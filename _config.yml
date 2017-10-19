@@ -1,3 +1,6 @@
+plugins:
+  - jekyll-seo-tag
+
 # Site settings
 timezone: Europe/Berlin
 
