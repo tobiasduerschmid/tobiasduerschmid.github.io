@@ -1,0 +1,27 @@
+
+<section id="projects">
+  <div class="container">
+  
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h2>{{ site.data.projects.heading.[page.lang] | escape }}</h2>
+      </div>
+    </div>
+
+
+  {% assign projects = site.data.projects.projects | sort:"date" %}
+  <div class="row">
+  {% for p in projects reversed %}
+    {% if p.status == 'ongoing' %}
+      {% include project.html %}
+    {% endif %}
+  {% endfor %}
+  {% for p in projects reversed %}
+    {% if p.status != 'ongoing' %}
+      {% include project.html %}
+    {% endif %}
+  {% endfor %}
+  </div>
+
+</div>
+</section>

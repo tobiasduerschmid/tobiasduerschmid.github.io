@@ -1,0 +1,94 @@
+{
+	"show" : false,
+	"carousel" : 
+	[
+		{ "slidedeck" : 
+			[
+				{ "img"      : "blueprint.jpg",
+				  "thumbnail": "blueprint_th.jpg",
+				  "title":     "Blueprint Rendering"
+			    },
+			    { "img"      : "blueprint2.jpg",
+				  "thumbnail": "blueprint2_th.jpg",
+				  "title":     "Blueprint Rendering"
+			    },
+			    { "img"      : "canyon.jpg",
+				  "thumbnail": "canyon_th.jpg",
+				  "title":     "Magic Lens Stylization"
+			    },
+			    { "img"      : "city.jpg",
+				  "thumbnail": "city_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    },
+			    { "img"      : "city2.jpg",
+				  "thumbnail": "city2_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    },
+			    { "img"      : "distance_stylization.jpg",
+				  "thumbnail": "distance_stylization_th.jpg",
+				  "title":     "Distance-based Stylization"
+			    },
+			    { "img"      : "edges.jpg",
+				  "thumbnail": "edges_th.jpg",
+				  "title":     "Image-based Edge Enhancement"
+			    },
+			    { "img"      : "edges2.jpg",
+				  "thumbnail": "edges2_th.jpg",
+				  "title":     "Image-based Edge Enhancement"
+			    },
+			    { "img"      : "flooding.jpg",
+				  "thumbnail": "flooding_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    },
+			    { "img"      : "interaction.jpg",
+				  "thumbnail": "interaction_th.jpg",
+				  "title":     "Interaction in 3D Spaces"
+				} 
+			] 
+		},
+		{ "slidedeck" : 
+			[
+			    { "img"      : "mpvs.jpg",
+				  "thumbnail": "mpvs_th.jpg",
+				  "title":     "Multiperspective Visualization"
+			    },
+			    { "img"      : "nuremberg.jpg",
+				  "thumbnail": "nuremberg_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    },
+			    { "img"      : "roi.jpg",
+				  "thumbnail": "roi_th.jpg",
+				  "title":     "Focus+Context Visualization"
+			    },
+			    { "img"      : "route.jpg",
+				  "thumbnail": "route_th.jpg",
+				  "title":     "Focus+Context Visualization"
+			    },
+			    { "img"      : "saliency.jpg",
+				  "thumbnail": "saliency_th.jpg",
+				  "title":     "Saliency Evaluation"
+			    },
+			    { "img"      : "sdof.jpg",
+				  "thumbnail": "sdof_th.jpg",
+				  "title":     "Extended Semantic Depth-of-field"
+			    },
+			    { "img"      : "streets.jpg",
+				  "thumbnail": "streets_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    },
+			    { "img"      : "streets2.jpg",
+				  "thumbnail": "streets2_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    },
+			    { "img"      : "thematic_lens.jpg",
+				  "thumbnail": "thematic_lens_th.jpg",
+				  "title":     "Visualization of Thematic Data"
+			    },
+			    { "img"      : "water.jpg",
+				  "thumbnail": "water_th.jpg",
+				  "title":     "Cartography-Oriented Visualization"
+			    } 
+			] 
+		}
+	]
+}

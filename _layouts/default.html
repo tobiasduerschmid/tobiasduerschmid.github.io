@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% include head.html %}
+
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+
+{% include ga.html %}
+
+{% include navbar.html %}
+
+{% include header.html %}
+
+
+{% if site.data.carousel.show %}   
+	{% include carousel.html %}
+{% endif %}			
+
+{% if site.data.news.show %}   
+	{% include news.html %}
+{% endif %}		
+
+{% if site.data.publications.show %}   
+	{% include publications_featured.html %}
+{% endif %}			
+
+{% if site.data.projects.show %}   
+	{% include projects.html %}
+{% endif %}			
+
+{% if site.data.talks.show %}   
+	{% include talks.html %}
+{% endif %}			
+
+{% if site.data.teaching.show %}   
+	{% include teaching.html %}
+{% endif %}			
+
+{% if site.data.activities.show %}   
+	{% include activities.html %}
+{% endif %}		
+
+{% if site.data.videos.show %}   
+	{% include videos.html %}
+{% endif %}			
+
+{% if site.data.contact.show %}   
+	{% include contact.html %}
+{% endif %}			
+
+{% include footer.html %}
+
+{% include scripts.html %}
+
+</body>
+
+</html>

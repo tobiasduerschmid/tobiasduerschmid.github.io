@@ -1,0 +1,24 @@
+{
+  "show" : true,
+  "teaching" :
+  [
+    {
+      "term" : "2017/18: Winter Term",
+      "courses" : 
+        [ { "course" : "Software Engineering II",
+            "type"   : "Lecture (BA)",
+            "role"   : "Tutor"
+          }
+        ]
+    },
+    {  "term" : "2016/17: Winter Term",
+      "courses" : 
+      [ 
+        { "course" : "Modelling I",
+          "type"   : "Lecture (BA)",
+          "role"   : "Tutor"
+        }
+      ]
+    }
+  ]
+}

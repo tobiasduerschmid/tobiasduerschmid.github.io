@@ -1,0 +1,26 @@
+{
+	"show" :  true, 
+	"email" : "tobias.duerschmid@student.hpi.de",
+	"profiles" : [
+		{ 
+			"desc" : "ACM",
+			"href": "https://dl.acm.org/author_page.cfm?id=99659048136"
+		}, 
+		{
+			"desc" : "Researchgate",
+			"href" : "https://www.researchgate.net/profile/Tobias_Duerschmid"
+		}, 
+		{
+			"desc" : "Google Scholar",
+			"href" : "https://scholar.google.de/citations?user=tmE8FjQAAAAJ"
+		},
+		{
+			"desc" : "dblp",
+			"href" : "http://dblp.uni-trier.de/pers/hd/d/D=uuml=rschmid:Tobias"
+		},
+		{
+			"desc" : "LinkedIn",
+			"href" : "https://www.linkedin.com/in/tobias-duerschmid/"
+		}
+	]
+}

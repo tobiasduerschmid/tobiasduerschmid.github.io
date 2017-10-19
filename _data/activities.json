@@ -1,0 +1,18 @@
+{ 
+	"show" : false,
+	"activities": 
+	[ 
+		{  
+			"title"     : "Memberships",
+		    "content"   : "ACM, GI"
+	  	},
+	  	{  
+	  		"title"     : "Scholarships and Awards",
+		    "content"   : "
+		    <p>1. Place in the <a href=\"http://src.acm.org/\">ACM Student Research Competition</a> @ ‹Programming› 2017 </p>
+		    <p>Certification as <a href=\"http://www.omg.org/ocup-2/\">OMG Certified UML Professional 2</a></p>
+		    <p>Scholarship of the <a href=\"https://www.studienstiftung.de/en/\">Studienstiftung</a>, the largest organisation that sponsors outstanding students in Germany</p>
+		    "
+		} 
+	]
+}

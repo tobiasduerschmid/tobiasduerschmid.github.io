@@ -1,0 +1,40 @@
+# Site settings
+timezone: Europe/Berlin
+
+baseurl: "" # the subpath of your site, e.g. /blog/
+url: "http://tobiasduerschmid.github.io/" # the base hostname & protocol for your site
+
+title: Tobias Dürschmid
+author: Tobias Dürschmid
+portrait: "/img/tobi.jpg"
+
+languages: [ 'en', 'de' ]
+
+
+description: > # this means to ignore newlines until "baseurl:"
+    Graduate student in IT-Systems Engineering at the Hasso Plattner Institute / University of Potsdam, Germany.
+subheading: > # this means to ignore newlines until "baseurl:"
+    <span class="text-danger">Software engineer</span> and <span class="text-danger">graduate student</span> in IT-Systems Engineering at the <a href="http://www.hpi.de/en" target="_blank">Hasso Plattner Institute</a> / <a href="http://www.uni-potsdam.de/en" target="_blank">University of Potsdam</a>, Germany.<br><br>I am mainly interested in simplifying the development of complex software systems. My areas of research include software architecture, software engineering, programming languages, and mobile image stylization.
+
+
+
+defaults:
+  - scope:
+      path: ''
+    values:
+      lang: en
+  - scope:
+      path: 'de'
+    values:
+      lang: de
+  - scope:
+      path: 'en'
+    values:
+      lang: en
+      
+# Handling Reading
+safe: true
+encoding: utf-8
+
+# Build settings
+markdown: kramdown

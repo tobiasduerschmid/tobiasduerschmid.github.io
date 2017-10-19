@@ -1,0 +1,41 @@
+
+<!-- Publications -->
+<section id="publications">
+  <div class="container">
+  
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h2 class="page-header">Thesis</h2>
+      </div>
+    </div>
+    {% assign publications = site.data.publications.publications | sort:"date" %}
+    {% for p in publications reversed %}
+	{% if p.thesis and p.thesis == "true" %}
+    <div class="row{% if p != publications.first %} not-last{% endif %}">
+      <div class="col-sm-3">
+        {% include thumbnail.html %}
+      </div>
+      <div class="col-sm-9">
+        <h4>{{ p.title }}</h4>
+        <p>{% for author in p.authors %}{% if author == p.authors.last and p.authors.count > 1 %}and {% endif %}{{ author }}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}<br><span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span></p>
+        <p>{{ p.caption }}</p>
+        <p>
+          {% if p.bibtex %}<a data-toggle="collapse" href="#bibtex-{{ p.key }}">BibTeX</a>{% if p.downloads %}, {% endif %}{% endif %}
+          {% if p.downloads %}{% for download in p.downloads %}<a {% if download.video %}class="video-{{ download.video }}" {% endif %}href="{{ download.href }}" target="_blank">{{ download.desc }}</a>{% if download != p.downloads.last %}, {% endif %}{% endfor %}{% endif %}
+        </p>
+      {% if p.bibtex %}
+      <div class="collapse bibtex" id="bibtex-{{ p.key }}">
+        <div class="btn-clipboard-parent">
+          <button type="button" data-clipboard-target="#bibtex-data-{{ p.key }}" class="btn btn-sm btn-clipboard">Copy to Clipboard</button> 
+        </div>
+        <div class="card card-block">
+          <pre id="bibtex-data-{{ p.key }}">{% include {{ p.bibtex }} %}</pre>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+  </div>
+</section>

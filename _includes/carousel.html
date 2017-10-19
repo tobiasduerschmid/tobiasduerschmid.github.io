@@ -1,0 +1,37 @@
+
+<!-- Carousel -->
+			{% if include.title %}<h3>{{ include.title }}</h3>{% endif %}
+			<div class="container">
+			<div class="my-slider">
+			<ul id="carousellist" style="width:100%">
+			{% assign carousel = site.data.carousel.carousel %}
+			{% for c in carousel %}
+			<li class="sub" style="width:100%;{% if c != carousel.last %} position: absolute{% endif %}">
+			<div id="portfoliowrap">
+			<div class="portfolio-centered">
+				<div class="recentitems portfolio">
+				{% assign slidedeck = c.slidedeck %}
+				{% for s in slidedeck %}
+					<div class="portfolio-item graphic-design carouselelement" style="display: inline;">
+						<div class="he-wrap tpl6 carouselelement" style="display: inline;">
+						<img src="{{ "/img/carousel/" | prepend: site.baseurl }}{{ s.thumbnail }}" alt="{{ s.title }}" style="width:100%; height:100%">
+							<div class="he-view">
+								<div class="bg a0" data-animate="fadeIn">
+									<div class="carouselitem">
+										<h3 data-animate="fadeInDown">{{ s.title }}</h3>
+										<a href="{{ "/img/carousel/" | prepend: site.baseurl }}{{ s.img }}" title="{{ s.title }}" class="dmbutton a2" data-animate="fadeInUp" data-gallery><i class="fa fa-search"></i></a>
+										<a href="{{  project.url | prepend: site.baseurl }}" class="dmbutton a2" data-animate="fadeInUp"><i class="fa fa-link"></i></a>
+									</div>
+								</div>
+							</div>				
+						</div><!-- he wrap -->
+					</div><!-- end col-12 -->
+				{% endfor %}
+				</div><!-- portfolio -->
+			</div>
+			</div><!--/Portfoliowrap -->
+			</li>
+			{% endfor %}
+			</ul>
+		</div>
+		</div><!-- portfolio container -->

@@ -1,0 +1,11 @@
+  <div class="col-md-5 {% cycle 'col-md-offset-1', 'col-md-offset-0' %} col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1">
+
+  {% assign thumbnail_src = p.thumbnail %}
+  {% assign thumbnail_alt = p.title %}
+  {% assign thumbnail_flickr = p.flickr %}
+  <h4 class="mt-1">{{ p.title | escape }}</h4>
+  {% include thumbnail.html %}
+  <p>{{ p.caption.[page.lang] }}</p>
+  <p>{% if p.bibtex %}<a data-toggle="modal" href="#bibtex-{{ p.key }}">BibTex</a>{% if p.downloads %}, {% endif %}{% endif %}
+    {% if p.downloads %}{% for download in p.downloads %}<a {% if download.video %}class="video-{{ download.video }}" {% endif %}href="{{ download.href }}">{{ download.desc }}</a>{% if download != p.downloads.last %}, {% endif %}{% endfor %}{% endif %}&nbsp;</p>
+</div>

@@ -1,0 +1,26 @@
+{
+  "show" : true,
+  "talks" :
+  [
+    {
+      "date"      : "2016-11-03 00:00:00",
+      "title"     : "Design Pattern Builder: A Concept for Refinable Reusable Design Pattern Libraries",
+      "location"  : "ACM Student Research Competition @ SPLASH, Amsterdam, Nederlands"
+    },
+    { 
+      "date"      : "2017-04-05 00:12:15",
+      "title"     : "Continuous Code Reviews: A Social Coding tool for Code Reviews inside the IDE",
+      "location"  : "ACM Student Research Competition @ ‹Programming›, Bruessels, Belgium"
+    },
+    { 
+      "date"      : "2017-05-22 00:00:00",
+      "title"     : "Towards Architectural Styles for Android App Software Product Lines",
+      "location"  : "MOBILESoft, Buenos Aires, Argentina"
+    },
+    { 
+      "date"      : "2017-11-28 00:00:00",
+      "title"     : "ProsumerFX: Mobile Design of Image Stylization Components",
+      "location"  : "SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications, Bangkok, Thailand"
+    }
+  ]
+}

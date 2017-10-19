@@ -1,0 +1,50 @@
+{
+  "show" : true,
+  "heading" : {
+    "en" : "Projects",
+    "de" : "Projekte" },
+
+  "projects" : [ 
+
+    { "key"       : "pencilhatching",
+      "title"     : "Pencil Hatching App",
+      "date"      : "2017-10-19",
+      "status"    : "ongoing",
+     
+      "caption"   : {
+        "en" : "Pencil Hatching turns your photos into realistic pencil drawings. Many predefined presets help creating the right look.",
+        "de" : "Pencil Hatching bietet die Möglichkeit, Fotos in realistische Bleistiftzeichungen zu verwandeln. Viele voreingestellte Presets helfen dabei, den richtigen Look zu erzielen." },
+
+      "authors"   : [ "Tobias Dürschmid", "Matthias Trapp", "Sebastian Pasewaldt", "Amir Semmo" ],
+      "thumbnail" : "/img/2017-pencilhatching.png",
+      "downloads" : [
+        { "href"  : "http://render3.hpi3d.de/tduerschmid/",
+          "desc"  : "Project"
+        },
+        { "href"  : "https://www.youtube.com/watch?v=cGFwQ4Xmhr0",
+          "desc"  : "Video",
+          "video" : "youtube"
+        } ],
+
+    },
+    { "key"       : "prosumer",
+      "title"     : "ProsumerFX",
+      "date"      : "2017-10-10",
+      "status"    : "ongoing",
+     
+      "caption"   : {
+        "en" : "The Prosumer app enables to create and share parameterizable image stylization effects on mobile devices.",
+        "de" : "Die Prosumer ermöglicht es, parameterisierbare Bildeffekte auf mobilen Geräten zu erstellen und mit Freunden zu teilen." },
+
+      "authors"   : [ "Tobias Dürschmid", "Matthias Trapp", "Sebastian Pasewaldt", "Amir Semmo" ],
+      "thumbnail" : "/img/2017-prosumerFXapp.jpg",
+      "downloads" : [
+        { "href"  : "https://youtu.be/sR4R1Jfs9LU",
+          "desc"  : "Video",
+          "video" : "youtube"
+        } ],
+
+    },
+
+     ]
+}
