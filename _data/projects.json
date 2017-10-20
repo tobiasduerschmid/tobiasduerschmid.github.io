@@ -18,8 +18,8 @@
       "authors"   : [ "Tobias Dürschmid", "Matthias Trapp", "Sebastian Pasewaldt", "Amir Semmo" ],
       "thumbnail" : "/img/2017-pencilhatching.png",
       "downloads" : [
-        { "href"  : "http://render3.hpi3d.de/tduerschmid/",
-          "desc"  : "Project"
+        { "href"  : "/pencilhatching/index.html",
+          "desc"  : "Project Website (German)"
         },
         { "href"  : "https://www.youtube.com/watch?v=cGFwQ4Xmhr0",
           "desc"  : "Video",
