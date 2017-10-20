@@ -25,7 +25,6 @@
           "desc"  : "Video",
           "video" : "youtube"
         } ],
-
     },
     { "key"       : "prosumer",
       "title"     : "ProsumerFX",
@@ -43,8 +42,22 @@
           "desc"  : "Video",
           "video" : "youtube"
         } ],
-
     },
+    { "key"       : "algernon",
+      "title"     : "Algernon",
+      "date"      : "2016-07-10",
+      "status"    : "ongoing",
+     
+      "caption"   : {
+        "en" : "Algernon is a productivity tool for Squeak programmers; your personal assistant for Squeak. Algernon aims to make programming in Squeak faster and more keyboard centric. It provides lightning quick access to the core functionalities (classes, methods, morphs, tests, repositories ...) and even gives you a quick way to evaluate Smalltalk expressions.",
+        "de" : "Algernon is a productivity tool for Squeak programmers; your personal assistant for Squeak. Algernon aims to make programming in Squeak faster and more keyboard centric. It provides lightning quick access to the core functionalities (classes, methods, morphs, tests, repositories ...) and even gives you a quick way to evaluate Smalltalk expressions." },
 
+      "authors"   : [ "Ann Katrin Kuessner", "Jonathan Schneider",  "Louis Kirsch", "Pius Ladenburger", "Tobias Dürschmid" ],
+      "thumbnail" : "/img/2016-algernon.png",
+      "downloads" : [
+        { "href"  : "https://github.com/HPI-SWA-Teaching/Algernon-Launcher",
+          "desc"  : "Project"
+        } ],
+    },
      ]
 }
