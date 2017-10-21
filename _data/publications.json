@@ -44,7 +44,7 @@
       "title"     : "Design Pattern Builder - A Concept for Refinable Reusable Design Pattern Libraries",
       "date"      : "2016-11-02",
       "authors"   : [ "Tobias Dürschmid"],
-      "published" : "SPLASH Companion 2016: Companion Proceedings of the 2016 ACM SIGPLAN International Conference on Systems, Programming, Languages and Applications: Software for Humanity",
+      "published" : "SPLASH Companion '16: Companion Proceedings of the ACM SIGPLAN International Conference on Systems, Programming, Languages and Applications: Software for Humanity",
       "caption"   : "Reuse is one of the core principles in professional software engineering. Design patterns provide a reusable solution for common design problems. But their implementations are generally not reusable as they are often well tailored to a specific context. We introduce a concept, that facilitates the reuse of their implementations by defining an abstract design pattern definition that can be instantiated with specialized design decisions. This approach is a meta-level Builder constructing design patterns as first-class citizens. It simplifies the application of design patterns by providing a pattern library and still being able to adjust it to the concrete context.",
       "thumbnail" : "/img/2016-designPatternBuilder.jpg",
       "downloads" : [
@@ -86,7 +86,7 @@
       "title"     : "Interactive Image Filtering with Multiple Levels-of-Control on Mobile Devices",
       "date"      : "2016-12-01",
       "authors"   : [ "Amir Semmo", "Tobias Dürschmid", "Matthias Trapp", "Mandy Klingbeil", "Jürgen Döllner", "Sebastian Pasewaldt" ],
-      "published" : "SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications",
+      "published" : "SA '16: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
       "caption"   : "With the continuous development of mobile graphics hardware, interactive high-quality image stylization based on nonlinear filtering is becoming feasible and increasingly used in casual creativity apps. However, these apps often only serve high-level controls to parameterize image filters and generally lack support for low-level (artistic) control, thus automating art creation rather than assisting it. This work presents a GPU-based framework that enables to parameterize image filters at three levels of control: (1) presets followed by (2) global parameter adjustments can be interactively refined by (3) complementary on-screen painting that operates within the filters' parameter spaces for local adjustments. The framework provides a modular XML-based effect scheme to effectively build complex image processing chains-using these interactive filters as building blocks-that can be efficiently processed on mobile devices. Thereby, global and local parameterizations are directed with higher-level algorithmic support to ease the interactive editing process, which is demonstrated by state-of-the-art stylization effects, such as oil paint filtering and watercolor rendering.",
       "thumbnail" : "/img/2016-sdtkdp.jpg",
       "downloads" : [
@@ -109,7 +109,7 @@
       "title"     : "Continuous Code Reviews: A Social Coding tool for Code Reviews inside the IDE",
       "date"      : "2017-04-04",
       "authors"   : [ "Tobias Dürschmid"],
-      "published" : "Programming '17 Companion to the first International Conference on the Art, Science and Engineering of Programming",
+      "published" : "Programming '17: Companion to the first International Conference on the Art, Science and Engineering of Programming",
       "caption"   : "Code reviews play an important and successful role in modern software development. But usually they happen only once before new code is merged into the main branch. We present a concept which helps developers to continuously give feedback on their source code directly in the integrated development environment (IDE) by using the metaphor of social networks. This reduces context switches for developers, improves the software development process and allows to give feedback to developers of external libraries and frameworks.",
       "thumbnail" : "/img/2017-ccr.jpg",
       "downloads" : [
@@ -134,7 +134,7 @@
       "title"     : "ProsumerFX: Mobile Design of Image Stylization Components",
       "date"      : "2017-11-03",
       "authors"   : [ "Tobias Dürschmid", "Maximilian Söchting", "Amir Semmo", "Matthias Trapp", "Jürgen Döllner" ],
-      "published" : "SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications",
+      "published" : "SA '17: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
       "caption"   : "With the continuous advances of mobile graphics hardware, high-quality image stylization—e.g., based on image filtering, stroke-based rendering, and neural style transfer—is becoming feasible and increasingly used in casual creativity apps. The creative expression facilitated by these mobile apps, however, is typically limited with respect to the usage and application of pre-defined visual styles, which ultimately do not include their design and composition—an inherent requirement of prosumers. We present ProsumerFX, a GPU-based app that enables to interactively design parameterizable image stylization components on-device by reusing building blocks of image processing effects and pipelines. Furthermore, the presentation of the effects can be customized by modifying the icons, names, and order of parameters and presets. Thereby, the customized visual styles are defined as platform-independent effects and can be shared with other users via a web-based platform and database. Together with the presented mobile app, this system approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Thus, it satisfies the needs for creative expression of both professionals as well as the general public.",
       "thumbnail" : "/img/2017-prosumerFX.jpg",
       "downloads" : [
