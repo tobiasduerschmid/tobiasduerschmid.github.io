@@ -13,17 +13,21 @@
     {% for n in news reversed %}
   	  {% assign newsDate = n.date | date: '%s' %}
       {% if newsDate <= curDate %}
-      <div class="row">
-        <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
-          <h4>{{ n.date | date : "%B %Y" }}</h4>
+        {% assign duration_sec = curDate | minus: newsDate %}
+        {% assign duration_days = duration_sec | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
+        {% if duration_days <= site.data.news.max_days %}
+        <div class="row">
+          <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
+            <h4>{{ n.date | date : "%B %Y" }}</h4>
+          </div>
+          <div class="col-md-8 col-sm-10">
+            <p>{{ n.text}}</p>
+          </div>
+          <div class="col-md-1 text-left">
+            <p>{{ n.icon}}</p>
+          </div>
         </div>
-        <div class="col-md-8 col-sm-10">
-          <p>{{ n.text}}</p>
-        </div>
-        <div class="col-md-1 text-left">
-          <p>{{ n.icon}}</p>
-        </div>
-      </div>
+        {% endif %}
       {% endif %}
     {% endfor %}
   </div>
