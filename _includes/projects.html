@@ -8,33 +8,15 @@
       </div>
     </div>
 
-  {% assign projects = site.data.projects.projects | where: "ongoing", true | sort:"date" %}
-  {% if projects.size > 0 %}
-    {% assign i = 0 %}
-    <div class="row">
-    {% if site.data.projects.projects.size != projects.size %}
-      <legend>Current Projects</legend>
-    {% endif %}
-    {% for p in projects reversed %}
-        {% include project.html %}
-        {% assign i = i | plus: 1 %}
-    {% endfor %}
-    </div>
-  {% endif %}
+  {% assign all_projects = site.data.projects.projects %}
 
-  {% assign projects = site.data.projects.projects | where: "ongoing", false | sort:"date" %}
-  {% if projects.size > 0 %}  
-    {% assign i = 0 %}
-    <div class="row">
-    {% if site.data.projects.projects.size != projects.size %}
-      <legend>Past Projects</legend>
-    {% endif %}
-    {% for p in projects reversed %}
-        {% include project.html %}
-        {% assign i = i | plus: 1 %}
-    {% endfor %}
-    </div>
-  {% endif %}
+  {% assign projects = all_projects | where: "ongoing", true | sort:"date" %}
+  {% assign legend = "Current Projects" %}
+  {% include projects_section.html %}
+  
+  {% assign projects = all_projects | where: "ongoing", false | sort:"date" %}
+  {% assign legend = "Past Projects" %}
+  {% include projects_section.html %}
 
 </div>
 </section>
