@@ -2,5 +2,7 @@
           <span class="label label-danger top-right">Flickr</span>  
           <img src="{{ p.thumbnail }}" alt="">
         </a>{% else %}<div class="thumbnail">
+          <a href="{% if p.image %}{{ p.image }}{% else %}{{ p.thumbnail }}{% endif %}" title="{{ p.title }}" data-animate="fadeInUp" data-gallery>
           <img src="{{ p.thumbnail }}" alt="">
+          </a>
         </div>{% endif %}
