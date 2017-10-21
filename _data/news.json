@@ -1,7 +1,10 @@
 {
-	"show" : false,
+	"show" : true,
 	"news" :
 	[ 
+	  { "date" : "2016-1-11 00:00:00",
+	    "text" : "Today we published our Pencil Hatching app for Android.",
+	  },
 	  { "date" : "2016-12-07 00:00:00",
 	    "text" : "We also presented the demo &ldquo;BeCasso: Artistic Image Processing and Editing on Mobile Devices&rdquo; at the <a class='urllink' href='http://sa2016.siggraph.org/en/attendees/symposium-on-mobile-graphics-and-interactive-applications' rel='nofollow'>SIGGRAPH Asia 2016 Symposium on Mobile Graphics and Interactive Applications</a>. The demo received a <a class='urllink' href='https://sa2016.siggraph.org/en/attendees/award-winners' rel='nofollow'>Best Demo Award</a>.",
 	    "icon" : "<img src='/img/award.png'>"
