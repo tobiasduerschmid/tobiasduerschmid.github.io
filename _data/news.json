@@ -3,16 +3,16 @@
 	"news" :
 	[ 
 	  { "date" : "2016-11-03 00:00:00",
-	    "text" : "I have been selected to present my research on a Design Pattern Builder in in the ACM Student ACM Student Research Competition at SPLASH in Amsterdam.",
+	    "text" : "I have been selected to present my research on a <a class='page-scroll' href='#publication-designPatternBuilder2016'>Design Pattern Builder</a> in the <a class='urllink' href='https://2016.splashcon.org/track/splash-2016-src#event-overview' rel='nofollow'>ACM Student Research Competition at SPLASH</a> in Amsterdam.",
 	  },	  
 	  { "date" : "2016-12-07 00:00:00",
 	    "text" : "I supported the Demo of &ldquo;BeCasso: Artistic Image Processing and Editing on Mobile Devices&rdquo; at the <a class='urllink' href='http://sa2016.siggraph.org/en/attendees/symposium-on-mobile-graphics-and-interactive-applications' rel='nofollow'>SIGGRAPH Asia 2016 Symposium on Mobile Graphics and Interactive Applications</a>. The demo received a <a class='urllink' href='https://sa2016.siggraph.org/en/attendees/award-winners' rel='nofollow'>Best Demo Award</a>.",
 	  },
 	  { "date" : "2017-05-20 00:00:00",
-	    "text" : "I fly to Buenos Aires to present our architectural styles for Android app product lines at the MOBILESoft, co-located with the International Conference on Software Engineering.",
+	    "text" : "I fly to Buenos Aires to present our <a class='page-scroll' href='#publication-archstyle2017'>architectural styles for Android app product lines</a> at the <a class='urllink' href='http://mobilesoftconf.org/2017/' rel='nofollow'>MOBILESoft</a>, co-located with the International Conference on Software Engineering.",
 	  },
 	  { "date" : "2017-04-05 00:12:15",
-	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017>Continuous Code Reviews</a>.",
+	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017'>Continuous Code Reviews</a>.",
 	    "icon" : "<img src='/img/src1.png'>"
 	  },	  
 	  { "date" : "2017-11-2 00:00:00",
