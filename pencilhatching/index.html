@@ -12,14 +12,17 @@
 
     <title>Pencil Hatching</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap theme -->
-    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
-    <link href="css/custom.min.css" rel="stylesheet">
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
-    <!-- Custom styles for this template -->
+    <link rel="stylesheet" href="https://bootswatch.com/yeti/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="//blueimp.github.io/Gallery/css/blueimp-gallery.min.css">
+    <link rel="stylesheet" href="../css/bootstrap-image-gallery.min.css">
+    <link rel="stylesheet" href="../css/portfolio.css">
+    <link rel="stylesheet" href="../css/hoverex-all.css">
+    <link rel="stylesheet" href="../css/unslider.css">
+    <link rel="stylesheet" href="../css/unslider-dots.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+
 
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
@@ -38,6 +41,8 @@
       });
     </script>
 
+    <script src="../js/scrolling-nav.js"></script>
+
   </head>
 
   <body data-spy="scroll" data-target=".navbar" data-offset="50">
@@ -45,25 +50,23 @@
     <!-- Fixed navbar -->
     <nav class="navbar navbar-inverse navbar-fixed-top" id="navnav">
       <div class="container-fluid">
-        <div class="navbar-header">
+        <div class="navbar-header page-scroll">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Pencil Hatching</a>
+          <a class="navbar-brand page-scroll" href="#">Pencil Hatching</a>
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li><a href="../index.html#projects">Home</a></li>
-            <li><a href="#Demo">Demo</a></li>
-            <li><a href="#Presets">Presets</a></li>
-            <li><a href="#Parameter">Parameter</a></li>
-            <li><a href="#Painting">Parameter Painting</a></li>
-            <li><a href="#Walkthrough">Walkthrough</a></li>
-            <!--<li><a href="functionality.html">Funktionsweise</a></li>-->
-            <li><a href="#About">Über mich</a></li>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav navbar-right">            <li><a href="../index.html#projects">Home</a></li>
+            <li><a class="page-scroll" href="#Demo">Demo</a></li>
+            <li><a class="page-scroll" href="#Presets">Presets</a></li>
+            <li><a class="page-scroll" href="#Parameter">Parameter</a></li>
+            <li><a class="page-scroll" href="#Painting">Parameter Painting</a></li>
+            <li><a class="page-scroll" href="#Walkthrough">Walkthrough</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -168,10 +171,6 @@
       <div id="Walkthrough">
         <div id="walkthrough"></div>
         <p></p>
-      </div>
-
-      <div id="About">
-          <div id="about"></div>
       </div>
 
     </div><!-- /container-fluid -->
