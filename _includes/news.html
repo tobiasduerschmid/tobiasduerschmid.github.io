@@ -8,21 +8,23 @@
         <h2 class="page-header">News</h2>
       </div>
     </div>
-	{% assign curDate = site.time | date: '%s' %}
+	  {% assign curDate = site.time | date: '%s' %}
     {% assign news = site.data.news.news | sort:"date" %}
     {% for n in news reversed %}
-    <div class="row">
-      <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
-        <h4>{{ n.date | date : "%B %Y" }}</h4>
+  	  {% assign newsDate = n.date | date: '%s' %}
+      {% if newsDate <= curDate %}
+      <div class="row">
+        <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
+          <h4>{{ n.date | date : "%B %Y" }}</h4>
+        </div>
+        <div class="col-md-8 col-sm-10">
+          <p>{{ n.text}}</p>
+        </div>
+        <div class="col-md-1 text-left">
+          <p>{{ n.icon}}</p>
+        </div>
       </div>
-	  {% assign newsDate = n.date | date: '%s' %}
-      <div class="col-md-8 col-sm-10">
-        <p>{{ n.text}}</p>
-      </div>
-      <div class="col-md-1 text-left">
-        <p>{{ n.icon}}</p>
-      </div>
-    </div>
+      {% endif %}
     {% endfor %}
   </div>
 </section>
