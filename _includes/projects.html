@@ -4,24 +4,37 @@
   
     <div class="row">
       <div class="col-lg-12 text-center">
-        <h2>{{ site.data.projects.heading.[page.lang] | escape }}</h2>
+        <h2 class="page-header">{{ site.data.projects.heading.[page.lang] | escape }}</h2>
       </div>
     </div>
 
+  {% assign projects = site.data.projects.projects | where: "ongoing", true | sort:"date" %}
+  {% if projects.size > 0 %}
+    {% assign i = 0 %}
+    <div class="row">
+    {% if site.data.projects.projects.size != projects.size %}
+      <legend>Current Projects</legend>
+    {% endif %}
+    {% for p in projects reversed %}
+        {% include project.html %}
+        {% assign i = i | plus: 1 %}
+    {% endfor %}
+    </div>
+  {% endif %}
 
-  {% assign projects = site.data.projects.projects | sort:"date" %}
-  <div class="row">
-  {% for p in projects reversed %}
-    {% if p.status == 'ongoing' %}
-      {% include project.html %}
+  {% assign projects = site.data.projects.projects | where: "ongoing", false | sort:"date" %}
+  {% if projects.size > 0 %}  
+    {% assign i = 0 %}
+    <div class="row">
+    {% if site.data.projects.projects.size != projects.size %}
+      <legend>Past Projects</legend>
     {% endif %}
-  {% endfor %}
-  {% for p in projects reversed %}
-    {% if p.status != 'ongoing' %}
-      {% include project.html %}
-    {% endif %}
-  {% endfor %}
-  </div>
+    {% for p in projects reversed %}
+        {% include project.html %}
+        {% assign i = i | plus: 1 %}
+    {% endfor %}
+    </div>
+  {% endif %}
 
 </div>
 </section>

@@ -9,7 +9,7 @@
     { "key"       : "pencilhatching",
       "title"     : "Pencil Hatching App",
       "date"      : "2017-10-19",
-      "status"    : "ongoing",
+      "ongoing"   : true,
      
       "caption"   : {
         "en" : "Pencil Hatching turns your photos into realistic pencil drawings. Many predefined presets help creating the right look.",
@@ -29,7 +29,7 @@
     { "key"       : "prosumer",
       "title"     : "ProsumerFX",
       "date"      : "2017-10-10",
-      "status"    : "ongoing",
+      "ongoing"   : true,
      
       "caption"   : {
         "en" : "The Prosumer app enables to create and share parameterizable image stylization effects on mobile devices.",
@@ -46,7 +46,7 @@
     { "key"       : "algernon",
       "title"     : "Algernon",
       "date"      : "2016-07-10",
-      "status"    : "ongoing",
+      "ongoing"   : false,
      
       "caption"   : {
         "en" : "Algernon is a productivity tool for Squeak programmers; your personal assistant for Squeak. Algernon aims to make programming in Squeak faster and more keyboard centric. It provides lightning quick access to the core functionalities (classes, methods, morphs, tests, repositories ...) and even gives you a quick way to evaluate Smalltalk expressions.",
