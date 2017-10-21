@@ -12,7 +12,7 @@
 	    "text" : "I fly to Buenos Aires to present our architectural styles for Android app product lines at the MOBILESoft, co-located with the International Conference on Software Engineering.",
 	  },
 	  { "date" : "2017-04-05 00:12:15",
-	    "text" : "I won the ACM Student ACM Student Research Competition at the ‹Programming› conference with a new concept for Continuous Code Reviews.",
+	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017>Continuous Code Reviews</a>.",
 	    "icon" : "<img src='/img/src1.png'>"
 	  },	  
 	  { "date" : "2017-11-2 00:00:00",
@@ -20,3 +20,4 @@
 	  }
 	]
 }
+

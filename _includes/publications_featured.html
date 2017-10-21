@@ -14,7 +14,7 @@
     {% assign currentyear = p.date | date: '%Y' %}
     {% if currentyear != previousyear %}<div><legend>{{ p.date | date: '%Y' }}</legend></div>{% endif %}
     {% assign previousyear = currentyear %}
-    <div class="row{% if p != publications.first %} not-last{% endif %}">
+    <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
       <div class="col-sm-2 col-md-offset-1">
         {% include thumbnail.html %}
       </div>
