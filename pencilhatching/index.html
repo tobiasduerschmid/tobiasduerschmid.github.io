@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="Pencil Hatching - Sieh die Welt durch die Augen eines Künstlers!">
+    <meta name="author" content="Tobias Dürschmid">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="images/icons/pencil.svg">
+
+    <title>Pencil Hatching</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap theme -->
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="css/custom.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="assets/js/ie-emulation-modes-warning.js"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="js/jquery.js"></script>
+    <script src="js/load.js"></script>
+
+    <script>
+      $(document).ready(function(){
+          $('[data-toggle="tooltip"]').tooltip();
+      });
+    </script>
+
+  </head>
+
+  <body data-spy="scroll" data-target=".navbar" data-offset="50">
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" id="navnav">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Pencil Hatching</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="../index.html#projects">Home</a></li>
+            <li><a href="#Demo">Demo</a></li>
+            <li><a href="#Presets">Presets</a></li>
+            <li><a href="#Parameter">Parameter</a></li>
+            <li><a href="#Painting">Parameter Painting</a></li>
+            <li><a href="#Walkthrough">Walkthrough</a></li>
+            <!--<li><a href="functionality.html">Funktionsweise</a></li>-->
+            <li><a href="#About">Über mich</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+
+    <div class="container-fluid theme-showcase" role="main">
+      <div id="Home">
+        <div class="jumbotron">
+          <h1>Pencil Hatching</h1>
+          <h2>Sieh die Welt durch die Augen eines Künstlers!</h2>
+        </div>
+        
+        <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+          <ol class="carousel-indicators">
+            <li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="1"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="2"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="3"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="4"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="5"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="6"></li>
+            <li data-target="#carousel-example-generic" data-slide-to="7"></li>
+          </ol>
+          <div class="carousel-inner" role="listbox">
+            <div class="item active">
+              <img src="images/img_1.jpg" onmousedown="this.src='images/img_1_org.jpg'" onmouseup="this.src='images/img_1.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>            
+            <div class="item">
+              <img src="images/img_4.jpg" onmousedown="this.src='images/img_4_org.jpg'" onmouseup="this.src='images/img_4.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+            <div class="item">
+              <img src="images/img_5.jpg" onmousedown="this.src='images/img_5_org.jpg'" onmouseup="this.src='images/img_5.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+            <div class="item">
+              <img src="images/img_2.jpg" onmousedown="this.src='images/img_2_org.jpg'" onmouseup="this.src='images/img_2.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+            <div class="item">
+              <img src="images/img_8.jpg" onmousedown="this.src='images/img_8_org.jpg'" onmouseup="this.src='images/img_8.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+            <div class="item">
+              <img src="images/img_3.jpg" onmousedown="this.src='images/img_3_org.jpg'" onmouseup="this.src='images/img_3.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+            <div class="item">
+              <img src="images/img_7.jpg" onmousedown="this.src='images/img_7_org.jpg'" onmouseup="this.src='images/img_7.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+            <div class="item">
+              <img src="images/img_6.jpg" onmousedown="this.src='images/img_6_org.jpg'" onmouseup="this.src='images/img_6.jpg'" title="Klicke auf die Bilder für eine Vorher-Nachher-Gegenüberstellung">
+            </div>
+          </div>
+          <a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+            <span class="sr-only">Zurück</span>
+          </a>
+          <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+            <span class="sr-only">Weiter</span>
+          </a>
+        </div>
+        
+        <div class="jumbotron">
+          <p>
+            <i>Pencil Hatching</i> ist eine Android App mit der Du Deine <b>Fotos interaktiv in Handzeichnungen verwandeln</b> kannst.
+            Echte Bleistiftstriche, die automatisch anhand des Bildinhalts ausgerichtet werden, geben dem Bild einen gezeichneten Charakter. 
+            Künstlerische Konturen sorgen für eine scharfe Zeichnung.            
+            Im Gegensatz zu anderen Apps ermöglicht Dir der virtuelle Pinsel sogar selbst künstlerisch aktiv zu werden, indem du Bildbereiche lokal anpassen kann. 
+            Damit können Schüler sehr schnell durch Ausprobieren lernen, wie ein Künstler eine Zeichnung anfertigen würde. 
+            Einen kompletten Walkthrough gibt es <a href="#Walkthrough">hier</a>.
+          </p>
+        </div>
+       
+        <div id="Features">
+          <br>
+          <br>
+          <br>
+          <br>
+          <div id="features"></div>
+          <br>
+          <br>
+          <br>
+          <br>
+        </div>
+
+      </div>
+      <div id="Demo">
+        <div id="demo"></div>
+        <p></p>
+      </div>
+
+      <div id="Presets">
+          <div id="presets"></div>
+      </div>
+
+      <div id="Parameter">
+          <div id="parameters"></div>
+      </div>
+        
+      <div id="Painting">
+          <div id="painting"></div>
+      </div>
+      
+      <div id="Walkthrough">
+        <div id="walkthrough"></div>
+        <p></p>
+      </div>
+
+      <div id="About">
+          <div id="about"></div>
+      </div>
+
+    </div><!-- /container-fluid -->
+
+    <div id="footer"></div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></scrpipt>
+    <script>window.jQuery || document.write('<script src="assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="assets/js/docs.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="assets/js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
