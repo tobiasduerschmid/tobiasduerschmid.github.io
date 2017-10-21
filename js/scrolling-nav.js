@@ -1,11 +1,3 @@
-// collapse the navbar on scroll
-$(window).scroll(function() 
-{
-  if ($(".navbar").offset().top > 64)
-    $(".navbar-fixed-top").addClass("top-nav-collapse");
-  else
-    $(".navbar-fixed-top").removeClass("top-nav-collapse"); 
-});
 
 // page scrolling feature (requires easing plugin)
 $(function() 
