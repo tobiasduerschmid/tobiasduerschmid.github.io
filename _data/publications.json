@@ -25,7 +25,7 @@
       "title"     : "Mobile Fabrication",
       "date"      : "2016-10-16",
       "authors"   : [ "Thijs Roumen", "Bastian Kruck", "Tobias Dürschmid", "Tobias Nack", "Patrick Baudisch"],
-      "published" : "UIST",
+      "published" : "UIST '16: Proceedings of the 29th Annual Symposium on User Interface Software and Technology",
       "caption"   : "We present an exploration into the future of fabrication, in particular the vision of mobile fabrication, which we define as 'personal fabrication on the go'. We explore this vision with two surveys, two simple hardware prototypes, matching custom apps that provide users with access to a solution database, custom fabrication processes we designed specifically for these devices, and a user study conducted in situ on metro trains. Our findings suggest that mobile fabrication is a compelling next direction for personal fabrication. From our experience with the prototypes we derive hardware requirements to make mobile fabrication also technically feasible.",
       "thumbnail" : "/img/2016-mobileFab.jpg",
       "downloads" : [
@@ -44,7 +44,7 @@
       "title"     : "Design Pattern Builder - A Concept for Refinable Reusable Design Pattern Libraries",
       "date"      : "2016-11-02",
       "authors"   : [ "Tobias Dürschmid"],
-      "published" : "SPLASH Companion",
+      "published" : "SPLASH Companion 2016: Companion Proceedings of the 2016 ACM SIGPLAN International Conference on Systems, Programming, Languages and Applications: Software for Humanity",
       "caption"   : "Reuse is one of the core principles in professional software engineering. Design patterns provide a reusable solution for common design problems. But their implementations are generally not reusable as they are often well tailored to a specific context. We introduce a concept, that facilitates the reuse of their implementations by defining an abstract design pattern definition that can be instantiated with specialized design decisions. This approach is a meta-level Builder constructing design patterns as first-class citizens. It simplifies the application of design patterns by providing a pattern library and still being able to adjust it to the concrete context.",
       "thumbnail" : "/img/2016-designPatternBuilder.jpg",
       "downloads" : [
