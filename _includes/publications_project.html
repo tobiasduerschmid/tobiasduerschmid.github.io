@@ -1,11 +1,4 @@
----
-title: My page
-layout: test
----
-
-{% include navbar_pub.html %}
-
-{% assign publications = site.data.publications.publications | sort:"date" | where: 'project', 'AVA' %}
+{% assign publications = site.data.publications.publications | sort:"date" | where: 'project', include.project %}
 
 <!-- Publications -->
 <section id="publications">
@@ -13,7 +6,7 @@ layout: test
   
     <div class="row">
       <div class="col-lg-12 text-center">
-        <h2 class="page-header">AVA Publications</h2>
+        <h2 class="page-header">{{ include.title }}</h2>
       </div>
     </div>
     

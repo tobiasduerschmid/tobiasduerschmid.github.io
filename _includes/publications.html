@@ -1,13 +1,4 @@
 
-<!-- Publications -->
-<section id="publications">
-  <div class="container">
-  
-    <div class="row">
-      <div class="col-lg-12 text-center">
-        <h2 class="page-header">Publications</h2>
-      </div>
-    </div>
     {% assign previousyear = '0' %}
     {% for p in publications reversed %}
     {% assign currentyear = p.date | date: '%Y' %}
@@ -44,5 +35,3 @@
     </div>
   </div>
   {% endfor %}
-  </div>
-</section>
