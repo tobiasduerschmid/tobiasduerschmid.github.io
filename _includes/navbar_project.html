@@ -15,8 +15,12 @@
     <div class="collapse navbar-collapse navbar-ex1-collapse">
       <ul class="nav navbar-nav navbar-right">
         <li><a href="../index.html#projects">Home</a></li>
-        <li><a class="page-scroll" href="#description">Description</a></li>
-        <li><a class="page-scroll" href="#publications">Publications</a></li>
+        {% for p in project.pages %}
+          <li><a class="page-scroll" href="#{% if p.id %}{{ p.id }}{% else %}{{ p.name }}{% endif %}">{{ p.name }}</a></li>
+        {% endfor %}
+        {% if include.pubssize > 0 %}
+          <li><a class="page-scroll" href="#publications">Publications</a></li>
+        {% endif %}
       </ul>
     </div><!--/.nav-collapse -->
   </div>

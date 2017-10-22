@@ -1,0 +1,72 @@
+<script>
+  $(".btn-group > .btn").click(function(){
+    $(this).addClass("active").parent().siblings().children().removeClass("active");
+    $(this).siblings().addClass("active");
+  });
+
+  function changeImage(image, src, title)
+  {
+    var img = document.getElementById(image);
+    img.src=src;
+    img.title=title;
+    return false;
+  }
+
+  function changeImage(image, src)
+  {
+    var img = document.getElementById(image);
+    img.src=src;
+    return false;
+  }
+
+</script>
+  <div class="row">
+    <div class="col-md-6 text-justify">
+      <p>Using <i>Parameter Painting</i> <a href="#Parameters" class="page-scroll">parameters</a> can be adjusted locally. D.h. es können zum Beispiel die Konturen in einigen Bildstellen entfernt werden. Einige Bereiche können aufgehellt werden, wobei andere abgedunkelt werden und um den Detailgrad in feien Bildbereichen zu verbessern, kann die Strichdicke lokal verkleinert werden. Dadurch ist es möglich, genau wie ein Künstler es tut, ein Fokusobjekt heraus zu heben und unterschiedliche Bildbereiche auf unterschiedliche Art und Weise zu behandeln.</p>
+      <p>Wenn ein Parameter ausgewählt ist, dann kann man einfach auf dem Bildschirm über die Bildstellen malen, die man anpassen will. Man kann den Pinsel invertieren um den Parameter in die andere Richtung zu verändern. Somit kann man aufhellen und abdunkeln. Ein Wechseln des Pinsels gibt die Möglichkeit, gröbere Pinsel oder Pinsel mit größerer Intensität zu wählen.</p>      
+      <p>Ist der Parameter "Striche drehen" ausgewählt, so kann man die Richtung der Striche in das Bild hinein malen. D.h. die Richtung, in die man wischt wird als neue Strich-Richtung für diesen Bereich gewählt. Somit kann man die automatisch Fluss-Analyse korrigieren oder verfeinern.</p>
+    </div>    
+    <div class="col-md-6">
+      <img id="img_1" src="img/pencilhatching/painting_global.jpg" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Before parameter painting">
+      <div class="btn-group btn-group-justified" role="group" aria-label="Exchange image">
+        <div class="btn-group">
+          <button class="btn btn-default" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_org.jpg', 'The original image');">Original</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-default active visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_global.jpg', 'Before parameter painting');">global</button>
+          <button class="btn btn-default active hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_global.jpg', 'Before parameter painting');">global adjustment</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-default visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_local.jpg', 'After parameter painting');">local</button>
+          <button class="btn btn-default hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_local.jpg', 'After parameter painting');">local adjustment</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-default visible-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_direction.jpg', 'After parameter painting');">Rotation</button>
+          <button class="btn btn-default hidden-xs" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_direction.jpg', 'After parameter painting');">rotated strokes</button>
+        </div>
+      </div>
+      <br><!--
+      <img id="img_2" src="img/pencilhatching/painting_global.jpg" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Das Bild vor dem Parameter Painting">
+      <div class="btn-group btn-group-justified" role="group" aria-label="Bild austauschen">
+        <div class="btn-group">
+          <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_org.jpg', 'Das Originalfoto');">Original</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-default active" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_global.jpg', 'Das Bild vor dem Parameter Painting');">Global</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_local.jpg', 'Das Bild nach dem Parameter Painting');">Lokal</button>
+        </div>
+      </div>-->
+      <br>
+  </div>
+  <!--<div class="row">
+  <div class="col-md-6 text-justify">
+      <p>Ist der Parameter "Striche drehen" ausgewählt, so kann man die Richtung der Striche in das Bild hinein malen. D.h. die Richtung, in die man wischt wird als neue Strich-Richtung für diesen Bereich gewählt. Somit kann man die automatisch Fluss-Analyse korrigieren oder verfeiern.</p>
+    </div>
+    <div class="col-md-6">
+      <img src="img/pencilhatching/parameter/stroke_width_1.jpg" onmousedown="this.src='img/pencilhatching/parameter/stroke_width_org.jpg'" onmouseup="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'" onmouseout="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'" class="img-responsive img-rounded" align="right" data-toggle="tooltip">
+      <center><p>Direction Painting</p></center>
+    </div>
+  </div>-->
+  </div>
