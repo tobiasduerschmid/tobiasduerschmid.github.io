@@ -115,7 +115,7 @@
       "published" : "Programming '17: Companion to the first International Conference on the Art, Science and Engineering of Programming",
       "caption"   : "Code reviews play an important and successful role in modern software development. But usually they happen only once before new code is merged into the main branch. We present a concept which helps developers to continuously give feedback on their source code directly in the integrated development environment (IDE) by using the metaphor of social networks. This reduces context switches for developers, improves the software development process and allows to give feedback to developers of external libraries and frameworks.",
       "thumbnail" : "/img/2017-ccr.jpg",
-      "project"   : "CCR2017",
+      "project"   : "CCR",
       "image"     : "/img/2017-ccr_large.jpg",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1145/3079368.3079374",
