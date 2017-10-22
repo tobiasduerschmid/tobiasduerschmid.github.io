@@ -2,6 +2,17 @@
   "show" : true,
   "projects" : 
   [ 
+    { "key"       : "DDOP",
+      "title"     : "Design-Decision-oriented Programming",
+      "subtitle"  : "A Paradigm for Property-based Selection of Reusable Implementations",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "DDOP/description.html"
+      }
+      ]
+    },
     { "key"       : "CCR",
       "title"     : "Community Code Review",
       "subtitle"  : "Merging the process of implementing and reviewing code",
@@ -9,11 +20,11 @@
       [
       {
       	"name" : "Description",
-      	"path" : "CCR_desc.html"
+      	"path" : "CCR/description.html"
       }
       ]
     },
-    { "key"       : "PencilHatching",
+    { "key"       : "pencilhatching",
       "title"     : "Pencil Hatching",
       "subtitle"  : "See the world through artists' eyes!",
       "pages" : 
