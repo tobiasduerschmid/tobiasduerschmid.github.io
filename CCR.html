@@ -1,0 +1,9 @@
+---
+title: Community Code Review
+layout: framework
+---
+
+{% assign projects = site.data.researchprojects.projects | where: 'key', 'CCR' %}
+{% assign project  = projects.first %}
+
+{% include researchproject.html %}

@@ -1,0 +1,60 @@
+{
+  "show" : true,
+  "projects" : 
+  [ 
+    { "key"       : "DDOP",
+      "title"     : "Design-Decision-oriented Programming",
+      "subtitle"  : "A Paradigm for Property-based Selection of Reusable Implementations",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "DDOP/description.html"
+      }
+      ]
+    },
+    { "key"       : "CCR",
+      "title"     : "Community Code Review",
+      "subtitle"  : "Merging the process of implementing and reviewing code",
+      "pages" : 
+      [
+      {
+      	"name" : "Description",
+      	"path" : "CCR/description.html"
+      }
+      ]
+    },
+    { "key"       : "pencilhatching",
+      "title"     : "Pencil Hatching",
+      "subtitle"  : "See the world through artists' eyes!",
+      "pages" : 
+      [
+      {
+      	"name" : "Description",
+      	"path" : "pencilhatching/description.html"
+      },
+      {
+      	"name" : "Demo",
+      	"path" : "pencilhatching/demo.html"
+      },
+      {
+      	"name" : "Presets",
+      	"path" : "pencilhatching/presets.html"
+      },
+      {
+      	"name" : "Parameters",
+      	"path" : "pencilhatching/parameters.html"
+      },
+      {
+      	"name" : "Parameter Painting",
+      	"id"   : "ParameterPainting",
+      	"path" : "pencilhatching/parameter_painting.html"
+      },
+      {
+      	"name" : "Walkthrough",
+      	"path" : "pencilhatching/walkthrough.html"
+      }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-{% assign publications = site.data.publications.publications | sort:"date" %}
+{% assign publications = site.data.publications.publications | sort:"date" | where: 'project', include.project %}
 
 <!-- Publications -->
 <section id="publications">
@@ -6,7 +6,7 @@
   
     <div class="row">
       <div class="col-lg-12 text-center">
-        <h2 class="page-header">Publications</h2>
+        <h2 class="page-header">{{ include.title }}</h2>
       </div>
     </div>
     
@@ -14,4 +14,3 @@
 
   </div>
 </section>
-

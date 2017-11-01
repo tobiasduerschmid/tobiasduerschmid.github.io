@@ -1,0 +1,31 @@
+
+<!-- Page Header -->
+<header class="intro-header">
+  <div class="container">
+
+    {% if include.img %}
+    <div class="row portrait">
+      <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-12">
+        <img class="img-responsive img-thumbnail center-block" src="{{ include.img }}" alt="portrait">
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2 text-center">
+        <h1>{{ include.title }}</h1>
+        <hr class="small">
+        <p class="lead">{{ include.description }}</p>
+      </div>
+    </div>
+
+    <noscript>
+      <div class="row">
+        <div class="col-md-8 col-md-offset-2 text-center">
+          <div class="alert alert-danger" role="alert">Enable JavaScript to unlock Galleries, BibTeXs, and the Contact Form.</div>
+        </div>
+      </div>
+    </noscript>
+
+  </div>
+</header>

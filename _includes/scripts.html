@@ -33,6 +33,11 @@
 <script src="{{ "/js/jquery.isotope.min.js" | prepend: site.baseurl }}"></script>
 <script src="{{ "/js/unslider-min.js" | prepend: site.baseurl }}"></script>
 <script>
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+<script>
 // Carousel
 (function($) {
 	"use strict";

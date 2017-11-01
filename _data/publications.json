@@ -12,6 +12,7 @@
       "published" : "Bachelor Thesis, Hasso Plattner Institute at the University of Potsdam",
       "caption"   : "With the continuous advances of mobile graphics hardware, high-quality image stylization, e.g., based on image filtering, stroke-based rendering, and neural style transfer, is becoming feasible and increasingly used in casual creativity apps. Nowadays, users want to create and distribute their own works and become a prosumer, i.e., being both consumer and producer. However, the creativity facilitated by contemporary mobile apps, is typically limited with respect to the usage and application of pre-defined visual styles, that ultimately does not include their design and composition – an inherent requirement of prosumers. This thesis presents the concept and implementation of a GPU-based mobile application that enables to interactively design parameterizable image stylization effects on-device, by reusing building blocks of image processing effects and pipelines. The parameterization is supported by three levels of control: (1) convenience presets, (2) global parameters, and (3) local parameter adjustments using on-screen painting. Furthermore, the created visual styles are defined using a platform-independent document format and can be shared with other users via a web-based community platform. The presented app is evaluated with regard to variety and visual quality of the styles, run-time performance measures, memory consumption, and implementation complexity metrics to demonstrate the feasibility of the concept. The results show that the app supports the interactive combination of complex effects such as neural style transfer, watercolor filtering, oil paint filtering, and pencil hatching filtering to create unique high-quality effects. This approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Hence, it satisfies the needs for creative expression of both professionals and novice users, i.e., the general public.",
       "thumbnail" : "/img/2017-ba.jpg",
+      "project"   : "pencilhatching",
       "downloads" : [
       { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/318700866_A_Framework_for_Editing_and_Execution_of_Image_and_Video_Processing_Techniques_on_Mobile_Devices/links/59784431aca27203ecc221b1/A-Framework-for-Editing-and-Execution-of-Image-and-Video-Processing-Techniques-on-Mobile-Devices.pdf",
         "desc"    : "Thesis (PDF)"
@@ -70,6 +71,7 @@
       "published" : "ACM SIGGRAPH Posters",
       "caption"   : "This work presents an interactive mobile implementation of a filter that transforms images into an oil paint look. At this, a multi-scale approach that processes image pyramids is introduced that uses flow-based joint bilateral upsampling to achieve deliberate levels of abstraction at multiple scales and interactive frame rates. The approach facilitates the implementation of interactive tools that adjust the appearance of filtering effects at run-time, which is demonstrated by an on-screen painting interface for per-pixel parameterization that fosters the casual creativity of non-artists.",
       "thumbnail" : "/img/2016-stddp.jpg",
+      "project"   : "AVA",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1145/2945078.2945120",
         "desc"    : "DOI"
@@ -89,6 +91,7 @@
       "published" : "SA '16: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
       "caption"   : "With the continuous development of mobile graphics hardware, interactive high-quality image stylization based on nonlinear filtering is becoming feasible and increasingly used in casual creativity apps. However, these apps often only serve high-level controls to parameterize image filters and generally lack support for low-level (artistic) control, thus automating art creation rather than assisting it. This work presents a GPU-based framework that enables to parameterize image filters at three levels of control: (1) presets followed by (2) global parameter adjustments can be interactively refined by (3) complementary on-screen painting that operates within the filters' parameter spaces for local adjustments. The framework provides a modular XML-based effect scheme to effectively build complex image processing chains-using these interactive filters as building blocks-that can be efficiently processed on mobile devices. Thereby, global and local parameterizations are directed with higher-level algorithmic support to ease the interactive editing process, which is demonstrated by state-of-the-art stylization effects, such as oil paint filtering and watercolor rendering.",
       "thumbnail" : "/img/2016-sdtkdp.jpg",
+      "project"   : "pencilhatching",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1145/2999508.2999521",
         "desc"    : "DOI"
@@ -98,6 +101,9 @@
       },
       { "href"  : "https://drive.google.com/file/d/0ByqyK4WwkIzQb1F3dC10SUJfV28/view",
         "desc"  : "Filter Results (Images / ZIP, 34 MiB)"
+      },
+      { "href"  : "https://www.youtube.com/watch?time_continue=1&v=KCVB4R1wiEc]",
+        "desc"  : "Video"
       } ]
    },
 
@@ -112,6 +118,7 @@
       "published" : "Programming '17: Companion to the first International Conference on the Art, Science and Engineering of Programming",
       "caption"   : "Code reviews play an important and successful role in modern software development. But usually they happen only once before new code is merged into the main branch. We present a concept which helps developers to continuously give feedback on their source code directly in the integrated development environment (IDE) by using the metaphor of social networks. This reduces context switches for developers, improves the software development process and allows to give feedback to developers of external libraries and frameworks.",
       "thumbnail" : "/img/2017-ccr.jpg",
+      "project"   : "CCR",
       "image"     : "/img/2017-ccr_large.jpg",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1145/3079368.3079374",
@@ -138,6 +145,7 @@
       "published" : "SA '17: SIGGRAPH ASIA Mobile Graphics and Interactive Applications",
       "caption"   : "With the continuous advances of mobile graphics hardware, high-quality image stylization—e.g., based on image filtering, stroke-based rendering, and neural style transfer—is becoming feasible and increasingly used in casual creativity apps. The creative expression facilitated by these mobile apps, however, is typically limited with respect to the usage and application of pre-defined visual styles, which ultimately do not include their design and composition—an inherent requirement of prosumers. We present ProsumerFX, a GPU-based app that enables to interactively design parameterizable image stylization components on-device by reusing building blocks of image processing effects and pipelines. Furthermore, the presentation of the effects can be customized by modifying the icons, names, and order of parameters and presets. Thereby, the customized visual styles are defined as platform-independent effects and can be shared with other users via a web-based platform and database. Together with the presented mobile app, this system approach supports collaborative works for designing visual styles, including their rapid prototyping, A/B testing, publishing, and distribution. Thus, it satisfies the needs for creative expression of both professionals as well as the general public.",
       "thumbnail" : "/img/2017-prosumerFX.jpg",
+      "project"   : "pencilhatching",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1145/3132787.3139208",
         "desc"    : "DOI"
@@ -160,6 +168,7 @@
       "published" : "MOBILESoft '17: Proceedings of the 4th International Conference on Mobile Software Engineering and Systems",
       "caption"   : "Software product line development for Android apps is difficult due to an inflexible design of the Android framework. However, since mobile applications become more and more complex, increased code reuse and thus reduced time-to-market play an important role, which can be improved by software product lines. We propose five architectural styles for developing software product lines of Android apps: (1) activity extensions, (2) activity connectors, (3) dynamic preference entries, (4) decoupled definition of domain-specific behavior via configuration files, (5) feature model using Android resources. We demonstrate the benefits in an early case study using an image processing product line which enables more than 90% of code reuse.",
       "thumbnail" : "/img/2017-archstyle.jpg",
+      "project"   : "AVA",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1109/MOBILESoft.2017.12",
         "desc"    : "DOI"
