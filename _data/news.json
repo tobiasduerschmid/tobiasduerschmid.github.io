@@ -16,9 +16,8 @@
 	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017'>Continuous Code Reviews</a>.",
 	    "icon" : "<img src='/img/src1.png'>"
 	  },	  
-	  { "date" : "2017-11-2 00:00:00",
-	    "text" : "We published our Pencil Hatching app for Android.",
+	  { "date" : "2017-11-11 00:00:00",
+	    "text" : "We published our Android app <a class='urllink' href='https://play.google.com/store/apps/details?id=com.digitalmasterpieces.app.pencilhatchingapp' rel='nofollow'>Pencil Hatching</a>.",
 	  }
 	]
 }
-
