@@ -2,6 +2,8 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
+env: production
+
 # Site settings
 timezone: Europe/Berlin
 
