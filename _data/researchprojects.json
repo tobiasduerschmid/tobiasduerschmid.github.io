@@ -13,6 +13,17 @@
       }
       ]
     },
+    { "key"       : "AIH",
+      "title"     : "Analytics for Information Hiding",
+      "subtitle"  : "Analysis and Recommendation to improve the modularity of software projects",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "AIF/description.html"
+      }
+      ]
+    },
     { "key"       : "CCR",
       "title"     : "Community Code Review",
       "subtitle"  : "Merging the process of implementing and reviewing code",
