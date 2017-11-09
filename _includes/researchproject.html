@@ -2,9 +2,9 @@
 {% assign haspubs = pubs.size > 0 %}
 
 {% include navbar_project.html title=project.title pubssize=pubs.size project=project %}
-<section id="header">
-  {% include header_project.html title=project.title description=project.subtitle%}
-</section>
+
+{% include header_project.html title=project.title description=project.subtitle%}
+
 {% for p in project.pages %}
 <section id="{% if p.id %}{{ p.id }}{% else %}{{ p.name }}{% endif %}">
   <div class="container">
