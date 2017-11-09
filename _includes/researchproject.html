@@ -6,7 +6,7 @@
   {% include header_project.html title=project.title description=project.subtitle%}
 </section>
 {% for p in project.pages %}
-<section id="{{ p.name }}">
+<section id="{% if p.id %}{{ p.id }}{% else %}{{ p.name }}{% endif %}">
   <div class="container">
   
     <div class="row">
