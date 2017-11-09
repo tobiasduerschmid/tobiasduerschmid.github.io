@@ -2,6 +2,8 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
 
+env: production
+
 # Site settings
 timezone: Europe/Berlin
 
@@ -39,3 +41,9 @@ encoding: utf-8
 
 # Build settings
 markdown: kramdown
+
+html_press:
+  unquoted_attributes: false
+  drop_empty_values: false
+  strip_crlf: false
+  js_minifier_options: false

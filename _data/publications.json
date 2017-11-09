@@ -168,6 +168,7 @@
       "published" : "MOBILESoft '17: Proceedings of the 4th International Conference on Mobile Software Engineering and Systems",
       "caption"   : "Software product line development for Android apps is difficult due to an inflexible design of the Android framework. However, since mobile applications become more and more complex, increased code reuse and thus reduced time-to-market play an important role, which can be improved by software product lines. We propose five architectural styles for developing software product lines of Android apps: (1) activity extensions, (2) activity connectors, (3) dynamic preference entries, (4) decoupled definition of domain-specific behavior via configuration files, (5) feature model using Android resources. We demonstrate the benefits in an early case study using an image processing product line which enables more than 90% of code reuse.",
       "thumbnail" : "/img/2017-archstyle.jpg",
+      "image"     : "/img/2017-archstyle_large.jpg",
       "project"   : "AVA",
       "downloads" : [
       { "href"    : "https://dx.doi.org/10.1109/MOBILESoft.2017.12",
