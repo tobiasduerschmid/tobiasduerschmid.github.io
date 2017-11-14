@@ -111,7 +111,7 @@
    { "key"       : "CCR2017",
       "featured"  : "true",
       "thesis"    : "false",
-      "bibtex"    : "bib/2016-sdtkdp.bib",
+      "bibtex"    : "bib/2017-ccr.bib",
       "title"     : "Continuous Code Reviews: A Social Coding tool for Code Reviews inside the IDE",
       "date"      : "2017-04-04",
       "authors"   : [ "Tobias Dürschmid"],
