@@ -155,7 +155,11 @@
       },
       { "href"    : "https://www.youtube.com/watch?v=sR4R1Jfs9LU",
         "desc"    : "Video"
-      }  ]
+      },
+      { "href"    : "/files/ProsumerFX-suppmaterial.zip",
+        "desc"    : "Supplemental (ZIP)"
+      }  
+       ]
     },
 
    { "key"       : "archstyle2017",
