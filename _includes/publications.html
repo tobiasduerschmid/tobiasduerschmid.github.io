@@ -12,7 +12,7 @@
         <h4 class="title">{{ p.title }}</h4>
         <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}{{ author }}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
         <span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span>
-        {% if p.comment}<br><span class="text-danger comment">{{ p.comment }}</span>{% endif %}<br>
+        {% if p.comment %}<br><span class="text-danger comment">{{ p.comment }}</span>{% endif %}<br>
         </p>
         <p>
           {% if p.caption %}<a data-toggle="collapse" href="#abstract-{{ p.key }}">Abstract</a>{% if p.bibtex or p.downloads %}, {% endif %}{% endif %}
