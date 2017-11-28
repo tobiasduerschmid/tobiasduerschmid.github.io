@@ -21,6 +21,9 @@
 	  },
 	  { "date" : "2017-11-27 05:00:00",
 	    "text" : "I presented our paper on ProsumerFX at the SIGGRAPH Asia 2017 Symposium on Mobile Graphics and Interactive Applications. The slides can be found <a class='urllink' href='https://www.slideshare.net/secret/GXmxjvJ2dIuXzs'>here</a>",
+	  },
+	  { "date" : "2017-11-28 05:00:00",
+	    "text" : "We won the best paper award of the SIGGRAPH Asia 2017 Symposium on Mobile Graphics and Interactive Applications for our paper ProsumerFX: Mobile Design of Image Stylization Components.",
 	  }
 	]
 }
