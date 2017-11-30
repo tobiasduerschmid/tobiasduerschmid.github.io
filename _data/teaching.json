@@ -14,7 +14,7 @@
     {  "term" : "2016/17: Winter Term",
       "courses" : 
       [ 
-        { "course" : "Modelling I",
+        { "course" : "Modeling I",
           "type"   : "Lecture (BA)",
           "role"   : "Tutor"
         }
