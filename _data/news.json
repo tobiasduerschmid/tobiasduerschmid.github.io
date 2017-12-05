@@ -14,7 +14,7 @@
 	  },
 	  { "date" : "2017-04-05 00:12:15",
 	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017'>Continuous Code Reviews</a>.",
-	    "icon" : "<img src='/img/src1.png'>"
+	    "icon" : "/img/src1.png"
 	  },
 	  { "date" : "2017-11-10 00:00:00",
 	    "text" : "We published our Android app <a class='urllink' href='https://play.google.com/store/apps/details?id=com.digitalmasterpieces.app.pencilhatchingapp' rel='nofollow'>Pencil Hatching</a>.<br>The current release is restricted to Germany, Australia, Canada, Sweden, and the Netherlands as well as devices that have at last 2 GB RAM, support OpenGL 3.1, and have at least Android 5 (Lollipop). Details of the project can be found <a href='pencilhatching.html'>here</a>.",
@@ -24,7 +24,7 @@
 	  },
 	  { "date" : "2017-11-28 05:00:00",
 	    "text" : "We won the best paper award at the SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications for our paper <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX: Mobile Design of Image Stylization Components</a>.",
-	    "icon" : "<img src='/img/src1.png'>"
+	    "icon" : "/img/award.jpg"
 	  }
 	]
 }
