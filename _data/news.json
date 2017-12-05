@@ -20,10 +20,10 @@
 	    "text" : "We published our Android app <a class='urllink' href='https://play.google.com/store/apps/details?id=com.digitalmasterpieces.app.pencilhatchingapp' rel='nofollow'>Pencil Hatching</a>.<br>The current release is restricted to Germany, Australia, Canada, Sweden, and the Netherlands as well as devices that have at last 2 GB RAM, support OpenGL 3.1, and have at least Android 5 (Lollipop). Details of the project can be found <a href='pencilhatching.html'>here</a>.",
 	  },
 	  { "date" : "2017-11-27 05:00:00",
-	    "text" : "I presented our paper on ProsumerFX at the SIGGRAPH Asia 2017 Symposium on Mobile Graphics and Interactive Applications. The slides can be found <a class='urllink' href='https://www.slideshare.net/secret/GXmxjvJ2dIuXzs'>here</a>",
+	    "text" : "I presented our paper on <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX</a> at the SIGGRAPH Asia 2017 Symposium on Mobile Graphics and Interactive Applications. The slides can be found <a class='urllink' href='https://www.slideshare.net/secret/GXmxjvJ2dIuXzs'>here</a>",
 	  },
 	  { "date" : "2017-11-28 05:00:00",
-	    "text" : "We won the best paper award at the SIGGRAPH Asia 2017 Symposium on Mobile Graphics and Interactive Applications for our paper ProsumerFX: Mobile Design of Image Stylization Components.",
+	    "text" : "We won the best paper award at the SIGGRAPH Asia 2017 Symposium on Mobile Graphics and Interactive Applications for our paper <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX: Mobile Design of Image Stylization Components</a>.",
 	  }
 	]
 }
