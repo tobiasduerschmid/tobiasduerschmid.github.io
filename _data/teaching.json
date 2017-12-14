@@ -5,9 +5,9 @@
     {
       "term" : "2017/18: Winter Term",
       "courses" : 
-        [ { "course" : "Software Engineering II",
+        [ { "course" : "Software Engineering II - Agile Software Development in Large Teams",
             "type"   : "Lecture (BA)",
-            "role"   : "Tutor"
+            "role"   : "Teaching Assistant"
           }
         ]
     },
@@ -16,7 +16,7 @@
       [ 
         { "course" : "Modeling I",
           "type"   : "Lecture (BA)",
-          "role"   : "Tutor"
+          "role"   : "Teaching Assistant"
         }
       ]
     }
