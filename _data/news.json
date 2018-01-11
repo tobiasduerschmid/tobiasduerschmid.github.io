@@ -16,10 +16,9 @@
 	    "text" : "I won the <a class='urllink' href='https://2017.programming-conference.org/track/programming-posters#Posters-ACM-Student-Research-Competition' rel='nofollow'>ACM Student Research Competition at the ‹Programming› conference</a> with a new concept for <a class='page-scroll' href='#publication-CCR2017'>Continuous Code Reviews</a>.",
 	    "icon" : "/img/src1.png"
 	  },
-	  ,
 	  { "date" : "2017-07-26 05:00:00",
-	    "text" : "Finished my bachelor thesis <a class='urllink' href='#publication-ba2017'>'A Framework for Editing and Execution of Image and Video Processing Techniques on Mobile Devices'</a>."
-	  }
+	    "text" : "Finished my bachelor thesis <a class='page-scroll' href='#publication-ba2017'>'A Framework for Editing and Execution of Image and Video Processing Techniques on Mobile Devices'</a>."
+	  },
 	  { "date" : "2017-11-10 00:00:00",
 	    "text" : "We published our Android app <a class='urllink' href='https://play.google.com/store/apps/details?id=com.digitalmasterpieces.app.pencilhatchingapp' rel='nofollow'>Pencil Hatching</a>.<br>The current release is restricted to Germany, Australia, Canada, Sweden, and the Netherlands as well as devices that have at last 2 GB RAM, support OpenGL 3.1, and have at least Android 5 (Lollipop). Details of the project can be found <a href='pencilhatching.html'>here</a>.",
 	  },
