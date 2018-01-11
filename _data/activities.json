@@ -9,10 +9,10 @@
 	  	{  
 	  		"title"     : "Scholarships and Awards",
 		    "content"   : "
-		    <p>1. Place in the <a href=\"http://src.acm.org/\">ACM Student Research Competition</a> @ ‹Programming› 2017 </p>
-		    <p>Certification as <a href=\"http://www.omg.org/ocup-2/\">OMG Certified UML Professional 2</a></p>
-		    <p>Scholarship of the <a href=\"https://www.studienstiftung.de/en/\">Studienstiftung</a>, the largest organisation that sponsors outstanding students in Germany</p>
-		    <p>Best Paper Award at the <a href='view-source:https://sa2017.siggraph.org/attendees/award-winners'>SIGGRAPH ASIA Mobile Graphics and Interactive Applications 2017</a></p>
+		    <p>1. Place in the <a href=\"http://src.acm.org/\" target=\"_blank\">ACM Student Research Competition</a> @ ‹Programming› 2017 </p>
+		    <p>Certification as <a href=\"http://www.omg.org/ocup-2/\" target=\"_blank\">OMG Certified UML Professional 2</a></p>
+		    <p>Scholarship of the <a href=\"https://www.studienstiftung.de/en/\" target=\"_blank\">Studienstiftung</a>, the largest organisation that sponsors outstanding students in Germany</p>
+		    <p>Best Paper Award at the <a href=\"https://sa2017.siggraph.org/attendees/award-winners\" target=\"_blank\">SIGGRAPH ASIA Mobile Graphics and Interactive Applications 2017</a></p>
 		    "
 		} 
 	]
