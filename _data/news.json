@@ -28,6 +28,9 @@
 	  { "date" : "2017-11-28 05:00:00",
 	    "text" : "We won the best paper award at the SIGGRAPH Asia Symposium on Mobile Graphics and Interactive Applications for our paper <a class='page-scroll' href='#publication-prosumerfx2017'>ProsumerFX: Mobile Design of Image Stylization Components</a>.",
 	    "icon" : "/img/award_.jpg"
-	  }
+	  },
+	  { "date" : "2018-01-31 00:00:00",
+	    "text" : "I have been admitted to the PhD in Software Engineering at CMU ISR. I look forward to working together with passionate and talented people.",
+	  }	  
 	]
 }
