@@ -19,9 +19,10 @@ languages: [ 'en', 'de' ]
 description: > # theis means to ignore newlines until "baseurl:"
     Research portfolio of Tobias Dürschmid - software engineer and graduate student in IT-Systems Engineering at the Hasso Plattner Institute / University of Potsdam.
 subheading: > # this means to ignore newlines until "baseurl:"
-    <span class="text-danger">Software engineer</span> and <span class="text-danger">graduate student</span> in IT-Systems Engineering at the <a href="http://www.hpi.de/en" target="_blank">Hasso Plattner Institute</a> / <a href="http://www.uni-potsdam.de/en" target="_blank">University of Potsdam</a>, Germany.<br><br>I am mainly interested in <span class="text-danger">simplifying the development of complex software systems</span>. My areas of research include new concepts for software reuse, modularity of design decisions, and mobile image stylization.
-    I will start my PhD in Software Engineering at <a href="http://isri.cmu.edu/" target="_blank">Carnegie Mellon University</a> in fall 2018.
-
+    <span class="text-danger">Software engineer</span> and <span class="text-danger">graduate student</span> in IT-Systems Engineering at the <a href="http://www.hpi.de/en" target="_blank">Hasso Plattner Institute</a> / <a href="http://www.uni-potsdam.de/en" target="_blank">University of Potsdam</a>, Germany.<br>
+    I will start my PhD in Software Engineering at <a href="http://isri.cmu.edu/" target="_blank">Carnegie Mellon University</a> in fall 2018.<br>
+    <br>I am mainly interested in <span class="text-danger">simplifying the development of complex software systems</span>. My areas of research include new concepts for software reuse, modularity of design decisions, and mobile image stylization.
+    
 defaults:
   - scope:
       path: ''
