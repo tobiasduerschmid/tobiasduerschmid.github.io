@@ -202,6 +202,7 @@
       "published" : "EG '18: Eurographics Education Papers",
       "caption"   : "In this paper we present a concept of a research course that teaches students in image processing as a building block of mobile applications. Our goal with this course is to teach theoretical foundations, practical skills in software development as well as scientific working principles to qualify graduates to start as fully-valued software developers or researchers. The course includes teaching and learning focused on the nature of small team research and development as encountered in the creative industries dealing with computer graphics, computer animation and game development. We discuss our curriculum design and issues in conducting undergraduate and graduate research that we have identified through four iterations of the course. Joint scientific demonstrations and publications of the students and their supervisors as well as quantitative and qualitative evaluation by students underline the success of the proposed concept. In particular, we observed that developing using a common software framework helps the students to jump start their course projects, while industry software processes such as branching coupled with a three-tier breakdown of project features helps them to structure and assess their progress.",
       "thumbnail" : "/img/2018-teaching.jpg",
+      "image"     : "/img/2018-teaching_large.jpg",
       "project"   : "AVA",
     }
   ]
