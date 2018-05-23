@@ -204,6 +204,13 @@
       "thumbnail" : "/img/2018-teaching.jpg",
       "image"     : "/img/2018-teaching_large.jpg",
       "project"   : "AVA",
+      "downloads" : [
+      { "href"    : "https://dx.doi.org/10.2312/eged.20181002",
+        "desc"    : "DOI"
+      },
+      { "href"    : "https://www.researchgate.net/profile/Matthias_Trapp/publication/324692909_Teaching_Image-Processing_Programming_for_Mobile_Devices_A_Software_Development_Perspective/links/5add89cf458515c60f5f6774/Teaching-Image-Processing-Programming-for-Mobile-Devices-A-Software-Development-Perspective.pdf",
+        "desc"    : "Paper (PDF)"
+      }]
     }
   ]
 }
