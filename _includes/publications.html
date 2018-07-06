@@ -13,8 +13,10 @@
       <div class="col-sm-8">
         <h4 class="title">{{ p.title }}</h4>
         <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}
+            {% assign found = false %}
             {% for a in co_authors %}
               {% if a.key == author %}
+                {% assign found = true %}
                 {% if a.website %}
                   <a href= "{{ a.website }}">{{ a.name }}</a>
                 {% else %}
@@ -22,6 +24,9 @@
                 {% endif %}
               {% endif %}
             {% endfor %}
+            {% if found == false %}
+              {{ author }}
+            {% endif %}              
         {% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
         <span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span>
         {% if p.comment %}<br><span class="text-danger"><b>{{ p.comment }}</b></span>{% endif %}<br>
