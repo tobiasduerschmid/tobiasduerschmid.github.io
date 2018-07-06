@@ -15,7 +15,11 @@
         <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}
             {% for a in co_authors %}
               {% if a.key == author %}
-                <a href= "{{ a.website }}">{{ a.name }}</a>
+                {% if a.website %}
+                  <a href= "{{ a.website }}">{{ a.name }}</a>
+                {% else %}
+                  {{ a.name }}
+                {% endif %}
               {% endif %}
             {% endfor %}
         {% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
