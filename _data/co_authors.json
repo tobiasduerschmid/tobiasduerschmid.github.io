@@ -7,15 +7,17 @@
 		{ "key"     : "MT",
 	      "name"  	: "Matthias Trapp",
 	      "website" : "https://hpi.de/en/doellner/people/current/trapp.html",
-	      "note" 	: "Matthias Trapp is senior researcher at the computer grafics group at the Hasso Plattner Institute."
+	      "note" 	: "Matthias Trapp is senior researcher at the computer graphics group at the Hasso Plattner Institute.",
 	  	},
 	  	{ "key"     : "JD"	,
 	      "name"  	: "Jürgen Döllner",
 	      "website" : "https://hpi.de/en/doellner/",
+	      "note" 	: "Jürgen Döllner is professor at the computer graphics group at the Hasso Plattner Institute.",
 	  	},
 	  	{ "key"     : "AS"	,
 	      "name"  	: "Amir Semmo",
 	      "website" : "http://asemmo.github.io/",
+	      "note" 	: "Amir Semmo is postdoc at the computer graphics group at the Hasso Plattner Institute.",
 	  	},
 	  	{ "key"     : "SP"	,
 	      "name"  	: "Sebastian Pasewaldt",
@@ -39,7 +41,6 @@
 	  	},
 	  	{ "key"     : "TobiasNack"	,
 	      "name"  	: "Tobias Nack",
-	      "website" : "",
 	  	}
 	]
 }

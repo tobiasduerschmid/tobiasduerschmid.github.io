@@ -39,7 +39,9 @@
     </div>
     <div class="col-md-1 text-left">
       <h4 class="title"> </h4>
+      {% if p.icon %}
       <p><img class='img-responsive' src='{{ p.icon }}' title='{{ p.comment }}'></p>
+      {% endif %}
     </div>
   </div>
   {% endfor %}
