@@ -4,13 +4,25 @@
     {% assign currentyear = p.date | date: '%Y' %}
     {% if currentyear != previousyear %}<div><legend>{{ p.date | date: '%Y' }}</legend></div>{% endif %}
     {% assign previousyear = currentyear %}
-    <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
+    {% assign co_authors = site.data.co_authors.authors %}
+  
+  <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
       <div class="col-sm-2 col-md-offset-1">
         {% include thumbnail.html %}
       </div>
       <div class="col-sm-8">
         <h4 class="title">{{ p.title }}</h4>
-        <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}{{ author }}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
+        <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}{{ 
+        {% found = false %}
+            {% for a in co_authors %}{% if a.key == author %}
+            <a href= "{{ a.website }}">{{ a.name }}</a>
+            {% found = true %}
+            {% endif %}
+            {% endfor %}
+            {% if found == false %}
+            {{ author }}
+            {% found = true %}
+        }}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
         <span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span>
         {% if p.comment %}<br><span class="text-danger"><b>{{ p.comment }}</b></span>{% endif %}<br>
         </p>
