@@ -213,15 +213,14 @@
     { "key"       : "cop2018",
       "featured"  : "false",
       "thesis"    : "false",
-      "bibtex"    : "bib/2018-teaching.bib",
+      "bibtex"    : "bib/2018-cop.bib",
       "title"     : "Cross-cutting Commentary - Narratives for Multi-party Mechanisms and Concerns",
       "date"      : "2018-07-21",
       "authors"   : [ "RH", "me", "pre", "MarcelTaeumel"],
       "published" : "COP '18: International Workshop on Context-Oriented Programming",
       "caption"   : "Cross-cutting concerns are an inherent property of the implementation of non-trivial software systems. Their study led to the development of advanced modularity constructs, usually supported by meta-level frameworks and programming language constructs, to improve comprehensibility. Because of their invasive nature, systems need to be refactored or rewritten to take advantage of these constructs. However, practical considerations such as organizational or economical constraints often do not allow for such reengineering efforts, leaving those systems without explicit representations of their cross-cutting concerns. <br> We propose a lightweight, non-invasive approach to explicate and document cross-cutting, multi-party concerns called <i>Cross-cutting Commentary</i>, or <i>Commentary</i> for short. Our proposal is based on the observation that comments are co-located with the individual semantic units they are about and with that scattered and tangled in the absence of advanced modularity constructs for cross-cutting concerns and the assumption that well-crafted, natural language explanations of system properties (their intents and the mechanisms they provide) largely improve comprehensibility. Commentaries are to help communicate narratives about system properties that involve multiple participants, both co-located in a single module or cross-cutting several of them, and allow for navigating to, from, and between them to explore the implementation artifacts involved. <br> Commentaries are inspired by the <i>layer</i> construct introduced with context-oriented programming (COP) to associate and manage (partial definitions of) system elements. In contrast to COP that contributes to both system comprehension during development and software composition at run-time, Commentaries for now focus on providing narratives for exploration activities. <br> In this work, we present our first attempt to provide Commentaries in Squeak/Smalltalk. We explain implementation details and discuss several application scenarios considering the documentation of basic mechanisms of this programming and runtime environment.",
-      "thumbnail" : "/img/2018-teaching.jpg",
-      "image"     : "/img/2018-teaching_large.jpg",
-      "downloads" : []
+      "thumbnail" : "/img/2018-cop.jpg",
+      "image"     : "/img/2018-cop.jpg",
     }
   ]
 }
