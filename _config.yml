@@ -19,7 +19,7 @@ languages: [ 'en', 'de' ]
 description: > # theis means to ignore newlines until "baseurl:"
     Research portfolio of Tobias Dürschmid - PhD student in Software Engineering at .
 subheading: > # this means to ignore newlines until "baseurl:"
-    I am <span class="text-danger">PhD student</span>  in Software Engineering at <a href="https://cmu.edu" target="_blank">Carnegie Mellon University</a>, <a href="http://www.isri.cmu.edu/" target="_blank">Institute for Software Research</a>. 
+    I am PhD student in <span class="text-danger">Software Engineering</span> at <a href="https://cmu.edu" target="_blank">Carnegie Mellon University</a>, <a href="http://www.isri.cmu.edu/" target="_blank">Institute for Software Research</a>. 
     <br>
     <br>I am mainly interested in <span class="text-danger">simplifying the development of complex software systems</span>. My areas of research include new concepts for software reuse, modularity of design decisions, and mobile image stylization.
     
