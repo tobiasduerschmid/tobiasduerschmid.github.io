@@ -22,6 +22,26 @@
               </div>
             </div>
 
+            {% if contact.office %}   
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Office</label>
+              <div class="col-sm-10">
+                <p class="form-control-static"><span class="text-danger">{{ contact.office }}</span></p>
+              </div>
+            </div>       
+            {% endif %}
+
+
+            {% if contact.address %}   
+            <div class="form-group">
+              <label class="col-sm-2 control-label">Address</label>
+              <div class="col-sm-10">
+                <p class="form-control-static"><span class="text-danger">{{ contact.address }}</span></p>
+              </div>
+            </div>       
+            {% endif %}
+
+
             {% if contact.profiles %}   
             <div class="form-group">
               <label class="col-sm-2 control-label">Profiles</label>
