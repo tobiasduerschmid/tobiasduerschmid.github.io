@@ -12,6 +12,11 @@ url: "http://tobiasduerschmid.github.io/" # the base hostname & protocol for you
 
 title: Tobias Dürschmid
 author: Tobias Dürschmid
+
+
+authorexplainname : Spelling
+authorexplain: The valid ASCII spelling is Tobias Duerschmid, not Tobias Durschmid. To correctly typeset the name in LaTeX use D{\"u}rschmid.
+
 portrait: "/img/tobi.jpg"
 
 languages: [ 'en', 'de' ]
