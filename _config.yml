@@ -20,7 +20,7 @@ authorexplain: >
   <br>
   The valid ASCII spelling is <strong>Tobias Duerschmid</strong>, not Tobias Durschmid. 
   <br>
-  To correctly typeset my name in LaTeX or BibTeX please use <strong>D{\"u}rschmid</strong> or <a href="https://stackoverflow.com/questions/1252998/how-can-i-compile-latex-in-utf8">use UTF-8 encoding</a>.
+  To correctly typeset my name in LaTeX or BibTeX please use <strong>D{\"u}rschmid</strong> or <a href="https://stackoverflow.com/questions/1252998/how-can-i-compile-latex-in-utf8" target="_blank">use UTF-8 encoding</a>.
 
 portrait: "/img/tobi.jpg"
 
