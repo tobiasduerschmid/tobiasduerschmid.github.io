@@ -10,16 +10,14 @@
     </div>
 
     <div class="row">
-      <div class="col-md-8 col-md-offset-2 text-center">
-        <h1>{{ site.authortitle }} {{ site.author }}</h1>
-        {% if site.authorexplain and site.authorexplainname %}
-        <a data-toggle="collapse" href="#authorexplain">{{ site.authorexplainname }}</a>
-        <div class="collapse bibtex" id="authorexplain">
-          <p>{{ site.authorexplain }}</p>
-        </div> 
-        <br>
-        {% endif %}
-      </div>
+      <h1>{{ site.authortitle }} {{ site.author }}</h1>
+      {% if site.authorexplain and site.authorexplainname %}
+      <a data-toggle="collapse" href="#authorexplain">{{ site.authorexplainname }}</a>
+      <div class="collapse bibtex" id="authorexplain">
+        <p>{{ site.authorexplain }}</p>
+      </div> 
+      <br>
+      {% endif %}
       <hr class="small">
       <p class="lead">{{ site.subheading }}</p>
       </div>
