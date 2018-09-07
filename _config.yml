@@ -15,7 +15,9 @@ author: Tobias Dürschmid
 
 
 authorexplainname : How to spell my name?
-authorexplain: The valid ASCII spelling is Tobias Duerschmid, not Tobias Durschmid. To correctly typeset the name in LaTeX use D{\"u}rschmid.
+authorexplain: >
+  The umlaut <strong>ü</strong> in my last name Dürschmid is signficiant for the pronunciation and the spelling. 
+  The valid ASCII spelling is Tobias Duerschmid, not Tobias Durschmid. To correctly typeset my name in LaTeX or BibTeX please use D{\"u}rschmid or use utf-8 encoding.
 
 portrait: "/img/tobi.jpg"
 
