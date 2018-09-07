@@ -18,7 +18,7 @@ authorexplainname : How to spell my name?
 authorexplain: >
   The umlaut <strong>ü</strong> in my last name Dürschmid is signficiant for the pronunciation and the spelling. 
   <br>
-  The valid ASCII spelling is Tobias Duerschmid, not Tobias Durschmid. To correctly typeset my name in LaTeX or BibTeX please use D{\"u}rschmid or use utf-8 encoding.
+  The valid ASCII spelling is <strong>Tobias Duerschmid</strong>, not Tobias Durschmid. To correctly typeset my name in LaTeX or BibTeX please use <strong>D{\"u}rschmid</strong> or <a href="https://stackoverflow.com/questions/1252998/how-can-i-compile-latex-in-utf8">use UTF-8 encoding</a>.
 
 portrait: "/img/tobi.jpg"
 
