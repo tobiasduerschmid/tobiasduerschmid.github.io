@@ -30,6 +30,8 @@ description: > # theis means to ignore newlines until "baseurl:"
     Research portfolio of Tobias Dürschmid - PhD student in Software Engineering at .
 subheading: > # this means to ignore newlines until "baseurl:"
     I am a <span class="text-danger">Software Engineering PhD student</span> at Carnegie Mellon University’s <a href="http://www.isri.cmu.edu/" target="_blank">Institute for Software Research</a>. 
+    I am co-advised by <a href="http://www.cs.cmu.edu/~garlan/" target="_blank">David Garlan</a> and <a href="https://eskang.github.io/" target="_blank">Eunsuk Kang</a>. 
+    I am a member of the <a href="http://www.cs.cmu.edu/~able/" target="_blank">ABLE Research Group</a>.
     <br><br>
     I earned my Bachelor of Science in IT-Systems Engineering from <a href="https://www.hpi.de/en/" target="_blank">Hasso Plattner Institut</a> / University of Postdam, Germany.
     <br><br>
