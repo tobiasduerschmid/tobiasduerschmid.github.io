@@ -32,6 +32,12 @@
 	  { "date" : "2018-01-31 00:00:00",
 	    "text" : "I have been admitted to the PhD in Software Engineering at CMU ISR. I look forward to working together with passionate and talented people.",
 	  },
+	  { "date" : "2018-04-20 00:00:00",
+	    "text" : "Our education paper <a class='page-scroll' href='#publication-teaching2018'>Teaching Image-Processing Programming for Mobile Devices: A Software Development Perspective</a> has been published on Eurographics.",
+	  },
+	  { "date" : "2018-07-21 00:00:00",
+	    "text" : "Our new concept on <a class='page-scroll' href='#publication-cop2018'>Cross-cutting Commentary</a> has been published at the International Workshop on Context-Oriented Programming.",
+	  },
 	  { "date" : "2018-09-16 00:00:00",
 	    "text" : "I started my PhD in Software Engineering at the Institute for Software Research at CMU.",
 	  }
