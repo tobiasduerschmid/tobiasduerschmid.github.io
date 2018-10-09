@@ -19,12 +19,12 @@
 			  {% for r in reviews %}
 				  {% if r.enabled %}
 				  	<div class="row">
-			          <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
+			          <div class="col-md-2 col-sm-2 text-right">
 			          	{% assign currentconf = r.conference_short %}
 					    {% if currentconf != previousconf %}<h4>{{ r.conference_short }} {{ r.year }}</h4>{% endif %}
 					    {% assign previousconf = currentconf %}			            
 			          </div>
-			          <div class="col-md-10 col-sm-11">
+			          <div class="col-md-10 col-sm-10">
 			            <p>{{ r.responsibilities }} for the {{ r.track }} of the {{ r.conference_long }} {{ r.year }}.</p>
 			          </div>
 			        </div>
