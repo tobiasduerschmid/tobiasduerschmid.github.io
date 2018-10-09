@@ -18,7 +18,7 @@
 			  {% for r in reviews %}
 				  {% if r.enabled %}
 					  <div class="col-sm-12">
-						{{ r.responsibilities }} for the {{ r.track }} of {{ r.conference }}.
+						{{ r.responsibilities }} for the {{ r.track }} of {{ r.conference }} {{ r.year }}.
 					  </div>
 				  {% endif %}
 			  {% endfor %}
