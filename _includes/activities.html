@@ -9,7 +9,7 @@
       </div>
     </div>
     
-    {% assign reviews = site.data.activities.reviews %}
+    {% assign reviews = site.data.activities.reviews | where: 'enabled', true %}
     {% if reviews.size > 0 %}
 		<div class="row">
 			<div class="col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1">
@@ -17,18 +17,16 @@
 			  <legend>Reviews</legend>
 			  {% assign previousconf = '0' %}
 			  {% for r in reviews %}
-				  {% if r.enabled %}
-				  	<div class="row">
-			          <div class="col-md-2 col-sm-2 text-right">
-			          	{% assign currentconf = r.conference_short %}
-					    {% if currentconf != previousconf %}<h4>{{ r.conference_short }} {{ r.year }}</h4>{% endif %}
-					    {% assign previousconf = currentconf %}			            
-			          </div>
-			          <div class="col-md-10 col-sm-10">
-			            <p>{{ r.responsibilities }} for the {% if r.track %}{{ r.track }} of the {% endif %}{{ r.conference_long }} {{ r.year }}.{% if r.details %}{{ r.details }}{% endif %}</p>
-			          </div>
-			        </div>
-				  {% endif %}
+			  	<div class="row">
+		          <div class="col-md-2 col-sm-2 text-right">
+		          	{% assign currentconf = r.conference_short %}
+				    {% if currentconf != previousconf %}<h4>{{ r.conference_short }} {{ r.year }}</h4>{% endif %}
+				    {% assign previousconf = currentconf %}			            
+		          </div>
+		          <div class="col-md-10 col-sm-10">
+		            <p>{{ r.responsibilities }} for the {% if r.track %}{{ r.track }} of the {% endif %}{{ r.conference_long }} {{ r.year }}.{% if r.details %}{{ r.details }}{% endif %}</p>
+		          </div>
+		        </div>				 
 			  {% endfor %}
 			  </fieldset>
 		    </div>
