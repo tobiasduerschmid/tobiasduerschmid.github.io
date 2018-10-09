@@ -19,20 +19,12 @@
 	"reviews": 
 	[
 		{
-			"enabled" 			: true,
+			"enabled" 			: false,
 			"responsibilities"	: "Sub-Reviewer",
 			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
 			"conference_short"	: "ICSE",
 			"year"				: 2019,
-			"track"			  	: "Technical Papers Track"
-		},
-		{
-			"enabled" 			: true,
-			"responsibilities"	: "Sub-Reviewer",
-			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
-			"conference_short"	: "ICSA",
-			"year"				: 2019,
-			"details"   		: "Best Reviewer Award."
+			"track"			  	: "Technical Papers Track"	
 		}
 	]
 }
