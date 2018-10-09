@@ -8,6 +8,28 @@
         <h2 class="page-header">Professional Activities, Awards, and Honors</h2>
       </div>
     </div>
+    
+    {% assign reviews = site.data.activities.reviews %}
+    {% if reviews.size > 0 %}
+		<div class="row">
+			<div class="col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1">
+			  <fieldset>
+			  <legend>Reviews</legend>
+			  {% for r in reviews %}
+				  {% if r.enabled %}
+					  <div class="col-sm-12">
+						{{ r.responsibilities }} for the {{ r.track }} of {{ r.conference }}.
+					  </div>
+				  {% endif %}
+			  {% endfor %}
+			  </fieldset>
+		    </div>
+		</div>
+		<br>
+	    
+    {% endif %}
+
+
     {% assign activities = site.data.activities.activities %}
     {% for t in activities %}
 	<div class="row">

@@ -15,5 +15,20 @@
 		    <p>Best Paper Award at the <a href=\"https://sa2017.siggraph.org/attendees/award-winners\" target=\"_blank\">SIGGRAPH ASIA Mobile Graphics and Interactive Applications 2017</a></p>
 		    "
 		} 
+	],
+	"reviews": 
+	[
+		{
+			"enabled" 			: true,
+			"responsibilities"	: "Sub-Reviewer",
+			"conference" 	  	: "ACM/IEEE International Conference on Software Engineering (ICSE 2019)",
+			"track"			  	: "Technical Papers Track"
+		},
+		{
+			"enabled" 			: true,
+			"responsibilities"	: "Sub-Reviewer",
+			"conference" 	  	: "ACM/IEEE International Conference on Software Engineering (ICSE 2019)",
+			"track"			  	: "Technical Papers Track"
+		}
 	]
 }
