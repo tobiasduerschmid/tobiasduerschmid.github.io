@@ -32,7 +32,6 @@
 			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
 			"conference_short"	: "ICSA",
 			"year"				: 2019,
-			"track"			  	: "Technical Papers Track"
 		}
 	]
 }
