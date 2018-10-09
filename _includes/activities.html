@@ -25,8 +25,9 @@
 					    {% assign previousconf = currentconf %}			            
 			          </div>
 			          <div class="col-md-10 col-sm-10">
-			            <p>{{ r.responsibilities }} for the {% if r.track %}{{ r.track }} of the {% endif %}{{ r.conference_long }} {{ r.year }}.</p>
+			            <p>{{ r.responsibilities }} for the {% if r.track %}{{ r.track }} of the {% endif %}{{ r.conference_long }} {{ r.year }}.
 			            {% if r.details %}{{ r.details }}{% endif %}
+			            </p>
 			          </div>
 			        </div>
 				  {% endif %}
