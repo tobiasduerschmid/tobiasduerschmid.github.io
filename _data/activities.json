@@ -30,7 +30,7 @@
 			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
 			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
-			"conference_short"	: "ICSE",
+			"conference_short"	: "ICSA",
 			"year"				: 2019,
 			"track"			  	: "Technical Papers Track"
 		}
