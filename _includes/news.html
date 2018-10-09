@@ -18,7 +18,7 @@
         {% if duration_days <= site.data.news.max_days %}
         <div class="row">
           <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
-            <h4>{{ n.date | date : "%d %B %Y" }}</h4>
+            <h4>{{ n.date | date : "%d %b. %Y" }}</h4>
           </div>
           <div class="col-md-8 col-sm-10">
             <p>{{ n.text}}</p>
