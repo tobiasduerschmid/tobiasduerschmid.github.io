@@ -57,6 +57,16 @@
 	      "name"  	: "Marcel Taeumel",
 	      "website" : "http://taeumel.eu/",
 	      "note" 	: "Marcel Taeumel is a PhD student at the software architecture group at the Hasso Plattner Institute.",
+	  	},
+	  	{ "key"     : "DG"	,
+	      "name"  	: "David Garlan",
+	      "website" : "http://www.cs.cmu.edu/~garlan/",
+	      "note" 	: "David Garlan is a full professor in the Institute for Software Research at Carnegie Mellon University.",
+	  	},
+	  	{ "key"     : "EK"	,
+	      "name"  	: "Eunsuk Kang",
+	      "website" : "https://eskang.github.io/",
+	      "note" 	: "Eunsuk Kang is an assistant professor in the Institute for Software Research at Carnegie Mellon University.",
 	  	}
 	]
 }
