@@ -4,6 +4,10 @@
 	"email" : "duerschmid@cmu.edu",
 	"profiles" : [
 		{ 
+			"desc" : "CV",
+			"href": "/files/resume_cv.pdf"
+		},
+		{ 
 			"desc" : "ACM",
 			"href": "https://dl.acm.org/author_page.cfm?id=99659048136"
 		}, 
