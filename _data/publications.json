@@ -244,7 +244,7 @@
       "featured"  : "false",
       "thesis"    : "false",
       "bibtex"    : "bib/2019-seet.bib",
-      "title"     : "Is What I Say What I Do? - Attitudes Towards Agile Practices in Software Teams",
+      "title"     : "Attitudes Towards Agile Practices in Software Teams",
       "date"      : "2019-05-25",
       "authors"   : [ "chrisma", "JohannesHuegle", "me", "RalfTeussner"],
       "published" : "SEET '19: ICSE Software Engineering Education and Training",
