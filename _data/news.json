@@ -40,6 +40,9 @@
 	  },
 	  { "date" : "2018-09-16 00:00:00",
 	    "text" : "I started my PhD in Software Engineering at the Institute for Software Research at CMU.",
+	  },
+	  { "date" : "2018-12-17 12:00:00",
+	    "text" : "Our vison paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" has been accepted to ICSE NIER. Additionally, our paper on <a class='page-scroll' href='#publication-seet2019'>Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices</a> been accepted to ICSE SEET.",
 	  }
 	]
 }
