@@ -244,7 +244,7 @@
       "featured"  : "false",
       "thesis"    : "false",
       "bibtex"    : "bib/2019-seet.bib",
-      "title"     : "Attitudes Towards Agile Practices in Software Teams",
+      "title"     : "Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices",
       "date"      : "2019-05-25",
       "authors"   : [ "chrisma", "JohannesHuegle", "me", "RalfTeussner"],
       "published" : "ICSE-SEET '19: ICSE Software Engineering Education and Training",
