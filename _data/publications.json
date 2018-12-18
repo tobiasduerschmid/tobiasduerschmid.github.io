@@ -228,6 +228,30 @@
       { "href"    : "https://dl.acm.org/authorize?N669902",
         "desc"    : "Paper (PDF)"
       }]
+    },
+    { "key"       : "nier2019",
+      "featured"  : "true",
+      "thesis"    : "false",
+      "bibtex"    : "bib/2019-nier.bib",
+      "title"     : "Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class",
+      "date"      : "2019-05-26",
+      "authors"   : [ "me", "EK", "DG"],
+      "published" : "NIER '19: ICSE New Ideas and Emerging results",
+      "caption"   : "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve reoccurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software.",
+      "thumbnail" : "/img/2019-nier.png",
+      "image"     : "/img/2019-nier.png"
+    },
+    { "key"       : "seet2019",
+      "featured"  : "false",
+      "thesis"    : "false",
+      "bibtex"    : "bib/2019-seet.bib",
+      "title"     : "Is What I Say What I Do? - Attitudes Towards Agile Practices in Software Teams",
+      "date"      : "2019-05-25",
+      "authors"   : [ "chrisma", "JohannesHuegle", "me", "RalfTeussner"],
+      "published" : "SEET '19: ICSE Software Engineering Education and Training",
+      "caption"   : "The attitudes of developers have a large impact on how software development projects are run and which development practices are employed. Recent agile methodologies have taken this into account, focusing on collaboration and highlighting the need for shared team values. In this research we investigate the attitudes towards Scrum agile practices and their usage of 42 students using surveys. Although attitudes did not evolve significantly over time, our analysis shows that the Scrum role significantly impacted participants’ views towards development practices. We find that using the version control system according to agile ideas was consistently rated most related to the values of the Agile Manifesto. Additionally, we investigate how common software development artifacts can be used to gain insights into team behavior and present the development data measurements we employed. We show that we can reliably detect well-defined agile practices, such as Test-Driven Development, in this data and that usage of these practices coincided with participants’ self-assessments.",
+      "thumbnail" : "/img/2019-seet.png",
+      "image"     : "/img/2019-seet.png"
     }
   ]
 }

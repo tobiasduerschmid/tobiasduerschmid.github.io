@@ -67,6 +67,22 @@
 	      "name"  	: "Eunsuk Kang",
 	      "website" : "https://eskang.github.io/",
 	      "note" 	: "Eunsuk Kang is an assistant professor in the Institute for Software Research at Carnegie Mellon University.",
-	  	}
+	  	},
+	  	{ "key"     : "chrisma"	,
+	      "name"  	: "Christoph Matthies",
+	      "website" : "https://hpi.de/plattner/people/phd-students/christoph-matthies.html",
+	      "note" 	: "Christoph Matthies is a PhD student at the enterprise platform and integration concepts group at the Hasso Plattner Institute.",
+	  	},
+	  	{ "key"     : "JohannesHuegle"	,
+	      "name"  	: "Johannes Huegle",
+	      "website" : "https://hpi.de/plattner/people/phd-students/johannes-huegle.html",
+	      "note" 	: "Johannes Huegle is a PhD student at the enterprise platform and integration concepts group at the Hasso Plattner Institute.",
+	  	},
+	  	{ "key"     : "RalfTeussner"	,
+	      "name"  	: "Ralf Teussner",
+	      "website" : "https://hpi.de/plattner/people/phd-students/ralf-teusner.html",
+	      "note" 	: "Ralf Teussner is a PhD student at the enterprise platform and integration concepts group at the Hasso Plattner Institute.",
+	  	},
+
 	]
 }
