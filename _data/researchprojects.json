@@ -2,14 +2,14 @@
   "show" : true,
   "projects" : 
   [ 
-    { "key"       : "DDOP",
-      "title"     : "Design-Decision-oriented Programming",
-      "subtitle"  : "A Paradigm for Property-based Selection of Reusable Implementations",
+    { "key"       : "TOD",
+      "title"     : "Trade-off-oriented Development",
+      "subtitle"  : "A Paradigm for making Quality-Attribute Trade-offs first class",
       "pages" : 
       [
       {
         "name" : "Description",
-        "path" : "DDOP/description.html"
+        "path" : "TOP/description.html"
       }
       ]
     },
