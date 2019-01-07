@@ -1,7 +1,7 @@
 {
   "show" : true,
   "a_rate_threashold" : "34",
-  "show_a_rate" : true,
+  "show_a_rate" : false,
   "publications" :
   [ 
     { "key"       : "ba2017",
