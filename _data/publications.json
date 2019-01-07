@@ -1,6 +1,6 @@
 {
   "show" : true,
-  "a_rate_threashold" : "30",
+  "a_rate_threashold" : "34",
   "show_a_rate" : true,
   "publications" :
   [ 
