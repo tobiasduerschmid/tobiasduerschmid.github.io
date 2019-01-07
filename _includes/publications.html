@@ -13,7 +13,7 @@
       <div class="col-sm-8">
         <h4 class="title">{{ p.title }}</h4>
         <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}{% assign found = false %}{% for a in co_authors %}{% if a.key == author %}{% assign found = true %}{% if a.website %}<a class="author" data-toggle="tooltip" title="{{ a.note }}" href= "{{ a.website }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}{% endif %}{% endfor %}{% if found == false %}{{ author }}{% endif %}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
-        <span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }}</span>
+        <span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }} {% if p.a_rate and 30 > p.a_rate %} (acceptance rate: {{ p.a_rate }}%){% endif %}</span>
         {% if p.comment %}<br><span class="text-danger"><b>{{ p.comment }}</b></span>{% endif %}<br>
         </p>
         <p>
