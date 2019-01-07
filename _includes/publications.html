@@ -6,7 +6,7 @@
     {% assign previousyear = currentyear %}
     {% assign co_authors = site.data.co_authors.authors %}
     {% assign show_a_rate = site.data.publications.show_a_rate %}
-    {% assign a_rate_threashold = '30' %}
+    {% assign a_rate_threashold = site.data.publications.a_rate_threashold %}
 
   
   <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
