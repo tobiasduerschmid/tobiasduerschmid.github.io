@@ -5,7 +5,7 @@
     {% if currentyear != previousyear %}<div><legend>{{ p.date | date: '%Y' }}</legend></div>{% endif %}
     {% assign previousyear = currentyear %}
     {% assign co_authors = site.data.co_authors.authors %}
-    {% assign show_a_rate = site.data.publications.show_a_rate %}
+    {% assign show_a_rate = false %}
     {% assign a_rate_threashold = '30' %}
 
   
