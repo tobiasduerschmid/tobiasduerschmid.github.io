@@ -7,6 +7,7 @@
     {% assign co_authors = site.data.co_authors.authors %}
     {% assign show_a_rate = site.data.publications.show_a_rate %}
     {% assign a_rate_threashold = site.data.publications.a_rate_threashold %}
+    {% assign curDate = site.time | date: '%s' %}
 
   
   <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
@@ -14,7 +15,7 @@
         {% include thumbnail.html %}
       </div>
       <div class="col-sm-8">
-        <h4 class="title">{{ p.title }}</h4>
+        <h4 class="title">{{ p.title }} {% if p.date > curDate %}(to appear){% endif %}</h4>
         <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}{% assign found = false %}{% for a in co_authors %}{% if a.key == author %}{% assign found = true %}{% if a.website %}<a class="author" data-toggle="tooltip" title="{{ a.note }}" href= "{{ a.website }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}{% endif %}{% endfor %}{% if found == false %}{{ author }}{% endif %}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
         <span class="text-danger">{{ p.published }} {{ p.date | date: '%Y' }} {% if show_a_rate == true and p.a_rate and a_rate_threashold > p.a_rate %} (acceptance rate: {{ p.a_rate }}%){% endif %}</span>
         {% if p.comment %}<br><span class="text-danger"><b>{{ p.comment }}</b></span>{% endif %}<br>
