@@ -261,6 +261,10 @@
       "published" : "ICSE-SEET '19: ICSE Software Engineering Education and Training",
       "caption"   : "The attitudes of developers have a large impact on how software development projects are run and which development practices are employed. Recent agile methodologies have taken this into account, focusing on collaboration and highlighting the need for shared team values. In this research we investigate the attitudes towards Scrum agile practices and their usage of 42 students using surveys. Although attitudes did not evolve significantly over time, our analysis shows that the Scrum role significantly impacted participants’ views towards development practices. We find that using the version control system according to agile ideas was consistently rated most related to the values of the Agile Manifesto. Additionally, we investigate how common software development artifacts can be used to gain insights into team behavior and present the development data measurements we employed. We show that we can reliably detect well-defined agile practices, such as Test-Driven Development, in this data and that usage of these practices coincided with participants’ self-assessments.",
       "thumbnail" : "/img/2019-seet.PNG",
+      "downloads" : [
+      { "href"    : "https://www.researchgate.net/profile/Christoph_Matthies/publication/331544075_Attitudes_Beliefs_and_Development_Data_Concerning_Agile_Software_Development_Practices/links/5c7f9586458515831f880d65/Attitudes-Beliefs-and-Development-Data-Concerning-Agile-Software-Development-Practices.pdf?_sg%5B0%5D=Bqs-t-toB0Nd1ZEVTnccUeWgJTr_YkSsXdWtJ2N6tmLHeLQwRLVlXMnmVtAu49s-YZt56GrdCSAYxdnNOJ5Aww.QYgecUU4cUXdqf9HesRVYE2BpO7Q3iDhtO9ZPfP0cT2ZL7xrn2WWPlFlu5t49viX3tdbKsf1WikhLEyroY0dyA&_sg%5B1%5D=5yOgacfRoaehVuZB31lyNeMndSlchMe73mx0RQ8GroVzv7y-XqVAre8-_HK1mvPXaHKVwauGMYGphp9FXMsOeSVSVC336D8_A6iaYe_DKsjX.QYgecUU4cUXdqf9HesRVYE2BpO7Q3iDhtO9ZPfP0cT2ZL7xrn2WWPlFlu5t49viX3tdbKsf1WikhLEyroY0dyA",
+        "desc"    : "Preprint (PDF)"
+      }]
     }
   ]
 }
