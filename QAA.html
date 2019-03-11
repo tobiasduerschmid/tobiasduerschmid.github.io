@@ -1,0 +1,9 @@
+---
+title: Quality Attribute Assumptions
+layout: framework
+---
+
+{% assign projects = site.data.researchprojects.projects | where: 'key', 'QAA' %}
+{% assign project  = projects.first %}
+
+{% include researchproject.html %}

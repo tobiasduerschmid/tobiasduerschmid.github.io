@@ -2,6 +2,40 @@
   "show" : true,
   "projects" : 
   [ 
+    { "key"       : "QAA",
+      "title"     : "Quality Attribute Assumptions",
+      "subtitle"  : "subtitle",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "QAA/description.html"
+      }
+      ]
+    },
+    { "key"       : "AIH",
+      "title"     : "Analytics for Information Hiding",
+      "subtitle"  : "Analysis and Recommendations to improve the Modularity of Software Projects",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "AIH/description.html"
+      }
+      ]
+    },
+    { "key"       : "CCR",
+      "title"     : "Community Code Review",
+      "subtitle"  : "Merging the process of implementing and reviewing code",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "CCR/description.html"
+      }
+      ]
+    },
+
     { "key"       : "TOD",
       "title"     : "Trade-off-oriented Development",
       "subtitle"  : "A Paradigm for Making Quality-Attribute Trade-offs First-Class",
@@ -35,6 +69,7 @@
       }
       ]
     },
+
     { "key"       : "pencilhatching",
       "title"     : "Pencil Hatching",
       "subtitle"  : "See the world through artists' eyes!",
