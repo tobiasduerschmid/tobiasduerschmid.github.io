@@ -2,10 +2,6 @@
 	"show" : true,
 	"activities": 
 	[ 
-		{  
-			"title"     : "Memberships",
-		    "content"   : "ACM, GI"
-	  	},
 	  	{  
 	  		"title"     : "Scholarships and Awards",
 		    "content"   : "
@@ -14,7 +10,22 @@
 		    <p>Scholarship of the <a href=\"https://www.studienstiftung.de/en/\" target=\"_blank\">Studienstiftung</a>, the largest organisation that sponsors outstanding students in Germany</p>
 		    <p>Best Paper Award at the <a href=\"https://sa2017.siggraph.org/attendees/award-winners\" target=\"_blank\">SIGGRAPH ASIA Mobile Graphics and Interactive Applications 2017</a></p>
 		    "
-		} 
+		},
+		{  
+			"title"     : "Memberships",
+		    "content"   : "ACM, GI"
+	  	},
+	  	{  
+			"title"     : "Volunteering",
+		    "content"   : "
+		    <p>International Conference on Software Engineering (ICSE) 2019</p>
+		    <p>International Conference on Software Architecture (ICSA) 2019</p>
+		    <p>International Conference on the Art, Science, and Engineering of Programming (‹Programming›) 2017</p>
+		    <p>Conference on Systems, Programming, Languages, and Applications: Software for Humanity (SPLASH) 2016</p>
+		    "
+	  	}
+
+
 	],
 	"reviews": 
 	[
