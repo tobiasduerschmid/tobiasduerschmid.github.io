@@ -30,10 +30,19 @@
 	"reviews": 
 	[
 		{
-			"enabled" 			: false,
+			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
 			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
 			"conference_short"	: "ICSE",
+			"year"				: 2019,
+			"track"			  	: "Technical Papers Track"	
+		},
+
+		{
+			"enabled" 			: true,
+			"responsibilities"	: "Sub-Reviewer",
+			"conference_long"  	: "European Conference on Software Architecture",
+			"conference_short"	: "ECSA",
 			"year"				: 2019,
 			"track"			  	: "Technical Papers Track"	
 		}
