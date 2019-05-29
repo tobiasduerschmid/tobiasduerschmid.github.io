@@ -246,6 +246,9 @@
       "caption"   : "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve reoccurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software.",
       "thumbnail" : "/img/2019-nier.PNG",
 	   "downloads" : [
+      { "href"    : "https://doi.org/10.1109/ICSE-NIER.2019.00036",
+        "desc"    : "DOI"
+      },
       { "href"    : "https://www.researchgate.net/profile/Tobias_Duerschmid/publication/330400619_Trade-off-Oriented_Development_Making_Quality_Attribute_Trade-offs_First-Class/links/5c3e227b92851c22a3771897",
         "desc"    : "Preprint (PDF)"
       }, 
