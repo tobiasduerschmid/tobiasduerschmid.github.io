@@ -19,6 +19,15 @@
           "role"   : "Teaching Assistant"
         }
       ]
+    },
+    { "term" : "Fall 2019/20",
+      "courses" : 
+      [ 
+        { "course" : "Models of Software Systems",
+          "type"   : "Lecture (MA)",
+          "role"   : "Teaching Assistant"
+        }
+      ]
     }
   ]
 }
