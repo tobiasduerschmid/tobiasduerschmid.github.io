@@ -38,13 +38,20 @@
 			"year"				: 2019,
 			"track"			  	: "Technical Papers Track"	
 		},
-
 		{
 			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
 			"conference_long"  	: "European Conference on Software Architecture",
 			"conference_short"	: "ECSA",
 			"year"				: 2019,
+			"track"			  	: "Technical Papers Track"	
+		},
+		{
+			"enabled" 			: true,
+			"responsibilities"	: "Sub-Reviewer",
+			"conference_long"  	: "IEEE International Conference on Software Architecture",
+			"conference_short"	: "ICSA",
+			"year"				: 2020,
 			"track"			  	: "Technical Papers Track"	
 		}
 	]
