@@ -5,7 +5,7 @@
     {
       "term" : "2017/18: Winter Term",
       "courses" : 
-        [ { "course" : "Software Engineering II - Agile Software Development in Large Teams",
+        [ { "course" : "Software Engineering II - Agile Software Development in Large Teams @ HPI",
             "type"   : "Lecture (BA)",
             "role"   : "Teaching Assistant"
           }
@@ -14,7 +14,7 @@
     {  "term" : "2016/17: Winter Term",
       "courses" : 
       [ 
-        { "course" : "Modeling I",
+        { "course" : "Modeling I @ HPI",
           "type"   : "Lecture (BA)",
           "role"   : "Teaching Assistant"
         }
@@ -23,9 +23,18 @@
     { "term" : "Fall 2019/20",
       "courses" : 
       [ 
-        { "course" : "Models of Software Systems",
+        { "course" : "Models of Software Systems (17-651) @ CMU",
           "type"   : "Lecture (MA)",
           "role"   : "Teaching Assistant"
+        }
+      ]
+    },
+    { "term" : "Fall 2020/21",
+      "courses" : 
+      [ 
+        { "course" : "Design Patterns & API Design (17-625) @ CMU",
+          "type"   : "Lecture (MA)",
+          "role"   : "Co-Instructor"
         }
       ]
     }
