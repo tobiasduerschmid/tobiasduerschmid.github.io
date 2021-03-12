@@ -33,9 +33,16 @@
 		{
 			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
-			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
-			"conference_short"	: "ICSE",
-			"year"				: 2019,
+			"conference_long"  	: "Symposium on Software Engineering for Adaptive and Self-Managing Systems",
+			"conference_short"	: "SEAMS",
+			"year"				: 2021,
+		},		
+		{
+			"enabled" 			: true,
+			"responsibilities"	: "Sub-Reviewer",
+			"conference_long"  	: "IEEE International Conference on Software Architecture",
+			"conference_short"	: "ICSA",
+			"year"				: 2020,
 			"track"			  	: "Technical Papers Track"
 		},
 		{
@@ -49,17 +56,10 @@
 		{
 			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
-			"conference_long"  	: "IEEE International Conference on Software Architecture",
-			"conference_short"	: "ICSA",
-			"year"				: 2020,
+			"conference_long"  	: "ACM/IEEE International Conference on Software Engineering",
+			"conference_short"	: "ICSE",
+			"year"				: 2019,
 			"track"			  	: "Technical Papers Track"
-		},
-		{
-			"enabled" 			: true,
-			"responsibilities"	: "Sub-Reviewer",
-			"conference_long"  	: "Symposium on Software Engineering for Adaptive and Self-Managing Systems",
-			"conference_short"	: "SEAMS",
-			"year"				: 2021,
-		}
+		}		
 	]
 }
