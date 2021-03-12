@@ -58,7 +58,7 @@
 			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
 			"conference_long"  	: "Symposium on Software Engineering for Adaptive and Self-Managing Systems",
-			"conference_short"	: "Seams",
+			"conference_short"	: "SEAMS",
 			"year"				: 2021,
 		}
 	]
