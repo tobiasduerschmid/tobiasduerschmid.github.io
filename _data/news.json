@@ -58,6 +58,9 @@
 	  },
 	  { "date" : "2020-07-30 12:00:00",
 	    "text" : "Our paper 'Synthesis-Based Resolution of Feature Interactions in Cyber-Physical Systems' got accepted to <a class='urllink' href='https://conf.researchr.org/home/ase-2020'>ASE 2020!</a>",
+	  },
+	  { "date" : "2021-12-12 12:00:00",
+	    "text" : "Our paper \"<a class='page-scroll' href='#publication-icsa2022'>'ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems'</a>\" has been accepted to <a class='urllink' href='https://icsa-conferences.org/2022/'>ICSA 2022!</a>",
 	  }
 	]
 }
