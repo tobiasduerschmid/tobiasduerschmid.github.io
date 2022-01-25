@@ -1,0 +1,51 @@
+
+<!-- Navigation -->
+<nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+  <div class="container-fluid">
+    <div class="navbar-header page-scroll">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+       <a class="navbar-brand page-scroll" href="#page-top">{{ site.title }}</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse navbar-ex1-collapse">
+      <ul class="nav navbar-nav navbar-right">
+        <!-- Hidden li included to remove active class from about link when scrolled up past about section -->
+        <li class="hidden"><a class="page-scroll" href="#page-top"></a></li>
+        {% if site.data.news.show %}   
+          <li><a class="page-scroll" href="#news">News</a></li>
+        {% endif %}   
+        {% if site.data.publications.show %}   
+        <li><a class="page-scroll" href="#publications">Publications</a></li>
+        {% endif %}   
+        {% if site.data.projects.show %}   
+        <li><a class="page-scroll" href="#projects">{{ site.data.projects.heading.[page.lang] | escape }}</a></li>
+        {% endif %}   
+        {% if site.data.talks.show %}   
+        <li><a class="page-scroll" href="#talks">Talks</a></li>
+        {% endif %}   
+        {% if site.data.teaching.show %}   
+        <li><a class="page-scroll" href="#teaching">Teaching</a></li>
+        {% endif %}   
+        {% if site.data.activities.show %}   
+          <li><a class="page-scroll" href="#activities">Professional Activities</a></li>
+        {% endif %}   
+      	{% if site.data.photography.show %}   
+          <li><a class="page-scroll" href="#photography">Photography</a></li>
+        {% endif %}   
+        {% if site.data.videos.show %}   
+        <li><a class="page-scroll" href="#videos">Videos</a></li>
+        {% endif %}   
+        {% if site.data.contact.show %}   
+        <li><a class="page-scroll" href="#contact">Contact</a></li>
+        {% endif %}   
+      </ul>
+    </div>
+
+  </div>
+</nav>
