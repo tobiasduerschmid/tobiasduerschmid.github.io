@@ -101,6 +101,17 @@
       	"path" : "pencilhatching/walkthrough.html"
       }
       ]
+    },
+    { "key"       : "photography",
+      "title"     : "Photography",
+      "subtitle"  : "subtitle",
+      "pages" : 
+      [
+      {
+      	"name" : "Overview",
+      	"path" : "photography/overview.html"
+      }
+      ]
     }
   ]
 }
