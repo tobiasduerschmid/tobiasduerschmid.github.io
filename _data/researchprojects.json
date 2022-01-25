@@ -110,6 +110,18 @@
       {
       	"name" : "Overview",
       	"path" : "photography/overview.html"
+      },
+      {
+      	"name" : "Cityscapes",
+      	"path" : "photography/cityscapes.html"
+      },
+      {
+      	"name" : "Creative",
+      	"path" : "photography/creative.html"
+      },
+      {
+      	"name" : "Black & White",
+      	"path" : "photography/bw.html"
       }
       ]
     }
