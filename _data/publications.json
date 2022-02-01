@@ -312,6 +312,9 @@
       { "href"    : "https://github.com/rosqual/rosdiscover",
         "desc"    : "Tool"
       },
+      { "href"    : "https://doi.org/10.5281/zenodo.5834633",
+        "desc"    : "Replication Package"
+      },
     ],
     }
   
