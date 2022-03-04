@@ -32,6 +32,18 @@
 	[
 		{
 			"enabled" 			: true,
+			"responsibilities"	: "Artifact Evaluation Committee",
+			"conference_long"  	: "The Art, Science, and Engineering of Programming",
+			"conference_short"	: "‹Programming›",
+			"year"				: 2022,
+		},{
+			"enabled" 			: true,
+			"responsibilities"	: "Sub-Reviewer",
+			"conference_long"  	: "Symposium on Software Engineering for Adaptive and Self-Managing Systems",
+			"conference_short"	: "SEAMS",
+			"year"				: 2022,
+		},{
+			"enabled" 			: true,
 			"responsibilities"	: "Sub-Reviewer",
 			"conference_long"  	: "IEEE International Conference on Software Architecture",
 			"conference_short"	: "ICSA",
