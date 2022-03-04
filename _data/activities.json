@@ -32,9 +32,9 @@
 	[
 		{
 			"enabled" 			: true,
-			"responsibilities"	: "Artifact Evaluation Committee",
+			"responsibilities"	: "Artifact Evaluation Committee Member",
 			"conference_long"  	: "The Art, Science, and Engineering of Programming",
-			"conference_short"	: "‹Programming›",
+			"conference_short"	: "Programming",
 			"year"				: 2022,
 		},{
 			"enabled" 			: true,
