@@ -61,6 +61,12 @@
 	  },
 	  { "date" : "2021-12-12 12:00:00",
 	    "text" : "Our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" has been accepted to <a class='urllink' href='https://icsa-conferences.org/2022/'>ICSA 2022!</a>",
+	  },
+	  { "date" : "2022-02-17 12:00:00",
+	    "text" : "The artifact for our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" has received the badges for OPEN RESEARCH OBJECT (ORO) and RESEARCH OBJECT REVIEWED (ROR) – REUSABLE. It can be found on <a class='urllink' href='https://doi.org/10.5281/zenodo.5834633'>Zenodo</a>.",
+	  },
+	  { "date" : "2022-02-19 12:00:00",
+	    "text" : "I will be presenting our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" virtually on Monday 14 March, 22:00 UTC and Tuesday 15 March, 18:00 UTC at <a class='urllink' href='https://icsa-conferences.org/2022/detailed-program/'>ICSA</a>.",
 	  }
 	]
 }
