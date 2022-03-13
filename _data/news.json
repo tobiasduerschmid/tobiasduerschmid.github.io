@@ -67,6 +67,10 @@
 	  },
 	  { "date" : "2022-02-19 12:00:00",
 	    "text" : "I will be presenting our paper \"<a class='page-scroll' href='#publication-icsa2022'>ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems</a>\" virtually on Monday 14 March, 22:00 UTC and Tuesday 15 March, 18:00 UTC at <a class='urllink' href='https://icsa-conferences.org/2022/detailed-program/'>ICSA</a>.",
+	  },
+	  { "date" : "2022-03-13 10:00:00",
+	    "text" : "The presentation of our ICSA paper can be found \"<a href='https://www.youtube.com/watch?v=sUfTNU5Jb-A'>here</a>\".",
 	  }
+
 	]
 }
