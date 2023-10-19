@@ -20,7 +20,7 @@
         }
       ]
     },
-    { "term" : "Fall 2019/20",
+    { "term" : "Fall 2019",
       "courses" : 
       [ 
         { "course" : "Models of Software Systems (17-651) @ CMU",
@@ -29,12 +29,21 @@
         }
       ]
     },
-    { "term" : "Fall 2020/21",
+    { "term" : "Fall 2020",
       "courses" : 
       [ 
         { "course" : "Design Patterns & API Design (17-625) @ CMU",
           "type"   : "Lecture (MA)",
-          "role"   : "Co-Instructor"
+          "role"   : "Designer and Co-Instructor"
+        }
+      ]
+    },
+    { "term" : "Spring 2024",
+      "courses" : 
+      [ 
+        { "course" : "Designing Large-scale Software Systems (17-423/723) @ CMU",
+          "type"   : "Lecture (BA/MA)",
+          "role"   : "Designer and Instructor"
         }
       ]
     }
