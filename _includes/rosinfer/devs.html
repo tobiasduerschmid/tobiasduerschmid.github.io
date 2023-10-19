@@ -1,45 +1,23 @@
 <div class="text-left">
   <p>We are looking for ROS developers who would like to apply our tools to their projects. Currently our tools only support ROS 1 project written in C++ (we might add ROS 2 and Python later). If you are interested, please email us at duerschmid (at) cmu [dot] edu and put ROSInfer in the subject line.</p>
   
-  <div class="row">
+  <div class="row"><legend>Tell Us About YOUR Bugs!</legend>
     <div class="col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2 col-xs-10 col-xs-offset-1">
-      
-      <form id="contact-form" class="form-horizontal" role="form" action="//formspree.io/{{ site.data.contact.email }}" method="POST">
-        <fieldset>
-
-          <legend>Tell Us About YOUR Bugs!</legend>
-
-          <div class="form-group">
-            <label for="name" class="col-sm-2 control-label">Name</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" id="name" name="name" placeholder="Name">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="_replyto" class="col-sm-2 control-label">Email</label>
-            <div class="col-sm-10">
-              <input type="text" class="form-control" id="_replyto" name="_replyto" placeholder="Email">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="message" class="col-sm-2 control-label">Bug Description</label>
-            <div class="col-sm-10">
-              <textarea class="form-control" rows="3" id="message" name="message"></textarea>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div class="col-sm-2 col-sm-offset-2 col-xs-2">
-              <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-            <div class="col-sm-8 col-xs-10 text-right">
-              <p class="form-control-static">Send via <a href="https://formspree.io/" target="blank">Formspree</a>.</p>
-            </div>
-          </div>
-
-        </fieldset>
+      {% assign contact = site.data.contact %}
+      <form
+        action="https://formspree.io/f/duerschmid@cmu.edu"
+        method="POST"
+      >
+        <label>
+          Your email:
+          <input type="email" name="email">
+        </label>
+        <label>
+          Your message:
+          <textarea name="message"></textarea>
+        </label>
+        <!-- your other form fields go here -->
+        <button type="submit">Send</button>
       </form>
 
     </div>
