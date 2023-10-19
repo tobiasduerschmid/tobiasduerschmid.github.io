@@ -36,6 +36,11 @@
       "date"      : "2023-05-29 00:00:00",
       "title"     : "Architectural Model Inference From Code For ROS-Based Robotics Systems.",
       "location"  : "ICRA, London, UK"
+    },
+    { 
+      "date"      : "2023-10-19 00:00:00",
+      "title"     : "Automatically Finding Architectural Composition Bugs",
+      "location"  : "ROSCon (Lightning Talk), New Orleans, USA"
     }
   ]
 }
