@@ -26,6 +26,16 @@
       "date"      : "2019-05-31 00:00:00",
       "title"     : "Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class",
       "location"  : "ICSE, Montréal, Canada"
+    },
+    { 
+      "date"      : "2022-03-14 00:00:00",
+      "title"     : "ROSDiscover: Statically Detecting Run-Time Architecture Misconfigurations in Robotics Systems",
+      "location"  : "ICSA, Virtual"
+    },
+    { 
+      "date"      : "2023-05-29 00:00:00",
+      "title"     : "Architectural Model Inference From Code For ROS-Based Robotics Systems.",
+      "location"  : "ICRA, London, UK"
     }
   ]
 }
