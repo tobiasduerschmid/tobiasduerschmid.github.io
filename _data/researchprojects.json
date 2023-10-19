@@ -8,10 +8,10 @@
       [
       {
         "name" : "Description",
-        "path" : "ROSInfer/description.html"
+        "path" : "rosinfer/description.html"
       }, {
         "name" : "For ROS Developers",
-        "path" : "ROSInfer/devs.html"
+        "path" : "rosinfer/devs.html"
       }
       ]
     },
