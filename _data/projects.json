@@ -79,9 +79,9 @@
       "ongoing"   : true,
      
       "caption"   : {
-        "en" : "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve reoccurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software."},
+        "en" : "Model-based analysis is a common technique to identify incorrect behavioral composition of complex, safety-critical systems, such as robotics systems. However, creating structural and behavioral models for hundreds of software components manually is often a labor-intensive and error-prone process. In this project, we present an approach to infer behavioral models for components of systems based on the Robot Operating System (ROS), the most popular framework for robotics systems, using static analysis by exploiting assumptions about the usage of the ROS framework. This work is a contribution towards making well-proven and powerful but infrequently used methods of model-based analysis more accessible and economical in practice to make robotics systems more reliable and safe."},
       "authors"   : [ "Tobias Dürschmid", "Christopher Timperley", "David Garlan", "Claire Le Goues"],
-      "thumbnail" : "img/2022-icsa.png",
+      "thumbnail" : "img/rosinfer.png",
       "downloads" : [
         { "href"  : "/rosinfer.html",
           "desc"  : "Project Website"
