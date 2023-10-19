@@ -81,7 +81,7 @@
       "caption"   : {
         "en" : "Model-based analysis is a common technique to identify incorrect behavioral composition of complex, safety-critical systems, such as robotics systems. However, creating structural and behavioral models for hundreds of software components manually is often a labor-intensive and error-prone process. In this project, we present an approach to infer behavioral models for components of systems based on the Robot Operating System (ROS), the most popular framework for robotics systems, using static analysis by exploiting assumptions about the usage of the ROS framework. This work is a contribution towards making well-proven and powerful but infrequently used methods of model-based analysis more accessible and economical in practice to make robotics systems more reliable and safe."},
       "authors"   : [ "Tobias Dürschmid", "Christopher Timperley", "David Garlan", "Claire Le Goues"],
-      "thumbnail" : "img/rosinfer.png",
+      "thumbnail" : "img/rosinfer.svg",
       "downloads" : [
         { "href"  : "/rosinfer.html",
           "desc"  : "Project Website"
