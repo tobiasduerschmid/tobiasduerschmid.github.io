@@ -41,7 +41,7 @@
     { "term" : "Spring 2024",
       "courses" : 
       [ 
-        { "course" : "Designing Large-scale Software Systems (17-423/723) @ CMU",
+        { "course" : "Designing Large-scale Software Systems",
           "type"   : "Lecture (BA/MA)",
           "role"   : "Designer and Instructor"
         }
