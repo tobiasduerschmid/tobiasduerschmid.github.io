@@ -1,6 +1,6 @@
 {
 	"show" : true,
-	"max_days" : 400,
+	"max_days" : 1000,
 	"news" :
 	[ 
 	  { "date" : "2016-11-03 00:00:00",
@@ -70,6 +70,12 @@
 	  },
 	  { "date" : "2022-03-13 10:00:00",
 	    "text" : "The presentation of our ICSA paper can be found \"<a href='https://www.youtube.com/watch?v=sUfTNU5Jb-A'>here</a>\".",
+	  },
+	  { "date" : "2023-05-13 10:00:00",
+	    "text" : "I will give a talk at ICRA in London on our past, current, and ongoing work on Architectural Model Inference From Code For ROS-Based Robotics Systems. You can find the slides <a href='https://www.slideshare.net/TobiasDrschmid1/architectural-model-inference-from-code-for-rosbased-robotics-systems'>here</a>.",
+	  },
+	  { "date" : "2023-10-13 10:00:00",
+	    "text" : "I will be an instructor for our newly developed course <a href='https://cmu-swdesign.github.io/'>17-423/723 Designing Large-scale Software Systems</a>.",
 	  }
 
 	]
