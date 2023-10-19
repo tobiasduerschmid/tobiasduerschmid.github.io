@@ -12,6 +12,9 @@
       }, {
         "name" : "For ROS Developers",
         "path" : "rosinfer/devs.html"
+      }, {
+        "name" : "Talks",
+        "path" : "rosinfer/talks.html"
       }
       ]
     },
