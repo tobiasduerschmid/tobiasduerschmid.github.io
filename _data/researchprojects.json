@@ -1,7 +1,20 @@
 {
   "show" : true,
   "projects" : 
-  [ 
+  [  { "key"       : "rosinfer",
+      "title"     : "ROSInfer",
+      "subtitle"  : "Finding Architectural Bugs in ROS-based Robotics Systems",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "ROSInfer/description.html"
+      }, {
+        "name" : "For ROS Developers",
+        "path" : "ROSInfer/devs.html"
+      }
+      ]
+    },
     { "key"       : "QAA",
       "title"     : "Quality Attribute Assumptions",
       "subtitle"  : "subtitle",
