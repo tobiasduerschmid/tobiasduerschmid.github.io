@@ -41,7 +41,7 @@
     { "term" : "Spring 2024",
       "courses" : 
       [ 
-        { "course" : "Designing Large-scale Software Systems",
+        { "course" : "<a href="https://cmu-swdesign.github.io/">Designing Large-scale Software Systems</a>",
           "type"   : "Lecture (BA/MA)",
           "role"   : "Designer and Instructor"
         }
