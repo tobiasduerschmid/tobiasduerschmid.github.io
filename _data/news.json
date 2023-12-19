@@ -79,7 +79,10 @@
 	  },
 	  { "date" : "2023-10-19 10:00:00",
 	    "text" : "I will give a short lightning talk on our project <a href='rosinfer.html'>ROSInfer</a> at ROSCon.",
-	  }
+	  },
+	  { "date" : "2023-12-15 12:00:00",
+	    "text" : "Our paper \"<a class='page-scroll' href='#publication-icse2024'>ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems</a>\" has been accepted to <a class='urllink' href='https://conf.researchr.org/track/icse-2024/icse-2024-research-track'>ICSE 2024!</a>",
+	  },
 
 	]
 }
