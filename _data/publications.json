@@ -341,7 +341,11 @@
       "downloads" : [
       { "href"    : "https://github.com/rosqual/rosdiscover",
         "desc"    : "Tool"
-      }      
+      },
+      {
+        "href"    : "https://doi.org/10.1145/3597503.3639206",
+        "desc"    : "DOI"
+      }
     ]
   },
   
