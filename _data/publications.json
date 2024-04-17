@@ -1,7 +1,7 @@
 {
   "show" : true,
   "a_rate_threashold" : "34",
-  "show_a_rate" : false,
+  "show_a_rate" : true,
   "publications" :
   [ 
     { "key"       : "ba2017",
@@ -332,7 +332,7 @@
       "bibtex"    : "bib/2024-icse.bib",
       "title"     : "ROSInfer: Statically Inferring Behavioral Component Models for ROS-based Robotics Systems",
       "date"      : "2024-04-15",
-      "a_rate"    : "20",
+      "a_rate"    : "21.2",
       "project"   : "rosinfer",
       "authors"   : [ "me", "CT", "DG", "CLG"],
       "published" : "ICSE '24: 46th International Conference on Software Engineering",
