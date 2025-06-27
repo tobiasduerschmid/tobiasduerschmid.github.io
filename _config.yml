@@ -29,7 +29,7 @@ languages: [ 'en', 'de' ]
 description: > # theis means to ignore newlines until "baseurl:"
     Tobias Dürschmid - Assistant Teaching Professor at UCLA.
 subheading: > # this means to ignore newlines until "baseurl:"
-    I am a incomming <span class="text-danger">Asistant Teaching Profgessor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. 
+    I am a incomming <span class="text-danger">Asistant Teaching Professor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. 
     I am a <span class="text-danger">Software Engineering PhD student</span> at Carnegie Mellon University’s <a href="http://www.scs.cmu.edu/" target="_blank">School of Computer Science</a>. 
     I am co-advised by <a href="https://clairelegoues.com/" target="_blank">Claire Le Goues</a> and <a href="http://www.cs.cmu.edu/~garlan/" target="_blank">David Garlan</a>.
     Hence, I am a member of <a href="https://squareslab.github.io/" target="_blank">squaresLab</a> and the <a href="https://www.cs.cmu.edu/~able/" target="_blank">ABLE group</a>. 
