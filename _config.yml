@@ -29,13 +29,13 @@ languages: [ 'en', 'de' ]
 description: > # theis means to ignore newlines until "baseurl:"
     Tobias Dürschmid - Assistant Teaching Professor at UCLA.
 subheading: > # this means to ignore newlines until "baseurl:"
-    I am an <span class="text-danger">Assistant Teaching Professor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. 
+    I am an <span class="text-danger">Assistant Teaching Professor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. I primarily teach courses in software engineering, sofware construction, programming languages, and related software development skills. 
     <br><br>
     I received my <span class="text-danger">PhD in Software Engineering</span> from Carnegie Mellon University’s <a href="http://www.scs.cmu.edu/" target="_blank">School of Computer Science</a>. 
-    I was fortunat eto be co-advised by <a href="https://clairelegoues.com/" target="_blank">Claire Le Goues</a> and <a href="http://www.cs.cmu.edu/~garlan/" target="_blank">David Garlan</a>.
+    I was fortunate to be co-advised by <a href="https://clairelegoues.com/" target="_blank">Claire Le Goues</a> and <a href="http://www.cs.cmu.edu/~garlan/" target="_blank">David Garlan</a>.
     I earned my Bachelor of Science in IT-Systems Engineering from <a href="https://www.hpi.de/en/" target="_blank">Hasso Plattner Institute</a> / University of Postdam, Germany.
     <br><br>
-    I am mainly interested in <span class="text-danger">simplifying the development of complex software systems</span>. My areas of research include software architecture, model-based analysis of quality-attributes for robotics systems, and static code analysis.
+    My research interests include <span class="text-danger">software engineering, computer science education, and pedagody</span>.
     
 defaults:
   - scope:
