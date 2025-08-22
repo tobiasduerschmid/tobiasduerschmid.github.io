@@ -47,5 +47,14 @@
         }
       ]
     }
+    { "term" : "Fall 2025",
+      "courses" : 
+      [ 
+        { "course" : "CS 35L Software Construction @ UCLA",
+          "type"   : "Lecture (BA)",
+          "role"   : "Instructor"
+        }
+      ]
+    }
   ]
 }
