@@ -36,6 +36,7 @@ subheading: > # this means to ignore newlines until "baseurl:"
     I earned my Bachelor of Science in IT-Systems Engineering from <a href="https://www.hpi.de/en/" target="_blank">Hasso Plattner Institute</a> / University of Postdam, Germany.
     <br><br>
     My research interests include <span class="text-danger">software engineering, computer science education, and pedagody</span>.
+    I do <strong>not</strong> currently accept PhD students. 
     
 defaults:
   - scope:
