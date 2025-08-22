@@ -29,7 +29,10 @@ languages: [ 'en', 'de' ]
 description: > # theis means to ignore newlines until "baseurl:"
     Tobias Dürschmid - Assistant Teaching Professor at UCLA.
 subheading: > # this means to ignore newlines until "baseurl:"
-    I am an <span class="text-danger">Assistant Teaching Professor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. I primarily teach courses in software engineering, sofware construction, programming languages, and related software development skills. 
+    I am an <span class="text-danger">Assistant Teaching Professor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. 
+    I am mainly interested in  <span class="text-danger">teaching how to systematically design, construct, and evaluate complex software systems</span>.
+    I usually teach CS 35 Software Construction, CS 130 Sofware Engineering, and CS 131 Programming Languagues.
+    
     <br><br>
     I received my <span class="text-danger">PhD in Software Engineering</span> from Carnegie Mellon University’s <a href="http://www.scs.cmu.edu/" target="_blank">School of Computer Science</a>. 
     I was fortunate to be co-advised by <a href="https://clairelegoues.com/" target="_blank">Claire Le Goues</a> and <a href="http://www.cs.cmu.edu/~garlan/" target="_blank">David Garlan</a>.
