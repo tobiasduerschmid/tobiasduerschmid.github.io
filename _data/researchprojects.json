@@ -93,11 +93,11 @@
       [
       {
       	"name" : "User Studies",
-      	"path" : "SEBook/userstories.md"
+      	"path" : "SEBook/userstories.html"
       },
       {
       	"name" : "SOLID Design Principles",
-      	"path" : "SEBook/solid.html"
+      	"path" : "SEBook/solid.md"
       }
       ]
     },
