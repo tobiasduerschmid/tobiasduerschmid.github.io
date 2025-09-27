@@ -86,6 +86,22 @@
       ]
     },
 
+    { "key"       : "sebook",
+      "title"     : "SE Book",
+      "subtitle"  : "SE Book",
+      "pages" : 
+      [
+      {
+      	"name" : "User Studies",
+      	"path" : "sebook/userstories.html"
+      },
+      {
+      	"name" : "SOLID Design Principles",
+      	"path" : "sebook/solid.html"
+      }
+      ]
+    },
+
     { "key"       : "pencilhatching",
       "title"     : "Pencil Hatching",
       "subtitle"  : "See the world through artists' eyes!",
