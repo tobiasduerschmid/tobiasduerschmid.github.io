@@ -1,0 +1,9 @@
+---
+title: SE Book
+layout: framework
+---
+
+{% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
+{% assign project  = projects.first %}
+
+{% include researchproject.html %}

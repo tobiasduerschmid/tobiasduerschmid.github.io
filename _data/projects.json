@@ -26,6 +26,22 @@
           "video" : "youtube"
         } ],
     },
+    { "key"       : "sebook",
+      "title"     : "SE Book",
+      "date"      : "2025-09-10",
+      "ongoing"   : true,
+     
+      "caption"   : {
+        "en" : "Collection of Software Engineering concepts for teaching",
+      },
+
+      "authors"   : [ "Tobias Dürschmid"],
+      "thumbnail" : "/img/2017-prosumerFXapp.jpg",
+      "downloads" : [
+        { "href"  : "/sebook.html",
+          "desc"  : "Project Website"
+        }, ],
+    },
     { "key"       : "prosumer",
       "title"     : "ProsumerFX",
       "date"      : "2017-10-10",
