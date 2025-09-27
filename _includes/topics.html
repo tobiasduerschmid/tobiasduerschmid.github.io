@@ -1,0 +1,23 @@
+{% assign haspubs = pubs.size > 0 %}
+
+{% include navbar_project.html title=project.title pubssize=pubs.size project=project %}
+
+{% include header_project.html title=project.title description=project.subtitle%}
+
+{% for p in project.pages %}
+<section id="{% if p.id %}{{ p.id }}{% else %}{{ p.name }}{% endif %}">
+  <div class="container">
+  
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        {% if p.name %}
+          <h2 class="page-header">{{ p.name }}</h2>
+        {% endif %}
+        <a href="{{p.path}}">{{p.name}}</a>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+{% endfor %}

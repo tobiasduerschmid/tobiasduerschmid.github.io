@@ -1,0 +1,161 @@
+{
+  "show" : true,
+  "topics" : 
+  [  { "key"       : "rosinfer",
+      "title"     : "ROSInfer",
+      "subtitle"  : "Finding Architectural Bugs in ROS-based Robotics Systems",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "rosinfer/description.html"
+      }, {
+        "name" : "For ROS Developers",
+        "path" : "rosinfer/devs.html"
+      }, {
+        "name" : "Talks",
+        "path" : "rosinfer/talks.html"
+      }
+      ]
+    },
+    { "key"       : "QAA",
+      "title"     : "Quality Attribute Assumptions",
+      "subtitle"  : "subtitle",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "QAA/description.html"
+      }
+      ]
+    },
+    { "key"       : "AIH",
+      "title"     : "Analytics for Information Hiding",
+      "subtitle"  : "Analysis and Recommendations to improve the Modularity of Software Projects",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "AIH/description.html"
+      }
+      ]
+    },
+    { "key"       : "CCR",
+      "title"     : "Community Code Review",
+      "subtitle"  : "Merging the process of implementing and reviewing code",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "CCR/description.html"
+      }
+      ]
+    },
+
+    { "key"       : "TOD",
+      "title"     : "Trade-off-oriented Development",
+      "subtitle"  : "A Paradigm for Making Quality-Attribute Trade-offs First-Class",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "TOD/description.html"
+      }
+      ]
+    },
+    { "key"       : "AIH",
+      "title"     : "Analytics for Information Hiding",
+      "subtitle"  : "Analysis and Recommendations to improve the Modularity of Software Projects",
+      "pages" : 
+      [
+      {
+        "name" : "Description",
+        "path" : "AIH/description.html"
+      }
+      ]
+    },
+    { "key"       : "CCR",
+      "title"     : "Community Code Review",
+      "subtitle"  : "Merging the process of implementing and reviewing code",
+      "pages" : 
+      [
+      {
+      	"name" : "Description",
+      	"path" : "CCR/description.html"
+      }
+      ]
+    },
+
+    { "key"       : "sebook",
+      "title"     : "SE Book",
+      "subtitle"  : "SE Book",
+      "pages" : 
+      [
+      {
+      	"name" : "User Studies",
+      	"path" : "SEBook/userstories.html"
+      },
+      {
+      	"name" : "SOLID Design Principles",
+      	"path" : "SEBook/solid.html"
+      }
+      ]
+    },
+
+    { "key"       : "pencilhatching",
+      "title"     : "Pencil Hatching",
+      "subtitle"  : "See the world through artists' eyes!",
+      "pages" : 
+      [
+      {
+      	"name" : "Description",
+      	"path" : "pencilhatching/description.html"
+      },
+      {
+      	"name" : "Demo",
+      	"path" : "pencilhatching/demo.html"
+      },
+      {
+      	"name" : "Presets",
+      	"path" : "pencilhatching/presets.html"
+      },
+      {
+      	"name" : "Parameters",
+      	"path" : "pencilhatching/parameters.html"
+      },
+      {
+      	"name" : "Parameter Painting",
+      	"id"   : "ParameterPainting",
+      	"path" : "pencilhatching/parameter_painting.html"
+      },
+      {
+      	"name" : "Walkthrough",
+      	"path" : "pencilhatching/walkthrough.html"
+      }
+      ]
+    },
+    { "key"       : "photography",
+      "title"     : "Photography",
+      "subtitle"  : "subtitle",
+      "pages" : 
+      [
+      {
+      	"name" : "Overview",
+      	"path" : "photography/overview.html"
+      },
+      {
+      	"name" : "Cityscapes",
+      	"path" : "photography/cityscapes.html"
+      },
+      {
+      	"name" : "Creative",
+      	"path" : "photography/creative.html"
+      },
+      {
+      	"name" : "Black & White",
+      	"path" : "photography/bw.html"
+      }
+      ]
+    }
+  ]
+}
