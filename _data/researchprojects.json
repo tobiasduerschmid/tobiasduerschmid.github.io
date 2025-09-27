@@ -88,6 +88,7 @@
 
     { "key"       : "sebook",
       "title"     : "SE Book",
+      "url"       : "/sebook.html",
       "subtitle"  : "SE Book",
       "pages" : 
       [
