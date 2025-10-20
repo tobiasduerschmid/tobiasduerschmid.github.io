@@ -95,5 +95,8 @@
 	  { "date" : "2025-08-01 12:00:00",
 	    "text" : "I started working for UCLA! I am looking forward to teaching CS 35L Software Construction</a>",
 	  },
+	  { "date" : "2025-10-01 12:00:00",
+	    "text" : "I have become the faculty advisor of UCLA's student clum \"<a href='https://bseatucla.com/'>Bruin Software Engineers</a>\"",
+	  },
 	]
 }
