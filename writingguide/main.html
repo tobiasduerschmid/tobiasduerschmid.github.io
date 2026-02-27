@@ -1,0 +1,27 @@
+---
+title: Writing Guide
+layout: framework
+---
+
+{% assign projects = site.data.researchprojects.projects | where: 'key', 'writingguide' %}
+{% assign project  = projects.first %}
+
+{% include navbar_project_subpage.html title=project.title pubssize=pubs.size project=project %}
+
+{% include header_project.html title=project.title description=project.subtitle%}
+
+
+<section id="Writing Guide">
+  <div class="container">
+  
+    <div class="row">
+      <div class="col-lg-12 text-center">
+          <h1 class="page-header"> Writing Guide" </h1>
+        
+      </div>
+    </div>
+
+
+  </div>
+</section>
+
