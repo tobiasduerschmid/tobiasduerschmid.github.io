@@ -87,9 +87,15 @@
     },
   { "key"       : "writingguide",
       "title"     : "Writing Guide",
-      "url"       : "writingguide/main.html",
+      "url"       : "writingguide.html",
       "subtitle"  : "Scientific Writing Guide for Students",
-      
+      "pages" : 
+      [
+      {
+      	"name" : "Guide",
+      	"path" : "writingguide/main.html"
+      }
+      ]
     },
     { "key"       : "sebook",
       "title"     : "SE Book",
