@@ -72,12 +72,11 @@
           "type"   : "Lecture (BA)",
           "role"   : "Instructor"
         },
-        { "course" : "CS 35L Software Construction @ UCLA",
+        { "course" : "CS 130 Software Engineering @ UCLA",
           "type"   : "Lecture (BA)",
           "role"   : "Instructor"
         }
       ]
     },
-
   ]
 }
