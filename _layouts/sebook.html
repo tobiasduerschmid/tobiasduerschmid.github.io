@@ -29,7 +29,8 @@
           {% for section in sections %}
             {% if section contains '</h1>' %}
             {% assign heading_and_content = section | split: '>' %}
-            {% assign heading_text = heading_and_content[1] | split: '</h1>' | first %}
+            {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1', '' %}
+
             {% if heading_text != "" %}
                 {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
                   <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
@@ -50,7 +51,7 @@
                 {% for section in sections %}
                   {% if section contains '</h1>' %}
                     {% assign heading_and_content = section | split: '>' %}
-                    {% assign heading_text = heading_and_content[1] | split: '</h1>' | first %}
+                    {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1', '' %}
                     {% assign section_content = section | split: '</h1>' | last %}
                     {% if heading_text != "" %}
                       {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' | replace: '</h1', '' %}
