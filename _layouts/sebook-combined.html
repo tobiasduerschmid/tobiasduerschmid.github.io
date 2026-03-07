@@ -21,22 +21,7 @@
           </button>
           <a class="navbar-brand page-scroll" href="{{project.url}}">{{project.title}} | {{ site.author }}</a>
         </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <!-- Extract H1 headings from all content sections -->
-            {% assign sections = content | split: '<h1' %}
-            {% for section in sections %}
-              {% if section contains '</h1>' %}
-                {% assign heading_text = section | split: '>' | last | split: '</h1>' | first %}
-                {% if heading_text != "" %}
-                  {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
-                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div><!--/.nav-collapse -->
+      
       </div>
     </nav>
 
@@ -45,25 +30,8 @@
 
         <div class="container">
           <div class="row">
-            <!-- Wrap each H1 section in a section div with ID -->
-            {% assign sections = content | split: '<h1>' %}
-            {% for section in sections %}
-              {% if section contains '</h1>' %}
-                {% assign heading_text = section | split: '</h1>' | first %}
-                {% assign section_content = section | split: '</h1>' | last %}
-                {% if heading_text != "" %}
-                  {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
-                  <section id="{{ section_id }}">
-                    <h1 id="{{ section_id }}">{{ heading_text }}</h1>
-                    {{ section_content }}
-                  </section>
-                {% endif %}
-              {% else %}
-                {% if section != "" %}
-                  {{ section }}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
+
+                    {{ content }}
           </div>
         </div>
     </article>
