@@ -5,9 +5,7 @@ layout: sebook
 
 
 
-# State
- 
-[Description](/SEBook/designpatterns/state.html)
+# Object-oriented Design Patterns:
 
-# Observer
-[Description](/SEBook/designpatterns/observer.html)
+* [**State**](/SEBook/designpatterns/state.html)
+* [**Observer**](/SEBook/designpatterns/observer.html)

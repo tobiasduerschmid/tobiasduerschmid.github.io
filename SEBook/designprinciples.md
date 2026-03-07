@@ -1,5 +1,5 @@
 ---
-title: Design Patterns
+title: Design Principles
 layout: sebook
 ---
 
