@@ -10,18 +10,4 @@ layout: framework
 
 {% include header_project.html title=project.title description=project.subtitle%}
 
-
-<section id="user stories">
-  <div class="container">
-  
-    <div class="row">
-      <div class="col-lg-12 text-center">
-          <h1 class="page-header"> User Stories </h1>
-        
-      </div>
-    </div>
-
-
-  </div>
-</section>
-
+# User Stories
