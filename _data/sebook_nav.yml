@@ -7,10 +7,10 @@ topics:
     url: /SEBook/designpatterns.html
     subtopics:
       - name: Observer
-        url: /SEBook/designpatterns.html#observer
+        url: /SEBook/designpatterns/observer.html
       - name: State
-        url: /SEBook/designpatterns.html#state
-  
+        url: /SEBook/designpatterns/state.html
+
   - name: SOLID
     icon: null
     url: /SEBook/solid.html
