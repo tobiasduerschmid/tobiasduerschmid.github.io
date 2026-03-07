@@ -21,6 +21,13 @@ topics:
         url: /SEBook/designprinciples/solid.html
 
 
+  - name: Software Process
+    icon: null
+    url: /SEBook/process.html
+    subtopics:
+      - name: Scrum
+        url: /SEBook/process/scrum.html
+
 
   - name: Testing
     icon: null

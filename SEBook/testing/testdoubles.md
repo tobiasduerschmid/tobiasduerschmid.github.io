@@ -15,7 +15,7 @@ While Test Stubs perfectly address the injection of inputs, they inherently igno
 # Test Spy
 
 When the behavior of the SUT includes actions that cannot be observed through its public interface—such as sending a message on a network channel or writing a record to a database—we refer to these actions as indirect outputs. To verify these indirect outputs, we use a Test Spy.
-A Test Spy is a more capable version of a Test Stub that serves as an observation point by quietly recording all method calls made to it by the SUT during execution,. Like a Test Stub, a Test Spy may need to provide values back to the SUT to allow execution to continue, but its defining characteristic is its ability to capture the SUT's indirect outputs and save them for later verification by the test.
+A Test Spy is a more capable version of a Test Stub that serves as an observation point by quietly recording all method calls made to it by the SUT during execution. Like a Test Stub, a Test Spy may need to provide values back to the SUT to allow execution to continue, but its defining characteristic is its ability to capture the SUT's indirect outputs and save them for later verification by the test.
 The use of a Test Spy facilitates a technique called "Procedural Behavior Verification". The testing lifecycle using a spy looks like this:
 
 1. The test installs the Test Spy in place of the DOC.
@@ -30,5 +30,5 @@ A software engineer should utilize a Test Spy when they want the assertions to r
 
 
 # Mock Object
-A Mock Object, like a Test Spy, acts as an observation point to verify the indirect outputs of the SUT,. However, a Mock Object operates using a fundamentally different paradigm known as "Expected Behavior Specification".
-Instead of waiting until after the SUT executes to verify the outputs procedurally, a Mock Object is configured before the SUT is exercised with the exact method calls and arguments it should expect to receive,. The Mock Object essentially acts as an active verification engine during the execution phase. As the SUT executes and calls the Mock Object, the mock dynamically compares the actual arguments received against its programmed expectations. If an unexpected call occurs, or if the arguments do not match, the Mock Object fails the test immediately.
+A Mock Object, like a Test Spy, acts as an observation point to verify the indirect outputs of the SUT. However, a Mock Object operates using a fundamentally different paradigm known as "Expected Behavior Specification".
+Instead of waiting until after the SUT executes to verify the outputs procedurally, a Mock Object is configured before the SUT is exercised with the exact method calls and arguments it should expect to receive. The Mock Object essentially acts as an active verification engine during the execution phase. As the SUT executes and calls the Mock Object, the mock dynamically compares the actual arguments received against its programmed expectations. If an unexpected call occurs, or if the arguments do not match, the Mock Object fails the test immediately.
