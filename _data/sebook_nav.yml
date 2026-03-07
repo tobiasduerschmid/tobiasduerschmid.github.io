@@ -11,9 +11,9 @@ topics:
       - name: State
         url: /SEBook/designpatterns/state.html
 
-  - name: SOLID
+  - name: Design Principles
     icon: null
-    url: SEBook/designprinciples.html
+    url: SEBook/SEBook/designprinciples.html
     subtopics:
       - name: Information Hiding
         url: /SEBook/designprinciples/informationhiding.html
