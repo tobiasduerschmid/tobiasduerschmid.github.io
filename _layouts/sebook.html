@@ -57,7 +57,7 @@
                     {% assign heading_text = heading_and_content[1] | split: '</h1>' | first %}
                     {% assign section_content = section | split: '</h1>' | last %}
                     {% if heading_text != "" %}
-                      {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
+                      {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' | replace: '</h1', '' %}
                       <section id="{{ section_id }}">
                         <h1>{{ heading_text }}</h1>{{ section_content }}
                       </section>
