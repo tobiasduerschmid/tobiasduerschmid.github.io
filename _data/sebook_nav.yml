@@ -31,9 +31,9 @@ topics:
     url: /SEBook/uml.html
     subtopics:
       - name: Class Diagrams
-        url: /SEBook/uml.html#class-diagrams
+        url: /SEBook/uml.html#class-diagrams%C2%A0
       - name: Sequence Diagrams
-        url: /SEBook/uml.html#sequence-diagrams
+        url: /SEBook/uml.html#sequence-diagrams%C2%A0
   
   - name: User Stories
     icon: null
