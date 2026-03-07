@@ -13,19 +13,13 @@ topics:
 
   - name: SOLID
     icon: null
-    url: /SEBook/solid.html
+    url: SEBook/designprinciples.html
     subtopics:
-      - name: Single Responsibility Principle
-        url: /SEBook/solid.html#single-responsibility-principle
-      - name: Open/Closed Principle
-        url: /SEBook/solid.html#openclosed-principle
-      - name: Liskov Substitution Principle
-        url: /SEBook/solid.html#liskov-substitution-principle
-      - name: Interface Segregation Principle
-        url: /SEBook/solid.html#interface-segregation-principle
-      - name: Dependency Inversion Principle
-        url: /SEBook/solid.html#dependency-inversion-principle
-  
+      - name: Information Hiding
+        url: /SEBook/designprinciples/informationhiding.html
+      - name: SOLID
+        url: /SEBook/designprinciples/solid.html
+
   - name: UML
     icon: null
     url: /SEBook/uml.html

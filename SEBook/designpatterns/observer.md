@@ -3,7 +3,6 @@ title: Observer Design Pattern
 layout: sebook
 ---
 
-
 # Problem 
 
 In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly.
