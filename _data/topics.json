@@ -96,6 +96,10 @@
       	"path" : "SEBook/userstories.html"
       },
       {
+      	"name" : "UML",
+      	"path" : "SEBook/uml.html"
+      },
+      {
       	"name" : "SOLID Design Principles",
       	"path" : "SEBook/solid.html"
       }
