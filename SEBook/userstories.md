@@ -3,8 +3,8 @@ title: User Stories
 layout: sebook
 ---
 
-User stories are the most commonly used mechanism to document requirements in a light-weight, informal way (particulalry in Agile projects).
-
+User stories are the most commonly used format to specify requirements in a light-weight, informal way (particulalry in Agile projects).
+Each user story is a high-level description of a software feature written from the perspective of the end-user.
 
 # Format
 
@@ -19,10 +19,13 @@ User stories follow this format:
 
 ---
 
+This structure makes the team to identify not just the "what", but also the "who" and — most importantly — the "why".
+
 
 # Acceptance Criteria
 
-Acceptance Criteria define the scope of a user story.
+To make these descriptions actionable and testable, we pair them with acceptance criteria. 
+Acceptance criteria define the scope of a user story.
 
 They follow this format:
 
@@ -55,3 +58,5 @@ They follow this format:
 
 ## Testable
 
+# Limitations
+User stories can struggle to capture non-functional requirements like performance, security, or reliability, and they are generally considered insufficient for safety-critical systems like spacecraft or medical devices

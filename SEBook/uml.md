@@ -46,9 +46,6 @@ The names shown on the arrows have to be consistent with the method names shown 
 
 It is a modeling choice to decide whether you want to include concrete values (e.g., `caclulateTax(1400)`) or meaningful variable names (e.g., `calculateTax(income)`). If you reference a real variable that has been used before, please make sure to ensure it is the same one and it has the right type. 
 
-
-
-
 # State Machine Diagrams 
 
 State machines model the transitions between different states. States are modeled either as oval, rectangles with rounded corners, or circles. 
