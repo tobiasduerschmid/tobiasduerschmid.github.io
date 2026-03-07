@@ -3,27 +3,13 @@
 topics:
   
   - name: Design Patterns
-    icon: puzzle
+    icon: null
     url: /SEBook/designpatterns.html
     subtopics:
-      - name: What is a Pattern
-        url: /SEBook/designpatterns.html#what-is-a-pattern
-      - name: Catalog
-        url: /SEBook/designpatterns.html#catalog
-        items:
-          - name: Creational Patterns
-            url: /SEBook/designpatterns.html#creational-patterns
-          - name: Structural Patterns
-            url: /SEBook/designpatterns.html#structural-patterns
-          - name: Behavioral Patterns
-            url: /SEBook/designpatterns.html#behavioral-patterns
-            items:
-              - name: Observer
-                url: /SEBook/designpatterns.html#observer
-              - name: State
-                url: /SEBook/designpatterns.html#state
-      - name: Code Examples
-        url: /SEBook/designpatterns.html#code-examples
+      - name: Observer
+        url: /SEBook/designpatterns.html#observer
+      - name: State
+        url: /SEBook/designpatterns.html#state
   
   - name: SOLID
     icon: null
