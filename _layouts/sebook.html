@@ -24,16 +24,11 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav navbar-right">
-            {% for p in project.pages %}
-              {% if p.name %}
-              <li><a class="page-scroll" href="#{% if p.id %}{{ p.id }}{% else %}{{ p.name }}{% endif %}">{{ p.name }}</a></li>
-              {% endif %}
-            {% endfor %}
             <!-- Extract H1 headings from content -->
-            {% assign h1_matches = content | split: '<h1' %}
+            {% assign h1_matches = content | split: '<h1>' %}
             {% for match in h1_matches %}
               {% if match contains '</h1>' %}
-                {% assign heading_text = match | split: '>' | last | split: '</h1>' | first %}
+                {% assign heading_text = match | split: '</h1>' | first %}
                 {% if heading_text != "" %}
                   {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
                   <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
