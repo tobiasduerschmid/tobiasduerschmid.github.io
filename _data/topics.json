@@ -100,6 +100,10 @@
       	"path" : "SEBook/uml.html"
       },
       {
+      	"name" : "Design Patterns",
+      	"path" : "SEBook/designpatterns.html"
+      },
+      {
       	"name" : "SOLID Design Principles",
       	"path" : "SEBook/solid.html"
       }
