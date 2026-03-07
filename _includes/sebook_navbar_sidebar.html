@@ -175,6 +175,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const currentUrl = window.location.pathname;
+  
   // Handle main navigation toggles
   document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(function(link) {
     link.addEventListener('click', function(e) {
@@ -185,6 +187,23 @@ document.addEventListener('DOMContentLoaded', function() {
         this.querySelector('.sebook-nav-toggle').classList.toggle('open');
       }
     });
+    
+    // Check if this section contains the current page
+    const parent = link.parentElement;
+    const sublinks = parent.querySelectorAll('.sebook-nav-sublink, .sebook-nav-itemlink');
+    let isCurrentPage = false;
+    
+    sublinks.forEach(function(sublink) {
+      if (sublink.href && currentUrl.includes(sublink.href.split('#')[0])) {
+        isCurrentPage = true;
+      }
+    });
+    
+    // Auto-expand if current page is in this section
+    if (isCurrentPage) {
+      parent.classList.add('open');
+      link.querySelector('.sebook-nav-toggle').classList.add('open');
+    }
   });
   
   // Handle subtopic toggles
@@ -197,6 +216,23 @@ document.addEventListener('DOMContentLoaded', function() {
         this.querySelector('.sebook-nav-toggle').classList.toggle('open');
       }
     });
+    
+    // Check if this section contains the current page
+    const parent = link.parentElement;
+    const itemlinks = parent.querySelectorAll('.sebook-nav-itemlink');
+    let isCurrentPage = false;
+    
+    itemlinks.forEach(function(itemlink) {
+      if (itemlink.href && currentUrl.includes(itemlink.href.split('#')[0])) {
+        isCurrentPage = true;
+      }
+    });
+    
+    // Auto-expand if current page is in this section
+    if (isCurrentPage) {
+      parent.classList.add('open');
+      link.querySelector('.sebook-nav-toggle').classList.add('open');
+    }
   });
 });
 </script>
