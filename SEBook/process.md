@@ -20,5 +20,5 @@ Key principles supporting this include:
 ## Common Agile Processes
 The most common agile processes include:
 * **[Scrum](/SEBook/process/scrum.html)**: The most popular framework using roles like Scrum Master, Product Owner, and Developers.
-* **Extreme Programming (XP)**: Focused on technical excellence through "extreme" versions of good practices, such as Test-Driven Development (TDD), Pair Programming, Continuous Integration, and Collective Code Ownership
+* **[Extreme Programming (XP)]((/SEBook/process/xp.html))**: Focused on technical excellence through "extreme" versions of good practices, such as Test-Driven Development (TDD), Pair Programming, Continuous Integration, and Collective Code Ownership
 * **Lean Software Development**: Derived from Toyota’s manufacturing principles, Lean focuses on eliminating waste

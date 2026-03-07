@@ -27,6 +27,8 @@ topics:
     subtopics:
       - name: Scrum
         url: /SEBook/process/scrum.html
+      - name: Extreme Programming (XP)
+        url: /SEBook/process/xp.html
 
 
   - name: Testing
