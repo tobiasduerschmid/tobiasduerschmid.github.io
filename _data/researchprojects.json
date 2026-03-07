@@ -103,9 +103,18 @@
       "subtitle"  : "SE Book",
       "pages" : 
       [
+      
       {
-      	"name" : "User Stories",
+      	"name" : "User Studies",
       	"path" : "SEBook/userstories.html"
+      },
+      {
+      	"name" : "UML",
+      	"path" : "SEBook/uml.html"
+      },
+      {
+      	"name" : "Design Patterns",
+      	"path" : "SEBook/designpatterns.html"
       },
       {
       	"name" : "SOLID Design Principles",
