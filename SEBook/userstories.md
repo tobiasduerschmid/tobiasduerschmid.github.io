@@ -8,30 +8,25 @@ layout: framework
 
 {% include navbar_project_subpage.html title=project.title pubssize=pubs.size project=project %}
 
-{% include header_project.html title=project.title description=project.subtitle%}
-
-## Table of Contents
-{:toc}
-
----
-
-# User Stories
-
-## INVEST
-
-### Independent
+{% include header_project.html title=SE Book description=User Stories%}
 
 
-### Negotiable
+# INVEST
+
+## Independent
 
 
-### Valuable
+## Negotiable
 
 
-### Estimable
+## Valuable
 
 
-### Small
+## Estimable
 
 
-### Testable
+## Small
+
+
+## Testable
+
