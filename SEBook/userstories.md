@@ -3,7 +3,7 @@ title: User Stories
 layout: sebook
 ---
 
-User stories are the most commonly used mechanism to document requirements in a light-weight, informal way (particulalry in Agile project).
+User stories are the most commonly used mechanism to document requirements in a light-weight, informal way (particulalry in Agile projects).
 
 
 # Format

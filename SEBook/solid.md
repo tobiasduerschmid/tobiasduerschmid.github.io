@@ -3,7 +3,7 @@ title: SOLID
 layout: sebook
 ---
 
-SOLID principles
+The SOLID principles are design principles for changeability in object-oriented systems. 
 
 # Single Responsibility Principle
 
