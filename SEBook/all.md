@@ -1,6 +1,6 @@
 ---
 title: SE Book
-layout: sebook
+layout: sebook-combined
 ---
 
 {% capture userstories %}{% include_relative userstories.md %}{% endcapture %}
