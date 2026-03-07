@@ -7,8 +7,8 @@ layout: sebook
 # Object-oriented Design Patterns
 
 Here are some examples of design patterns that we describe in more detail:
-* [**State**](/SEBook/designpatterns/state.html)
-* [**Observer**](/SEBook/designpatterns/observer.html)
+* [**State**](/SEBook/designpatterns/state.html): 
+* [**Observer**](/SEBook/designpatterns/observer.html): 
 
 
 # Anatomy of a Pattern
@@ -27,5 +27,5 @@ Because each pattern variation can significantly alter the resulting consequence
 Making the right choice requires a rational decision-making process. Early in a software engineering career, one should deliberately execute three steps: identify the design options, evaluate those options, and rank them. Evaluation should be based on strict criteria such as changeability, extensibility, understandability, and performance. Engineers must ask critical questions: Which design decisions might change? How likely are those changes? How easy would the change be without applying the pattern?. Only by prioritizing options based on context-dependent weights of these criteria can a rational, robust architectural decision be made.
 
 # Pattern Compounds and Pattern Languages 
-In advanced software architecture, patterns rarely exist in total isolation. They frequently combine into *Pattern Compounds*, which are recurring sets of patterns with overlapping roles from which entirely new, emergent properties arise. Because pattern compounds act as abstract solutions to abstract problems, they are recognized as patterns themselves. An example of this is utilizing the Observer design pattern within the context of a Model-View-Controller framework to manage complex user interface states, such as in an image effects application where user parameter changes must trigger dynamic re-rendering.
+In advanced software architecture, patterns rarely exist in total isolation. They frequently combine into *Pattern Compounds*, which are recurring sets of patterns with overlapping roles from which entirely new, emergent properties arise. Because pattern compounds act as abstract solutions to abstract problems, they are recognized as patterns themselves. An example of this is utilizing the [*Observer*](/SEBook/designpatterns/observer.html) design pattern within the context of a Model-View-Controller framework to manage complex user interface states, such as in an image effects application where user parameter changes must trigger dynamic re-rendering.
 Scaling further, we rely on Pattern Languages. Unlike an individual pattern that solves a solitary problem, a pattern language provides a conceptual framework detailing how to combine different patterns and make trade-offs between similar ones. It dictates the "grammar" of how pattern problems, solutions, and consequences interact to construct a coherent whole. Pattern collections can be organized by problem (e.g., how to create complex objects using *Builder* or *Abstract Factory*), by desired properties, by level of abstraction, or by specific domains.
