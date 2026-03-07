@@ -20,6 +20,16 @@ topics:
       - name: SOLID
         url: /SEBook/designprinciples/solid.html
 
+
+
+  - name: Testing
+    icon: null
+    url: /SEBook/testing.html
+    subtopics:
+      - name: Test Doubles
+        url: /SEBook/testing/testdoubles.html
+
+
   - name: UML
     icon: null
     url: /SEBook/uml.html

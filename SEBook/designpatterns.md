@@ -3,7 +3,6 @@ title: Design Patterns
 layout: sebook
 ---
 
-
 # Object-oriented Design Patterns
 
 Here are some examples of design patterns that we describe in more detail:
