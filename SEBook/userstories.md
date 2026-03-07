@@ -10,4 +10,28 @@ layout: framework
 
 {% include header_project.html title=project.title description=project.subtitle%}
 
+## Table of Contents
+{:toc}
+
+---
+
 # User Stories
+
+## INVEST
+
+### Independent
+
+
+### Negotiable
+
+
+### Valuable
+
+
+### Estimable
+
+
+### Small
+
+
+### Testable
