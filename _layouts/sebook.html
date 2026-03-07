@@ -30,13 +30,14 @@
               {% endif %}
             {% endfor %}
             <!-- Extract H1 headings from content -->
-            {% assign h1_pattern = '<h1[^>]*>' %}
-            {% assign h1_tags = content | split: h1_pattern %}
-            {% for i in (1..h1_tags.size) %}
-              {% assign h1_content = h1_tags[i] | split: '</h1>' | first %}
-              {% if h1_content %}
-                {% assign h1_id = h1_content | downcase | replace: ' ', '-' | remove: '<' | remove: '>' %}
-                <li><a class="page-scroll" href="#{{ h1_id }}">{{ h1_content }}</a></li>
+            {% assign h1_matches = content | split: '<h1' %}
+            {% for match in h1_matches %}
+              {% if match contains '</h1>' %}
+                {% assign heading_text = match | split: '>' | last | split: '</h1>' | first %}
+                {% if heading_text != "" %}
+                  {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
+                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
+                {% endif %}
               {% endif %}
             {% endfor %}
           </ul>
@@ -49,18 +50,20 @@
 
         <div class="container">
           <div class="row">
-                {% assign content_with_sections = content | replace: '<h1>', '<section id="section"><h1>' | replace: '</h1>', '</h1></section>' %}
-                {% assign content_split = content_with_sections | split: '<section id="section">' %}
-                {% for section in content_split %}
-                  {% if section != "" %}
-                    {% if section contains '</h1>' %}
-                      {% assign h1_content = section | split: '</h1>' | first %}
-                      {% assign h1_text = h1_content | remove: '<h1>' %}
-                      {% assign section_id = h1_text | downcase | replace: ' ', '-' %}
-                      <section id="{{ section_id }}">{{ section }}</section>
-                    {% else %}
-                      {{ section }}
+                {% assign sections = content | split: '<h1' %}
+                {% for section in sections %}
+                  {% if section contains '</h1>' %}
+                    {% assign heading_and_content = section | split: '>' %}
+                    {% assign heading_text = heading_and_content[1] | split: '</h1>' | first %}
+                    {% assign section_content = section | split: '</h1>' | last %}
+                    {% if heading_text != "" %}
+                      {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
+                      <section id="{{ section_id }}">
+                        <h1>{{ heading_text }}</h1>{{ section_content }}
+                      </section>
                     {% endif %}
+                  {% else %}
+                    {{ section }}
                   {% endif %}
                 {% endfor %}
               
