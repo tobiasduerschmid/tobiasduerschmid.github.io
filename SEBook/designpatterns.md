@@ -7,8 +7,9 @@ layout: sebook
 # Object-oriented Design Patterns
 
 Here are some examples of design patterns that we describe in more detail:
-* [**State**](/SEBook/designpatterns/state.html): 
-* [**Observer**](/SEBook/designpatterns/observer.html): 
+* [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
+
+* [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that a group of dependent objects is automatically notified and updated whenever the internal state of their shared subject changes.
 
 
 # Anatomy of a Pattern
