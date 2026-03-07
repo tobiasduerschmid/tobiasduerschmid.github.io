@@ -4,8 +4,9 @@ layout: sebook
 ---
 
 
-# Object-oriented Design Patterns:
+# Object-oriented Design Patterns
 
+Here are some examples of design patterns that we describe in more detail:
 * [**State**](/SEBook/designpatterns/state.html)
 * [**Observer**](/SEBook/designpatterns/observer.html)
 
