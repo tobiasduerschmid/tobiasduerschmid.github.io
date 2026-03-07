@@ -19,9 +19,12 @@ A Test Spy is a more capable version of a Test Stub that serves as an observatio
 The use of a Test Spy facilitates a technique called "Procedural Behavior Verification". The testing lifecycle using a spy looks like this:
 
 1. The test installs the Test Spy in place of the DOC.
+
 2. The SUT is exercised.
+
 3. The test retrieves the recorded information from the Test Spy (often via a Retrieval Interface).
-4. The test uses standard assertion methods to compare the actual values passed to the spy against the expected values,.
+
+4. The test uses standard assertion methods to compare the actual values passed to the spy against the expected values.
 
 A software engineer should utilize a Test Spy when they want the assertions to remain clearly visible within the test method itself, or when they cannot predict the values of all attributes of the SUT's interactions ahead of time. Because a Test Spy does not fail the test at the first deviation from expected behavior, it allows tests to gather more execution data and include highly detailed diagnostic information in assertion failure messages.
 
