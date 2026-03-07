@@ -10,13 +10,59 @@
       {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
       {% assign project  = projects.first %}
 
-      {% include navbar_project_subpage.html title=project.title pubssize=pubs.size project=project %}
+      <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+      <div class="container-fluid">
+        <div class="navbar-header page-scroll">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand page-scroll" href="{{project.url}}">{{project.title}} | {{ site.author }}</a>
+        </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            {% for p in project.pages %}
+              {% if p.name %}
+              <li><a class="page-scroll" href="#{% if p.id %}{{ p.id }}{% else %}{{ p.name }}{% endif %}">{{ p.name }}</a></li>
+              {% endif %}
+            {% endfor %}
+            <!-- Extract H1 headings from content -->
+            {% assign h1_pattern = '<h1[^>]*>' %}
+            {% assign h1_tags = content | split: h1_pattern %}
+            {% for i in (1..h1_tags.size) %}
+              {% assign h1_content = h1_tags[i] | split: '</h1>' | first %}
+              {% if h1_content %}
+                {% assign h1_id = h1_content | downcase | replace: ' ', '-' | remove: '<' | remove: '>' %}
+                <li><a class="page-scroll" href="#{{ h1_id }}">{{ h1_content }}</a></li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
 
       {% include header_project.html title=page.title %}
 
         <div class="container">
           <div class="row">
-                {{content}}
+                {% assign content_with_sections = content | replace: '<h1>', '<section id="section"><h1>' | replace: '</h1>', '</h1></section>' %}
+                {% assign content_split = content_with_sections | split: '<section id="section">' %}
+                {% for section in content_split %}
+                  {% if section != "" %}
+                    {% if section contains '</h1>' %}
+                      {% assign h1_content = section | split: '</h1>' | first %}
+                      {% assign h1_text = h1_content | remove: '<h1>' %}
+                      {% assign section_id = h1_text | downcase | replace: ' ', '-' %}
+                      <section id="{{ section_id }}">{{ section }}</section>
+                    {% else %}
+                      {{ section }}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
               
           </div>
         </div>
