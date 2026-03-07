@@ -45,7 +45,7 @@
 
         <div class="container">
           <div class="row">
-                {% assign sections = content | split: '<h1' %}
+                {% assign sections = content | split: '<h1>' %}
                 {% for section in sections %}
                   {% if section contains '</h1>' %}
                     {% assign heading_and_content = section | split: '>' %}
