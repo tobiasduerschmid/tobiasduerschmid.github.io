@@ -1,5 +1,5 @@
 ---
-title: Observer Patterns
+title: Observer Design Pattern
 layout: sebook
 ---
 
