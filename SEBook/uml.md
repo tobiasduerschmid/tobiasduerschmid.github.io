@@ -15,11 +15,11 @@ The top section is always the name of the class. If the class is abstract, the n
 
 The middle section indicates attributes of the class (i.e., member variables). 
 
-The bottom section should include all methods are implemented in this class (i.e., for which the implementation of the class contains a method definition). 
+The bottom section should include all methods that are implemented in this class (i.e., for which the implementation of the class contains a method definition). 
 
 Inheritance is visualized using an arrow with an empty triage pointing to the super class. 
 
-Attributes and methods can be marked as `public` (+), `private` (-), or `protected` (#), to indicate the visibility. 
+Attributes and methods can be marked as *public* (`+`), *private* (`-`), or *protected* (`#`), to indicate the visibility. 
 **Hint:** Avoid public attributes, as this leads to bad design. (Public means every class has access, private means only this class has access, protected means this class and its sub classes have access) 
 
 When a class uses an association, the name and visibility of the attribute can be written either next to the association or in the attribute section, or both (but only if it is done consistently). Writing it on the Association is more common since it increases the readability of the diagram.
