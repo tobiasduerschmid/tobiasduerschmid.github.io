@@ -25,7 +25,7 @@ Create **Concrete State classes** that inherit from the Abstract State and imple
 
 The only interactions that should be allows are interactions between the Context and Concrete States. There are no interaction among Concrete States objects.
 
-# Details / Design Decisions:
+# Design Decisions
 
 ## How to let the state make operations on the context object?
 The state-dependent behavior often needs to make changes to the Context. To implement this, the state object can either store a reference to the Context (usually implemented in the Abstract State class) or the context object is passed into the state with every call to a state-dependent method.  

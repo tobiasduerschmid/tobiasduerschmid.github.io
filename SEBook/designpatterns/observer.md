@@ -34,7 +34,7 @@ When the *Subject*'s state changes, it iterates through its list of attached *Ob
 
 This creates a loosely coupled system: the *Subject* only knows that its *Observers* implement a specific interface, not their concrete implementation details.
 
-# Details / Design Decisions:
+# Design Decisions
 
 ## Push vs. Pull Model: 
 **Push Model:** 
