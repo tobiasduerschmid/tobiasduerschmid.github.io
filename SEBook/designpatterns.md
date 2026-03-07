@@ -3,7 +3,9 @@ title: Design Patterns
 layout: sebook
 ---
 
-# State Pattern
+
+
+# State
 
 ## Problem 
 
@@ -36,4 +38,30 @@ The state-dependent behavior often needs to make changes to the Context. To impl
 Use the Null Object pattern to create a ["null state"](https://en.wikipedia.org/wiki/Null_object_pattern)
 
 
+# Observer
 
+## Problem 
+
+## Context
+
+## Solution
+
+The Observer design pattern solves this by establishing a one-to-many subscription mechanism.
+
+It introduces two main roles: the ***Subject*** (the object sending updates after it has changed) and the ***Observer*** (the object listening to the updates of *Subjects*).
+
+Instead of objects polling the *Subject* or the *Subject* being hard-wired to specific objects, the *Subject* maintains a dynamic list of *Observers*. 
+It provides an interface for *Observers* to attach and detach themselves at runtime. 
+When the *Subject*'s state changes, it iterates through its list of attached *Observers* and calls a specific notification method (e.g., `update()`) defined in the Observer interface.
+
+This creates a loosely coupled system: the *Subject* only knows that its *Observers* implement a specific interface, not their concrete implementation details.
+
+## Details / Design Decisions:
+
+### Push vs. Pull Model: 
+**Push Model:** 
+The *Subject* sends the **detailed state information** to the *Observer* as arguments in the `update()` method, even if the *Observer* doesn't need all data. 
+This keeps the Observer completely decoupled from the Subject but can be inefficient if large data is passed unnecessarily.
+
+**Pull Model:** 
+The *Subject* sends a **minimal notification**, and the *Observer* is responsible for querying the *Subject* for the specific data it needs. This requires the *Observer* to have a reference back to the *Subject*, slightly increasing coupling, but it is often more efficient.
