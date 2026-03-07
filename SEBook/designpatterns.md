@@ -1,5 +1,5 @@
 ---
-title: UML
+title: Design Patterns
 layout: sebook
 ---
 
