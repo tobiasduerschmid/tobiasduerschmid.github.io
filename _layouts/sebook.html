@@ -25,12 +25,11 @@
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract H1 headings from content -->
-          {% assign sections = content | split: '<h1>' %}
+          {% assign sections = content | split: '<h1' %}
           {% for section in sections %}
-          {% if section contains '</h1>' %}
+            {% if section contains '</h1>' %}
             {% assign heading_and_content = section | split: '>' %}
             {% assign heading_text = heading_and_content[1] | split: '</h1>' | first %}
-            {% assign section_content = section | split: '</h1>' | last %}
             {% if heading_text != "" %}
                 {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
                   <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
@@ -47,7 +46,7 @@
 
         <div class="container">
           <div class="row">
-                {% assign sections = content | split: '<h1>' %}
+                {% assign sections = content | split: '<h1' %}
                 {% for section in sections %}
                   {% if section contains '</h1>' %}
                     {% assign heading_and_content = section | split: '>' %}
