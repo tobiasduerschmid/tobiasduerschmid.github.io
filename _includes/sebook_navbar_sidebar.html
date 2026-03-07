@@ -198,19 +198,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Still allow clicking to collapse/expand
+  // Top level items: allow clicking to navigate to URL (don't prevent default)
   document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(function(link) {
-    link.addEventListener('click', function(e) {
-      if (this.querySelector('.sebook-nav-toggle')) {
-        e.preventDefault();
-        const parent = this.parentElement;
+    // Toggle only when clicking the toggle arrow, not the whole link
+    const toggle = link.querySelector('.sebook-nav-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const parent = link.parentElement;
         parent.classList.toggle('open');
-        this.querySelector('.sebook-nav-toggle').classList.toggle('open');
-      }
-    });
+        this.classList.toggle('open');
+      });
+    }
   });
   
-  // Handle subtopic toggles
+  // Handle subtopic toggles (these should still toggle, not navigate)
   document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(function(link) {
     link.addEventListener('click', function(e) {
       if (this.querySelector('.sebook-nav-toggle')) {
