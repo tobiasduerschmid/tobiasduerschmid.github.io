@@ -3,9 +3,8 @@ title: Observer Patterns
 layout: sebook
 ---
 
-# Observer
 
-## Problem 
+# Problem 
 
 In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly.
 
@@ -13,7 +12,7 @@ If the dependent objects constantly check the core object for changes (polling),
 
 The core problem is: **How can a one-to-many dependency between objects be maintained efficiently without making the objects tightly coupled?**
 
-## Context
+# Context
 
 The Observer pattern is highly applicable in scenarios requiring **distributed event handling** systems or highly decoupled architectures. Common contexts include:
 
@@ -23,7 +22,7 @@ The Observer pattern is highly applicable in scenarios requiring **distributed e
 
 * **Social Media/News Feeds**: A system where users (observers) follow a specific creator (subject) and need to be notified instantly when new content is posted.
 
-## Solution
+# Solution
 
 The Observer design pattern solves this by establishing a one-to-many subscription mechanism.
 
@@ -35,9 +34,9 @@ When the *Subject*'s state changes, it iterates through its list of attached *Ob
 
 This creates a loosely coupled system: the *Subject* only knows that its *Observers* implement a specific interface, not their concrete implementation details.
 
-## Details / Design Decisions:
+# Details / Design Decisions:
 
-### Push vs. Pull Model: 
+## Push vs. Pull Model: 
 **Push Model:** 
 The *Subject* sends the **detailed state information** to the *Observer* as arguments in the `update()` method, even if the *Observer* doesn't need all data. 
 This keeps the Observer completely decoupled from the Subject but can be inefficient if large data is passed unnecessarily.
