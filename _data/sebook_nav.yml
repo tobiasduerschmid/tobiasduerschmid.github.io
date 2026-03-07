@@ -1,13 +1,6 @@
 # SE Book Navigation Structure
 
 topics:
-  - name: Premium Content
-    icon: star
-    url: "#premium"
-  
-  - name: Refactoring
-    icon: scissors
-    url: /SEBook/refactoring.html
   
   - name: Design Patterns
     icon: puzzle
@@ -25,26 +18,10 @@ topics:
           - name: Behavioral Patterns
             url: /SEBook/designpatterns.html#behavioral-patterns
             items:
-              - name: Chain of Responsibility
-                url: /SEBook/designpatterns.html#chain-of-responsibility
-              - name: Command
-                url: /SEBook/designpatterns.html#command
-              - name: Iterator
-                url: /SEBook/designpatterns.html#iterator
-              - name: Mediator
-                url: /SEBook/designpatterns.html#mediator
-              - name: Memento
-                url: /SEBook/designpatterns.html#memento
               - name: Observer
                 url: /SEBook/designpatterns.html#observer
               - name: State
                 url: /SEBook/designpatterns.html#state
-              - name: Strategy
-                url: /SEBook/designpatterns.html#strategy
-              - name: Template Method
-                url: /SEBook/designpatterns.html#template-method
-              - name: Visitor
-                url: /SEBook/designpatterns.html#visitor
       - name: Code Examples
         url: /SEBook/designpatterns.html#code-examples
   
