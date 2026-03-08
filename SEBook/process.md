@@ -7,7 +7,12 @@ layout: sebook
 For decades, software development was dominated by the Waterfall model, a sequential process where each phase—requirements, design, implementation, verification, and maintenance—had to be completed entirely before the next began. This "Big Upfront Design" approach assumed that requirements were stable and that designers could predict every challenge before a single line of code was written. However, this led to significant industry frustrations: projects were frequently delayed, and because customer feedback arrived only at the very end of the multi-year cycle, teams often delivered products that no longer met the user's changing needs.
 
 ## Agile Manifesto
-In 2001, a group of software experts met in Utah to address these failures, resulting in the Agile Manifesto. Rather than a rigid rulebook, the manifesto proposed a shift in values: Individuals and interactions over processes and tools; Working software over comprehensive documentation; Customer collaboration over contract negotiation; and Responding to change over following a plan. While the authors acknowledged value in the items on the right, they insisted that the items on the left were more critical for success in complex environments.
+In 2001, a group of software experts met in Utah to address these failures, resulting in the Agile Manifesto. Rather than a rigid rulebook, the manifesto proposed a shift in values: 
+* Individuals and interactions over processes and tools
+* Working software over comprehensive documentation
+* Customer collaboration over contract negotiation; 
+* Responding to change over following a plan
+While the authors acknowledged value in the items on the right, they insisted that the items on the left were more critical for success in complex environments.
 
 ## Core Principles
 The heart of Agility lies in **iterative and incremental development**. Instead of one long cycle, work is broken into short, time-boxed periods—often called Sprints—typically lasting one to four weeks. At the end of each sprint, the team delivers a "Working Increment" of the product, which is demonstrated to the customer to gather rapid feedback. This ensures the team is always building the "right" system and can pivot if requirements evolve.
