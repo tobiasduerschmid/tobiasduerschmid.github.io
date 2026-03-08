@@ -9,6 +9,8 @@
       
       {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
       {% assign project  = projects.first %}
+      {% assign topics  = site.data.CS35L_nav.topics %}
+
 
       <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
       <div class="container-fluid">
