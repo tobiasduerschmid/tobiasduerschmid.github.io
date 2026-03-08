@@ -3,7 +3,8 @@ title: Scrum
 layout: sebook
 ---
 
-<audio controls>
+AI Audio Summary: 
+<audio controls>    
     <source src="/SEBook/process/scrum.m4a" type="audio/mpeg">
     Your browser does not support the audio element.
 </audio>
