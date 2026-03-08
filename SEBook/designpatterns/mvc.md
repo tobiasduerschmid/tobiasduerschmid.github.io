@@ -50,7 +50,7 @@ Applying the MVC pattern yields profound architectural advantages, but it also i
 # Sample Code 
 This sample code shows how MVC could be implemented in Python:
 
-```Python
+```python
 # ==========================================
 # 0. OBSERVER PATTERN BASE CLASSES
 # ==========================================
