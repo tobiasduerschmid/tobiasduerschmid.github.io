@@ -24,10 +24,6 @@ Despite their power, design patterns are not silver bullets. Misusing them intro
 *   **Implicit Dependencies:** Patterns intentionally replace static, compile-time dependencies with dynamic, runtime interactions. This flexibility comes at a cost: it becomes harder to trace the execution flow and state of the system just by reading the code.
 *   **Misinterpretation as Recipes:** A pattern is an abstract idea, not a snippet of code from Stack Overflow. Integrating a pattern into a system is a human-intensive, manual activity that requires tailoring the solution to fit a concrete context.
 
-*   **Pattern Variants:** Because patterns are language-independent concepts, their exact implementation varies wildly. In a dynamically typed language like Ruby, a pattern might be reduced to a single line of library inclusion, whereas in C++, it might utilize multiple inheritance. 
-*   **Pattern Compounds:** Often, a pattern will introduce a new problem that another pattern must solve, leading to "pattern compounds" (e.g., a Composite Command or a Composite State). These combinations create emergent synergies that make software design more unified and coherent, though they run the risk of superimposing too many confusing roles onto a single class.
-
-
 # Object-oriented Design Patterns
 
 Here are some examples of design patterns that we describe in more detail:
