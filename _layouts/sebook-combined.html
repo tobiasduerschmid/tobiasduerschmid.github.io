@@ -21,7 +21,17 @@
           </button>
           <a class="navbar-brand page-scroll" href="{{project.url}}">{{project.title}} | {{ site.author }}</a>
         </div>
-      
+      <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <!-- Extract H1 headings from content -->
+          {% for topic in topics %}
+                {% assign topic_id = topic | slugify %}
+                  <li><a class="page-scroll" href="#{{topic_id}}">{{topic}}</a></li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+          </ul>
+        </div><!--/.nav-collapse -->
       </div>
     </nav>
 
