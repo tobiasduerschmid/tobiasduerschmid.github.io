@@ -8,7 +8,10 @@ topics:
     subtopics:
       - name: Observer
         url: /SEBook/designpatterns/observer.html
-
+      - name: Factory Method
+        url: /SEBook/designpatterns/factory_method.html
+      - name: Abstract Factory
+        url: /SEBook/designpatterns/abstract_factory.html
   - name: Design Principles
     icon: null
     url: /SEBook/designprinciples.html
