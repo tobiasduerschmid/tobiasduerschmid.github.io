@@ -7,7 +7,7 @@
 
     <article class="post-content">
       
-    {% assign course_key = site.course  %}
+    {% assign course_key = page.course  %}
     {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
     {% assign project  = projects.first %}
     {% assign nav_key = course_key | append: '_nav' %}
