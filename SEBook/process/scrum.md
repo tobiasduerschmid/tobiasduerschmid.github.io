@@ -19,7 +19,7 @@ To make empiricism actionable, Scrum rests on three core pillars:
 
 * **Transparency**: Significant aspects of the process must be visible to everyone responsible for the outcome. "The work is on the wall", meaning stakeholders and developers alike should see exactly where the project stands via artifacts like Kanban boards.
 * **Inspection**: The team must frequently and diligently check their progress toward the Sprint Goal to detect undesirable variances.
-* **Adaptation**: If inspection reveals that the process or product is unacceptable, the team must adjust immediately to minimize further issues. The course material emphasizes that Scrum is not a fixed process but one designed to be tailored to a team's specific domain and needs.
+* **Adaptation**: If inspection reveals that the process or product is unacceptable, the team must adjust immediately to minimize further issues. It is important to realize that Scrum is not a fixed process but one designed to be tailored to a team's specific domain and needs.
 
 # Scrum Roles
 AI Audio Summary: 
