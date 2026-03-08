@@ -1,10 +1,15 @@
 ---
 title: CS 35L
 layout: sebook-combined
+project_name: 
 ---
 
 
-{% for topic in site.data.CS35L_nav.topics %}
+{% for topic in site.data.sebook_nav.topics %}
+    {% assign topic_id = {{topic.name}} | slugify %}
+    
+    <section id="{{topic_id}}">
+
     {% capture topic_name %}{% include_relative {{ topic.url | replace: '/SEBook/', '' | replace: '.html', '.md' }} %}{% endcapture %}
     {% include header_project.html title=topic.name %}
     {% assign topic_parts = topic_name | split: '---' %}
@@ -30,4 +35,5 @@ layout: sebook-combined
             {% endif %}
         {% endfor %}
     {% endif %}
+    </section>
 {% endfor %}
