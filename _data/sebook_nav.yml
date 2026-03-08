@@ -52,19 +52,7 @@ topics:
   - name: UML
     icon: null
     url: /SEBook/uml.html
-    subtopics:
-      - name: Class Diagrams
-        url: /SEBook/uml.html#class-diagrams%C2%A0
-      - name: Sequence Diagrams
-        url: /SEBook/uml.html#sequence-diagrams%C2%A0
   
   - name: User Stories
     icon: null
     url: /SEBook/userstories.html
-    subtopics:
-      - name: Format
-        url: /SEBook/userstories.html#format
-      - name: Acceptance Criteria
-        url: /SEBook/userstories.html#acceptance-criteria
-      - name: INVEST
-        url: /SEBook/userstories.html#invest
