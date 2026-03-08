@@ -99,7 +99,7 @@
     },
     { "key"       : "sebook",
       "title"     : "SE Book",
-      "url"       : "/sebook.html",
+      "url"       : "/SEBook/",
       "subtitle"  : "SE Book",
       "pages" : 
       [

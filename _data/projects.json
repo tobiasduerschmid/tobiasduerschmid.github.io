@@ -38,7 +38,7 @@
       "authors"   : [ "Tobias Dürschmid"],
       "thumbnail" : "/img/se.png",
       "downloads" : [
-        { "href"  : "/sebook.html",
+        { "href"  : "/SEBook/",
           "desc"  : "Project Website"
         }
       ]
