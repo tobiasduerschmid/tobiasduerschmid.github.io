@@ -3,6 +3,11 @@ title: Scrum
 layout: sebook
 ---
 
+<audio controls>
+    <source src="/SEBook/process/scrum.m4a" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
 
 While many organizations claim to be "Agile", the vast majority (roughly 63%) implement the Scrum framework. 
 
