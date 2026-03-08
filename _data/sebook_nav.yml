@@ -59,6 +59,8 @@ topics:
     subtopics:
       - name: Interoperability
         url: /SEBook/quality_attributes/interoperability.html
+      - name: Testability
+        url: /SEBook/quality_attributes/testability.html
 
 
   - name: UML
