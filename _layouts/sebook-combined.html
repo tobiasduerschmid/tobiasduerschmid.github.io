@@ -7,9 +7,11 @@
 
     <article class="post-content">
       
-      {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
-      {% assign project  = projects.first %}
-      {% assign topics  = site.data.sebook_nav.topics %}
+    {% assign course_key = site.course | default: 'sebook' %}
+    {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
+    {% assign project  = projects.first %}
+    {% assign nav_key = course_key | append: '_nav' %}
+    {% assign topics = site.data[nav_key].topics %}
 
 
       <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
