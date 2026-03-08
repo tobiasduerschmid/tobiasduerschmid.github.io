@@ -1,0 +1,48 @@
+# SE Book Navigation Structure
+
+topics:
+  
+  - name: Design Patterns
+    icon: null
+    url: /SEBook/designpatterns.html
+    subtopics:
+      - name: Observer
+        url: /SEBook/designpatterns/observer.html
+
+  - name: Design Principles
+    icon: null
+    url: /SEBook/designprinciples.html
+    subtopics:
+      - name: Information Hiding
+        url: /SEBook/designprinciples/informationhiding.html
+
+
+  - name: Software Process
+    icon: null
+    url: /SEBook/process.html
+    subtopics:
+      - name: Scrum
+        url: /SEBook/process/scrum.html
+      - name: Extreme Programming (XP)
+        url: /SEBook/process/xp.html
+
+
+  - name: Testing
+    icon: null
+    url: /SEBook/testing.html
+    subtopics:
+
+
+  - name: Quality Attributes
+    icon: null
+    url: /SEBook/quality_attributes.html
+    subtopics:
+
+
+  - name: UML
+    icon: null
+    url: /SEBook/uml.html
+  
+  - name: User Stories
+    icon: null
+    url: /SEBook/userstories.html
