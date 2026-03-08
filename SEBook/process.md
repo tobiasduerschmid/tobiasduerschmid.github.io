@@ -10,7 +10,7 @@ For decades, software development was dominated by the Waterfall model, a sequen
 In 2001, a group of software experts met in Utah to address these failures, resulting in the Agile Manifesto. Rather than a rigid rulebook, the manifesto proposed a shift in values: 
 * Individuals and interactions over processes and tools
 * Working software over comprehensive documentation
-* Customer collaboration over contract negotiation; 
+* Customer collaboration over contract negotiation
 * Responding to change over following a plan
 While the authors acknowledged value in the items on the right, they insisted that the items on the left were more critical for success in complex environments.
 
