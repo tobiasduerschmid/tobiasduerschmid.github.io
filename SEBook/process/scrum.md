@@ -17,7 +17,7 @@ Scrum is a management framework built on the philosophy of *Empiricism*. This ph
 
 To make empiricism actionable, Scrum rests on three core pillars:
 
-* **Transparency**: Significant aspects of the process must be visible to everyone responsible for the outcome. As the lecture slide notes, "The work is on the wall", meaning stakeholders and developers alike should see exactly where the project stands via artifacts like Kanban boards.
+* **Transparency**: Significant aspects of the process must be visible to everyone responsible for the outcome. "The work is on the wall", meaning stakeholders and developers alike should see exactly where the project stands via artifacts like Kanban boards.
 * **Inspection**: The team must frequently and diligently check their progress toward the Sprint Goal to detect undesirable variances.
 * **Adaptation**: If inspection reveals that the process or product is unacceptable, the team must adjust immediately to minimize further issues. The course material emphasizes that Scrum is not a fixed process but one designed to be tailored to a team's specific domain and needs.
 
@@ -47,7 +47,7 @@ The framework follows a specific rhythm of time-boxed events:
 * **The Sprint**: A 1–4 week period of uninterrupted development.
 * **Sprint Planning**: The entire team collaborates to define why the sprint is valuable (the goal), what can be done, and how it will be built.
 * **Daily Standup** (Daily Scrum): A 15-minute sync where developers discuss what they did yesterday, what they will do today, and any obstacles in their way.
-* **Sprint Review**: A working session at the end of the sprint where stakeholders provide feedback on the working increment. The lecture slide notes that a good review includes live demos, not just slides.
+* **Sprint Review**: A working session at the end of the sprint where stakeholders provide feedback on the working increment. A good review includes live demos, not just slides.
 * **Sprint Retrospective**: The team reflects on their process and identifies ways to increase future quality and effectiveness.
 
 # Scaling Scrum with SAFe
