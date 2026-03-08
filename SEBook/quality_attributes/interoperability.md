@@ -6,6 +6,8 @@ layout: sebook
 Interoperability is defined as the degree to which two or more systems or components can usefully exchange meaningful information via interfaces in a particular context.
 
 # Motivation
+In the modern software landscape, systems are rarely "islands"; they must interact with external services to function effectively
+
 
 # Syntactic vs Semantic Interoperability
 
