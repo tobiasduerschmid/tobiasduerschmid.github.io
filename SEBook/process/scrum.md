@@ -30,7 +30,7 @@ AI Audio Summary:
 
 Scrum defines three specific roles that are intentionally designed to exist in tension to ensure both speed and quality:
 
-* **The Product Owner** (The Navigator): This role is responsible for maximizing the value of the product resulting from the team’s work. They "own" the product vision, prioritize the backlog, and typically communicate requirements through user stories.
+* **The Product Owner** (The Value Navigator): This role is responsible for maximizing the value of the product resulting from the team’s work. They "own" the product vision, prioritize the backlog, and typically communicate requirements through user stories.
 * **The Developers** (The Builders): Developers in Scrum are meant to be cross-functional and self-organizing. This means they possess all the skills needed—UI, backend, testing—to create a usable increment without depending on outside teams. They are responsible for adhering to a Definition of Done to ensure internal quality.
 * **The Scrum Master** (The Coach): Misunderstood as a "project manager", the Scrum Master is actually a servant-leader. Their primary objective is to maximize team effectiveness by removing "impediments" (blockers like legal delays or missing licenses) and coaching the team on Scrum values.
 
