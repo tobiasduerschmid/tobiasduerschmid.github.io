@@ -29,8 +29,6 @@
           {% for topic in topics %}
                 {% assign topic_id = topic | slugify %}
                   <li><a class="page-scroll" href="#{{topic_id}}">{{topic}}</a></li>
-                {% endif %}
-              {% endif %}
             {% endfor %}
           </ul>
         </div><!--/.nav-collapse -->
