@@ -22,7 +22,6 @@ To make empiricism actionable, Scrum rests on three core pillars:
 * **Adaptation**: If inspection reveals that the process or product is unacceptable, the team must adjust immediately to minimize further issues. The course material emphasizes that Scrum is not a fixed process but one designed to be tailored to a team's specific domain and needs.
 
 # Scrum Roles
-
 AI Audio Summary: 
 <audio controls>    
     <source src="/SEBook/process/scrum_roles.m4a" type="audio/mpeg">
