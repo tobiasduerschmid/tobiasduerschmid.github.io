@@ -11,8 +11,7 @@ As software evolves, we must ensure that new features don't inadvertently break 
 
 ## Black-Box and White-Box
 When we design tests, we usually adopt one of two mindsets. 
-**Black-box testing** treats the system as a "black box" where the internal workings are invisible; tests are derived strictly from the requirements or specification to ensure they don't overfit the implementation. I
-n contrast, **white-box testing** requires the tester to be aware of the inner workings of the code, deriving tests directly from the implementation to ensure high code coverage.
+**Black-box testing** treats the system as a "black box" where the internal workings are invisible; tests are derived strictly from the requirements or specification to ensure they don't overfit the implementation. In contrast, **white-box testing** requires the tester to be aware of the inner workings of the code, deriving tests directly from the implementation to ensure high code coverage.
 
 ## The Testing Pyramid: Levels of Execution
 A robust testing strategy requires a mix of tests at different levels of abstraction.
