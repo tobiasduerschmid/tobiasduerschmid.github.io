@@ -8,9 +8,9 @@ When expert programmers navigate an unfamiliar codebase, they do not read source
 Understanding the theory of beacons is essential for mastering expert code reading, as they represent the primary mechanism by which human memory bridges the gap between low-level syntax and high-level system architecture.
 
 # Definition
-At its core, a beacon is a recognizable, familiar point in the source code that serves as a mental shortcut for the programmer (Ali & Khan 2019). They are defined as "signs standing close to human thinking that may give a hint for the programmer about the purpose of the examined code" (Fekete & Porkoláb 2020). 
+At its core, a beacon is a **recognizable, familiar point in the source code that serves as a mental shortcut for the programmer** (Ali & Khan 2019). They are defined as **"signs standing close to human thinking that may give a hint for the programmer about the purpose of the examined code"** (Fekete & Porkoláb 2020). 
 
-Beacons act as the tangible evidence of a specific structural implementation (Ali & Khan 2019). The most common examples of beacons include highly descriptive function names, specific variable identifiers, or distinct programming style conventions (Fekete & Porkoláb 2020; Ali & Khan 2019). To an expert, the presence of a variable named `isPriNum` or a method named `Sort` is not just text; it is a beacon that instantly communicates the underlying intent of the surrounding code block.
+Beacons act as the tangible evidence of a specific structural implementation (Ali & Khan 2019). The most common examples of beacons include highly descriptive function names, specific variable identifiers, or distinct programming style conventions (Fekete & Porkoláb 2020; Ali & Khan 2019). To an expert, the presence of a variable named `isPriNum` or a method named `Sort` is not just text; it is a beacon that instantly **communicates the underlying intent of the surrounding code block**.
 
 # Examples 
 
