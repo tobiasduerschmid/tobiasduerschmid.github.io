@@ -3,12 +3,9 @@ title: Modern Code Review
 layout: sebook
 ---
 
+# The Evolution of Code Review
 
-# The Evolution and the "Defect-Finding" Fallacy
-
-If you walk into any software company today and ask a developer, "Why do you review code?", most of them will give you a very simple, straightforward answer: "To find bugs early".
-
-It is a logical assumption. Software engineers write code, humans make mistakes, and therefore we need other humans to inspect that code to catch those mistakes before they reach the user. But in the modern software engineering landscape, this assumption is actually a profound misconception. To understand why modern software teams review code, we must first trace the history of the practice and dismantle what we call the **"Defect-Finding" Fallacy**.
+To understand why modern software teams review code, we must first trace the history of the practice.
 
 ## The First Wave: The Era of Formal Inspections
 
@@ -28,7 +25,14 @@ To adapt to the need for speed, the software industry abandoned the conference r
 
 Modern Code Review is fundamentally different from formal inspections. It is defined by three core characteristics: it is **informal**, it is **tool-based**, and it is **asynchronous**. Instead of scheduling a meeting, a developer today finishes a unit of work and submits a *pull request* (or patch) to a code review tool like GitHub, Gerrit, or Microsoft's CodeFlow. Reviewers are notified via email or a messaging app, and they examine the *diff* (the specific lines of code that were added or deleted) on their own time, leaving comments directly in the margins of the code.
 
-## The "Defect-Finding" Fallacy vs. Empirical Reality
+
+# The "Defect-Finding" Fallacy
+
+If you walk into any software company today and ask a developer, "Why do you review code?", most of them will give you a very simple, straightforward answer: "To find bugs early".
+
+It is a logical assumption. Software engineers write code, humans make mistakes, and therefore we need other humans to inspect that code to catch those mistakes before they reach the user. But in the modern software engineering landscape, this assumption is actually a profound misconception. To understand what teams are actually doing, we must dismantle what we call the **"Defect-Finding" Fallacy**.
+
+## Expectations vs. Empirical Reality
 
 Because MCR evolved directly from formal inspections, management and developers carried over the exact same expectations: they believed they were still primarily hunting for bugs. Extensive surveys reveal that "finding defects" remains the number one cited motivation for conducting code reviews.
 
@@ -45,9 +49,8 @@ Code review operates as a bidirectional educational tool. Junior developers lear
 **3. Shared Code Ownership and Team Awareness**
 By requiring at least one other person to read and approve a change, teams ensure there are "backup developers" who understand the architecture. It acts as a forcing function to dilute rigid, individual ownership and binds the team together through a shared sense of collective responsibility.
 
----
 
-# Cognitive Dynamics: Comprehension, Load, and the 400-Line Rule
+# Cognitive Factors
 
 Achieving any of the goals of MCR requires a reviewer to accomplish one monumental task: actually understanding the code they are reading. The human brain has strict biological limits regarding how much abstract logic it can hold in its working memory. When software teams ignore these limits, the code review process breaks down entirely.
 
@@ -85,9 +88,8 @@ Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line c
 
 To build massive features without exceeding cognitive limits, high-performing teams utilize **Stacked Pull Requests**. Instead of submitting one monolithic feature, developers decompose the work into small, atomic, dependent units (e.g., *PR 1* for database tables, *PR 2* for API logic, *PR 3* for UI). This perfectly aligns with cognitive dynamics, keeping every PR under the 400-line limit and allowing reviewers to process them in optimal 30-to-60-minute sessions.
 
----
 
-# The Socio-Technical Fabric: Accountability, Emotion, and Conflict
+# Socio-Technical Factors
 
 Because software is a virtual product, critiquing code is a direct evaluation of a developer's thought process, making it an inherently social and emotional event.
 
@@ -118,7 +120,7 @@ The socio-technical fabric is susceptible to human biases regarding race, gender
 
 To combat this, organizations have experimented with *Anonymous Author Code Review*. A large-scale field experiment at Google tested this by building a browser extension that hid the author's identity and avatar inside their internal tool. Across more than 5,000 code reviews, reviewers correctly guessed the author's identity in 77% of non-readability reviews. They used contextual clues—such as specific ownership boundaries, programming style, or prior offline conversations—to deduce who wrote the code. While anonymization did not slow down review speed and reduced the focus on power dynamics, "guessability" proved to be an unavoidable reality of highly collaborative engineering.
 
----
+
 
 # Code Review at Google
 
