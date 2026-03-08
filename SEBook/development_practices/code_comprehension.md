@@ -5,7 +5,7 @@ layout: sebook
 
 This chapter explores program comprehension—the cognitive processes developers use to understand existing software. Because developers spend up to 70% of their time reading and comprehending code rather than writing it, optimizing for understandability is paramount. This chapter bridges cognitive psychology, neuro-software engineering, structural metrics, and architectural design to provide a holistic guide to writing brain-friendly software.
 
-# The Psychology of Code Comprehension
+# Cognitive Effects
 
 Reading code is recognized as the most time-consuming activity in software maintenance, taking up approximately 58% to 70% of a developer's time. Code comprehension is an "accidental property" (controlled by the engineer) rather than an "essential property" (dictated by the problem space). To understand how to optimize this process, we must look at how the human brain processes software.
 
@@ -26,7 +26,7 @@ Program comprehension relies heavily on two classic cognitive theories, the appl
 * **The Top-Down Approach (Deductive):** The programmer leverages prior experience to formulate a hypothesis about what the system does. They then search the code for specific *beacons*—familiar, recognizable points like method names—to verify or reject this hypothesis.
 * **The Integrated Meta-Model:** Modern, successful developers fluidly combine both approaches. They build a "situational model" of abstract concepts alongside a "program model" of localized chunks to navigate the codebase efficiently.
 
-# Measuring Complexity: Metrics and Perception
+# Metrics and Perception
 
 Historically, the industry relied on structural metrics like McCabe's *Cyclomatic Complexity (CC)* and Halstead's volume metrics. Modern tools (e.g., SonarSource) have shifted toward *Cognitive Complexity*, which penalizes deep nesting over simple linear branches to better quantify human effort. However, empirical and neuroscientific studies reveal divergent perspectives on metric accuracy:
 
@@ -34,7 +34,7 @@ Historically, the industry relied on structural metrics like McCabe's *Cyclomati
 * **The "Saturation Effect":** Empirical EEG studies show that modern Cognitive Complexity metrics critically flaw by scaling linearly and infinitely. In reality, human perception features a "saturation effect." Once code reaches a certain level of complexity, the brain simply recognizes it as "too complex," and additional logic does not proportionally increase perceived effort.
 * **Textual Size as a Visual Heuristic:** fMRI data suggests that raw code size (Lines of Code and vocabulary size) acts as a preattentive indicator. Developers anticipate high cognitive load simply by looking at the size of the block, driving their attention and working memory load before they even read the logic.
 
-# Bridging the Architecture-Code Gap
+# Architecture-Code Gap
 
 One of the most persistent challenges in software engineering is the misalignment of perspectives between different roles in the software lifecycle, creating a cognitive obstacle during architecture realization.
 
@@ -49,7 +49,7 @@ When dealing with eroded legacy systems, engineers use *Software Architecture Re
 **Automated vs. Human-in-the-Loop**
 While fully automated "Big Bang" remodularization tools exist, they often require thousands of unviable code changes. A highly recommended alternative is using *interactive genetic algorithms (IGAs)* or supervised search-based techniques. These utilize automated tools for basic metrics but keep the human developer "in the loop" to apply top-down domain knowledge.
 
-# Structural Trade-Offs: Modularity, Abstraction, and Patterns
+# Structural Trade-Offs
 
 High cohesion (grouping related logic) and low coupling (minimizing dependencies) are widely considered the gold standard for understandable modules. However, empirical studies reveal critical trade-offs when pushing these concepts to their limits.
 
@@ -62,7 +62,7 @@ Design patterns serve a dual, somewhat paradoxical role in comprehension:
 * **As a High-Level Language:** Patterns provide a "theory of the design." Stating that a component uses a "Command Processor" pattern immediately conveys top-down intent and behavioral dynamics to peers without requiring a bottom-up explanation.
 * **As a Source of Cognitive Load:** Despite assumptions that patterns improve understandability, empirical studies reveal they often *do not*. Patterns introduce extra layers of abstraction and implicit coupling (e.g., the Observer pattern), which can increase cognitive load and make code harder for maintainers to learn and debug.
 
-# Elevating Your Strategy: Actionable Practices for Top-Down Comprehension
+# Actionable Practices for Top-Down Comprehension
 
 As developers transition from junior roles to senior engineering positions, their approach to code review and design must undergo a fundamental cognitive shift. Novice reviewers naturally default to a *bottom-up* approach: reading linearly line-by-line, attempting to reconstruct the program's overall purpose by mentally compiling raw syntax. While this works for small patches, it rapidly leads to cognitive overload in complex systems.
 
