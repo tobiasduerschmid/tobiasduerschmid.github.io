@@ -3,27 +3,21 @@ title: SE Book
 layout: sebook-combined
 ---
 
-{% capture userstories %}{% include_relative userstories.md %}{% endcapture %}
-{{ userstories | markdownify }}
 
-
-{% capture designprinciples %}{% include_relative designprinciples.md %}{% endcapture %}
-{{ designprinciples | markdownify }}
-
-{% capture solid %}{% include_relative designprinciples/solid.md %}{% endcapture %}
-{{ solid | markdownify }}
-
-{% capture informationhiding %}{% include_relative designprinciples/informationhiding.md %}{% endcapture %}
-{{ informationhiding | markdownify }}
-
-{% capture uml %}{% include_relative uml.md %}{% endcapture %}
-{{ uml | markdownify }}
-
-{% capture designpatterns %}{% include_relative designpatterns.md %}{% endcapture %}
-{{ designpatterns | markdownify }}
-
-{% capture state %}{% include_relative designpatterns/state.md %}{% endcapture %}
-{{ state | markdownify }}
-
-{% capture observer %}{% include_relative designpatterns/observer.md %}{% endcapture %}
-{{ observer | markdownify }}
+{% for topic in site.data.sebook_nav.topics %}
+    {% capture topic.name %}{% include topic.url %}{% endcapture %}
+    {{ topic.name | markdownify }}
+    
+    {% if topic.subtopics %}
+        {% for subtopic in topic.subtopics %}
+            {% capture subtopic.name %}{% include subtopic.url %}{% endcapture %}
+            {{ item.name | markdownify }}
+            {% if subtopic.items %}
+                {% for item in subtopic.items %}
+                    {% capture item.name %}{% include item.url %}{% endcapture %}
+                    {{ item.name | markdownify }}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
