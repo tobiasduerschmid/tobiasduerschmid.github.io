@@ -9,6 +9,29 @@ In software engineering, a design pattern is a **common, acceptable solution to 
 
 In software development, design patterns refer to medium-level abstractions that describe structural and behavioral aspects of software. They sit between low-level language **idioms** (like how to efficiently concatenate strings in Java) and large-scale **architectural patterns** (like Model-View-Controller or client-server patterns). Structurally, they deal with classes, objects, and the assignment of responsibilities; behaviorally, they govern method calls, message sequences, and execution semantics. 
 
+## Anatomy of a Pattern
+A true pattern is more than simply a good idea or a random solution; it requires a structured format to capture the problem, the context, the solution, and the consequences. While various authors use slightly different templates, the fundamental anatomy of a design pattern contains the following essential elements:
+
+* **Pattern Name**: A good name is vital as it becomes a handle we can use to describe a design problem, its solution, and its consequences in a word or two. Naming a pattern increases our design vocabulary, allowing us to design and communicate at a higher level of abstraction.
+* **Context**: This defines the recurring situation or environment in which the pattern applies and where the problem exists.
+* **Problem**: This describes the specific design issue or goal you are trying to achieve, along with the constraints symptomatic of an inflexible design.
+* **Forces**: This outlines the trade-offs and competing concerns that must be balanced by the solution.
+* **Solution**: This describes the elements that make up the design, their relationships, responsibilities, and collaborations. It specifies the spatial configuration and behavioral dynamics of the participating classes and objects.
+* **Consequences**: This explicitly lists the results, costs, and benefits of applying the pattern, including its impact on system flexibility, extensibility, portability,  performance, and other quality attributes.
+
+## GoF Design Patterns
+
+Here are some examples of design patterns that we describe in more detail:
+* [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
+
+* [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that a group of dependent objects is automatically notified and updated whenever the internal state of their shared subject changes.
+
+## Architectural Patterns
+
+Here are some examples of architectural patterns that we describe in more detail:
+
+* [**Model-View-Controller (MVC)**](/SEBook/designpatterns/mvc.html): The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates
+
 ## The Benefits of a Shared Toolbox
 Just as a mechanic must know their toolbox, a software engineer must know design patterns intimately—understanding their advantages, disadvantages, and knowing precisely when (and when not) to use them.
 
@@ -23,30 +46,6 @@ Despite their power, design patterns are not silver bullets. Misusing them intro
 *   **Over-engineering vs. Under-engineering:** Under-engineering makes software too rigid for future changes. However, over-applying patterns leads to over-engineering—creating premature abstractions that make the codebase unnecessarily complex, unreadable, and a waste of development time. Developers must constantly balance **simplicity** (fewer classes and patterns) against **changeability** (greater flexibility but more abstraction).
 *   **Implicit Dependencies:** Patterns intentionally replace static, compile-time dependencies with dynamic, runtime interactions. This flexibility comes at a cost: it becomes harder to trace the execution flow and state of the system just by reading the code.
 *   **Misinterpretation as Recipes:** A pattern is an abstract idea, not a snippet of code from Stack Overflow. Integrating a pattern into a system is a human-intensive, manual activity that requires tailoring the solution to fit a concrete context.
-
-# GoF Design Patterns
-
-Here are some examples of design patterns that we describe in more detail:
-* [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
-
-* [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that a group of dependent objects is automatically notified and updated whenever the internal state of their shared subject changes.
-
-# Architectural Patterns
-
-Here are some examples of architectural patterns that we describe in more detail:
-
-* [**Model-View-Controller (MVC)**](/SEBook/designpatterns/mvc.html): The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates
-
-# Anatomy of a Pattern
-A true pattern is more than simply a good idea or a random solution; it requires a structured format to capture the problem, the context, the solution, and the consequences. While various authors use slightly different templates, the fundamental anatomy of a design pattern contains the following essential elements:
-
-* **Pattern Name**: A good name is vital as it becomes a handle we can use to describe a design problem, its solution, and its consequences in a word or two. Naming a pattern increases our design vocabulary, allowing us to design and communicate at a higher level of abstraction.
-* **Context**: This defines the recurring situation or environment in which the pattern applies and where the problem exists.
-* **Problem**: This describes the specific design issue or goal you are trying to achieve, along with the constraints symptomatic of an inflexible design.
-* **Forces**: This outlines the trade-offs and competing concerns that must be balanced by the solution.
-* **Solution**: This describes the elements that make up the design, their relationships, responsibilities, and collaborations. It specifies the spatial configuration and behavioral dynamics of the participating classes and objects.
-* **Consequences**: This explicitly lists the results, costs, and benefits of applying the pattern, including its impact on system flexibility, extensibility, portability,  performance, and other quality attributes.
-
 
 # Context Tailoring 
 It is important to remember that the standard description of a pattern presents an abstract solution to an abstract problem. Integrating a pattern into a software system is a highly human-intensive, manual activity; patterns cannot simply be misinterpreted as step-by-step recipes or copied as raw code. Instead, developers must engage in **context tailoring**—the process of taking an abstract pattern and instantiating it into a concrete solution that perfectly fits the concrete problem and the concrete context of their application.
