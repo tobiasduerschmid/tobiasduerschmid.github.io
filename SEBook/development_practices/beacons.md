@@ -53,18 +53,46 @@ This creates a continuous cycle of hypothesis testing:
 
 If the anticipated beacons are found, the hypothesis is verified and becomes a permanent part of the programmer's mental model of the system; if the beacons are missing, the hypothesis is declined, and the programmer must adjust their assumptions (Ali & Khan 2019). 
 
-#  Triggering Programming Plans
+## Triggering Programming Plans
 To understand why beacons are so effective, we must look at how they interact with *programming plans*. A programming plan is a stereotypical piece of code that exhibits a typical behavior—for instance, the standard `for`-loop structure used to compare numbers during a sorting algorithm (Ali & Khan 2019). 
 
 Experts hold thousands of these abstract plans in their long-term memory. Beacons act as the sensory triggers that pull these plans from memory into active working cognition (Wiedenbeck 1986). When an expert spots a beacon (e.g., a temporary swap variable), they do not need to decode the rest of the lines; the beacon instantly activates the complete "sorting plan" schema in their mind (Ali & Khan 2019).
 
-# Modern Tool Support for Beacon Hunting
+## Modern Tool Support for Beacon Hunting
 The theory of beacons is not merely academic; it fundamentally dictates how modern Integrated Development Environments (IDEs) are designed. The most powerful features in modern code editors are explicitly engineered to assist the programmer in finding, capturing, and validating beacons (Fekete & Porkoláb 2020). 
 
 *   **Code Browsing:** General browsing support aids the top-down approach by allowing developers to navigate intuitively, searching for and verifying previously captured beacons across different software files (Fekete & Porkoláb 2020).
 *   **Go to Definition:** This core feature directly supports top-down comprehension. Its main purpose is to locate the exact source (definition) of a beacon, which allows the programmer to effortlessly move from a high-level abstraction down to the functional details (Fekete & Porkoláb 2020).
 *   **Intelligent Code Completion:** Auto-complete systems act as beacon-discovery engines. By providing an intuitive list of available classes, functions, and variables, they offer the programmer a rapid perspective of the system's vocabulary, making it highly efficient to capture new beacons (Fekete & Porkoláb 2020).
 *   **Split Views:** Utilizing split-screen functionality provides a powerful top-down perspective, enabling developers to grasp and correlate beacons from multiple files simultaneously, holding the mental model together in real-time (Fekete & Porkoláb 2020).
+
+
+#  The Role of Beacons in Research, Education, and Code Review
+
+The theory of beacons extends far beyond basic code reading. Recent meta-analyses, educational frameworks, and observational studies demonstrate that beacons are fundamental to how researchers design comprehension experiments, how novices learn to abstract, and how experts navigate complex code reviews. 
+
+## 1. Beacons in Experimental Design and Measurement
+In the realm of empirical software engineering, beacons serve as a crucial theoretical mechanism for researchers studying cognitive load (Wyrich et al., 2023). Because beacons naturally trigger *top-down* comprehension (allowing developers to generate hypotheses and skip reading every line), researchers must carefully control them when designing experiments (Wyrich et al., 2023). 
+
+To rigorously test *bottom-up* comprehension—where a programmer is forced to read code statement-by-statement—experimenters deliberately sabotage the developer's normal cognitive process (Wyrich et al., 2023). They achieve this by systematically obfuscating identifiers and removing beacons and comments from the code snippets provided to subjects (Wyrich et al., 2023). This experimental manipulation proves that without the presence of lexical and structural beacons, the brain's ability to quickly abstract high-level intent is severely impaired.
+
+## 2. Educational Trajectories: Beacons as Cognitive Shortcuts
+In computer science education, teaching novices to recognize beacons is a critical milestone in their cognitive development (Izu et al., 2019). The *Block Model* of program comprehension illustrates that novices often get stuck at the "Atom" level, meticulously tracing code line-by-line (Izu et al., 2019). 
+
+Beacons provide the cognitive scaffolding necessary to jump to higher levels of abstraction:
+*   **Variable Roles as Beacons:** Educators emphasize that recognizing specific variable roles acts as a beacon. For instance, spotting a *stepper* variable (a loop control variable) alongside a *gatherer* variable (an accumulator) instantly signals to the student that they are looking at a *Sum* or *Count* plan (Izu et al., 2019). 
+*   **Tracing Shortcuts:** As novices become more fluent, they use beacons to take shortcuts in code tracing (Izu et al., 2019). Instead of mentally simulating the execution of every statement, the detection of a familiar element (a beacon) allows the student to infer the overall algorithm, shifting their comprehension from the rote execution dimension to the higher-level functional dimension (Izu et al., 2019). 
+
+## 3. Contextual Beacons in Modern Code Review
+In modern, collaborative software development, the concept of a beacon extends beyond the raw source code. When experienced developers perform code reviews, they operate in an environment that is incremental, iterative, and highly interactive (Gonçalves et al., 2025). 
+
+To build a mental model of a proposed change, reviewers rely on *contextual beacons* distributed across the development workflow (Gonçalves et al., 2025). 
+*   **The Specification Layer:** Reviewers use Pull Request (PR) titles, PR descriptions, and issue trackers as initial beacons to construct the "specification layer" of their mental model (Gonçalves et al., 2025). 
+*   **Top-Down Annotation:** Once these high-level expectations are set, reviewers scan the code using file names, commit messages, and variable names as beacons to achieve *top-down annotation*—verifying that the implementation matches the expected intent (Gonçalves et al., 2025). 
+*   **Navigating Complexity:** Because large code reviews exceed human working memory, reviewers use beacons to execute opportunistic reading strategies, such as *difficulty-based reading* (scanning for the "core" of the change) or *chunking* (segmenting the review based on specific functional tests or isolated commits) (Gonçalves et al., 2025). 
+
+## Divergent Perspectives: The Tracing Tension
+A fascinating tension exists in the literature regarding how developers *should* read code versus how they *actually* read code. In educational settings, students are often rigidly taught to trace code line-by-line to build an accurate mental model of the "notional machine" (Izu et al., 2019). However, observational studies of real-world code reviews reveal that experts actively avoid this systematic tracing. Instead, experts rely heavily on an opportunistic, ad-hoc search for beacons to quickly map code to an expected "ideal" solution, bypassing exhaustive bottom-up reading entirely unless forced to by high complexity (Gonçalves et al., 2025). This suggests that true expertise is defined not by the ability to trace every line flawlessly, but by the ability to strategically use beacons to avoid unnecessary cognitive load.
 
 # Conclusion
 Mastering code reading requires transitioning from a systematic, line-by-line decoding process to an opportunistic, top-down strategy. By actively formulating hypotheses and utilizing IDE tools to hunt for structural and lexical beacons, a developer can rapidly construct an accurate mental model of a complex system without succumbing to cognitive overload.
@@ -78,11 +106,17 @@ Mastering code reading requires transitioning from a systematic, line-by-line de
 *   (Caprile & Tonella 1999) Caprile, B., & Tonella, P. (1999). Nomen est omen: analyzing the language of function identifiers. *Working Conference on Reverse Engineering*.
 *   (Davis 1984) Davis, J. S. (1984). Chunks: A basis for complexity measurement. *Information Processing & Management*, 20(1-2), 119–127.
 *   (Deissenböck & Pizka 2005) Deissenböck, F., & Pizka, M. (2005). Concise and consistent naming. *Proceedings of the 13th International Workshop on Program Comprehension*.
+*   (Gonçalves et al., 2025) Gonçalves, P. W., Rani, P., Storey, M.-A., Spinellis, D., & Bacchelli, A. (2025). Code Review Comprehension: Reviewing Strategies Seen Through Code Comprehension Theories. *IEEE/ACM International Conference on Program Comprehension*.
 *   (Fekete & Porkoláb 2020) Fekete, A., & Porkoláb, Z. (2020). A comprehensive review on software comprehension models. *Annales Mathematicae et Informaticae*, 51, 103–111.
 *   (Harrison et al. 2007) Harrison, N. B., Avgeriou, P., & Kruchten, P. (2007). Using Pattern-Based Architecture Reviews to Detect Quality Attribute Issues.
+*   (Izu et al., 2019) Izu, C., Schulte, C., Aggarwal, A., Cutts, Q., Duran, R., Gutica, M., Heinemann, B., Kraemer, E., Lonati, V., Mirolo, C., & Weeda, R. (2019). Fostering Program Comprehension in Novice Programmers - Learning Activities and Learning Trajectories. *Proceedings of the Working Group Reports on Innovation and Technology in Computer Science Education (ITiCSE-WGR '19)*.
 *   (Lawrie et al. 2006) Lawrie, D., Morrell, C., Feild, H., & Binkley, D. (2006). What's in a Name? A Study of Identifiers. *Loyola College*.
 *   (Marques et al. 2010) Marques, E. N., et al. (2010). Pattern Language for the Internal Structure of Metadata-Based Frameworks.
 *   (Soloway et al. 1984) Soloway, E., Adelson, B., & Ehrlich, K. (1984). Cognitive models of program comprehension.
 *   (Takang et al. 1996) Takang, A., Grubb, P., & Macredie, R. (1996). The effects of comments and identifier names on program comprehensibility: an experiential study. *Journal of Program Languages*, 4(3), 143–167.
 *   (Wiedenbeck 1986) Wiedenbeck, S. (1986). Beacons in computer program comprehension. *International Journal of Man-Machine Studies*, 25(6), 697-709.
 *   (Wirfs-Brock & McKean 2003) Wirfs-Brock, R., & McKean, A. (2003). *Object Design: Roles, Responsibilities, and Collaborations*. Addison-Wesley.
+*   (Wyrich et al., 2023) Wyrich, M., Bogner, J., & Wagner, S. (2023). 40 Years of Designing Code Comprehension Experiments: A Systematic Mapping Study. *ACM Computing Surveys*, 56(4), 1-42.
+
+
+
