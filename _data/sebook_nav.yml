@@ -41,6 +41,14 @@ topics:
         url: /SEBook/testing/testdoubles.html
 
 
+  - name: Quality Attributes
+    icon: null
+    url: /SEBook/quality_attributes.html
+    subtopics:
+      - name: Interoperability
+        url: /SEBook/quality_attributes/interoperability.html
+
+
   - name: UML
     icon: null
     url: /SEBook/uml.html
