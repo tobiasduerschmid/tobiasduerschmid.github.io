@@ -37,6 +37,10 @@ $(document).ready(function(){
     $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
+<!-- Highlight.js for client-side syntax highlighting (fallback). Loads after content scripts. -->
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+<script>document.addEventListener('DOMContentLoaded', (event) => { if(window.hljs){ hljs.highlightAll(); }});</script>
 <script>
 // Carousel
 (function($) {

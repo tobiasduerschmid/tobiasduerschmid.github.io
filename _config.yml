@@ -62,6 +62,16 @@ encoding: utf-8
 # Build settings
 markdown: kramdown
 
+# Syntax highlighting
+# Use Rouge (default for modern Jekyll) and configure kramdown to support fenced code blocks
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+
 html_press:
   unquoted_attributes: false
   drop_empty_values: false
