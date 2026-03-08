@@ -24,7 +24,7 @@ Despite their power, design patterns are not silver bullets. Misusing them intro
 *   **Implicit Dependencies:** Patterns intentionally replace static, compile-time dependencies with dynamic, runtime interactions. This flexibility comes at a cost: it becomes harder to trace the execution flow and state of the system just by reading the code.
 *   **Misinterpretation as Recipes:** A pattern is an abstract idea, not a snippet of code from Stack Overflow. Integrating a pattern into a system is a human-intensive, manual activity that requires tailoring the solution to fit a concrete context.
 
-# Object-oriented Design Patterns
+# GoF Design Patterns
 
 Here are some examples of design patterns that we describe in more detail:
 * [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
@@ -122,8 +122,8 @@ Despite their power, pattern compounds introduce distinct architectural and cogn
 *   **Naming Limitations:** Accurately naming a class to reflect its domain purpose alongside multiple pattern roles (e.g., a "PlayerObserver") quickly becomes unmanageable, forcing teams to rely heavily on external documentation to explain the architecture.
 *   **The Over-Engineering Trap:** As with any design abstraction, possessing the "hammer" of a pattern compound does not make every problem a nail. Developers must constantly evaluate whether the resulting architectural complexity is truly justified by the context.
 
-
-# Patterns Within Patterns: Core Principles
+# Advanced Concepts 
+## Patterns Within Patterns: Core Principles
 When analyzing various design patterns, you will begin to notice recurring micro-architectures. Design patterns are often built upon fundamental software engineering principles:
 
 *   **Delegation over Inheritance:** Subclassing can lead to rigid designs and code duplication (e.g., trying to create an inheritance tree for cars that can be electric, gas, hybrid, and also either drive or fly). Patterns like Strategy, State, and Bridge solve this by extracting varying behaviors into separate classes and delegating responsibilities to them.
@@ -131,7 +131,7 @@ When analyzing various design patterns, you will begin to notice recurring micro
 *   **Additional Layers of Indirection:** To reduce strong coupling between interacting components, patterns like the Mediator or Facade introduce an intermediate object to handle communication. While this centralizes logic and improves changeability, it can create long traces of method calls that are harder to debug.
 
 
-# Domain-Specific and Application-Specific Patterns
+## Domain-Specific and Application-Specific Patterns
 The Gang of Four patterns are generic to object-oriented programming, but patterns exist at all levels. 
 *   **Domain-Specific Patterns:** Certain industries (like Game Development, Android Apps, or Security) have their own highly tailored patterns. Because these patterns make assumptions about a specific domain, they generally carry fewer negative consequences within their niche, but they require the team to actually possess domain expertise.
 *   **Application-Specific Patterns:** Every distinct software project will eventually develop its own localized patterns—agreed-upon conventions and structures unique to that team. Identifying and documenting these implicit patterns is one of the most critical steps when a new developer joins an existing codebase, as it massively improves program comprehension.
