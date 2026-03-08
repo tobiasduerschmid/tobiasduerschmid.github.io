@@ -1,5 +1,5 @@
 ---
-title: 35L
+title: CS 35L
 layout: sebook-combined
 ---
 
