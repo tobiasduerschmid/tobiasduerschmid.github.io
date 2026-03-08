@@ -10,6 +10,8 @@ topics:
         url: /SEBook/designpatterns/observer.html
       - name: State
         url: /SEBook/designpatterns/state.html
+      - name: Model-View-Controller (MVC)
+        url: /SEBook/designpatterns/mvc.html
 
   - name: Design Principles
     icon: null

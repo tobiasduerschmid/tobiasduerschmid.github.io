@@ -10,6 +10,11 @@ Here are some examples of design patterns that we describe in more detail:
 
 * [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that a group of dependent objects is automatically notified and updated whenever the internal state of their shared subject changes.
 
+# Architectural Patterns
+
+Here are some examples of architectural patterns that we describe in more detail:
+
+* [**Model-View-Controller (MVC)**](/SEBook/designpatterns/mvc.html): The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates
 
 # Anatomy of a Pattern
 A true pattern is more than simply a good idea or a random solution; it requires a structured format to capture the problem, the context, the solution, and the consequences. While various authors use slightly different templates, the fundamental anatomy of a design pattern contains the following essential elements:
