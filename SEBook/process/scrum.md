@@ -22,6 +22,13 @@ To make empiricism actionable, Scrum rests on three core pillars:
 * **Adaptation**: If inspection reveals that the process or product is unacceptable, the team must adjust immediately to minimize further issues. The course material emphasizes that Scrum is not a fixed process but one designed to be tailored to a team's specific domain and needs.
 
 # Scrum Roles
+
+AI Audio Summary: 
+<audio controls>    
+    <source src="/SEBook/process/scrum_roles.m4a" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
 Scrum defines three specific roles that are intentionally designed to exist in tension to ensure both speed and quality:
 
 * **The Product Owner** (The Navigator): This role is responsible for maximizing the value of the product resulting from the team’s work. They "own" the product vision, prioritize the backlog, and typically communicate requirements through user stories.
