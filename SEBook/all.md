@@ -5,6 +5,7 @@ layout: sebook-combined
 
 
 {% for topic in site.data.sebook_nav.topics %}
+    <section id="{{topic.name}} | slugify">
     {% capture topic_name %}{% include_relative {{ topic.url | replace: '/SEBook/', '' | replace: '.html', '.md' }} %}{% endcapture %}
     {% include header_project.html title=topic.name %}
     {% assign topic_parts = topic_name | split: '---' %}
@@ -30,4 +31,5 @@ layout: sebook-combined
             {% endif %}
         {% endfor %}
     {% endif %}
+    </section>
 {% endfor %}
