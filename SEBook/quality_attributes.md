@@ -12,10 +12,6 @@ Important quality attributes include:
 
 * **[Testability](/SEBook/quality_attributes/testability.html)**: degree to which a system or component can be tested via **runtime observation**, determining how hard it is to write effective tests for a piece of software.
 
-# Chapter: Mastering Quality Attributes in Software Architecture
-
-In the world of software engineering, functionality describes what a system does, but **quality attributes measure the "goodness" of a design** by describing how well the system performs those functions. While a system might technically fulfill its requirements, its ultimate success depends on dimensions such as **extensibility, availability, security, performance, robustness, interoperability, and testability**.
-
 # The Architectural Foundation: "Load-Bearing Walls"
 Quality attributes are often described as the **load-bearing walls of a software system**. Just as the structural integrity of a building depends on walls that cannot be easily moved once construction is finished, early architectural decisions strongly impact the possible qualities of a system. Because quality attributes are typically **cross-cutting concerns** spread throughout the codebase, they are extremely difficult to "add in later" if they were not considered early in the design process.
 
