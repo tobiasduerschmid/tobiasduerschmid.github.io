@@ -6,16 +6,22 @@ layout: sebook-combined
 
 {% for topic in site.data.sebook_nav.topics %}
     {% capture topic_name %}{% include_relative {{ topic.url | replace: '/SEBook/', '' | replace: '.html', '.md' }} %}{% endcapture %}
-    {{ topic_name | markdownify }}
+    {% assign topic_parts = topic_name | split: '---' %}
+    {% capture topic_body %}{% for p in topic_parts offset:2 %}{{ p }}{% if forloop.last == false %}---{% endif %}{% endfor %}{% endcapture %}
+    {{ topic_body | markdownify }}
     
     {% if topic.subtopics %}
         {% for subtopic in topic.subtopics %}
             {% capture subtopic_name %}{% include_relative {{ subtopic.url | replace: '/SEBook/', '' | replace: '.html', '.md' }} %}{% endcapture %}
-            {{ subtopic_name | markdownify }}
+            {% assign subtopic_parts = subtopic_name | split: '---' %}
+            {% capture subtopic_body %}{% for p in subtopic_parts offset:2 %}{{ p }}{% if forloop.last == false %}---{% endif %}{% endfor %}{% endcapture %}
+            {{ subtopic_body | markdownify }}
             {% if subtopic.items %}
                 {% for item in subtopic.items %}
                     {% capture item_name %}{% include_relative {{ item.url | replace: '/SEBook/', '' | replace: '.html', '.md' }} %}{% endcapture %}
-                    {{ item_name | markdownify }}
+                    {% assign item_parts = item_name | split: '---' %}
+                    {% capture item_body %}{% for p in item_parts offset:2 %}{{ p }}{% if forloop.last == false %}---{% endif %}{% endfor %}{% endcapture %}
+                    {{ item_body | markdownify }}
                 {% endfor %}
             {% endif %}
         {% endfor %}
