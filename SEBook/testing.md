@@ -2,7 +2,7 @@
 title: Software Testing
 layout: sebook
 ---
-In our quest to construct high-quality software, testing stands as the most popular and essential quality assurance activity. While other techniques like static analysis, model checking, and code reviews are valuable, testing is often the primary pillars of industry-standard quality assurance.
+In our quest to construct high-quality software, testing stands as the most popular and essential quality assurance activity. While other techniques like static analysis, model checking, and code reviews are valuable, testing is often the primary pillar of industry-standard quality assurance.
 
 # Test Classifications
 

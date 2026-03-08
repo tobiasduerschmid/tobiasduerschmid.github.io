@@ -87,7 +87,6 @@ class TaskModel(Subject):
 
     def add_task(self, task):
         self.tasks.append(task)
-        # KEY CHANGE: The model automatically notifies observers when data changes
         self.notify() 
 
     def get_tasks(self):
@@ -98,7 +97,6 @@ class TaskModel(Subject):
 # 2. THE VIEW (The Observer)
 # ==========================================
 class TaskView(Observer):
-    # KEY CHANGE: The View now has an update method to react to the Model
     def update(self, subject):
         # When notified, the view pulls the latest data directly from the model
         tasks = subject.get_tasks()
@@ -117,7 +115,6 @@ class TaskView(Observer):
 class TaskController:
     def __init__(self, model):
         self.model = model
-        # KEY CHANGE: The controller no longer needs to know about the view!
 
     def add_new_task(self, task):
         print(f"Controller: Adding task '{task}'...")
