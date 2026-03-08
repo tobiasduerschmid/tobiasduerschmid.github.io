@@ -12,6 +12,14 @@ topics:
         url: /SEBook/designpatterns/factory_method.html
       - name: Abstract Factory
         url: /SEBook/designpatterns/abstract_factory.html
+      - name: Adapter
+        url: /SEBook/designpatterns/adapter.html
+      - name: Singleton
+        url: /SEBook/designpatterns/singleton.html
+      - name: Mediator
+        url: /SEBook/designpatterns/mediator.html
+      - name: Facade
+        url: /SEBook/designpatterns/facade.html
   - name: Design Principles
     icon: null
     url: /SEBook/designprinciples.html
