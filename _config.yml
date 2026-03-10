@@ -77,3 +77,9 @@ html_press:
   drop_empty_values: false
   strip_crlf: false
   js_minifier_options: false
+
+# Collections
+collections:
+  blog:
+    output: true
+    permalink: /blog/:slug/
