@@ -1,5 +1,5 @@
 ---
-title: Test-Driven Developemnt (TDD)
+title: Test-Driven Development (TDD)
 layout: sebook
 ---
 
@@ -29,7 +29,7 @@ This structure manifests as the Red-Green-Refactor cycle:
 * Green: The mandate is to write the "simplest piece of code" to reach a passing state. Shortcuts and naive implementations are acceptable here; the priority is the verification of behavior.
 * Refactor: Once the bar is green, the developer performs "merciless refactoring" to remove duplication (code smells) and clarify intent. Following Kerievsky’s "Small Steps" methodology is vital. If a developer takes steps that are too large, they risk falling into a "World of Red"—a state where tests remain broken for long periods, the feedback loop is severed, and the productivity benefits of the cycle are lost.
 
-# $Strategic Impact: Quality, Documentation, and the "Information Hiding" Debate
+# Strategic Impact: Quality, Documentation, and the "Information Hiding" Debate
 
 TDD’s impact transcends individual code blocks, serving as a "living" form of documentation. Because the tests are executed continuously, they provide an always-accurate specification of the system’s behavior. This dramatically increases the "bus factor"—the number of team members who can depart a project without the remaining team losing the ability to maintain the codebase. Furthermore, TDD ensures that bugs effectively "only exist for 10 seconds." Since failures are immediately linked to the most recent change, debugging becomes trivial, eliminating the wasteful scavenger hunts typical of sequential testing.
 
