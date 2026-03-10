@@ -30,11 +30,12 @@
           {% for section in sections %}
             {% if section contains '</h1>' %}
             {% assign heading_and_content = section | split: '>' %}
-            {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1', '' | split: ':' | first %}
+            {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1', '' %}
 
             {% if heading_text != "" %}
                 {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
-                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
+                {% assign heading_text_short = heading_text | split: ':' | first %}
+                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
                 {% endif %}
               {% endif %}
             {% endfor %}
