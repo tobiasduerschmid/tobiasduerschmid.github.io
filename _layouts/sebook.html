@@ -35,7 +35,7 @@
             {% if heading_text != "" %}
                 {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', '' %}
                 {% assign heading_text_short = heading_text | split: ':' | first %}
-                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
+                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text }}</a></li>
                 {% endif %}
               {% endif %}
             {% endfor %}
