@@ -48,16 +48,6 @@ topics:
         url: /SEBook/designpatterns/mvc.html
 
 
-  - name: Architectural Styles
-    icon: null
-    url: /SEBook/architectural_styles/index.html
-    subtopics:
-      - name: Layered Style
-        url: /SEBook/architectural_styles/layers.html
-      - name: Pipes and Filters
-        url: /SEBook/architectural_styles/pipes_and_filters.html
-      - name: Publish Subscribe
-        url: /SEBook/architectural_styles/pubsub.html
   - name: Design Principles
     icon: null
     url: /SEBook/designprinciples.html
@@ -71,6 +61,27 @@ topics:
     icon: null
     url: /SEBook/software_architecture.html
     subtopics:
+
+
+    - name: Quality Attributes
+      icon: null
+      url: /SEBook/quality_attributes.html
+      items:
+        - name: Interoperability
+          url: /SEBook/quality_attributes/interoperability.html
+        - name: Testability
+          url: /SEBook/quality_attributes/testability.html
+
+    - name: Architectural Styles
+      icon: null
+      url: /SEBook/architectural_styles/index.html
+      items:
+        - name: Layered Style
+          url: /SEBook/architectural_styles/layers.html
+        - name: Pipes and Filters
+          url: /SEBook/architectural_styles/pipes_and_filters.html
+        - name: Publish Subscribe
+          url: /SEBook/architectural_styles/pubsub.html
 
   - name: Software Process
     icon: null
@@ -88,16 +99,6 @@ topics:
     subtopics:
       - name: Test Doubles
         url: /SEBook/testing/testdoubles.html
-
-
-  - name: Quality Attributes
-    icon: null
-    url: /SEBook/quality_attributes.html
-    subtopics:
-      - name: Interoperability
-        url: /SEBook/quality_attributes/interoperability.html
-      - name: Testability
-        url: /SEBook/quality_attributes/testability.html
 
 
   - name: UML
