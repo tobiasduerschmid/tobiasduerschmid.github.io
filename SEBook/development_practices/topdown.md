@@ -23,7 +23,7 @@ To provide a comprehensive analysis of top-down code comprehension, we must firs
 
 ---
 
-#  The Cognitive Mechanics of Top-Down Understanding
+#  The Cognitive Mechanics
 
 To understand how developers read code, we must examine how the brain processes information. Historically rooted in constructivist learning theories and the psycholinguistic research of Kenneth Goodman and Frank Smith, top-down processing fundamentally views reading as a "psycholinguistic guessing game." Comprehension begins in the mind of the reader rather than on the screen.
 

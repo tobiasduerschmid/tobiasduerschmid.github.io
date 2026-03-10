@@ -38,12 +38,12 @@ When systems must interact but possess incompatible interfaces, the **Adapter de
 
 In modern **microservices** architectures, interoperability is managed through **Bounded Contexts**. Each service handles its own data model for an entity, and interfaces are kept minimal—often sharing only a unique identifier like a User ID—to separate concerns and reduce the complexity of interactions.
 
-# The Interoperability-Changeability Trade-off
+# Trade-offs
 Interoperability often **conflicts with changeability**. Standardized interfaces are inherently difficult to update because a change to the interface cannot be localized to a single system; it requires **all participating systems to update** their implementations simultaneously. 
 
 The GDS case study highlights this dilemma. Because the GDS interface is highly standardized, it struggled to adapt to the business model of **Southwest Airlines**, which does not use traditional seat assignments. Updating the GDS standard to support Southwest would have required every booking system and airline in the world to change their software, creating a massive implementation hurdle.
 
-# Evaluating"Practical Interoperability"
+# "Practical Interoperability"
 In a real-world setting, a design for interoperability is evaluated based on its likelihood of adoption, which involves two conflicting measures:
 1.  **Implementation Effort:** The more complex an interface is, the less likely it is to be adopted due to the high cost of implementation across all systems.
 2.  **Variability:** An interface that supports a wide variety of use cases and potential extensions is more likely to be adopted.
