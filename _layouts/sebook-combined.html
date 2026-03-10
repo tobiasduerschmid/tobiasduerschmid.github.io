@@ -30,7 +30,7 @@
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract H1 headings from content -->
           {% for topic in topics %}
-                {% assign topic_id = {{topic.name}} | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', ''  %}
+                {% assign topic_id = topic.name | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', ''  %}
                   <li><a class="page-scroll" href="#{{topic_id}}">{{topic.name}}</a></li>
             {% endfor %}
           </ul>
@@ -48,7 +48,7 @@
                     
 
           {% for topic in topics %}
-              {% assign topic_id = {{topic.name}} | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', ''  %}
+              {% assign topic_id = topic.name | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', ''  %}
               
               <section id="{{topic_id}}">
 

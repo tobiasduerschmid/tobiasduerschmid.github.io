@@ -1,0 +1,91 @@
+---
+layout: blog
+---
+
+<section id="blog-post" class="container" style="margin-top: 60px;">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2">
+      <article>
+        <div class="blog-post-header">
+          <h1>{{ page.title }}</h1>
+          <p class="blog-post-meta">
+            <small>
+              <span class="post-date">{{ page.date | date: "%B %d, %Y" }}</span>
+              {% if page.category %}
+                <span class="post-category">
+                  <a href="/blog/#{{ page.category | slugify }}" class="badge" style="background-color: #5cb85c;">{{ page.category }}</a>
+                </span>
+              {% endif %}
+            </small>
+          </p>
+        </div>
+        <div class="blog-post-content">
+          {{ content }}
+        </div>
+        <footer class="blog-post-footer">
+          <a href="/blog/" class="btn btn-default btn-sm" style="margin-top: 20px;">← Back to Blog</a>
+        </footer>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+.blog-post-header {
+  margin-bottom: 30px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 20px;
+}
+
+.blog-post-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5em;
+  color: #333;
+}
+
+.blog-post-meta {
+  color: #666;
+  font-size: 0.95em;
+}
+
+.post-category {
+  margin-left: 15px;
+}
+
+.blog-post-content {
+  font-size: 1.05em;
+  line-height: 1.8;
+  color: #333;
+  margin: 30px 0;
+}
+
+.blog-post-content h2 {
+  margin-top: 30px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.blog-post-content p {
+  margin-bottom: 15px;
+}
+
+.blog-post-content code {
+  background-color: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.blog-post-content pre {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+.blog-post-footer {
+  border-top: 1px solid #ddd;
+  padding-top: 20px;
+  margin-top: 40px;
+}
+</style>
