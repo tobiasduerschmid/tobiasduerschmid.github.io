@@ -34,6 +34,8 @@ topics:
         url: /SEBook/designpatterns/factory_method.html
       - name: Abstract Factory
         url: /SEBook/designpatterns/abstract_factory.html
+      - name: Composite
+        url: /SEBook/designpatterns/composite.html
       - name: State
         url: /SEBook/designpatterns/state.html
       - name: Adapter
