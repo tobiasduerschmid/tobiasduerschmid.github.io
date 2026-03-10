@@ -1,6 +1,3 @@
----
-layout: compress
----
 
 var flickr_api = "https://api.flickr.com/services/rest/";
 var flickr_api_key = "{{ site.flickr_api_key }}";
