@@ -177,30 +177,105 @@
   background-color: #c8c8c8;
   color: #2774AE;
 }
+
+/* Highlight current page */
+.sebook-nav-link.current,
+.sebook-nav-sublink.current,
+.sebook-nav-itemlink.current {
+  background-color: #2774AE;
+  color: white;
+  font-weight: 600;
+}
+
+.sebook-nav-link.current:hover,
+.sebook-nav-sublink.current:hover,
+.sebook-nav-itemlink.current:hover {
+  background-color: #1a5a9f;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Automatically expand all sections on page load
+  const currentPath = window.location.pathname;
+  let foundCurrent = false;
+  let currentTopicItem = null;
+  let currentSubtopicItem = null;
+  
+  // First, close all sections
   document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(function(item) {
-    item.classList.add('open');
+    item.classList.remove('open');
     const toggle = item.querySelector('.sebook-nav-toggle');
     if (toggle) {
-      toggle.classList.add('open');
+      toggle.classList.remove('open');
     }
   });
   
   document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(function(item) {
-    item.classList.add('open');
+    item.classList.remove('open');
     const toggle = item.querySelector('.sebook-nav-toggle');
     if (toggle) {
-      toggle.classList.add('open');
+      toggle.classList.remove('open');
     }
   });
   
-  // Top level items: allow clicking to navigate to URL (don't prevent default)
+  // Find and highlight the current page
+  document.querySelectorAll('.sebook-nav-link').forEach(function(link) {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.add('current');
+      currentTopicItem = link.closest('.sebook-nav-item');
+      foundCurrent = true;
+    }
+  });
+  
+  if (!foundCurrent) {
+    document.querySelectorAll('.sebook-nav-sublink').forEach(function(link) {
+      if (link.getAttribute('href') === currentPath) {
+        link.classList.add('current');
+        const subitem = link.closest('.sebook-nav-subitem');
+        currentSubtopicItem = subitem;
+        currentTopicItem = subitem.closest('.sebook-nav-item');
+        foundCurrent = true;
+      }
+    });
+  }
+  
+  if (!foundCurrent) {
+    document.querySelectorAll('.sebook-nav-itemlink').forEach(function(link) {
+      if (link.getAttribute('href') === currentPath) {
+        link.classList.add('current');
+        const itemLeaf = link.closest('.sebook-nav-item-leaf');
+        const subitem = itemLeaf.closest('.sebook-nav-subitem');
+        currentSubtopicItem = subitem;
+        currentTopicItem = subitem.closest('.sebook-nav-item');
+        foundCurrent = true;
+      }
+    });
+  }
+  
+  // Open only the current topic and its subtopics
+  if (currentTopicItem) {
+    if (currentTopicItem.classList.contains('has-subtopics')) {
+      currentTopicItem.classList.add('open');
+      const toggle = currentTopicItem.querySelector('.sebook-nav-toggle');
+      if (toggle) {
+        toggle.classList.add('open');
+      }
+    }
+  }
+  
+  // Open the current subtopic if it has items
+  if (currentSubtopicItem) {
+    if (currentSubtopicItem.classList.contains('has-subitems')) {
+      currentSubtopicItem.classList.add('open');
+      const toggle = currentSubtopicItem.querySelector('.sebook-nav-toggle');
+      if (toggle) {
+        toggle.classList.add('open');
+      }
+    }
+  }
+  
+  // Toggle handlers: Top level items
   document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(function(link) {
-    // Toggle only when clicking the toggle arrow, not the whole link
     const toggle = link.querySelector('.sebook-nav-toggle');
     if (toggle) {
       toggle.addEventListener('click', function(e) {
@@ -212,16 +287,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Handle subtopic toggles (these should still toggle, not navigate)
+  // Toggle handlers: Subtopic items
   document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(function(link) {
-    link.addEventListener('click', function(e) {
-      if (this.querySelector('.sebook-nav-toggle')) {
+    const toggle = link.querySelector('.sebook-nav-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
         e.preventDefault();
-        const parent = this.parentElement;
+        const parent = link.parentElement;
         parent.classList.toggle('open');
-        this.querySelector('.sebook-nav-toggle').classList.toggle('open');
-      }
-    });
+        this.classList.toggle('open');
+      });
+    }
   });
 });
 </script>
