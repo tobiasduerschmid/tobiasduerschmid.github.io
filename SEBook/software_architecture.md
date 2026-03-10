@@ -2,9 +2,6 @@
 title: Software Architecture
 layout: sebook
 ---
-I acknowledge these instructions. To synthesize this chapter, I am actively scanning the corpus for the following semantic clusters and metaphorical equivalents: *Foundational Abstractions, software architecture definitions, structural elements, principal design decisions, target architecture vs. actual architecture, prescriptive architecture vs. descriptive architecture, as-intended vs. as-realized architecture, architectural degradation, architectural drift, and nonarchitectural design.*
-
-***
 
 # Introduction: Defining the Intangible
 
