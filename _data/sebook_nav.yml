@@ -1,6 +1,28 @@
 # SE Book Navigation Structure
 
 topics:
+
+
+  - name: Development Practices
+    icon: null
+    url: /SEBook/development_practices/index.html
+    subtopics:
+      - name: Beacons
+        url: /SEBook/development_practices/beacons.html
+      - name: Code Comprehension
+        url: /SEBook/development_practices/code_comprehension.html
+      - name: Debugging
+        url: /SEBook/development_practices/debugging.html
+      - name: Gen Ai
+        url: /SEBook/development_practices/genAI.html
+      - name: Modern Code Review
+        url: /SEBook/development_practices/modern_code_review.html
+      - name: Prompt Engineering
+        url: /SEBook/development_practices/promptengineering.html
+      - name: Refactoring
+        url: /SEBook/development_practices/refactoring.html
+      - name: Top Down Code Comprehension
+        url: /SEBook/development_practices/topdown.html
   
   - name: Design Patterns
     icon: null
@@ -25,6 +47,17 @@ topics:
       - name: Model-View-Controller (MVC)
         url: /SEBook/designpatterns/mvc.html
 
+
+  - name: Architectural Styles
+    icon: null
+    url: /SEBook/architectural_styles/index.html
+    subtopics:
+      - name: Layered Style
+        url: /SEBook/architectural_styles/layers.html
+      - name: Pipes and Filters
+        url: /SEBook/architectural_styles/pipes_and_filters.html
+      - name: Publish Subscribe
+        url: /SEBook/architectural_styles/pubsub.html
   - name: Design Principles
     icon: null
     url: /SEBook/designprinciples.html
@@ -34,6 +67,10 @@ topics:
       - name: SOLID
         url: /SEBook/designprinciples/solid.html
 
+  - name: Software Architecture
+    icon: null
+    url: /SEBook/software_architecture.html
+    subtopics:
 
   - name: Software Process
     icon: null
