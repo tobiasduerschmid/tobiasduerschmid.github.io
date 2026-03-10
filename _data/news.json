@@ -98,5 +98,8 @@
 	  { "date" : "2025-10-01 12:00:00",
 	    "text" : "I have become the faculty advisor of UCLA's student clum \"<a href='https://bseatucla.com/'>Bruin Software Engineers</a>\"",
 	  },
+	  { "date" : "2026-03-09 12:00:00",
+	    "text" : "Carey Nachenberg and I are developing a new course on 'Generative Software Development' at UCLA. The course will be offered for the first time in Winter 2027.",
+	  },
 	]
-}gi
+}
