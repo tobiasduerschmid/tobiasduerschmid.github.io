@@ -5,20 +5,20 @@ layout: sebook
 
 # Introduction: Defining the Intangible
 
-## The Essence of Software Architecture
+## Definitions of Software Architecture
 
-The quest to definitively answer "What is software architecture?" has historically generated a myriad of answers. The literature reveals that computer science has not committed to a single, universal definition, but rather a "scatter plot" of over 150 definitions, each highlighting specific aspects of the discipline (Clements et al. 2010). However, as the field has matured, a consensus centroid has emerged around two prevailing paradigms: the structural and the decision-based.
+The quest to definitively answer "What is software architecture?" has various, different answers. The literature reveals that software engineering have not committed to a single, universal definition, but rather a "scatter plot" of over 150 definitions, each highlighting specific aspects of the discipline (Clements et al. 2010). However, as the field has matured, a consensus centroid has emerged around two prevailing paradigms: the *structural* and the *decision-based*.
 
 **The Structural Paradigm**
-The earliest and most prominent foundational definitions view architecture through a highly structural lens. Dewayne Perry and Alexander Wolf originally proposed that architecture is analogous to building construction, formalized as the formula: *Architecture = {Elements, Form, Rationale}* (Perry & Wolf 1992). This established that architecture consists of processing, data, and connecting elements organized into specific topologies. 
+The earliest and most prominent foundational definitions view architecture through a highly structural lens. Dewayne Perry and Alexander Wolf originally proposed that architecture is analogous to building construction, formalized as the formula: **Architecture = {Elements, Form, Rationale}** (Perry & Wolf 1992). This established that architecture consists of processing, data, and connecting elements organized into specific topologies. 
 
-This definition evolved into the modern industry standard, which posits that a software system's architecture is "the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both" (Bass et al. 2012). This structural view insists that architecture is inherently multidimensional; a system is not defined by a single structure, but by a combination of *module structures* (how code is divided), *component-and-connector structures* (how elements interact at runtime), and *allocation structures* (how software maps to hardware and organizational environments) (Bass et al. 2012).
+This definition evolved into the modern industry standard, which posits that a software system's architecture is **"the set of structures needed to reason about the system, which comprise software elements, relations among them, and properties of both"** (Bass et al. 2012). This structural view insists that architecture is inherently multidimensional. A system is not defined by a single structure, but by a combination of *module structures* (how code is divided), *component-and-connector structures* (how elements interact at runtime), and *allocation structures* (how software maps to hardware and organizational environments) (Bass et al. 2012).
 
-**The Decision-Based (Socio-Technical) Paradigm**
-Conversely, a secondary, newer paradigm reorients architecture away from "drawing boxes and lines" and towards the human element of *decision-making* (Capilla et al. 2015). In this view, software architecture is strictly defined as "the set of principal design decisions governing a system" (Taylor et al. 2009). An architectural decision is deemed *principal* if its impact is far-reaching, or, as Eoin Woods pragmatically states, it is a decision "which, if made incorrectly, may cause your project to be cancelled" (Woods 2010). This socio-technical shift implies that architecture is not merely the end result (the structures), but the culmination of rationale, context, and the compromises made by stakeholders.
+**The Decision-Based Paradigm**
+Conversely, a different definition reorients architecture away from "drawing boxes and lines" and towards the element of *decision-making*. In this view, software architecture is defined as **"the set of principal design decisions governing a system"** (Taylor et al. 2009). An architectural decision is deemed *principal* if its impact is far-reaching. This perspective implies that architecture is not merely the end result, but the culmination of rationale, context, and the compromises made by stakeholders over the historical evolution of the software system.
 
 **Divergent Perspective: The Architecture vs. Design Debate**
-A recurring debate within the literature is the precise boundary between *architecture* and *design*. Grady Booch famously noted, "All architecture is design, but not all design is architecture" (Booch 1999). However, the industry has historically struggled to define where architecture ends and design begins, often relying on the flawed concept of "detailed design." 
+A recurring debate within the literature is the precise boundary between *architecture* and *design*. Grady Booch famously noted, "All architecture is design, but not all design is architecture" (Booch 1999). However, the industry has historically struggled to define where architecture ends and design begins, often relying on the flawed concept of "detailed design". 
 
 The literature heavily criticizes the notion that architecture is simply design *without detail*. Asserting that architecture represents a "small set of big design decisions" or is restricted to a certain page limit is dismissed as "utter nonsense" (Clements et al. 2010). Architectural decisions can be highly detailed—such as mandating specific XML schemas, thread-safety constraints, or network latency limits. 
 
@@ -50,9 +50,7 @@ If a system's architecture is allowed to drift and erode without reconciliation,
 
 *   Bass, L., Clements, P., & Kazman, R. (2012). *Software Architecture in Practice, 3rd Edition*. Addison-Wesley.
 *   Booch, G., Rumbaugh, J., & Jacobson, I. (1999). *The Unified Modeling Language User Guide*. Addison-Wesley.
-*   Capilla, R. et al. (2015). *10 years of software architecture knowledge management: Practice and future*.
 *   Clements, P. et al. (2010). *Documenting Software Architectures: Views and Beyond, 2nd Edition*. Addison-Wesley.
 *   Eeles, P., & Cripps, P. (2009). *The Process of Software Architecting*. Addison-Wesley.
 *   Perry, D. E., & Wolf, A. L. (1992). *Foundations for the Study of Software Architecture*. ACM SIGSOFT Software Engineering Notes.
 *   Taylor, R. N., Medvidovic, N., & Dashofy, E. M. (2009). *Software Architecture: Foundations, Theory, and Practice*. Wiley.
-*   Woods, E. (2010). *Defining Software Architecture* (SEI Collection).
