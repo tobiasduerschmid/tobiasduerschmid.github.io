@@ -3,6 +3,7 @@ layout: blog-post
 title: "[Draft] How Should I Use AI as a College Student?"
 date: 2026-03-11
 category: "For Students"
+featured: true
 ---
 
 Students constantly ask me the same question: *How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*

@@ -1,0 +1,59 @@
+{% assign publications = site.data.publications.publications | sort:"date" %}
+
+<!-- Publications -->
+<section id="Blog">
+  <div class="container">
+  
+    <div class="row">
+      <div class="col-lg-12 text-center">
+        <h2 class="page-header">Recent Blog Posts</h2>
+      </div>
+
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2">
+      <div id="blog-posts">
+        {% assign sorted_posts = site.blog | sort: "date" | reverse %}
+        {% for post in sorted_posts %}
+		{% if post.featured %}
+          <article class="blog-post-item" data-category="{% if post.category %}{{ post.category | slugify }}{% else %}uncategorized{% endif %}">
+            <div class="blog-post-preview">
+              <h3 class="blog-post-title">
+                <a href="{{ post.url }}">{{ post.title }}</a>
+              </h3>
+              <div class="blog-post-info">
+                <span class="post-date">
+                  <i class="fa fa-calendar"></i> {{ post.date | date: "%B %d, %Y" }}
+                </span>
+                {% if post.category %}
+                  <span class="post-category">
+                    <a href="#{{ post.category | slugify }}" class="badge category-link" style="font-weight: bold; color: #000; background-color: #FFD100; margin-left: 10px;">{{ post.category }}</a>
+                  </span>
+                {% endif %}
+              </div>
+              <p class="blog-post-excerpt">
+                {% if post.excerpt %}
+                  {{ post.excerpt | strip_html | truncatewords: 50 }}
+                {% else %}
+                  {{ post.content | strip_html | truncatewords: 50 }}
+                {% endif %}
+              </p>
+              <a href="{{ post.url }}" class="btn btn-xs btn-primary" style="margin-top: 10px;">Read More →</a>
+            </div>
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+          </article>
+		{% endif %}
+        {% endfor %}
+      </div>
+
+      {% if site.blog.size == 0 %}
+        <div class="alert alert-info text-center" style="margin-top: 30px;">
+          <p>No blog posts yet. Check back soon!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+    </div>
+    
+
+  </div>
+</section>

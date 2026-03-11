@@ -31,4 +31,10 @@
       {% endif %}
     {% endfor %}
   </div>
+
+
+  {% if site.data.blog.show %}   
+    {% include blog_featured.html %}
+  {% endif %}   
+
 </section>
