@@ -64,7 +64,7 @@ h4 {
 
       <div style="display: flex; margin-top: 45px; min-height: calc(100vh - 60px);">
         <!-- Mobile Sidebar Toggle -->
-        <button id="sidebar-toggle" style="display: none; position: fixed; top: 60px; left: 10px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer;">
+        <button id="sidebar-toggle" style="display: none; position: fixed; top: 40px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
           ☰ Menu
         </button>
         
@@ -83,6 +83,12 @@ h4 {
               margin-bottom: 20px;
             }
             
+            /* Ensure sidebar does not get too thin on mid-sized screens */
+            #sidebar {
+              flex-shrink: 0;
+              min-width: 220px;
+            }
+            
             /* Mobile responsive styles */
             @media screen and (max-width: 768px) {
               #sidebar-toggle {
@@ -91,13 +97,15 @@ h4 {
               
               #sidebar {
                 position: fixed !important;
-                top: 0 !important;
+                /* start below the top navbar */
+                top: 80px !important;
                 left: -260px !important;
                 width: 260px !important;
+                min-width: 0 !important;
                 height: 100vh !important;
                 z-index: 999 !important;
                 transition: left 0.3s ease !important;
-                margin-top: 50px !important;
+                margin-top: 0 !important;
               }
               
               #sidebar.open {
