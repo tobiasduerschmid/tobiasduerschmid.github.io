@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "[Draft] How Should I use AI as a College Student?"
+title: "[Draft] How Should I Use AI as a College Student?"
 date: 2026-03-11
 category: "For Students"
 ---
