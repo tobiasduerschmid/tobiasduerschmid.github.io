@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: "[Notes] How Should I use AI as a College Student?"
-date: 2026-03-11
+date: 2026-03-01
 category: "For Students"
 ---
 
