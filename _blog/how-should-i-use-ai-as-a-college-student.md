@@ -4,12 +4,17 @@ title: "[Draft] How Should I Use AI as a College Student?"
 date: 2026-03-11
 category: "For Students"
 featured: true
+image: "/img/genai.jpg"
+image_p: "/img/genai_.jpg"
 ---
 
-Students constantly ask me the same question: *How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*
+
+Many of my students come to me with this wonderful question: *How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*
 So I decided to write my advice down in a succinct post for everyone.
 
-But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early research we have. Please take it as a guide, not gospel.
+
+
+But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early research I could find. Please take it as a guide, not gospel.
 
 ## Motivation: Maximize your Learning
 Some of you might be wondering: *Why bother grinding through the tedious process of learning basic computer science skills when AI can already do all my homework assignments in minutes?*
