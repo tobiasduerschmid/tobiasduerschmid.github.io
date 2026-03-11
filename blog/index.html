@@ -51,7 +51,7 @@ layout: blog
                 </span>
                 {% if post.category %}
                   <span class="post-category">
-                    <a href="#{{ post.category | slugify }}" class="badge category-link" style="background-color: #5cb85c; margin-left: 10px;">{{ post.category }}</a>
+                    <a href="#{{ post.category | slugify }}" class="badge category-link" style="color: #000; background-color: #FFD100; margin-left: 10px;">{{ post.category }}</a>
                   </span>
                 {% endif %}
               </div>
@@ -98,9 +98,9 @@ layout: blog
 }
 
 .filter-btn.active {
-  background-color: #5cb85c;
-  color: white;
-  border-color: #5cb85c;
+  background-color: #FFD100;
+  color: black;
+  border-color: #FFD100;
 }
 
 .blog-post-item {
@@ -128,7 +128,7 @@ layout: blog
 }
 
 .blog-post-title a:hover {
-  color: #5cb85c;
+  color: #2774AE;
 }
 
 .blog-post-info {
