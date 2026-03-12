@@ -6,4 +6,4 @@ layout: sebook
 ## This is still Work In Progress 
 ## Please Come Back Later  
 
-This is a collection of topics for students in software engineering courses.
+This will be a collection of topics for students in software engineering courses.

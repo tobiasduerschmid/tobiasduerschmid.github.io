@@ -3,26 +3,14 @@
 topics:
 
 
-  - name: Development Practices
+  - name: Requirements
     icon: null
-    url: /SEBook/development_practices/index.html
-    subtopics:
-      - name: Beacons
-        url: /SEBook/development_practices/beacons.html
-      - name: Code Comprehension
-        url: /SEBook/development_practices/code_comprehension.html
-      - name: Debugging
-        url: /SEBook/development_practices/debugging.html
-      - name: Gen Ai
-        url: /SEBook/development_practices/genAI.html
-      - name: Modern Code Review
-        url: /SEBook/development_practices/modern_code_review.html
-      - name: Prompt Engineering
-        url: /SEBook/development_practices/promptengineering.html
-      - name: Refactoring
-        url: /SEBook/development_practices/refactoring.html
-      - name: Top Down Code Comprehension
-        url: /SEBook/development_practices/topdown.html
+    url: /SEBook/requirements.html
+    subtopics:  
+      - name: User Stories
+        icon: null
+        url: /SEBook/userstories.html
+
   
   - name: Design Patterns
     icon: null
@@ -108,7 +96,26 @@ topics:
   - name: UML
     icon: null
     url: /SEBook/uml.html
-  
-  - name: User Stories
+
+
+
+  - name: Development Practices
     icon: null
-    url: /SEBook/userstories.html
+    url: /SEBook/development_practices/index.html
+    subtopics:
+      - name: Beacons
+        url: /SEBook/development_practices/beacons.html
+      - name: Code Comprehension
+        url: /SEBook/development_practices/code_comprehension.html
+      - name: Debugging
+        url: /SEBook/development_practices/debugging.html
+      - name: Gen Ai
+        url: /SEBook/development_practices/genAI.html
+      - name: Modern Code Review
+        url: /SEBook/development_practices/modern_code_review.html
+      - name: Prompt Engineering
+        url: /SEBook/development_practices/promptengineering.html
+      - name: Refactoring
+        url: /SEBook/development_practices/refactoring.html
+      - name: Top Down Code Comprehension
+        url: /SEBook/development_practices/topdown.html
