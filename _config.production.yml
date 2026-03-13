@@ -1,0 +1,5 @@
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-scholar
+  - jekyll-minify-html

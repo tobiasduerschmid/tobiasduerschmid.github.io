@@ -26,7 +26,7 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Build with Jekyll
-        run: bundle exec jekyll build
+        run: bundle exec jekyll build --config _config.yml,_config.production.yml
         env:
           JEKYLL_ENV: production
 

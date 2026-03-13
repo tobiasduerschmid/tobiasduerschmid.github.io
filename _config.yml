@@ -3,8 +3,7 @@ plugins:
   - jekyll-sitemap
   - jekyll-scholar
 
-sass:
-  style: compressed
+env: development
 
 # Site settings
 timezone: Europe/Berlin
