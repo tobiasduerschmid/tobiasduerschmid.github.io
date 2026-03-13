@@ -87,7 +87,7 @@ scholar:
   source: ./_bibliography
   bibliography: references.bib
   # Prefix each reference with the formatted in-text citation, e.g. "(Shen & Tamkin, 2026)"
-  bibliography_template: "{{reference}}"
+  bibliography_template: "{{reference}} {{link}}"
   sort_by: author
   order: ascending
   # Turn inline citations into links to the bibliography section

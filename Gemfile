@@ -24,4 +24,4 @@ group :jekyll_plugins do
   gem 'jekyll-github-metadata'
 end
 
-ruby '3.3'
+ruby '3.3.0'
