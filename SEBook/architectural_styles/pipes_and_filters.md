@@ -67,10 +67,5 @@ The literature highlights a conflict in how to manage the inherent lack of error
 ***
 
 ### References
-*   Bass, L., Clements, P., & Kazman, R. (2012). *Software Architecture in Practice, 3rd Edition*. Addison-Wesley.
-*   Buschmann, F., Meunier, R., Rohnert, H., Sommerlad, P., & Stal, M. (1996). *Pattern-Oriented Software Architecture: A System of Patterns, Volume 1*. John Wiley & Sons.
-*   Clements, P. et al. (2010). *Documenting Software Architectures: Views and Beyond, 2nd Edition*. Addison-Wesley.
-*   Fairbanks, G. (2010). *Just Enough Software Architecture: A Risk-Driven Approach*. Marshall & Brainerd.
-*   Garlan, D., & Shaw, M. (1993). *An Introduction to Software Architecture*. Carnegie Mellon University.
-*   Lattanze, A. (2008). *Architecting Software Intensive Systems: A Practitioner's Guide*. Auerbach Publications.
-*   Taylor, R. N., Medvidovic, N., & Dashofy, E. M. (2009). *Software Architecture: Foundations, Theory, and Practice*. Wiley.
+<div style='display:none'>{% cite Bass2012 Buschmann1996 Clements2010 Fairbanks2010 Garlan1993 Lattanze2008 Taylor2009 %}</div>
+{% bibliography --cited %}

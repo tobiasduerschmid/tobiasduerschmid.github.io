@@ -134,11 +134,5 @@ The publish/subscribe paradigm represents a fundamental shift in distributed com
 ***
 
 ### References
-*   Bass, L., Clements, P., & Kazman, R. (2012). *Software Architecture in Practice, 3rd Edition*. Addison-Wesley.
-*   Buschmann, F., Meunier, R., Rohnert, H., Sommerlad, P., & Stal, M. (1996). *Pattern-Oriented Software Architecture: A System of Patterns, Volume 1*. John Wiley & Sons.
-*   Clements, P. et al. (2010). *Documenting Software Architectures: Views and Beyond, 2nd Edition*. Addison-Wesley.
-*   Fairbanks, G. (2010). *Just Enough Software Architecture: A Risk-Driven Approach*. Marshall & Brainerd.
-*   Garcia, J. et al. (n.d.). *Identifying architectural bad smells*.
-*   Garlan, D., & Shaw, M. (1993). *An Introduction to Software Architecture*. Carnegie Mellon University.
-*   Garlan, D., Khersonsky, S., & Kim, J. S. (2003). *Model Checking Publish-Subscribe Systems*. Proceedings of the 10th International SPIN Workshop on Model Checking of Software.
-*   Rozanski, N., & Woods, E. (2011). *Software Systems Architecture: Working With Stakeholders Using Viewpoints and Perspectives*. Addison-Wesley.
+<div style='display:none'>{% cite Bass2012 Buschmann1996 Clements2010 Fairbanks2010 Garcia Garlan1993 Garlan2003 Rozanski2011 %}</div>
+{% bibliography --cited %}

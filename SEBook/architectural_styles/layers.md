@@ -50,10 +50,5 @@ In traditional layered systems, the *Infrastructure Layer* (databases, logging, 
 ***
 
 ### References
-*   Bass, L., Clements, P., & Kazman, R. (2012). *Software Architecture in Practice, 3rd Edition*. Addison-Wesley.
-*   Buschmann, F., Meunier, R., Rohnert, H., Sommerlad, P., & Stal, M. (1996). *Pattern-Oriented Software Architecture: A System of Patterns, Volume 1*. John Wiley & Sons.
-*   Clements, P. et al. (2010). *Documenting Software Architectures: Views and Beyond, 2nd Edition*. Addison-Wesley.
-*   Keeling, M. (2017). *Design It! From Programmer to Software Architect*. Pragmatic Bookshelf.
-*   Lilienthal, C. (2019). *Sustainable Software Architecture: Analyze and Reduce Technical Debt*. dpunkt.verlag.
-*   Taylor, R. N., Medvidovic, N., & Dashofy, E. M. (2009). *Software Architecture: Foundations, Theory, and Practice*. Wiley.
-*   Woods, E., & Rozanski, N. (2011). *Software Systems Architecture: Working With Stakeholders Using Viewpoints and Perspectives*. Addison-Wesley.
+<div style='display:none'>{% cite Bass2012 Buschmann1996 Clements2010 Keeling2017 Lilienthal2019 Taylor2009 Rozanski2011 %}</div>
+{% bibliography --cited %}

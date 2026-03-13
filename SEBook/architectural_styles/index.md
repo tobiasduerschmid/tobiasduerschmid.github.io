@@ -15,11 +15,11 @@ By voluntarily restricting the vocabulary of design alternatives to a relatively
 ## Divergent Perspectives: Styles vs. Patterns
 A significant debate within the literature is the precise boundary between an *architectural style* and an *architectural pattern*. While some practitioners use the terms interchangeably, careful meta-analysis reveals a nuanced distinction:
 
-*   **The Problem-Context Distinction:** An *architectural pattern* is generally viewed as a specific solution to a specific recurring problem within a given context (a context-problem-solution triple). In contrast, an *architectural style* is an abstract structural framework independent of any specific design situation. As noted by Taylor et al., styles are *strategic* (e.g., "highly distributed systems"), while patterns are *tactical* (e.g., "separating business logic from data management").
+*   **The Problem-Context Distinction:** An *architectural pattern* is generally viewed as a specific solution to a specific recurring problem within a given context (a context-problem-solution triple). In contrast, an *architectural style* is an abstract structural framework independent of any specific design situation. As noted by Taylor et al., styles are *strategic* (e.g., "highly distributed systems"), while patterns are *tactical* (e.g., "separating business logic from data management") {% cite Taylor2009 %}.
 *   **The Constraint Focus:** Styles tend to be highly declarative, focusing on the constraints that must be obeyed (e.g., "pipes only connect to filters"). Patterns tend to be more constructive and specific, showing precise instances of elements interacting to solve a problem.
 
 ## The Ideal vs. The Real: Platonic vs. Embodied Styles
-When analyzing systems in the wild, architects must recognize the difference between theoretical blueprints and messy realities. Fairbanks introduces a critical dichotomy:
+When analyzing systems in the wild, architects must recognize the difference between theoretical blueprints and messy realities. George Fairbanks introduces a critical dichotomy {% cite Fairbanks2010 %}:
 *   **Platonic Styles:** These are the idealized, mathematically pure styles found in textbooks. If a system strictly adheres to the constraints of a Platonic style, the architect can mathematically guarantee certain quality attributes (e.g., complete reconfiguration capabilities). 
 *   **Embodied Styles:** Real-world systems rarely adhere perfectly to textbook constraints. An *embodied style* is the messy implementation found in actual source code, where strict constraints are occasionally bent to accommodate performance needs or legacy integrations. While bending these rules is sometimes necessary, architects must be acutely aware that violating a style's constraints degrades the very quality attributes the style was chosen to guarantee.
 
@@ -58,13 +58,5 @@ Ultimately, mastering software architecture requires fluency in these diverse st
 ***
 
 ### References
-*   Bass, L., Clements, P., & Kazman, R. (2012). *Software Architecture in Practice, 3rd Edition*. Addison-Wesley.
-*   Bass, L. et al. (2023). *Engineering AI Systems: Architecture and DevOps Essentials*.
-*   Buschmann, F., Meunier, R., Rohnert, H., Sommerlad, P., & Stal, M. (1996). *Pattern-Oriented Software Architecture: A System of Patterns, Volume 1*. John Wiley & Sons.
-*   Clements, P. et al. (2010). *Documenting Software Architectures: Views and Beyond, 2nd Edition*. Addison-Wesley.
-*   Di Francesco, P., Lago, P., & Malavolta, I. (2019). *Architecting with microservices: A systematic mapping study*. Journal of Systems and Software.
-*   Fairbanks, G. (2010). *Just Enough Software Architecture: A Risk-Driven Approach*. Marshall & Brainerd.
-*   Garlan, D., & Shaw, M. (1993). *An Introduction to Software Architecture*. Carnegie Mellon University.
-*   Lilienthal, C. (2019). *Sustainable Software Architecture: Analyze and Reduce Technical Debt*. dpunkt.verlag.
-*   Perry, D. E., & Wolf, A. L. (1992). *Foundations for the Study of Software Architecture*. ACM SIGSOFT Software Engineering Notes.
-*   Taylor, R. N., Medvidovic, N., & Dashofy, E. M. (2009). *Software Architecture: Foundations, Theory, and Practice*. Wiley.
+<div style='display:none'>{% cite Bass2012 Bass2023 Buschmann1996 Clements2010 DiFrancesco2019 Garlan1993 Lilienthal2019 Perry1992 %}</div>
+{% bibliography --cited %}
