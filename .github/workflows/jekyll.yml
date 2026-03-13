@@ -2,7 +2,7 @@ name: Deploy Jekyll site to Pages
 
 on:
   push:
-    branches: ["main"] # Replace with your default branch name
+    branches: ["master"] # Replace with your default branch name
 
 permissions:
   contents: read
