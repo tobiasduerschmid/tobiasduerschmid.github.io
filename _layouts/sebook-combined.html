@@ -92,7 +92,7 @@ h4 {
           {% endfor %}
 
           {% capture bib %}{% bibliography --cited %}{% endcapture %}
-          {% if bib contains 'class="bibliography"' %}
+          {% if bib contains '<li' %}
             <div class="row">
               <section id="references">
                 <hr>
