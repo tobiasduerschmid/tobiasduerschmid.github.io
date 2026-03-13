@@ -31,12 +31,12 @@
         <group delimiter=" ">
           <text term="in"/>
           <names variable="container-author" delimiter=", " suffix=", ">
-            <name and="text" delimiter-precedes-last="always"/>
+            <name and="text" delimiter-precedes-last="contextual"/>
           </names>
           <choose>
             <if variable="container-author" match="none">
               <names variable="editor translator" delimiter=", ">
-                <name and="text" delimiter-precedes-last="always"/>
+                <name and="text" delimiter-precedes-last="contextual"/>
                 <label form="short" prefix=" (" suffix=")"/>
               </names>
             </if>
@@ -56,14 +56,14 @@
       <else-if variable="container-author" match="any">
         <names variable="editor translator" delimiter=". ">
           <label form="verb" text-case="capitalize-first" suffix=" "/>
-          <name and="text" delimiter=", " delimiter-precedes-last="always"/>
+          <name and="text" delimiter=", " delimiter-precedes-last="contextual"/>
         </names>
       </else-if>
     </choose>
   </macro>
   <macro name="author">
     <names variable="author">
-      <name and="text" delimiter-precedes-last="always"/>
+      <name and="text" delimiter-precedes-last="contextual"/>
       <label form="short" prefix=" (" suffix=")"/>
       <et-al font-style="italic"/>
       <substitute>
@@ -83,7 +83,7 @@
   
   <macro name="author-short">
     <names variable="author">
-      <name form="short" and="text" delimiter=", " delimiter-precedes-last="always" et-al-min="3" et-al-use-first="1"/>
+      <name form="short" and="text" delimiter=", " delimiter-precedes-last="contextual" et-al-min="3" et-al-use-first="1"/>
       <et-al font-style="italic"/>
       <substitute>
         <names variable="editor"/>
