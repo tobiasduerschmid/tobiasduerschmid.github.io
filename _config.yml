@@ -2,12 +2,9 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
   - jekyll-scholar
-  - jekyll-minify-html 
 
 sass:
   style: compressed
-  
-env: production
 
 # Site settings
 timezone: Europe/Berlin
