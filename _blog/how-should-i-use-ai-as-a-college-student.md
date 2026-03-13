@@ -18,8 +18,8 @@ But first a **disclaimer**: AI is evolving at rapid speed, and we still lack rep
 ## Motivation: Maximize your Learning
 Some of you might be wondering: "*Why bother grinding through the tedious process of learning basic computer science skills when AI can already do all my homework assignments in minutes?*"
 
-However, state-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite Ma2026 %}.
-When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 %}. 
+However, state-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite Ma2026 DORA2025 Paradis2025 %}.
+When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Ma2026 DORA2025 Paradis2025 %}. 
 This research tells a clear story: AI benefits those with more experience and stronger foundational skills much more than those who use AI as a replacement for skill aquisition.
 
 This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
