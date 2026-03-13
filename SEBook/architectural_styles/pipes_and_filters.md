@@ -10,7 +10,7 @@ In the realm of software architecture, data flow styles describe systems where t
 The pattern of interaction in this style is characterized by the successive transformation of streams of discrete data. Originally popularized by the UNIX operating system in the 1970s—where developers could chain command-line tools together to perform complex tasks—this style treats a software system much like a chemical processing plant where fluid flows through pipes to be refined by various filters. Modern applications of this style extend far beyond the command line, encompassing signal-processing systems, the request-processing architecture of the Apache Web server, compiler toolchains, financial data aggregators, and distributed map-reduce frameworks.
 
 ##  Structural Paradigms: Elements and Constraints
-As defined by Garlan and Shaw, an architectural style provides a vocabulary of design elements and a set of strict constraints on how they can be combined. The pipe-and-filter style is elegantly restricted to two primary element types and highly specific interaction rules.
+As defined by Garlan and Shaw, an architectural style provides a vocabulary of design elements and a set of strict constraints on how they can be combined{% cite Garlan1993 %}. The pipe-and-filter style is elegantly restricted to two primary element types and highly specific interaction rules.
 
 **The Elements**
 1.  **Filters (Components):** A *filter* is the primary computational component. It reads streams of data from one or more input ports, applies a local transformation (enriching, refining, or altering the data), and produces streams of data on one or more output ports. A critical feature of a true filter is that it computes *incrementally*; it can start producing output before it has consumed all of its input.
@@ -20,8 +20,8 @@ As defined by Garlan and Shaw, an architectural style provides a vocabulary of d
 **The Constraints**
 To guarantee the emergent qualities of the style, the architecture must adhere to strict invariants:
 *   **Strict Independence:** Filters must be completely independent entities. They cannot share state or memory with other filters.
-*   **Agnosticism:** A filter must not know the identity of its upstream or downstream neighbors. It operates like a "simple clerk in a locked room who receives message envelopes slipped under one door... and slips another message envelope under another door".
-*   **Topological Limits:** Pipes can only connect filter output ports to filter input ports (pipes cannot connect to pipes). While pure *pipelines* are strictly linear sequences, the broader pipe-and-filter style allows for directed acyclic graphs (such as tee-and-join topologies). 
+*   **Agnosticism:** A filter must not know the identity of its upstream or downstream neighbors. It operates like a "simple clerk in a locked room who receives message envelopes slipped under one door... and slips another message envelope under another door"{% cite Fairbanks2010 %}.
+*   **Topological Limits:** Pipes can only connect filter output ports to filter input ports (pipes cannot connect to pipes). While pure *pipelines* are strictly linear sequences, the broader pipe-and-filter style allows for directed acyclic graphs (such as tee-and-join topologies){% cite Clements2010 %}. 
 
 ## Quality Attribute Trade-offs
 Architectural choices are fundamentally about managing quality attributes. The pipe-and-filter style offers a distinct profile of promoted benefits and severe liabilities.
@@ -30,7 +30,7 @@ Architectural choices are fundamentally about managing quality attributes. The p
 *   **Modifiability and Reconfigurability:** Because filters are completely independent and oblivious to their neighbors, developers can easily exchange, add, or recombine filters to create entirely new system behaviors without modifying existing code. This allows for the "late recomposition" of networks.
 *   **Reusability:** A well-designed filter that does exactly "one thing well" (e.g., a sorting filter) can be reused across countless different applications.
 *   **Performance (Concurrency):** Because filters process data incrementally and independently, they can be deployed as separate processes or threads executing in parallel. Data buffering within the pipes naturally synchronizes these concurrent tasks.
-*   **Simplicity of Analysis:** The overall input/output behavior of the system can be mathematically reasoned about as the simple functional composition of the individual filters.
+*   **Simplicity of Analysis:** The overall input/output behavior of the system can be mathematically reasoned about as the simple functional composition of the individual filters{% cite Bass2012 %}.
 
 **Quality Attributes Inhibited:**
 *   **Interactivity:** Pipe-and-filter systems are typically transformational and are notoriously poor at handling interactive, event-driven user interfaces where rich, cyclic feedback loops are required.
@@ -41,13 +41,13 @@ Architectural choices are fundamentally about managing quality attributes. The p
 When bridging the gap between architectural blueprint and actual source code, developers employ specific *architecture frameworks* and control-flow mechanisms to realize the style.
 
 **Push, Pull, and Active Pipelines**
-Buschmann et al. categorize the runtime dynamics of pipelines into different execution models:
+Buschmann et al. categorize the runtime dynamics of pipelines into different execution models{% cite Buschmann1996 %}:
 1.  **Push Pipeline:** Activity is initiated by the data source, which "pushes" data into passive filters downstream.
 2.  **Pull Pipeline:** Activity is initiated by the data sink, which "pulls" data from upstream passive filters.
 3.  **Active (Concurrent) Pipeline:** The most robust implementation, where every filter runs in its own thread of control. Filters actively pull from their input pipe, compute, and push to their output pipe in a continuous loop.
 
 **Architectural Frameworks (The UNIX `stdio` Example)**
-Building an active pipeline from scratch requires managing complex concurrency locks. To mitigate this, developers rely on architecture frameworks. The most ubiquitous framework for pipe-and-filter is the UNIX Standard I/O library (`stdio`). By providing standardized abstractions (like `stdin` and `stdout`) and relying on the operating system to handle process scheduling and pipe buffering, `stdio` serves as a direct bridge between procedural programming languages (like C) and the concurrent, stream-oriented needs of the pipe-and-filter style.
+Building an active pipeline from scratch requires managing complex concurrency locks. To mitigate this, developers rely on architecture frameworks. The most ubiquitous framework for pipe-and-filter is the UNIX Standard I/O library (`stdio`). By providing standardized abstractions (like `stdin` and `stdout`) and relying on the operating system to handle process scheduling and pipe buffering, `stdio` serves as a direct bridge between procedural programming languages (like C) and the concurrent, stream-oriented needs of the pipe-and-filter style{% cite Taylor2009 %}.
 
 In object-oriented languages like Java, developers often *hoist* the style directly into the code using an *architecturally-evident coding style*. This is achieved by creating an abstract `Filter` base class that implements threading (e.g., via the `Runnable` interface) and a `Pipe` class that encapsulates thread-safe data transfer (e.g., using `java.util.concurrent.BlockingQueue`).
 
@@ -62,10 +62,9 @@ However, practically speaking, many developers implement "pipelines" using filte
 Textbooks present the *Platonic* ideal of the pipe-and-filter style: filters must *never* share state or rely on external databases, and they must only communicate via pipes. However, practitioners note that in the wild, *embodied* styles frequently violate these constraints. For instance, it is common to see a hybrid architecture where filters interact via pipes, but also query a shared repository (a database) to enrich the data stream. While academics argue this "violates a basic tenet of the approach", pragmatists argue it is a necessary heterogeneous adaptation, though it explicitly destroys the style's guarantees regarding filter independence and simple mathematical predictability.
 
 **3. Tackling the Error Handling Liability**
-The literature highlights a conflict in how to manage the inherent lack of error handling in pipelines. Traditional pattern catalogs suggest passing "special marker values" down the pipeline to resynchronize filters upon failure, or relying on a single error channel (like `stderr`). However, newer architectural methodologies propose fundamentally altering the style's topology. Lattanze suggests introducing *broadcasting filters*—filters equipped with event-casting mechanisms (like observer-observable patterns) to asynchronously broadcast errors to an external monitor. This represents a paradigm shift from pure data-flow to a hybrid event-driven/data-flow architecture to satisfy enterprise reliability requirements.
+The literature highlights a conflict in how to manage the inherent lack of error handling in pipelines. Traditional pattern catalogs suggest passing "special marker values" down the pipeline to resynchronize filters upon failure, or relying on a single error channel (like `stderr`). However, newer architectural methodologies propose fundamentally altering the style's topology. Lattanze suggests introducing *broadcasting filters*—filters equipped with event-casting mechanisms (like observer-observable patterns) to asynchronously broadcast errors to an external monitor{% cite Lattanze2008 %}. This represents a paradigm shift from pure data-flow to a hybrid event-driven/data-flow architecture to satisfy enterprise reliability requirements.
 
 ***
 
 ### References
-<div style='display:none'>{% cite Bass2012 Buschmann1996 Clements2010 Fairbanks2010 Garlan1993 Lattanze2008 Taylor2009 %}</div>
 {% bibliography --cited %}
