@@ -47,7 +47,3 @@ Historically, architects implemented *technical layering*—grouping code by tec
 **3. The Infrastructure Inversion (Clean and Hexagonal Architectures)**
 In traditional layered systems, the *Infrastructure Layer* (databases, logging, UI frameworks) is placed at the very bottom, meaning the core business logic depends on technical infrastructure. Modern architectural thought has rebelled against this. Styles such as the *Hexagonal Architecture (Ports and Adapters)*, *Onion Architecture*, and *Clean Architecture* represent a profound paradigm shift. These styles invert the traditional dependencies by placing the *Domain Model* at the absolute center of the architecture, entirely decoupled from technical concerns. The UI and databases are pushed to the outermost layers as pluggable "adapters". This extreme separation of concerns drastically reduces technical debt and ensures the business logic can be tested in total isolation from the physical environment.
 
-***
-
-### References
-{% bibliography --cited %}

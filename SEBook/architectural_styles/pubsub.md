@@ -131,7 +131,3 @@ The asynchronous, non-deterministic nature of pub/sub networks makes them diffic
 ## Conclusion
 The publish/subscribe paradigm represents a fundamental shift in distributed computing, moving away from tightly coupled synchronous calls toward highly scalable, event-driven architectures. By carefully selecting the right subscription model (topic vs. content-based), tuning the routing algorithms, and properly applying Quality of Service guarantees, software architects can build systems capable of processing trillions of events seamlessly. As technologies like Kafka, Pulsar, and MQTT continue to evolve, mastering the tradeoffs of the publish/subscribe model remains an essential skill for modern distributed systems engineering.
 
-***
-
-### References
-{% bibliography --cited %}

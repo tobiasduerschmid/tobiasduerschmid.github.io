@@ -131,7 +131,3 @@ To facilitate top-down thinking for yourself and your team, you must design boun
 
 
 
-***
-
-### References
-{% bibliography --cited %}

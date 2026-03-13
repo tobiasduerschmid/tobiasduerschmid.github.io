@@ -44,7 +44,3 @@ This discrepancy between the as-intended plan and the as-realized code is known 
 
 If a system's architecture is allowed to drift and erode without reconciliation, the descriptive and prescriptive architectures diverge completely. When this happens, the system loses its conceptual integrity, technical debt accumulates in the source code, and the system eventually becomes unmaintainable, necessitating a complete architectural recovery or overhaul {% cite Taylor2009 %}.
 
-***
-
-### References
-{% bibliography --cited %}

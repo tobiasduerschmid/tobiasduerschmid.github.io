@@ -74,8 +74,3 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 *   Generative AI should be utilized as a **"bicycle for the mind"**—a tool that amplifies your cognitive reach but still requires your active control, steering, and judgment
 </div>
 
-<hr>
-<div class="blog-bibliography">
-    <h3>References</h3>
-    {% bibliography --cited %}
-</div>

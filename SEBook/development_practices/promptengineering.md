@@ -147,7 +147,3 @@ Similarly, the integration of Test-Driven Development (TDD) into prompt engineer
 
 **Conclusion:** The evolution of prompt engineering suggests a near future where developers will no longer agonize over the perfect phrasing of a zero-shot prompt. Instead, developers will supply the high-level intent and validation criteria, while intermediary orchestration layers dynamically synthesize the rigorous context, multi-agent debates, and compiler feedback required to safely generate production-ready code.
 
-***
-
-### References
-{% bibliography --cited %}

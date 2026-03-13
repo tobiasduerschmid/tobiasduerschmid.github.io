@@ -55,8 +55,3 @@ Styles can be combined in two primary ways:
 
 Ultimately, mastering software architecture requires fluency in these diverse styles, recognizing them not as rigid dogma, but as an advanced vocabulary of trade-offs used to intentionally hoist quality attributes into the structural skeleton of a system.
 
-***
-
-### References
-<div style='display:none'>{% cite Bass2012 Bass2023 Buschmann1996 Clements2010 DiFrancesco2019 Garlan1993 Lilienthal2019 Perry1992 %}</div>
-{% bibliography --cited %}

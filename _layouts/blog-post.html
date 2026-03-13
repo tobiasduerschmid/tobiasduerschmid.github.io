@@ -25,6 +25,16 @@ layout: blog
           {{ content }}
         </div>
 
+        {% if content contains 'class="citation"' %}
+          {% unless content contains 'class="bibliography"' %}
+            <div class="blog-bibliography">
+              <hr>
+              <h3 id="references">References</h3>
+              {% bibliography --cited %}
+            </div>
+          {% endunless %}
+        {% endif %}
+
         <footer class="blog-post-footer">
           <a href="/blog/" class="btn btn-default btn-sm" style="margin-top: 20px;">← Back to Blog</a>
         </footer>

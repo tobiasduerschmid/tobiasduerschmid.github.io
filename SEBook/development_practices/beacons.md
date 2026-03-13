@@ -124,7 +124,3 @@ A fascinating tension exists in the literature regarding how developers *should*
 # Conclusion
 Mastering code reading requires transitioning from a systematic, line-by-line decoding process to an opportunistic, top-down strategy. By actively formulating hypotheses and utilizing IDE tools to hunt for structural and lexical beacons, a developer can rapidly construct an accurate mental model of a complex system without succumbing to cognitive overload.
 
-***
-
-### References
-{% bibliography --cited %}
