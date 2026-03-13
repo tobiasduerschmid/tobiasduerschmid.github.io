@@ -4,168 +4,167 @@
 {% include head.html %}
 
 <style>
+  h1 {
+    font-weight: bold;
+  }
 
-h1 {
-  font-weight: bold;
-}
+  h2 {
+    font-weight: bold;
+  }
 
-h2 {
-  font-weight: bold;
-}
-h3 {
-  font-weight: bold;
-}
-h4 {
-  font-weight: bold;
-}
+  h3 {
+    font-weight: bold;
+  }
+
+  h4 {
+    font-weight: bold;
+  }
 </style>
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
 
-    <article class="post-content">
-      
-      {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
-      {% assign project  = projects.first %}
+  <article class="post-content">
 
-      <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+    {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
+    {% assign project = projects.first %}
+
+    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
       <div class="container-fluid">
         <div class="navbar-header page-scroll">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand page-scroll" href="{{project.url}}">{{project.title}}</a><a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
-        
+          <a class="navbar-brand page-scroll" href="{{project.url}}">{{project.title}}</a><a
+            class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
+
         </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract H1 headings from content -->
-          {% assign sections = content | split: '<h1' %}
-          {% for section in sections %}
-            {% if section contains '</h1>' %}
-            {% assign heading_and_content = section | split: '>' %}
-            {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1', '' %}
-
-            {% if heading_text != "" %}
-                {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: ':', '-'  | replace: '/', '-' | replace: '\', '-' | replace: '|', '-' | replace: '.', '-' | replace: ',', '-'  | replace: '(', '' | replace: ')', '' %}
-                {% assign heading_text_short = heading_text | split: ':' | first %}
-                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
-                {% endif %}
+            {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
+              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
+              split: '</h1>' | first | replace: '</h1' , '' %} {% if heading_text !="" %} {% assign
+              heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' |
+              replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' |
+              replace: '(' , '' | replace: ')' , '' %} {% assign heading_text_short=heading_text | split: ':' | first %}
+              <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
               {% endif %}
-            {% endfor %}
+              {% endif %}
+              {% endfor %}
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
 
-      <div style="display: flex; margin-top: 45px; min-height: calc(100vh - 60px);">
-        <!-- Mobile Sidebar Toggle -->
-        <button id="sidebar-toggle" style="display: none; position: fixed; top: 40px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-          ☰ Menu
-        </button>
-        
-        <!-- Sidebar Navigation -->
-        <div id="sidebar" style="width: 260px; max-width: 80vw; overflow-y: auto; background-color: #f5f5f5; margin: 0; padding: 0;">
-          {% include sebook_navbar_sidebar.html %}
-        </div>
-        
-        <!-- Main Content -->
-        <div id="main-content" style="flex: 1; padding: 20px;">
-          <style>
-            .intro-header {
-              margin-top: -70px;
-              margin-left: -20px;
-              margin-right: -20px;
-              margin-bottom: 20px;
+    <div style="display: flex; margin-top: 45px; min-height: calc(100vh - 60px);">
+      <!-- Mobile Sidebar Toggle -->
+      <button id="sidebar-toggle"
+        style="display: none; position: fixed; top: 40px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        ☰ Menu
+      </button>
+
+      <!-- Sidebar Navigation -->
+      <div id="sidebar"
+        style="width: 260px; max-width: 80vw; overflow-y: auto; background-color: #f5f5f5; margin: 0; padding: 0;">
+        {% include sebook_navbar_sidebar.html %}
+      </div>
+
+      <!-- Main Content -->
+      <div id="main-content" style="flex: 1; padding: 20px;">
+        <style>
+          .intro-header {
+            margin-top: -70px;
+            margin-left: -20px;
+            margin-right: -20px;
+            margin-bottom: 20px;
+          }
+
+          /* Ensure sidebar does not get too thin on mid-sized screens */
+          #sidebar {
+            flex-shrink: 0;
+            min-width: 220px;
+          }
+
+          /* Mobile responsive styles */
+          @media screen and (max-width: 768px) {
+            #sidebar-toggle {
+              display: block !important;
             }
-            
-            /* Ensure sidebar does not get too thin on mid-sized screens */
+
             #sidebar {
-              flex-shrink: 0;
-              min-width: 220px;
+              position: fixed !important;
+              /* start below the top navbar */
+              top: 80px !important;
+              left: -260px !important;
+              width: 260px !important;
+              min-width: 0 !important;
+              height: 100vh !important;
+              z-index: 999 !important;
+              transition: left 0.3s ease !important;
+              margin-top: 0 !important;
             }
-            
-            /* Mobile responsive styles */
-            @media screen and (max-width: 768px) {
-              #sidebar-toggle {
-                display: block !important;
-              }
-              
-              #sidebar {
-                position: fixed !important;
-                /* start below the top navbar */
-                top: 80px !important;
-                left: -260px !important;
-                width: 260px !important;
-                min-width: 0 !important;
-                height: 100vh !important;
-                z-index: 999 !important;
-                transition: left 0.3s ease !important;
-                margin-top: 0 !important;
-              }
-              
-              #sidebar.open {
-                left: 0 !important;
-              }
-              
-              #main-content {
-                width: 100% !important;
-                padding: 15px !important;
-              }
-              
-              .intro-header {
-                margin-top: 0 !important;
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-                margin-bottom: 15px !important;
-              }
+
+            #sidebar.open {
+              left: 0 !important;
             }
-          </style>
-          {% include header_project.html title=page.title %}
-          <div class="container">
-            <div class="row">
-                  {% assign sections = content | split: '<h1' %}
-                  {% for section in sections %}
-                    {% if section contains '</h1>' %}
-                      {% assign heading_and_content = section | split: '>' %}
-                      {% assign heading_text = heading_and_content[1] | split: '</h1>' | first | replace: '</h1', '' %}
-                      {% assign section_content = section | split: '</h1>' | last %}
-                      {% if heading_text != "" %}
-                        {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: ':', '-'  | replace: '/', '-' | replace: '\', '-' | replace: '|', '-' | replace: '.', '-' | replace: ',', '-' | replace: '(', '' | replace: ')', '' | replace: '</h1', '' %}
-                        <section id="{{ section_id }}">
-                          <h1>{{ heading_text }}</h1>{{ section_content }}
-                        </section>
-                      {% endif %}
-                    {% else %}
-                      {{ section }}
-                    {% endif %}
-                  {% endfor %}
-                
-            </div>
+
+            #main-content {
+              width: 100% !important;
+              padding: 15px !important;
+            }
+
+            .intro-header {
+              margin-top: 0 !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+              margin-bottom: 15px !important;
+            }
+          }
+        </style>
+        {% include header_project.html title=page.title %}
+        <div class="container">
+          <div class="row">
+            {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
+              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
+              split: '</h1>' | first | replace: '</h1' , '' %} {% assign section_content=section | split: '</h1>' | last
+              %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
+              replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
+              | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '</h1' , ''
+              %} <section id="{{ section_id }}">
+              <h1>{{ heading_text }}</h1>{{ section_content }}
+              </section>
+              {% endif %}
+              {% else %}
+              {{ section }}
+              {% endif %}
+              {% endfor %}
+
           </div>
         </div>
       </div>
-    </article>
-    
-    <script>
-    (function() {
+    </div>
+  </article>
+
+  <script>
+    (function () {
       var sidebar = document.getElementById('sidebar');
       var toggleBtn = document.getElementById('sidebar-toggle');
-      
+
       if (!sidebar || !toggleBtn) return;
 
       // Toggle sidebar on button click (mobile only)
-      toggleBtn.addEventListener('click', function(e) {
+      toggleBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         sidebar.classList.toggle('open');
       });
 
       // Close sidebar when clicking outside of it on mobile
-      document.addEventListener('click', function(e) {
+      document.addEventListener('click', function (e) {
         var isMobile = window.matchMedia('(max-width: 768px)').matches;
         if (!isMobile) return;
         if (!sidebar.classList.contains('open')) return;
@@ -174,18 +173,18 @@ h4 {
       });
 
       // Close sidebar when a link inside it is clicked (for better UX on mobile)
-      sidebar.addEventListener('click', function(e) {
+      sidebar.addEventListener('click', function (e) {
         var target = e.target;
         if (target.tagName === 'A' || target.closest('a')) {
           sidebar.classList.remove('open');
         }
       });
     })();
-    </script>
+  </script>
 
-{% include footer.html %}
+  {% include footer.html %}
 
-{% include scripts.html %}
+  {% include scripts.html %}
 
 </body>
 

@@ -289,4 +289,37 @@ $("#contact-form").validate(
   }
 });
 
+// Turn bare URLs in bibliography entries into clickable links
+document.addEventListener('DOMContentLoaded', function() {
+  var items = document.querySelectorAll('.blog-bibliography .bibliography li, ol.bibliography li');
+  if (!items.length) return;
+
+  var urlRegex = /(https?:\/\/[^\s<]+)/g;
+  var doiRegex = /\bdoi:\s*(10\.\d{4,9}\/[^\s<]+)\b/gi;
+
+  items.forEach(function(li) {
+    var html = li.innerHTML;
+
+    // Link bare URLs
+    html = html.replace(urlRegex, function(url) {
+      // Avoid double-wrapping existing links
+      if (url.includes('href=')) return url;
+      // Remove trailing dot if present
+      if (url.endsWith('.')) {
+        url = url.slice(0, -1);
+      }
+      return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+    });
+
+    // Link DOIs
+    html = html.replace(doiRegex, function(match, doi) {
+      // Avoid double-wrapping if already linked
+      if (match.includes('href=')) return match;
+      var href = 'https://doi.org/' + doi;
+      return 'doi: <a href="' + href + '" target="_blank" rel="noopener noreferrer">' + doi + '</a>';
+    });
+
+    li.innerHTML = html;
+  });
+});
 </script>
