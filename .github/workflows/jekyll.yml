@@ -19,7 +19,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7.8' # Specify your Ruby version
+          ruby-version: '3.3' # Specify your Ruby version
           bundler-cache: true # runs 'bundle install' and caches gems
 
       - name: Setup Pages
