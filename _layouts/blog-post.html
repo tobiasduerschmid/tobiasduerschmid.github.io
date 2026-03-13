@@ -159,6 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!items.length) return;
 
   var urlRegex = /(https?:\/\/[^\s<]+)/g;
+  //remove the LAST dot from the url
   // Matches DOI strings like "doi: 10.1109/ICSE-SEIP66354.2025.00060"
   var doiRegex = /\bdoi:\s*(10\.\d{4,9}\/[^\s<]+)\b/gi;
 
@@ -169,6 +170,9 @@ document.addEventListener('DOMContentLoaded', function() {
         html = html.replace(urlRegex, function(url) {
       // Avoid double-wrapping existing links
       if (url.includes('href=')) return url;
+      if (url.endsWith('.')) {
+        url = url.slice(0, -1);
+      }
       return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
     });
 
