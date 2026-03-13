@@ -76,6 +76,6 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 
 <hr>
 <div class="blog-bibliography">
-    <h3>References</h3>
+    <h2>References</h2>
     {% bibliography --cited %}
 </div>
