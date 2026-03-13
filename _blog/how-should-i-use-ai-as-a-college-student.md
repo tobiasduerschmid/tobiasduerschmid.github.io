@@ -8,7 +8,6 @@ image: "/img/genai.jpg"
 image_p: "/img/genai_.jpg"
 ---
 
-
 **Many of my students come to me with this wonderful question: "*How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*"
 In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience.
 So I decided to write my advice down in a succinct, evidence-based post for everyone.**
@@ -19,8 +18,8 @@ But first a **disclaimer**: AI is evolving at rapid speed, and we still lack rep
 ## Motivation: Maximize your Learning
 Some of you might be wondering: "*Why bother grinding through the tedious process of learning basic computer science skills when AI can already do all my homework assignments in minutes?*"
 
-However, state-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** (<abbr title="DORA Team. (2025). State of AI-assisted Software Development 2025. Google Cloud / DORA">DORA 2025</abbr>, <abbr title="Paradis, E., Grey, K., Madison, Q., Nam, D., Macvean, A., Meimand, V., Zhang, N., Ferrari-Church, B., & Chandra, S. (2025). How much does AI impact development speed? An enterprise-based randomized controlled trial. International Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP '25)">Paradis et al. 2025</abbr>, <abbr title="Ma, Q., Koedinger, K., & Wu, T. (2026). Not Everyone Wins with LLMs: Behavioral Patterns and Pedagogical Implications for AI Literacy in Programmatic Data Science. CHI Conference on Human Factors in Computing Systems (CHI '26)">Ma et al. 2026</abbr>). 
-When paired with AI, the productivity boost for developers with more skills and experience is actually larger (<abbr title="DORA Team. (2025). State of AI-assisted Software Development 2025. Google Cloud / DORA">DORA 2025</abbr>, <abbr title="Paradis, E., Grey, K., Madison, Q., Nam, D., Macvean, A., Meimand, V., Zhang, N., Ferrari-Church, B., & Chandra, S. (2025). How much does AI impact development speed? An enterprise-based randomized controlled trial. International Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP '25)">Paradis et al. 2025</abbr>, <abbr title="Ma, Q., Koedinger, K., & Wu, T. (2026). Not Everyone Wins with LLMs: Behavioral Patterns and Pedagogical Implications for AI Literacy in Programmatic Data Science. CHI Conference on Human Factors in Computing Systems (CHI '26)">Ma et al. 2026</abbr>). 
+However, state-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite Ma2026 %}.
+When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 %}. 
 This research tells a clear story: AI benefits those with more experience and stronger foundational skills much more than those who use AI as a replacement for skill aquisition.
 
 This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
@@ -32,7 +31,7 @@ This blog post is intended to be a guide for students who are trying to elevate 
 
 ## The Double-Edged Sword of Cognitive Offloading: Beneficial vs. Detrimental Use
 
-To truly master how you integrate AI into your computer science education, we need to dive into the psychological engine room of your brain: *cognitive offloading*. 
+To truly master how you integrate AI into your computer science education, we need to dive into the learning science theory of *cognitive offloading*. 
 
 **The Research:**
 Cognitive offloading is using external tools to reduce your cognitive demand (Risko & Gilbert 2016). Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constly think about the deadline. or asking ChatGPT to debug a script. They enable you get a task done with less cognitive work on your end, which of course sounds very enticing!
@@ -47,7 +46,7 @@ Detrimental offloading occurs when you use AI to bypass the *intrinsic* cognitiv
 When you outsource the intrinsic load, you suffer several severe consequences:
 *   **Bypassing Schema Construction:** By letting the AI generate the logic, you skip the "desirable difficulties" necessary to move knowledge from your limited working memory into your long-term procedural memory (de Bruin et al. 2023; Duplice 2025). 
 A massive randomized experiment of students using AI to solve math problems found that while their immediate performance was excellent, their long-term, durable learning suffered significantly once the AI was removed because they never built the internal neural pathways to solve the problems themselves (Bastani et al. 2025).
-A smaller study conducted by Anthropic researchers shows similar results for coding tasks as well (Shen & Tamkin 2026).
+A smaller study conducted by Anthropic researchers shows similar results for coding tasks as well {% cite ShenTamkin2026 %}.
 
 *   **Metacognitive Laziness:** The frictionless convenience of GenAI powerfully incentivizes "metacognitive laziness"—a state where learners willingly abdicate their self-regulatory responsibilities, such as planning an approach, monitoring their own comprehension, and critically evaluating their work, simply handing those executive functions over to the machine (Fan et al. 2024).
 
@@ -64,13 +63,19 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 </div>
 
 
-### References
-*   **DORA 2025**  - [DORA Team. (2025). State of AI-assisted Software Development 2025. Google Cloud / DORA](https://dora.dev/research/2025/dora-report/)
-
-*   **Ma et al. 2026** - [Ma, Q., Koedinger, K., & Wu, T. (2026). Not Everyone Wins with LLMs: Behavioral Patterns and Pedagogical Implications for AI Literacy in Programmatic Data Science. *CHI Conference on Human Factors in Computing Systems (CHI '26)*](https://arxiv.org/abs/2509.21890)
-
-*   **Paradis et al. 2025** - [Paradis, E., Grey, K., Madison, Q., Nam, D., Macvean, A., Meimand, V., Zhang, N., Ferrari-Church, B., & Chandra, S. (2025). How much does AI impact development speed? An enterprise-based randomized controlled trial. *International Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP '25)*](https://arxiv.org/abs/2410.12944)
+“Learning results from what the student does and thinks and only from what the student does and thinks. The teacher can advance learning only by influencing what the student does to learn” 
 
 
-*   **Shen & Tamkin 2026** - [Shen, J. H., & Tamkin, A. (2026). How AI Impacts Skill Formation.](https://arxiv.org/abs/2601.20245)
+<div class="action-box" markdown="1">
+#### Use AI for:
+*   **Personalized Feedback:**
+*   **Adaptive Scaffolding:**
+*   **Simulating Worked Examples:** 
+*   Generative AI should be utilized as a **"bicycle for the mind"**—a tool that amplifies your cognitive reach but still requires your active control, steering, and judgment
+</div>
 
+<hr>
+<div class="blog-bibliography">
+    <h3>References</h3>
+    {% bibliography --cited %}
+</div>

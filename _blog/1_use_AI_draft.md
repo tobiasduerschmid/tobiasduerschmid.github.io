@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "[Notes] How Should I use AI as a College Student?"
+title: "[Notes] How Should I use AI as a College Student? A Science-Backed Guide for CS Students"
 date: 2026-03-01
 category: "Notes"
 ---
@@ -283,3 +283,83 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 *   **Skulmowski 2023** - Skulmowski, A. (2023). The cognitive architecture of digital externalization. *Educational Psychology Review*, 35(4).
 *   **Sparrow, Liu, & Wegner 2011** - Sparrow, B., Liu, J., & Wegner, D. M. (2011). Google effects on memory: Cognitive consequences of having information at our fingertips. *Science*, 333(6043), 776-778.
 *   **Paradis et al. 2025** - Paradis, E., Grey, K., Madison, Q., Nam, D., Macvean, A., Meimand, V., Zhang, N., Ferrari-Church, B., & Chandra, S. (2025). How much does AI impact development speed? An enterprise-based randomized controlled trial. *In Proceedings of the IEEE/ACM International Conference on Software Engineering: Software Engineering in Practice (ICSE-SEIP)*, 618–629.
+
+## Part 4
+**How to Use AI as a College Student: A Science-Backed Guide for CS Majors**
+
+Generative AI tools like ChatGPT, Claude, and GitHub Copilot have rapidly transitioned from novelties to everyday necessities in computer science. You can now generate complex algorithms, debug cryptic errors, or scaffold entire web applications in seconds. However, there is a massive difference between using AI to *build software* as a professional and using AI to *build your brain* as a student. 
+
+If you use AI poorly, you risk falling into what researchers call the "performance paradox"—where your homework grades look flawless, but your actual coding skills decay. Based on the latest educational research and cognitive science, here is a guide for CS undergrads on how to use AI to actually maximize your learning.
+
+***
+
+### Tip 1: Practice "Beneficial Offloading" (Automate the Boring, Struggle with the Core)
+
+**The Research Consensus:** 
+The evidence here is highly clear and heavily grounded in Cognitive Load Theory (Sweller 2011). Research consistently shows that the impact of AI depends entirely on *what* mental tasks you hand over to the machine. Educational psychologists distinguish between two types of cognitive offloading: "beneficial" and "detrimental." Beneficial offloading occurs when you outsource distracting, low-level tasks (extraneous load), freeing up your working memory for complex problem-solving. Conversely, detrimental offloading occurs when you outsource the core logical reasoning (intrinsic load). Studies demonstrate a clear consensus: students who heavily rely on AI to do the deep thinking experience immediate performance gains but score significantly lower on independent retention tests once the AI is removed (Bastani et al. 2025; Lodge & Loble 2026). 
+
+**What We Can Learn:** 
+Your brain requires "productive struggle" and cognitive friction to move knowledge into long-term memory and build internal biological schemas. If you use AI to bypass the intrinsic difficulty of an assignment, you are simulating learning rather than achieving it. You should fiercely protect your architectural and algorithmic thinking while delegating tedious syntax or setup tasks to the AI.
+
+**Concrete CS Example:**
+Imagine you are building a full-stack web application for a database systems class. 
+*   **Do not offload (The Core):** Designing the SQL database schema, deciding between a hash map or a binary tree for data storage, or writing the complex `JOIN` queries. This is the intrinsic load where learning happens.
+*   **Do offload (The Boring):** Prompting the AI to "Generate the HTML/CSS boilerplate for a login form" or "Write a Python script to generate 50 rows of mock JSON user data with random names, emails, and hashed passwords so I can test my database."
+
+### Tip 2: Defeat the "Illusion of Competence" via Socratic Prompting
+
+**The Research Consensus:** 
+The evidence is very clear that the highly fluent, authoritative tone of Large Language Models (LLMs) creates a dangerous "illusion of competence." Because the AI provides articulate code and thorough explanations instantaneously, students easily mistake the machine's capability for their own understanding (Aiersilan 2025). This leads to a severe "explainability gap" and solution paralysis when students must code unaided. Conversely, experimental studies strongly support that using AI as a "Socratic tutor"—which asks guiding questions rather than giving direct answers—maintains cognitive agency and significantly improves learning outcomes (Sunil & Thakkar 2025).
+
+**What We Can Learn:** 
+You must actively prevent the AI from giving you the final answer. If you let the AI act as an oracle, you skip the necessary step of bridging your own knowledge gaps. By forcing the AI to act as a mentor, you keep yourself in the driver's seat of the learning process.
+
+**Concrete CS Example:**
+Instead of pasting a homework prompt and asking, "Write a Python function to solve this," engineer a Socratic prompt to establish boundaries. 
+Tell the AI: *"Act as my senior computer science tutor. I am trying to implement a recursive merge sort in Java, but I am getting a StackOverflowError. Do NOT write the corrected code for me. Instead, ask me a guiding question about my base case to help me figure out the flaw myself."*
+
+### Tip 3: Avoid "Metacognitive Laziness" with the Hypothesis-First Approach
+
+**The Research Consensus:** 
+Log-based behavioral studies and process-mining research provide clear, robust evidence that AI convenience induces "metacognitive laziness" (Fan et al. 2025). The research shows a stark contrast between novices and experienced programmers: novices use AI *reactively*, engaging in mindless "iterative AI debugging" loops where they repeatedly paste compiler errors into ChatGPT without formulating a plan (Rahe & Maalej 2025; Ma et al. 2026). In contrast, experienced students use AI *strategically* by decomposing tasks and providing explicit context (Ma et al. 2026).
+
+**What We Can Learn:** 
+Instant answers disrupt the natural planning and reflection phases of self-regulated learning. To build expertise, you must formulate your own mental model of a problem before you engage the AI. If you blindly follow AI suggestions without forming an intent, you accumulate "cognitive debt."
+
+**Concrete CS Example:**
+When your code breaks, do not immediately paste the error traceback into an LLM. Take a moment to read the error and form a hypothesis. Then, use the AI to verify your thinking. 
+Prompt the AI with context: *"I am getting a KeyError in my Pandas dataframe. I hypothesize it is because the 'price' column is being dropped during my inner merge step. Can you confirm if my hypothesis is correct, and explain the default behavior of the merge function?"*
+
+### Tip 4: Conduct a "Critical Audit" to Build Epistemic Vigilance
+
+**The Research Consensus:** 
+The literature consistently highlights concerns over AI's reliability, noting its tendency to generate code with latent security vulnerabilities, logic errors, or "hallucinated" APIs (Aiersilan 2025). Researchers agree that modern education must cultivate "evaluative judgment" and epistemic vigilance—the capacity to critically question, verify, and trace the sources of claims made by AI systems. Uncritical acceptance of AI outputs (the "parroting" effect) is heavily correlated with diminished analytical skills and poorer exam performance (Hon 2026; Lee et al. 2025).
+
+**What We Can Learn:** 
+You should never view an LLM as an infallible expert; treat it as an enthusiastic but unreliable junior developer. The day-to-day skills of a software engineer are shifting from syntax generation to *task stewardship* and verification (Lee et al. 2025). Evaluating and critiquing code is a higher-order cognitive skill that will make you a significantly better programmer.
+
+**Concrete CS Example:**
+Adopt the practice of the "Critical Audit." If you use AI to generate a complex algorithm, do not just copy-paste it into your IDE. 
+1.  **Trace it manually:** Run a mock input through the AI's code by hand on a whiteboard.
+2.  **Adversarial Testing:** Test it against edge cases. (e.g., If the AI generated Dijkstra's algorithm for a graph, ask yourself: *"What happens if I pass a graph with negative edge weights into this code?"*)
+3.  **Apply the FLUF(F) test:** Systematically evaluate the output's Format, Language, Usability, and Function (Parker 2025). Demand that the AI defend its choices: *"Explain exactly what will happen on line 14 if the priority queue receives a negative integer, and tell me if Bellman-Ford would be safer here."*
+
+***
+
+### References
+
+*   (Aiersilan 2025) Aiersilan, A. (2025). The Vibe-Check Protocol: Quantifying Cognitive Offloading in AI Programming. *arXiv preprint*.
+*   (Bastani et al. 2025) Bastani, H., Bastani, O., Sungu, A., Ge, H., Kabakcı, Ö., & Mariman, R. (2025). Generative AI without guardrails can harm learning: Evidence from high school mathematics. *Proceedings of the National Academy of Sciences*.
+*   (Bjork & Bjork 2015) Bjork, E. L., & Bjork, R. A. (2015). Making things hard on yourself, but in a good way: Creating desirable difficulties to enhance learning. In *Psychology and the real world: Essays illustrating fundamental contributions to society*. Worth.
+*   (Fan et al. 2025) Fan, Y., Tang, L., Le, H., Shen, K., Tan, S., Zhao, Y., Shen, Y., Li, X., & Gašević, D. (2025). Beware of metacognitive laziness: Effects of generative artificial intelligence on learning motivation, processes, and performance. *British Journal of Educational Technology*, 56(2), 489–530.
+*   (Hon 2026) Hon, K. K. L. (2026). Generative AI in Higher Education: A Systematic Review of Its Effects on Learning Outcomes and Academic Performance. *Journal of Educational Technology Systems*, 54(3), 537–560.
+*   (Hong et al. 2025) Hong, H., Vate-U-Lan, P., & Viriyavejakul, C. (2025). Cognitive Offload Instruction with Generative AI: A Quasi-Experimental Study on Critical Thinking Gains in English Writing. *Forum for Linguistic Studies*.
+*   (Kruger & Dunning 1999) Kruger, J., & Dunning, D. (1999). Unskilled and unaware of it: How difficulties in recognizing one’s own incompetence lead to inflated self-assessments. *Journal of Personality and Social Psychology*, 77(6), 1121–1134.
+*   (Lee et al. 2025) Lee, H. P., Sarkar, A., Tankelevitch, L., Drosos, I., Rintel, S., Banks, R., & Wilson, N. (2025). The Impact of Generative AI on Critical Thinking: Self-Reported Reductions in Cognitive Effort and Confidence Effects From a Survey of Knowledge Workers. *Proceedings of the 2025 CHI Conference on Human Factors in Computing Systems*.
+*   (Lodge & Loble 2026) Lodge, J. M., & Loble, L. (2026). Artificial intelligence, cognitive offloading and implications for education. *University of Technology Sydney*.
+*   (Ma et al. 2026) Ma, Q., Koedinger, K., & Wu, T. (2026). Not Everyone Wins with LLMs: Behavioral Patterns and Pedagogical Implications for AI Literacy in Programmatic Data Science. *Proceedings of the 2026 CHI Conference on Human Factors in Computing Systems*.
+*   (Parker 2025) Parker, J. L. (2025). Zero FLUF(F): Guided Activity for Effective AI Prompting and Output Review with the FLUF(F) Test. *Teaching Repository of AI-Infused Learning*.
+*   (Rahe & Maalej 2025) Rahe, C., & Maalej, W. (2025). How Do Programming Students Use Generative AI? *Proceedings of the ACM on Software Engineering*.
+*   (Sunil & Thakkar 2025) Sunil, K., & Thakkar, A. (2025). SocraticAI: Transforming LLMs into Guided CS Tutors Through Scaffolded Interaction.
+*   (Sweller 2011) Sweller, J. (2011). Cognitive load theory. *Psychology of learning and motivation*.
+*   (Yan et al. 2025) Yan, L., Greiff, S., Lodge, J. M., & Gašević, D. (2025). Distinguishing performance gains from learning when using generative AI. *Nature Reviews Psychology*.

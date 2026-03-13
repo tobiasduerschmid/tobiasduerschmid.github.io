@@ -56,12 +56,28 @@ To evaluate if a user story is well-written, we apply the INVEST criteria:
 We will not look at these criteria in more detail below.
 ## Independent
 
+Independent is a property 
 
 ## Negotiable
 
-This user story violates negotiable: "As a student, I want the website to use HTTPS so that my data is safe." 
-HTTPS is a design decision, not a requirement. So this user story leaves the space of requirements, which it should nopt. 
-A better version would focus on the need for encrypted data: "As a student, I want the website to keep data I send and receive confidential so that my privacy is ensured." 
+A user story should only capture the essence of a user's need, leaving room for design decisions rather than dictating a specific technical implementation (see ["Requirements Vs. Design"](/SEBook/requirements#requirements-vs--design)).
+A good story **captures the essence**, not the details. 
+
+**Violation Example:** "*As a student, I want the website to use HTTPS so that my data is safe*". This violates the principle because "HTTPS" is a specific design decision, meaning the user story has inappropriately left the space of requirements.
+
+**How to Improve:** Focus on the underlying *need* rather than the technical execution. A better version would be: "*As a student, I want the website to keep data I send and receive confidential so that my privacy is ensured*".
+
+
+The Bad Story: "As a user, I want my profile settings saved in a MongoDB database so that they load quickly the next time I log in."
+
+The Design Decision: Specifying "MongoDB."
+
+Why it's a problem: The user doesn't care where the data lives. The engineering team might realize that a relational SQL database or local browser caching is a much better fit for the rest of the application's architecture.
+
+The Negotiable Fix: "As a user, I want the system to remember my profile settings so that I don't have to re-enter them every time I log in."
+
+
+"If the development team solves this user's problem using a completely different technology or layout than I pictured in my head, is the user still happy?" If the answer is yes, your story is negotiable!
 
 ## Valuable
 
@@ -72,7 +88,21 @@ A better version would focus on the need for encrypted data: "As a student, I wa
 ## Small
 
 
+"*As a student, I want direct integration with Piazza, Gradescope, Google Drive, and Zoom so that I do not need to open them in separate pages. 
+Given the student is logged in, when the student uses the Piazza, Gradescope, Google Drive, or Zoom integration, then the linked services do not require separate authentication, and data is transferred automatically from/to BruinLearn, and no privacy violations (as defined in the federal law “FERPA”) occur in the external apps.*"
+
+The user story contains multiple, separate features (Piazza, Gradescope, Google Drive, and Zoom) that can be broken into separate user stories that are each valuable on their own.
+
+
+"As a registered shopper, I want to add items to my cart, enter my shipping address, provide credit card details, and receive a confirmation email with a tracking number so that I can complete my purchase in one go."
+
+
+
+
 ## Testable
+
+
+"As a site administrator, I want the dashboard to load 'fast' and feel 'snappy' when I log in so that I don't get frustrated with the interface."
 
 # Applicability
 User stories are ideal for iterative, customer-centric projects where requirements might change frequently. 

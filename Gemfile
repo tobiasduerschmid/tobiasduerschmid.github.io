@@ -1,9 +1,13 @@
 source 'https://rubygems.org'
 
-# Pin nokogiri to a CVE-fixed release; 1.16+ has patches for vendored libxml2 security issues
-gem 'nokogiri', '~> 1.16'
+gem 'nokogiri'
 
 gem 'github-pages'
 
-gem 'jekyll-press'
 gem 'octopress-minify-html'
+gem 'ffi', '~> 1.15.5'
+
+group :jekyll_plugins do
+  gem 'jekyll-scholar'
+end
+ruby '2.7.8'

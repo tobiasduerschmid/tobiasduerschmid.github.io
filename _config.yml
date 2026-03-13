@@ -1,6 +1,7 @@
 plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
+  - jekyll-scholar
 
 env: production
 
@@ -56,7 +57,9 @@ defaults:
       lang: en
 
 # Handling Reading
-safe: true
+# Set safe to false so local builds can load custom plugins
+# (needed for the bibtex-ruby Ruby 3 compatibility patch).
+safe: false
 encoding: utf-8
 
 # Build settings
@@ -72,14 +75,21 @@ kramdown:
   syntax_highlighter_opts:
     css_class: 'highlight'
 
-html_press:
-  unquoted_attributes: false
-  drop_empty_values: false
-  strip_crlf: false
-  js_minifier_options: false
-
 # Collections
 collections:
   blog:
     output: true
     permalink: /blog/:slug/
+
+scholar:
+  style: harvard-cite-them-right
+  locale: en-US
+  source: ./_bibliography
+  bibliography: references.bib
+  # Prefix each reference with the formatted in-text citation, e.g. "(Shen & Tamkin, 2026)"
+  bibliography_template: "{{reference}}"
+  sort_by: author
+  order: ascending
+  # Turn inline citations into links to the bibliography section
+  # (you can override link behavior later if needed)
+  details_link: "References"
