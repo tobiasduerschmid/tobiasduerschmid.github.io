@@ -3,3 +3,8 @@ plugins:
   - jekyll-sitemap
   - jekyll-scholar
   - jekyll-minify-html
+
+env: production
+
+sass:
+    style: compressed
