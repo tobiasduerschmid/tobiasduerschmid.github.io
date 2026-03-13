@@ -110,7 +110,7 @@
 .footer-col-wrapper {
     font-size: 15px;
     color: $grey-color;
-    margin-left: -calc($spacing-unit / 2);
+    margin-left: -($spacing-unit * 0.5);
     @extend %clearfix;
 }
 
