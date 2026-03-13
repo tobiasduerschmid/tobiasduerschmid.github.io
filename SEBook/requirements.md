@@ -3,7 +3,7 @@ title: Requirements
 layout: sebook
 ---
 
-Requirements define the **problem space**. They capture *what* the system must do and what the user actually needs to achieve. We care about them for several key reasons:
+Requirements define the **problem space**. They capture *what* the system must do and what the user actually needs to achieve {% cite Taylor2009 %}. We care about them for several key reasons:
 
 * **Defining "Correctness":** A requirement establishes the exact criteria for whether an implementation is successful. Without clear requirements, developers have no objective way to know when a feature is "done" or if it actually works as intended.
 * **Building the Right System:** You can write perfectly clean, highly optimized, bug-free code—but if it doesn't solve the user's actual problem, the software is useless. Requirements ensure the engineering team's efforts are aligned with user value.
@@ -13,11 +13,11 @@ Requirements define the **problem space**. They capture *what* the system must d
 # Requirements vs. Design
 In software engineering, distinguishing between requirements and design is critical to building successful systems. 
 Requirements express *what* the system should do and capture the user's needs. 
-The goal of requirements, in general, is to capture the exact set of criteria that determine if an implementation is "correct".
+The goal of requirements, in general, is to capture the exact set of criteria that determine if an implementation is "correct" {% cite Pressman2014 %}.
 
 A design, on the other hand, describes *how* the system implements these user needs. 
 Design is about exploring the space of possible solutions to fulfill the requirements. 
-A well-crafted **requirements specification should never artificially limit this space by prematurely making design decisions**. 
+A well-crafted **requirements specification should never artificially limit this space by prematurely making design decisions** {% cite Taylor2009 %}. 
 For example, a requirement for pathfinding might be: "The program should find the shortest path between A and B".
 If you were to specify that "The program should implement Dijkstra's shortest path algorithm", you would over-constrain the system and dictate a design choice before development even begins.
 
@@ -68,13 +68,13 @@ Here are some examples illustrating the difference between a **requirement** (wh
 
 ## Why Does the Difference Matter?
 
-Blurring the lines between requirements and design is a common mistake that leads to misunderstandings. The distinction matters for three main reasons:
+Blurring the lines between requirements and design is a common mistake that leads to misunderstandings. In practice, the two are often pursued cooperatively and contemporaneously {% cite Perry1992 %}, yet the distinction matters for three main reasons:
 
 **Avoiding Premature Constraints:**
 When you put design decisions into your requirements, you artificially limit the space of possible solutions before development even begins. If a product manager writes a requirement that says, "The system must use an SQL database to store user profiles", they have made a design decision. A NoSQL database or an in-memory cache might have been vastly superior for this specific use case, but the engineers are now blocked from exploring those better options.
 
 **Preserving Flexibility and Agility:**
-Design decisions change frequently. A team might start by using one sorting algorithm or database architecture, realize it doesn't scale well, and swap it out for another. If the *requirement* was strictly about the "what" (e.g., "Data must be sorted alphabetically"), the requirement stays the same even when the design changes. If the design was baked into the requirement, you now have to rewrite your requirements and change your acceptance criteria just to fix a technical issue.
+Design decisions change frequently. A team might start by using one sorting algorithm or database architecture, realize it doesn't scale well, and swap it out for another. If the *requirement* was strictly about the "what" (e.g., "Data must be sorted alphabetically"), the requirement stays the same even when the design changes. This iterative process of swinging between requirements and design helps manage the complexity of "wicked" problems {% cite DeGraceStahl1990 %}. If the design was baked into the requirement, you now have to rewrite your requirements and change your acceptance criteria just to fix a technical issue.
 
 **Utilizing the Right Expertise:**
 Requirements should usually be negotiated with the customer or product manager / product owner — the people who understand the business needs. Design decisions should be made by the software engineers and architects — the people who understand the technology. 
@@ -88,6 +88,7 @@ In short: Requirements keep you focused on delivering **value** to the user. Lea
 ## User Stories
 
 ## Quality Attribute Scenarios
+Quality attribute requirements (such as performance, security, and availability) are often best captured via "Quality Attribute Scenarios" to make them concrete and measurable {% cite Bass2003 %}.
 
 ## Formal Requirements Specifications
 
