@@ -24,7 +24,7 @@
         { "href"  : "https://www.youtube.com/watch?v=cGFwQ4Xmhr0",
           "desc"  : "Video",
           "video" : "youtube"
-        } ],
+        } ]
     },
     { "key"       : "sebook",
       "title"     : "SE Book",
@@ -49,7 +49,7 @@
       "ongoing"   : false,
      
       "caption"   : {
-        "en" : "The Prosumer app enables to create and share parameterizable image stylization effects on mobile devices.",
+        "en" : "The Prosumer app enables users to create and share parameterizable image stylization effects on mobile devices.",
         "de" : "Die Prosumer ermöglicht es, parameterisierbare Bildeffekte auf mobilen Geräten zu erstellen und mit Freunden zu teilen." },
 
       "authors"   : [ "Tobias Dürschmid", "Matthias Trapp", "Sebastian Pasewaldt", "Amir Semmo" ],
@@ -82,7 +82,7 @@
       "ongoing"   : false,
      
       "caption"   : {
-        "en" : "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve reoccurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software."},
+        "en" : "Implementing a solution for a design decision that precisely satisfies the trade-off between quality attributes can be extremely challenging. Further, typically trade-offs are not represented as first-class entities in development artifacts. Hence, decisions might be suboptimal and lack requirements traceability as well as changeability. We propose Trade-off-Oriented Development (ToD), a new concept to automate the selection and integration of reusable implementations for a given design decision based on quality attribute trade-offs. Implementations that vary in quality attributes and that solve recurring design decisions are collected in a design decision library. Developers declaratively specify the quality attribute trade-off, which is then used to automatically select the best fitting implementation. We argue that thereby, software satisfies the trade-offs more precisely, requirements are traceable and changeable, and advances in implementations automatically improve existing software."},
       "authors"   : [ "Tobias Dürschmid", "Eunsuk Kang", "David Garlan"],
       "thumbnail" : "/img/2019-nier.PNG",
       "downloads" : [
