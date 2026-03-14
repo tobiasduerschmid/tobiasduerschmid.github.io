@@ -34,9 +34,9 @@ Unfortunately, AI as a technology often incentivizes behavior that reduces skill
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
 <div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
-  <img src="{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}" alt="Student in a gym watching a robot lift weights" style="width: 100%; height: auto; border-radius: 8px; display: block;">
-  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-weight: 500; font-size: 1.5em; line-height: 1.2;">
-    "I just found this new AI that makes my daily workout so much easier and faster"
+  <img src="{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}" alt="Student in a gym watching a robot lift weights" style="width: 100%; height: auto; border-radius: 12px; display: block;">
+  <div style="position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px; border-top-left-radius: 12px; border-top-right-radius: 12px; font-weight: 500; font-size: 1.5em; line-height: 1;">
+    "Wow, I just discovered this new AI that makes my daily workout so much easier and faster!"
   </div>
 </div>
 
