@@ -1,23 +1,37 @@
 ---
 layout: default
+title: Home
 ---
 
 <div class="home">
 
-  <h1 class="page-heading">Posts</h1>
+  <div class="row" style="margin-top: 2em; margin-bottom: 2em; align-items: center; display: flex; flex-wrap: wrap; gap: 2em;">
+    {% if site.portrait %}
+    <div style="flex: 0 0 auto;">
+      <img src="{{ site.portrait | prepend: site.baseurl }}"
+           alt="Portrait of {{ site.author }}"
+           style="border-radius: 50%; width: 160px; height: 160px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    </div>
+    {% endif %}
+    <div style="flex: 1 1 260px;">
+      <h1 style="margin-top: 0;">{{ site.author }}</h1>
+      <p class="lead">{{ site.subheading }}</p>
+    </div>
+  </div>
 
+  {% if site.posts.size > 0 %}
+  <h2>Posts</h2>
   <ul class="post-list">
     {% for post in site.posts %}
       <li>
         <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
-
-        <h2>
+        <h3>
           <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-        </h2>
+        </h3>
       </li>
     {% endfor %}
   </ul>
-
-  <p class="rss-subscribe">subscribe <a href="{{ "/feed.xml" | prepend: site.baseurl }}">via RSS</a></p>
+  <p class="rss-subscribe">Subscribe <a href="{{ "/feed.xml" | prepend: site.baseurl }}">via RSS</a></p>
+  {% endif %}
 
 </div>
