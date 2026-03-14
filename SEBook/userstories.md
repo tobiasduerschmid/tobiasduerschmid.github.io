@@ -23,6 +23,8 @@ User stories follow this format:
 
 This structure makes the team to identify not just the "what", but also the "who" and — most importantly — the "why".
 
+The main requirement of the user story is captured in the *I want* part. 
+The *so that* part clarifies the goal the user wants to achieve. It does **not** add additional requirements or constraints to the described requirements. 
 
 # Acceptance Criteria
 
@@ -39,6 +41,8 @@ They follow this format:
 **Then** [post-condition / outcome]
 
 ---
+
+
 
 
 # INVEST
@@ -61,7 +65,7 @@ Independent is a property
 ## Negotiable
 
 A user story should only capture the essence of a user's need, leaving room for design decisions rather than dictating a specific technical implementation (see ["Requirements Vs. Design"](/SEBook/requirements#requirements-vs--design)).
-A good story **captures the essence**, not the details. 
+A good story **captures the essence**, not the details {% cite Wake2003INVESTinGoodStories %}. 
 
 **Violation Example:** "*As a student, I want the website to use HTTPS so that my data is safe*". This violates the principle because "HTTPS" is a specific design decision, meaning the user story has inappropriately left the space of requirements.
 
@@ -79,11 +83,28 @@ The Negotiable Fix: "As a user, I want the system to remember my profile setting
 
 "If the development team solves this user's problem using a completely different technology or layout than I pictured in my head, is the user still happy?" If the answer is yes, your story is negotiable!
 
+### How to Design Negotiable User Stories
+
+Designing for negotiability requires a balance between providing enough context to be Estimatable while remaining open enough to be Negotiable.
+
+* **Focus on the "Why":** Use "So that" clauses to clarify the underlying goal, which allows the team to negotiate the "How".
+
+* **Use Open-Ended Questions:** When talking to potential users, ask context-free questions like "Tell me about how you’d like to search" rather than "Should we use a dropdown for search?".
+
+* **Define Acceptance Criteria, Not Steps:** Use Confirmation to define the outcomes that must be true, rather than the specific UI clicks or database queries required.
+
+* **Iterative Refinement:** Treat the story as a "slice" of functionality that can be reshaped as the team's understanding of the system evolves.
+
+
 ## Valuable
+
+The Valuable criterion ensures that every "chunk of functionality" your team produces translates into meaningful impact for your stakeholders {% cite Wake2003INVESTinGoodStories %}.
 
 
 ## Estimable
 
+
+Estimable stories are those for which a judgment can be made regarding their size, cost, or time to deliver. To achieve this, stories must be understood well enough and remain stable enough to put useful bounds on our guesses.
 
 ## Small
 
@@ -103,6 +124,22 @@ The user story contains multiple, separate features (Piazza, Gradescope, Google 
 
 
 "As a site administrator, I want the dashboard to load 'fast' and feel 'snappy' when I log in so that I don't get frustrated with the interface."
+
+## FAQ on INVEST
+
+### How are Estimable and Testable different?
+
+
+### How are Estimable and Small different?
+
+### Should bug reports be user stories?
+
+Mike Cohn explicitly advocates for this unified approach, stating that the best method is to consider each bug report its own story {% cite cohn2004user %}. If a bug is large and requires significant effort, it should be estimated, prioritized, and treated exactly like any other typical user story {% cite cohn2004user %}. However, treating every minor bug as an independent story can cause administrative bloat. For bugs that are small and quick to fix, Cohn suggests that teams combine them into one or more unified stories {% cite cohn2004user %}. On a physical task board, this is achieved by stapling several small bug cards together under a single "cover story card", allowing the collection to be estimated and scheduled as a single unit of work {% cite cohn2004user %}.
+
+From the [Extreme Programming (XP)](/SEBook/process/xp) perspective, translating a bug report into a narrative user story addresses only the process layer; the technical reality is that a bug is a missing test. Kent Beck argues that problem reports must come with *test cases* demonstrating the problem in code {% cite beck2004XPExplained %}. 
+When a developer encounters or is assigned a problem, their immediate action must be to write an automated unit or functional test that isolates the issue {% cite beck2004XPExplained %}. In this paradigm, a bug report is fundamentally an *executable specification*. Writing the story card is merely a placeholder; the true confirmation of the defect's existence—and its subsequent resolution—is proven by a test that fails, and then passes {% cite beck2004XPExplained %}. 
+
+
 
 # Applicability
 User stories are ideal for iterative, customer-centric projects where requirements might change frequently. 
