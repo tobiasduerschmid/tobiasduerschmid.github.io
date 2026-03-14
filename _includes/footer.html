@@ -2,9 +2,36 @@
 <!-- Footer -->
 <footer>
   <div class="col-md-12 text-center">
-    <a href="https://github.com/cgcostume/cgcostume.github.io">Datafolio</a> by {{ site.author }}: Created using <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://getbootstrap.com/" target="_blank">Bootstrap</a>, generated and hosted via <a href="https://pages.github.com/" target="_blank">gh-pages</a>. Last updated on <a href="https://github.com/tobiasduerschmid/tobiasduerschmid.github.io/commits/master" target="_blank">{{ site.time | date: "%x" }}</a>.
+
+    {% if site.social %}
+    <p>
+      {% if site.social.github %}
+      <a href="https://github.com/{{ site.social.github }}" target="_blank" rel="noopener" title="GitHub" style="margin: 0 6px; font-size: 1.4em; color: inherit;">
+        <i class="fa fa-github"></i>
+      </a>
+      {% endif %}
+      {% if site.social.linkedin %}
+      <a href="https://www.linkedin.com/in/{{ site.social.linkedin }}" target="_blank" rel="noopener" title="LinkedIn" style="margin: 0 6px; font-size: 1.4em; color: inherit;">
+        <i class="fa fa-linkedin"></i>
+      </a>
+      {% endif %}
+      {% if site.social.twitter %}
+      <a href="https://twitter.com/{{ site.social.twitter }}" target="_blank" rel="noopener" title="Twitter/X" style="margin: 0 6px; font-size: 1.4em; color: inherit;">
+        <i class="fa fa-twitter"></i>
+      </a>
+      {% endif %}
+      {% if site.social.google_scholar %}
+      <a href="https://scholar.google.com/citations?user={{ site.social.google_scholar }}" target="_blank" rel="noopener" title="Google Scholar" style="margin: 0 6px; font-size: 1.4em; color: inherit;">
+        <i class="fa fa-graduation-cap"></i>
+      </a>
+      {% endif %}
+    </p>
+    {% endif %}
+
+    <a href="https://github.com/cgcostume/cgcostume.github.io">Datafolio</a> by {{ site.author.name | default: site.author }}: Created using <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> and <a href="https://getbootstrap.com/" target="_blank">Bootstrap</a>, generated and hosted via <a href="https://pages.github.com/" target="_blank">gh-pages</a>. Last updated on <a href="https://github.com/tobiasduerschmid/tobiasduerschmid.github.io/commits/master" target="_blank">{{ site.time | date: "%x" }}</a>.
   </div>
 </footer>
+
 
 <!-- The Bootstrap Image Gallery lightbox, should be a child element of the document body -->
 <div id="blueimp-gallery" class="blueimp-gallery">
