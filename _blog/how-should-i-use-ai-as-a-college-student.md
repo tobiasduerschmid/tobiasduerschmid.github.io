@@ -25,7 +25,7 @@ This research tells a clear story: AI benefits those with more experience and st
 This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" { % cite bjork2011making, bjork2020desirable, brown2014MakeItStick %}.
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making, bjork2020desirable, brown2014MakeItStick %}.
 On the other hand, if used correctly, it has the potential to rapidly accelerate the learning journey of students who use AI to cognitively challenge themselves more, not less.
 
 This blog post is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
