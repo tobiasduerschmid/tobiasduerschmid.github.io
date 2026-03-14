@@ -9,14 +9,29 @@ sass:
   style: compressed
 
 # Site settings
-timezone: Europe/Berlin
+timezone: US/Los_Angeles
 
 baseurl: "" # the subpath of your site, e.g. /blog/
 url: "http://tobiasduerschmid.github.io/" # the base hostname & protocol for your site
 
 title: Tobias Dürschmid
-author: Tobias Dürschmid
+author:
+  name: Tobias Dürschmid
+  twitter: TobiasDuerschmid  # Twitter/X handle (without @) — used for Twitter Card meta tags
+  links:
+    # Profiles listed here are output as <link rel="me"> tags and schema.org sameAs.
+    # Uncomment and fill in the ones that apply.
+    - https://scholar.google.com/citations?user=tmE8FjQAAAAJ&hl=en
+    - https://www.linkedin.com/in/tobias-duerschmid/
+    - https://github.com/tobiasduerschmid
+    - https://orcid.org/0000-0001-8612-1767
 
+# Social links shown in the site UI (navigation / footer — used by your theme/layouts)
+social:
+  github:    tobiasduerschmid
+  twitter:  TDurschmid
+  linkedin: tobias-duerschmid
+  google_scholar: tmE8FjQAAAAJ
 
 authorexplainname : How to spell my name?
 authorexplain: >
@@ -28,7 +43,7 @@ authorexplain: >
 
 portrait: "/img/tobi.jpg"
 
-languages: [ 'en', 'de' ]
+languages: [ 'en' ]
 
 description: > # theis means to ignore newlines until "baseurl:"
     Tobias Dürschmid - Assistant Teaching Professor at UCLA.
