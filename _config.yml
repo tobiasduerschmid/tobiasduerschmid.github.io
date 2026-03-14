@@ -12,21 +12,12 @@ sass:
 timezone: US/Los_Angeles
 
 baseurl: "" # the subpath of your site, e.g. /blog/
-url: "http://tobiasduerschmid.github.io/" # the base hostname & protocol for your site
+url: "https://tobiasduerschmid.github.io/" # the base hostname & protocol for your site
+
+google_site_verification: PsUhrtR2-1XWZ0diQcCbt0egBzKjidLDPTl5WB3s-2E # jekyll-seo-tag outputs this as a meta tag
 
 title: Tobias Dürschmid
-author:
-  name: Tobias Dürschmid
-  twitter: TobiasDuerschmid  # Twitter/X handle (without @) — used for Twitter Card meta tags
-  links:
-    # Profiles listed here are output as <link rel="me"> tags and schema.org sameAs.
-    # Uncomment and fill in the ones that apply.
-    - https://scholar.google.com/citations?user=tmE8FjQAAAAJ&hl=en
-    - https://www.linkedin.com/in/tobias-duerschmid/
-    - https://github.com/tobiasduerschmid
-    - https://orcid.org/0000-0001-8612-1767
-
-# Social links shown in the site UI (navigation / footer — used by your theme/layouts)
+author: Tobias Dürschmid
 social:
   github:    tobiasduerschmid
   twitter:  TDurschmid
