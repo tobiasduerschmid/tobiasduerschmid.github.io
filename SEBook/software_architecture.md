@@ -7,7 +7,7 @@ layout: sebook
 
 ## Definitions of Software Architecture
 
-The quest to definitively answer "What is software architecture?" has various, different answers. The literature reveals that software engineering have not committed to a single, universal definition, but rather a "scatter plot" of over 150 definitions, each highlighting specific aspects of the discipline {% cite Clements2010 %}. However, as the field has matured, a consensus centroid has emerged around two prevailing paradigms: the *structural* and the *decision-based*.
+The quest to definitively answer "What is software architecture?" has various answers. The literature reveals that software engineering has not committed to a single, universal definition, but rather a "scatter plot" of over 150 definitions, each highlighting specific aspects of the discipline {% cite Clements2010 %}. However, as the field has matured, a consensus centroid has emerged around two prevailing paradigms: the *structural* and the *decision-based*.
 
 **The Structural Paradigm**
 The earliest and most prominent foundational definitions view architecture through a highly structural lens. Dewayne Perry and Alexander Wolf originally proposed that architecture is analogous to building construction, formalized as the formula: **Architecture = {Elements, Form, Rationale}** {% cite Perry1992 %}. This established that architecture consists of processing, data, and connecting elements organized into specific topologies. 

@@ -42,7 +42,7 @@
 	    "text" : "I started my PhD in Software Engineering at the Institute for Software Research at CMU.",
 	  },
 	  { "date" : "2018-12-17 12:00:00",
-	    "text" : "Our vison paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" has been accepted to ICSE NIER. Additionally, our paper on <a class='page-scroll' href='#publication-seet2019'>Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices</a> been accepted to ICSE SEET.",
+	    "text" : "Our vison paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" has been accepted to ICSE NIER. Additionally, our paper on <a class='page-scroll' href='#publication-seet2019'>Attitudes, Beliefs, and Development Data Concerning Agile Software Development Practices</a> has been accepted to ICSE SEET."
 	  },
 	  { "date" : "2019-05-24 12:00:00",
 	    "text" : "I will present our paper \"<a class='page-scroll' href='#publication-nier2019'>Trade-off-Oriented Development - Making Quality Attribute Trade-offs First-Class</a>\" at <a class='page-scroll' href='https://2019.icse-conferences.org/track/icse-2019-New-Ideas-and-Emerging-Reults?track=ICSE%20New%20Ideas%20and%20Emerging%20Results#program'>ICSE NIER</a> on Friday in the session 16:00-17:20 in the Viger room. I look forward to interesting discussions about the concept. The slides will be uploaded after the presentation.",
@@ -90,16 +90,16 @@
 	    "text" : "I am on the Software Engineering Teaching Job Market! After co-creating and co-instructing <a class='page-scroll' href='#teaching'>two software engineering courses</a> at CMU I am looking for teaching-focused faculty positions in software engineering that start in Fall 2025. If you know anyone who is hiring teaching faculty in SE, please send me an <a  href='mailto:duerschmid@cmu.edu'>email</a>",
 	  },
 	  { "date" : "2025-03-20 12:00:00",
-	    "text" : "I accepted a position as Assistant Teaching Professor at UCLA. I am very excited to join a great department this Fall!</a>",
+	    "text" : "I accepted a position as Assistant Teaching Professor at UCLA. I am very excited to join a great department this Fall!"
 	  },
 	  { "date" : "2025-08-01 12:00:00",
-	    "text" : "I started working for UCLA! I am looking forward to teaching CS 35L Software Construction</a>",
+	    "text" : "I started working for UCLA! I am looking forward to teaching CS 35L Software Construction"
 	  },
 	  { "date" : "2025-10-01 12:00:00",
-	    "text" : "I have become the faculty advisor of UCLA's student clum \"<a href='https://bseatucla.com/'>Bruin Software Engineers</a>\"",
+	    "text" : "I have become the faculty advisor of UCLA's student club \"<a href='https://bseatucla.com/'>Bruin Software Engineers</a>\""
 	  },
 	  { "date" : "2026-03-09 12:00:00",
-	    "text" : "<a class='urllink' href='https://careynachenberg.weebly.com/' rel='nofollow'>Carey Nachenberg</a> and I are developing a new course on 'Generative Software Development' at UCLA. The course will be offered for the first time in Winter 2027.",
+	    "text" : "<a class='urllink' href='https://careynachenberg.weebly.com/' rel='nofollow'>Carey Nachenberg</a> and I are developing a new course on 'Generative Software Development' at UCLA. The course will be offered for the first time in Winter 2027."
 	  },
 	]
 }
