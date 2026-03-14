@@ -16,11 +16,16 @@ So I decided to write my advice down in a succinct, evidence-based post for ever
 But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early research I could find. Please take it as a guide, not gospel.
 
 ## Motivation: Maximize your Learning
-Some of you might be wondering: "*Why bother grinding through the tedious process of learning basic computer science skills when AI can already do all my homework assignments in minutes?*"
+It's 7:00 PM on a Friday. 
+Your friends want to go watch a movie. 
+But you're sitting here debugging your C++ program that is throwing a cryptic segmentation fault. 
+You have stared at the same while loop for twenty minutes, and the temptation to paste the entire file into an LLM with the prompt "fix this" is overwhelming. 
+This is what the real professionals would do, so why shouldn't you?
+Because you would rob your brain of the exact friction it needs to become a skilled software engineer.
 
-However, state-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026%}.
+State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026%}.
 When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 %}. 
-This research tells a clear story: AI benefits those with more experience and stronger foundational skills much more than those who use AI as a replacement for skill aquisition.
+This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more than those who use AI as a replacement for skill aquisition.
 
 This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
