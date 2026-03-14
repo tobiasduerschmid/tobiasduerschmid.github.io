@@ -23,15 +23,26 @@ You have stared at the same while loop for twenty minutes, and the temptation to
 This is what the real professionals would do, so why shouldn't you?
 Because you would rob your brain of the exact friction it needs to become a skilled software engineer.
 
-State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026%}.
+
+
+State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026 %}.
 When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 %}. 
 This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more than those who use AI as a replacement for skill aquisition.
 
 This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
-On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use to remove undesirable difficulties while increasing desirable difficulties.
+
+<div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
+  <img src="{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}" alt="Student in a gym watching a robot lift weights" style="width: 100%; height: auto; border-radius: 8px; display: block;">
+  <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; font-weight: 500; font-size: 1.5em; line-height: 1.2;">
+    "I just found this new AI that makes my daily workout so much easier and faster"
+  </div>
+</div>
+
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014makeitstick %}.
+
+On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties.
 
 This blog post is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
 
