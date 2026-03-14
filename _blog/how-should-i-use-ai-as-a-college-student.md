@@ -35,8 +35,8 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 
 <div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
   <img src="{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}" alt="Student in a gym watching a robot lift weights" style="width: 100%; height: auto; border-radius: 12px; display: block;">
-  <div style="position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.6); color: white; padding: 10px; border-top-left-radius: 12px; border-top-right-radius: 12px; font-weight: 500; font-size: 1.5em; line-height: 1;">
-    "Wow, I just discovered this new AI that makes my daily workout so much easier and faster!"
+  <div style="position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-top-left-radius: 12px; border-top-right-radius: 12px; font-weight: 500; font-size: 1em; line-height: 1.1;">
+    <strong>"Wow, I just discovered this new AI that makes my daily workout so much easier and faster!"</strong>
   </div>
 </div>
 
