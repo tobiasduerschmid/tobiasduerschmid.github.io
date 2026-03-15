@@ -94,14 +94,6 @@
     border-radius: 50%;
   }
 
-  /* Disabled Highlight State */
-  .highlights-disabled mark {
-    background-color: transparent !important;
-    color: inherit !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    transition: background-color 0.3s ease;
-  }
 </style>
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="60">
@@ -340,6 +332,9 @@
 
         if (marks.length > 0) {
           toggle.addEventListener('change', function () {
+            // Enable transitions only when manually toggled
+            document.documentElement.classList.add('highlights-transition');
+            
             if (this.checked) {
               document.documentElement.classList.remove('highlights-disabled');
             } else {

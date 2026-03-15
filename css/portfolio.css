@@ -35,6 +35,19 @@ mark {
 	font-weight: bold;
 }
 
+/* Disabled Highlight State */
+.highlights-disabled mark {
+	background-color: transparent !important;
+	color: inherit !important;
+	padding: 0 !important;
+	border-radius: 0 !important;
+}
+
+/* Enable transition only when class is present to prevent load-time blinking */
+.highlights-transition mark {
+	transition: background-color 0.3s ease;
+}
+
 a:hover,
 a:focus {
 	color: black;
