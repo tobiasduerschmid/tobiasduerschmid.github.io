@@ -4,6 +4,7 @@
 {% include head.html %}
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <article class="post-content">
       
@@ -44,7 +45,7 @@
       <div style="display: flex; min-height: calc(100vh - 200px);">
         
         <!-- Main Content -->
-        <div style="flex: 1; padding: 20px">
+        <div id="main-content" style="flex: 1; padding: 20px">
           <div class="container">
             <div class="row">
                   {% assign sections = content | split: '<h2' %}

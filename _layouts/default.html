@@ -4,10 +4,13 @@
 {% include head.html %}
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
 {% include navbar.html %}
 
 {% include header.html %}
+
+<div id="main-content">
 
 
 {% if site.data.carousel.show %}   
@@ -49,6 +52,7 @@
 {% if site.data.contact.show %}   
 	{% include contact.html %}
 {% endif %}			
+</div>
 
 {% include footer.html %}
 
