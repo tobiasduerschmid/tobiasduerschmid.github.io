@@ -346,7 +346,8 @@ a.citation {
 
 a.citation {
 	color: black !important;
-	padding: 1px 4px;
+	padding: 1px 0;
+	margin: 0;
 	font-weight: 500;
 }
 
