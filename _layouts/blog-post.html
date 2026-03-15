@@ -237,11 +237,11 @@ layout: blog
     transition: .4s;
   }
 
-  input:checked + .slider {
+  input:checked+.slider {
     background-color: #2774AE;
   }
 
-  input:checked + .slider:before {
+  input:checked+.slider:before {
     transform: translateX(16px);
   }
 
@@ -264,7 +264,7 @@ layout: blog
 </style>
 
 <script>
-  (function() {
+  (function () {
     function setCookie(name, value, days) {
       const d = new Date();
       d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -287,14 +287,14 @@ layout: blog
       const article = document.querySelector('article');
       const toggle = document.getElementById('highlightToggle');
       const container = document.getElementById('highlightToggleContainer');
-      
+
       if (!article || !toggle || !container) return;
-      
+
       const marks = article.getElementsByTagName('mark');
-      
+
       if (marks.length > 0) {
         container.style.display = 'flex';
-        
+
         // Load state from cookie
         const savedState = getCookie('show-highlights');
         if (savedState !== null) {
@@ -306,14 +306,14 @@ layout: blog
             article.classList.add('highlights-disabled');
           }
         }
-        
-        toggle.addEventListener('change', function() {
+
+        toggle.addEventListener('change', function () {
           if (this.checked) {
             article.classList.remove('highlights-disabled');
           } else {
             article.classList.add('highlights-disabled');
           }
-          setCookie('show-highlights', this.checked, 30);
+          setCookie('show-highlights', this.checked, 365);
         });
       }
     }
