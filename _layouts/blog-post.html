@@ -296,24 +296,24 @@ layout: blog
         container.style.display = 'flex';
       }
 
-      // Load state from cookie
+      // Load state from cookie and apply to html element
       const savedState = getCookie('show-highlights');
       if (savedState !== null) {
         const isChecked = savedState === 'true';
         toggle.checked = isChecked;
         if (isChecked) {
-          article.classList.remove('highlights-disabled');
+          document.documentElement.classList.remove('highlights-disabled');
         } else {
-          article.classList.add('highlights-disabled');
+          document.documentElement.classList.add('highlights-disabled');
         }
       }
 
       if (marks.length > 0) {
         toggle.addEventListener('change', function () {
           if (this.checked) {
-            article.classList.remove('highlights-disabled');
+            document.documentElement.classList.remove('highlights-disabled');
           } else {
-            article.classList.add('highlights-disabled');
+            document.documentElement.classList.add('highlights-disabled');
           }
           setCookie('show-highlights', this.checked, 300);
         });
