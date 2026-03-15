@@ -41,7 +41,7 @@ However, when software engineering researchers mined the databases of review too
 If 75% to 85% of the time spent reviewing code isn't fixing bugs, what exactly are software engineers doing? Research has identified that modern code review has evolved into a highly collaborative, **socio-technical** communication network focused on three non-functional categories:
 
 **1. Maintainability and Code Improvement**
-Roughly **75% of the issues fixed during MCR are related to evolvability, readability, and maintainability**. Reviewers spend the bulk of their time suggesting better coding practices, removing dead code, enforcing team style guidelines, and asking the author to improve documentation.
+Roughly **75% of the issues fixed during MCR are related to evolvability, readability, and maintainability** {% cite Beller2014 Mantyla2009 Czerwonka2015 %}. Reviewers spend the bulk of their time suggesting better coding practices, removing dead code, enforcing team style guidelines, and asking the author to improve documentation.
 
 **2. Knowledge Transfer and Mentorship**
 Code review operates as a bidirectional educational tool. Junior developers learn best practices by having their code critiqued, while reviewers actively learn about new features and unfamiliar areas of the system by reading someone else's code.
@@ -52,7 +52,7 @@ By requiring at least one other person to read and approve a change, teams ensur
 
 # Cognitive Factors
 
-Achieving any of the goals of MCR requires a reviewer to accomplish one monumental task: actually understanding the code they are reading. The human brain has strict biological limits regarding how much abstract logic it can hold in its working memory. When software teams ignore these limits, the code review process breaks down entirely.
+Achieving any of the goals of MCR requires a reviewer to accomplish one monumental task: actually understanding the code they are reading. The human brain has strict biological limits regarding how much abstract logic it can hold in its working memory {% cite Letovsky1987 %}. When software teams ignore these limits, the code review process breaks down entirely.
 
 ## The Brain on Code: Letovsky and the CRCM
 
@@ -82,11 +82,11 @@ Combining these limits dictates that developers should review code at a rate of 
 
 ## Divergent Perspectives: Is LOC the Only Metric?
 
-Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line change consisting entirely of a well-documented class interface requires very little effort to review compared to a 50-line patch altering a complex parallel-processing algorithm {% cite Cohen2006 %}. Additionally, a rigorous experiment by Baum et al. could not reliably conclude that the *order* in which code changes are presented to a reviewer influences review efficiency, challenging some cognitive load hypotheses.
+Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line change consisting entirely of a well-documented class interface requires very little effort to review compared to a 50-line patch altering a complex parallel-processing algorithm {% cite Cohen2006 %}. Additionally, a rigorous experiment by Baum et al. could not reliably conclude that the *order* in which code changes are presented to a reviewer influences review efficiency, challenging some cognitive load hypotheses {% cite Baum2019 %}.
 
 ## Engineering Around the Brain: Stacking
 
-To build massive features without exceeding cognitive limits, high-performing teams utilize **Stacked Pull Requests**. Instead of submitting one monolithic feature, developers decompose the work into small, atomic, dependent units (e.g., *PR 1* for database tables, *PR 2* for API logic, *PR 3* for UI). This perfectly aligns with cognitive dynamics, keeping every PR under the 400-line limit and allowing reviewers to process them in optimal 30-to-60-minute sessions.
+To build massive features without exceeding cognitive limits, high-performing teams utilize **Stacked Pull Requests** {% cite Greiler2020 %}. Instead of submitting one monolithic feature, developers decompose the work into small, atomic, dependent units (e.g., *PR 1* for database tables, *PR 2* for API logic, *PR 3* for UI). This perfectly aligns with cognitive dynamics, keeping every PR under the 400-line limit and allowing reviewers to process them in optimal 30-to-60-minute sessions.
 
 
 # Socio-Technical Factors
@@ -183,9 +183,7 @@ Because agents frequently generate "over-mocked" tests or fail to grasp complex,
 
 ## The "Rubber Stamp" Risk and AI Hallucinations
 
-As AI generates massive blocks of code, human reviewers are hit with unprecedented cognitive fatigue. This leads to the **Rubber Stamp Effect**: reviewers see a massive PR that passes automated linting and unit testing, assume it is valid, and grant an "LGTM" (Looks Good To Me) approval without actually reading the syntax. 
-
-Rubber stamping AI code alters a project's risk profile because AI mistakes do not look like human mistakes. While human errors are often obvious logic gaps or syntax faults, LLMs hallucinate code that looks highly plausible and authoritative but is functionally incorrect or deeply insecure. 
+As AI generates massive blocks of code, human reviewers are hit with unprecedented cognitive fatigue. This leads to the **Rubber Stamp Effect**: reviewers see a massive PR that passes automated linting and unit testing, assume it is valid, and grant an "LGTM" (Looks Good To Me) approval without actually reading the syntax {% cite Meneely2014 %}. This phenomenon effectively breaks **Linus's Law** ("many eyes make all bugs shallow"), as adding more eyes to a review only increases the likelihood of shared over-confidence rather than defect discovery when the individual depth of inspection is shallow {% cite Meneely2014 %}. Rubber stamping AI code alters a project's risk profile because AI mistakes do not look like human mistakes. While human errors are often obvious logic gaps or syntax faults, LLMs hallucinate code that looks highly plausible and authoritative but is functionally incorrect or deeply insecure. 
 
 ## Security Vulnerabilities in AI-Generated Code
 Extensive literature reviews confirm that LLMs frequently introduce critical security vulnerabilities.
