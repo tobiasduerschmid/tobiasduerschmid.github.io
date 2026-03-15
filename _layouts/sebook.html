@@ -21,7 +21,7 @@
   }
 </style>
 
-<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="60">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <article class="post-content">
@@ -49,8 +49,11 @@
             {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
               %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
               split: '</h1>' | first | replace: '</h1' , '' %} {% if heading_text !="" %} {% assign
-              heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' %} {% assign heading_text_short=heading_text | split: ':' | first %}
-              <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
+              heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' |
+              replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' |
+              replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' %} {%
+              assign heading_text_short=heading_text | split: ':' | first %} <li><a class="page-scroll"
+                href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
               {% endif %}
               {% endif %}
               {% endfor %}
@@ -133,8 +136,8 @@
               split: '</h1>' | first | replace: '</h1' , '' %} {% assign section_content=section | split: '</h1>' | last
               %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
               replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
-              | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' | replace: '</h1' , ''
-              %} <section id="{{ section_id }}">
+              | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
+              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %} <section id="{{ section_id }}">
               <h1>{{ heading_text }}</h1>{{ section_content }}
               </section>
               {% endif %}
