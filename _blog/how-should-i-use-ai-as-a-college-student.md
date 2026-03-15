@@ -24,12 +24,12 @@ This is what the real professionals would do, so why shouldn't you?
 Because you would rob your brain of the exact friction it needs to become a skilled software engineer.
 
 
-
 State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
 When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 Prather2024WideningGap %}. 
-This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more than those who use AI as a replacement for skill aquisition.
+This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more. 
+AI enables skilled developers to compound their knowledge and productivity by critically evaluating and learning from AI outputs, while novices lacking those skills and experience fall exponentially further behind.
 
-This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
+This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
