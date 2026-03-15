@@ -65,17 +65,22 @@ a:focus {
 
 /* Danger Text Styling - UCLA Yellow Background */
 .text-danger {
-	color: #d08002 !important;
-	font-weight: 500;
+	font-weight: bold;
+	color: black !important;
+	-webkit-text-stroke: 0.5px #FFD100;
 }
 
 .alert-danger {
-	color: #d08002 !important;
+	font-weight: bold;
+	color: black !important;
+	-webkit-text-stroke: 0.5px #FFD100;
 	border-color: #d08002 !important;
 }
 
 .alert-danger .alert-link {
+	font-weight: bold;
 	color: black !important;
+	-webkit-text-stroke: 0.5px #FFD100;
 	text-decoration: underline !important;
 }
 
