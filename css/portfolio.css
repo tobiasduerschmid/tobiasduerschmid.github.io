@@ -23,6 +23,18 @@ a {
 	border-radius: 4px;
 }
 
+
+/**
+ * Custom Highlight Syntax (==text== -> <mark>text</mark>)
+ */
+mark {
+	background-color: #FFD100;
+	color: black;
+	font-weight: bold;
+	padding: 1px 4px;
+	border-radius: 4px;
+}
+
 a:hover,
 a:focus {
 	color: black;

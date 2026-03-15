@@ -8,10 +8,9 @@ image: "/img/genai.jpg"
 image_alt_text: "Student working on a computer with a robot sitting next to him. They both look at a digital screen. University buildings in the background. Soft evening light"
 ---
 
-**Many of my students come to me with this wonderful question: "*How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*"
+**Many of my students come to me with this wonderful question: =="*How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*"==
 In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience.
 So I decided to write my advice down in a succinct, evidence-based post for everyone.**
-
 
 But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early research I could find. Please take it as a guide, not gospel.
 
@@ -26,10 +25,10 @@ Because you would rob your brain of the exact friction it needs to become a skil
 
 State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
 When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 Prather2024WideningGap %}. 
-This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more. 
+This research tells a clear story: ==AI benefits those with *more experience* and *stronger foundational skills* much more==.
 AI enables skilled developers to compound their knowledge and productivity by critically evaluating and learning from AI outputs, while novices who have not successfully developed these skills fall further and further behind.
 
-This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
+This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 

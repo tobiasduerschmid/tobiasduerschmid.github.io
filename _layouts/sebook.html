@@ -137,7 +137,7 @@
               %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
               replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
               | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
-              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %} <section id="{{ section_id }}">
+              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %}              <section id="{{ section_id }}">
               <h1>{{ heading_text }}</h1>{{ section_content }}
               </section>
               {% endif %}

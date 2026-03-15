@@ -180,6 +180,15 @@ pre {
 }
 
 
+/**
+ * Custom Highlight Syntax (==text== -> <mark>text</mark>)
+ */
+mark {
+    background-color: #FFD100;
+    color: black;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
 
 /**
  * Wrapper
