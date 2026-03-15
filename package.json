@@ -1,0 +1,24 @@
+{
+  "name": "tobiasduerschmid.github.io",
+  "version": "1.0.0",
+  "description": "Homepage Portfolio optimized for researchers and those who strive for a minimal, file-based \"content management\" (**Datafolio**). The complete site's content is based on a json/xml file per section (e.g., ```contact.json```, ```projects.json```, ```publications.json```, ```talks.json```, and ```teaching.json```) as well as the pages ```_config.yml``` information.",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tobiasduerschmid/tobiasduerschmid.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/tobiasduerschmid/tobiasduerschmid.github.io/issues"
+  },
+  "homepage": "https://github.com/tobiasduerschmid/tobiasduerschmid.github.io#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

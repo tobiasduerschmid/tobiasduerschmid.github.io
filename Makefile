@@ -6,6 +6,7 @@ build:
 
 test:
 	./scripts/check_references.sh
+	npx playwright test
 
 run:
 	bundle exec jekyll serve --incremental
