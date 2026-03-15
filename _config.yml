@@ -98,7 +98,7 @@ scholar:
   bibliography: references.bib
   # Prefix each reference with the formatted in-text citation, e.g. "(Shen & Tamkin, 2026)"
   bibliography_template: "{% if entry.url %}<a href='{{ entry.url }}' target='_blank' class='bib-link'>{% elsif entry.doi %}<a href='https://doi.org/{{ entry.doi }}' target='_blank' class='bib-link'>{% endif %}{{ reference }}{% if entry.url or entry.doi %}</a>{% endif %}"
-  sort_by: author
+  sort_by: sortkey
   order: ascending
   # Turn inline citations into links to the bibliography section
   # (you can override link behavior later if needed)
