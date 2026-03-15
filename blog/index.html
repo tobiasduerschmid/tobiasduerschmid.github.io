@@ -13,7 +13,7 @@ layout: blog
   <div class="row" style="margin-top: 30px; margin-bottom: 40px;">
     <div class="col-lg-10 col-lg-offset-1">
       <div id="category-filter" class="text-center">
-        <button class="btn btn-default filter-btn active" data-category="all" onclick="filterByCategory('all')">
+        <button id="cat-all" class="btn btn-default filter-btn active" data-category="all" onclick="filterByCategory('all')">
           All Posts
         </button>
         {% assign categories = "" | split: "" %}
@@ -27,7 +27,7 @@ layout: blog
 
         {% assign sorted_categories = categories | sort %}
         {% for category in sorted_categories %}
-        <button class="btn btn-default filter-btn" data-category="{{ category | slugify }}"
+        <button id="cat-{{ category | slugify }}" class="btn btn-default filter-btn" data-category="{{ category | slugify }}"
           onclick="filterByCategory('{{ category | slugify }}')">
           {{ category }}
         </button>
@@ -61,7 +61,7 @@ layout: blog
                 </span>
                 {% if post.category %}
                 <span class="post-category">
-                  <a href="#{{ post.category | slugify }}" class="badge category-link"
+                  <a href="#cat-{{ post.category | slugify }}" class="badge category-link"
                     style="font-weight: bold; color: #000; background-color: #FFD100; margin-left: 10px;">{{
                     post.category }}</a>
                 </span>
