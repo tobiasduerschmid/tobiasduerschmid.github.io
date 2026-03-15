@@ -15,4 +15,4 @@ test: check
 run: check
 	bundle exec jekyll serve --incremental
 
-all: build test run
+all: test run
