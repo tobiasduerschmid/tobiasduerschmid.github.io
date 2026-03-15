@@ -9,7 +9,7 @@ To understand why modern software teams review code, we must first trace the his
 
 ## The First Wave: The Era of Formal Inspections
 
-Code review was not always the seamless, online, asynchronous process it is today. In 1976, IBM researcher Michael Fagan formalized a rigorous, highly structured process known as *Fagan inspections* or *Formal Inspections*.
+Code review was not always the seamless, online, asynchronous process it is today. In 1976, IBM researcher Michael Fagan formalized a rigorous, highly structured process known as *Fagan inspections* or *Formal Inspections* {% cite Fagan1976 %}.
 
 During the 1970s and 1980s, testing software was incredibly expensive. To prevent bugs from making it to production, Fagan devised a methodology that operated much like a formal court proceeding. A typical formal inspection required printing out physical copies of the source code and gathering three to six developers in a conference room. Participants were assigned strict, defined roles:
 
@@ -23,7 +23,7 @@ This method was highly effective for its primary goal: early defect detection. S
 
 To adapt to the need for speed, the software industry abandoned the conference room and moved code review to the web. This marked the birth of *Modern Code Review (MCR)*.
 
-Modern Code Review is fundamentally different from formal inspections. It is defined by three core characteristics: it is **informal**, it is **tool-based**, and it is **asynchronous**. Instead of scheduling a meeting, a developer today finishes a unit of work and submits a *pull request* (or patch) to a code review tool like GitHub, Gerrit, or Microsoft's CodeFlow. Reviewers are notified via email or a messaging app, and they examine the *diff* (the specific lines of code that were added or deleted) on their own time, leaving comments directly in the margins of the code.
+Modern Code Review is fundamentally different from formal inspections. It is defined by three core characteristics: it is **informal**, it is **tool-based**, and it is **asynchronous** {% cite Bacchelli2013 Rigby2013 %}. Instead of scheduling a meeting, a developer today finishes a unit of work and submits a *pull request* (or patch) to a code review tool like GitHub, Gerrit, or Microsoft's CodeFlow. Reviewers are notified via email or a messaging app, and they examine the *diff* (the specific lines of code that were added or deleted) on their own time, leaving comments directly in the margins of the code.
 
 
 # The "Defect-Finding" Fallacy
@@ -34,14 +34,18 @@ It is a logical assumption. Software engineers write code, humans make mistakes,
 
 ## Expectations vs. Empirical Reality
 
-Because MCR evolved directly from formal inspections, management and developers carried over the exact same expectations: they believed they were still primarily hunting for bugs. Extensive surveys reveal that "finding defects" remains the number one cited motivation for conducting code reviews.
+Because MCR evolved directly from formal inspections, management and developers carried over the exact same expectations: they believed they were still primarily hunting for bugs. Extensive surveys reveal that "finding defects" remains the number one cited motivation for conducting code reviews {% cite Bacchelli2013 %}.
 
-However, when software engineering researchers mined the databases of review tools across Microsoft, Google, and open-source projects, they uncovered a stark contradiction: **only 14% to 25% of code review comments actually point out functional defects**. Furthermore, the bugs that *are* found are rarely deep architectural flaws; they are overwhelmingly minor, low-level logic errors.
+However, when software engineering researchers mined the databases of review tools across Microsoft, Google, and open-source projects, they uncovered a stark contradiction: **only 14% to 25% of code review comments actually point out functional defects** {% cite Bacchelli2013 Czerwonka2015 Beller2014 %}. Furthermore, the bugs that *are* found are rarely deep architectural flaws; they are overwhelmingly minor, low-level logic errors {% cite Bacchelli2013 %}.
 
 If 75% to 85% of the time spent reviewing code isn't fixing bugs, what exactly are software engineers doing? Research has identified that modern code review has evolved into a highly collaborative, **socio-technical** communication network focused on three non-functional categories:
 
 **1. Maintainability and Code Improvement**
+<<<<<<< HEAD
 Roughly **75% of the issues fixed during MCR are related to evolvability, readability, and maintainability** {% cite Beller2014 Mantyla2009 Czerwonka2015 %}. Reviewers spend the bulk of their time suggesting better coding practices, removing dead code, enforcing team style guidelines, and asking the author to improve documentation.
+=======
+Roughly **75% of the issues fixed during MCR are related to evolvability, readability, and maintainability** {% cite Beller2014 Mantyla2009 %}. Reviewers spend the bulk of their time suggesting better coding practices, removing dead code, enforcing team style guidelines, and asking the author to improve documentation.
+>>>>>>> 2e32c9d (Add modern code review citation)
 
 **2. Knowledge Transfer and Mentorship**
 Code review operates as a bidirectional educational tool. Junior developers learn best practices by having their code critiqued, while reviewers actively learn about new features and unfamiliar areas of the system by reading someone else's code.
@@ -82,7 +86,11 @@ Combining these limits dictates that developers should review code at a rate of 
 
 ## Divergent Perspectives: Is LOC the Only Metric?
 
+<<<<<<< HEAD
 Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line change consisting entirely of a well-documented class interface requires very little effort to review compared to a 50-line patch altering a complex parallel-processing algorithm {% cite Cohen2006 %}. Additionally, a rigorous experiment by Baum et al. could not reliably conclude that the *order* in which code changes are presented to a reviewer influences review efficiency, challenging some cognitive load hypotheses {% cite Baum2019 %}.
+=======
+Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line change consisting entirely of a well-documented class interface requires very little effort to review compared to a 50-line patch altering a complex parallel-processing algorithm {% cite Cohen2006 %}. Additionally, a rigorous experiment by Baum et al. could not reliably conclude that the *order* in which code changes are presented to a reviewer influences review efficiency, challenging some cognitive load hypotheses.
+>>>>>>> 2e32c9d (Add modern code review citation)
 
 ## Engineering Around the Brain: Stacking
 
@@ -124,7 +132,11 @@ To combat this, organizations have experimented with *Anonymous Author Code Revi
 
 # Code Review at Google
 
+<<<<<<< HEAD
 Imagine a software company where more than 25,000 developers submit over 20,000 source code changes every workday into a single monolithic repository (or *monorepo*). To maintain order, Google enforces a mandatory, highly optimized code review process revolving around four key pillars: education, maintaining norms, gatekeeping, and accident prevention {% cite Sadowski2018 %}.
+=======
+Imagine a software company where more than 25,000 developers submit over 20,000 source code changes every workday into a single monolithic repository (or *monorepo*) {% cite Sadowski2018 Potvin2016 %}. To maintain order, Google enforces a mandatory, highly optimized code review process revolving around four key pillars: education, maintaining norms, gatekeeping, and accident prevention.
+>>>>>>> 2e32c9d (Add modern code review citation)
 
 ## The Twin Pillars: Ownership and Readability
 
@@ -134,7 +146,7 @@ Google enforces two highly unique concepts dictating *who* is allowed to approve
 Every directory in Google's codebase has explicit "owners." While anyone can propose a change, it cannot be merged unless an official owner of that specific directory reviews and approves it.
 
 **2. Readability (Maintaining Norms)**
-Google has strict, mandatory coding styles for every language. "Readability" is an internal certification developers earn by consistently submitting high-quality code. If an author lacks Readability certification for a specific language, their code *must* be approved by a reviewer who has it.
+Google has strict, mandatory coding styles for every language. "Readability" is an internal certification developers earn by consistently submitting high-quality code. If an author lacks Readability certification for a specific language, their code *must* be approved by a reviewer who has it {% cite Sadowski2018 %}.
 
 ## The Tool and the Workflow: Enter "Critique"
 
@@ -183,7 +195,13 @@ Because agents frequently generate "over-mocked" tests or fail to grasp complex,
 
 ## The "Rubber Stamp" Risk and AI Hallucinations
 
+<<<<<<< HEAD
 As AI generates massive blocks of code, human reviewers are hit with unprecedented cognitive fatigue. This leads to the **Rubber Stamp Effect**: reviewers see a massive PR that passes automated linting and unit testing, assume it is valid, and grant an "LGTM" (Looks Good To Me) approval without actually reading the syntax {% cite Meneely2014 %}. This phenomenon effectively breaks **Linus's Law** ("many eyes make all bugs shallow"), as adding more eyes to a review only increases the likelihood of shared over-confidence rather than defect discovery when the individual depth of inspection is shallow {% cite Meneely2014 %}. Rubber stamping AI code alters a project's risk profile because AI mistakes do not look like human mistakes. While human errors are often obvious logic gaps or syntax faults, LLMs hallucinate code that looks highly plausible and authoritative but is functionally incorrect or deeply insecure. 
+=======
+As AI generates massive blocks of code, human reviewers are hit with unprecedented cognitive fatigue. This leads to the **Rubber Stamp Effect**: reviewers see a massive PR that passes automated linting and unit testing, assume it is valid, and grant an "LGTM" (Looks Good To Me) approval without actually reading the syntax. 
+
+Rubber stamping AI code alters a project's risk profile because AI mistakes do not look like human mistakes. While human errors are often obvious logic gaps or syntax faults, LLMs hallucinate code that looks highly plausible and authoritative but is functionally incorrect or deeply insecure. When discussing the ability of peer review to catch functional defects, the software engineering community frequently refers to **Linus's Law**: *"Given enough eyeballs, all bugs are shallow"* {% cite Raymond1999 %}. This concept is often used to justify broad, broadcast-based open-source code reviews (like those historically done on the Linux Kernel mailing lists). Modern empirical research (like the findings in the blog post) actively challenges the absolute truth of Linus's Law by showing that even with many "eyeballs", architectural bugs are rarely caught in MCR. 
+>>>>>>> 2e32c9d (Add modern code review citation)
 
 ## Security Vulnerabilities in AI-Generated Code
 Extensive literature reviews confirm that LLMs frequently introduce critical security vulnerabilities {% cite Nong2024 %}.
