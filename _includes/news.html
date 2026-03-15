@@ -1,4 +1,3 @@
-
 <!-- Talks -->
 <section id="news">
   <div class="container">
@@ -8,33 +7,31 @@
         <h2 class="page-header">News</h2>
       </div>
     </div>
-	  {% assign curDate = site.time | date: '%s' %}
+    {% assign curDate = site.time | date: '%s' %}
     {% assign news = site.data.news.news | sort:"date" %}
     {% for n in news reversed %}
-  	  {% assign newsDate = n.date | date: '%s' %}
-      {% if newsDate <= curDate %}
-        {% assign duration_sec = curDate | minus: newsDate %}
-        {% assign duration_days = duration_sec | divided_by: 60 | divided_by: 60 | divided_by: 24 %}
-        {% if duration_days <= site.data.news.max_days %}
-        <div class="row">
-          <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
-            <h4>{{ n.date | date : "%d %b. %Y" }}</h4>
-          </div>
-          <div class="col-md-8 col-sm-10">
-            <p>{{ n.text}}</p>
-          </div>
-          <div class="col-md-1 text-left">
-            <p><img class='img-responsive' src='{{ n.icon }}'></p>
-          </div>
-        </div>
-        {% endif %}
-      {% endif %}
-    {% endfor %}
+    {% assign newsDate = n.date | date: '%s' %}
+    {% if newsDate <= curDate %} {% assign duration_sec=curDate | minus: newsDate %} {% assign
+      duration_days=duration_sec | divided_by: 60 | divided_by: 60 | divided_by: 24 %} {% if duration_days
+      <=site.data.news.max_days %} <div class="row">
+      <div class="col-md-2 col-md-offset-1 col-sm-2 text-right">
+        <h4>{{ n.date | date : "%d %b. %Y" }}</h4>
+      </div>
+      <div class="col-md-8 col-sm-10">
+        <p>{{ n.text}}</p>
+      </div>
+      <div class="col-md-1 text-left">
+        <p><img class='img-responsive' src='{{ n.icon }}'></p>
+      </div>
+  </div>
+  {% endif %}
+  {% endif %}
+  {% endfor %}
   </div>
 
 
-  {% if site.data.blog.show %}   
-    {% include blog_featured.html %}
-  {% endif %}   
+  {% if site.data.blog.show %}
+  {% include blog_featured.html %}
+  {% endif %}
 
 </section>

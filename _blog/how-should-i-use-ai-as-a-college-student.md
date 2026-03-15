@@ -5,7 +5,6 @@ date: 2026-03-11
 category: "For Students"
 featured: true
 image: "/img/genai.jpg"
-image_p: "/img/genai_.jpg"
 ---
 
 **Many of my students come to me with this wonderful question: "*How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*"
