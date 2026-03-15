@@ -56,9 +56,9 @@ Achieving any of the goals of MCR requires a reviewer to accomplish one monument
 
 ## The Brain on Code: Letovsky and the CRCM
 
-In 1987, Stanley Letovsky proposed a foundational model suggesting that programmers act as "knowledge-based understanders," using an *assimilation process* to combine raw code with their existing knowledge base to construct a mental model.
+In 1987, Stanley Letovsky proposed a foundational model suggesting that programmers act as "knowledge-based understanders," using an *assimilation process* to combine raw code with their existing knowledge base to construct a mental model {% cite Letovsky1987 %}.
 
-Recent studies extended this specifically for MCR, creating the *Code Review Comprehension Model (CRCM)*. A reviewer must simultaneously hold a mental model of the *existing* software system, the *proposed* changes, and the *ideal* solution. Because this comparative comprehension is incredibly taxing, reviewers use **opportunistic strategies** instead of reading top-to-bottom:
+Recent studies extended this specifically for MCR, creating the *Code Review Comprehension Model (CRCM)* {% cite Goncalves2025 %}. A reviewer must simultaneously hold a mental model of the *existing* software system, the *proposed* changes, and the *ideal* solution. Because this comparative comprehension is incredibly taxing, reviewers use **opportunistic strategies** instead of reading top-to-bottom {% cite Goncalves2025 %}:
 
 1. **Linear Reading:** Used mostly for very small changes (under 175 lines). The reviewer reads from the first changed file to the last.
 2. **Difficulty-Based Reading:** Reviewers prioritize. Some use an *easy-first* approach (skimming and approving documentation/renames to reduce cognitive load), while others use a *core-based* approach (searching for the core change and tracing data flow outward).
@@ -66,23 +66,23 @@ Recent studies extended this specifically for MCR, creating the *Code Review Com
 
 ## The Quantitative Limits of Human Attention
 
-Empirical studies across open-source projects and industry giants like Microsoft and Cisco have identified rigid numerical limits to human code comprehension.
+Empirical studies across open-source projects and industry giants like Microsoft and Cisco have identified rigid numerical limits to human code comprehension {% cite Cohen2006 Bacchelli2013 Sadowski2018 %}.
 
 ### The 400-Line Rule
 
-A reviewer's effectiveness drops precipitously once a pull request exceeds 200 to 400 lines of code (LOC). When hit with a massive PR (a "code bomb"), reviewers are overwhelmed. In a study of over 212,000 PRs, researchers found that 66% to 75% of all defects are detected within PRs that are between 200 and 400 LOC. Beyond this threshold, defect discovery plummets.
+A reviewer's effectiveness drops precipitously once a pull request exceeds 200 to 400 lines of code (LOC) {% cite Cohen2006 Shah2026 %}. When hit with a massive PR (a "code bomb"), reviewers are overwhelmed. In a study of 212,687 PRs across 82 open-source projects, researchers found that 66% to 75% of all defects are detected within PRs that are between 200 and 400 LOC {% cite Mariotto2025 %}. Beyond this threshold, defect discovery plummets.
 
 ### The 60-Minute Clock
 
-Review sessions should never exceed **60 to 90 minutes**. After roughly an hour of staring at a diff, the reviewer experiences *cognitive fatigue* and defect discovery drops to near zero.
+Review sessions should never exceed **60 to 90 minutes** {% cite Cohen2006 Blakely1991 %}. After roughly an hour of staring at a diff, the reviewer experiences *cognitive fatigue* and defect discovery drops to near zero {% cite Dunsmore2000 %}.
 
 ### The Speed Limit
 
-Combining these limits dictates that developers should review code at a rate of **200 to 500 lines of code per hour**. Reviewing faster than this causes the reviewer to miss architectural details.
+Combining these limits dictates that developers should review code at a rate of **200 to 500 lines of code per hour** {% cite Cohen2006 %}. Reviewing faster than this causes the reviewer to miss architectural details {% cite Kemerer2009 %}.
 
 ## Divergent Perspectives: Is LOC the Only Metric?
 
-Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line change consisting entirely of a well-documented class interface requires very little effort to review compared to a 50-line patch altering a complex parallel-processing algorithm. Additionally, a rigorous experiment by Baum et al. could not reliably conclude that the *order* in which code changes are presented to a reviewer influences review efficiency, challenging some cognitive load hypotheses.
+Some researchers argue that measuring *Lines of Code* is too blunt. A 400-line change consisting entirely of a well-documented class interface requires very little effort to review compared to a 50-line patch altering a complex parallel-processing algorithm {% cite Cohen2006 %}. Additionally, a rigorous experiment by Baum et al. could not reliably conclude that the *order* in which code changes are presented to a reviewer influences review efficiency, challenging some cognitive load hypotheses.
 
 ## Engineering Around the Brain: Stacking
 
