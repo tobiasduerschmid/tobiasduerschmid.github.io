@@ -37,7 +37,7 @@ Key rules for safe refactoring include:
 *   **Do one at a time:** Finish one transformation before starting the next.
 *   **Make frequent checkpoints:** Commit to version control after every successful step.
 
-#  Refactoring in the Age of Generative AI**
+#  Refactoring in the Age of Generative AI
 Modern **Generative AI (GenAI)** tools are highly effective at implementing these transformations because they have been trained on classic refactoring catalogs. A developer can explicitly prompt an AI agent to **"Replace this conditional with polymorphism"** or **"Refactor this to use the Strategy pattern"**.
 
 However, the **Supervisor Mentality** remains critical. AI agents have limited context windows and may struggle with system-level refactorings that span an entire code base. The human engineer’s role is to identify *when* a refactoring is needed and to orchestrate the AI through small, verifiable steps, running tests after every AI-generated change to ensure correctness. By keeping **Information Hiding** and modularity in mind, developers can limit the context required for any single refactoring, making both themselves and their AI assistants more effective.
