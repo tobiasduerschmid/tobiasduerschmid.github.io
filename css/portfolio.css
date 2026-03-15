@@ -15,6 +15,43 @@ section {
 	margin-top: 2em;
 }
 
+/* Global Link Styles */
+a {
+	color: #2774AE;
+	text-decoration: underline;
+	transition: all 0.2s ease;
+	border-radius: 4px;
+}
+
+a:hover,
+a:focus {
+	color: black;
+	background-color: #FFD100;
+	text-decoration: underline;
+}
+
+/* Overrides for specific elements that should not be underlined */
+.badge,
+.category-link,
+.filter-btn,
+.navbar a,
+.nav a {
+	text-decoration: none !important;
+}
+
+.badge:hover,
+.category-link:hover,
+.filter-btn:hover,
+.navbar a:hover,
+.nav a:hover,
+.badge:focus,
+.category-link:focus,
+.filter-btn:focus,
+.navbar a:focus,
+.nav a:focus {
+	text-decoration: none !important;
+}
+
 .page-header {
 	font-weight: 500 !important;
 }
@@ -60,11 +97,24 @@ a.author {
 .navbar-header a {
 	font-size: 20px !important;
 	font-weight: 500;
+	border-radius: 0 !important;
 }
 
 .nav a {
 	font-size: 15px !important;
 	font-weight: 500;
+	border-radius: 0 !important;
+}
+
+#sidebar a {
+	border-radius: 0 !important;
+}
+
+#sidebar a:hover,
+#sidebar a:focus {
+	color: black;
+	background-color: #FFD100;
+	text-decoration: underline;
 }
 
 .label.top-right {
