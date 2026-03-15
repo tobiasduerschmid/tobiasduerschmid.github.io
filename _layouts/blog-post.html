@@ -13,7 +13,7 @@ layout: blog
               <span class="post-date">{{ page.date | date: "%B %d, %Y" }}</span>
               {% if page.category %}
               <span class="post-category">
-                <a href="/blog/#{{ page.category | slugify }}" class="badge"
+                <a href="/blog/#cat-{{ page.category | slugify }}" class="badge"
                   style="font-weight: bold; color:black; background-color: #FFD100;">{{ page.category }}</a>
               </span>
               {% endif %}

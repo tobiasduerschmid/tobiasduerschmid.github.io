@@ -66,6 +66,32 @@ test('blog post has a references section', async ({ page }) => {
   expect(body).toContain('References');
 });
 
+test('clicking a category badge on a post filters the list', async ({ page }) => {
+  await page.goto('/blog/');
+
+  // Find the first category badge
+  const categoryLink = page.locator('.category-link').first();
+  const categoryName = (await categoryLink.innerText()).trim();
+  
+  // Click it
+  await categoryLink.click();
+  
+  // Wait for transitions
+  await page.waitForTimeout(500);
+  
+  // Verify the filter button for this category is now active
+  const filterBtn = page.locator(`.filter-btn.active`);
+  const activeCategory = (await filterBtn.innerText()).trim();
+  expect(activeCategory).toBe(categoryName);
+  
+  // Verify only matching posts are visible
+  const visiblePosts = page.locator('.blog-post-item:not(.hidden)');
+  const postCategories = await visiblePosts.locator('.category-link').allInnerTexts();
+  for (const cat of postCategories) {
+    expect(cat.trim()).toBe(categoryName);
+  }
+});
+
 test('blog index shows post titles linking to posts', async ({ page }) => {
   await page.goto('/blog/');
   // Post links should include /blog/ in their href

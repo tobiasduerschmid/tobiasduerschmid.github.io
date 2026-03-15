@@ -215,11 +215,14 @@ layout: blog
     const posts = document.querySelectorAll('.blog-post-item');
     const buttons = document.querySelectorAll('.filter-btn');
 
+    // Update active button state
     buttons.forEach(btn => {
-      btn.classList.remove('active');
+      if (btn.getAttribute('data-category') === category) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
     });
-
-    event.target.classList.add('active');
 
     posts.forEach(post => {
       if (category === 'all' || post.dataset.category === category) {
@@ -228,17 +231,34 @@ layout: blog
         post.classList.add('hidden');
       }
     });
+
+    // Update URL hash without jumping
+    if (category !== 'all') {
+      history.pushState(null, null, '#cat-' + category);
+    } else {
+      history.pushState(null, null, window.location.pathname);
+    }
   }
 
   // Handle category link clicks from posts
   document.querySelectorAll('.category-link').forEach(link => {
     link.addEventListener('click', function (e) {
       e.preventDefault();
-      const category = this.getAttribute('href').substring(1);
-      const btn = document.querySelector(`[data-category="${category}"]`);
-      if (btn) {
-        btn.click();
-      }
+      // Extract the slug (remove '#cat-' prefix)
+      const href = this.getAttribute('href');
+      const category = href.replace('#cat-', '').replace('#', '');
+      filterByCategory(category);
+      // Scroll to top of filter section for better feedback
+      document.getElementById('category-filter').scrollIntoView({ behavior: 'smooth' });
     });
+  });
+
+  // Handle initial page load with hash
+  window.addEventListener('load', () => {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#cat-')) {
+      const category = hash.replace('#cat-', '');
+      filterByCategory(category);
+    }
   });
 </script>
