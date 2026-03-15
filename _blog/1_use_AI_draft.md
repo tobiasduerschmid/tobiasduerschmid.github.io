@@ -55,7 +55,7 @@ A fascinating contradiction exists within the literature regarding AI's impact o
 *   *Perspective A (The Efficiency Advocate):* Some researchers argue that by taking over lower-level tasks (like syntax correction or searching for baseline facts), AI reduces extraneous cognitive load, freeing up mental resources for higher-order, germane problem-solving and creativity (Gerlich 2024; Alanazi et al. 2025). 
 *   *Perspective B (The Cognitive Atrophy Warning):* Conversely, other scholars argue that this exact reduction in cognitive friction is detrimental. Because the AI makes learning feel "effortless," it bypasses the productive struggle necessary for schema formation in the brain, leading to lower-quality reasoning, superficial fluency, and the erosion of independent problem-solving skills (Kosmyna 2025; Macnamara et al. 2024). 
 
-**Synthesis for the Student:** To reconcile these views, students must deliberately inject "desirable difficulties" back into their learning process. If AI makes gathering information frictionless, the student must manually apply the friction during the synthesis and application phases to ensure true learning takes place.
+**Synthesis for the Student:** To reconcile these views, students must deliberately inject "[desirable difficulties](https://www.youtube.com/watch?v=gtmMMR7SJKw)" back into their learning process. If AI makes gathering information frictionless, the student must manually apply the friction during the synthesis and application phases to ensure true learning takes place.
 
 
 ## NotebookLM 
