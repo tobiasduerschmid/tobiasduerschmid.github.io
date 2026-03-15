@@ -1,6 +1,7 @@
 install:
 	bundle install
 	npm install
+	npx playwright install
 
 build:
 	bundle exec jekyll build --incremental
