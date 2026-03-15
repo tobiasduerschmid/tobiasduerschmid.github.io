@@ -5,6 +5,7 @@ date: 2026-03-11
 category: "For Students"
 featured: true
 image: "/img/genai.jpg"
+image_alt_text: "Student working on a computer with a robot sitting next to him. They both look at a digital screen. University buildings in the background. Soft evening light"
 ---
 
 **Many of my students come to me with this wonderful question: "*How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?*"
@@ -33,9 +34,9 @@ Unfortunately, AI as a technology often incentivizes behavior that reduces skill
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
 <div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
-  <img src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student in a gym watching a robot lift weights" style="width: 100%; height: auto; border-radius: 12px; display: block;">
-  <div style="position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.7); color: white; padding: 8px; border-top-left-radius: 12px; border-top-right-radius: 12px; font-weight: 500; font-size: 1.1em; line-height: 1;">
-    <strong>"Wow, I just discovered this new AI that makes my workout so much easier and faster!"</strong>
+  <img src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student standing relaxed in a gym while watching a robot lift heavy weights. Other students are working out actively in the gym. University buildings in the background." style="width: 100%; height: auto; border-radius: 12px; display: block;">
+  <div style="position: absolute; top: 0; left: 0; right: 0; background: rgba(0, 0, 0, 0.7); color: white; padding: 4px; border-top-left-radius: 12px; border-top-right-radius: 12px; font-weight: 500; font-size: 1.1em; line-height: 1.2;">
+    <strong>"Wow, I just discovered this AI that makes my workout so much easier and faster!"</strong>
   </div>
 </div>
 

@@ -133,7 +133,7 @@ The user story contains multiple, separate features (Piazza, Gradescope, Google 
 ### How are Estimable and Small different?
 
 ### Should bug reports be user stories?
-
+    
 Mike Cohn explicitly advocates for this unified approach, stating that the best method is to consider each bug report its own story {% cite cohn2004user %}. If a bug is large and requires significant effort, it should be estimated, prioritized, and treated exactly like any other typical user story {% cite cohn2004user %}. However, treating every minor bug as an independent story can cause administrative bloat. For bugs that are small and quick to fix, Cohn suggests that teams combine them into one or more unified stories {% cite cohn2004user %}. On a physical task board, this is achieved by stapling several small bug cards together under a single "cover story card", allowing the collection to be estimated and scheduled as a single unit of work {% cite cohn2004user %}.
 
 From the [Extreme Programming (XP)](/SEBook/process/xp) perspective, translating a bug report into a narrative user story addresses only the process layer; the technical reality is that a bug is a missing test. Kent Beck argues that problem reports must come with *test cases* demonstrating the problem in code {% cite beck2004XPExplained %}. 
