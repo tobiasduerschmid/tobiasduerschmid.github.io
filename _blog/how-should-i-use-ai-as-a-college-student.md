@@ -27,8 +27,9 @@ State-of-the-art research on real-world tasks shows that **==AI is an amplifier 
 This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more.
 AI enables skilled developers to compound their knowledge and productivity by critically evaluating and learning from AI outputs, guiding AI by anticipating its shortcomings and correcting its mistakes. 
 In contrast, novices who have not successfully developed these skills fall further and further behind.
-Experts utilize GenAI proactively to effectively *plan* and *conceptualize*, whereas novices use it *reactively* to resolve immediate roadblocks {% cite Ma2026 Prather2024WideningGap %}.
-Experts possess the deep knowledge of algorithms, data structures, and syntax required to rapidly scan AI outputs, spot subtle security vulnerabilities, and identify hallucinated variables {% cite Dohmke2025 ShenTamkin2026 %}.
+Experts utilize GenAI proactively to effectively *plan*, *conceptualize*, *delegate*, and *verify*, whereas novices use it *reactively* to resolve immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 %}.
+Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) required to rapidly scan AI outputs, spot subtle security vulnerabilities, and identify hallucinations to super-charge their AI use {% cite Dohmke2025 ShenTamkin2026 %}.
+Real experts use their 
 
 This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
