@@ -4,51 +4,60 @@
 {% include head.html %}
 
 <style>
+  h1 {
+    font-weight: bold;
+    color: #2774AE;
+    -webkit-text-stroke: 1px black;
+    text-shadow: 1.5px 1.5px 3px rgba(0, 0, 0, 0.4);
+  }
 
-h1 {
-  font-weight: bold;
-}
+  h2 {
+    font-weight: bold;
+    color: #2774AE;
+    -webkit-text-stroke: 1px black;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  }
 
-h2 {
-  font-weight: bold;
-}
-h3 {
-  font-weight: bold;
-}
-h4 {
-  font-weight: bold;
-}
+  h3 {
+    font-weight: bold;
+  }
+
+  h4 {
+    font-weight: bold;
+  }
 </style>
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
 
-    <article class="post-content">
-      
-    {% assign course_key = page.course  %}
+  <article class="post-content">
+
+    {% assign course_key = page.course %}
     {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
-    {% assign project  = projects.first %}
+    {% assign project = projects.first %}
     {% assign nav_key = course_key | append: '_nav' %}
     {% assign topics = site.data[nav_key].topics %}
 
 
-      <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
       <div class="container-fluid">
         <div class="navbar-header page-scroll">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-        <a class="navbar-brand page-scroll" href="{{project.url}}">{{page.title}}</a><a class="navbar-brand page-scroll">|</a><a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
-        
+          <a class="navbar-brand page-scroll" href="{{project.url}}">{{page.title}}</a><a
+            class="navbar-brand page-scroll">|</a><a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
+
         </div>
-      <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract H1 headings from content -->
-          {% for topic in topics %}
-                {% assign topic_id = topic.name | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', ''  %}
-                  <li><a class="page-scroll" href="#{{topic_id}}">{{topic.name}}</a></li>
+            {% for topic in topics %}
+            {% assign topic_id = topic.name | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' |
+            replace: ')', '' %}
+            <li><a class="page-scroll" href="#{{topic_id}}">{{topic.name}}</a></li>
             {% endfor %}
           </ul>
         </div><!--/.nav-collapse -->
@@ -56,62 +65,62 @@ h4 {
     </nav>
 
 
-      {% include header_project.html title=page.title %}
+    {% include header_project.html title=page.title %}
 
-        <div class="container">
-          <div class="row">
-            {{content}}
+    <div class="container">
+      <div class="row">
+        {{content}}
 
-                    
 
-          {% for topic in topics %}
-              {% assign topic_id = topic.name | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' | replace: ')', ''  %}
-              
-              <section id="{{topic_id}}">
 
-              {% assign current_topic = site.pages | where: "url", topic.url | first %}
-              {% include header_project.html title=topic.name %}
-              {{ current_topic.content | liquid | markdownify }}
-              
-              {% if topic.subtopics %}
-                  {% for subtopic in topic.subtopics %}
-                      {% include header_project.html title=subtopic.name %}
-                      {% assign current_subtopic = site.pages | where: "url", subtopic.url | first %}
-                      {{ current_subtopic.content | liquid | markdownify }}
-                      {% if subtopic.items %}
-                          {% for item in subtopic.items %}
+        {% for topic in topics %}
+        {% assign topic_id = topic.name | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: '(', '' |
+        replace: ')', '' %}
 
-                          {% include header_project.html title=item.name %}
-                              {% assign current_item = site.pages | where: "url", item.url | first %}
-                              {{ current_item.content | liquid | markdownify }}
-                          {% endfor %}
-                      {% endif %}
-                  {% endfor %}
-              {% endif %}
-              </section>
+        <section id="{{topic_id}}">
+
+          {% assign current_topic = site.pages | where: "url", topic.url | first %}
+          {% include header_project.html title=topic.name %}
+          {{ current_topic.content | liquid | markdownify }}
+
+          {% if topic.subtopics %}
+          {% for subtopic in topic.subtopics %}
+          {% include header_project.html title=subtopic.name %}
+          {% assign current_subtopic = site.pages | where: "url", subtopic.url | first %}
+          {{ current_subtopic.content | liquid | markdownify }}
+          {% if subtopic.items %}
+          {% for item in subtopic.items %}
+
+          {% include header_project.html title=item.name %}
+          {% assign current_item = site.pages | where: "url", item.url | first %}
+          {{ current_item.content | liquid | markdownify }}
           {% endfor %}
-
-          {% capture bib %}{% bibliography --cited %}{% endcapture %}
-          {% if bib contains '<li' %}
-            <div class="row">
-              <section id="references">
-                <hr>
-                <div class="container">
-                  <div class="row">
-                    <h3>References</h3>
-                    {{ bib }}
-                  </div>
-                </div>
-              </section>
-            </div>
           {% endif %}
-          </div>
-        </div>
-    </article>
-    
-{% include footer.html %}
+          {% endfor %}
+          {% endif %}
+        </section>
+        {% endfor %}
 
-{% include scripts.html %}
+        {% capture bib %}{% bibliography --cited %}{% endcapture %}
+        {% if bib contains '<li' %} <div class="row">
+          <section id="references">
+            <hr>
+            <div class="container">
+              <div class="row">
+                <h3>References</h3>
+                {{ bib }}
+              </div>
+            </div>
+          </section>
+      </div>
+      {% endif %}
+    </div>
+    </div>
+  </article>
+
+  {% include footer.html %}
+
+  {% include scripts.html %}
 
 </body>
 
