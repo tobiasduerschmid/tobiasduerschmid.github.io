@@ -294,26 +294,28 @@ layout: blog
 
       if (marks.length > 0) {
         container.style.display = 'flex';
+      }
 
-        // Load state from cookie
-        const savedState = getCookie('show-highlights');
-        if (savedState !== null) {
-          const isChecked = savedState === 'true';
-          toggle.checked = isChecked;
-          if (isChecked) {
-            article.classList.remove('highlights-disabled');
-          } else {
-            article.classList.add('highlights-disabled');
-          }
+      // Load state from cookie
+      const savedState = getCookie('show-highlights');
+      if (savedState !== null) {
+        const isChecked = savedState === 'true';
+        toggle.checked = isChecked;
+        if (isChecked) {
+          article.classList.remove('highlights-disabled');
+        } else {
+          article.classList.add('highlights-disabled');
         }
+      }
 
+      if (marks.length > 0) {
         toggle.addEventListener('change', function () {
           if (this.checked) {
             article.classList.remove('highlights-disabled');
           } else {
             article.classList.add('highlights-disabled');
           }
-          setCookie('show-highlights', this.checked, 365);
+          setCookie('show-highlights', this.checked, 300);
         });
       }
     }

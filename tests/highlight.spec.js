@@ -29,19 +29,19 @@ test.describe('Highlight Syntax Verification', () => {
   });
 
   test('nested italics render inside <mark>', async ({ page }) => {
-    const mark = page.locator('mark:has-text("this should be")');
+    const mark = page.locator('mark').filter({ hasText: /^this should be italicized and highlighted$/ });
     const em = mark.locator('em');
     await expect(em).toHaveText('italicized and highlighted');
   });
 
   test('nested bold renders inside <mark>', async ({ page }) => {
-    const mark = page.locator('mark:has-text("this should be")');
+    const mark = page.locator('mark').filter({ hasText: /^this should be bold and highlighted$/ });
     const strong = mark.locator('strong');
     await expect(strong).toHaveText('bold and highlighted');
   });
 
   test('mixed nested italics and bold render inside <mark>', async ({ page }) => {
-    const mark = page.locator('mark:has-text("bold and italicized highlighted")');
+    const mark = page.locator('mark').filter({ hasText: /^this should be bold and italicized highlighted$/ });
     const strong = mark.locator('strong');
     const em = strong.locator('em');
     await expect(em).toHaveText('italicized');
