@@ -1,5 +1,6 @@
 install:
 	bundle install
+	npm install
 
 build:
 	bundle exec jekyll build --incremental
