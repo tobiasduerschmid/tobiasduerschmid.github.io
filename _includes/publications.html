@@ -1,52 +1,63 @@
+{% assign previousyear = '0' %}
+{% for p in publications reversed %}
+{% assign currentyear = p.date | date: '%Y' %}
+{% if currentyear != previousyear %}<div>
+  <legend>{{ p.date | date: '%Y' }}</legend>
+</div>{% endif %}
+{% assign previousyear = currentyear %}
+{% assign co_authors = site.data.co_authors.authors %}
+{% assign show_a_rate = site.data.publications.show_a_rate %}
+{% assign a_rate_threashold = site.data.publications.a_rate_threashold %}
+{% assign curDate = site.time | date: '%s' %}
+{% assign pDate = p.date | date: '%s' %}
 
-    {% assign previousyear = '0' %}
-    {% for p in publications reversed %}
-    {% assign currentyear = p.date | date: '%Y' %}
-    {% if currentyear != previousyear %}<div><legend>{{ p.date | date: '%Y' }}</legend></div>{% endif %}
-    {% assign previousyear = currentyear %}
-    {% assign co_authors = site.data.co_authors.authors %}
-    {% assign show_a_rate = site.data.publications.show_a_rate %}
-    {% assign a_rate_threashold = site.data.publications.a_rate_threashold %}
-    {% assign curDate = site.time | date: '%s' %}
-    {% assign pDate = p.date | date: '%s' %}
 
-  
-  <div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
-      <div class="col-sm-2 col-md-offset-1">
-        {% include thumbnail.html %}
-      </div>
-      <div class="col-sm-8">
-        <h4 class="title">{{ p.title }}</h4>
-        <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {% endif %}{% assign found = false %}{% for a in co_authors %}{% if a.key == author %}{% assign found = true %}{% if a.website %}<a class="author" data-toggle="tooltip" title="{{ a.note }}" href= "{{ a.website }}">{{ a.name }}</a>{% else %}{{ a.name }}{% endif %}{% endif %}{% endfor %}{% if found == false %}{{ author }}{% endif %}{% if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
-        <span class="text-danger">{% if pDate > curDate %}To appear in {% endif %}{{ p.published }} {{ p.date | date: '%Y' }} {% if show_a_rate == true and p.a_rate and a_rate_threashold > p.a_rate %} (acceptance rate: {{ p.a_rate }}%){% endif %}</span>
-        {% if p.comment %}<br><span class="text-danger"><b>{{ p.comment }}</b></span>{% endif %}<br>
-        </p>
-        <p>
-          {% if p.caption %}<a data-toggle="collapse" href="#abstract-{{ p.key }}">Abstract</a>{% if p.bibtex or p.downloads %}, {% endif %}{% endif %}
-          {% if p.bibtex %}<a data-toggle="collapse" href="#bibtex-{{ p.key }}">BibTeX</a>{% if p.downloads %}, {% endif %}{% endif %}
-          {% if p.downloads %}{% for download in p.downloads %}<a {% if download.video %}class="video-{{ download.video }}" {% endif %}href="{{ download.href }}" target="_blank">{{ download.desc }}</a>{% if download != p.downloads.last %}, {% endif %}{% endfor %}{% endif %}
-        </p>
-      {% if p.caption %}
-      <div class="collapse bibtex" id="abstract-{{ p.key }}">
-          <p>{{ p.caption }}</p>
-      </div>
-      {% endif %}
-      {% if p.bibtex %}
-      <div class="collapse bibtex" id="bibtex-{{ p.key }}">
-        <div class="btn-clipboard-parent">
-          <button type="button" data-clipboard-target="#bibtex-data-{{ p.key }}" class="btn btn-sm btn-clipboard">Copy to Clipboard</button> 
-        </div>
-        <div class="card card-block">
-          <pre id="bibtex-data-{{ p.key }}">{% include {{ p.bibtex }} %}</pre>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-    <div class="col-md-1 text-left">
-      <h4 class="title"> </h4>
-      {% if p.icon %}
-      <p><img class='img-responsive' src='{{ p.icon }}' title='{{ p.comment }}'></p>
-      {% endif %}
-    </div>
+<div class="row{% if p != publications.first %} not-last{% endif %}" id="publication-{{ p.key }}">
+  <div class="col-sm-2 col-md-offset-1">
+    {% include thumbnail.html %}
   </div>
-  {% endfor %}
+  <div class="col-sm-8">
+    <h4 class="title">{{ p.title }}</h4>
+    <p><span class="author">{% for author in p.authors %}{% if author == p.authors.last and p.authors.size > 1 %}and {%
+        endif %}{% assign found = false %}{% for a in co_authors %}{% if a.key == author %}{% assign found = true %}{%
+        if a.website %}<a class="author" data-toggle="tooltip" title="{{ a.note }}" href="{{ a.website }}">{{ a.name
+          }}</a>{% else %}{{ a.name }}{% endif %}{% endif %}{% endfor %}{% if found == false %}{{ author }}{% endif %}{%
+        if p.authors.size > 2 and author != p.authors.last %},{% endif %} {% endfor %}</span><br>
+      <span class="text-danger">{% if pDate > curDate %}To appear in {% endif %}{{ p.published }} {{ p.date | date: '%Y'
+        }} {% if show_a_rate == true and p.a_rate and a_rate_threashold > p.a_rate %} (acceptance rate: {{ p.a_rate
+        }}%){% endif %}</span>
+      {% if p.comment %}<br><span class="text-danger"><b>{{ p.comment }}</b></span>{% endif %}<br>
+    </p>
+    <p>
+      {% if p.caption %}<a data-toggle="collapse" href="#abstract-{{ p.key }}">Abstract</a>{% if p.bibtex or p.downloads
+      %}, {% endif %}{% endif %}
+      {% if p.bibtex %}<a data-toggle="collapse" href="#bibtex-{{ p.key }}">BibTeX</a>{% if p.downloads %}, {% endif
+      %}{% endif %}
+      {% if p.downloads %}{% for download in p.downloads %}<a {% if download.video %}class="video-{{ download.video }}"
+        {% endif %}href="{{ download.href }}" target="_blank">{{ download.desc }}</a>{% if download != p.downloads.last
+      %}, {% endif %}{% endfor %}{% endif %}
+    </p>
+    {% if p.caption %}
+    <div class="collapse bibtex" id="abstract-{{ p.key }}">
+      <p>{{ p.caption }}</p>
+    </div>
+    {% endif %}
+    {% if p.bibtex %}
+    <div class="collapse bibtex" id="bibtex-{{ p.key }}">
+      <div class="btn-clipboard-parent">
+        <button type="button" data-clipboard-target="#bibtex-data-{{ p.key }}" class="btn btn-sm btn-clipboard">Copy to
+          Clipboard</button>
+      </div>
+      <div class="card card-block">
+        <pre id="bibtex-data-{{ p.key }}">{% include {{ p.bibtex }} %}</pre>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-md-1 text-left">
+    {% if p.icon %}
+    <p><img class='img-responsive' src='{{ p.icon }}' title='{{ p.comment }}'></p>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
