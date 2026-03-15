@@ -54,7 +54,7 @@ To truly master how you integrate AI into your computer science education, we ne
 **The Research:**
 Cognitive offloading is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016 %}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constly think about the deadline. or asking ChatGPT to debug a script. They enable you get a task done with less cognitive work on your end, which of course sounds very enticing!
 
-However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory, which divides our mental effort into two categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn) and *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal) {% cite KalyugaPlass2025 %}. 
+However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory (CLT), which divides our mental effort into two categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn) and *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal) {% cite sweller2011cognitive KalyugaPlass2025 %}. 
 
 Based on this framework, research categorizes AI cognitive offloading into two distinct paths:
 
