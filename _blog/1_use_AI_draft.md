@@ -87,7 +87,7 @@ However, studies across high school and university programming courses consisten
 **Actionable Tips:**
 
 *   **Demand Socratic Scaffolding, Not Solutions:** 
-    Do not ask AI to "solve this problem" or "write this function." This robs you of the *generation effect* needed for deep learning {% cite Duplice2025 %}. Instead, force the AI to act as your *Socratic Tutor* {% cite SunilThakkar2025 %}. 
+    Do not ask AI to "solve this problem" or "write this function." This robs you of the *generation effect* needed for deep learning {% cite Duplice2025 %}. Instead, force the AI to act as your *Socratic Tutor* {% cite SunilThakkar2024 %}. 
     *   *How to do it:* Engineer your prompt to establish boundaries. Say, *"Act as my senior computer science tutor. I am trying to implement a recursive merge sort in Java, but I am getting a StackOverflowError. Do NOT write the corrected code for me. Instead, ask me a guiding question about my base case to help me figure out the flaw myself."* This keeps you in the driver's seat and preserves the productive struggle required for skill acquisition.
 *   **The "Generation-Then-Comprehension" Protocol:** 
     If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. Research shows that students who simply delegate code generation to AI suffer severe skill decay {% cite ShenTamkin2026 %}.

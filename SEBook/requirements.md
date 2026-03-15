@@ -88,7 +88,7 @@ In short: Requirements keep you focused on delivering **value** to the user. Lea
 ## User Stories
 
 ## Quality Attribute Scenarios
-Quality attribute requirements (such as performance, security, and availability) are often best captured via "Quality Attribute Scenarios" to make them concrete and measurable {% cite Bass2003 %}.
+Quality attribute requirements (such as performance, security, and availability) are often best captured via "Quality Attribute Scenarios" to make them concrete and measurable {% cite Bass2012 %}.
 
 ## Formal Requirements Specifications
 
