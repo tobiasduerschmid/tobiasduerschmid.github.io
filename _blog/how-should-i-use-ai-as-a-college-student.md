@@ -40,7 +40,7 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
   </div>
 </div>
 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](https://www.youtube.com/watch?v=gtmMMR7SJKw)" {% cite bjork2011making bjork2020desirable brown2014makeitstick %}.
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](https://www.youtube.com/watch?v=gtmMMR7SJKw)" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
 
 On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties.
 
