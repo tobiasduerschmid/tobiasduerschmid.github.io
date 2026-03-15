@@ -40,16 +40,16 @@ languages: [ 'en' ]
 description: > # this means to ignore newlines until "baseurl:"
     Tobias Dürschmid - Assistant Teaching Professor at UCLA.
 subheading: > # this means to ignore newlines until "baseurl:"
-    I am an <span class="text-danger">Assistant Teaching Professor in Computer Science</span> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. 
-    I am mainly interested in  <span class="text-danger">teaching how to systematically design, construct, and evaluate complex software systems</span>.
+    I am an <strong>Assistant Teaching Professor in Computer Science</strong> at <a href="http://www.cs.ucla.edu/" target="_blank">UCLA</a>. 
+    I am mainly interested in  <strong>teaching how to systematically design, construct, and evaluate complex software systems</strong>.
     I usually teach CS 35L Software Construction, CS 130 Software Engineering, and CS 131 Programming Languages.
     
     <br><br>
-    I received my <span class="text-danger">PhD in Software Engineering</span> from Carnegie Mellon University’s <a href="http://www.scs.cmu.edu/" target="_blank">School of Computer Science</a>. 
+    I received my <strong>PhD in Software Engineering</strong> from Carnegie Mellon University’s <a href="http://www.scs.cmu.edu/" target="_blank">School of Computer Science</a>. 
     I was fortunate to be co-advised by <a href="https://clairelegoues.com/" target="_blank">Claire Le Goues</a> and <a href="http://www.cs.cmu.edu/~garlan/" target="_blank">David Garlan</a>.
     I earned my Bachelor of Science in IT-Systems Engineering from <a href="https://www.hpi.de/en/" target="_blank">Hasso Plattner Institute</a> / University of Potsdam, Germany.
     <br><br>
-    My research interests include <span class="text-danger">software engineering, computer science education, and pedagogy</span>.
+    My research interests include <strong>software engineering, computer science education, and pedagogy</strong>.
     I do <strong>not</strong> currently accept PhD students. 
     
 defaults:
@@ -73,7 +73,7 @@ safe: false
 encoding: utf-8
 
 # Build settings
-markdown: kramdown
+strongdown: kramdown
 
 # Syntax highlighting
 # Use Rouge (default for modern Jekyll) and configure kramdown to support fenced code blocks

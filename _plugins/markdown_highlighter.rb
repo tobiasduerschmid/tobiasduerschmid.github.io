@@ -1,15 +1,24 @@
+require 'kramdown'
+
 Jekyll::Hooks.register [:posts, :pages, :documents], :post_render do |post|
-  # We use a regex that matches the markers and their content
-  # but we perform the replacement only if the markers are in "plain text" areas
-  # of the HTML (not inside tags like <script>, <code>, <pre>, or as attributes).
-  
-  # This pattern matches any tag (<...>), or the sequence ==...==
-  # This allows us to skip over tags entirely.
-  post.output.gsub!(/(<[^>]+?>)|==([^=\s][^=]*?[^=\s])==/) do |match|
-    if $1 # It was a tag
-      match
-    else # It was the highlight syntax
-      content = $2
+  # Only process if it's an HTML file
+  next unless post.output && post.output.include?("<html") || post.url.end_with?("/", ".html")
+
+  # Tag-skipping regex: skips scripts, code blocks, and individual tags
+  # Matches: 1. Script/Code/Pre blocks, 2. Any HTML tag, 3. The ==highlight== syntax
+  post.output.gsub!(%r{<(script|code|pre|style).*?>.*?</\1>|(<[^>]+?>)|==([^=\s][^=]*?[^=\s])==}mi) do |match|
+    if $1 || $2
+      match # Skip tags and forbidden blocks
+    else
+      # It's our highlight syntax
+      content = $3
+      
+      # Convert basic markdown inside (Italics and Bold)
+      # We do this manually to be fast and avoid double-wrapping in <p> tags
+      # Handling bold first, then italics
+      content.gsub!(/\*\*(.+?)\*\*/, '<strong>\1</strong>')
+      content.gsub!(/\*(.+?)\*/, '<em>\1</em>')
+      
       "<mark>#{content}</mark>"
     end
   end

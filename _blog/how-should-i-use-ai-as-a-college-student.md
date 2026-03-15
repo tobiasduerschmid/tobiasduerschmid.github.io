@@ -23,14 +23,14 @@ This is what the real professionals would do, so why shouldn't you?
 Because you would rob your brain of the exact friction it needs to become a skilled software engineer.
 
 
-State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
+State-of-the-art research on real-world tasks shows that **==AI is an amplifier of technical skills, not an equalizer==** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
 When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 Prather2024WideningGap %}. 
-This research tells a clear story: ==AI benefits those with *more experience* and *stronger foundational skills* much more==.
+This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more.
 AI enables skilled developers to compound their knowledge and productivity by critically evaluating and learning from AI outputs, while novices who have not successfully developed these skills fall further and further behind.
 
 This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
-To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
+To use an analogy: **==Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself==**. 
 
 <div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
   <img src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student standing relaxed in a gym while watching a robot lift heavy weights. Other students are working out actively in the gym. University buildings in the background." style="width: 100%; height: auto; border-radius: 12px; display: block;">
