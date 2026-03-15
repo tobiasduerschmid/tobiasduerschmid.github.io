@@ -12,27 +12,28 @@ layout: blog
             <small>
               <span class="post-date">{{ page.date | date: "%B %d, %Y" }}</span>
               {% if page.category %}
-                <span class="post-category">
-                  <a href="/blog/#{{ page.category | slugify }}" class="badge" style="font-weight: bold; color:black; background-color: #FFD100;">{{ page.category }}</a>
-                </span>
+              <span class="post-category">
+                <a href="/blog/#{{ page.category | slugify }}" class="badge"
+                  style="font-weight: bold; color:black; background-color: #FFD100;">{{ page.category }}</a>
+              </span>
               {% endif %}
             </small>
           </p>
           <img src="{{page.image}}" alt="title image for {{ page.title }}" class="rounded-img">
         </div>
-          
+
         <div class="blog-post-content">
           {{ content }}
         </div>
 
         {% if content contains 'class="citation"' %}
-          {% unless content contains 'class="bibliography"' %}
-            <div class="blog-bibliography">
-              <hr>
-              <h3 id="references">References</h3>
-              {% bibliography --cited %}
-            </div>
-          {% endunless %}
+        {% unless content contains 'class="bibliography"' %}
+        <div class="blog-bibliography">
+          <hr>
+          <h3 id="references">References</h3>
+          {% bibliography --cited %}
+        </div>
+        {% endunless %}
         {% endif %}
 
         <footer class="blog-post-footer">
@@ -48,117 +49,124 @@ layout: blog
     max-width: 100%;
     height: auto;
     /* This adds the rounded corners */
-    border-radius: 25px; 
+    border-radius: 25px;
     /* Optional: prevents image "bleed" if you add a border later */
-    overflow: hidden; 
+    overflow: hidden;
   }
-.blog-post-header {
-  margin-bottom: 30px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 20px;
-}
 
-.blog-post-header h1 {
-  margin: 0 0 10px 0;
-  font-size: 2.5em;
-  color: black;
-}
+  .blog-post-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 20px;
+  }
 
-.blog-post-meta {
-  color: black;
-  font-size: 0.95em;
-}
+  .blog-post-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 2.5em;
+    color: black;
+  }
 
-.post-category {
-  margin-left: 15px;
-}
+  .blog-post-meta {
+    color: black;
+    font-size: 0.95em;
+  }
 
-.blog-post-content {
-  font-size: 1.05em;
-  line-height: 1.8;
-  color: black;
-  margin: 30px 0;
-}
+  .post-category {
+    margin-left: 15px;
+  }
 
-.blog-post-content h2 {
-  margin-top: 30px;
-  margin-bottom: 15px;
-  font-weight: bold;
-}
+  .blog-post-content {
+    font-size: 1.05em;
+    line-height: 1.8;
+    color: black;
+    margin: 30px 0;
+  }
 
-.blog-post-header h1 {
-  font-weight: bold;
-}
+  .blog-post-content h2 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
 
-.blog-post-content h2 {
-  font-weight: bold;
-}
-.blog-post-content h3 {
-  font-weight: bold;
-}
-.blog-post-content h4 {
-  font-weight: bold;
-}
+  .blog-post-header h1 {
+    font-weight: bold;
+  }
 
-.blog-post-content p {
-  margin-bottom: 15px;
-}
+  .blog-post-content h2 {
+    font-weight: bold;
+  }
 
-.blog-post-content code {
-  background-color: #f5f5f5;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: monospace;
-}
+  .blog-post-content h3 {
+    font-weight: bold;
+  }
 
-.blog-post-content pre {
-  background-color: #f5f5f5;
-  padding: 15px;
-  border-radius: 5px;
-  overflow-x: auto;
-}
+  .blog-post-content h4 {
+    font-weight: bold;
+  }
 
-.blog-post-footer {
-  border-top: 1px solid #ddd;
-  padding-top: 20px;
-  margin-top: 40px;
-}
+  .blog-post-content p {
+    margin-bottom: 15px;
+  }
 
-.blog-bibliography {
-  margin-top: 40px;
-}
+  .blog-post-content code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
 
-.blog-bibliography h3 {
-  font-weight: bold;
-  margin-bottom: 15px;
-}
+  .blog-post-content pre {
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+  }
 
-.blog-bibliography .bibliography {
-  list-style-type: none;
-  padding-left: 0;
-}
+  .blog-post-footer {
+    border-top: 1px solid #ddd;
+    padding-top: 20px;
+    margin-top: 40px;
+  }
 
-.blog-bibliography .bibliography li {
-  margin-bottom: 10px;
-  line-height: 1.5;
-}
+  .blog-bibliography {
+    margin-top: 40px;
+  }
 
-.action-box {
-  background-color: #FFD100;      /* A very light gray/off-white */
-  border-left: 10px solid #2774AE; /* A bold blue line on the left to draw the eye */
-  /*border-right: 1.5px solid #2774AE; /* A bold blue line on the right to draw the eye */
-  /*border-top: 1.5px solid #2774AE; /* A bold blue line on the left to draw the eye */
-  /*border-bottom: 1.5px solid #2774AE; /* A bold blue line on the left to draw the eye */
-  padding: 5px 20px 5px 20px;    /* Top, Right, Bottom, Left padding */
-  margin: 20px 0;                 /* Spacing above and below the box */
-  border-radius: 20px;             /* Slightly rounded corners on the right */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* A very subtle shadow */
-}
+  .blog-bibliography h3 {
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
 
-/* Optional: This ensures the last item in your box doesn't create extra dead space at the bottom */
-.action-box *:last-child {
-  margin-bottom: 0;
-}
+  .blog-bibliography .bibliography {
+    list-style-type: none;
+    padding-left: 0;
+  }
 
+  .blog-bibliography .bibliography li {
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .action-box {
+    background-color: #FFD100;
+    /* A very light gray/off-white */
+    border-left: 10px solid #2774AE;
+    /* A bold blue line on the left to draw the eye */
+    /*border-right: 1.5px solid #2774AE; /* A bold blue line on the right to draw the eye */
+    /*border-top: 1.5px solid #2774AE; /* A bold blue line on the left to draw the eye */
+    /*border-bottom: 1.5px solid #2774AE; /* A bold blue line on the left to draw the eye */
+    padding: 5px 20px 5px 20px;
+    /* Top, Right, Bottom, Left padding */
+    margin: 20px 0;
+    /* Spacing above and below the box */
+    border-radius: 20px;
+    /* Slightly rounded corners on the right */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    /* A very subtle shadow */
+  }
+
+  /* Optional: This ensures the last item in your box doesn't create extra dead space at the bottom */
+  .action-box *:last-child {
+    margin-bottom: 0;
+  }
 </style>
-

@@ -148,19 +148,19 @@
         </div>
 
         {% if content contains 'class="citation"' %}
-          {% unless content contains 'class="bibliography"' %}
-            <div class="row">
-              <section id="references">
-                <hr>
-                <div class="container">
-                  <div class="row">
-                    <h3>References</h3>
-                    {% bibliography --cited %}
-                  </div>
-                </div>
-              </section>
+        {% unless content contains 'class="bibliography"' %}
+        <div class="row">
+          <section id="references">
+            <hr>
+            <div class="container">
+              <div class="row">
+                <h3>References</h3>
+                {% bibliography --cited %}
+              </div>
             </div>
-          {% endunless %}
+          </section>
+        </div>
+        {% endunless %}
         {% endif %}
       </div>
     </div>
