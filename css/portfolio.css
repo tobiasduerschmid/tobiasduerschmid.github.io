@@ -347,6 +347,11 @@ a.citation:hover {
 	text-decoration: underline !important;
 }
 
+.bibliography {
+	list-style-type: none;
+	padding-left: 0;
+}
+
 .bibliography li {
 	margin-bottom: 12px;
 }
