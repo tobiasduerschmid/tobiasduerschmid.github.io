@@ -28,7 +28,7 @@ Recent research by Google shows that developers with *stronger coding foundation
 In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025 %}.
 Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle isuses, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026 %}.
 Methodologically, experts engage with GenAI *proactively* to *plan*, *steer*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 huang202DontVibeTheyControl %}.
-Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices are not developing these skills fall further and further behind**.
+Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind**.
 
 This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
