@@ -6,10 +6,16 @@
 <style>
   h1 {
     font-weight: bold;
+    color: #2774AE;
+    -webkit-text-stroke: 1px black;
+    text-shadow: 1.5px 1.5px 3px rgba(0, 0, 0, 0.4);
   }
 
   h2 {
     font-weight: bold;
+    color: #2774AE;
+    -webkit-text-stroke: 1px black;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   }
 
   h3 {
@@ -137,7 +143,7 @@
               %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
               replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
               | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
-              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %}              <section id="{{ section_id }}">
+              replace: '?' , '' | replace: '!' , '' | replace: '</h1' , '' %} <section id="{{ section_id }}">
               <h1>{{ heading_text }}</h1>{{ section_content }}
               </section>
               {% endif %}
