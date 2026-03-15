@@ -14,19 +14,20 @@ So I decided to write my advice down in a succinct, evidence-based post for ever
 
 But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early research I could find. Please take it as a guide, not gospel.
 
-## Motivation: Maximize your Learning
+## Motivation: Maximize your Learning Because AI is a Skill Amplifier
 It's 7:00 PM on a Friday. 
 Your friends want to go watch a movie. 
 But you're sitting here debugging your C++ program that is throwing a cryptic segmentation fault. 
-You have stared at the same while loop for twenty minutes, and the temptation to paste the entire file into an LLM with the prompt "fix this" is overwhelming. 
+You have stared at the same while loop for twenty minutes, and the temptation to paste the entire file into an LLM with the prompt "`fix this`" is overwhelming. 
 This is what the real professionals would do, so why shouldn't you?
 Because you would rob your brain of the exact friction it needs to become a skilled software engineer.
 
 
 State-of-the-art research on real-world tasks shows that **==AI is an amplifier of technical skills, not an equalizer==** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
-Recent research by Google shows that the productivity boost from AI augmental is significantly larger for developers with more coding skills and system design experience {% cite Paradis2025 %} and that in professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025 %}.
-Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) required to rapidly scan and comprehend AI outputs, spot subtle isuses, anticipate edge cases, and identify hallucinations to super-charge their AI use {% cite Prather2024WideningGap Ma2026 %}.
-Experts utilize GenAI proactively to effectively *plan*, *conceptualize*, *delegate*, and *verify*, whereas novices use it *reactively* to resolve immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 %}.
+Recent research by Google shows that the productivity boost from AI augmental is *significantly larger* for developers with *more* coding skills and *more* system design experience {% cite Paradis2025 %}.
+In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025 %}.
+Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) required to rapidly scan and comprehend AI outputs, spot subtle isuses, anticipate edge cases, and identify hallucinations to super-charge their productivity {% cite Prather2024WideningGap Ma2026 %}.
+Experts utilize GenAI proactively to effectively *plan*, *delegate*, and *verify*, whereas novices use it *reactively* to resolve immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 %}.
 In short: AI enables skilled developers to compound their knowledge and productivity by critically evaluating and learning from AI outputs, guiding AI by anticipating its shortcomings and correcting its mistakes. 
 In contrast, novices who have not successfully developed these skills fall further and further behind.
 
