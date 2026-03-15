@@ -1,13 +1,34 @@
 
 // page scrolling feature (requires easing plugin)
-$(function() 
-{
-  $('a.page-scroll').bind('click', function(event) 
-  { 
-    var $anchor = $(this);
-    $('html, body').stop().animate(
-      { scrollTop: $($anchor.attr('href')).offset().top - 45 }, 1000, 'easeInOutExpo');
+$(function () {
+  const OFFSET = 50; // Match user's preference
 
-    event.preventDefault();
+  function smoothScroll(target) {
+    if (target.length) {
+      $('html, body').stop().animate(
+        { scrollTop: target.offset().top - OFFSET }, 1000, 'easeInOutExpo');
+    }
+  }
+
+  // Handle same-page internal links
+  $('a[href*="#"]').not('[href="#"]').not('[href^="http"]').bind('click', function (event) {
+    if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
+      var target = $(this.hash);
+      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+      if (target.length) {
+        smoothScroll(target);
+        event.preventDefault();
+      }
+    }
   });
+
+  // Handle initial hash on page load (for links from other pages)
+  if (window.location.hash) {
+    setTimeout(function () {
+      var target = $(window.location.hash);
+      if (target.length) {
+        $(window).scrollTop(target.offset().top - OFFSET);
+      }
+    }, 50); // Minimal delay helps with some browser layout races
+  }
 });
