@@ -26,10 +26,10 @@ Because you would rob your brain of the exact friction it needs to become a skil
 State-of-the-art research on real-world tasks shows that **==AI is an amplifier of technical skills, not an equalizer==** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
 Recent research by Google shows that developers with *stronger coding foundations* and *deeper system design experience* achieve a *significantly larger* productivity boost from AI tools {% cite Paradis2025 %}.
 In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025 %}.
-Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) required to rapidly scan and comprehend AI outputs, spot subtle isuses, anticipate edge cases, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026 %}.
+Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle isuses, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026 %}.
 Methodologically, experts engage with GenAI *proactively* to *plan*, *delegate*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 %}.
-Ultimately, **AI enables skilled developers to compound their knowledge and productivity by critically evaluating and learning from AI outputs, guiding AI by anticipating its shortcomings and correcting its mistakes. 
-In contrast, novices who have not successfully developed these skills fall further and further behind**.
+Ultimately, **AI enables skilled developers to compound their knowledge and productivity by controlling AI, critically evaluating and learning from AI outputs, and correcting it** {% cite Prather2024WideningGap Ma2026 huang202DontVibeTheyControl %}. 
+**In contrast, novices who have not successfully developed these skills fall further and further behind**.
 
 This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
