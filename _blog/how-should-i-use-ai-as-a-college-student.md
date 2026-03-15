@@ -25,8 +25,8 @@ Because you would rob your brain of the exact friction it needs to become a skil
 
 
 
-State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026 Prather2023WideningGap %}.
-When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 Prather2023WideningGap %}. 
+State-of-the-art research on real-world tasks shows that **AI is an amplifier of technical skills, not an equalizer** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
+When paired with AI, the productivity boost for developers with more skills and experience is actually larger {% cite Paradis2025 Prather2024WideningGap %}. 
 This research tells a clear story: AI benefits those with *more experience* and *stronger foundational skills* much more than those who use AI as a replacement for skill aquisition.
 
 This means that **as a college student, your main goal should be to  maximize your skills** so that, when you then add AI on top, you amplify a larger base of skills, and you also increase the amplification factor.
