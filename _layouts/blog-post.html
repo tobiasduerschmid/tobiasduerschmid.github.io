@@ -22,6 +22,15 @@ layout: blog
           <img src="{{page.image}}" alt="{{ page.image_alt_text }}" class="rounded-img">
         </div>
 
+        <!-- Highlight Toggle -->
+        <div class="highlight-toggle-container" id="highlightToggleContainer" style="display: none;">
+          <span class="toggle-label">Show Highlights</span>
+          <label class="switch">
+            <input type="checkbox" id="highlightToggle" checked aria-label="Toggle highlights">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
         <div class="blog-post-content">
           {{ content }}
         </div>
@@ -175,4 +184,145 @@ layout: blog
   .action-box *:last-child {
     margin-bottom: 0;
   }
+
+  /* Highlight Toggle Styles */
+  .highlight-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  .toggle-label {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+  }
+
+  input:checked + .slider {
+    background-color: #2774AE;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(16px);
+  }
+
+  .slider.round {
+    border-radius: 18px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  /* Disabled Highlight State */
+  .highlights-disabled mark {
+    background-color: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    transition: background-color 0.3s ease;
+  }
 </style>
+
+<script>
+  (function() {
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+      }
+      return null;
+    }
+
+    function initHighlightToggle() {
+      const article = document.querySelector('article');
+      const toggle = document.getElementById('highlightToggle');
+      const container = document.getElementById('highlightToggleContainer');
+      
+      if (!article || !toggle || !container) return;
+      
+      const marks = article.getElementsByTagName('mark');
+      
+      if (marks.length > 0) {
+        container.style.display = 'flex';
+        
+        // Load state from cookie
+        const savedState = getCookie('show-highlights');
+        if (savedState !== null) {
+          const isChecked = savedState === 'true';
+          toggle.checked = isChecked;
+          if (isChecked) {
+            article.classList.remove('highlights-disabled');
+          } else {
+            article.classList.add('highlights-disabled');
+          }
+        }
+        
+        toggle.addEventListener('change', function() {
+          if (this.checked) {
+            article.classList.remove('highlights-disabled');
+          } else {
+            article.classList.add('highlights-disabled');
+          }
+          setCookie('show-highlights', this.checked, 30);
+        });
+      }
+    }
+
+    // Run when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHighlightToggle);
+    } else {
+      initHighlightToggle();
+    }
+  })();
+</script>
