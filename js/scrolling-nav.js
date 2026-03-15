@@ -17,6 +17,8 @@ $(function () {
       target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
       if (target.length) {
         smoothScroll(target);
+        // Update hash without jumping, enabling :target styling
+        history.pushState(null, null, this.hash);
         event.preventDefault();
       }
     }

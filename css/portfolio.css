@@ -366,4 +366,11 @@ a.citation:hover {
 
 .bibliography li {
 	margin-bottom: 12px;
+	transition: background-color 0.5s ease;
+	border-radius: 4px;
+}
+
+.bibliography li:target {
+	background-color: #FFD100 !important;
+	color: black !important;
 }
