@@ -52,6 +52,26 @@ a:focus {
 	text-decoration: none !important;
 }
 
+/* Danger Text Styling - UCLA Yellow Background */
+.text-danger {
+	color: #d08002 !important;
+	padding: 1px 6px;
+	border-radius: 4px;
+	font-weight: 500;
+	display: inline-block;
+}
+
+.alert-danger {
+	color: #d08002 !important;
+	border-color: #d08002 !important;
+	border-radius: 4px;
+}
+
+.alert-danger .alert-link {
+	color: black !important;
+	text-decoration: underline !important;
+}
+
 .page-header {
 	font-weight: 500 !important;
 }
@@ -241,6 +261,7 @@ a.thumbnail {
 	-moz-transition: background-color 300ms ease-out;
 	transition: background-color 300ms ease-out;
 	-webkit-appearance: none;
+	appearance: none;
 	font-weight: normal !important;
 }
 
@@ -317,7 +338,7 @@ a.citation {
 }
 
 a.citation {
-	color: #2774AE !important;
+	color: black !important;
 	padding: 1px 4px;
 	font-weight: 500;
 }
