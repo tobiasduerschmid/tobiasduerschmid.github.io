@@ -4,6 +4,8 @@ title: "[Notes] How To Learn Effectively as a College Student"
 date: 2026-03-02
 category: "For Students"
 permalink: /blog/learning_draft/
+image: "/img/learning.jpg"
+image_alt_text: "Student working on a laptop and whiteboard"
 ---
 
 **The Ultimate Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
