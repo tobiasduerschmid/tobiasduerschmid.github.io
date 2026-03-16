@@ -52,3 +52,5 @@ The framework follows a specific rhythm of time-boxed events:
 
 # Scaling Scrum with SAFe
 When a product is too massive for a single team of 7–10 people, organizations often use the Scaled Agile Framework (SAFe). SAFe introduces the Agile Release Train (ART)—a "team of teams" that synchronizes their sprints. It operates on Program Increments (PI), typically lasting 8–12 weeks, which align multiple teams toward quarterly goals. While SAFe provides predictability for Fortune 500 companies, critics sometimes call it "Scrum-but-for-managers" because it can reduce individual team autonomy through heavy planning requirements.
+
+{% include quiz.html id="scrum" %}
