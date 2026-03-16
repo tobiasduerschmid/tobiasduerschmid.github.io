@@ -10,9 +10,9 @@ image_alt_text: "Student working on a laptop and whiteboard"
 
 **The Ultimate Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
 
-If you are like most college students, your primary study strategies probably consist of rereading your textbooks, highlighting key passages, and cramming the night before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: rereading text and massed practice (cramming) are by far the least productive study strategies,. 
-
-These common methods merely boost temporary retrieval strength and create an "illusion of knowing" {% cite BjorkBjork1992 %}. When you read a text multiple times, the material becomes familiar, and you mistake this perceptual fluency for true mastery of the subject. To build deep, durable knowledge, you need to embrace "desirable difficulties"—short-term impediments that make learning feel harder and slower, but ultimately trigger cognitive processes that optimize long-term retention and the transfer of skills {% cite Bjork1994a %}. 
+If you are like most college students, your primary study strategies probably consist of rereading your textbooks, highlighting key passages, and cramming the night before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: ==rereading text and massed practice (cramming) are by far the least productive study strategies==. 
+git
+These common methods merely boost temporary retrieval strength and create an "illusion of knowing" {% cite BjorkBjork1992 %}. When you read a text multiple times, the material becomes familiar, and you mistake this perceptual fluency for true mastery of the subject. ==To build deep, durable knowledge, you need to embrace "desirable difficulties"—short-term impediments that make learning feel harder and slower, but ultimately trigger cognitive processes that optimize long-term retention and the transfer of skills== {% cite Bjork1994a %}. 
 
 Here is actionable, research-backed advice on how to study effectively, with specific applications for computer science (CS) students.
 
