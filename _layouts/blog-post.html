@@ -22,13 +22,22 @@ layout: blog
           <img src="{{page.image}}" alt="{{ page.image_alt_text }}" class="rounded-img">
         </div>
 
-        <!-- Highlight Toggle -->
-        <div class="highlight-toggle-container" id="highlightToggleContainer" style="display: none;">
-          <span class="toggle-label">Show Highlights</span>
-          <label class="switch">
-            <input type="checkbox" id="highlightToggle" checked aria-label="Toggle highlights">
-            <span class="slider round"></span>
-          </label>
+        <!-- Toggles -->
+        <div class="highlight-toggle-container" id="togglesContainer" style="display: none;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
+            <span class="toggle-label">Dark Mode</span>
+            <label class="switch">
+              <input type="checkbox" id="darkModeToggle" aria-label="Toggle dark mode">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="toggle-label">Show Highlights</span>
+            <label class="switch">
+              <input type="checkbox" id="highlightToggle" checked aria-label="Toggle highlights">
+              <span class="slider round"></span>
+            </label>
+          </div>
         </div>
 
         <div class="blog-post-content">
@@ -275,24 +284,48 @@ layout: blog
       return null;
     }
 
-    function initHighlightToggle() {
+    function initToggles() {
       const article = document.querySelector('article');
-      const toggle = document.getElementById('highlightToggle');
-      const container = document.getElementById('highlightToggleContainer');
+      const highlightToggle = document.getElementById('highlightToggle');
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      const container = document.getElementById('togglesContainer');
 
-      if (!article || !toggle || !container) return;
+      if (!article || !highlightToggle || !darkModeToggle || !container) return;
 
       const marks = article.getElementsByTagName('mark');
 
-      if (marks.length > 0) {
-        container.style.display = 'flex';
+      // Dark mode is always available, highlights only if marks exist
+      container.style.display = 'flex';
+      if (marks.length === 0) {
+        highlightToggle.parentElement.parentElement.style.display = 'none';
       }
 
-      // Load state from cookie and apply to html element
-      const savedState = getCookie('show-highlights');
-      if (savedState !== null) {
-        const isChecked = savedState === 'true';
-        toggle.checked = isChecked;
+      // --- Dark Mode Logic ---
+      const savedDarkMode = getCookie('dark-mode');
+      const isDark = savedDarkMode === 'true';
+      darkModeToggle.checked = isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark-mode');
+      }
+
+      darkModeToggle.addEventListener('change', function () {
+        document.documentElement.classList.add('dark-mode-transition');
+        if (this.checked) {
+          document.documentElement.classList.add('dark-mode');
+        } else {
+          document.documentElement.classList.remove('dark-mode');
+        }
+        setCookie('dark-mode', this.checked, 300);
+        setTimeout(() => {
+          document.documentElement.classList.remove('dark-mode-transition');
+        }, 300);
+      });
+
+      // --- Highlight Logic ---
+      const savedHighlights = getCookie('show-highlights');
+      if (savedHighlights !== null) {
+        const isChecked = savedHighlights === 'true';
+        highlightToggle.checked = isChecked;
         if (isChecked) {
           document.documentElement.classList.remove('highlights-disabled');
         } else {
@@ -300,26 +333,25 @@ layout: blog
         }
       }
 
-      if (marks.length > 0) {
-        toggle.addEventListener('change', function () {
-          // Enable transitions only when manually toggled
-          document.documentElement.classList.add('highlights-transition');
-          
-          if (this.checked) {
-            document.documentElement.classList.remove('highlights-disabled');
-          } else {
-            document.documentElement.classList.add('highlights-disabled');
-          }
-          setCookie('show-highlights', this.checked, 300);
-        });
-      }
+      highlightToggle.addEventListener('change', function () {
+        document.documentElement.classList.add('highlights-transition');
+        if (this.checked) {
+          document.documentElement.classList.remove('highlights-disabled');
+        } else {
+          document.documentElement.classList.add('highlights-disabled');
+        }
+        setCookie('show-highlights', this.checked, 300);
+        setTimeout(() => {
+          document.documentElement.classList.remove('highlights-transition');
+        }, 300);
+      });
     }
 
     // Run when DOM is ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initHighlightToggle);
+      document.addEventListener('DOMContentLoaded', initToggles);
     } else {
-      initHighlightToggle();
+      initToggles();
     }
   })();
 </script>

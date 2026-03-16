@@ -393,3 +393,126 @@ a.citation:hover {
 	background-color: #FFD100 !important;
 	color: black !important;
 }
+
+/* Dark Mode Styles */
+html.dark-mode {
+	background-color: #121212;
+	color: #e0e0e0;
+}
+
+html.dark-mode body {
+	background-color: #121212;
+	color: #e0e0e0;
+}
+
+html.dark-mode #sidebar {
+	background-color: #1e1e1e !important;
+}
+
+html.dark-mode #main-content {
+	background-color: #121212;
+}
+
+html.dark-mode .container {
+	background-color: transparent;
+}
+
+html.dark-mode h1, 
+html.dark-mode h2, 
+html.dark-mode h3, 
+html.dark-mode h4, 
+html.dark-mode h5, 
+html.dark-mode h6 {
+	color: #e0e0e0 !important;
+}
+
+/* Maintain UCLA Blue for headers with strokes if they exist */
+html.dark-mode h1, 
+html.dark-mode h2 {
+	-webkit-text-stroke: 1px #000;
+}
+
+html.dark-mode .blog-post-header,
+html.dark-mode .blog-post-footer {
+	border-color: #333;
+}
+
+html.dark-mode .blog-post-meta,
+html.dark-mode .blog-post-content {
+	color: #e0e0e0;
+}
+
+html.dark-mode a {
+	color: #4da3ff;
+}
+
+html.dark-mode a:hover {
+	color: #fff;
+	background-color: #333;
+}
+
+html.dark-mode mark {
+	background-color: #b38f00; /* Darker yellow for better contrast */
+	color: #fff;
+}
+
+html.dark-mode .action-box {
+	background-color: #2a2a00;
+	border-color: #2774AE;
+	color: #e0e0e0;
+}
+
+html.dark-mode blockquote,
+html.dark-mode code,
+html.dark-mode pre {
+	background-color: #1a1a1a;
+	color: #e0e0e0;
+	border-color: #333;
+}
+
+html.dark-mode .navbar-inverse {
+	background-color: #000;
+	border-color: #333;
+}
+
+html.dark-mode .toggle-label {
+	color: #b0b0b0;
+}
+
+html.dark-mode .slider {
+	background-color: #444;
+}
+
+html.dark-mode input:checked + .slider {
+	background-color: #2774AE;
+}
+
+/* Ensure quiz and other components adapt */
+html.dark-mode .quiz-question-card {
+	background-color: #1e1e1e;
+	border-color: #333;
+	color: #e0e0e0;
+}
+
+html.dark-mode .quiz-option {
+	background-color: #252525;
+	border-color: #333;
+	color: #e0e0e0;
+}
+
+html.dark-mode .quiz-option:hover {
+	background-color: #333;
+}
+
+html.dark-mode .quiz-explanation {
+	background-color: #1a1a2e;
+	border-color: #2774AE;
+}
+
+/* Transitions for smooth theme switching */
+html.dark-mode-transition,
+html.dark-mode-transition *,
+html.dark-mode-transition *:before,
+html.dark-mode-transition *:after {
+	transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}
