@@ -5,7 +5,7 @@ layout: sebook
 
 # Overview
 
-In software engineering, a design pattern is a **common, acceptable solution to a recurring design problem that arises within a specific context**. The concept did not originate in computer science, but rather in architecture. Christopher Alexander, an architect who pioneered the idea, defined a pattern beautifully: **"Each pattern describes a problem which occurs over and over again in our environment, and then describes the core of the solution to that problem, in such a way that you can use this solution a million times over, without ever doing it the same way twice"**.
+In software engineering, a design pattern is a ==common, acceptable solution to a recurring design problem that arises within a specific context==. The concept did not originate in computer science, but rather in architecture. Christopher Alexander, an architect who pioneered the idea, defined a pattern beautifully: **"Each pattern describes a problem which occurs over and over again in our environment, and then describes the core of the solution to that problem, in such a way that you can use this solution a million times over, without ever doing it the same way twice"**.
 
 In software development, design patterns refer to medium-level abstractions that describe structural and behavioral aspects of software. They sit between low-level language **idioms** (like how to efficiently concatenate strings in Java) and large-scale **architectural patterns** (like Model-View-Controller or client-server patterns). Structurally, they deal with classes, objects, and the assignment of responsibilities; behaviorally, they govern method calls, message sequences, and execution semantics. 
 
