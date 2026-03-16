@@ -193,6 +193,52 @@
   .hidden {
     display: none !important;
   }
+
+  @media print {
+    .quiz-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .quiz-header {
+      margin-bottom: 30px;
+    }
+
+    .quiz-progress-bar, 
+    .next-btn, 
+    .restart-btn, 
+    .review-btn, 
+    .quiz-results {
+      display: none !important;
+    }
+
+    .quiz-question-card {
+      display: block !important;
+      margin-bottom: 40px !important;
+      page-break-inside: avoid;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .question-text {
+      color: #000 !important;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .option-label {
+      color: #000 !important;
+    }
+
+    .quiz-option {
+      border: 1px solid #ddd !important;
+      color: #000 !important;
+      background: #fff !important;
+    }
+  }
 </style>
 
 <script>
