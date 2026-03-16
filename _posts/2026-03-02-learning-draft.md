@@ -3,7 +3,7 @@ layout: blog-post
 title: "Evidence-Based Study Tips for College Students"
 date: 2026-03-16
 category: "For Students"
-permalink: /blog/learning_draft/
+permalink: /blog/evidence-based-study-tips-for-college-students/
 image: "/img/learning.jpg"
 image_alt_text: "Student working on a laptop and whiteboard"
 ---
