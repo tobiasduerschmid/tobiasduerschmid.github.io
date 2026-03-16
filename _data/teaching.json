@@ -2,15 +2,6 @@
   "show" : true,
   "teaching" :
   [
-    {
-      "term" : "2017/18: Winter Term",
-      "courses" : 
-        [ { "course" : "Software Engineering II - Agile Software Development in Large Teams @ HPI",
-            "type"   : "Lecture (BA)",
-            "role"   : "Teaching Assistant"
-          }
-        ]
-    },
     {  "term" : "2016/17: Winter Term",
       "courses" : 
       [ 
@@ -19,6 +10,15 @@
           "role"   : "Teaching Assistant"
         }
       ]
+    },
+    {
+      "term" : "2017/18: Winter Term",
+      "courses" : 
+        [ { "course" : "Software Engineering II - Agile Software Development in Large Teams @ HPI",
+            "type"   : "Lecture (BA)",
+            "role"   : "Teaching Assistant"
+          }
+        ]
     },
     { "term" : "Fall 2019",
       "courses" : 

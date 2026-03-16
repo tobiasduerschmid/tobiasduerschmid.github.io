@@ -10,7 +10,7 @@
     </div>
 
     <div class="row" style="display: flex; flex-wrap: wrap;">
-    {% assign terms = site.data.teaching.teaching | sort:"term" %} 
+    {% assign terms = site.data.teaching.teaching %} 
     {% for t in terms reversed %}
       <div class="col-md-6 col-sm-12 col-xs-12" style="display: flex; margin-bottom: 20px;">
         <div class="panel panel-default" style="width: 100%; display: flex; flex-direction: column; margin-bottom: 0;">
