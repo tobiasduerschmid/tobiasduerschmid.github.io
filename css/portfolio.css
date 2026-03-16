@@ -767,6 +767,18 @@ input:checked+.slider:before {
 	border-radius: 50%;
 }
 
+/* Portrait Oval Framing */
+.portrait-oval {
+	width: 250px;
+	height: 250px;
+	border-radius: 50%;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+	object-fit: cover;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
 /* Transitions for smooth theme switching */
 html.dark-mode-transition,
 html.dark-mode-transition *,
