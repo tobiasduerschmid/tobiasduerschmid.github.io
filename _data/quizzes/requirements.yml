@@ -1,0 +1,56 @@
+title: "Requirements"
+description: "Test your understanding of the difference between requirements and design, user stories, and quality scenarios."
+questions:
+  - question: "What is the primary difference between a requirement and a design decision?"
+    options:
+      - "Requirements describe how a system works; design describes what it does."
+      - "Requirements define the problem space (the 'what'); design defines the solution space (the 'how')."
+      - "Requirements are made by engineers; design is made by product managers."
+      - "Requirements are only about performance; design is about functionality."
+    correct_index: 1
+    explanation: "Requirements capture the user's needs and the criteria for correctness, while design explores possible ways to fulfill those needs."
+
+  - question: "Which of the following is an example of an over-constrained requirement that prematurely dictates a design choice?"
+    options:
+      - "'The system must find the shortest path between A and B.'"
+      - "'The program should implement Dijkstra's shortest path algorithm.'"
+      - "'The web interface must be navigable on mobile screens.'"
+      - "'User passwords must be stored securely.'"
+    correct_index: 1
+    explanation: "Specifying a particular algorithm (like Dijkstra's) in a requirement artificially limits the solution space, which is a design task."
+
+  - question: "In Agile development, what are the '3 Cs' of a user story?"
+    options:
+      - "Card, Conversation, Confirmation"
+      - "Complexity, Capacity, Cost"
+      - "Code, Control, Correctness"
+      - "Context, Constraint, Continuity"
+    correct_index: 0
+    explanation: "The 3 Cs represent the Card (a brief reminder), the Conversation (to flesh out details), and the Confirmation (acceptance tests)."
+
+  - question: "What does the 'I' stand for in the INVEST criteria for good user stories?"
+    options:
+      - "Integrated"
+      - "Independent"
+      - "Incremental"
+      - "Implicit"
+    correct_index: 1
+    explanation: "INVEST stands for Independent, Negotiable, Valuable, Estimatable, Small, and Testable."
+
+  - question: "Which part of a 'Quality Attribute Scenario' defines the quantifiable metric used to evaluate the system's reaction?"
+    options:
+      - "Stimulus"
+      - "Artifact"
+      - "Response Measure"
+      - "Environment"
+    correct_index: 2
+    explanation: "The Response Measure is the specific, measurable criteria (e.g., 'within 0.5 seconds') that determines if the requirement is met."
+
+  - question: "Why is 'Ethnography' (field observation) useful for requirements elicitation?"
+    options:
+      - "It is the fastest way to gather high-level business goals."
+      - "It helps identify implicit requirements and 'dissatisfiers' that users might not mention in interviews."
+      - "It focuses entirely on the legacy code's internal logic."
+      - "It replaces the need for user stories and use cases."
+    correct_index: 1
+    explanation: "Immersion in the user's environment reveals the actual ways people work and requirements they take for granted, which are often missed in direct questioning."

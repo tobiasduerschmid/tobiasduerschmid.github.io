@@ -94,3 +94,5 @@ Quality attribute requirements (such as performance, security, and availability)
 
 
 # Requirements Elicitation
+
+{% include quiz.html id="requirements" %}
