@@ -459,7 +459,7 @@ html.dark-mode a:hover {
 }
 
 html.dark-mode mark {
-	background-color: #2774AE;
+	background-color: #005587;
 	/* UCLA Blue for highlights as requested */
 	color: #fff;
 }
@@ -520,8 +520,8 @@ html.dark-mode .sebook-nav-itemlink.current {
 }
 
 html.dark-mode .action-box {
-	background-color: #2a2a00;
-	border-color: #2774AE;
+	background-color: #005587;
+	border-left-color: #FFB81C;
 	color: #e0e0e0;
 }
 
@@ -536,6 +536,12 @@ html.dark-mode pre {
 html.dark-mode .navbar-inverse {
 	background-color: #000;
 	border-color: #333;
+}
+
+html.dark-mode .navbar-inverse .navbar-nav>li>a:hover,
+html.dark-mode .navbar-inverse .navbar-nav>li>a:focus {
+	background-color: #005587 !important;
+	color: #fff !important;
 }
 
 html.dark-mode .toggle-label {
@@ -651,8 +657,17 @@ html.dark-mode .blog-post-item hr {
 	border-top-color: #333 !important;
 }
 
-html.dark-mode .btn-primary {
+html.dark-mode .btn-primary,
+html.dark-mode .btn-default {
 	color: #fff !important;
+	background-color: #333 !important;
+	border-color: #444 !important;
+}
+
+html.dark-mode .btn-primary:hover,
+html.dark-mode .btn-default:hover {
+	background-color: #444 !important;
+	border-color: #555 !important;
 }
 
 /* Homepage Dark Mode Fixes */
