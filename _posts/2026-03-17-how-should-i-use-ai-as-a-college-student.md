@@ -5,6 +5,7 @@ date: 2026-03-11
 category: "For Students"
 featured: true
 image: "/img/genai.jpg"
+permalink: /blog/how-should-i-use-ai-as-a-college-student/
 image_alt_text: "Student working on a computer with a robot sitting next to him. They both look at a digital screen. University buildings in the background. Soft evening light"
 ---
 
