@@ -644,11 +644,25 @@ html.dark-mode .blog-post-excerpt {
 }
 
 html.dark-mode .blog-post-title a {
-	color: #4da3ff !important;
+	color: #FFD100 !important;
 }
 
 html.dark-mode .blog-post-title a:hover {
-	color: #2774AE !important;
+	color: #FFB81C !important;
+}
+
+.blog-post-excerpt-link {
+	text-decoration: none !important;
+	color: inherit !important;
+	display: block;
+}
+
+.blog-post-excerpt-link:hover .blog-post-excerpt {
+	opacity: 0.8;
+}
+
+html.dark-mode .blog-post-excerpt-link:hover .blog-post-excerpt {
+	color: #FFD100 !important;
 }
 
 html.dark-mode .filter-btn {
