@@ -24,10 +24,14 @@ When learning is completely effortless, it is almost always superficial and easi
 To build truly durable knowledge, you have to lean into "**desirable difficulties**"—intentional roadblocks that force your brain to work harder to process, connect, and retrieve information {% cite Bjork1994a bjork2011making %}. 
 For example, instead of looking something up in your notes or textbook, you should always try to recall it yourself or actively construct an answer to a question yourself, even if you are not sure it is correct. 
 The mental sweat you experience when you can't quite remember the time complexity of an algorithm, or the frustration of grappling with a complex concept, isn't a sign that you aren't smart enough. 
-Rather, that struggle is the biological mechanism of your brain building stronger, more permanent neural pathways. Simply put: ==effortful learning *is* effective learning== {% cite brown2014MakeItStick %}. 
+Rather, that struggle is the biological mechanism of your brain building stronger, more permanent neural pathways. 
+Simply put: ==effortful learning *is* effective learning== {% cite brown2014MakeItStick %}. 
+However, note that not all difficulties are desirable. 
+For example, studying while you are sleep-deprived, hungry, sick, or highly anxious; reading the material in an unfamiliar language; or studying a topic without prequired fundamentals are undesirable difficulties and they should be reduced. 
+Only difficulties that encourage more cognitive acitivity while still making progress towards your answer are desirable. 
 
 * **Actionable Advice:** ==When your study routine starts to feel too easy or comfortable, try to add in some challenges that make it harder for yourself==. 
-If you are breezing through your flashcards, shuffle them to remove predictable patterns, or force yourself to explain the core concepts out loud to an empty room without looking at your notes.
+If you are breezing through your flashcards, shuffle them to remove predictable patterns, or force yourself to explain the core concepts out loud to an empty room without looking at your notes. Change the place where you study instead of returning to the same spot. 
 When you feel that cognitive friction, remind yourself that the **struggle is a necessary part of the growth process**.
 * **Computer Science Example:** When working on a coding assignment, it is incredibly tempting to rely on AI auto-complete tools (like GitHub Copilot, Cursor, or Codex) or to copy-paste boilerplate code directly from a tutorial or online resource. 
 While this is efficient for workplace production, it bypasses the cognitive effort required for actual learning. 
