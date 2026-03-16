@@ -30,9 +30,9 @@ questions:
     correct_index: 0
     explanation: "This describes desirable difficulties (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
   - id: 4
-    question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties,' what is the primary benefit of this highly frustrating choice?"
+    question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
     options:
-      - "It forces your brain to manually recall syntax and logic, creating the mental sweat necessary to actually remember how to code it tomorrow."
+      - "It forces your brain to manually recall syntax and logic, creating the mental challenge necessary to develop solid coding skills."
       - "It ensures your program will run faster, since AI tools often introduce unnecessary and bloated code."
       - "It prevents you from accidentally plagiarizing open-source code and failing the class."
       - "It helps you type faster, which is the most important skill for a computer science student."
@@ -77,12 +77,12 @@ questions:
     correct_index: 2
     explanation: "This represents generation. Jacoby's work shows that struggling with a problem before seeing the solution (even if errors are made) makes the mind far more receptive to the correct answer when provided."
   - id: 9
-    question: "A novice programmer is completely overwhelmed trying to build a cloud-hosted, database-driven React application all at once. What should they do to optimize their cognitive architecture?"
+    question: "A student is completely overwhelmed trying to combine Git, shell scripting, and learning a new programming language all at the same time. What should they do to optimize their cognitive architecture?"
     options:
       - "Push through the frustration to build grit and mental endurance."
       - "Switch to interleaved practice immediately across all domains."
-      - "Isolate and master individual micro-skills (like basic UI routing or simple SQL queries) before attempting to merge them."
-      - "Reread the React documentation from start to finish to ensure nothing was missed."
+      - "Isolate and master individual component skills (like basic Git commands, simple shell scripts, or fundamental syntax) before attempting to merge them."
+      - "Reread the Git documentation from start to finish to ensure nothing was missed."
       - "Rely entirely on massed practice to finish the application in one sitting."
     correct_index: 2
     explanation: "This represents managing cognitive load. Sweller's research dictates that working memory is highly limited; complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
