@@ -13,7 +13,8 @@ layout: blog
   <div class="row" style="margin-top: 30px; margin-bottom: 40px;">
     <div class="col-lg-10 col-lg-offset-1">
       <div id="category-filter" class="text-center">
-        <button id="cat-all" class="btn btn-default filter-btn active" data-category="all" onclick="filterByCategory('all')">
+        <button id="cat-all" class="btn btn-default filter-btn active" data-category="all"
+          onclick="filterByCategory('all')">
           All Posts
         </button>
         {% assign categories = "" | split: "" %}
@@ -27,8 +28,8 @@ layout: blog
 
         {% assign sorted_categories = categories | sort %}
         {% for category in sorted_categories %}
-        <button id="cat-{{ category | slugify }}" class="btn btn-default filter-btn" data-category="{{ category | slugify }}"
-          onclick="filterByCategory('{{ category | slugify }}')">
+        <button id="cat-{{ category | slugify }}" class="btn btn-default filter-btn"
+          data-category="{{ category | slugify }}" onclick="filterByCategory('{{ category | slugify }}')">
           {{ category }}
         </button>
         {% endfor %}
@@ -259,6 +260,50 @@ layout: blog
     if (hash && hash.startsWith('#cat-')) {
       const category = hash.replace('#cat-', '');
       filterByCategory(category);
+    }
+
+    // Toggle logic for Dark Mode and Highlights
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const highlightToggle = document.getElementById('highlightToggle');
+    const togglesContainer = document.getElementById('togglesContainer');
+
+    if (togglesContainer) {
+      togglesContainer.style.display = 'flex';
+    }
+
+    // Initial switch states
+    if (document.documentElement.classList.contains('dark-mode')) {
+      if (darkModeToggle) darkModeToggle.checked = true;
+    }
+
+    const highlightCookie = document.cookie.split('; ').find(row => row.startsWith('highlights='));
+    if (highlightCookie && highlightCookie.split('=')[1] === 'false') {
+      if (highlightToggle) highlightToggle.checked = false;
+      document.body.classList.add('highlights-off');
+    }
+
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('change', function () {
+        if (this.checked) {
+          document.documentElement.classList.add('dark-mode');
+          document.cookie = "dark-mode=true; path=/; max-age=" + (60 * 60 * 24 * 365);
+        } else {
+          document.documentElement.classList.remove('dark-mode');
+          document.cookie = "dark-mode=false; path=/; max-age=" + (60 * 60 * 24 * 365);
+        }
+      });
+    }
+
+    if (highlightToggle) {
+      highlightToggle.addEventListener('change', function () {
+        if (this.checked) {
+          document.body.classList.remove('highlights-off');
+          document.cookie = "highlights=true; path=/; max-age=" + (60 * 60 * 24 * 365);
+        } else {
+          document.body.classList.add('highlights-off');
+          document.cookie = "highlights=false; path=/; max-age=" + (60 * 60 * 24 * 365);
+        }
+      });
     }
   });
 </script>

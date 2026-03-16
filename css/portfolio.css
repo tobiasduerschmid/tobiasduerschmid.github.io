@@ -417,19 +417,26 @@ html.dark-mode .container {
 	background-color: transparent;
 }
 
-html.dark-mode h1, 
-html.dark-mode h2, 
-html.dark-mode h3, 
-html.dark-mode h4, 
-html.dark-mode h5, 
-html.dark-mode h6 {
-	color: #e0e0e0 !important;
+html.dark-mode h1,
+html.dark-mode h2,
+html.dark-mode h3,
+html.dark-mode h4,
+html.dark-mode h5,
+html.dark-mode h6,
+html.dark-mode .blog-post-header h1,
+html.dark-mode .blog-post-content h2,
+html.dark-mode .blog-post-content h3 {
+	color: #FFD100 !important;
 }
 
-/* Maintain UCLA Blue for headers with strokes if they exist */
-html.dark-mode h1, 
+/* Maintain stroke for H1/H2 */
+html.dark-mode h1,
 html.dark-mode h2 {
 	-webkit-text-stroke: 1px #000;
+}
+
+html.dark-mode .text-danger {
+	color: white !important;
 }
 
 html.dark-mode .blog-post-header,
@@ -443,17 +450,73 @@ html.dark-mode .blog-post-content {
 }
 
 html.dark-mode a {
-	color: #4da3ff;
+	color: #FFD100;
 }
 
 html.dark-mode a:hover {
-	color: #fff;
-	background-color: #333;
+	color: #FFD100;
+	background-color: #005587;
 }
 
 html.dark-mode mark {
-	background-color: #b38f00; /* Darker yellow for better contrast */
+	background-color: #2774AE;
+	/* UCLA Blue for highlights as requested */
 	color: #fff;
+}
+
+html.dark-mode a.citation {
+	color: #fff !important;
+}
+
+html.dark-mode a.citation:hover {
+	color: #FFD100 !important;
+	background-color: #005587 !important;
+
+}
+
+/* Sidebar Dark Mode */
+html.dark-mode #sidebar {
+	background-color: #1e1e1e !important;
+}
+
+html.dark-mode .sebook-sidebar-nav {
+	background-color: #1e1e1e !important;
+	color: #e0e0e0 !important;
+}
+
+html.dark-mode .sebook-nav-link,
+html.dark-mode .sebook-nav-sublink,
+html.dark-mode .sebook-nav-itemlink {
+	color: #e0e0e0 !important;
+}
+
+html.dark-mode .sebook-nav-link:hover,
+html.dark-mode .sebook-nav-sublink:hover,
+html.dark-mode .sebook-nav-itemlink:hover {
+	background-color: #333 !important;
+}
+
+html.dark-mode .sebook-nav-sublist {
+	background-color: #252525 !important;
+}
+
+html.dark-mode .sebook-nav-itemlist {
+	background-color: #2a2a2a !important;
+}
+
+html.dark-mode .sebook-nav-item {
+	border-bottom-color: #333 !important;
+}
+
+html.dark-mode .sebook-nav-subitem {
+	border-bottom-color: #333 !important;
+}
+
+html.dark-mode .sebook-nav-link.current,
+html.dark-mode .sebook-nav-sublink.current,
+html.dark-mode .sebook-nav-itemlink.current {
+	background-color: #2774AE !important;
+	color: white !important;
 }
 
 html.dark-mode .action-box {
@@ -483,30 +546,142 @@ html.dark-mode .slider {
 	background-color: #444;
 }
 
-html.dark-mode input:checked + .slider {
+html.dark-mode input:checked+.slider {
 	background-color: #2774AE;
 }
 
-/* Ensure quiz and other components adapt */
-html.dark-mode .quiz-question-card {
-	background-color: #1e1e1e;
-	border-color: #333;
-	color: #e0e0e0;
+/* Quiz Dark Mode Overrides */
+html.dark-mode .quiz-container {
+	background-color: #1a1a1a !important;
+	border-color: #333 !important;
+	color: #e0e0e0 !important;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark-mode .quiz-header h3 {
+	color: #4da3ff !important;
+	/* Lighter blue for dark mode */
+}
+
+html.dark-mode .question-text {
+	color: #ffffff !important;
 }
 
 html.dark-mode .quiz-option {
-	background-color: #252525;
-	border-color: #333;
-	color: #e0e0e0;
+	background-color: #252525 !important;
+	border-color: #444 !important;
+	color: #e0e0e0 !important;
 }
 
-html.dark-mode .quiz-option:hover {
-	background-color: #333;
+html.dark-mode .quiz-option:hover:not([disabled]) {
+	border-color: #4da3ff !important;
+	background-color: #2c2c2c !important;
+}
+
+html.dark-mode .option-label {
+	color: #888 !important;
+}
+
+html.dark-mode .quiz-option.correct {
+	border-color: #28a745 !important;
+	background-color: #1a3a2a !important;
+	color: #98fb98 !important;
+}
+
+html.dark-mode .quiz-option.incorrect {
+	border-color: #dc3545 !important;
+	background-color: #3d1a1a !important;
+	color: #ffbaba !important;
 }
 
 html.dark-mode .quiz-explanation {
-	background-color: #1a1a2e;
-	border-color: #2774AE;
+	background-color: #252525 !important;
+	border-left-color: #4da3ff !important;
+	color: #e0e0e0 !important;
+}
+
+html.dark-mode .explanation-title {
+	color: #4da3ff !important;
+}
+
+html.dark-mode .quiz-progress-bar {
+	background-color: #333 !important;
+}
+
+html.dark-mode .progress-fill {
+	background-color: #4da3ff !important;
+}
+
+/* Blog Overview Dark Mode */
+html.dark-mode p.lead,
+html.dark-mode .blog-post-excerpt {
+	color: white !important;
+}
+
+html.dark-mode .blog-post-title a {
+	color: #4da3ff !important;
+}
+
+html.dark-mode .blog-post-title a:hover {
+	color: #2774AE !important;
+}
+
+html.dark-mode .filter-btn {
+	background-color: #252525 !important;
+	border-color: #444 !important;
+	color: #e0e0e0 !important;
+}
+
+html.dark-mode .filter-btn:hover {
+	background-color: #333 !important;
+}
+
+html.dark-mode .filter-btn.active {
+	background-color: #FFD100 !important;
+	color: #000 !important;
+	border-color: #FFD100 !important;
+}
+
+html.dark-mode .post-date,
+html.dark-mode .blog-post-info {
+	color: #888 !important;
+}
+
+html.dark-mode .blog-post-item hr {
+	border-top-color: #333 !important;
+}
+
+html.dark-mode .btn-primary {
+	color: #fff !important;
+}
+
+/* Homepage Dark Mode Fixes */
+html.dark-mode .panel-default {
+	background-color: #1e1e1e !important;
+	border-color: #333 !important;
+}
+
+html.dark-mode .panel-heading {
+	background-color: #252525 !important;
+	color: #FFD100 !important;
+	border-bottom-color: #333 !important;
+	font-weight: bold !important;
+}
+
+html.dark-mode .panel-body {
+	background-color: #1e1e1e !important;
+	color: #e0e0e0 !important;
+}
+
+html.dark-mode .jumbotron {
+	background-color: #1a1a1a !important;
+	color: #e0e0e0 !important;
+	border: 1px solid #333 !important;
+}
+
+html.dark-mode legend {
+	color: #FFD100 !important;
+	border-bottom-color: #333 !important;
 }
 
 /* Transitions for smooth theme switching */
