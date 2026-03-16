@@ -400,6 +400,41 @@ html.dark-mode {
 	color: #e0e0e0;
 }
 
+/* Global Image Shadow Styles */
+.img-shadow,
+.img-thumbnail,
+.thumbnail,
+.flickr.thumbnail {
+	padding: 0 !important;
+	border: none !important;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	background: transparent !important;
+	/* Remove background from .thumbnail */
+}
+
+.img-shadow:hover,
+.img-thumbnail:hover,
+.thumbnail:hover,
+.flickr.thumbnail:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-mode .img-shadow,
+html.dark-mode .img-thumbnail,
+html.dark-mode .thumbnail,
+html.dark-mode .flickr.thumbnail {
+	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+html.dark-mode .img-shadow:hover,
+html.dark-mode .img-thumbnail:hover,
+html.dark-mode .thumbnail:hover,
+html.dark-mode .flickr.thumbnail:hover {
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+}
+
 html.dark-mode body {
 	background-color: #121212;
 	color: #e0e0e0;
