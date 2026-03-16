@@ -98,33 +98,9 @@ a:focus {
 	text-decoration: underline !important;
 }
 
-.page-header {
-	font-weight: 500 !important;
-}
-
 .panel-title {
 	color: black;
 	font-weight: 500;
-}
-
-.h1 {
-	font-weight: bold;
-}
-
-.h2 {
-	font-weight: bold;
-}
-
-.h3 {
-	font-weight: 1000;
-}
-
-.h4 {
-	font-weight: 40000;
-}
-
-.h5 {
-	font-weight: bold;
 }
 
 .title {
@@ -450,6 +426,14 @@ html.dark-mode #main-content {
 
 html.dark-mode .container {
 	background-color: transparent;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+	font-weight: bold;
 }
 
 html.dark-mode h1,
