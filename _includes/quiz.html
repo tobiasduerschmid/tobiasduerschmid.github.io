@@ -212,11 +212,18 @@
   let score = 0;
   let incorrectIndices = [];
   let isReviewMode = false;
+  let reviewQueue = [];
   let reviewStep = 0;
 
   function updateProgress() {
     const total = cards.length;
-    const progress = ((currentStep) / total) * 100;
+    let progress;
+    if (isReviewMode) {
+      // In review mode, progress shows how much of the original quiz is solved
+      progress = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
+    } else {
+      progress = (currentStep / total) * 100;
+    }
     progressBar.style.width = `${progress}%`;
   }
 
@@ -239,12 +246,12 @@
 
     if (isCorrect) {
       option.classList.add('correct');
-      if (!isReviewMode) score++;
+      score++;
     } else {
       option.classList.add('incorrect');
       // Highlight the correct one
       options[option.dataset.correct].classList.add('correct');
-      if (!isReviewMode) incorrectIndices.push(questionIndex);
+      incorrectIndices.push(questionIndex);
     }
 
     explanation.classList.remove('hidden');
@@ -256,9 +263,9 @@
   function nextQuestion() {
     if (isReviewMode) {
       reviewStep++;
-      if (reviewStep < incorrectIndices.length) {
-        showQuestion(incorrectIndices[reviewStep]);
-        resetCard(incorrectIndices[reviewStep]);
+      if (reviewStep < reviewQueue.length) {
+        showQuestion(reviewQueue[reviewStep]);
+        resetCard(reviewQueue[reviewStep]);
       } else {
         finishQuiz();
       }
@@ -290,7 +297,7 @@
     scoreDisplay.textContent = score;
     progressBar.style.width = '100%';
 
-    if (incorrectIndices.length > 0 && !isReviewMode) {
+    if (incorrectIndices.length > 0) {
       reviewBtn.classList.remove('hidden');
     } else {
       reviewBtn.classList.add('hidden');
@@ -299,16 +306,19 @@
 
   function startReview() {
     isReviewMode = true;
+    reviewQueue = [...incorrectIndices];
+    incorrectIndices = []; // Reset to catch any still incorrect ones
     reviewStep = 0;
     resultsArea.classList.add('hidden');
-    showQuestion(incorrectIndices[0]);
-    resetCard(incorrectIndices[0]);
+    showQuestion(reviewQueue[0]);
+    resetCard(reviewQueue[0]);
   }
 
   function restartQuiz() {
     currentStep = 0;
     score = 0;
     incorrectIndices = [];
+    reviewQueue = [];
     isReviewMode = false;
     resultsArea.classList.add('hidden');
     cards.forEach((_, i) => resetCard(i));

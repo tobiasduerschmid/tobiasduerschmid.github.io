@@ -8,7 +8,7 @@ build:
 
 check: build
 	./scripts/check_references.sh
-	
+	./scripts/check_quizzes.sh
 test: check
 	npx playwright test
 
