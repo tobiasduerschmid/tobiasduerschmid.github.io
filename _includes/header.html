@@ -1,7 +1,66 @@
-
 <!-- Page Header -->
 <header class="intro-header">
   <div class="container">
+    <!-- Dark Mode Toggle -->
+    <div class="highlight-toggle-container" style="justify-content: flex-end; margin-top: 10px; margin-bottom: 0;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="toggle-label">Dark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="darkModeToggle" aria-label="Toggle dark mode">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        function setCookie(name, value, days) {
+          const d = new Date();
+          d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+          const expires = "expires=" + d.toUTCString();
+          document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+          const nameEQ = name + "=";
+          const ca = document.cookie.split(';');
+          for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+          }
+          return null;
+        }
+
+        function initDarkMode() {
+          const toggle = document.getElementById('darkModeToggle');
+          if (!toggle) return;
+
+          const saved = getCookie('dark-mode');
+          const isDark = saved === 'true';
+          toggle.checked = isDark;
+
+          toggle.addEventListener('change', function () {
+            document.documentElement.classList.add('dark-mode-transition');
+            if (this.checked) {
+              document.documentElement.classList.add('dark-mode');
+            } else {
+              document.documentElement.classList.remove('dark-mode');
+            }
+            setCookie('dark-mode', this.checked, 300);
+            setTimeout(() => {
+              document.documentElement.classList.remove('dark-mode-transition');
+            }, 300);
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initDarkMode);
+        } else {
+          initDarkMode();
+        }
+      })();
+    </script>
 
     <div class="row portrait">
       <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-12">
@@ -15,22 +74,23 @@
       <a data-toggle="collapse" href="#authorexplain">{{ site.authorexplainname }}</a>
       <div class="collapse bibtex" id="authorexplain">
         <p>{{ site.authorexplain }}</p>
-      </div> 
+      </div>
       <br>
       {% endif %}
-      </div>
-      <hr class="small">
-      <p class="lead">{{ site.subheading }}</p>
+    </div>
+    <hr class="small">
+    <p class="lead">{{ site.subheading }}</p>
+  </div>
+  </div>
+
+  <noscript>
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2 text-center">
+        <div class="alert alert-danger" role="alert">Enable JavaScript to unlock Galleries, BibTeXs, and the Contact
+          Form.</div>
       </div>
     </div>
-
-    <noscript>
-      <div class="row">
-        <div class="col-md-8 col-md-offset-2 text-center">
-          <div class="alert alert-danger" role="alert">Enable JavaScript to unlock Galleries, BibTeXs, and the Contact Form.</div>
-        </div>
-      </div>
-    </noscript>
+  </noscript>
 
   </div>
 </header>
