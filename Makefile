@@ -12,6 +12,9 @@ check: build
 test: check
 	npx playwright test
 
+clean:
+	rm -rf _site
+
 run: check
 	bundle exec jekyll serve --incremental
 
