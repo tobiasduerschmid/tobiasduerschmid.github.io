@@ -1,0 +1,80 @@
+title: "The Science of Effective Learning: Student Self-Assessment"
+description: "Test your understanding of the science-backed study techniques discussed in this post."
+questions:
+  - id: 1
+    question: "After reading a chapter on algorithms three times, a student feels incredibly confident about the upcoming exam. However, they end up failing. According to learning science, what psychological trap did this student likely fall into?"
+    options:
+      - "Working memory depletion from excessive studying."
+      - "Mistaking perceptual familiarity with the text for true conceptual mastery."
+      - "Failing to utilize blocked practice techniques."
+      - "Experiencing the negative effects of a growth mindset."
+      - "Applying too many desirable difficulties at once."
+    correct_index: 1
+    explanation: "The text references Bjork & Bjork's 'illusion of knowing', where rereading creates perceptual fluency (familiarity) that students mistake for actual mastery."
+  - id: 2
+    question: "A junior developer wants to master a new web framework. Which of the following approaches represents the most effective memory-strengthening technique?"
+    options:
+      - "Highlighting the official documentation extensively in multiple colors."
+      - "Watching a highly-rated, three-hour tutorial video twice."
+      - "Closing all references and attempting to script a basic routing function from scratch."
+      - "Copying and pasting expert code snippets repeatedly until they look familiar."
+      - "Reading the framework's source code line-by-line before writing any code."
+    correct_index: 2
+    explanation: "This represents retrieval practice. Roediger and Karpicke's research demonstrates that actively retrieving information from memory (without looking at the source) physically strengthens memory traces far better than passive review."
+  - id: 3
+    question: "A project team must pass a rigorous cybersecurity certification in one month. How should they schedule their preparation to ensure the knowledge remains accessible long after the test is over?"
+    options:
+      - "Schedule a single, 20-hour weekend marathon right before the exam."
+      - "Study exclusively new material each week, never looking back at previous chapters."
+      - "Schedule shorter, periodic review sessions that force them to recall slightly degraded memories."
+      - "Focus only on the most difficult topics the day before the exam."
+    correct_index: 2
+    explanation: "This represents distributed practice (spacing). Cepeda et al. showed that allowing a little forgetting to set in forces the brain to 'reload' the information, triggering reconsolidation and deeper learning."
+  - id: 4
+    question: "A data structures student is practicing graph algorithms. Instead of doing all the shortest-path problems, followed by all the minimum-spanning-tree problems, she shuffles them together. What specific cognitive capability does this heavily cultivate?"
+    options:
+      - "The ability to memorize exact syntax faster."
+      - "The capacity to discern which underlying strategy applies to a novel, unclassified scenario."
+      - "The reduction of total cognitive load during the initial learning phase."
+      - "The stabilization of short-term memory traces."
+      - "The creation of perceptual fluency."
+    correct_index: 1
+    explanation: "This represents interleaving. Rohrer and Taylor note that while blocked practice teaches you how to do a problem, interleaving improves your ability to discriminate between problem types and know when to apply specific solutions."
+  - id: 5
+    question: "Before attending a lecture on building neural networks, a software engineering student tries to sketch out the math for backpropagation, making several fundamental logic errors. Pedagogically speaking, how should we view this attempt?"
+    options:
+      - "Harmful, as the student is likely to permanently encode incorrect habits."
+      - "Inefficient, because that time could have been spent reading the textbook's summary."
+      - "Highly beneficial, as the initial struggle primes the brain to better encode the correct mechanism later."
+      - "Irrelevant, as only the final compiling code matters in computer science."
+    correct_index: 2
+    explanation: "This represents generation. Jacoby's work shows that struggling with a problem before seeing the solution (even if errors are made) makes the mind far more receptive to the correct answer when provided."
+  - id: 6
+    question: "A novice programmer is completely overwhelmed trying to build a cloud-hosted, database-driven React application all at once. What should they do to optimize their cognitive architecture?"
+    options:
+      - "Push through the frustration to build grit and mental endurance."
+      - "Switch to interleaved practice immediately across all domains."
+      - "Isolate and master individual micro-skills (like basic UI routing or simple SQL queries) before attempting to merge them."
+      - "Reread the React documentation from start to finish to ensure nothing was missed."
+      - "Rely entirely on massed practice to finish the application in one sitting."
+    correct_index: 2
+    explanation: "This represents managing cognitive load. Sweller's research dictates that working memory is highly limited; complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
+  - id: 7
+    question: "Why do evidence-based study techniques often feel slower, clumsier, and more frustrating to the learner?"
+    options:
+      - "Because they introduce short-term friction that forces deeper cognitive processing and robust encoding."
+      - "Because they are inherently flawed and are designed strictly for advanced learners."
+      - "Because working memory is infinite and requires massive amounts of data to be challenged."
+      - "Because they rely heavily on creating an illusion of competence."
+    correct_index: 0
+    explanation: "This describes desirable difficulties (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
+  - id: 8
+    question: "A student struggles heavily with their first algorithms assignment and decides, 'I'm just not wired for complex math and logic.' This reaction is a classic example of:"
+    options:
+      - "A growth orientation."
+      - "A fixed mindset that rejects the malleability of intellectual ability."
+      - "Successful cognitive load management."
+      - "An appropriate response to undesirable difficulties."
+      - "The generation effect."
+    correct_index: 1
+    explanation: "This references Carol Dweck's research on growth mindset. Believing abilities are innate and unchangeable is a fixed mindset, whereas a growth mindset embraces the fact that abilities can be improved through effort."
