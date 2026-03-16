@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "[Notes] How To Learn Effectively as a College Student"
+title: "Evidence-Based Study Tips for College Students"
 date: 2026-03-02
 category: "For Students"
 permalink: /blog/learning_draft/
@@ -8,7 +8,7 @@ image: "/img/learning.jpg"
 image_alt_text: "Student working on a laptop and whiteboard"
 ---
 
-**The Ultimate Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
+**The Quick Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
 
 If you are like most college students, your primary study strategies probably consist of rereading your textbooks, highlighting key passages, and cramming the night before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: ==rereading text and massed practice (cramming) are by far the least productive study strategies==. 
 git
