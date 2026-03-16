@@ -1,4 +1,3 @@
-
 <!-- Navigation -->
 <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
   <div class="container-fluid">
@@ -9,50 +8,50 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-       <a class="navbar-brand page-scroll" href="#page-top">{{ site.title }}</a>
+      <a class="navbar-brand page-scroll" href="#page-top">{{ site.title }}</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse navbar-ex1-collapse">
       <ul class="nav navbar-nav navbar-right">
         <!-- Hidden li included to remove active class from about link when scrolled up past about section -->
-        {% if site.data.sebook.show %}   
+        {% if site.data.sebook.show %}
 
         <li><a href="/SEBook"> | SE Book | </a></li>
         {% endif %}
-        {% if site.data.blog.show %}   
+        {% if site.data.blog.show %}
         <li><a href="/blog">| Blog | </a></li>
         {% endif %}
 
 
         <li class="hidden"><a class="page-scroll" href="#page-top"></a></li>
-        {% if site.data.news.show %}   
-          <li><a class="page-scroll" href="#news">News</a></li>
-        {% endif %}   
-        {% if site.data.publications.show %}   
+        {% if site.data.news.show %}
+        <li><a class="page-scroll" href="#news">News</a></li>
+        {% endif %}
+        {% if site.data.publications.show %}
         <li><a class="page-scroll" href="#publications">Publications</a></li>
-        {% endif %}   
-        {% if site.data.projects.show %}   
+        {% endif %}
+        {% if site.data.projects.show %}
         <li><a class="page-scroll" href="#projects">{{ site.data.projects.heading.[page.lang] | escape }}</a></li>
-        {% endif %}   
-        {% if site.data.talks.show %}   
+        {% endif %}
+        {% if site.data.talks.show %}
         <li><a class="page-scroll" href="#talks">Talks</a></li>
-        {% endif %}   
-        {% if site.data.teaching.show %}   
+        {% endif %}
+        {% if site.data.teaching.show %}
         <li><a class="page-scroll" href="#teaching">Teaching</a></li>
-        {% endif %}   
-        {% if site.data.activities.show %}   
-          <li><a class="page-scroll" href="#activities">Professional Activities</a></li>
-        {% endif %}   
-        {% if site.data.photography.show %}   
-          <li><a class="page-scroll" href="#photography">Photography</a></li>
-        {% endif %}   
-      	{% if site.data.videos.show %}   
+        {% endif %}
+        {% if site.data.activities.show %}
+        <li><a class="page-scroll" href="#activities">Professional Activities</a></li>
+        {% endif %}
+        {% if site.data.photography.show %}
+        <li><a class="page-scroll" href="#photography">Photography</a></li>
+        {% endif %}
+        {% if site.data.videos.show %}
         <li><a class="page-scroll" href="#videos">Videos</a></li>
-        {% endif %}   
-        {% if site.data.contact.show %}   
+        {% endif %}
+        {% if site.data.contact.show %}
         <li><a class="page-scroll" href="#contact">Contact</a></li>
-        {% endif %}   
+        {% endif %}
         <li><a href="/files/resume_cv.pdf">CV</a></li>
       </ul>
     </div>

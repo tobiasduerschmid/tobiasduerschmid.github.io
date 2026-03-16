@@ -6,7 +6,6 @@ category: "Testing"
 permalink: /blog/use_ai_draft/
 ---
 
-
 ## Research & Tips
 
 Here is the synthesized meta-analysis and guide for students on how to use AI effectively for learning, categorized by cognitive processes, tool-level practices, and human factors.
