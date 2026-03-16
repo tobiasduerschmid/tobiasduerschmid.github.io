@@ -2,7 +2,8 @@
 layout: blog-post
 title: "[Notes] How Should I use AI as a College Student? A Science-Backed Guide for CS Students"
 date: 2026-03-01
-category: "Notes"
+category: "Testing"
+permalink: /blog/use_ai_draft/
 ---
 
 
