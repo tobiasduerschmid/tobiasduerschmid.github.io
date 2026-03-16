@@ -1,5 +1,5 @@
-title: "Software Requirements & Design Quiz"
-description: "Test your ability to discriminate between problem-space statements (requirements) and solution-space statements (design) in novel scenarios."
+title: "Software Requirements Quiz"
+description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your ability to discriminate between problem-space statements (requirements) and solution-space statements (design) in novel scenarios."
 questions:
   - question: "A startup is building a new music streaming application. The product owner states, 'Listeners need the ability to seamlessly transition between songs without any perceived loading delays.' What does this statement best represent?"
     options:
