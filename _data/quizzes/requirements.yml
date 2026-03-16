@@ -61,7 +61,7 @@ questions:
       - "A concrete Quality Attribute Scenario."
       - "A detailed relational database schema."
       - "An Operational Transformation matrix."
-      - "A formal user story detailing the login button's color."
+      - "A long user story."
     correct_index: 1
     explanation: "Quality attribute requirements (performance, security, availability) are best captured via Quality Attribute Scenarios to make them concrete and measurable."
 
