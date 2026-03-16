@@ -42,15 +42,15 @@
                   </span>
                   {% endif %}
                 </div>
-                <p class="blog-post-excerpt">
-                  {% if post.excerpt %}
-                  {{ post.excerpt | strip_html | truncatewords: 70 }}
-                  {% else %}
-                  {{ post.content | strip_html | truncatewords: 70 }}
-                  {% endif %}
-                </p>
-                <a href="{{ post.url }}" class="btn btn-xs btn-primary"
-                  style="margin-top: auto; align-self: flex-start;">Read More →</a>
+                <a href="{{ post.url }}" class="blog-post-excerpt-link">
+                  <p class="blog-post-excerpt">
+                    {% if post.excerpt %}
+                    {{ post.excerpt | strip_html | truncatewords: 70 }}
+                    {% else %}
+                    {{ post.content | strip_html | truncatewords: 70 }}
+                    {% endif %}
+                  </p>
+                </a>
               </div>
             </div>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
@@ -88,6 +88,13 @@
             object-fit: cover;
             border-radius: 20px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            border: 1px solid transparent;
+          }
+
+          .blog-post-image img:hover {
+            border-color: #FFD100;
+            box-shadow: 0px 0px 30px #FFB81C;
           }
 
           .blog-post-content {
@@ -140,6 +147,20 @@
             font-size: 1em;
             line-height: 1.6;
             margin: 15px 0;
+          }
+
+          .blog-post-excerpt-link {
+            text-decoration: none !important;
+            color: inherit !important;
+            display: block;
+          }
+
+          .blog-post-excerpt-link:hover .blog-post-excerpt {
+            opacity: 0.8;
+          }
+
+          html.dark-mode .blog-post-excerpt-link:hover .blog-post-excerpt {
+            color: #FFD100 !important;
           }
         </style>
       </div>
