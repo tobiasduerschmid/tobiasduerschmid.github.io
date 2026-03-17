@@ -1,12 +1,20 @@
 
 // page scrolling feature (requires easing plugin)
 $(function () {
-  const OFFSET = 50; // Match user's preference
+  // Prevent browser from jumping to hash before we can calculate the correct offset
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+
+  function getOffset() {
+    const navbar = $('#navnav');
+    return 10 + (navbar.length ? navbar.outerHeight() : 50);
+  }
 
   function smoothScroll(target) {
     if (target.length) {
       $('html, body').stop().animate(
-        { scrollTop: target.offset().top - OFFSET }, 1000, 'easeInOutExpo');
+        { scrollTop: target.offset().top - getOffset() }, 1000, 'easeInOutExpo');
     }
   }
 
@@ -25,12 +33,22 @@ $(function () {
   });
 
   // Handle initial hash on page load (for links from other pages)
-  if (window.location.hash) {
-    setTimeout(function () {
+  function performInitialScroll() {
+    if (window.location.hash) {
       var target = $(window.location.hash);
+      target = target.length ? target : $('[name=' + window.location.hash.slice(1) + ']');
       if (target.length) {
-        $(window).scrollTop(target.offset().top - OFFSET);
+        // Use browser's instant scroll
+        window.scrollTo(0, target.offset().top - getOffset());
       }
-    }, 50); // Minimal delay helps with some browser layout races
+    }
+  }
+
+  if (window.location.hash) {
+    // Run multiple times to catch late-loading elements (like images or quizzes)
+    performInitialScroll();
+    setTimeout(performInitialScroll, 50);
+    setTimeout(performInitialScroll, 250);
+    setTimeout(performInitialScroll, 500);
   }
 });

@@ -73,7 +73,7 @@
     </nav>
 
 
-    <div style="display: flex; margin-top: 45px; min-height: calc(100vh - 60px);">
+    <div id="sebook-content-wrapper" style="display: flex; min-height: calc(100vh - 60px);">
       <!-- Mobile Sidebar Toggle -->
       <button id="sidebar-toggle"
         style="display: none; position: fixed; top: 80px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
@@ -383,6 +383,33 @@
         initToggles();
       }
     })();
+  </script>
+
+  <script>
+    function adjustNavbarPadding() {
+      const navbar = document.getElementById('navnav');
+      const content = document.getElementById('sebook-content-wrapper');
+      if (navbar && content) {
+        const height = navbar.offsetHeight;
+        content.style.marginTop = (height) + 'px';
+        
+        // Also adjust sidebar toggle position
+        const toggle = document.getElementById('sidebar-toggle');
+        if (toggle) {
+          toggle.style.top = (height + 20) + 'px';
+        }
+      }
+    }
+
+    window.addEventListener('load', adjustNavbarPadding);
+    window.addEventListener('resize', adjustNavbarPadding);
+
+    let adjustmentCount = 0;
+    const adjustmentInterval = setInterval(() => {
+      adjustNavbarPadding();
+      adjustmentCount++;
+      if (adjustmentCount > 10) clearInterval(adjustmentInterval);
+    }, 200);
   </script>
 
   {% include footer.html %}

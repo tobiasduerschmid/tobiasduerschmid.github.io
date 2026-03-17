@@ -6,74 +6,94 @@
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <article class="post-content">
-      
-      <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+  <article class="post-content">
+
+    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
       <div class="container-fluid">
         <div class="navbar-header page-scroll">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
             <span class="sr-only">Toggle navigation</span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand page-scroll" href="/blog/">Blog</a><a class="navbar-brand page-scroll">|</a><a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
+          <a class="navbar-brand page-scroll" href="/blog/">Blog</a><a class="navbar-brand page-scroll">|</a><a
+            class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
         </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
+        <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse navbar-ex1-collapse">
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract h2 headings from content -->
-          {% assign sections = content | split: '<h2' %}
-          {% for section in sections %}
-            {% if section contains '</h2>' %}
-            {% assign heading_and_content = section | split: '>' %}
-            {% assign heading_text = heading_and_content[1] | split: '</h2>' | first | replace: '</h2', '' %}
-
-            {% if heading_text != "" %}
-                {% assign heading_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: ':', '-' | replace: '/', '-' | replace: '\', '-' | replace: '|', '-'  | replace: '.', '-' | replace: ',', '-' | replace: '(', '' | replace: ')', '' | replace: '*', '' | replace: '?', '' | replace: '!', '' %}
-                {% assign heading_text_short = heading_text | split: ':' | first %}
-                  <li><a class="page-scroll" href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
-                {% endif %}
+            {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
+              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
+              split: '</h2>' | first | replace: '</h2' , '' %} {% if heading_text !="" %} {% assign
+              heading_id=heading_text | downcase | replace: ' ' , '-' | replace: '&amp;' , '' | replace: ':' , '-' |
+              replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-' | replace: '.' , '-' | replace: ',' , '-' |
+              replace: '(' , '' | replace: ')' , '' | replace: '*' , '' | replace: '?' , '' | replace: '!' , '' %} {%
+              assign heading_text_short=heading_text | split: ':' | first %} <li><a class="page-scroll"
+                href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
               {% endif %}
-            {% endfor %}
+              {% endif %}
+              {% endfor %}
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
 
 
-      <div style="display: flex; min-height: calc(100vh - 200px);">
-        
-        <!-- Main Content -->
-        <div id="main-content" style="flex: 1; padding: 20px">
-          <div class="container">
-            <div class="row">
-                  {% assign sections = content | split: '<h2' %}
-                  {% for section in sections %}
-                    {% if section contains '</h2>' %}
-                      {% assign heading_and_content = section | split: '>' %}
-                      {% assign heading_text = heading_and_content[1] | split: '</h2>' | first | replace: '</h2', '' %}
-                      {% assign section_content = section | split: '</h2>' | last %}
-                      {% if heading_text != "" %}
-                        {% assign section_id = heading_text | downcase | replace: ' ', '-' | replace: '&amp;', '' | replace: ':', '-'  | replace: '/', '-' | replace: '\', '-' | replace: '|', '-'  | replace: '.', '-' | replace: ',', '-' | replace: '(', '' | replace: ')', '' | replace: '*', '' | replace: '?', '' | replace: '!', '' | replace: '</h2', '' %}
-                        <section id="{{ section_id }}">
-                          <h2>{{ heading_text }}</h2>{{ section_content }}
-                        </section>
-                      {% endif %}
-                    {% else %}
-                      {{ section }}
-                    {% endif %}
-                  {% endfor %}
-                
-            </div>
+    <div style="display: flex; min-height: calc(100vh - 200px);">
+
+      <!-- Main Content -->
+      <div id="main-content" style="flex: 1; padding: 20px">
+        <div class="container">
+          <div class="row">
+            {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
+              %} {% assign heading_and_content=section | split: '>' %} {% assign heading_text=heading_and_content[1] |
+              split: '</h2>' | first | replace: '</h2' , '' %} {% assign section_content=section | split: '</h2>' | last
+              %} {% if heading_text !="" %} {% assign section_id=heading_text | downcase | replace: ' ' , '-' |
+              replace: '&amp;' , '' | replace: ':' , '-' | replace: '/' , '-' | replace: '\' , '-' | replace: '|' , '-'
+              | replace: '.' , '-' | replace: ',' , '-' | replace: '(' , '' | replace: ')' , '' | replace: '*' , '' |
+              replace: '?' , '' | replace: '!' , '' | replace: '</h2' , '' %} <section id="{{ section_id }}">
+              <h2>{{ heading_text }}</h2>{{ section_content }}
+              </section>
+              {% endif %}
+              {% else %}
+              {{ section }}
+              {% endif %}
+              {% endfor %}
+
           </div>
         </div>
       </div>
-    </article>
-    
-{% include footer.html %}
+    </div>
+  </article>
 
-{% include scripts.html %}
+  {% include footer.html %}
+
+  <script>
+    function adjustNavbarPadding() {
+      const navbar = document.getElementById('navnav');
+      const blogPost = document.getElementById('blog-post');
+      if (navbar && blogPost) {
+        const height = navbar.offsetHeight;
+        blogPost.style.marginTop = (height + 20) + 'px'; // Height plus some padding
+      }
+    }
+
+    // Run on load and on resize
+    window.addEventListener('load', adjustNavbarPadding);
+    window.addEventListener('resize', adjustNavbarPadding);
+
+    // Also run periodically for a bit as some elements might load late
+    let adjustmentCount = 0;
+    const adjustmentInterval = setInterval(() => {
+      adjustNavbarPadding();
+      adjustmentCount++;
+      if (adjustmentCount > 10) clearInterval(adjustmentInterval);
+    }, 200);
+  </script>
+
+  {% include scripts.html %}
 
 </body>
 

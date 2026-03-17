@@ -15,6 +15,12 @@ section {
 	margin-top: 2em;
 }
 
+/* Dynamic adjustment styles handled via JS to be instant */
+#blog-content-wrapper,
+#sebook-content-wrapper {
+	margin-top: 45px; /* Default height for 1-row navbar */
+}
+
 /* Global Link Styles */
 a {
 	color: #2774AE;
@@ -744,7 +750,8 @@ html.dark-mode legend {
 	.highlight-toggle-container {
 		flex-wrap: wrap !important;
 		justify-content: center !important;
-		gap: 10px 15px !important; /* Smaller vertical gap */
+		gap: 10px 15px !important;
+		/* Smaller vertical gap */
 		margin-bottom: 15px !important;
 		width: 100% !important;
 	}
