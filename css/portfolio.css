@@ -331,13 +331,14 @@ a.thumbnail {
 
 .bib-link,
 a.citation {
-	color: #2774AE !important;
+	color: #000 !important;
 	text-decoration: underline !important;
 	transition: all 0.2s ease;
 	border-radius: 4px;
 }
 
 .bib-link {
+	color: #000 !important;
 	display: block;
 	padding: 5px 10px;
 	margin: 0 -10px;
