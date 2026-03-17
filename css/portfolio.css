@@ -995,150 +995,162 @@ html.dark-mode-transition *:before,
 html.dark-mode-transition *:after {
 	transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
 }
+
 /* Flashcard Fragment Styles */
 .flashcards-container {
-    background: #ffffff;
-    border: 1px solid #e1e4e8;
-    border-radius: 12px;
-    padding: 16px;
-    margin: 20px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    font-family: 'Inter', sans-serif;
+	background: #ffffff;
+	border: 1px solid #e1e4e8;
+	border-radius: 12px;
+	padding: 16px;
+	margin: 20px 0;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+	font-family: 'Inter', sans-serif;
 }
 
 .flashcard-card {
-    display: none;
-    animation: fadeIn 0.4s ease;
-    text-align: center;
-    padding: 10px;
+	display: none;
+	animation: fadeIn 0.4s ease;
+	text-align: center;
+	padding: 10px;
 }
 
 .flashcard-card.active {
-    display: block;
+	display: block;
 }
 
 .flashcard-question {
-    font-size: 1.25em;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: #1a1a1a;
-    min-height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	font-size: 1.25em;
+	font-weight: 600;
+	margin-bottom: 20px;
+	color: #1a1a1a;
+	min-height: 60px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .flashcard-answer-container {
-    margin-top: 15px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border-top: 3px solid #FFD100;
-    animation: slideDown 0.3s ease;
+	margin-top: 15px;
+	padding: 15px;
+	background: #f8f9fa;
+	border-radius: 8px;
+	border-top: 3px solid #FFD100;
+	animation: slideDown 0.3s ease;
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .flashcard-answer {
-    font-size: 1.2em;
-    color: #2774AE;
-    margin-bottom: 12px;
+	font-size: 1.2em;
+	color: #2774AE;
+	margin-bottom: 12px;
 }
 
 .flashcard-explanation {
-    font-size: 1em;
-    color: #666;
-    line-height: 1.5;
+	font-size: 1em;
+	color: #666;
+	line-height: 1.5;
 }
 
 .flashcard-actions {
-    margin-top: 20px;
+	margin-top: 20px;
 }
 
-.show-answer-btn, .flashcards-container .restart-btn, .flashcards-container .review-btn {
-    background: #2774AE;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
+.show-answer-btn,
+.flashcards-container .restart-btn,
+.flashcards-container .review-btn {
+	background: #2774AE;
+	color: white;
+	border: none;
+	padding: 12px 24px;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s;
 }
 
-.show-answer-btn:hover, .flashcards-container .restart-btn:hover, .flashcards-container .review-btn:hover {
-    background: #1e5c8a;
+.show-answer-btn:hover,
+.flashcards-container .restart-btn:hover,
+.flashcards-container .review-btn:hover {
+	background: #1e5c8a;
 }
 
 .assessment-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
+	display: flex;
+	justify-content: center;
+	gap: 20px;
 }
 
 .assess-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    font-size: 24px;
-    color: white;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	border: none;
+	font-size: 24px;
+	color: white;
+	cursor: pointer;
+	transition: transform 0.2s, background 0.2s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .assess-btn:hover {
-    transform: scale(1.1);
+	transform: scale(1.1);
 }
 
 .correct-btn {
-    background: #28a745;
+	background: #28a745;
 }
 
 .correct-btn:hover {
-    background: #218838;
+	background: #218838;
 }
 
 .incorrect-btn {
-    background: #dc3545;
+	background: #dc3545;
 }
 
 .incorrect-btn:hover {
-    background: #c82333;
+	background: #c82333;
 }
 
 .flashcards-results {
-    text-align: center;
-    padding: 32px 0;
+	text-align: center;
+	padding: 32px 0;
 }
 
 /* Flashcard Dark Mode Overrides */
 html.dark-mode .flashcards-container {
-    background-color: #1a1a1a !important;
-    border-color: #333 !important;
-    color: #e0e0e0 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+	background-color: #1a1a1a !important;
+	border-color: #333 !important;
+	color: #e0e0e0 !important;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
 }
 
 html.dark-mode .flashcard-question {
-    color: #ffffff !important;
+	color: #ffffff !important;
 }
 
 html.dark-mode .flashcard-answer-container {
-    background-color: #252525 !important;
-    border-top-color: #FFD100 !important;
+	background-color: #252525 !important;
+	border-top-color: #FFD100 !important;
 }
 
 html.dark-mode .flashcard-answer {
-    color: #FFD100 !important;
+	color: #FFD100 !important;
 }
 
 html.dark-mode .flashcard-explanation {
-    color: #b0b0b0 !important;
+	color: #b0b0b0 !important;
 }

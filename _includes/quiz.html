@@ -354,12 +354,17 @@
     explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  function scrollToTop() {
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   function nextQuestion() {
     if (isReviewMode) {
       reviewStep++;
       if (reviewStep < reviewQueue.length) {
         showQuestion(reviewQueue[reviewStep]);
         resetCard(reviewQueue[reviewStep]);
+        scrollToTop();
       } else {
         finishQuiz();
       }
@@ -367,6 +372,7 @@
       currentStep++;
       if (currentStep < cards.length) {
         showQuestion(currentStep);
+        scrollToTop();
       } else {
         finishQuiz();
       }
@@ -390,6 +396,7 @@
     resultsArea.classList.remove('hidden');
     scoreDisplay.textContent = score;
     progressBar.style.width = '100%';
+    scrollToTop();
 
     if (incorrectIndices.length > 0) {
       reviewBtn.classList.remove('hidden');
@@ -406,6 +413,7 @@
     resultsArea.classList.add('hidden');
     showQuestion(reviewQueue[0]);
     resetCard(reviewQueue[0]);
+    scrollToTop();
   }
 
   function restartQuiz() {
@@ -417,6 +425,7 @@
     resultsArea.classList.add('hidden');
     cards.forEach((_, i) => resetCard(i));
     showQuestion(0);
+    scrollToTop();
   }
 
   // Event Listeners
