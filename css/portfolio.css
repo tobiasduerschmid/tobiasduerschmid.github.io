@@ -330,9 +330,8 @@ a.thumbnail {
 }
 
 .bib-link,
-a.citation,
 a.citation {
-	color: black !important;
+	color: #2774AE !important;
 	text-decoration: underline !important;
 	transition: all 0.2s ease;
 	border-radius: 4px;
@@ -364,8 +363,7 @@ a.citation:hover {
 	margin-bottom: 12px;
 	transition: background-color 0.5s ease;
 	border-radius: 4px;
-	color: #2774AE;
-	/* Ensure non-link references are also blue */
+	color: #2774AE !important;
 }
 
 .bibliography li:target {
@@ -486,20 +484,21 @@ html.dark-mode mark {
 }
 
 html.dark-mode a.citation {
-	color: #2774AE !important;
+	color: #FFF !important;
 }
 
+html.dark-mode .bib-link:hover,
 html.dark-mode a.citation:hover {
-	color: #fff !important;
-	background-color: #2774AE !important;
+	color: #FFD100 !important;
+	background-color: #005587 !important;
 }
 
 html.dark-mode .bib-link {
-	color: #2774AE !important;
+	color: #FFF !important;
 }
 
 html.dark-mode .bibliography li {
-	color: #2774AE;
+	color: #FFF !important;
 }
 
 /* Sidebar Dark Mode */
