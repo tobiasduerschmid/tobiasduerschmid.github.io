@@ -74,7 +74,7 @@ A study session is more effective after you start to forget a little bit of the 
 
 
 ## Interleaving:  Mix Up Your Problem Types
-Most textbooks and many courses use "blocked practice": It first covers one topic entirely, then the second topic, then the third. The problem with blocked practice is that it never teaches you *when* to apply a specific solution. In contrast, ==interleaving mixes the practice of different but related topics or skills==. This helps you develop a broader understanding of the relationships between conditions and improve your ability to discriminate between problem types {% cite Kornell2008learning RohrerTaylor2007 %}.
+Most textbooks and many courses use "blocked practice": They first covers one topic entirely, then the second topic, then the third. The problem with blocked practice is that it never teaches you *when* to apply a specific solution. In contrast, ==interleaving mixes the practice of different but related topics or skills==. This helps you develop a broader understanding of the relationships between conditions and improve your ability to discriminate between problem types {% cite Kornell2008learning RohrerTaylor2007 %}.
 This often makes students feel less confident in their knowledge, because they start working on the next topic before they feel they fully grasped the first one. But it is actually more effective for effective learning, because it naturally builds in spaced retrieval practice and it also makes you pay more attention to the connections, similarities, and differences between topics, which is more important for real-world application of the taught skills {% cite brown2014MakeItStick %}.
 
 
