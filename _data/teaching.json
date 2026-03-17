@@ -1,80 +1,88 @@
 {
-  "show" : true,
-  "teaching" :
-  [
-    {  "term" : "2016/17: Winter Term",
-      "courses" : 
-      [ 
-        { "course" : "Modeling I @ HPI",
-          "type"   : "Lecture (BA)",
-          "role"   : "Teaching Assistant"
+  "show": true,
+  "teaching": [
+    {
+      "term": "2016/17: Winter Term",
+      "courses": [
+        {
+          "course": "Modeling I @ HPI",
+          "type": "Lecture (BA)",
+          "role": "Teaching Assistant"
         }
       ]
     },
     {
-      "term" : "2017/18: Winter Term",
-      "courses" : 
-        [ { "course" : "Software Engineering II - Agile Software Development in Large Teams @ HPI",
-            "type"   : "Lecture (BA)",
-            "role"   : "Teaching Assistant"
-          }
-        ]
-    },
-    { "term" : "Fall 2019",
-      "courses" : 
-      [ 
-        { "course" : "Models of Software Systems (17-651) @ CMU",
-          "type"   : "Lecture (MA)",
-          "role"   : "Teaching Assistant"
+      "term": "2017/18: Winter Term",
+      "courses": [
+        {
+          "course": "Software Engineering II - Agile Software Development in Large Teams @ HPI",
+          "type": "Lecture (BA)",
+          "role": "Teaching Assistant"
         }
       ]
     },
-    { "term" : "Fall 2020",
-      "courses" : 
-      [ 
-        { "course" : "Design Patterns & API Design (17-625) @ CMU",
-          "type"   : "Lecture (MA)",
-          "role"   : "Designer and Co-Instructor"
+    {
+      "term": "Fall 2019",
+      "courses": [
+        {
+          "course": "Models of Software Systems (17-651) @ CMU",
+          "type": "Lecture (MA)",
+          "role": "Teaching Assistant"
         }
       ]
     },
-    { "term" : "Spring 2024",
-      "courses" : 
-      [ 
-        { "course" : "<a href='https://cmu-swdesign.github.io/'>Designing Large-scale Software Systems</a> @ CMU",
-          "type"   : "Lecture (BA/MA)",
-          "role"   : "Designer and Instructor"
+    {
+      "term": "Fall 2020",
+      "courses": [
+        {
+          "course": "Design Patterns & API Design (17-625) @ CMU",
+          "type": "Lecture (MA)",
+          "role": "Designer and Co-Instructor"
         }
       ]
     },
-    { "term" : "Fall 2025",
-      "courses" : 
-      [ 
-        { "course" : "CS 35L Software Construction @ UCLA",
-          "type"   : "Lecture (BA)",
-          "role"   : "Instructor"
+    {
+      "term": "Spring 2024",
+      "courses": [
+        {
+          "course": "<a href='https://cmu-swdesign.github.io/'>Designing Large-scale Software Systems</a> @ CMU",
+          "type": "Lecture (BA/MA)",
+          "role": "Designer and Instructor"
         }
       ]
     },
-    { "term" : "Winter 2026",
-      "courses" : 
-      [ 
-        { "course" : "CS 130 Software Engineering @ UCLA",
-          "type"   : "Lecture (BA)",
-          "role"   : "Instructor"
+    {
+      "term": "Fall 2025",
+      "courses": [
+        {
+          "course": "CS 35L Software Construction @ UCLA",
+          "type": "Lecture (BA)",
+          "role": "Instructor"
         }
       ]
     },
-    { "term" : "Spring 2026",
-      "courses" : 
-      [ 
-        { "course" : "CS 35L Software Construction @ UCLA",
-          "type"   : "Lecture (BA)",
-          "role"   : "Instructor"
+    {
+      "term": "Winter 2026",
+      "courses": [
+        {
+          "course": "CS 130 Software Engineering @ UCLA",
+          "type": "Lecture (BA)",
+          "role": "Instructor"
+        }
+      ]
+    },
+    {
+      "term": "Spring 2026",
+      "courses": [
+        {
+          "course": "CS 35L Software Construction @ UCLA",
+          "type": "Lecture (BA)",
+          "role": "Instructor"
         },
-        { "course" : "CS 130 Software Engineering @ UCLA",
-          "type"   : "Lecture (BA)",
-          "role"   : "Instructor"
+        {
+          "course": "CS 130 Software Engineering @ UCLA",
+          "type": "Lecture (BA)",
+          "role": "Instructor"
         }
       ]
     },
