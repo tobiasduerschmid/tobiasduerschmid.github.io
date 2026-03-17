@@ -417,8 +417,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       scrollToTop();
 
       const summary = resultsArea.querySelector('.score-summary');
-      if (score === cards.length) {
-        summary.textContent = "Come back later to form lasting memory!";
+      if (incorrectIndices.length === 0) {
+        summary.textContent = "Come back later to improve your recall!";
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }
