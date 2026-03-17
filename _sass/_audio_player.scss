@@ -3,8 +3,9 @@
    ============================================================ */
 
 .cap {
-    display: none; /* Hidden by default */
-    
+    display: none;
+    /* Hidden by default */
+
     html.read-aloud-enabled & {
         display: flex;
     }
@@ -16,12 +17,15 @@
     padding: 10px 18px;
     margin: 20px 0;
     max-width: 100%;
-    height: 68px; /* Fixed height for consistent look */
+    height: 68px;
+    /* Fixed height for consistent look */
     box-sizing: border-box;
-    box-shadow:
-        0 4px 24px rgba(0, 0, 0, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    font-family: 'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
     transition: all 0.3s ease;
 
     /* ── Speed presets ───────────────────────────────────────── */
@@ -85,7 +89,8 @@
 
         span {
             position: absolute;
-            bottom: -12px; /* Even lower to avoid icon circle completely */
+            bottom: -12px;
+            /* Even lower to avoid icon circle completely */
             font-size: 7.5px;
             font-weight: 800;
             letter-spacing: -0.02em;
@@ -125,7 +130,8 @@
     /* Big play button */
     &__play-btn {
         background: transparent;
-        border: 2.5px solid #2774AE; /* UCLA Blue outline */
+        border: 2.5px solid #2774AE;
+        /* UCLA Blue outline */
         width: 48px;
         height: 48px;
         border-radius: 50%;
@@ -135,7 +141,8 @@
         justify-content: center;
         color: #fff;
         transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(39, 116, 174, 0.3); /* Subtle blue glow */
+        box-shadow: 0 4px 12px rgba(39, 116, 174, 0.3);
+        /* Subtle blue glow */
 
         &:hover {
             background: rgba(39, 116, 174, 0.1);
@@ -149,7 +156,8 @@
 
         i {
             font-size: 1.1rem;
-            margin-left: 2px; /* Visual center for play icon */
+            margin-left: 2px;
+            /* Visual center for play icon */
         }
 
         &.is-playing i {
@@ -197,7 +205,8 @@
     &__volume-slider {
         -webkit-appearance: none;
         appearance: none;
-        width: 60px; /* Always visible, no flicker */
+        width: 60px;
+        /* Always visible, no flicker */
         height: 2px;
         background: rgba(255, 255, 255, 0.12);
         border-radius: 1px;
@@ -210,7 +219,8 @@
             width: 10px;
             height: 10px;
             margin-top: -4px;
-            background: #FFD100; /* UCLA Gold */
+            background: #FFD100;
+            /* UCLA Gold */
             border-radius: 50%;
             box-shadow: 0 0 6px rgba(255, 209, 0, 0.4);
             transition: transform 0.15s ease;
@@ -240,7 +250,8 @@
             -webkit-appearance: none;
             width: 10px;
             height: 10px;
-            margin-top: -4px; /* Center on 2px track */
+            margin-top: -4px;
+            /* Center on 2px track */
             background: #fff;
             border-radius: 50%;
             border: 2px solid #2774AE;
@@ -255,14 +266,17 @@
     }
 
     &__times {
-        display: none; /* Removed in favor of inline spans */
+        display: none;
+        /* Removed in favor of inline spans */
     }
 
     &__time {
-        font-size: 11px; /* Slightly larger for visibility */
+        font-size: 11px;
+        /* Slightly larger for visibility */
         font-weight: 600;
         font-variant-numeric: tabular-nums;
-        color: rgba(255, 255, 255, 0.65); /* Increased contrast */
+        color: rgba(255, 255, 255, 0.65);
+        /* Increased contrast */
         letter-spacing: 0.02em;
         white-space: nowrap;
         min-width: 38px;
@@ -272,6 +286,7 @@
     /* ── Responsive ──────────────────────────────────────────── */
     @media (max-width: 640px) {
         flex-wrap: wrap;
+        height: auto; /* Allow stacking without overflow */
         gap: 12px;
         border-radius: 16px;
         padding: 14px 16px;
@@ -330,10 +345,14 @@
         }
 
         &__play-btn {
-            background-image:
-                linear-gradient(#f0f0f5, #f0f0f5),
-                linear-gradient(135deg, #2774AE 0%, #FFD100 100%);
-            color: #222;
+            background: transparent;
+            border-color: #2774AE; /* UCLA Blue */
+            color: #2774AE;
+            box-shadow: 0 4px 12px rgba(39, 116, 174, 0.15);
+
+            &:hover {
+                background: rgba(39, 116, 174, 0.05);
+            }
         }
 
         &__skip-btn,
@@ -356,7 +375,8 @@
         &__volume-slider {
             &::-webkit-slider-thumb {
                 background: #fff;
-                border: 2px solid #2774AE; /* UCLA Blue */
+                border: 2px solid #2774AE;
+                /* UCLA Blue */
                 box-shadow: 0 0 8px rgba(39, 116, 174, 0.5);
                 margin-top: -4px;
             }

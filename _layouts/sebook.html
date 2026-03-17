@@ -81,8 +81,7 @@
       </button>
 
       <!-- Sidebar Navigation -->
-      <div id="sidebar"
-        style="width: 260px; max-width: 80vw; overflow-y: auto; margin: 0; padding: 0;">
+      <div id="sidebar" style="width: 260px; max-width: 80vw; overflow-y: auto; margin: 0; padding: 0;">
         {% include sebook_navbar_sidebar.html %}
       </div>
 
@@ -328,7 +327,7 @@
         // --- Read Aloud Toggle Logic ---
         const savedReadAloud = getCookie('read-aloud');
         const isReadAloud = savedReadAloud === 'true'; // Default is false (hidden)
-        
+
         if (readAloudToggle) {
           readAloudToggle.checked = isReadAloud;
           if (isReadAloud) {
