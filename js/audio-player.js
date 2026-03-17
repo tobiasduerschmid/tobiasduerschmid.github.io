@@ -1,90 +1,110 @@
 
 document.addEventListener('DOMContentLoaded', () => {
-    const players = document.querySelectorAll('.custom-audio-player');
-    
-    players.forEach(player => {
-        const audio = player.querySelector('audio');
-        const playBtn = player.querySelector('.play-pause-btn');
-        const progress = player.querySelector('.progress-container input[type="range"]');
-        const speed = player.querySelector('.speed-control select');
-        const currentTimeDisplay = player.querySelector('.time.current');
-        const totalTimeDisplay = player.querySelector('.time.total');
-        const volumeSlider = player.querySelector('.volume-control input[type="range"]');
-        const muteBtn = player.querySelector('.volume-control i');
+    document.querySelectorAll('.cap').forEach(player => {
+        const audio       = player.querySelector('.cap__audio');
+        const playBtn     = player.querySelector('.cap__play-btn');
+        const progress    = player.querySelector('.cap__progress');
+        const volumeSlider = player.querySelector('.cap__volume-slider');
+        const volIcon     = player.querySelector('.cap__vol-icon');
+        const timeCur     = player.querySelector('.cap__time--cur');
+        const timeDur     = player.querySelector('.cap__time--dur');
+        const speedBtns   = player.querySelectorAll('.cap__speed-btn');
+        const skipBtns    = player.querySelectorAll('.cap__skip-btn');
+        const prevBtn     = player.querySelector('.cap__ctrl-btn--prev');
+        const nextBtn     = player.querySelector('.cap__ctrl-btn--next');
 
-        // Play/Pause
+        // ── Helpers ──────────────────────────────────────────────
+        function fmt(s) {
+            if (!isFinite(s) || isNaN(s)) return '--:--';
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = Math.floor(s % 60);
+            const mm = h > 0 ? `${h}:${String(m).padStart(2,'0')}` : `${m}`;
+            return `${mm}:${String(sec).padStart(2,'0')}`;
+        }
+
+        function setVolIcon(v) {
+            volIcon.className = 'fa-solid cap__vol-icon ' +
+                (v === 0 ? 'fa-volume-xmark' : v < 0.4 ? 'fa-volume-low' : 'fa-volume-high');
+        }
+
+        // ── Metadata / time ──────────────────────────────────────
+        audio.addEventListener('loadedmetadata', () => {
+            timeDur.textContent = fmt(audio.duration);
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (!isNaN(audio.duration) && audio.duration > 0) {
+                progress.value = (audio.currentTime / audio.duration) * 100;
+                timeCur.textContent = fmt(audio.currentTime);
+            }
+        });
+
+        audio.addEventListener('ended', () => {
+            playBtn.classList.remove('is-playing');
+            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        });
+
+        // ── Play / Pause ─────────────────────────────────────────
         playBtn.addEventListener('click', () => {
             if (audio.paused) {
                 audio.play();
+                playBtn.classList.add('is-playing');
                 playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
             } else {
                 audio.pause();
+                playBtn.classList.remove('is-playing');
                 playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
             }
         });
 
-        // Update progress bar
-        audio.addEventListener('timeupdate', () => {
+        // ── Seek ─────────────────────────────────────────────────
+        progress.addEventListener('input', () => {
             if (!isNaN(audio.duration)) {
-                const pct = (audio.currentTime / audio.duration) * 100;
-                progress.value = pct;
-                currentTimeDisplay.textContent = formatTime(audio.currentTime);
+                audio.currentTime = (progress.value / 100) * audio.duration;
             }
         });
 
-        // Load metadata
-        audio.addEventListener('loadedmetadata', () => {
-            totalTimeDisplay.textContent = formatTime(audio.duration);
+        // ── Skip ±15 s ───────────────────────────────────────────
+        skipBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                audio.currentTime = Math.max(0,
+                    Math.min(audio.duration || 0, audio.currentTime + parseFloat(btn.dataset.skip)));
+            });
         });
 
-        // Seek
-        progress.addEventListener('input', () => {
-            const time = (progress.value / 100) * audio.duration;
-            audio.currentTime = time;
+        // ── Prev (restart) / Next (jump to end) ──────────────────
+        if (prevBtn) prevBtn.addEventListener('click', () => { audio.currentTime = 0; });
+        if (nextBtn) nextBtn.addEventListener('click', () => {
+            if (!isNaN(audio.duration)) audio.currentTime = audio.duration;
         });
 
-        // Speed control
-        speed.addEventListener('change', () => {
-            audio.playbackRate = parseFloat(speed.value);
+        // ── Speed presets ────────────────────────────────────────
+        speedBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                speedBtns.forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                audio.playbackRate = parseFloat(btn.dataset.speed);
+            });
         });
 
-        // Volume control
+        // ── Volume ───────────────────────────────────────────────
         volumeSlider.addEventListener('input', () => {
-            audio.volume = volumeSlider.value;
-            updateVolumeIcon(audio.volume);
+            audio.volume = parseFloat(volumeSlider.value);
+            setVolIcon(audio.volume);
         });
 
-        muteBtn.addEventListener('click', () => {
+        let prevVol = 1;
+        volIcon.addEventListener('click', () => {
             if (audio.volume > 0) {
-                audio.dataset.prevVolume = audio.volume;
+                prevVol = audio.volume;
                 audio.volume = 0;
                 volumeSlider.value = 0;
             } else {
-                audio.volume = audio.dataset.prevVolume || 1;
-                volumeSlider.value = audio.volume;
+                audio.volume = prevVol;
+                volumeSlider.value = prevVol;
             }
-            updateVolumeIcon(audio.volume);
+            setVolIcon(audio.volume);
         });
-
-        function updateVolumeIcon(vol) {
-            if (vol === 0) {
-                muteBtn.className = 'fa-solid fa-volume-off';
-            } else if (vol < 0.5) {
-                muteBtn.className = 'fa-solid fa-volume-down';
-            } else {
-                muteBtn.className = 'fa-solid fa-volume-up';
-            }
-        }
-
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return "0:00";
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = Math.floor(seconds % 60);
-            if (h > 0) {
-                return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-            }
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
     });
 });
