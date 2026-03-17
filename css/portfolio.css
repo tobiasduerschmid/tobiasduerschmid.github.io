@@ -338,7 +338,7 @@ a.citation {
 }
 
 .bib-link {
-	color: black;
+	color: #2774AE;
 	/* Orange */
 	display: block;
 	padding: 5px 10px;
@@ -346,7 +346,7 @@ a.citation {
 }
 
 a.citation {
-	color: black !important;
+	color: #2774AE !important;
 	padding: 1px 0 !important;
 	margin: 0 !important;
 	font-weight: 100;
@@ -354,7 +354,7 @@ a.citation {
 
 .bib-link:hover,
 a.citation:hover {
-	color: black !important;
+	color: #2774AE !important;
 	/* UCLA Blue */
 	background-color: #FFD100 !important;
 	text-decoration: underline !important;
