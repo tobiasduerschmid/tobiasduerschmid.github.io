@@ -358,6 +358,15 @@ Data source: _data/flashcards/{{ include.id }}.yml
       cards.forEach(c => c.classList.remove('active'));
       cards[index].classList.add('active');
       updateProgress();
+      scrollToTop();
+    }
+
+    function scrollToTop() {
+      const navbar = document.getElementById('navnav');
+      const navHeight = navbar ? navbar.offsetHeight : 50;
+      const yOffset = -navHeigh; // Dynamic navbar height + extra padding
+      const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
 
     function handleShowAnswer(e) {
@@ -410,10 +419,11 @@ Data source: _data/flashcards/{{ include.id }}.yml
       resultsArea.classList.remove('hidden');
       scoreDisplay.textContent = score;
       progressBar.style.width = '100%';
+      scrollToTop();
 
       const summary = resultsArea.querySelector('.score-summary');
-      if (score === cards.length) {
-        summary.textContent = "Come back later to form lasting memory!";
+      if (incorrectIndices.length === 0) {
+        summary.textContent = "Come back later to improve your recall!";
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }

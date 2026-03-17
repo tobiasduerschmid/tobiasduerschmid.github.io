@@ -46,6 +46,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
         Your Score: <span class="current-score">0</span>/<span class="total-questions">{{ quiz_data.questions | size
           }}</span>
       </div>
+      <p class="score-summary"></p>
       <div class="results-actions">
         <button class="restart-btn">Restart Quiz</button>
         <button class="review-btn hidden">Review Incorrect Questions</button>
@@ -368,7 +369,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
     }
 
     function scrollToTop() {
-      const yOffset = -20; // Extra padding
+      const navbar = document.getElementById('navnav');
+      const navHeight = navbar ? navbar.offsetHeight : 50;
+      const yOffset = -navHeight; // Dynamic navbar height + padding
       const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -415,7 +418,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       const summary = resultsArea.querySelector('.score-summary');
       if (score === cards.length) {
-        summary.textContent = "Come back later to improve your recall!";
+        summary.textContent = "Come back later to form lasting memory!";
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }
