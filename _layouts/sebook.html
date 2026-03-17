@@ -149,10 +149,17 @@
               <span class="slider round"></span>
             </label>
           </div>
-          <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-right: 20px;">
             <span class="toggle-label">Show Highlights</span>
             <label class="switch">
               <input type="checkbox" id="highlightToggle" checked aria-label="Toggle highlights">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="toggle-label">Read Aloud</span>
+            <label class="switch">
+              <input type="checkbox" id="readAloudToggle" aria-label="Toggle read aloud">
               <span class="slider round"></span>
             </label>
           </div>
@@ -253,16 +260,23 @@
         const article = document.querySelector('article');
         const highlightToggle = document.getElementById('highlightToggle');
         const darkModeToggle = document.getElementById('darkModeToggle');
+        const readAloudToggle = document.getElementById('readAloudToggle');
         const container = document.getElementById('togglesContainer');
 
         if (!article || !highlightToggle || !darkModeToggle || !container) return;
 
         const marks = article.getElementsByTagName('mark');
+        const audioPlayers = document.getElementsByClassName('cap');
 
         // Dark mode is always available, highlights only if marks exist
         container.style.display = 'flex';
         if (marks.length === 0) {
           highlightToggle.parentElement.parentElement.style.display = 'none';
+        }
+
+        // Read Aloud only if players exist
+        if (readAloudToggle && audioPlayers.length === 0) {
+          readAloudToggle.parentElement.parentElement.style.display = 'none';
         }
 
         // --- Dark Mode Logic ---
@@ -310,6 +324,28 @@
             document.documentElement.classList.remove('highlights-transition');
           }, 300);
         });
+
+        // --- Read Aloud Toggle Logic ---
+        const savedReadAloud = getCookie('read-aloud');
+        const isReadAloud = savedReadAloud === 'true'; // Default is false (hidden)
+        
+        if (readAloudToggle) {
+          readAloudToggle.checked = isReadAloud;
+          if (isReadAloud) {
+            document.documentElement.classList.add('read-aloud-enabled');
+          } else {
+            document.documentElement.classList.remove('read-aloud-enabled');
+          }
+
+          readAloudToggle.addEventListener('change', function () {
+            if (this.checked) {
+              document.documentElement.classList.add('read-aloud-enabled');
+            } else {
+              document.documentElement.classList.remove('read-aloud-enabled');
+            }
+            setCookie('read-aloud', this.checked, 300);
+          });
+        }
       }
 
       // Run when DOM is ready

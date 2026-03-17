@@ -1,5 +1,9 @@
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ── Global State Persistence ───────────────────────────────
+    const STORAGE_KEY_VOL = 'cap_volume';
+    const STORAGE_KEY_SPEED = 'cap_speed';
+
     document.querySelectorAll('.cap').forEach(player => {
         const audio       = player.querySelector('.cap__audio');
         const playBtn     = player.querySelector('.cap__play-btn');
@@ -12,6 +16,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const skipBtns    = player.querySelectorAll('.cap__skip-btn');
         const prevBtn     = player.querySelector('.cap__ctrl-btn--prev');
         const nextBtn     = player.querySelector('.cap__ctrl-btn--next');
+
+        // ── Initialization from Persistence ──────────────────────
+        const savedVol = localStorage.getItem(STORAGE_KEY_VOL);
+        if (savedVol !== null) {
+            audio.volume = parseFloat(savedVol);
+            if (volumeSlider) volumeSlider.value = savedVol;
+        }
+
+        const savedSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
+        if (savedSpeed !== null) {
+            const speed = parseFloat(savedSpeed);
+            audio.playbackRate = speed;
+            // Update active state on buttons
+            speedBtns.forEach(btn => {
+                if (parseFloat(btn.dataset.speed) === speed) {
+                    btn.classList.add('is-active');
+                } else {
+                    btn.classList.remove('is-active');
+                }
+            });
+        }
 
         // ── Helpers ──────────────────────────────────────────────
         function fmt(s) {
@@ -28,9 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 (v === 0 ? 'fa-volume-xmark' : v < 0.4 ? 'fa-volume-low' : 'fa-volume-high');
         }
 
+        setVolIcon(audio.volume);
+
         // ── Metadata / time ──────────────────────────────────────
         audio.addEventListener('loadedmetadata', () => {
             timeDur.textContent = fmt(audio.duration);
+            // Re-apply speed on load (some browsers reset playbackRate on src change)
+            const currentSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
+            if (currentSpeed) audio.playbackRate = parseFloat(currentSpeed);
         });
 
         audio.addEventListener('timeupdate', () => {
@@ -82,16 +112,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // ── Speed presets ────────────────────────────────────────
         speedBtns.forEach(btn => {
             btn.addEventListener('click', () => {
+                const speed = parseFloat(btn.dataset.speed);
                 speedBtns.forEach(b => b.classList.remove('is-active'));
                 btn.classList.add('is-active');
-                audio.playbackRate = parseFloat(btn.dataset.speed);
+                audio.playbackRate = speed;
+                localStorage.setItem(STORAGE_KEY_SPEED, speed);
             });
         });
 
         // ── Volume ───────────────────────────────────────────────
         volumeSlider.addEventListener('input', () => {
-            audio.volume = parseFloat(volumeSlider.value);
-            setVolIcon(audio.volume);
+            const vol = parseFloat(volumeSlider.value);
+            audio.volume = vol;
+            setVolIcon(vol);
+            localStorage.setItem(STORAGE_KEY_VOL, vol);
         });
 
         let prevVol = 1;
@@ -105,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 volumeSlider.value = prevVol;
             }
             setVolIcon(audio.volume);
+            localStorage.setItem(STORAGE_KEY_VOL, audio.volume);
         });
     });
 });

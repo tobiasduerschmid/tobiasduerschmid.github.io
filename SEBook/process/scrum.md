@@ -7,7 +7,7 @@ AI Audio Summary:
 {% include audio_player.html src="/SEBook/process/scrum.m4a" %}
 
 
-While many organizations claim to be "Agile", the vast majority (roughly 63%) implement the Scrum framework. 
+While many organizations claim to be "Agile", the ==vast majority (roughly 63%) implement the Scrum framework==. 
 
 # Scrum Theory
 Scrum is a management framework built on the philosophy of *Empiricism*. This philosophy asserts that in complex environments like software development, we cannot rely on detailed upfront predictions. Instead, knowledge comes from experience, and decisions must be based on what is actually observed and measured in a "real" product.
