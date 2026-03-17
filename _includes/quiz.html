@@ -355,7 +355,9 @@
   }
 
   function scrollToTop() {
-    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const yOffset = -20; // Extra padding
+    const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({ top: y, behavior: 'smooth' });
   }
 
   function nextQuestion() {
