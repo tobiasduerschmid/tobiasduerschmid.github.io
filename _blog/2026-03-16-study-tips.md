@@ -36,8 +36,7 @@ Rather, that struggle is the biological mechanism of your brain building stronge
 Simply put: ==effective learning *is* effortful== {% cite brown2014MakeItStick %}.
 However, note that not all difficulties are desirable.
 For example, studying while you are sleep-deprived, hungry, sick, or highly anxious; reading the material in an unfamiliar language; or studying a topic without pre-required fundamentals are undesirable difficulties and they should be reduced.
-Only difficulties that encourage more cognitive activity while still making progress towards your answer are desirable.
-
+Only difficulties that **present challenges to the learner but are not be of such difficulty that the learner cannot eventually meet or overcome them** are desirable. A rule of thumb is that what makes your brain do more active work while still reaching an answer is helpful.
 
 * **Actionable Advice:** ==When your study routine starts to feel too easy or comfortable, try to add in some challenges that make it harder for yourself==.
 If you are breezing through your flashcards, shuffle them to remove predictable patterns, or force yourself to explain the core concepts out loud to an empty room without looking at your notes. Change the place where you study instead of returning to the same spot.
@@ -109,11 +108,10 @@ Adopting all of the strategies listed above is nearly impossible if you operate 
 *   **Computer Science Examples:** There is a pervasive and toxic myth in software engineering that some people are just naturally born with a "coding gene". This is entirely false. When your C program segfaults for the fiftieth time, or you are trying to untangle a messy `git rebase`, it is easy to feel like an imposter. A fixed mindset tells you to give up because you aren't cut out for computer science. A growth mindset reminds you that every single expert developer started exactly where you are. Bugs and compiler errors are not indictments of your intelligence. They are simply the mechanism by which you build mastery. ==You are entirely capable of conquering these complex systems, provided you embrace the resilient, effortful struggle required to learn them and you are not afraid to ask for help when you need it.==
 
 
-## Conclusion & Quiz
-
-If you would like to know more about the science behind this post, I recommend reading the book "Make It Stick: The Science of Successful Learning" {% cite brown2014MakeItStick %}. It is one of my favorite books on learning because it helps both the learner and the teacher. Also, check out the [research summary of UCLS's Bjork Learning and Forgetting Lab](https://bjorklab.psych.ucla.edu/research/), [Robert Bjork's talk at Harvard](https://www.youtube.com/watch?v=MPL68uxiNaU), and the other references linked below.
-
+## Quiz & Conclusion 
 
 {% include quiz.html id="effective_learning" %}
 
-==After getting foundational knowledge, now it's time for you to apply this in the next course you are taking! Try to slowly integrate them into your study sessions and let them guide your approach to learning!==
+==After getting foundational knowledge, now it's time for you to apply these tips in the course you are taking (especially the more challenging courses)! Try to slowly integrate these learning practices into your study sessions and let them guide your approach to learning!==
+
+If you would like to know more about the science behind this post, I recommend reading the book "Make It Stick: The Science of Successful Learning" {% cite brown2014MakeItStick %}. It is one of my favorite books on learning because it helps both the learner and the teacher. Also, check out the [research summary of UCLS's Bjork Learning and Forgetting Lab](https://bjorklab.psych.ucla.edu/research/), [Robert Bjork's talk at Harvard](https://www.youtube.com/watch?v=MPL68uxiNaU), and the other references linked below.
