@@ -737,7 +737,17 @@ html.dark-mode legend {
 	align-items: center;
 	justify-content: flex-end;
 	margin-bottom: 10px;
-	gap: 10px;
+	gap: 15px;
+}
+
+@media (max-width: 1100px) {
+	.highlight-toggle-container {
+		flex-wrap: wrap !important;
+		justify-content: center !important;
+		gap: 10px 15px !important; /* Smaller vertical gap */
+		margin-bottom: 15px !important;
+		width: 100% !important;
+	}
 }
 
 .toggle-label {

@@ -51,7 +51,7 @@ The mental challenge you feel when you have to manually track down a missing bra
 
 ## Retrieval Practice: Ditch the Highlighter and Quiz Yourself
 One of the most powerful learning tools at your disposal is **"active retrieval"**.
-As a computer scientist, you might think that recalling memory does not have any side effects. While this might be true for most digital systems (unless they use caching or log all requests), it is not true for human memory.
+As a computer scientist, you might think that recalling memory does not have any side effects. While this might be true for most digital digital storage media (unless they use caching or log requests), it is not true for human memory.
 In fact, ==the act of retrieving information from human memory makes that information much easier to access in the future== {% cite RoedigerKarpicke2006 %}. The more often you try to recall information, the easier it becomes to retrieve it in the future.
 A single, simple quiz after reading a text produces better learning and remembering than reading the text multiple times.
 Passively re-consuming the material does *not* have a similar effect as active retrieval {% cite brown2014MakeItStick %}. You have to recall the answers yourself, without looking at the material.
@@ -66,7 +66,7 @@ Additionally, while simultaneously reinforcing this memory to move it towards mo
 Cramming all your studying into one massive session might help you pass the mid-term the next day, but that knowledge will melt away for the final.
 *Massed practice* feels very productive in the moment, but it actively harms long-term retention.
 ==To build durable memory, you must space out your practice== {% cite Cepeda2006 %}.
-Studying a little bit every week is much more effective than studying the sum of each individual study session in one single day. Spacing allows time for your memories to consolidate—a process where memory traces are stabilized, given meaning, and connected to prior knowledge {% cite brown2014MakeItStick %}.
+Studying a little bit every week is much more effective than studying for the cumulative duration of these individual study sessions within one single day. Spacing allows time for your memories to consolidate—a process where memory traces are stabilized, given meaning, and connected to prior knowledge {% cite brown2014MakeItStick %}.
 A study session is more effective after you start to forget a little bit of the material {% cite brown2014MakeItStick %}. Repeating this process of incrementally studying the same material over increasing intervals of time is one of the most effective ways to build durable memory, because it feels more effortful and signals to your brain that the information is important and needs to be retained long-term {% cite brown2014MakeItStick %}.
 
 

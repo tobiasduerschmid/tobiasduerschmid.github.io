@@ -1,40 +1,109 @@
 /* ============================================================
-   Custom Audio Player  (.cap = "custom audio player")
+   Custom Audio Player (.cap = "custom audio player")
    ============================================================ */
 
 .cap {
-    display: none;
-    /* Hidden by default */
+    display: none; /* Hidden by default */
 
     html.read-aloud-enabled & {
         display: flex;
     }
 
+    flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     background: #1c1c1e;
-    border-radius: 14px;
-    padding: 10px 18px;
+    border-radius: 16px;
+    padding: 16px 20px;
     margin: 20px 0;
     max-width: 100%;
-    height: 68px;
-    /* Fixed height for consistent look */
+    height: auto;
     box-sizing: border-box;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-    font-family: 'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    font-family: 'Inter', sans-serif;
     transition: all 0.3s ease;
 
-    /* ── Speed presets ───────────────────────────────────────── */
+    /* ── Row 1: Timeline (Top) ────────────────────────── */
+    &__top-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 4px;
+    }
+
+    &__progress-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        min-width: 0;
+    }
+
+    &__progress {
+        width: 100%;
+        height: 2px;
+        appearance: none;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 1px;
+        outline: none;
+        cursor: pointer;
+        transition: height 0.15s ease;
+
+        &:hover { height: 4px; }
+
+        &::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            margin-top: -4px;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px solid #2774AE;
+            box-shadow: 0 0 8px rgba(39, 116, 174, 0.5);
+        }
+    }
+
+    &__time {
+        font-size: 11px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: rgba(255, 255, 255, 0.65);
+        min-width: 38px;
+        text-align: center;
+    }
+
+    /* ── Row 2: Controls, Speeds, Volume (Bottom) ──────────── */
+    &__bottom-row {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    &__transport {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     &__speeds {
         display: flex;
         gap: 4px;
-        flex-shrink: 0;
+        align-items: center;
     }
 
+    &__volume {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 12px;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Sub-components (Buttons, Icons) ─────────────────── */
     &__speed-btn {
         background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -45,7 +114,6 @@
         padding: 6px 9px;
         cursor: pointer;
         transition: all 0.2s ease;
-        letter-spacing: 0.01em;
 
         &:hover {
             background: rgba(255, 255, 255, 0.12);
@@ -54,24 +122,12 @@
 
         &.is-active {
             background: rgba(39, 116, 174, 0.15);
-            /* UCLA Blue tint */
             border-color: #2774AE;
-            /* UCLA Blue */
             color: #8bb8e8;
         }
     }
 
-    /* ── Transport cluster ───────────────────────────────────── */
-    &__transport {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-shrink: 0;
-    }
-
-    /* Skip ±15 s */
     &__skip-btn {
-        position: relative;
         background: none;
         border: none;
         color: rgba(255, 255, 255, 0.55);
@@ -79,61 +135,37 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 0;
+        position: relative;
         width: 34px;
-        transition: color 0.2s ease;
 
-        i {
-            font-size: 20px;
-        }
-
+        i { font-size: 20px; }
         span {
             position: absolute;
-            bottom: -12px;
-            /* Even lower to avoid icon circle completely */
+            bottom: -8px;
             font-size: 7.5px;
             font-weight: 800;
-            letter-spacing: -0.02em;
-            line-height: 1;
         }
 
-        &:hover {
-            color: #fff;
-        }
-
-        &:active {
-            transform: scale(0.9);
-        }
+        &:hover { color: #fff; }
     }
 
-    /* Prev / Next step */
     &__ctrl-btn {
         background: none;
         border: none;
         color: rgba(255, 255, 255, 0.55);
         cursor: pointer;
         font-size: 18px;
-        padding: 0;
         display: flex;
         align-items: center;
-        transition: color 0.2s ease;
 
-        &:hover {
-            color: #fff;
-        }
-
-        &:active {
-            transform: scale(0.9);
-        }
+        &:hover { color: #fff; }
     }
 
-    /* Big play button */
     &__play-btn {
         background: transparent;
         border: 2.5px solid #2774AE;
-        /* UCLA Blue outline */
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         cursor: pointer;
         display: flex;
@@ -141,254 +173,74 @@
         justify-content: center;
         color: #fff;
         transition: all 0.2s ease;
-        box-shadow: 0 4px 12px rgba(39, 116, 174, 0.3);
-        /* Subtle blue glow */
+
+        i { margin-left: 2px; }
+        &.is-playing i { margin-left: 0; }
 
         &:hover {
-            background: rgba(39, 116, 174, 0.1);
             transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(39, 116, 174, 0.4);
+            background: rgba(39, 116, 174, 0.1);
         }
-
-        &:active {
-            transform: scale(0.95);
-        }
-
-        i {
-            font-size: 1.1rem;
-            margin-left: 2px;
-            /* Visual center for play icon */
-        }
-
-        &.is-playing i {
-            margin-left: 0;
-        }
-    }
-
-    /* ── Right-side: progress + time + volume ────────────────── */
-    &__right {
-        flex: 1;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
-        min-width: 0;
-    }
-
-    &__progress-wrap {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        position: relative;
-    }
-
-    &__volume {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        width: fit-content;
-        position: relative;
-        padding-left: 8px;
     }
 
     &__vol-icon {
         color: rgba(255, 255, 255, 0.45);
-        font-size: 13px;
+        font-size: 14px;
         cursor: pointer;
-        transition: color 0.2s ease;
-
-        &:hover {
-            color: #fff;
-        }
+        &:hover { color: #fff; }
     }
 
     &__volume-slider {
         -webkit-appearance: none;
-        appearance: none;
-        width: 60px;
-        /* Always visible, no flicker */
+        width: 40px;
         height: 2px;
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.15);
         border-radius: 1px;
         outline: none;
         cursor: pointer;
-        margin: 0;
 
         &::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 10px;
             height: 10px;
-            margin-top: -4px;
-            background: #FFD100;
-            /* UCLA Gold */
-            border-radius: 50%;
-            box-shadow: 0 0 6px rgba(255, 209, 0, 0.4);
-            transition: transform 0.15s ease;
-        }
-
-        &:hover::-webkit-slider-thumb {
-            transform: scale(1.2);
-        }
-    }
-
-    &__progress {
-        width: 100%;
-        height: 2px;
-        /* Lower line thickness */
-        appearance: none;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 1px;
-        outline: none;
-        cursor: pointer;
-        transition: height 0.15s ease;
-
-        &:hover {
-            height: 4px;
-        }
-
-        &::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 10px;
-            height: 10px;
-            margin-top: -4px;
-            /* Center on 2px track */
             background: #fff;
             border-radius: 50%;
             border: 2px solid #2774AE;
-            /* UCLA Blue */
-            box-shadow: 0 0 8px rgba(39, 116, 174, 0.5);
-            transition: transform 0.15s ease;
-        }
-
-        &:active::-webkit-slider-thumb {
-            transform: scale(1.2);
         }
     }
 
-    &__times {
-        display: none;
-        /* Removed in favor of inline spans */
-    }
-
-    &__time {
-        font-size: 11px;
-        /* Slightly larger for visibility */
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        color: rgba(255, 255, 255, 0.65);
-        /* Increased contrast */
-        letter-spacing: 0.02em;
-        white-space: nowrap;
-        min-width: 38px;
-        text-align: center;
-    }
-
-    /* ── Responsive ──────────────────────────────────────────── */
-    @media (max-width: 640px) {
-        flex-wrap: wrap;
-        height: auto; /* Allow stacking without overflow */
-        gap: 12px;
-        border-radius: 16px;
-        padding: 14px 16px;
-
-        &__speeds {
-            order: 3;
-            width: 100%;
-            justify-content: center;
-        }
-
-        &__transport {
-            order: 2;
-            width: 100%;
-            justify-content: center;
-        }
-
-        &__right {
-            order: 1;
-            width: 100%;
-        }
-
-        /* Disable vertical volume on mobile for easier touch */
-        &__volume-slider-container {
-            display: none;
-        }
-    }
-
-    /* ── Light-mode override ─────────────────────────────────── */
+    /* ── Light Mode Override ────────────────────────────── */
     html:not(.dark-mode) & {
         background: #f0f0f5;
-        box-shadow:
-            0 2px 12px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-        &__speed-btn {
+        .cap__speed-btn {
             background: rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.12);
+            border-color: rgba(0, 0, 0, 0.1);
             color: rgba(0, 0, 0, 0.5);
-
-            &:hover {
-                background: rgba(0, 0, 0, 0.09);
-                color: rgba(0, 0, 0, 0.8);
-            }
-
-            &.is-active {
-                background: rgba(39, 116, 174, 0.1);
-                border-color: #2774AE;
-                color: #2774AE;
-            }
+            &.is-active { color: #2774AE; border-color: #2774AE; }
         }
 
-        &__volume-slider-container {
-            background: #fff;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        &__play-btn {
-            background: transparent;
-            border-color: #2774AE; /* UCLA Blue */
-            color: #2774AE;
-            box-shadow: 0 4px 12px rgba(39, 116, 174, 0.15);
-
-            &:hover {
-                background: rgba(39, 116, 174, 0.05);
-            }
-        }
-
-        &__skip-btn,
-        &__ctrl-btn {
+        .cap__skip-btn, .cap__ctrl-btn, .cap__vol-icon {
             color: rgba(0, 0, 0, 0.45);
-
-            &:hover {
-                color: #000;
-            }
+            &:hover { color: #000; }
         }
 
-        &__vol-icon {
-            color: rgba(0, 0, 0, 0.4);
+        .cap__time { color: rgba(0, 0, 0, 0.4); }
+        .cap__progress, .cap__volume-slider { background: rgba(0, 0, 0, 0.1); }
+    }
 
-            &:hover {
-                color: #000;
-            }
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 600px) {
+        &__bottom-row {
+            flex-direction: column;
+            gap: 12px;
         }
-
-        &__volume-slider {
-            &::-webkit-slider-thumb {
-                background: #fff;
-                border: 2px solid #2774AE;
-                /* UCLA Blue */
-                box-shadow: 0 0 8px rgba(39, 116, 174, 0.5);
-                margin-top: -4px;
-            }
-        }
-
-        &__volume-slider,
-        &__progress {
-            background: rgba(0, 0, 0, 0.1);
-        }
-
-        &__time {
-            color: rgba(0, 0, 0, 0.35);
+        &__volume {
+            border-left: none;
+            padding-left: 0;
+            margin-top: 4px;
         }
     }
 }
