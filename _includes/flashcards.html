@@ -18,7 +18,7 @@
 
   <div class="flashcards-list">
     {% for card in flashcard_data.cards %}
-    <div class="flashcard-card" data-card-index="{{ forloop.index0 }}" id="flash-{{ include.id }}-{{ forloop.index0 }}">
+    <div class="flashcard-card" data-card-id="{{ card.id }}" data-card-index="{{ forloop.index0 }}" id="flash-{{ include.id }}-{{ forloop.index0 }}">
       <div class="flashcard-question">{{ card.question }}</div>
       
       <div class="flashcard-answer-container hidden">
