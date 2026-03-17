@@ -206,6 +206,79 @@
   html.dark-mode .flashcard-explanation {
     color: #b0b0b0 !important;
   }
+
+  @media print {
+    .flashcards-container {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .flashcards-list {
+      display: block !important;
+    }
+
+    .flashcards-list .flashcard-card,
+    .flashcards-list .flashcard-card.active {
+      display: block !important;
+      margin-bottom: 30px !important;
+      page-break-inside: avoid;
+      border: 1px solid #eee !important;
+      padding: 15px !important;
+      text-align: left !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .flashcard-card .flashcard-question {
+      font-size: 1.2em !important;
+      margin-bottom: 10px !important;
+      min-height: auto !important;
+      justify-content: flex-start !important;
+      border-bottom: 1px solid #f0f0f0 !important;
+      padding-bottom: 5px !important;
+    }
+
+    .flashcard-card .flashcard-question::before {
+      content: "Q: ";
+      font-weight: bold;
+    }
+
+    .flashcard-card .flashcard-answer-container,
+    .flashcard-card .flashcard-answer-container.hidden {
+      display: block !important;
+      margin-top: 10px !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      animation: none !important;
+    }
+
+    .flashcard-card .flashcard-answer::before {
+      content: "A: ";
+      font-weight: bold;
+    }
+
+    .flashcard-answer {
+      color: #000 !important;
+      font-weight: bold !important;
+    }
+
+    .flashcard-explanation {
+      color: #333 !important;
+      font-size: 0.9em !important;
+    }
+
+    .flashcards-container .quiz-progress-bar,
+    .flashcards-container .flashcard-actions,
+    .flashcards-container .flashcards-results,
+    .flashcards-container .show-answer-btn,
+    .flashcards-container .assessment-buttons {
+      display: none !important;
+    }
+  }
 </style>
 
 <script>
