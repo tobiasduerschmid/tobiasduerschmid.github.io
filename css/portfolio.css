@@ -18,7 +18,8 @@ section {
 /* Dynamic adjustment styles handled via JS to be instant */
 #blog-content-wrapper,
 #sebook-content-wrapper {
-	margin-top: 45px; /* Default height for 1-row navbar */
+	margin-top: 45px;
+	/* Default height for 1-row navbar */
 }
 
 /* Global Link Styles */
@@ -328,36 +329,30 @@ a.thumbnail {
 	top: 0;
 }
 
-/* Bibliography and Citation Links */
 .bib-link,
+a.citation,
 a.citation {
-	text-decoration: none;
+	color: black !important;
+	text-decoration: underline !important;
 	transition: all 0.2s ease;
 	border-radius: 4px;
-	text-decoration: underline !important;
 }
 
 .bib-link {
-	color: #2774AE;
-	/* Orange */
 	display: block;
 	padding: 5px 10px;
 	margin: 0 -10px;
 }
 
 a.citation {
-	color: #2774AE !important;
 	padding: 1px 0 !important;
 	margin: 0 !important;
-	font-weight: 100;
 }
 
 .bib-link:hover,
 a.citation:hover {
-	color: #2774AE !important;
-	/* UCLA Blue */
 	background-color: #FFD100 !important;
-	text-decoration: underline !important;
+	color: #2774AE !important;
 }
 
 .bibliography {
@@ -369,6 +364,8 @@ a.citation:hover {
 	margin-bottom: 12px;
 	transition: background-color 0.5s ease;
 	border-radius: 4px;
+	color: #2774AE;
+	/* Ensure non-link references are also blue */
 }
 
 .bibliography li:target {
@@ -489,13 +486,20 @@ html.dark-mode mark {
 }
 
 html.dark-mode a.citation {
-	color: #fff !important;
+	color: #2774AE !important;
 }
 
 html.dark-mode a.citation:hover {
-	color: #FFD100 !important;
-	background-color: #005587 !important;
+	color: #fff !important;
+	background-color: #2774AE !important;
+}
 
+html.dark-mode .bib-link {
+	color: #2774AE !important;
+}
+
+html.dark-mode .bibliography li {
+	color: #2774AE;
 }
 
 /* Sidebar Dark Mode */
