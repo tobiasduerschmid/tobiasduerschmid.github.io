@@ -1,0 +1,373 @@
+{% comment %}
+  Interactive Flashcard Fragment
+  Usage: {% include flashcards.html id="study_tips" %}
+  Data source: _data/flashcards/{{ include.id }}.yml
+{% endcomment %}
+
+{% assign flashcard_data = site.data.flashcards[include.id] %}
+
+{% if flashcard_data %}
+<div class="flashcards-container" id="flashcards-{{ include.id }}" data-quiz-id="{{ include.id }}">
+  <div class="quiz-header">
+    <h3>{{ flashcard_data.title }}</h3>
+    <p>{{ flashcard_data.description }}</p>
+    <div class="quiz-progress-bar">
+      <div class="progress-fill" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <div class="flashcards-list">
+    {% for card in flashcard_data.cards %}
+    <div class="flashcard-card" data-card-index="{{ forloop.index0 }}" id="flash-{{ include.id }}-{{ forloop.index0 }}">
+      <div class="flashcard-question">{{ card.question }}</div>
+      
+      <div class="flashcard-answer-container hidden">
+        <div class="flashcard-answer">{{ card.answer | markdownify }}</div>
+        <div class="flashcard-explanation">{{ card.explanation | markdownify }}</div>
+      </div>
+
+      <div class="flashcard-actions">
+        <button class="show-answer-btn">Show Answer</button>
+        <div class="assessment-buttons hidden">
+          <button class="assess-btn correct-btn" title="I got it right!">✔</button>
+          <button class="assess-btn incorrect-btn" title="I missed it">✖</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="flashcards-results hidden">
+    <div class="results-content">
+      <h4>Session Complete!</h4>
+      <div class="score-display">
+        Your Score: <span class="current-score">0</span>/<span class="total-cards">{{ flashcard_data.cards | size }}</span>
+      </div>
+      <p class="score-summary">Keep practicing to improve your recall!</p>
+      <div class="results-actions">
+        <button class="restart-btn">Restart Session</button>
+        <button class="review-btn hidden">Review Incorrect Cards</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .flashcards-container {
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 32px 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .flashcard-card {
+    display: none;
+    animation: fadeIn 0.4s ease;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .flashcard-card.active {
+    display: block;
+  }
+
+  .flashcard-question {
+    font-size: 1.4em;
+    font-weight: 600;
+    margin-bottom: 30px;
+    color: #1a1a1a;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flashcard-answer-container {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-top: 3px solid #FFD100;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .flashcard-answer {
+    font-size: 1.2em;
+    color: #2774AE;
+    margin-bottom: 12px;
+  }
+
+  .flashcard-answer strong, .flashcard-answer b {
+    font-weight: 800 !important;
+  }
+
+  .flashcard-explanation {
+    font-size: 1em;
+    color: #666;
+    line-height: 1.5;
+  }
+
+  .flashcard-actions {
+    margin-top: 30px;
+  }
+
+  .show-answer-btn, .restart-btn, .review-btn {
+    background: #2774AE;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .show-answer-btn:hover, .restart-btn:hover, .review-btn:hover {
+    background: #1e5c8a;
+  }
+
+  .assessment-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .assess-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .assess-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .correct-btn {
+    background: #28a745;
+  }
+
+  .correct-btn:hover {
+    background: #218838;
+  }
+
+  .incorrect-btn {
+    background: #dc3545;
+  }
+
+  .incorrect-btn:hover {
+    background: #c82333;
+  }
+
+  .flashcards-results {
+    text-align: center;
+    padding: 32px 0;
+  }
+
+  /* Dark Mode */
+  html.dark-mode .flashcards-container {
+    background-color: #1a1a1a !important;
+    border-color: #333 !important;
+    color: #e0e0e0 !important;
+  }
+
+  html.dark-mode .flashcard-question {
+    color: #ffffff !important;
+  }
+
+  html.dark-mode .flashcard-answer-container {
+    background-color: #252525 !important;
+    border-top-color: #FFD100 !important;
+  }
+
+  html.dark-mode .flashcard-answer {
+    color: #FFD100 !important;
+  }
+
+  html.dark-mode .flashcard-explanation {
+    color: #b0b0b0 !important;
+  }
+</style>
+
+<script>
+(function() {
+  const fcId = "{{ include.id }}";
+  const container = document.getElementById(`flashcards-${fcId}`);
+  if (!container) return;
+
+  const progressBar = container.querySelector('.progress-fill');
+  const resultsArea = container.querySelector('.flashcards-results');
+  const scoreDisplay = container.querySelector('.current-score');
+  const reviewBtn = container.querySelector('.review-btn');
+  const restartBtn = container.querySelector('.restart-btn');
+  const listContainer = container.querySelector('.flashcards-list');
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function initFlashcards() {
+    const cards = Array.from(listContainer.querySelectorAll('.flashcard-card'));
+    shuffleArray(cards);
+    
+    listContainer.innerHTML = '';
+    cards.forEach((card, idx) => {
+      card.classList.remove('active');
+      if (idx === 0) card.classList.add('active');
+      listContainer.appendChild(card);
+      
+      // Reset card state
+      card.querySelector('.flashcard-answer-container').classList.add('hidden');
+      card.querySelector('.show-answer-btn').classList.remove('hidden');
+      card.querySelector('.assessment-buttons').classList.add('hidden');
+    });
+
+    return cards;
+  }
+
+  let cards = initFlashcards();
+  let currentStep = 0;
+  let score = 0;
+  let incorrectIndices = [];
+  let isReviewMode = false;
+  let reviewQueue = [];
+  let reviewStep = 0;
+
+  function updateProgress() {
+    const total = cards.length;
+    let progress;
+    if (isReviewMode) {
+      progress = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
+    } else {
+      progress = (currentStep / total) * 100;
+    }
+    progressBar.style.width = `${progress}%`;
+  }
+
+  function showCard(index) {
+    cards.forEach(c => c.classList.remove('active'));
+    cards[index].classList.add('active');
+    updateProgress();
+  }
+
+  function handleShowAnswer(e) {
+    const btn = e.target.closest('.show-answer-btn');
+    if (!btn) return;
+    const card = btn.closest('.flashcard-card');
+    card.querySelector('.flashcard-answer-container').classList.remove('hidden');
+    btn.classList.add('hidden');
+    card.querySelector('.assessment-buttons').classList.remove('hidden');
+  }
+
+  function handleAssessment(correct, card) {
+    if (correct) {
+      score++;
+    } else {
+      incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+    }
+    nextCard();
+  }
+
+  function nextCard() {
+    if (isReviewMode) {
+      reviewStep++;
+      if (reviewStep < reviewQueue.length) {
+        const nextIdx = reviewQueue[reviewStep];
+        resetCard(nextIdx);
+        showCard(nextIdx);
+      } else {
+        finishSession();
+      }
+    } else {
+      currentStep++;
+      if (currentStep < cards.length) {
+        showCard(currentStep);
+      } else {
+        finishSession();
+      }
+    }
+  }
+
+  function resetCard(index) {
+    const card = cards[index];
+    card.querySelector('.flashcard-answer-container').classList.add('hidden');
+    card.querySelector('.show-answer-btn').classList.remove('hidden');
+    card.querySelector('.assessment-buttons').classList.add('hidden');
+  }
+
+  function finishSession() {
+    cards.forEach(c => c.classList.remove('active'));
+    resultsArea.classList.remove('hidden');
+    scoreDisplay.textContent = score;
+    progressBar.style.width = '100%';
+
+    if (incorrectIndices.length > 0) {
+      reviewBtn.classList.remove('hidden');
+    } else {
+      reviewBtn.classList.add('hidden');
+    }
+  }
+
+  // Event Listeners
+  container.addEventListener('click', e => {
+    const target = e.target;
+    if (target.closest('.show-answer-btn')) {
+      handleShowAnswer(e);
+    } else if (target.closest('.correct-btn')) {
+      handleAssessment(true, target.closest('.flashcard-card'));
+    } else if (target.closest('.incorrect-btn')) {
+      handleAssessment(false, target.closest('.flashcard-card'));
+    } else if (target.closest('.restart-btn')) {
+      restartSession();
+    } else if (target.closest('.review-btn')) {
+      startReview();
+    }
+  });
+
+  function restartSession() {
+    currentStep = 0;
+    score = 0;
+    incorrectIndices = [];
+    reviewQueue = [];
+    isReviewMode = false;
+    resultsArea.classList.add('hidden');
+    cards = initFlashcards();
+    showCard(0);
+  }
+
+  function startReview() {
+    isReviewMode = true;
+    reviewQueue = [...incorrectIndices];
+    incorrectIndices = [];
+    reviewStep = 0;
+    resultsArea.classList.add('hidden');
+    
+    const firstReviewIdx = reviewQueue[0];
+    resetCard(firstReviewIdx);
+    showCard(firstReviewIdx);
+  }
+
+})();
+</script>
+{% else %}
+<div class="quiz-error">Flashcard data not found for ID: {{ include.id }}</div>
+{% endif %}
