@@ -4,10 +4,7 @@ layout: sebook
 ---
 
 AI Audio Summary: 
-<audio controls>    
-    <source src="/SEBook/process/scrum.m4a" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
+{% include audio_player.html src="/SEBook/process/scrum.m4a" %}
 
 
 While many organizations claim to be "Agile", the vast majority (roughly 63%) implement the Scrum framework. 
@@ -23,10 +20,7 @@ To make empiricism actionable, Scrum rests on three core pillars:
 
 # Scrum Roles
 AI Audio Summary: 
-<audio controls>    
-    <source src="/SEBook/process/scrum_roles.m4a" type="audio/mpeg">
-    Your browser does not support the audio element.
-</audio>
+{% include audio_player.html src="/SEBook/process/scrum_roles.m4a" %}
 
 Scrum defines three specific roles that are intentionally designed to exist in tension to ensure both speed and quality:
 
