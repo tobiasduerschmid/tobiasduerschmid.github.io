@@ -1,7 +1,7 @@
 {% comment %}
-  Interactive Quiz Include
-  Usage: {% include quiz.html id="ai_fundamentals" %}
-  Data source: _data/quizzes/{{ include.id }}.yml
+Interactive Quiz Include
+Usage: {% include quiz.html id="ai_fundamentals" %}
+Data source: _data/quizzes/{{ include.id }}.yml
 {% endcomment %}
 
 {% assign quiz_data = site.data.quizzes[include.id] %}
@@ -18,7 +18,8 @@
 
   <div class="quiz-questions">
     {% for q in quiz_data.questions %}
-    <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}" id="q-{{ include.id }}-{{ forloop.index0 }}">
+    <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
+      id="q-{{ include.id }}-{{ forloop.index0 }}">
       <div class="question-text">{{ q.question }}</div>
       <div class="quiz-options">
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
@@ -42,7 +43,8 @@
     <div class="results-content">
       <h4>Quiz Complete!</h4>
       <div class="score-display">
-        Your Score: <span class="current-score">0</span>/<span class="total-questions">{{ quiz_data.questions | size }}</span>
+        Your Score: <span class="current-score">0</span>/<span class="total-questions">{{ quiz_data.questions | size
+          }}</span>
       </div>
       <div class="results-actions">
         <button class="restart-btn">Restart Quiz</button>
@@ -59,7 +61,7 @@
     border-radius: 12px;
     padding: 12px;
     margin: 12px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     font-family: 'Inter', sans-serif;
   }
 
@@ -93,8 +95,15 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .question-text {
@@ -166,7 +175,9 @@
     text-transform: uppercase;
   }
 
-  .next-btn, .restart-btn, .review-btn {
+  .next-btn,
+  .restart-btn,
+  .review-btn {
     background: #2774AE;
     color: white;
     border: none;
@@ -178,7 +189,9 @@
     transition: background 0.2s;
   }
 
-  .next-btn:hover, .restart-btn:hover, .review-btn:hover {
+  .next-btn:hover,
+  .restart-btn:hover,
+  .review-btn:hover {
     background: #1e5c8a;
   }
 
@@ -211,10 +224,10 @@
       margin-bottom: 30px;
     }
 
-    .quiz-progress-bar, 
-    .next-btn, 
-    .restart-btn, 
-    .review-btn, 
+    .quiz-progress-bar,
+    .next-btn,
+    .restart-btn,
+    .review-btn,
     .quiz-results {
       display: none !important;
     }
@@ -253,196 +266,203 @@
 </style>
 
 <script>
-(function() {
-  const quizId = "{{ include.id }}";
-  const container = document.getElementById(`quiz-${quizId}`);
-  if (!container) return;
+  (function () {
+    const quizId = "{{ include.id }}";
+    const container = document.getElementById(`quiz-${quizId}`);
+    if (!container) return;
 
-  const progressBar = container.querySelector('.progress-fill');
-  const resultsArea = container.querySelector('.quiz-results');
-  const scoreDisplay = container.querySelector('.current-score');
-  const reviewBtn = container.querySelector('.review-btn');
-  const restartBtn = container.querySelector('.restart-btn');
-  const questionsContainer = container.querySelector('.quiz-questions');
+    const progressBar = container.querySelector('.progress-fill');
+    const resultsArea = container.querySelector('.quiz-results');
+    const scoreDisplay = container.querySelector('.current-score');
+    const reviewBtn = container.querySelector('.review-btn');
+    const restartBtn = container.querySelector('.restart-btn');
+    const questionsContainer = container.querySelector('.quiz-questions');
 
-  function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
-
-  // Shuffle Questions
-  const questionCards = Array.from(questionsContainer.querySelectorAll('.quiz-question-card'));
-  shuffleArray(questionCards);
-  
-  // Clear container to avoid duplication
-  questionsContainer.innerHTML = '';
-  
-  // Re-append shuffled cards and set the first one as active
-  questionCards.forEach((card, idx) => {
-    if (idx === 0) card.classList.add('active');
-    else card.classList.remove('active');
-    questionsContainer.appendChild(card);
-  });
-
-  // Shuffle Options for each card and update labels
-  questionCards.forEach(card => {
-    const optionsContainer = card.querySelector('.quiz-options');
-    const options = Array.from(optionsContainer.querySelectorAll('.quiz-option'));
-    shuffleArray(options);
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    options.forEach((opt, idx) => {
-      optionsContainer.appendChild(opt);
-      const label = opt.querySelector('.option-label');
-      if (label) label.textContent = alphabet[idx];
-    });
-  });
-
-  const cards = container.querySelectorAll('.quiz-question-card');
-  let currentStep = 0;
-  let score = 0;
-  let incorrectIndices = [];
-  let isReviewMode = false;
-  let reviewQueue = [];
-  let reviewStep = 0;
-
-  function updateProgress() {
-    const total = cards.length;
-    let progress;
-    if (isReviewMode) {
-      // In review mode, progress shows how much of the original quiz is solved
-      progress = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
-    } else {
-      progress = (currentStep / total) * 100;
-    }
-    progressBar.style.width = `${progress}%`;
-  }
-
-  function showQuestion(index) {
-    cards.forEach(c => c.classList.remove('active'));
-    cards[index].classList.add('active');
-    updateProgress();
-  }
-
-  function handleOptionClick(e) {
-    const option = e.currentTarget;
-    const card = option.closest('.quiz-question-card');
-    const options = card.querySelectorAll('.quiz-option');
-    const explanation = card.querySelector('.quiz-explanation');
-    const isCorrect = option.dataset.correct === option.dataset.index;
-    const questionIndex = parseInt(card.dataset.questionIndex);
-
-    // Disable all options
-    options.forEach(opt => opt.setAttribute('disabled', 'true'));
-
-    if (isCorrect) {
-      option.classList.add('correct');
-      score++;
-    } else {
-      option.classList.add('incorrect');
-      // Highlight the correct one
-      const correctOption = Array.from(options).find(opt => opt.dataset.index === option.dataset.correct);
-      if (correctOption) correctOption.classList.add('correct');
-      incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
-    }
-
-    explanation.classList.remove('hidden');
-    
-    // Smooth scroll to explanation if needed
-    explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  function scrollToTop() {
-    const yOffset = -20; // Extra padding
-    const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
-    window.scrollTo({ top: y, behavior: 'smooth' });
-  }
-
-  function nextQuestion() {
-    if (isReviewMode) {
-      reviewStep++;
-      if (reviewStep < reviewQueue.length) {
-        showQuestion(reviewQueue[reviewStep]);
-        resetCard(reviewQueue[reviewStep]);
-        scrollToTop();
-      } else {
-        finishQuiz();
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
       }
-    } else {
-      currentStep++;
-      if (currentStep < cards.length) {
-        showQuestion(currentStep);
-        scrollToTop();
+      return array;
+    }
+
+    // Shuffle Questions
+    const questionCards = Array.from(questionsContainer.querySelectorAll('.quiz-question-card'));
+    shuffleArray(questionCards);
+
+    // Clear container to avoid duplication
+    questionsContainer.innerHTML = '';
+
+    // Re-append shuffled cards and set the first one as active
+    questionCards.forEach((card, idx) => {
+      if (idx === 0) card.classList.add('active');
+      else card.classList.remove('active');
+      questionsContainer.appendChild(card);
+    });
+
+    // Shuffle Options for each card and update labels
+    questionCards.forEach(card => {
+      const optionsContainer = card.querySelector('.quiz-options');
+      const options = Array.from(optionsContainer.querySelectorAll('.quiz-option'));
+      shuffleArray(options);
+      const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      options.forEach((opt, idx) => {
+        optionsContainer.appendChild(opt);
+        const label = opt.querySelector('.option-label');
+        if (label) label.textContent = alphabet[idx];
+      });
+    });
+
+    const cards = container.querySelectorAll('.quiz-question-card');
+    let currentStep = 0;
+    let score = 0;
+    let incorrectIndices = [];
+    let isReviewMode = false;
+    let reviewQueue = [];
+    let reviewStep = 0;
+
+    function updateProgress() {
+      const total = cards.length;
+      let progress;
+      if (isReviewMode) {
+        // In review mode, progress shows how much of the original quiz is solved
+        progress = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
       } else {
-        finishQuiz();
+        progress = (currentStep / total) * 100;
+      }
+      progressBar.style.width = `${progress}%`;
+    }
+
+    function showQuestion(index) {
+      cards.forEach(c => c.classList.remove('active'));
+      cards[index].classList.add('active');
+      updateProgress();
+    }
+
+    function handleOptionClick(e) {
+      const option = e.currentTarget;
+      const card = option.closest('.quiz-question-card');
+      const options = card.querySelectorAll('.quiz-option');
+      const explanation = card.querySelector('.quiz-explanation');
+      const isCorrect = option.dataset.correct === option.dataset.index;
+      const questionIndex = parseInt(card.dataset.questionIndex);
+
+      // Disable all options
+      options.forEach(opt => opt.setAttribute('disabled', 'true'));
+
+      if (isCorrect) {
+        option.classList.add('correct');
+        score++;
+      } else {
+        option.classList.add('incorrect');
+        // Highlight the correct one
+        const correctOption = Array.from(options).find(opt => opt.dataset.index === option.dataset.correct);
+        if (correctOption) correctOption.classList.add('correct');
+        incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+      }
+
+      explanation.classList.remove('hidden');
+
+      // Smooth scroll to explanation if needed
+      explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function scrollToTop() {
+      const yOffset = -20; // Extra padding
+      const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+
+    function nextQuestion() {
+      if (isReviewMode) {
+        reviewStep++;
+        if (reviewStep < reviewQueue.length) {
+          showQuestion(reviewQueue[reviewStep]);
+          resetCard(reviewQueue[reviewStep]);
+          scrollToTop();
+        } else {
+          finishQuiz();
+        }
+      } else {
+        currentStep++;
+        if (currentStep < cards.length) {
+          showQuestion(currentStep);
+          scrollToTop();
+        } else {
+          finishQuiz();
+        }
       }
     }
-  }
 
-  function resetCard(index) {
-    const card = cards[index];
-    const options = card.querySelectorAll('.quiz-option');
-    const explanation = card.querySelector('.quiz-explanation');
-    
-    options.forEach(opt => {
-      opt.classList.remove('correct', 'incorrect');
-      opt.removeAttribute('disabled');
-    });
-    explanation.classList.add('hidden');
-  }
+    function resetCard(index) {
+      const card = cards[index];
+      const options = card.querySelectorAll('.quiz-option');
+      const explanation = card.querySelector('.quiz-explanation');
 
-  function finishQuiz() {
-    cards.forEach(c => c.classList.remove('active'));
-    resultsArea.classList.remove('hidden');
-    scoreDisplay.textContent = score;
-    progressBar.style.width = '100%';
-    scrollToTop();
-
-    if (incorrectIndices.length > 0) {
-      reviewBtn.classList.remove('hidden');
-    } else {
-      reviewBtn.classList.add('hidden');
+      options.forEach(opt => {
+        opt.classList.remove('correct', 'incorrect');
+        opt.removeAttribute('disabled');
+      });
+      explanation.classList.add('hidden');
     }
-  }
 
-  function startReview() {
-    isReviewMode = true;
-    reviewQueue = [...incorrectIndices];
-    incorrectIndices = []; // Reset to catch any still incorrect ones
-    reviewStep = 0;
-    resultsArea.classList.add('hidden');
-    showQuestion(reviewQueue[0]);
-    resetCard(reviewQueue[0]);
-    scrollToTop();
-  }
+    function finishQuiz() {
+      cards.forEach(c => c.classList.remove('active'));
+      resultsArea.classList.remove('hidden');
+      scoreDisplay.textContent = score;
+      progressBar.style.width = '100%';
+      scrollToTop();
 
-  function restartQuiz() {
-    currentStep = 0;
-    score = 0;
-    incorrectIndices = [];
-    reviewQueue = [];
-    isReviewMode = false;
-    resultsArea.classList.add('hidden');
-    cards.forEach((_, i) => resetCard(i));
-    showQuestion(0);
-    scrollToTop();
-  }
+      const summary = resultsArea.querySelector('.score-summary');
+      if (score === cards.length) {
+        summary.textContent = "Come back later to improve your recall!";
+      } else {
+        summary.textContent = "Keep practicing to improve your recall!";
+      }
 
-  // Event Listeners
-  container.querySelectorAll('.quiz-option').forEach(btn => {
-    btn.addEventListener('click', handleOptionClick);
-  });
+      if (incorrectIndices.length > 0) {
+        reviewBtn.classList.remove('hidden');
+      } else {
+        reviewBtn.classList.add('hidden');
+      }
+    }
 
-  container.querySelectorAll('.next-btn').forEach(btn => {
-    btn.addEventListener('click', nextQuestion);
-  });
+    function startReview() {
+      isReviewMode = true;
+      reviewQueue = [...incorrectIndices];
+      incorrectIndices = []; // Reset to catch any still incorrect ones
+      reviewStep = 0;
+      resultsArea.classList.add('hidden');
+      showQuestion(reviewQueue[0]);
+      resetCard(reviewQueue[0]);
+      scrollToTop();
+    }
 
-  reviewBtn.addEventListener('click', startReview);
-  restartBtn.addEventListener('click', restartQuiz);
+    function restartQuiz() {
+      currentStep = 0;
+      score = 0;
+      incorrectIndices = [];
+      reviewQueue = [];
+      isReviewMode = false;
+      resultsArea.classList.add('hidden');
+      cards.forEach((_, i) => resetCard(i));
+      showQuestion(0);
+      scrollToTop();
+    }
 
-})();
+    // Event Listeners
+    container.querySelectorAll('.quiz-option').forEach(btn => {
+      btn.addEventListener('click', handleOptionClick);
+    });
+
+    container.querySelectorAll('.next-btn').forEach(btn => {
+      btn.addEventListener('click', nextQuestion);
+    });
+
+    reviewBtn.addEventListener('click', startReview);
+    restartBtn.addEventListener('click', restartQuiz);
+
+  })();
 </script>
 {% else %}
 <div class="quiz-error">Quiz data not found for ID: {{ include.id }}</div>
