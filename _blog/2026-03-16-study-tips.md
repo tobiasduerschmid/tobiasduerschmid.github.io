@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "Evidence-Based Study Tips for College Students"
+title: "[DRAFT] Evidence-Based Study Tips for College Students"
 date: 2026-03-16
 category: "For Students"
 permalink: /blog/evidence-based-study-tips-for-college-students/
