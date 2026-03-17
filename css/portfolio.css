@@ -23,7 +23,9 @@ section {
 }
 
 /* Global Link Styles */
-a {
+/* Use a:visited too — browsers have a special high-priority rule for visited state */
+a,
+a:visited {
 	color: #2774AE;
 	text-decoration: underline;
 	transition: all 0.2s ease;
