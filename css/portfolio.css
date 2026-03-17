@@ -352,7 +352,7 @@ a.citation {
 .bib-link:hover,
 a.citation:hover {
 	background-color: #FFD100 !important;
-	color: #2774AE !important;
+	color: #000 !important;
 }
 
 .bibliography {
@@ -367,10 +367,6 @@ a.citation:hover {
 	color: #2774AE !important;
 }
 
-.bibliography li:target {
-	background-color: #FFD100 !important;
-	color: black !important;
-}
 
 /* Dark Mode Styles */
 html.dark-mode {
