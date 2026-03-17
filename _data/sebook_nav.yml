@@ -115,6 +115,8 @@ topics:
         url: /SEBook/development_practices/modern_code_review.html
       - name: Prompt Engineering
         url: /SEBook/development_practices/promptengineering.html
+      - name: Code Smells
+        url: /SEBook/development_practices/code_smells.html
       - name: Refactoring
         url: /SEBook/development_practices/refactoring.html
       - name: Top Down Code Comprehension
