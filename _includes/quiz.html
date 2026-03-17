@@ -18,7 +18,7 @@
 
   <div class="quiz-questions">
     {% for q in quiz_data.questions %}
-    <div class="quiz-question-card {% if forloop.first %}active{% endif %}" data-question-index="{{ forloop.index0 }}" id="q-{{ include.id }}-{{ forloop.index0 }}">
+    <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}" id="q-{{ include.id }}-{{ forloop.index0 }}">
       <div class="question-text">{{ q.question }}</div>
       <div class="quiz-options">
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
@@ -254,13 +254,49 @@
   const container = document.getElementById(`quiz-${quizId}`);
   if (!container) return;
 
-  const cards = container.querySelectorAll('.quiz-question-card');
   const progressBar = container.querySelector('.progress-fill');
   const resultsArea = container.querySelector('.quiz-results');
   const scoreDisplay = container.querySelector('.current-score');
   const reviewBtn = container.querySelector('.review-btn');
   const restartBtn = container.querySelector('.restart-btn');
+  const questionsContainer = container.querySelector('.quiz-questions');
 
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // Shuffle Questions
+  const questionCards = Array.from(questionsContainer.querySelectorAll('.quiz-question-card'));
+  shuffleArray(questionCards);
+  
+  // Clear container to avoid duplication
+  questionsContainer.innerHTML = '';
+  
+  // Re-append shuffled cards and set the first one as active
+  questionCards.forEach((card, idx) => {
+    if (idx === 0) card.classList.add('active');
+    else card.classList.remove('active');
+    questionsContainer.appendChild(card);
+  });
+
+  // Shuffle Options for each card and update labels
+  questionCards.forEach(card => {
+    const optionsContainer = card.querySelector('.quiz-options');
+    const options = Array.from(optionsContainer.querySelectorAll('.quiz-option'));
+    shuffleArray(options);
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    options.forEach((opt, idx) => {
+      optionsContainer.appendChild(opt);
+      const label = opt.querySelector('.option-label');
+      if (label) label.textContent = alphabet[idx];
+    });
+  });
+
+  const cards = container.querySelectorAll('.quiz-question-card');
   let currentStep = 0;
   let score = 0;
   let incorrectIndices = [];
@@ -303,8 +339,9 @@
     } else {
       option.classList.add('incorrect');
       // Highlight the correct one
-      options[option.dataset.correct].classList.add('correct');
-      incorrectIndices.push(questionIndex);
+      const correctOption = Array.from(options).find(opt => opt.dataset.index === option.dataset.correct);
+      if (correctOption) correctOption.classList.add('correct');
+      incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
     }
 
     explanation.classList.remove('hidden');
