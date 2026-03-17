@@ -41,7 +41,7 @@ layout: blog
           <div style="display: flex; align-items: center; gap: 10px;">
             <span class="toggle-label">Read Aloud</span>
             <label class="switch">
-              <input type="checkbox" id="readAloudToggle" aria-label="Toggle read aloud">
+              <input type="checkbox" id="readAloudToggle" checked aria-label="Toggle read aloud">
               <span class="slider round"></span>
             </label>
           </div>
@@ -301,7 +301,7 @@ layout: blog
 
       // --- Read Aloud Toggle Logic ---
       const savedReadAloud = getCookie('read-aloud');
-      const isReadAloud = savedReadAloud === 'true'; // Default is false (hidden)
+      const isReadAloud = savedReadAloud !== 'false'; // Default is true (ON)
 
       if (readAloudToggle) {
         readAloudToggle.checked = isReadAloud;
