@@ -111,9 +111,9 @@ Adopting all of the strategies listed above is nearly impossible if you operate 
 
 ## Quiz & Conclusion 
 
-{% include quiz.html id="effective_learning" %}
-
 {% include flashcards.html id="study_tips" %}
+
+{% include quiz.html id="effective_learning" %}
 
 ==After getting foundational knowledge, now it's time for you to apply these tips in the course you are taking (especially the more challenging courses)! Try to slowly integrate these learning practices into your study sessions and let them guide your approach to learning!==
 
