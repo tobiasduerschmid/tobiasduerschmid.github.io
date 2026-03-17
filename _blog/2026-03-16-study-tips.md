@@ -5,7 +5,7 @@ date: 2026-03-16
 category: "For Students"
 permalink: /blog/evidence-based-study-tips-for-college-students/
 image: "/img/learning.jpg"
-image_alt_text: "Student working on a laptop and whiteboard"
+image_alt_text: "Students working on a laptop and whiteboard"
 audio: "/files/study_tips.mp3"
 ---
 
