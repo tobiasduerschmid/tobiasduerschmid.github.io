@@ -106,7 +106,7 @@ Adopting all of the strategies listed above is nearly impossible if you operate 
 
 
 *   **Actionable Advice:** ==Pay attention to your internal monologue and add the word "yet"==. Change "I don't understand this" to "I don't understand this yet". When you hit a roadblock, do not view it as a limit of your natural ability. View it as a cue that you need to adjust your study strategies, increase your effort, or seek out office hours. If you've done well in a class, don't assume you're a "natural" at the subject. Instead, recognize that your success is the result of effective strategies and consistent effort, which you can replicate in more challenging courses. And if you struggle too much, don't be afraid to ask for help and visit office hours or email your instructor(s). All of them are always willing to help, *especially* if you let them know how hard you've tried already.
-*   **Computer Science Examples:** There is a pervasive and toxic myth in software engineering that some people are just naturally born with a "coding gene". This is entirely false. When your C program segfaults for the fiftieth time, or you are trying to untangle a messy `git rebase`, it is easy to feel like an imposter. A fixed mindset tells you to give up because you aren't cut out for computer science. A growth mindset reminds you that every single expert developer started exactly where you are. Bugs and compiler errors are not indictments of your intelligence. They are simply the mechanism by which you build mastery. **You are entirely capable of conquering these complex systems, provided you embrace the resilient, effortful struggle required to learn them and you are not afraid to ask for help when you need it.**
+*   **Computer Science Examples:** There is a pervasive and toxic myth in software engineering that some people are just naturally born with a "coding gene". This is entirely false. When your C program segfaults for the fiftieth time, or you are trying to untangle a messy `git rebase`, it is easy to feel like an imposter. A fixed mindset tells you to give up because you aren't cut out for computer science. A growth mindset reminds you that every single expert developer started exactly where you are. Bugs and compiler errors are not indictments of your intelligence. They are simply the mechanism by which you build mastery. ==You are entirely capable of conquering these complex systems, provided you embrace the resilient, effortful struggle required to learn them and you are not afraid to ask for help when you need it.==
 
 
 ## Conclusion & Quiz
@@ -115,3 +115,5 @@ If you would like to know more about the science behind this post, I recommend r
 
 
 {% include quiz.html id="effective_learning" %}
+
+==After getting foundational knowledge, now it's time for you to apply this in the next course you are taking! Try to slowly integrate them into your study sessions and let them guide your approach to learning!==
