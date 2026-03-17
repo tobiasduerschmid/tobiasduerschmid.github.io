@@ -193,8 +193,8 @@
     &__volume-slider {
         -webkit-appearance: none;
         appearance: none;
-        width: 40px !important;
-        flex: 0 0 40px !important;
+        width: 80px !important;
+        flex: 0 0 80px !important;
         height: 2px;
         background: rgba(255, 255, 255, 0.15);
         border-radius: 1px;
@@ -225,12 +225,12 @@
             &.is-active { color: #2774AE; border-color: #2774AE; }
         }
 
-        .cap__skip-btn, .cap__ctrl-btn, .cap__vol-icon {
-            color: rgba(0, 0, 0, 0.45);
+        .cap__skip-btn, .cap__ctrl-btn, .cap__vol-icon, .cap__play-btn {
+            color: rgba(0, 0, 0, 0.65);
             &:hover { color: #000; }
         }
 
-        .cap__time { color: rgba(0, 0, 0, 0.4); }
+        .cap__time { color: rgba(0, 0, 0, 0.5); }
         .cap__progress, .cap__volume-slider { background: rgba(0, 0, 0, 0.1); }
     }
 

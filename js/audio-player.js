@@ -56,9 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
         setVolIcon(audio.volume);
 
         // ── Metadata / time ──────────────────────────────────────
-        audio.addEventListener('loadedmetadata', () => {
-            timeDur.textContent = fmt(audio.duration);
-            // Re-apply speed on load (some browsers reset playbackRate on src change)
+        function updateDuration() {
+            if (!isNaN(audio.duration) && audio.duration > 0) {
+                timeDur.textContent = fmt(audio.duration);
+            }
+        }
+
+        audio.addEventListener('loadedmetadata', updateDuration);
+
+        // Handle cases where metadata is already loaded (e.g. cached files)
+        if (audio.readyState >= 1) {
+            updateDuration();
+        }
+
+        // Re-apply speed on load (some browsers reset playbackRate on src change)
+        audio.addEventListener('loadstart', () => {
             const currentSpeed = localStorage.getItem(STORAGE_KEY_SPEED);
             if (currentSpeed) audio.playbackRate = parseFloat(currentSpeed);
         });
