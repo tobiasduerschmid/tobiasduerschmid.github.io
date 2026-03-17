@@ -6,11 +6,10 @@ category: "For Students"
 permalink: /blog/evidence-based-study-tips-for-college-students/
 image: "/img/learning.jpg"
 image_alt_text: "Student working on a laptop and whiteboard"
+audio: "/files/study_tips.mp3"
 ---
 
 **The Quick Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
-
-{% include audio_player.html src="/files/study_tips.mp3" %}
 
 If you are like many college students, your primary study strategies probably consist of rereading your textbooks or lecture slides, highlighting key passages, and cramming the day before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: ==rereading text and massed practice (cramming) are by far the *least productive* study strategies==.
 These common methods merely boost short-term memory and create an "illusion of knowing" {% cite BjorkBjork1992 benjamin1998mismeasure %}.

@@ -47,6 +47,10 @@ layout: blog
           </div>
         </div>
 
+        {% if page.audio %}
+        {% include audio_player.html src=page.audio %}
+        {% endif %}
+
         <div class="blog-post-content">
           {{ content }}
         </div>

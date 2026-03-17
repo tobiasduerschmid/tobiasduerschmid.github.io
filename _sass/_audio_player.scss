@@ -192,7 +192,9 @@
 
     &__volume-slider {
         -webkit-appearance: none;
-        width: 40px;
+        appearance: none;
+        width: 40px !important;
+        flex: 0 0 40px !important;
         height: 2px;
         background: rgba(255, 255, 255, 0.15);
         border-radius: 1px;
@@ -201,6 +203,7 @@
 
         &::-webkit-slider-thumb {
             -webkit-appearance: none;
+            appearance: none;
             width: 10px;
             height: 10px;
             background: #fff;
