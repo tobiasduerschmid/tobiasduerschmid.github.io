@@ -16,11 +16,11 @@ These common methods merely boost short-term memory and create an "illusion of k
 When you read a text multiple times, the material becomes familiar, and you mistake this perceptual fluency for true mastery of the subject.
 ==To build deep, durable knowledge, you need to embrace "desirable difficulties"—short-term impediments that make learning feel harder and slower, but ultimately trigger cognitive processes that optimize long-term retention and the transfer of skills== {% cite Bjork1994a bjork2011making %}.
 
-This post is intended to teach you **actionable, research-backed study tips** on how to learn effectively, with **specific examples for computer science students** to **enable everyone to get the most out of their college experience**!
+This post is intended to teach you actionable, research-backed study tips on how to learn effectively, with specific examples for computer science students to enable everyone to get the most out of their college experience!
 Interestingly, despite actually **measurably learning *more* effectively**, learners who study based on these techniques **often subjectively believe they have learned *less* effectively**, because short-term performance is often perceived to be worse due to the additional struggle of desirable difficulties {% cite Kornell2008learning Simon2001metacognition %}.
 This illustrates that **the *perception* of learning is not always aligned with the *actual* learning**. Actual learning is what predicts your *future* performance.
 What you observe is your *past* performance.
-==The study tips in this post are empirically validated to be effective and should help you pick learning strategies that *actually work* rather than just *feel like they work*==.
+**The study tips in this post are empirically validated to be effective and should help you pick learning strategies that *actually work* rather than just *feel like they work**.
 
 
 Fun fact: a significant portion of the research presented in this post was actually done at UCLA by the [Bjork Learning and Forgetting Lab](https://bjorklab.psych.ucla.edu/research/)!
