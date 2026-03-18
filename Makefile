@@ -23,7 +23,9 @@ run: check
 
 pdf: build
 	npm run pdf
-	node scripts/merge_pdfs.js
+	node scripts/merge_pdfs.js CS35L
+	node scripts/merge_pdfs.js CS130
+	node scripts/merge_pdfs.js 'SE Book'
 
 clean-latex:
 	cd latex && rm -f *.aux *.bbl *.blg *.log *.out *.toc main.pdf

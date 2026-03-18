@@ -5,18 +5,26 @@ const yaml = require('js-yaml');
 const { chromium } = require('@playwright/test');
 const { execSync } = require('child_process');
 
+const book = process.argv[2] || 'SE Book';
+
+var nav_path
+if (book == 'SE Book') {
+  nav_path = 'sebook'
+} else {
+  nav_path = book
+}
 async function mergePDFs() {
   console.log('Starting Unified SE Book PDF merge (preserving accessibility tags)...');
 
-  const navPath = path.join(__dirname, '../_data/sebook_nav.yml');
+  const navPath = path.join(__dirname, `../_data/${nav_path}_nav.yml`);
   const navContent = fs.readFileSync(navPath, 'utf8');
   const nav = yaml.load(navContent);
 
   const pdfsDir = path.join(__dirname, '../pdfs');
-  const outputPath = path.join(pdfsDir, 'SEBook_Full.pdf');
-  const tempMergedPath = path.join(pdfsDir, 'SEBook_Full_base.pdf');
-  const stampsPath = path.join(pdfsDir, 'SEBook_Full_stamps.pdf');
-  const introPath = path.join(pdfsDir, '_intro.pdf');
+  const outputPath = path.join(pdfsDir, book + '_Full.pdf');
+  const tempMergedPath = path.join(pdfsDir, book + '_Full_base.pdf');
+  const stampsPath = path.join(pdfsDir, book + '_Full_stamps.pdf');
+  const introPath = path.join(pdfsDir, '_' + book + '_intro.pdf');
 
   // 1. Identify all individual PDFs in order from nav
   const pdfEntries = [];
@@ -47,7 +55,7 @@ async function mergePDFs() {
   // 2. Generate Initial Intro to get page count
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  
+
   async function generateIntro(tocData) {
     const categories = Array.from(new Set(tocData.map(e => e.category)));
     const tocHtml = `
@@ -74,10 +82,10 @@ async function mergePDFs() {
         </head>
         <body>
           <div class="title-page">
-            <h1>SE Book</h1>
+            <h1>${book}</h1>
             <div class="subtitle">Collection of topics for students in software engineering courses.</div>
             <div class="author">Tobias Dürschmid</div>
-            <div class="date">Unified Edition • ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+            <div class="date">${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
           </div>
           <div class="toc-container">
             <div class="toc-header">Table of Contents</div>
@@ -147,7 +155,7 @@ async function mergePDFs() {
     const page = stampDoc.addPage([612, 792]);
     if (i >= actualIntroPageCount) {
       const fontSize = 10;
-      const color = rgb(0.4, 0.4, 0.4); 
+      const color = rgb(0.4, 0.4, 0.4);
       const { width } = page.getSize();
       page.drawLine({
         start: { x: marginPt, y: marginPt - 10 },
@@ -155,7 +163,7 @@ async function mergePDFs() {
         thickness: 0.5,
         color: rgb(0.93, 0.93, 0.93),
       });
-      page.drawText('SE Book - Tobias Dürschmid', {
+      page.drawText(`${book} - Tobias Dürschmid`, {
         x: marginPt,
         y: marginPt - 25,
         size: fontSize,
