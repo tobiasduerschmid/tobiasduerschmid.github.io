@@ -4,6 +4,7 @@ install:
 	bundle install
 	npm install
 	npx playwright install
+	brew install cpdf # This needs to update for other OS
 
 build:
 	bundle exec jekyll build --incremental

@@ -137,10 +137,10 @@ async function mergePDFs() {
   await generateIntro(tocEntries);
   await browser.close();
 
-  // 4. Merge with qpdf (Using the tagged intro as base)
-  console.log('Merging tagged PDFs with qpdf...');
-  const qpdfMergeCommand = `qpdf "${introPath}" --pages . "${uniquePdfEntries.map(e => e.path).join('" "')}" -- "${tempMergedPath}"`;
-  execSync(qpdfMergeCommand);
+  // 4. Merge with cpdf (Preserves accessibility tags and internal links)
+  console.log('Merging tagged PDFs with cpdf...');
+  const cpdfMergeCommand = `cpdf -merge -process-struct-trees "${introPath}" ${uniquePdfEntries.map(e => `"${e.path}"`).join(' ')} -o "${tempMergedPath}"`;
+  execSync(cpdfMergeCommand);
 
   // 5. Create "Stamps" (page numbers)
   console.log('Generating page number overlay...');
@@ -186,7 +186,15 @@ async function mergePDFs() {
   // 6. Final Overlay
   console.log('Final overlay...');
   const qpdfOverlayCommand = `qpdf "${tempMergedPath}" --overlay "${stampsPath}" -- "${outputPath}"`;
-  execSync(qpdfOverlayCommand);
+  try {
+    execSync(qpdfOverlayCommand);
+  } catch (e) {
+    if (e.status === 3) {
+      console.warn('qpdf finished with warnings (status 3), which is normal for complex merges.');
+    } else {
+      throw e;
+    }
+  }
 
   // Cleanup
   [introPath, tempMergedPath, stampsPath].forEach(p => {
