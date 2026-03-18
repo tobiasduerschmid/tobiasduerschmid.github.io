@@ -30,6 +30,6 @@ clean-latex:
 
 latex:
 	pipenv run python3 ./scripts/md_to_latex.py
-	cd latex && pdflatex main.tex && biber main && pdflatex main.tex && pdflatex main.tex
+	cd latex && pdflatex -interaction=nonstopmode main.tex && biber main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
 
 all: test run

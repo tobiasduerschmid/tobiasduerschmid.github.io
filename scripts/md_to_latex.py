@@ -238,26 +238,39 @@ def md_to_latex(md_content, base_url):
 
     # ── 2. Headers — MUST come before list capture so headings adjacent to
     #        list blocks are never consumed by the list block regex. ──────────
-    # User requested shift: # -> subsection, ## -> subsubsection, ### -> paragraph
+    # User requested shift: # -> subsection, ## -> subsubsection, ### -> subsubsection, #### -> paragraph
     # We also add a \label to each header for cross-referencing.
     page_id = (base_url.replace('/SEBook/', '').replace('.html', '').replace('/', '_').strip('_')) or 'root'
+    
+    # Store used labels for this file to make them unique
+    file_labels = set()
 
     def header_to_latex(match):
         level_mark = match.group(1)
         title_text = match.group(2)
         
         # Determine LaTeX command
-        if level_mark == '###': cmd = 'PARAGRAPH'
-        elif level_mark == '##': cmd = 'SUBSUBSECTION'
-        else: cmd = 'SUBSECTION'
+        if   level_mark == '####': cmd = 'PARAGRAPH'
+        elif level_mark == '###':  cmd = 'SUBSUBSECTION'
+        elif level_mark == '##':   cmd = 'SUBSUBSECTION'
+        else:                      cmd = 'SUBSECTION'
         
         # Generate slugified label
         slug = re.sub(r'[^a-zA-Z0-9]+', '-', title_text.lower()).strip('-')
         full_label = f"{page_id}##{slug}"
         
+        # Ensure uniqueness within the file
+        if full_label in file_labels:
+            i = 1
+            while f"{full_label}-{i}" in file_labels:
+                i += 1
+            full_label = f"{full_label}-{i}"
+        
+        file_labels.add(full_label)
+        
         return f'LXCMD{cmd}{{{title_text}}}LXCMDLABEL{{{full_label}}}'
 
-    md_content = re.sub(r'^(#{1,3})\s+(.+)$', header_to_latex, md_content, flags=re.MULTILINE)
+    md_content = re.sub(r'^(#{1,4})\s+(.+)$', header_to_latex, md_content, flags=re.MULTILINE)
 
     # ── 3. Capture list blocks (raw markdown), replace with placeholder ───────
     # Key insight: we store the raw markdown lines here (before any escaping
