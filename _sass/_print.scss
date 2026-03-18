@@ -261,4 +261,12 @@
     border-radius: 4px !important;
     margin: 20px 0 !important;
   }
+
+  // Bibliography & References clipping fix
+  .bib-link {
+    display: block !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 15px !important;
+    overflow: visible !important;
+  }
 }
