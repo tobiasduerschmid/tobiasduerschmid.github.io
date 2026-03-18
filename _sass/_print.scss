@@ -42,23 +42,23 @@
   }
 
   #main-content {
+    display: block !important; // Flex can cause clipping in some PDF engines
     width: 100% !important;
-    padding: 20px !important; // Match site's padding
-    margin: 40px 0 0 0 !important; // Push down to clear the running header
-    flex: none !important;
+    padding: 20px !important; 
+    margin: 40px 0 0 0 !important; 
     background-color: white !important;
-    color: #111 !important; // Match $text-color
+    color: #111 !important; 
     overflow: visible !important;
   }
 
   // Typography - Identical to Light Mode (_base.scss)
   body {
-    font-family: Helvetica, Arial, sans-serif !important; // Match $base-font-family
-    font-size: 16px !important; // Match $base-font-size
-    line-height: 1.5 !important; // Match $base-line-height
+    font-family: Helvetica, Arial, sans-serif !important; 
+    font-size: 16px !important; 
+    line-height: 1.5 !important; 
     font-weight: 500 !important;
-    color: #111 !important; // Match $text-color
-    background-color: #fdfdfd !important; // Match $background-color
+    color: #111 !important; 
+    background-color: #fdfdfd !important; 
     overflow: visible !important;
     margin: 0 !important;
   }
@@ -83,15 +83,19 @@
   .post-title,
   .quiz-header h3 {
     font-family: 'Inter', sans-serif !important;
-    color: #2774AE !important; // Match $brand-color
+    color: #2774AE !important; 
     font-weight: 700 !important;
     -webkit-text-stroke: 1px black !important;
     text-shadow: 1.5px 1.5px 3px rgba(0, 0, 0, 0.4) !important;
     page-break-after: avoid;
-    margin-top: 0 !important;
+    margin-top: 20px !important; 
     margin-bottom: 30px !important;
-    padding-left: 2px !important; // Buffer for stroke
+    padding-top: 15px !important; // Massive buffer for top of letters/stroke
+    padding-bottom: 5px !important;
+    padding-left: 2px !important; 
     overflow: visible !important;
+    display: block !important;
+    line-height: 1.4 !important;
   }
 
   h1 {
