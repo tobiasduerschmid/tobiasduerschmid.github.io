@@ -1,304 +1,307 @@
 <nav class="sebook-sidebar-nav">
   <ul class="sebook-nav-list">
     {% for topic in site.data.sebook_nav.topics %}
-      <li class="sebook-nav-item {% if topic.subtopics %}has-subtopics{% endif %}">
-        <a href="{{ topic.url }}" class="sebook-nav-link">
-          {% if topic.icon %}
-            <span class="sebook-nav-icon">{{ topic.icon }}</span>
-          {% endif %}
-          <span class="sebook-nav-text">{{ topic.name }}</span>
-          {% if topic.subtopics %}
-            <span class="sebook-nav-toggle">›</span>
-          {% endif %}
-        </a>
-        
+    <li class="sebook-nav-item {% if topic.subtopics %}has-subtopics{% endif %}">
+      <a href="{{ topic.url }}" class="sebook-nav-link">
+        {% if topic.icon %}
+        <span class="sebook-nav-icon">{{ topic.icon }}</span>
+        {% endif %}
+        <span class="sebook-nav-text">{{ topic.name }}</span>
         {% if topic.subtopics %}
-          <ul class="sebook-nav-sublist">
-            {% for subtopic in topic.subtopics %}
-              <li class="sebook-nav-subitem {% if subtopic.items %}has-subitems{% endif %}">
-                <a href="{{ subtopic.url }}" class="sebook-nav-sublink">
-                  <span class="sebook-nav-text">{{ subtopic.name }}</span>
-                  {% if subtopic.items %}
-                    <span class="sebook-nav-toggle">›</span>
-                  {% endif %}
-                </a>
-                
-                {% if subtopic.items %}
-                  <ul class="sebook-nav-itemlist">
-                    {% for item in subtopic.items %}
-                      <li class="sebook-nav-item-leaf">
-                        <a href="{{ item.url }}" class="sebook-nav-itemlink">
-                          {{ item.name }}
-                        </a>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-              </li>
+        <span class="sebook-nav-toggle">›</span>
+        {% endif %}
+      </a>
+
+      {% if topic.subtopics %}
+      <ul class="sebook-nav-sublist">
+        {% for subtopic in topic.subtopics %}
+        <li class="sebook-nav-subitem {% if subtopic.items %}has-subitems{% endif %}">
+          <a href="{{ subtopic.url }}" class="sebook-nav-sublink">
+            <span class="sebook-nav-text">{{ subtopic.name }}</span>
+            {% if subtopic.items %}
+            <span class="sebook-nav-toggle">›</span>
+            {% endif %}
+          </a>
+
+          {% if subtopic.items %}
+          <ul class="sebook-nav-itemlist">
+            {% for item in subtopic.items %}
+            <li class="sebook-nav-item-leaf">
+              <a href="{{ item.url }}" class="sebook-nav-itemlink">
+                {{ item.name }}
+              </a>
+            </li>
             {% endfor %}
           </ul>
-        {% endif %}
-      </li>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
     {% endfor %}
   </ul>
 </nav>
 
 <style>
-.sebook-sidebar-nav {
-  background-color: #f5f5f5;
-  color: #333333;
-  padding: 0;
-  margin: 0;
-  font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
-}
+  .sebook-sidebar-nav {
+    background-color: #f5f5f5;
+    color: #333333;
+    padding: 0;
+    margin: 0;
+    font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
 
-.sebook-nav-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+  .sebook-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
 
-.sebook-nav-item {
-  margin: 0;
-  border-bottom: 1px solid #ddd;
-}
+  .sebook-nav-item {
+    margin: 0;
+    border-bottom: 1px solid #ddd;
+  }
 
-.sebook-nav-link {
-  display: flex;
-  align-items: center;
-  padding: 12px 15px;
-  color: #333333;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-size: 15px;
-  font-weight: 500;
-  width: 100%;
-  box-sizing: border-box;
-}
+  .sebook-nav-link,
+  .sebook-nav-link:visited {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: 2774AE;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 15px;
+    font-weight: 500;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-.sebook-nav-link:hover {
-  background-color: #e8e8e8;
-}
+  .sebook-nav-link:hover {
+    background-color: #e8e8e8;
+  }
 
-.sebook-nav-icon {
-  margin-right: 10px;
-  font-size: 18px;
-}
+  .sebook-nav-icon {
+    margin-right: 10px;
+    font-size: 18px;
+  }
 
-.sebook-nav-text {
-  flex: 1;
-}
+  .sebook-nav-text {
+    flex: 1;
+  }
 
-.sebook-nav-toggle {
-  margin-left: 10px;
-  transition: transform 0.2s;
-}
+  .sebook-nav-toggle {
+    margin-left: 10px;
+    transition: transform 0.2s;
+  }
 
-.sebook-nav-item.has-subtopics .sebook-nav-toggle.open {
-  transform: rotate(90deg);
-}
+  .sebook-nav-item.has-subtopics .sebook-nav-toggle.open {
+    transform: rotate(90deg);
+  }
 
-/* Subtopics */
-.sebook-nav-sublist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: none;
-  background-color: #eeeeee;
-}
+  /* Subtopics */
+  .sebook-nav-sublist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+    background-color: #eeeeee;
+  }
 
-.sebook-nav-item.has-subtopics.open > .sebook-nav-sublist {
-  display: block;
-}
+  .sebook-nav-item.has-subtopics.open>.sebook-nav-sublist {
+    display: block;
+  }
 
-.sebook-nav-subitem {
-  margin: 0;
-  border-bottom: 1px solid #ddd;
-}
+  .sebook-nav-subitem {
+    margin: 0;
+    border-bottom: 1px solid #ddd;
+  }
 
-.sebook-nav-sublink {
-  display: flex;
-  align-items: center;
-  padding: 10px 30px;
-  color: #333333;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-size: 14px;
-  font-weight: normal;
-  width: 100%;
-  box-sizing: border-box;
-}
+  .sebook-nav-sublink,
+  .sebook-nav-sublink:visited {
+    display: flex;
+    align-items: center;
+    padding: 10px 30px;
+    color: #2774AE;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    font-weight: normal;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-.sebook-nav-sublink:hover {
-  background-color: #d8d8d8;
-}
+  .sebook-nav-sublink:hover {
+    background-color: #d8d8d8;
+  }
 
-.sebook-nav-toggle {
-  margin-left: 10px;
-}
+  .sebook-nav-toggle {
+    margin-left: 10px;
+  }
 
-.sebook-nav-subitem.has-subitems .sebook-nav-toggle.open {
-  transform: rotate(90deg);
-}
+  .sebook-nav-subitem.has-subitems .sebook-nav-toggle.open {
+    transform: rotate(90deg);
+  }
 
-/* Items (third level) */
-.sebook-nav-itemlist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: none;
-  background-color: #e0e0e0;
-}
+  /* Items (third level) */
+  .sebook-nav-itemlist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+    background-color: #e0e0e0;
+  }
 
-.sebook-nav-subitem.has-subitems.open > .sebook-nav-itemlist {
-  display: block;
-}
+  .sebook-nav-subitem.has-subitems.open>.sebook-nav-itemlist {
+    display: block;
+  }
 
-.sebook-nav-item-leaf {
-  margin: 0;
-}
+  .sebook-nav-item-leaf {
+    margin: 0;
+  }
 
-.sebook-nav-itemlink {
-  display: block;
-  padding: 8px 50px;
-  color: #333333;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  font-size: 13px;
-  font-weight: normal;
-  width: 100%;
-  box-sizing: border-box;
-}
+  .sebook-nav-itemlink,
+  .sebook-nav-itemlink:visited {
+    display: block;
+    padding: 8px 50px;
+    color: #2774AE;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 13px;
+    font-weight: normal;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-.sebook-nav-itemlink:hover {
-  background-color: #c8c8c8;
-  color: #2774AE;
-}
+  .sebook-nav-itemlink:hover {
+    background-color: #c8c8c8;
+    color: #2774AE;
+  }
 
-/* Highlight current page */
-.sebook-nav-link.current,
-.sebook-nav-sublink.current,
-.sebook-nav-itemlink.current {
-  background-color: #2774AE;
-  color: white;
-  font-weight: 600;
-}
+  /* Highlight current page */
+  .sebook-nav-link.current,
+  .sebook-nav-sublink.current,
+  .sebook-nav-itemlink.current {
+    background-color: #2774AE;
+    color: white;
+    font-weight: 600;
+  }
 
-.sebook-nav-link.current:hover,
-.sebook-nav-sublink.current:hover,
-.sebook-nav-itemlink.current:hover {
-  background-color: #1a5a9f;
-}
+  .sebook-nav-link.current:hover,
+  .sebook-nav-sublink.current:hover,
+  .sebook-nav-itemlink.current:hover {
+    background-color: #1a5a9f;
+  }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const currentPath = window.location.pathname;
-  let foundCurrent = false;
-  let currentTopicItem = null;
-  let currentSubtopicItem = null;
-  
-  // First, close all sections
-  document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(function(item) {
-    item.classList.remove('open');
-    const toggle = item.querySelector('.sebook-nav-toggle');
-    if (toggle) {
-      toggle.classList.remove('open');
-    }
-  });
-  
-  document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(function(item) {
-    item.classList.remove('open');
-    const toggle = item.querySelector('.sebook-nav-toggle');
-    if (toggle) {
-      toggle.classList.remove('open');
-    }
-  });
-  
-  // Find and highlight the current page
-  document.querySelectorAll('.sebook-nav-link').forEach(function(link) {
-    if (link.getAttribute('href') === currentPath) {
-      link.classList.add('current');
-      currentTopicItem = link.closest('.sebook-nav-item');
-      foundCurrent = true;
-    }
-  });
-  
-  if (!foundCurrent) {
-    document.querySelectorAll('.sebook-nav-sublink').forEach(function(link) {
+  document.addEventListener('DOMContentLoaded', function () {
+    const currentPath = window.location.pathname;
+    let foundCurrent = false;
+    let currentTopicItem = null;
+    let currentSubtopicItem = null;
+
+    // First, close all sections
+    document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(function (item) {
+      item.classList.remove('open');
+      const toggle = item.querySelector('.sebook-nav-toggle');
+      if (toggle) {
+        toggle.classList.remove('open');
+      }
+    });
+
+    document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(function (item) {
+      item.classList.remove('open');
+      const toggle = item.querySelector('.sebook-nav-toggle');
+      if (toggle) {
+        toggle.classList.remove('open');
+      }
+    });
+
+    // Find and highlight the current page
+    document.querySelectorAll('.sebook-nav-link').forEach(function (link) {
       if (link.getAttribute('href') === currentPath) {
         link.classList.add('current');
-        const subitem = link.closest('.sebook-nav-subitem');
-        currentSubtopicItem = subitem;
-        currentTopicItem = subitem.closest('.sebook-nav-item');
+        currentTopicItem = link.closest('.sebook-nav-item');
         foundCurrent = true;
       }
     });
-  }
-  
-  if (!foundCurrent) {
-    document.querySelectorAll('.sebook-nav-itemlink').forEach(function(link) {
-      if (link.getAttribute('href') === currentPath) {
-        link.classList.add('current');
-        const itemLeaf = link.closest('.sebook-nav-item-leaf');
-        const subitem = itemLeaf.closest('.sebook-nav-subitem');
-        currentSubtopicItem = subitem;
-        currentTopicItem = subitem.closest('.sebook-nav-item');
-        foundCurrent = true;
+
+    if (!foundCurrent) {
+      document.querySelectorAll('.sebook-nav-sublink').forEach(function (link) {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('current');
+          const subitem = link.closest('.sebook-nav-subitem');
+          currentSubtopicItem = subitem;
+          currentTopicItem = subitem.closest('.sebook-nav-item');
+          foundCurrent = true;
+        }
+      });
+    }
+
+    if (!foundCurrent) {
+      document.querySelectorAll('.sebook-nav-itemlink').forEach(function (link) {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('current');
+          const itemLeaf = link.closest('.sebook-nav-item-leaf');
+          const subitem = itemLeaf.closest('.sebook-nav-subitem');
+          currentSubtopicItem = subitem;
+          currentTopicItem = subitem.closest('.sebook-nav-item');
+          foundCurrent = true;
+        }
+      });
+    }
+
+    // Open only the current topic and its subtopics
+    if (currentTopicItem) {
+      if (currentTopicItem.classList.contains('has-subtopics')) {
+        currentTopicItem.classList.add('open');
+        const toggle = currentTopicItem.querySelector('.sebook-nav-toggle');
+        if (toggle) {
+          toggle.classList.add('open');
+        }
+      }
+    }
+
+    // Open the current subtopic if it has items
+    if (currentSubtopicItem) {
+      if (currentSubtopicItem.classList.contains('has-subitems')) {
+        currentSubtopicItem.classList.add('open');
+        const toggle = currentSubtopicItem.querySelector('.sebook-nav-toggle');
+        if (toggle) {
+          toggle.classList.add('open');
+        }
+      }
+    }
+
+    // Toggle handlers: Top level items
+    document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(function (link) {
+      const toggle = link.querySelector('.sebook-nav-toggle');
+      if (toggle) {
+        toggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const parent = link.parentElement;
+          parent.classList.toggle('open');
+          this.classList.toggle('open');
+        });
       }
     });
-  }
-  
-  // Open only the current topic and its subtopics
-  if (currentTopicItem) {
-    if (currentTopicItem.classList.contains('has-subtopics')) {
-      currentTopicItem.classList.add('open');
-      const toggle = currentTopicItem.querySelector('.sebook-nav-toggle');
+
+    // Toggle handlers: Subtopic items
+    document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(function (link) {
+      const toggle = link.querySelector('.sebook-nav-toggle');
       if (toggle) {
-        toggle.classList.add('open');
+        toggle.addEventListener('click', function (e) {
+          e.stopPropagation();
+          e.preventDefault();
+          const parent = link.parentElement;
+          parent.classList.toggle('open');
+          this.classList.toggle('open');
+        });
       }
-    }
-  }
-  
-  // Open the current subtopic if it has items
-  if (currentSubtopicItem) {
-    if (currentSubtopicItem.classList.contains('has-subitems')) {
-      currentSubtopicItem.classList.add('open');
-      const toggle = currentSubtopicItem.querySelector('.sebook-nav-toggle');
-      if (toggle) {
-        toggle.classList.add('open');
-      }
-    }
-  }
-  
-  // Toggle handlers: Top level items
-  document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(function(link) {
-    const toggle = link.querySelector('.sebook-nav-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const parent = link.parentElement;
-        parent.classList.toggle('open');
-        this.classList.toggle('open');
-      });
-    }
+    });
   });
-  
-  // Toggle handlers: Subtopic items
-  document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(function(link) {
-    const toggle = link.querySelector('.sebook-nav-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        const parent = link.parentElement;
-        parent.classList.toggle('open');
-        this.classList.toggle('open');
-      });
-    }
-  });
-});
 </script>

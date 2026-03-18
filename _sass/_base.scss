@@ -118,14 +118,13 @@ h6 {
 /**
  * Links
  */
-a {
+a,
+a:visited {
     color: $brand-color;
     text-decoration: none;
+}
 
-    &:visited {
-        color: $brand-color;
-    }
-
+a {
     &:hover {
         color: $text-color;
         text-decoration: underline;

@@ -274,8 +274,9 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 	font-weight: 100;
 }
 
-a.author {
-	color: black
+a.author,
+a.author:visited {
+	color: black;
 }
 
 .navbar-header a {
@@ -324,7 +325,8 @@ section#teaching li {
 	padding: 0 0 9px;
 }
 
-a.thumbnail {
+a.thumbnail,
+a.thumbnail:visited {
 	color: #fff;
 }
 
@@ -485,7 +487,9 @@ a.thumbnail {
 }
 
 .bib-link,
-a.citation {
+.bib-link:visited,
+a.citation,
+a.citation:visited {
 	color: #000 !important;
 	text-decoration: underline !important;
 	transition: all 0.2s ease;
@@ -625,7 +629,8 @@ html.dark-mode .blog-post-content {
 	color: #e0e0e0;
 }
 
-html.dark-mode a {
+html.dark-mode a,
+html.dark-mode a:visited {
 	color: #FFD100;
 }
 
@@ -640,7 +645,8 @@ html.dark-mode mark {
 	color: #fff;
 }
 
-html.dark-mode a.citation {
+html.dark-mode a.citation,
+html.dark-mode a.citation:visited {
 	color: #FFF !important;
 }
 
@@ -650,7 +656,8 @@ html.dark-mode a.citation:hover {
 	background-color: #005587 !important;
 }
 
-html.dark-mode .bib-link {
+html.dark-mode .bib-link,
+html.dark-mode .bib-link:visited {
 	color: #FFF !important;
 }
 
@@ -669,8 +676,11 @@ html.dark-mode .sebook-sidebar-nav {
 }
 
 html.dark-mode .sebook-nav-link,
+html.dark-mode .sebook-nav-link:visited,
 html.dark-mode .sebook-nav-sublink,
-html.dark-mode .sebook-nav-itemlink {
+html.dark-mode .sebook-nav-sublink:visited,
+html.dark-mode .sebook-nav-itemlink,
+html.dark-mode .sebook-nav-itemlink:visited {
 	color: #e0e0e0 !important;
 }
 
@@ -808,7 +818,8 @@ html.dark-mode .blog-post-excerpt {
 	color: white !important;
 }
 
-html.dark-mode .blog-post-title a {
+html.dark-mode .blog-post-title a,
+html.dark-mode .blog-post-title a:visited {
 	color: #FFD100 !important;
 }
 
