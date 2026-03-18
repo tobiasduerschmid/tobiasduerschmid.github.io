@@ -263,15 +263,16 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 
 .title {
 	color: black;
-	font-weight: 500;
+	font-weight: bold;
 }
 
 .author {
-	font-weight: 100;
+	font-weight: 400;
 }
 
 a.author,
 a.author:visited {
+	text-decoration: underline;
 	color: black;
 }
 
