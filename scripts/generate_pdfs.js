@@ -83,6 +83,7 @@ async function generatePDFs() {
         format: 'Letter',
         printBackground: true,
         displayHeaderFooter: true,
+        tagged: true, // Generate tagged (accessible) PDF
         headerTemplate: `
           <div style="font-size: 12pt; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; margin: 0 2cm; padding-bottom: 5px; border-bottom: 0.5px solid #eee; display: flex; justify-content: space-between; -webkit-print-color-adjust: exact;">
             <span style="font-weight: 700; color: #2774AE;">${category}</span>
