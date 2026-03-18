@@ -30,19 +30,19 @@ questions:
 
   - question: "Which Git command should you NEVER use on a shared branch because it can permanently overwrite and destroy work pushed by other team members?"
     options:
-      - "git pull"
-      - "git fetch"
-      - "git push -f"
-      - "git merge --squash"
+      - "`git pull`"
+      - "`git fetch`"
+      - "`git push -f`"
+      - "`git merge --squash`"
     correct_index: 2
     explanation: "Force-pushing overwrites the remote repository's history to exactly match yours, which will permanently delete any new commits made by your collaborators."
 
   - question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
     options:
-      - "git cherry-pick"
-      - "git bisect"
-      - "git revert"
-      - "git stash"
+      - "`git cherry-pick`"
+      - "`git bisect`"
+      - "`git revert`"
+      - "`git stash`"
     correct_index: 3
     explanation: "`git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
 
@@ -57,10 +57,10 @@ questions:
 
   - question: "Which Git command utilizes a binary search through your commit history to help you pinpoint the exact commit that introduced a bug?"
     options:
-      - "git blame"
-      - "git bisect"
-      - "git diff"
-      - "git cherry-pick"
+      - "`git blame`"
+      - "`git bisect`"
+      - "`git diff`"
+      - "`git cherry-pick`"
     correct_index: 1
     explanation: "`git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
 
@@ -98,11 +98,11 @@ questions:
   - type: multiple
     question: "Which of the following commands are primarily used to review changes, history, or differences in a Git repository? (Select all that apply)"
     options:
-      - "git log"
-      - "git diff"
-      - "git show"
-      - "git push"
-      - "git init"
+      - "`git log`"
+      - "`git diff`"
+      - "`git show`"
+      - "`git push`"
+      - "`git init`"
     correct_indices: [0, 1, 2]
     explanation: "`git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
 
