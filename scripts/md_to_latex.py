@@ -128,6 +128,7 @@ def escape_and_restore(text):
             'section':       'section',
             'subsection':    'subsection',
             'subsubsection': 'subsubsection',
+            'paragraph':     'paragraph',
             'hl':            'hl',
             'cite':          'cite',
             'textbold':      'textbf',
@@ -230,9 +231,11 @@ def md_to_latex(md_content, base_url):
 
     # ── 2. Headers — MUST come before list capture so headings adjacent to
     #        list blocks are never consumed by the list block regex. ──────────
-    md_content = re.sub(r'^###\s+(.+)$', r'LXCMDSUBSUBSECTION{\1}', md_content, flags=re.MULTILINE)
-    md_content = re.sub(r'^##\s+(.+)$',  r'LXCMDSUBSECTION{\1}',    md_content, flags=re.MULTILINE)
-    md_content = re.sub(r'^#\s+(.+)$',   r'LXCMDSECTION{\1}',       md_content, flags=re.MULTILINE)
+    # User requested shift: # -> subsection, ## -> subsubsection, ### -> paragraph
+    # The page title itself will be the \section.
+    md_content = re.sub(r'^###\s+(.+)$', r'LXCMDPARAGRAPH{\1}',     md_content, flags=re.MULTILINE)
+    md_content = re.sub(r'^##\s+(.+)$',  r'LXCMDSUBSUBSECTION{\1}', md_content, flags=re.MULTILINE)
+    md_content = re.sub(r'^#\s+(.+)$',   r'LXCMDSUBSECTION{\1}',    md_content, flags=re.MULTILINE)
 
     # ── 3. Capture list blocks (raw markdown), replace with placeholder ───────
     # Key insight: we store the raw markdown lines here (before any escaping
@@ -291,33 +294,52 @@ def md_to_latex(md_content, base_url):
                f'\\end{{lstlisting}}')
         md_content = md_content.replace(f'LXPBLOCKCODE{i}X', lst)
 
-    # ── 8. Section label ─────────────────────────────────────────────────────
+    # ── 8. Section Heading & Label ───────────────────────────────────────────
+    # The page title is the main \section of this file.
     label = (base_url.replace('/SEBook/', '')
                      .replace('.html', '')
                      .replace('/', '_')
                      .strip('_')) or 'root'
-    output = f'\\section{{{escape_latex(title)}}}\\label{{{label}}}\n' + md_content
-
-    return output
+    
+    # We use LXCMDSECTION here so it goes through the restore pipeline 
+    # (though at this point it wouldn't matter much as we're at the end, 
+    # but consistency is good). Actually, simpler to just use final LaTeX.
+    res = f'\\section{{{escape_latex(title)}}}\\label{{{label}}}\n\n' + md_content
+    return res
 
 
 # ---------------------------------------------------------------------------
 # Navigation parser
 # ---------------------------------------------------------------------------
 def parse_nav(nav_data):
-    files = []
-
-    def process_items(items):
-        for item in items:
-            if 'url' in item:
-                files.append(item['url'])
-            if 'subtopics' in item:
-                process_items(item['subtopics'])
-            if 'items' in item:
-                process_items(item['items'])
-
-    process_items(nav_data['topics'])
-    return files
+    """Returns a list of (category_name, [urls]) tuples."""
+    categories = []
+    
+    for topic in nav_data.get('topics', []):
+        cat_name = topic.get('name', 'General')
+        urls = []
+        
+        def collect_urls(items):
+            for item in items:
+                if 'url' in item:
+                    urls.append(item['url'])
+                if 'subtopics' in item:
+                    collect_urls(item['subtopics'])
+                if 'items' in item:
+                    collect_urls(item['items'])
+        
+        if 'url' in topic:
+            urls.append(topic['url'])
+        
+        if 'subtopics' in topic:
+            collect_urls(topic['subtopics'])
+        elif 'items' in topic:
+            collect_urls(topic['items'])
+            
+        if urls:
+            categories.append((cat_name, urls))
+            
+    return categories
 
 
 # ---------------------------------------------------------------------------
@@ -379,41 +401,51 @@ def main():
     with open(NAV_FILE, 'r') as f:
         nav = yaml.safe_load(f)
 
-    urls = parse_nav(nav)
-    translated_files = []
+    categories = parse_nav(nav)
+    
+    # Pre-translate all detected files to keep track of generated filenames
+    url_to_tex = {}
+    for cat_name, urls in categories:
+        for url in urls:
+            md_rel_path = url.replace('/SEBook/', '').replace('.html', '.md')
+            md_abs_path = os.path.join(MD_ROOT, md_rel_path)
+            if os.path.exists(md_abs_path):
+                tex_filename = md_rel_path.replace('.md', '.tex').replace('/', '_')
+                url_to_tex[url] = tex_filename
+                
+                print(f'Translating {md_abs_path}...')
+                with open(md_abs_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                tex_content = md_to_latex(content, url)
+                tex_abs_path = os.path.join(LATEX_DIR, tex_filename)
+                with open(tex_abs_path, 'w', encoding='utf-8') as f:
+                    f.write(tex_content)
+            else:
+                print(f'Warning: {md_abs_path} not found.')
 
-    for url in urls:
-        md_rel_path = url.replace('/SEBook/', '').replace('.html', '.md')
-        md_abs_path = os.path.join(MD_ROOT, md_rel_path)
-        if os.path.exists(md_abs_path):
-            print(f'Translating {md_abs_path}...')
-            with open(md_abs_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            tex_content = md_to_latex(content, url)
-            tex_filename = md_rel_path.replace('.md', '.tex').replace('/', '_')
-            tex_abs_path = os.path.join(LATEX_DIR, tex_filename)
-            with open(tex_abs_path, 'w', encoding='utf-8') as f:
-                f.write(tex_content)
-            translated_files.append(tex_filename)
-        else:
-            print(f'Warning: {md_abs_path} not found.')
-
-    main_tex = f"""\\documentclass{{article}}
+    # Build main.tex
+    main_tex = f"""\\documentclass{{report}}
 {PREAMBLE}
 \\usepackage{{biblatex}}
 \\addbibresource{{{BIB_REF}}}
-\\title{{SEBook}}
-\\author{{Tobias Duerschmid}}
 \\begin{{document}}
-\\maketitle
 \\tableofcontents
 \\clearpage
-
 """
-    for tf in translated_files:
-        main_tex += f"\\include{{{tf.replace('.tex', '')}}}\n"
 
-    main_tex += '\\printbibliography\n'
+    for cat_name, urls in categories:
+        # Avoid empty chapters if translation failed for all URLs
+        translated_in_cat = [url for url in urls if url in url_to_tex]
+        if not translated_in_cat:
+            continue
+            
+        main_tex += f"\n\\chapter{{{cat_name}}}\n"
+        for url in translated_in_cat:
+            tf = url_to_tex[url]
+            main_tex += f"\\input{{{tf.replace('.tex', '')}}}\n"
+
+    main_tex += '\n\\printbibliography\n'
     main_tex += '\\end{document}\n'
 
     with open(os.path.join(LATEX_DIR, 'main.tex'), 'w', encoding='utf-8') as f:
