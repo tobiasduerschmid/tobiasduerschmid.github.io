@@ -90,13 +90,12 @@ async function generatePDFs() {
           </div>`,
         footerTemplate: `
           <div style="font-size: 10pt; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; margin: 0 2cm; padding-top: 5px; border-top: 0.5px solid #eee; display: flex; justify-content: space-between; -webkit-print-color-adjust: exact; color: #666;">
-            <span>SEBook - Tobias Dürschmid</span>
           </div>`,
         margin: {
-          top: '70px',
-          right: '40px',
-          bottom: '70px',
-          left: '40px'
+          top: '2cm',
+          right: '2cm',
+          bottom: '2cm',
+          left: '2cm'
         }
       });
     } catch (error) {

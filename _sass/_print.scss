@@ -6,9 +6,11 @@
     print-color-adjust: exact !important;
   }
 
-  // Set page margins
+  // Set page margins (US Letter is 8.5 x 11 inches)
+  // This reserves the base 2cm margin for the header/footer and content flow
   @page {
-    margin: 1.7cm;
+    margin: 2cm !important;
+    size: letter;
   }
 
   // Hide navigation, sidebars, and UI elements
@@ -41,21 +43,27 @@
 
   #main-content {
     width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    padding: 20px !important; // Match site's padding
+    margin: 40px 0 0 0 !important; // Push down to clear the running header
     flex: none !important;
     background-color: white !important;
-    color: #1a1a1a !important;
+    color: #111 !important; // Match $text-color
+    overflow: visible !important;
   }
 
-  // Typography - Match light mode premium feel
+  // Typography - Identical to Light Mode (_base.scss)
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    background-color: white !important;
-    color: #1a1a1a !important;
-    font-size: 12pt !important;
+    font-family: Helvetica, Arial, sans-serif !important; // Match $base-font-family
+    font-size: 16px !important; // Match $base-font-size
+    line-height: 1.5 !important; // Match $base-line-height
+    font-weight: 500 !important;
+    color: #111 !important; // Match $text-color
+    background-color: #fdfdfd !important; // Match $background-color
+    overflow: visible !important;
+    margin: 0 !important;
   }
 
+  // Headings - Identical to Light Mode HTML View
   h1,
   h2,
   h3,
@@ -63,133 +71,169 @@
   h5,
   h6,
   .post-title,
-  .quiz-header h3,
-  .flashcard-answer {
+  .quiz-header h3 {
     font-family: 'Inter', sans-serif !important;
-    color: #2774AE !important; // UCLA Blue
+    color: #2774AE !important; // Match $brand-color
     font-weight: 700 !important;
+    -webkit-text-stroke: 1px black !important;
+    text-shadow: 1.5px 1.5px 3px rgba(0, 0, 0, 0.4) !important;
     page-break-after: avoid;
-    -webkit-text-stroke: 0.6px #2774AE !important; // Slightly thicker for high-quality feel
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1) !important;
+    margin-top: 0 !important;
+    margin-bottom: 30px !important;
+    padding-left: 2px !important; // Buffer for stroke
+    overflow: visible !important;
+  }
+
+  h1 {
+    font-size: 42px !important;
+    line-height: 1.1 !important;
+  }
+
+  h2 {
+    font-size: 32px !important;
+  }
+
+  h3 {
+    font-size: 26px !important;
+  }
+
+  h4 {
+    font-size: 20px !important;
   }
 
   a,
   a:visited {
     color: #2774AE !important;
-    text-decoration: underline !important;
+    text-decoration: none !important;
   }
 
-  // Components (Quizzes/Flashcards) - High Quality Aesthetics
+  // Code Formatting - Identical to Light Mode (_base.scss)
+  pre,
+  code,
+  .highlight {
+    font-size: 15px !important;
+    background-color: #eef !important;
+    color: #111 !important;
+    border: 1px solid #eee !important;
+    border-radius: 3px !important;
+    -webkit-text-stroke: 1px black !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  pre {
+    padding: 8px 12px !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    margin-bottom: 20px !important;
+  }
+
+  code {
+    padding: 1px 5px !important;
+  }
+
+  pre code {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    -webkit-text-stroke: inherit !important;
+  }
+
+  // Syntax Highlighting - Identical to _syntax-highlighting.scss
+  .highlight {
+    background: #fff !important;
+    -webkit-text-stroke: 0 !important; // Reset stroke for syntax tokens
+
+    * {
+      -webkit-text-stroke: 0 !important; // Deep reset for all tokens
+    }
+
+    .c {
+      color: #998 !important;
+      font-style: italic !important;
+    }
+
+    .k {
+      font-weight: bold !important;
+      color: #111 !important;
+    }
+
+    .o {
+      font-weight: bold !important;
+      color: #111 !important;
+    }
+
+    .s {
+      color: #d14 !important;
+    }
+
+    .na {
+      color: #008080 !important;
+    }
+
+    .nc {
+      color: #458 !important;
+      font-weight: bold !important;
+    }
+
+    .nf {
+      color: #900 !important;
+      font-weight: bold !important;
+    }
+
+    .nt {
+      color: #000080 !important;
+    }
+
+    .nv {
+      color: #008080 !important;
+    }
+
+    .m {
+      color: #099 !important;
+    }
+
+    .mi,
+    .mf,
+    .mh,
+    .mo {
+      color: #099 !important;
+    }
+
+    .s2,
+    .s1,
+    .sb,
+    .sc {
+      color: #d14 !important;
+    }
+  }
+
+  // Components (Quizzes/Flashcards) - High Quality Aesthetics matching HTML
   .quiz-container,
   .flashcards-container {
-    border: none !important;
+    border: 1px solid #eee !important;
     background-color: white !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; // Slightly stronger shadow for depth
     page-break-inside: avoid;
-    font-family: 'Inter', sans-serif !important;
-    margin: 25px 0 !important;
+    margin: 30px 0 !important;
     padding: 25px !important;
-    border-radius: 16px !important;
+    border-radius: 8px !important;
+    overflow: visible !important;
   }
 
   .quiz-option {
-    border: none !important;
     background-color: #f8f9fa !important;
-    color: #1a1a1a !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-    margin-bottom: 10px !important;
+    border: 1px solid #eee !important;
+    margin-bottom: 12px !important;
     padding: 12px 18px !important;
-    border-radius: 8px !important;
+    border-radius: 6px !important;
   }
 
   .flashcard-answer-container {
     background-color: #f8f9fa !important;
-    border-top: 3px solid #FFD100 !important; // UCLA Gold accent - keeping this as a decorative line
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    border-top: 2px solid #FFD100 !important;
     padding: 15px !important;
-    margin-top: 15px !important;
-    border-radius: 0 0 16px 16px !important;
+    margin-top: 20px !important;
   }
-
-  // Ensure code blocks look like light mode and have syntax highlighting
-  pre,
-  .highlight {
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
-    background-color: #eef !important; // Light mode code background
-    color: #1a1a1a !important;
-    border: none !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
-    border-radius: 8px !important;
-    margin: 15px 0 !important;
-    padding: 15px !important;
-  }
-
-  pre code,
-  .highlight code {
-    background-color: transparent !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-  }
-
-  // Sync syntax highlighting colors with _syntax-highlighting.scss
-  .highlight .k,
-  .highlight .kd,
-  .highlight .kr,
-  .highlight .o {
-    color: #000 !important;
-    font-weight: bold !important;
-  }
-
-  // Keywords/Operators
-  .highlight .s,
-  .highlight .s2,
-  .highlight .s1,
-  .highlight .sb,
-  .highlight .sc {
-    color: #d14 !important;
-  }
-
-  // Strings
-  .highlight .c,
-  .highlight .c1,
-  .highlight .cm,
-  .highlight .cs {
-    color: #998 !important;
-    font-style: italic !important;
-  }
-
-  // Comments
-  .highlight .nf,
-  .highlight .nc,
-  .highlight .ne {
-    color: #900 !important;
-    font-weight: bold !important;
-  }
-
-  // Functions/Classes
-  .highlight .mi,
-  .highlight .m,
-  .highlight .mf,
-  .highlight .mh,
-  .highlight .mo {
-    color: #099 !important;
-  }
-
-  // Numbers
-  .highlight .nt {
-    color: #000080 !important;
-  }
-
-  // Tags
-  .highlight .nv,
-  .highlight .na,
-  .highlight .no {
-    color: #008080 !important;
-  }
-
-  // Variables/Attributes
 
   // Layout refinement
   .container {
@@ -197,18 +241,14 @@
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
-  }
-
-  .row {
-    margin: 0 !important;
+    overflow: visible !important;
   }
 
   // Image quality
   img {
     max-width: 100% !important;
     height: auto !important;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12) !important;
-    border-radius: 12px !important;
-    margin: 15px 0 !important;
+    border-radius: 4px !important;
+    margin: 20px 0 !important;
   }
 }

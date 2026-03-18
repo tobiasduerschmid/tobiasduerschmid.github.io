@@ -5,15 +5,15 @@ const yaml = require('js-yaml');
 const { chromium } = require('@playwright/test');
 
 async function mergePDFs() {
-  console.log('Starting Unified SEBook PDF merge...');
-  
+  console.log('Starting Unified SE Book PDF merge...');
+
   const navPath = path.join(__dirname, '../_data/sebook_nav.yml');
   const navContent = fs.readFileSync(navPath, 'utf8');
   const nav = yaml.load(navContent);
-  
+
   const pdfsDir = path.join(__dirname, '../pdfs');
   const outputPath = path.join(pdfsDir, 'SEBook_Full.pdf');
-  
+
   const mergedPdf = await PDFDocument.create();
   const tocEntries = [];
 
@@ -45,7 +45,7 @@ async function mergePDFs() {
 
   // 2. Pre-calculate page counts to build TOC
   // We'll estimate TOC takes 2 pages. Title is 1.
-  let tocPageCount = 2; 
+  let tocPageCount = 2;
   let runningPageNumber = 1 + tocPageCount + 1; // Title(1) + TOC(2)
 
   for (const entry of uniquePdfEntries) {
@@ -99,8 +99,8 @@ async function mergePDFs() {
       </head>
       <body>
         <div class="title-page">
-          <h1>SEBook</h1>
-          <div class="subtitle">Software Engineering Handbook</div>
+          <h1>SE Book</h1>
+          <div class="subtitle">Collection of topics for students in software engineering courses.</div>
           <div class="author">Tobias Dürschmid</div>
           <div class="date">Full Collection • ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
         </div>
@@ -126,8 +126,8 @@ async function mergePDFs() {
 
   await page.setContent(tocHtml);
   // Set margin to 0 for Playwright because we handle it in @page CSS
-  const introPdfBytes = await page.pdf({ 
-    format: 'Letter', 
+  const introPdfBytes = await page.pdf({
+    format: 'Letter',
     printBackground: true,
     margin: { top: 0, right: 0, bottom: 0, left: 0 }
   });
@@ -146,33 +146,53 @@ async function mergePDFs() {
     pages.forEach(p => mergedPdf.addPage(p));
   }
 
-  // 5. Add Global Page Numbers (Bottom Right)
-  const helveticaFont = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
+  // 5. Add Global Page Numbers (Bottom Center-ish with Line)
+  const helveticaFont = await mergedPdf.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
   const totalPages = mergedPdf.getPageCount();
   const allPages = mergedPdf.getPages();
-  
-  // 2cm in points (approx 56.7pt)
-  const marginPt = 56.7; 
 
-  for (let i = 0; i < totalPages; i++) {
+  // 2cm in points (approx 56.7pt)
+  const marginPt = 56.7;
+
+  for (let i = 1; i < totalPages; i++) {
     const page = allPages[i];
     const { width, height } = page.getSize();
-    const pageNumText = `${i + 1} / ${totalPages}`;
     const fontSize = 10;
-    const textWidth = helveticaFont.widthOfTextAtSize(pageNumText, fontSize);
-    
-    page.drawText(pageNumText, {
-      x: width - marginPt - textWidth,
-      y: marginPt / 2, // Slightly higher than the absolute edge
+    const color = rgb(0.0, 0.0, 0.0); // #000
+
+    // Draw the top line (border-top equivalent)
+    page.drawLine({
+      start: { x: marginPt, y: marginPt - 10 },
+      end: { x: width - marginPt, y: marginPt - 10 },
+      thickness: 0.5,
+      color: rgb(0.93, 0.93, 0.93), // #eee
+    });
+
+    // Draw "SEBook - Tobias Dürschmid" (Left)
+    page.drawText('SE Book - Tobias Dürschmid', {
+      x: marginPt,
+      y: marginPt - 25,
       size: fontSize,
       font: helveticaFont,
-      color: rgb(0.4, 0.4, 0.4),
+      color: color,
+    });
+
+    // Draw "Page X of Y" (Right)
+    const pageNumText = `Page ${i} of ${totalPages}`;
+    const textWidth = helveticaFont.widthOfTextAtSize(pageNumText, fontSize);
+    page.drawText(pageNumText, {
+      x: width - marginPt - textWidth,
+      y: marginPt - 25,
+      size: fontSize,
+      font: helveticaFont,
+      color: color,
     });
   }
 
   const finalPdfBytes = await mergedPdf.save();
   fs.writeFileSync(outputPath, finalPdfBytes);
-  
+
   console.log(`Success! Unified PDF created at: ${outputPath}`);
 }
 
