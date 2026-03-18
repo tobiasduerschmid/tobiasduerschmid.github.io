@@ -209,11 +209,10 @@
               {% endfor %}
 
           </div>
-        </div>
 
-        {% if content contains 'class="citation"' %}
-        {% unless content contains 'class="bibliography"' %}
-        <div class="row">
+
+          {% if content contains 'class="citation"' %}
+          {% unless content contains 'class="bibliography"' %}
           <section id="references">
             <hr>
             <div class="container">
