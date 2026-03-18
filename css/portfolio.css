@@ -243,20 +243,16 @@ html.dark-mode .blog-post-excerpt-link:focus .blog-post-excerpt {
 .text-danger {
 	font-weight: bold;
 	color: black !important;
-	-webkit-text-stroke: 0.5px #FFD100;
 }
 
 .alert-danger {
 	font-weight: bold;
 	color: black !important;
-	-webkit-text-stroke: 0.5px #FFD100;
-	border-color: #d08002 !important;
 }
 
 .alert-danger .alert-link {
 	font-weight: bold;
 	color: black !important;
-	-webkit-text-stroke: 0.5px #FFD100;
 	text-decoration: underline !important;
 }
 
