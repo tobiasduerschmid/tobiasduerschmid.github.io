@@ -129,3 +129,5 @@ topics:
         url: /SEBook/tools/git.html
       - name: Shell Scripting
         url: /SEBook/tools/shell.html
+      - name: Regular Expressions
+        url: /SEBook/tools/regex.html

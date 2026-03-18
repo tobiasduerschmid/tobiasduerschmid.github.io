@@ -1,0 +1,52 @@
+title: "RegEx Example Flashcards"  
+description: "Test your knowledge on solving common text-processing problems using Regular Expressions!"  
+cards:  
+  - id: 1  
+    question: "Write a regex to validate a standard email address (e.g., user@domain.com)."  
+    answer: "`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$`"  
+    explanation: "This matches a sequence of alphanumeric characters and allowed symbols for the username, followed by an '@', a domain name, and a 2+ character top-level domain."  
+  
+  - id: 2  
+    question: "Write a regex to match a standard US phone number, with optional parentheses and various separators (e.g., 123-456-7890 or (123) 456-7890)."  
+    answer: "`^(\\(\\d{3}\\)|\\d{3})[- .]?\\d{3}[- .]?\\d{4}$`"  
+    explanation: "The first group matches either 3 digits in parentheses or just 3 digits. The `[- .]?` allows for an optional dash, space, or dot between the number segments."  
+  
+  - id: 3  
+    question: "Write a regex to match a 3 or 6 digit hex color code starting with a hashtag (e.g., #FFF or #1A2B3C)."  
+    answer: "`^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$`"  
+    explanation: "Matches the literal '#' followed by either exactly 6 hexadecimal characters or exactly 3 hexadecimal characters, ensuring no extra characters exist using the `$` anchor."  
+  
+  - id: 4  
+    question: "Write a regex to validate a strong password (at least 8 characters, containing at least one uppercase letter, one lowercase letter, and one number)."  
+    answer: "`^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$`"  
+    explanation: "Uses positive lookaheads `(?=...)` to scan ahead and guarantee the presence of a lowercase, uppercase, and digit before matching a string of 8 or more valid characters."  
+  
+  - id: 5  
+    question: "Write a regex to match a valid IPv4 address (e.g., 192.168.1.1)."  
+    answer: "`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`"  
+    explanation: "Ensures that each of the 4 octets falls between 0 and 255, separating the first three with literal dots."  
+  
+  - id: 6  
+    question: "Write a regex to extract the domain name from a URL, ignoring the protocol and 'www' (e.g., extracting 'example.com' from 'https://www.example.com/page')."  
+    answer: "`^(?:https?:\\/\\/)?(?:www\\.)?([^\\/]+)`"  
+    explanation: "The non-capturing groups `(?:...)` make the 'http(s)://' and 'www.' optional. It then captures all characters up to the first forward slash."  
+  
+  - id: 7  
+    question: "Write a regex to match a date in the format `YYYY-MM-DD` (checking for valid month and day ranges)."  
+    answer: "`^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$`"  
+    explanation: "Matches exactly 4 digits for the year, restricts the month to 01-12, and restricts the day to 01-31."  
+  
+  - id: 8  
+    question: "Write a regex to match a time in 24-hour format (HH:MM)."  
+    answer: "`^([01]\\d|2[0-3]):([0-5]\\d)$`"  
+    explanation: "The hour group allows either 00-19 or 20-23. The minute group strictly allows 00-59."  
+  
+  - id: 9  
+    question: "Write a regex to match an opening or closing HTML tag."  
+    answer: "`<\\/?[a-z][\\s\\S]*>`"  
+    explanation: "Matches the opening `<`, an optional `/` for closing tags, a starting letter, and then any characters (including newlines) until the closing `>`."  
+  
+  - id: 10  
+    question: "Write a regex to find all leading and trailing whitespaces in a string (commonly used for string trimming)."  
+    answer: "`^\\s+|\\s+$`"
+    explanation: "Matches one or more whitespace characters `\\s+` at the start `^` of the string, OR `|` one or more whitespace characters at the end `$` of the string."

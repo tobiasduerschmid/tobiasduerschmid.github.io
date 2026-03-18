@@ -2,6 +2,21 @@
 
 topics:
   
+  - name: User Stories
+    icon: null
+    url: /SEBook/userstories.html
+
+  - name: Tools
+    icon: null
+    url: /SEBook/tools/index.html
+    subtopics:
+      - name: Git
+        url: /SEBook/tools/git.html
+      - name: Shell Scripting
+        url: /SEBook/tools/shell.html
+      - name: Regular Expressions
+        url: /SEBook/tools/regex.html
+
   - name: Design Patterns
     icon: null
     url: /SEBook/designpatterns.html
@@ -53,6 +68,3 @@ topics:
     icon: null
     url: /SEBook/uml.html
   
-  - name: User Stories
-    icon: null
-    url: /SEBook/userstories.html

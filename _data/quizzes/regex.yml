@@ -1,0 +1,107 @@
+title: "RegEx Quiz" 
+description: "Test your understanding of regular expressions beyond basic syntax, focusing on underlying mechanics, performance, and theory." 
+questions: 
+  - id: 1 
+    question: "You are tasked with extracting all data enclosed in HTML `<div>` tags. You write a regular expression, but it consistently fails on deeply nested divs (e.g., `<div><div>text</div></div>`). From a theoretical computer science perspective, why is standard RegEx the wrong tool for this?" 
+    options: 
+      - "RegEx engines process strings right-to-left, making opening tags impossible to track." 
+      - "Standard regular expressions are based on finite automata, which lack the memory to track arbitrarily deep nested structures." 
+      - "HTML tags contain special characters like `<` and `>` that cannot be properly escaped in modern RegEx." 
+      - "The RegEx engine will inevitably suffer from catastrophic backtracking when encountering the forward slash in closing tags." 
+    correct_index: 1 
+    explanation: "Standard regular expressions correlate to regular languages in formal language theory. They are evaluated by Finite State Machines, which do not have a 'stack' or memory mechanism to keep track of balanced, nested pairs (unlike context-free grammars used by HTML parsers)." 
+  
+  - id: 2 
+    question: "A developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?" 
+    options: 
+      - "The engine evaluates the string character-by-character from the end of the line backwards." 
+      - "The `.*` is greedy; it first swallows the entire line, then forces the engine to backtrack character by character until it finds 'error'." 
+      - "The `.*` is lazy; it pauses execution at every single character to check for the word 'error'." 
+      - "The `.*` command forces the regex engine to cache the entire file into memory before evaluating the line." 
+    correct_index: 1 
+    explanation: "Greedy quantifiers (like `*` and `+`) match as much as possible right away. `.*` consumes the whole string, realizes it missed 'error', and has to backtrack (step backwards) one character at a time to find a match, which is computationally expensive on long strings." 
+  
+  - id: 3 
+    question: "You need to validate user input to ensure a password contains both a number and a special character, but you don't know what order they will appear in. What mechanism allows a RegEx engine to assert these conditions without actually 'consuming' the string character by character?" 
+    options: 
+      - "Non-capturing groups `(?:...)`" 
+      - "Possessive quantifiers `*+`" 
+      - "Lookarounds (e.g., Lookaheads `(?=...)`)" 
+      - "Word boundaries `\\b`" 
+    correct_index: 2 
+    explanation: "Lookaheads and lookbehinds are 'zero-width assertions'. They look ahead in the string to verify a pattern exists, but they do not consume any characters. This allows you to chain multiple lookaheads at the start of a string to act like a logical 'AND' statement." 
+  
+  - id: 4 
+    question: "A junior engineer writes a regex to validate an email address and deploys it. Later, the system crashes because the regex engine hangs infinitely when evaluating the malicious input: `aaaaaaaaaaaaaaaaaaaaaaaaa!`. What vulnerability did the engineer likely introduce?" 
+    options: 
+      - "A Cross-Site Scripting (XSS) vulnerability." 
+      - "Catastrophic Backtracking caused by nested or overlapping quantifiers (e.g., `(a+)+$`)." 
+      - "A stack overflow caused by too many capturing groups." 
+      - "Greedy matching on a string that exceeds the database's character limit." 
+    correct_index: 1 
+    explanation: "Catastrophic backtracking (often leading to a ReDoS - Regular Expression Denial of Service) occurs when a regex has multiple ways to match the same sequence (often via nested quantifiers). When a match fails at the very end (like the `!`), the engine attempts every possible exponential combination of the preceding characters before giving up." 
+
+  - id: 5 
+    question: "When writing a complex regex to extract phone numbers, you group the area code using parentheses `(...)` so you can apply a `?` quantifier to it. However, you don't actually need to save the area code data in memory for later. What is the most optimized approach?" 
+    options: 
+      - "Use a lookahead instead of parentheses." 
+      - "Remove the parentheses and apply the `?` to the whole pattern." 
+      - "Use a non-capturing group `(?:...)` to group the logic without the memory overhead of capturing." 
+      - "Escape the parentheses `\\( \\)` to tell the engine to ignore them." 
+    correct_index: 2 
+    explanation: "Standard parentheses `(...)` create 'capturing groups', meaning the regex engine allocates memory to store the matched substring for later extraction. If you only need parentheses to group tokens for a quantifier, a non-capturing group `(?:...)` prevents this unnecessary memory overhead." 
+
+  - id: 6 
+    question: "You write a regex to ensure a username is strictly alphanumeric: `[a-zA-Z0-9]+`. However, a user successfully submits the username `admin!@#`. Why did this happen?" 
+    options: 
+      - "You used a character class `[]` instead of a capturing group `()`." 
+      - "The `+` quantifier allows special characters if they follow valid characters." 
+      - "You failed to use start `^` and end `$` anchors, allowing the regex to simply match the 'admin' portion and ignore the rest." 
+      - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed." 
+    correct_index: 2 
+    explanation: "Without positional anchors (`^` for the start, `$` for the end), a regex will search for *any* substring that satisfies the pattern. It found 'admin', considered it a successful match, and ignored the trailing invalid characters. Anchors are mandatory for strict input validation." 
+
+  - id: 7 
+    type: multiple 
+    question: "Which of the following scenarios are highly appropriate use cases for Regular Expressions? (Select all that apply)" 
+    options: 
+      - "Scraping text to find universally formatted IP addresses (e.g., IPv4)." 
+      - "Parsing a deeply nested JSON payload to extract a specific key." 
+      - "Validating that a user's date input matches a strict 'YYYY-MM-DD' format." 
+      - "Sanitizing HTML input to prevent XSS attacks by perfectly stripping all `<script>` tags regardless of formatting." 
+      - "Performing a bulk find-and-replace operation to change US date formats to European date formats in a text document." 
+    correct_indices: [0, 2, 4] 
+    explanation: "RegEx excels at pattern matching flat strings, validating strict formats, and doing structural find-and-replace operations. It should NOT be used to parse complex, tree-like structures like JSON or HTML, as it cannot handle infinite nesting and is prone to security bypasses." 
+
+  - id: 8 
+    type: multiple 
+    question: "In the context of evaluating a regex for data extraction, what represents a 'False Positive' and a 'False Negative'? (Select all that apply)" 
+    options: 
+      - "A False Positive occurs when the regex matches text that it was not supposed to match." 
+      - "A False Negative occurs when the regex successfully rejects invalid text." 
+      - "A False Negative occurs when the regex fails to match text that it was actually supposed to find." 
+      - "A False Positive occurs when the regex engine throws a syntax error." 
+    correct_indices: [0, 3] 
+    explanation: "A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns." 
+
+  - id: 9 
+    type: multiple 
+    question: "Which of the following strategies are effective ways to prevent Catastrophic Backtracking (ReDoS)? (Select all that apply)" 
+    options: 
+      - "Avoiding nested quantifiers (e.g., changing `(a*)*` to a safer pattern)." 
+      - "Using Atomic Groups `(?>...)` if your regex engine supports them, to prevent the engine from backtracking into that group." 
+      - "Wrapping your entire expression in a global `.*` modifier." 
+      - "Using possessive quantifiers (e.g., `*+` or `++`) to forbid the engine from giving back characters." 
+    correct_indices: [0, 1, 3] 
+    explanation: "Catastrophic backtracking is solved by removing ambiguity in the pattern. You can do this by refactoring nested quantifiers, or by using advanced engine features like Atomic Groups and Possessive Quantifiers, which explicitly forbid the engine from backtracking over a match." 
+
+  - id: 10 
+    type: multiple 
+    question: "Which of the following statements about Lookaheads `(?=...)` are true? (Select all that apply)" 
+    options: 
+      - "They assert that a specific pattern must follow, but they do not add those characters to the final match." 
+      - "They can be chained together at the same position in the string to test multiple independent conditions." 
+      - "They are natively supported by basic POSIX standard utilities like standard `grep` or `sed`." 
+      - "They allow you to validate logical 'AND' requirements (e.g., must have a letter AND a number)." 
+    correct_indices: [0, 1, 3] 
+    explanation: "Lookaheads do not consume characters, can be chained to check multiple conditions from the exact same starting position, and are the standard way to enforce logical 'AND' in regex. However, they are a feature of PCRE (Perl Compatible Regular Expressions) and are generally NOT supported by basic POSIX tools like standard `sed`."

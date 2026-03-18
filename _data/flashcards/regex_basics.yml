@@ -1,0 +1,72 @@
+title: "Basic RegEx Syntax Flashcards (Production/Recall)"  
+description: "Test your ability to produce the exact Regular Expression metacharacter or syntax based on its functional description."  
+cards:  
+  - id: 1  
+    question: "What metacharacter asserts the start of a string?"  
+    answer: "`^` (Caret)"  
+    explanation: "Placed at the very beginning of a pattern, it constrains the match to the start of the string."  
+
+  - id: 2  
+    question: "What metacharacter asserts the end of a string?"  
+    answer: "`$` (Dollar sign)"  
+    explanation: "Placed at the very end of a pattern, it constrains the match to the end of the string."  
+
+  - id: 3  
+    question: "What syntax is used to define a Character Class (matching any single character from a specified group)?"  
+    answer: "`[...]` (Square brackets)"  
+    explanation: "Wrapping characters in square brackets tells the engine to match exactly one of the characters found inside."  
+
+  - id: 4  
+    question: "What syntax is used inside a character class to act as a negation operator (matching any character NOT in the group)?"  
+    answer: "`[^...]` (Caret immediately after the opening bracket)"  
+    explanation: "If the caret is the very first character inside the brackets, it inverts the character class."  
+
+  - id: 5  
+    question: "What shorthand character class is used to match any single digit?"  
+    answer: "`\\d`"  
+    explanation: "This is the direct equivalent of the character class `[0-9]`."  
+
+  - id: 6  
+    question: "What shorthand character class is used to match any 'word' character (alphanumeric plus underscore)?"  
+    answer: "`\\w`"  
+    explanation: "This is the direct equivalent of the character class `[a-zA-Z0-9_]`."  
+
+  - id: 7  
+    question: "What shorthand character class is used to match any whitespace character (spaces, tabs, line breaks)?"  
+    answer: "`\\s`"  
+    explanation: "This quickly targets formatting and spacing characters."  
+
+  - id: 8  
+    question: "What metacharacter acts as a wildcard, matching any single character except a newline?"  
+    answer: "`.` (Dot)"  
+    explanation: "To match a literal dot, you would need to escape it (\\.)."  
+
+  - id: 9  
+    question: "What quantifier specifies that the preceding element should match '0 or more' times?"  
+    answer: "`*` (Asterisk)"  
+    explanation: "This allows the preceding character or group to be completely absent or repeat infinitely."  
+
+  - id: 10  
+    question: "What quantifier specifies that the preceding element should match '1 or more' times?"  
+    answer: "`+` (Plus sign)"  
+    explanation: "This guarantees the character or group appears at least once, but allows it to repeat infinitely."  
+
+  - id: 11  
+    question: "What quantifier specifies that the preceding element should match '0 or 1' time?"  
+    answer: "`?` (Question mark)"  
+    explanation: "This essentially makes the preceding character, class, or group optional."  
+
+  - id: 12  
+    question: "What syntax is used to specify that the preceding element must repeat exactly n times?"  
+    answer: "`{n}` (Curly braces with a number)"  
+    explanation: "You can also specify a range of repetitions using `{n,m}`."  
+
+  - id: 13  
+    question: "What syntax is used to create a standard capture group?"  
+    answer: "`(...)` (Parentheses)"  
+    explanation: "This groups tokens together and saves the matched substring into memory for later extraction."  
+
+  - id: 14  
+    question: "What is the syntax used to create a Named Capture Group?"  
+    answer: "`(?P<name>pattern)`"  
+    explanation: "This captures the matched substring and assigns it a specific variable name instead of just a numbered index."
