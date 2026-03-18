@@ -8,7 +8,7 @@
 
   // Set page margins
   @page {
-    margin: 2cm;
+    margin: 1.7cm;
   }
 
   // Hide navigation, sidebars, and UI elements
@@ -113,7 +113,6 @@
 
   // Ensure code blocks look like light mode and have syntax highlighting
   pre,
-  code,
   .highlight {
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
@@ -123,6 +122,15 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
     border-radius: 8px !important;
     margin: 15px 0 !important;
+    padding: 15px !important;
+  }
+
+  pre code,
+  .highlight code {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
   }
 
   // Sync syntax highlighting colors with _syntax-highlighting.scss

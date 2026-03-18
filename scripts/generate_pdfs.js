@@ -67,9 +67,9 @@ async function generatePDFs() {
       }
 
       // Extract the Page Title (h1) to use as the right header
-      // We use the cleaned up page title (without the site suffix) or the first H1
+      // We look for .post-title or the first H1 in #main-content
       const displayPageTitle = await page.evaluate(() => {
-        const h1 = document.querySelector('h1');
+        const h1 = document.querySelector('#main-content h1, .post-title, h1');
         return h1 ? h1.innerText.trim() : document.title.split('|')[0].trim();
       });
 
@@ -84,13 +84,13 @@ async function generatePDFs() {
         printBackground: true,
         displayHeaderFooter: true,
         headerTemplate: `
-          <div style="font-size: 12pt; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; margin: 0 40px; padding-bottom: 5px; border-bottom: 0.5px solid #eee; display: flex; justify-content: space-between; -webkit-print-color-adjust: exact;">
+          <div style="font-size: 12pt; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; margin: 0 2cm; padding-bottom: 5px; border-bottom: 0.5px solid #eee; display: flex; justify-content: space-between; -webkit-print-color-adjust: exact;">
             <span style="font-weight: 700; color: #2774AE;">${category}</span>
             <span style="font-weight: 400; color: #000000; text-align: right; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-left: 20px;">${displayPageTitle}</span>
           </div>`,
         footerTemplate: `
-          <div style="font-size: 12pt; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; margin: 0 40px; padding-top: 5px; border-top: 0.5px solid #eee; display: flex; justify-content: space-between; -webkit-print-color-adjust: exact;">
-            <span style="font-weight: 400; color: #000000;">SEBook - Tobias Dürschmid</span>
+          <div style="font-size: 10pt; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; width: 100%; margin: 0 2cm; padding-top: 5px; border-top: 0.5px solid #eee; display: flex; justify-content: space-between; -webkit-print-color-adjust: exact; color: #666;">
+            <span>SEBook - Tobias Dürschmid</span>
           </div>`,
         margin: {
           top: '70px',
