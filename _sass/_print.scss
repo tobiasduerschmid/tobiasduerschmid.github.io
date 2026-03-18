@@ -1,12 +1,20 @@
 @media print {
-  // Hide navigation and UI elements
+  // Hide navigation, sidebars, and UI elements
   #sidebar,
   #sidebar-toggle,
   #navnav,
   .navbar,
   .highlight-toggle-container,
-  .skip-link {
+  .skip-link,
+  #togglesContainer,
+  footer,
+  .footer {
     display: none !important;
+  }
+
+  // Suppress URL printing after links (standard browser behavior)
+  a[href]:after {
+    content: none !important;
   }
 
   // Reset content wrapper and main content for full width
@@ -29,7 +37,7 @@
     flex: none !important;
   }
 
-  // Ensure text spans full width
+  // Ensure text spans full width and remove Bootstrap constraints
   .container {
     width: 100% !important;
     max-width: none !important;
@@ -41,26 +49,24 @@
     margin: 0 !important;
   }
 
-  // Hide the "Read Aloud" and other toggles
-  #togglesContainer {
-    display: none !important;
-  }
-
   // Adjust headers for print
   h1, h2, h3, h4 {
     page-break-after: avoid;
     -webkit-text-stroke: 0 !important;
     text-shadow: none !important;
+    color: black !important;
   }
 
   // Avoid breaking sections in the middle
-  section {
+  section, .flashcard, .quiz-container {
     page-break-inside: avoid;
   }
 
-  // Ensure code blocks look good
+  // Ensure code blocks look good and wrap
   pre, code {
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
+    background-color: #f5f5f5 !important;
+    color: black !important;
   }
 }
