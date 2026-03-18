@@ -19,17 +19,22 @@ Data source: _data/quizzes/{{ include.id }}.yml
   <div class="quiz-questions">
     {% for q in quiz_data.questions %}
     <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
-      id="q-{{ include.id }}-{{ forloop.index0 }}">
+      id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}">
       <div class="question-text">{{ q.question }}</div>
       <div class="quiz-options">
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
         {% for option in q.options %}
-        <button class="quiz-option" data-index="{{ forloop.index0 }}" data-correct="{{ q.correct_index }}">
+        <button class="quiz-option" data-index="{{ forloop.index0 }}" data-correct="{{ q.correct_index }}"
+          data-correct-indices="{{ q.correct_indices | join: ',' }}">
+          <span class="option-checkbox"></span>
           <span class="option-label">{{ alphabet | slice: forloop.index0 }}</span>
           <span class="option-content">{{ option }}</span>
         </button>
         {% endfor %}
       </div>
+      {% if q.type == 'multiple' %}
+      <button class="submit-answer-btn">Submit Answer</button>
+      {% endif %}
       <div class="quiz-explanation hidden">
         <div class="explanation-title">Explanation</div>
         <div class="explanation-text">{{ q.explanation }}</div>
@@ -135,9 +140,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
     line-height: 1.25;
   }
 
-  .quiz-option:hover:not([disabled]) {
+  .quiz-option:hover:not([disabled]):not(.selected) {
     border-color: #2774AE;
     background: #f0f7ff;
+  }
+
+  .quiz-option.selected {
+    border-color: #2774AE;
+    background: #eef6fc;
+    box-shadow: 0 0 0 1px #2774AE;
   }
 
   .quiz-option.correct {
@@ -152,10 +163,46 @@ Data source: _data/quizzes/{{ include.id }}.yml
     color: #721c24;
   }
 
+  .option-checkbox {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid #d1d5da;
+    border-radius: 3px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  [data-type="multiple"] .option-checkbox {
+    display: block;
+  }
+
+  .quiz-option.selected .option-checkbox {
+    background: #2774AE;
+    border-color: #2774AE;
+  }
+
+  .quiz-option.selected .option-checkbox::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin: 0px 3px;
+  }
+
   .option-label {
     font-weight: 800;
     margin-right: 12px;
     color: #6a737d;
+  }
+
+  [data-type="multiple"] .option-label {
+    display: none;
   }
 
   .quiz-explanation {
@@ -176,6 +223,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     text-transform: uppercase;
   }
 
+  .submit-answer-btn,
   .next-btn,
   .restart-btn,
   .review-btn {
@@ -185,11 +233,19 @@ Data source: _data/quizzes/{{ include.id }}.yml
     padding: 6px 14px;
     border-radius: 5px;
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: 10px;
     cursor: pointer;
     transition: background 0.2s;
+    width: 100%;
+    font-size: 0.95em;
   }
 
+  .submit-answer-btn:disabled {
+    background: #a1c2db;
+    cursor: not-allowed;
+  }
+
+  .submit-answer-btn:hover:not(:disabled),
   .next-btn:hover,
   .restart-btn:hover,
   .review-btn:hover {
@@ -287,9 +343,14 @@ Data source: _data/quizzes/{{ include.id }}.yml
       return array;
     }
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const noShuffle = urlParams.get('noshuffle') === '1' || {% if quiz_data.shuffle == false %}true{% else %}false{% endif %};
+
     // Shuffle Questions
     const questionCards = Array.from(questionsContainer.querySelectorAll('.quiz-question-card'));
-    shuffleArray(questionCards);
+    if (!noShuffle) {
+      shuffleArray(questionCards);
+    }
 
     // Clear container to avoid duplication
     questionsContainer.innerHTML = '';
@@ -305,7 +366,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
     questionCards.forEach(card => {
       const optionsContainer = card.querySelector('.quiz-options');
       const options = Array.from(optionsContainer.querySelectorAll('.quiz-option'));
-      shuffleArray(options);
+      if (!noShuffle) {
+        shuffleArray(options);
+      }
       const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       options.forEach((opt, idx) => {
         optionsContainer.appendChild(opt);
@@ -324,31 +387,51 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
     function updateProgress() {
       const total = cards.length;
-      let progress;
+      let progressValue;
       if (isReviewMode) {
-        // In review mode, progress shows how much of the original quiz is solved
-        progress = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
+        progressValue = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
       } else {
-        progress = (currentStep / total) * 100;
+        progressValue = (currentStep / total) * 100;
       }
-      progressBar.style.width = `${progress}%`;
+      progressBar.style.width = `${progressValue}%`;
     }
 
     function showQuestion(index) {
       cards.forEach(c => c.classList.remove('active'));
-      cards[index].classList.add('active');
+      const card = cards[index];
+      card.classList.add('active');
+
+      // Reset submit button if it exists
+      const submitBtn = card.querySelector('.submit-answer-btn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+      }
+
       updateProgress();
     }
 
     function handleOptionClick(e) {
       const option = e.currentTarget;
       const card = option.closest('.quiz-question-card');
+      const type = card.dataset.type;
+
+      if (card.querySelector('.quiz-explanation:not(.hidden)')) return; // Already answered
+
+      if (type === 'multiple') {
+        option.classList.toggle('selected');
+        const submitBtn = card.querySelector('.submit-answer-btn');
+        const anySelected = card.querySelectorAll('.quiz-option.selected').length > 0;
+        submitBtn.disabled = !anySelected;
+      } else {
+        validateSingleChoice(option, card);
+      }
+    }
+
+    function validateSingleChoice(option, card) {
       const options = card.querySelectorAll('.quiz-option');
       const explanation = card.querySelector('.quiz-explanation');
       const isCorrect = option.dataset.correct === option.dataset.index;
-      const questionIndex = parseInt(card.dataset.questionIndex);
 
-      // Disable all options
       options.forEach(opt => opt.setAttribute('disabled', 'true'));
 
       if (isCorrect) {
@@ -356,22 +439,57 @@ Data source: _data/quizzes/{{ include.id }}.yml
         score++;
       } else {
         option.classList.add('incorrect');
-        // Highlight the correct one
         const correctOption = Array.from(options).find(opt => opt.dataset.index === option.dataset.correct);
         if (correctOption) correctOption.classList.add('correct');
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
 
       explanation.classList.remove('hidden');
+      explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 
-      // Smooth scroll to explanation if needed
+    function handleSubmitClick(e) {
+      const card = e.currentTarget.closest('.quiz-question-card');
+      const options = card.querySelectorAll('.quiz-option');
+      const selectedOptions = card.querySelectorAll('.quiz-option.selected');
+      const explanation = card.querySelector('.quiz-explanation');
+      const submitBtn = e.currentTarget;
+
+      const selectedIndices = Array.from(selectedOptions).map(opt => opt.dataset.index).sort().join(',');
+      // Data in correct-indices is sorted in the template
+      const correctIndices = card.querySelector('.quiz-option').dataset.correctIndices;
+
+      options.forEach(opt => opt.setAttribute('disabled', 'true'));
+      submitBtn.classList.add('hidden');
+
+      if (selectedIndices === correctIndices) {
+        selectedOptions.forEach(opt => opt.classList.add('correct'));
+        score++;
+      } else {
+        selectedOptions.forEach(opt => {
+          const isCorrect = correctIndices.split(',').includes(opt.dataset.index);
+          opt.classList.add(isCorrect ? 'correct' : 'incorrect');
+        });
+
+        // Highlight missed correct options
+        const correctSet = correctIndices.split(',');
+        options.forEach(opt => {
+          if (correctSet.includes(opt.dataset.index)) {
+            opt.classList.add('correct');
+          }
+        });
+
+        incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+      }
+
+      explanation.classList.remove('hidden');
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function scrollToTop() {
       const navbar = document.getElementById('navnav');
       const navHeight = navbar ? navbar.offsetHeight : 50;
-      const yOffset = -navHeight; // Dynamic navbar height + padding
+      const yOffset = -navHeight - 20;
       const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -401,12 +519,17 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const card = cards[index];
       const options = card.querySelectorAll('.quiz-option');
       const explanation = card.querySelector('.quiz-explanation');
+      const submitBtn = card.querySelector('.submit-answer-btn');
 
       options.forEach(opt => {
-        opt.classList.remove('correct', 'incorrect');
+        opt.classList.remove('correct', 'incorrect', 'selected');
         opt.removeAttribute('disabled');
       });
       explanation.classList.add('hidden');
+      if (submitBtn) {
+        submitBtn.classList.remove('hidden');
+        submitBtn.disabled = true;
+      }
     }
 
     function finishQuiz() {
@@ -418,7 +541,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       const summary = resultsArea.querySelector('.score-summary');
       if (incorrectIndices.length === 0) {
-        summary.textContent = "Come back later to improve your recall!";
+        summary.textContent = "Perfect score! Come back later to improve your recall!";
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }
@@ -432,8 +555,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
     function startReview() {
       isReviewMode = true;
-      reviewQueue = [...incorrectIndices];
-      incorrectIndices = []; // Reset to catch any still incorrect ones
+      reviewQueue = [...new Set(incorrectIndices)]; // Deduplicate
+      incorrectIndices = [];
       reviewStep = 0;
       resultsArea.classList.add('hidden');
       showQuestion(reviewQueue[0]);
@@ -456,6 +579,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
     // Event Listeners
     container.querySelectorAll('.quiz-option').forEach(btn => {
       btn.addEventListener('click', handleOptionClick);
+    });
+
+    container.querySelectorAll('.submit-answer-btn').forEach(btn => {
+      btn.addEventListener('click', handleSubmitClick);
     });
 
     container.querySelectorAll('.next-btn').forEach(btn => {

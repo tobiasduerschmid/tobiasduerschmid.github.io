@@ -13,3 +13,4 @@ This post is used to verify the new interactive quiz fragment.
 {% include quiz.html id="ai_fundamentals" %}
 
 ## End of Test
+\n

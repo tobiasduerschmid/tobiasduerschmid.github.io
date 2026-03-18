@@ -37,13 +37,3 @@ questions:
       - "A state of confusion that has no educational benefit."
     correct_index: 1
     explanation: "Desirable difficulties are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
-  - id: 5
-    type: multiple
-    question: "Which of the following are considered 'desirable difficulties'? (Select all that apply)"
-    options:
-      - "Testing yourself instead of re-reading."
-      - "Spacing out study sessions over time."
-      - "Mixing up different topics within a single session."
-      - "Studying in a quiet, familiar environment every time."
-    correct_indices: [0, 1, 2]
-    explanation: "Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context."

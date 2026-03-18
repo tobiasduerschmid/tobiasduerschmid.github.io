@@ -4,7 +4,43 @@ const { test, expect } = require('@playwright/test');
 test.describe('Interactive Quiz Verification', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the verification post
-    await page.goto('http://localhost:4000/blog/quiz-verification/');
+    await page.goto('http://localhost:4000/blog/quiz-verification/?noshuffle=1');
+  });
+
+  test('Multiple choice question type', async ({ page }) => {
+    // Navigate to the MCQ (it's the 5th question, index 4)
+    for (let i = 0; i < 4; i++) {
+        await page.locator('.quiz-question-card.active .quiz-option').first().click();
+        await page.click('.quiz-question-card.active .next-btn');
+    }
+
+    const mcq = page.locator('.quiz-question-card.active');
+    await expect(mcq).toContainText('Select all that apply');
+    
+    // Check for submit button
+    const submitBtn = mcq.locator('.submit-answer-btn');
+    await expect(submitBtn).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
+
+    // Select options (Correct indices are 0, 1, 2)
+    const options = mcq.locator('.quiz-option');
+    await options.nth(0).click();
+    await expect(submitBtn).toBeEnabled();
+    
+    await options.nth(1).click();
+    await options.nth(2).click();
+
+    // Submit
+    await submitBtn.click();
+    
+    // Check results
+    await expect(submitBtn).toBeHidden();
+    await expect(mcq.locator('.quiz-explanation')).toBeVisible();
+    
+    // Verify that selected correct ones have 'correct' class
+    await expect(options.nth(0)).toHaveClass(/correct/);
+    await expect(options.nth(1)).toHaveClass(/correct/);
+    await expect(options.nth(2)).toHaveClass(/correct/);
   });
 
   test('Quiz initialization and basic flow', async ({ page }) => {
@@ -43,9 +79,16 @@ test.describe('Interactive Quiz Verification', () => {
     await page.locator('.quiz-question-card.active .quiz-option').nth(1).click();
     await page.click('.quiz-question-card.active .next-btn');
 
+    // Question 5 (MCQ): Correct (indices 0, 1, 2)
+    await page.locator('.quiz-question-card.active .quiz-option').nth(0).click();
+    await page.locator('.quiz-question-card.active .quiz-option').nth(1).click();
+    await page.locator('.quiz-question-card.active .quiz-option').nth(2).click();
+    await page.click('.quiz-question-card.active .submit-answer-btn');
+    await page.click('.quiz-question-card.active .next-btn');
+
     // Verify Results page
     await expect(page.locator('.quiz-results')).not.toHaveClass(/hidden/);
-    await expect(page.locator('.current-score')).toHaveText('3');
+    await expect(page.locator('.current-score')).toHaveText('4');
 
     // Verify Review button appears
     await expect(page.locator('.review-btn')).toBeVisible();
@@ -65,10 +108,16 @@ test.describe('Interactive Quiz Verification', () => {
     await page.locator('.quiz-question-card.active .quiz-option').nth(0).click();
     await page.click('.quiz-question-card.active .next-btn');
     
-    // Quick skip to the end
-    for (let i = 0; i < 3; i++) {
-        await page.locator('.quiz-question-card.active .quiz-option').first().click();
-        await page.click('.quiz-question-card.active .next-btn');
+    // Quick skip to the end (need to answer 4 more questions)
+    for (let i = 0; i < 4; i++) {
+        const card = page.locator('.quiz-question-card.active');
+        const type = await card.getAttribute('data-type');
+        
+        await card.locator('.quiz-option').first().click();
+        if (type === 'multiple') {
+            await card.locator('.submit-answer-btn').click();
+        }
+        await card.locator('.next-btn').click();
     }
 
     await page.click('.restart-btn');
