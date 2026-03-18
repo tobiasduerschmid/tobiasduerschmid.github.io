@@ -131,7 +131,7 @@ These commands facilitate collaboration by syncing your local work with a remote
 * **`git pull`**: Fetches changes from a remote repository and immediately merges them into your current local branch.
 * **`git push`**: Uploads your local commits to a remote repository. **Note**: Never use `git push -f` (force-push) on shared branches, as it can overwrite and destroy work pushed by other team members.
 
-### 5. Advanced and Debugging Tools
+## Advanced and Debugging Tools
 Git includes powerful utilities for handling complex scenarios and tracking down bugs.
 * **`git stash` / `git stash pop`**: Temporarily saves uncommitted changes (both staged and unstaged) so you can switch contexts without making a messy commit. Use `pop` to re-apply those changes later.
 * **`git cherry-pick`**: Selectively applies a single specific commit from one branch onto another.

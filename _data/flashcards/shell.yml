@@ -51,9 +51,9 @@ cards:
     explanation: "The 'wc' (word count) command prints newline, word, and byte counts for a file. Adding the '-l' flag restricts the output to only the line count."
   - id: 13
     question: "You need to perform an automated find-and-replace operation on a stream of text to change the word 'apple' to 'orange'."
-    answer: "sed"
-    explanation: "The 'sed' (stream editor) command is a powerful text processing tool used for filtering and transforming text, most famously utilized for regular expression substitutions."
+    answer: "sed 's/apple/orange/g'"
+    explanation: "The 'sed' (stream editor) s: Stands for 'substitute'. '/': The delimiter that separates the search and replacement terms. apple: The string you want to find. orange: The string you want to replace it with. g: Stands for 'global'. This tells sed to replace every instance of 'apple' on a line, rather than just the first one it finds."
   - id: 14
     question: "You have a space-separated log file and want a tool to extract and print only the 3rd column of data."
-    answer: "awk"
+    answer: "awk '{print $3}'"
     explanation: "'awk' is a versatile command-line utility and programming language designed for text processing and data extraction, particularly excelling at handling structured, column-based data."
