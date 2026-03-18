@@ -123,6 +123,11 @@ def escape_and_restore(text):
         inner = match.group(2)
         if cmd in ['cite', 'pageref', 'label']:
             inner = unescape_latex(inner)
+        
+        if cmd == 'cite':
+            # Split multiple keys and join with comma
+            # IMPORTANT: Citations keys must remain UNESCAPED for biblatex
+            inner = ', '.join([k.strip() for k in inner.replace(',', ' ').split()])
 
         cmd_map = {
             'section':       'section',
@@ -131,6 +136,7 @@ def escape_and_restore(text):
             'paragraph':     'paragraph',
             'hl':            'hl',
             'cite':          'cite',
+            'label':         'label',
             'textbold':      'textbf',
             'textitalic':    'textit',
             'texttt':        'texttt',
@@ -139,7 +145,8 @@ def escape_and_restore(text):
         real_cmd = cmd_map.get(cmd, cmd)
         return f'\\{real_cmd}{{{inner}}}'
 
-    # href: two brace groups
+    # ── Restore commands ─────────────────────────────────────────────────────
+    # href: two brace groups. Note: delimiters were escaped by escape_latex.
     text = re.sub(
         r'LXCMDHREF\\\{(.*?)\\\}\\\{(.*?)\\\}',
         lambda m: f'\\href{{{unescape_latex(m.group(1))}}}{{{m.group(2)}}}',
@@ -147,14 +154,14 @@ def escape_and_restore(text):
         flags=re.DOTALL
     )
 
-    # All single-argument LXCMD commands (repeat for nesting)
+    # All single-argument LXCMD commands (repeat for nesting).
+    # We use [A-Z]+ to avoid over-matching into adjacent LXP prefixes.
     for _ in range(6):
-        text = re.sub(r'LXCMD(\w+)\\\{(.*?)\\\}', sub_cmd, text, flags=re.DOTALL)
+        text = re.sub(r'LXCMD([A-Z]+)\\\{(.*?)\\\}', sub_cmd, text, flags=re.DOTALL)
 
-    # Enquote sentinels — restored LAST after all other commands are in place.
-    # Inner content has already been through escape_and_restore so it contains
-    # real LaTeX.  We just need to wrap it with \enquote{…}.
-    text = text.replace('LXPENQUOTEX', '\\enquote{').replace('LXPENQUOTEY', '}')
+    # ── Restore enquote sentinels LAST ───────────────────────────────────────
+    text = text.replace('LXPENQUOTEX', '\\enquote{')
+    text = text.replace('LXPENQUOTEY', '}')
 
     return text
 
@@ -232,10 +239,25 @@ def md_to_latex(md_content, base_url):
     # ── 2. Headers — MUST come before list capture so headings adjacent to
     #        list blocks are never consumed by the list block regex. ──────────
     # User requested shift: # -> subsection, ## -> subsubsection, ### -> paragraph
-    # The page title itself will be the \section.
-    md_content = re.sub(r'^###\s+(.+)$', r'LXCMDPARAGRAPH{\1}',     md_content, flags=re.MULTILINE)
-    md_content = re.sub(r'^##\s+(.+)$',  r'LXCMDSUBSUBSECTION{\1}', md_content, flags=re.MULTILINE)
-    md_content = re.sub(r'^#\s+(.+)$',   r'LXCMDSUBSECTION{\1}',    md_content, flags=re.MULTILINE)
+    # We also add a \label to each header for cross-referencing.
+    page_id = (base_url.replace('/SEBook/', '').replace('.html', '').replace('/', '_').strip('_')) or 'root'
+
+    def header_to_latex(match):
+        level_mark = match.group(1)
+        title_text = match.group(2)
+        
+        # Determine LaTeX command
+        if level_mark == '###': cmd = 'PARAGRAPH'
+        elif level_mark == '##': cmd = 'SUBSUBSECTION'
+        else: cmd = 'SUBSECTION'
+        
+        # Generate slugified label
+        slug = re.sub(r'[^a-zA-Z0-9]+', '-', title_text.lower()).strip('-')
+        full_label = f"{page_id}##{slug}"
+        
+        return f'LXCMD{cmd}{{{title_text}}}LXCMDLABEL{{{full_label}}}'
+
+    md_content = re.sub(r'^(#{1,3})\s+(.+)$', header_to_latex, md_content, flags=re.MULTILINE)
 
     # ── 3. Capture list blocks (raw markdown), replace with placeholder ───────
     # Key insight: we store the raw markdown lines here (before any escaping
@@ -355,6 +377,13 @@ PREAMBLE = r"""
 \usepackage{xcolor}
 \usepackage[autostyle=true]{csquotes}
 \usepackage{soul}
+\soulregister{\textbf}{1}
+\soulregister{\textit}{1}
+\soulregister{\texttt}{1}
+\soulregister{\enquote}{1}
+\soulregister{\cite}{1}
+\soulregister{\ref}{1}
+\soulregister{\pageref}{1}
 \usepackage{hyperref}
 \usepackage{listings}
 
@@ -425,9 +454,10 @@ def main():
                 print(f'Warning: {md_abs_path} not found.')
 
     # Build main.tex
-    main_tex = f"""\\documentclass{{report}}
+    main_tex = f"""\\documentclass[12pt]{{book}}
 {PREAMBLE}
 \\usepackage{{biblatex}}
+\\usepackage{{graphicx}}
 \\addbibresource{{{BIB_REF}}}
 \\begin{{document}}
 \\tableofcontents

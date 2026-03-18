@@ -1,3 +1,5 @@
+.PHONY: install build check test clean run pdf latex all
+
 install:
 	bundle install
 	npm install
@@ -22,5 +24,12 @@ run: check
 pdf: build
 	npm run pdf
 	node scripts/merge_pdfs.js
+
+clean-latex:
+	cd latex && rm -f *.aux *.bbl *.blg *.log *.out *.toc main.pdf
+
+latex:
+	pipenv run python3 ./scripts/md_to_latex.py
+	cd latex && pdflatex main.tex && biber main && pdflatex main.tex && pdflatex main.tex
 
 all: test run
