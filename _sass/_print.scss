@@ -1,0 +1,66 @@
+@media print {
+  // Hide navigation and UI elements
+  #sidebar,
+  #sidebar-toggle,
+  #navnav,
+  .navbar,
+  .highlight-toggle-container,
+  .skip-link {
+    display: none !important;
+  }
+
+  // Reset content wrapper and main content for full width
+  #sebook-content-wrapper {
+    display: block !important;
+    margin-top: 0 !important;
+    min-height: auto !important;
+  }
+
+  #sidebar {
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #main-content {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+  }
+
+  // Ensure text spans full width
+  .container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .row {
+    margin: 0 !important;
+  }
+
+  // Hide the "Read Aloud" and other toggles
+  #togglesContainer {
+    display: none !important;
+  }
+
+  // Adjust headers for print
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+    -webkit-text-stroke: 0 !important;
+    text-shadow: none !important;
+  }
+
+  // Avoid breaking sections in the middle
+  section {
+    page-break-inside: avoid;
+  }
+
+  // Ensure code blocks look good
+  pre, code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+  }
+}
