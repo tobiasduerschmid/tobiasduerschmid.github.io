@@ -10,3 +10,4 @@ test-results/
 .jekyll-metadata
 pdfs/
 .DS_Store
+latex/
