@@ -1,0 +1,128 @@
+title: "Version Control and Git Quiz"
+description: "Test your knowledge of core version control concepts, Git architecture, branching strategies, and advanced commands."
+questions:
+  - question: "Which of the following best describes the core difference between centralized and distributed version control systems (like Git)?"
+    options:
+      - "Distributed systems require a constant internet connection to the central server to make any changes."
+      - "In distributed systems, each developer has a full, local copy of the entire repository and its history."
+      - "Centralized systems are generally considered the best practice for massive, globally distributed open-source projects."
+      - "Distributed systems are designed exclusively to track binary files, whereas centralized systems track text files."
+    correct_index: 1
+    explanation: "This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
+
+  - question: "What are the three primary local states that a file can reside in within a standard Git workflow?"
+    options:
+      - "Untracked, Tracked, and Ignored"
+      - "Main Branch, Feature Branch, and Remote Server"
+      - "Working Directory, Staging Area, and Local Repository"
+      - "Uploaded, Downloaded, and Synced"
+    correct_index: 2
+    explanation: "Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
+
+  - question: "What does the command `git diff HEAD` compare?"
+    options:
+      - "The working directory to the staging area."
+      - "The staging area to the remote repository."
+      - "The latest commit to the commit immediately before it."
+      - "The working directory to the latest commit."
+    correct_index: 3
+    explanation: "Adding HEAD tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
+
+  - question: "Which Git command should you NEVER use on a shared branch because it can permanently overwrite and destroy work pushed by other team members?"
+    options:
+      - "git pull"
+      - "git fetch"
+      - "git push -f"
+      - "git merge --squash"
+    correct_index: 2
+    explanation: "Force-pushing overwrites the remote repository's history to exactly match yours, which will permanently delete any new commits made by your collaborators."
+
+  - question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
+    options:
+      - "git cherry-pick"
+      - "git bisect"
+      - "git revert"
+      - "git stash"
+    correct_index: 3
+    explanation: "Git stash temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+
+  - question: "What happens when you enter a 'Detached HEAD' state in Git?"
+    options:
+      - "A merge conflict occurs that Git cannot resolve automatically."
+      - "The HEAD pointer is attached directly to a specific commit rather than a branch name."
+      - "You accidentally delete the main branch of your repository."
+      - "The remote server goes offline, and your local repository can no longer push updates."
+    correct_index: 1
+    explanation: "Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
+
+  - question: "Which Git command utilizes a binary search through your commit history to help you pinpoint the exact commit that introduced a bug?"
+    options:
+      - "git blame"
+      - "git bisect"
+      - "git diff"
+      - "git cherry-pick"
+    correct_index: 1
+    explanation: "Bisect systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
+
+  - question: "What is the primary purpose of Git Submodules?"
+    options:
+      - "To break a single, massive file into smaller, trackable pieces to improve performance."
+      - "To include an external Git repository as a subdirectory of your project while maintaining its independent history."
+      - "To securely store passwords, API keys, and private credentials outside of the main repository."
+      - "To automatically squash a long sequence of commits into a single bugfix."
+    correct_index: 1
+    explanation: "Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
+
+  - type: multiple
+    question: "Which of the following are advantages of a Distributed Version Control System (like Git) compared to a Centralized one? (Select all that apply)"
+    options:
+      - "Developers can commit changes and view history while working offline."
+      - "Every developer has a full, independent copy of the repository's history."
+      - "It mathematically prevents merge conflicts from ever occurring."
+      - "It strictly relies on a single central server to store all file metadata."
+      - "It is generally better suited for massive, globally distributed open-source projects."
+    correct_indices: [0, 1, 4]
+    explanation: "In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
+
+  - type: multiple
+    question: "Which of the following represent the core local states (or areas) where files can reside in a standard Git architecture? (Select all that apply)"
+    options:
+      - "Working Directory"
+      - "Staging Area (Index)"
+      - "Remote Server"
+      - "Local Repository"
+      - "Detached Head"
+    correct_indices: [0, 1, 3]
+    explanation: "The three primary local states in Git's architecture are the Working Directory (files on disk), the Staging Area (prepped for the next commit), and the Local Repository (the compressed history of commits). The remote server is external, and 'Detached HEAD' is a state of the HEAD pointer, not a file area."
+
+  - type: multiple
+    question: "Which of the following commands are primarily used to review changes, history, or differences in a Git repository? (Select all that apply)"
+    options:
+      - "git log"
+      - "git diff"
+      - "git show"
+      - "git push"
+      - "git init"
+    correct_indices: [0, 1, 2]
+    explanation: "`git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
+
+  - type: multiple
+    question: "In which of the following scenarios would using `git stash` be considered an appropriate and helpful practice? (Select all that apply)"
+    options:
+      - "You have uncommitted, incomplete changes but need to switch branches urgently to fix a bug."
+      - "You want to temporarily clear your working directory so you can safely pull down new remote changes."
+      - "You want to permanently delete unneeded code files from your project's history."
+      - "You want to permanently apply a completed commit from a completely different branch."
+    correct_indices: [0, 1]
+    explanation: "`git stash` temporarily shelves your local modifications (both staged and unstaged), leaving you with a clean working directory. This is perfect for quick context switches or pulling updates without committing messy, incomplete work. It is not used for permanent deletion or applying commits (which would be `git cherry-pick`)."
+
+  - type: multiple
+    question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase? (Select all that apply)"
+    options:
+      - "git merge"
+      - "git rebase"
+      - "git merge --squash"
+      - "git bisect"
+      - "git blame"
+    correct_indices: [0, 1, 2]
+    explanation: "Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."

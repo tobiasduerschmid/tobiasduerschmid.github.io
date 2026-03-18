@@ -1,0 +1,98 @@
+title: "Self-Assessment Quiz: Shell Scripting & UNIX Philosophy"
+description: "Test your conceptual understanding of shell environments, data streams, and scripting paradigms beyond basic command memorization."
+questions:
+  - id: 1
+    question: "A developer needs to parse a massive log file, extract IP addresses, sort them, and count unique occurrences. Instead of writing a 500-line Python script, they use 'cat | awk | sort | uniq -c'. Why is this approach fundamentally preferred in the UNIX environment?"
+    options:
+      - "Because shell scripts execute faster than compiled C or C++ programs."
+      - "It adheres to the UNIX philosophy of combining small, single-purpose programs that communicate via universal text streams."
+      - "Because 'awk' and 'sort' are built-in OS functions that completely bypass the system's kernel."
+      - "It prevents the operating system from allocating memory to background processes."
+    correct_index: 1
+    explanation: "The UNIX design philosophy revolves around writing programs that 'do one thing and do it well', and having them work together by handling text streams. Pipelines allow complex tasks to be solved elegantly by chaining these simple tools together."
+  - id: 2
+    question: "A script runs a command that generates both useful output and a flood of permission error messages. The user runs 'script.sh > output.txt', but the errors still clutter the terminal screen while the useful data goes to the file. What underlying concept explains this behavior?"
+    options:
+      - "The terminal always mirrors file output for security reasons."
+      - "Standard Output (stdout) and Standard Error (stderr) are entirely separate data streams; the '>' operator only redirected stdout."
+      - "The script is missing the '#!/bin/bash' shebang, causing it to execute in a fallback compatibility mode."
+      - "Standard Error cannot be redirected in UNIX systems and must always be printed to the screen to alert the user."
+    correct_index: 1
+    explanation: "In UNIX, processes have three default streams: stdin, stdout, and stderr. Redirection with '>' only captures stdout. To capture the errors, you would need to redirect stderr specifically (e.g., using '2>')."
+  - id: 3
+    question: "A C++ developer writes a Bash script with a 'for' loop. Inside the loop, they declare a variable 'temp_val'. After the loop finishes, they try to print 'temp_val' expecting it to be undefined or empty, but it prints the last value assigned in the loop. Why did this happen?"
+    options:
+      - "Bash automatically exports all variables to the global environment by default."
+      - "The developer forgot to use the 'let' keyword when declaring the variable."
+      - "Unlike C++, Bash lacks strict block-level scoping (like '{}' blocks), meaning variables set within loops or if-statements remain accessible in the script's global scope."
+      - "The script was executed with 'sudo' privileges, which ignores standard scoping rules."
+    correct_index: 2
+    explanation: "Bash does not use block-level scoping. Unless explicitly declared as 'local' inside a function, variables assigned within control structures like loops or conditionals bleed into the rest of the script."
+  - id: 4
+    question: "You want to use a command that requires two file inputs (like 'diff'), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the '<(command)' syntax. What is this concept called and what does it achieve?"
+    options:
+      - "Piping; it concatenates the outputs of both commands into a single, unified text stream."
+      - "Process substitution; it runs the commands and treats their outputs as if they were temporary files for the primary command to read."
+      - "I/O Redirection; it overwrites the standard input of the 'diff' command with standard error."
+      - "Arithmetic expansion; it mathematically evaluates the commands and returns their integer exit codes."
+    correct_index: 1
+    explanation: "Process substitution '<()' allows the standard output of a command to be treated as a file. The operating system creates a temporary file descriptor (like '/dev/fd/63') that the consuming command can read from as if it were a physical file."
+  - id: 5
+    question: "A script contains entirely valid Python code, but the file is named 'script.sh' and has '#!/bin/bash' at the very top. When executed via './script.sh', the terminal throws dozens of 'command not found' and syntax errors. What is the fundamental misunderstanding here?"
+    options:
+      - "The file extension '.sh' forces the operating system to compile it as a C program."
+      - "The shebang ('#!') dictates which interpreter the OS uses to execute the file, completely overriding the file's extension or the actual code syntax."
+      - "Python scripts cannot be made executable via 'chmod +x' and must always be run using the 'python' keyword."
+      - "The script requires the 'set -e' flag to switch the shell into a dynamic Python compatibility mode."
+    correct_index: 1
+    explanation: "In UNIX systems, file extensions are largely superficial. The shebang ('#!') on the first line is what tells the operating system's program loader which interpreter program (e.g., Bash, Python, Node) to use to parse the rest of the file."
+  - id: 6
+    question: "A developer uses the regular expression '[0-9]{4}' to validate that a user's input is exactly a four-digit PIN. However, the system incorrectly accepts '12345' and 'A1234'. What crucial RegEx concept did the developer omit?"
+    options:
+      - "Escape characters ('\\') to neutralize the literal numbers."
+      - "The '*' wildcard to capture the whole string."
+      - "Anchors ('^' and '$') to strictly bind the match to the start and end of the string."
+      - "Named capture groups to extract the exact digits into memory."
+    correct_index: 2
+    explanation: "Without anchors, a regular expression looks for a match *anywhere* within the string. Because '12345' contains '1234', the pattern matches. Adding '^' (start) and '$' (end) ensures the pattern must account for the entire string."
+  - id: 7
+    type: multiple
+    question: "You are designing a data pipeline in the shell. Which of the following statements correctly describe how UNIX handles data streams and command chaining? (Select all that apply)"
+    options:
+      - "The pipe operator ('|') connects the standard output of one command directly to the standard input of the next command."
+      - "The '>>' operator appends standard output to a file without overwriting its existing contents."
+      - "Standard Error (stderr) is automatically piped to the next command when using the '|' operator."
+      - "The '<' operator is used to redirect standard input, allowing a command to read from a file instead of the keyboard."
+      - "The '>!' operator is fundamentally required to redirect both stdout and stderr simultaneously in modern Bash."
+    correct_indices: [0, 1, 3]
+    explanation: "Pipes ('|') link stdout to stdin, '>>' appends stdout to a file, and '<' feeds a file into stdin. By default, pipes do NOT pass stderr (errors will still print to the screen). '>!' is not the standard way to redirect both streams in Bash (typically '>&' or '&>' is used)."
+  - id: 8
+    type: multiple
+    question: "You've written a shell script 'deploy.sh' but it throws a 'Permission denied' error or fails to run when you type './deploy.sh'. Which of the following are valid reasons or necessary steps to successfully execute a script as a standalone program? (Select all that apply)"
+    options:
+      - "The file must have execute permissions granted to it using a command like 'chmod +x'."
+      - "The file must first be compiled into a binary language using the 'gcc' compiler."
+      - "The script should start with a valid shebang (e.g., '#!/bin/bash') to inform the OS which interpreter to invoke."
+      - "The script's directory must be permanently added to the '$PATH' variable in order to run it using the './' prefix."
+    correct_indices: [0, 2]
+    explanation: "Scripts require execute permissions ('chmod +x') to be run as programs, and a shebang tells the OS how to interpret the text. They are interpreted, not compiled. The './' explicitly tells the OS to look in the current directory, bypassing the need for the directory to be in the '$PATH'."
+  - id: 9
+    type: multiple
+    question: "In Bash, exit codes are crucial for determining if a command succeeded or failed. Which of the following statements are true regarding how Bash handles exit statuses and control flow? (Select all that apply)"
+    options:
+      - "The 'false' command does absolutely nothing except return an error exit code (a non-zero value)."
+      - "Running the 'set -e' command configures the script to abort immediately if any command within it exits with a non-zero status."
+      - "An exit status of '1' universally indicates complete, bug-free success in UNIX shell scripting."
+      - "Control structures like 'if' statements evaluate the underlying exit code of a command, rather than looking for a boolean literal like 'true' or 'false'."
+    correct_indices: [0, 1, 3]
+    explanation: "In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. 'if' statements work by running a command and proceeding if its exit code is 0. 'set -e' is a common safety mechanism to fail fast if an error occurs."
+  - id: 10
+    type: multiple
+    question: "When you type a command like 'python' or 'grep' into the terminal, the shell knows exactly what program to run without you providing the full file path. How does the '$PATH' environment variable facilitate this, and how is it managed? (Select all that apply)"
+    options:
+      - "'$PATH' contains a colon-separated, ordered list of directories that the operating system searches through to find matching executable files."
+      - "If you add a directory to '$PATH' using the 'export PATH=...' command in your terminal, the change is temporary and disappears when you close the session."
+      - "To make a '$PATH' modification permanent, you must append the export command to a shell startup script, such as '~/.bashrc' or '~/.zshrc'."
+      - "'$PATH' automatically crawls every single folder on your hard drive in real-time, which is why system commands are discovered so rapidly."
+    correct_indices: [0, 1, 2]
+    explanation: "'$PATH' is an explicit list of directories, not a global search crawler (which would be extremely slow). The OS checks these directories in order. Modifications in the terminal are bound to that specific session unless saved in a configuration file like .bashrc."

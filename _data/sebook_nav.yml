@@ -121,3 +121,11 @@ topics:
         url: /SEBook/development_practices/refactoring.html
       - name: Top Down Code Comprehension
         url: /SEBook/development_practices/topdown.html
+  - name: Tools
+    icon: null
+    url: /SEBook/tools/index.html
+    subtopics:
+      - name: Git
+        url: /SEBook/tools/git.html
+      - name: Shell Scripting
+        url: /SEBook/tools/shell.html
