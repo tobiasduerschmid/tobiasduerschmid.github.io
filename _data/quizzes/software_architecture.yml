@@ -8,7 +8,7 @@ questions:
       - "The Allocation Paradigm"
       - "The Module Paradigm"
     correct_index: 1
-    explanation: "The decision-based paradigm, championed by Taylor et al., defines architecture as the sum of principal design decisions rather than just boxes and lines."
+    explanation: "The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
 
   - question: "What formula did Perry and Wolf propose to define software architecture?"
     options:
@@ -17,7 +17,7 @@ questions:
       - "Architecture = {Modules, Layers, Interfaces}"
       - "Architecture = {Structure, Behavior, Constraints}"
     correct_index: 1
-    explanation: "Perry and Wolf's original formula (1992) defined architecture as consisting of Elements, Form, and Rationale."
+    explanation: "Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
 
   - question: "What is the key difference between 'Architectural Drift' and 'Architectural Erosion'?"
     options:
@@ -26,7 +26,7 @@ questions:
       - "Drift involves new decisions that don't violate rules; erosion involves direct violations of the intended architecture."
       - "Drift is structural, whereas erosion is decision-based."
     correct_index: 2
-    explanation: "Drift adds decisions that aren't in the plan but don't break it; erosion explicitly violates the rules and constraints of the prescriptive architecture."
+    explanation: "**Drift** adds decisions that aren't in the plan but don't break it; **erosion** explicitly violates the rules and constraints of the **prescriptive architecture**."
 
   - question: "Which term refers to the architecture as it is 'realized' in the source code and physical build artifacts?"
     options:
@@ -35,7 +35,7 @@ questions:
       - "Descriptive Architecture"
       - "Conceptual Architecture"
     correct_index: 2
-    explanation: "Descriptive architecture is the 'as-realized' structure found in the actual source code and artifacts."
+    explanation: "**Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
 
   - question: "According to the literature, what happens when a system's descriptive and prescriptive architectures diverge completely?"
     options:

@@ -4,24 +4,24 @@ cards:
   - id: 1
     question: "Why is rereading a textbook often an ineffective study strategy?"
     answer: "It creates an 'illusion of knowing' or perceptual fluency."
-    explanation: "Rereading makes the material feel familiar, but it doesn't trigger the deep cognitive processing required for long-term retention."
+    explanation: "Rereading makes the material feel familiar, but it doesn't trigger the **deep cognitive processing** required for long-term retention."
   - id: 2
     question: "What are 'Desirable Difficulties'?"
     answer: "Challenges that make learning feel harder and slower but trigger processes that optimize long-term retention."
-    explanation: "Examples include retrieval practice, spacing, and interleaving. They force the brain to work harder, which strengthens neural pathways."
+    explanation: "Examples include **retrieval practice**, **spacing**, and **interleaving**. They force the brain to work harder, which strengthens neural pathways."
   - id: 3
     question: "What is Retrieval Practice?"
     answer: "The act of actively recalling information from memory."
-    explanation: "Instead of looking at notes, you quiz yourself. This reinforces memory traces and identifies gaps in knowledge."
+    explanation: "Instead of looking at notes, you quiz yourself. This reinforces **memory traces** and identifies gaps in knowledge."
   - id: 4
     question: "Define 'Spaced Practice' (Spacing)."
     answer: "Spreading out study sessions over increasing intervals of time."
-    explanation: "Spacing allows for some forgetting to occur, which makes the subsequent retrieval more effortful and effective for durable memory."
+    explanation: "Spacing allows for some forgetting to occur, which makes the subsequent retrieval more effortful and effective for **durable memory**."
   - id: 5
     question: "What is Interleaving?"
     answer: "Mixing the practice of different but related topics or skills."
-    explanation: "Unlike 'blocked practice' (focusing on one topic at a time), interleaving helps learners discriminate between problem types and understand relationships."
+    explanation: "Unlike **'blocked practice'** (focusing on one topic at a time), interleaving helps learners discriminate between problem types and understand relationships."
   - id: 6
     question: "How does 'Generation' improve learning?"
     answer: "Attempting to solve a problem before being shown the solution makes the mind more receptive to the answer."
-    explanation: "Even if you make mistakes, the effort of generation creates fertile ground for encoding the correct solution later."
+    explanation: "Even if you make mistakes, the effort of **generation** creates fertile ground for encoding the correct solution later."

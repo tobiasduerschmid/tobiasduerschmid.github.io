@@ -7,7 +7,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign quiz_data = site.data.quizzes[include.id] %}
 
 {% if quiz_data %}
-<div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}">
+<div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}" data-shuffle="{{ quiz_data.shuffle | default: true }}">
   <div class="quiz-header">
     <h3>{{ quiz_data.title }}</h3>
     <p>{{ quiz_data.description }}</p>
@@ -20,7 +20,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     {% for q in quiz_data.questions %}
     <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
       id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}">
-      <div class="question-text">{{ q.question }}</div>
+      <div class="question-text">{{ q.question | markdownify }}</div>
       <div class="quiz-options">
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
         {% for option in q.options %}
@@ -28,7 +28,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
           data-correct-indices="{{ q.correct_indices | join: ',' }}">
           <span class="option-checkbox"></span>
           <span class="option-label">{{ alphabet | slice: forloop.index0 }}</span>
-          <span class="option-content">{{ option }}</span>
+          <span class="option-content">{{ option | markdownify }}</span>
         </button>
         {% endfor %}
       </div>
@@ -37,7 +37,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       {% endif %}
       <div class="quiz-explanation hidden">
         <div class="explanation-title">Explanation</div>
-        <div class="explanation-text">{{ q.explanation }}</div>
+        <div class="explanation-text">{{ q.explanation | markdownify }}</div>
         <button class="next-btn">Next Question</button>
       </div>
     </div>
@@ -118,6 +118,12 @@ Data source: _data/quizzes/{{ include.id }}.yml
     margin-bottom: 8px;
     line-height: 1.25;
     color: #1a1a1a;
+  }
+
+  .question-text p,
+  .option-content p,
+  .explanation-text p {
+    margin: 0;
   }
 
   .quiz-options {
@@ -344,7 +350,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const noShuffle = urlParams.get('noshuffle') === '1' || {% if quiz_data.shuffle == false %}true{% else %}false{% endif %};
+    const noShuffle = urlParams.get('noshuffle') === '1' || container.dataset.shuffle === 'false';
 
     // Shuffle Questions
     const questionCards = Array.from(questionsContainer.querySelectorAll('.quiz-question-card'));

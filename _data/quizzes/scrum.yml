@@ -9,7 +9,7 @@ questions:
       - "The prioritization duties of the Value Navigator"
       - "The daily synchronization meeting"
     correct_index: 1
-    explanation: "Scrum is founded on empiricism, and adaptation requires adjusting the process or product as soon as possible if aspects deviate outside acceptable limits."
+    explanation: "Scrum is founded on **empiricism**, and **adaptation** requires adjusting the process or product as soon as possible if aspects deviate outside acceptable limits."
 
   - question: "In an environment that prioritizes agility, the individuals actually building the product must possess a specific dynamic. Which description best captures how this group should operate?"
     options:
@@ -18,7 +18,7 @@ questions:
       - "A hierarchy of junior and senior engineers reporting directly to external stakeholders."
       - "A temporary task force assembled only for the duration of a single specific feature."
     correct_index: 1
-    explanation: "Scrum Teams are cross-functional (possessing all necessary skills) and self-managing (deciding internally who does what, when, and how)."
+    explanation: "Scrum Teams are **cross-functional** (possessing all necessary skills) and **self-managing** (deciding internally who does what, when, and how)."
 
   - question: "The development group is completely blocked because they lack access to a third-party API required for their current iteration. Who is primarily responsible for facilitating the resolution of this organizational bottleneck?"
     options:
@@ -27,7 +27,7 @@ questions:
       - "The Scrum Master, by causing the removal of the impediment."
       - "The external stakeholders, by extending the iteration's deadline."
     correct_index: 2
-    explanation: "The Scrum Master serves the team by causing the removal of impediments to their progress."
+    explanation: "The **Scrum Master** serves the team by causing the removal of **impediments** to their progress."
 
   - question: "To ensure the team is consistently tackling the most crucial problems first, someone must dictate the priority of upcoming work items. Who holds this responsibility?"
     options:
@@ -37,7 +37,7 @@ questions:
       - "A consensus vote among all stakeholders during the review session."
       - "The users submitting bug reports."
     correct_index: 1
-    explanation: "The Product Owner is the one who orders the work for a complex problem into a Product Backlog to maximize value."
+    explanation: "The **Product Owner** is the one who orders the work for a complex problem into a **Product Backlog** to maximize value."
 
   - question: "What condition must be strictly satisfied before a newly developed feature is officially considered a completed, verifiable stepping stone toward the ultimate product vision?"
     options:
@@ -46,7 +46,7 @@ questions:
       - "It must be deployed to the live production environment for end-users."
       - "It must be previewed in a slide deck for corporate stakeholders."
     correct_index: 1
-    explanation: "The Scrum Master helps the team focus on creating high-value Increments that specifically meet the Definition of Done (the quality measures checklist)."
+    explanation: "The **Scrum Master** helps the team focus on creating high-value **Increments** that specifically meet the **Definition of Done** (the quality measures checklist)."
 
   - question: "What is the primary objective of the Daily Scrum?"
     options:
@@ -56,7 +56,7 @@ questions:
       - "To reflect on long-term team friction and interpersonal conflicts."
       - "To refine and estimate future work items."
     correct_index: 1
-    explanation: "The Daily Scrum focuses on progress toward the Sprint Goal and produces an actionable plan for the next day of work."
+    explanation: "The **Daily Scrum** focuses on progress toward the **Sprint Goal** and produces an actionable plan for the next day of work."
 
   - question: "At the conclusion of a work cycle, the team gathers specifically to discuss how they can improve their internal collaboration and technical practices for the next cycle. Which event does this describe?"
     options:
@@ -65,7 +65,7 @@ questions:
       - "The Sprint Review."
       - "The Sprint Retrospective."
     correct_index: 3
-    explanation: "The Sprint Retrospective is a event for the team to inspect their process, reflect on it, and adjust for the next Sprint to continuously improve."
+    explanation: "The **Sprint Retrospective** is an event for the team to inspect their process, reflect on it, and adjust for the next Sprint to continuously improve."
 
   - question: "When a massive enterprise needs to coordinate dozens of teams working on the same vast product, they might adopt a 'team of teams' approach. According to common critiques, what is a potential drawback of this heavily synchronized model?"
     options:

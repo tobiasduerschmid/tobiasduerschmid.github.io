@@ -2,14 +2,14 @@ title: "Review Quiz"
 description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding."
 questions:
   - id: 1
-    question: "What is 'cognitive offloading'?"
+    question: "What is **'cognitive offloading'**?"
     options:
       - "Using AI to generate entire essays to save time."
       - "Using external tools to reduce cognitive demand for a task."
       - "Turning off your brain while watching educational videos."
       - "A technique to increase memory capacity through brain exercises."
     correct_index: 1
-    explanation: "Cognitive offloading is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
+    explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
   - id: 2
     question: "According to research, who benefits more from using AI for technical tasks?"
     options:
@@ -20,23 +20,23 @@ questions:
     correct_index: 2
     explanation: "Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
   - id: 3
-    question: "Which of these is an example of 'Beneficial Offloading' for a CS student?"
+    question: "Which of these is an example of **'Beneficial Offloading'** for a CS student?"
     options:
       - "Asking AI to solve the core algorithm of a homework assignment."
       - "Using AI to generate boilerplate HTML or format dummy data."
       - "Letting AI decide the architecture and edge cases of a system."
       - "Copying AI code without understanding how it works."
     correct_index: 1
-    explanation: "Beneficial offloading involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
+    explanation: "**Beneficial offloading** involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
   - id: 4
-    question: "What is the 'desirable difficulty' in the context of learning?"
+    question: "What is the **'desirable difficulty'** in the context of learning?"
     options:
       - "Any difficulty that makes a student want to give up."
       - "Difficulties that appear during learning but actually trigger deeper processing."
       - "The difficulty of finding a good internet connection."
       - "A state of confusion that has no educational benefit."
     correct_index: 1
-    explanation: "Desirable difficulties are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
+    explanation: "**Desirable difficulties** are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
   - id: 5
     type: multiple
     question: "Which of the following are considered 'desirable difficulties'? (Select all that apply)"

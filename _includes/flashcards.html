@@ -20,7 +20,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     {% for card in flashcard_data.cards %}
     <div class="flashcard-card" data-card-id="{{ card.id }}" data-card-index="{{ forloop.index0 }}"
       id="flash-{{ include.id }}-{{ forloop.index0 }}">
-      <div class="flashcard-question">{{ card.question }}</div>
+      <div class="flashcard-question">{{ card.question | markdownify }}</div>
 
       <div class="flashcard-answer-container hidden">
         <div class="flashcard-answer">{{ card.answer | markdownify }}</div>
@@ -86,6 +86,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .flashcard-question p,
+  .flashcard-answer p,
+  .flashcard-explanation p {
+    margin: 0;
   }
 
   .flashcard-answer-container {

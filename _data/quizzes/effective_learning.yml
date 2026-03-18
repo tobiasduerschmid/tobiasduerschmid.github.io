@@ -10,7 +10,7 @@ questions:
       - "Experiencing the negative effects of a growth mindset."
       - "Applying too many desirable difficulties at once."
     correct_index: 1
-    explanation: "The text references Bjork & Bjork's 'illusion of knowing', where rereading creates perceptual fluency (familiarity) that students mistake for actual mastery."
+    explanation: "The text references Bjork & Bjork's **'illusion of knowing'**, where rereading creates perceptual fluency (familiarity) that students mistake for actual mastery."
   - id: 2
     question: "According to the science of learning, why should you intentionally make your study sessions feel harder?"
     options:
@@ -19,7 +19,7 @@ questions:
       - "To weed out the concepts you aren't naturally gifted at understanding."
       - "Because studying for longer hours is the only way to prove your dedication to the material."
     correct_index: 1
-    explanation: "It is incredibly common to mistake the feeling of 'easy' studying (like rereading highlighted notes) for actual learning. However, that smooth, effortless feeling usually just means the material is familiar, not that you have mastered it. When you introduce 'desirable difficulties'—like forcing yourself to recall information without looking—the mental friction you feel is actually the biological process of your brain forging stronger, more permanent neural pathways!"
+    explanation: "It is incredibly common to mistake the feeling of 'easy' studying (like rereading highlighted notes) for actual learning. However, that smooth, effortless feeling usually just means the material is familiar, not that you have mastered it. When you introduce **'desirable difficulties'**—like forcing yourself to recall information without looking—the mental friction you feel is actually the biological process of your brain forging stronger, more permanent neural pathways!"
   - id: 3
     question: "Why do evidence-based study techniques often feel slower, clumsier, and more frustrating to the learner?"
     options:
@@ -28,7 +28,7 @@ questions:
       - "Because working memory is infinite and requires massive amounts of data to be challenged."
       - "Because they rely heavily on creating an illusion of competence."
     correct_index: 0
-    explanation: "This describes desirable difficulties (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
+    explanation: "This describes **desirable difficulties** (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
   - id: 4
     question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
     options:
@@ -37,7 +37,7 @@ questions:
       - "It prevents you from accidentally plagiarizing open-source code and failing the class."
       - "It helps you type faster, which is the most important skill for a computer science student."
     correct_index: 0
-    explanation: "While AI auto-complete tools are fantastic for workplace efficiency, they are terrible for initial learning because they do the heavy cognitive lifting for you. By turning them off, you force yourself to struggle through the logic, manually track down missing brackets, and figure out the syntax from scratch. That exact frustration is what cements the knowledge in your long-term memory, ensuring you won't need the AI to do it for you on the final exam."
+    explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task. While AI auto-complete tools are fantastic for workplace efficiency, they are terrible for initial learning because they do the heavy cognitive lifting for you. By turning them off, you force yourself to struggle through the logic, manually track down missing brackets, and figure out the syntax from scratch. That exact frustration is what cements the knowledge in your long-term memory, ensuring you won't need the AI to do it for you on the final exam."
   - id: 5
     question: "A junior developer wants to master a new web framework. Which of the following approaches represents the most effective memory-strengthening technique?"
     options:
@@ -47,7 +47,7 @@ questions:
       - "Copying and pasting expert code snippets repeatedly until they look familiar."
       - "Reading the framework's source code line-by-line before writing any code."
     correct_index: 2
-    explanation: "This represents retrieval practice. Roediger and Karpicke's research demonstrates that actively retrieving information from memory (without looking at the source) physically strengthens memory traces far better than passive review."
+    explanation: "This represents **retrieval practice**. Roediger and Karpicke's research demonstrates that actively retrieving information from memory (without looking at the source) physically strengthens memory traces far better than passive review."
   - id: 6
     question: "A project team must pass a rigorous cybersecurity certification in one month. How should they schedule their preparation to ensure the knowledge remains accessible long after the test is over?"
     options:
@@ -56,7 +56,7 @@ questions:
       - "Schedule shorter, periodic review sessions that force them to recall slightly degraded memories."
       - "Focus only on the most difficult topics the day before the exam."
     correct_index: 2
-    explanation: "This represents distributed practice (spacing). Cepeda et al. showed that allowing a little forgetting to set in forces the brain to 'reload' the information, triggering reconsolidation and deeper learning."
+    explanation: "This represents **distributed practice (spacing)**. Cepeda et al. showed that allowing a little forgetting to set in forces the brain to 'reload' the information, triggering reconsolidation and deeper learning."
   - id: 7
     question: "A data structures student is practicing graph algorithms. Instead of doing all the shortest-path problems, followed by all the minimum-spanning-tree problems, she shuffles them together. What specific cognitive capability does this heavily cultivate?"
     options:
@@ -66,7 +66,7 @@ questions:
       - "The stabilization of short-term memory traces."
       - "The creation of perceptual fluency."
     correct_index: 1
-    explanation: "This represents interleaving. Rohrer and Taylor note that while blocked practice teaches you how to do a problem, interleaving improves your ability to discriminate between problem types and know when to apply specific solutions."
+    explanation: "This represents **interleaving**. Rohrer and Taylor note that while blocked practice teaches you how to do a problem, interleaving improves your ability to discriminate between problem types and know when to apply specific solutions."
   - id: 8
     question: "Before attending a lecture on building neural networks, a software engineering student tries to sketch out the math for backpropagation, making several fundamental logic errors. Pedagogically speaking, how should we view this attempt?"
     options:
@@ -75,7 +75,7 @@ questions:
       - "Highly beneficial, as the initial struggle primes the brain to better encode the correct mechanism later."
       - "Irrelevant, as only the final compiling code matters in computer science."
     correct_index: 2
-    explanation: "This represents generation. Jacoby's work shows that struggling with a problem before seeing the solution (even if errors are made) makes the mind far more receptive to the correct answer when provided."
+    explanation: "This represents **generation**. Jacoby's work shows that struggling with a problem before seeing the solution (even if errors are made) makes the mind far more receptive to the correct answer when provided."
   - id: 9
     question: "A student is completely overwhelmed trying to combine Git, shell scripting, and learning a new programming language all at the same time. What should they do to optimize their cognitive architecture?"
     options:

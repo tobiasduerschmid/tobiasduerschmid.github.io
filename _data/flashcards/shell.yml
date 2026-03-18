@@ -4,56 +4,56 @@ cards:
   - id: 1 
     question: "You need to see a list of all the files and folders in your current directory. What command do you use?" 
     answer: "ls" 
-    explanation: "The 'ls' command lists directory contents. You can also use flags like 'ls -l' for a detailed list or 'ls -a' to see hidden files." 
+    explanation: "The `ls` command lists directory contents. You can also use flags like `ls -l` for a detailed list or `ls -a` to see hidden files." 
   - id: 2 
     question: "You are currently in your home directory and need to navigate into a folder named 'Documents'. Which command achieves this?" 
     answer: "cd Documents" 
-    explanation: "The 'cd' (change directory) command is used to change the current working directory in the command line operating system." 
+    explanation: "The `cd` (change directory) command is used to change the current working directory in the command line operating system." 
   - id: 3 
     question: "You want to quickly view the entire contents of a small text file named 'config.txt' printed directly to your terminal screen." 
     answer: "cat config.txt" 
-    explanation: "The 'cat' (concatenate) command reads data from the file and gives its content as output. It is widely used to display file contents." 
+    explanation: "The `cat` (concatenate) command reads data from the file and gives its content as output. It is widely used to display file contents." 
   - id: 4 
     question: "You need to find every line containing the word 'ERROR' inside a massive log file called 'server.log'." 
     answer: "grep 'ERROR' server.log" 
-    explanation: "'grep' searches for patterns in each file. It prints each line that matches the given pattern, making it invaluable for parsing logs." 
+    explanation: "`grep` searches for patterns in each file. It prints each line that matches the given pattern, making it invaluable for parsing logs." 
   - id: 5 
     question: "You wrote a new bash script named 'script.sh', but when you try to run it, you get a 'Permission denied' error. How do you make the file executable?" 
     answer: "chmod +x script.sh" 
-    explanation: "The 'chmod' command changes file modes or Access Control Lists. The '+x' flag specifically adds execute permissions to the file." 
+    explanation: "The `chmod` command changes file modes or Access Control Lists. The `+x` flag specifically adds execute permissions to the file." 
   - id: 6 
     question: "You want to rename a file from 'draft_v1.txt' to 'final_version.txt' without creating a copy." 
     answer: "mv draft_v1.txt final_version.txt" 
-    explanation: "The 'mv' command is used to move files or directories, but it is also the standard command used to rename a file by moving it to a new name in the same directory." 
+    explanation: "The `mv` command is used to move files or directories, but it is also the standard command used to rename a file by moving it to a new name in the same directory." 
   - id: 7 
     question: "You are starting a new project and need to create a brand new, empty folder named 'src' in your current location." 
     answer: "mkdir src" 
-    explanation: "'mkdir' stands for 'make directory'. It creates a new directory with the specified name, provided you have the correct permissions." 
+    explanation: "`mkdir` stands for 'make directory'. It creates a new directory with the specified name, provided you have the correct permissions." 
   - id: 8 
     question: "You want to view the contents of a very long text file called 'manual.txt' one page at a time so you can scroll through it." 
     answer: "less manual.txt" 
-    explanation: "The 'less' command is a terminal pager program that allows viewing (but not editing) the contents of a text file one screen at a time, allowing both forward and backward navigation."
+    explanation: "The `less` command is a terminal pager program that allows viewing (but not editing) the contents of a text file one screen at a time, allowing both forward and backward navigation."
   - id: 9
     question: "You need to create an exact duplicate of a file named 'report.pdf' and save it as 'report_backup.pdf'."
     answer: "cp report.pdf report_backup.pdf"
-    explanation: "The 'cp' (copy) command is used to copy files or directories from one location to another."
+    explanation: "The `cp` (copy) command is used to copy files or directories from one location to another."
   - id: 10
     question: "You have a temporary file called 'temp_data.csv' that you no longer need and want to permanently delete from your system."
     answer: "rm temp_data.csv"
-    explanation: "The 'rm' (remove) command deletes files or directories. Use with caution, as deleted files are generally not recoverable."
+    explanation: "The `rm` (remove) command deletes files or directories. Use with caution, as deleted files are generally not recoverable."
   - id: 11
     question: "You want to quickly print the phrase 'Hello World' to the terminal or pass that string into a pipeline."
     answer: "echo 'Hello World'"
-    explanation: "The 'echo' command outputs the strings it is being passed as arguments. It is commonly used in scripts to display messages or write data to a file using redirection."
+    explanation: "The `echo` command outputs the strings it is being passed as arguments. It is commonly used in scripts to display messages or write data to a file using redirection."
   - id: 12
     question: "You want to know exactly how many lines are contained within a file named 'essay.txt'."
     answer: "wc -l essay.txt"
-    explanation: "The 'wc' (word count) command prints newline, word, and byte counts for a file. Adding the '-l' flag restricts the output to only the line count."
+    explanation: "The `wc` (word count) command prints newline, word, and byte counts for a file. Adding the `-l` flag restricts the output to only the line count."
   - id: 13
     question: "You need to perform an automated find-and-replace operation on a stream of text to change the word 'apple' to 'orange'."
     answer: "sed 's/apple/orange/g'"
-    explanation: "The 'sed' (stream editor) s: Stands for 'substitute'. '/': The delimiter that separates the search and replacement terms. apple: The string you want to find. orange: The string you want to replace it with. g: Stands for 'global'. This tells sed to replace every instance of 'apple' on a line, rather than just the first one it finds."
+    explanation: "The `sed` (stream editor) `s`: Stands for 'substitute'. `/`: The delimiter that separates the search and replacement terms. `apple`: The string you want to find. `orange`: The string you want to replace it with. `g`: Stands for 'global'. This tells sed to replace every instance of 'apple' on a line, rather than just the first one it finds."
   - id: 14
     question: "You have a space-separated log file and want a tool to extract and print only the 3rd column of data."
     answer: "awk '{print $3}'"
-    explanation: "'awk' is a versatile command-line utility and programming language designed for text processing and data extraction, particularly excelling at handling structured, column-based data."
+    explanation: "`awk` is a versatile command-line utility and programming language designed for text processing and data extraction, particularly excelling at handling structured, column-based data."

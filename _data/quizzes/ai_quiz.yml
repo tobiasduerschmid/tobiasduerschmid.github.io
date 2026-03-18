@@ -9,7 +9,7 @@ questions:
       - "Turning off your brain while watching educational videos."
       - "A technique to increase memory capacity through brain exercises."
     correct_index: 1
-    explanation: "Cognitive offloading is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
+    explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
   - id: 2
     question: "According to research, who benefits more from using AI for technical tasks?"
     options:
@@ -27,7 +27,7 @@ questions:
       - "Letting AI decide the architecture and edge cases of a system."
       - "Copying AI code without understanding how it works."
     correct_index: 1
-    explanation: "Beneficial offloading involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
+    explanation: "**Beneficial offloading** involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
   - id: 4
     question: "What is the 'desirable difficulty' in the context of learning?"
     options:
@@ -36,4 +36,4 @@ questions:
       - "The difficulty of finding a good internet connection."
       - "A state of confusion that has no educational benefit."
     correct_index: 1
-    explanation: "Desirable difficulties are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
+    explanation: "**Desirable difficulties** are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."

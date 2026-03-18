@@ -26,7 +26,7 @@ questions:
       - "The latest commit to the commit immediately before it."
       - "The working directory to the latest commit."
     correct_index: 3
-    explanation: "Adding HEAD tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
+    explanation: "Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
 
   - question: "Which Git command should you NEVER use on a shared branch because it can permanently overwrite and destroy work pushed by other team members?"
     options:
@@ -44,7 +44,7 @@ questions:
       - "git revert"
       - "git stash"
     correct_index: 3
-    explanation: "Git stash temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+    explanation: "`git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
 
   - question: "What happens when you enter a 'Detached HEAD' state in Git?"
     options:
@@ -62,7 +62,7 @@ questions:
       - "git diff"
       - "git cherry-pick"
     correct_index: 1
-    explanation: "Bisect systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
+    explanation: "`git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
 
   - question: "What is the primary purpose of Git Submodules?"
     options:
@@ -119,10 +119,10 @@ questions:
   - type: multiple
     question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase? (Select all that apply)"
     options:
-      - "git merge"
-      - "git rebase"
-      - "git merge --squash"
-      - "git bisect"
-      - "git blame"
+      - "`git merge`"
+      - "`git rebase`"
+      - "`git merge --squash`"
+      - "`git bisect`"
+      - "`git blame`"
     correct_indices: [0, 1, 2]
     explanation: "Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."

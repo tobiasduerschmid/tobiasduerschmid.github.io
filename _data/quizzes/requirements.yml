@@ -8,7 +8,7 @@ questions:
       - "A specific architectural implementation strategy."
       - "A concrete algorithmic choice for data caching."
     correct_index: 1
-    explanation: "The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the problem space."
+    explanation: "The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**."
 
   - question: "A Quality Assurance (QA) engineer is writing automated checks for a new e-commerce checkout flow. They ensure that every test maps directly back to a specific stakeholder request. Which core benefit of defining the problem space does this mapping best demonstrate?"
     options:
@@ -17,7 +17,7 @@ questions:
       - "Establishing verifiable traceability."
       - "Delegating design choices to the QA team."
     correct_index: 2
-    explanation: "Good requirements allow developers to write clear acceptance criteria, ensuring every test and line of code traces back to a specific requirement."
+    explanation: "Good requirements allow developers to write clear acceptance criteria, ensuring every test and line of code traces back to a specific requirement via **verifiable traceability**."
 
   - question: "A client requests a new social media dashboard and specifies, 'The platform must use a graph database to map user connections.' Why might a software architect push back on this specific phrasing?"
     options:
@@ -44,7 +44,7 @@ questions:
       - "The application will utilize an in-memory Redis store to temporarily hold the user's unpurchased items."
       - "Consumers must receive an email notification immediately after a successful transaction."
     correct_index: 2
-    explanation: "Utilizing 'Redis' is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
+    explanation: "Utilizing **`Redis`** is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
 
   - question: "A development team originally built a search feature using a basic database query but later migrated to a dedicated indexing engine to handle typos more effectively. If their original specification was written perfectly, what happened to that specification during this technical migration?"
     options:
@@ -53,7 +53,7 @@ questions:
       - "It was discarded because iterative teams do not use specifications."
       - "It was expanded to mandate the new indexing engine for all future company projects."
     correct_index: 1
-    explanation: "Because design decisions change frequently, a well-written requirement focused strictly on the 'what' preserves flexibility and remains valid even if the underlying technical solution is swapped out."
+    explanation: "Because design decisions change frequently, a well-written requirement focused strictly on the **'what'** preserves flexibility and remains valid even if the underlying technical solution is swapped out."
 
   - question: "A team needs to ensure their new banking portal can handle 10,000 simultaneous logins within two seconds without crashing. What is the recommended format for capturing this specific type of system characteristic?"
     options:
@@ -63,7 +63,7 @@ questions:
       - "An Operational Transformation matrix."
       - "A long user story."
     correct_index: 1
-    explanation: "Quality attribute requirements (performance, security, availability) are best captured via Quality Attribute Scenarios to make them concrete and measurable."
+    explanation: "Quality attribute requirements (performance, security, availability) are best captured via **Quality Attribute Scenarios** to make them concrete and measurable."
 
   - question: "A transit application needs to serve commuters who frequently lose cell service in subway tunnels. Which of the following represents the 'how' (the implementation) rather than the 'what' for this scenario?"
     options:
@@ -72,4 +72,4 @@ questions:
       - "The application embeds a local database to cache schedule data directly on the device."
       - "The app must notify the user with a banner that they are viewing offline data."
     correct_index: 2
-    explanation: "Embedding a local database to cache data is the design decision (the 'how'). The other options describe the required offline capabilities (the 'what')."
+    explanation: "Embedding a local database to cache data is the design decision (the **'how'**). The other options describe the required offline capabilities (the **'what'**)."
