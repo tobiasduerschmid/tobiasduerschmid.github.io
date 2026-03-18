@@ -8,3 +8,5 @@ test-results/
 .cache/
 .playwright-mcp/
 .jekyll-metadata
+pdfs/
+.DS_Store

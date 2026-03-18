@@ -19,4 +19,8 @@ clean:
 run: check
 	bundle exec jekyll serve --incremental
 
+pdf: build
+	npm run pdf
+	node scripts/merge_pdfs.js
+
 all: test run
