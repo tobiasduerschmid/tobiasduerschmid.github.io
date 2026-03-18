@@ -59,14 +59,14 @@ def apply_inline_markup(text):
 
     # Quotation marks → \enquote
     # IMPORTANT: must come FIRST before bold/italic add { } chars.
-    # We use a sentinel PAIR with no braces so that escape_latex and the
-    # brace-based LXCMD restore regex cannot corrupt the span.
+    # Use LXP (not LXCMD) prefix so the brace-based LXCMD restore regex
+    # can never accidentally merge this sentinel with an adjacent LXCMD token.
     # Typographic "…"
     text = re.sub('\u201c([^\u201d]*?)\u201d',
-                  lambda m: 'LXCMDENQUOTEX' + m.group(1) + 'LXCMDENQUOTEY', text)
+                  lambda m: 'LXPENQUOTEX' + m.group(1) + 'LXPENQUOTEY', text)
     # ASCII "…" — no newlines so we never cross line boundaries
     text = re.sub(r'"([^"\n]+?)"',
-                  lambda m: 'LXCMDENQUOTEX' + m.group(1) + 'LXCMDENQUOTEY', text)
+                  lambda m: 'LXPENQUOTEX' + m.group(1) + 'LXPENQUOTEY', text)
 
     # Citations
     text = re.sub(
@@ -153,7 +153,7 @@ def escape_and_restore(text):
     # Enquote sentinels — restored LAST after all other commands are in place.
     # Inner content has already been through escape_and_restore so it contains
     # real LaTeX.  We just need to wrap it with \enquote{…}.
-    text = text.replace('LXCMDENQUOTEX', '\\enquote{').replace('LXCMDENQUOTEY', '}')
+    text = text.replace('LXPENQUOTEX', '\\enquote{').replace('LXPENQUOTEY', '}')
 
     return text
 
@@ -228,7 +228,13 @@ def md_to_latex(md_content, base_url):
 
     md_content = re.sub(r'```(\w+)?\n(.*?)\n```', store_code, md_content, flags=re.DOTALL)
 
-    # ── 2. Capture list blocks (raw markdown), replace with placeholder ───────
+    # ── 2. Headers — MUST come before list capture so headings adjacent to
+    #        list blocks are never consumed by the list block regex. ──────────
+    md_content = re.sub(r'^###\s+(.+)$', r'LXCMDSUBSUBSECTION{\1}', md_content, flags=re.MULTILINE)
+    md_content = re.sub(r'^##\s+(.+)$',  r'LXCMDSUBSECTION{\1}',    md_content, flags=re.MULTILINE)
+    md_content = re.sub(r'^#\s+(.+)$',   r'LXCMDSECTION{\1}',       md_content, flags=re.MULTILINE)
+
+    # ── 3. Capture list blocks (raw markdown), replace with placeholder ───────
     # Key insight: we store the raw markdown lines here (before any escaping
     # or inline markup), then process each item through the full pipeline later.
     list_blocks = []
@@ -257,11 +263,6 @@ def md_to_latex(md_content, base_url):
         md_content,
         flags=re.MULTILINE
     )
-
-    # ── 3. Headers ───────────────────────────────────────────────────────────
-    md_content = re.sub(r'^###\s+(.+)$', r'LXCMDSUBSUBSECTION{\1}', md_content, flags=re.MULTILINE)
-    md_content = re.sub(r'^##\s+(.+)$',  r'LXCMDSUBSECTION{\1}',    md_content, flags=re.MULTILINE)
-    md_content = re.sub(r'^#\s+(.+)$',   r'LXCMDSECTION{\1}',       md_content, flags=re.MULTILINE)
 
     # ── 4. Inline markup on body text ────────────────────────────────────────
     md_content = apply_inline_markup(md_content)
