@@ -42,7 +42,7 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
   </div>
 </div>
 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](blog/evidence-based-study-tips-for-college-students/)" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](/blog/evidence-based-study-tips-for-college-students/)" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
 
 On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties.
 
@@ -56,12 +56,12 @@ To truly master how you integrate AI into your computer science education, we ne
 **The Research:**
 Cognitive offloading is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016 %}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constly think about the deadline. or asking ChatGPT to debug a script. They enable you get a task done with less cognitive work on your end, which of course sounds very enticing!
 
-However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory (CLT), which divides our mental effort into two categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn) and *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal) {% cite sweller2011cognitive KalyugaPlass2025 %}. 
+However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory (CLT), which divides our mental effort into three categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn), *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal), and *germane load* (the mental effort that is directly contributing to learning and understanding) {% cite sweller2011cognitive KalyugaPlass2025 %}. 
 
 Based on this framework, research categorizes AI cognitive offloading into two distinct paths:
 
 #### The Bad: Detrimental Offloading (Outsourcing)
-Detrimental offloading occurs when you use AI to bypass the *intrinsic* cognitive effort required to build long-term knowledge schemas in your brain {% cite LodgeLoble2026 %}. In computer science, this looks like asking an AI to "write a Python script to solve the traveling salesperson problem" when the entire point of the assignment is for you to learn algorithmic optimization. 
+Detrimental offloading occurs when you use AI to bypass the *intrinsic* and *germane* cognitive effort required to build long-term knowledge schemas in your brain {% cite LodgeLoble2026 %}. In computer science, this looks like asking an AI to "write a Python script to solve the traveling salesperson problem" when the entire point of the assignment is for you to learn algorithmic optimization. 
 
 When you outsource the intrinsic load, you suffer several severe consequences:
 *   **Bypassing Schema Construction:** By letting the AI generate the logic, you skip the "desirable difficulties" necessary to move knowledge from your limited working memory into your long-term procedural memory {% cite deBruinEtAl2023 Duplice2025 %}. 
