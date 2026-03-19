@@ -243,54 +243,81 @@ Data source: _data/flashcards/{{ include.id }}.yml
     .flashcards-list .flashcard-card,
     .flashcards-list .flashcard-card.active {
       display: block !important;
-      margin-bottom: 30px !important;
+      margin-bottom: 25px !important;
       page-break-inside: avoid;
       border: 1px solid #eee !important;
-      padding: 15px !important;
+      padding: 15px 20px !important;
       text-align: left !important;
       opacity: 1 !important;
       transform: none !important;
     }
 
-    .flashcard-card .flashcard-question {
-      font-size: 1.2em !important;
-      margin-bottom: 10px !important;
+    .flashcard-card .flashcard-question,
+    .flashcard-card .flashcard-answer {
+      display: block !important;
+      font-size: 1.15em !important;
       min-height: auto !important;
-      justify-content: flex-start !important;
-      border-bottom: 1px solid #f0f0f0 !important;
-      padding-bottom: 5px !important;
+      position: relative !important;
+      padding-left: 35px !important;
+      line-height: 1.4 !important;
+    }
+
+    .flashcard-card .flashcard-question {
+      margin-bottom: 12px !important;
+      border-bottom: none !important;
     }
 
     .flashcard-card .flashcard-question::before {
-      content: "Q: ";
-      font-weight: bold;
+      content: "Q:";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-weight: 800 !important;
+      color: #000 !important;
     }
 
     .flashcard-card .flashcard-answer-container,
     .flashcard-card .flashcard-answer-container.hidden {
       display: block !important;
-      margin-top: 10px !important;
+      margin-top: 5px !important;
       padding: 0 !important;
       background: transparent !important;
       border: none !important;
       animation: none !important;
     }
 
-    .flashcard-card .flashcard-answer::before {
-      content: "A: ";
-      font-weight: bold;
-    }
-
-    .flashcard-answer {
+    .flashcard-card .flashcard-answer {
       color: #000 !important;
       font-weight: bold !important;
+      margin-bottom: 8px !important;
+    }
+
+    .flashcard-card .flashcard-answer::before {
+      content: "A:";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-weight: 800 !important;
+      color: #000 !important;
+    }
+
+    .flashcard-answer p,
+    .flashcard-question p {
+      display: inline !important;
+      margin: 0 !important;
     }
 
     .flashcard-explanation {
-      color: #333 !important;
-      font-size: 0.9em !important;
+      display: block !important;
+      color: #444 !important;
+      font-size: 0.95em !important;
+      margin-left: 35px !important;
+      line-height: 1.5 !important;
+      padding-top: 8px !important;
+      border-top: 1px dashed #eee !important;
     }
 
+    .flashcards-container .quiz-header,
     .flashcards-container .quiz-progress-bar,
     .flashcards-container .flashcard-actions,
     .flashcards-container .flashcards-results,
