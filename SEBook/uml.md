@@ -3,6 +3,11 @@ title: UML
 layout: sebook
 ---
 
+![UML Sequence Diagram](/img/sequence_diagram_1.svg)
+
+![UML State Diagram](/img/state_machine_1.svg)
+
+![UML Class Diagram](/img/class_diagram_1.svg)
 
 # Introduction
 

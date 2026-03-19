@@ -794,7 +794,7 @@ html.dark-mode .quiz-option.incorrect {
 /* SVG Inversion in Dark Mode */
 html.dark-mode .post-content img[src$=".svg"],
 html.dark-mode .post-content svg {
-	filter: invert(1) hue-rotate(180deg);
+	filter: invert(100%) brightness(150%) hue-rotate(180deg);
 }
 
 html.dark-mode .quiz-explanation {
