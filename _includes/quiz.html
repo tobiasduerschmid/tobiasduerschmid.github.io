@@ -7,7 +7,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign quiz_data = site.data.quizzes[include.id] %}
 
 {% if quiz_data %}
-<div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}" data-shuffle="{{ quiz_data.shuffle | default: true }}">
+<div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}"
+  data-shuffle="{{ quiz_data.shuffle | default: true }}">
   <div class="quiz-header">
     <h3>{{ quiz_data.title }}</h3>
     <p>{{ quiz_data.description }}</p>
@@ -35,6 +36,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
       {% if q.type == 'multiple' %}
       <button class="submit-answer-btn">Submit Answer</button>
       {% endif %}
+      <div class="quiz-connect-answers">
+        Connect Answer{% if q.type == 'multiple' %}s{% endif %}:
+        <span class="correct-labels"></span>
+      </div>
       <div class="quiz-explanation hidden">
         <div class="explanation-title">Explanation</div>
         <div class="explanation-text">{{ q.explanation | markdownify }}</div>
@@ -263,6 +268,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
     padding: 32px 0;
   }
 
+  .quiz-connect-answers {
+    display: none;
+  }
+
   .score-display {
     font-size: 2em;
     font-weight: 800;
@@ -291,8 +300,18 @@ Data source: _data/quizzes/{{ include.id }}.yml
     .next-btn,
     .restart-btn,
     .review-btn,
+    .submit-answer-btn,
     .quiz-results {
       display: none !important;
+    }
+
+    .quiz-connect-answers {
+      display: block !important;
+      margin-top: 15px !important;
+      font-weight: 700 !important;
+      color: #000 !important;
+      border-bottom: 2px solid #2774AE !important;
+      padding-bottom: 8px !important;
     }
 
     .quiz-question-card {
@@ -376,11 +395,28 @@ Data source: _data/quizzes/{{ include.id }}.yml
         shuffleArray(options);
       }
       const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const qType = card.dataset.type;
+      const correctIndices = (qType === 'multiple')
+        ? options[0].dataset.correctIndices.split(',')
+        : [options[0].dataset.correct];
+
+      const correctLabels = [];
+
       options.forEach((opt, idx) => {
         optionsContainer.appendChild(opt);
-        const label = opt.querySelector('.option-label');
-        if (label) label.textContent = alphabet[idx];
+        const label = alphabet[idx];
+        const labelElem = opt.querySelector('.option-label');
+        if (labelElem) labelElem.textContent = label;
+
+        if (correctIndices.includes(opt.dataset.index)) {
+          correctLabels.push(label);
+        }
       });
+
+      const connectAnswersElem = card.querySelector('.quiz-connect-answers .correct-labels');
+      if (connectAnswersElem) {
+        connectAnswersElem.textContent = correctLabels.join(', ');
+      }
     });
 
     const cards = container.querySelectorAll('.quiz-question-card');

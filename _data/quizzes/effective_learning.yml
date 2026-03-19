@@ -104,6 +104,6 @@ questions:
       - "Spacing out study sessions over time."
       - "Mixing up different topics within a single session."
       - "Studying in a quiet, familiar environment every time."
-      - "Studying in a quiet, familiar environment every time."
+      - "Studying while experiencing severe test anxiety."
     correct_indices: [0, 1, 2]
-    explanation: "Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context."
+    explanation: "Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context. Test anxiety is also harmful for learning."

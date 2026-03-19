@@ -1162,3 +1162,10 @@ html.dark-mode .flashcard-answer {
 html.dark-mode .flashcard-explanation {
 	color: #b0b0b0 !important;
 }
+
+/* Print Overrides */
+@media print {
+	.cap {
+		display: none !important;
+	}
+}
