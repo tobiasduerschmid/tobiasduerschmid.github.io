@@ -29,10 +29,10 @@ Recent research by Google shows that developers with *stronger coding foundation
 In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025 %}.
 Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle isuses, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026 %}.
 Methodologically, experts engage with GenAI *proactively* to *plan*, *steer*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 huang202DontVibeTheyControl %}.
-Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind**.
+Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind** {% cite LodgeLoble2026 %}.
 
 This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
-Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
+Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately {% cite Yan2024promises %}. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
 <div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
@@ -44,7 +44,7 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 
 Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](/blog/evidence-based-study-tips-for-college-students/)" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
 
-On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties.
+On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties {% cite Yan2024promises %}.
 
 This blog post is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
 
@@ -61,18 +61,19 @@ However, whether this offloading helps or harms your education depends entirely 
 Based on this framework, research categorizes AI cognitive offloading into two distinct paths:
 
 #### The Bad: Detrimental Offloading (Outsourcing)
-Detrimental offloading occurs when you use AI to bypass the *intrinsic* and *germane* cognitive effort required to build long-term knowledge schemas in your brain {% cite LodgeLoble2026 %}. In computer science, this looks like asking an AI to "write a Python script to solve the traveling salesperson problem" when the entire point of the assignment is for you to learn algorithmic optimization. 
+Detrimental offloading occurs when you use AI to bypass the *intrinsic* and *germane* cognitive effort required to build long-term knowledge schemas in your brain {% cite LodgeLoble2026 %}. 
+In computer science, this looks like asking an AI to "write a Python script to solve the traveling salesperson problem" when the entire point of the assignment is for you to learn algorithmic optimization. 
 
-When you outsource the intrinsic load, you suffer several severe consequences:
+When you outsource the intrinsic and/or germane load, you suffer several severe consequences:
 *   **Bypassing Schema Construction:** By letting the AI generate the logic, you skip the "desirable difficulties" necessary to move knowledge from your limited working memory into your long-term procedural memory {% cite deBruinEtAl2023 Duplice2025 %}. 
 A massive randomized experiment of students using AI to solve math problems found that while their immediate performance was excellent, their long-term, durable learning suffered significantly once the AI was removed because they never built the internal neural pathways to solve the problems themselves {% cite BastaniEtAl2025 %}.
 A smaller study conducted by Anthropic researchers shows similar results for coding tasks as well {% cite ShenTamkin2026 %}.
 
-*   **Metacognitive Laziness:** The frictionless convenience of GenAI powerfully incentivizes "metacognitive laziness"—a state where learners willingly abdicate their self-regulatory responsibilities, such as planning an approach, monitoring their own comprehension, and critically evaluating their work, simply handing those executive functions over to the machine {% cite FanEtAl2025 %}.
+*   **Metacognitive Laziness:** The frictionless convenience of GenAI powerfully incentivizes "metacognitive laziness"—a state where learners willingly abdicate their self-regulatory responsibilities, such as planning an approach, monitoring their own comprehension, and critically evaluating their work, simply handing those executive functions over to the machine {% cite FanEtAl2025 yan2025distinguishing %}.
 
 
 #### The Good: Beneficial Offloading
-Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026 %}. 
+Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite behind %}. 
 
 In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025 %}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025 %}. 
 
