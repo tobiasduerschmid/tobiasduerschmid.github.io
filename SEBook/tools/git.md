@@ -3,13 +3,22 @@ title: Version Control with Git
 layout: sebook
 ---
 
-# Basics 
-In modern software construction, version control is not just a convenience—it is a foundational practice. Whether you are a solo developer or part of a global engineering team, understanding Git is essential for managing code complexity and ensuring project stability.
+In modern software construction, version control is not just a convenience—it is a foundational practice, solving several major challenges associated with managing code. 
+Git is by far the most common tool for version control. 
+Let's dive into both!
 
+# Basics 
 
 ## What is Version Control?
 
 **Version control** (also known as source control or revision control) is the software engineering practice of controlling, organizing, and tracking different versions in the history of computer files. While it works best with text-based source code, it can theoretically track any file type.
+
+We call a tool that supports version control a **Version Control System (VCS)**.
+The most common version control systems are:
+* **[Git](https://git-scm.com/)** (most common for open source systems, also used by Microsoft, Apple, and most other companies)
+* **[Mercurial](https://www.mercurial-scm.org/)** (used by Meta, formerly Facebook {% cite goode2014scaling %}, Jane Street, and some others)
+* **Piper** (internal tool used by Google {% cite Potvin2016 %})
+* **Subversion** (used by some older projects)
 
 ### Why is it Essential?
 Manual version control—saving files with names like `Homework_final_v2_really_final.txt`—is cumbersome and error-prone. Automated systems like Git solve several critical problems:
@@ -24,7 +33,7 @@ Manual version control—saving files with names like `Homework_final_v2_really_
 
 There are two primary models of version control systems:
 
-| Feature | Centralized (e.g., Subversion) | Distributed (e.g., Git) |
+| Feature | Centralized (e.g., Subversion, Piper) | Distributed (e.g., Git, Mercurial) |
 | :--- | :--- | :--- |
 | **Data Storage** | Data is stored in a single central repository. | Each developer has a full copy of the entire repository history. |
 | **Offline Work** | Requires a connection to the central server to make changes. | Developers can work and commit changes locally while offline. |
