@@ -1,0 +1,10 @@
+title: "Tools Master Quiz"
+description: "A comprehensive mix of all tools quizzes."
+decks:
+  - makefile_syntax
+  - git
+  - makefile_examples
+  - shell
+  - makefile_examples_2
+  - regex_basics
+  - regex_examples

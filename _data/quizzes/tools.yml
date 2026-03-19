@@ -1,0 +1,7 @@
+title: "Tools Master Quiz"
+description: "A comprehensive mix of all tools flashcards."
+decks:
+  - shell
+  - git
+  - makefile
+  - regex
