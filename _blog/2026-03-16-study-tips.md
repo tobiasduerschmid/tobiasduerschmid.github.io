@@ -117,6 +117,6 @@ As you just learned, recalling what you just learned is the best way to form las
 
 {% include quiz.html id="effective_learning" %}
 
-==After getting foundational knowledge, now it's time for you to apply these tips in the course you are taking (especially the more challenging courses)! Try to slowly integrate these learning practices into your study sessions and let them guide your approach to learning!==
+==After getting foundational knowledge, now it's time for you to apply these tips in the courses you are taking (especially the more challenging courses)! Try to slowly integrate these learning practices into your study sessions and let them guide your approach to learning!==
 
 If you would like to know more about the science behind this post, I recommend reading the book "Make It Stick: The Science of Successful Learning" {% cite brown2014MakeItStick %}. It is one of my favorite books on learning because it helps both the learner and the teacher. Also, check out the [research summary of UCLA's Bjork Learning and Forgetting Lab](https://bjorklab.psych.ucla.edu/research/), [Robert Bjork's talk at Harvard](https://www.youtube.com/watch?v=MPL68uxiNaU), and the other references linked below.
