@@ -89,7 +89,7 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 
 <div class="action-box" markdown="1">
 #### Use AI for:
-*   **Personalized Feedback:**
+*   **Personalized Feedback:** {% cite Vorobyeva2025PersonalizedLearningThroughAI %}
 *   **Adaptive Scaffolding:**
 *   **Simulating Worked Examples:** 
 *   Generative AI should be utilized as a **"bicycle for the mind"**—a tool that amplifies your cognitive reach but still requires your active control, steering, and judgment
