@@ -223,10 +223,6 @@ Data source: _data/flashcards/{{ include.id }}.yml
     color: #FFD100 !important;
   }
 
-  html.dark-mode .flashcard-explanation {
-    color: #b0b0b0 !important;
-  }
-
   @media print {
     .flashcards-container {
       background: transparent !important;
@@ -243,13 +239,14 @@ Data source: _data/flashcards/{{ include.id }}.yml
     .flashcards-list .flashcard-card,
     .flashcards-list .flashcard-card.active {
       display: block !important;
-      margin-bottom: 25px !important;
+      margin-bottom: 30px !important;
       page-break-inside: avoid;
       border: 1px solid #eee !important;
-      padding: 15px 20px !important;
+      padding: 20px !important;
       text-align: left !important;
       opacity: 1 !important;
       transform: none !important;
+      background: #fff !important;
     }
 
     .flashcard-card .flashcard-question,
@@ -260,11 +257,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
       position: relative !important;
       padding-left: 35px !important;
       line-height: 1.4 !important;
+      color: #000 !important;
     }
 
     .flashcard-card .flashcard-question {
-      margin-bottom: 12px !important;
-      border-bottom: none !important;
+      margin-bottom: 15px !important;
+      font-weight: 700 !important;
     }
 
     .flashcard-card .flashcard-question::before {
@@ -279,7 +277,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     .flashcard-card .flashcard-answer-container,
     .flashcard-card .flashcard-answer-container.hidden {
       display: block !important;
-      margin-top: 5px !important;
+      margin-top: 10px !important;
       padding: 0 !important;
       background: transparent !important;
       border: none !important;
@@ -288,8 +286,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
     .flashcard-card .flashcard-answer {
       color: #000 !important;
-      font-weight: bold !important;
-      margin-bottom: 8px !important;
+      font-weight: 700 !important;
+      margin-bottom: 10px !important;
     }
 
     .flashcard-card .flashcard-answer::before {
@@ -301,23 +299,21 @@ Data source: _data/flashcards/{{ include.id }}.yml
       color: #000 !important;
     }
 
-    .flashcard-answer p,
-    .flashcard-question p {
-      display: inline !important;
-      margin: 0 !important;
-    }
-
     .flashcard-explanation {
       display: block !important;
       color: #444 !important;
       font-size: 0.95em !important;
       margin-left: 35px !important;
       line-height: 1.5 !important;
-      padding-top: 8px !important;
-      border-top: 1px dashed #eee !important;
+      padding-top: 10px !important;
+      border-top: 1px dashed #ddd !important;
     }
 
-    .flashcards-container .quiz-header,
+    .flashcard-answer p,
+    .flashcard-question p {
+      display: inline !important;
+    }
+
     .flashcards-container .quiz-progress-bar,
     .flashcards-container .flashcard-actions,
     .flashcards-container .flashcards-results,
@@ -326,6 +322,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       display: none !important;
     }
   }
+
 </style>
 
 <script>

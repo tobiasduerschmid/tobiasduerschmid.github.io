@@ -36,8 +36,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       {% if q.type == 'multiple' %}
       <button class="submit-answer-btn">Submit Answer</button>
       {% endif %}
-      <div class="quiz-connect-answers">
-        Connect Answer{% if q.type == 'multiple' %}s{% endif %}:
+      <div class="quiz-correct-answers">
+        Correct Answer{% if q.type == 'multiple' %}s{% endif %}:
         <span class="correct-labels"></span>
       </div>
       <div class="quiz-explanation hidden">
@@ -213,7 +213,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   }
 
   [data-type="multiple"] .option-label {
-    display: none;
+    display: inline-block;
   }
 
   .quiz-explanation {
@@ -268,8 +268,29 @@ Data source: _data/quizzes/{{ include.id }}.yml
     padding: 32px 0;
   }
 
-  .quiz-connect-answers {
+  .quiz-connect-answers,
+  .quiz-correct-answers {
     display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-weight: 600;
+    color: #444;
+  }
+
+  .correct-labels {
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  .correct-label-badge {
+    background: #2774AE;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 0.85em;
+    display: inline-block;
   }
 
   .score-display {
@@ -283,68 +304,6 @@ Data source: _data/quizzes/{{ include.id }}.yml
     display: none !important;
   }
 
-  @media print {
-    .quiz-container {
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    .quiz-header {
-      margin-bottom: 30px;
-    }
-
-    .quiz-progress-bar,
-    .next-btn,
-    .restart-btn,
-    .review-btn,
-    .submit-answer-btn,
-    .quiz-results {
-      display: none !important;
-    }
-
-    .quiz-connect-answers {
-      display: block !important;
-      margin-top: 15px !important;
-      font-weight: 700 !important;
-      color: #000 !important;
-      border-bottom: 2px solid #2774AE !important;
-      padding-bottom: 8px !important;
-    }
-
-    .quiz-question-card {
-      display: block !important;
-      margin-bottom: 40px !important;
-      page-break-inside: avoid;
-      opacity: 1 !important;
-      transform: none !important;
-    }
-
-    .quiz-explanation {
-      display: block !important;
-      margin-top: 15px !important;
-      border-left: 2px solid #2774AE !important;
-      background: #f9f9f9 !important;
-    }
-
-    .question-text {
-      color: #000 !important;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-    }
-
-    .option-label {
-      color: #000 !important;
-    }
-
-    .quiz-option {
-      border: 1px solid #ddd !important;
-      color: #000 !important;
-      background: #fff !important;
-    }
-  }
 </style>
 
 <script>
@@ -413,9 +372,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
         }
       });
 
-      const connectAnswersElem = card.querySelector('.quiz-connect-answers .correct-labels');
+      const connectAnswersElem = card.querySelector('.quiz-correct-answers .correct-labels');
       if (connectAnswersElem) {
-        connectAnswersElem.textContent = correctLabels.join(', ');
+        connectAnswersElem.innerHTML = ''; // Clear current
+        correctLabels.forEach(label => {
+          const badge = document.createElement('span');
+          badge.className = 'correct-label-badge';
+          badge.textContent = label;
+          connectAnswersElem.appendChild(badge);
+        });
       }
     });
 
