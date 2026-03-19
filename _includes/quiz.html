@@ -7,6 +7,18 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign quiz_data = site.data.quizzes[include.id] %}
 
 {% if quiz_data %}
+  {% if quiz_data.decks %}
+    {% assign all_questions = "" | split: "" %}
+    {% for deck_id in quiz_data.decks %}
+      {% assign deck_data = site.data.quizzes[deck_id] %}
+      {% if deck_data %}
+        {% assign all_questions = all_questions | concat: deck_data.questions %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% assign all_questions = quiz_data.questions %}
+  {% endif %}
+
 <div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}"
   data-shuffle="{{ quiz_data.shuffle | default: true }}">
   <div class="quiz-header">
@@ -18,7 +30,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
   </div>
 
   <div class="quiz-questions">
-    {% for q in quiz_data.questions %}
+    {% for q in all_questions %}
     <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
       id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}">
       <div class="question-text">{{ q.question | markdownify }}</div>
@@ -53,7 +65,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     <div class="results-content">
       <h4>Quiz Complete!</h4>
       <div class="score-display">
-        Your Score: <span class="current-score">0</span>/<span class="total-questions">{{ quiz_data.questions | size
+        Your Score: <span class="current-score">0</span>/<span class="total-questions">{{ all_questions | size
           }}</span>
       </div>
       <p class="score-summary"></p>
