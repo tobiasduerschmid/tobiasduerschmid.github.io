@@ -13,13 +13,13 @@ image_alt_text: "Student working on a computer with a robot sitting next to him.
 In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience.
 So I decided to write my advice down in a succinct, evidence-based post for everyone.**
 
-But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early research I could find. Please take it as a guide, not gospel.
+But first a **disclaimer**: AI is evolving at rapid speed, and we still lack replicated, long-term, larger-scale data on its impact. What follows is my personal perspective, backed by the best available, still early, research I could find. Please take it as a guide, not gospel.
 
 ## Motivation: Maximize your Learning Because AI is a Skill Amplifier
 It's 7:00 PM on a Friday. 
 Your friends want to go watch a movie. 
 But you're sitting here debugging your C++ program that is throwing a cryptic segmentation fault. 
-You have stared at the same while loop for twenty minutes, and the temptation to paste the entire file into an LLM with the prompt "`fix this`" is overwhelming. 
+You have stared at the same `while` loop for twenty minutes, and the temptation to paste the entire file into an LLM with the prompt "`fix this`" is overwhelming. 
 This is what the real professionals would do, so why shouldn't you?
 Because you would rob your brain of the exact friction it needs to become a skilled software engineer.
 
@@ -33,7 +33,7 @@ Ultimately, **AI enables skilled developers to compound their knowledge and prod
 
 This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately. 
-To use an analogy: **==Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself==**. 
+To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
 <div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
   <img src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student standing relaxed in a gym while watching a robot lift heavy weights. Other students are working out actively in the gym. University buildings in the background." style="width: 100%; height: auto; border-radius: 12px; display: block;">
@@ -42,7 +42,7 @@ To use an analogy: **==Using AI to do the heavy lifting in your coursework is li
   </div>
 </div>
 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](https://www.youtube.com/watch?v=gtmMMR7SJKw)" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "[desirable difficulties](blog/evidence-based-study-tips-for-college-students/)" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}.
 
 On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties.
 
