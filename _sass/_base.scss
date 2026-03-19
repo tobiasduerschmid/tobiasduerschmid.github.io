@@ -84,6 +84,54 @@ figcaption {
 
 
 /**
+ * Tables
+ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: $spacing-unit;
+    font-size: 15px; // Larger font size for better readability
+    line-height: $base-line-height;
+}
+
+th,
+td {
+    padding: 12px 15px;
+    border: 1px solid $grey-color-light;
+}
+
+th {
+    background-color: #f8f9fa;
+    color: $brand-color;
+    text-align: left;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+// Dark mode support
+html.dark-mode table {
+
+    th,
+    td {
+        border-color: #333;
+    }
+
+    th {
+        background-color: #252525;
+        color: #FFD100;
+    }
+
+    tr:nth-child(even) {
+        background-color: #1a1a1a;
+    }
+}
+
+
+
+/**
  * Lists
  */
 ul,

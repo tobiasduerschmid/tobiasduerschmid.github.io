@@ -365,4 +365,33 @@
     margin-bottom: 15px !important;
     overflow: visible !important;
   }
+
+  // Tables - Increase readability and font size
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 25px 0 !important;
+    font-size: 15px !important; // Match body size (16px) closely for readability
+    page-break-inside: avoid !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd !important;
+    padding: 12px 15px !important;
+    text-align: left !important;
+    vertical-align: top !important;
+    line-height: 1.4 !important;
+  }
+
+  th {
+    background-color: #f8f9fa !important;
+    color: #2774AE !important;
+    font-weight: 700 !important;
+    border-bottom: 2px solid #2774AE !important;
+  }
+
+  tr:nth-child(even) {
+    background-color: #fafafa !important;
+  }
 }
