@@ -372,3 +372,13 @@ clean:
 * **Line 9-10:** This rule says: "To build `myprog`, I need `mysrc1.o` and `mysrc2.o`. To build it, run `clang -Wall -o myprog mysrc1.o mysrc2.o`."
 * **Line 13-14:** This pattern rule explains *how* to turn a `.c` file into a `.o` file. It tells Make: "To compile any object file, use the compiler to compile the first prerequisite (`$<`, which is the `.c` file) and output it to the target name (`$@`, which is the `.o` file)".
 * **Line 17-18:** The `clean` target is a convention used to remove all generated object files and the target executable, leaving only the original source files. You can execute it by running `make clean`.
+
+# Quiz
+
+{% include flashcards.html id="makefile_syntax" %}
+
+{% include flashcards.html id="makefile_examples" %}
+
+{% include flashcards.html id="makefile_examples_2" %}
+
+{% include quiz.html id="makefile" %}

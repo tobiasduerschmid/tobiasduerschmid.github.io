@@ -1,0 +1,52 @@
+title: "Makefile Flashcards (Example Generation)"  
+description: "Test your knowledge on solving common build automation problems using Makefile syntax and rules!"  
+cards:  
+  - id: 1  
+    question: "Write a basic Makefile rule to compile a single C source file (`main.c`) into an executable named `app`."  
+    answer: "`app: main.c\n\tgcc main.c -o app`"  
+    explanation: "This defines `app` as the target, `main.c` as the prerequisite, and provides the exact compilation command required to build the executable. (Remember the command must be indented with a Tab)."  
+
+  - id: 2  
+    question: "Write a Makefile snippet that defines variables for the C compiler (`gcc`) and standard compilation flags (`-Wall -g`), and uses them to compile `main.c` into `main.o`."  
+    answer: "`CC = gcc\nCFLAGS = -Wall -g\n\nmain.o: main.c\n\t$(CC) $(CFLAGS) -c main.c -o main.o`"  
+    explanation: "Variables make the Makefile flexible. If you later want to switch to `clang` or add optimization flags, you only need to change the variable definitions at the top."  
+
+  - id: 3  
+    question: "Write a standard `clean` target that removes all `.o` files and an `app` executable, ensuring it runs even if a file literally named 'clean' is created in the directory."  
+    answer: "`.PHONY: clean\nclean:\n\trm -f *.o app`"  
+    explanation: "The `.PHONY` declaration tells `make` that `clean` is an action, not a file. The `-f` flag in `rm` prevents errors if the files don't exist."  
+
+  - id: 4  
+    question: "Write a generic pattern rule to compile any `.c` file into a corresponding `.o` file, using automatic variables for the target name and the first prerequisite."  
+    answer: "`%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@`"  
+    explanation: "The `%` acts as a wildcard. `$<` substitutes the name of the `.c` file, and `$@` substitutes the name of the `.o` file."  
+
+  - id: 5  
+    question: "Given a variable `SRCS = main.c utils.c`, write a variable definition for `OBJS` that dynamically replaces the `.c` extension with `.o` for all files in `SRCS`."  
+    answer: "`OBJS = $(SRCS:.c=.o)`"  
+    explanation: "This is a substitution reference. It takes the value of `SRCS`, looks for the `.c` suffix at the end of each word, and replaces it with `.o`."  
+
+  - id: 6  
+    question: "Write a rule to link an executable `myprog` from a list of object files stored in the `$(OBJS)` variable, using the automatic variable that lists all prerequisites."  
+    answer: "`myprog: $(OBJS)\n\t$(CC) $^ -o $@`"  
+    explanation: "`$^` expands to a space-separated list of all prerequisites (all the `.o` files), and `$@` expands to the target name (`myprog`)."  
+
+  - id: 7  
+    question: "Write the conventional default target rule that is used to build multiple executables (e.g., `app1` and `app2`) when a user simply types `make` without specifying a target."  
+    answer: "`all: app1 app2`"  
+    explanation: "By convention, `all` is the first target in a Makefile. Since `make` defaults to the first target it sees, this guarantees both apps are built. No commands are needed; simply listing them as prerequisites triggers their respective build rules."  
+
+  - id: 8  
+    question: "Write a `run` target that executes an output file named `./app`, but suppresses `make` from printing the command to the terminal before running it."  
+    answer: "`run: app\n\t@./app`"  
+    explanation: "Adding the `@` symbol at the very beginning of the recipe line tells `make` to execute the command silently (without echoing it to standard output first)."  
+
+  - id: 9  
+    question: "Write a variable definition `SRCS` that uses a Make function to dynamically find and list all `.c` files in the current directory."  
+    answer: "`SRCS = $(wildcard *.c)`"  
+    explanation: "The `wildcard` function tells `make` to search the filesystem and return a space-separated list of all files matching the given pattern."  
+
+  - id: 10  
+    question: "Write a generic rule to create a build directory `build/` using the `mkdir` command."  
+    answer: "`build/:\n\tmkdir -p $@`"  
+    explanation: "Directories can be targets just like regular files. The `-p` flag ensures `mkdir` doesn't throw an error if the directory already exists."

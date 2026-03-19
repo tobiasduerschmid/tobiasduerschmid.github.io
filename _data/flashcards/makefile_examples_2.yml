@@ -1,0 +1,52 @@
+title: "C Program Makefile Flashcards"  
+description: "Test your ability to read and understand actual Makefile snippets commonly found in real-world C projects."  
+cards:  
+  - id: 1  
+    question: "Given the snippet `app: main.o network.o utils.o` followed by the command `$(CC) $(CFLAGS) $^ -o $@`, what exactly does the command evaluate to if `CC=gcc` and `CFLAGS=-Wall`?"  
+    answer: "`gcc -Wall main.o network.o utils.o -o app`"  
+    explanation: "`$^` expands to all prerequisites (the three `.o` files), and `$@` expands to the target name (`app`). This is the standard way to link object files into a final C executable."  
+
+  - id: 2  
+    question: "If a C project Makefile contains `SRCS = main.c math.c io.c` and `OBJS = $(SRCS:.c=.o)`, what does `OBJS` evaluate to?"  
+    answer: "`main.o math.o io.o`"  
+    explanation: "This is a substitution reference. It iterates through every file listed in `SRCS`, finds the `.c` extension, and replaces it with `.o` to dynamically generate the list of object files needed for compilation."  
+
+  - id: 3  
+    question: "Read this common pattern rule: `%.o: %.c` followed by `$(CC) $(CFLAGS) -c $< -o $@`. If `make` uses this rule to build `utils.o` from `utils.c`, what does `$<` represent?"  
+    answer: "`utils.c`"  
+    explanation: "In a pattern rule, `$<` is an automatic variable that evaluates to the first prerequisite. In this case, it passes the specific C source file being compiled to the compiler."  
+
+  - id: 4  
+    question: "You see the line `CC ?= gcc` at the top of a Makefile. What happens if a developer compiles the project by typing `make CC=clang` in their terminal?"  
+    answer: "The compiler used will be `clang`, not `gcc`."  
+    explanation: "The `?=` operator is a conditional assignment. It only sets `CC` to `gcc` if `CC` has not already been defined. The command-line argument overrides the default."  
+
+  - id: 5  
+    question: "A C project has a rule `clean:\n\trm -f *.o myapp`. Why is it critical to also include `.PHONY: clean` in this Makefile?"  
+    answer: "To ensure the cleanup runs even if a developer accidentally creates a file literally named `clean` in the project directory."  
+    explanation: "Without `.PHONY`, if a file named `clean` exists and has no prerequisites, `make` will think the target `clean` is already \"up to date\" and will refuse to execute the `rm` command."  
+
+  - id: 6  
+    question: "In the rule `main.o: main.c main.h types.h`, what happens if you edit and save `types.h`?"  
+    answer: "`make` will recompile `main.o` the next time it is run."  
+    explanation: "Even though `types.h` is not directly passed to the compiler in the recipe, listing header files as prerequisites tells `make` to track their modification timestamps. If a header changes, the object files that depend on it must be rebuilt."  
+
+  - id: 7  
+    question: "You are reading a Makefile and see `@echo \"Compiling $@...\"` followed by `@$(CC) -c $< -o $@`. What do the `@` symbols do?"  
+    answer: "They suppress the terminal from printing the actual commands before executing them."  
+    explanation: "Instead of seeing the messy `gcc` command printed out, the developer will only see the clean, custom message: `Compiling main.o...`."  
+
+  - id: 8  
+    question: "What is the conventional purpose of the `CFLAGS` variable in a C Makefile?"  
+    answer: "To store flags and options passed to the C compiler (e.g., warnings and optimizations)."  
+    explanation: "Common values include `-Wall` (enable all warnings), `-Wextra` (extra warnings), `-g` (include debugging symbols), or `-O2` (optimize for speed)."  
+
+  - id: 9  
+    question: "What is the conventional purpose of the `LDFLAGS` or `LDLIBS` variables in a C Makefile?"  
+    answer: "To store flags and library links passed to the linker during the final executable creation."  
+    explanation: "For example, if your C program uses the math library `<math.h>`, you would define `LDLIBS = -lm` so the linker knows to include it when combining the `.o` files."  
+
+  - id: 10  
+    question: "A C project has multiple executables: a server and a client. The Makefile starts with `all: server client`. What happens if you just type `make`?"  
+    answer: "It will build both the `server` and the `client` executables."  
+    explanation: "`make` defaults to the first target defined in the file (which is `all` here). By listing both programs as prerequisites for `all`, it forces `make` to evaluate and build the rules for both of them."
