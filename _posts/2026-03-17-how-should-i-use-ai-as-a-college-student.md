@@ -27,7 +27,7 @@ Because you would rob your brain of the exact friction it needs to become a skil
 State-of-the-art research on real-world tasks shows that **==AI is an amplifier of technical skills, not an equalizer==** {% cite DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
 Recent research by Google shows that developers with *stronger coding foundations* and *deeper system design experience* achieve a *significantly larger* productivity boost from AI tools {% cite Paradis2025 %}.
 In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025 %}.
-Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle isuses, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026 %}.
+Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle issues, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026 %}.
 Methodologically, experts engage with GenAI *proactively* to *plan*, *steer*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 huang202DontVibeTheyControl %}.
 Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind** {% cite LodgeLoble2026 %}.
 
@@ -42,7 +42,7 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
   </div>
 </div>
 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}. Learn more about desirable difficulties and their importance for learning in my recent blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick %}. Learn more about desirable difficulties and their importance for learning in my previous blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
 
 On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties {% cite Yan2024promises %}.
 
@@ -73,9 +73,11 @@ A smaller study conducted by Anthropic researchers shows similar results for cod
 
 
 #### The Good: Beneficial Offloading
-Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite behind %}. 
+Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026  %}. 
 
 In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025 %}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025 %}. 
+
+
 
 <div class="action-box" markdown="1">
 #### **Actionable Tips:**
