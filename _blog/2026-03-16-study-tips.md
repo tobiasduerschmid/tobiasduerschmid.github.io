@@ -50,7 +50,7 @@ The mental challenge you feel when you have to manually track down a missing bra
 
 ## Retrieval Practice: Ditch the Highlighter and Quiz Yourself
 One of the most powerful learning tools at your disposal is **"active retrieval"**.
-As a computer scientist, you might think that recalling memory does not have any side effects. While this might be true for most digital digital storage media (unless they use caching or log requests), it is not true for human memory.
+As a computer scientist, you might think that recalling memory does not have any side effects. While this might be true for most digital storage media (unless they use caching or log requests), it is not true for human memory.
 In fact, ==the act of retrieving information from human memory makes that information much easier to access in the future== {% cite RoedigerKarpicke2006 %}. The more often you try to recall information, the easier it becomes to retrieve it in the future.
 A single, simple quiz after reading a text produces better learning and remembering than reading the text multiple times.
 Passively re-consuming the material does *not* have a similar effect as active retrieval {% cite brown2014MakeItStick %}. You have to recall the answers yourself, without looking at the material.
