@@ -1,6 +1,5 @@
 ---
-title: Version Control with Git - A Comprehensive Guide to Professional Software Development
-
+title: Version Control with Git 
 layout: sebook
 ---
 

@@ -85,7 +85,6 @@
     font-family: 'Inter', sans-serif !important;
     color: #2774AE !important;
     font-weight: 700 !important;
-    -webkit-text-stroke: 1px black !important;
     page-break-after: avoid;
     margin-top: 20px !important;
     margin-bottom: 30px !important;
@@ -129,7 +128,6 @@
     color: #111 !important;
     border: 1px solid #eee !important;
     border-radius: 3px !important;
-    -webkit-text-stroke: 1px black !important;
     box-shadow: none !important;
     overflow: visible !important;
   }
@@ -149,7 +147,6 @@
     background-color: transparent !important;
     border: none !important;
     padding: 0 !important;
-    -webkit-text-stroke: inherit !important;
   }
 
   // Syntax Highlighting - Identical to _syntax-highlighting.scss
