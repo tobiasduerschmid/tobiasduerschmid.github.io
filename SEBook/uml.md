@@ -3,9 +3,9 @@ title: UML
 layout: sebook
 ---
 More Notes (WIP):
-* [Sequence Diagrams](/SEBook/uml_sequence_diagram.md)
-* [State Machine Diagrams](/SEBook/uml_state_diagram.md)
-* [Class Diagrams](/SEBook/uml_class_diagram.md)
+* [Sequence Diagrams](/SEBook/uml_sequence_diagram.html)
+* [State Machine Diagrams](/SEBook/uml_state_diagram.html)
+* [Class Diagrams](/SEBook/uml_class_diagram.html)
 
 ![UML Sequence Diagram](/img/sequence_diagram_1.svg)
 
