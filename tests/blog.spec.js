@@ -30,17 +30,17 @@ test('clicking a category filter button filters posts correctly', async ({ page 
     const firstBtn = categoryButtons.first();
     const categoryName = await firstBtn.getAttribute('data-category');
     await firstBtn.click();
-    
+
     // Wait for any JS transitions
     await page.waitForTimeout(500);
 
     // Some sites might use classes like .hidden or just change display
     // Check that we don't have all posts visible if filtering
     const visiblePosts = allPosts.filter({ hasText: '' }); // This is a bit generic, better if we know the 'hidden' class
-    
+
     // Better: check that at least one post is visible and no navigation occurred
     expect(page.url()).toContain('/blog');
-    
+
     // Click "All" to reset
     await page.locator('#cat-all').click();
     await page.waitForTimeout(500);
@@ -72,18 +72,18 @@ test('clicking a category badge on a post filters the list', async ({ page }) =>
   // Find the first category badge
   const categoryLink = page.locator('.category-link').first();
   const categoryName = (await categoryLink.innerText()).trim();
-  
+
   // Click it
   await categoryLink.click();
-  
+
   // Wait for transitions
   await page.waitForTimeout(500);
-  
+
   // Verify the filter button for this category is now active
   const filterBtn = page.locator(`.filter-btn.active`);
   const activeCategory = (await filterBtn.innerText()).trim();
   expect(activeCategory).toBe(categoryName);
-  
+
   // Verify only matching posts are visible
   const visiblePosts = page.locator('.blog-post-item:not(.hidden)');
   const postCategories = await visiblePosts.locator('.category-link').allInnerTexts();
@@ -94,8 +94,8 @@ test('clicking a category badge on a post filters the list', async ({ page }) =>
 
 test('blog index shows post titles linking to posts', async ({ page }) => {
   await page.goto('/blog/');
-  // Post links should include /blog/ in their href
-  const postLinks = page.locator('a[href*="/blog/how-"]');
+  // Post links should be inside the blog post titles
+  const postLinks = page.locator('.blog-post-title a');
   const count = await postLinks.count();
   expect(count, 'Blog index should link to individual posts').toBeGreaterThan(0);
 });
