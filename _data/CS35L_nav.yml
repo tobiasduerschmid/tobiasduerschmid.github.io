@@ -16,6 +16,8 @@ topics:
         url: /SEBook/tools/shell.html
       - name: Regular Expressions
         url: /SEBook/tools/regex.html
+      - name: Make
+        url: /SEBook/tools/make.html
 
   - name: Design Patterns
     icon: null
