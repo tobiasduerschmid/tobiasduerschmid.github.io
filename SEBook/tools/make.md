@@ -145,21 +145,7 @@ In a Makefile, the **rule** or **command** is the specific action the compiler m
 
 This can be visualized as a dependency graph:
 
-```
-[flour.txt] ─────────┐
-[sugar.txt] ─────────┼──▶ (Chocolate_Layers) ════╗
-[eggs.txt]  ─────────┤                           ║
-[cocoa.txt] ─────────┘                           ║
-                                                 ║
-[raspberries.txt] ───┐                           ╠══▶ [FINAL_CAKE]
-[sugar.txt] ─────────┼──▶ (Raspberry_Filling) ═══╣
-[lemon_juice.txt] ───┘                           ║
-                                                 ║
-[butter.txt] ────────┐                           ║
-[powdered_sugar.txt] ┼──▶ (Buttercream) ═════════╝
-[vanilla.txt] ───────┘
-```
----
+![cake_dependency_graph](/img/cake_dependency_graph.svg)
 
 ### The Real Magic: Incremental Baking (Why we use Makefiles)
 
@@ -170,6 +156,18 @@ Imagine you are halfway through assembling your cake. You have your baked chocol
 * **Without a Makefile:** You would throw away *everything*. You would re-bake the chocolate layers, re-whip the buttercream, and remake the raspberry filling from scratch. This takes hours (like recompiling a massive codebase from scratch).
 * **With a Makefile:** The kitchen manager (`make`) looks at the counter. It sees that the *buttercream* is already finished and its raw ingredients haven't changed. However, it sees your new packed of sugar (a source file was updated). The manager says: **"Only remake the raspberry filling and the chocolate layers, and then reassemble the final cake. Leave the buttercream as is."**
 
+Here is the dependency graph with arrows showing exactly how the ingredients flow into the final cake. 
+
+I have drawn it so the arrows represent the **flow of creation** (bottom-up execution). The raw ingredients combine to form the intermediate components, which then combine to form the final cake.
+
+
+If you look closely at the arrows leaving `[sugar.txt]`, you can immediately see the brilliance of `make`:
+
+1.  **The Split Path:** The arrow from `sugar.txt` forks into two different directions: one goes to the `Chocolate_Layers` and the other goes to the `Raspberry_Filling`. 
+2.  **The Safe Zone:** Notice there is absolutely no arrow connecting `sugar.txt` to the `Buttercream` (which uses powdered sugar instead). 
+3.  **The Chain Reaction:** When `make` detects that `sugar.txt` has changed (because you fixed the salty sugar), it travels along those two specific arrows. It forces the Chocolate Layers and Raspberry filling to be remade. Those updates then trigger the double-lined arrows `══▶`, forcing the Final Cake to be reassembled.
+
+Because no arrow carried the "sugar update" to the Buttercream, the Buttercream is completely ignored during the rebuild!
 ### A Recipe as a Makefile
 
 If your cake recipe were written as a Makefile, it would look exactly like this:
@@ -189,11 +187,7 @@ If your cake recipe were written as a Makefile, it would look exactly like this:
 Whenever you type `make` in your terminal, the system reads this recipe from the top down, checks what is already sitting in your "kitchen," and only does the work absolutely necessary to give you a fresh cake.
 
 
-
-
-
 # Makefile Syntax
-
 
 ### How Do Makefiles Work?
 
