@@ -1,4 +1,4 @@
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const { PDFDocument, rgb, StandardFonts, PDFName } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
@@ -74,9 +74,7 @@ async function mergePDFs() {
             .toc-header { font-size: 32pt; font-weight: 700; color: #2774AE; margin-bottom: 40px; border-bottom: 4px solid #FFD100; padding-bottom: 15px; }
             .toc-category-group { margin-bottom: 25px; page-break-inside: avoid; }
             .toc-category-title { font-size: 15pt; font-weight: 700; color: #2774AE; background: #f0f4f8; padding: 6px 12px; border-radius: 6px; margin-bottom: 12px; }
-            .toc-item { display: flex; align-items: baseline; margin-bottom: 8px; padding: 0 10px; font-size: 11pt; }
-            .toc-name { font-weight: 500; color: #444; }
-            .toc-dots { flex-grow: 1; border-bottom: 1px dotted #bbb; margin: 0 8px; position: relative; top: -4px; }
+            .toc-item { display: flex; align-items: baseline; margin-bottom: 8px; padding: 0 10px; font-size: 11pt; height: 19.3px; line-height: 1.2; overflow: hidden; }
             .toc-page { font-weight: 700; color: #2774AE; min-width: 35px; text-align: right; }
           </style>
         </head>
@@ -142,17 +140,45 @@ async function mergePDFs() {
   const cpdfMergeCommand = `cpdf -merge -process-struct-trees "${introPath}" ${uniquePdfEntries.map(e => `"${e.path}"`).join(' ')} -o "${tempMergedPath}"`;
   execSync(cpdfMergeCommand);
 
-  // 5. Create "Stamps" (page numbers)
-  console.log('Generating page number overlay...');
-  const baseDoc = await PDFDocument.load(fs.readFileSync(tempMergedPath));
+  // 4b. Add Bookmarks with cpdf
+  console.log('Adding PDF bookmarks...');
+  const bookmarksPath = path.join(pdfsDir, book + '_bookmarks.txt');
+  let bookmarksContent = '';
+  const categoriesInOrder = Array.from(new Set(tocEntries.map(e => e.category)));
+  categoriesInOrder.forEach(cat => {
+    const firstEntry = tocEntries.find(e => e.category === cat);
+    // Level 0 for Category
+    bookmarksContent += `0 "${cat}" ${actualIntroPageCount + firstEntry.page}\n`;
+    tocEntries.filter(e => e.category === cat).forEach(e => {
+      // Level 1 for Topic
+      bookmarksContent += `1 "${e.name}" ${actualIntroPageCount + e.page}\n`;
+    });
+  });
+  fs.writeFileSync(bookmarksPath, bookmarksContent);
+  const tempBookmarkedPath = path.join(pdfsDir, book + '_Full_bookmarked.pdf');
+  const cpdfBookmarksCommand = `cpdf -add-bookmarks "${bookmarksPath}" "${tempMergedPath}" -o "${tempBookmarkedPath}"`;
+  execSync(cpdfBookmarksCommand);
+
+  // 5. Create "Stamps" (page numbers & clickable ToC links)
+  console.log('Generating page number overlay and ToC links...');
+  const baseDoc = await PDFDocument.load(fs.readFileSync(tempBookmarkedPath));
   const totalPagesCount = baseDoc.getPageCount();
 
   const stampDoc = await PDFDocument.create();
   const helveticaFont = await stampDoc.embedFont(StandardFonts.Helvetica);
   const marginPt = 56.7; // 2cm
 
+  // Coordinate math for ToC links
+  const topMargin = 72; // ~1 inch margin
+  const headerHeight = 100; // Header + spacers
+  const itemHeight = 19.3; 
+  const catMargin = 25;
+  const itemsPerPage = 28; // Estimate based on height
+
   for (let i = 0; i < totalPagesCount; i++) {
     const page = stampDoc.addPage([612, 792]);
+    
+    // Header/Footer Stamping
     if (i >= actualIntroPageCount) {
       const fontSize = 10;
       const color = rgb(0.4, 0.4, 0.4);
@@ -180,12 +206,47 @@ async function mergePDFs() {
         color: color,
       });
     }
+
+    // ToC Link Overlay (Typically begins on page 2 (index 1) of the intro)
+    if (i >= 1 && i < actualIntroPageCount) {
+      let currentY = 792 - topMargin - headerHeight;
+      const tIndex = i - 1; // 0-based index for ToC pages
+      
+      let entryIndex = 0;
+      categoriesInOrder.forEach(cat => {
+        currentY -= catMargin;
+        tocEntries.filter(e => e.category === cat).forEach(e => {
+          // Simplistic distribution: assign items to pages based on itemsPerPage
+          const itemPageIndex = Math.floor(entryIndex / itemsPerPage);
+          if (itemPageIndex === tIndex) {
+            const targetY = currentY;
+            if (targetY > 72) {
+               const link = stampDoc.context.obj({
+                Type: 'Annot',
+                Subtype: 'Link',
+                Rect: [marginPt, targetY, 612 - marginPt, targetY + itemHeight],
+                Border: [0, 0, 0],
+                A: {
+                  Type: 'Action',
+                  S: 'GoTo',
+                  D: [baseDoc.getPage(actualIntroPageCount + e.page - 1).ref, 'XYZ', null, null, null],
+                },
+              });
+              page.node.set(PDFName.of('Annots'), stampDoc.context.obj([link]));
+            }
+          }
+          currentY -= itemHeight;
+          if (currentY < 72) currentY = 792 - topMargin - headerHeight; // Reset for next "virtual" page
+          entryIndex++;
+        });
+      });
+    }
   }
   fs.writeFileSync(stampsPath, await stampDoc.save());
 
   // 6. Final Overlay
   console.log('Final overlay...');
-  const qpdfOverlayCommand = `qpdf "${tempMergedPath}" --overlay "${stampsPath}" -- "${outputPath}"`;
+  const qpdfOverlayCommand = `qpdf "${tempBookmarkedPath}" --overlay "${stampsPath}" -- "${outputPath}"`;
   try {
     execSync(qpdfOverlayCommand);
   } catch (e) {
@@ -197,11 +258,11 @@ async function mergePDFs() {
   }
 
   // Cleanup
-  [introPath, tempMergedPath, stampsPath].forEach(p => {
+  [introPath, tempMergedPath, tempBookmarkedPath, stampsPath, bookmarksPath].forEach(p => {
     if (fs.existsSync(p)) fs.unlinkSync(p);
   });
 
-  console.log(`Success! Tagged & Numbered PDF created at: ${outputPath}`);
+  console.log(`Success! Tagged & Numbered PDF with Bookmarks created at: ${outputPath}`);
 }
 
 mergePDFs().catch(console.error);
