@@ -791,6 +791,12 @@ html.dark-mode .quiz-option.incorrect {
 	color: #ffbaba !important;
 }
 
+/* SVG Inversion in Dark Mode */
+html.dark-mode .post-content img[src$=".svg"],
+html.dark-mode .post-content svg {
+	filter: invert(1) hue-rotate(180deg);
+}
+
 html.dark-mode .quiz-explanation {
 	background-color: #252525 !important;
 	border-left-color: #4da3ff !important;
