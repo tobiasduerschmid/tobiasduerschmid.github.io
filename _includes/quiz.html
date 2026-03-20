@@ -22,7 +22,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
 <div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}"
   data-shuffle="{{ quiz_data.shuffle | default: true }}">
   <div class="quiz-header">
-    <h3>{{ quiz_data.title }}</h3>
+    <div class="quiz-title-row">
+      <h3>{{ quiz_data.title }}</h3>
+      {% if site.personal_deck %}
+      <button class="personal-deck-toggle" data-deck-type="quiz" data-deck-id="{{ include.id }}"
+        title="Add to Personal Deck" style="display: none;">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+      {% endif %}
+    </div>
     <p>{{ quiz_data.description }}</p>
     <div class="quiz-progress-bar">
       <div class="progress-fill" style="width: 0%"></div>
@@ -315,6 +323,50 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .hidden {
     display: none !important;
   }
+
+  .quiz-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quiz-title-row h3 {
+    flex: 1;
+    margin: 0;
+  }
+
+  .personal-deck-toggle {
+    background: none;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 14px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .personal-deck-toggle:hover {
+    border-color: #2774AE;
+    color: #2774AE;
+  }
+
+  .personal-deck-toggle.in-deck {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+  }
+
+  .personal-deck-toggle.in-deck:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+  }
 </style>
 
 <script>
@@ -462,6 +514,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
 
+      // Track performance
+      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
+        PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
+      }
+
       explanation.classList.remove('hidden');
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -480,7 +537,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       options.forEach(opt => opt.setAttribute('disabled', 'true'));
       submitBtn.classList.add('hidden');
 
-      if (selectedIndices === correctIndices) {
+      const isAnswerCorrect = (selectedIndices === correctIndices);
+      if (isAnswerCorrect) {
         selectedOptions.forEach(opt => opt.classList.add('correct'));
         score++;
       } else {
@@ -498,6 +556,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
         });
 
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+      }
+
+      // Track performance
+      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
+        PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
       }
 
       explanation.classList.remove('hidden');
@@ -609,6 +672,32 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
     reviewBtn.addEventListener('click', startReview);
     restartBtn.addEventListener('click', restartQuiz);
+
+    // Personal Deck toggle
+    if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive()) {
+      const toggleBtn = container.querySelector('.personal-deck-toggle');
+      if (toggleBtn) {
+        toggleBtn.style.display = '';
+        const deckType = toggleBtn.dataset.deckType;
+        const deckId = toggleBtn.dataset.deckId;
+
+        function updateToggleState() {
+          const inDeck = PersonalDeck.isInDeck(deckType, deckId);
+          toggleBtn.classList.toggle('in-deck', inDeck);
+          const icon = toggleBtn.querySelector('i');
+          icon.className = inDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          toggleBtn.title = inDeck ? 'Remove from Personal Deck' : 'Add to Personal Deck';
+        }
+
+        updateToggleState();
+
+        toggleBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          PersonalDeck.toggleDeck(deckType, deckId);
+          updateToggleState();
+        });
+      }
+    }
 
   })();
 </script>

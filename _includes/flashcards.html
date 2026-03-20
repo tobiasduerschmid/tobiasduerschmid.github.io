@@ -21,7 +21,15 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
 <div class="flashcards-container" id="flashcards-{{ include.id }}" data-quiz-id="{{ include.id }}">
   <div class="quiz-header">
-    <h3>{{ flashcard_data.title }}</h3>
+    <div class="quiz-title-row">
+      <h3>{{ flashcard_data.title }}</h3>
+      {% if site.personal_deck %}
+      <button class="personal-deck-toggle" data-deck-type="flashcard" data-deck-id="{{ include.id }}"
+        title="Add to Personal Deck" style="display: none;">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+      {% endif %}
+    </div>
     <p>{{ flashcard_data.description }}</p>
     <div class="quiz-progress-bar">
       <div class="progress-fill" style="width: 0%"></div>
@@ -212,6 +220,50 @@ Data source: _data/flashcards/{{ include.id }}.yml
   .flashcards-results {
     text-align: center;
     padding: 32px 0;
+  }
+
+  .quiz-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quiz-title-row h3 {
+    flex: 1;
+    margin: 0;
+  }
+
+  .personal-deck-toggle {
+    background: none;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 14px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  .personal-deck-toggle:hover {
+    border-color: #2774AE;
+    color: #2774AE;
+  }
+
+  .personal-deck-toggle.in-deck {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+  }
+
+  .personal-deck-toggle.in-deck:hover {
+    background: #dc3545;
+    border-color: #dc3545;
   }
 
   /* Dark Mode */
@@ -425,6 +477,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
       } else {
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
+
+      // Track performance
+      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
+        PersonalDeck.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
+      }
+
       nextCard();
     }
 
@@ -513,6 +571,32 @@ Data source: _data/flashcards/{{ include.id }}.yml
       const firstReviewIdx = reviewQueue[0];
       resetCard(firstReviewIdx);
       showCard(firstReviewIdx);
+    }
+
+    // Personal Deck toggle
+    if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive()) {
+      const toggleBtn = container.querySelector('.personal-deck-toggle');
+      if (toggleBtn) {
+        toggleBtn.style.display = '';
+        const deckType = toggleBtn.dataset.deckType;
+        const deckId = toggleBtn.dataset.deckId;
+
+        function updateToggleState() {
+          const inDeck = PersonalDeck.isInDeck(deckType, deckId);
+          toggleBtn.classList.toggle('in-deck', inDeck);
+          const icon = toggleBtn.querySelector('i');
+          icon.className = inDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          toggleBtn.title = inDeck ? 'Remove from Personal Deck' : 'Add to Personal Deck';
+        }
+
+        updateToggleState();
+
+        toggleBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          PersonalDeck.toggleDeck(deckType, deckId);
+          updateToggleState();
+        });
+      }
     }
 
   })();

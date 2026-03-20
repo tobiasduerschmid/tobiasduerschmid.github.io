@@ -5,6 +5,9 @@ plugins:
 
 env: production
 
+# Feature flags
+personal_deck: true
+
 sass:
   style: compressed
 
