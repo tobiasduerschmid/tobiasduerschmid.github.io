@@ -110,7 +110,7 @@ title: "SE Deck"
           <h2 style="margin: 0;">Your Deck</h2>
           <button id="empty-deck-btn" class="deck-btn secondary" title="Empty your deck">Empty Deck</button>
         </div>
-        <div id="deck-selected">
+        <div id="deck-selected" style="margin-top: 12px;">
           <p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>
         </div>
 
@@ -260,6 +260,7 @@ title: "SE Deck"
     {{ qid | jsonify }}: {
       title: {{ qdata.title | jsonify }},
       description: {{ qdata.description | default: "" | jsonify }},
+      isMaster: true,
       questions: [
         {% for deck_id in qdata.decks %} {% assign ref_data = site.data.quizzes[deck_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
       question: {{ q.question | markdownify | jsonify }},
@@ -290,6 +291,7 @@ title: "SE Deck"
     {{ fcid | jsonify }}: {
       title: {{ fcdata.title | jsonify }},
       description: {{ fcdata.description | default: "" | jsonify }},
+      isMaster: true,
       cards: [
         {% for deck_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[deck_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
       question: {{ card.question | markdownify | jsonify }},
@@ -1372,13 +1374,20 @@ title: "SE Deck"
 
         // Build "Your Deck" section
         var selectedHtml = '';
+        var seenQuestions = {};
         deck.forEach(function (entry) {
           var data = entry.type === 'quiz' ? ALL_CARD_DATA.quizzes[entry.id] : ALL_CARD_DATA.flashcards[entry.id];
           if (!data) return;
-          var count = entry.type === 'quiz' ? data.questions.length : data.cards.length;
-          totalCards += count;
+          var items = entry.type === 'quiz' ? data.questions : data.cards;
+          var count = items.length;
+          items.forEach(function (item) {
+            if (!seenQuestions[item.question]) {
+              seenQuestions[item.question] = true;
+              totalCards++;
+            }
+          });
           var badgeClass = entry.type === 'quiz' ? 'quiz-badge' : 'flashcard-badge';
-          var badgeText = entry.type === 'quiz' ? 'Quiz' : 'Flashcard';
+          var badgeText = entry.type === 'quiz' ? (data.isMaster ? 'Master Quiz' : 'Quiz') : (data.isMaster ? 'Master Flashcards' : 'Flashcard');
           selectedHtml += '<div class="deck-item in-deck" data-type="' + entry.type + '" data-id="' + entry.id + '">' +
             '<div class="deck-item-info">' +
             '<span class="deck-item-badge ' + badgeClass + '">' + badgeText + '</span>' +
@@ -1581,37 +1590,47 @@ title: "SE Deck"
       function buildSessionCards() {
         var deck = PersonalDeck.getDeck();
         var cards = [];
+        var seenQuestions = {};
 
         deck.forEach(function (entry) {
           if (entry.type === 'difficult') {
             // Add difficult questions
             var difficultCards = getDifficultCards();
             difficultCards.forEach(function (dc) {
-              cards.push({
-                cardType: dc.cardType,
-                source: dc.source + ' (Difficult)',
-                data: dc.data
-              });
+              if (!seenQuestions[dc.data.question]) {
+                seenQuestions[dc.data.question] = true;
+                cards.push({
+                  cardType: dc.cardType,
+                  source: dc.source + ' (Difficult)',
+                  data: dc.data
+                });
+              }
             });
           } else if (entry.type === 'quiz') {
             var quizData = ALL_CARD_DATA.quizzes[entry.id];
             if (!quizData) return;
             quizData.questions.forEach(function (q) {
-              cards.push({
-                cardType: 'quiz',
-                source: quizData.title,
-                data: q
-              });
+              if (!seenQuestions[q.question]) {
+                seenQuestions[q.question] = true;
+                cards.push({
+                  cardType: 'quiz',
+                  source: quizData.title,
+                  data: q
+                });
+              }
             });
           } else {
             var fcData = ALL_CARD_DATA.flashcards[entry.id];
             if (!fcData) return;
             fcData.cards.forEach(function (c) {
-              cards.push({
-                cardType: 'flashcard',
-                source: fcData.title,
-                data: c
-              });
+              if (!seenQuestions[c.question]) {
+                seenQuestions[c.question] = true;
+                cards.push({
+                  cardType: 'flashcard',
+                  source: fcData.title,
+                  data: c
+                });
+              }
             });
           }
         });
