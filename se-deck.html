@@ -240,32 +240,32 @@ title: "SE Deck"
     var ALL_CARD_DATA = {
       quizzes: {
         {% for quiz_entry in site.data.quizzes %} {% assign qid = quiz_entry[0] %} {% assign qdata = quiz_entry[1] %} {% if qdata.questions %}
-    { { qid | jsonify } }: {
-      title: { { qdata.title | jsonify } },
-      description: { { qdata.description | default: "" | jsonify } },
+    {{ qid | jsonify }}: {
+      title: {{ qdata.title | jsonify }},
+      description: {{ qdata.description | default: "" | jsonify }},
       questions: [
         {% for q in qdata.questions %} {
-      question: { { q.question | markdownify | jsonify } },
-      type: { { q.type | default: "single" | jsonify } },
-      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
-    correct_index: { { q.correct_index | jsonify } },
-    correct_indices: { { q.correct_indices | jsonify } },
-    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
+      question: {{ q.question | markdownify | jsonify }},
+      type: {{ q.type | default: "single" | jsonify }},
+      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
+    correct_index: {{ q.correct_index | jsonify }},
+    correct_indices: {{ q.correct_indices | jsonify }},
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
             }, {% endfor %}
           ]
         },
     {% elsif qdata.decks %}
-    { { qid | jsonify } }: {
-      title: { { qdata.title | jsonify } },
-      description: { { qdata.description | default: "" | jsonify } },
+    {{ qid | jsonify }}: {
+      title: {{ qdata.title | jsonify }},
+      description: {{ qdata.description | default: "" | jsonify }},
       questions: [
         {% for deck_id in qdata.decks %} {% assign ref_data = site.data.quizzes[deck_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
-      question: { { q.question | markdownify | jsonify } },
-      type: { { q.type | default: "single" | jsonify } },
-      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
-    correct_index: { { q.correct_index | jsonify } },
-    correct_indices: { { q.correct_indices | jsonify } },
-    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
+      question: {{ q.question | markdownify | jsonify }},
+      type: {{ q.type | default: "single" | jsonify }},
+      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
+    correct_index: {{ q.correct_index | jsonify }},
+    correct_indices: {{ q.correct_indices | jsonify }},
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
             }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -273,26 +273,26 @@ title: "SE Deck"
       },
     flashcards: {
       {% for fc_entry in site.data.flashcards %} {% assign fcid = fc_entry[0] %} {% assign fcdata = fc_entry[1] %} {% if fcdata.cards %}
-      { { fcid | jsonify } }: {
-        title: { { fcdata.title | jsonify } },
-        description: { { fcdata.description | default: "" | jsonify } },
+      {{ fcid | jsonify }}: {
+        title: {{ fcdata.title | jsonify }},
+        description: {{ fcdata.description | default: "" | jsonify }},
         cards: [
           {% for card in fcdata.cards %} {
-        question: { { card.question | markdownify | jsonify } },
-        answer: { { card.answer | markdownify | jsonify } },
-        explanation: { { card.explanation | default: "" | markdownify | jsonify } }
+        question: {{ card.question | markdownify | jsonify }},
+        answer: {{ card.answer | markdownify | jsonify }},
+        explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
       }, {% endfor %}
           ]
     },
     {% elsif fcdata.decks %}
-    { { fcid | jsonify } }: {
-      title: { { fcdata.title | jsonify } },
-      description: { { fcdata.description | default: "" | jsonify } },
+    {{ fcid | jsonify }}: {
+      title: {{ fcdata.title | jsonify }},
+      description: {{ fcdata.description | default: "" | jsonify }},
       cards: [
         {% for deck_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[deck_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
-      question: { { card.question | markdownify | jsonify } },
-      answer: { { card.answer | markdownify | jsonify } },
-      explanation: { { card.explanation | default: "" | markdownify | jsonify } }
+      question: {{ card.question | markdownify | jsonify }},
+      answer: {{ card.answer | markdownify | jsonify }},
+      explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
     }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -400,9 +400,9 @@ title: "SE Deck"
     .info-tooltip {
       display: none;
       position: absolute;
-      left: 50%;
-      bottom: calc(100% + 8px);
-      transform: translateX(-50%);
+      left: -20px;
+      top: calc(100% + 8px);
+      transform: none;
       background: #333;
       color: #fff;
       font-size: 1.2em;
@@ -410,6 +410,7 @@ title: "SE Deck"
       padding: 8px 12px;
       border-radius: 6px;
       width: 240px;
+      max-width: 85vw;
       line-height: 1.4;
       z-index: 100;
       pointer-events: none;
@@ -419,11 +420,10 @@ title: "SE Deck"
     .info-tooltip::after {
       content: '';
       position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
+      bottom: 100%;
+      left: 24px;
       border: 6px solid transparent;
-      border-top-color: #333;
+      border-bottom-color: #333;
     }
 
     .info-btn:hover .info-tooltip,
@@ -1232,6 +1232,9 @@ title: "SE Deck"
     }
   </style>
 
+  {% include footer.html %}
+  {% include scripts.html %}
+
   <!-- ==================== PAGE SCRIPT ==================== -->
   <script>
     (function () {
@@ -1917,9 +1920,6 @@ title: "SE Deck"
     <p>Personal Deck feature is not currently available.</p>
   </div>
   {% endif %}
-
-  {% include footer.html %}
-  {% include scripts.html %}
 
 </body>
 
