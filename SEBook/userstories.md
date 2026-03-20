@@ -43,8 +43,6 @@ They follow this format:
 ---
 
 
-
-
 # INVEST
 
 To evaluate if a user story is well-written, we apply the INVEST criteria:
@@ -100,11 +98,52 @@ Designing for negotiability requires a balance between providing enough context 
 
 The Valuable criterion ensures that every "chunk of functionality" your team produces translates into meaningful impact for your stakeholders {% cite Wake2003INVESTinGoodStories %}.
 
+Here are some examples of user stories that are not valuable:
+
+### Developer-centric stories
+The Bad Story: 
+> **"As a developer, 
+I want to rewrite the core authentication API in Rust 
+so that I can use a more modern programming language."** 
+
+This issue: This user story discusses a *developer need*, not a *user need*. So it is not *valuable*. 
+
+Similar examples include:
+> **"As a frontend engineer, 
+I want to update all the third-party dependencies in the package.json file 
+so that there are no deprecation warnings showing up in my local development console."** 
+
+> **"As a system architect, 
+I want to split the monolithic backend repository into three separate microservices
+so that the codebase is structurally decoupled."** 
+
+> **"As a database administrator, 
+I want to normalize the user profile tables to the Third Normal Form (3NF) 
+so that the database schema strictly follows academic normalization rules."** 
+
+### Incomplete stories
+The Bad Story: 
+> **As a** smart home owner,
+> **I want to** schedule my porch lights to turn on automatically at a specific time,
+> **so that** I don't have to walk up to a dark house in the evening.
+> **Given** I am logged into the smart home mobile app,
+> **When** I set the porch light schedule to turn on at 6:00 PM,
+> **Then** the porch lights will illuminate at exactly 6:00 PM every day.
+
+On first glance, this user story looks valuable, but if you look closer at the acceptance criteria, you can see that they are missing a feature to turn off the lights. If lights are turned on forever, this costs unnecessary energy. To fix this, we have to *add an acceptance criterion* that specifies when the lights should turn off. 
+For example:
+> **Given** I am logged into the smart home mobile app,
+> **When** I set the porch light schedule to turn off at 6:00 AM and the lights are illuminated,
+> **Then** the porch lights will turn off at 6:00 AM.
+
+Now this user story is valuable, and we can hand it to our development team.
 
 ## Estimable
 
-
 Estimable stories are those for which a judgment can be made regarding their size, cost, or time to deliver. To achieve this, stories must be understood well enough and remain stable enough to put useful bounds on our guesses.
+We also need to avoid ambiguity in the user story.  A user story that is too vague or too complex will be difficult to estimate.
+For example: 
+
 
 ## Small
 
