@@ -185,3 +185,10 @@ User stories are ideal for iterative, customer-centric projects where requiremen
 
 # Limitations
 User stories can struggle to capture non-functional requirements like performance, security, or reliability, and they are generally considered insufficient for safety-critical systems like spacecraft or medical devices
+
+# Quiz
+
+
+{% include flashcards.html id="user_stories" %}
+
+{% include quiz.html id="user_stories" %}

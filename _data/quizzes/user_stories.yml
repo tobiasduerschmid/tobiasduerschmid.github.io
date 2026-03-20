@@ -1,0 +1,105 @@
+title: "INVEST Criteria Violations Quiz"
+description: "Test your ability to identify which of the INVEST principles are being violated in various Agile user stories, now including their associated Acceptance Criteria."
+questions:
+  - id: 1
+    type: multiple
+    question: |
+      Read the following user story and its acceptance criteria: 
+      "As a customer, I want to pay for my items using a credit card, so that I can complete my purchase. (Note: This story cannot be implemented until the User Registration and Cart Management stories are fully completed).
+      
+      Acceptance Criteria:
+      - Given a user has items in their cart, when they enter valid credit card details and submit, then the payment is processed and an order confirmation is shown.
+      - Given a user enters an expired credit card, when they submit, then the system displays an 'invalid card' error message.
+        
+      Which INVEST criteria are violated? (Select all that apply)
+    options:
+      - "Independent"
+      - "Negotiable"
+      - "Valuable"
+      - "Estimable"
+      - "Small"
+      - "Testable"
+    correct_indices: [0]
+    explanation: "This story violates the **Independent** criterion because it is explicitly blocked by other incomplete stories. All other INVEST criteria are met."
+  - id: 2
+    type: multiple
+    question: |
+      Read the following user story and its acceptance criteria: 
+      "As a user, I want the application to be built using a React.js frontend, a Node.js backend, and a PostgreSQL database, so that I can view my profile."
+      
+      Acceptance Criteria:
+      - Given a user is logged in, when they navigate to the profile route, then the React.js components mount and display their data.
+      - Given a profile update occurs, when the form is submitted, then a REST API call is made to the Node.js server to update the PostgreSQL database.
+          
+      Which INVEST criteria are violated? (Select all that apply)
+    options:
+      - "Independent"
+      - "Negotiable"
+      - "Valuable"
+      - "Estimable"
+      - "Small"
+      - "Testable"
+    correct_indices: [1, 2]
+    explanation: "This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable**, because the end-user generally derives no direct business value from the specific tech stack being used; their value comes solely from being able to view their profile."
+  - id: 3
+    type: multiple
+    question: |
+      Read the following user story and its acceptance criteria: 
+      "As a developer, I want to add a hidden ID column to the legacy database table that is never queried, displayed on the UI, or used by any background process, so that the table structure is updated."
+     
+      Acceptance Criteria:
+      - Given the database migration script runs, when the legacy table is inspected, then a new integer column named 'hidden_id' exists.
+      - Given the application is running, when any database operation occurs, then the 'hidden_id' column remains completely unused and unaffected.
+          
+      Which INVEST criteria are violated? (Select all that apply)
+    options:
+      - "Independent"
+      - "Negotiable"
+      - "Valuable"
+      - "Estimable"
+      - "Small"
+      - "Testable"
+    correct_indices: [1, 2]
+    explanation: "This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
+  - id: 4
+    type: multiple
+    question: |
+      Read the following user story and its acceptance criteria: 
+      "As a hospital administrator, I want a comprehensive software system that includes patient records, payroll, pharmacy inventory management, and staff scheduling, so that I can run the entire hospital effectively."
+      
+      Acceptance Criteria:
+      - Given a doctor is logged in, when they search for a patient, then their full medical history is displayed.
+      - Given it is the end of the month, when HR runs payroll, then all staff are paid accurately.
+      - Given the pharmacy receives a shipment, when it is logged, then the inventory updates automatically.
+      - Given a nursing manager opens the calendar, when they drag and drop shifts, then the schedule is saved and notifications are sent to staff.
+        
+      Which INVEST criteria are violated? (Select all that apply)
+    options:
+      - "Independent"
+      - "Negotiable"
+      - "Valuable"
+      - "Estimable"
+      - "Small"
+      - "Testable"
+    correct_indices: [3, 4, 5]
+    explanation: "This violates **Small** because it is a massive 'Epic' (with wide-ranging acceptance criteria) that would take months or years to build. Furthmore, it vioplates **Testable** because 'run the entire hospital effectively' is too broad and subjective to objectively verify in a single iteration. Because of this, it also violates **Estimable**, as the team cannot possibly guess the accurate effort for an entire hospital system in one go."
+  - id: 5
+    type: multiple
+    question: |
+      Read the following user story and its acceptance criteria: 
+      "As a website visitor, I want the homepage to load blazing fast and look extremely modern, so that I have a pleasant browsing experience."
+      
+      Acceptance Criteria:
+      - Given a user enters the website URL, when they press enter, then the page loads blazing fast.
+      - Given the homepage renders, when the user looks at the UI, then the design feels extremely modern and pleasant.
+       
+      Which INVEST criteria are violated? (Select all that apply)
+    options:
+      - "Independent"
+      - "Negotiable"
+      - "Valuable"
+      - "Estimable"
+      - "Small"
+      - "Testable"
+    correct_indices: [3, 5]
+    explanation: "This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'."

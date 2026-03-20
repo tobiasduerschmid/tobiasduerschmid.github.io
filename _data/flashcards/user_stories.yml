@@ -1,0 +1,43 @@
+title: "User Stories & INVEST Principle Flashcards"
+description: "Test your knowledge on Agile user stories and the criteria for creating high-quality requirements!"
+cards:
+  - id: 1
+    question: "What is the primary purpose of Acceptance Criteria in a user story?"
+    answer: "To define the specific conditions that must be met for a user story to be considered 'Done'. They define the scope of the user story."
+    explanation: "Acceptance criteria provide clear, objective boundaries for a feature. They remove ambiguity, guide the development team on exactly what needs to be built, and form the basis for testing whether the story delivers the intended value. They make user stories testable and estimable."
+  - id: 2
+    question: "What is the standard template for writing a User Story?"
+    answer: "'As a [role], I want [feature/action], so that [benefit/value].'"
+    explanation: "This structure ensures the team always understands **who** they are building for, **what** they are building, and **why** it matters to the business or user."
+  - id: 3
+    question: "What does the acronym INVEST stand for?"
+    answer: "Independent, Negotiable, Valuable, Estimable, Small, and Testable."
+    explanation: "The **INVEST principle** is a widely used checklist to assess the quality and readiness of a user story before it enters a sprint."
+  - id: 4
+    question: "What does 'Independent' mean in the INVEST principle?"
+    answer: "A user story should be self-contained and not rely on the completion of other stories."
+    explanation: "**Dependencies** make prioritization and planning difficult. If stories are tightly coupled, the team should look for ways to combine them or split them along different boundaries."
+  - id: 5
+    question: "Why must a user story be 'Negotiable'?"
+    answer: "Because a user story describes requirements, not implementation details or design decisions.."
+    explanation: "Developers and product owners collaborate and **negotiate the implementation details** just-in-time, allowing for better, more flexible solutions."
+  - id: 6
+    question: "What makes a user story 'Estimable'?"
+    answer: "The development team must have enough information to roughly gauge the effort required to complete it."
+    explanation: "If a story isn't estimable, it usually means it is **too large** or **poorly understood**. The team needs more discussion or a technical spike to clarify the requirements."
+  - id: 7
+    question: "Why is it crucial for a user story to be 'Small'?"
+    answer: "It must be appropriately sized to be completed within a single Agile iteration or sprint."
+    explanation: "Smaller stories reduce delivery risk, provide faster feedback loops, and make estimation much more accurate. If a story is too big (an 'Epic'), it must be broken down."
+  - id: 8
+    question: "How do you ensure a user story is 'Testable'?"
+    answer: "By defining clear, objective Acceptance Criteria."
+    explanation: "A story is only 'Done' when it can be verified. If you cannot test a story, you cannot prove that it successfully delivers the intended **value** to the user."
+  - id: 9
+    question: "What is the widely used format for writing Acceptance Criteria?"
+    answer: "The 'Given [pre-condition] / When [action] / Then [post-condition]' format."
+    explanation: "This format structures criteria as clear scenarios: **Given** a specific context or starting state, **When** a specific action is performed, **Then** a specific, measurable outcome or result occurs."
+  - id: 10
+    question: "What is the difference between the main body of the User Story and Acceptance Criteria?"
+    answer: "A User Story describes the **what** and **why** of a feature from the user's perspective, while Acceptance Criteria **define the scope by listing all conditions** that must be met for the story to be considered 'Done'."
+    explanation: "Think of the User Story as the **goal** and the Acceptance Criteria as the **checklist** to verify that the goal has been achieved. The story is the 'what' and 'why', while the criteria are the 'how we know it's done'."

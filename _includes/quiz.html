@@ -7,17 +7,17 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign quiz_data = site.data.quizzes[include.id] %}
 
 {% if quiz_data %}
-  {% if quiz_data.decks %}
-    {% assign all_questions = "" | split: "" %}
-    {% for deck_id in quiz_data.decks %}
-      {% assign deck_data = site.data.quizzes[deck_id] %}
-      {% if deck_data %}
-        {% assign all_questions = all_questions | concat: deck_data.questions %}
-      {% endif %}
-    {% endfor %}
-  {% else %}
-    {% assign all_questions = quiz_data.questions %}
-  {% endif %}
+{% if quiz_data.decks %}
+{% assign all_questions = "" | split: "" %}
+{% for deck_id in quiz_data.decks %}
+{% assign deck_data = site.data.quizzes[deck_id] %}
+{% if deck_data %}
+{% assign all_questions = all_questions | concat: deck_data.questions %}
+{% endif %}
+{% endfor %}
+{% else %}
+{% assign all_questions = quiz_data.questions %}
+{% endif %}
 
 <div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}"
   data-shuffle="{{ quiz_data.shuffle | default: true }}">
@@ -315,7 +315,6 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .hidden {
     display: none !important;
   }
-
 </style>
 
 <script>
