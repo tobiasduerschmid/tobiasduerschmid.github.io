@@ -37,7 +37,7 @@ title: "SE Deck"
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="deck-library">
-      <h1>SE Study Deck Playground</h1>
+      <h1>SE Study Deck</h1>
       <p class="deck-subtitle"> Make studying fun while following <a
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
         your
@@ -45,7 +45,7 @@ title: "SE Deck"
 
       <!-- Session Controls -->
       <div id="deck-controls">
-        <div class="controls-row activate-row" style="justify-content: space-between;">
+        <div class="controls-row toggle-row" style="justify-content: space-between;">
           <span style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="toggle-label">Activate Personal Deck</span>
             <span class="info-btn" tabindex="0" aria-label="Info about personal deck">?<span class="info-tooltip">Allows
@@ -57,12 +57,13 @@ title: "SE Deck"
           </label>
         </div>
         <div id="deck-controls-body">
-          <div class="controls-row" style="justify-content: space-between; margin-top: 10px;">
+          <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="toggle-label">Track Performance</span>
               <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span
                   class="info-tooltip">Allows SE Deck to track your performance on each question to be stored locally in
-                  your browser's localStorage to enable you to easily revisit the questions you often get wrong. This will track your
+                  your browser's localStorage to enable you to easily revisit the questions you often get wrong. This
+                  will track your
                   performance across quizzes and flash cards across the entire site, not just this page. Your personal
                   data remains on your local device and is not shared with the provider of the site.</span></span>
             </span>
@@ -71,9 +72,11 @@ title: "SE Deck"
               <span class="slider round"></span>
             </label>
           </div>
-          <div class="controls-row" style="margin-top: 14px;">
-            <label for="max-cards">Max cards:</label>
-            <input type="number" id="max-cards" value="20" min="1" max="500">
+          <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
+            <div style="display: inline-flex; align-items: center; gap: 8px;">
+              <label for="max-cards" class="toggle-label" style="margin: 0;">Max cards:</label>
+              <input type="number" id="max-cards" value="20" min="1" max="500">
+            </div>
             <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
           </div>
           <p id="deck-summary" class="deck-summary-text"></p>
@@ -221,17 +224,17 @@ title: "SE Deck"
       </div>
     </div>
 
-  <!-- Privacy / Cookie Notice -->
-  <p class="cookie-notice">
-    <strong>Cookie &amp; Privacy Notice:</strong> SE Deck stores your preferences
-    (<em>personal deck</em> and <em>track performance</em> settings) in browser cookies,
-    and your per-question performance history in browser "localStorage".
-    All data remains on your device — nothing is transmitted to or stored on any server.
-    You may delete your data at any time: turn off <em>Activate Personal Deck</em> to
-    clear deck preferences, or turn off <em>Track Performance</em> and confirm deletion
-    to erase all performance statistics.
-    To comply with FERPA laws, this tool keeps all educational performance data strictly local.
-  </p>
+    <!-- Privacy / Cookie Notice -->
+    <p class="cookie-notice">
+      <strong>Cookie &amp; Privacy Notice:</strong> SE Deck stores your preferences
+      (<em>personal deck</em> and <em>track performance</em> settings) in browser cookies,
+      and your per-question performance history in browser "localStorage".
+      All data remains on your device — nothing is transmitted to or stored on any server.
+      You may delete your data at any time: turn off <em>Activate Personal Deck</em> to
+      clear deck preferences, or turn off <em>Track Performance</em> and confirm deletion
+      to erase all performance statistics.
+      To comply with FERPA laws, this tool keeps all educational performance data strictly local.
+    </p>
 
   </div>
 
@@ -1195,13 +1198,39 @@ title: "SE Deck"
         padding: 15px;
       }
 
-      .controls-row {
+      .controls-row:not(.toggle-row) {
         flex-direction: column;
         align-items: stretch;
       }
 
-      .controls-row input[type="number"] {
+      .toggle-row {
+        gap: 8px;
+        /* Slightly tighter gap on mobile */
+      }
+
+      .toggle-row .toggle-label {
+        font-size: 0.8em;
+      }
+
+      .toggle-row .switch {
+        transform: scale(0.85);
+        transform-origin: right center;
+      }
+
+      .controls-row:not(.toggle-row) input[type="number"] {
         width: 100%;
+      }
+
+      .toggle-row input[type="number"] {
+        width: 75px;
+        padding: 4px 8px;
+        font-size: 0.9em;
+      }
+
+      .toggle-row .deck-btn {
+        padding: 6px 12px;
+        font-size: 0.85em;
+        white-space: nowrap;
       }
     }
 

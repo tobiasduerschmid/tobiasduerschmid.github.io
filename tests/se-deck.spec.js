@@ -34,7 +34,7 @@ async function setCookie(context, name, value) {
 
 // ==================== LIBRARY VIEW TESTS ====================
 
-test.describe('Personal Deck - Library View', () => {
+test.describe('SE Deck - Library View', () => {
   test.beforeEach(async ({ page }) => {
     await clearState(page);
   });
@@ -43,7 +43,7 @@ test.describe('Personal Deck - Library View', () => {
     await page.goto(DECK_URL);
     await expect(page.locator('#deck-library')).toBeVisible();
     await expect(page.locator('#deck-session')).toBeHidden();
-    await expect(page.locator('h1')).toContainText('Personal Deck');
+    await expect(page.locator('h1')).toContainText('SE Study Deck');
   });
 
   test('activate toggle is off by default and sections are dimmed', async ({ page }) => {
