@@ -1,7 +1,7 @@
 (function () {
-  var COOKIE_NAME = 'personal-deck';
+  var COOKIE_NAME = 'se-deck';
   var COOKIE_DAYS = 365;
-  var ACTIVE_COOKIE = 'personal-deck-active';
+  var ACTIVE_COOKIE = 'se-deck-active';
 
   function setCookie(name, value, days) {
     var d = new Date();
@@ -59,7 +59,7 @@
   // ==================== Performance Tracking ====================
 
   var PERF_COOKIE = 'analyze-performance';
-  var STATS_KEY = 'personal-deck-stats';
+  var STATS_KEY = 'se-deck-stats';
 
   function isPersonalDeckActive() {
     return getCookie(ACTIVE_COOKIE) === 'true';

@@ -1,7 +1,7 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
-const DECK_URL = '/personal-deck/';
+const DECK_URL = '/se-deck/';
 // A page with both a quiz and flashcard include
 const GIT_PAGE_URL = '/SEBook/tools/git/';
 
@@ -11,12 +11,12 @@ const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalDeckToggle + .slider';
 const ANALYZE_TOGGLE_SLIDER = '#analyzePerformanceToggle + .slider';
 
 /**
- * Helper: clear all personal-deck cookies and localStorage before each test.
+ * Helper: clear all se-deck cookies and localStorage before each test.
  */
 async function clearState(page) {
   await page.context().clearCookies();
   await page.evaluate(() => {
-    try { localStorage.removeItem('personal-deck-stats'); } catch (e) { /* */ }
+    try { localStorage.removeItem('se-deck-stats'); } catch (e) { /* */ }
   });
 }
 
@@ -71,8 +71,8 @@ test.describe('Personal Deck - Library View', () => {
 
   test('deactivating toggle clears the deck', async ({ page, context }) => {
     // Activate and add a quiz to the deck
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     // Verify the quiz is in the deck
@@ -87,7 +87,7 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('available quizzes and flashcards are listed', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
 
     const quizItems = page.locator('#available-quizzes .deck-item');
@@ -103,7 +103,7 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('clicking + button adds quiz to deck', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
 
     // Find the git quiz add button
@@ -120,7 +120,7 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('clicking + button again removes quiz from deck', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
 
     const gitAddBtn = page.locator('#available-quizzes .deck-add-btn[data-id="git"]');
@@ -136,8 +136,8 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('removing from "Your Deck" section works', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     // Click the remove button in the "Your Deck" section
@@ -151,8 +151,8 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('empty deck button clears all items', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([
       { type: 'quiz', id: 'git' },
       { type: 'flashcard', id: 'git' },
     ]));
@@ -164,21 +164,21 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('start session button is disabled when deck is empty', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
     await expect(page.locator('#start-session-btn')).toBeDisabled();
   });
 
   test('start session button is enabled when deck has items', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
     await expect(page.locator('#start-session-btn')).toBeEnabled();
   });
 
   test('deck summary shows card count', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
     const summary = page.locator('#deck-summary');
     await expect(summary).toContainText('total cards available');
@@ -186,7 +186,7 @@ test.describe('Personal Deck - Library View', () => {
   });
 
   test('deck persists across page reload', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
 
     // Add git quiz
@@ -208,8 +208,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('starting a session shows session view and hides library', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#start-session-btn').click();
@@ -219,8 +219,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session shows progress bar', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#start-session-btn').click();
@@ -228,8 +228,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session renders quiz card with quiz UI', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     // Set max cards to 1 so we only get one card
@@ -245,8 +245,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session renders flashcard with flashcard UI', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -260,8 +260,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('quiz card interaction: answering shows explanation and next', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('2');
@@ -285,8 +285,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('flashcard interaction: show answer then assess', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -310,8 +310,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session completes and shows results', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -328,8 +328,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session results: back to library works', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -343,8 +343,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session results: review incorrect shows only missed cards', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('2');
@@ -372,8 +372,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('session results: restart reshuffles cards', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -393,8 +393,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('back to library button works during session', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#start-session-btn').click();
@@ -406,8 +406,8 @@ test.describe('Personal Deck - Session', () => {
   });
 
   test('max cards limits the number of session cards', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await setCookie(context, 'se-deck-active', 'true');
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'quiz', id: 'git' }]));
     await page.goto(DECK_URL);
 
     // Git quiz has many questions; limit to 2
@@ -443,22 +443,22 @@ test.describe('Personal Deck - Toggle Button on Includes', () => {
   test('+ button is hidden when personal deck is not active', async ({ page }) => {
     await page.goto(GIT_PAGE_URL);
     // The toggle button should exist but be hidden
-    const toggleBtn = page.locator('.personal-deck-toggle').first();
+    const toggleBtn = page.locator('.se-deck-toggle').first();
     await expect(toggleBtn).toBeHidden();
   });
 
   test('+ button is visible when personal deck is active', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(GIT_PAGE_URL);
-    const toggleBtn = page.locator('.personal-deck-toggle').first();
+    const toggleBtn = page.locator('.se-deck-toggle').first();
     await expect(toggleBtn).toBeVisible();
   });
 
   test('+ button toggles to check icon when clicked', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(GIT_PAGE_URL);
 
-    const toggleBtn = page.locator('.personal-deck-toggle').first();
+    const toggleBtn = page.locator('.se-deck-toggle').first();
     await expect(toggleBtn.locator('i')).toHaveClass(/fa-plus/);
 
     await toggleBtn.click();
@@ -467,15 +467,15 @@ test.describe('Personal Deck - Toggle Button on Includes', () => {
   });
 
   test('+ button adds item to cookie deck', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(GIT_PAGE_URL);
 
-    const toggleBtn = page.locator('.personal-deck-toggle').first();
+    const toggleBtn = page.locator('.se-deck-toggle').first();
     await toggleBtn.click();
 
     // Verify cookie was set
     const deck = await page.evaluate(() => {
-      var nameEQ = 'personal-deck=';
+      var nameEQ = 'se-deck=';
       var ca = document.cookie.split(';');
       for (var i = 0; i < ca.length; i++) {
         var c = ca[i].trim();
@@ -488,10 +488,10 @@ test.describe('Personal Deck - Toggle Button on Includes', () => {
   });
 
   test('clicking + again removes from deck', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(GIT_PAGE_URL);
 
-    const toggleBtn = page.locator('.personal-deck-toggle').first();
+    const toggleBtn = page.locator('.se-deck-toggle').first();
     await toggleBtn.click();
     await expect(toggleBtn).toHaveClass(/in-deck/);
 
@@ -509,13 +509,13 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('analyze performance toggle is off by default', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
     await expect(page.locator('#analyzePerformanceToggle')).not.toBeChecked();
   });
 
   test('analyze performance toggle persists across reload', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
 
     await page.locator(ANALYZE_TOGGLE_SLIDER).click();
@@ -524,13 +524,13 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('difficult questions section is hidden when analyze is off', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await page.goto(DECK_URL);
     await expect(page.locator('#difficult-deck-section')).toBeHidden();
   });
 
   test('difficult questions section is hidden when analyze is on but no difficult questions', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
     // No stats exist, so no difficult questions
@@ -538,7 +538,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('difficult questions appear when stats exceed threshold', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 
@@ -564,7 +564,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('difficult deck can be added to session', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 
@@ -589,9 +589,9 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('session records performance when analyze is on', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
-    await setCookie(context, 'personal-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await setCookie(context, 'se-deck', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(DECK_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -610,7 +610,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('deactivating analyze toggle shows confirm modal', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 
@@ -624,7 +624,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('confirm modal "Yes" clears stats and deactivates', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 
@@ -650,7 +650,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('confirm modal "No" keeps toggle on', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 
@@ -664,7 +664,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('questions below 40% failure threshold are NOT in difficult deck', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 
@@ -685,7 +685,7 @@ test.describe('Personal Deck - Performance Tracking', () => {
   });
 
   test('difficult deck deduplicates questions across sets', async ({ page, context }) => {
-    await setCookie(context, 'personal-deck-active', 'true');
+    await setCookie(context, 'se-deck-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(DECK_URL);
 

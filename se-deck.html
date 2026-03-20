@@ -1,5 +1,5 @@
 ---
-permalink: /personal-deck/
+permalink: /se-deck/
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -11,7 +11,7 @@ permalink: /personal-deck/
   <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
     <div class="container-fluid">
       <div class="navbar-header page-scroll">
-        <a class="navbar-brand page-scroll" href="/personal-deck/">SE Deck</a>
+        <a class="navbar-brand page-scroll" href="/se-deck/">SE Deck</a>
         <a class="navbar-brand page-scroll">|</a>
         <a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
       </div>
@@ -32,7 +32,7 @@ permalink: /personal-deck/
     </div>
   </div>
 
-  <div id="personal-deck-app">
+  <div id="se-deck-app">
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="deck-library">
@@ -56,7 +56,7 @@ permalink: /personal-deck/
           <div class="controls-row" style="justify-content: space-between; margin-top: 10px;">
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="toggle-label">Track Performance</span>
-              <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span class="info-tooltip">Your performance on each question will be stored locally in a cookie to enable you to easily revisit the questions you often get wrong.</span></span>
+              <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span class="info-tooltip">Allows SE Deck to track your performance on each question to be stored locally in a cookie to enable you to easily revisit the questions you often get wrong. Your personal data remains on your local device and is not shared with the provider of the site.</span></span>
             </span>
             <label class="switch">
               <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
@@ -282,20 +282,20 @@ permalink: /personal-deck/
 
   <!-- ==================== STYLES ==================== -->
   <style>
-    #personal-deck-app {
+    #se-deck-app {
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
       font-family: 'Inter', 'Helvetica Neue', sans-serif;
     }
 
-    #personal-deck-app h1 {
+    #se-deck-app h1 {
       color: #2774AE;
       font-weight: 700;
       margin-top: 0;
     }
 
-    #personal-deck-app h2 {
+    #se-deck-app h2 {
       color: #2774AE;
       font-weight: 700;
       margin-top: 30px;
@@ -1024,12 +1024,12 @@ permalink: /personal-deck/
     }
 
     /* Dark Mode */
-    html.dark-mode #personal-deck-app {
+    html.dark-mode #se-deck-app {
       color: #e0e0e0;
     }
 
-    html.dark-mode #personal-deck-app h1,
-    html.dark-mode #personal-deck-app h2 {
+    html.dark-mode #se-deck-app h1,
+    html.dark-mode #se-deck-app h2 {
       color: #FFD100;
       border-bottom-color: #444;
     }
@@ -1170,7 +1170,7 @@ permalink: /personal-deck/
 
     /* Responsive adjustments */
     @media (max-width: 600px) {
-      #personal-deck-app {
+      #se-deck-app {
         padding: 15px;
       }
 
@@ -1593,7 +1593,7 @@ permalink: /personal-deck/
       function scrollToTop() {
         var navbar = document.getElementById('navnav');
         var navHeight = navbar ? navbar.offsetHeight : 50;
-        var app = document.getElementById('personal-deck-app');
+        var app = document.getElementById('se-deck-app');
         var y = app.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
         window.scrollTo({ top: y, behavior: 'smooth' });
       }
@@ -1860,7 +1860,7 @@ permalink: /personal-deck/
       // Adjust for navbar
       function adjustForNavbar() {
         var navbar = document.getElementById('navnav');
-        var app = document.getElementById('personal-deck-app');
+        var app = document.getElementById('se-deck-app');
         if (navbar && app) {
           app.style.marginTop = (navbar.offsetHeight + 10) + 'px';
         }

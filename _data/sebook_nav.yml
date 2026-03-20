@@ -133,3 +133,6 @@ topics:
         url: /SEBook/tools/regex.html
       - name: Make
         url: /SEBook/tools/make.html
+  - name: SE Deck
+    icon: null
+    url: /se-deck/
