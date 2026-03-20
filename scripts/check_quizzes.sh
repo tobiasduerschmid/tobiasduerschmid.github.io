@@ -2,7 +2,7 @@
 
 # Configuration
 SITE_DIR="_site"
-SEARCH_STRING="Quiz data not found for ID"
+SEARCH_STRING="data not found for ID"
 # Focus on areas where quizzes are most common
 TARGET_DIRS=("blog" "SEBook")
 
@@ -12,7 +12,7 @@ if [ ! -d "$SITE_DIR" ]; then
     exit 1
 fi
 
-echo "🔍 Auditing $SITE_DIR for missing quiz data..."
+echo "🔍 Auditing $SITE_DIR for missing quiz & flashcard data..."
 
 MISSING_QUIZZES=""
 for dir in "${TARGET_DIRS[@]}"; do
@@ -27,11 +27,11 @@ for dir in "${TARGET_DIRS[@]}"; do
 done
 
 if [ ! -z "$MISSING_QUIZZES" ]; then
-    echo "❌ Found missing quiz data in the following files:"
+    echo "❌ Found missing quiz & flashcard data in the following files:"
     echo "$MISSING_QUIZZES"
-    echo "Please check that the quiz ID used in {% include quiz.html id='...' %} matches a file in _data/quizzes/."
+    echo "Please check that the quiz/flashcard ID used in {% include quiz.html id='...' %} or {% include flashcards.html id='...' %} matches a file in _data/quizzes/ or _data/flashcards/."
     exit 1
 else
-    echo "✅ All included quizzes have valid data in ${TARGET_DIRS[*]}."
+    echo "✅ All included quizzes & flashcards have valid data in ${TARGET_DIRS[*]}."
     exit 0
 fi
