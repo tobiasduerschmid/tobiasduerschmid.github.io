@@ -55,119 +55,254 @@ To evaluate if a user story is well-written, we apply the INVEST criteria:
 * **Testable**: It must be verifiable through its acceptance criteria.
 
 
-We will not look at these criteria in more detail below.
+We will now look at these criteria in more detail below.
 ## Independent
 
-Independent is a property 
+
+**What it is and Why it Matters**
+The "Independent" criterion states that user stories should not overlap in concept and should be schedulable and implementable in any order {% cite Wake2003INVESTinGoodStories %}. An independent story can be understood, tracked, implemented, and tested on its own, without requiring other stories to be completed first.
+
+This criterion matters for several fundamental reasons:
+* **Flexible Prioritization:** Independent stories allow the business to prioritize the backlog based strictly on value, rather than being constrained by technical dependencies {% cite Wake2003INVESTinGoodStories %}. Without independence, a high-priority story might be blocked by a low-priority one.
+* **Accurate Estimation:** When stories overlap or depend on each other, their estimates become entangled. For example, if paying by Visa and paying by MasterCard are separate stories, the first one implemented bears the infrastructure cost, making the second one much cheaper {% cite cohn2004user %}. This skews estimates.
+* **Reduced Confusion:** By avoiding overlap, independent stories reduce places where descriptions contradict each other and make it easier to verify that all needed functionality has been described {% cite Wake2003INVESTinGoodStories %}.
+
+**How to Evaluate It**
+To determine if a user story is independent, ask:
+1. **Does this story overlap with another story?** If two stories share underlying capabilities (e.g., both involve "sending a message"), they have overlap dependency—the most painful form {% cite Wake2003INVESTinGoodStories %}.
+2. **Must this story be implemented before or after another?** If so, there is an order dependency. While less harmful than overlap (the business often naturally schedules these correctly), it still constrains planning {% cite Wake2003INVESTinGoodStories %}.
+3. **Was this story split along technical boundaries?** If one story covers the UI layer and another covers the database layer for the same feature, they are interdependent and neither delivers value alone {% cite cohn2004user %}.
+
+**How to Improve It**
+If stories violate the Independent criterion, you can improve them using these techniques:
+* **Combine Interdependent Stories:** If two stories are too entangled to estimate separately, merge them into a single story. For example, instead of separate stories for Visa, MasterCard, and American Express payments, combine them: "A company can pay for a job posting with a credit card" {% cite cohn2004user %}.
+* **Partition Along Different Dimensions:** If combining makes the story too large, re-split along a different dimension. For overlapping email stories like "User sends and receives messages" and "User sends and replies to messages", repartition by action: "User sends message", "User receives message", "User replies to message" {% cite Wake2003INVESTinGoodStories %}.
+* **Slice Vertically:** When stories have been split along technical layers (UI vs. database), re-slice them as vertical "slices of cake" that cut through all layers. Instead of "Job Seeker fills out a resume form" and "Resume data is written to the database", write "Job Seeker can submit a resume with basic information" {% cite cohn2004user %}.
+
+### Examples of Stories Violating ONLY the Independent Criterion
+
+**Example 1: Overlap Dependency**
+> Story A: *"As a user, I want to send and receive messages so that I can communicate with other users."*
+> Story B: *"As a user, I want to send and reply to messages so that I can respond to conversations."*
+
+* **Negotiable:** Yes. Neither story dictates a specific UI or technology.
+* **Valuable:** Yes. Communication features are clearly valuable to users.
+* **Estimable:** Difficult. The overlapping "send" capability makes it unclear how to estimate each story independently.
+* **Small:** Yes. Each story could fit within a sprint.
+* **Testable:** Yes. Clear acceptance criteria can be written for sending, receiving, and replying.
+* **Why it violates Independent:** Both stories include "sending a message." If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
+* **How to fix it:** Repartition into three non-overlapping stories: "User sends message", "User receives message", and "User replies to message."
+
+**Example 2: Technical (Horizontal) Splitting**
+> Story A: *"As a job seeker, I want to fill out a resume form so that I can enter my information."*
+> Story B: *"As a job seeker, I want my resume data to be saved so that it is available when I return."*
+
+* **Negotiable:** No. Both stories dictate internal technical steps rather than user-facing capabilities.
+* **Valuable:** No. Neither story delivers value on its own—a form that does not save is useless, and saving data without a form to collect it is equally useless.
+* **Estimable:** Yes. Developers can estimate each technical task.
+* **Small:** Yes. Each is a small piece of work.
+* **Testable:** Yes. Each can be verified in isolation.
+* **Why it violates Independent:** Story B is meaningless without Story A, and Story A is useless without Story B. They are completely interdependent because the feature was split along technical boundaries (UI layer vs. persistence layer) instead of user-facing functionality {% cite cohn2004user %}.
+* **How to fix it:** Combine into a single vertical slice: "As a job seeker, I want to submit a resume with basic information (name, address, education) so that employers can find me." This cuts through all layers and delivers value independently {% cite cohn2004user %}.
 
 ## Negotiable
 
-A user story should only capture the essence of a user's need, leaving room for design decisions rather than dictating a specific technical implementation (see ["Requirements Vs. Design"](/SEBook/requirements#requirements-vs--design)).
-A good story **captures the essence**, not the details {% cite Wake2003INVESTinGoodStories %}. 
+**What it is and Why it Matters**
+The "Negotiable" criterion states that a user story is not an explicit contract for features; rather, it captures the essence of a user’s need, leaving the details to be co-created by the customer and the development team during development {% cite Wake2003INVESTinGoodStories %}. A good story **captures the essence**, not the details (see also ["Requirements Vs. Design"](/SEBook/requirements#requirements-vs--design)).
 
-**Violation Example:** "*As a student, I want the website to use HTTPS so that my data is safe*". This violates the principle because "HTTPS" is a specific design decision, meaning the user story has inappropriately left the space of requirements.
+This criterion matters for several fundamental reasons:
+* **Enabling Collaboration:** Because stories are intentionally incomplete, the team is forced to have conversations to fill in the details. Ron Jeffries describes this through the three C’s: *Card* (the story text), *Conversation* (the discussion), and *Confirmation* (the acceptance tests) {% cite cohn2004user %}. The card is merely a token promising a future conversation {% cite Wake2003INVESTinGoodStories %}.
+* **Evolutionary Design:** High-level stories define capabilities without over-constraining the implementation approach {% cite Wake2003INVESTinGoodStories %}. This leaves room to evolve the solution from a basic form to an advanced form as the team learns more about the system’s needs.
+* **Avoiding False Precision:** Including too many details early creates a dangerous illusion of precision {% cite cohn2004user %}. It misleads readers into believing the requirement is finalized, which discourages necessary conversations and adaptation.
 
-**How to Improve:** Focus on the underlying *need* rather than the technical execution. A better version would be: "*As a student, I want the website to keep data I send and receive confidential so that my privacy is ensured*".
+**How to Evaluate It**
+To determine if a user story is negotiable, ask:
+1. **Does this story dictate a specific technology or design decision?** Words like "MongoDB", "HTTPS", "REST API", or "dropdown menu" in a story are red flags that it has left the space of requirements and entered the space of design.
+2. **Could the development team solve this problem using a completely different technology or layout, and would the user still be happy?** If the answer is yes, the story is negotiable. If the answer is no, the story is over-constrained.
+3. **Does the story include UI details?** Embedding user interface specifics (e.g., "a print dialog with a printer list") introduces premature assumptions before the team fully understands the business goals {% cite cohn2004user %}.
 
-
-The Bad Story: "As a user, I want my profile settings saved in a MongoDB database so that they load quickly the next time I log in."
-
-The Design Decision: Specifying "MongoDB."
-
-Why it's a problem: The user doesn't care where the data lives. The engineering team might realize that a relational SQL database or local browser caching is a much better fit for the rest of the application's architecture.
-
-The Negotiable Fix: "As a user, I want the system to remember my profile settings so that I don't have to re-enter them every time I log in."
-
-
-"If the development team solves this user's problem using a completely different technology or layout than I pictured in my head, is the user still happy?" If the answer is yes, your story is negotiable!
-
-### How to Design Negotiable User Stories
-
-Designing for negotiability requires a balance between providing enough context to be Estimatable while remaining open enough to be Negotiable.
-
+**How to Improve It**
+If a story violates the Negotiable criterion, you can improve it using these techniques:
 * **Focus on the "Why":** Use "So that" clauses to clarify the underlying goal, which allows the team to negotiate the "How".
+* **Specify What, Not How:** Replace technology-specific language with the user need it serves. Instead of "use HTTPS", write "keep data I send and receive confidential."
+* **Define Acceptance Criteria, Not Steps:** Define the outcomes that must be true, rather than the specific UI clicks or database queries required.
+* **Keep the UI Out as Long as Possible:** Avoid embedding interface details into stories early in the project {% cite cohn2004user %}. Focus on what the user needs to accomplish, not the specific controls they will use.
 
-* **Use Open-Ended Questions:** When talking to potential users, ask context-free questions like "Tell me about how you’d like to search" rather than "Should we use a dropdown for search?".
+### Examples of Stories Violating ONLY the Negotiable Criterion
 
-* **Define Acceptance Criteria, Not Steps:** Use Confirmation to define the outcomes that must be true, rather than the specific UI clicks or database queries required.
+**Example 1: The Technology-Specific Story**
+> *"As a user, I want my profile settings saved in a MongoDB database so that they load quickly the next time I log in."*
 
-* **Iterative Refinement:** Treat the story as a "slice" of functionality that can be reshaped as the team's understanding of the system evolves.
+* **Independent:** Yes. Saving profile settings does not depend on other stories.
+* **Valuable:** Yes. Remembering user settings is clearly valuable.
+* **Estimable:** Yes. A developer can estimate the effort to implement settings persistence.
+* **Small:** Yes. This is a focused piece of work.
+* **Testable:** Yes. You can verify that settings persist across sessions.
+* **Why it violates Negotiable:** Specifying "MongoDB" is a design decision. The user does not care where the data lives. The engineering team might realize that a relational SQL database or local browser caching is a much better fit for the application’s architecture.
+* **How to fix it:** *"As a user, I want the system to remember my profile settings so that I don’t have to re-enter them every time I log in."*
+
+**Example 2: The UI-Specific Story**
+> *"As a student, I want the website to use HTTPS so that my data is safe."*
+
+* **Independent:** Yes. Security does not depend on other stories.
+* **Valuable:** Yes. Data safety is clearly valuable to the user.
+* **Estimable:** Yes. Enabling HTTPS is a well-understood task.
+* **Small:** Yes. This is a single, focused change.
+* **Testable:** Yes. You can verify that traffic is encrypted.
+* **Why it violates Negotiable:** "HTTPS" is a specific design decision. The user’s actual need is data confidentiality, which could be achieved in multiple ways depending on the system’s architecture.
+* **How to fix it:** *"As a student, I want the website to keep data I send and receive confidential so that my privacy is ensured."*
 
 
 ## Valuable
 
-The Valuable criterion ensures that every "chunk of functionality" your team produces translates into meaningful impact for your stakeholders {% cite Wake2003INVESTinGoodStories %}.
+**What it is and Why it Matters**
+The "Valuable" criterion states that every user story must deliver tangible value to the customer, purchaser, or user—not just to the development team {% cite Wake2003INVESTinGoodStories %}. A good story focuses on the external impact of the software in the real world: if we frame stories so their impact is clear, product owners and users can understand what the stories bring and make good prioritization choices {% cite Wake2003INVESTinGoodStories %}.
 
-Here are some examples of user stories that are not valuable:
+This criterion matters for several fundamental reasons:
+* **Informed Prioritization:** The product owner prioritizes the backlog by weighing each story's value against its cost. If a story's business value is opaque—because it is written in technical jargon—the customer cannot make intelligent scheduling decisions {% cite cohn2004user %}.
+* **Avoiding Waste:** Stories that serve only the development team (e.g., refactoring for its own sake, adopting a trendy technology) consume iteration capacity without moving the product closer to its users' goals. The IRACIS framework provides a useful lens for value: does the story **I**ncrease **R**evenue, **A**void **C**osts, or **I**mprove **S**ervice? {% cite Wake2003INVESTinGoodStories %}
+* **User vs. Purchaser Value:** It is tempting to say every story must be valued by end-users, but that is not always correct. In enterprise environments, the *purchaser* may value stories that end-users do not care about (e.g., "All configuration is read from a central location" matters to the IT department managing 5,000 machines, not to daily users) {% cite cohn2004user %}.
 
-### Developer-centric stories
-The Bad Story: 
-> **"As a developer, 
-I want to rewrite the core authentication API in Rust 
-so that I can use a more modern programming language."** 
+**How to Evaluate It**
+To determine if a user story is valuable, ask:
+1. **Would the customer or user care if this story were dropped?** If only developers would notice, the story likely lacks user-facing value.
+2. **Can the customer prioritize this story against others?** If the story is written in "techno-speak" (e.g., "All connections go through a connection pool"), the customer cannot weigh its importance {% cite cohn2004user %}.
+3. **Does this story describe an external effect or an internal implementation detail?** Valuable stories describe what happens on the edge of the system—the effects of the software in the world—not how the system is built internally {% cite Wake2003INVESTinGoodStories %}.
 
-This issue: This user story discusses a *developer need*, not a *user need*. So it is not *valuable*. 
+**How to Improve It**
+If stories violate the Valuable criterion, you can improve them using these techniques:
+* **Rewrite for External Impact:** Translate the technical requirement into a statement of benefit for the user. Instead of "All connections to the database are through a connection pool", write "Up to fifty users should be able to use the application with a five-user database license" {% cite cohn2004user %}.
+* **Let the Customer Write:** The most effective way to ensure a story is valuable is to have the customer write it in the language of the business, rather than in technical jargon {% cite cohn2004user %}.
+* **Focus on the "So That":** A well-written "so that" clause forces the author to articulate the real-world benefit. If you cannot complete "so that [some user benefit]" without referencing technology, the story is likely not valuable.
+* **Complete the Acceptance Criteria:** A story may *appear* valuable but have incomplete acceptance criteria that leave out essential functionality, effectively making the delivered feature useless.
 
-Similar examples include:
-> **"As a frontend engineer, 
-I want to update all the third-party dependencies in the package.json file 
-so that there are no deprecation warnings showing up in my local development console."** 
+### Examples of Stories Violating ONLY the Valuable Criterion
 
-> **"As a system architect, 
-I want to split the monolithic backend repository into three separate microservices
-so that the codebase is structurally decoupled."** 
+**Example 1: The Developer-Centric Story**
+> *"As a developer, I want to rewrite the core authentication API in Rust so that I can use a more modern programming language."*
 
-> **"As a database administrator, 
-I want to normalize the user profile tables to the Third Normal Form (3NF) 
-so that the database schema strictly follows academic normalization rules."** 
+* **Independent:** Yes. Rewriting the auth API does not depend on other stories.
+* **Negotiable:** Yes. The story is phrased as a goal (rewrite auth), leaving room to discuss scope and approach.
+* **Estimable:** Yes. A developer experienced with Rust can estimate the effort of a rewrite.
+* **Small:** Yes. Rewriting a single API component can fit within a sprint.
+* **Testable:** Yes. You can verify the new API passes all existing authentication tests.
+* **Why it violates Valuable:** The story is written entirely from the developer's perspective. The user does not care which programming language the API uses. The "so that" clause ("use a more modern programming language") describes a developer preference, not a user benefit {% cite cohn2004user %}.
+* **How to fix it:** If there is a legitimate user-facing reason (e.g., performance), rewrite the story around that benefit: *"As a user, I want to log in without noticeable delay so that I can start using the application immediately."*
 
-### Incomplete stories
-The Bad Story: 
-> **As a** smart home owner,
-> **I want to** schedule my porch lights to turn on automatically at a specific time,
-> **so that** I don't have to walk up to a dark house in the evening.
-> **Given** I am logged into the smart home mobile app,
-> **When** I set the porch light schedule to turn on at 6:00 PM,
-> **Then** the porch lights will illuminate at exactly 6:00 PM every day.
+**Example 2: The Incomplete Story**
+> *"As a smart home owner, I want to schedule my porch lights to turn on automatically at a specific time so that I don't have to walk up to a dark house in the evening."*
+> **Given** I am logged into the smart home mobile app, **When** I set the porch light schedule to turn on at 6:00 PM, **Then** the porch lights will illuminate at exactly 6:00 PM every day.
 
-On first glance, this user story looks valuable, but if you look closer at the acceptance criteria, you can see that they are missing a feature to turn off the lights. If lights are turned on forever, this costs unnecessary energy. To fix this, we have to *add an acceptance criterion* that specifies when the lights should turn off. 
-For example:
-> **Given** I am logged into the smart home mobile app,
-> **When** I set the porch light schedule to turn off at 6:00 AM and the lights are illuminated,
-> **Then** the porch lights will turn off at 6:00 AM.
-
-Now this user story is valuable, and we can hand it to our development team.
+* **Independent:** Yes. Scheduling lights does not depend on other stories.
+* **Negotiable:** Yes. The specific UI and scheduling mechanism are open to discussion.
+* **Estimable:** Yes. Implementing a time-based trigger is well-understood work.
+* **Small:** Yes. A single scheduling feature fits within a sprint.
+* **Testable:** Yes. The acceptance criteria define a clear pass/fail condition.
+* **Why it violates Valuable:** On first glance, this story looks valuable. But the acceptance criteria are missing the ability to *turn off* the lights. If lights stay on forever, they waste energy and the feature becomes a nuisance rather than a benefit. The story as written delivers incomplete value because its acceptance criteria do not capture the full scope needed to make the feature genuinely useful.
+* **How to fix it:** Add the missing acceptance criterion: *"Given I am logged into the smart home mobile app, When I set the porch light schedule to turn off at 6:00 AM and the lights are illuminated, Then the porch lights will turn off at 6:00 AM."* Now the story delivers complete value.
 
 ## Estimable
 
-Estimable stories are those for which a judgment can be made regarding their size, cost, or time to deliver. To achieve this, stories must be understood well enough and remain stable enough to put useful bounds on our guesses.
-We also need to avoid ambiguity in the user story.  A user story that is too vague or too complex will be difficult to estimate.
-For example: 
+
+**What it is and Why it Matters**
+The "Estimable" criterion states that the development team must be able to make a reasonable judgment about a story's size, cost, or time to deliver {% cite Wake2003INVESTinGoodStories %}. While precision is not the goal, the estimate must be useful enough for the product owner to prioritize the story against other work {% cite cohn2004user %}.
+
+This criterion matters for several fundamental reasons:
+* **Enabling Prioritization:** The product owner ranks stories by comparing value to cost. If a story cannot be estimated, the cost side of this equation is unknown, making informed prioritization impossible {% cite cohn2004user %}.
+* **Supporting Planning:** Stories that cannot be estimated cannot be reliably scheduled into an iteration. Without sizing information, the team risks committing to more (or less) work than they can deliver.
+* **Surfacing Unknowns Early:** An unestimable story is a signal that something important is not understood—either the domain, the technology, or the scope. Recognizing this early prevents costly surprises later.
+
+**How to Evaluate It**
+Developers generally cannot estimate a story for one of three reasons {% cite cohn2004user %}:
+1. **Lack of Domain Knowledge:** The developers do not understand the business context. For example, a story saying "New users are given a diabetic screening" could mean a simple web questionnaire or an at-home physical testing kit—without clarification, no estimate is possible {% cite cohn2004user %}.
+2. **Lack of Technical Knowledge:** The team understands the requirement but has never worked with the required technology. For example, a team asked to provide a CORBA interface when no one has CORBA experience cannot estimate the work {% cite cohn2004user %}.
+3. **The Story is Too Big:** An epic like "A job seeker can find a job" encompasses so many sub-tasks and unknowns that it cannot be meaningfully sized as a single unit {% cite cohn2004user %}.
+
+**How to Improve It**
+The approach to fixing an unestimable story depends on which barrier is blocking estimation:
+* **Conversation (for Domain Knowledge Gaps):** Have the developers discuss the story directly with the customer. A brief conversation often reveals that the requirement is simpler (or more complex) than assumed, making estimation possible {% cite cohn2004user %}.
+* **Spike (for Technical Knowledge Gaps):** Split the story into two: an investigative *spike*—a brief, time-boxed experiment to learn about the unknown technology—and the actual implementation story. The spike itself is always given a defined maximum time (e.g., "Spend exactly two days investigating credit card processing"), which makes it estimable. Once the spike is complete, the team has enough knowledge to estimate the real story {% cite cohn2004user %}.
+* **Disaggregate (for Stories That Are Too Big):** Break the epic into smaller, constituent stories. Each smaller piece isolates a specific slice of functionality, reducing the cognitive load and making estimation tractable {% cite cohn2004user %}.
+
+### Examples of Stories Violating ONLY the Estimable Criterion
+
+**Example 1: The Unknown Domain**
+> *"As a patient, I want to receive a personalized wellness screening so that I can understand my health risks."*
+
+* **Independent:** Yes. The screening feature does not depend on other stories.
+* **Negotiable:** Yes. The specific questions and screening logic are open to discussion.
+* **Valuable:** Yes. Personalized health screening is clearly valuable to patients.
+* **Small:** Yes. A single screening workflow can fit within a sprint—once the scope is clarified.
+* **Testable:** Yes. Acceptance criteria can define specific screening outcomes for specific patient profiles.
+* **Why it violates Estimable:** The developers do not know what "personalized wellness screening" means in this context. It could be a simple 5-question web form or a complex algorithm that integrates with lab data. Without domain knowledge, the team cannot estimate the effort {% cite cohn2004user %}.
+* **How to fix it:** Have the developers sit down with the customer (e.g., a qualified nurse or medical expert) to clarify the scope. Once the team learns it is a simple web questionnaire, they can estimate it confidently.
+
+**Example 2: The Unknown Technology**
+> *"As an enterprise customer, I want to access the system's data through a CORBA interface so that I can integrate it with my existing infrastructure."*
+
+* **Independent:** Yes. Adding an integration interface does not depend on other stories.
+* **Negotiable:** Partially. The customer has specified CORBA, but the conversation format and data contract are open.
+* **Valuable:** Yes. Enterprise integration is clearly valuable to the purchasing organization.
+* **Small:** Yes. A single interface endpoint can fit within a sprint—once the team understands the technology.
+* **Testable:** Yes. You can verify the interface returns the correct data in the correct format.
+* **Why it violates Estimable:** No one on the development team has ever built a CORBA interface. They understand *what* the customer wants but have no experience with the technology required to deliver it, making any estimate unreliable {% cite cohn2004user %}.
+* **How to fix it:** Split into two stories: (1) a time-boxed spike—"Investigate CORBA integration: spend at most two days building a proof-of-concept"—and (2) the actual implementation story. After the spike, the team has enough knowledge to estimate the real work {% cite cohn2004user %}.
+
 
 
 ## Small
 
-### The "Small" Criterion in Agile User Stories
 
 **What it is and Why it Matters**
-The "Small" criterion states that a user story should be appropriately sized so that it can be comfortably completed by the development team within a single iteration or sprint (typically 1 to 4 weeks). If a story is too large, it is often referred to as an "Epic" and must be broken down.
+The "Small" criterion states that a user story should be appropriately sized so that it can be comfortably completed by the development team within a single iteration {% cite cohn2004user %}. Stories typically represent at most a few person-weeks of work; some teams restrict them to a few person-days {% cite Wake2003INVESTinGoodStories %}. If a story is too large, it is called an *epic* and must be broken down. If a story is too small, it should be combined with related stories.
 
 This criterion matters for several fundamental reasons:
-* **Predictability and Estimation:** Large tasks are notoriously difficult to estimate accurately. The smaller the story, the higher the confidence the team has in their estimation of the effort required.
-* **Risk Reduction:** If a massive user story spans an entire sprint (or spills over into multiple sprints), the team risks delivering zero value if they hit a roadblock. Smaller stories ensure a steady, continuous flow of delivered value.
-* **Faster Feedback Loops:** Smaller stories get to a "Done" state faster, meaning they can be tested, reviewed by the product owner, and put in front of users much sooner to gather valuable feedback.
+* **Predictability:** Large stories are notoriously difficult to estimate accurately. The smaller the story, the higher the confidence the team has in their estimate of the effort required {% cite cohn2004user %}.
+* **Risk Reduction:** If a massive story spans an entire sprint (or spills over into multiple sprints), the team risks delivering zero value if they hit a roadblock. Smaller stories ensure a steady, continuous flow of delivered value.
+* **Faster Feedback:** Smaller stories reach a "Done" state faster, meaning they can be tested, reviewed by the product owner, and put in front of users much sooner to gather valuable feedback.
 
 **How to Evaluate It**
-To determine if a user story is small enough, ask:
-1. **Can it be completed in one sprint?** If the answer is no, or "maybe, if everything goes perfectly," the story is too big.
-2. **Does it contain complex compound conjunctions?** Words like *and*, *or*, and *but* in the story description (e.g., "I want to register *and* manage my profile *and* upload photos") often indicate that multiple stories are hiding inside one.
-3. **Are there too many Acceptance Criteria?** If a story has a massive checklist of complex acceptance criteria spanning multiple different workflows, it is likely an Epic.
+To determine if a user story is appropriately sized, ask:
+1. **Can it be completed in one sprint?** If the answer is no, or "maybe, if everything goes perfectly," the story is too big. It is an epic and must be split {% cite cohn2004user %}.
+2. **Is it a compound story?** Words like *and*, *or*, and *but* in the story description (e.g., "I want to register *and* manage my profile *and* upload photos") often indicate that multiple stories are hiding inside one. A compound story is an epic that aggregates multiple easily identifiable shorter stories {% cite cohn2004user %}.
+3. **Is it a complex story?** If the story is large because of inherent *uncertainty* (new technology, novel algorithm), it is a complex story and should be split into a spike and an implementation story {% cite cohn2004user %}.
+4. **Is it too small?** If the administrative overhead of writing and estimating the story takes longer than implementing it, the story is too small and should be combined with related stories {% cite cohn2004user %}.
 
 **How to Improve It**
-If a story violates the Small criterion, the team must collaborate to split it into smaller, independently valuable pieces. Common ways to split stories include:
-* **Splitting by Workflow Steps:** Instead of "As a user, I want to manage my online cart," split it into adding items, removing items, and applying promo codes.
-* **Splitting by Happy/Sad Paths:** Build the "happy path" (successful transaction) as one story, and handle the error states (declined cards, expired sessions) in subsequent stories.
-* **Splitting by Platform/Interface:** Do the web interface first, then the mobile interface.
+The approach to fixing a story that violates the Small criterion depends on whether it is too big or too small:
+
+*Stories that are too big:*
+* **Split by Workflow Steps (CRUD):** Instead of "As a user, I want to manage my resume," split along operations: create, edit, delete, and manage multiple resumes {% cite cohn2004user %}.
+* **Split by Data Boundaries:** Instead of splitting by operation, split by the data involved: "add/edit education", "add/edit job history", "add/edit salary" {% cite cohn2004user %}.
+* **Slice the Cake (Vertical Slicing):** Never split along technical boundaries (one story for UI, one for database). Instead, split into thin end-to-end "vertical slices" where each story touches every architectural layer and delivers complete, albeit narrow, functionality {% cite cohn2004user %}.
+* **Split by Happy/Sad Paths:** Build the "happy path" (successful transaction) as one story, and handle the error states (declined cards, expired sessions) in subsequent stories.
+
+*Stories that are too small:*
+* **Combine Related Stories:** Merge tiny, related items (e.g., a batch of small UI tweaks or minor bug fixes) into a single story representing a half-day to several days of work {% cite cohn2004user %}.
+
+### Examples of Stories Violating ONLY the Small Criterion
+
+**Example 1: The Epic (Too Big)**
+> *"As a traveler, I want to plan a vacation so that I can book all the arrangements I need in one place."*
+
+* **Independent:** Yes. Planning a vacation does not overlap with other stories.
+* **Negotiable:** Yes. The specific features and UI are open to discussion.
+* **Valuable:** Yes. End-to-end vacation planning is clearly valuable to travelers.
+* **Estimable:** No. The scope is so vast that developers cannot reliably predict the effort. (Violations of Small often cause violations of Estimable, since epics contain hidden complexity.)
+* **Testable:** Yes. Acceptance criteria can be written for individual planning features.
+* **Why it violates Small:** "Planning a vacation" involves searching for flights, comparing hotels, booking rental cars, managing an itinerary, handling payments, and much more. This is an epic containing many stories. It cannot be completed in a single sprint {% cite cohn2004user %}.
+* **How to fix it:** Disaggregate into smaller vertical slices: "As a traveler, I want to search for flights by date and destination so that I can find available options", "As a traveler, I want to compare hotel prices for my destination so that I can choose one within my budget", etc.
+
+**Example 2: The Micro-Story (Too Small)**
+> *"As a job seeker, I want to edit the date for each community service entry on my resume so that I can correct mistakes."*
+
+* **Independent:** Yes. Editing a single date field does not depend on other stories.
+* **Negotiable:** Yes. The exact editing interaction is open to discussion.
+* **Valuable:** Yes. Correcting resume data is valuable to the user.
+* **Estimable:** Yes. Editing a single field is trivially estimable.
+* **Testable:** Yes. Clear pass/fail criteria can be written.
+* **Why it violates Small:** This story is *too small*. The administrative overhead of writing, estimating, and tracking this story card takes longer than actually implementing the change. Having dozens of stories at this granularity buries the team in disconnected details—what Wake calls a "bag of leaves" {% cite Wake2003INVESTinGoodStories %}.
+* **How to fix it:** Combine with related micro-stories into a single meaningful story: "As a job seeker, I want to edit all fields of my community service entries so that I can keep my resume accurate." {% cite cohn2004user %}
 
 
 ## Testable
@@ -192,8 +327,6 @@ If you find a story that violates the Testable criterion, you can improve it by 
 * **Quantify Adjectives:** Replace subjective terms with hard numbers. Change "loads fast" to "loads in under 2 seconds." Change "supports a lot of users" to "supports 10,000 concurrent users."
 * **Use the Given/When/Then Format:** Borrow from Behavior-Driven Development (BDD) to write clear acceptance criteria. Establish the starting state (*Given*), the action taken (*When*), and the expected, observable outcome (*Then*).
 * **Define "Intuitive" or "Easy":** If the goal is a "user-friendly" interface, make it testable by tying it to a metric, such as: "A new user can complete the checkout process in fewer than 3 clicks without relying on a help menu."
-
----
 
 ### Examples of Stories Violating ONLY the Testable Criterion
 
