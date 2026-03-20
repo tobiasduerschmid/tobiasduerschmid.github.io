@@ -1,6 +1,7 @@
 (function () {
   var COOKIE_NAME = 'personal-deck';
   var COOKIE_DAYS = 365;
+  var ACTIVE_COOKIE = 'personal-deck-active';
 
   function setCookie(name, value, days) {
     var d = new Date();
@@ -59,6 +60,18 @@
 
   var PERF_COOKIE = 'analyze-performance';
   var STATS_KEY = 'personal-deck-stats';
+
+  function isPersonalDeckActive() {
+    return getCookie(ACTIVE_COOKIE) === 'true';
+  }
+
+  function setPersonalDeckActive(value) {
+    setCookie(ACTIVE_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
+  }
+
+  function clearDeck() {
+    setCookie(COOKIE_NAME, '[]', COOKIE_DAYS);
+  }
 
   function isAnalyzePerformance() {
     return getCookie(PERF_COOKIE) === 'true';
@@ -119,6 +132,9 @@
     addToDeck: addToDeck,
     removeFromDeck: removeFromDeck,
     toggleDeck: toggleDeck,
+    isPersonalDeckActive: isPersonalDeckActive,
+    setPersonalDeckActive: setPersonalDeckActive,
+    clearDeck: clearDeck,
     isAnalyzePerformance: isAnalyzePerformance,
     setAnalyzePerformance: setAnalyzePerformance,
     hashQuestion: hashQuestion,

@@ -20,6 +20,18 @@ permalink: /personal-deck/
 
   {% if site.personal_deck %}
 
+  <!-- Confirm Modal -->
+  <div id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-msg" style="display:none;">
+    <div class="confirm-modal-backdrop"></div>
+    <div class="confirm-modal-box">
+      <p id="confirm-modal-msg">Do you want to delete your current performance statistics?</p>
+      <div class="confirm-modal-btns">
+        <button id="confirm-modal-yes" class="deck-btn primary">Yes</button>
+        <button id="confirm-modal-no" class="deck-btn secondary">No</button>
+      </div>
+    </div>
+  </div>
+
   <div id="personal-deck-app">
 
     <!-- ==================== LIBRARY VIEW ==================== -->
@@ -30,20 +42,37 @@ permalink: /personal-deck/
 
       <!-- Session Controls -->
       <div id="deck-controls">
-        <div class="controls-row">
-          <label for="max-cards">Max cards:</label>
-          <input type="number" id="max-cards" value="20" min="1" max="500">
-          <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
-        </div>
-        <div class="controls-row" style="margin-top: 10px;">
-          <span class="toggle-label">Analyze Personal Performance</span>
+        <div class="controls-row activate-row" style="justify-content: space-between;">
+          <span style="display: inline-flex; align-items: center; gap: 6px;">
+            <span class="toggle-label">Activate Personal Deck</span>
+            <span class="info-btn" tabindex="0" aria-label="Info about personal deck">?<span class="info-tooltip">Allows you to add flash cards and quizzes to your personal deck stored in a local cookie.</span></span>
+          </span>
           <label class="switch">
-            <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
+            <input type="checkbox" id="activatePersonalDeckToggle" aria-label="Toggle personal deck activation">
             <span class="slider round"></span>
           </label>
         </div>
-        <p id="deck-summary" class="deck-summary-text"></p>
+        <div id="deck-controls-body">
+          <div class="controls-row" style="justify-content: space-between; margin-top: 10px;">
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              <span class="toggle-label">Analyze Personal Performance</span>
+              <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span class="info-tooltip">Your performance on each question will be stored locally in a cookie to enable you to easily revisit the questions you often get wrong.</span></span>
+            </span>
+            <label class="switch">
+              <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="controls-row" style="margin-top: 14px;">
+            <label for="max-cards">Max cards:</label>
+            <input type="number" id="max-cards" value="20" min="1" max="500">
+            <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
+          </div>
+          <p id="deck-summary" class="deck-summary-text"></p>
+        </div>
       </div>
+
+      <div id="deck-library-sections">
 
       <!-- Difficult Questions Deck (shown only when analyze is on and there are difficult questions) -->
       <div id="difficult-deck-section" style="display: none;">
@@ -149,6 +178,8 @@ permalink: /personal-deck/
         {% endif %}
         {% endfor %}
       </div>
+
+      </div><!-- /#deck-library-sections -->
     </div>
 
     <!-- ==================== SESSION VIEW ==================== -->
@@ -314,6 +345,120 @@ permalink: /personal-deck/
     }
 
     html.dark-mode .toggle-label {
+      color: #e0e0e0;
+    }
+
+    /* Info button & tooltip */
+    .info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #888;
+      color: #fff;
+      font-size: 0.75em;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      user-select: none;
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+
+    .info-btn:hover,
+    .info-btn:focus {
+      background: #555;
+      outline: none;
+    }
+
+    .info-tooltip {
+      display: none;
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      font-size: 1.2em;
+      font-weight: 400;
+      padding: 8px 12px;
+      border-radius: 6px;
+      width: 240px;
+      line-height: 1.4;
+      z-index: 100;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    .info-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #333;
+    }
+
+    .info-btn:hover .info-tooltip,
+    .info-btn:focus .info-tooltip,
+    .info-btn.active .info-tooltip {
+      display: block;
+    }
+
+    html.dark-mode .info-btn {
+      background: #666;
+    }
+
+    html.dark-mode .info-btn:hover,
+    html.dark-mode .info-btn:focus {
+      background: #888;
+    }
+
+    /* Confirm Modal */
+    .confirm-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+    }
+
+    .confirm-modal-box {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 10px;
+      padding: 24px 28px;
+      z-index: 201;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      max-width: 360px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .confirm-modal-box p {
+      margin: 0 0 20px;
+      font-size: 1em;
+      font-weight: 600;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    .confirm-modal-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    html.dark-mode .confirm-modal-box {
+      background: #2a2a2a;
+    }
+
+    html.dark-mode .confirm-modal-box p {
       color: #e0e0e0;
     }
 
@@ -1035,6 +1180,12 @@ permalink: /personal-deck/
         width: 100%;
       }
     }
+
+    .pd-inactive {
+      opacity: 0.4;
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 
   <!-- ==================== PAGE SCRIPT ==================== -->
@@ -1061,6 +1212,9 @@ permalink: /personal-deck/
 
       var allItems = document.querySelectorAll('.deck-item:not(.difficult-deck-item)');
       var allAddBtns = document.querySelectorAll('.deck-add-btn:not(#difficult-add-btn)');
+      var activateToggle = document.getElementById('activatePersonalDeckToggle');
+      var deckControlsBody = document.getElementById('deck-controls-body');
+      var deckLibrarySections = document.getElementById('deck-library-sections');
       var analyzeToggle = document.getElementById('analyzePerformanceToggle');
       var difficultSection = document.getElementById('difficult-deck-section');
       var difficultCountEl = document.getElementById('difficult-count');
@@ -1268,6 +1422,40 @@ permalink: /personal-deck/
 
       maxCardsInput.addEventListener('input', refreshLibrary);
 
+      // ---- Info button click toggle (for touch devices) ----
+      var infoBtn = document.querySelector('.info-btn');
+      if (infoBtn) {
+        infoBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          this.classList.toggle('active');
+        });
+        document.addEventListener('click', function () {
+          infoBtn.classList.remove('active');
+        });
+      }
+
+      // ---- Activate Personal Deck Toggle ----
+      function applyActiveState(isActive) {
+        deckControlsBody.classList.toggle('pd-inactive', !isActive);
+        deckLibrarySections.classList.toggle('pd-inactive', !isActive);
+      }
+
+      activateToggle.checked = PersonalDeck.isPersonalDeckActive();
+      applyActiveState(activateToggle.checked);
+
+      activateToggle.addEventListener('change', function () {
+        if (this.checked) {
+          PersonalDeck.setPersonalDeckActive(true);
+          applyActiveState(true);
+          refreshLibrary();
+        } else {
+          PersonalDeck.setPersonalDeckActive(false);
+          PersonalDeck.clearDeck();
+          applyActiveState(false);
+          refreshLibrary();
+        }
+      });
+
       // ---- Analyze Performance Toggle ----
       analyzeToggle.checked = PersonalDeck.isAnalyzePerformance();
 
@@ -1276,14 +1464,23 @@ permalink: /personal-deck/
           PersonalDeck.setAnalyzePerformance(true);
           refreshLibrary();
         } else {
-          var shouldDelete = confirm('Do you want to delete your current performance statistics?');
-          if (shouldDelete) {
+          var modal = document.getElementById('confirm-modal');
+          modal.style.display = 'block';
+          document.getElementById('confirm-modal-yes').onclick = function () {
+            modal.style.display = 'none';
             PersonalDeck.clearStats();
-          }
-          PersonalDeck.setAnalyzePerformance(false);
-          // Remove difficult deck from selection
-          PersonalDeck.removeFromDeck('difficult', 'difficult');
-          refreshLibrary();
+            PersonalDeck.setAnalyzePerformance(false);
+            PersonalDeck.removeFromDeck('difficult', 'difficult');
+            refreshLibrary();
+          };
+          document.getElementById('confirm-modal-no').onclick = function () {
+            modal.style.display = 'none';
+            analyzeToggle.checked = true;
+          };
+          document.querySelector('.confirm-modal-backdrop').onclick = function () {
+            modal.style.display = 'none';
+            analyzeToggle.checked = true;
+          };
         }
       });
 

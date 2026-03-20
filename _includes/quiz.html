@@ -26,7 +26,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       <h3>{{ quiz_data.title }}</h3>
       {% if site.personal_deck %}
       <button class="personal-deck-toggle" data-deck-type="quiz" data-deck-id="{{ include.id }}"
-        title="Add to Personal Deck">
+        title="Add to Personal Deck" style="display: none;">
         <i class="fa-solid fa-plus"></i>
       </button>
       {% endif %}
@@ -515,7 +515,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalDeck && PersonalDeck.isAnalyzePerformance()) {
+      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
         PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
       }
 
@@ -559,7 +559,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalDeck && PersonalDeck.isAnalyzePerformance()) {
+      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
         PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
       }
 
@@ -674,9 +674,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
     restartBtn.addEventListener('click', restartQuiz);
 
     // Personal Deck toggle
-    if (window.PersonalDeck) {
+    if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive()) {
       const toggleBtn = container.querySelector('.personal-deck-toggle');
       if (toggleBtn) {
+        toggleBtn.style.display = '';
         const deckType = toggleBtn.dataset.deckType;
         const deckId = toggleBtn.dataset.deckId;
 

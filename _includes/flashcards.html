@@ -25,7 +25,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       <h3>{{ flashcard_data.title }}</h3>
       {% if site.personal_deck %}
       <button class="personal-deck-toggle" data-deck-type="flashcard" data-deck-id="{{ include.id }}"
-        title="Add to Personal Deck">
+        title="Add to Personal Deck" style="display: none;">
         <i class="fa-solid fa-plus"></i>
       </button>
       {% endif %}
@@ -479,7 +479,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalDeck && PersonalDeck.isAnalyzePerformance()) {
+      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
         PersonalDeck.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
       }
 
@@ -574,9 +574,10 @@ Data source: _data/flashcards/{{ include.id }}.yml
     }
 
     // Personal Deck toggle
-    if (window.PersonalDeck) {
+    if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive()) {
       const toggleBtn = container.querySelector('.personal-deck-toggle');
       if (toggleBtn) {
+        toggleBtn.style.display = '';
         const deckType = toggleBtn.dataset.deckType;
         const deckId = toggleBtn.dataset.deckId;
 
