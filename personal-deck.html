@@ -1,0 +1,1442 @@
+---
+permalink: /personal-deck/
+---
+<!DOCTYPE html>
+<html lang="en">
+
+{% include head.html %}
+
+<body id="page-top">
+
+  <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+    <div class="container-fluid">
+      <div class="navbar-header page-scroll">
+        <a class="navbar-brand page-scroll" href="/personal-deck/">Personal Deck</a>
+        <a class="navbar-brand page-scroll">|</a>
+        <a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
+      </div>
+    </div>
+  </nav>
+
+  {% if site.personal_deck %}
+
+  <div id="personal-deck-app">
+
+    <!-- ==================== LIBRARY VIEW ==================== -->
+    <div id="deck-library">
+      <h1>Personal Deck</h1>
+      <p class="deck-subtitle">Build your own study deck by adding quizzes and flashcard sets, then start a session to
+        review shuffled cards.</p>
+
+      <!-- Session Controls -->
+      <div id="deck-controls">
+        <div class="controls-row">
+          <label for="max-cards">Max cards:</label>
+          <input type="number" id="max-cards" value="20" min="1" max="500">
+          <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
+        </div>
+        <p id="deck-summary" class="deck-summary-text"></p>
+      </div>
+
+      <h2>Your Deck</h2>
+      <div id="deck-selected">
+        <p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>
+      </div>
+
+      <h2>Available Quizzes</h2>
+      <div id="available-quizzes">
+        {% for quiz_entry in site.data.quizzes %}
+        {% assign qid = quiz_entry[0] %}
+        {% assign qdata = quiz_entry[1] %}
+        {% if qdata.questions %}
+        <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
+          <div class="deck-item-info">
+            <span class="deck-item-badge quiz-badge">Quiz</span>
+            <strong class="deck-item-title">{{ qdata.title }}</strong>
+            <span class="deck-item-count">({{ qdata.questions | size }} questions)</span>
+            <p class="deck-item-desc">{{ qdata.description }}</p>
+          </div>
+          <button class="deck-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to deck">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        {% elsif qdata.decks %}
+        {% assign meta_count = 0 %}
+        {% for deck_id in qdata.decks %}
+          {% assign ref_data = site.data.quizzes[deck_id] %}
+          {% if ref_data and ref_data.questions %}
+            {% assign meta_count = meta_count | plus: ref_data.questions.size %}
+          {% endif %}
+        {% endfor %}
+        <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
+          <div class="deck-item-info">
+            <span class="deck-item-badge quiz-badge">Quiz Deck</span>
+            <strong class="deck-item-title">{{ qdata.title }}</strong>
+            <span class="deck-item-count">({{ meta_count }} questions)</span>
+            <p class="deck-item-desc">{{ qdata.description }}</p>
+          </div>
+          <button class="deck-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to deck">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+      <h2>Available Flashcard Sets</h2>
+      <div id="available-flashcards">
+        {% for fc_entry in site.data.flashcards %}
+        {% assign fcid = fc_entry[0] %}
+        {% assign fcdata = fc_entry[1] %}
+        {% if fcdata.cards %}
+        <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
+          <div class="deck-item-info">
+            <span class="deck-item-badge flashcard-badge">Flashcard</span>
+            <strong class="deck-item-title">{{ fcdata.title }}</strong>
+            <span class="deck-item-count">({{ fcdata.cards | size }} cards)</span>
+            <p class="deck-item-desc">{{ fcdata.description }}</p>
+          </div>
+          <button class="deck-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to deck">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        {% elsif fcdata.decks %}
+        {% assign meta_count = 0 %}
+        {% for deck_id in fcdata.decks %}
+          {% assign ref_data = site.data.flashcards[deck_id] %}
+          {% if ref_data and ref_data.cards %}
+            {% assign meta_count = meta_count | plus: ref_data.cards.size %}
+          {% endif %}
+        {% endfor %}
+        <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
+          <div class="deck-item-info">
+            <span class="deck-item-badge flashcard-badge">Flashcard Deck</span>
+            <strong class="deck-item-title">{{ fcdata.title }}</strong>
+            <span class="deck-item-count">({{ meta_count }} cards)</span>
+            <p class="deck-item-desc">{{ fcdata.description }}</p>
+          </div>
+          <button class="deck-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to deck">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ==================== SESSION VIEW ==================== -->
+    <div id="deck-session" style="display: none;">
+      <button id="back-to-library-btn" class="deck-btn secondary"><i class="fa-solid fa-arrow-left"></i> Back to
+        Library</button>
+
+      <div class="session-progress-bar">
+        <div class="session-progress-fill" id="session-progress" style="width: 0%"></div>
+      </div>
+
+      <div id="session-card-area"></div>
+
+      <div id="session-results" style="display: none;">
+        <div class="session-results-content">
+          <h2>Session Complete!</h2>
+          <div class="session-score-display">
+            Score: <span id="session-score">0</span>/<span id="session-total">0</span>
+          </div>
+          <p id="session-summary"></p>
+          <div class="session-results-actions">
+            <button id="session-restart-btn" class="deck-btn primary">Restart Session</button>
+            <button id="session-review-btn" class="deck-btn secondary" style="display: none;">Review Incorrect</button>
+            <button id="session-back-btn" class="deck-btn secondary">Back to Library</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== EMBEDDED CARD DATA ==================== -->
+  <script>
+    var ALL_CARD_DATA = {
+      quizzes: {
+        {% for quiz_entry in site.data.quizzes %}{% assign qid = quiz_entry[0] %}{% assign qdata = quiz_entry[1] %}{% if qdata.questions %}
+        {{ qid | jsonify }}: {
+          title: {{ qdata.title | jsonify }},
+          description: {{ qdata.description | default: "" | jsonify }},
+          questions: [
+            {% for q in qdata.questions %}{
+              question: {{ q.question | markdownify | jsonify }},
+              type: {{ q.type | default: "single" | jsonify }},
+              options: [{% for opt in q.options %}{{ opt | markdownify | jsonify }},{% endfor %}],
+              correct_index: {{ q.correct_index | jsonify }},
+              correct_indices: {{ q.correct_indices | jsonify }},
+              explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
+            },{% endfor %}
+          ]
+        },
+        {% elsif qdata.decks %}
+        {{ qid | jsonify }}: {
+          title: {{ qdata.title | jsonify }},
+          description: {{ qdata.description | default: "" | jsonify }},
+          questions: [
+            {% for deck_id in qdata.decks %}{% assign ref_data = site.data.quizzes[deck_id] %}{% if ref_data and ref_data.questions %}{% for q in ref_data.questions %}{
+              question: {{ q.question | markdownify | jsonify }},
+              type: {{ q.type | default: "single" | jsonify }},
+              options: [{% for opt in q.options %}{{ opt | markdownify | jsonify }},{% endfor %}],
+              correct_index: {{ q.correct_index | jsonify }},
+              correct_indices: {{ q.correct_indices | jsonify }},
+              explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
+            },{% endfor %}{% endif %}{% endfor %}
+          ]
+        },
+        {% endif %}{% endfor %}
+      },
+      flashcards: {
+        {% for fc_entry in site.data.flashcards %}{% assign fcid = fc_entry[0] %}{% assign fcdata = fc_entry[1] %}{% if fcdata.cards %}
+        {{ fcid | jsonify }}: {
+          title: {{ fcdata.title | jsonify }},
+          description: {{ fcdata.description | default: "" | jsonify }},
+          cards: [
+            {% for card in fcdata.cards %}{
+              question: {{ card.question | markdownify | jsonify }},
+              answer: {{ card.answer | markdownify | jsonify }},
+              explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
+            },{% endfor %}
+          ]
+        },
+        {% elsif fcdata.decks %}
+        {{ fcid | jsonify }}: {
+          title: {{ fcdata.title | jsonify }},
+          description: {{ fcdata.description | default: "" | jsonify }},
+          cards: [
+            {% for deck_id in fcdata.decks %}{% assign ref_data = site.data.flashcards[deck_id] %}{% if ref_data and ref_data.cards %}{% for card in ref_data.cards %}{
+              question: {{ card.question | markdownify | jsonify }},
+              answer: {{ card.answer | markdownify | jsonify }},
+              explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
+            },{% endfor %}{% endif %}{% endfor %}
+          ]
+        },
+        {% endif %}{% endfor %}
+      }
+    };
+  </script>
+
+  <!-- ==================== STYLES ==================== -->
+  <style>
+    #personal-deck-app {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    }
+
+    #personal-deck-app h1 {
+      color: #2774AE;
+      font-weight: 700;
+      margin-top: 0;
+    }
+
+    #personal-deck-app h2 {
+      color: #2774AE;
+      font-weight: 700;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #e1e4e8;
+      padding-bottom: 8px;
+    }
+
+    .deck-subtitle {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    /* Controls */
+    #deck-controls {
+      background: #f8f9fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .controls-row label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .controls-row input[type="number"] {
+      width: 80px;
+      padding: 6px 10px;
+      border: 1.5px solid #d1d5da;
+      border-radius: 6px;
+      font-size: 0.95em;
+    }
+
+    .deck-summary-text {
+      margin: 8px 0 0 0;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    /* Buttons */
+    .deck-btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .deck-btn.primary {
+      background: #2774AE;
+      color: white;
+    }
+
+    .deck-btn.primary:hover:not(:disabled) {
+      background: #1e5c8a;
+    }
+
+    .deck-btn.primary:disabled {
+      background: #a1c2db;
+      cursor: not-allowed;
+    }
+
+    .deck-btn.secondary {
+      background: #e1e4e8;
+      color: #333;
+    }
+
+    .deck-btn.secondary:hover {
+      background: #d1d5da;
+    }
+
+    /* Deck Items */
+    .deck-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border: 1px solid #e1e4e8;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+
+    .deck-item:hover {
+      border-color: #2774AE;
+    }
+
+    .deck-item.in-deck {
+      border-color: #28a745;
+      background: #f0fff4;
+    }
+
+    .deck-item-info {
+      flex: 1;
+    }
+
+    .deck-item-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    .quiz-badge {
+      background: #2774AE;
+      color: white;
+    }
+
+    .flashcard-badge {
+      background: #FFD100;
+      color: #333;
+    }
+
+    .deck-item-title {
+      font-size: 1em;
+    }
+
+    .deck-item-count {
+      font-size: 0.85em;
+      color: #888;
+      margin-left: 4px;
+    }
+
+    .deck-item-desc {
+      margin: 4px 0 0;
+      font-size: 0.85em;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .deck-add-btn {
+      background: none;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 16px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      padding: 0;
+      margin-left: 12px;
+    }
+
+    .deck-add-btn:hover {
+      border-color: #2774AE;
+      color: #2774AE;
+    }
+
+    .deck-add-btn.in-deck {
+      background: #28a745;
+      border-color: #28a745;
+      color: white;
+    }
+
+    .deck-add-btn.in-deck:hover {
+      background: #dc3545;
+      border-color: #dc3545;
+    }
+
+    .empty-deck-msg {
+      color: #999;
+      font-style: italic;
+      padding: 16px;
+      text-align: center;
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+    }
+
+    /* Session */
+    #deck-session {
+      padding-top: 10px;
+    }
+
+    .session-progress-bar {
+      height: 4px;
+      background: #f0f2f5;
+      border-radius: 2px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+
+    .session-progress-fill {
+      height: 100%;
+      background: #2774AE;
+      transition: width 0.4s ease;
+    }
+
+    .session-source-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* Session Quiz Card */
+    .session-quiz-card {
+      background: #ffffff;
+      border: 1px solid #e1e4e8;
+      border-radius: 12px;
+      padding: 12px;
+      margin: 12px 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      animation: fadeIn 0.4s ease;
+    }
+
+    .session-quiz-card .question-text {
+      font-size: 1.05em;
+      font-weight: 600;
+      margin-bottom: 8px;
+      line-height: 1.25;
+      color: #1a1a1a;
+    }
+
+    .session-quiz-card .question-text p,
+    .session-quiz-card .option-content p,
+    .session-quiz-card .explanation-text p {
+      margin: 0;
+    }
+
+    .session-quiz-card .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .session-quiz-card .quiz-option {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border: 1.5px solid #e1e4e8;
+      border-radius: 6px;
+      background: white;
+      text-align: left;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-size: 0.95em;
+      line-height: 1.25;
+    }
+
+    .session-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
+      border-color: #2774AE;
+      background: #f0f7ff;
+    }
+
+    .session-quiz-card .quiz-option.selected {
+      border-color: #2774AE;
+      background: #eef6fc;
+      box-shadow: 0 0 0 1px #2774AE;
+    }
+
+    .session-quiz-card .quiz-option.correct {
+      border-color: #28a745;
+      background: #e6ffed;
+      color: #155724;
+    }
+
+    .session-quiz-card .quiz-option.incorrect {
+      border-color: #dc3545;
+      background: #ffeef0;
+      color: #721c24;
+    }
+
+    .session-quiz-card .option-checkbox {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #d1d5da;
+      border-radius: 3px;
+      margin-right: 10px;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .session-quiz-card[data-type="multiple"] .option-checkbox {
+      display: block;
+    }
+
+    .session-quiz-card .quiz-option.selected .option-checkbox {
+      background: #2774AE;
+      border-color: #2774AE;
+    }
+
+    .session-quiz-card .quiz-option.selected .option-checkbox::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin: 0px 3px;
+    }
+
+    .session-quiz-card .option-label {
+      font-weight: 800;
+      margin-right: 12px;
+      color: #6a737d;
+    }
+
+    .session-quiz-card .submit-answer-btn,
+    .session-quiz-card .next-btn {
+      background: #2774AE;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 5px;
+      font-weight: 600;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+      font-size: 0.95em;
+    }
+
+    .session-quiz-card .submit-answer-btn:disabled {
+      background: #a1c2db;
+      cursor: not-allowed;
+    }
+
+    .session-quiz-card .submit-answer-btn:hover:not(:disabled),
+    .session-quiz-card .next-btn:hover {
+      background: #1e5c8a;
+    }
+
+    .session-quiz-card .quiz-explanation {
+      margin-top: 10px;
+      padding: 10px 15px;
+      background: #f8f9fa;
+      border-left: 3px solid #2774AE;
+      border-radius: 4px;
+      font-size: 0.92em;
+      line-height: 1.35;
+    }
+
+    .session-quiz-card .explanation-title {
+      font-weight: 700;
+      color: #2774AE;
+      margin-bottom: 8px;
+      font-size: 0.9em;
+      text-transform: uppercase;
+    }
+
+    .session-quiz-card .quiz-correct-answers {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .session-quiz-card .correct-label-badge {
+      background: #2774AE;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.85em;
+      display: inline-block;
+    }
+
+    /* Session Flashcard */
+    .session-flashcard {
+      background: #ffffff;
+      border: 1px solid #e1e4e8;
+      border-radius: 12px;
+      padding: 12px;
+      margin: 12px 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .session-flashcard .flashcard-question {
+      font-size: 1.15em;
+      font-weight: 600;
+      margin-bottom: 12px;
+      line-height: 1.25;
+      color: #1a1a1a;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .session-flashcard .flashcard-question p,
+    .session-flashcard .flashcard-answer p,
+    .session-flashcard .flashcard-explanation p {
+      margin: 0;
+    }
+
+    .session-flashcard .flashcard-answer-container {
+      margin-top: 10px;
+      padding: 10px 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-top: 2px solid #FFD100;
+      animation: slideDown 0.3s ease;
+      font-size: 0.95em;
+      line-height: 1.3;
+    }
+
+    .session-flashcard .flashcard-answer {
+      font-size: 1.2em;
+      color: #2774AE;
+      margin-bottom: 12px;
+    }
+
+    .session-flashcard .flashcard-answer strong,
+    .session-flashcard .flashcard-answer b {
+      font-weight: 800 !important;
+    }
+
+    .session-flashcard .flashcard-explanation {
+      font-size: 1em;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .session-flashcard .flashcard-actions {
+      margin-top: 12px;
+    }
+
+    .session-flashcard .show-answer-btn {
+      background: #2774AE;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 0.9em;
+    }
+
+    .session-flashcard .show-answer-btn:hover {
+      background: #1e5c8a;
+    }
+
+    .session-flashcard .assessment-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .session-flashcard .assess-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .session-flashcard .assess-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .session-flashcard .correct-btn {
+      background: #28a745;
+    }
+
+    .session-flashcard .correct-btn:hover {
+      background: #218838;
+    }
+
+    .session-flashcard .incorrect-btn {
+      background: #dc3545;
+    }
+
+    .session-flashcard .incorrect-btn:hover {
+      background: #c82333;
+    }
+
+    /* Session Results */
+    .session-results-content {
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    .session-score-display {
+      font-size: 2em;
+      font-weight: 800;
+      margin: 20px 0;
+      color: #2774AE;
+    }
+
+    .session-results-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Dark Mode */
+    html.dark-mode #personal-deck-app {
+      color: #e0e0e0;
+    }
+
+    html.dark-mode #personal-deck-app h1,
+    html.dark-mode #personal-deck-app h2 {
+      color: #FFD100;
+      border-bottom-color: #444;
+    }
+
+    html.dark-mode .deck-subtitle {
+      color: #aaa;
+    }
+
+    html.dark-mode #deck-controls {
+      background: #252525;
+      border-color: #444;
+    }
+
+    html.dark-mode .controls-row label {
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .controls-row input[type="number"] {
+      background: #1a1a1a;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .deck-item {
+      background: #1a1a1a;
+      border-color: #333;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .deck-item:hover {
+      border-color: #4da3ff;
+    }
+
+    html.dark-mode .deck-item.in-deck {
+      border-color: #28a745;
+      background: #1a2e1a;
+    }
+
+    html.dark-mode .deck-item-desc {
+      color: #aaa;
+    }
+
+    html.dark-mode .deck-item-count {
+      color: #888;
+    }
+
+    html.dark-mode .empty-deck-msg {
+      color: #666;
+      border-color: #444;
+    }
+
+    html.dark-mode .session-quiz-card {
+      background: #1a1a1a;
+      border-color: #333;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .session-quiz-card .question-text {
+      color: #ffffff;
+    }
+
+    html.dark-mode .session-quiz-card .quiz-option {
+      background: #252525;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .session-quiz-card .quiz-option:hover:not([disabled]):not(.selected) {
+      border-color: #4da3ff;
+      background: #2c2c2c;
+    }
+
+    html.dark-mode .session-quiz-card .quiz-option.correct {
+      border-color: #28a745;
+      background: #1a3a2a;
+      color: #98fb98;
+    }
+
+    html.dark-mode .session-quiz-card .quiz-option.incorrect {
+      border-color: #dc3545;
+      background: #3d1a1a;
+      color: #ffbaba;
+    }
+
+    html.dark-mode .session-quiz-card .quiz-explanation {
+      background: #252525;
+      border-left-color: #4da3ff;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .session-quiz-card .explanation-title {
+      color: #4da3ff;
+    }
+
+    html.dark-mode .session-flashcard {
+      background: #1a1a1a;
+      border-color: #333;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .session-flashcard .flashcard-question {
+      color: #ffffff;
+    }
+
+    html.dark-mode .session-flashcard .flashcard-answer-container {
+      background: #252525;
+      border-top-color: #FFD100;
+    }
+
+    html.dark-mode .session-flashcard .flashcard-answer {
+      color: #FFD100;
+    }
+
+    html.dark-mode .session-progress-bar {
+      background: #333;
+    }
+
+    html.dark-mode .session-progress-fill {
+      background: #4da3ff;
+    }
+
+    html.dark-mode .session-results-content {
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .session-score-display {
+      color: #4da3ff;
+    }
+
+    html.dark-mode .deck-btn.secondary {
+      background: #333;
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .deck-btn.secondary:hover {
+      background: #444;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      #personal-deck-app {
+        padding: 15px;
+      }
+
+      .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .controls-row input[type="number"] {
+        width: 100%;
+      }
+    }
+  </style>
+
+  <!-- ==================== PAGE SCRIPT ==================== -->
+  <script>
+    (function () {
+      if (!window.PersonalDeck) return;
+
+      var libraryView = document.getElementById('deck-library');
+      var sessionView = document.getElementById('deck-session');
+      var startBtn = document.getElementById('start-session-btn');
+      var maxCardsInput = document.getElementById('max-cards');
+      var deckSummary = document.getElementById('deck-summary');
+      var deckSelectedDiv = document.getElementById('deck-selected');
+      var backBtn = document.getElementById('back-to-library-btn');
+      var sessionCardArea = document.getElementById('session-card-area');
+      var sessionResults = document.getElementById('session-results');
+      var sessionProgress = document.getElementById('session-progress');
+      var sessionScoreEl = document.getElementById('session-score');
+      var sessionTotalEl = document.getElementById('session-total');
+      var sessionSummaryEl = document.getElementById('session-summary');
+      var sessionRestartBtn = document.getElementById('session-restart-btn');
+      var sessionReviewBtn = document.getElementById('session-review-btn');
+      var sessionBackBtn = document.getElementById('session-back-btn');
+
+      var allItems = document.querySelectorAll('.deck-item');
+      var allAddBtns = document.querySelectorAll('.deck-add-btn');
+
+      // Session state
+      var sessionCards = [];
+      var sessionCurrentStep = 0;
+      var sessionScore = 0;
+      var sessionIncorrectIndices = [];
+      var sessionIsReview = false;
+      var sessionReviewQueue = [];
+      var sessionReviewStep = 0;
+
+      function shuffleArray(arr) {
+        for (var i = arr.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+        }
+        return arr;
+      }
+
+      // ==================== LIBRARY VIEW ====================
+
+      function refreshLibrary() {
+        var deck = PersonalDeck.getDeck();
+        var totalCards = 0;
+
+        // Update add buttons and item states
+        allItems.forEach(function (item) {
+          var type = item.dataset.type;
+          var id = item.dataset.id;
+          var btn = item.querySelector('.deck-add-btn');
+          var inDeck = deck.some(function (d) { return d.type === type && d.id === id; });
+
+          item.classList.toggle('in-deck', inDeck);
+          btn.classList.toggle('in-deck', inDeck);
+          var icon = btn.querySelector('i');
+          icon.className = inDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          btn.title = inDeck ? 'Remove from deck' : 'Add to deck';
+        });
+
+        // Build "Your Deck" section
+        var selectedHtml = '';
+        deck.forEach(function (entry) {
+          var data = entry.type === 'quiz' ? ALL_CARD_DATA.quizzes[entry.id] : ALL_CARD_DATA.flashcards[entry.id];
+          if (!data) return;
+          var count = entry.type === 'quiz' ? data.questions.length : data.cards.length;
+          totalCards += count;
+          var badgeClass = entry.type === 'quiz' ? 'quiz-badge' : 'flashcard-badge';
+          var badgeText = entry.type === 'quiz' ? 'Quiz' : 'Flashcard';
+          selectedHtml += '<div class="deck-item in-deck" data-type="' + entry.type + '" data-id="' + entry.id + '">' +
+            '<div class="deck-item-info">' +
+            '<span class="deck-item-badge ' + badgeClass + '">' + badgeText + '</span>' +
+            '<strong class="deck-item-title">' + data.title + '</strong>' +
+            '<span class="deck-item-count">(' + count + (entry.type === 'quiz' ? ' questions' : ' cards') + ')</span>' +
+            '</div>' +
+            '<button class="deck-add-btn in-deck deck-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from deck">' +
+            '<i class="fa-solid fa-check"></i>' +
+            '</button>' +
+            '</div>';
+        });
+
+        if (deck.length === 0) {
+          deckSelectedDiv.innerHTML = '<p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>';
+        } else {
+          deckSelectedDiv.innerHTML = selectedHtml;
+          // Bind remove buttons in selected section
+          deckSelectedDiv.querySelectorAll('.deck-remove-selected').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              PersonalDeck.removeFromDeck(btn.dataset.type, btn.dataset.id);
+              refreshLibrary();
+            });
+          });
+        }
+
+        // Update summary and start button
+        var maxCards = parseInt(maxCardsInput.value) || 20;
+        var drawCount = Math.min(maxCards, totalCards);
+        if (deck.length > 0) {
+          deckSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
+          startBtn.disabled = false;
+        } else {
+          deckSummary.textContent = '';
+          startBtn.disabled = true;
+        }
+      }
+
+      // Bind add/remove buttons in available sections
+      allAddBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          PersonalDeck.toggleDeck(btn.dataset.type, btn.dataset.id);
+          refreshLibrary();
+        });
+      });
+
+      maxCardsInput.addEventListener('input', refreshLibrary);
+
+      // ==================== SESSION ====================
+
+      function buildSessionCards() {
+        var deck = PersonalDeck.getDeck();
+        var cards = [];
+
+        deck.forEach(function (entry) {
+          if (entry.type === 'quiz') {
+            var quizData = ALL_CARD_DATA.quizzes[entry.id];
+            if (!quizData) return;
+            quizData.questions.forEach(function (q) {
+              cards.push({
+                cardType: 'quiz',
+                source: quizData.title,
+                data: q
+              });
+            });
+          } else {
+            var fcData = ALL_CARD_DATA.flashcards[entry.id];
+            if (!fcData) return;
+            fcData.cards.forEach(function (c) {
+              cards.push({
+                cardType: 'flashcard',
+                source: fcData.title,
+                data: c
+              });
+            });
+          }
+        });
+
+        shuffleArray(cards);
+
+        var maxCards = parseInt(maxCardsInput.value) || 20;
+        if (cards.length > maxCards) {
+          cards = cards.slice(0, maxCards);
+        }
+
+        return cards;
+      }
+
+      function startSession() {
+        sessionCards = buildSessionCards();
+        if (sessionCards.length === 0) return;
+
+        sessionCurrentStep = 0;
+        sessionScore = 0;
+        sessionIncorrectIndices = [];
+        sessionIsReview = false;
+        sessionReviewQueue = [];
+        sessionReviewStep = 0;
+
+        libraryView.style.display = 'none';
+        sessionView.style.display = 'block';
+        sessionResults.style.display = 'none';
+        sessionCardArea.innerHTML = '';
+
+        sessionTotalEl.textContent = sessionCards.length;
+        showSessionCard(0);
+        scrollToTop();
+      }
+
+      function showSessionCard(index) {
+        sessionCardArea.innerHTML = '';
+        var card = sessionCards[index];
+        if (!card) return;
+
+        updateSessionProgress();
+
+        if (card.cardType === 'quiz') {
+          renderQuizCard(card, index);
+        } else {
+          renderFlashcard(card, index);
+        }
+      }
+
+      function updateSessionProgress() {
+        var total = sessionCards.length;
+        var current;
+        if (sessionIsReview) {
+          current = (total - sessionReviewQueue.length + sessionReviewStep) / total * 100;
+        } else {
+          current = sessionCurrentStep / total * 100;
+        }
+        sessionProgress.style.width = current + '%';
+      }
+
+      function scrollToTop() {
+        var navbar = document.getElementById('navnav');
+        var navHeight = navbar ? navbar.offsetHeight : 50;
+        var app = document.getElementById('personal-deck-app');
+        var y = app.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+
+      // ---- QUIZ CARD RENDERING ----
+
+      function renderQuizCard(card, sessionIndex) {
+        var q = card.data;
+        var type = q.type || 'single';
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // Shuffle options while tracking correct indices
+        var optionObjs = q.options.map(function (opt, i) { return { html: opt, originalIndex: i }; });
+        shuffleArray(optionObjs);
+
+        // Compute correct labels after shuffle
+        var correctOriginals = type === 'multiple' && q.correct_indices
+          ? q.correct_indices
+          : [q.correct_index];
+        var correctLabels = [];
+
+        var div = document.createElement('div');
+        div.className = 'session-quiz-card';
+        div.setAttribute('data-type', type);
+
+        var sourceHtml = '<span class="session-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>';
+        var questionHtml = '<div class="question-text">' + q.question + '</div>';
+
+        var optionsHtml = '<div class="quiz-options">';
+        optionObjs.forEach(function (opt, idx) {
+          var label = alphabet[idx];
+          if (correctOriginals.indexOf(opt.originalIndex) !== -1) {
+            correctLabels.push(label);
+          }
+          var checkboxHtml = '<span class="option-checkbox"></span>';
+          optionsHtml += '<button class="quiz-option" data-index="' + opt.originalIndex + '" data-label="' + label + '">' +
+            checkboxHtml +
+            '<span class="option-label">' + label + '</span>' +
+            '<span class="option-content">' + opt.html + '</span>' +
+            '</button>';
+        });
+        optionsHtml += '</div>';
+
+        var submitHtml = type === 'multiple'
+          ? '<button class="submit-answer-btn" disabled>Submit Answer</button>'
+          : '';
+
+        var correctAnswerHtml = '<div class="quiz-correct-answers">Correct Answer' +
+          (type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
+          correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join(' ') +
+          '</span></div>';
+
+        var explanationHtml = '<div class="quiz-explanation hidden">' +
+          '<div class="explanation-title">Explanation</div>' +
+          '<div class="explanation-text">' + q.explanation + '</div>' +
+          '<button class="next-btn">Next</button>' +
+          '</div>';
+
+        div.innerHTML = sourceHtml + questionHtml + optionsHtml + submitHtml + correctAnswerHtml + explanationHtml;
+        sessionCardArea.appendChild(div);
+
+        // Bind quiz interactions
+        var options = div.querySelectorAll('.quiz-option');
+        var explanationEl = div.querySelector('.quiz-explanation');
+        var correctAnswersEl = div.querySelector('.quiz-correct-answers');
+
+        if (type === 'single') {
+          options.forEach(function (opt) {
+            opt.addEventListener('click', function () {
+              if (explanationEl && !explanationEl.classList.contains('hidden')) return;
+              // Validate
+              options.forEach(function (o) { o.setAttribute('disabled', 'true'); });
+              var isCorrect = correctOriginals.indexOf(parseInt(opt.dataset.index)) !== -1;
+              if (isCorrect) {
+                opt.classList.add('correct');
+                sessionScore++;
+              } else {
+                opt.classList.add('incorrect');
+                options.forEach(function (o) {
+                  if (correctOriginals.indexOf(parseInt(o.dataset.index)) !== -1) o.classList.add('correct');
+                });
+                sessionIncorrectIndices.push(sessionIsReview ? sessionReviewQueue[sessionReviewStep] : sessionCurrentStep);
+              }
+              correctAnswersEl.style.display = 'flex';
+              explanationEl.classList.remove('hidden');
+              explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+          });
+        } else {
+          var submitBtn = div.querySelector('.submit-answer-btn');
+          options.forEach(function (opt) {
+            opt.addEventListener('click', function () {
+              if (explanationEl && !explanationEl.classList.contains('hidden')) return;
+              opt.classList.toggle('selected');
+              var anySelected = div.querySelectorAll('.quiz-option.selected').length > 0;
+              submitBtn.disabled = !anySelected;
+            });
+          });
+          submitBtn.addEventListener('click', function () {
+            var selectedOpts = div.querySelectorAll('.quiz-option.selected');
+            var selectedIndices = Array.from(selectedOpts).map(function (o) { return parseInt(o.dataset.index); }).sort().join(',');
+            var correctIndicesSorted = correctOriginals.slice().sort().join(',');
+            options.forEach(function (o) { o.setAttribute('disabled', 'true'); });
+            submitBtn.classList.add('hidden');
+            if (selectedIndices === correctIndicesSorted) {
+              selectedOpts.forEach(function (o) { o.classList.add('correct'); });
+              sessionScore++;
+            } else {
+              selectedOpts.forEach(function (o) {
+                var idx = parseInt(o.dataset.index);
+                o.classList.add(correctOriginals.indexOf(idx) !== -1 ? 'correct' : 'incorrect');
+              });
+              options.forEach(function (o) {
+                if (correctOriginals.indexOf(parseInt(o.dataset.index)) !== -1) o.classList.add('correct');
+              });
+              sessionIncorrectIndices.push(sessionIsReview ? sessionReviewQueue[sessionReviewStep] : sessionCurrentStep);
+            }
+            correctAnswersEl.style.display = 'flex';
+            explanationEl.classList.remove('hidden');
+            explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+        }
+
+        div.querySelector('.next-btn').addEventListener('click', nextSessionCard);
+      }
+
+      // ---- FLASHCARD RENDERING ----
+
+      function renderFlashcard(card, sessionIndex) {
+        var c = card.data;
+
+        var div = document.createElement('div');
+        div.className = 'session-flashcard';
+
+        var sourceHtml = '<span class="session-source-badge flashcard-badge">' + escapeHtml(card.source) + '</span>';
+
+        div.innerHTML = sourceHtml +
+          '<div class="flashcard-question">' + c.question + '</div>' +
+          '<div class="flashcard-answer-container hidden">' +
+          '<div class="flashcard-answer">' + c.answer + '</div>' +
+          '<div class="flashcard-explanation">' + c.explanation + '</div>' +
+          '</div>' +
+          '<div class="flashcard-actions">' +
+          '<button class="show-answer-btn">Show Answer</button>' +
+          '<div class="assessment-buttons hidden">' +
+          '<button class="assess-btn correct-btn" title="I got it right!">&#x2714;</button>' +
+          '<button class="assess-btn incorrect-btn" title="I missed it">&#x2716;</button>' +
+          '</div>' +
+          '</div>';
+
+        sessionCardArea.appendChild(div);
+
+        var showBtn = div.querySelector('.show-answer-btn');
+        var answerContainer = div.querySelector('.flashcard-answer-container');
+        var assessBtns = div.querySelector('.assessment-buttons');
+
+        showBtn.addEventListener('click', function () {
+          answerContainer.classList.remove('hidden');
+          showBtn.classList.add('hidden');
+          assessBtns.classList.remove('hidden');
+        });
+
+        div.querySelector('.correct-btn').addEventListener('click', function () {
+          sessionScore++;
+          nextSessionCard();
+        });
+
+        div.querySelector('.incorrect-btn').addEventListener('click', function () {
+          sessionIncorrectIndices.push(sessionIsReview ? sessionReviewQueue[sessionReviewStep] : sessionCurrentStep);
+          nextSessionCard();
+        });
+      }
+
+      // ---- SESSION NAVIGATION ----
+
+      function nextSessionCard() {
+        if (sessionIsReview) {
+          sessionReviewStep++;
+          if (sessionReviewStep < sessionReviewQueue.length) {
+            showSessionCard(sessionReviewQueue[sessionReviewStep]);
+            scrollToTop();
+          } else {
+            finishSession();
+          }
+        } else {
+          sessionCurrentStep++;
+          if (sessionCurrentStep < sessionCards.length) {
+            showSessionCard(sessionCurrentStep);
+            scrollToTop();
+          } else {
+            finishSession();
+          }
+        }
+      }
+
+      function finishSession() {
+        sessionCardArea.innerHTML = '';
+        sessionResults.style.display = 'block';
+        sessionProgress.style.width = '100%';
+        sessionScoreEl.textContent = sessionScore;
+        scrollToTop();
+
+        if (sessionIncorrectIndices.length === 0) {
+          sessionSummaryEl.textContent = 'Perfect score! Come back later to improve your recall!';
+          sessionReviewBtn.style.display = 'none';
+        } else {
+          sessionSummaryEl.textContent = 'Keep practicing to improve your recall!';
+          sessionReviewBtn.style.display = 'inline-block';
+        }
+      }
+
+      function startReview() {
+        sessionIsReview = true;
+        sessionReviewQueue = sessionIncorrectIndices.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        sessionIncorrectIndices = [];
+        sessionReviewStep = 0;
+        sessionResults.style.display = 'none';
+        showSessionCard(sessionReviewQueue[0]);
+        scrollToTop();
+      }
+
+      function restartSession() {
+        shuffleArray(sessionCards);
+        sessionCurrentStep = 0;
+        sessionScore = 0;
+        sessionIncorrectIndices = [];
+        sessionIsReview = false;
+        sessionReviewQueue = [];
+        sessionReviewStep = 0;
+        sessionResults.style.display = 'none';
+        showSessionCard(0);
+        scrollToTop();
+      }
+
+      function goBackToLibrary() {
+        sessionView.style.display = 'none';
+        libraryView.style.display = 'block';
+        refreshLibrary();
+        scrollToTop();
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      }
+
+      // ==================== EVENT BINDINGS ====================
+
+      startBtn.addEventListener('click', startSession);
+      backBtn.addEventListener('click', goBackToLibrary);
+      sessionRestartBtn.addEventListener('click', restartSession);
+      sessionReviewBtn.addEventListener('click', startReview);
+      sessionBackBtn.addEventListener('click', goBackToLibrary);
+
+      // Initialize
+      refreshLibrary();
+
+      // Adjust for navbar
+      function adjustForNavbar() {
+        var navbar = document.getElementById('navnav');
+        var app = document.getElementById('personal-deck-app');
+        if (navbar && app) {
+          app.style.marginTop = (navbar.offsetHeight + 10) + 'px';
+        }
+      }
+      adjustForNavbar();
+      window.addEventListener('load', adjustForNavbar);
+      window.addEventListener('resize', adjustForNavbar);
+    })();
+  </script>
+
+  {% else %}
+  <div style="max-width: 800px; margin: 100px auto; padding: 20px; text-align: center;">
+    <p>Personal Deck feature is not currently available.</p>
+  </div>
+  {% endif %}
+
+  {% include footer.html %}
+  {% include scripts.html %}
+
+</body>
+
+</html>
