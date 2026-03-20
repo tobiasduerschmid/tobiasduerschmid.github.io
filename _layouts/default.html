@@ -3,60 +3,60 @@
 
 {% include head.html %}
 
-<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="60">
-  <a href="#main-content" class="skip-link">Skip to main content</a>
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
+	<a href="#main-content" class="skip-link">Skip to main content</a>
 
-{% include navbar.html %}
+	{% include navbar.html %}
 
-{% include header.html %}
+	{% include header.html %}
 
-<div id="main-content">
+	<div id="main-content">
 
 
-{% if site.data.carousel.show %}   
-	{% include carousel.html %}
-{% endif %}			
+		{% if site.data.carousel.show %}
+		{% include carousel.html %}
+		{% endif %}
 
-{% if site.data.news.show %}   
-	{% include news.html %}
-{% endif %}		
+		{% if site.data.news.show %}
+		{% include news.html %}
+		{% endif %}
 
-{% if site.data.publications.show %}   
-	{% include publications_featured.html %}
-{% endif %}			
+		{% if site.data.publications.show %}
+		{% include publications_featured.html %}
+		{% endif %}
 
-{% if site.data.projects.show %}   
-	{% include projects.html %}
-{% endif %}			
+		{% if site.data.projects.show %}
+		{% include projects.html %}
+		{% endif %}
 
-{% if site.data.talks.show %}   
-	{% include talks.html %}
-{% endif %}			
+		{% if site.data.talks.show %}
+		{% include talks.html %}
+		{% endif %}
 
-{% if site.data.teaching.show %}   
-	{% include teaching.html %}
-{% endif %}			
+		{% if site.data.teaching.show %}
+		{% include teaching.html %}
+		{% endif %}
 
-{% if site.data.activities.show %}   
-	{% include activities.html %}
-{% endif %}		
+		{% if site.data.activities.show %}
+		{% include activities.html %}
+		{% endif %}
 
-{% if site.data.photography.show %}   
-	{% include photography.html %}
-{% endif %}		
+		{% if site.data.photography.show %}
+		{% include photography.html %}
+		{% endif %}
 
-{% if site.data.videos.show %}   
-	{% include videos.html %}
-{% endif %}			
+		{% if site.data.videos.show %}
+		{% include videos.html %}
+		{% endif %}
 
-{% if site.data.contact.show %}   
-	{% include contact.html %}
-{% endif %}			
-</div>
+		{% if site.data.contact.show %}
+		{% include contact.html %}
+		{% endif %}
+	</div>
 
-{% include footer.html %}
+	{% include footer.html %}
 
-{% include scripts.html %}
+	{% include scripts.html %}
 
 </body>
 

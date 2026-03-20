@@ -29,7 +29,7 @@
   }
 </style>
 
-<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="60">
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <article class="post-content">
@@ -74,7 +74,7 @@
     <div id="sebook-content-wrapper" style="display: flex; min-height: calc(100vh - 60px);">
       <!-- Mobile Sidebar Toggle -->
       <button id="sidebar-toggle"
-        style="display: none; position: fixed; top: 80px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        style="display: none; position: fixed; top: 60px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
         ☰ Menu
       </button>
 
@@ -393,7 +393,7 @@
         // Also adjust sidebar toggle position
         const toggle = document.getElementById('sidebar-toggle');
         if (toggle) {
-          toggle.style.top = (height + 20) + 'px';
+          toggle.style.top = (height - 7) + 'px';
         }
       }
     }
