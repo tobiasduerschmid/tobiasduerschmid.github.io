@@ -1,14 +1,14 @@
 title: "CS 35L Final Exam Fall 2025 MCQs"
 description: "Test your knowledge on software construction principles, design patterns, testing, security, and Git based on the CS 35L Final Exam."
 questions:
-  - question: "According to the design principles discussed in the course, what is the primary goal of implementing information hiding in a program?"
+  - question: "What is the primary goal of implementing information hiding in a program?"
     options:
       - "To expose only the executable logic while hiding personally-identifiable user data for security purposes."
       - "To maximize execution speed by placing all related components into a single file"
       - "To define an interface that reveals what a module does while isolating other modules from the impact of changes to implementation details"
       - "Ensure that module decomposition follows the chronological steps outlined in a processing flowchart."
     correct_index: 2
-    explanation: "Information hiding aims to conceal implementation details behind a stable interface to minimize the impact of changes across modules."
+    explanation: "Information hiding limits the impact of changes. By defining a stable interface and concealing implementation details, a program ensures that modifying the internal logic of one module does not necessitate changes in other modules that depend on it."
 
   - question: "Which software construction practice does NOT increase the bus factor?"
     options:
@@ -17,7 +17,7 @@ questions:
       - "Writing unit tests & integration tests with high coverage"
       - "Generating code with genAI"
     correct_index: 3
-    explanation: "Generating code with AI does not inherently spread deep project knowledge among team members, whereas code reviews and readable code ensure more people understand the system."
+    explanation: "The bus factor represents the number of team members who would need to suddenly leave the project before it stalls. Practices like code reviews and clean code distribute knowledge among the team. Generating code with AI does not inherently share project-specific architectural understanding among developers."
 
   - question: "How does Test-Driven Development (TDD) relate to information hiding?"
     options:
@@ -26,7 +26,7 @@ questions:
       - "TDD often leads to low coupling and small interfaces, but additional design efforts are necessary to ensure the larger architecture follows the information hiding principle"
       - "TDD only improves information hiding if tests are generated from UML diagrams"
     correct_index: 2
-    explanation: "While TDD promotes low coupling and small interfaces, structural architecture and proper information hiding require explicit design consideration beyond just writing tests first."
+    explanation: "Test-Driven Development naturally encourages creating small, decoupled interfaces to make testing easier. However, strictly writing tests and code incrementally without upfront planning can neglect the large-scale architecture. To achieve proper information hiding across complex systems, developers must engage in deliberate architectural design beyond localized refactoring."
 
   - question: "The UNIX philosophy emphasizes writing programs to handle text streams (stdin, stdout, stderr) as a universal interface. This design choice primarily supports which concept of software construction? Check the one that is most appropriate."
     options:
@@ -35,16 +35,16 @@ questions:
       - "Information Hiding because programs cannot make assumptions about which input or output device is providing the data."
       - "Separation of Concerns, because stderr is separated from stdout."
     correct_index: 2
-    explanation: "Text streams hide the specifics of the input/output devices, meaning programs interact purely via standard streams without needing to know the underlying hardware or source details."
+    explanation: "By standardizing on text streams, UNIX programs hide the underlying hardware or file system details from the application logic. Programs interact via standard inputs and outputs, meaning they do not need to make assumptions about the specific devices providing or receiving the data."
 
-  - question: "What is the most effective way to prevent SQL Injection attacks, as discussed in the lectures?"
+  - question: "What is the most effective way to prevent SQL Injection attacks?"
     options:
       - "Using prepared statements and parameterized queries"
       - "Using f-strings for efficient string concatenation"
       - "Updating the DBMS to the newest version"
       - "Avoiding the C programming language"
     correct_index: 0
-    explanation: "Prepared statements parameterize inputs so they are strictly treated as data rather than executable SQL logic, effectively neutralizing SQL injection attempts."
+    explanation: "Prepared statements and parameterized queries separate the SQL code structure from the user-provided data. This ensures that the database engine treats all inputs strictly as literal values rather than executable commands, neutralizing attempts to inject malicious SQL logic."
 
   - question: "What does a test stub do?"
     options:
@@ -53,7 +53,7 @@ questions:
       - "Injecting indirect inputs into a system to ensure the test is covering the particular behavior that should be tested."
       - "Validating that the right system was built by asking real users if their needs are fully met by the implemented system."
     correct_index: 2
-    explanation: "Test stubs replace components to provide predetermined responses (indirect inputs) so that the system under test can be verified under specific conditions."
+    explanation: "A test stub acts as a controlled replacement for a system component. It is used to supply predetermined indirect inputs (such as hardcoded responses) to the system under test, ensuring that specific behaviors or edge cases can be reliably verified without depending on external systems."
 
   - question: "What is the necessary first step in the systematic process of debugging a bug reported by a user?"
     options:
@@ -62,7 +62,7 @@ questions:
       - "Reproducing the bug reliably."
       - "Writing a test case that verifies whether we fixed the bug."
     correct_index: 2
-    explanation: "You must first reliably reproduce the bug to understand its conditions and verify later whether it was effectively fixed."
+    explanation: "Before attempting to find the root cause or implement a fix, a bug must be reliably reproduced. Consistent reproduction confirms the exact conditions under which the failure occurs and provides a definitive way to verify if the subsequent fix is actually successful."
 
   - question: "The Single Choice Principle is a software modularity guideline proposed to handle systems that must support a set of alternatives (e.g., different DBMS, network protocols, or payment types). What does this principle mandate?"
     options:
@@ -71,7 +71,7 @@ questions:
       - "One and only one module in the system should know the exhaustive list of alternatives that are supported"
       - "All modules must be designed to have a single purpose or function."
     correct_index: 2
-    explanation: "The principle states that the exhaustive list of alternatives should be known by a single module so that adding a new alternative requires modifying only that specific module."
+    explanation: "The Single Choice Principle dictates that whenever a software system must support a set of alternatives, one and only one module should know the exhaustive list of those alternatives. This isolates the knowledge so that adding a new alternative requires changes in only that single location."
 
   - question: "When integrating LLM-based generative AI into the development workflow for complex tasks, which approach is specifically recommended to improve the quality of the generated code?"
     options:
@@ -80,7 +80,7 @@ questions:
       - "Commit changes only when a major feature is completed to simplify history tracking"
       - "Break the overall task into smaller, simpler tasks while guiding the AI through the steps"
     correct_index: 3
-    explanation: "LLMs perform best when a complex prompt is systematically broken down into smaller, bounded instructions that provide continuous guidance."
+    explanation: "Large Language Models perform best when complex problems are decomposed. Instead of relying on the AI to solve a massive design problem all at once, developers should break the task into small, bounded instructions and provide continuous, incremental guidance."
 
   - question: "For which use case is Python a better programming language choice than C?"
     options:
@@ -89,7 +89,7 @@ questions:
       - "Developing the firmware of a drone"
       - "Developing a database management system (like MySQL or MongoDB)"
     correct_index: 1
-    explanation: "Python is heavily favored for data science and scientific analysis due to its extensive ecosystem (e.g., Pandas, NumPy), while C is preferred for low-level systems like OS, firmware, and database engines."
+    explanation: "Python features an extensive ecosystem of libraries for data processing and scientific computing, making it highly effective for data analysis. Conversely, C provides fine-grained control over hardware and memory, making it the standard for low-level firmware, operating systems, and performance-critical database engines."
 
   - question: "In the TCP/IP model, which layer is responsible for breaking down Application Layer messages into smaller, reliable segments and ensuring they are delivered in the correct order?"
     options:
@@ -98,7 +98,7 @@ questions:
       - "The internet layer"
       - "The transport layer"
     correct_index: 3
-    explanation: "The transport layer (typically TCP) guarantees reliable delivery and reassembles application data in the proper order."
+    explanation: "The transport layer handles end-to-end communication by breaking application data into smaller segments, ensuring reliable, ordered delivery, and managing error recovery during transmission."
 
   - question: "Which answer best describes a framework, as opposed to a library?"
     options:
@@ -107,7 +107,7 @@ questions:
       - "A framework dictates the overall architecture of an application and calls your code"
       - "A framework deals with interoperability and not with reuse"
     correct_index: 2
-    explanation: "The key differentiator is the 'Inversion of Control'—a framework dictates the flow and architecture, making calls to the code you plug in, whereas your code calls a library."
+    explanation: "The defining characteristic of a framework is the Inversion of Control. While a developer's code calls functions from a library, a framework dictates the overall application flow and architecture, making calls to the custom code plugged into it."
 
   - question: "What is a direct implication of the CAP theorem?"
     options:
@@ -116,7 +116,7 @@ questions:
       - "Non-error responses always include the most recent write"
       - "ATM systems do not let users withdraw money during a network outage"
     correct_index: 1
-    explanation: "The CAP theorem implies that a distributed data store can only simultaneously provide two out of three guarantees: Consistency, Availability, and Partition tolerance, requiring trade-offs."
+    explanation: "In distributed data stores, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Systems must make architectural trade-offs, often sacrificing either consistency or availability during network partitions."
 
   - question: "Which of these systems is most prone to cross-site scripting attacks?"
     options:
@@ -125,7 +125,7 @@ questions:
       - "An Android app that allows users to communicate via direct messages"
       - "A web app that allows users write and read reviews for movies"
     correct_index: 3
-    explanation: "A site where users input text (reviews) that is rendered directly in other users' browsers is highly susceptible to Cross-Site Scripting (XSS) if not properly sanitized."
+    explanation: "Cross-Site Scripting (XSS) occurs when untrusted user input is rendered directly in a web application without proper sanitization. Applications that display user-generated text to other users are highly vulnerable, as malicious scripts can be injected and executed in victims' browsers."
 
   - question: "What is a primary benefit of employing rational decision making (as opposed to intuitive decision making) in software engineering?"
     options:
@@ -134,17 +134,17 @@ questions:
       - "It usually guides non-expert designers to better design outcomes & documents decisions"
       - "It results in cleaner architectures, because it prioritizes information hiding over algorithmic optimization"
     correct_index: 2
-    explanation: "Rational decision making relies on a structured, logical process, which aids non-experts in arriving at sound designs and ensures architectural decisions are well-documented."
+    explanation: "Rational decision making uses structured, logical processes rather than relying solely on intuition. This systematic approach documents the reasoning behind architectural choices, making the design process transparent and helping non-experts achieve robust design outcomes."
 
   - type: multiple
-    question: "Based on recommendations from the lecture, which of these git commands might create major challenges in team projects? Check all that apply!"
+    question: "Which of these git commands might create major challenges in team projects? Check all that apply!"
     options:
       - "`git rebase -i`"
       - "`git cherry-pick`"
       - "`git revert`"
       - "`git push -f`"
     correct_indices: [0, 3]
-    explanation: "`git push -f` overwrites remote history and can delete collaborators' commits. `git rebase -i` requires a force push and rewrites history, similarly disrupting other developers' work."
+    explanation: "Commands that rewrite history, such as force pushing (`git push -f`) or interactive rebasing (`git rebase -i`), overwrite the existing sequence of commits. If applied to shared branches, they can permanently erase the contributions of other team members and cause repository inconsistencies."
 
   - type: multiple
     question: "In which situations would an agile software process be most appropriate (as compared to a plan-driven approach)? Check all that apply"
@@ -153,4 +153,4 @@ questions:
       - "Developing the software for the probe that should explore the moons of the planet Saturn"
       - "Developing software for a start-up"
     correct_indices: [2]
-    explanation: "Agile is suitable for environments like start-ups where requirements rapidly change and evolve, whereas mission-critical and safety-critical software (medical devices, space probes) traditionally require strict, plan-driven documentation."
+    explanation: "Agile methodologies excel in environments with high uncertainty and rapidly evolving requirements, such as startups. In contrast, mission-critical systems like medical devices or space probes require strict, plan-driven documentation and rigorous upfront verification to ensure safety."
