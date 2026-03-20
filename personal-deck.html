@@ -1194,6 +1194,8 @@ permalink: /personal-deck/
       function getDifficultCards() {
         var stats = PersonalDeck.getStats();
         var cards = [];
+        var seenHashes = {}; // Deduplicate across sets (same question may appear in base + meta deck)
+        var DIFFICULTY_THRESHOLD = 0.4; // 40% failure rate
 
         // Scan all quiz questions
         var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
@@ -1203,8 +1205,10 @@ permalink: /personal-deck/
           for (var i = 0; i < quizData.questions.length; i++) {
             var q = quizData.questions[i];
             var h = PersonalDeck.hashQuestion(q.question);
+            if (seenHashes[h]) continue;
             var s = stats[h];
-            if (s && s.seen > 0 && s.correct < s.seen) {
+            if (s && s.seen > 0 && (s.seen - s.correct) / s.seen > DIFFICULTY_THRESHOLD) {
+              seenHashes[h] = true;
               cards.push({
                 cardType: 'quiz',
                 source: quizData.title,
@@ -1223,8 +1227,10 @@ permalink: /personal-deck/
           for (var j = 0; j < fcData.cards.length; j++) {
             var c = fcData.cards[j];
             var h2 = PersonalDeck.hashQuestion(c.question);
+            if (seenHashes[h2]) continue;
             var s2 = stats[h2];
-            if (s2 && s2.seen > 0 && s2.correct < s2.seen) {
+            if (s2 && s2.seen > 0 && (s2.seen - s2.correct) / s2.seen > DIFFICULTY_THRESHOLD) {
+              seenHashes[h2] = true;
               cards.push({
                 cardType: 'flashcard',
                 source: fcData.title,
