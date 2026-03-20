@@ -73,11 +73,11 @@ title: "SE Deck"
             </label>
           </div>
           <div class="controls-row toggle-row" style="margin-top: 14px; justify-content: space-between;">
-            <div style="display: inline-flex; align-items: center; gap: 8px;">
-              <label for="max-cards" class="toggle-label" style="margin: 0;">Max cards:</label>
+            <label for="max-cards" class="toggle-label" style="margin: 0; text-transform: uppercase;">Max cards:</label>
+            <div style="display: inline-flex; align-items: center; gap: 12px;">
               <input type="number" id="max-cards" value="20" min="1" max="500">
+              <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
             </div>
-            <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
           </div>
           <p id="deck-summary" class="deck-summary-text"></p>
         </div>
@@ -233,7 +233,6 @@ title: "SE Deck"
       You may delete your data at any time: turn off <em>Activate Personal Deck</em> to
       clear deck preferences, or turn off <em>Track Performance</em> and confirm deletion
       to erase all performance statistics.
-      To comply with FERPA laws, this tool keeps all educational performance data strictly local.
     </p>
 
   </div>
@@ -536,6 +535,16 @@ title: "SE Deck"
       border: 1.5px solid #d1d5da;
       border-radius: 6px;
       font-size: 0.95em;
+      font-weight: 600;
+      color: #333;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .controls-row input[type="number"]:focus {
+      border-color: #2774AE;
+      box-shadow: 0 0 0 3px rgba(39, 116, 174, 0.15);
     }
 
     .deck-summary-text {
