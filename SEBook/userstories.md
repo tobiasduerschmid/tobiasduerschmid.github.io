@@ -6,7 +6,7 @@ layout: sebook
 User stories are the most commonly used format to specify requirements in a light-weight, informal way (particulalry in Agile projects).
 Each user story is a high-level description of a software feature written from the perspective of the end-user.
 
-Unlike formal specifications, user stories are meant to be "negotiable"—they act as placeholders for a conversation between the technical team and the "business" side to ensure both parties understand the why behind a feature
+User stories act as placeholders for a conversation between the technical team and the "business" side to ensure both parties understand the why and what of a feature.
 
 # Format
 
@@ -20,6 +20,12 @@ User stories follow this format:
 **so that** [I can achieve a goal]
 
 ---
+
+For example:
+
+> (*Smart Grocery Application*):  **As a** home cook, **I want to** swap out ingredients in a recipe **so that** I can accommodate my dietary restrictions and utilize what I already have in my kitchen.
+
+> (*Travel Itinerary Planner*):  **As a** frequent traveler, **I want to** discover unique, locally hosted activities **so that** I can experience the authentic culture of my destination rather than just the standard tourist traps.
 
 This structure makes the team to identify not just the "what", but also the "who" and — most importantly — the "why".
 
@@ -43,6 +49,23 @@ They follow this format:
 **Then** [post-condition / outcome]
 
 ---
+
+For example:
+
+> (*Smart Grocery Application*):  **As a** home cook, **I want to** swap out ingredients in a recipe **so that** I can accommodate my dietary restrictions and utilize what I already have in my kitchen.
+> * **Given** the user is viewing a recipe's ingredient list, **when** they tap on a specific ingredient, **then** a modal should appear suggesting a list of viable alternatives.
+> * **Given** the user selects a substitute from the alternatives list, **when** they confirm the swap, **then** the recipe's required quantities and nutritional estimates should recalculate and update on the screen.
+> * **Given** the user has modified a recipe with substitutions, **when** they tap the "Save to My Cookbook" button, **then** the customized version of the recipe should be stored in their personal profile without altering the original public recipe.
+
+These acceptance criteria add clarity to the user story by defining the specific conditions under which the feature should work as expected. They also help to identify potential edge cases and constraints that need to be considered during development. The acceptance criteria define the scope of conditions that check whether an implementation is "correct" and meets the user's needs. So naturally, ==user story acceptance criteria must be specific enough to be testable but should not be overly prescriptive about the implementation details, not to constraint the developers more than really needed to describe the true user need==.
+
+Here is another example:
+
+> (*Travel Itinerary Planner*):  **As a** frequent traveler, **I want to** discover unique, locally hosted activities **so that** I can experience the authentic culture of my destination rather than just the standard tourist traps.
+> * **Given** the user has set their upcoming trip destination to a city, **when** they navigate to the "Local Experiences" tab, **then** they should see a dynamically populated list of activities hosted by verified local residents.
+> * **Given** the user is browsing the experiences list, **when** they apply the "Under $50" budget filter, **then** the list should refresh to display only the activities that fall within that price range.
+> * **Given** the user selects a specific local experience, **when** they tap "Check Availability", **then** a calendar widget should expand displaying open booking slots for their specific travel dates.
+
 
 
 # INVEST
