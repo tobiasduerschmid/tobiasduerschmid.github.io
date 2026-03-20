@@ -141,7 +141,7 @@ title: "SE Deck"
           {% endfor %}
           <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
             <div class="deck-item-info">
-              <span class="deck-item-badge quiz-badge">Quiz Deck</span>
+              <span class="deck-item-badge quiz-badge">Master Quiz</span>
               <strong class="deck-item-title">{{ qdata.title }}</strong>
               <span class="deck-item-count">({{ meta_count }} questions)</span>
               <p class="deck-item-desc">{{ qdata.description }}</p>
@@ -162,7 +162,7 @@ title: "SE Deck"
           {% if fcdata.cards %}
           <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
             <div class="deck-item-info">
-              <span class="deck-item-badge flashcard-badge">Flashcard</span>
+              <span class="deck-item-badge flashcard-badge">Flashcards</span>
               <strong class="deck-item-title">{{ fcdata.title }}</strong>
               <span class="deck-item-count">({{ fcdata.cards | size }} cards)</span>
               <p class="deck-item-desc">{{ fcdata.description }}</p>
@@ -181,7 +181,7 @@ title: "SE Deck"
           {% endfor %}
           <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
             <div class="deck-item-info">
-              <span class="deck-item-badge flashcard-badge">Flashcard Deck</span>
+              <span class="deck-item-badge flashcard-badge">Master Flashcards</span>
               <strong class="deck-item-title">{{ fcdata.title }}</strong>
               <span class="deck-item-count">({{ meta_count }} cards)</span>
               <p class="deck-item-desc">{{ fcdata.description }}</p>
