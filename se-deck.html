@@ -224,17 +224,6 @@ title: "SE Deck"
       </div>
     </div>
 
-    <!-- Privacy / Cookie Notice -->
-    <p class="cookie-notice">
-      <strong>Cookie &amp; Privacy Notice:</strong> SE Deck stores your preferences
-      (<em>personal deck</em> and <em>track performance</em> settings) in browser cookies,
-      and your per-question performance history in browser "localStorage".
-      All data remains on your device — nothing is transmitted to or stored on any server.
-      You may delete your data at any time: turn off <em>Activate Personal Deck</em> to
-      clear deck preferences, or turn off <em>Track Performance</em> and confirm deletion
-      to erase all performance statistics.
-    </p>
-
   </div>
 
   <!-- ==================== EMBEDDED CARD DATA ==================== -->
@@ -1253,29 +1242,17 @@ title: "SE Deck"
       pointer-events: none;
       user-select: none;
     }
-
-    /* Cookie / Privacy Notice */
-    .cookie-notice {
-      font-size: 0.78em;
-      color: #666;
-      background: #f8f9fa;
-      border: 1px solid #e1e4e8;
-      border-left: 3px solid #2774AE;
-      border-radius: 6px;
-      padding: 10px 14px;
-      margin: 30px 0 10px 0;
-      line-height: 1.5;
-    }
-
-    html.dark-mode .cookie-notice {
-      background: #1e1e1e;
-      border-color: #444;
-      border-left-color: #4da3ff;
-      color: #aaa;
-    }
   </style>
 
   {% include footer.html %}
+
+  <!-- Privacy / Cookie Notice -->
+  <div style="max-width: 860px; margin: 0 auto; padding: 0 20px; clear: both;">
+    <p class="cookie-notice">
+      <strong>Cookie &amp; Privacy Notice:</strong> SE Deck uses browser cookies to store your deck preferences and browser localStorage to store per-question performance data. No personal information is collected, transmitted, or stored on any external server. All data resides solely on your device and is fully under your control. You may delete stored preferences by disabling <em>Activate Personal Deck</em>, or erase all performance data by disabling <em>Track Performance</em> and confirming deletion. This site does not sell, share, or disclose any user data to third parties.
+    </p>
+  </div>
+
   {% include scripts.html %}
 
   <!-- ==================== PAGE SCRIPT ==================== -->

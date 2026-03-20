@@ -27,6 +27,7 @@
   .slider.round:before {
     border-radius: 50%;
   }
+
 </style>
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top" data-offset="100">
@@ -413,6 +414,20 @@
   </script>
 
   {% include footer.html %}
+
+  <!-- Privacy / Cookie Notice -->
+  <div style="max-width: 860px; margin: 20px auto 0; padding: 0 20px; clear: both;">
+    <p class="cookie-notice">
+      <strong>Cookie &amp; Privacy Notice:</strong> This page stores your UI preferences
+      (<em>dark mode</em>, <em>show highlights</em>, and <em>read aloud</em>) in browser cookies.
+      {% if page.audio %}<em>Audio player</em> volume and playback speed are saved in your browser's localStorage.{% endif %}
+      If you have enabled performance tracking on the <a href="/se-deck/">SE Deck</a> page,
+      per-question statistics are also stored in localStorage.
+      No personal information is collected, transmitted, or stored on any external server.
+      All data resides solely on your device and is fully under your control. 
+      This site does not sell, share, or disclose any user data to third parties.
+    </p>
+  </div>
 
   {% include scripts.html %}
 
