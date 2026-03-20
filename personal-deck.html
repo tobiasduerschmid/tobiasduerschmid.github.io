@@ -94,7 +94,10 @@ permalink: /personal-deck/
         </div>
       </div>
 
-      <h2>Your Deck</h2>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <h2 style="margin: 0;">Your Deck</h2>
+        <button id="empty-deck-btn" class="deck-btn secondary" title="Empty your deck">Empty Deck</button>
+      </div>
       <div id="deck-selected">
         <p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>
       </div>
@@ -1257,6 +1260,34 @@ permalink: /personal-deck/
           btn.title = inDeck ? 'Remove from deck' : 'Add to deck';
         });
 
+        // ---- Difficult Questions Deck ----
+        var difficultCards = [];
+        var hasDifficult = false;
+        if (PersonalDeck.isAnalyzePerformance()) {
+          difficultCards = getDifficultCards();
+          hasDifficult = difficultCards.length > 0;
+        }
+
+        var difficultInDeck = deck.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
+
+        if (PersonalDeck.isAnalyzePerformance() && hasDifficult) {
+          difficultSection.style.display = 'block';
+          difficultCountEl.textContent = '(' + difficultCards.length + ' cards)';
+          difficultAddBtn.classList.toggle('in-deck', difficultInDeck);
+          var dIcon = difficultAddBtn.querySelector('i');
+          dIcon.className = difficultInDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          difficultAddBtn.title = difficultInDeck ? 'Remove from session' : 'Add to session';
+          if (difficultInDeck) {
+            totalCards += difficultCards.length;
+          }
+        } else {
+          difficultSection.style.display = 'none';
+          // Remove difficult from deck if no longer applicable
+          if (deck.some(function (d) { return d.type === 'difficult'; })) {
+            PersonalDeck.removeFromDeck('difficult', 'difficult');
+          }
+        }
+
         // Build "Your Deck" section
         var selectedHtml = '';
         deck.forEach(function (entry) {
@@ -1278,48 +1309,7 @@ permalink: /personal-deck/
             '</div>';
         });
 
-        if (deck.length === 0) {
-          deckSelectedDiv.innerHTML = '<p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>';
-        } else {
-          deckSelectedDiv.innerHTML = selectedHtml;
-          // Bind remove buttons in selected section
-          deckSelectedDiv.querySelectorAll('.deck-remove-selected').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-              PersonalDeck.removeFromDeck(btn.dataset.type, btn.dataset.id);
-              refreshLibrary();
-            });
-          });
-        }
-
-        // ---- Difficult Questions Deck ----
-        var difficultCards = [];
-        var hasDifficult = false;
-        if (PersonalDeck.isAnalyzePerformance()) {
-          difficultCards = getDifficultCards();
-          hasDifficult = difficultCards.length > 0;
-        }
-
-        if (PersonalDeck.isAnalyzePerformance() && hasDifficult) {
-          difficultSection.style.display = 'block';
-          difficultCountEl.textContent = '(' + difficultCards.length + ' cards)';
-          var difficultInDeck = deck.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
-          difficultAddBtn.classList.toggle('in-deck', difficultInDeck);
-          var dIcon = difficultAddBtn.querySelector('i');
-          dIcon.className = difficultInDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          difficultAddBtn.title = difficultInDeck ? 'Remove from session' : 'Add to session';
-          if (difficultInDeck) {
-            totalCards += difficultCards.length;
-          }
-        } else {
-          difficultSection.style.display = 'none';
-          // Remove difficult from deck if no longer applicable
-          if (deck.some(function (d) { return d.type === 'difficult'; })) {
-            PersonalDeck.removeFromDeck('difficult', 'difficult');
-          }
-        }
-
         // ---- "Your Deck" entry for difficult questions ----
-        var difficultInDeck = deck.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
         if (difficultInDeck && PersonalDeck.isAnalyzePerformance() && hasDifficult) {
           selectedHtml += '<div class="deck-item in-deck difficult-deck-item" data-type="difficult" data-id="difficult">' +
             '<div class="deck-item-info">' +
@@ -1331,6 +1321,20 @@ permalink: /personal-deck/
             '<i class="fa-solid fa-check"></i>' +
             '</button>' +
             '</div>';
+        }
+
+        var hasAnything = deck.length > 0 || (difficultInDeck && hasDifficult);
+        if (!hasAnything) {
+          deckSelectedDiv.innerHTML = '<p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>';
+        } else {
+          deckSelectedDiv.innerHTML = selectedHtml;
+          // Bind remove buttons in selected section
+          deckSelectedDiv.querySelectorAll('.deck-remove-selected').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              PersonalDeck.removeFromDeck(btn.dataset.type, btn.dataset.id);
+              refreshLibrary();
+            });
+          });
         }
 
         // Update summary and start button
@@ -1433,6 +1437,12 @@ permalink: /personal-deck/
           infoBtn.classList.remove('active');
         });
       }
+
+      // ---- Empty Deck Button ----
+      document.getElementById('empty-deck-btn').addEventListener('click', function () {
+        PersonalDeck.clearDeck();
+        refreshLibrary();
+      });
 
       // ---- Activate Personal Deck Toggle ----
       function applyActiveState(isActive) {
