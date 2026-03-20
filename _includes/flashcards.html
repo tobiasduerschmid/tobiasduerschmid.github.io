@@ -477,6 +477,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
       } else {
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
+
+      // Track performance
+      if (window.PersonalDeck && PersonalDeck.isAnalyzePerformance()) {
+        PersonalDeck.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
+      }
+
       nextCard();
     }
 

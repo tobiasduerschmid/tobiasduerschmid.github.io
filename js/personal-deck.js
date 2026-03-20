@@ -55,12 +55,77 @@
     }
   }
 
+  // ==================== Performance Tracking ====================
+
+  var PERF_COOKIE = 'analyze-performance';
+  var STATS_KEY = 'personal-deck-stats';
+
+  function isAnalyzePerformance() {
+    return getCookie(PERF_COOKIE) === 'true';
+  }
+
+  function setAnalyzePerformance(value) {
+    setCookie(PERF_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
+  }
+
+  function hashQuestion(html) {
+    // Strip HTML tags and normalize whitespace for stable hashing
+    var clean = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    var hash = 2166136261; // FNV-1a offset basis
+    for (var i = 0; i < clean.length; i++) {
+      hash ^= clean.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    return hash.toString(36);
+  }
+
+  function getStats() {
+    try {
+      var raw = localStorage.getItem(STATS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveStats(stats) {
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    } catch (e) { /* localStorage full or unavailable */ }
+  }
+
+  function clearStats() {
+    try { localStorage.removeItem(STATS_KEY); } catch (e) { /* ignore */ }
+  }
+
+  function recordResult(questionHtml, correct) {
+    if (!isAnalyzePerformance()) return;
+    var h = hashQuestion(questionHtml);
+    var stats = getStats();
+    if (!stats[h]) stats[h] = { seen: 0, correct: 0 };
+    stats[h].seen++;
+    if (correct) stats[h].correct++;
+    saveStats(stats);
+  }
+
+  function getQuestionStats(questionHtml) {
+    var h = hashQuestion(questionHtml);
+    var stats = getStats();
+    return stats[h] || null;
+  }
+
   window.PersonalDeck = {
     getDeck: getDeck,
     saveDeck: saveDeck,
     isInDeck: isInDeck,
     addToDeck: addToDeck,
     removeFromDeck: removeFromDeck,
-    toggleDeck: toggleDeck
+    toggleDeck: toggleDeck,
+    isAnalyzePerformance: isAnalyzePerformance,
+    setAnalyzePerformance: setAnalyzePerformance,
+    hashQuestion: hashQuestion,
+    getStats: getStats,
+    saveStats: saveStats,
+    clearStats: clearStats,
+    recordResult: recordResult,
+    getQuestionStats: getQuestionStats
   };
 })();

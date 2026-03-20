@@ -35,7 +35,34 @@ permalink: /personal-deck/
           <input type="number" id="max-cards" value="20" min="1" max="500">
           <button id="start-session-btn" class="deck-btn primary" disabled>Start Session</button>
         </div>
+        <div class="controls-row" style="margin-top: 10px;">
+          <span class="toggle-label">Analyze Personal Performance</span>
+          <label class="switch">
+            <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
+            <span class="slider round"></span>
+          </label>
+        </div>
         <p id="deck-summary" class="deck-summary-text"></p>
+      </div>
+
+      <!-- Difficult Questions Deck (shown only when analyze is on and there are difficult questions) -->
+      <div id="difficult-deck-section" style="display: none;">
+        <h2 class="difficult-heading">Difficult Questions</h2>
+        <div id="difficult-deck-container">
+          <div class="deck-item difficult-deck-item" data-type="difficult" data-id="difficult">
+            <div class="deck-item-info">
+              <span class="deck-item-badge difficult-badge">Difficult</span>
+              <strong class="deck-item-title">Difficult Questions</strong>
+              <span class="deck-item-count" id="difficult-count"></span>
+              <p class="deck-item-desc">Questions you have previously answered incorrectly. Practice these to improve your
+                weak areas.</p>
+            </div>
+            <button class="deck-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
+              title="Add to session">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
       </div>
 
       <h2>Your Deck</h2>
@@ -241,6 +268,67 @@ permalink: /personal-deck/
       margin-bottom: 15px;
       border-bottom: 2px solid #e1e4e8;
       padding-bottom: 8px;
+    }
+
+    /* Difficult Questions deck */
+    .difficult-heading {
+      color: #dc3545 !important;
+      border-bottom-color: #dc3545 !important;
+    }
+
+    .difficult-deck-item {
+      border-color: #dc3545 !important;
+      background: #fff5f5 !important;
+    }
+
+    .difficult-deck-item:hover {
+      border-color: #c82333 !important;
+    }
+
+    .difficult-deck-item.in-deck {
+      border-color: #dc3545 !important;
+      background: #ffe0e0 !important;
+    }
+
+    .difficult-badge {
+      background: #dc3545 !important;
+      color: white !important;
+    }
+
+    .difficult-add-btn.in-deck {
+      background: #dc3545 !important;
+      border-color: #dc3545 !important;
+    }
+
+    .difficult-stat {
+      font-size: 0.8em;
+      color: #dc3545;
+      margin-left: 6px;
+    }
+
+    /* Toggle label */
+    .toggle-label {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95em;
+    }
+
+    html.dark-mode .toggle-label {
+      color: #e0e0e0;
+    }
+
+    html.dark-mode .difficult-heading {
+      color: #ff6b6b !important;
+      border-bottom-color: #ff6b6b !important;
+    }
+
+    html.dark-mode .difficult-deck-item {
+      background: #2d1a1a !important;
+      border-color: #dc3545 !important;
+    }
+
+    html.dark-mode .difficult-deck-item.in-deck {
+      background: #3d1a1a !important;
     }
 
     .deck-subtitle {
@@ -970,8 +1058,12 @@ permalink: /personal-deck/
       var sessionReviewBtn = document.getElementById('session-review-btn');
       var sessionBackBtn = document.getElementById('session-back-btn');
 
-      var allItems = document.querySelectorAll('.deck-item');
-      var allAddBtns = document.querySelectorAll('.deck-add-btn');
+      var allItems = document.querySelectorAll('.deck-item:not(.difficult-deck-item)');
+      var allAddBtns = document.querySelectorAll('.deck-add-btn:not(#difficult-add-btn)');
+      var analyzeToggle = document.getElementById('analyzePerformanceToggle');
+      var difficultSection = document.getElementById('difficult-deck-section');
+      var difficultCountEl = document.getElementById('difficult-count');
+      var difficultAddBtn = document.getElementById('difficult-add-btn');
 
       // Session state
       var sessionCards = [];
@@ -1044,16 +1136,113 @@ permalink: /personal-deck/
           });
         }
 
+        // ---- Difficult Questions Deck ----
+        var difficultCards = [];
+        var hasDifficult = false;
+        if (PersonalDeck.isAnalyzePerformance()) {
+          difficultCards = getDifficultCards();
+          hasDifficult = difficultCards.length > 0;
+        }
+
+        if (PersonalDeck.isAnalyzePerformance() && hasDifficult) {
+          difficultSection.style.display = 'block';
+          difficultCountEl.textContent = '(' + difficultCards.length + ' cards)';
+          var difficultInDeck = deck.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
+          difficultAddBtn.classList.toggle('in-deck', difficultInDeck);
+          var dIcon = difficultAddBtn.querySelector('i');
+          dIcon.className = difficultInDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          difficultAddBtn.title = difficultInDeck ? 'Remove from session' : 'Add to session';
+          if (difficultInDeck) {
+            totalCards += difficultCards.length;
+          }
+        } else {
+          difficultSection.style.display = 'none';
+          // Remove difficult from deck if no longer applicable
+          if (deck.some(function (d) { return d.type === 'difficult'; })) {
+            PersonalDeck.removeFromDeck('difficult', 'difficult');
+          }
+        }
+
+        // ---- "Your Deck" entry for difficult questions ----
+        var difficultInDeck = deck.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
+        if (difficultInDeck && PersonalDeck.isAnalyzePerformance() && hasDifficult) {
+          selectedHtml += '<div class="deck-item in-deck difficult-deck-item" data-type="difficult" data-id="difficult">' +
+            '<div class="deck-item-info">' +
+            '<span class="deck-item-badge difficult-badge">Difficult</span>' +
+            '<strong class="deck-item-title">Difficult Questions</strong>' +
+            '<span class="deck-item-count">(' + difficultCards.length + ' cards)</span>' +
+            '</div>' +
+            '<button class="deck-add-btn in-deck deck-remove-selected" data-type="difficult" data-id="difficult" title="Remove from session">' +
+            '<i class="fa-solid fa-check"></i>' +
+            '</button>' +
+            '</div>';
+        }
+
         // Update summary and start button
         var maxCards = parseInt(maxCardsInput.value) || 20;
         var drawCount = Math.min(maxCards, totalCards);
-        if (deck.length > 0) {
+        if (deck.length > 0 || (difficultInDeck && hasDifficult)) {
           deckSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
           startBtn.disabled = false;
         } else {
           deckSummary.textContent = '';
           startBtn.disabled = true;
         }
+      }
+
+      // ---- Difficult questions helper ----
+      function getDifficultCards() {
+        var stats = PersonalDeck.getStats();
+        var cards = [];
+
+        // Scan all quiz questions
+        var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
+        for (var qi = 0; qi < quizIds.length; qi++) {
+          var qid = quizIds[qi];
+          var quizData = ALL_CARD_DATA.quizzes[qid];
+          for (var i = 0; i < quizData.questions.length; i++) {
+            var q = quizData.questions[i];
+            var h = PersonalDeck.hashQuestion(q.question);
+            var s = stats[h];
+            if (s && s.seen > 0 && s.correct < s.seen) {
+              cards.push({
+                cardType: 'quiz',
+                source: quizData.title,
+                data: q,
+                stats: s
+              });
+            }
+          }
+        }
+
+        // Scan all flashcard cards
+        var fcIds = Object.keys(ALL_CARD_DATA.flashcards);
+        for (var fi = 0; fi < fcIds.length; fi++) {
+          var fcid = fcIds[fi];
+          var fcData = ALL_CARD_DATA.flashcards[fcid];
+          for (var j = 0; j < fcData.cards.length; j++) {
+            var c = fcData.cards[j];
+            var h2 = PersonalDeck.hashQuestion(c.question);
+            var s2 = stats[h2];
+            if (s2 && s2.seen > 0 && s2.correct < s2.seen) {
+              cards.push({
+                cardType: 'flashcard',
+                source: fcData.title,
+                data: c,
+                stats: s2
+              });
+            }
+          }
+        }
+
+        // Sort by failure rate (highest first)
+        cards.sort(function (a, b) {
+          var rateA = (a.stats.seen - a.stats.correct) / a.stats.seen;
+          var rateB = (b.stats.seen - b.stats.correct) / b.stats.seen;
+          return rateB - rateA;
+        });
+
+        return cards;
       }
 
       // Bind add/remove buttons in available sections
@@ -1064,7 +1253,32 @@ permalink: /personal-deck/
         });
       });
 
+      // Bind difficult deck add button
+      difficultAddBtn.addEventListener('click', function () {
+        PersonalDeck.toggleDeck('difficult', 'difficult');
+        refreshLibrary();
+      });
+
       maxCardsInput.addEventListener('input', refreshLibrary);
+
+      // ---- Analyze Performance Toggle ----
+      analyzeToggle.checked = PersonalDeck.isAnalyzePerformance();
+
+      analyzeToggle.addEventListener('change', function () {
+        if (this.checked) {
+          PersonalDeck.setAnalyzePerformance(true);
+          refreshLibrary();
+        } else {
+          var shouldDelete = confirm('Do you want to delete your current performance statistics?');
+          if (shouldDelete) {
+            PersonalDeck.clearStats();
+          }
+          PersonalDeck.setAnalyzePerformance(false);
+          // Remove difficult deck from selection
+          PersonalDeck.removeFromDeck('difficult', 'difficult');
+          refreshLibrary();
+        }
+      });
 
       // ==================== SESSION ====================
 
@@ -1073,7 +1287,17 @@ permalink: /personal-deck/
         var cards = [];
 
         deck.forEach(function (entry) {
-          if (entry.type === 'quiz') {
+          if (entry.type === 'difficult') {
+            // Add difficult questions
+            var difficultCards = getDifficultCards();
+            difficultCards.forEach(function (dc) {
+              cards.push({
+                cardType: dc.cardType,
+                source: dc.source + ' (Difficult)',
+                data: dc.data
+              });
+            });
+          } else if (entry.type === 'quiz') {
             var quizData = ALL_CARD_DATA.quizzes[entry.id];
             if (!quizData) return;
             quizData.questions.forEach(function (q) {
@@ -1239,6 +1463,7 @@ permalink: /personal-deck/
                 });
                 sessionIncorrectIndices.push(sessionIsReview ? sessionReviewQueue[sessionReviewStep] : sessionCurrentStep);
               }
+              PersonalDeck.recordResult(q.question, isCorrect);
               correctAnswersEl.style.display = 'flex';
               explanationEl.classList.remove('hidden');
               explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1260,7 +1485,8 @@ permalink: /personal-deck/
             var correctIndicesSorted = correctOriginals.slice().sort().join(',');
             options.forEach(function (o) { o.setAttribute('disabled', 'true'); });
             submitBtn.classList.add('hidden');
-            if (selectedIndices === correctIndicesSorted) {
+            var isMultiCorrect = (selectedIndices === correctIndicesSorted);
+            if (isMultiCorrect) {
               selectedOpts.forEach(function (o) { o.classList.add('correct'); });
               sessionScore++;
             } else {
@@ -1273,6 +1499,7 @@ permalink: /personal-deck/
               });
               sessionIncorrectIndices.push(sessionIsReview ? sessionReviewQueue[sessionReviewStep] : sessionCurrentStep);
             }
+            PersonalDeck.recordResult(q.question, isMultiCorrect);
             correctAnswersEl.style.display = 'flex';
             explanationEl.classList.remove('hidden');
             explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1320,11 +1547,13 @@ permalink: /personal-deck/
 
         div.querySelector('.correct-btn').addEventListener('click', function () {
           sessionScore++;
+          PersonalDeck.recordResult(c.question, true);
           nextSessionCard();
         });
 
         div.querySelector('.incorrect-btn').addEventListener('click', function () {
           sessionIncorrectIndices.push(sessionIsReview ? sessionReviewQueue[sessionReviewStep] : sessionCurrentStep);
+          PersonalDeck.recordResult(c.question, false);
           nextSessionCard();
         });
       }

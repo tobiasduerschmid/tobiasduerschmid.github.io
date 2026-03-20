@@ -514,6 +514,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
       }
 
+      // Track performance
+      if (window.PersonalDeck && PersonalDeck.isAnalyzePerformance()) {
+        PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
+      }
+
       explanation.classList.remove('hidden');
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -532,7 +537,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       options.forEach(opt => opt.setAttribute('disabled', 'true'));
       submitBtn.classList.add('hidden');
 
-      if (selectedIndices === correctIndices) {
+      const isAnswerCorrect = (selectedIndices === correctIndices);
+      if (isAnswerCorrect) {
         selectedOptions.forEach(opt => opt.classList.add('correct'));
         score++;
       } else {
@@ -550,6 +556,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
         });
 
         incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+      }
+
+      // Track performance
+      if (window.PersonalDeck && PersonalDeck.isAnalyzePerformance()) {
+        PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
       }
 
       explanation.classList.remove('hidden');
