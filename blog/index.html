@@ -170,10 +170,10 @@ layout: blog
       darkModeToggle.addEventListener('change', function () {
         if (this.checked) {
           document.documentElement.classList.add('dark-mode');
-          document.cookie = "dark-mode=true; path=/; max-age=" + (60 * 60 * 24 * 365);
+          document.cookie = "dark-mode=true; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
         } else {
           document.documentElement.classList.remove('dark-mode');
-          document.cookie = "dark-mode=false; path=/; max-age=" + (60 * 60 * 24 * 365);
+          document.cookie = "dark-mode=false; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
         }
       });
     }
@@ -182,10 +182,10 @@ layout: blog
       highlightToggle.addEventListener('change', function () {
         if (this.checked) {
           document.body.classList.remove('highlights-off');
-          document.cookie = "highlights=true; path=/; max-age=" + (60 * 60 * 24 * 365);
+          document.cookie = "highlights=true; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
         } else {
           document.body.classList.add('highlights-off');
-          document.cookie = "highlights=false; path=/; max-age=" + (60 * 60 * 24 * 365);
+          document.cookie = "highlights=false; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
         }
       });
     }

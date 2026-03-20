@@ -6,7 +6,7 @@
   function setCookie(name, value, days) {
     var d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/';
+    document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
   }
 
   function getCookie(name) {

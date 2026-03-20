@@ -1,5 +1,6 @@
 ---
 permalink: /se-deck/
+title: "SE Deck"
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -36,16 +37,19 @@ permalink: /se-deck/
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="deck-library">
-      <h1>Personal Deck</h1>
-      <p class="deck-subtitle">Build your own study deck by adding quizzes and flashcard sets, then start a session to
-        review shuffled cards.</p>
+      <h1>SE Study Deck Playground</h1>
+      <p class="deck-subtitle"> Make studying fun while following <a
+          href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
+        your
+        own study deck by adding quizzes and flashcard sets, then start a session to review shuffled cards.</p>
 
       <!-- Session Controls -->
       <div id="deck-controls">
         <div class="controls-row activate-row" style="justify-content: space-between;">
           <span style="display: inline-flex; align-items: center; gap: 6px;">
             <span class="toggle-label">Activate Personal Deck</span>
-            <span class="info-btn" tabindex="0" aria-label="Info about personal deck">?<span class="info-tooltip">Allows you to add flash cards and quizzes to your personal deck stored in a local cookie.</span></span>
+            <span class="info-btn" tabindex="0" aria-label="Info about personal deck">?<span class="info-tooltip">Allows
+                you to add flash cards and quizzes to your personal deck stored in a local cookie.</span></span>
           </span>
           <label class="switch">
             <input type="checkbox" id="activatePersonalDeckToggle" aria-label="Toggle personal deck activation">
@@ -56,7 +60,11 @@ permalink: /se-deck/
           <div class="controls-row" style="justify-content: space-between; margin-top: 10px;">
             <span style="display: inline-flex; align-items: center; gap: 6px;">
               <span class="toggle-label">Track Performance</span>
-              <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span class="info-tooltip">Allows SE Deck to track your performance on each question to be stored locally in a cookie to enable you to easily revisit the questions you often get wrong. Your personal data remains on your local device and is not shared with the provider of the site.</span></span>
+              <span class="info-btn" tabindex="0" aria-label="Info about performance tracking">?<span
+                  class="info-tooltip">Allows SE Deck to track your performance on each question to be stored locally in
+                  your browser's localStorage to enable you to easily revisit the questions you often get wrong. This will track your
+                  performance across quizzes and flash cards across the entire site, not just this page. Your personal
+                  data remains on your local device and is not shared with the provider of the site.</span></span>
             </span>
             <label class="switch">
               <input type="checkbox" id="analyzePerformanceToggle" aria-label="Toggle performance analysis">
@@ -72,115 +80,116 @@ permalink: /se-deck/
         </div>
       </div>
 
+
       <div id="deck-library-sections">
 
-      <!-- Difficult Questions Deck (shown only when analyze is on and there are difficult questions) -->
-      <div id="difficult-deck-section" style="display: none;">
-        <h2 class="difficult-heading">Difficult Questions</h2>
-        <div id="difficult-deck-container">
-          <div class="deck-item difficult-deck-item" data-type="difficult" data-id="difficult">
-            <div class="deck-item-info">
-              <span class="deck-item-badge difficult-badge">Difficult</span>
-              <strong class="deck-item-title">Difficult Questions</strong>
-              <span class="deck-item-count" id="difficult-count"></span>
-              <p class="deck-item-desc">Questions you have often answered incorrectly. Practice these to improve your
-                weak areas.</p>
+        <!-- Difficult Questions Deck (shown only when analyze is on and there are difficult questions) -->
+        <div id="difficult-deck-section" style="display: none;">
+          <h2 class="difficult-heading">Difficult Questions</h2>
+          <div id="difficult-deck-container">
+            <div class="deck-item difficult-deck-item" data-type="difficult" data-id="difficult">
+              <div class="deck-item-info">
+                <span class="deck-item-badge difficult-badge">Difficult</span>
+                <strong class="deck-item-title">Difficult Questions</strong>
+                <span class="deck-item-count" id="difficult-count"></span>
+                <p class="deck-item-desc">Questions you have often answered incorrectly. Practice these to improve your
+                  weak areas.</p>
+              </div>
+              <button class="deck-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
+                title="Add to session">
+                <i class="fa-solid fa-plus"></i>
+              </button>
             </div>
-            <button class="deck-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
-              title="Add to session">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h2 style="margin: 0;">Your Deck</h2>
+          <button id="empty-deck-btn" class="deck-btn secondary" title="Empty your deck">Empty Deck</button>
+        </div>
+        <div id="deck-selected">
+          <p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>
+        </div>
+
+        <h2>Available Quizzes</h2>
+        <div id="available-quizzes">
+          {% for quiz_entry in site.data.quizzes %}
+          {% assign qid = quiz_entry[0] %}
+          {% assign qdata = quiz_entry[1] %}
+          {% if qdata.questions %}
+          <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
+            <div class="deck-item-info">
+              <span class="deck-item-badge quiz-badge">Quiz</span>
+              <strong class="deck-item-title">{{ qdata.title }}</strong>
+              <span class="deck-item-count">({{ qdata.questions | size }} questions)</span>
+              <p class="deck-item-desc">{{ qdata.description }}</p>
+            </div>
+            <button class="deck-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to deck">
               <i class="fa-solid fa-plus"></i>
             </button>
           </div>
-        </div>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 14px;">
-        <h2 style="margin: 0;">Your Deck</h2>
-        <button id="empty-deck-btn" class="deck-btn secondary" title="Empty your deck">Empty Deck</button>
-      </div>
-      <div id="deck-selected">
-        <p class="empty-deck-msg">Your deck is empty. Add quizzes and flashcard sets below.</p>
-      </div>
-
-      <h2>Available Quizzes</h2>
-      <div id="available-quizzes">
-        {% for quiz_entry in site.data.quizzes %}
-        {% assign qid = quiz_entry[0] %}
-        {% assign qdata = quiz_entry[1] %}
-        {% if qdata.questions %}
-        <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
-          <div class="deck-item-info">
-            <span class="deck-item-badge quiz-badge">Quiz</span>
-            <strong class="deck-item-title">{{ qdata.title }}</strong>
-            <span class="deck-item-count">({{ qdata.questions | size }} questions)</span>
-            <p class="deck-item-desc">{{ qdata.description }}</p>
-          </div>
-          <button class="deck-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to deck">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-        {% elsif qdata.decks %}
-        {% assign meta_count = 0 %}
-        {% for deck_id in qdata.decks %}
+          {% elsif qdata.decks %}
+          {% assign meta_count = 0 %}
+          {% for deck_id in qdata.decks %}
           {% assign ref_data = site.data.quizzes[deck_id] %}
           {% if ref_data and ref_data.questions %}
-            {% assign meta_count = meta_count | plus: ref_data.questions.size %}
+          {% assign meta_count = meta_count | plus: ref_data.questions.size %}
           {% endif %}
-        {% endfor %}
-        <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
-          <div class="deck-item-info">
-            <span class="deck-item-badge quiz-badge">Quiz Deck</span>
-            <strong class="deck-item-title">{{ qdata.title }}</strong>
-            <span class="deck-item-count">({{ meta_count }} questions)</span>
-            <p class="deck-item-desc">{{ qdata.description }}</p>
+          {% endfor %}
+          <div class="deck-item" data-type="quiz" data-id="{{ qid }}">
+            <div class="deck-item-info">
+              <span class="deck-item-badge quiz-badge">Quiz Deck</span>
+              <strong class="deck-item-title">{{ qdata.title }}</strong>
+              <span class="deck-item-count">({{ meta_count }} questions)</span>
+              <p class="deck-item-desc">{{ qdata.description }}</p>
+            </div>
+            <button class="deck-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to deck">
+              <i class="fa-solid fa-plus"></i>
+            </button>
           </div>
-          <button class="deck-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to deck">
-            <i class="fa-solid fa-plus"></i>
-          </button>
+          {% endif %}
+          {% endfor %}
         </div>
-        {% endif %}
-        {% endfor %}
-      </div>
 
-      <h2>Available Flashcard Sets</h2>
-      <div id="available-flashcards">
-        {% for fc_entry in site.data.flashcards %}
-        {% assign fcid = fc_entry[0] %}
-        {% assign fcdata = fc_entry[1] %}
-        {% if fcdata.cards %}
-        <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
-          <div class="deck-item-info">
-            <span class="deck-item-badge flashcard-badge">Flashcard</span>
-            <strong class="deck-item-title">{{ fcdata.title }}</strong>
-            <span class="deck-item-count">({{ fcdata.cards | size }} cards)</span>
-            <p class="deck-item-desc">{{ fcdata.description }}</p>
+        <h2>Available Flashcard Sets</h2>
+        <div id="available-flashcards">
+          {% for fc_entry in site.data.flashcards %}
+          {% assign fcid = fc_entry[0] %}
+          {% assign fcdata = fc_entry[1] %}
+          {% if fcdata.cards %}
+          <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
+            <div class="deck-item-info">
+              <span class="deck-item-badge flashcard-badge">Flashcard</span>
+              <strong class="deck-item-title">{{ fcdata.title }}</strong>
+              <span class="deck-item-count">({{ fcdata.cards | size }} cards)</span>
+              <p class="deck-item-desc">{{ fcdata.description }}</p>
+            </div>
+            <button class="deck-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to deck">
+              <i class="fa-solid fa-plus"></i>
+            </button>
           </div>
-          <button class="deck-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to deck">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-        {% elsif fcdata.decks %}
-        {% assign meta_count = 0 %}
-        {% for deck_id in fcdata.decks %}
+          {% elsif fcdata.decks %}
+          {% assign meta_count = 0 %}
+          {% for deck_id in fcdata.decks %}
           {% assign ref_data = site.data.flashcards[deck_id] %}
           {% if ref_data and ref_data.cards %}
-            {% assign meta_count = meta_count | plus: ref_data.cards.size %}
+          {% assign meta_count = meta_count | plus: ref_data.cards.size %}
           {% endif %}
-        {% endfor %}
-        <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
-          <div class="deck-item-info">
-            <span class="deck-item-badge flashcard-badge">Flashcard Deck</span>
-            <strong class="deck-item-title">{{ fcdata.title }}</strong>
-            <span class="deck-item-count">({{ meta_count }} cards)</span>
-            <p class="deck-item-desc">{{ fcdata.description }}</p>
+          {% endfor %}
+          <div class="deck-item" data-type="flashcard" data-id="{{ fcid }}">
+            <div class="deck-item-info">
+              <span class="deck-item-badge flashcard-badge">Flashcard Deck</span>
+              <strong class="deck-item-title">{{ fcdata.title }}</strong>
+              <span class="deck-item-count">({{ meta_count }} cards)</span>
+              <p class="deck-item-desc">{{ fcdata.description }}</p>
+            </div>
+            <button class="deck-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to deck">
+              <i class="fa-solid fa-plus"></i>
+            </button>
           </div>
-          <button class="deck-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to deck">
-            <i class="fa-solid fa-plus"></i>
-          </button>
+          {% endif %}
+          {% endfor %}
         </div>
-        {% endif %}
-        {% endfor %}
-      </div>
 
       </div><!-- /#deck-library-sections -->
     </div>
@@ -212,70 +221,82 @@ permalink: /se-deck/
       </div>
     </div>
 
+  <!-- Privacy / Cookie Notice -->
+  <p class="cookie-notice">
+    <strong>Cookie &amp; Privacy Notice:</strong> SE Deck stores your preferences
+    (<em>personal deck</em> and <em>track performance</em> settings) in browser cookies,
+    and your per-question performance history in browser "localStorage".
+    All data remains on your device — nothing is transmitted to or stored on any server.
+    You may delete your data at any time: turn off <em>Activate Personal Deck</em> to
+    clear deck preferences, or turn off <em>Track Performance</em> and confirm deletion
+    to erase all performance statistics.
+    To comply with FERPA laws, this tool keeps all educational performance data strictly local.
+  </p>
+
   </div>
 
   <!-- ==================== EMBEDDED CARD DATA ==================== -->
   <script>
     var ALL_CARD_DATA = {
       quizzes: {
-        {% for quiz_entry in site.data.quizzes %}{% assign qid = quiz_entry[0] %}{% assign qdata = quiz_entry[1] %}{% if qdata.questions %}
-        {{ qid | jsonify }}: {
-          title: {{ qdata.title | jsonify }},
-          description: {{ qdata.description | default: "" | jsonify }},
-          questions: [
-            {% for q in qdata.questions %}{
-              question: {{ q.question | markdownify | jsonify }},
-              type: {{ q.type | default: "single" | jsonify }},
-              options: [{% for opt in q.options %}{{ opt | markdownify | jsonify }},{% endfor %}],
-              correct_index: {{ q.correct_index | jsonify }},
-              correct_indices: {{ q.correct_indices | jsonify }},
-              explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
-            },{% endfor %}
+        {% for quiz_entry in site.data.quizzes %} {% assign qid = quiz_entry[0] %} {% assign qdata = quiz_entry[1] %} {% if qdata.questions %}
+    { { qid | jsonify } }: {
+      title: { { qdata.title | jsonify } },
+      description: { { qdata.description | default: "" | jsonify } },
+      questions: [
+        {% for q in qdata.questions %} {
+      question: { { q.question | markdownify | jsonify } },
+      type: { { q.type | default: "single" | jsonify } },
+      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
+    correct_index: { { q.correct_index | jsonify } },
+    correct_indices: { { q.correct_indices | jsonify } },
+    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
+            }, {% endfor %}
           ]
         },
-        {% elsif qdata.decks %}
-        {{ qid | jsonify }}: {
-          title: {{ qdata.title | jsonify }},
-          description: {{ qdata.description | default: "" | jsonify }},
-          questions: [
-            {% for deck_id in qdata.decks %}{% assign ref_data = site.data.quizzes[deck_id] %}{% if ref_data and ref_data.questions %}{% for q in ref_data.questions %}{
-              question: {{ q.question | markdownify | jsonify }},
-              type: {{ q.type | default: "single" | jsonify }},
-              options: [{% for opt in q.options %}{{ opt | markdownify | jsonify }},{% endfor %}],
-              correct_index: {{ q.correct_index | jsonify }},
-              correct_indices: {{ q.correct_indices | jsonify }},
-              explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
-            },{% endfor %}{% endif %}{% endfor %}
+    {% elsif qdata.decks %}
+    { { qid | jsonify } }: {
+      title: { { qdata.title | jsonify } },
+      description: { { qdata.description | default: "" | jsonify } },
+      questions: [
+        {% for deck_id in qdata.decks %} {% assign ref_data = site.data.quizzes[deck_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
+      question: { { q.question | markdownify | jsonify } },
+      type: { { q.type | default: "single" | jsonify } },
+      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
+    correct_index: { { q.correct_index | jsonify } },
+    correct_indices: { { q.correct_indices | jsonify } },
+    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
+            }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
-        {% endif %}{% endfor %}
+    {% endif %} {% endfor %}
       },
-      flashcards: {
-        {% for fc_entry in site.data.flashcards %}{% assign fcid = fc_entry[0] %}{% assign fcdata = fc_entry[1] %}{% if fcdata.cards %}
-        {{ fcid | jsonify }}: {
-          title: {{ fcdata.title | jsonify }},
-          description: {{ fcdata.description | default: "" | jsonify }},
-          cards: [
-            {% for card in fcdata.cards %}{
-              question: {{ card.question | markdownify | jsonify }},
-              answer: {{ card.answer | markdownify | jsonify }},
-              explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
-            },{% endfor %}
+    flashcards: {
+      {% for fc_entry in site.data.flashcards %} {% assign fcid = fc_entry[0] %} {% assign fcdata = fc_entry[1] %} {% if fcdata.cards %}
+      { { fcid | jsonify } }: {
+        title: { { fcdata.title | jsonify } },
+        description: { { fcdata.description | default: "" | jsonify } },
+        cards: [
+          {% for card in fcdata.cards %} {
+        question: { { card.question | markdownify | jsonify } },
+        answer: { { card.answer | markdownify | jsonify } },
+        explanation: { { card.explanation | default: "" | markdownify | jsonify } }
+      }, {% endfor %}
+          ]
+    },
+    {% elsif fcdata.decks %}
+    { { fcid | jsonify } }: {
+      title: { { fcdata.title | jsonify } },
+      description: { { fcdata.description | default: "" | jsonify } },
+      cards: [
+        {% for deck_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[deck_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
+      question: { { card.question | markdownify | jsonify } },
+      answer: { { card.answer | markdownify | jsonify } },
+      explanation: { { card.explanation | default: "" | markdownify | jsonify } }
+    }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
-        {% elsif fcdata.decks %}
-        {{ fcid | jsonify }}: {
-          title: {{ fcdata.title | jsonify }},
-          description: {{ fcdata.description | default: "" | jsonify }},
-          cards: [
-            {% for deck_id in fcdata.decks %}{% assign ref_data = site.data.flashcards[deck_id] %}{% if ref_data and ref_data.cards %}{% for card in ref_data.cards %}{
-              question: {{ card.question | markdownify | jsonify }},
-              answer: {{ card.answer | markdownify | jsonify }},
-              explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
-            },{% endfor %}{% endif %}{% endfor %}
-          ]
-        },
-        {% endif %}{% endfor %}
+    {% endif %} {% endfor %}
       }
     };
   </script>
@@ -392,7 +413,7 @@ permalink: /se-deck/
       line-height: 1.4;
       z-index: 100;
       pointer-events: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
     .info-tooltip::after {
@@ -424,7 +445,7 @@ permalink: /se-deck/
     .confirm-modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 200;
     }
 
@@ -437,7 +458,7 @@ permalink: /se-deck/
       border-radius: 10px;
       padding: 24px 28px;
       z-index: 201;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
       max-width: 360px;
       width: 90%;
       text-align: center;
@@ -1188,6 +1209,26 @@ permalink: /se-deck/
       opacity: 0.4;
       pointer-events: none;
       user-select: none;
+    }
+
+    /* Cookie / Privacy Notice */
+    .cookie-notice {
+      font-size: 0.78em;
+      color: #666;
+      background: #f8f9fa;
+      border: 1px solid #e1e4e8;
+      border-left: 3px solid #2774AE;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 30px 0 10px 0;
+      line-height: 1.5;
+    }
+
+    html.dark-mode .cookie-notice {
+      background: #1e1e1e;
+      border-color: #444;
+      border-left-color: #4da3ff;
+      color: #aaa;
     }
   </style>
 
