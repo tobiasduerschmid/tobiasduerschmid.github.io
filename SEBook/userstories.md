@@ -147,29 +147,142 @@ For example:
 
 ## Small
 
+### The "Small" Criterion in Agile User Stories
 
-"*As a student, I want direct integration with Piazza, Gradescope, Google Drive, and Zoom so that I do not need to open them in separate pages. 
-Given the student is logged in, when the student uses the Piazza, Gradescope, Google Drive, or Zoom integration, then the linked services do not require separate authentication, and data is transferred automatically from/to BruinLearn, and no privacy violations (as defined in the federal law “FERPA”) occur in the external apps.*"
+**What it is and Why it Matters**
+The "Small" criterion states that a user story should be appropriately sized so that it can be comfortably completed by the development team within a single iteration or sprint (typically 1 to 4 weeks). If a story is too large, it is often referred to as an "Epic" and must be broken down.
 
-The user story contains multiple, separate features (Piazza, Gradescope, Google Drive, and Zoom) that can be broken into separate user stories that are each valuable on their own.
+This criterion matters for several fundamental reasons:
+* **Predictability and Estimation:** Large tasks are notoriously difficult to estimate accurately. The smaller the story, the higher the confidence the team has in their estimation of the effort required.
+* **Risk Reduction:** If a massive user story spans an entire sprint (or spills over into multiple sprints), the team risks delivering zero value if they hit a roadblock. Smaller stories ensure a steady, continuous flow of delivered value.
+* **Faster Feedback Loops:** Smaller stories get to a "Done" state faster, meaning they can be tested, reviewed by the product owner, and put in front of users much sooner to gather valuable feedback.
 
+**How to Evaluate It**
+To determine if a user story is small enough, ask:
+1. **Can it be completed in one sprint?** If the answer is no, or "maybe, if everything goes perfectly," the story is too big.
+2. **Does it contain complex compound conjunctions?** Words like *and*, *or*, and *but* in the story description (e.g., "I want to register *and* manage my profile *and* upload photos") often indicate that multiple stories are hiding inside one.
+3. **Are there too many Acceptance Criteria?** If a story has a massive checklist of complex acceptance criteria spanning multiple different workflows, it is likely an Epic.
 
-"As a registered shopper, I want to add items to my cart, enter my shipping address, provide credit card details, and receive a confirmation email with a tracking number so that I can complete my purchase in one go."
-
-
+**How to Improve It**
+If a story violates the Small criterion, the team must collaborate to split it into smaller, independently valuable pieces. Common ways to split stories include:
+* **Splitting by Workflow Steps:** Instead of "As a user, I want to manage my online cart," split it into adding items, removing items, and applying promo codes.
+* **Splitting by Happy/Sad Paths:** Build the "happy path" (successful transaction) as one story, and handle the error states (declined cards, expired sessions) in subsequent stories.
+* **Splitting by Platform/Interface:** Do the web interface first, then the mobile interface.
 
 
 ## Testable
 
 
-"As a site administrator, I want the dashboard to load 'fast' and feel 'snappy' when I log in so that I don't get frustrated with the interface."
+**What it is and Why it Matters**
+The "Testable" criterion dictates that a user story must have clear, objective, and measurable conditions that allow the team to verify when the work is officially complete. If a story is not testable, it can never truly be considered "Done." 
+
+This criterion matters for several crucial reasons:
+* **Shared Understanding:** It forces the product owner and the development team to align on the exact expectations. It removes ambiguity and prevents the dreaded "that's not what I meant" conversation at the end of a sprint.
+* **Proving Value:** A user story represents a slice of business value. If you cannot test the story, you cannot prove that it successfully delivers that value to the user.
+* **Enabling Quality Assurance:** Testable stories allow QA engineers (and developers practicing Test-Driven Development) to write their test cases—whether manual or automated—before a single line of production code is written.
+
+**How to Evaluate It**
+To determine if a user story is testable, ask yourself the following questions:
+1. **Can I write a definitive pass/fail test for this?** If the answer relies on someone's opinion or mood, it is not testable.
+2. **Does the story contain "weasel words"?** Look out for subjective adjectives and adverbs like *fast, easy, intuitive, beautiful, modern, user-friendly, robust,* or *seamless*. These words are red flags that the story lacks objective boundaries.
+3. **Are the Acceptance Criteria clear?** Does the story have defined boundaries that outline specific scenarios and edge cases?
+
+**How to Improve It**
+If you find a story that violates the Testable criterion, you can improve it by replacing subjective language with quantifiable metrics and concrete scenarios:
+* **Quantify Adjectives:** Replace subjective terms with hard numbers. Change "loads fast" to "loads in under 2 seconds." Change "supports a lot of users" to "supports 10,000 concurrent users."
+* **Use the Given/When/Then Format:** Borrow from Behavior-Driven Development (BDD) to write clear acceptance criteria. Establish the starting state (*Given*), the action taken (*When*), and the expected, observable outcome (*Then*).
+* **Define "Intuitive" or "Easy":** If the goal is a "user-friendly" interface, make it testable by tying it to a metric, such as: "A new user can complete the checkout process in fewer than 3 clicks without relying on a help menu."
+
+---
+
+### Examples of Stories Violating ONLY the Testable Criterion
+
+Below are two user stories that are not testable but still satisfy (most) other INVEST criteria.
+
+**Example 1: The Subjective UI Requirement**
+> *"As a marketing manager, I want the new campaign landing page to feature a **gorgeous and modern** design, so that it appeals to our younger demographic."*
+
+* **Independent:** Yes. It doesn't inherently rely on other features being built first.
+* **Negotiable:** Yes. The exact layout and tech used to build it are open to discussion.
+* **Valuable:** Yes. A landing page to attract a younger demographic provides clear business value.
+* **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page.
+* **Small:** Yes. Building a single landing page easily fits within a single sprint.
+* **Why it violates Testable:** "Gorgeous," "modern," and "appeals to" are completely subjective. What one developer thinks is modern, the marketing manager might think is ugly. 
+* **How to fix it:** Tie it to a specific, measurable design system or user-testing metric. *(e.g., "Acceptance Criteria: The design strictly adheres to the new V2 Brand Guidelines and passes a 5-second usability test with a 4/5 rating from a focus group of 18-24 year olds.")*
+
+**Example 2: The Vague Performance Requirement**
+> *"As a data analyst, I want the monthly sales report to generate **instantly**, so that my workflow isn't interrupted by loading screens."*
+
+* **Independent:** Yes. Optimizing or building this report can be done independently.
+* **Negotiable:** Yes. The team can negotiate *how* to achieve the speed (e.g., caching, database indexing, background processing).
+* **Valuable:** Yes. Saving the analyst's time is a clear operational benefit.
+* **Small:** Yes. It is a focused optimization on a single report.
+* **Why it violates Testable:** "Instantly" is physically impossible in computing, and it is a highly subjective standard. Does instantly mean 0.1 seconds, or 1.5 seconds? Without a benchmark, a test script cannot verify if the feature passes or fails.
+* **Estimable:** No. Without a clear definition of "instantly", the team cannot estimate the effort required to build the feature. Violations of testable are often also not estimable. In the example above, the Subjective UI was still estiable, because independent of the specific definition of "modern", the implementation effort would not change signifiantly, just the specific UI that would be chosen would change.
+* **How to fix it:** Replace the subjective word with a quantifiable service level indicator. *(e.g., "Acceptance Criteria: Given the database contains 5 years of sales data, when the user requests the monthly sales report, then the data renders on screen in under 2.5 seconds at the 95th percentile.")*
+
+
+**Example 3: The Subjective Audio Requirement**
+> *"As a podcast listener, I want the app's default intro chime to play at a **pleasant volume**, so that it doesn't startle me when I open the app."*
+
+* **Independent:** Yes. Adjusting the audio volume doesn't rely on other features.
+* **Negotiable:** Yes. The exact decibel level or method of adjustment is open to discussion.
+* **Valuable:** Yes. Improving user comfort directly enhances the user experience.
+* **Estimable:** Yes. Changing a default audio volume variable or asset is a trivial, highly predictable task (e.g., a 1-point story). The developers know exactly *how* much effort is involved.
+* **Small:** Yes. It will take a few minutes to implement.
+* **Why it violates Testable:** "Pleasant volume" is entirely subjective. A volume that is pleasant in a quiet library will be inaudible on a noisy subway. Because there is no objective baseline, QA cannot definitively pass or fail the test. 
+* **How to fix it:** *"Acceptance Criteria: The default intro chime must be normalized to -16 LUFS (Loudness Units relative to Full Scale)."*
+
 
 ## FAQ on INVEST
 
 ### How are Estimable and Testable different?
 
+**Estimable** refers to the ability of developers to predict the size, cost, or time required to deliver a story. This attribute relies on the story being understood well enough and having a clear enough scope to put useful bounds on those guesses.
+
+**Testable** means that a story can be verified through objective acceptance criteria. A story is considered testable if there is a definitive "Yes" or "No" answer to whether its objectives have been achieved.
+
+In practice, these two are closely linked: if a story is not testable because it uses vague terms like "fast" or "high accuracy," it becomes nearly impossible to estimate the actual effort needed to satisfy it.
+But that is not always the case.
+
+Here are examples of user stories that isolate those specific violations of the INVEST criteria:
+
+ **Violates Testable but not Estimable**
+**User Story:** *"As a site administrator, I want the dashboard to feel **snappy** when I log in so that I don't get frustrated with the interface."*
+
+*   **Why it violates Testable:** Terms like "snappy" or "fast" are subjective. Without a specific metric (e.g., "loads in under 2 seconds"), there is no objective "Yes" or "No" answer to determine if the story is done. 
+*   **Why it is still Estimable:** A developer might still estimate this as a "small" task if they assume it just requires basic front-end optimization, even though they can't formally verify the "snappy" feel.
+
+ **Violates Estimable but not Testable**
+**User Story:** *"As a safety officer, I want the system to **automatically identify every pedestrian** in this complex, low-light video feed."*
+
+*   **Why it violates Estimable:** This is a "research project". Because the technical implementation is unknown or highly innovative, developers cannot put useful bounds on the time or cost required to solve it.
+*   **Why it is still Testable:** It is perfectly testable; you could poll 1,000 humans to verify if the software's identifications match reality. The outcome is clear, but the effort to reach it is not.
+*   **What about Small?** This user story is not small. It is a very large feature that takes a long time to implement.
+
 
 ### How are Estimable and Small different?
+
+While they are related, **Estimable** and **Small** focus on different dimensions of a user story's readiness for development.
+
+### **Estimable: Predictability of Effort**
+Estimable refers to the developers' ability to provide a reasonable judgment regarding the size, cost, or time required to deliver a story.
+*   **Requirements**: For a story to be estimable, it must be understood well enough and be stable enough that developers can put "useful bounds" on their guesses. 
+*   **Barriers**: A story may fail this criterion if developers lack domain knowledge, technical knowledge (requiring a "technical spike" to learn), or if the story is so large (an epic) that its complexity is hidden.
+*   **Goal**: It ensures the Product Owner can prioritize stories by weighing their value against their cost.
+
+### **Small: Manageability of Scope**
+Small refers to the physical magnitude of the work. A story should be a manageable chunk that can be completed within a single iteration or sprint.
+*   **Ideal Size**: Most teams prefer stories that represent between half a day and two weeks of work. 
+*   **Splitting**: If a story is too big, it should be split into smaller, still-valuable "vertical slices" of functionality. However, a story shouldn't be so small (like a "bag of leaves") that it loses its meaningful context or value to the user.
+*   **Goal**: Smaller stories provide more scheduling flexibility and help maintain momentum through continuous delivery.
+
+### **Key Differences**
+1.  **Nature of the Constraint**: **Small** is a constraint on **volume**, while **Estimable** is a constraint on **clarity**.
+2.  **Accuracy vs. Size**: While smaller stories tend to get more accurate estimates, a story can be small but still unestimatable. For example, a "Research Project" or investigative spike might involve a very small amount of work (reading one document), but because the outcome is unknown, it remains impossible to estimate the time required to actually solve the problem.
+3.  **Predictability vs. Flow**: Estimability is necessary for **planning** (knowing what fits in a release), while Smallness is necessary for **flow** (ensuring work moves through the system without bottlenecks).
+
+
 
 ### Should bug reports be user stories?
     
@@ -177,7 +290,6 @@ Mike Cohn explicitly advocates for this unified approach, stating that the best 
 
 From the [Extreme Programming (XP)](/SEBook/process/xp) perspective, translating a bug report into a narrative user story addresses only the process layer; the technical reality is that a bug is a missing test. Kent Beck argues that problem reports must come with *test cases* demonstrating the problem in code {% cite beck2004XPExplained %}. 
 When a developer encounters or is assigned a problem, their immediate action must be to write an automated unit or functional test that isolates the issue {% cite beck2004XPExplained %}. In this paradigm, a bug report is fundamentally an *executable specification*. Writing the story card is merely a placeholder; the true confirmation of the defect's existence—and its subsequent resolution—is proven by a test that fails, and then passes {% cite beck2004XPExplained %}. 
-
 
 
 # Applicability
