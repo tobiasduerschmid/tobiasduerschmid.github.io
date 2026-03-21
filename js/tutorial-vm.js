@@ -140,26 +140,26 @@
     this.root.classList.add('tvm-root');
     this.root.innerHTML =
       '<div class="tvm-loading">' +
-        '<div class="tvm-loading-spinner"></div>' +
-        '<div class="tvm-loading-text">Loading…</div>' +
+      '<div class="tvm-loading-spinner"></div>' +
+      '<div class="tvm-loading-text">Loading…</div>' +
       '</div>' +
       '<div class="tvm-container" style="display:none">' +
-        '<div class="tvm-instructions-panel">' +
-          '<div class="tvm-step-nav"></div>' +
-          '<div class="tvm-step-content"></div>' +
-        '</div>' +
-        '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
-        '<div class="tvm-workspace">' +
-          '<div class="tvm-editor-panel">' +
-            '<div class="tvm-editor-tabs"></div>' +
-            '<div class="tvm-editor-container"></div>' +
-          '</div>' +
-          '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
-          '<div class="tvm-terminal-panel">' +
-            '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
-            '<div class="tvm-terminal-container"></div>' +
-          '</div>' +
-        '</div>' +
+      '<div class="tvm-instructions-panel">' +
+      '<div class="tvm-step-nav"></div>' +
+      '<div class="tvm-step-content"></div>' +
+      '</div>' +
+      '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
+      '<div class="tvm-workspace">' +
+      '<div class="tvm-editor-panel">' +
+      '<div class="tvm-editor-tabs"></div>' +
+      '<div class="tvm-editor-container"></div>' +
+      '</div>' +
+      '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
+      '<div class="tvm-terminal-panel">' +
+      '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
+      '<div class="tvm-terminal-container"></div>' +
+      '</div>' +
+      '</div>' +
       '</div>';
 
     this.loadingEl = this.root.querySelector('.tvm-loading');
@@ -189,10 +189,10 @@
   TutorialVM.prototype._showError = function (msg) {
     this.root.innerHTML =
       '<div class="tvm-error">' +
-        '<h3>Tutorial Error</h3>' +
-        '<p>' + msg + '</p>' +
-        '<p class="tvm-error-hint">Make sure you have run <code>./vm/setup.sh</code> to download the VM image.</p>' +
-        '<button onclick="location.reload()">Retry</button>' +
+      '<h3>Tutorial Error</h3>' +
+      '<p>' + msg + '</p>' +
+      '<p class="tvm-error-hint">Make sure you have run <code>./vm/setup.sh</code> to download the VM image.</p>' +
+      '<button onclick="location.reload()">Retry</button>' +
       '</div>';
   };
 
@@ -349,8 +349,10 @@
         });
 
         // Wire serial port output → xterm (permanent)
+        // When _muted is true, output is suppressed (used during silent file sync)
+        self._muted = false;
         self.emulator.add_listener('serial0-output-byte', function (byte) {
-          self.term.write(String.fromCharCode(byte));
+          if (!self._muted) self.term.write(String.fromCharCode(byte));
         });
 
         // Detect boot prompt (separate temporary listener)
@@ -389,9 +391,10 @@
   };
 
   TutorialVM.prototype._setupFilesystem = function () {
-    // The 9p filesystem is already mounted by /init at /tutorial.
-    // We just ensure the VM is ready and cd to /tutorial.
-    this.sendCommand('cd /tutorial');
+    // Ensure /tutorial directory exists (it may already from the rootfs).
+    // The 9p mount may not be available depending on kernel config, so
+    // we use serial-port file sync instead of create_file().
+    this.sendCommand('mkdir -p /tutorial && cd /tutorial');
     return delay(300);
   };
 
@@ -518,8 +521,39 @@
     if (!entry) return;
 
     var content = entry.model.getValue();
-    var encoder = new TextEncoder();
-    this.emulator.create_file(filename, encoder.encode(content));
+    // Base64-encode the content to safely transmit through the serial port,
+    // avoiding issues with special characters, quotes, and newlines.
+    var b64 = btoa(unescape(encodeURIComponent(content)));
+    // Use printf + base64 -d to decode and write to the file in /tutorial/
+    var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
+
+    // Mute terminal output so the user doesn't see the noisy sync command.
+    // We detect the shell prompt returning to know when to unmute, with a
+    // safety timeout as fallback.
+    var self = this;
+    self._muted = true;
+    self._mutedBuffer = '';
+
+    function onMutedByte(byte) {
+      self._mutedBuffer += String.fromCharCode(byte);
+      // Unmute once we see the shell prompt (command finished executing)
+      if (self._mutedBuffer.includes('# ') || self._mutedBuffer.includes('$ ')) {
+        self._muted = false;
+        self._mutedBuffer = '';
+        self.emulator.remove_listener('serial0-output-byte', onMutedByte);
+        clearTimeout(safetyTimer);
+      }
+    }
+    self.emulator.add_listener('serial0-output-byte', onMutedByte);
+
+    // Safety: always unmute after 5s even if prompt detection fails
+    var safetyTimer = setTimeout(function () {
+      self._muted = false;
+      self._mutedBuffer = '';
+      self.emulator.remove_listener('serial0-output-byte', onMutedByte);
+    }, 5000);
+
+    this.sendCommand(cmd);
   };
 
   // ---- Tutorial Steps -------------------------------------------------------
