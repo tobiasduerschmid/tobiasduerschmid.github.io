@@ -9,6 +9,8 @@ Regular Expressions are sequences of characters that define search patterns. The
 
 This article will break down how Regular Expressions work, explore their syntax from basic to advanced, and provide real-world examples to help you master them.
 
+> **Want to practice?** Try the [Interactive RegEx Tutorial](/SEBook/tools/regex-tutorial.html) — 20 hands-on exercises that build from basics to lookaheads, with real-time feedback.
+
 # Basics
 
 ## The Core Purpose of RegEx

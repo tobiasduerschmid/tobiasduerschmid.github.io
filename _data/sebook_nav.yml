@@ -129,6 +129,8 @@ topics:
         url: /SEBook/tools/shell.html
       - name: Regular Expressions
         url: /SEBook/tools/regex.html
+      - name: RegEx Tutorial
+        url: /SEBook/tools/regex-tutorial.html
       - name: Python
         url: /SEBook/tools/python.html
       - name: Node.js
