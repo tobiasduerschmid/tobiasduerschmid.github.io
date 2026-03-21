@@ -314,7 +314,7 @@ print(my_book) # Output: "Pride and Prejudice" by Jane Austen (1813)
 ```
 
 
-### 10. Substring Operations and Slicing
+### Substring Operations and Slicing
 
 In C++, if you want a substring, you call `my_string.substr(start_index, length)`. Python takes a much more elegant and generalized approach called **Slicing**. 
 
