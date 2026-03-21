@@ -84,12 +84,12 @@
       ]
     },
 
-    // ═══ Section 3: Shorthand Classes & the Dot ════════════════════════════
+    // ═══ Section 3: Meta Characters ════════════════════════════
     {
-      id: 'shorthand-1', type: 'free',
-      section: 'Shorthand Classes & the Dot',
+      id: 'meta character-1', type: 'free',
+      section: 'Meta Characters',
       title: 'Digit Detector',
-      goal: 'Match every individual digit. Use the shorthand <code>\\d</code>.',
+      goal: 'Match every individual digit.',
       sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3.',
       solution: '\\d',
       tests: [
@@ -103,8 +103,8 @@
       ]
     },
     {
-      id: 'shorthand-2', type: 'free',
-      section: 'Shorthand Classes & the Dot',
+      id: 'meta character-2', type: 'free',
+      section: 'Meta Characters',
       title: 'File Extensions',
       goal: 'Match file extensions: a literal dot followed by one or more lowercase letters. The dot <code>.</code> is a wildcard — escape it as <code>\\.</code> to match a real dot.',
       sampleText: 'Files: report.pdf, data.csv, photo.jpg, README, notes.txt, archive.tar.gz, config.yaml',

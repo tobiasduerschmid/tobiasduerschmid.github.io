@@ -184,11 +184,11 @@ To **negate** a class, place `^` right after the opening bracket: `[^a-z]` match
 <div class="rt-section" data-section="Character Classes"></div>
 
 
-# Shorthand Classes & the Dot
+# Meta Characters
 
-Writing out full character classes every time gets tedious. RegEx provides **shorthand** escape sequences:
+Writing out full character classes every time gets tedious. RegEx provides **meta character** escape sequences:
 
-| Shorthand | Meaning | Equivalent Class |
+| meta character | Meaning | Equivalent Class |
 |-----------|---------|-----------------|
 | `\d` | Any digit | `[0-9]` |
 | `\D` | Any non-digit | `[^0-9]` |
@@ -199,7 +199,7 @@ Writing out full character classes every time gets tedious. RegEx provides **sho
 
 The **dot** `.` is a wildcard that matches **any single character** (except newline). Because the dot matches almost everything, it is powerful but easy to overuse. When you actually need to match a literal period, **escape it**: `\.`
 
-<div class="rt-section" data-section="Shorthand Classes & the Dot"></div>
+<div class="rt-section" data-section="Meta Characters"></div>
 
 
 # Anchors & Boundaries

@@ -89,8 +89,8 @@ Character classes (or sets) allow you to match any single character from a speci
 * `[A-Za-z0-9]`: Matches any alphanumeric character.
 * `[^0-9]`: The caret inside the brackets means **negation**. This matches any character that is *not* a digit.
 
-### Shorthand Character Classes
-Because certain character sets are used so frequently, RegEx provides handy shorthands:
+### meta characteres
+Because certain character sets are used so frequently, RegEx provides handy meta characters:
 * `\d`: Matches any digit (equivalent to `[0-9]`).
 * `\w`: Matches any "word" character (alphanumeric plus underscore: `[a-zA-Z0-9_]`).
 * `\s`: Matches any whitespace character (spaces, tabs, line breaks).
