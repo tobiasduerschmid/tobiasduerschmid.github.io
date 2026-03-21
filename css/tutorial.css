@@ -417,6 +417,92 @@ html, body {
 }
 
 /* ───────────────────────────────────────────
+   Test My Work button & results panel
+─────────────────────────────────────────── */
+.tvm-btn-test {
+  background: #1a7f3c;
+  color: #fff;
+}
+.tvm-btn-test:hover { background: #22a04e; }
+
+.tvm-test-panel {
+  margin-top: 20px;
+  border-top: 1px solid #2a2a38;
+  padding-top: 16px;
+}
+
+.tvm-test-running {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8080a0;
+  font-size: 0.9em;
+  padding: 10px 0;
+}
+
+.tvm-test-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #3a3a48;
+  border-top-color: #1a7f3c;
+  border-radius: 50%;
+  animation: tvm-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.tvm-test-summary {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 0.95em;
+}
+.tvm-test-summary.all-pass {
+  background: rgba(26,127,60,.18);
+  color: #4caf50;
+  border: 1px solid rgba(76,175,80,.3);
+}
+.tvm-test-summary.partial {
+  background: rgba(230,160,30,.12);
+  color: #e6a01e;
+  border: 1px solid rgba(230,160,30,.28);
+}
+
+.tvm-test-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tvm-test-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  background: #1a1a22;
+  border: 1px solid #2a2a38;
+  line-height: 1.4;
+}
+.tvm-test-item.pass { border-color: rgba(76,175,80,.25); background: rgba(26,127,60,.08); }
+.tvm-test-item.fail { border-color: rgba(239,83,80,.25); background: rgba(180,40,40,.08); }
+
+.tvm-test-icon {
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  margin-top: 1px;
+}
+.tvm-test-item.pass .tvm-test-icon { color: #4caf50; }
+.tvm-test-item.fail .tvm-test-icon { color: #ef5350; }
+.tvm-test-item.unknown .tvm-test-icon { color: #888; }
+
+.tvm-test-desc { color: #c8c8d8; font-size: 0.92em; }
+
+/* ───────────────────────────────────────────
    Loading Overlay
 ─────────────────────────────────────────── */
 .tvm-loading {

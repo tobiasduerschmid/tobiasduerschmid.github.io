@@ -87,6 +87,12 @@
     this.editorModels = {};   // filename -> { model, language }
     this.activeFileName = null;
     this.booted = false;
+
+    // Test runner state
+    this._testListening = false;
+    this._testBuffer = '';
+    this._testResults = [];
+    this._testCallbacks = [];
   }
 
   // ---- Lifecycle ------------------------------------------------------------
@@ -368,7 +374,12 @@
         // When _muted is true, output is suppressed (used during silent file sync)
         self._muted = false;
         self.emulator.add_listener('serial0-output-byte', function (byte) {
-          if (!self._muted) self.term.write(String.fromCharCode(byte));
+          var ch = String.fromCharCode(byte);
+          if (!self._muted) self.term.write(ch);
+          if (self._testListening) {
+            self._testBuffer += ch;
+            self._parseTestOutput();
+          }
         });
 
         // Detect boot prompt (separate temporary listener)
@@ -605,12 +616,19 @@
     // Render controls in the fixed footer bar (always visible, below scroll)
     var controlsHtml = '';
     if (index > 0) {
-      controlsHtml += '<button class="tvm-btn tvm-btn-prev">← Previous</button>';
+      controlsHtml += '<button class="tvm-btn tvm-btn-prev">\u2190 Previous</button>';
+    } else {
+      controlsHtml += '<span></span>';
+    }
+    if (step.tests && step.tests.length > 0) {
+      controlsHtml += '<button class="tvm-btn tvm-btn-test">\u2713 Test My Work</button>';
     } else {
       controlsHtml += '<span></span>';
     }
     if (index < this.steps.length - 1) {
-      controlsHtml += '<button class="tvm-btn tvm-btn-next">Next →</button>';
+      controlsHtml += '<button class="tvm-btn tvm-btn-next">Next \u2192</button>';
+    } else {
+      controlsHtml += '<span></span>';
     }
     this.stepControlsEl.innerHTML = controlsHtml;
 
@@ -618,8 +636,10 @@
     var self = this;
     var prevBtn = this.stepControlsEl.querySelector('.tvm-btn-prev');
     var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
+    var testBtn = this.stepControlsEl.querySelector('.tvm-btn-test');
     if (prevBtn) prevBtn.addEventListener('click', function () { self.loadStep(index - 1); });
     if (nextBtn) nextBtn.addEventListener('click', function () { self.loadStep(index + 1); });
+    if (testBtn) testBtn.addEventListener('click', function () { self._runTests(); });
 
     // Open files for this step
     if (step.files) {
@@ -670,6 +690,105 @@
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  };
+
+  // ---- Test Runner ----------------------------------------------------------
+
+  TutorialVM.prototype._runTests = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+
+    this._showTestPanel(
+      '<div class="tvm-test-running">' +
+        '<div class="tvm-test-spinner"></div>' +
+        'Running tests\u2026' +
+      '</div>'
+    );
+
+    var parts = [];
+    tests.forEach(function (t, i) {
+      parts.push('( ' + t.command + ' ) 2>/dev/null; echo "__TRESULT_' + i + '_$?__"');
+    });
+    parts.push('echo "__T""DONE__"');
+
+    this._testResults = new Array(tests.length).fill(null);
+    this._testBuffer = '';
+    this._testListening = true;
+    this._muted = true;
+    this._testCallbacks = [
+      function () { self._muted = false; },
+      function () { self._renderTestResults(tests, self._testResults); }
+    ];
+
+    var safetyTimer = setTimeout(function () {
+      if (self._testListening) {
+        self._testListening = false;
+        self._testBuffer = '';
+        self._muted = false;
+        self._renderTestResults(tests, self._testResults);
+      }
+    }, 15000);
+    this._testCallbacks.push(function () { clearTimeout(safetyTimer); });
+
+    this.sendCommand(parts.join('; '));
+  };
+
+  TutorialVM.prototype._parseTestOutput = function () {
+    if (!this._testBuffer.includes('__TDONE__')) return;
+
+    var re = /__TRESULT_(\d+)_(\d+)__/g;
+    var match;
+    while ((match = re.exec(this._testBuffer)) !== null) {
+      var idx = parseInt(match[1], 10);
+      var code = parseInt(match[2], 10);
+      if (idx < this._testResults.length) {
+        this._testResults[idx] = (code === 0);
+      }
+    }
+
+    this._testListening = false;
+    this._testBuffer = '';
+    var callbacks = this._testCallbacks.splice(0);
+    callbacks.forEach(function (cb) { cb(); });
+  };
+
+  TutorialVM.prototype._showTestPanel = function (innerHtml) {
+    var panel = this.stepContentEl.querySelector('.tvm-test-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'tvm-test-panel';
+      this.stepContentEl.appendChild(panel);
+    }
+    panel.innerHTML = innerHtml;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  TutorialVM.prototype._renderTestResults = function (tests, results) {
+    var self = this;
+    var passed = results.filter(function (r) { return r === true; }).length;
+    var total = tests.length;
+    var allPass = passed === total;
+
+    var html = '<div class="tvm-test-results">';
+    html += '<div class="tvm-test-summary ' + (allPass ? 'all-pass' : 'partial') + '">';
+    html += allPass
+      ? '\u2705 All ' + total + ' tests passed!'
+      : passed + '\u00a0/\u00a0' + total + ' tests passed';
+    html += '</div><ul class="tvm-test-list">';
+    tests.forEach(function (t, i) {
+      var pass = results[i];
+      var cls = pass === true ? 'pass' : (pass === false ? 'fail' : 'unknown');
+      var icon = pass === true ? '\u2713' : (pass === false ? '\u2717' : '?');
+      html += '<li class="tvm-test-item ' + cls + '">';
+      html += '<span class="tvm-test-icon">' + icon + '</span>';
+      html += '<span class="tvm-test-desc">' + self._escapeHtml(t.description) + '</span>';
+      html += '</li>';
+    });
+    html += '</ul></div>';
+
+    this._showTestPanel(html);
   };
 
   // ---- Export ----------------------------------------------------------------

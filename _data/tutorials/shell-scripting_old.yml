@@ -1,0 +1,479 @@
+title: "Shell Scripting"
+description: "Learn the basics of shell scripting in an interactive Linux environment"
+
+steps:
+  - title: "Your First Script"
+    instructions: |
+      Welcome to the **Shell Scripting Tutorial**! You have a real Linux VM
+      running in your browser. The editor is on the left, the terminal on
+      the right.
+
+      ### Goal
+      Create and run your first shell script.
+
+      ### Steps
+
+      1. Look at `hello.sh` in the editor — it already has the **shebang** line
+         (`#!/bin/bash`) which tells Linux to use Bash to run the script.
+      2. Add this line below the comment:
+         ```bash
+         echo "Hello, World!"
+         ```
+      3. Press **Ctrl+S** (or Cmd+S) to save the file to the VM.
+      4. In the terminal, make the script executable and run it:
+         ```bash
+         chmod +x hello.sh
+         ./hello.sh
+         ```
+
+      > **Tip:** Every time you save in the editor, the file is synced to the
+      > VM at `/tutorial/`. You can also edit files directly in the terminal
+      > using `nano`.
+    files:
+      - path: "hello.sh"
+        content: |
+          #!/bin/bash
+          # My first shell script
+
+    open_file: "hello.sh"
+    tests:
+      - description: "hello.sh has the shebang line (#!/bin/bash)"
+        command: "head -1 hello.sh | grep -q '#!/bin/bash'"
+      - description: "Script prints 'Hello, World!'"
+        command: "bash hello.sh | grep -qF 'Hello, World!'"
+      - description: "Script is executable (chmod +x was run)"
+        command: "[ -x hello.sh ]"
+
+  - title: "Variables"
+    instructions: |
+      Variables let you store and reuse values. In Bash, you assign with `=`
+      (no spaces!) and read with `$`.
+
+      ### Key rules
+      - **No spaces** around `=`: `name="Alice"` not `name = "Alice"`
+      - **Double quotes** preserve spaces and expand variables
+      - **Single quotes** are literal (no expansion)
+      - Use `${}` for clarity: `"Hello, ${name}!"`
+
+      ### Try it
+
+      1. Edit `variables.sh` in the editor.
+      2. Add some variables and echo them:
+         ```bash
+         greeting="Hello"
+         name="World"
+         echo "${greeting}, ${name}!"
+         echo "The current directory is: $(pwd)"
+         ```
+      3. Save (**Ctrl+S**) and run:
+         ```bash
+         chmod +x variables.sh
+         ./variables.sh
+         ```
+
+      ### Command substitution
+      `$(command)` runs a command and inserts its output:
+      ```bash
+      today=$(date +%Y-%m-%d)
+      echo "Today is ${today}"
+      ```
+    files:
+      - path: "variables.sh"
+        content: |
+          #!/bin/bash
+          # Practice with variables
+
+    open_file: "variables.sh"
+    tests:
+      - description: "Script output contains 'Hello'"
+        command: "bash variables.sh | grep -qi 'hello'"
+      - description: "Script output contains 'World'"
+        command: "bash variables.sh | grep -qi 'world'"
+      - description: "Script uses variable substitution ($var or ${var})"
+        command: "grep -qE '\\$\\{?[a-zA-Z]' variables.sh"
+
+  - title: "Arguments & Input"
+    instructions: |
+      Scripts can receive **arguments** from the command line and read
+      **interactive input** from the user.
+
+      ### Script arguments
+      - `$1`, `$2`, ... — positional arguments
+      - `$#` — number of arguments
+      - `$@` — all arguments as separate words
+      - `$0` — the script's own name
+
+      ### Reading input
+      The `read` command pauses and waits for user input:
+      ```bash
+      read -p "Enter your name: " username
+      echo "Hello, ${username}!"
+      ```
+
+      ### Try it
+
+      1. Edit `greet.sh` to use arguments and input.
+      2. Example implementation:
+         ```bash
+         if [ $# -gt 0 ]; then
+             echo "Hello, $1!"
+         else
+             read -p "What is your name? " name
+             echo "Hello, ${name}!"
+         fi
+         ```
+      3. Run it both ways:
+         ```bash
+         chmod +x greet.sh
+         ./greet.sh Alice
+         ./greet.sh
+         ```
+    files:
+      - path: "greet.sh"
+        content: |
+          #!/bin/bash
+          # A greeting script that accepts arguments or prompts for input
+
+    open_file: "greet.sh"
+    tests:
+      - description: "Script greets a named argument (./greet.sh Alice outputs 'Alice')"
+        command: "bash greet.sh Alice | grep -qi 'alice'"
+      - description: "Script uses $# or $1 to handle arguments"
+        command: "grep -qE '\\$#|\\$1|\\$@' greet.sh"
+      - description: "Script uses 'read' for interactive input"
+        command: "grep -q 'read' greet.sh"
+
+  - title: "Conditionals"
+    instructions: |
+      Conditionals let your script make decisions.
+
+      ### if / elif / else
+      ```bash
+      if [ condition ]; then
+          # ...
+      elif [ other_condition ]; then
+          # ...
+      else
+          # ...
+      fi
+      ```
+
+      ### Common test operators
+      | Operator | Meaning |
+      |----------|---------|
+      | `-f file` | File exists |
+      | `-d dir` | Directory exists |
+      | `-z "$str"` | String is empty |
+      | `-n "$str"` | String is not empty |
+      | `"$a" = "$b"` | Strings are equal |
+      | `$a -eq $b` | Integers are equal |
+      | `$a -lt $b` | Less than (integers) |
+      | `$a -gt $b` | Greater than (integers) |
+
+      ### Try it
+
+      1. Edit `check_file.sh` to check whether a file exists:
+         ```bash
+         filename="${1:-hello.sh}"
+
+         if [ -f "$filename" ]; then
+             echo "$filename exists ($(wc -l < "$filename") lines)"
+         elif [ -d "$filename" ]; then
+             echo "$filename is a directory"
+         else
+             echo "$filename does not exist"
+         fi
+         ```
+      2. Test it:
+         ```bash
+         chmod +x check_file.sh
+         ./check_file.sh hello.sh
+         ./check_file.sh /tmp
+         ./check_file.sh nonexistent
+         ```
+    files:
+      - path: "check_file.sh"
+        content: |
+          #!/bin/bash
+          # Check whether a file or directory exists
+
+    open_file: "check_file.sh"
+    tests:
+      - description: "Detects an existing file (hello.sh exists)"
+        command: "bash check_file.sh hello.sh | grep -qi 'exist'"
+      - description: "Detects a directory (/tmp is a directory)"
+        command: "bash check_file.sh /tmp | grep -qi 'director'"
+      - description: "Reports a missing file correctly"
+        command: "bash check_file.sh __no_such_file_xyz__ | grep -qiE 'not exist|does not|no such'"
+      - description: "Script uses if/elif/else"
+        command: "grep -q 'elif\\|else' check_file.sh"
+
+  - title: "Loops"
+    instructions: |
+      Loops let you repeat actions. Bash has `for`, `while`, and `until`.
+
+      ### for loop
+      ```bash
+      for item in one two three; do
+          echo "$item"
+      done
+
+      # Loop over files
+      for f in *.sh; do
+          echo "Script: $f"
+      done
+      ```
+
+      ### while loop
+      ```bash
+      count=1
+      while [ $count -le 5 ]; do
+          echo "Count: $count"
+          count=$((count + 1))
+      done
+      ```
+
+      ### Try it
+
+      1. Edit `loops.sh` and experiment with both loop types.
+      2. A practical example — create a multiplication table:
+         ```bash
+         n="${1:-5}"
+         for i in $(seq 1 "$n"); do
+             for j in $(seq 1 "$n"); do
+                 printf "%4d" $((i * j))
+             done
+             echo
+         done
+         ```
+      3. Run it:
+         ```bash
+         chmod +x loops.sh
+         ./loops.sh 5
+         ```
+
+      ### Bonus: C-style for loop
+      ```bash
+      for ((i=0; i<10; i++)); do
+          echo "$i"
+      done
+      ```
+    files:
+      - path: "loops.sh"
+        content: |
+          #!/bin/bash
+          # Practice with loops
+
+    open_file: "loops.sh"
+    tests:
+      - description: "Script uses a for or while loop"
+        command: "grep -qE 'for |while ' loops.sh"
+      - description: "Output of ./loops.sh 3 has at least 3 lines"
+        command: "[ $(bash loops.sh 3 | wc -l) -ge 3 ]"
+      - description: "3x3 table contains 9 (3x3=9)"
+        command: "bash loops.sh 3 | grep -q '9'"
+
+  - title: "Functions"
+    instructions: |
+      Functions let you organize reusable blocks of code.
+
+      ### Defining and calling
+      ```bash
+      greet() {
+          local name="$1"
+          echo "Hello, ${name}!"
+      }
+
+      greet "Alice"
+      greet "Bob"
+      ```
+
+      ### Key points
+      - Use `local` for variables that should not leak out
+      - Functions receive arguments as `$1`, `$2`, etc.
+      - Return a status code with `return 0` (success) or `return 1` (failure)
+      - Capture output with `result=$(my_function)`
+
+      ### Try it
+
+      1. Edit `utils.sh` to create utility functions:
+         ```bash
+         # Check if a command exists
+         command_exists() {
+             command -v "$1" >/dev/null 2>&1
+         }
+
+         # Print a colored message
+         info()  { echo -e "\033[34m[INFO]\033[0m $*"; }
+         warn()  { echo -e "\033[33m[WARN]\033[0m $*"; }
+         error() { echo -e "\033[31m[ERROR]\033[0m $*"; }
+
+         # Demo
+         info "Checking for required tools..."
+         for tool in bash git make nano; do
+             if command_exists "$tool"; then
+                 info "$tool is installed"
+             else
+                 warn "$tool is NOT installed"
+             fi
+         done
+         ```
+      2. Run it:
+         ```bash
+         chmod +x utils.sh
+         ./utils.sh
+         ```
+    files:
+      - path: "utils.sh"
+        content: |
+          #!/bin/bash
+          # Utility functions
+
+    open_file: "utils.sh"
+    tests:
+      - description: "Script defines at least one function"
+        command: "grep -qE '^[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(\\)' utils.sh"
+      - description: "Script outputs [INFO] messages"
+        command: "bash utils.sh | grep -q '\\[INFO\\]'"
+      - description: "bash is reported as installed"
+        command: "bash utils.sh | grep -qi 'bash.*install'"
+
+  - title: "Pipes & Redirection"
+    instructions: |
+      One of the most powerful features of the shell is composing commands
+      using **pipes** (`|`) and controlling I/O with **redirection**.
+
+      ### Redirection
+      ```bash
+      echo "hello" > file.txt    # Write (overwrite)
+      echo "world" >> file.txt   # Append
+      cat < file.txt             # Read from file
+      command 2> errors.log      # Redirect stderr
+      command &> all.log         # Redirect both stdout & stderr
+      ```
+
+      ### Pipes
+      The output of one command becomes the input of the next:
+      ```bash
+      cat /etc/passwd | grep root | cut -d: -f1
+      ```
+
+      ### Try it
+
+      First, let's create a data file to work with:
+      ```bash
+      cat data.csv
+      ```
+
+      Now try these pipeline exercises:
+      ```bash
+      # Count the number of lines
+      wc -l < data.csv
+
+      # Sort by the second column (score), show top 3
+      sort -t, -k2 -nr data.csv | head -3
+
+      # Extract just the names
+      cut -d, -f1 data.csv | tail -n +2
+
+      # Find entries with score > 85
+      awk -F, 'NR>1 && $2>85 {print $1, $2}' data.csv
+      ```
+    files:
+      - path: "data.csv"
+        content: |
+          name,score,grade
+          Alice,92,A
+          Bob,78,B
+          Charlie,95,A
+          Diana,88,B
+          Eve,67,C
+          Frank,91,A
+          Grace,72,C
+          Hank,84,B
+    open_file: "data.csv"
+    tests:
+      - description: "data.csv has 9 lines (header + 8 students)"
+        command: "[ $(wc -l < data.csv) -eq 9 ]"
+      - description: "Charlie has the highest score"
+        command: "sort -t, -k2 -nr data.csv | head -1 | grep -q 'Charlie'"
+      - description: "Three students scored above 85"
+        command: "[ $(awk -F, 'NR>1 && $2>85' data.csv | wc -l) -eq 3 ]"
+
+  - title: "Putting It Together"
+    instructions: |
+      Let's combine everything you've learned into a real script!
+
+      ### Challenge
+      Write a script called `report.sh` that:
+
+      1. Accepts a CSV filename as an argument (default: `data.csv`)
+      2. Validates the file exists
+      3. Prints a formatted report with:
+         - Total number of students
+         - Average score
+         - Top scorer
+         - Grade distribution (count per grade)
+
+      ### Starter code
+      The editor has a skeleton. Fill in the TODOs!
+
+      ### Hints
+      - Use `awk` for calculations: `awk -F, 'NR>1 {sum+=$2; n++} END {print sum/n}'`
+      - Use `sort` + `head` to find the top scorer
+      - Use `cut`, `sort`, and `uniq -c` for grade distribution
+
+      ### Run it
+      ```bash
+      chmod +x report.sh
+      ./report.sh data.csv
+      ```
+
+      ### Expected output (roughly)
+      ```
+      === Student Report: data.csv ===
+      Total students: 7
+      Average score:  81.3
+      Top scorer:     Charlie (95)
+
+      Grade distribution:
+            3 A
+            3 B
+            2 C
+      ```
+    files:
+      - path: "report.sh"
+        content: |
+          #!/bin/bash
+          # report.sh - Generate a report from a CSV file
+
+          file="${1:-data.csv}"
+
+          # Validate file exists
+          if [ ! -f "$file" ]; then
+              echo "Error: $file not found" >&2
+              exit 1
+          fi
+
+          echo "=== Student Report: $file ==="
+          echo ""
+
+          # TODO: Count total students (hint: wc -l, subtract 1 for header)
+
+          # TODO: Calculate average score (hint: use awk)
+
+          # TODO: Find top scorer (hint: sort -t, -k2 -nr | head -1)
+
+          # TODO: Grade distribution (hint: cut + sort + uniq -c)
+    open_file: "report.sh"
+    tests:
+      - description: "report.sh is executable (chmod +x was run)"
+        command: "[ -x report.sh ]"
+      - description: "Report shows total student count"
+        command: "bash report.sh data.csv | grep -qiE 'total.*[0-9]|[0-9].*stud'"
+      - description: "Charlie is identified as top scorer"
+        command: "bash report.sh data.csv | grep -q 'Charlie'"
+      - description: "Average score is displayed"
+        command: "bash report.sh data.csv | grep -qiE 'average|avg'"
+      - description: "Grade distribution is shown"
+        command: "bash report.sh data.csv | grep -qiE 'grade|distrib'"
