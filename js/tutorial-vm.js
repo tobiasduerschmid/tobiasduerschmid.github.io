@@ -300,18 +300,58 @@
             return new Promise(function (resolve) {
               window.require.config({ paths: { vs: CDN.MONACO_VS } });
               window.require(['vs/editor/editor.main'], function () {
-                // Define custom themes that match our Rouge colors
+                // Define custom Monarch tokenizer for shell to support interpolation
+                monaco.languages.setMonarchTokensProvider('shell', {
+                  keywords: ['if', 'then', 'else', 'fi', 'for', 'in', 'do', 'done', 'case', 'esac', 'while', 'until'],
+                  builtins: ['echo', 'set', 'cd', 'pwd', 'export', 'local', 'read', 'return', 'exit', 'grep', 'wc', 'head', 'sort', 'uniq', 'cut', 'cat', 'mkdir', 'touch', 'rm', 'cp', 'mv', 'whoami', 'date'],
+                  tokenizer: {
+                    root: [
+                      [/^#!.*$/, 'comment.shell'],
+                      [/[a-zA-Z_][\w]*/, {
+                        cases: {
+                          '@keywords': 'command.name.shell',
+                          '@builtins': 'command.name.shell',
+                          '@default': 'command.name.shell'
+                        }
+                      }],
+                      [/\$\{?[\w]+\}?/, 'command.name.shell'],
+                      [/\$\(/, { token: 'command.name.shell', next: '@interpolation' }],
+                      [/#.*$/, 'comment.shell'],
+                      [/"/, { token: 'string.shell', next: '@string' }],
+                      [/'/, { token: 'string.shell', next: '@sstring' }],
+                      [/[ \t\r\n]+/, 'white'],
+                      [/[{}()\[\]]/, '@brackets'],
+                      [/[<>|&;$]/, 'operator.shell'],
+                      [/-[\w-]+/, 'attribute.name.shell'],
+                      [/\+[\w-]+/, 'attribute.name.shell']
+                    ],
+                    string: [
+                      [/\$\(/, { token: 'command.name.shell', next: '@interpolation' }],
+                      [/\$\{?[\w]+\}?/, 'command.name.shell'],
+                      [/[^\\"$]+/, 'string.shell'],
+                      [/\\./, 'string.shell'],
+                      [/"/, { token: 'string.shell', next: '@pop' }]
+                    ],
+                    sstring: [
+                      [/[^\\']+/, 'string.shell'],
+                      [/\\./, 'string.shell'],
+                      [/'/, { token: 'string.shell', next: '@pop' }]
+                    ],
+                    interpolation: [
+                      [/\)/, { token: 'command.name.shell', next: '@pop' }],
+                      { include: 'root' }
+                    ]
+                  }
+                });
+
                 monaco.editor.defineTheme('sebook-light', {
                   base: 'vs',
                   inherit: true,
                   rules: [
-                    { token: 'keyword.shell', foreground: '267f99' }, // Teal to match 'set' in instructions
+                    { token: 'command.name.shell', foreground: '267f99' },
                     { token: 'attribute.name.shell', foreground: 'a31515' },
-                    { token: 'type.identifier.shell', foreground: '267f99' },
                     { token: 'string.shell', foreground: 'a31515' },
-                    { token: 'comment.shell', foreground: '008000' },
-                    { token: 'number.shell', foreground: '098658' },
-                    { token: 'variable.shell', foreground: '001080' }
+                    { token: 'comment.shell', foreground: '008000' }
                   ],
                   colors: {}
                 });
@@ -320,13 +360,10 @@
                   base: 'vs-dark',
                   inherit: true,
                   rules: [
-                    { token: 'keyword.shell', foreground: '569cd6' },
+                    { token: 'command.name.shell', foreground: '569cd6' },
                     { token: 'attribute.name.shell', foreground: 'f44747' },
-                    { token: 'type.identifier.shell', foreground: '569cd6' }, // Blue to match shell commands
                     { token: 'string.shell', foreground: 'ce9178' },
-                    { token: 'comment.shell', foreground: '6a9955' },
-                    { token: 'number.shell', foreground: 'b5cea8' },
-                    { token: 'variable.shell', foreground: '9cdcfe' }
+                    { token: 'comment.shell', foreground: '6a9955' }
                   ],
                   colors: {
                     'editor.background': '#1e1e1e'
