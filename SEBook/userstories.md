@@ -112,14 +112,14 @@ If stories violate the Independent criterion, you can improve them using these t
 > * **Given** I am on the messaging page, **When** I compose a message and click "Send", **Then** the message appears in the recipient's inbox.
 > * **Given** a colleague has sent me a message, **When** I open my inbox, **Then** I can read the message.
 >
-> Story B: *"**As a** team member, **I want to** send and reply to messages **so that** I can respond to conversations."*
-> * **Given** I am on the messaging page, **When** I compose a message and click "Send", **Then** the message appears in the recipient's inbox.
-> * **Given** I have received a message, **When** I click "Reply" and submit my response, **Then** my reply is sent to the original sender.
+> Story B: *"**As a** team member, **I want to** reply to messages **so that** I can indicate which message I am responding to."*
+> * **Given** I have received a message, **When** I click the "Reply" button and submit my response, **Then** the reply is sent to the original sender.
+> * **Given** the reply has been received, **When** the original sender views the message, **Then** it is displayed has a reply to the original message.
 
 * **Negotiable:** Yes. Neither story dictates a specific UI or technology.
 * **Valuable:** Yes. Communication features are clearly valuable to users.
 * **Estimable:** Difficult. The overlapping "send" capability makes it unclear how to estimate each story independently.
-* **Small:** Yes. Each story could fit within a sprint.
+* **Small:** Yes. Each story is as small as it can be without losing value. Sending without receiving would be incomplete and thus not valuable, so we cannot split story A into seperate stories.
 * **Testable:** Yes. Clear acceptance criteria can be written for sending, receiving, and replying.
 * **Why it violates Independent:** Both stories include "sending a message." If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
 * **How to fix it:** Repartition into three non-overlapping stories: "**As a** team member, **I want to** send a message", "**As a** team member, **I want to** receive messages", and "**As a** team member, **I want to** reply to a message."
@@ -293,10 +293,9 @@ The approach to fixing an unestimable story depends on which barrier is blocking
 * **How to fix it:** Split into two stories: (1) a time-boxed spike—"Investigate gRPC integration: spend at most two days building a proof-of-concept service"—and (2) the actual implementation story. After the spike, the team has enough knowledge to estimate the real work {% cite cohn2004user %}.
 
 
-
 ## Small
 
-*A **small** story is a manageable chunk of work that can be completed within a single iteration—not so large it becomes an epic, not so small it loses meaningful context.*
+*A **small** story is a manageable chunk of work that can be completed within a single iteration—not so large it becomes an epic, not so small it loses meaningful context. A user story should be as small as it can be while still delivering value.* 
 
 **What it is and Why it Matters**
 The "Small" criterion states that a user story should be appropriately sized **so that** it can be comfortably completed by the development team within a single iteration {% cite cohn2004user %}. Stories typically represent at most a few person-weeks of work; some teams restrict them to a few person-days {% cite Wake2003INVESTinGoodStories %}. If a story is too large, it is called an *epic* and must be broken down. If a story is too small, it should be combined with related stories.
@@ -418,6 +417,14 @@ Below are two user stories that are not testable but still satisfy (most) other 
 * **Why it violates Testable:** "Pleasant volume" is entirely subjective. A volume that is pleasant in a quiet library will be inaudible on a noisy subway. Because there is no objective baseline, QA cannot definitively pass or fail the test. 
 * **How to fix it:** *"Acceptance Criteria: The default intro chime must be normalized to -16 LUFS (Loudness Units relative to Full Scale)."*
 
+## How INVEST supports agile processes like Scrum
+
+The INVEST principles matter because they act as a compass for creating high-quality, actionable user stories that align with Agile goals and principles of processes like [Scrum](/SEBook/process/scrum.html). 
+By ensuring stories are **Independent** and **Small**, teams gain the scheduling flexibility needed to implement and release features in any order within short iterations. 
+If user stories are not independent, it becomes hard to always select the highest value user stories. 
+If they are not small, it becomes hard to select a Sprint Backlog that fit the team's velocity.  
+**Negotiable** stories promote essential dialogue between developers and stakeholders, while **Valuable** ones ensure that every effort translates into a meaningful benefit for the user. Finally, stories that are **Estimable** and **Testable** provide the clarity required for accurate sprint planning and objective verification of the finished product. In 
+[Scrum](/SEBook/process/scrum.html) and [XP](/SEBook/process/xp.html), user stories are estimated during the Planning activity. 
 
 ## FAQ on INVEST
 
