@@ -35,6 +35,7 @@
       title: 'Your Turn',
       goal: 'Type a regex to match every occurrence of <code>error</code> in the text.',
       sampleText: 'System log: error in module A. No error found in module B. Warning: terror alert is not an error. Error handling improved.',
+      solution: 'error',
       tests: [
         { input: 'error occurred', shouldMatch: true, label: 'contains "error"' },
         { input: 'all clear', shouldMatch: false, label: 'no "error"' },
@@ -71,6 +72,7 @@
       title: 'Not a Letter',
       goal: 'Match every character that is <strong>not</strong> a letter. Use <code>[^...]</code> to negate.',
       sampleText: 'Score: 42 points! Time remaining: 3:30. Player #7 wins $100.',
+      solution: '[^a-zA-Z]',
       tests: [
         { input: '123', shouldMatch: true, label: 'all digits — should match' },
         { input: 'abc', shouldMatch: false, label: 'all letters — should NOT match' },
@@ -89,6 +91,7 @@
       title: 'Digit Detector',
       goal: 'Match every individual digit. Use the shorthand <code>\\d</code>.',
       sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3.',
+      solution: '\\d',
       tests: [
         { input: 'Room 101', shouldMatch: true, label: 'contains digits' },
         { input: 'hello', shouldMatch: false, label: 'no digits' },
@@ -105,6 +108,7 @@
       title: 'File Extensions',
       goal: 'Match file extensions: a literal dot followed by one or more lowercase letters. The dot <code>.</code> is a wildcard — escape it as <code>\\.</code> to match a real dot.',
       sampleText: 'Files: report.pdf, data.csv, photo.jpg, README, notes.txt, archive.tar.gz, config.yaml',
+      solution: '\\.[a-z]+',
       tests: [
         { input: '.txt', shouldMatch: true, label: 'dot + letters' },
         { input: 'txt', shouldMatch: false, label: 'no dot — should NOT match' },
@@ -142,6 +146,7 @@
       title: 'Stand-Alone Words',
       goal: 'Match only the standalone word <code>go</code> — not inside "goal" or "cargo". Use word boundaries <code>\\b</code>.',
       sampleText: 'Ready, set, go! The goal is to outperform the algorithm. Let\'s go before the cargo ship departs. Go ahead.',
+      solution: '\\bgo\\b',
       showVisualizer: true,
       tests: [
         { input: "let's go", shouldMatch: true, label: '"go" as a word' },
@@ -161,6 +166,7 @@
       goal: 'This regex is supposed to validate that a username is <strong>only</strong> alphanumeric characters. But it incorrectly accepts <code>admin!@#</code>. Fix it!',
       sampleText: null,
       brokenRegex: '[a-zA-Z0-9]+',
+      solution: '^[a-zA-Z0-9]+$',
       hint: 'Without anchors, the regex finds "admin" as a substring match and considers it a success — ignoring the rest.',
       tests: [
         { input: 'admin', shouldMatch: true, label: 'valid username' },
@@ -181,6 +187,7 @@
       title: 'ZIP Code Spotter',
       goal: 'Match numbers that are <strong>exactly 5 digits</strong> — not shorter, not longer. Combine <code>\\b</code>, <code>\\d</code>, and <code>{n}</code>.',
       sampleText: 'Locations: New York 10001, Los Angeles 90210, Chicago 60601, apt 42, serial 1234567, code 999.',
+      solution: '\\b\\d{5}\\b',
       tests: [
         { input: '90210', shouldMatch: true, label: 'exactly 5 digits' },
         { input: '123', shouldMatch: false, label: '3 digits — too short' },
@@ -197,6 +204,7 @@
       title: 'Star vs. Plus',
       goal: 'Match strings that start with one or more <code>a</code> followed by a <code>b</code>. Notice: <code>a*b</code> would also match a lone <code>b</code> — but <code>a+b</code> requires at least one <code>a</code>.',
       sampleText: 'Test: ab, aab, aaab, b, xb, aaa, aaaab.',
+      solution: 'a+b',
       tests: [
         { input: 'ab', shouldMatch: true, label: 'one a + b' },
         { input: 'aaab', shouldMatch: true, label: 'multiple a\'s + b' },
@@ -214,6 +222,7 @@
       title: 'Singular or Plural',
       goal: 'Match both <code>file</code> and <code>files</code> — the trailing <code>s</code> should be optional.',
       sampleText: 'Upload your file here. Multiple files are supported. The file manager shows all files in the current directory.',
+      solution: 'files?',
       tests: [
         { input: 'file', shouldMatch: true, label: 'singular' },
         { input: 'files', shouldMatch: true, label: 'plural' },
@@ -232,6 +241,7 @@
       title: 'Spelling Variants',
       goal: 'Match both <code>grey</code> and <code>gray</code>.',
       sampleText: 'The grey sky turned dark gray by evening. Is it grey or gray? The greyhound ran across the gravel path, its grey fur blending into gray fog.',
+      solution: 'gr[ae]y',
       tests: [
         { input: 'grey', shouldMatch: true, label: 'British spelling' },
         { input: 'gray', shouldMatch: true, label: 'American spelling' },
@@ -248,6 +258,7 @@
       title: 'Time Format',
       goal: 'Match times in <code>HH:MM</code> format — exactly two digits, a colon, two digits.',
       sampleText: 'Schedule: standup at 09:30, lunch at 12:00, review at 15:45. Note: 9:5 is not valid. Neither is 123:456.',
+      solution: '\\d{2}:\\d{2}',
       tests: [
         { input: '09:30', shouldMatch: true, label: 'valid time' },
         { input: '12:00', shouldMatch: true, label: 'noon' },
@@ -265,6 +276,7 @@
       goal: 'This regex is supposed to validate dates in <code>MM/DD</code> format. But it accepts <code>99/99</code> and rejects nothing. Debug it — the month should be 01–12 and the day 01–31.',
       sampleText: null,
       brokenRegex: '\\d{2}/\\d{2}',
+      solution: '^(0[1-9]|1[0-2])/(0[1-9]|[12]\\d|3[01])$',
       hint: 'The current pattern accepts any two digits for month and day. You need to restrict the ranges, and add anchors.',
       tests: [
         { input: '03/15', shouldMatch: true, label: 'valid date' },
@@ -286,6 +298,7 @@
       title: 'Tag Trouble',
       goal: 'Match each <em>individual</em> HTML tag (like <code>&lt;b&gt;</code> or <code>&lt;/b&gt;</code>) — not the entire string. Try <code>&lt;.*&gt;</code> first to see the greedy problem, then add <code>?</code> to make it lazy.',
       sampleText: '<b>bold</b> and <i>italic</i> text',
+      solution: '<.*?>',
       showVisualizer: true,
       tests: [
         { input: '<b>', shouldMatch: true, label: 'opening tag' },
@@ -303,6 +316,7 @@
       title: 'Quoted Strings',
       goal: 'Match each individual double-quoted string separately. Use a lazy quantifier.',
       sampleText: 'He said "hello" and she replied "goodbye" before they both whispered "see you later" softly.',
+      solution: '".*?"',
       tests: [
         { input: '"hello"', shouldMatch: true, label: 'first quoted string' },
         { input: '"goodbye"', shouldMatch: true, label: 'second quoted string' },
@@ -321,6 +335,7 @@
       title: 'Repeated Syllables',
       goal: 'Match the syllable <code>na</code> repeated <strong>2 or more</strong> times in a row. Use a group <code>(...)</code> with a quantifier.',
       sampleText: 'The crowd chanted: na nana nanana nananana! A banana has na but also nan. Just na alone is not enough.',
+      solution: '(na){2,}',
       tests: [
         { input: 'nana', shouldMatch: true, label: '2 repetitions' },
         { input: 'nanana', shouldMatch: true, label: '3 repetitions' },
@@ -338,6 +353,7 @@
       goal: 'This regex tries to match 3-letter airport codes (like LAX, JFK) but it incorrectly matches <code>LA</code> and <code>ABCD</code>. Fix it.',
       sampleText: null,
       brokenRegex: '[A-Z]+',
+      solution: '^[A-Z]{3}$',
       hint: 'You need to specify exactly 3 letters, and use anchors to prevent partial matching.',
       tests: [
         { input: 'LAX', shouldMatch: true, label: '3 uppercase letters' },
@@ -359,6 +375,7 @@
       title: 'Dollar Amounts',
       goal: 'Match the numeric amount after a <code>$</code> sign — but do NOT include the <code>$</code> in the match. Use a positive lookbehind: <code>(?&lt;=\\$)</code>.',
       sampleText: 'Prices: \$25, €30, \$100, £50, \$7.99, ¥500, \$0.50, and €12.50 on sale.',
+      solution: '(?<=\\$)[\\d.]+',
       tests: [
         { input: '$25', shouldMatch: true, label: 'dollar amount (match the number)' },
         { input: '€30', shouldMatch: false, label: 'euro — should NOT match' },
@@ -375,6 +392,7 @@
       title: 'Password Check',
       goal: 'Validate that the entire string has at least one digit <strong>and</strong> at least one uppercase letter. Chain positive lookaheads <code>(?=.*\\d)</code> and <code>(?=.*[A-Z])</code> at the start.',
       sampleText: null,
+      solution: '^(?=.*\\d)(?=.*[A-Z]).+$',
       tests: [
         { input: 'Hello1', shouldMatch: true, label: 'uppercase + digit' },
         { input: 'hello1', shouldMatch: false, label: 'no uppercase — should NOT match' },
@@ -557,7 +575,7 @@
 
     // Print-only answer
     if (ex.solution) {
-      h += '<div class="rt-print-answer"><strong>Answer:</strong> <code>' + esc(ex.solution) + '</code></div>';
+      h += '<div class="rt-print-answer"><strong>Solution:</strong> <code>' + esc(ex.solution) + '</code></div>';
     }
 
     h += '</div>';
