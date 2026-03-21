@@ -89,7 +89,7 @@
       id: 'meta character-1', type: 'free',
       section: 'Meta Characters',
       title: 'Digit Detector',
-      goal: 'Match every individual digit.',
+      goal: 'Match every individual digit. Use the meta character <code>\\d</code>.',
       sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3.',
       solution: '\\d',
       tests: [

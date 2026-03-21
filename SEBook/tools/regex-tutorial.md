@@ -202,7 +202,7 @@ The **dot** `.` is a wildcard that matches **any single character** (except newl
 <div class="rt-section" data-section="Meta Characters"></div>
 
 
-# Anchors & Boundaries
+# Anchors
 
 So far every pattern matches **anywhere** inside a string. **Anchors** constrain *where* a match can occur without consuming characters:
 
@@ -216,7 +216,7 @@ Anchors are critical for **validation**. Without them, the pattern `\d+` would m
 
 Word boundaries (`\b`) let you match whole words. `\bgo\b` matches the standalone word "go" but not "goal" or "cargo".
 
-<div class="rt-section" data-section="Anchors & Boundaries"></div>
+<div class="rt-section" data-section="Anchors"></div>
 
 
 # Quantifiers
