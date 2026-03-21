@@ -605,7 +605,7 @@
     }
   };
 
-  TutorialVM.prototype._syncFileToVM = function (filename) {
+  TutorialVM.prototype._syncFileToVM = function (filename, isInitial) {
     if (!this.emulator || !this.booted) return;
     var entry = this.editorModels[filename];
     if (!entry) return;
@@ -627,6 +627,7 @@
 
     // Write directly to the v86 9p filesystem
     // Files are created at the root of the 9p share (which is mounted at /tutorial)
+    var isShellScript = /\.sh$/i.test(filename) && !isInitial;
     var self = this;
     this.emulator.create_file('/' + filename, bytes, function(err) {
       if (err) {
@@ -634,6 +635,7 @@
         // Fallback to sending command if 9p failed
         var b64 = btoa(unescape(encodeURIComponent(content)));
         var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
+        if (isShellScript) cmd += ' && chmod +x /tutorial/' + filename;
 
         self._muted = true;
         self._mutedBuffer = '';
@@ -656,6 +658,9 @@
         }, 5000);
 
         self.sendCommand(cmd);
+      } else if (isShellScript) {
+        // Restore execute permission — create_file writes plain bytes with no mode
+        self.sendCommand('chmod +x /tutorial/' + filename);
       }
     });
   };
@@ -709,7 +714,7 @@
     if (step.files) {
       step.files.forEach(function (f) {
         self.openFile(f.path, f.content, f.language);
-        self._syncFileToVM(f.path);
+        self._syncFileToVM(f.path, true); // initial load — don't auto-chmod
       });
       if (step.open_file) {
         self._setActiveFile(step.open_file);

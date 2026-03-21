@@ -128,7 +128,7 @@ topics:
       - name: Shell Scripting
         url: /SEBook/tools/shell.html
       - name: Shell Scripting Tutorial
-        url: /SEBook/tools/shell_tutorial.html
+        url: /SEBook/tools/shell-tutorial.html
       - name: Regular Expressions
         url: /SEBook/tools/regex.html
       - name: RegEx Tutorial
