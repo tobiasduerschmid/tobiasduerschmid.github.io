@@ -87,6 +87,106 @@ steps:
       - description: "morning.sh is executable"
         command: "[ -x morning.sh ]"
 
+  - title: "Pipes — Connecting Commands"
+    instructions: |
+      The **pipe** operator `|` is one of the most powerful ideas in Unix.
+      It connects programs so that the output of one becomes the input of
+      the next, letting you build data-processing pipelines from small,
+      single-purpose tools.
+
+      ### The Unix philosophy
+
+      Each Unix tool does *one thing well*:
+      - `grep` finds matching lines
+      - `sort` sorts lines alphabetically or numerically
+      - `uniq` removes consecutive duplicate lines
+      - `wc` counts lines, words, or characters
+      - `cut` extracts specific columns
+
+      Pipes let you compose them into powerful chains without writing a
+      program. Data flows through memory from one process to the next —
+      no intermediate files needed.
+
+      ### Explore the data
+
+      A file called `server_log.txt` is provided. Browse it first:
+
+      ```bash
+      cat server_log.txt
+      ```
+
+      ### Pipeline exercises
+
+      **Type these yourself** — building pipelines step by step trains
+      you to think in terms of data flowing through stages.
+
+      ```bash
+      # 1. Count total lines
+      wc -l < server_log.txt
+
+      # 2. Show only ERROR lines
+      grep "ERROR" server_log.txt
+
+      # 3. Count how many errors
+      grep "ERROR" server_log.txt | wc -l
+
+      # 4. Extract just the timestamps (first field)
+      cut -d' ' -f1 server_log.txt | head -5
+
+      # 5. Which message types appear most often?
+      cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -3
+      ```
+
+      Read pipeline 5 left to right: extract column 2 → sort alphabetically
+      (so duplicates become adjacent) → count consecutive duplicates →
+      sort by count descending → show top 3. Each step is trivial; the
+      combination is powerful.
+
+      ### Redirection: connecting commands to files
+
+      Pipes connect commands to commands. **Redirection** connects commands
+      to files:
+
+      ```bash
+      grep "ERROR" server_log.txt > errors_only.txt   # create/overwrite
+      echo "extra line" >> errors_only.txt             # append (safe)
+      wc -l < errors_only.txt                          # read from file
+      ```
+
+      Note: `>` overwrites without warning. Use `>>` to append and
+      preserve existing content.
+
+      **Now create `errors_only.txt`** by running the `grep "ERROR"`
+      redirection above — the tests below will check it.
+    files:
+      - path: "server_log.txt"
+        content: |
+          08:12:01 INFO server started on port 8080
+          08:12:03 INFO database connection established
+          08:14:22 WARN high memory usage detected (82%)
+          08:15:45 ERROR failed to process request /api/users
+          08:16:01 INFO request completed in 230ms
+          08:18:33 ERROR database timeout after 30s
+          08:19:02 WARN disk usage above threshold (91%)
+          08:20:15 INFO cache refreshed successfully
+          08:22:47 ERROR connection refused by upstream service
+          08:23:01 INFO retry succeeded for /api/users
+          08:25:00 INFO scheduled backup completed
+          08:27:12 WARN deprecated API endpoint called: /v1/legacy
+          08:30:00 INFO health check passed
+          08:31:44 ERROR out of memory on worker-3
+          08:32:01 INFO worker-3 restarted
+    open_file: "server_log.txt"
+    tests:
+      - description: "server_log.txt has 15 log entries"
+        command: "[ $(wc -l < server_log.txt) -eq 15 ]"
+      - description: "There are exactly 4 ERROR lines in the log"
+        command: "[ $(grep -c 'ERROR' server_log.txt) -eq 4 ]"
+      - description: "errors_only.txt was created with ERROR lines"
+        command: "[ -f errors_only.txt ] && grep -q 'ERROR' errors_only.txt"
+      - description: "INFO is the most common message type"
+        command: "[ \"$(cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')\" = 'INFO' ]"
+
   - title: "Variables & The Quoting Trap"
     instructions: |
       Variables store values for reuse. In Bash, you assign with `=` and
@@ -196,106 +296,6 @@ steps:
         command: "bash inventory.sh | grep -qiE 'v[0-9]|version'"
       - description: "inventory.sh output includes a script count"
         command: "bash inventory.sh | grep -qE '[0-9]+ script'"
-
-  - title: "Pipes — Connecting Commands"
-    instructions: |
-      The **pipe** operator `|` is one of the most powerful ideas in Unix.
-      It connects programs so that the output of one becomes the input of
-      the next, letting you build data-processing pipelines from small,
-      single-purpose tools.
-
-      ### The Unix philosophy
-
-      Each Unix tool does *one thing well*:
-      - `grep` finds matching lines
-      - `sort` sorts lines alphabetically or numerically
-      - `uniq` removes consecutive duplicate lines
-      - `wc` counts lines, words, or characters
-      - `cut` extracts specific columns
-
-      Pipes let you compose them into powerful chains without writing a
-      program. Data flows through memory from one process to the next —
-      no intermediate files needed.
-
-      ### Explore the data
-
-      A file called `server_log.txt` is provided. Browse it first:
-
-      ```bash
-      cat server_log.txt
-      ```
-
-      ### Pipeline exercises
-
-      **Type these yourself** — building pipelines step by step trains
-      you to think in terms of data flowing through stages.
-
-      ```bash
-      # 1. Count total lines
-      wc -l < server_log.txt
-
-      # 2. Show only ERROR lines
-      grep "ERROR" server_log.txt
-
-      # 3. Count how many errors
-      grep "ERROR" server_log.txt | wc -l
-
-      # 4. Extract just the timestamps (first field)
-      cut -d' ' -f1 server_log.txt | head -5
-
-      # 5. Which message types appear most often?
-      cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -3
-      ```
-
-      Read pipeline 5 left to right: extract column 2 → sort alphabetically
-      (so duplicates become adjacent) → count consecutive duplicates →
-      sort by count descending → show top 3. Each step is trivial; the
-      combination is powerful.
-
-      ### Redirection: connecting commands to files
-
-      Pipes connect commands to commands. **Redirection** connects commands
-      to files:
-
-      ```bash
-      grep "ERROR" server_log.txt > errors_only.txt   # create/overwrite
-      echo "extra line" >> errors_only.txt             # append (safe)
-      wc -l < errors_only.txt                          # read from file
-      ```
-
-      Note: `>` overwrites without warning. Use `>>` to append and
-      preserve existing content.
-
-      **Now create `errors_only.txt`** by running the `grep "ERROR"`
-      redirection above — the tests below will check it.
-    files:
-      - path: "server_log.txt"
-        content: |
-          08:12:01 INFO server started on port 8080
-          08:12:03 INFO database connection established
-          08:14:22 WARN high memory usage detected (82%)
-          08:15:45 ERROR failed to process request /api/users
-          08:16:01 INFO request completed in 230ms
-          08:18:33 ERROR database timeout after 30s
-          08:19:02 WARN disk usage above threshold (91%)
-          08:20:15 INFO cache refreshed successfully
-          08:22:47 ERROR connection refused by upstream service
-          08:23:01 INFO retry succeeded for /api/users
-          08:25:00 INFO scheduled backup completed
-          08:27:12 WARN deprecated API endpoint called: /v1/legacy
-          08:30:00 INFO health check passed
-          08:31:44 ERROR out of memory on worker-3
-          08:32:01 INFO worker-3 restarted
-    open_file: "server_log.txt"
-    tests:
-      - description: "server_log.txt has 15 log entries"
-        command: "[ $(wc -l < server_log.txt) -eq 15 ]"
-      - description: "There are exactly 4 ERROR lines in the log"
-        command: "[ $(grep -c 'ERROR' server_log.txt) -eq 4 ]"
-      - description: "errors_only.txt was created with ERROR lines"
-        command: "[ -f errors_only.txt ] && grep -q 'ERROR' errors_only.txt"
-      - description: "INFO is the most common message type"
-        command: "[ \"$(cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')\" = 'INFO' ]"
 
   - title: "Conditionals — Making Decisions"
     instructions: |

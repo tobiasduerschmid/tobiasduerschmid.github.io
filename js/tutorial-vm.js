@@ -93,6 +93,13 @@
     this._testBuffer = '';
     this._testResults = [];
     this._testCallbacks = [];
+
+    // Tracks which filenames the user has explicitly chmod +x'd
+    this._executableFiles = new Set();
+    // Buffer for monitoring user terminal input
+    this._inputLine = '';
+    // Flag to suppress auto-save during programmatic setValue calls
+    this._suppressAutoSave = false;
   }
 
   // ---- Lifecycle ------------------------------------------------------------
@@ -429,9 +436,22 @@
           filesystem: {},
         });
 
-        // Wire xterm input → serial port
+        // Wire xterm input → serial port, and monitor for chmod +x
         self.term.onData(function (data) {
           self.emulator.serial0_send(data);
+          // Track user-typed commands to detect chmod +x <file>
+          if (data === '\r' || data === '\n') {
+            var m = self._inputLine.match(/chmod\s+\+x\s+(\S+)/);
+            if (m) {
+              var fname = m[1].replace(/^\.\//, '').replace(/^\/tutorial\//, '');
+              self._executableFiles.add(fname);
+            }
+            self._inputLine = '';
+          } else if (data === '\x7f' || data === '\b') {
+            self._inputLine = self._inputLine.slice(0, -1);
+          } else {
+            self._inputLine += data;
+          }
         });
 
         // Wire serial port output → xterm (permanent)
@@ -484,6 +504,8 @@
   TutorialVM.prototype._setupFilesystem = function () {
     // Navigate to the 9p filesystem 'host9p' mounted at /tutorial by the init script
     this.sendCommand('cd /tutorial');
+    // Ensure commands prefixed with a space are not saved in history
+    this.sendCommand('export HISTCONTROL=ignoreboth');
     this.sendCommand('clear');
     return delay(100);
   };
@@ -527,6 +549,7 @@
       var self = this;
       var saveTimeout;
       model.onDidChangeContent(function () {
+        if (self._suppressAutoSave) return;
         clearTimeout(saveTimeout);
         saveTimeout = setTimeout(function () {
           self._syncFileToVM(filename);
@@ -605,6 +628,31 @@
     }
   };
 
+  // Run a shell command silently (muted output, waits for prompt before unmuting).
+  TutorialVM.prototype._runSilent = function (cmd) {
+    var self = this;
+    self._muted = true;
+    self._mutedBuffer = '';
+
+    function onByte(byte) {
+      self._mutedBuffer += String.fromCharCode(byte);
+      if (self._mutedBuffer.includes('# ') || self._mutedBuffer.includes('$ ')) {
+        self._muted = false;
+        self._mutedBuffer = '';
+        self.emulator.remove_listener('serial0-output-byte', onByte);
+        clearTimeout(timer);
+      }
+    }
+    self.emulator.add_listener('serial0-output-byte', onByte);
+    var timer = setTimeout(function () {
+      self._muted = false;
+      self._mutedBuffer = '';
+      self.emulator.remove_listener('serial0-output-byte', onByte);
+    }, 5000);
+    // Leading space prevents bash history recording
+    self.sendCommand(' ' + cmd);
+  };
+
   TutorialVM.prototype._syncFileToVM = function (filename, isInitial) {
     if (!this.emulator || !this.booted) return;
     var entry = this.editorModels[filename];
@@ -627,40 +675,18 @@
 
     // Write directly to the v86 9p filesystem
     // Files are created at the root of the 9p share (which is mounted at /tutorial)
-    var isShellScript = /\.sh$/i.test(filename) && !isInitial;
+    // Restore execute bit only if the user has explicitly chmod +x'd this file before.
     var self = this;
+    var needsChmod = /\.sh$/i.test(filename) && !isInitial && self._executableFiles.has(filename);
     this.emulator.create_file('/' + filename, bytes, function(err) {
       if (err) {
         console.warn('TutorialVM: Failed to sync file via 9p API, falling back to serial base64 sync', err);
-        // Fallback to sending command if 9p failed
         var b64 = btoa(unescape(encodeURIComponent(content)));
         var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
-        if (isShellScript) cmd += ' && chmod +x /tutorial/' + filename;
-
-        self._muted = true;
-        self._mutedBuffer = '';
-
-        function onMutedByte(byte) {
-          self._mutedBuffer += String.fromCharCode(byte);
-          if (self._mutedBuffer.includes('# ') || self._mutedBuffer.includes('$ ')) {
-            self._muted = false;
-            self._mutedBuffer = '';
-            self.emulator.remove_listener('serial0-output-byte', onMutedByte);
-            clearTimeout(safetyTimer);
-          }
-        }
-        self.emulator.add_listener('serial0-output-byte', onMutedByte);
-
-        var safetyTimer = setTimeout(function () {
-          self._muted = false;
-          self._mutedBuffer = '';
-          self.emulator.remove_listener('serial0-output-byte', onMutedByte);
-        }, 5000);
-
-        self.sendCommand(cmd);
-      } else if (isShellScript) {
-        // Restore execute permission — create_file writes plain bytes with no mode
-        self.sendCommand('chmod +x /tutorial/' + filename);
+        if (needsChmod) cmd += ' && chmod +x /tutorial/' + filename;
+        self._runSilent(cmd);
+      } else if (needsChmod) {
+        self._runSilent('chmod +x /tutorial/' + filename);
       }
     });
   };
@@ -712,10 +738,13 @@
 
     // Open files for this step
     if (step.files) {
+      self._suppressAutoSave = true;
       step.files.forEach(function (f) {
+        self._executableFiles.delete(f.path); // reset — user must chmod +x again for this file
         self.openFile(f.path, f.content, f.language);
         self._syncFileToVM(f.path, true); // initial load — don't auto-chmod
       });
+      self._suppressAutoSave = false;
       if (step.open_file) {
         self._setActiveFile(step.open_file);
         self._renderTabs();
@@ -801,7 +830,9 @@
     }, 15000);
     this._testCallbacks.push(function () { clearTimeout(safetyTimer); });
 
-    this.sendCommand(parts.join('; '));
+    // Leading space prevents bash from recording the command in history
+    // (requires HISTCONTROL=ignorespace or ignoreboth, set in .bashrc)
+    this.sendCommand(' ' + parts.join('; '));
   };
 
   TutorialVM.prototype._parseTestOutput = function () {
