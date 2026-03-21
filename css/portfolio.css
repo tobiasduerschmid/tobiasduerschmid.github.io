@@ -781,8 +781,8 @@ html.dark-mode .highlight .vc,
 html.dark-mode .highlight .vg,
 html.dark-mode .highlight .vi { color: #9cdcfe; }
 html.dark-mode .highlight .nb,
-html.dark-mode .highlight .bp { color: #dcdcaa; }
-html.dark-mode .highlight .nt { color: #569cd6; }
+html.dark-mode .highlight .bp { color: #569cd6; } /* Blue for builtins (set, echo) to match Monaco Shell */
+html.dark-mode .highlight .nt { color: #f44747; } /* Red for options (-e, +x) to match Monaco Shell */
 html.dark-mode .highlight .o { color: #d4d4d4; }
 
 

@@ -201,8 +201,8 @@ html, body {
 .tvm-step-instructions .highlight .vg,
 .tvm-step-instructions .highlight .vi { color: #9cdcfe; }
 .tvm-step-instructions .highlight .nb,
-.tvm-step-instructions .highlight .bp { color: #dcdcaa; }
-.tvm-step-instructions .highlight .nt { color: #569cd6; }
+.tvm-step-instructions .highlight .bp { color: #569cd6; } /* Blue for builtins (set, echo) to match Monaco Shell */
+.tvm-step-instructions .highlight .nt { color: #f44747; } /* Red for options (-e, +x) to match Monaco Shell */
 .tvm-step-instructions .highlight .o { color: #d4d4d4; }
 
 
