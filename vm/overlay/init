@@ -1,0 +1,68 @@
+#!/bin/sh
+# /init - PID 1 for the tutorial VM
+# Must never exit, or the kernel panics.
+
+# Mount essential filesystems
+mount -t proc proc /proc 2>/dev/null
+mount -t sysfs sysfs /sys 2>/dev/null
+mount -t devtmpfs devtmpfs /dev 2>/dev/null
+
+# If devtmpfs failed, create the serial device manually
+if [ ! -e /dev/ttyS0 ]; then
+    mknod /dev/ttyS0 c 4 64
+fi
+
+mkdir -p /dev/pts /dev/shm /tmp /run
+mount -t devpts devpts /dev/pts 2>/dev/null
+mount -t tmpfs tmpfs /tmp 2>/dev/null
+mount -t tmpfs tmpfs /run 2>/dev/null
+
+# Debug: log to serial console
+log() { echo "init: $*" > /dev/ttyS0; }
+
+log "filesystems mounted"
+
+hostname tutorial
+
+export HOME=/root
+export TERM=linux
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export LANG=C.UTF-8
+
+# Mount 9p filesystem for tutorial files
+mkdir -p /tutorial
+mount -t 9p -o trans=virtio,version=9p2000.L,msize=131072 host9p /tutorial 2>/dev/null || true
+
+log "looking for shell..."
+
+# Find a working shell — try bash, fall back to sh
+SHELL_BIN=""
+for candidate in /usr/bin/bash /bin/bash /bin/sh; do
+    if [ -x "$candidate" ]; then
+        SHELL_BIN="$candidate"
+        log "found $candidate"
+        break
+    fi
+done
+
+if [ -z "$SHELL_BIN" ]; then
+    log "ERROR: no shell found! listing /bin:"
+    ls /bin > /dev/ttyS0 2>&1
+    log "listing /usr/bin:"
+    ls /usr/bin > /dev/ttyS0 2>&1
+    # Hang forever instead of exiting (to avoid kernel panic)
+    while true; do sleep 1000; done
+fi
+
+cd /tutorial 2>/dev/null || cd /root
+
+cat /etc/motd > /dev/ttyS0 2>/dev/null
+
+# Start shell on serial console
+# Use exec so the shell becomes PID 1 (must never exit)
+log "starting $SHELL_BIN"
+exec "$SHELL_BIN" --login < /dev/ttyS0 > /dev/ttyS0 2>&1
+
+# If exec failed, hang forever
+log "ERROR: exec failed"
+while true; do sleep 1000; done

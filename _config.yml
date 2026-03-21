@@ -75,6 +75,13 @@ defaults:
 safe: false
 encoding: utf-8
 
+# Exclude VM build scripts from site output (but include assets/v86 and vm/dist)
+exclude:
+  - vm/setup.sh
+  - vm/build-rootfs.sh
+  - vm/overlay
+  - vm/Makefile
+
 # Build settings
 strongdown: kramdown
 

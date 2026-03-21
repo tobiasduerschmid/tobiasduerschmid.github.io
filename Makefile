@@ -1,4 +1,4 @@
-.PHONY: install build check test clean run pdf latex all
+.PHONY: install build check test clean run pdf latex all vm-setup vm-build
 
 install:
 	bundle install
@@ -37,3 +37,10 @@ latex:
 	cd latex && pdflatex -interaction=nonstopmode main.tex && biber main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
 
 all: test run
+
+# --- Tutorial VM ---
+vm-setup:
+	./vm/setup.sh
+
+vm-build:
+	./vm/build-rootfs.sh

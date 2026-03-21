@@ -1,0 +1,19 @@
+# ~/.bashrc - Tutorial VM shell configuration
+
+# Colored prompt: user@tutorial:/path$
+export PS1='\[\033[01;32m\]\u@tutorial\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+
+# Environment
+export EDITOR=nano
+export PAGER=less
+export TERM=xterm-256color
+export LANG=C.UTF-8
+
+# Useful aliases
+alias ll='ls -la --color=auto'
+alias la='ls -A --color=auto'
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+
+# Start in /tutorial if it exists
+cd /tutorial 2>/dev/null || true

@@ -1,0 +1,426 @@
+/* ============================================================
+   Tutorial VM Styles
+   Split-pane layout: instructions (top) | editor + terminal (bottom)
+   Always dark-mode for the workspace panels.
+   ============================================================ */
+
+/* Root container — fills viewport below the navbar */
+.tvm-root {
+  width: 100%;
+  height: calc(100vh - 52px);
+  position: relative;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+/* Main flex container */
+.tvm-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* ----- Instructions Panel (top) ----- */
+.tvm-instructions-panel {
+  flex: 0 0 33%;
+  overflow-y: auto;
+  padding: 16px 28px 12px;
+  background: #252526;
+  color: #d4d4d4;
+  border-bottom: 1px solid #333;
+}
+
+.tvm-instructions-panel h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #4fc3f7;
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+.tvm-instructions-panel h3 {
+  color: #81c784;
+  font-size: 1.15em;
+  margin-top: 16px;
+}
+
+.tvm-instructions-panel p {
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.tvm-instructions-panel code {
+  background: #333;
+  color: #ce9178;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+}
+
+.tvm-instructions-panel pre {
+  background: #1e1e1e;
+  padding: 12px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid #333;
+  margin: 12px 0;
+}
+
+.tvm-instructions-panel pre code {
+  background: none;
+  padding: 0;
+  color: #d4d4d4;
+}
+
+.tvm-instructions-panel ul,
+.tvm-instructions-panel ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.tvm-instructions-panel li {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.tvm-instructions-panel a {
+  color: #4fc3f7;
+}
+
+.tvm-instructions-panel strong {
+  color: #e0e0e0;
+}
+
+.tvm-instructions-panel blockquote {
+  border-left: 3px solid #4fc3f7;
+  margin: 12px 0;
+  padding: 8px 16px;
+  background: rgba(79, 195, 247, 0.08);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ----- Horizontal Splitter ----- */
+.tvm-hsplitter {
+  flex: 0 0 5px;
+  background: #333;
+  cursor: row-resize;
+  transition: background 0.15s;
+  position: relative;
+  z-index: 10;
+}
+.tvm-hsplitter:hover,
+.tvm-hsplitter.active {
+  background: #0078d4;
+}
+
+/* ----- Workspace (bottom: editor + terminal) ----- */
+.tvm-workspace {
+  flex: 1 1 67%;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  background: #1e1e1e;
+}
+
+/* ----- Editor Panel ----- */
+.tvm-editor-panel {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tvm-editor-tabs {
+  display: flex;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  overflow-x: auto;
+  min-height: 35px;
+  flex-shrink: 0;
+}
+
+.tvm-editor-tabs::-webkit-scrollbar {
+  height: 3px;
+}
+.tvm-editor-tabs::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+.tvm-tab {
+  padding: 7px 14px;
+  color: #888;
+  cursor: pointer;
+  border-right: 1px solid #1e1e1e;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.tvm-tab.active {
+  color: #fff;
+  background: #1e1e1e;
+  border-bottom: 2px solid #0078d4;
+}
+
+.tvm-tab:hover {
+  color: #ccc;
+  background: #2a2d2e;
+}
+
+.tvm-tab-close {
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.tvm-tab:hover .tvm-tab-close {
+  opacity: 0.6;
+}
+
+.tvm-tab-close:hover {
+  opacity: 1 !important;
+  color: #fff;
+}
+
+/* Saved indicator flash */
+.tvm-tab.saved {
+  border-bottom-color: #4caf50 !important;
+}
+
+.tvm-editor-container {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ----- Vertical Splitter ----- */
+.tvm-vsplitter {
+  flex: 0 0 5px;
+  background: #333;
+  cursor: col-resize;
+  transition: background 0.15s;
+  position: relative;
+  z-index: 10;
+}
+.tvm-vsplitter:hover,
+.tvm-vsplitter.active {
+  background: #0078d4;
+}
+
+/* ----- Terminal Panel ----- */
+.tvm-terminal-panel {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tvm-terminal-header {
+  background: #252526;
+  color: #ccc;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  border-bottom: 1px solid #333;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tvm-terminal-container {
+  flex: 1;
+  min-height: 0;
+  padding: 4px;
+  background: #1e1e1e;
+}
+
+/* Ensure xterm.js fills its container */
+.tvm-terminal-container .xterm {
+  height: 100%;
+}
+
+/* ----- Step Navigation (pill buttons) ----- */
+.tvm-step-nav {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.tvm-step-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  background: transparent;
+  color: #999;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.tvm-step-btn:hover {
+  border-color: #4fc3f7;
+  color: #4fc3f7;
+}
+
+.tvm-step-btn.active {
+  background: #0078d4;
+  border-color: #0078d4;
+  color: #fff;
+}
+
+/* ----- Step Controls (prev / next buttons) ----- */
+.tvm-step-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+}
+
+.tvm-btn {
+  padding: 7px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background 0.15s;
+}
+
+.tvm-btn-prev,
+.tvm-btn-next {
+  background: #0078d4;
+  color: #fff;
+}
+
+.tvm-btn-prev:hover,
+.tvm-btn-next:hover {
+  background: #005a9e;
+}
+
+/* ----- Loading Overlay ----- */
+.tvm-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  z-index: 100;
+  gap: 16px;
+}
+
+.tvm-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top-color: #0078d4;
+  border-radius: 50%;
+  animation: tvm-spin 0.8s linear infinite;
+}
+
+@keyframes tvm-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tvm-loading-text {
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ----- Error State ----- */
+.tvm-error {
+  padding: 60px 40px;
+  text-align: center;
+  color: #ef5350;
+  background: #1e1e1e;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tvm-error h3 {
+  font-size: 1.5em;
+  margin-bottom: 12px;
+}
+
+.tvm-error p {
+  color: #999;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.tvm-error-hint {
+  margin-top: 8px;
+}
+
+.tvm-error-hint code {
+  background: #333;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color: #ce9178;
+}
+
+.tvm-error button {
+  margin-top: 20px;
+  padding: 10px 28px;
+  background: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+.tvm-error button:hover {
+  background: #005a9e;
+}
+
+/* ----- Responsive: stack workspace vertically on narrow screens ----- */
+@media (max-width: 900px) {
+  .tvm-workspace {
+    flex-direction: column;
+  }
+  .tvm-vsplitter {
+    flex: 0 0 5px;
+    cursor: row-resize;
+  }
+}
+
+/* ----- Override site styles in tutorial context ----- */
+.tutorial-page {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.tutorial-page .container {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+}

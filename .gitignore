@@ -11,3 +11,7 @@ test-results/
 pdfs/
 .DS_Store
 latex/
+
+# Tutorial VM - built artifacts (run `make vm-setup` to generate)
+vm/dist/
+assets/v86/
