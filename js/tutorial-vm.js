@@ -140,26 +140,30 @@
     this.root.classList.add('tvm-root');
     this.root.innerHTML =
       '<div class="tvm-loading">' +
-      '<div class="tvm-loading-spinner"></div>' +
-      '<div class="tvm-loading-text">Loading…</div>' +
+        '<div class="tvm-loading-spinner"></div>' +
+        '<div class="tvm-loading-text">Loading…</div>' +
       '</div>' +
       '<div class="tvm-container" style="display:none">' +
-      '<div class="tvm-instructions-panel">' +
-      '<div class="tvm-step-nav"></div>' +
-      '<div class="tvm-step-content"></div>' +
-      '</div>' +
-      '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
-      '<div class="tvm-workspace">' +
-      '<div class="tvm-editor-panel">' +
-      '<div class="tvm-editor-tabs"></div>' +
-      '<div class="tvm-editor-container"></div>' +
-      '</div>' +
-      '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
-      '<div class="tvm-terminal-panel">' +
-      '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
-      '<div class="tvm-terminal-container"></div>' +
-      '</div>' +
-      '</div>' +
+        '<div class="tvm-instructions-panel">' +
+          '<div class="tvm-step-nav-bar">' +
+            '<div class="tvm-step-nav"></div>' +
+          '</div>' +
+          '<div class="tvm-step-content-wrap">' +
+            '<div class="tvm-step-content"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
+        '<div class="tvm-workspace">' +
+          '<div class="tvm-editor-panel">' +
+            '<div class="tvm-editor-tabs"></div>' +
+            '<div class="tvm-editor-container"></div>' +
+          '</div>' +
+          '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
+          '<div class="tvm-terminal-panel">' +
+            '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
+            '<div class="tvm-terminal-container"></div>' +
+          '</div>' +
+        '</div>' +
       '</div>';
 
     this.loadingEl = this.root.querySelector('.tvm-loading');
@@ -200,41 +204,42 @@
 
   TutorialVM.prototype._initSplitters = function () {
     var self = this;
+    // hsplitter: separates LEFT (instructions) from RIGHT (workspace) — horizontal drag
     var hsplitter = this.root.querySelector('.tvm-hsplitter');
     var instructions = this.root.querySelector('.tvm-instructions-panel');
     var workspace = this.root.querySelector('.tvm-workspace');
-    this._makeDraggable(hsplitter, 'horizontal', instructions, workspace);
+    this._makeDraggable(hsplitter, 'vertical', instructions, workspace);  // 'vertical' = col-resize
 
+    // vsplitter: separates editor (top) from terminal (bottom) — vertical drag
     var vsplitter = this.root.querySelector('.tvm-vsplitter');
     var editorPanel = this.root.querySelector('.tvm-editor-panel');
     var terminalPanel = this.root.querySelector('.tvm-terminal-panel');
-    this._makeDraggable(vsplitter, 'vertical', editorPanel, terminalPanel);
+    this._makeDraggable(vsplitter, 'horizontal', editorPanel, terminalPanel);  // 'horizontal' = row-resize
   };
 
   TutorialVM.prototype._makeDraggable = function (splitter, direction, beforeEl, afterEl) {
     var self = this;
-    var startPos, startBefore, startAfter;
+    var startPos, startSizeBefore;
 
     function onMouseDown(e) {
       e.preventDefault();
-      startPos = direction === 'horizontal' ? e.clientY : e.clientX;
-      startBefore = direction === 'horizontal' ? beforeEl.getBoundingClientRect().height : beforeEl.getBoundingClientRect().width;
-      startAfter = direction === 'horizontal' ? afterEl.getBoundingClientRect().height : afterEl.getBoundingClientRect().width;
+      startPos = direction === 'vertical' ? e.clientX : e.clientY;
+      startSizeBefore = direction === 'vertical'
+        ? beforeEl.getBoundingClientRect().width
+        : beforeEl.getBoundingClientRect().height;
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
       splitter.classList.add('active');
-      document.body.style.cursor = direction === 'horizontal' ? 'row-resize' : 'col-resize';
+      document.body.style.cursor = direction === 'vertical' ? 'col-resize' : 'row-resize';
       document.body.style.userSelect = 'none';
     }
 
     function onMouseMove(e) {
-      var current = direction === 'horizontal' ? e.clientY : e.clientX;
-      var delta = current - startPos;
-      var total = startBefore + startAfter;
-      var newBefore = Math.max(80, Math.min(total - 80, startBefore + delta));
-      var newAfter = total - newBefore;
-      beforeEl.style.flex = '0 0 ' + (newBefore / total * 100) + '%';
-      afterEl.style.flex = '0 0 ' + (newAfter / total * 100) + '%';
+      var current = direction === 'vertical' ? e.clientX : e.clientY;
+      var newSize = Math.max(120, startSizeBefore + (current - startPos));
+      // Set beforeEl to a fixed px size; afterEl takes remaining space via flex:1
+      beforeEl.style.flex = '0 0 ' + newSize + 'px';
+      afterEl.style.flex = '1 1 0';
       if (self.fitAddon) self.fitAddon.fit();
       if (self.editor) self.editor.layout();
     }

@@ -1,111 +1,192 @@
 /* ============================================================
    Tutorial VM Styles
-   Split-pane layout: instructions (top) | editor + terminal (bottom)
+   Layout: instructions (left, full height) | editor+terminal (right, stacked)
    Always dark-mode for the workspace panels.
    ============================================================ */
 
-/* Root container — fills viewport below the navbar */
-.tvm-root {
-  width: 100%;
-  height: calc(100vh - 52px);
-  position: relative;
-  overflow: hidden;
-  background: #1e1e1e;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Lock the page — no scrolling on the tutorial layout */
+html, body {
+  height: 100%;
+  overflow: hidden !important;
+  margin: 0;
+  padding: 0;
 }
 
-/* Main flex container */
+/* Root container fills the space below the fixed navbar */
+.tvm-root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #141414;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Main flex container — horizontal split */
 .tvm-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
   width: 100%;
 }
 
-/* ----- Instructions Panel (top) ----- */
+/* ───────────────────────────────────────────
+   Left: Instructions Panel (full height)
+─────────────────────────────────────────── */
 .tvm-instructions-panel {
-  flex: 0 0 33%;
+  flex: 0 0 38%;  /* overridden to px by splitter drag */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #1c1c1e;
+  border-right: 1px solid #2a2a2e;
+}
+
+.tvm-step-nav-bar {
+  flex-shrink: 0;
+  padding: 10px 20px;
+  background: #141416;
+  border-bottom: 1px solid #2a2a2e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tvm-step-content-wrap {
+  flex: 1;
   overflow-y: auto;
-  padding: 16px 28px 12px;
-  background: #252526;
-  color: #d4d4d4;
-  border-bottom: 1px solid #333;
+  padding: 24px 28px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3e transparent;
 }
 
-.tvm-instructions-panel h2 {
-  margin-top: 0;
-  margin-bottom: 12px;
-  color: #4fc3f7;
-  font-size: 1.4em;
+.tvm-step-content-wrap::-webkit-scrollbar { width: 8px; }
+.tvm-step-content-wrap::-webkit-scrollbar-track { background: #252528; border-radius: 4px; }
+.tvm-step-content-wrap::-webkit-scrollbar-thumb { background: #555566; border-radius: 4px; }
+.tvm-step-content-wrap::-webkit-scrollbar-thumb:hover { background: #7777aa; }
+
+/* Step content typography */
+.tvm-step-content h2 {
+  margin: 0 0 16px;
+  color: #e8e8f0;
+  font-size: 1.35em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tvm-step-content h3 {
+  color: #7ec8e3;
+  font-size: 1.05em;
   font-weight: 600;
+  margin: 20px 0 8px;
 }
 
-.tvm-instructions-panel h3 {
-  color: #81c784;
-  font-size: 1.15em;
-  margin-top: 16px;
+.tvm-step-instructions p {
+  line-height: 1.7;
+  margin: 10px 0;
+  color: #c8c8d8;
+  font-size: 0.95em;
 }
 
-.tvm-instructions-panel p {
-  line-height: 1.6;
-  margin: 8px 0;
-}
-
-.tvm-instructions-panel code {
-  background: #333;
-  color: #ce9178;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.9em;
+.tvm-step-instructions code {
+  background: #2a2a38;
+  color: #f0a070;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.88em;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  border: 1px solid #3a3a48;
 }
 
-.tvm-instructions-panel pre {
-  background: #1e1e1e;
-  padding: 12px 16px;
-  border-radius: 6px;
+.tvm-step-instructions pre {
+  background: #141418;
+  padding: 14px 18px;
+  border-radius: 8px;
   overflow-x: auto;
-  border: 1px solid #333;
-  margin: 12px 0;
+  border: 1px solid #2a2a38;
+  margin: 14px 0;
 }
 
-.tvm-instructions-panel pre code {
+.tvm-step-instructions pre code {
   background: none;
+  border: none;
   padding: 0;
-  color: #d4d4d4;
+  color: #d0d0e8;
+  font-size: 0.9em;
 }
 
-.tvm-instructions-panel ul,
-.tvm-instructions-panel ol {
-  padding-left: 24px;
-  margin: 8px 0;
+.tvm-step-instructions ul,
+.tvm-step-instructions ol {
+  padding-left: 22px;
+  margin: 10px 0;
 }
 
-.tvm-instructions-panel li {
-  margin: 4px 0;
-  line-height: 1.6;
+.tvm-step-instructions li {
+  margin: 6px 0;
+  line-height: 1.65;
+  color: #c8c8d8;
+  font-size: 0.95em;
 }
 
-.tvm-instructions-panel a {
-  color: #4fc3f7;
+.tvm-step-instructions a { color: #7ec8e3; }
+.tvm-step-instructions strong { color: #f0f0ff; font-weight: 600; }
+
+/* Tables */
+.tvm-step-instructions table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 0.9em;
 }
 
-.tvm-instructions-panel strong {
-  color: #e0e0e0;
+.tvm-step-instructions thead tr {
+  background: #2a2a40;
 }
 
-.tvm-instructions-panel blockquote {
-  border-left: 3px solid #4fc3f7;
-  margin: 12px 0;
-  padding: 8px 16px;
-  background: rgba(79, 195, 247, 0.08);
-  border-radius: 0 4px 4px 0;
+.tvm-step-instructions th {
+  padding: 8px 12px;
+  text-align: left;
+  color: #e0e0ff;
+  font-weight: 600;
+  border-bottom: 2px solid #3a3a58;
 }
 
-/* ----- Horizontal Splitter ----- */
+.tvm-step-instructions td {
+  padding: 7px 12px;
+  color: #c8c8d8;
+  border-bottom: 1px solid #2a2a38;
+  vertical-align: middle;
+}
+
+.tvm-step-instructions tr:nth-child(even) td {
+  background: #1e1e2a;
+}
+
+.tvm-step-instructions td code,
+.tvm-step-instructions th code {
+  font-size: 0.92em;
+}
+
+.tvm-step-instructions blockquote {
+  border-left: 3px solid #0078d4;
+  margin: 14px 0;
+  padding: 10px 18px;
+  background: rgba(0, 120, 212, 0.08);
+  border-radius: 0 6px 6px 0;
+  color: #a0a0c0;
+}
+
+/* ───────────────────────────────────────────
+   Horizontal splitter (between left & right)
+─────────────────────────────────────────── */
 .tvm-hsplitter {
-  flex: 0 0 5px;
-  background: #333;
-  cursor: row-resize;
+  flex: 0 0 4px;
+  flex-shrink: 0;
+  background: #2a2a2e;
+  cursor: col-resize;
   transition: background 0.15s;
   position: relative;
   z-index: 10;
@@ -115,198 +196,210 @@
   background: #0078d4;
 }
 
-/* ----- Workspace (bottom: editor + terminal) ----- */
+/* ───────────────────────────────────────────
+   Right: Workspace (editor top, terminal bottom)
+─────────────────────────────────────────── */
 .tvm-workspace {
-  flex: 1 1 67%;
-  display: flex;
-  flex-direction: row;
-  min-height: 0;
-  background: #1e1e1e;
-}
-
-/* ----- Editor Panel ----- */
-.tvm-editor-panel {
-  flex: 1 1 50%;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #141414;
+}
+
+/* Editor Panel */
+.tvm-editor-panel {
+  flex: 0 0 60%;  /* overridden to px by splitter drag */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #1e1e1e;
+  border-bottom: 1px solid #2a2a2e;
 }
 
 .tvm-editor-tabs {
   display: flex;
-  background: #252526;
-  border-bottom: 1px solid #333;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
   overflow-x: auto;
-  min-height: 35px;
+  min-height: 36px;
   flex-shrink: 0;
+  scrollbar-width: none;
 }
-
-.tvm-editor-tabs::-webkit-scrollbar {
-  height: 3px;
-}
-.tvm-editor-tabs::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 3px;
-}
+.tvm-editor-tabs::-webkit-scrollbar { display: none; }
 
 .tvm-tab {
-  padding: 7px 14px;
+  padding: 7px 16px;
   color: #888;
   cursor: pointer;
-  border-right: 1px solid #1e1e1e;
-  font-size: 13px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
   white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 8px;
   transition: color 0.15s, background 0.15s;
   user-select: none;
+  border-right: 1px solid #2a2a2e;
+  letter-spacing: 0.01em;
 }
 
 .tvm-tab.active {
-  color: #fff;
+  color: #e8e8f0;
   background: #1e1e1e;
   border-bottom: 2px solid #0078d4;
 }
 
-.tvm-tab:hover {
-  color: #ccc;
-  background: #2a2d2e;
+.tvm-tab:hover:not(.active) {
+  color: #c0c0d0;
+  background: #222228;
 }
 
 .tvm-tab-close {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1;
   opacity: 0;
   transition: opacity 0.15s;
   cursor: pointer;
   padding: 0 2px;
+  border-radius: 3px;
 }
 
-.tvm-tab:hover .tvm-tab-close {
-  opacity: 0.6;
-}
+.tvm-tab:hover .tvm-tab-close { opacity: 0.5; }
+.tvm-tab-close:hover { opacity: 1 !important; color: #e0e0f0; background: #383848; }
 
-.tvm-tab-close:hover {
-  opacity: 1 !important;
-  color: #fff;
-}
-
-/* Saved indicator flash */
-.tvm-tab.saved {
-  border-bottom-color: #4caf50 !important;
-}
+.tvm-tab.saved { border-bottom-color: #4caf50 !important; }
 
 .tvm-editor-container {
   flex: 1;
   min-height: 0;
 }
 
-/* ----- Vertical Splitter ----- */
+/* Vertical splitter (between editor and terminal) */
 .tvm-vsplitter {
-  flex: 0 0 5px;
-  background: #333;
-  cursor: col-resize;
+  flex: 0 0 4px;
+  background: #2a2a2e;
+  cursor: row-resize;
   transition: background 0.15s;
-  position: relative;
   z-index: 10;
+  flex-shrink: 0;
 }
 .tvm-vsplitter:hover,
 .tvm-vsplitter.active {
   background: #0078d4;
 }
 
-/* ----- Terminal Panel ----- */
+/* Terminal Panel */
 .tvm-terminal-panel {
-  flex: 1 1 50%;
+  flex: 1 1 0;  /* takes remaining space after editor */
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #141414;
 }
 
 .tvm-terminal-header {
-  background: #252526;
-  color: #ccc;
-  padding: 7px 14px;
-  font-size: 13px;
+  background: #161618;
+  color: #888;
+  padding: 6px 14px;
+  font-size: 12px;
   font-weight: 600;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  border-bottom: 1px solid #333;
-  min-height: 35px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #2a2a2e;
+  min-height: 34px;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.tvm-terminal-header::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #4caf50;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
   flex-shrink: 0;
 }
 
 .tvm-terminal-container {
   flex: 1;
   min-height: 0;
-  padding: 4px;
-  background: #1e1e1e;
+  padding: 6px 6px 4px;
+  background: #0e0e10;
 }
 
-/* Ensure xterm.js fills its container */
-.tvm-terminal-container .xterm {
-  height: 100%;
-}
+.tvm-terminal-container .xterm { height: 100%; }
+.tvm-terminal-container .xterm-viewport { scrollbar-width: thin; scrollbar-color: #333 transparent; }
 
-/* ----- Step Navigation (pill buttons) ----- */
+/* ───────────────────────────────────────────
+   Step Navigation
+─────────────────────────────────────────── */
 .tvm-step-nav {
   display: flex;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .tvm-step-btn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 2px solid #555;
+  border: 2px solid #3a3a44;
   background: transparent;
-  color: #999;
+  color: #666;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   transition: all 0.15s;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .tvm-step-btn:hover {
-  border-color: #4fc3f7;
-  color: #4fc3f7;
+  border-color: #7ec8e3;
+  color: #7ec8e3;
 }
 
 .tvm-step-btn.active {
   background: #0078d4;
   border-color: #0078d4;
   color: #fff;
+  box-shadow: 0 0 8px rgba(0, 120, 212, 0.35);
 }
 
-/* ----- Step Controls (prev / next buttons) ----- */
+/* ───────────────────────────────────────────
+   Previous / Next
+─────────────────────────────────────────── */
 .tvm-step-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #333;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #2a2a38;
 }
 
 .tvm-btn {
-  padding: 7px 18px;
+  padding: 8px 20px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
-  font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  transition: background 0.15s;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
 }
+
+.tvm-btn:active { transform: scale(0.97); }
 
 .tvm-btn-prev,
 .tvm-btn-next {
@@ -316,10 +409,12 @@
 
 .tvm-btn-prev:hover,
 .tvm-btn-next:hover {
-  background: #005a9e;
+  background: #1a8ae6;
 }
 
-/* ----- Loading Overlay ----- */
+/* ───────────────────────────────────────────
+   Loading Overlay
+─────────────────────────────────────────── */
 .tvm-loading {
   position: absolute;
   inset: 0;
@@ -327,100 +422,94 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: #141414;
+  color: #b0b0c0;
   z-index: 100;
-  gap: 16px;
+  gap: 20px;
 }
 
 .tvm-loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #333;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #2a2a38;
   border-top-color: #0078d4;
   border-radius: 50%;
-  animation: tvm-spin 0.8s linear infinite;
+  animation: tvm-spin 0.75s linear infinite;
 }
 
-@keyframes tvm-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes tvm-spin { to { transform: rotate(360deg); } }
 
 .tvm-loading-text {
-  font-size: 15px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #8080a0;
 }
 
-/* ----- Error State ----- */
+/* ───────────────────────────────────────────
+   Error State
+─────────────────────────────────────────── */
 .tvm-error {
   padding: 60px 40px;
   text-align: center;
-  color: #ef5350;
-  background: #1e1e1e;
+  background: #141414;
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
 }
 
-.tvm-error h3 {
-  font-size: 1.5em;
-  margin-bottom: 12px;
-}
-
-.tvm-error p {
-  color: #999;
-  max-width: 500px;
-  line-height: 1.6;
-}
-
-.tvm-error-hint {
-  margin-top: 8px;
-}
-
-.tvm-error-hint code {
-  background: #333;
-  padding: 2px 8px;
-  border-radius: 3px;
-  color: #ce9178;
-}
-
+.tvm-error h3 { font-size: 1.4em; color: #ef5350; }
+.tvm-error p { color: #808090; max-width: 500px; line-height: 1.65; font-size: 0.95em; }
+.tvm-error-hint code { background: #2a2a38; padding: 2px 8px; border-radius: 4px; color: #f0a070; }
 .tvm-error button {
-  margin-top: 20px;
+  margin-top: 12px;
   padding: 10px 28px;
   background: #0078d4;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
   transition: background 0.15s;
 }
+.tvm-error button:hover { background: #1a8ae6; }
 
-.tvm-error button:hover {
-  background: #005a9e;
-}
-
-/* ----- Responsive: stack workspace vertically on narrow screens ----- */
+/* ───────────────────────────────────────────
+   Responsive
+─────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .tvm-workspace {
-    flex-direction: column;
-  }
-  .tvm-vsplitter {
-    flex: 0 0 5px;
-    cursor: row-resize;
-  }
+  .tvm-container { flex-direction: column; }
+  .tvm-instructions-panel { flex: 0 0 40%; border-right: none; border-bottom: 1px solid #2a2a2e; }
+  .tvm-hsplitter { cursor: row-resize; }
+  .tvm-workspace { flex-direction: column; }
+  .tvm-vsplitter { cursor: row-resize; }
 }
 
-/* ----- Override site styles in tutorial context ----- */
+/* ───────────────────────────────────────────
+   Layout overrides
+─────────────────────────────────────────── */
 .tutorial-page {
-  padding: 0 !important;
+  /* Pin to exact viewport edges below the fixed navbar — robust in fullscreen */
+  position: fixed !important;
+  top: 52px !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
 }
 
 .tutorial-page .container {
   width: 100% !important;
   max-width: 100% !important;
   padding: 0 !important;
+  height: 100%;
+}
+
+#tutorial-container {
+  height: 100%;
 }
