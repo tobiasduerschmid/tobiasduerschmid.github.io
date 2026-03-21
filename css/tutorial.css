@@ -193,16 +193,11 @@ html, body {
 .tvm-step-instructions .highlight .sr,
 .tvm-step-instructions .highlight .ss { color: #ce9178; }
 .tvm-step-instructions .highlight .si { color: #d4d4d4; }
-.tvm-step-instructions .highlight .nf { color: #dcdcaa; }
-.tvm-step-instructions .highlight .na,
-.tvm-step-instructions .highlight .no,
-.tvm-step-instructions .highlight .nv,
-.tvm-step-instructions .highlight .vc,
-.tvm-step-instructions .highlight .vg,
-.tvm-step-instructions .highlight .vi { color: #9cdcfe; }
 .tvm-step-instructions .highlight .nb,
-.tvm-step-instructions .highlight .bp { color: #569cd6; } /* Blue for builtins (set, echo) to match Monaco Shell */
-.tvm-step-instructions .highlight .nt { color: #f44747; } /* Red for options (-e, +x) to match Monaco Shell */
+.tvm-step-instructions .highlight .bp,
+.tvm-step-instructions .highlight .n,
+.tvm-step-instructions .highlight .nf { color: #569cd6; } /* Blue for commands/builtins in dark mode */
+.tvm-step-instructions .highlight .nt { color: #f44747; } /* Red for options (-e, +x) */
 .tvm-step-instructions .highlight .o { color: #d4d4d4; }
 
 
@@ -810,15 +805,10 @@ html:not(.dark-mode) .tvm-step-instructions .highlight .sx,
 html:not(.dark-mode) .tvm-step-instructions .highlight .sr,
 html:not(.dark-mode) .tvm-step-instructions .highlight .ss { color: #a31515; }
 html:not(.dark-mode) .tvm-step-instructions .highlight .si { color: #000000; }
-html:not(.dark-mode) .tvm-step-instructions .highlight .nf { color: #795e26; }
-html:not(.dark-mode) .tvm-step-instructions .highlight .na,
-html:not(.dark-mode) .tvm-step-instructions .highlight .no,
-html:not(.dark-mode) .tvm-step-instructions .highlight .nv,
-html:not(.dark-mode) .tvm-step-instructions .highlight .vc,
-html:not(.dark-mode) .tvm-step-instructions .highlight .vg,
-html:not(.dark-mode) .tvm-step-instructions .highlight .vi { color: #001080; }
 html:not(.dark-mode) .tvm-step-instructions .highlight .nb,
-html:not(.dark-mode) .tvm-step-instructions .highlight .bp { color: #267f99; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .bp,
+html:not(.dark-mode) .tvm-step-instructions .highlight .n,
+html:not(.dark-mode) .tvm-step-instructions .highlight .nf { color: #267f99; } /* Teal for commands/builtins in light mode */
 html:not(.dark-mode) .tvm-step-instructions .highlight .nt { color: #a31515; }
 html:not(.dark-mode) .tvm-step-instructions .highlight .o { color: #000000; }
 

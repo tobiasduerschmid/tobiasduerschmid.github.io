@@ -551,7 +551,7 @@
     this.editor = monaco.editor.create(this.editorContainerEl, {
       value: '// Follow the tutorial steps on the left.\n// Files will appear here as you progress.\n',
       language: 'shell',
-      theme: this._isDarkMode() ? 'vs-dark' : 'vs',
+      theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
       minimap: { enabled: false },
