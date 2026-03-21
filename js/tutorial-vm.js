@@ -673,21 +673,26 @@
       }
     }
 
-    // Write directly to the v86 9p filesystem
-    // Files are created at the root of the 9p share (which is mounted at /tutorial)
-    // Restore execute bit only if the user has explicitly chmod +x'd this file before.
+    // Write directly to the v86 9p filesystem.
+    // create_file returns a Promise (no callback). After writing, if the user
+    // has previously chmod +x'd this .sh file, set the execute bit directly on
+    // the 9p inode so it persists across cache invalidations.
     var self = this;
     var needsChmod = /\.sh$/i.test(filename) && !isInitial && self._executableFiles.has(filename);
-    this.emulator.create_file('/' + filename, bytes, function(err) {
-      if (err) {
-        console.warn('TutorialVM: Failed to sync file via 9p API, falling back to serial base64 sync', err);
-        var b64 = btoa(unescape(encodeURIComponent(content)));
-        var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
-        if (needsChmod) cmd += ' && chmod +x /tutorial/' + filename;
-        self._runSilent(cmd);
-      } else if (needsChmod) {
-        self._runSilent('chmod +x /tutorial/' + filename);
+    this.emulator.create_file('/' + filename, bytes).then(function () {
+      if (needsChmod) {
+        // Set execute bit (0o755 = 33261) directly on the 9p inode
+        var result = self.emulator.fs9p.SearchPath('/' + filename);
+        if (result && result.id !== -1) {
+          self.emulator.fs9p.inodes[result.id].mode = 0x81ED; // 0o100755
+        }
       }
+    }).catch(function (err) {
+      console.warn('TutorialVM: create_file failed, falling back to serial base64 sync', err);
+      var b64 = btoa(unescape(encodeURIComponent(content)));
+      var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
+      if (needsChmod) cmd += ' && chmod +x /tutorial/' + filename;
+      self._runSilent(cmd);
     });
   };
 
