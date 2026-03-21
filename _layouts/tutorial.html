@@ -105,6 +105,9 @@
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var config = {{ tutorial_data | jsonify }};
+      // Pre-rendered instruction HTML using Jekyll/Rouge for server-side syntax highlighting
+      var instructionHTML = [{% for step in tutorial_data.steps %}{{ step.instructions | markdownify | jsonify }}{% unless forloop.last %},{% endunless %}{% endfor %}];
+      config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
       var tutorial = new TutorialVM('#tutorial-container', {
         steps: config.steps,
         v86Path: '{{ page.v86_path | default: "/assets/v86" }}',

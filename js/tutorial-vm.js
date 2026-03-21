@@ -707,9 +707,10 @@
     // Update step navigation
     this._renderStepNav();
 
-    // Render instructions
+    // Render instructions — use server-rendered HTML (Rouge syntax highlighting) if available,
+    // fall back to client-side marked.js parsing
     var html = '<h2>' + this._escapeHtml(step.title) + '</h2>';
-    html += '<div class="tvm-step-instructions">' + this._renderMarkdown(step.instructions || '') + '</div>';
+    html += '<div class="tvm-step-instructions">' + (step.instructionsHTML || this._renderMarkdown(step.instructions || '')) + '</div>';
     this.stepContentEl.innerHTML = html;
     this.stepContentEl.scrollTop = 0;
 

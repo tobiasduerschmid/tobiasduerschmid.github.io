@@ -736,48 +736,31 @@ html.dark-mode pre {
 
 
 
-/* Dark Mode Syntax Highlighting Overrides - Fine-tuned VS Code Version */
+/* Dark Mode Syntax Highlighting Overrides - Monaco VS-Dark (Rouge) */
 html.dark-mode .highlight {
-	background-color: #222222 !important;
+	background-color: #1e1e1e !important;
+	border-radius: 6px;
 }
 
 html.dark-mode .highlight .c,
 html.dark-mode .highlight .cm,
 html.dark-mode .highlight .c1,
-html.dark-mode .highlight .cs {
-	color: #75be66;
-}
-
-/* Comments (saturated VS Code Green) */
-
+html.dark-mode .highlight .cs { color: #6a9955; font-style: italic; }
 html.dark-mode .highlight .k,
 html.dark-mode .highlight .kd,
 html.dark-mode .highlight .kp,
 html.dark-mode .highlight .kr,
-html.dark-mode .highlight .kc {
-	color: #4fc1ff;
-}
-
-/* Keywords (saturated VS Code Blue) */
-
+html.dark-mode .highlight .kc,
+html.dark-mode .highlight .ow { color: #569cd6; }
 html.dark-mode .highlight .kt,
-html.dark-mode .highlight .nc {
-	color: #4ee0c0;
-}
-
-/* Classes/Types (vibrant Emerald) */
-
+html.dark-mode .highlight .nc,
+html.dark-mode .highlight .nn { color: #4ec9b0; }
 html.dark-mode .highlight .m,
 html.dark-mode .highlight .mf,
 html.dark-mode .highlight .mh,
 html.dark-mode .highlight .mi,
 html.dark-mode .highlight .mo,
-html.dark-mode .highlight .il {
-	color: #bce5ab;
-}
-
-/* Numbers (saturated Light Green) */
-
+html.dark-mode .highlight .il { color: #b5cea8; }
 html.dark-mode .highlight .s,
 html.dark-mode .highlight .s1,
 html.dark-mode .highlight .s2,
@@ -786,48 +769,22 @@ html.dark-mode .highlight .sc,
 html.dark-mode .highlight .sd,
 html.dark-mode .highlight .se,
 html.dark-mode .highlight .sh,
-html.dark-mode .highlight .si,
-html.dark-mode .highlight .sx {
-	color: #e09a7a;
-}
-
-/* Strings (saturated VS Code Orange) */
-
-html.dark-mode .highlight .nf {
-	color: #f0f099;
-}
-
-/* Functions (more vibrant Yellow) */
-
+html.dark-mode .highlight .sx,
+html.dark-mode .highlight .sr,
+html.dark-mode .highlight .ss { color: #ce9178; }
+html.dark-mode .highlight .si { color: #d4d4d4; }
+html.dark-mode .highlight .nf { color: #dcdcaa; }
 html.dark-mode .highlight .na,
 html.dark-mode .highlight .no,
 html.dark-mode .highlight .nv,
 html.dark-mode .highlight .vc,
 html.dark-mode .highlight .vg,
-html.dark-mode .highlight .vi {
-	color: #a1e3ff;
-}
+html.dark-mode .highlight .vi { color: #9cdcfe; }
+html.dark-mode .highlight .nb,
+html.dark-mode .highlight .bp { color: #dcdcaa; }
+html.dark-mode .highlight .nt { color: #569cd6; }
+html.dark-mode .highlight .o { color: #d4d4d4; }
 
-/* Variables/Constants (saturated Light Blue) */
-
-html.dark-mode .highlight .o,
-html.dark-mode .highlight .ow {
-	color: #e0e0e0;
-}
-
-/* Operators (brighter Grey/White) */
-
-html.dark-mode .highlight .nt {
-	color: #4fc1ff;
-}
-
-/* Tags (saturated Blue) */
-
-html.dark-mode .highlight .nb {
-	color: #a1e3ff;
-}
-
-/* Builtins (saturated Light Blue) */
 
 
 

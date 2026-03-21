@@ -142,21 +142,83 @@ html, body {
   border: 1px solid #3a3a48;
 }
 
-.tvm-step-instructions pre {
-  background: #141418;
-  padding: 14px 18px;
+/* Rouge wraps fenced code blocks in a .highlight div — treat it like a pre */
+.tvm-step-instructions .highlight {
+  background: transparent;
   border-radius: 8px;
-  overflow-x: auto;
   border: 1px solid #2a2a38;
   margin: 14px 0;
+  overflow-x: auto;
 }
 
-.tvm-step-instructions pre code {
+/* Syntax Highlighting Base Styles */
+.tvm-step-instructions pre code,
+.tvm-step-instructions pre code.hljs {
   background: none;
   border: none;
   padding: 0;
-  color: #d0d0e8;
   font-size: 0.9em;
+  color: #d4d4d4; /* Base VS Dark color */
+}
+
+/* Monaco VS-Dark colors for Rouge tokens */
+.tvm-step-instructions .highlight .c,
+.tvm-step-instructions .highlight .cm,
+.tvm-step-instructions .highlight .c1,
+.tvm-step-instructions .highlight .cs { color: #6a9955; font-style: italic; }
+.tvm-step-instructions .highlight .k,
+.tvm-step-instructions .highlight .kd,
+.tvm-step-instructions .highlight .kp,
+.tvm-step-instructions .highlight .kr,
+.tvm-step-instructions .highlight .kc,
+.tvm-step-instructions .highlight .ow { color: #569cd6; }
+.tvm-step-instructions .highlight .kt,
+.tvm-step-instructions .highlight .nc,
+.tvm-step-instructions .highlight .nn { color: #4ec9b0; }
+.tvm-step-instructions .highlight .m,
+.tvm-step-instructions .highlight .mf,
+.tvm-step-instructions .highlight .mh,
+.tvm-step-instructions .highlight .mi,
+.tvm-step-instructions .highlight .mo,
+.tvm-step-instructions .highlight .il { color: #b5cea8; }
+.tvm-step-instructions .highlight .s,
+.tvm-step-instructions .highlight .s1,
+.tvm-step-instructions .highlight .s2,
+.tvm-step-instructions .highlight .sb,
+.tvm-step-instructions .highlight .sc,
+.tvm-step-instructions .highlight .sd,
+.tvm-step-instructions .highlight .se,
+.tvm-step-instructions .highlight .sh,
+.tvm-step-instructions .highlight .sx,
+.tvm-step-instructions .highlight .sr,
+.tvm-step-instructions .highlight .ss { color: #ce9178; }
+.tvm-step-instructions .highlight .si { color: #d4d4d4; }
+.tvm-step-instructions .highlight .nf { color: #dcdcaa; }
+.tvm-step-instructions .highlight .na,
+.tvm-step-instructions .highlight .no,
+.tvm-step-instructions .highlight .nv,
+.tvm-step-instructions .highlight .vc,
+.tvm-step-instructions .highlight .vg,
+.tvm-step-instructions .highlight .vi { color: #9cdcfe; }
+.tvm-step-instructions .highlight .nb,
+.tvm-step-instructions .highlight .bp { color: #dcdcaa; }
+.tvm-step-instructions .highlight .nt { color: #569cd6; }
+.tvm-step-instructions .highlight .o { color: #d4d4d4; }
+
+
+.tvm-step-instructions pre,
+.tvm-step-instructions .highlight pre {
+  background: transparent;
+  padding: 14px 18px;
+  border-radius: 0;
+  overflow-x: auto;
+  border: none;
+  margin: 0;
+}
+
+.tvm-step-instructions pre code,
+.tvm-step-instructions pre code.hljs {
+  /* Inherits from base style above */
 }
 
 .tvm-step-instructions ul,
@@ -700,14 +762,66 @@ html:not(.dark-mode) .tvm-step-instructions code {
   border-color: #c8c8d8;
 }
 
+html:not(.dark-mode) .tvm-step-instructions .highlight {
+  background: transparent;
+  border-color: #d8d8e8;
+}
+
 html:not(.dark-mode) .tvm-step-instructions pre {
-  background: #f0f0f8;
+  background: transparent;
   border-color: #d0d0e0;
 }
 
 html:not(.dark-mode) .tvm-step-instructions pre code {
-  color: #222236;
+  color: #333333; /* Base VS Light color */
+  background: none;
+  border: none;
 }
+
+/* Monaco VS (Light) colors for Rouge tokens */
+html:not(.dark-mode) .tvm-step-instructions .highlight .c,
+html:not(.dark-mode) .tvm-step-instructions .highlight .cm,
+html:not(.dark-mode) .tvm-step-instructions .highlight .c1,
+html:not(.dark-mode) .tvm-step-instructions .highlight .cs { color: #008000; font-style: italic; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .k,
+html:not(.dark-mode) .tvm-step-instructions .highlight .kd,
+html:not(.dark-mode) .tvm-step-instructions .highlight .kp,
+html:not(.dark-mode) .tvm-step-instructions .highlight .kr,
+html:not(.dark-mode) .tvm-step-instructions .highlight .kc,
+html:not(.dark-mode) .tvm-step-instructions .highlight .ow { color: #0000ff; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .kt,
+html:not(.dark-mode) .tvm-step-instructions .highlight .nc,
+html:not(.dark-mode) .tvm-step-instructions .highlight .nn { color: #267f99; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .m,
+html:not(.dark-mode) .tvm-step-instructions .highlight .mf,
+html:not(.dark-mode) .tvm-step-instructions .highlight .mh,
+html:not(.dark-mode) .tvm-step-instructions .highlight .mi,
+html:not(.dark-mode) .tvm-step-instructions .highlight .mo,
+html:not(.dark-mode) .tvm-step-instructions .highlight .il { color: #098658; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .s,
+html:not(.dark-mode) .tvm-step-instructions .highlight .s1,
+html:not(.dark-mode) .tvm-step-instructions .highlight .s2,
+html:not(.dark-mode) .tvm-step-instructions .highlight .sb,
+html:not(.dark-mode) .tvm-step-instructions .highlight .sc,
+html:not(.dark-mode) .tvm-step-instructions .highlight .sd,
+html:not(.dark-mode) .tvm-step-instructions .highlight .se,
+html:not(.dark-mode) .tvm-step-instructions .highlight .sh,
+html:not(.dark-mode) .tvm-step-instructions .highlight .sx,
+html:not(.dark-mode) .tvm-step-instructions .highlight .sr,
+html:not(.dark-mode) .tvm-step-instructions .highlight .ss { color: #a31515; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .si { color: #000000; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .nf { color: #795e26; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .na,
+html:not(.dark-mode) .tvm-step-instructions .highlight .no,
+html:not(.dark-mode) .tvm-step-instructions .highlight .nv,
+html:not(.dark-mode) .tvm-step-instructions .highlight .vc,
+html:not(.dark-mode) .tvm-step-instructions .highlight .vg,
+html:not(.dark-mode) .tvm-step-instructions .highlight .vi { color: #001080; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .nb,
+html:not(.dark-mode) .tvm-step-instructions .highlight .bp { color: #267f99; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .nt { color: #a31515; }
+html:not(.dark-mode) .tvm-step-instructions .highlight .o { color: #000000; }
+
 
 html:not(.dark-mode) .tvm-step-instructions li {
   color: #383848;
