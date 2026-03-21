@@ -195,7 +195,7 @@
       id: 'quant-2', type: 'free',
       section: 'Quantifiers',
       title: 'Star vs. Plus',
-      goal: 'Match strings that start with one or more <code>a</code> followed by a <code>b</code>. Use <code>+</code> (not <code>*</code>). Notice: <code>a*b</code> would also match a lone <code>b</code> — but <code>a+b</code> requires at least one <code>a</code>.',
+      goal: 'Match strings that start with one or more <code>a</code> followed by a <code>b</code>. Notice: <code>a*b</code> would also match a lone <code>b</code> — but <code>a+b</code> requires at least one <code>a</code>.',
       sampleText: 'Test: ab, aab, aaab, b, xb, aaa, aaaab.',
       tests: [
         { input: 'ab', shouldMatch: true, label: 'one a + b' },
@@ -212,7 +212,7 @@
       id: 'quant-3', type: 'free',
       section: 'Quantifiers',
       title: 'Singular or Plural',
-      goal: 'Match both <code>file</code> and <code>files</code> — the trailing <code>s</code> should be optional. Use <code>?</code>.',
+      goal: 'Match both <code>file</code> and <code>files</code> — the trailing <code>s</code> should be optional.',
       sampleText: 'Upload your file here. Multiple files are supported. The file manager shows all files in the current directory.',
       tests: [
         { input: 'file', shouldMatch: true, label: 'singular' },
@@ -230,7 +230,7 @@
       id: 'combine-1', type: 'free',
       section: 'Alternation & Combining',
       title: 'Spelling Variants',
-      goal: 'Match both <code>grey</code> and <code>gray</code>. Use a character class <code>[ae]</code> or alternation <code>a|e</code>.',
+      goal: 'Match both <code>grey</code> and <code>gray</code>.',
       sampleText: 'The grey sky turned dark gray by evening. Is it grey or gray? The greyhound ran across the gravel path, its grey fur blending into gray fog.',
       tests: [
         { input: 'grey', shouldMatch: true, label: 'British spelling' },
@@ -358,7 +358,7 @@
       section: 'Lookaheads & Lookbehinds',
       title: 'Dollar Amounts',
       goal: 'Match the numeric amount after a <code>$</code> sign — but do NOT include the <code>$</code> in the match. Use a positive lookbehind: <code>(?&lt;=\\$)</code>.',
-      sampleText: 'Prices: $25, €30, $100, £50, $7.99, ¥500, $0.50, and €12.50 on sale.',
+      sampleText: 'Prices: \$25, €30, \$100, £50, \$7.99, ¥500, \$0.50, and €12.50 on sale.',
       tests: [
         { input: '$25', shouldMatch: true, label: 'dollar amount (match the number)' },
         { input: '€30', shouldMatch: false, label: 'euro — should NOT match' },
@@ -400,12 +400,12 @@
           input: '<b>bold</b>',
           regex: '<.*>',
           steps: [
-            { regexHL: [0,0], strHL: [0,0], strMatch: null, desc: 'Engine starts. Pattern pointer at <code>&lt;</code>, string pointer at position 0.' },
-            { regexHL: [0,0], strHL: [0,0], strMatch: [0,0], desc: '<strong>Match!</strong> Literal <code>&lt;</code> matches <code>&lt;</code>. Both pointers advance.' },
-            { regexHL: [1,2], strHL: [1,1], strMatch: [0,10], desc: '<code>.*</code> is <em>greedy</em> — it consumes <strong>everything</strong> to the end: <code>b&gt;bold&lt;/b&gt;</code>.' },
-            { regexHL: [3,3], strHL: [11,11], strMatch: [0,10], desc: 'Pattern needs <code>&gt;</code>, but the string pointer is past the end. <strong>Fails.</strong>' },
-            { regexHL: [1,2], strHL: [10,10], strMatch: [0,9], desc: '<strong>Backtrack!</strong> <code>.*</code> gives back one character. Pointer moves back to <code>&gt;</code>.' },
-            { regexHL: [3,3], strHL: [10,10], strMatch: [0,10], desc: 'Pattern <code>&gt;</code> matches the final <code>&gt;</code>. <strong>Match found</strong> — but it matched <em>everything</em>: <code>&lt;b&gt;bold&lt;/b&gt;</code>. Too much!' }
+            { regexHL: [0, 0], strHL: [0, 0], strMatch: null, desc: 'Engine starts. Pattern pointer at <code>&lt;</code>, string pointer at position 0.' },
+            { regexHL: [0, 0], strHL: [0, 0], strMatch: [0, 0], desc: '<strong>Match!</strong> Literal <code>&lt;</code> matches <code>&lt;</code>. Both pointers advance.' },
+            { regexHL: [1, 2], strHL: [1, 1], strMatch: [0, 10], desc: '<code>.*</code> is <em>greedy</em> — it consumes <strong>everything</strong> to the end: <code>b&gt;bold&lt;/b&gt;</code>.' },
+            { regexHL: [3, 3], strHL: [11, 11], strMatch: [0, 10], desc: 'Pattern needs <code>&gt;</code>, but the string pointer is past the end. <strong>Fails.</strong>' },
+            { regexHL: [1, 2], strHL: [10, 10], strMatch: [0, 9], desc: '<strong>Backtrack!</strong> <code>.*</code> gives back one character. Pointer moves back to <code>&gt;</code>.' },
+            { regexHL: [3, 3], strHL: [10, 10], strMatch: [0, 10], desc: 'Pattern <code>&gt;</code> matches the final <code>&gt;</code>. <strong>Match found</strong> — but it matched <em>everything</em>: <code>&lt;b&gt;bold&lt;/b&gt;</code>. Too much!' }
           ]
         },
         {
@@ -413,12 +413,12 @@
           input: '<b>bold</b>',
           regex: '<.*?>',
           steps: [
-            { regexHL: [0,0], strHL: [0,0], strMatch: [0,0], desc: 'Literal <code>&lt;</code> matches <code>&lt;</code>. Both pointers advance.' },
-            { regexHL: [1,3], strHL: [1,1], strMatch: [0,0], desc: '<code>.*?</code> is <em>lazy</em> — it tries matching <strong>zero</strong> characters first.' },
-            { regexHL: [4,4], strHL: [1,1], strMatch: [0,0], desc: 'Pattern <code>&gt;</code> checks against <code>b</code>. <strong>No match.</strong>' },
-            { regexHL: [1,3], strHL: [1,1], strMatch: [0,1], desc: 'Lazy quantifier <em>expands</em>: <code>.*?</code> now matches 1 character (<code>b</code>).' },
-            { regexHL: [4,4], strHL: [2,2], strMatch: [0,1], desc: 'Pattern <code>&gt;</code> checks against <code>&gt;</code>. <strong>Match!</strong>' },
-            { regexHL: [4,4], strHL: [2,2], strMatch: [0,2], desc: 'Result: matched just <code>&lt;b&gt;</code>. The engine continues and finds <code>&lt;/b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;/i&gt;</code> separately.' }
+            { regexHL: [0, 0], strHL: [0, 0], strMatch: [0, 0], desc: 'Literal <code>&lt;</code> matches <code>&lt;</code>. Both pointers advance.' },
+            { regexHL: [1, 3], strHL: [1, 1], strMatch: [0, 0], desc: '<code>.*?</code> is <em>lazy</em> — it tries matching <strong>zero</strong> characters first.' },
+            { regexHL: [4, 4], strHL: [1, 1], strMatch: [0, 0], desc: 'Pattern <code>&gt;</code> checks against <code>b</code>. <strong>No match.</strong>' },
+            { regexHL: [1, 3], strHL: [1, 1], strMatch: [0, 1], desc: 'Lazy quantifier <em>expands</em>: <code>.*?</code> now matches 1 character (<code>b</code>).' },
+            { regexHL: [4, 4], strHL: [2, 2], strMatch: [0, 1], desc: 'Pattern <code>&gt;</code> checks against <code>&gt;</code>. <strong>Match!</strong>' },
+            { regexHL: [4, 4], strHL: [2, 2], strMatch: [0, 2], desc: 'Result: matched just <code>&lt;b&gt;</code>. The engine continues and finds <code>&lt;/b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;/i&gt;</code> separately.' }
           ]
         }
       ]
@@ -431,15 +431,15 @@
           input: 'go! goal cargo go',
           regex: '\\bgo\\b',
           steps: [
-            { regexHL: [0,1], strHL: [0,0], strMatch: null, desc: '<code>\\b</code> checks for a word boundary at position 0. Start of string = boundary. <strong>Satisfied.</strong>' },
-            { regexHL: [2,2], strHL: [0,0], strMatch: [0,0], desc: '<code>g</code> matches <code>g</code>. Advance.' },
-            { regexHL: [3,3], strHL: [1,1], strMatch: [0,1], desc: '<code>o</code> matches <code>o</code>. Advance.' },
-            { regexHL: [4,5], strHL: [2,2], strMatch: [0,1], desc: '<code>\\b</code>: next char is <code>!</code> (non-word). Boundary exists. <strong>Match #1: "go"</strong>' },
-            { regexHL: [0,1], strHL: [4,4], strMatch: null, desc: 'Engine tries <code>g</code> in "goal". <code>\\b</code> satisfied (after space). <code>g</code> matches, <code>o</code> matches.' },
-            { regexHL: [4,5], strHL: [6,6], strMatch: [4,5], desc: '<code>\\b</code>: next char is <code>a</code> (word char). <strong>No boundary! Match fails.</strong> "goal" rejected.' },
-            { regexHL: [0,1], strHL: [9,9], strMatch: null, desc: 'Engine tries <code>g</code> in "cargo". Previous char is <code>r</code> (word char). <code>\\b</code> <strong>not satisfied</strong>. Fails immediately.' },
-            { regexHL: [2,2], strHL: [14,14], strMatch: [14,14], desc: 'Engine reaches final "go". <code>\\b</code> satisfied. <code>g</code> matches, <code>o</code> matches.' },
-            { regexHL: [4,5], strHL: [16,16], strMatch: [14,15], desc: '<code>\\b</code>: end of string = boundary. <strong>Match #2: "go"</strong>. Only standalone words matched!' }
+            { regexHL: [0, 1], strHL: [0, 0], strMatch: null, desc: '<code>\\b</code> checks for a word boundary at position 0. Start of string = boundary. <strong>Satisfied.</strong>' },
+            { regexHL: [2, 2], strHL: [0, 0], strMatch: [0, 0], desc: '<code>g</code> matches <code>g</code>. Advance.' },
+            { regexHL: [3, 3], strHL: [1, 1], strMatch: [0, 1], desc: '<code>o</code> matches <code>o</code>. Advance.' },
+            { regexHL: [4, 5], strHL: [2, 2], strMatch: [0, 1], desc: '<code>\\b</code>: next char is <code>!</code> (non-word). Boundary exists. <strong>Match #1: "go"</strong>' },
+            { regexHL: [0, 1], strHL: [4, 4], strMatch: null, desc: 'Engine tries <code>g</code> in "goal". <code>\\b</code> satisfied (after space). <code>g</code> matches, <code>o</code> matches.' },
+            { regexHL: [4, 5], strHL: [6, 6], strMatch: [4, 5], desc: '<code>\\b</code>: next char is <code>a</code> (word char). <strong>No boundary! Match fails.</strong> "goal" rejected.' },
+            { regexHL: [0, 1], strHL: [9, 9], strMatch: null, desc: 'Engine tries <code>g</code> in "cargo". Previous char is <code>r</code> (word char). <code>\\b</code> <strong>not satisfied</strong>. Fails immediately.' },
+            { regexHL: [2, 2], strHL: [14, 14], strMatch: [14, 14], desc: 'Engine reaches final "go". <code>\\b</code> satisfied. <code>g</code> matches, <code>o</code> matches.' },
+            { regexHL: [4, 5], strHL: [16, 16], strMatch: [14, 15], desc: '<code>\\b</code>: end of string = boundary. <strong>Match #2: "go"</strong>. Only standalone words matched!' }
           ]
         }
       ]
@@ -511,7 +511,7 @@
 
   function renderExercise(ex, container) {
     var done = !!completedExercises[ex.id];
-    var h = '<div class="rt-exercise' + (done ? ' rt-complete' : '') + '" id="ex-' + ex.id + '">';
+    var h = '<div class="mathjax_ignore rt-exercise' + (done ? ' rt-complete' : '') + '" id="ex-' + ex.id + '">';
     h += '<div class="rt-ex-header"><span class="rt-ex-title">' + ex.title + '</span>';
     h += '<span class="rt-ex-status">' + (done ? '&#10003;' : '') + '</span></div>';
     h += '<p class="rt-goal">' + ex.goal + '</p>';
