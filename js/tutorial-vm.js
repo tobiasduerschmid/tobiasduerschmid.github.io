@@ -299,7 +299,42 @@
           .then(function () {
             return new Promise(function (resolve) {
               window.require.config({ paths: { vs: CDN.MONACO_VS } });
-              window.require(['vs/editor/editor.main'], resolve);
+              window.require(['vs/editor/editor.main'], function () {
+                // Define custom themes that match our Rouge colors
+                monaco.editor.defineTheme('sebook-light', {
+                  base: 'vs',
+                  inherit: true,
+                  rules: [
+                    { token: 'keyword.shell', foreground: '267f99' }, // Teal to match 'set' in instructions
+                    { token: 'attribute.name.shell', foreground: 'a31515' },
+                    { token: 'type.identifier.shell', foreground: '267f99' },
+                    { token: 'string.shell', foreground: 'a31515' },
+                    { token: 'comment.shell', foreground: '008000' },
+                    { token: 'number.shell', foreground: '098658' },
+                    { token: 'variable.shell', foreground: '001080' }
+                  ],
+                  colors: {}
+                });
+
+                monaco.editor.defineTheme('sebook-dark', {
+                  base: 'vs-dark',
+                  inherit: true,
+                  rules: [
+                    { token: 'keyword.shell', foreground: '569cd6' },
+                    { token: 'attribute.name.shell', foreground: 'f44747' },
+                    { token: 'type.identifier.shell', foreground: '569cd6' }, // Blue to match shell commands
+                    { token: 'string.shell', foreground: 'ce9178' },
+                    { token: 'comment.shell', foreground: '6a9955' },
+                    { token: 'number.shell', foreground: 'b5cea8' },
+                    { token: 'variable.shell', foreground: '9cdcfe' }
+                  ],
+                  colors: {
+                    'editor.background': '#1e1e1e'
+                  }
+                });
+
+                resolve();
+              });
             });
           });
 
@@ -309,10 +344,10 @@
 
   // ---- Terminal (xterm.js) --------------------------------------------------
 
-  // Theme definitions (VSCode-style light/dark)
+  // Theme definitions (Customized to match Rouge/SEBook style)
   var THEMES = {
     dark: {
-      monaco: 'vs-dark',
+      monaco: 'sebook-dark',
       xterm: {
         background: '#1e1e1e',
         foreground: '#d4d4d4',
@@ -321,7 +356,7 @@
       },
     },
     light: {
-      monaco: 'vs',
+      monaco: 'sebook-light',
       xterm: {
         background: '#ffffff',
         foreground: '#383a42',
