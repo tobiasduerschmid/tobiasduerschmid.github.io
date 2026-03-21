@@ -151,6 +151,9 @@
           '<div class="tvm-step-content-wrap">' +
             '<div class="tvm-step-content"></div>' +
           '</div>' +
+          '<div class="tvm-step-controls-bar">' +
+            '<div class="tvm-step-controls"></div>' +
+          '</div>' +
         '</div>' +
         '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
         '<div class="tvm-workspace">' +
@@ -170,6 +173,7 @@
     this.containerEl = this.root.querySelector('.tvm-container');
     this.stepNavEl = this.root.querySelector('.tvm-step-nav');
     this.stepContentEl = this.root.querySelector('.tvm-step-content');
+    this.stepControlsEl = this.root.querySelector('.tvm-step-controls');
     this.editorTabsEl = this.root.querySelector('.tvm-editor-tabs');
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
     this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
@@ -186,8 +190,15 @@
   };
 
   TutorialVM.prototype._hideLoading = function () {
+    var self = this;
     if (this.loadingEl) this.loadingEl.style.display = 'none';
     if (this.containerEl) this.containerEl.style.display = '';
+    // Give the browser one frame to paint the revealed layout, then resize
+    // xterm and Monaco so they measure actual container dimensions (not 0).
+    requestAnimationFrame(function () {
+      if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) {} }
+      if (self.editor) { self.editor.layout(); }
+    });
   };
 
   TutorialVM.prototype._showError = function (msg) {
@@ -396,11 +407,10 @@
   };
 
   TutorialVM.prototype._setupFilesystem = function () {
-    // Ensure /tutorial directory exists (it may already from the rootfs).
-    // The 9p mount may not be available depending on kernel config, so
-    // we use serial-port file sync instead of create_file().
-    this.sendCommand('mkdir -p /tutorial && cd /tutorial');
-    return delay(300);
+    // Navigate to the 9p filesystem 'host9p' mounted at /tutorial by the init script
+    this.sendCommand('cd /tutorial');
+    this.sendCommand('clear');
+    return delay(100);
   };
 
   // ---- Monaco Editor --------------------------------------------------------
@@ -526,39 +536,53 @@
     if (!entry) return;
 
     var content = entry.model.getValue();
-    // Base64-encode the content to safely transmit through the serial port,
-    // avoiding issues with special characters, quotes, and newlines.
-    var b64 = btoa(unescape(encodeURIComponent(content)));
-    // Use printf + base64 -d to decode and write to the file in /tutorial/
-    var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
-
-    // Mute terminal output so the user doesn't see the noisy sync command.
-    // We detect the shell prompt returning to know when to unmute, with a
-    // safety timeout as fallback.
-    var self = this;
-    self._muted = true;
-    self._mutedBuffer = '';
-
-    function onMutedByte(byte) {
-      self._mutedBuffer += String.fromCharCode(byte);
-      // Unmute once we see the shell prompt (command finished executing)
-      if (self._mutedBuffer.includes('# ') || self._mutedBuffer.includes('$ ')) {
-        self._muted = false;
-        self._mutedBuffer = '';
-        self.emulator.remove_listener('serial0-output-byte', onMutedByte);
-        clearTimeout(safetyTimer);
+    
+    // Convert content to Uint8Array for v86 9p filesystem
+    var bytes;
+    if (typeof TextEncoder !== 'undefined') {
+      bytes = new TextEncoder().encode(content);
+    } else {
+      // Fallback for older browsers
+      var utf8 = unescape(encodeURIComponent(content));
+      bytes = new Uint8Array(utf8.length);
+      for (var i = 0; i < utf8.length; i++) {
+        bytes[i] = utf8.charCodeAt(i);
       }
     }
-    self.emulator.add_listener('serial0-output-byte', onMutedByte);
 
-    // Safety: always unmute after 5s even if prompt detection fails
-    var safetyTimer = setTimeout(function () {
-      self._muted = false;
-      self._mutedBuffer = '';
-      self.emulator.remove_listener('serial0-output-byte', onMutedByte);
-    }, 5000);
+    // Write directly to the v86 9p filesystem
+    // Files are created at the root of the 9p share (which is mounted at /tutorial)
+    var self = this;
+    this.emulator.create_file('/' + filename, bytes, function(err) {
+      if (err) {
+        console.warn('TutorialVM: Failed to sync file via 9p API, falling back to serial base64 sync', err);
+        // Fallback to sending command if 9p failed
+        var b64 = btoa(unescape(encodeURIComponent(content)));
+        var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
 
-    this.sendCommand(cmd);
+        self._muted = true;
+        self._mutedBuffer = '';
+
+        function onMutedByte(byte) {
+          self._mutedBuffer += String.fromCharCode(byte);
+          if (self._mutedBuffer.includes('# ') || self._mutedBuffer.includes('$ ')) {
+            self._muted = false;
+            self._mutedBuffer = '';
+            self.emulator.remove_listener('serial0-output-byte', onMutedByte);
+            clearTimeout(safetyTimer);
+          }
+        }
+        self.emulator.add_listener('serial0-output-byte', onMutedByte);
+
+        var safetyTimer = setTimeout(function () {
+          self._muted = false;
+          self._mutedBuffer = '';
+          self.emulator.remove_listener('serial0-output-byte', onMutedByte);
+        }, 5000);
+
+        self.sendCommand(cmd);
+      }
+    });
   };
 
   // ---- Tutorial Steps -------------------------------------------------------
@@ -575,23 +599,25 @@
     // Render instructions
     var html = '<h2>' + this._escapeHtml(step.title) + '</h2>';
     html += '<div class="tvm-step-instructions">' + this._renderMarkdown(step.instructions || '') + '</div>';
-    html += '<div class="tvm-step-controls">';
+    this.stepContentEl.innerHTML = html;
+    this.stepContentEl.scrollTop = 0;
+
+    // Render controls in the fixed footer bar (always visible, below scroll)
+    var controlsHtml = '';
     if (index > 0) {
-      html += '<button class="tvm-btn tvm-btn-prev">\u2190 Previous</button>';
+      controlsHtml += '<button class="tvm-btn tvm-btn-prev">← Previous</button>';
     } else {
-      html += '<span></span>';
+      controlsHtml += '<span></span>';
     }
     if (index < this.steps.length - 1) {
-      html += '<button class="tvm-btn tvm-btn-next">Next \u2192</button>';
+      controlsHtml += '<button class="tvm-btn tvm-btn-next">Next →</button>';
     }
-    html += '</div>';
-
-    this.stepContentEl.innerHTML = html;
+    this.stepControlsEl.innerHTML = controlsHtml;
 
     // Wire up buttons
     var self = this;
-    var prevBtn = this.stepContentEl.querySelector('.tvm-btn-prev');
-    var nextBtn = this.stepContentEl.querySelector('.tvm-btn-next');
+    var prevBtn = this.stepControlsEl.querySelector('.tvm-btn-prev');
+    var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
     if (prevBtn) prevBtn.addEventListener('click', function () { self.loadStep(index - 1); });
     if (nextBtn) nextBtn.addEventListener('click', function () { self.loadStep(index + 1); });
 

@@ -69,7 +69,28 @@ docker run --rm --platform linux/386 \
  Your files are in /tutorial
 MOTD
 
-    echo "[3/4] Creating cpio archive..."
+    echo "[3/4] Installing kernel & network modules..."
+    apk add --no-cache linux-virt 2>/dev/null || true
+    if [ -f /boot/vmlinuz-virt ]; then
+        cp /boot/vmlinuz-virt /output/bzImage
+        echo "    kernel: $(du -sh /output/bzImage | cut -f1)"
+    else
+        echo "    WARNING: linux-virt not available. Provide a kernel at vm/dist/bzImage"
+    fi
+
+    # Strip unused kernel modules avoiding --parents issue
+    mkdir -p /tmp/keep_modules
+    cd /
+    find lib/modules \( -name "modules.*" -o -name "9p*.ko*" -o -name "virtio*.ko*" -o -name "netfs*.ko*" -o -name "fscache*.ko*" \) | cpio -pdm /tmp/keep_modules/ 2>/dev/null || true
+    cd - >/dev/null
+    
+    rm -rf /lib/modules
+    if [ -d /tmp/keep_modules/lib/modules ]; then
+        mv /tmp/keep_modules/lib/modules /lib/
+    fi
+    rm -rf /tmp/keep_modules
+
+    echo "[4/4] Creating cpio archive..."
 
     # Export the full container filesystem as a cpio initrd,
     # excluding Docker mount points and unnecessary directories
@@ -86,15 +107,6 @@ MOTD
     | gzip -9 > /output/rootfs.cpio.gz
 
     echo "    rootfs: $(du -sh /output/rootfs.cpio.gz | cut -f1)"
-
-    echo "[4/4] Extracting kernel..."
-    apk add --no-cache linux-virt 2>/dev/null || true
-    if [ -f /boot/vmlinuz-virt ]; then
-        cp /boot/vmlinuz-virt /output/bzImage
-        echo "    kernel: $(du -sh /output/bzImage | cut -f1)"
-    else
-        echo "    WARNING: linux-virt not available. Provide a kernel at vm/dist/bzImage"
-    fi
 
     echo ""
     echo "Build complete!"

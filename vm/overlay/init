@@ -2,6 +2,9 @@
 # /init - PID 1 for the tutorial VM
 # Must never exit, or the kernel panics.
 
+# Create mount points (needed because cp/find omitted them from initrd)
+mkdir -p /proc /sys /dev
+
 # Mount essential filesystems
 mount -t proc proc /proc 2>/dev/null
 mount -t sysfs sysfs /sys 2>/dev/null
@@ -29,9 +32,19 @@ export TERM=linux
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export LANG=C.UTF-8
 
-# Mount 9p filesystem for tutorial files
+# Load 9p modules
+modprobe 9pnet_virtio 2>/dev/null || true
+modprobe 9p 2>/dev/null || true
+
+# Mount 9p filesystem for tutorial files (retry loop for virtio device race condition)
 mkdir -p /tutorial
-mount -t 9p -o trans=virtio,version=9p2000.L,msize=131072 host9p /tutorial 2>/dev/null || true
+for param_i in 1 2 3 4 5; do
+    if mount -t 9p -o trans=virtio,version=9p2000.L,msize=131072 host9p /tutorial 2>/dev/null; then
+        log "9p mounted successfully"
+        break
+    fi
+    sleep 1
+done
 
 log "looking for shell..."
 
