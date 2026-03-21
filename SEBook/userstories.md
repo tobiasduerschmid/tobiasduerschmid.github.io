@@ -3,7 +3,7 @@ title: User Stories
 layout: sebook
 ---
 
-User stories are the most commonly used format to specify requirements in a light-weight, informal way (particulalry in Agile projects).
+User stories are the ==most commonly used format to specify requirements in a light-weight, informal way== (particulalry in Agile projects).
 Each user story is a high-level description of a software feature written from the perspective of the end-user.
 
 User stories act as placeholders for a conversation between the technical team and the "business" side to ensure both parties understand the why and what of a feature.
@@ -13,11 +13,11 @@ User stories act as placeholders for a conversation between the technical team a
 User stories follow this format:
 
 ---
-**As a** [user role], 
+**==As a==** [user role], 
 
-**I want** [to perform an action] 
+**==I want==** [to perform an action] 
 
-**so that** [I can achieve a goal]
+**==so that==** [I can achieve a goal]
 
 ---
 
@@ -42,11 +42,11 @@ Acceptance criteria define the scope of a user story.
 They follow this format:
 
 ---
-**Given** [pre-condition / initial state]
+**==Given==** [pre-condition / initial state]
 
-**When** [action]
+**==When==** [action]
 
-**Then** [post-condition / outcome]
+**==Then==** [post-condition / outcome]
 
 ---
 
@@ -57,7 +57,7 @@ For example:
 > * **Given** the user selects a substitute from the alternatives list, **when** they confirm the swap, **then** the recipe's required quantities and nutritional estimates should recalculate and update on the screen.
 > * **Given** the user has modified a recipe with substitutions, **when** they tap the "Save to My Cookbook" button, **then** the customized version of the recipe should be stored in their personal profile without altering the original public recipe.
 
-These acceptance criteria add clarity to the user story by defining the specific conditions under which the feature should work as expected. They also help to identify potential edge cases and constraints that need to be considered during development. The acceptance criteria define the scope of conditions that check whether an implementation is "correct" and meets the user's needs. So naturally, ==user story acceptance criteria must be specific enough to be testable but should not be overly prescriptive about the implementation details, not to constraint the developers more than really needed to describe the true user need==.
+These acceptance criteria add clarity to the user story by defining the specific conditions under which the feature should work as expected. They also help to identify potential edge cases and constraints that need to be considered during development. The acceptance criteria define the scope of conditions that check whether an implementation is "correct" and meets the user's needs. So naturally, ==acceptance criteria must be specific enough to be testable but should not be overly prescriptive about the implementation details, not to constraint the developers more than really needed to describe the true user need==.
 
 Here is another example:
 
