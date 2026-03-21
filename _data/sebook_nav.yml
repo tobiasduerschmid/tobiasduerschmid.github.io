@@ -131,6 +131,10 @@ topics:
         url: /SEBook/tools/regex.html
       - name: Python
         url: /SEBook/tools/python.html
+      - name: Node.js
+        url: /SEBook/tools/nodejs.html
+      - name: React
+        url: /SEBook/tools/react.html
       - name: Git
         url: /SEBook/tools/git.html
       - name: Make
