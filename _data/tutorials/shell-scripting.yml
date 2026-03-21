@@ -8,21 +8,37 @@ steps:
       editor; on the right is a real Linux terminal. Files you save in the
       editor are synced to `/tutorial/` on the VM.
 
-      ### What is a shell script?
+      ### Why shell scripting?
 
-      A shell script is a plain text file containing commands that the shell
-      executes in sequence — like a recipe for your computer. Instead of
-      typing commands one at a time, you write them in a file and run the
-      file.
+      Every time you repeat a task in the terminal — renaming files, checking
+      server logs, running builds — you are a candidate for automation. A
+      shell script captures those commands in a file so you can re-run,
+      share, and schedule them without retyping anything.
+
+      Shell scripts are the foundation of CI/CD pipelines, Docker
+      entrypoints, deployment scripts, and system administration. The skills
+      you learn here transfer directly to real production workflows.
+
+      ### Two lines every script needs
+
+      Open `morning.sh` in the editor. It already has:
+
+      ```bash
+      #!/bin/bash
+      set -e
+      ```
+
+      **Line 1 — the shebang (`#!`):** When you run a file, Linux reads the
+      first two bytes to decide how to execute it. `#!` followed by a path
+      tells the OS which interpreter to use. Without it, the OS guesses —
+      and often guesses wrong. Always write `#!/bin/bash` on line 1.
+
+      **Line 2 — the safety net (`set -e`):** By default, Bash happily
+      continues running after a failed command. `set -e` stops the script
+      immediately when something goes wrong, preventing a cascade of
+      confusing failures. Always include it.
 
       ### Your task
-
-      Open `morning.sh` in the editor. It already has two important lines:
-
-      - **Line 1** — the *shebang*: `#!/bin/bash` tells Linux which
-        interpreter to use.
-      - **Line 2** — `set -e` tells the shell to stop immediately if any
-        command fails (a safety net you should always include).
 
       Add the following three lines below the existing ones:
 
@@ -39,13 +55,17 @@ steps:
       ./morning.sh
       ```
 
-      > **What just happened?**
-      > - `chmod +x` marks the file as executable so Linux allows you to
-      >   run it directly.
-      > - `./morning.sh` tells the shell "run the file in the current
-      >   directory."
-      > - `$(date +%A)` is *command substitution* — it runs `date` and
-      >   inserts the result into your string.
+      **Breaking it down:**
+      - `chmod +x` grants execute permission. Linux requires this explicit
+        step before running a file as a program — a deliberate security
+        feature so files don't accidentally become executable.
+      - `./morning.sh` — the `./` prefix means "look in the current
+        directory." The shell only searches directories listed in `$PATH`
+        for commands; your local folder is not in `$PATH` by default.
+      - `$(date +%A)` is *command substitution*: the shell runs `date +%A`
+        first, captures its output, and injects the result into your string.
+        Any command can go inside `$(...)` — this is one of Bash's most
+        useful features.
     files:
       - path: "morning.sh"
         content: |
@@ -72,50 +92,74 @@ steps:
       Variables store values for reuse. In Bash, you assign with `=` and
       read with `$`.
 
-      ### The golden rules
+      ### The spaces rule — easy to break, hard to debug
 
-      1. **No spaces** around `=` — `color="blue"` works,
-         `color = "blue"` does **not** (the shell sees three separate
-         words!).
-      2. **Always double-quote** your variables: `"$color"`, not `$color`.
-         Without quotes, values with spaces break apart.
+      ```bash
+      color="blue"      # correct
+      color = "blue"    # WRONG — shell sees three words: "color", "=", "blue"
+      ```
+
+      There must be **no spaces** around `=`. The shell is a command
+      language: `color = "blue"` looks like running a command named `color`
+      with arguments `=` and `blue`. You will get a "command not found"
+      error that can be confusing at first.
+
+      ### The quoting problem
+
+      When you write `$variable`, the shell replaces it with the value —
+      then *word-splits* the result on spaces and runs glob expansion.
+      This causes chaos when values contain spaces:
+
+      ```bash
+      file="my report.txt"
+      wc -l $file      # shell splits into: wc -l my report.txt  (TWO args!)
+      wc -l "$file"    # correct: one argument, treated as a unit
+      ```
+
+      **Rule: always double-quote your variables** unless you have a
+      specific reason not to.
+
+      ### Single vs. double quotes
+
+      | Quote style | Variables expand? | Example output |
+      |-------------|------------------|----------------|
+      | `"double"`  | Yes              | `"Hello $name"` → `Hello Alice` |
+      | `'single'`  | No (literal)     | `'Hello $name'` → `Hello $name` |
+
+      Use double quotes almost always. Use single quotes when you want a
+      literal `$` — for example, in awk programs or regex patterns.
 
       ### See the bug
 
-      `buggy.sh` has a deliberate mistake. Run it first:
+      `buggy.sh` has a deliberate quoting mistake. Run it first:
 
       ```bash
       bash buggy.sh
       ```
 
-      You will see an error. **Read the error message carefully.** The
-      variable `$filename` contains a space, but without quotes the shell
-      splits it into two separate arguments.
+      Read the error carefully — it shows exactly what happens when a
+      space-containing variable is unquoted.
 
       ### Fix it
 
       1. Open `buggy.sh` in the editor.
-      2. Find the line that uses `$filename` without quotes.
+      2. Find the unquoted `$filename` on the `wc -l` line.
       3. Wrap it in double quotes: `"$filename"`.
       4. Save and run again — the error should disappear.
 
       ### Now build your own
 
-      Open `inventory.sh` and write a short script that:
+      Open `inventory.sh` and write a script that:
 
       1. Stores a **project name** and a **version number** in variables.
-      2. Uses command substitution `$(...)` to capture the number of `.sh`
-         files in the current directory (hint: `ls *.sh | wc -l`).
+      2. Uses `$(...)` to capture the number of `.sh` files in the current
+         directory (hint: `ls *.sh | wc -l`).
       3. Prints a summary like: `Project: mytools v1.0 — 3 scripts found`
 
       ```bash
       chmod +x inventory.sh
       ./inventory.sh
       ```
-
-      > **Single vs. double quotes:**
-      > - Double quotes `"..."` expand variables: `"Hello $name"` → `Hello Alice`
-      > - Single quotes `'...'` are literal: `'Hello $name'` → `Hello $name`
     files:
       - path: "buggy.sh"
         content: |
@@ -155,21 +199,27 @@ steps:
 
   - title: "Pipes — Connecting Commands"
     instructions: |
-      The **pipe** operator `|` is the heart of shell scripting. It sends
-      the output of one command as input to the next, letting you build
-      powerful data-processing chains from small, focused tools.
+      The **pipe** operator `|` is one of the most powerful ideas in Unix.
+      It connects programs so that the output of one becomes the input of
+      the next, letting you build data-processing pipelines from small,
+      single-purpose tools.
 
-      ### How it works
+      ### The Unix philosophy
 
-      ```
-      command1 | command2 | command3
-      ```
+      Each Unix tool does *one thing well*:
+      - `grep` finds matching lines
+      - `sort` sorts lines alphabetically or numerically
+      - `uniq` removes consecutive duplicate lines
+      - `wc` counts lines, words, or characters
+      - `cut` extracts specific columns
 
-      Each command does one thing well. Together they solve complex tasks.
+      Pipes let you compose them into powerful chains without writing a
+      program. Data flows through memory from one process to the next —
+      no intermediate files needed.
 
       ### Explore the data
 
-      A file called `server_log.txt` is provided. Take a look:
+      A file called `server_log.txt` is provided. Browse it first:
 
       ```bash
       cat server_log.txt
@@ -177,39 +227,47 @@ steps:
 
       ### Pipeline exercises
 
-      Try each of these in the terminal. **Type them yourself** — do not
-      copy-paste — so you get a feel for building pipelines step by step.
+      **Type these yourself** — building pipelines step by step trains
+      you to think in terms of data flowing through stages.
 
       ```bash
-      # 1. Count total lines in the log
+      # 1. Count total lines
       wc -l < server_log.txt
 
-      # 2. Show only lines containing "ERROR"
+      # 2. Show only ERROR lines
       grep "ERROR" server_log.txt
 
-      # 3. Count how many errors occurred
+      # 3. Count how many errors
       grep "ERROR" server_log.txt | wc -l
 
-      # 4. Extract just the timestamps (first field, space-delimited)
+      # 4. Extract just the timestamps (first field)
       cut -d' ' -f1 server_log.txt | head -5
 
-      # 5. Find the three most common message types
+      # 5. Which message types appear most often?
       cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -3
       ```
 
-      ### Redirection
+      Read pipeline 5 left to right: extract column 2 → sort alphabetically
+      (so duplicates become adjacent) → count consecutive duplicates →
+      sort by count descending → show top 3. Each step is trivial; the
+      combination is powerful.
 
-      While pipes connect commands, **redirection** connects commands to
-      files:
+      ### Redirection: connecting commands to files
+
+      Pipes connect commands to commands. **Redirection** connects commands
+      to files:
 
       ```bash
-      grep "ERROR" server_log.txt > errors_only.txt   # Write to file
-      echo "extra line" >> errors_only.txt             # Append
-      wc -l < errors_only.txt                          # Read from file
+      grep "ERROR" server_log.txt > errors_only.txt   # create/overwrite
+      echo "extra line" >> errors_only.txt             # append (safe)
+      wc -l < errors_only.txt                          # read from file
       ```
 
-      **Now verify your work:** the tests below check that `server_log.txt`
-      exists and that you created `errors_only.txt` with the right content.
+      Note: `>` overwrites without warning. Use `>>` to append and
+      preserve existing content.
+
+      **Now create `errors_only.txt`** by running the `grep "ERROR"`
+      redirection above — the tests below will check it.
     files:
       - path: "server_log.txt"
         content: |
@@ -241,56 +299,70 @@ steps:
 
   - title: "Conditionals — Making Decisions"
     instructions: |
-      Scripts need to react to different situations. Bash uses `if` with
-      the `[ ... ]` test construct.
+      Scripts need to react to different situations. Bash's `if` statement
+      runs commands conditionally based on whether a *test* succeeds.
 
       ### Syntax
 
       ```bash
       if [ condition ]; then
-          # commands
+          # runs when condition is true
       elif [ other_condition ]; then
-          # commands
+          # runs when first is false but this is true
       else
-          # commands
+          # runs when all conditions are false
       fi
       ```
 
-      **Spacing matters!** The spaces inside `[ ... ]` are mandatory — `[`
-      is actually a command, and the arguments must be separated.
+      ### Why the spaces inside `[ ]` are mandatory
+
+      `[` is not special syntax — it is an actual command (try `which [`).
+      Like any command, its arguments must be separated by spaces:
+
+      ```bash
+      [ -f "$file" ]    # correct: "[" receives "-f" and "$file" as args
+      [-f "$file"]      # WRONG: shell tries to run a command named "[-f"
+      ```
 
       ### Common tests
 
       | Test | Meaning |
       |------|---------|
-      | `-f path` | File exists and is a regular file |
-      | `-d path` | Path is a directory |
-      | `-z "$var"` | String is empty |
+      | `-f path` | Path exists and is a regular file |
+      | `-d path` | Path exists and is a directory |
+      | `-z "$var"` | String is empty (zero length) |
       | `-n "$var"` | String is not empty |
       | `"$a" = "$b"` | Strings are equal |
       | `$x -eq $y` | Integers are equal |
-      | `$x -lt $y` | Less than (integers) |
-      | `$x -gt $y` | Greater than (integers) |
+      | `$x -lt $y` | Integer less than |
+      | `$x -gt $y` | Integer greater than |
+      | `! condition` | Logical NOT |
+
+      **Important:** use `-eq`, `-lt`, `-gt` for numbers; use `=` and `!=`
+      for strings. Mixing them gives wrong results silently.
+
+      ### Printing to stderr
+
+      Error messages should go to standard error (`>&2`), not standard
+      output. This lets callers separate normal output from errors:
+
+      ```bash
+      echo "Error: file not found" >&2
+      exit 1
+      ```
 
       ### Your task
 
-      Edit `health_check.sh` so that it:
+      Edit `health_check.sh` and fill in the three `_____` placeholders:
 
-      1. Takes a filename as `$1` (default to `server_log.txt` if none given,
-         using `${1:-server_log.txt}`).
-      2. Checks if the file exists — if not, prints an error to stderr and
-         exits with code 1.
-      3. Counts ERROR lines in the file.
-      4. If errors > 3, prints `CRITICAL: <N> errors found`.
-         If errors > 0, prints `WARNING: <N> errors found`.
-         Otherwise, prints `OK: no errors found`.
-
-      **Starter code** is in the editor — fill in the blanks.
+      1. Test if the file does **not** exist — hint: `! -f "$file"`.
+      2. Test if `error_count` is **greater than 3**.
+      3. Test if `error_count` is **greater than 0**.
 
       ```bash
       chmod +x health_check.sh
-      ./health_check.sh server_log.txt
-      ./health_check.sh nonexistent.txt
+      ./health_check.sh server_log.txt    # should report CRITICAL (4 errors)
+      ./health_check.sh nonexistent.txt   # should print an error and exit 1
       ```
     files:
       - path: "health_check.sh"
@@ -337,42 +409,59 @@ steps:
 
       | Variable | Contains |
       |----------|----------|
-      | `$0` | The script's own name |
+      | `$0` | The script's own name (great for usage messages) |
       | `$1`, `$2`, ... | Positional arguments |
-      | `$#` | Number of arguments |
-      | `$@` | All arguments (as separate words) |
+      | `$#` | Total number of arguments passed |
+      | `$@` | All arguments as separate, properly-quoted words |
       | `$?` | Exit code of the last command (0 = success) |
 
-      ### Your task
+      ### Always validate your arguments
 
-      Write `file_info.sh` — a script that reports information about every
-      file passed as an argument.
-
-      **Requirements:**
-
-      1. If no arguments are given (`$# -eq 0`), print a usage message:
-         `Usage: file_info.sh <file1> [file2] ...` and exit with code 1.
-      2. Loop over all arguments using `for f in "$@"`.
-      3. For each file:
-         - If it does not exist, print `<filename>: not found`
-         - If it is a directory, print `<filename>: directory`
-         - Otherwise, print `<filename>: <N> lines`
-           (use `wc -l < "$f"` to count lines)
-
-      Here is the **first and last line** to get you started:
+      A script that silently does the wrong thing when called incorrectly
+      is worse than one that fails clearly. Good scripts check their inputs:
 
       ```bash
       if [ $# -eq 0 ]; then
+          echo "Usage: $0 <file1> [file2...]" >&2
+          exit 1
+      fi
       ```
+
+      Using `$0` in the usage message means it always shows the correct
+      script name, even if the script is renamed.
+
+      ### Looping over arguments
+
+      `"$@"` expands to all arguments as separate, properly-quoted words:
+
       ```bash
+      for f in "$@"; do
+          echo "Processing: $f"
       done
       ```
+
+      Always quote `"$@"` — unquoted `$@` has the same space-splitting
+      problem as unquoted variables.
+
+      ### Your task
+
+      Write `file_info.sh` from scratch. It should:
+
+      1. Print a usage message and exit with code 1 if no arguments given.
+      2. Loop over all arguments with `for f in "$@"`.
+      3. For each argument:
+         - Print `<name>: not found` if it doesn't exist.
+         - Print `<name>: directory` if it's a directory.
+         - Print `<name>: <N> lines` otherwise (use `wc -l < "$f"`).
 
       Test with:
       ```bash
       chmod +x file_info.sh
       ./file_info.sh server_log.txt morning.sh /tmp nope.txt
       ```
+
+      You should see a line count, a directory label, and a "not found"
+      message — all from one call.
     files:
       - path: "file_info.sh"
         content: |
@@ -395,9 +484,10 @@ steps:
 
   - title: "Loops — Repeating Work"
     instructions: |
-      Loops let you process many items without duplicating code.
+      Loops eliminate repetition. Instead of writing the same logic ten
+      times for ten files, you write it once and let the loop do the rest.
 
-      ### for loops
+      ### for loops — iterate over a list
 
       ```bash
       for fruit in apple banana cherry; do
@@ -405,15 +495,15 @@ steps:
       done
       ```
 
-      You can also loop over command output or file globs:
+      The list can be literal words, a glob, or command output:
 
       ```bash
-      for f in *.sh; do
-          echo "Found script: $f"
+      for f in *.sh; do          # expands to all matching filenames
+          echo "Found: $f"
       done
       ```
 
-      ### while loops
+      ### while loops — repeat until a condition changes
 
       ```bash
       counter=1
@@ -423,19 +513,36 @@ steps:
       done
       ```
 
-      `$(( ))` is *arithmetic expansion* — it evaluates math expressions.
+      `$(( ))` is *arithmetic expansion* — it evaluates integer math
+      expressions. Common operations: `+`, `-`, `*`, `/`, and
+      `$((total * 100 / count))` for integer percentages.
+
+      ### Accumulating totals
+
+      A common pattern is keeping running counts across loop iterations:
+
+      ```bash
+      passed=0
+      failed=0
+      # ... inside loop:
+      passed=$((passed + 1))
+      ```
 
       ### Your task
 
       Write `batch_check.sh` that:
 
-      1. Loops over every `.sh` file in the current directory.
-      2. For each file, checks whether it starts with a shebang line
-         (`#!/bin/bash`). Hint: `head -1 "$f"`.
-      3. Prints either `✓ filename` or `✗ filename (missing shebang)`.
-      4. At the end, prints a summary: `Checked N files: P passed, F failed`.
+      1. Uses `for f in *.sh` to loop over every `.sh` file.
+      2. Reads the first line of each file with `head -1 "$f"` and checks
+         whether it equals `#!/bin/bash`.
+      3. Prints `✓ filename` if correct, `✗ filename (missing shebang)`
+         if not.
+      4. After the loop, prints:
+         `Checked N files: P passed, F failed`
 
-      Use a `for` loop and keep running totals with arithmetic.
+      > **Tip:** store the first line in a variable before comparing:
+      > `first=$(head -1 "$f")`
+      > Then: `if [ "$first" = "#!/bin/bash" ]; then`
 
       ```bash
       chmod +x batch_check.sh
@@ -461,42 +568,66 @@ steps:
 
   - title: "Functions — Reusable Building Blocks"
     instructions: |
-      Functions let you name a block of code and call it repeatedly.
+      As scripts grow, repeating the same logic in multiple places becomes
+      a maintenance problem. Functions let you name a block of code and
+      call it anywhere, changing it in one place when needed.
 
       ### Defining and calling
 
       ```bash
-      say_hello() {
-          local who="$1"
-          echo "Hello, ${who}!"
+      greet() {
+          local name="$1"
+          echo "Hello, ${name}!"
       }
 
-      say_hello "engineer"
+      greet "engineer"   # → Hello, engineer!
+      greet "world"      # → Hello, world!
       ```
 
-      ### Key points
+      Functions are defined first, then called by name — just like
+      external commands, but without a separate file.
 
-      - `local` keeps variables scoped to the function (without it, they
-        leak into the rest of the script).
-      - Functions receive arguments as `$1`, `$2`, etc., just like scripts.
-      - Use `return 0` for success, `return 1` for failure.
-      - Capture printed output: `result=$(my_func "arg")`.
+      ### Key concepts
+
+      **`local` variables:** Without `local`, variables set inside a
+      function leak into the rest of the script, overwriting outer
+      variables with the same name. Always use `local` for variables
+      that belong only to the function.
+
+      **Arguments:** Functions receive `$1`, `$2`, etc. independently
+      of the script's own arguments — each call gets its own set.
+
+      **Return values:** `return 0` means success, `return 1` means
+      failure. This lets callers use functions directly in `if`:
+
+      ```bash
+      if is_number "$input"; then
+          echo "Valid number"
+      fi
+      ```
+
+      **Capturing output:** Use `$(func_name arg)` to capture what a
+      function prints, just like with any command:
+
+      ```bash
+      upper=$(to_upper "hello")   # upper="HELLO"
+      ```
 
       ### Your task
 
-      Write a `toolkit.sh` script that defines and demonstrates three
-      functions:
+      Write `toolkit.sh` with three utility functions:
 
       1. **`to_upper`** — converts its argument to uppercase.
          Hint: `echo "$1" | tr '[:lower:]' '[:upper:]'`
-      2. **`file_ext`** — extracts and prints the file extension.
-         Hint: `echo "${1##*.}"`
-      3. **`is_number`** — returns 0 (success) if the argument is a
-         valid integer, 1 otherwise.
-         Hint: test with a regex `[[ "$1" =~ ^-?[0-9]+$ ]]`
+      2. **`file_ext`** — prints the file extension of its argument.
+         Hint: `echo "${1##*.}"` — `##*.` strips everything up to the
+         last dot.
+      3. **`is_number`** — exits 0 if the argument is a valid integer,
+         1 otherwise.
+         Hint: `[[ "$1" =~ ^-?[0-9]+$ ]]` (a Bash regex test)
 
-      After defining them, add a demo section that calls each function and
-      prints the results.
+      After defining the functions, add a demo section that calls each
+      one and prints the results.
 
       ```bash
       chmod +x toolkit.sh
@@ -526,47 +657,70 @@ steps:
 
   - title: "Text Processing — grep, sed, and awk"
     instructions: |
-      Three powerful external programs handle most text-processing tasks in
-      shell scripts.
+      Three tools handle most text-processing work in shell scripts.
+      Knowing when to reach for each one is the key skill.
+
+      ### Choosing the right tool
+
+      | Tool | Best for |
+      |------|----------|
+      | `grep` | Selecting lines that match a pattern |
+      | `sed` | Transforming text (find & replace, delete lines) |
+      | `awk` | Structured data: columns, math, aggregation |
+
+      A useful heuristic: **grep** to filter rows, **sed** to edit them,
+      **awk** to compute across them.
 
       ### grep — search for patterns
 
       ```bash
       grep "pattern" file          # Lines matching pattern
       grep -i "pattern" file       # Case-insensitive
-      grep -c "pattern" file       # Count matches
-      grep -v "pattern" file       # Lines NOT matching
-      grep -E "pat1|pat2" file     # Extended regex (OR)
+      grep -c "pattern" file       # Count of matching lines
+      grep -v "pattern" file       # Lines NOT matching (invert)
+      grep -E "pat1|pat2" file     # Extended regex: OR
       ```
 
-      ### sed — stream editor (find & replace)
+      ### sed — stream editor
 
       ```bash
       sed 's/old/new/' file        # Replace first match per line
-      sed 's/old/new/g' file       # Replace ALL matches
-      sed -n '5,10p' file          # Print only lines 5-10
+      sed 's/old/new/g' file       # Replace ALL matches (global flag)
       sed '/pattern/d' file        # Delete matching lines
+      sed -n '5,10p' file          # Print only lines 5–10
       ```
+
+      The `s/old/new/` syntax is a substitution expression. The `/`
+      characters are delimiters — you can use any character if your
+      pattern contains `/`: e.g. `s|/old/path|/new/path|`.
 
       ### awk — column-oriented processing
 
+      awk splits each line into fields (`$1`, `$2`, ...) and lets you
+      run a program on each one:
+
       ```bash
-      awk '{print $1}' file              # Print first column
-      awk -F, '{print $2}' file.csv      # Use comma as delimiter
-      awk '$3 > 50 {print $1, $3}' file  # Filter by column value
-      awk '{sum+=$2} END {print sum}' f  # Sum a column
+      awk '{print $1}' file              # First field of every line
+      awk -F, '{print $2}' file.csv      # Comma-delimited: field 2
+      awk '$3 == 404 {print $2}' file    # Print field 2 where field 3 is 404
+      awk '{sum += $4} END {print sum / NR}' file  # Average of field 4
       ```
+
+      The `END` block runs once after all lines — useful for totals and
+      averages. `NR` is the total number of records (lines) processed.
 
       ### Your task
 
-      A file called `access.log` is provided. Write `log_analysis.sh` that:
+      `access.log` is provided. Write `log_analysis.sh` that:
 
       1. Prints the total number of requests.
-      2. Shows the count of each HTTP method (GET, POST, etc.).
-      3. Lists all unique URLs that returned a 404 status.
-      4. Calculates the average response time from the last column.
+      2. Shows the count of each HTTP method (GET, POST, etc.) —
+         hint: `awk '{print $1}' | sort | uniq -c`
+      3. Lists all unique URLs that returned a 404 —
+         hint: `awk '$3 == 404 {print $2}'`
+      4. Calculates the average response time from the last column —
+         hint: strip the `ms` suffix with `sed 's/ms//'` before summing.
 
-      Run and test:
       ```bash
       chmod +x log_analysis.sh
       ./log_analysis.sh
@@ -612,57 +766,76 @@ steps:
 
   - title: "Case Statements & Exit Codes"
     instructions: |
-      ### case — clean multi-way branching
+      ### case — readable multi-way branching
 
-      When you have many options to check, `case` is cleaner than a chain
-      of `if/elif`:
+      When you need to check one variable against many possible values,
+      a chain of `if/elif` becomes hard to scan. `case` is cleaner:
 
       ```bash
       case "$input" in
-          start)  echo "Starting..."  ;;
-          stop)   echo "Stopping..."  ;;
-          *)      echo "Unknown: $input" ;;
+          start)   echo "Starting..."  ;;
+          stop)    echo "Stopping..."  ;;
+          restart) echo "Restarting..." ;;
+          *)       echo "Unknown: $input" ;;
       esac
       ```
 
-      Each pattern ends with `)`, and each branch ends with `;;`.
-      The `*` pattern is the default (like `else`).
+      Each branch ends with `;;`. The `*` pattern is the catch-all default.
+      `esac` is `case` spelled backwards — a quirky Bash tradition.
 
-      ### Exit codes
-
-      Every command returns an exit code: **0 = success**, anything else
-      = failure. Your scripts should do the same.
+      `case` also supports glob patterns in branches:
 
       ```bash
-      exit 0   # success
-      exit 1   # general error
-      exit 2   # usage error (wrong arguments)
+      case "$filename" in
+          *.sh)       echo "Shell script" ;;
+          *.py)       echo "Python file"  ;;
+          *.txt|*.md) echo "Text file"    ;;
+      esac
       ```
 
-      You can check the previous command's exit code with `$?`.
+      ### Exit codes: the language of success and failure
+
+      Every command exits with a number. **0 always means success**; any
+      other value means failure. This is the opposite of most programming
+      languages (where 0 is falsy) — it trips people up at first.
+
+      ```bash
+      exit 0    # success
+      exit 1    # general error
+      exit 2    # misuse / wrong arguments (a common convention)
+      ```
+
+      Exit codes are what make scripts composable. Other scripts and CI
+      systems check your exit code to decide what to do next:
+
+      ```bash
+      if ./health_check.sh logfile.txt; then
+          echo "All clear"
+      else
+          echo "Problems found"
+      fi
+      ```
 
       ### Your task
 
-      Write `service.sh` — a simulated service controller that accepts a
-      command as its first argument.
+      Write `service.sh` — a simulated service controller. Use functions
+      for the `start`, `stop`, and `status` logic, then dispatch with
+      a `case` statement on `$1`.
 
       **Requirements:**
-
-      - `start` — prints `Starting service...` and exits 0.
-      - `stop` — prints `Stopping service...` and exits 0.
-      - `status` — checks if a file `/tmp/my_service.pid` exists.
+      - `start` — prints `Starting service...`, exits 0.
+      - `stop` — prints `Stopping service...`, exits 0.
+      - `status` — checks if `/tmp/my_service.pid` exists.
         If yes: `Service is running`, exit 0.
         If no: `Service is stopped`, exit 1.
-      - `restart` — prints `Restarting...`, then calls the script's own
-        `stop` and `start` logic (hint: use functions).
-      - Any other input (or no input) — prints
-        `Usage: service.sh {start|stop|status|restart}` to stderr, exit 2.
+      - `restart` — calls your stop and start functions.
+      - No input or unknown input — print usage to stderr, exit 2.
 
       ```bash
       chmod +x service.sh
       ./service.sh start
       ./service.sh status
-      ./service.sh
+      ./service.sh        # should print usage
       ```
     files:
       - path: "service.sh"
@@ -688,57 +861,68 @@ steps:
 
   - title: "Wildcards, Expansion & Regular Expressions"
     instructions: |
-      The shell expands patterns *before* commands run. Understanding
-      this prevents many subtle bugs.
+      The shell expands patterns *before* commands ever run. Understanding
+      this explains many surprising behaviors.
+
+      ### Globs vs. regular expressions — a common source of confusion
+
+      These look similar but work in completely different contexts:
+
+      | Feature | Globs | Regular Expressions |
+      |---------|-------|---------------------|
+      | Used by | Shell, `ls`, `cp`, `for` loops | `grep -E`, `sed`, `awk` |
+      | `*` means | Any string of characters | Zero or more of the preceding |
+      | `.` means | A literal dot | Any single character |
+      | `+` means | A literal `+` | One or more of the preceding |
+
+      **Key insight:** globs match *filenames* in the shell before the
+      command runs. Regexes match *text content* inside a running program.
 
       ### Glob patterns (file matching)
 
-      | Pattern | Matches |
-      |---------|---------|
-      | `*` | Any string (zero or more chars) |
-      | `?` | Any single character |
-      | `[abc]` | One of a, b, or c |
-      | `[0-9]` | Any digit |
-
       ```bash
-      ls *.sh         # All shell scripts
-      ls file?.txt    # file1.txt, fileA.txt, etc.
+      *.sh          # any filename ending in .sh
+      file?.txt     # file1.txt, fileA.txt (exactly one character)
+      [0-9]*        # anything starting with a digit
       ```
+
+      If no files match a glob, the shell passes the literal pattern
+      string to the command — usually causing a "file not found" error.
 
       ### Brace expansion
 
+      Brace expansion generates lists and happens before glob expansion.
+      It does not require matching files to exist:
+
       ```bash
-      echo {A,B,C}        # A B C
-      echo file{1..5}.txt  # file1.txt file2.txt ... file5.txt
-      mkdir -p project/{src,tests,docs}
+      echo {A,B,C}              # → A B C
+      echo file{1..5}.txt       # → file1.txt file2.txt ... file5.txt
+      mkdir -p project/{src,tests,docs}   # three directories at once
       ```
 
       ### Regular expressions in grep
 
-      Regex patterns are more powerful than globs and work inside `grep -E`:
-
       | Pattern | Meaning |
       |---------|---------|
       | `.` | Any single character |
-      | `+` | One or more of the previous |
-      | `*` | Zero or more of the previous |
+      | `+` | One or more of the preceding |
       | `^` | Start of line |
       | `$` | End of line |
       | `[0-9]{3}` | Exactly 3 digits |
-      | `(a\|b)` | a or b |
+      | `4[0-9]{2}` | 4xx (any 3-digit number starting with 4) |
 
       ### Your task
 
       Write `organizer.sh` that:
 
-      1. Creates a set of test files using brace expansion:
+      1. Creates test files using brace expansion:
          `touch report_{jan,feb,mar}.csv log_{jan,feb,mar}.txt notes.md`
-      2. Uses a loop with a glob to list all `.csv` files.
-      3. Uses `grep -E` on `access.log` to find all lines where the URL
-         path starts with `/api/`.
-      4. Uses `grep -E` to find lines with 3-digit status codes starting
-         with 4 (i.e., 4xx client errors).
-      5. Cleans up the created test files at the end.
+      2. Uses a `for` loop with a glob to list all `.csv` files.
+      3. Uses `grep -E` on `access.log` to print lines where the URL
+         starts with `/api/`.
+      4. Uses `grep -E` on `access.log` to print lines with 4xx status
+         codes (hint: `4[0-9]{2}`).
+      5. Cleans up the test files with `rm` at the end.
 
       ```bash
       chmod +x organizer.sh
@@ -766,44 +950,55 @@ steps:
 
   - title: "Process Substitution & Advanced Pipes"
     instructions: |
-      You now have all the core building blocks. From here on, the
-      exercises give you less scaffolding — you design the solution.
+      You now have all the core building blocks. These final exercises
+      give you less scaffolding — focus on designing the solution before
+      writing any code.
 
       ### Process substitution `<(...)`
 
-      Sometimes you need to pass the output of a command where a
-      *filename* is expected. Process substitution creates a temporary
-      file-like object:
+      Some commands expect filenames, not pipes. Process substitution
+      makes the output of a command look like a file:
 
       ```bash
-      diff <(sort file1.txt) <(sort file2.txt)
+      diff file1.txt file2.txt                       # compare two files
+      diff <(sort file1.txt) <(sort file2.txt)       # compare sorted versions
       ```
 
-      This sorts both files and compares them without creating temporary
-      files.
+      Without process substitution, you would create two temporary files,
+      sort into them, diff them, then delete them. Process substitution
+      handles all of that automatically.
 
-      ### Combining tools
+      ### tee — split a stream in two
+
+      `tee` writes its input to a file *and* passes it through to stdout:
 
       ```bash
-      # Pipeline: Find the 5 largest .sh files by line count
-      wc -l *.sh | sort -rn | head -5
-
-      # tee: write to a file AND pass through the pipe
       grep "ERROR" server_log.txt | tee errors.txt | wc -l
+      #                             ↑ saves to file  ↑ also counts
       ```
+
+      Useful when you want to save an intermediate result for debugging
+      without breaking the pipeline.
+
+      ### Reading diff output
+
+      When `diff` compares two inputs, lines prefixed with `<` come from
+      the first source, and lines prefixed with `>` come from the second.
+      This tells you which entries are unique to each side.
 
       ### Your task
 
-      Write `compare_logs.sh` that takes two log files as arguments and:
+      Write `compare_logs.sh` that accepts two log filenames as arguments:
 
-      1. Validates both files exist.
-      2. Prints how many lines each file has.
-      3. Uses process substitution with `diff` to compare the *sorted
-         unique error messages* from each file (extract just the message
-         part after the status keyword).
-      4. Prints which errors are unique to each file.
+      1. Validate both files exist (exit with an error if not).
+      2. Print the line count of each file.
+      3. Use process substitution with `diff` to compare the **sorted,
+         unique error messages** from each file. Extract just the message
+         text (everything after the log level keyword).
+      4. Summarize which errors appear only in file 1 and only in file 2.
 
-      Create a second log file to test with:
+      `server_log2.txt` is provided for testing:
+
       ```bash
       chmod +x compare_logs.sh
       ./compare_logs.sh server_log.txt server_log2.txt
@@ -860,10 +1055,18 @@ steps:
          upstream services" if errors > 20% of total).
       6. Exit with code 0 if no errors, code 1 if errors were found.
 
-      **Design hints (think before coding):**
-      - Use functions to organize sections.
-      - Use `awk` for counting and percentage calculations.
-      - Use `grep` + `sed` or `awk` to extract error details.
+      ### Design approach — plan before you code
+
+      Sketch your structure in comments first, then fill it in:
+
+      1. **What data do I need?** (counts, timestamps, error lines)
+      2. **Which tool extracts each piece?**
+         - `grep -c` for counts per level
+         - `head -1` / `tail -1` for first and last timestamps
+         - `grep "ERROR"` piped to `awk` or `cut` for error details
+         - `awk` for integer percentage: `$((errors * 100 / total))`
+      3. **What functions make sense?** e.g. `print_summary`,
+         `print_errors`, `print_recommendations`
 
       ```bash
       chmod +x monitor.sh
@@ -898,32 +1101,49 @@ steps:
   - title: "Capstone — System Health Dashboard"
     instructions: |
       You have learned variables, quoting, pipes, conditionals, loops,
-      functions, text processing, and exit codes. Now combine them all.
+      functions, text processing, and exit codes. Now combine them all
+      into a production-quality tool.
 
       ### The challenge
 
       Build `dashboard.sh` — a system health dashboard that gathers
-      information and produces a formatted report. **No starter code. No
-      hints. Design it yourself.**
+      information and produces a formatted report. **No starter code.
+      No hints. Design it yourself.**
 
-      **Minimum requirements:**
+      ### Parsing flags — the while/case pattern
 
-      1. A `usage()` function that explains how to run the script.
-      2. Accept flags using `case` in a `while` loop:
-         - `-f <logfile>` — specify a log file to analyze (default: `server_log.txt`)
-         - `-o <outfile>` — write the report to a file instead of stdout
-         - `-h` — show usage and exit
-      3. **System info section:** hostname, current date/time, uptime,
-         disk usage summary.
-      4. **Log analysis section** (reuse techniques from earlier steps):
-         - Entry counts per level
-         - Top 3 most frequent log messages (strip timestamps)
+      Real command-line tools accept flags like `-f file` and `-o output`.
+      The idiomatic Bash pattern uses a `while` loop with `case`:
+
+      ```bash
+      while [ $# -gt 0 ]; do
+          case "$1" in
+              -f) logfile="$2"; shift 2 ;;
+              -o) outfile="$2"; shift 2 ;;
+              -h) usage; exit 0 ;;
+              *)  echo "Unknown option: $1" >&2; exit 2 ;;
+          esac
+      done
+      ```
+
+      `shift N` discards the first N positional parameters, sliding
+      subsequent arguments into `$1`, `$2`, etc. for the next iteration.
+
+      ### Minimum requirements
+
+      1. A `usage()` function printed with `-h`.
+      2. Flag parsing: `-f <logfile>`, `-o <outfile>`, `-h`.
+      3. **System info section:** hostname, current date/time, disk usage.
+      4. **Log analysis section:**
+         - Entry counts per level (INFO, WARN, ERROR)
+         - Top 3 most frequent messages (strip timestamps)
          - Error rate as a percentage
-      5. **Status verdict:** HEALTHY (0 errors), DEGRADED (error rate
-         < 30%), or CRITICAL (error rate ≥ 30%).
-      6. If `-o` was specified, write to that file; otherwise print to
-         stdout.
-      7. Exit with 0/1/2 matching HEALTHY/DEGRADED/CRITICAL.
+      5. **Health verdict:**
+         - `HEALTHY` — 0 errors (exit 0)
+         - `DEGRADED` — error rate < 30% (exit 1)
+         - `CRITICAL` — error rate ≥ 30% (exit 2)
+      6. If `-o` is given, write the report to that file; otherwise
+         print to stdout.
 
       ```bash
       chmod +x dashboard.sh
