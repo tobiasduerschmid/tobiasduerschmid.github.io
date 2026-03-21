@@ -72,7 +72,7 @@ app.listen(port, () => {
 });
 ```
 
-**Pedagogical Breakdown of the Example:**
+**Breakdown of the Example:**
 1.  **Arrow Functions `(req, res) => { ... }`:** This is a concise way to write an anonymous function. You are passing a function as an argument to `app.get()`. This is how JS handles asynchronous events: "When someone makes a GET request to this URL, run this block of code."
 2.  **`req` and `res`:** These represent the HTTP Request and HTTP Response objects, abstracting away the raw network sockets you would have to manage manually in lower-level C++.
 
