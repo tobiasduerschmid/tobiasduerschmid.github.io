@@ -5,9 +5,9 @@ layout: sebook
 
 <style>
 /* ── Progress Bar ──────────────────────────────────────────────── */
-.rt-progress { background: #e9ecef; border-radius: 8px; height: 22px; margin-bottom: 1.5em; position: relative; overflow: hidden; }
+.rt-progress { background: #e9ecef; border-radius: 8px; height: 12px; margin-bottom: 1.5em; overflow: hidden; }
 .rt-progress-fill { background: linear-gradient(90deg, #2774AE, #005587); height: 100%; border-radius: 8px; transition: width 0.4s ease; width: 0%; }
-.rt-progress-label { position: absolute; top: 0; left: 0; right: 0; text-align: center; line-height: 22px; font-size: 0.8em; font-weight: 600; color: #333; }
+.rt-progress-label { text-align: right; font-size: 0.85em; font-weight: 600; color: #555; margin-bottom: 0.4em; }
 
 /* ── Exercise Card ─────────────────────────────────────────────── */
 .rt-exercise { background: #fff; border: 1px solid #ddd; border-left: 4px solid #2774AE; border-radius: 6px; padding: 1.2em 1.4em; margin-bottom: 1.5em; transition: border-color 0.3s; }
@@ -125,7 +125,7 @@ layout: sebook
 :root.dark-mode .rt-viz-btn:hover { background: #333; }
 :root.dark-mode .rt-viz-desc { color: #ccc; }
 :root.dark-mode .rt-progress { background: #333; }
-:root.dark-mode .rt-progress-label { color: #ccc; }
+:root.dark-mode .rt-progress-label { color: #aaa; }
 :root.dark-mode .rt-match { background: #b8960a; color: #fff; }
 :root.dark-mode .rt-result-pass { background: #1a3a1a; color: #7ec87e; border-color: #2a5a2a; }
 :root.dark-mode .rt-result-fail { background: #3a1a1a; color: #e87e7e; border-color: #5a2a2a; }
@@ -148,9 +148,9 @@ layout: sebook
 }
 </style>
 
+<div class="rt-progress-label" id="rt-progress-label">0 / 20 exercises completed</div>
 <div class="rt-progress">
   <div class="rt-progress-fill" id="rt-progress-fill"></div>
-  <div class="rt-progress-label" id="rt-progress-label">0 / 20 exercises completed</div>
 </div>
 
 This hands-on tutorial will walk you through Regular Expressions step by step. Each section builds on the last. Complete exercises to unlock your progress. Don't worry about memorizing everything — focus on understanding the **patterns**.
