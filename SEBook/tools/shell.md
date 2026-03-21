@@ -8,6 +8,8 @@ If you have ever found yourself performing the same repetitive tasks on your com
 
 In this detailed educational article, we will explore the concepts, syntax, and power of shell scripting, specifically focusing on the most ubiquitous UNIX shell: Bash.
 
+
+> **Want to practice?** Try the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system!
  
 # Basics 
 ## What is the Shell?
@@ -211,3 +213,5 @@ Shell scripting is an indispensable skill for anyone working in tech. By viewing
 {% include flashcards.html id="shell" %}
 
 {% include quiz.html id="shell" %}
+
+After finishing these quizzes, you are now ready to practice in a real Linux system. Try the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html)!
