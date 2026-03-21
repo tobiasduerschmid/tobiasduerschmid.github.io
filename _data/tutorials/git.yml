@@ -1,0 +1,972 @@
+title: "Version Control with Git"
+description: "Learn Git through hands-on practice — from your first commit to resolving merge conflicts, all inside an interactive Linux environment"
+
+setup_commands:
+  - "git config --global user.email 'strange@ucla.edu'"
+  - "git config --global user.name 'Steven Strange'"
+
+steps:
+  # --------------------------------------------------------------------------
+  # STEP 1: Why Version Control? + git init + git config
+  # --------------------------------------------------------------------------
+  - title: "Your First Repository"
+    instructions: |
+      Welcome to the **Git Tutorial**! On the right you have a code editor
+      (top) and a real Linux terminal (bottom). Files you edit are
+      automatically synced to the VM.
+
+      ### Why version control?
+
+      Imagine working on a project and saving files like
+      `report_final_v2_REALLY_final.txt`. Version control solves this chaos.
+      It lets you:
+
+      - **Track every change** — see exactly what changed, when, and by whom
+      - **Undo mistakes** — roll back to any previous version
+      - **Work in parallel** — multiple people can edit without overwriting each other
+
+      Git is the most widely used version control system in the world. Let's
+      learn it by building a small Python project.
+
+      ### The three states of Git
+
+      Before we start, understand Git's core architecture. Every file lives
+      in one of **three states**:
+
+      ```
+      ┌──────────────┐     git add     ┌──────────────┐   git commit   ┌──────────────┐
+      │   Working    │ ──────────────▶ │   Staging    │ ────────────▶ │    Local     │
+      │  Directory   │                 │  Area (Index)│               │  Repository  │
+      └──────────────┘                 └──────────────┘               └──────────────┘
+            You edit                     You review                    Permanently
+           files here                  what will be in                  saved as a
+                                      the next snapshot                  snapshot
+      ```
+
+      Think of it like packing a shipping box:
+      - **Working Directory** = the warehouse floor (your messy workspace)
+      - **Staging Area** = the loading dock (you arrange items to ship)
+      - **Commit** = the truck drives away (a permanent snapshot is saved)
+
+      ### Task 1: Initialize a repository
+
+      Your Git identity has already been configured for you (as Steven
+      Strange). You can verify this anytime with `git config user.name`.
+
+      Now create a new Git repository:
+
+      ```bash
+      git init myproject
+      cd myproject
+      ```
+
+      `git init` creates a hidden `.git` folder that stores all version
+      history. You now have an empty repository!
+
+      ### Task 2: Explore what was created
+
+      Run this command to see the hidden `.git` directory:
+
+      ```bash
+      ls -la
+      ```
+
+      You should see a `.git/` folder — this is where Git stores everything.
+      Your working directory is clean and empty, ready for your first file.
+
+    tests:
+      - description: "Git user name is configured"
+        command: "git config user.name | grep -q '.'"
+      - description: "Git user email is configured"
+        command: "git config user.email | grep -q '.'"
+      - description: "myproject directory exists and is a Git repository"
+        command: "[ -d /tutorial/myproject/.git ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 2: First commit — git add, git commit
+  # --------------------------------------------------------------------------
+  - title: "Your First Commit"
+    instructions: |
+      ### Creating and tracking files
+
+      Now let's create our first Python file. A file in your working
+      directory starts as **untracked** — Git doesn't know about it yet.
+
+      ### Task 1: Create a file and check status
+
+      The editor shows `calculator.py` — a simple calculator module.
+      It has already been saved to the VM. Now run:
+
+      ```bash
+      cd /tutorial/myproject
+      git status
+      ```
+
+      You should see `calculator.py` listed as an **untracked file** in red.
+      Git sees the file but isn't tracking it yet.
+
+      ### Task 2: Stage the file
+
+      Move the file from the Working Directory to the Staging Area:
+
+      ```bash
+      git add calculator.py
+      ```
+
+      Now run `git status` again. The file should appear in green under
+      "Changes to be committed". It's on the loading dock, ready to ship!
+
+      ### Task 3: Commit the snapshot
+
+      Save this snapshot permanently to the repository:
+
+      ```bash
+      git commit -m "Add calculator module with add and subtract"
+      ```
+
+      The `-m` flag lets you write a message describing *what* and *why*.
+      Good commit messages help your future self (and teammates) understand
+      the history.
+
+      Run `git status` one more time — it should say "nothing to commit,
+      working tree clean". Your file is safely stored!
+
+    files:
+      - path: "myproject/calculator.py"
+        content: |
+          """A simple calculator module."""
+
+
+          def add(a, b):
+              """Return the sum of a and b."""
+              return a + b
+
+
+          def subtract(a, b):
+              """Return the difference of a and b."""
+              return a - b
+        language: "python"
+
+    open_file: "myproject/calculator.py"
+
+    setup_commands:
+      - " cp /tutorial/myproject/calculator.py /tutorial/myproject/calculator.py 2>/dev/null; true"
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "calculator.py exists in the repository"
+        command: "[ -f /tutorial/myproject/calculator.py ]"
+      - description: "calculator.py is tracked by Git (has been committed)"
+        command: "cd /tutorial/myproject && git log --oneline -- calculator.py | grep -q '.'"
+      - description: "Commit message mentions 'calculator' or 'add'"
+        command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'calc\\|add'"
+
+  # --------------------------------------------------------------------------
+  # STEP 3: Making changes — edit, diff, add, commit cycle
+  # --------------------------------------------------------------------------
+  - title: "The Edit-Stage-Commit Cycle"
+    instructions: |
+      ### Modifying tracked files
+
+      Git now tracks `calculator.py`. When you edit a tracked file, Git
+      notices the difference between what's in your working directory and
+      what was last committed.
+
+      ### Task 1: Add a multiply function
+
+      Open `calculator.py` in the editor and add this function at the
+      bottom of the file:
+
+      ```python
+      def multiply(a, b):
+          """Return the product of a and b."""
+          return a * b
+      ```
+
+      Save the file (**Ctrl+S**), then run in the terminal:
+
+      ```bash
+      cd /tutorial/myproject
+      git status
+      ```
+
+      You'll see `calculator.py` is now listed as **modified** (in red).
+      The file is tracked, but your new changes haven't been staged yet.
+
+      ### Task 2: See exactly what changed
+
+      Before staging, review your changes:
+
+      ```bash
+      git diff
+      ```
+
+      `git diff` compares your **working directory** to the **staging area**.
+      Lines starting with `+` are additions; `-` are removals. This is your
+      chance to review before committing.
+
+      ### Task 3: Stage and commit
+
+      Now complete the cycle:
+
+      ```bash
+      git add calculator.py
+      git commit -m "Add multiply function to calculator"
+      ```
+
+      ### Task 4: Review your history
+
+      See all your commits so far:
+
+      ```bash
+      git log
+      ```
+
+      Each commit shows: a unique hash (ID), the author, date, and your
+      message. Press `q` to exit the log viewer.
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "calculator.py contains a multiply function"
+        command: "cd /tutorial/myproject && grep -q 'def multiply' calculator.py"
+      - description: "The multiply function has been committed"
+        command: "cd /tutorial/myproject && git log --oneline | grep -qi 'multiply'"
+      - description: "Repository has at least 2 commits"
+        command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 2 ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 4: Staging strategies — individual, wildcard, directory, all
+  # --------------------------------------------------------------------------
+  - title: "Staging Strategies"
+    instructions: |
+      ### Controlling what goes into a commit
+
+      The staging area lets you carefully choose *exactly* which changes
+      become part of each commit. This is powerful — you can make multiple
+      changes to your working directory but commit them in logical groups.
+
+      ### Task 1: Create multiple new files
+
+      Let's add several files to our project. Create these in the terminal:
+
+      ```bash
+      cd /tutorial/myproject
+      echo '"""Tests for calculator."""' > test_calc.py
+      echo '"""Tests for utilities."""' > test_utils.py
+      echo "# My Calculator Project" > README.md
+      echo "A simple calculator" >> README.md
+      echo "TODO: add division" > notes.txt
+      echo "DONE: add multiply" >> notes.txt
+      ```
+
+      Run `git status` to see all the untracked files.
+
+      ### Task 2: Stage files one at a time
+
+      Stage just one specific file:
+
+      ```bash
+      git add README.md
+      git status
+      ```
+
+      Notice: `README.md` is green (staged), while the others are still
+      red (untracked). You have precise control!
+
+      ### Task 3: Stage by wildcard pattern
+
+      Stage all Python test files at once using a glob pattern:
+
+      ```bash
+      git add test_*.py
+      git status
+      ```
+
+      Both `test_calc.py` and `test_utils.py` should now be staged.
+
+      ### Task 4: Stage everything remaining
+
+      To add all untracked and modified files at once, use:
+
+      ```bash
+      git add .
+      ```
+
+      The `.` means "current directory and everything in it". This stages
+      `notes.txt` too. Run `git status` to confirm everything is green.
+
+      ### Task 5: Commit all staged files
+
+      ```bash
+      git commit -m "Add test files, README, and project notes"
+      ```
+
+      Now you've seen four ways to stage:
+      1. **Individual file:** `git add README.md`
+      2. **Wildcard pattern:** `git add test_*.py`
+      3. **Current directory:** `git add .`
+      4. **All tracked + untracked:** `git add --all` (or `-A`)
+
+    tests:
+      - description: "README.md has been committed"
+        command: "cd /tutorial/myproject && git log --all --oneline -- README.md | grep -q '.'"
+      - description: "test_calc.py has been committed"
+        command: "cd /tutorial/myproject && git log --all --oneline -- test_calc.py | grep -q '.'"
+      - description: "test_utils.py has been committed"
+        command: "cd /tutorial/myproject && git log --all --oneline -- test_utils.py | grep -q '.'"
+      - description: "notes.txt has been committed"
+        command: "cd /tutorial/myproject && git log --all --oneline -- notes.txt | grep -q '.'"
+
+  # --------------------------------------------------------------------------
+  # STEP 5: Unstaging and undoing changes
+  # --------------------------------------------------------------------------
+  - title: "Unstaging and Undoing Changes"
+    instructions: |
+      ### Everyone makes mistakes
+
+      What if you stage a file by accident? Or make changes you want to
+      throw away? Git has tools for both.
+
+      ### Task 1: Make a change and stage it
+
+      Let's edit a file and then undo our staging:
+
+      ```bash
+      cd /tutorial/myproject
+      echo "BROKEN CODE" >> calculator.py
+      git add calculator.py
+      git status
+      ```
+
+      You'll see `calculator.py` is staged (green). But wait — we don't
+      actually want to commit "BROKEN CODE"!
+
+      ### Task 2: Unstage the file
+
+      Remove the file from the staging area **without** losing your edits:
+
+      ```bash
+      git restore --staged calculator.py
+      git status
+      ```
+
+      The file is now **modified but unstaged** (red again). Your edit is
+      still in the working directory — `git restore --staged` only moves it
+      off the loading dock; it doesn't delete anything.
+
+      ### Task 3: Discard working directory changes
+
+      Now let's throw away the change entirely and restore the file to its
+      last committed version:
+
+      ```bash
+      git restore calculator.py
+      git status
+      ```
+
+      The "BROKEN CODE" line is gone. The file matches the last commit.
+
+      **Warning:** `git restore` (without `--staged`) permanently discards
+      uncommitted changes. There is no undo for this — the changes were
+      never committed, so Git has no record of them.
+
+      ### Summary
+
+      | Command | Effect |
+      |---|---|
+      | `git restore --staged <file>` | Unstage (move off loading dock, keep edits) |
+      | `git restore <file>` | Discard working directory changes (permanent!) |
+      | `git reset --hard` | Discard ALL uncommitted changes (nuclear option) |
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "calculator.py does NOT contain 'BROKEN CODE'"
+        command: "cd /tutorial/myproject && ! grep -q 'BROKEN CODE' calculator.py"
+      - description: "Working tree is clean (no uncommitted changes)"
+        command: "cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet"
+
+  # --------------------------------------------------------------------------
+  # STEP 6: .gitignore
+  # --------------------------------------------------------------------------
+  - title: "Ignoring Files with .gitignore"
+    instructions: |
+      ### Not everything belongs in version control
+
+      Some files should **never** be committed:
+      - **Compiled files** (`.pyc`, `__pycache__/`) — generated from source
+      - **Environment files** (`.env`) — contain secrets like API keys
+      - **OS files** (`.DS_Store`, `Thumbs.db`) — system clutter
+      - **Dependencies** (`node_modules/`, `venv/`) — downloaded, not authored
+
+      ### Task 1: See the problem
+
+      Let's simulate what happens without a `.gitignore`:
+
+      ```bash
+      cd /tutorial/myproject
+      mkdir -p __pycache__
+      echo "bytecode" > __pycache__/calculator.cpython-311.pyc
+      echo "SECRET_KEY=abc123" > .env
+      echo "debug log" > debug.log
+      git status
+      ```
+
+      Git wants to track all of these! Committing `.env` would expose your
+      secrets to anyone who can see the repository.
+
+      ### Task 2: Create a .gitignore file
+
+      Open the `.gitignore` file in the editor and add the following patterns.
+      Each line is a pattern that tells Git to pretend matching files don't exist:
+
+      ```
+      __pycache__/
+      *.pyc
+      .env
+      *.log
+      ```
+
+      Save the file, then check the status:
+
+      ```bash
+      git status
+      ```
+
+      The ignored files have vanished from the status output! Only
+      `.gitignore` itself appears as a new untracked file.
+
+      ### Task 3: Commit the .gitignore
+
+      The `.gitignore` file itself *should* be committed — it's a project
+      configuration that all contributors benefit from:
+
+      ```bash
+      git add .gitignore
+      git commit -m "Add .gitignore to exclude compiled and secret files"
+      ```
+
+    files:
+      - path: "myproject/.gitignore"
+        content: ""
+        language: "plaintext"
+
+    open_file: "myproject/.gitignore"
+
+    watch_files:
+      - "myproject/.gitignore"
+
+    tests:
+      - description: ".gitignore file exists"
+        command: "[ -f /tutorial/myproject/.gitignore ]"
+      - description: ".gitignore excludes __pycache__/"
+        command: "cd /tutorial/myproject && grep -q '__pycache__' .gitignore"
+      - description: ".gitignore excludes .env"
+        command: "cd /tutorial/myproject && grep -q '.env' .gitignore"
+      - description: ".gitignore excludes *.pyc"
+        command: "cd /tutorial/myproject && grep -q '\\*.pyc' .gitignore"
+      - description: ".gitignore has been committed"
+        command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
+      - description: ".env is not tracked by Git"
+        command: "cd /tutorial/myproject && ! git ls-files --cached | grep -q '.env'"
+
+  # --------------------------------------------------------------------------
+  # STEP 7: Inspecting history — git log, git diff HEAD, git show
+  # --------------------------------------------------------------------------
+  - title: "Inspecting History"
+    instructions: |
+      ### Reading the story of your project
+
+      Git's log is a detailed journal of every snapshot you've saved. Let's
+      learn to read it effectively.
+
+      ### Task 1: View the commit log
+
+      ```bash
+      cd /tutorial/myproject
+      git log
+      ```
+
+      Press `q` to exit. Each entry shows:
+      - **Commit hash** — a unique 40-character ID (SHA-1) for this snapshot
+      - **Author** — who made the commit
+      - **Date** — when it was made
+      - **Message** — what it describes
+
+      ### Task 2: Compact log view
+
+      For a summary, use:
+
+      ```bash
+      git log --oneline
+      ```
+
+      This shows just the first 7 characters of the hash and the message.
+      Much easier to scan!
+
+      ### Task 3: See what a commit changed
+
+      Pick any commit hash from the log and inspect it:
+
+      ```bash
+      git show HEAD
+      ```
+
+      `HEAD` always refers to the latest commit. `git show` displays the
+      full diff of what changed in that commit.
+
+      ### Task 4: Compare commits
+
+      See what changed between the second-to-last commit and the latest:
+
+      ```bash
+      git diff HEAD~1 HEAD
+      ```
+
+      `HEAD~1` means "one commit before HEAD". You can use `HEAD~2` for
+      two commits back, and so on.
+
+      ### Understanding git diff variants
+
+      ```
+      git diff              → Working Directory vs. Staging Area
+      git diff HEAD         → Working Directory vs. Last Commit
+      git diff HEAD~1 HEAD  → Previous Commit vs. Last Commit
+      git diff --staged     → Staging Area vs. Last Commit
+      ```
+
+    tests:
+      - description: "Repository has at least 3 commits"
+        command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 3 ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 8: Branching — git branch, git checkout/switch
+  # --------------------------------------------------------------------------
+  - title: "Branching"
+    instructions: |
+      ### Parallel development
+
+      Branches let you develop features in isolation without affecting the
+      main codebase. A branch is just a lightweight **pointer** to a commit
+      — creating one is nearly instant and costs almost nothing.
+
+      ```
+      Before branching:
+
+        main:  [C1] ← [C2] ← [C3]  ← HEAD
+
+      After creating feature branch:
+
+        main:  [C1] ← [C2] ← [C3]
+                                ↑
+        feature:             (points here too)  ← HEAD
+      ```
+
+      The branch is just a sticky note (pointer) on a commit — not a copy
+      of your entire project!
+
+      ### Task 1: See your current branch
+
+      ```bash
+      cd /tutorial/myproject
+      git branch
+      ```
+
+      You should see `* master` (or `* main`). The `*` indicates which
+      branch HEAD is currently pointing to.
+
+      ### Task 2: Create and switch to a new branch
+
+      ```bash
+      git checkout -b feature-divide
+      ```
+
+      This creates a new branch called `feature-divide` and switches to it.
+      (`-b` means "create the branch"). Run `git branch` to confirm you're
+      on the new branch.
+
+      ### Task 3: Make changes on the feature branch
+
+      Add a `divide` function to `calculator.py`. Open it in the editor and
+      add at the bottom:
+
+      ```python
+      def divide(a, b):
+          """Return the quotient of a and b."""
+          if b == 0:
+              raise ValueError("Cannot divide by zero")
+          return a / b
+      ```
+
+      Save, then stage and commit:
+
+      ```bash
+      git add calculator.py
+      git commit -m "Add divide function with zero-division check"
+      ```
+
+      ### Task 4: Switch back to master
+
+      ```bash
+      git checkout master
+      ```
+
+      Now look at `calculator.py` in the terminal:
+
+      ```bash
+      cat calculator.py
+      ```
+
+      The `divide` function is **gone**! It only exists on the
+      `feature-divide` branch. Your `master` branch is untouched. This is
+      the power of branching.
+
+      Switch back to see it again:
+
+      ```bash
+      git checkout feature-divide
+      cat calculator.py
+      ```
+
+      The function is back. Each branch is a separate timeline.
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "Branch 'feature-divide' exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'feature-divide'"
+      - description: "calculator.py has a divide function on feature-divide"
+        command: "cd /tutorial/myproject && git show feature-divide:calculator.py | grep -q 'def divide'"
+      - description: "The divide function has been committed on feature-divide"
+        command: "cd /tutorial/myproject && git log feature-divide --oneline | grep -qi 'divide'"
+
+  # --------------------------------------------------------------------------
+  # STEP 9: Merging — fast-forward and three-way merge
+  # --------------------------------------------------------------------------
+  - title: "Merging Branches"
+    instructions: |
+      ### Integrating your work
+
+      When a feature is complete, you merge it back into the main branch.
+      This combines the histories of both branches.
+
+      ```
+      Before merge:
+
+        master:          [C1] ← [C2] ← [C3]
+                                          \
+        feature-divide:                   [C4]  (divide function)
+
+      After merge:
+
+        master:          [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
+                                          \     /
+        feature-divide:                   [C4]
+      ```
+
+      ### Task 1: Switch to master and merge
+
+      First, switch to the branch you want to merge **into** (master):
+
+      ```bash
+      cd /tutorial/myproject
+      git checkout master
+      ```
+
+      Now merge the feature branch:
+
+      ```bash
+      git merge feature-divide
+      ```
+
+      ### Task 2: Verify the merge
+
+      Check that the divide function is now on master:
+
+      ```bash
+      cat calculator.py
+      git log --oneline
+      ```
+
+      You should see the divide function in the file and the commit from
+      `feature-divide` in your log. The feature has been integrated!
+
+      ### Task 3: Clean up
+
+      After merging, you can optionally delete the feature branch since its
+      work is now part of master:
+
+      ```bash
+      git branch -d feature-divide
+      ```
+
+      The `-d` flag safely deletes a branch only if it's been fully merged.
+      This keeps your branch list tidy.
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "Currently on master branch"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'master'"
+      - description: "calculator.py on master has the divide function"
+        command: "cd /tutorial/myproject && git checkout master 2>/dev/null; grep -q 'def divide' calculator.py"
+      - description: "Merge commit or fast-forward is in the log"
+        command: "cd /tutorial/myproject && git log master --oneline | grep -qi 'divide'"
+
+  # --------------------------------------------------------------------------
+  # STEP 10: Create a branch for merge conflict setup (student makes changes)
+  # --------------------------------------------------------------------------
+  - title: "Preparing for a Merge Conflict"
+    instructions: |
+      ### When merges go wrong (and that's OK!)
+
+      A **merge conflict** happens when two branches modify the **same
+      lines** of the same file. Git can't decide which version to keep, so
+      it asks you — the human — to resolve it.
+
+      This is **not** an error. It's Git being careful and asking for help.
+      Let's create this situation intentionally so you know exactly how to
+      handle it.
+
+      ### Task 1: Create a new branch and modify calculator.py
+
+      ```bash
+      cd /tutorial/myproject
+      git checkout -b update-add-function
+      ```
+
+      Now open `calculator.py` in the editor and **change the `add`
+      function** to include a type check:
+
+      ```python
+      def add(a, b):
+          """Return the sum of a and b (integers only)."""
+          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+              raise TypeError("Arguments must be numbers")
+          return a + b
+      ```
+
+      Save, stage, and commit:
+
+      ```bash
+      git add calculator.py
+      git commit -m "Add type checking to add function"
+      ```
+
+      ### Task 2: Switch back to master
+
+      ```bash
+      git checkout master
+      ```
+
+      Verify that master still has the **original** `add` function
+      (without type checking):
+
+      ```bash
+      head -8 calculator.py
+      ```
+
+      **Important:** Stay on `master` and proceed to the next step. In the
+      next step, we'll make a *different* change to the same `add` function
+      on master, setting up a conflict!
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "Branch 'update-add-function' exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'update-add-function'"
+      - description: "update-add-function branch has the type checking commit"
+        command: "cd /tutorial/myproject && git log update-add-function --oneline | grep -qi 'type\\|check\\|add'"
+      - description: "Currently on master branch"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'master'"
+
+  # --------------------------------------------------------------------------
+  # STEP 11: Resolving a merge conflict
+  # --------------------------------------------------------------------------
+  - title: "Resolving a Merge Conflict"
+    instructions: |
+      ### The conflict
+
+      In the previous step, you changed the `add` function on the
+      `update-add-function` branch. Now we'll make a *different* change to
+      the same function on `master`, creating a conflict.
+
+      ### Task 1: Modify add on master
+
+      Make sure you're on master:
+
+      ```bash
+      cd /tutorial/myproject
+      git checkout master
+      ```
+
+      Open `calculator.py` in the editor and change the `add` function to
+      log its inputs:
+
+      ```python
+      def add(a, b):
+          """Return the sum of a and b (with logging)."""
+          print(f"Adding {a} + {b}")
+          return a + b
+      ```
+
+      Save, stage, and commit:
+
+      ```bash
+      git add calculator.py
+      git commit -m "Add logging to add function"
+      ```
+
+      ### Task 2: Attempt the merge
+
+      Now try to merge the other branch:
+
+      ```bash
+      git merge update-add-function
+      ```
+
+      Git will report a **CONFLICT**! It found that both branches changed
+      the same lines in `calculator.py` and can't automatically combine
+      them.
+
+      ### Task 3: Read the conflict markers
+
+      Open `calculator.py` in the editor (or run `cat calculator.py`).
+      You'll see something like:
+
+      ```
+      <<<<<<< HEAD
+          """Return the sum of a and b (with logging)."""
+          print(f"Adding {a} + {b}")
+          return a + b
+      =======
+          """Return the sum of a and b (integers only)."""
+          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+              raise TypeError("Arguments must be numbers")
+          return a + b
+      >>>>>>> update-add-function
+      ```
+
+      - `<<<<<<< HEAD` — your current branch's version (master)
+      - `=======` — separator
+      - `>>>>>>> update-add-function` — the incoming branch's version
+
+      ### Task 4: Resolve the conflict
+
+      Edit `calculator.py` to combine both changes. Remove ALL conflict
+      markers (`<<<<<<<`, `=======`, `>>>>>>>`) and write the merged
+      version you want to keep. For example, keep both the logging and the
+      type check:
+
+      ```python
+      def add(a, b):
+          """Return the sum of a and b (with type checking and logging)."""
+          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+              raise TypeError("Arguments must be numbers")
+          print(f"Adding {a} + {b}")
+          return a + b
+      ```
+
+      ### Task 5: Complete the merge
+
+      After editing, mark the conflict as resolved and commit:
+
+      ```bash
+      git add calculator.py
+      git commit -m "Merge update-add-function: combine type checking and logging"
+      ```
+
+      Congratulations — you've resolved a merge conflict! This is a skill
+      that even experienced developers practice regularly.
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    setup_commands:
+      - " cd /tutorial/myproject && git checkout master 2>/dev/null; true"
+
+    tests:
+      - description: "calculator.py has no conflict markers"
+        command: "cd /tutorial/myproject && ! grep -q '<<<<<<<\\|=======\\|>>>>>>>' calculator.py"
+      - description: "The merge has been completed (no unmerged paths)"
+        command: "cd /tutorial/myproject && ! git status | grep -q 'Unmerged\\|both modified'"
+      - description: "calculator.py contains type checking (isinstance)"
+        command: "cd /tutorial/myproject && grep -q 'isinstance' calculator.py"
+      - description: "calculator.py contains logging (print)"
+        command: "cd /tutorial/myproject && grep -q 'print' calculator.py"
+
+  # --------------------------------------------------------------------------
+  # STEP 12: Review and best practices
+  # --------------------------------------------------------------------------
+  - title: "Review and Best Practices"
+    instructions: |
+      ### Congratulations!
+
+      You've learned the fundamental Git workflow. Let's review everything
+      you've mastered:
+
+      ### Commands you now know
+
+      | Command | Purpose |
+      |---|---|
+      | `git init` | Create a new repository |
+      | `git config` | Set your identity |
+      | `git add <file>` | Stage specific files |
+      | `git add .` | Stage all changes |
+      | `git commit -m "msg"` | Save a snapshot |
+      | `git status` | Check what's changed |
+      | `git log` | View commit history |
+      | `git diff` | See uncommitted changes |
+      | `git show` | Inspect a commit |
+      | `git restore --staged` | Unstage a file |
+      | `git restore` | Discard changes |
+      | `git branch` | List/create branches |
+      | `git checkout -b` | Create and switch branch |
+      | `git merge` | Combine branch histories |
+
+      ### Best practices for professional use
+
+      1. **Write meaningful commit messages** — explain *what* and *why*,
+         not just "fix" or "update"
+      2. **Commit small and often** — each commit should be one logical
+         change
+      3. **Use `.gitignore` early** — set it up before your first commit
+      4. **Never commit secrets** — no API keys, passwords, or `.env` files
+      5. **Pull frequently** — fetch remote changes early to avoid big
+         conflicts
+
+      ### Final task: Review your project history
+
+      Take a look at everything you've built:
+
+      ```bash
+      cd /tutorial/myproject
+      git log --oneline --graph --all
+      ```
+
+      The `--graph` flag draws an ASCII art representation of your branch
+      structure. The `--all` flag shows all branches, not just the current
+      one.
+
+      ```bash
+      cat calculator.py
+      ```
+
+      From an empty folder to a version-controlled Python project with
+      branching and merge conflict resolution — well done!
+
+    tests:
+      - description: "Repository has at least 6 commits"
+        command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 6 ]"
+      - description: "calculator.py has add, subtract, multiply, and divide functions"
+        command: "cd /tutorial/myproject && grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py"
+      - description: ".gitignore exists and is committed"
+        command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"

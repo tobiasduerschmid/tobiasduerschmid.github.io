@@ -110,6 +110,7 @@
       config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
       var tutorial = new TutorialVM('#tutorial-container', {
         steps: config.steps,
+        setupCommands: config.setup_commands || [],
         v86Path: '{{ page.v86_path | default: "/assets/v86" }}',
         vmPath: '{{ page.vm_path | default: "/vm/dist" }}',
         memoryMB: {{ page.memory_mb | default: 256 }},

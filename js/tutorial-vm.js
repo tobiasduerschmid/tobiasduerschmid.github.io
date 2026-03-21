@@ -79,6 +79,7 @@
     };
 
     this.steps = options.steps || [];
+    this.setupCommands = options.setupCommands || [];
     this.currentStep = -1;
     this.emulator = null;
     this.term = null;
@@ -589,10 +590,15 @@
   };
 
   TutorialVM.prototype._setupFilesystem = function () {
+    var self = this;
     // Navigate to the 9p filesystem 'host9p' mounted at /tutorial by the init script
     this.sendCommand('cd /tutorial');
     // Ensure commands prefixed with a space are not saved in history
     this.sendCommand('export HISTCONTROL=ignoreboth');
+    // Run top-level setup commands (e.g. git config, env setup)
+    this.setupCommands.forEach(function (cmd) {
+      self.sendCommand(cmd);
+    });
     this.sendCommand('clear');
     return delay(100);
   };
