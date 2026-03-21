@@ -58,8 +58,18 @@ async function generatePDFs() {
     console.log(`Generating: ${filename} from ${fullUrl}`);
 
     try {
-      const response = await page.goto(fullUrl, { waitUntil: 'networkidle', timeout: 60000 });
-      const status = response.status();
+      let response = await page.goto(fullUrl, { waitUntil: 'networkidle', timeout: 60000 });
+      let status = response.status();
+
+      // If the page declares a pdf-url meta tag, use that URL for PDF generation instead
+      const pdfUrlMeta = await page.$('meta[name="pdf-url"]');
+      if (pdfUrlMeta) {
+        const pdfPath = await pdfUrlMeta.getAttribute('content');
+        const alternatUrl = `http://localhost:4000${pdfPath}`;
+        console.log(`  Using print URL: ${alternatUrl}`);
+        response = await page.goto(alternatUrl, { waitUntil: 'networkidle', timeout: 60000 });
+        status = response.status();
+      }
       const pageTitle = await page.title();
 
       if (status !== 200) {

@@ -2,6 +2,7 @@
 <html lang="en">
 
 {% include head.html %}
+<meta name="pdf-url" content="{{ page.url | replace: '.html', '' }}/print">
 
 <body id="page-top">
 
@@ -16,11 +17,80 @@
           {{ page.title }}
         </span>
       </div>
+      <div class="navbar-right" style="display:flex; align-items:center; height:50px; padding-right:16px; gap:14px;">
+        <a href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
+           style="color:#fff; font-size:13px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
+          <i class="fa fa-print"></i> Print
+        </a>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;">
+          Dark mode
+          <span class="tvm-dark-toggle-wrap">
+            <input type="checkbox" id="darkModeToggle" style="display:none;">
+            <span class="tvm-dark-toggle-track">
+              <span class="tvm-dark-toggle-thumb"></span>
+            </span>
+          </span>
+        </label>
+      </div>
     </div>
   </nav>
 
+  <script>
+    (function () {
+      function setCookie(name, value, days) {
+        var d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+      }
+      function getCookie(name) {
+        var nameEQ = name + '=', ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+          var c = ca[i]; while (c.charAt(0) === ' ') c = c.substring(1);
+          if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+        }
+        return null;
+      }
+      function initDarkMode() {
+        var toggle = document.getElementById('darkModeToggle');
+        if (!toggle) return;
+        var isDark = getCookie('dark-mode') === 'true';
+        toggle.checked = isDark;
+        toggle.addEventListener('change', function () {
+          document.documentElement.classList.add('dark-mode-transition');
+          if (this.checked) {
+            document.documentElement.classList.add('dark-mode');
+          } else {
+            document.documentElement.classList.remove('dark-mode');
+          }
+          setCookie('dark-mode', this.checked, 300);
+          setTimeout(function () {
+            document.documentElement.classList.remove('dark-mode-transition');
+          }, 300);
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDarkMode);
+      } else {
+        initDarkMode();
+      }
+
+      // Intercept print (Ctrl/Cmd+P and File > Print) — open the
+      // dedicated print view instead of printing the live tutorial UI.
+      var PRINT_URL = '{{ page.url | replace: ".html", "" | relative_url }}/print?autoprint=1';
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+          e.preventDefault();
+          window.open(PRINT_URL, '_blank');
+        }
+      });
+      window.addEventListener('beforeprint', function () {
+        window.open(PRINT_URL, '_blank');
+      });
+    })();
+  </script>
+
   <!-- Tutorial container — full viewport below navbar -->
-  <div class="tutorial-page" style="margin-top: 52px;">
+  <div class="tutorial-page">
     <div id="tutorial-container"></div>
   </div>
 

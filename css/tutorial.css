@@ -6,6 +6,47 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* ───────────────────────────────────────────
+   Dark mode toggle pill (in tutorial navbar)
+─────────────────────────────────────────── */
+.tvm-dark-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tvm-dark-toggle-track {
+  display: inline-block;
+  width: 34px;
+  height: 18px;
+  background: #555;
+  border-radius: 9px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+#darkModeToggle:checked + .tvm-dark-toggle-track {
+  background: #0078d4;
+}
+
+.tvm-dark-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.2s;
+}
+
+#darkModeToggle:checked + .tvm-dark-toggle-track .tvm-dark-toggle-thumb {
+  left: 18px;
+}
+
+/* ─────────────────────────────────────────── */
+
 /* Lock the page — no scrolling on the tutorial layout */
 html, body {
   height: 100%;
@@ -584,7 +625,7 @@ html, body {
 .tutorial-page {
   /* Pin to exact viewport edges below the fixed navbar — robust in fullscreen */
   position: fixed !important;
-  top: 52px !important;
+  top: 50px !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
@@ -602,4 +643,225 @@ html, body {
 
 #tutorial-container {
   height: 100%;
+}
+
+
+/* ───────────────────────────────────────────
+   Light Mode Overrides  (html:not(.dark-mode))
+   Matches site's cookie-based theme toggle.
+   Terminal and editor panels stay dark —
+   conventional for code editors / terminals.
+─────────────────────────────────────────── */
+
+html:not(.dark-mode) .tvm-root {
+  background: #f0f0f4;
+}
+
+/* Instructions panel */
+html:not(.dark-mode) .tvm-instructions-panel {
+  background: #ffffff;
+  border-right-color: #d0d0da;
+}
+
+html:not(.dark-mode) .tvm-step-nav-bar {
+  background: #f5f5f8;
+  border-bottom-color: #d0d0da;
+}
+
+html:not(.dark-mode) .tvm-step-controls-bar {
+  background: #f5f5f8;
+  border-top-color: #d0d0da;
+}
+
+/* Scrollbar */
+html:not(.dark-mode) .tvm-step-content-wrap {
+  scrollbar-color: #b0b0c0 transparent;
+}
+html:not(.dark-mode) .tvm-step-content-wrap::-webkit-scrollbar-track { background: #e8e8f0; }
+html:not(.dark-mode) .tvm-step-content-wrap::-webkit-scrollbar-thumb { background: #b0b0c4; }
+html:not(.dark-mode) .tvm-step-content-wrap::-webkit-scrollbar-thumb:hover { background: #7777aa; }
+
+/* Typography */
+html:not(.dark-mode) .tvm-step-content h2 {
+  color: #111120;
+}
+
+html:not(.dark-mode) .tvm-step-content h3 {
+  color: #0060a8;
+}
+
+html:not(.dark-mode) .tvm-step-instructions p {
+  color: #383848;
+}
+
+html:not(.dark-mode) .tvm-step-instructions code {
+  background: #eaeaf4;
+  color: #b03010;
+  border-color: #c8c8d8;
+}
+
+html:not(.dark-mode) .tvm-step-instructions pre {
+  background: #f0f0f8;
+  border-color: #d0d0e0;
+}
+
+html:not(.dark-mode) .tvm-step-instructions pre code {
+  color: #222236;
+}
+
+html:not(.dark-mode) .tvm-step-instructions li {
+  color: #383848;
+}
+
+html:not(.dark-mode) .tvm-step-instructions a { color: #0060a8; }
+html:not(.dark-mode) .tvm-step-instructions strong { color: #0a0a20; }
+
+/* Tables */
+html:not(.dark-mode) .tvm-step-instructions thead tr {
+  background: #e0e0ef;
+}
+
+html:not(.dark-mode) .tvm-step-instructions th {
+  color: #111120;
+  border-bottom-color: #b0b0cc;
+}
+
+html:not(.dark-mode) .tvm-step-instructions td {
+  color: #383848;
+  border-bottom-color: #d0d0e0;
+}
+
+html:not(.dark-mode) .tvm-step-instructions tr:nth-child(even) td {
+  background: #f5f5ff;
+}
+
+html:not(.dark-mode) .tvm-step-instructions blockquote {
+  background: rgba(0, 100, 180, 0.07);
+  color: #505070;
+}
+
+/* Workspace + editor + terminal (VSCode light palette) */
+html:not(.dark-mode) .tvm-workspace {
+  background: #ffffff;
+}
+
+html:not(.dark-mode) .tvm-editor-panel {
+  background: #ffffff;
+  border-bottom-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-editor-tabs {
+  background: #f3f3f3;
+  border-bottom-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-tab {
+  color: #6e6e6e;
+  border-right-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-tab.active {
+  color: #333;
+  background: #ffffff;
+}
+
+html:not(.dark-mode) .tvm-tab:hover:not(.active) {
+  color: #333;
+  background: #e8e8e8;
+}
+
+html:not(.dark-mode) .tvm-tab-close:hover {
+  background: #d0d0d0;
+  color: #333;
+}
+
+html:not(.dark-mode) .tvm-terminal-header {
+  background: #f3f3f3;
+  color: #5a5a5a;
+  border-bottom-color: #d4d4d4;
+}
+
+html:not(.dark-mode) .tvm-terminal-container {
+  background: #ffffff;
+}
+
+/* Splitter */
+html:not(.dark-mode) .tvm-hsplitter {
+  background: #d0d0da;
+}
+
+/* Step nav dots */
+html:not(.dark-mode) .tvm-step-btn {
+  border-color: #c0c0c8;
+  color: #333;
+  background: #f5f5f7;
+}
+
+html:not(.dark-mode) .tvm-step-btn.active {
+  background: #0078d4;
+  border-color: #0078d4;
+  color: #fff;
+}
+
+html:not(.dark-mode) .tvm-step-btn:hover:not(.active) {
+  border-color: #0060a8;
+  color: #0060a8;
+}
+
+html:not(.dark-mode) .tvm-step-btn.active:hover {
+  background: #006cbf;
+  border-color: #006cbf;
+  color: #fff;
+}
+
+/* Test results */
+html:not(.dark-mode) .tvm-test-panel {
+  border-top-color: #d0d0e0;
+}
+
+html:not(.dark-mode) .tvm-test-running {
+  color: #6060a0;
+}
+
+html:not(.dark-mode) .tvm-test-spinner {
+  border-color: #d0d0e0;
+  border-top-color: #1a7f3c;
+}
+
+html:not(.dark-mode) .tvm-test-item {
+  background: #f4f4fa;
+  border-color: #d0d0e0;
+}
+
+html:not(.dark-mode) .tvm-test-item.pass { border-color: rgba(76,175,80,.4); background: rgba(26,127,60,.06); }
+html:not(.dark-mode) .tvm-test-item.fail { border-color: rgba(239,83,80,.4); background: rgba(180,40,40,.06); }
+
+html:not(.dark-mode) .tvm-test-desc { color: #383848; }
+
+/* Loading overlay */
+html:not(.dark-mode) .tvm-loading {
+  background: #f0f0f4;
+  color: #4a4a5a;
+}
+
+html:not(.dark-mode) .tvm-loading-spinner {
+  border-color: #d0d0e0;
+  border-top-color: #0078d4;
+}
+
+html:not(.dark-mode) .tvm-loading-text {
+  color: #5a5a80;
+}
+
+/* Error state */
+html:not(.dark-mode) .tvm-error {
+  background: #f0f0f4;
+}
+
+html:not(.dark-mode) .tvm-error p { color: #505060; }
+html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010; }
+
+/* Responsive border on narrow screens */
+@media (max-width: 900px) {
+  html:not(.dark-mode) .tvm-instructions-panel { border-bottom-color: #d0d0da; }
 }

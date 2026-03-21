@@ -302,18 +302,72 @@
 
   // ---- Terminal (xterm.js) --------------------------------------------------
 
-  TutorialVM.prototype._initTerminal = function () {
-    var TermClass = window.Terminal;
-    this.term = new TermClass({
-      cursorBlink: true,
-      fontSize: this.config.fontSize,
-      fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
-      theme: {
+  // Theme definitions (VSCode-style light/dark)
+  var THEMES = {
+    dark: {
+      monaco: 'vs-dark',
+      xterm: {
         background: '#1e1e1e',
         foreground: '#d4d4d4',
         cursor: '#d4d4d4',
         selectionBackground: '#264f78',
       },
+    },
+    light: {
+      monaco: 'vs',
+      xterm: {
+        background: '#ffffff',
+        foreground: '#383a42',
+        cursor: '#383a42',
+        selectionBackground: '#add6ff',
+        black:         '#383a42',
+        red:           '#e45649',
+        green:         '#50a14f',
+        yellow:        '#986801',
+        blue:          '#4078f2',
+        magenta:       '#a626a4',
+        cyan:          '#0184bc',
+        white:         '#fafafa',
+        brightBlack:   '#4f525e',
+        brightRed:     '#e06c75',
+        brightGreen:   '#98c379',
+        brightYellow:  '#e5c07b',
+        brightBlue:    '#61afef',
+        brightMagenta: '#c678dd',
+        brightCyan:    '#56b6c2',
+        brightWhite:   '#ffffff',
+      },
+    },
+  };
+
+  TutorialVM.prototype._isDarkMode = function () {
+    return document.documentElement.classList.contains('dark-mode');
+  };
+
+  TutorialVM.prototype._applyTheme = function (isDark) {
+    var theme = isDark ? THEMES.dark : THEMES.light;
+    if (this.editor) {
+      monaco.editor.setTheme(theme.monaco);
+    }
+    if (this.term) {
+      if (typeof this.term.setOption === 'function') {
+        this.term.setOption('theme', theme.xterm);
+      } else {
+        this.term.options.theme = theme.xterm;
+      }
+    }
+  };
+
+  TutorialVM.prototype._initTerminal = function () {
+    var self = this;
+    var isDark = this._isDarkMode();
+
+    var TermClass = window.Terminal;
+    this.term = new TermClass({
+      cursorBlink: true,
+      fontSize: this.config.fontSize,
+      fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
+      theme: isDark ? THEMES.dark.xterm : THEMES.light.xterm,
       scrollback: 5000,
       convertEol: true,
     });
@@ -327,18 +381,28 @@
     this.term.open(this.terminalContainerEl);
     this.term.focus();
 
-    var self = this;
     // Delay initial fit to let layout settle
     setTimeout(function () { self.fitAddon.fit(); }, 100);
 
-    // Auto-resize when terminal panel resizes
+    // Auto-resize when terminal panel resizes — debounced so the layout
+    // has settled before we measure, preventing the last row being clipped.
     if (window.ResizeObserver) {
+      var fitTimer;
       var ro = new ResizeObserver(function () {
-        if (self.fitAddon) {
-          try { self.fitAddon.fit(); } catch (e) { /* ignore */ }
-        }
+        clearTimeout(fitTimer);
+        fitTimer = setTimeout(function () {
+          if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) {} }
+        }, 50);
       });
       ro.observe(this.terminalContainerEl);
+    }
+
+    // React to dark-mode class changes on <html>
+    if (window.MutationObserver) {
+      var mo = new MutationObserver(function () {
+        self._applyTheme(self._isDarkMode());
+      });
+      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     }
   };
 
@@ -430,7 +494,7 @@
     this.editor = monaco.editor.create(this.editorContainerEl, {
       value: '// Follow the tutorial steps on the left.\n// Files will appear here as you progress.\n',
       language: 'shell',
-      theme: 'vs-dark',
+      theme: this._isDarkMode() ? 'vs-dark' : 'vs',
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
       minimap: { enabled: false },

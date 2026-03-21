@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.print_title | default: page.title }} — Print View</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #1a1a2e;
+      background: #fff;
+      margin: 0;
+      padding: 32px 48px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .print-header {
+      border-bottom: 2px solid #0078d4;
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+
+    .print-header h1 {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #0a0a20;
+      margin: 0 0 6px;
+    }
+
+    .print-header p {
+      color: #505070;
+      margin: 0;
+      font-size: 0.95em;
+    }
+
+    .print-controls {
+      text-align: right;
+      margin-bottom: 24px;
+    }
+
+    .print-controls button {
+      padding: 8px 20px;
+      background: #0078d4;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .step {
+      margin-bottom: 40px;
+      page-break-inside: avoid;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d0d0e0;
+    }
+
+    .step-number {
+      font-size: 0.8em;
+      font-weight: 700;
+      color: #fff;
+      background: #0078d4;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-size: 1.15em;
+      font-weight: 700;
+      color: #0a0a20;
+      margin: 0;
+    }
+
+    .step-instructions h2 { display: none; } /* title already shown in header */
+    .step-instructions h3 {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #0060a8;
+      margin: 14px 0 6px;
+    }
+
+    .step-instructions p {
+      margin: 8px 0;
+      color: #383848;
+    }
+
+    .step-instructions code {
+      background: #eaeaf4;
+      color: #b03010;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.87em;
+      font-family: 'Fira Code', Menlo, monospace;
+    }
+
+    .step-instructions pre {
+      background: #f4f4f8;
+      border: 1px solid #d8d8e8;
+      border-radius: 6px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    .step-instructions pre code {
+      background: none;
+      color: #222236;
+      padding: 0;
+      font-size: 0.88em;
+      border-radius: 0;
+    }
+
+    .step-instructions ul,
+    .step-instructions ol {
+      padding-left: 22px;
+      margin: 8px 0;
+    }
+
+    .step-instructions li { margin: 4px 0; color: #383848; }
+
+    .step-instructions strong { color: #0a0a20; font-weight: 600; }
+
+    .step-instructions a { color: #0060a8; }
+
+    .step-instructions table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 0.9em;
+    }
+
+    .step-instructions thead tr { background: #e8e8f4; }
+
+    .step-instructions th {
+      padding: 7px 10px;
+      text-align: left;
+      color: #111120;
+      font-weight: 600;
+      border-bottom: 2px solid #c0c0d8;
+    }
+
+    .step-instructions td {
+      padding: 6px 10px;
+      color: #383848;
+      border-bottom: 1px solid #d8d8e8;
+    }
+
+    .step-instructions tr:nth-child(even) td { background: #f8f8ff; }
+
+    .step-instructions blockquote {
+      border-left: 3px solid #0078d4;
+      margin: 10px 0;
+      padding: 8px 14px;
+      background: rgba(0,120,212,0.06);
+      border-radius: 0 4px 4px 0;
+      color: #505070;
+    }
+
+    .starter-files {
+      margin-top: 14px;
+    }
+
+    .starter-files-label {
+      font-size: 0.8em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #7070a0;
+      margin-bottom: 8px;
+    }
+
+    .starter-file {
+      margin-bottom: 10px;
+    }
+
+    .starter-file-name {
+      font-size: 0.82em;
+      font-weight: 600;
+      color: #505070;
+      background: #eaeaf4;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px 4px 0 0;
+      border: 1px solid #d0d0e0;
+      border-bottom: none;
+      font-family: 'Fira Code', Menlo, monospace;
+    }
+
+    .starter-file pre {
+      margin: 0;
+      background: #f4f4f8;
+      border: 1px solid #d0d0e0;
+      border-radius: 0 4px 4px 4px;
+      padding: 10px 14px;
+      font-size: 0.87em;
+      font-family: 'Fira Code', Menlo, monospace;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+      color: #222236;
+    }
+
+    @media print {
+      body { padding: 16px 24px; }
+      .print-controls { display: none; }
+      .step { page-break-inside: avoid; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-controls">
+    <button onclick="window.print()"><i class="fa fa-print"></i> Print / Save as PDF</button>
+  </div>
+
+  <script>
+    if (window.location.search.indexOf('autoprint=1') !== -1) {
+      window.addEventListener('load', function () { window.print(); });
+    }
+  </script>
+
+  {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
+
+  <div class="print-header">
+    <h1>{{ tutorial_data.title }}</h1>
+    {% if tutorial_data.description %}
+    <p>{{ tutorial_data.description }}</p>
+    {% endif %}
+  </div>
+
+  {% for step in tutorial_data.steps %}
+  <div class="step">
+    <div class="step-header">
+      <span class="step-number">{{ forloop.index }}</span>
+      <h2 class="step-title">{{ step.title }}</h2>
+    </div>
+
+    <div class="step-instructions">
+      {{ step.instructions | markdownify }}
+    </div>
+
+    {% if step.files %}
+    <div class="starter-files">
+      <div class="starter-files-label">Starter files</div>
+      {% for file in step.files %}
+      <div class="starter-file">
+        <div class="starter-file-name">{{ file.path }}</div>
+        <pre>{{ file.content }}</pre>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+</body>
+</html>
