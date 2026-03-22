@@ -3,6 +3,8 @@ title: Version Control with Git
 layout: sebook
 ---
 
+> **Want to practice?** Try the [Interactive Git Tutorial](/SEBook/tools/git-tutorial.html) — hands-on exercises in a real Linux system right in the browser!
+
 In modern software construction, version control is not just a convenience—it is a foundational practice, solving several major challenges associated with managing code. 
 Git is by far the most common tool for version control. 
 Let's dive into both!

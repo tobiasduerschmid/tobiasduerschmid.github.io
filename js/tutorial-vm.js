@@ -80,6 +80,8 @@
 
     this.steps = options.steps || [];
     this.setupCommands = options.setupCommands || [];
+    this.requireTests = options.requireTests || false;
+    this._stepsPassed = new Set();
     this.currentStep = -1;
     this.emulator = null;
     this.term = null;
@@ -661,7 +663,11 @@
 
     if (!this.editorModels[filename]) {
       var model = monaco.editor.createModel(content || '', language);
-      this.editorModels[filename] = { model: model, filename: filename };
+      this.editorModels[filename] = {
+        model: model,
+        filename: filename,
+        lastSyncContent: content || ''
+      };
 
       // Auto-save to VM on change (debounced)
       var self = this;
@@ -797,8 +803,10 @@
     // the 9p inode so it persists across cache invalidations.
     var self = this;
     var needsChmod = /\.sh$/i.test(filename) && !isInitial && self._executableFiles.has(filename);
-    this.emulator.create_file('/' + filename, bytes).then(function () {
-      if (needsChmod) {
+    this.emulator.create_file('/' + filename, bytes)
+      .then(function () {
+        entry.lastSyncContent = content;
+        if (filename.endsWith('.sh')) {
         // Set execute bit (0o755 = 33261) directly on the 9p inode
         var result = self.emulator.fs9p.SearchPath('/' + filename);
         if (result && result.id !== -1) {
@@ -844,8 +852,13 @@
     } else {
       controlsHtml += '<span></span>';
     }
+    var nextLocked = this.requireTests &&
+      step.tests && step.tests.length > 0 &&
+      !this._stepsPassed.has(index);
     if (index < this.steps.length - 1) {
-      controlsHtml += '<button class="tvm-btn tvm-btn-next">Next \u2192</button>';
+      controlsHtml += '<button class="tvm-btn tvm-btn-next"' +
+        (nextLocked ? ' disabled title="Pass all tests to continue"' : '') +
+        '>Next \u2192</button>';
     } else {
       controlsHtml += '<span></span>';
     }
@@ -857,7 +870,9 @@
     var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
     var testBtn = this.stepControlsEl.querySelector('.tvm-btn-test');
     if (prevBtn) prevBtn.addEventListener('click', function () { self.loadStep(index - 1); });
-    if (nextBtn) nextBtn.addEventListener('click', function () { self.loadStep(index + 1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () {
+      if (!nextBtn.disabled) self.loadStep(index + 1);
+    });
     if (testBtn) testBtn.addEventListener('click', function () { self._runTests(); });
 
     // Open files for this step
@@ -1018,6 +1033,16 @@
     html += '</ul></div>';
 
     this._showTestPanel(html);
+
+    // Unlock Next button if all tests passed and require_tests is on
+    if (allPass && this.requireTests) {
+      this._stepsPassed.add(this.currentStep);
+      var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
+      if (nextBtn) {
+        nextBtn.disabled = false;
+        nextBtn.removeAttribute('title');
+      }
+    }
   };
 
   // ---- Reverse File Sync (VM → Editor) --------------------------------------
@@ -1049,10 +1074,13 @@
         .then(function (buf) {
           var content = new TextDecoder('utf-8').decode(buf);
           var entry = self.editorModels[filename];
-          if (entry && entry.model.getValue() !== content) {
-            self._suppressAutoSave = true;
-            entry.model.setValue(content);
-            self._suppressAutoSave = false;
+          if (entry && entry.lastSyncContent !== content) {
+            entry.lastSyncContent = content;
+            if (entry.model.getValue() !== content) {
+              self._suppressAutoSave = true;
+              entry.model.setValue(content);
+              self._suppressAutoSave = false;
+            }
           }
         })
         .catch(function () {

@@ -1,6 +1,8 @@
 title: "Version Control with Git"
 description: "Learn Git through hands-on practice — from your first commit to resolving merge conflicts, all inside an interactive Linux environment"
 
+require_tests: true
+
 setup_commands:
   - "git config --global user.email 'student@cs.ucla.edu'"
   - "git config --global user.name 'Diligent Student'"
@@ -99,7 +101,6 @@ steps:
       It has already been saved to the VM. Now run:
 
       ```bash
-      cd /tutorial/myproject
       git status
       ```
 
@@ -189,7 +190,7 @@ steps:
       Save the file (**Ctrl+S**), then run in the terminal:
 
       ```bash
-      cd /tutorial/myproject
+      
       git status
       ```
 
@@ -250,21 +251,14 @@ steps:
       become part of each commit. This is powerful — you can make multiple
       changes to your working directory but commit them in logical groups.
 
-      ### Task 1: Create multiple new files
+      ### Task 1: Explore the new files
 
-      Let's add several files to our project. Create these in the terminal:
+      Several files have been added to your project — explore them using
+      the editor tabs above. Then run `git status` to see them all:
 
       ```bash
-      cd /tutorial/myproject
-      echo '"""Tests for calculator."""' > test_calc.py
-      echo '"""Tests for utilities."""' > test_utils.py
-      echo "# My Calculator Project" > README.md
-      echo "A simple calculator" >> README.md
-      echo "TODO: add division" > notes.txt
-      echo "DONE: add multiply" >> notes.txt
+      git status
       ```
-
-      Run `git status` to see all the untracked files.
 
       ### Task 2: Stage files one at a time
 
@@ -312,6 +306,28 @@ steps:
       3. **Current directory:** `git add .`
       4. **All tracked + untracked:** `git add --all` (or `-A`)
 
+    files:
+      - path: "myproject/test_calc.py"
+        content: |
+          """Tests for calculator."""
+        language: "python"
+      - path: "myproject/test_utils.py"
+        content: |
+          """Tests for utilities."""
+        language: "python"
+      - path: "myproject/README.md"
+        content: |
+          # My Calculator Project
+          A simple calculator
+        language: "markdown"
+      - path: "myproject/notes.txt"
+        content: |
+          TODO: add division
+          DONE: add multiply
+        language: "plaintext"
+
+    open_file: "myproject/notes.txt"
+
     tests:
       - description: "README.md has been committed"
         command: "cd /tutorial/myproject && git log --all --oneline -- README.md | grep -q '.'"
@@ -337,7 +353,6 @@ steps:
       Let's edit a file and then undo our staging:
 
       ```bash
-      cd /tutorial/myproject
       echo "BROKEN CODE" >> calculator.py
       git add calculator.py
       git status
@@ -410,7 +425,6 @@ steps:
       Let's simulate what happens without a `.gitignore`:
 
       ```bash
-      cd /tutorial/myproject
       mkdir -p __pycache__
       echo "bytecode" > __pycache__/calculator.cpython-311.pyc
       echo "SECRET_KEY=abc123" > .env
@@ -489,7 +503,6 @@ steps:
       ### Task 1: View the commit log
 
       ```bash
-      cd /tutorial/myproject
       git log
       ```
 
@@ -574,7 +587,6 @@ steps:
       ### Task 1: See your current branch
 
       ```bash
-      cd /tutorial/myproject
       git branch
       ```
 
@@ -676,7 +688,6 @@ steps:
       First, switch to the branch you want to merge **into** (main):
 
       ```bash
-      cd /tutorial/myproject
       git checkout main
       ```
 
@@ -739,7 +750,6 @@ steps:
       ### Task 1: Create a new branch and modify calculator.py
 
       ```bash
-      cd /tutorial/myproject
       git checkout -b update-add-function
       ```
 
@@ -805,7 +815,7 @@ steps:
       Make sure you're on main:
 
       ```bash
-      cd /tutorial/myproject
+      
       git checkout main
       ```
 
@@ -949,7 +959,6 @@ steps:
       Take a look at everything you've built:
 
       ```bash
-      cd /tutorial/myproject
       git log --oneline --graph --all
       ```
 

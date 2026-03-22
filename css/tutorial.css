@@ -514,6 +514,18 @@ html, body {
   background: #1a8ae6;
 }
 
+.tvm-btn-next:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tvm-btn-next:disabled::after {
+  content: " \1F512";
+  font-size: 11px;
+}
+
 /* ───────────────────────────────────────────
    Test My Work button & results panel
 ─────────────────────────────────────────── */

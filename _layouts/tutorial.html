@@ -111,6 +111,7 @@
       var tutorial = new TutorialVM('#tutorial-container', {
         steps: config.steps,
         setupCommands: config.setup_commands || [],
+        requireTests: config.require_tests || false,
         v86Path: '{{ page.v86_path | default: "/assets/v86" }}',
         vmPath: '{{ page.vm_path | default: "/vm/dist" }}',
         memoryMB: {{ page.memory_mb | default: 256 }},
