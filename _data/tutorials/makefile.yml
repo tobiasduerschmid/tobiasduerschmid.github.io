@@ -12,13 +12,13 @@ steps:
   # --------------------------------------------------------------------------
   - title: "The Pain of Manual Compilation"
     instructions: |
-      Welcome to the **Makefiles Tutorial**! 
+      Welcome to the **Makefiles Tutorial**!
 
-      Before you care *how* a Makefile works, you need to understand *why* it exists. In the real world, software projects consist of dozens, hundreds, or thousands of source files. 
+      Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain. Let's feel that pain first.
 
       ### Task 1: Compile the project manually
-      
-      We have a small C project with three files: `main.c`, `math.c`, and `io.c`. Let's compile them the hard way. Run this long command:
+
+      We have a small C project with three files: `main.c`, `math.c`, and `io.c`. Let's compile them the hard way:
 
       ```bash
       cd make_project
@@ -28,13 +28,13 @@ steps:
       **Oh no!** The compilation failed. There is a syntax error in `math.c`.
 
       ### Task 2: Fix the error and recompile
-      
+
       1. Open `math.c` in the editor.
       2. Fix the missing semicolon at the end of the `return` statement.
       3. Save the file.
       4. Go back to the terminal and **re-type** (or press Up arrow) that entire `gcc` command to try compiling again.
-      
-      Imagine doing this every time you fix a single typo in a project with 500 files. You'd waste hours waiting for files that didn't even change to recompile. We need a better way.
+
+      Notice what just happened: to fix **one file**, you had to recompile **all three**. `gcc` has no memory — it blindly reprocesses everything you hand it. In a 500-file project, fixing a single typo means a minutes-long recompile of every untouched file. We need a smarter tool.
 
     files:
       - path: "make_project/main.c"
@@ -42,7 +42,7 @@ steps:
           #include <stdio.h>
           int add(int a, int b);
           void init_io();
-          
+
           int main() {
               init_io();
               printf("Math test: 2 + 3 = %d\n", add(2, 3));
@@ -80,9 +80,9 @@ steps:
   - title: "Your First Makefile & The Tab Trap"
     instructions: |
       ### The Anatomy of a Rule
-      
+
       Makefiles are made of **rules** that describe a dependency graph. A rule looks like this:
-      
+
       ```make
       target: prerequisites
           recipe
@@ -90,20 +90,24 @@ steps:
       * **Target:** The file you want to build (e.g., your executable).
       * **Prerequisites:** The files the target depends on (e.g., your `.c` files).
       * **Recipe:** The shell command to create the target.
-      
+
+      Make reads these rules, builds a graph of what depends on what, and only runs the recipes that are needed.
+
       ### Task 1: Run your first Make command
-      
+
       A basic `Makefile` has been added to your project. Try running it:
-      
+
       ```bash
       make
       ```
-      
+
       **Error!** You should see: `Makefile:2: *** missing separator. Stop.`
-      
+
       ### Task 2: Fix the Tab Trap
-      
-      Makefiles have one notoriously strict, invisible rule: **Recipes MUST be indented with a true `Tab` character, not spaces!** 1. Open `Makefile` in the editor.
+
+      Makefiles have one notoriously strict, invisible rule: **Recipes MUST be indented with a true `Tab` character, not spaces!**
+
+      1. Open `Makefile` in the editor.
       2. Look at line 2 before the `gcc` command. It currently uses 4 spaces.
       3. Delete the spaces and press `Tab` to insert a real tab character.
       4. Save the file and run `make` again in the terminal.
@@ -130,29 +134,31 @@ steps:
         command: "cd /tutorial/make_project && [ -f app ]"
 
   # --------------------------------------------------------------------------
-  # STEP 3: The "DRY" Refactor
+  # STEP 3: The "DRY" Refactor — Variables
   # --------------------------------------------------------------------------
   - title: "Don't Repeat Yourself (DRY) with Variables"
     instructions: |
-      ### Managing Complexity
-      
-      To get true incremental builds, we must compile each `.c` file into an intermediate Object file (`.o`) separately, then link them. 
-      
-      Look at the new `Makefile`. It works, but it violates the **DRY principle** (Don't Repeat Yourself). We've hardcoded `gcc -Wall -std=c11` everywhere! If we wanted to change the compiler to `clang`, we'd have to edit 4 different lines.
-      
+      ### Enabling Incremental Builds
+
+      Our single-rule Makefile still recompiles everything together. To let Make skip unchanged files, we must compile each `.c` file into an **object file** (`.o`) separately, then **link** the `.o` files into the final executable.
+
+      Look at the new `Makefile`. It does this — but notice the problem: `gcc -Wall -std=c11` is hardcoded **four times**. If we ever switch to `clang`, we'd have to edit four lines. This violates the **DRY principle** (Don't Repeat Yourself).
+
       ### Task: Refactor using Variables
-      
-      In Makefiles, you can define variables and reference them using `$(VAR_NAME)`.
-      
+
+      In Makefiles, you define variables at the top and reference them with `$(VAR_NAME)`.
+
       1. Open `Makefile`.
-      2. At the very top, define two variables (Make has standard names for the C compiler and its flags):
+      2. At the very top, define two variables (these are Make's standard names for C builds):
          ```make
          CC = gcc
          CFLAGS = -Wall -std=c11
          ```
       3. Replace all 4 instances of `gcc` with `$(CC)`.
       4. Replace all 4 instances of `-Wall -std=c11` with `$(CFLAGS)`.
-      5. Save the file and test it by running `make`. It should still compile successfully!
+      5. Save the file and run `make` to confirm it still compiles successfully.
+
+      Now a compiler change is a one-line edit at the top of the file.
 
     setup_commands:
       - "rm -f /tutorial/make_project/*.o /tutorial/make_project/app"
@@ -162,13 +168,13 @@ steps:
         content: |
           app: main.o math.o io.o
           	gcc -Wall -std=c11 main.o math.o io.o -o app
-          
+
           main.o: main.c
           	gcc -Wall -std=c11 -c main.c
-          
+
           math.o: math.c
           	gcc -Wall -std=c11 -c math.c
-          
+
           io.o: io.c
           	gcc -Wall -std=c11 -c io.c
         language: "makefile"
@@ -189,87 +195,196 @@ steps:
         command: "cd /tutorial/make_project && make && [ -f app ]"
 
   # --------------------------------------------------------------------------
-  # STEP 4: Proving the Magic of the DAG
+  # STEP 4: Automatic Variables & Pattern Rules
+  # --------------------------------------------------------------------------
+  - title: "Smarter Rules: Automatic Variables & Patterns"
+    instructions: |
+      ### The Repetition Problem
+
+      Look at your current Makefile. The three `.o` rules are almost identical:
+
+      ```make
+      main.o: main.c
+      	$(CC) $(CFLAGS) -c main.c
+
+      math.o: math.c
+      	$(CC) $(CFLAGS) -c math.c
+
+      io.o: io.c
+      	$(CC) $(CFLAGS) -c io.c
+      ```
+
+      Each filename appears **twice** per rule. With 50 source files you'd have 50 nearly identical rules. There must be a better way.
+
+      ### Automatic Variables
+
+      Make provides special variables that expand to parts of the *current* rule being evaluated:
+
+      | Variable | Expands to |
+      |----------|------------|
+      | `$@` | The **target** name (left of the `:`) |
+      | `$<` | The **first prerequisite** (first item after the `:`) |
+      | `$^` | **All prerequisites** |
+
+      ### Pattern Rules
+
+      A **pattern rule** uses `%` as a wildcard to match any filename stem:
+
+      ```make
+      %.o: %.c
+      	$(CC) $(CFLAGS) -c $< -o $@
+      ```
+
+      This **single rule** tells Make: "to build *any* `.o` file, compile the matching `.c` file." It replaces all three of your explicit `.o` rules.
+
+      ### Task: Refactor with OBJS, automatic variables, and a pattern rule
+
+      1. At the very top (after `CFLAGS`), add an `OBJS` variable:
+         ```make
+         OBJS = main.o math.o io.o
+         ```
+      2. Update the `app` rule to use `$(OBJS)` and the automatic variable `$^` (all prereqs):
+         ```make
+         app: $(OBJS)
+         	$(CC) $(CFLAGS) $^ -o $@
+         ```
+      3. **Delete** the three explicit `.o` rules (`main.o`, `math.o`, `io.o`).
+      4. Replace them with **one** pattern rule:
+         ```make
+         %.o: %.c
+         	$(CC) $(CFLAGS) -c $< -o $@
+         ```
+      5. Save and run `make` to confirm it still builds correctly.
+
+      Your Makefile shrinks from 14 lines to 8 — and it handles **any** number of source files with zero changes to the rules.
+
+    setup_commands:
+      - "rm -f /tutorial/make_project/*.o /tutorial/make_project/app"
+
+    files:
+      - path: "make_project/Makefile"
+        content: |
+          CC = gcc
+          CFLAGS = -Wall -std=c11
+
+          app: main.o math.o io.o
+          	$(CC) $(CFLAGS) main.o math.o io.o -o app
+
+          main.o: main.c
+          	$(CC) $(CFLAGS) -c main.c
+
+          math.o: math.c
+          	$(CC) $(CFLAGS) -c math.c
+
+          io.o: io.c
+          	$(CC) $(CFLAGS) -c io.c
+        language: "makefile"
+
+    open_file: "make_project/Makefile"
+
+    watch_files:
+      - "make_project/Makefile"
+
+    tests:
+      - description: "Defined OBJS variable"
+        command: "cd /tutorial/make_project && grep -q 'OBJS *=' Makefile"
+      - description: "Used $(OBJS) in the app rule"
+        command: "cd /tutorial/make_project && grep -q '\\$(OBJS)' Makefile"
+      - description: "Added a pattern rule (%.o: %.c)"
+        command: "cd /tutorial/make_project && grep -qP '%\\.o.*:.*%\\.c' Makefile"
+      - description: "Used an automatic variable ($<, $^, or $@) in a recipe"
+        command: "cd /tutorial/make_project && grep -qP '\\$[<^@]' Makefile"
+      - description: "Project still builds correctly"
+        command: "cd /tutorial/make_project && make && [ -f app ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 5: Proving the Magic of the DAG
   # --------------------------------------------------------------------------
   - title: "The Magic of Incremental Builds"
     instructions: |
-      ### The Directed Acyclic Graph (DAG)
-      
-      How does `make` know what needs to be compiled? It compares the **timestamps** of the Target and the Prerequisites. If a Prerequisite is newer than the Target, Make knows the Target is out of date and runs the recipe.
-      
-      Let's prove it.
-      
+      ### The Core Idea: Timestamp Comparison
+
+      Make's central trick is brutally simple: it compares the **last-modified timestamp** of each target against its prerequisites. If a prerequisite is *newer* than the target, the target is out of date and Make runs its recipe. Otherwise, it skips it.
+
+      This timestamp heuristic is what turns a 2-hour full rebuild into a 2-second incremental one.
+
       ### Task 1: Check if up to date
-      
+
       Run `make` right now:
       ```bash
       make
       ```
-      Make should tell you: `make: 'app' is up to date.` It skipped doing any work because the `.o` files and `app` are newer than the `.c` files.
-      
+      Make should tell you: `make: 'app' is up to date.` It skipped all work because the `.o` files and `app` are all newer than the `.c` files.
+
       ### Task 2: Simulate a file change
-      
-      The `touch` command updates a file's timestamp to the current time, tricking Make into thinking you just edited it.
-      
+
+      The `touch` command updates a file's timestamp without changing its content — it tricks Make into thinking you just edited it.
+
       Run this to "update" only `math.c`:
       ```bash
       touch math.c
       ```
-      
+
       ### Task 3: Observe the magic
-      
+
       Run `make` one more time:
       ```bash
       make
       ```
-      
-      Look closely at the output! It compiled `math.c` into `math.o`, and then linked `app`. **It completely skipped compiling `main.c` and `io.c`!** In a massive codebase, this timestamp logic is what reduces a 2-hour build to a 2-second build.
+
+      Look closely at the output! Make compiled `math.c` → `math.o` and then re-linked `app`. **It completely skipped `main.c` and `io.c`.** They were still up to date — so Make left them alone. In a massive codebase this is the difference between waiting seconds and waiting hours.
+
+    setup_commands:
+      - "make -C /tutorial/make_project 2>/dev/null || true"
 
     tests:
       - description: "math.c was touched and recompiled (math.o is newer than main.o)"
         command: "cd /tutorial/make_project && [ math.o -nt main.o ]"
 
   # --------------------------------------------------------------------------
-  # STEP 5: The .PHONY Sabotage
+  # STEP 6: The .PHONY Sabotage
   # --------------------------------------------------------------------------
   - title: "The .PHONY Sabotage"
     instructions: |
       ### Non-File Targets
-      
-      Make is obsessed with files. But sometimes we want a target that just executes a command, like cleaning up our directory.
-      
+
+      Make is fundamentally about building files. But sometimes we want a target that just runs a command — like cleaning up build artifacts. There's no output file; you just want the action.
+
       ### Task 1: Add a clean target
-      
+
       Add this to the very bottom of your `Makefile`:
       ```make
       clean:
       	rm -f *.o app
       ```
-      Run `make clean` in the terminal. Your directory is now clean!
-      
+      Run `make clean` in the terminal. Your build artifacts are gone!
+
       ### Task 2: The Sabotage
-      
-      Because Make expects targets to be files, what happens if a file actually named `clean` exists? Let's find out.
-      
+
+      Because Make assumes targets are files, what happens when a file actually *named* `clean` exists?
+
       1. Create a dummy file named clean:
          ```bash
          touch clean
          ```
-      2. Run `make app` to quickly generate the build files again.
-      3. Try to run `make clean`.
-      
-      **It fails!** Make says `make: 'clean' is up to date.` It sees the file named `clean`, notices it has no prerequisites, and decides no work needs to be done.
-      
-      ### Task 3: The Fix
-      
-      We must explicitly tell Make that `clean` is a "phony" target—a command, not a file. 
-      
-      At the bottom of your Makefile, right above the `clean:` target, add:
+      2. Run `make app` to generate the build files again.
+      3. Try running `make clean`.
+
+      **It fails!** Make says `make: 'clean' is up to date.` It finds the file named `clean`, sees it has no prerequisites, decides it's already "built," and does nothing.
+
+      ### Task 3: The Fix — .PHONY
+
+      We must tell Make that `clean` is a *phony* target — a command name, not a filename.
+
+      Right above the `clean:` target, add:
       ```make
       .PHONY: clean
       ```
-      
-      Save and run `make clean` again. Even though the file named `clean` exists, Make ignores it and correctly deletes your build files. You have mastered Makefiles!
+
+      Save and run `make clean` again. Even though a file named `clean` exists, Make ignores it and correctly removes your build files.
+
+    setup_commands:
+      - "make -C /tutorial/make_project 2>/dev/null || true"
 
     watch_files:
       - "make_project/Makefile"
