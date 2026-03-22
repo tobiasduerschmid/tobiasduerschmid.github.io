@@ -130,19 +130,48 @@ steps:
       The **pipe** operator `|` is one of the most powerful ideas in Unix.
       It connects programs so that the output of one becomes the input of
       the next, letting you build data-processing pipelines from small,
-      single-purpose tools.
+      single-purpose tools. Data flows through memory from one process to
+      the next — no intermediate files needed.
 
-      ### The Unix philosophy
+      ### Your toolkit
 
-      Each Unix tool does *one thing well*:
-      - `grep` finds matching lines
-      - `sort` sorts lines alphabetically or numerically
-      - `uniq -c` removes consecutive duplicate lines and counts them
-      - `wc -l` counts lines
-      - `cut -d' ' -f<number>` extracts a specific column separated by a space
+      **`wc -l`** — count lines of input
 
-      Pipes let you compose them into powerful chains without writing a
-      program. Data flows through memory from one process to the next.
+      ```bash
+      wc -l < /etc/hosts   # how many entries are in /etc/hosts?
+      ```
+
+      **`grep PATTERN file`** — print only lines that match a pattern
+
+      ```bash
+      grep "WARN" server_log.txt   # show only warning lines
+      ```
+
+      **`sort`** — sort lines alphabetically; add `-n` for numeric order,
+      `-r` to reverse
+
+      ```bash
+      echo -e "banana\napple\ncherry" | sort   # → apple, banana, cherry
+      ```
+
+      **`uniq -c`** — collapse *consecutive* duplicate lines and prefix each
+      with its count *(always sort first so duplicates are adjacent)*
+
+      ```bash
+      echo -e "cat\ncat\ndog" | uniq -c   # →  2 cat   1 dog
+      ```
+
+      **`cut -d' ' -f<n>`** — extract the *n*-th space-separated field
+
+      ```bash
+      cut -d' ' -f3 server_log.txt   # extract the third word on each line
+      ```
+
+      **`head -n`** — show only the first *n* lines
+
+      ```bash
+      sort names.txt | head -5   # the 5 alphabetically first names
+      ```
 
       ### Explore the data
 
@@ -152,29 +181,34 @@ steps:
       cat server_log.txt
       ```
 
-      ### Pipeline exercises
-
-      **Your turn to construct pipelines:** Use the tools listed above to answer the following questions. Test your theories in the terminal!
-
-      1. **Count total lines:** Feed the file into the word count tool.
-      2. **Filter data:** Print only lines containing the word "ERROR".
-      3. **Count specific data:** How many errors are there? (Hint: pipe your answer from step 2 into your answer from step 1).
-      4. **Extract columns:** Extract just the timestamps (the first field/column) from the file.
-      5. **Data Aggregation:** Which message types appear most often? 
-         *(Read this workflow left to right and build it step-by-step: extract column 2 → sort alphabetically so duplicates become adjacent → count consecutive duplicates → sort by count descending (`sort -rn`) → show top 3 (`head -3`))*
-
-      ### Redirection: connecting commands to files
+      ### Redirection: saving output to files
 
       Pipes connect commands to commands. **Redirection** connects commands
       to files:
 
       ```bash
-      grep "ERROR" server_log.txt > errors_only.txt   # create/overwrite
-      echo "extra line" >> errors_only.txt             # append (safe)
-      wc -l < errors_only.txt                          # read from file
+      grep "INFO" server_log.txt > info_only.txt   # create/overwrite
+      echo "extra line" >> info_only.txt             # append (safe)
+      wc -l < info_only.txt                          # read from file
       ```
 
-      **Now create `errors_only.txt`** by redirecting your "ERROR" pipeline from earlier into a new file. The tests below will check it.
+      ### Pipeline exercises
+
+      For each question, build a pipeline and **save the result to the named
+      file** using `>`. The tests below will check every file.
+
+      1. **Count total lines:** Feed `server_log.txt` into `wc -l`.
+         Save to `line_count.txt`.
+      2. **Filter errors:** Print only lines containing "ERROR".
+         Save to `errors_only.txt`.
+      3. **Count errors:** Pipe your ERROR filter into `wc -l`.
+         Save to `error_count.txt`.
+      4. **Extract timestamps:** Extract just the first field (the timestamps).
+         Save to `timestamps.txt`.
+      5. **Top message types:** Find the 2 most frequent message types.
+         *(Build step by step: extract field 2 → sort → count duplicates →
+         sort by count descending → top 2)*
+         Save to `top_message_types.txt`.
     files:
       - path: "server_log.txt"
         content: |
@@ -195,14 +229,16 @@ steps:
           08:32:01 INFO worker-3 restarted
     open_file: "server_log.txt"
     tests:
-      - description: "server_log.txt has 15 log entries"
-        command: "[ $(wc -l < server_log.txt) -eq 15 ]"
-      - description: "There are exactly 4 ERROR lines in the log"
-        command: "[ $(grep -c 'ERROR' server_log.txt) -eq 4 ]"
-      - description: "errors_only.txt was created with ERROR lines"
-        command: "[ -f errors_only.txt ] && grep -q 'ERROR' errors_only.txt"
-      - description: "INFO is the most common message type"
-        command: "[ \"$(cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')\" = 'INFO' ]"
+      - description: "line_count.txt contains the total number of log entries (15)"
+        command: "[ $(cat line_count.txt) -eq 15 ]"
+      - description: "errors_only.txt contains exactly 4 ERROR lines"
+        command: "[ -f errors_only.txt ] && [ $(grep -c 'ERROR' errors_only.txt) -eq 4 ]"
+      - description: "error_count.txt contains 4 (the number of errors)"
+        command: "[ $(cat error_count.txt) -eq 4 ]"
+      - description: "timestamps.txt has one timestamp per log entry (15 lines)"
+        command: "[ -f timestamps.txt ] && [ $(wc -l < timestamps.txt) -eq 15 ]"
+      - description: "top_message_types.txt lists INFO (8) and ERROR (4) with correct counts, and excludes WARN"
+        command: "[ -f top_message_types.txt ] && grep -q '8\\s*INFO' top_message_types.txt && grep -q '4\\s*ERROR' top_message_types.txt && ! grep -q 'WARN' top_message_types.txt"
 
     quiz:
       title: "Pipes — Knowledge Check"
@@ -227,14 +263,14 @@ steps:
           correct_index: 1
           explanation: "`>` **creates or overwrites** the file without warning — existing content is lost. `>>` **appends** new content after existing content. Always prefer `>>` when preserving existing data matters."
 
-        - question: "You want to find the three most common log levels in a file where level is the 2nd space-separated field. Which pipeline is correct?"
+        - question: "What does `grep 'WARN' server_log.txt | head -n 3 | sort -r` do?"
           options:
-            - "`sort server_log.txt | cut -d' ' -f2 | head -3`"
-            - "`cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -3`"
-            - "`grep -c 'INFO\\|WARN\\|ERROR' server_log.txt | sort -rn | head -3`"
-            - "`awk '{print NR}' server_log.txt | sort | head -3`"
+            - "It finds all the 'WARN' lines in the file, sorts all of them in reverse alphabetical order, and then shows you the top 3 from that sorted list."
+            - "It goes to the bottom of the file, finds the last 3 'WARN' logs, and displays them."
+            - "It extracts the first 3 lines containing 'WARN', sorts them backward, and saves the sorted lines back into `server_log.txt`"
+            - "It grabs the very first 3 lines in server_log.txt that contain 'WARN', and prints those 3 specific lines in reverse alphabetical order (Z to A)"
           correct_index: 1
-          explanation: "The correct pipeline: **cut** extracts the field → **sort** makes duplicates adjacent → **uniq -c** counts consecutive duplicates → **sort -rn** orders by count descending → **head -3** takes the top 3."
+          explanation: "`grep 'WARN' server_log.txt` searches the file from top to bottom and streams out every line containing the word 'WARN'. `| head -n 3` acts as a gatekeeper. It accepts the first 3 lines it receives from grep and then immediately closes the gate, discarding the rest of the matches. `| sort -r:`  receives only those 3 lines. It sorts those specific three lines in reverse alphabetical order and prints the final result to your screen."
 
   - title: "Variables & The Quoting Trap"
     instructions: |
@@ -277,7 +313,7 @@ steps:
       Open `inventory.sh` and write a script from scratch that:
       1. Declares a variable for a **project name** and another for a **version number**.
       2. Uses command substitution `$(...)` to dynamically count the number of `.sh` files in the current directory and save it to a variable. (Hint: combine `ls *.sh` with `wc -l`).
-      3. Uses `echo` to print a single string combining all three variables, e.g., `Project: mytools v1.0 — 3 scripts found`
+      3. Uses `echo` to print a single string combining all three variables, e.g., `Project: mytools v1.0 — 5 scripts found`
     files:
       - path: "buggy.sh"
         content: |
