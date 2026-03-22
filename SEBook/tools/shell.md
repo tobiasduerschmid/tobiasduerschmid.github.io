@@ -105,6 +105,24 @@ The pipe operator `|` is the most powerful composition tool. It takes the `stdou
 *Example:* `cat access.log | grep "ERROR" | wc -l`
 This pipeline reads a log file, filters only the lines containing "ERROR", and then counts how many lines there are.
 
+### Here Documents and Here Strings
+Sometimes you need to feed a block of text directly into a command without creating a temporary file. A **here document** (`<<`) lets you embed multi-line input inline, up to a chosen delimiter:
+
+```bash
+cat <<EOF
+Server: production
+Version: 1.4.2
+Status: running
+EOF
+```
+
+The shell expands variables inside the block (just like double quotes). To suppress expansion, quote the delimiter: `<<'EOF'`.
+
+A **here string** (`<<<`) feeds a single expanded string to a command's standard input — a concise alternative to `echo "text" | command`:
+```bash
+grep "ERROR" <<< "08:15:45 ERROR failed to connect"
+```
+
 ### Process Substitution
 Advanced shell users often utilize process substitution to treat the output of a command as a file. The syntax looks like `<(command)`. For example, `H < <(G) >> I` allows you to refer to the standard output of command `G` as a file, redirect it into the standard input of `H`, and append the output to `I`.
 
@@ -131,6 +149,15 @@ chmod +x myscript.sh
 ./myscript.sh
 ```
 
+### Debugging Scripts
+When a script behaves unexpectedly, Bash has built-in tracing modes that let you see exactly what the shell is doing:
+
+* **`bash -n script.sh`**: Reads the script and checks for syntax errors without executing any commands. Always run this first when a script refuses to start.
+* **`bash -x script.sh`** (or `set -x` inside the script): Prints a trace of each command and its expanded arguments to `stderr` before executing it — indispensable for logic bugs. Each traced line is prefixed with `+`.
+* **`bash -v script.sh`** (or `set -v`): Prints each line of input exactly as read, before expansion — useful for seeing the raw source being interpreted.
+
+You can combine flags: `bash -xv script.sh`. To turn tracing on for only a section of a script, use `set -x` before that section and `set +x` after it.
+
 ### Error Handling (`set -e` and Exit Status)
 By default, a Bash script will continue executing even if a command fails. Every command returns a numerical code known as an **Exit Status**; `0` generally indicates success, while any non-zero value indicates an error or failure. Continuing after a failure can be dangerous and lead to unexpected behavior. To prevent this, you should typically include `set -e` at the top of your scripts:
 ```bash
@@ -147,7 +174,7 @@ Bash is a full-fledged programming language, but because it is an interpreted sc
 ### 5. Scripting Constructs
 In our scripts, we also treat these keywords as "commands" for building logic:
 * **`#!` (Shebang)**: Tells the system which interpreter to use.
-* **`read`**: Read a line from standard input into a variable.
+* **`read`**: Read a line from standard input into a variable. Common flags: `-p "prompt"` displays a prompt on the same line, `-s` silently hides typed input (useful for passwords), and `-n 1` returns after exactly one character instead of waiting for Enter.
 * **`if` / `then` / `elif` / `else` / `fi`**: Conditional execution.
 * **`for` / `do` / `done` / `while`**: Looping constructs.
 * **`case` / `in` / `esac`**: Multi-way branching on a single value.
@@ -160,6 +187,33 @@ You can assign values to variables without declaring a type. Note that there are
 ```bash
 NAME="Ada"
 echo "Hello, $NAME"
+```
+
+### Parameter Expansion — Default Values and String Manipulation
+Beyond simple `$VAR` substitution, Bash supports a powerful set of **parameter expansion** operators that let you handle missing values and manipulate strings entirely within the shell, without spawning external tools.
+
+**Default values:**
+```bash
+# Use "server_log.txt" if $1 is unset or empty
+file="${1:-server_log.txt}"
+
+# Use "anonymous" if $NAME is unset or empty, AND assign it
+NAME="${NAME:=anonymous}"
+```
+
+**String trimming** — remove a pattern from the start (`#`) or end (`%`) of a value:
+```bash
+path="/home/user/project/main.sh"
+filename="${path##*/}"    # removes longest prefix up to last /  → "main.sh"
+noext="${filename%.*}"    # removes shortest suffix from last .  → "main"
+```
+The double form (`##` / `%%`) removes the *longest* match; the single form (`#` / `%`) removes the *shortest*.
+
+**Search and replace:**
+```bash
+msg="Hello World World"
+echo "${msg/World/Earth}"    # replaces first match  → "Hello Earth World"
+echo "${msg//World/Earth}"   # replaces all matches  → "Hello Earth Earth"
 ```
 
 ### Scope Differences
@@ -215,6 +269,25 @@ for i in 1 2 3 4 5; do
 done
 ```
 
+For numeric ranges, the **C-style `for` loop** using arithmetic expansion is often cleaner:
+```bash
+for (( i=1; i<=5; i++ )); do
+    echo "Iteration $i"
+done
+```
+
+**Loop control keywords:**
+* **`break`**: Exit the loop immediately, regardless of the remaining iterations.
+* **`continue`**: Skip the rest of the current iteration and jump to the next one.
+
+```bash
+for f in *.log; do
+    [ -s "$f" ] || continue    # skip empty files
+    grep -q "ERROR" "$f" || continue
+    echo "Errors found in: $f"
+done
+```
+
 ### Quoting and Word Splitting
 How you quote text profoundly changes how Bash interprets it — this is one of the most common sources of bugs in shell scripts.
 * **Single quotes (`'...'`)**: All characters are literal. No variable or command substitution occurs. `echo 'Cost: $5'` prints exactly `Cost: $5`.
@@ -264,7 +337,19 @@ Because every command returns an exit status, you can chain commands conditional
 
 This compact chaining idiom is widely used in professional scripts for concise, readable error handling.
 
+### Background Jobs
+Appending `&` to a command runs it **asynchronously** — the shell launches it in the background and immediately returns to the prompt without waiting for it to finish:
 
+```bash
+./long_running_build.sh &
+echo "Build started, continuing with other work..."
+```
+
+Two special variables are useful when managing background processes:
+* **`$$`**: The process ID (PID) of the current shell itself. Often used to create unique temporary file names: `tmp_file="/tmp/myscript.$$"`.
+* **`$!`**: The PID of the most recently backgrounded job. Use it to wait for or kill a specific background process.
+
+The `jobs` command lists all active background jobs; `fg` brings the most recent one back to the foreground, and `bg` resumes a stopped job in the background.
 
 ## Functions — Reusable Building Blocks
 
@@ -328,11 +413,26 @@ Every command — including your own scripts — exits with a number. **0 always
 
 Meaningful exit codes make scripts **composable**: other scripts, CI pipelines, and tools like `make` can call your script and take action based on the result. For example, `./monitor.sh || alert_team` only triggers the alert when your monitor exits non-zero.
 
+## Shell Expansions — Brace Expansion and Globbing
+
+The shell performs several rounds of expansion on a command line before executing it. Understanding the order helps you predict and control what the shell does.
+
+### Brace Expansion
+First comes **brace expansion**, which generates arbitrary lists of strings. It is a purely textual operation — no files need to exist:
+
+```bash
+mkdir project/{src,tests,docs}      # creates three directories at once
+cp config.yml config.yml.{bak,old}  # copies to two names simultaneously
+echo {1..5}                          # → 1 2 3 4 5  (sequence expression)
+```
+
+Brace expansion happens before all other expansions, so you can combine it freely with variables and globbing.
+
 ## Supercharging Scripts with Regular Expressions
 
 Because the UNIX philosophy is heavily centered around text streams, text processing is a massive part of shell scripting. **Regular Expressions (RegEx)** is a vital tool used within shell commands like `grep`, `sed`, and `awk` to find, validate, or transform text patterns quickly.
 
-> **Globbing vs. Regular Expressions:** These look similar but are entirely different systems. **Globbing** (filename expansion) uses `*`, `?`, and `[...]` to match filenames — the shell expands these *before* the command runs (e.g., `rm *.log` deletes all `.log` files). **Regular Expressions** use `^`, `$`, `.*`, `[0-9]+`, and similar constructs — they are pattern languages processed by specific tools like `grep`, `sed`, and `awk`; the shell itself does not interpret them. Critically, `*` means "match anything" in globbing, but "zero or more of the preceding character" in RegEx.
+> **Globbing vs. Regular Expressions:** These look similar but are entirely different systems. **Globbing** (filename expansion) uses `*`, `?`, and `[...]` to match filenames — the shell expands these *before* the command runs (e.g., `rm *.log` deletes all `.log` files). The three wildcard characters are: `*` matches any string (including empty), `?` matches any single character, and `[a-z]` matches any one character within the given set or range. **Regular Expressions** use `^`, `$`, `.*`, `[0-9]+`, and similar constructs — they are pattern languages processed by specific tools like `grep`, `sed`, and `awk`; the shell itself does not interpret them. Critically, `*` means "match anything" in globbing, but "zero or more of the preceding character" in RegEx.
 
 RegEx allows you to match sub-strings in a longer sequence. Critical to this are **anchors**, which constrain matches based on their location:
 * `^` : Start of string. (Does not allow any other characters to come before).
