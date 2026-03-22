@@ -43,9 +43,9 @@ These are the foundational tools for interacting with the POSIX filesystem:
 * **`cd`**: Change the current working directory (e.g., use `..` to move to a parent folder).
 * **`pwd`**: Print the name of the current/working directory so you don't get lost.
 * **`mkdir`**: Create a new directory.
-* **`cp`**: Copy files or directories.
+* **`cp`**: Copy files. Use `-r` (recursive) to copy a directory and its contents.
 * **`mv`**: Move or rename files and directories.
-* **`rm`**: Remove (delete) files or directories.
+* **`rm`**: Remove (delete) files. Use `-r` to remove a directory and its contents recursively.
 * **`rmdir`**: Remove empty directories (only works on empty ones).
 * **`touch`**: Create an empty file or update timestamps.
 
@@ -132,7 +132,7 @@ Advanced shell users often utilize process substitution to treat the output of a
 When you find yourself typing the same commands repeatedly, you should create a **shell script**. A shell script is written in a plain text file (often ending in `.sh`) and contains a sequence of commands that the shell executes as a program. 
 
 ### Interpreted Nature
-Unlike a compiled language like C++, which is **compiled** into machine code before execution, shell scripts are **interpreted** line-by-line at runtime. This allows for rapid prototyping but means syntax errors might not be caught until that specific line is executed.
+Unlike a compiled language like C++, which is **compiled** into machine code before execution, shell scripts are **interpreted** at runtime rather than ahead of time. This allows for rapid prototyping. Bash always reads at least one complete line of input, and reads *all* lines that make up a compound command (such as an `if` block or `for` loop) before executing any of them. This means a syntax error on a later line inside a multi-line compound block is caught before the block starts executing — but an error in a branch that is never reached at runtime may go unnoticed. Use `bash -n script.sh` to check for syntax errors without running the script.
 
 
 
@@ -143,11 +143,16 @@ Every script should start with a "shebang" (`#!`). This tells the operating syst
 ```
 
 ### Execution Permissions
-By default, text files are not executable for security reasons. To run your script, you must grant it execute permissions using the `chmod` command:
+By default, text files are not executable for security reasons. Execute permission is required only if you want to run the script directly as a command:
 ```bash
 chmod +x myscript.sh
 ./myscript.sh
 ```
+Alternatively, you can bypass the execute-permission requirement entirely by passing the file as an argument to the Bash interpreter directly — no `chmod` needed:
+```bash
+bash myscript.sh
+```
+You can also run a script's commands *within the current shell* (inheriting and potentially modifying its environment) using `source` or the `.` builtin: `source myscript.sh`.
 
 ### Debugging Scripts
 When a script behaves unexpectedly, Bash has built-in tracing modes that let you see exactly what the shell is doing:
@@ -173,7 +178,7 @@ Bash is a full-fledged programming language, but because it is an interpreted sc
 
 ### 5. Scripting Constructs
 In our scripts, we also treat these keywords as "commands" for building logic:
-* **`#!` (Shebang)**: Tells the system which interpreter to use.
+* **`#!` (Shebang)**: An OS-level interpreter directive on the first line of a script file — not a Bash keyword or command. When the OS executes the file, it reads `#!` and uses the rest of that line as the interpreter path. Within Bash itself, any line starting with `#` is simply a comment and is ignored.
 * **`read`**: Read a line from standard input into a variable. Common flags: `-p "prompt"` displays a prompt on the same line, `-s` silently hides typed input (useful for passwords), and `-n 1` returns after exactly one character instead of waiting for Enter.
 * **`if` / `then` / `elif` / `else` / `fi`**: Conditional execution.
 * **`for` / `do` / `done` / `while`**: Looping constructs.
@@ -217,7 +222,11 @@ echo "${msg//World/Earth}"   # replaces all matches  → "Hello Earth Earth"
 ```
 
 ### Scope Differences
-Unlike C++ or Java, Bash lacks strict block-level scoping (like `{}` blocks). Variables assigned anywhere in a script — including inside `if` statements and loops — remain accessible throughout the entire script's global scope. The only exception is **function-level scoping**: variables declared with the `local` builtin *inside a Bash function* are visible only to that function and its callees.
+Unlike C++ or Java, Bash lacks strict block-level scoping (like `{}` blocks). Variables assigned anywhere in a script — including inside `if` statements and loops — remain accessible throughout the entire script's global scope. There are, however, several important isolation boundaries:
+
+* **Function-level scoping**: variables declared with the `local` builtin *inside a Bash function* are visible only to that function and its callees.
+* **Subshells**: commands grouped with `( list )`, command substitutions `$(...)`, and background jobs run in a *subshell* — a copy of the shell environment. Any variable assignments made inside a subshell do not propagate back to the parent shell.
+* **Per-command environment**: a variable assignment placed immediately before a simple command (e.g., `VAR=value command`) is only visible to that command for its duration, leaving the surrounding scope untouched.
 
 ### Arithmetic
 Math in Bash is slightly idiosyncratic. While a language like C++ operates directly on integers with `+` or `/`, arithmetic in Bash needs to be enclosed within `$(( ... ))` or evaluated using the `let` command.
@@ -242,7 +251,7 @@ else
 fi
 ```
 
-> **`[` is a real command:** The single bracket `[` is not special syntax — it is an actual program on your system (you can verify with `which [`). Like any command, its arguments must be separated by spaces: `[ -f "$file" ]` is correct, but `[-f "$file"]` tries to run a command named `[-f`, which fails. This is why the spaces inside brackets are mandatory, not just stylistic.
+> **`[` is a shell builtin command:** The single bracket `[` is not special syntax — it is a builtin command, a synonym for `test`. Because Bash implements it internally, its arguments must be separated by spaces just like any other command: `[ -f "$file" ]` is correct, but `[-f "$file"]` tries to run a command named `[-f`, which fails. This is why the spaces inside brackets are mandatory, not just stylistic. (An external binary `/usr/bin/[` also exists on most systems, but Bash uses its builtin by default — you can verify with `type -a [`.)
 
 The following table covers the most important tests available inside `[ ]`:
 
@@ -269,12 +278,13 @@ for i in 1 2 3 4 5; do
 done
 ```
 
-For numeric ranges, the **C-style `for` loop** using arithmetic expansion is often cleaner:
+For numeric ranges, the **C-style `for` loop** (the *arithmetic for command*) is often cleaner:
 ```bash
 for (( i=1; i<=5; i++ )); do
     echo "Iteration $i"
 done
 ```
+This is a distinct looping construct from the standalone `(( ))` arithmetic compound command. In this form, expr1 is evaluated once at start, expr2 is tested before each iteration (loop runs while non-zero), and expr3 is evaluated after each iteration — the same semantics as C's `for` loop.
 
 **Loop control keywords:**
 * **`break`**: Exit the loop immediately, regardless of the remaining iterations.
@@ -432,7 +442,7 @@ Brace expansion happens before all other expansions, so you can combine it freel
 
 Because the UNIX philosophy is heavily centered around text streams, text processing is a massive part of shell scripting. **Regular Expressions (RegEx)** is a vital tool used within shell commands like `grep`, `sed`, and `awk` to find, validate, or transform text patterns quickly.
 
-> **Globbing vs. Regular Expressions:** These look similar but are entirely different systems. **Globbing** (filename expansion) uses `*`, `?`, and `[...]` to match filenames — the shell expands these *before* the command runs (e.g., `rm *.log` deletes all `.log` files). The three wildcard characters are: `*` matches any string (including empty), `?` matches any single character, and `[a-z]` matches any one character within the given set or range. **Regular Expressions** use `^`, `$`, `.*`, `[0-9]+`, and similar constructs — they are pattern languages processed by specific tools like `grep`, `sed`, and `awk`; the shell itself does not interpret them. Critically, `*` means "match anything" in globbing, but "zero or more of the preceding character" in RegEx.
+> **Globbing vs. Regular Expressions:** These look similar but are entirely different systems. **Globbing** (filename expansion) uses `*`, `?`, and `[...]` to match filenames — the shell expands these *before* the command runs (e.g., `rm *.log` deletes all `.log` files). The three special pattern characters are: `*` matches any string (including empty), `?` matches any single character, and `[` opens a bracket expression `[...]` that matches any one of the enclosed characters — e.g., `[a-z]` matches any lowercase letter, and `[!a-z]` matches any character that is not a lowercase letter. **Regular Expressions** use `^`, `$`, `.*`, `[0-9]+`, and similar constructs — they are pattern languages used by tools like `grep`, `sed`, and `awk`, and also natively by Bash itself via the `=~` operator inside `[[ ]]` conditionals (which evaluates POSIX extended regular expressions directly without spawning an external tool). Critically, `*` means "match anything" in globbing, but "zero or more of the preceding character" in RegEx.
 
 RegEx allows you to match sub-strings in a longer sequence. Critical to this are **anchors**, which constrain matches based on their location:
 * `^` : Start of string. (Does not allow any other characters to come before).
