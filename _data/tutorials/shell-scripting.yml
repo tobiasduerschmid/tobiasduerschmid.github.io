@@ -517,8 +517,8 @@ steps:
       1. **Input Validation:** Check if the number of arguments (`$#`) is equal to 0. If it is, print a usage message (e.g., `echo "Usage: $0 <file1>..."`) and `exit 1`.
       2. **Iteration:** Loop over all arguments passed to the script using a `for` loop and `"$@"`.
       3. **Conditionals:** Inside the loop, for each file:
-         - Check if the file does NOT exist (`! -f`). If so, print `<name>: not found`.
          - Check if it is a directory (`-d`). If so, print `<name>: directory`.
+         - Otherwise, check if the file does NOT exist (`! -f`). If so, print `<name>: not found`.
          - Else (it's a real file), use `wc -l < "$f"` to count the lines and print `<name>: <N> lines`.
 
       *Tip: Think about the flow of data. Combine what you learned in the Conditionals step with the `for` loop shown above.*
@@ -539,13 +539,13 @@ steps:
     tests:
       - description: "Shows usage and exits with code 1 when called with no arguments"
         command: "! bash file_info.sh 2>/dev/null && bash file_info.sh 2>&1 | grep -qi 'usage'"
-      - description: "Reports line count for an existing file"
-        command: "bash file_info.sh server_log.txt | grep -qE '15 lines|server_log.*lines'"
-      - description: "Reports 'directory' for /tmp"
-        command: "bash file_info.sh /tmp | grep -qi 'directory'"
       - description: "Reports 'not found' for a missing file"
         command: "bash file_info.sh __nope__ 2>&1 | grep -qi 'not found'"
-
+      - description: "Reports 'directory' for /tmp"
+        command: "bash file_info.sh /tmp | grep -qi 'directory'"
+      - description: "Reports line count for an existing file"
+        command: "bash file_info.sh server_log.txt | grep -qE '15 lines|server_log.*lines'"
+      
     quiz:
       title: "Arguments & Special Variables — Knowledge Check"
       min_score: 0.8
