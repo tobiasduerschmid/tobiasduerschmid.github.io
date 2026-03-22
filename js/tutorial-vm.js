@@ -802,18 +802,18 @@
     // has previously chmod +x'd this .sh file, set the execute bit directly on
     // the 9p inode so it persists across cache invalidations.
     var self = this;
-    var needsChmod = /\.sh$/i.test(filename) && !isInitial && self._executableFiles.has(filename);
+    var needsChmod = self._executableFiles.has(filename);
     this.emulator.create_file('/' + filename, bytes)
       .then(function () {
         entry.lastSyncContent = content;
-        if (filename.endsWith('.sh')) {
-        // Set execute bit (0o755 = 33261) directly on the 9p inode
-        var result = self.emulator.fs9p.SearchPath('/' + filename);
-        if (result && result.id !== -1) {
-          self.emulator.fs9p.inodes[result.id].mode = 0x81ED; // 0o100755
+        if (needsChmod) {
+          // Set execute bit (0o755 = 33261) directly on the 9p inode
+          var result = self.emulator.fs9p.SearchPath('/' + filename);
+          if (result && result.id !== -1) {
+            self.emulator.fs9p.inodes[result.id].mode = 0x81ED; // 0o100755
+          }
         }
-      }
-    }).catch(function (err) {
+      }).catch(function (err) {
       console.warn('TutorialVM: create_file failed, falling back to serial base64 sync', err);
       var b64 = btoa(unescape(encodeURIComponent(content)));
       var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
@@ -879,7 +879,6 @@
     if (step.files) {
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
-        self._executableFiles.delete(f.path); // reset — user must chmod +x again for this file
         self.openFile(f.path, f.content, f.language);
         self._syncFileToVM(f.path, true); // initial load — don't auto-chmod
       });
@@ -1072,6 +1071,17 @@
     var promises = files.map(function (filename) {
       return self.emulator.read_file('/' + filename)
         .then(function (buf) {
+          // Check permissions (executable bit)
+          var result = self.emulator.fs9p.SearchPath('/' + filename);
+          if (result && result.id !== -1) {
+            var inode = self.emulator.fs9p.inodes[result.id];
+            if (inode.mode & 0x49) { // Check if any execute bit is set (0o111)
+              self._executableFiles.add(filename);
+            } else {
+              self._executableFiles.delete(filename);
+            }
+          }
+
           var content = new TextDecoder('utf-8').decode(buf);
           var entry = self.editorModels[filename];
           if (entry && entry.lastSyncContent !== content) {
