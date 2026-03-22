@@ -1049,7 +1049,7 @@
           ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
           '<span class="option-checkbox"></span>' +
           '<span class="option-label">' + alphabet[oi] + '</span>' +
-          '<span class="option-content">' + self._escapeHtml(opt.text) + '</span>' +
+          '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span>' +
           '</button>';
       });
       html += '</div>'; // quiz-options
