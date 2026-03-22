@@ -107,10 +107,7 @@ steps:
 
       Makefiles have one notoriously strict, invisible rule: **Recipes MUST be indented with a true `Tab` character, not spaces!**
 
-      1. Open `Makefile` in the editor.
-      2. Look at line 2 before the `gcc` command. It currently uses 4 spaces.
-      3. Delete the spaces and press `Tab` to insert a real tab character.
-      4. Save the file and run `make` again in the terminal.
+      In many text editors (like the one on the right) it is often hard to replace spaces with tabs. So for this task you will need to be a bit more creative. Hint: terminal-based editors like `nano` or `vi` might help or the `sed` command!
 
     setup_commands:
       - "rm -f /tutorial/make_project/app"
