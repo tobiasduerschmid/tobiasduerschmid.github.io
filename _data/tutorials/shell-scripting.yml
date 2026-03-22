@@ -38,15 +38,17 @@ steps:
       immediately when something goes wrong, preventing a cascade of
       confusing failures. Always include it.
 
+      ### New Concept: Command Substitution
+      You can capture the output of a command and use it as a string by wrapping it in `$(...)`. 
+      Try running this in your terminal right now: `echo "I am $(whoami)"`
+
       ### Your task
 
-      Add the following three lines below the existing ones:
+      Add three commands to `morning.sh`:
 
-      ```bash
-      echo "Good morning!"
-      echo "Today is $(date +%A)."
-      echo "You are logged in as: $(whoami)"
-      ```
+      1. Print the literal string "Good morning!" using `echo`.
+      2. Print "Today is " followed by the current day. (Hint: the command `date +%A` outputs the day of the week. Use command substitution!)
+      3. Print "You are logged in as: " followed by your username. (Hint: use the `whoami` command).
 
       Then save (**Ctrl+S** / **Cmd+S**) and run in the terminal:
 
@@ -83,7 +85,7 @@ steps:
       - description: "Script prints the day of the week"
         command: "bash morning.sh | grep -qiE 'monday|tuesday|wednesday|thursday|friday|saturday|sunday'"
       - description: "Script prints who you are logged in as"
-        command: "bash morning.sh | grep -qi 'logged in'"
+        command: "bash morning.sh | grep -qi 'root'"
       - description: "morning.sh is executable"
         command: "[ -x morning.sh ]"
 
@@ -135,13 +137,12 @@ steps:
       Each Unix tool does *one thing well*:
       - `grep` finds matching lines
       - `sort` sorts lines alphabetically or numerically
-      - `uniq` removes consecutive duplicate lines
-      - `wc` counts lines, words, or characters
-      - `cut` extracts specific columns
+      - `uniq -c` removes consecutive duplicate lines and counts them
+      - `wc -l` counts lines
+      - `cut -d' ' -f<number>` extracts a specific column separated by a space
 
       Pipes let you compose them into powerful chains without writing a
-      program. Data flows through memory from one process to the next —
-      no intermediate files needed.
+      program. Data flows through memory from one process to the next.
 
       ### Explore the data
 
@@ -153,30 +154,14 @@ steps:
 
       ### Pipeline exercises
 
-      **Type these yourself** — building pipelines step by step trains
-      you to think in terms of data flowing through stages.
+      **Your turn to construct pipelines:** Use the tools listed above to answer the following questions. Test your theories in the terminal!
 
-      ```bash
-      # 1. Count total lines
-      wc -l < server_log.txt
-
-      # 2. Show only ERROR lines
-      grep "ERROR" server_log.txt
-
-      # 3. Count how many errors
-      grep "ERROR" server_log.txt | wc -l
-
-      # 4. Extract just the timestamps (first field)
-      cut -d' ' -f1 server_log.txt | head -5
-
-      # 5. Which message types appear most often?
-      cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn | head -3
-      ```
-
-      Read pipeline 5 left to right: extract column 2 → sort alphabetically
-      (so duplicates become adjacent) → count consecutive duplicates →
-      sort by count descending → show top 3. Each step is trivial; the
-      combination is powerful.
+      1. **Count total lines:** Feed the file into the word count tool.
+      2. **Filter data:** Print only lines containing the word "ERROR".
+      3. **Count specific data:** How many errors are there? (Hint: pipe your answer from step 2 into your answer from step 1).
+      4. **Extract columns:** Extract just the timestamps (the first field/column) from the file.
+      5. **Data Aggregation:** Which message types appear most often? 
+         *(Read this workflow left to right and build it step-by-step: extract column 2 → sort alphabetically so duplicates become adjacent → count consecutive duplicates → sort by count descending (`sort -rn`) → show top 3 (`head -3`))*
 
       ### Redirection: connecting commands to files
 
@@ -189,11 +174,7 @@ steps:
       wc -l < errors_only.txt                          # read from file
       ```
 
-      Note: `>` overwrites without warning. Use `>>` to append and
-      preserve existing content.
-
-      **Now create `errors_only.txt`** by running the `grep "ERROR"`
-      redirection above — the tests below will check it.
+      **Now create `errors_only.txt`** by redirecting your "ERROR" pipeline from earlier into a new file. The tests below will check it.
     files:
       - path: "server_log.txt"
         content: |
@@ -253,7 +234,7 @@ steps:
             - "`grep -c 'INFO\\|WARN\\|ERROR' server_log.txt | sort -rn | head -3`"
             - "`awk '{print NR}' server_log.txt | sort | head -3`"
           correct_index: 1
-          explanation: "The correct pipeline: **cut** extracts the field → **sort** makes duplicates adjacent → **uniq -c** counts consecutive duplicates → **sort -rn** orders by count descending → **head -3** takes the top 3. Each step is trivial; together they answer a complex question."
+          explanation: "The correct pipeline: **cut** extracts the field → **sort** makes duplicates adjacent → **uniq -c** counts consecutive duplicates → **sort -rn** orders by count descending → **head -3** takes the top 3."
 
   - title: "Variables & The Quoting Trap"
     instructions: |
@@ -266,17 +247,12 @@ steps:
       color="blue"      # correct
       color = "blue"    # WRONG — shell sees three words: "color", "=", "blue"
       ```
-
-      There must be **no spaces** around `=`. The shell is a command
-      language: `color = "blue"` looks like running a command named `color`
-      with arguments `=` and `blue`. You will get a "command not found"
-      error that can be confusing at first.
+      There must be **no spaces** around `=`. The shell interprets `color = "blue"` as running a command named `color` with arguments `=` and `blue`. 
 
       ### The quoting problem
 
       When you write `$variable`, the shell replaces it with the value —
-      then *word-splits* the result on spaces and runs glob expansion.
-      This causes chaos when values contain spaces:
+      then *word-splits* the result on spaces. This causes chaos when values contain spaces:
 
       ```bash
       file="my report.txt"
@@ -287,47 +263,21 @@ steps:
       **Rule: always double-quote your variables** unless you have a
       specific reason not to.
 
-      ### Single vs. double quotes
+      ### See the bug (Active Debugging)
 
-      | Quote style | Variables expand? | Example output |
-      |-------------|------------------|----------------|
-      | `"double"`  | Yes              | `"Hello $name"` → `Hello Alice` |
-      | `'single'`  | No (literal)     | `'Hello $name'` → `Hello $name` |
+      `buggy.sh` has a deliberate quoting mistake. Run it first in the terminal to see the error, and read the error carefully. 
 
-      Use double quotes almost always. Use single quotes when you want a
-      literal `$` — for example, in awk programs or regex patterns.
-
-      ### See the bug
-
-      `buggy.sh` has a deliberate quoting mistake. Run it first:
-
-      ```bash
-      bash buggy.sh
-      ```
-
-      Read the error carefully — it shows exactly what happens when a
-      space-containing variable is unquoted.
-
-      ### Fix it
-
+      **Fix it:**
       1. Open `buggy.sh` in the editor.
-      2. Find the unquoted `$filename` on the `wc -l` line.
-      3. Wrap it in double quotes: `"$filename"`.
-      4. Save and run again — the error should disappear.
+      2. Diagnose why `wc -l` is throwing an error based on what you just learned.
+      3. Fix the syntax and run the script again.
 
-      ### Now build your own
+      ### Build your own
 
-      Open `inventory.sh` and write a script that:
-
-      1. Stores a **project name** and a **version number** in variables.
-      2. Uses `$(...)` to capture the number of `.sh` files in the current
-         directory (hint: `ls *.sh | wc -l`).
-      3. Prints a summary like: `Project: mytools v1.0 — 3 scripts found`
-
-      ```bash
-      chmod +x inventory.sh
-      ./inventory.sh
-      ```
+      Open `inventory.sh` and write a script from scratch that:
+      1. Declares a variable for a **project name** and another for a **version number**.
+      2. Uses command substitution `$(...)` to dynamically count the number of `.sh` files in the current directory and save it to a variable. (Hint: combine `ls *.sh` with `wc -l`).
+      3. Uses `echo` to print a single string combining all three variables, e.g., `Project: mytools v1.0 — 3 scripts found`
     files:
       - path: "buggy.sh"
         content: |
@@ -377,7 +327,7 @@ steps:
             - "`name=\"Alice\"`"
             - "`$name = Alice`"
           correct_index: 2
-          explanation: "Bash requires **no spaces** around `=` in variable assignment. `name = \"Alice\"` makes the shell interpret `name` as a command with `=` and `\"Alice\"` as arguments, causing a 'command not found' error."
+          explanation: "Bash requires **no spaces** around `=` in variable assignment."
 
         - question: "A variable `dir` contains the value `my documents`. What happens when you run `ls $dir` (unquoted)?"
           options:
@@ -386,20 +336,7 @@ steps:
             - "Bash produces a syntax error and stops"
             - "Bash automatically quotes the variable to handle the space"
           correct_index: 1
-          explanation: "Without quotes, Bash **word-splits** the expanded value on spaces. `ls $dir` becomes `ls my documents` — two arguments. Bash tries to list `my` and `documents` separately. The fix is always `\"$dir\"` (double-quoted)."
-
-        - question: "Which statements about single vs. double quotes in Bash are correct? (Select all that apply)"
-          type: multiple
-          options:
-            - "Double quotes allow variable expansion: `\"Hello $name\"` → `Hello Alice`"
-            - "Single quotes suppress all expansion: `'Hello $name'` → `Hello $name`"
-            - "Both single and double quotes expand `$()` command substitutions"
-            - "Single quotes are preferred when you want to pass a literal `$` to awk or regex patterns"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "Double quotes expand variables and `$(...)` but protect against word-splitting. Single quotes are completely literal — nothing inside is expanded, making them ideal for awk programs (`awk '{print $1}'`) or regex patterns where `$` means end-of-line."
+          explanation: "Without quotes, Bash **word-splits** the expanded value on spaces. `ls $dir` becomes `ls my documents` — two arguments. The fix is always `\"$dir\"`."
 
   - title: "Conditionals — Making Decisions"
     instructions: |
@@ -420,7 +357,7 @@ steps:
 
       ### Why the spaces inside `[ ]` are mandatory
 
-      `[` is not special syntax — it is an actual command (try `which [`).
+      `[` is not special syntax — it is an actual command (try running `which [`).
       Like any command, its arguments must be separated by spaces:
 
       ```bash
@@ -428,40 +365,27 @@ steps:
       [-f "$file"]      # WRONG: shell tries to run a command named "[-f"
       ```
 
-      ### Common tests
+      ### Common tests (Your Toolbox)
 
       | Test | Meaning |
       |------|---------|
       | `-f path` | Path exists and is a regular file |
-      | `-d path` | Path exists and is a directory |
       | `-z "$var"` | String is empty (zero length) |
-      | `-n "$var"` | String is not empty |
       | `"$a" = "$b"` | Strings are equal |
       | `$x -eq $y` | Integers are equal |
-      | `$x -lt $y` | Integer less than |
       | `$x -gt $y` | Integer greater than |
       | `! condition` | Logical NOT |
 
       **Important:** use `-eq`, `-lt`, `-gt` for numbers; use `=` and `!=`
-      for strings. Mixing them gives wrong results silently.
-
-      ### Printing to stderr
-
-      Error messages should go to standard error (`>&2`), not standard
-      output. This lets callers separate normal output from errors:
-
-      ```bash
-      echo "Error: file not found" >&2
-      exit 1
-      ```
+      for strings. Mixing them gives wrong results silently!
 
       ### Your task
 
-      Edit `health_check.sh` and fill in the three `_____` placeholders:
+      We are providing a skeleton file `health_check.sh`. To help you structure your thinking, we've left blanks (`_____`) where the tests should go. Look at the "Common tests" toolbox above to fill them in logically:
 
-      1. Test if the file does **not** exist — hint: `! -f "$file"`.
-      2. Test if `error_count` is **greater than 3**.
-      3. Test if `error_count` is **greater than 0**.
+      1. First blank: We want to exit if the file does **not** exist. How do you negate a file existence check?
+      2. Second blank: We want to mark CRITICAL if `error_count` is **greater than 3**.
+      3. Third blank: We want to mark WARNING if `error_count` is **greater than 0**.
 
       ```bash
       chmod +x health_check.sh
@@ -501,8 +425,6 @@ steps:
         command: "! bash health_check.sh __does_not_exist__ 2>/dev/null"
       - description: "Error message for missing file goes to stderr"
         command: "bash health_check.sh __does_not_exist__ 2>&1 >/dev/null | grep -qi 'not found'"
-      - description: "Script uses if/elif/else structure"
-        command: "grep -q 'elif' health_check.sh && grep -q 'else' health_check.sh"
       - description: "Uses -gt or -ge for numeric comparison"
         command: "grep -qE '\\-gt|\\-ge' health_check.sh"
 
@@ -518,7 +440,7 @@ steps:
             - "Without spaces, the shell treats the entire bracket expression as a string"
             - "Spaces are only required when using string comparisons, not file tests"
           correct_index: 1
-          explanation: "`[` is not special syntax — it is a real command (you can verify with `which [`). Like any command, arguments must be separated by spaces. `[-f \"$file\"]` tries to run a command literally named `[-f` — which doesn't exist."
+          explanation: "`[` is not special syntax — it is a real command (you can verify with `which [`). Like any command, arguments must be separated by spaces."
 
         - question: "You want to compare two **integer** variables `$count` and `$max` in a Bash conditional. Which test is correct?"
           options:
@@ -527,20 +449,7 @@ steps:
             - "`[ $count -eq $max ]`"
             - "`[ $count === $max ]`"
           correct_index: 2
-          explanation: "Bash uses **`-eq`, `-lt`, `-gt`, `-le`, `-ge`, `-ne`** for integer comparisons. The `=` and `==` operators do string comparison — they may give wrong results for numbers (e.g., `\"10\" = \"9\"` is false but `10 -gt 9` is true)."
-
-        - question: "Which practices are correct when writing Bash conditionals? (Select all that apply)"
-          type: multiple
-          options:
-            - "Error messages should go to stderr with `>&2`, not stdout"
-            - "Exit with a non-zero code (e.g., `exit 1`) when the script encounters an unrecoverable error"
-            - "Use `=` for string equality and `-eq` for integer equality"
-            - "Use `[ -z \"$var\" ]` to test if a variable is non-empty (has content)"
-          correct_indices:
-            - 0
-            - 1
-            - 2
-          explanation: "Errors to stderr (`>&2`) keeps stdout clean for piping. Non-zero exit codes signal failure to callers. String and integer comparisons use different operators. `-z` tests if a string is **empty** (zero-length) — use `-n` to test if a string is **non-empty**."
+          explanation: "Bash uses **`-eq`, `-lt`, `-gt`, `-le`, `-ge`, `-ne`** for integer comparisons. The `=` and `==` operators do string comparison."
 
   - title: "Arguments & Special Variables"
     instructions: |
@@ -553,26 +462,10 @@ steps:
       | `$1`, `$2`, ... | Positional arguments |
       | `$#` | Total number of arguments passed |
       | `$@` | All arguments as separate, properly-quoted words |
-      | `$?` | Exit code of the last command (0 = success) |
-
-      ### Always validate your arguments
-
-      A script that silently does the wrong thing when called incorrectly
-      is worse than one that fails clearly. Good scripts check their inputs:
-
-      ```bash
-      if [ $# -eq 0 ]; then
-          echo "Usage: $0 <file1> [file2...]" >&2
-          exit 1
-      fi
-      ```
-
-      Using `$0` in the usage message means it always shows the correct
-      script name, even if the script is renamed.
 
       ### Looping over arguments
 
-      `"$@"` expands to all arguments as separate, properly-quoted words:
+      `"$@"` expands to all arguments as separate, properly-quoted words. You can loop over them like this:
 
       ```bash
       for f in "$@"; do
@@ -580,34 +473,31 @@ steps:
       done
       ```
 
-      Always quote `"$@"` — unquoted `$@` has the same space-splitting
-      problem as unquoted variables.
-
       ### Your task
 
-      Write `file_info.sh` from scratch. It should:
+      Now we remove the training wheels. Write `file_info.sh` completely from scratch. 
 
-      1. Print a usage message and exit with code 1 if no arguments given.
-      2. Loop over all arguments with `for f in "$@"`.
-      3. For each argument:
-         - Print `<name>: not found` if it doesn't exist.
-         - Print `<name>: directory` if it's a directory.
-         - Print `<name>: <N> lines` otherwise (use `wc -l < "$f"`).
+      **Requirements:**
+      1. **Input Validation:** Check if the number of arguments (`$#`) is equal to 0. If it is, print a usage message (e.g., `echo "Usage: $0 <file1>..."`) and `exit 1`.
+      2. **Iteration:** Loop over all arguments passed to the script using a `for` loop and `"$@"`.
+      3. **Conditionals:** Inside the loop, for each file:
+         - Check if the file does NOT exist (`! -f`). If so, print `<name>: not found`.
+         - Check if it is a directory (`-d`). If so, print `<name>: directory`.
+         - Else (it's a real file), use `wc -l < "$f"` to count the lines and print `<name>: <N> lines`.
 
-      Test with:
+      *Tip: Think about the flow of data. Combine what you learned in the Conditionals step with the `for` loop shown above.*
+
+      Test your script with:
       ```bash
       chmod +x file_info.sh
       ./file_info.sh server_log.txt morning.sh /tmp nope.txt
       ```
-
-      You should see a line count, a directory label, and a "not found"
-      message — all from one call.
     files:
       - path: "file_info.sh"
         content: |
           #!/bin/bash
           set -e
-          # Report info about each file given as an argument
+          # Write your code below!
 
     open_file: "file_info.sh"
     tests:
@@ -619,8 +509,6 @@ steps:
         command: "bash file_info.sh /tmp | grep -qi 'directory'"
       - description: "Reports 'not found' for a missing file"
         command: "bash file_info.sh __nope__ 2>&1 | grep -qi 'not found'"
-      - description: "Handles multiple files in one call"
-        command: "[ $(bash file_info.sh server_log.txt /tmp 2>&1 | wc -l) -ge 2 ]"
 
     quiz:
       title: "Arguments & Special Variables — Knowledge Check"
@@ -634,7 +522,7 @@ steps:
             - "The number `3` (including the script name)"
             - "The exit code of the last command"
           correct_index: 1
-          explanation: "`$#` is the **count of positional arguments**, not counting the script name (`$0`). For `./deploy.sh app v1.2`, `$#` is `2`, `$1` is `app`, and `$2` is `v1.2`."
+          explanation: "`$#` is the **count of positional arguments**, not counting the script name (`$0`). For `./deploy.sh app v1.2`, `$#` is `2`."
 
         - question: "Why use `\"$@\"` (quoted) instead of `$@` (unquoted) when looping over arguments?"
           options:
@@ -643,35 +531,11 @@ steps:
             - "Quoted `$@` includes the script name as the first element"
             - "There is no practical difference between `\"$@\"` and `$@`"
           correct_index: 1
-          explanation: "Without quotes, `$@` is subject to word splitting. If an argument is `my file.txt`, unquoted `$@` splits it into `my` and `file.txt` — two arguments instead of one. `\"$@\"` preserves each argument as a single unit, regardless of spaces."
-
-        - question: "Which special variables and their meanings are correctly matched? (Select all that apply)"
-          type: multiple
-          options:
-            - "`$0` — the script's own name/path"
-            - "`$?` — the exit code of the most recently executed command"
-            - "`$@` — all positional arguments as separately-quoted words"
-            - "`$1` — the total number of arguments passed to the script"
-          correct_indices:
-            - 0
-            - 1
-            - 2
-          explanation: "`$0` is the script name, `$?` is the last exit code, `$@` is all arguments. `$1` is the **first** positional argument — the total count is `$#`."
+          explanation: "Without quotes, `$@` is subject to word splitting. `\"$@\"` preserves each argument as a single unit, regardless of spaces."
 
   - title: "Loops — Repeating Work"
     instructions: |
-      Loops eliminate repetition. Instead of writing the same logic ten
-      times for ten files, you write it once and let the loop do the rest.
-
-      ### for loops — iterate over a list
-
-      ```bash
-      for fruit in apple banana cherry; do
-          echo "I like $fruit"
-      done
-      ```
-
-      The list can be literal words, a glob, or command output:
+      Loops eliminate repetition. Let's look at iterating over globs (file expansions).
 
       ```bash
       for f in *.sh; do          # expands to all matching filenames
@@ -679,46 +543,27 @@ steps:
       done
       ```
 
-      ### while loops — repeat until a condition changes
-
-      ```bash
-      counter=1
-      while [ $counter -le 5 ]; do
-          echo "Step $counter"
-          counter=$((counter + 1))
-      done
-      ```
-
-      `$(( ))` is *arithmetic expansion* — it evaluates integer math
-      expressions. Common operations: `+`, `-`, `*`, `/`, and
-      `$((total * 100 / count))` for integer percentages.
-
       ### Accumulating totals
 
-      A common pattern is keeping running counts across loop iterations:
+      A common pattern is keeping running counts across loop iterations using arithmetic expansion `$(( ... ))`:
 
       ```bash
       passed=0
-      failed=0
       # ... inside loop:
       passed=$((passed + 1))
       ```
 
       ### Your task
 
-      Write `batch_check.sh` that:
+      Write `batch_check.sh` from scratch. Combine your knowledge of variables, file expansion (`*.sh`), `head`, conditionals, and arithmetic expansion.
 
-      1. Uses `for f in *.sh` to loop over every `.sh` file.
-      2. Reads the first line of each file with `head -1 "$f"` and checks
-         whether it equals `#!/bin/bash`.
-      3. Prints `✓ filename` if correct, `✗ filename (missing shebang)`
-         if not.
-      4. After the loop, prints:
-         `Checked N files: P passed, F failed`
-
-      > **Tip:** store the first line in a variable before comparing:
-      > `first=$(head -1 "$f")`
-      > Then: `if [ "$first" = "#!/bin/bash" ]; then`
+      **Requirements:**
+      1. Initialize two variables tracking `passed` and `failed` counts.
+      2. Loop over every `.sh` file in the current directory.
+      3. For each file, read its first line and capture it in a variable. *(Hint: `first=$(head -1 "$f")`)*
+      4. If that variable equals exacty `#!/bin/bash`, print `✓ filename` and increment your `passed` counter. 
+      5. Otherwise, print `✗ filename (missing shebang)` and increment `failed`.
+      6. After the loop, print: `Checked N files: P passed, F failed` (where N is passed + failed).
 
       ```bash
       chmod +x batch_check.sh
@@ -729,7 +574,6 @@ steps:
         content: |
           #!/bin/bash
           set -e
-          # Check all .sh files for a proper shebang line
 
     open_file: "batch_check.sh"
     tests:
@@ -754,7 +598,7 @@ steps:
             - "After the loop completes, to validate the filenames used"
             - "Only when running with `bash -e` safety flag enabled"
           correct_index: 1
-          explanation: "Shell glob expansion happens **before** the loop executes. The shell replaces `*.sh` with the list of matching filenames (e.g., `morning.sh batch_check.sh`), and the loop iterates over that fixed list."
+          explanation: "Shell glob expansion happens **before** the loop executes. The shell replaces `*.sh` with the list of matching filenames, and the loop iterates over that fixed list."
 
         - question: "What does `$((counter + 1))` do in Bash?"
           options:
@@ -763,28 +607,11 @@ steps:
             - "Concatenates the string `counter` with `+ 1`"
             - "Increments `counter` in place and returns the new value"
           correct_index: 1
-          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates integer math inside it and substitutes the result. It does **not** modify the variable in place; you must write `counter=$((counter + 1))` to update `counter`."
-
-        - question: "Which are valid use cases for a `while` loop compared to a `for` loop? (Select all that apply)"
-          type: multiple
-          options:
-            - "Iterating until a counter reaches a limit"
-            - "Processing lines from a file with `while IFS= read -r line`"
-            - "Iterating over a fixed list of filenames matching a glob"
-            - "Repeating until an external condition changes (e.g., a file appears)"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "`while` is best for **condition-based repetition**: counting up/down, reading input line by line, or waiting for something to change. `for` is best for **iterating over known lists** like glob results or argument lists."
+          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates integer math inside it and substitutes the result. It does **not** modify the variable in place; you must assign it back."
 
   - title: "Functions — Reusable Building Blocks"
     instructions: |
-      As scripts grow, repeating the same logic in multiple places becomes
-      a maintenance problem. Functions let you name a block of code and
-      call it anywhere, changing it in one place when needed.
-
-      ### Defining and calling
+      Functions let you name a block of code and call it anywhere, just like external commands.
 
       ```bash
       greet() {
@@ -793,77 +620,39 @@ steps:
       }
 
       greet "engineer"   # → Hello, engineer!
-      greet "world"      # → Hello, world!
       ```
 
-      Functions are defined first, then called by name — just like
-      external commands, but without a separate file.
+      **Rule of Thumb:** Always use `local` for variables declared inside a function so they don't leak out and overwrite global variables. 
+      Functions receive `$1`, `$2`, etc. independently of the script's own arguments.
 
-      ### Key concepts
-
-      **`local` variables:** Without `local`, variables set inside a
-      function leak into the rest of the script, overwriting outer
-      variables with the same name. Always use `local` for variables
-      that belong only to the function.
-
-      **Arguments:** Functions receive `$1`, `$2`, etc. independently
-      of the script's own arguments — each call gets its own set.
-
-      **Return values:** `return 0` means success, `return 1` means
-      failure. This lets callers use functions directly in `if`:
-
-      ```bash
-      if is_number "$input"; then
-          echo "Valid number"
-      fi
-      ```
-
-      **Capturing output:** Use `$(func_name arg)` to capture what a
-      function prints, just like with any command:
-
-      ```bash
-      upper=$(to_upper "hello")   # upper="HELLO"
-      ```
+      ### Return Values
+      Functions can `return 0` (success) or `return 1` (failure). This allows you to use functions directly in `if` statements! To return *strings*, you use `echo` inside the function and capture it outside using `$(...)`.
 
       ### Your task
 
-      Write `toolkit.sh` with three utility functions:
+      Write `toolkit.sh` and create these three functions:
 
-      1. **`to_upper`** — converts its argument to uppercase.
-         Hint: `echo "$1" | tr '[:lower:]' '[:upper:]'`
-      2. **`file_ext`** — prints the file extension of its argument.
-         Hint: `echo "${1##*.}"` — `##*.` strips everything up to the
-         last dot.
-      3. **`is_number`** — exits 0 if the argument is a valid integer,
-         1 otherwise.
-         Hint: `[[ "$1" =~ ^-?[0-9]+$ ]]` (a Bash regex test)
+      1. **`to_upper`**: Echoes its argument converted to uppercase.
+         *(Tool hint: `echo "$1" | tr '[:lower:]' '[:upper:]'`)*
+      2. **`file_ext`**: Echoes the file extension of its argument.
+         *(Tool hint: `echo "${1##*.}"` strips everything up to the last dot)*
+      3. **`is_number`**: Checks if its argument is a valid integer using the Regex test `[[ "$1" =~ ^-?[0-9]+$ ]]`. If true, `return 0`. Else, `return 1`.
 
-      After defining the functions, add a demo section that calls each
-      one and prints the results.
-
-      ```bash
-      chmod +x toolkit.sh
-      ./toolkit.sh
-      ```
+      Write a small script below the functions to test them, ensuring they work!
     files:
       - path: "toolkit.sh"
         content: |
           #!/bin/bash
           set -e
-          # A small library of utility functions
-
+          
     open_file: "toolkit.sh"
     tests:
       - description: "Defines at least three functions"
         command: "[ $(grep -cE '^[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(\\)' toolkit.sh) -ge 3 ]"
       - description: "to_upper converts text to uppercase"
         command: "bash -c 'source toolkit.sh; to_upper hello' 2>/dev/null | grep -q 'HELLO' || bash toolkit.sh | grep -q 'HELLO'"
-      - description: "file_ext extracts extensions correctly"
-        command: "bash -c 'source toolkit.sh; file_ext report.pdf' 2>/dev/null | grep -q 'pdf' || bash toolkit.sh | grep -qi 'ext'"
       - description: "is_number succeeds for a valid integer"
         command: "bash -c 'source toolkit.sh; is_number 42'"
-      - description: "is_number fails for non-numeric input"
-        command: "! bash -c 'source toolkit.sh; is_number abc'"
       - description: "Uses 'local' for variable scoping"
         command: "grep -q 'local ' toolkit.sh"
 
@@ -879,7 +668,7 @@ steps:
             - "It allows the function to accept more than 9 arguments"
             - "It makes the function available to child processes (subshells)"
           correct_index: 1
-          explanation: "Without `local`, any variable set inside a function modifies the global scope. If a function uses a variable named `file` and the outer script also uses `file`, the function will overwrite it. `local` constrains the variable to the function's scope."
+          explanation: "Without `local`, any variable set inside a function modifies the global scope. `local` constrains the variable to the function's scope."
 
         - question: "A function `count_words` should return a number to the caller. Which is the correct Bash pattern?"
           options:
@@ -888,245 +677,52 @@ steps:
             - "Use `return 42` and read it from `$?` with `result=$?`"
             - "Assign directly to a global variable inside the function"
           correct_index: 1
-          explanation: "In Bash, `return` only carries exit codes (0–255). To pass **data** back, the function should `echo` the value and the caller captures it with `$(...)`. `$?` gets the exit status (success/failure), not arbitrary data."
-
-        - question: "Which statements about Bash functions are correct? (Select all that apply)"
-          type: multiple
-          options:
-            - "Functions receive their own `$1`, `$2`, ... independently of the script's arguments"
-            - "A function can be used directly in an `if` statement based on its exit code"
-            - "Functions must be defined before they are called"
-            - "The `return` keyword can pass any string value back to the caller"
-          correct_indices:
-            - 0
-            - 1
-            - 2
-          explanation: "Functions have their own positional parameter space (`$1`, `$2` inside the function are the function's arguments). Their exit code works in `if` statements. They must be defined before being called. `return` only passes integer exit codes (0–255), not strings — use `echo` + `$()` for string return values."
-
-  - title: "Text Processing — grep, sed, and awk"
-    instructions: |
-      Three tools handle most text-processing work in shell scripts.
-      Knowing when to reach for each one is the key skill.
-
-      ### Choosing the right tool
-
-      | Tool | Best for |
-      |------|----------|
-      | `grep` | Selecting lines that match a pattern |
-      | `sed` | Transforming text (find & replace, delete lines) |
-      | `awk` | Structured data: columns, math, aggregation |
-
-      A useful heuristic: **grep** to filter rows, **sed** to edit them,
-      **awk** to compute across them.
-
-      ### grep — search for patterns
-
-      ```bash
-      grep "pattern" file          # Lines matching pattern
-      grep -i "pattern" file       # Case-insensitive
-      grep -c "pattern" file       # Count of matching lines
-      grep -v "pattern" file       # Lines NOT matching (invert)
-      grep -E "pat1|pat2" file     # Extended regex: OR
-      ```
-
-      ### sed — stream editor
-
-      ```bash
-      sed 's/old/new/' file        # Replace first match per line
-      sed 's/old/new/g' file       # Replace ALL matches (global flag)
-      sed '/pattern/d' file        # Delete matching lines
-      sed -n '5,10p' file          # Print only lines 5–10
-      ```
-
-      The `s/old/new/` syntax is a substitution expression. The `/`
-      characters are delimiters — you can use any character if your
-      pattern contains `/`: e.g. `s|/old/path|/new/path|`.
-
-      ### awk — column-oriented processing
-
-      awk splits each line into fields (`$1`, `$2`, ...) and lets you
-      run a program on each one:
-
-      ```bash
-      awk '{print $1}' file              # First field of every line
-      awk -F, '{print $2}' file.csv      # Comma-delimited: field 2
-      awk '$3 == 404 {print $2}' file    # Print field 2 where field 3 is 404
-      awk '{sum += $4} END {print sum / NR}' file  # Average of field 4
-      ```
-
-      The `END` block runs once after all lines — useful for totals and
-      averages. `NR` is the total number of records (lines) processed.
-
-      ### Your task
-
-      `access.log` is provided. Write `log_analysis.sh` that:
-
-      1. Prints the total number of requests.
-      2. Shows the count of each HTTP method (GET, POST, etc.) —
-         hint: `awk '{print $1}' | sort | uniq -c`
-      3. Lists all unique URLs that returned a 404 —
-         hint: `awk '$3 == 404 {print $2}'`
-      4. Calculates the average response time from the last column —
-         hint: strip the `ms` suffix with `sed 's/ms//'` before summing.
-
-      ```bash
-      chmod +x log_analysis.sh
-      ./log_analysis.sh
-      ```
-    files:
-      - path: "access.log"
-        content: |
-          GET /index.html 200 12ms
-          POST /api/login 200 85ms
-          GET /about.html 200 8ms
-          GET /api/users 500 340ms
-          POST /api/data 201 120ms
-          GET /missing-page 404 3ms
-          GET /index.html 200 10ms
-          DELETE /api/users/5 200 45ms
-          GET /old-link 404 2ms
-          POST /api/login 401 30ms
-          GET /api/users 200 55ms
-          PUT /api/users/3 200 90ms
-          GET /favicon.ico 404 1ms
-          GET /index.html 304 5ms
-          POST /api/upload 413 15ms
-      - path: "log_analysis.sh"
-        content: |
-          #!/bin/bash
-          set -e
-          # Analyze access.log using grep, sed, and awk
-
-          log="access.log"
-
-    open_file: "log_analysis.sh"
-    tests:
-      - description: "Reports total request count (15)"
-        command: "bash log_analysis.sh | grep -qE '15|[Tt]otal.*1[0-9]'"
-      - description: "Shows HTTP method counts (GET appears 8 times)"
-        command: "bash log_analysis.sh | grep -qE 'GET.*8|8.*GET'"
-      - description: "Lists 404 URLs"
-        command: "bash log_analysis.sh | grep -q 'missing-page'"
-      - description: "Calculates an average response time"
-        command: "bash log_analysis.sh | grep -qiE 'average|avg|mean'"
-      - description: "Script uses at least two of: grep, sed, awk"
-        command: "tools=0; grep -q 'grep' log_analysis.sh && tools=$((tools+1)); grep -q 'sed' log_analysis.sh && tools=$((tools+1)); grep -q 'awk' log_analysis.sh && tools=$((tools+1)); [ $tools -ge 2 ]"
-
-    quiz:
-      title: "Text Processing — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "You want to replace ALL occurrences of `http` with `https` in a file. Which `sed` command is correct?"
-          options:
-            - "`sed 's/http/https/' file`"
-            - "`sed 's/http/https/g' file`"
-            - "`sed '/http/https/' file`"
-            - "`sed 'r/http/https/' file`"
-          correct_index: 1
-          explanation: "Without the `g` (global) flag, `sed 's/old/new/'` replaces only the **first** occurrence per line. The `g` flag makes it replace **all** occurrences on each line."
-
-        - question: "In `awk '{sum += $4} END {print sum / NR}' file`, what does `NR` represent?"
-          options:
-            - "The number of fields in the current record"
-            - "The total number of records (lines) processed by awk"
-            - "The current record (line) number being processed"
-            - "A user-defined variable for counting"
-          correct_index: 1
-          explanation: "`NR` (Number of Records) is awk's built-in variable for the **total lines processed so far**. In the `END` block, it equals the total line count. `NF` is the number of fields. `NR` in the `END` block is commonly used for averages."
-
-        - question: "Which tool should you choose for each task? (Select all correct tool–task pairs)"
-          type: multiple
-          options:
-            - "`grep` — selecting log lines that match a pattern"
-            - "`sed` — replacing all occurrences of a string across a file"
-            - "`awk` — summing a numeric column and computing averages"
-            - "`grep` — splitting each line by delimiter and doing math on column values"
-          correct_indices:
-            - 0
-            - 1
-            - 2
-          explanation: "`grep` filters rows; `sed` transforms text (find/replace, delete lines); `awk` processes **structured data** with columns, math, and aggregation. Using `grep` for column math would be very awkward — `awk` is the right tool for that."
+          explanation: "In Bash, `return` only carries exit codes (0–255). To pass **data** back, the function should `echo` the value and the caller captures it with `$(...)`."
 
   - title: "Case Statements & Exit Codes"
     instructions: |
       ### case — readable multi-way branching
 
       When you need to check one variable against many possible values,
-      a chain of `if/elif` becomes hard to scan. `case` is cleaner:
+      `case` is cleaner than `if/elif`:
 
       ```bash
       case "$input" in
           start)   echo "Starting..."  ;;
           stop)    echo "Stopping..."  ;;
-          restart) echo "Restarting..." ;;
           *)       echo "Unknown: $input" ;;
-      esac
-      ```
-
-      Each branch ends with `;;`. The `*` pattern is the catch-all default.
-      `esac` is `case` spelled backwards — a quirky Bash tradition.
-
-      `case` also supports glob patterns in branches:
-
-      ```bash
-      case "$filename" in
-          *.sh)       echo "Shell script" ;;
-          *.py)       echo "Python file"  ;;
-          *.txt|*.md) echo "Text file"    ;;
       esac
       ```
 
       ### Exit codes: the language of success and failure
 
       Every command exits with a number. **0 always means success**; any
-      other value means failure. This is the opposite of most programming
-      languages (where 0 is falsy) — it trips people up at first.
+      other value means failure. 
 
       ```bash
       exit 0    # success
       exit 1    # general error
-      exit 2    # misuse / wrong arguments (a common convention)
-      ```
-
-      Exit codes are what make scripts composable. Other scripts and CI
-      systems check your exit code to decide what to do next:
-
-      ```bash
-      if ./health_check.sh logfile.txt; then
-          echo "All clear"
-      else
-          echo "Problems found"
-      fi
+      exit 2    # misuse / wrong arguments
       ```
 
       ### Your task
 
-      Write `service.sh` — a simulated service controller. Use functions
-      for the `start`, `stop`, and `status` logic, then dispatch with
-      a `case` statement on `$1`.
-
+      Write `service.sh` — a simulated service controller. 
+      Use a `case` statement to check the first argument `$1`.
+      
       **Requirements:**
-      - `start` — prints `Starting service...`, exits 0.
-      - `stop` — prints `Stopping service...`, exits 0.
-      - `status` — checks if `/tmp/my_service.pid` exists.
-        If yes: `Service is running`, exit 0.
-        If no: `Service is stopped`, exit 1.
-      - `restart` — calls your stop and start functions.
-      - No input or unknown input — print usage to stderr, exit 2.
+      - If `start` — print `Starting service...`, exit 0.
+      - If `stop` — print `Stopping service...`, exit 0.
+      - If `status` — check if `/tmp/my_service.pid` exists (`-f`).
+        If yes: print `Service is running`, exit 0.
+        If no: print `Service is stopped`, exit 1.
+      - Anything else (or empty) — print usage instructions to stderr (`>&2`) and exit 2.
 
-      ```bash
-      chmod +x service.sh
-      ./service.sh start
-      ./service.sh status
-      ./service.sh        # should print usage
-      ```
     files:
       - path: "service.sh"
         content: |
           #!/bin/bash
           set -e
-          # A service controller using case and exit codes
 
     open_file: "service.sh"
     tests:
@@ -1134,14 +730,10 @@ steps:
         command: "bash service.sh 2>&1 >/dev/null | grep -qi 'usage' && exit_code=0; bash service.sh 2>/dev/null; exit_code=$?; [ $exit_code -eq 2 ]"
       - description: "'start' prints a start message and exits 0"
         command: "bash service.sh start | grep -qi 'start'"
-      - description: "'stop' prints a stop message and exits 0"
-        command: "bash service.sh stop | grep -qi 'stop'"
       - description: "'status' reports whether the service is running or stopped"
         command: "bash service.sh status 2>&1 | grep -qiE 'running|stopped'"
       - description: "Script uses a case statement"
         command: "grep -q 'case' service.sh && grep -q 'esac' service.sh"
-      - description: "'restart' calls both stop and start logic"
-        command: "bash service.sh restart | grep -qiE 'restart|stop.*start|start'"
 
     quiz:
       title: "Case Statements & Exit Codes — Knowledge Check"
@@ -1155,7 +747,7 @@ steps:
             - "It is a syntax error — `case` does not support wildcards"
             - "It matches the empty string only"
           correct_index: 1
-          explanation: "`*` in a `case` branch acts as a **catch-all default**, matching any value that didn't match the earlier patterns. It is conventionally placed last to handle unexpected or missing input gracefully."
+          explanation: "`*` in a `case` branch acts as a **catch-all default**, matching any value that didn't match the earlier patterns."
 
         - question: "What is the universal meaning of **exit code 0** in Unix/Linux?"
           options:
@@ -1164,267 +756,11 @@ steps:
             - "The script exited before finishing all commands"
             - "Zero is falsy — it means the condition was false"
           correct_index: 1
-          explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This is the *opposite* of most programming languages where 0 is falsy. Bash `if` treats exit code 0 as 'true' and non-zero as 'false', which is why `if command; then ...` works directly."
-
-        - question: "Why are exit codes important for script composability? (Select all that apply)"
-          type: multiple
-          options:
-            - "CI/CD systems check exit codes to decide whether a build passed or failed"
-            - "Another script can call your script in an `if` statement and branch based on success/failure"
-            - "A non-zero exit code automatically sends an email notification to the developer"
-            - "Pipelines and tools like `make` stop processing when a command exits non-zero"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "Exit codes are the **language of success and failure** in shell scripting. CI/CD pipelines, Makefiles, and caller scripts all rely on exit codes to chain work correctly. There is no automatic email — that's a separate mechanism."
-
-  - title: "Wildcards, Expansion & Regular Expressions"
-    instructions: |
-      The shell expands patterns *before* commands ever run. Understanding
-      this explains many surprising behaviors.
-
-      ### Globs vs. regular expressions — a common source of confusion
-
-      These look similar but work in completely different contexts:
-
-      | Feature | Globs | Regular Expressions |
-      |---------|-------|---------------------|
-      | Used by | Shell, `ls`, `cp`, `for` loops | `grep -E`, `sed`, `awk` |
-      | `*` means | Any string of characters | Zero or more of the preceding |
-      | `.` means | A literal dot | Any single character |
-      | `+` means | A literal `+` | One or more of the preceding |
-
-      **Key insight:** globs match *filenames* in the shell before the
-      command runs. Regexes match *text content* inside a running program.
-
-      ### Glob patterns (file matching)
-
-      ```bash
-      *.sh          # any filename ending in .sh
-      file?.txt     # file1.txt, fileA.txt (exactly one character)
-      [0-9]*        # anything starting with a digit
-      ```
-
-      If no files match a glob, the shell passes the literal pattern
-      string to the command — usually causing a "file not found" error.
-
-      ### Brace expansion
-
-      Brace expansion generates lists and happens before glob expansion.
-      It does not require matching files to exist:
-
-      ```bash
-      echo {A,B,C}              # → A B C
-      echo file{1..5}.txt       # → file1.txt file2.txt ... file5.txt
-      mkdir -p project/{src,tests,docs}   # three directories at once
-      ```
-
-      ### Regular expressions in grep
-
-      | Pattern | Meaning |
-      |---------|---------|
-      | `.` | Any single character |
-      | `+` | One or more of the preceding |
-      | `^` | Start of line |
-      | `$` | End of line |
-      | `[0-9]{3}` | Exactly 3 digits |
-      | `4[0-9]{2}` | 4xx (any 3-digit number starting with 4) |
-
-      ### Your task
-
-      Write `organizer.sh` that:
-
-      1. Creates test files using brace expansion:
-         `touch report_{jan,feb,mar}.csv log_{jan,feb,mar}.txt notes.md`
-      2. Uses a `for` loop with a glob to list all `.csv` files.
-      3. Uses `grep -E` on `access.log` to print lines where the URL
-         starts with `/api/`.
-      4. Uses `grep -E` on `access.log` to print lines with 4xx status
-         codes (hint: `4[0-9]{2}`).
-      5. Cleans up the test files with `rm` at the end.
-
-      ```bash
-      chmod +x organizer.sh
-      ./organizer.sh
-      ```
-    files:
-      - path: "organizer.sh"
-        content: |
-          #!/bin/bash
-          set -e
-          # Practice with wildcards, brace expansion, and regex
-
-    open_file: "organizer.sh"
-    tests:
-      - description: "Script uses brace expansion to create files"
-        command: "grep -qE '\\{.*,.*\\}' organizer.sh"
-      - description: "Script uses a glob pattern (e.g., *.csv)"
-        command: "grep -qE '\\*\\.' organizer.sh"
-      - description: "Script finds /api/ URLs in access.log"
-        command: "bash organizer.sh | grep -q '/api/'"
-      - description: "Script identifies 4xx status codes"
-        command: "bash organizer.sh | grep -qE '4[0-9]{2}|404|401|413'"
-      - description: "Script cleans up after itself"
-        command: "bash organizer.sh && ! ls report_jan.csv 2>/dev/null"
-
-    quiz:
-      title: "Wildcards, Expansion & Regex — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "In the glob pattern `file?.txt`, what does `?` match?"
-          options:
-            - "Zero or more of any character"
-            - "Exactly one of any character"
-            - "A literal question mark"
-            - "Any digit from 0 to 9"
-          correct_index: 1
-          explanation: "In **glob patterns**, `?` matches exactly **one** of any character. So `file?.txt` matches `file1.txt`, `fileA.txt`, `file_.txt`, but NOT `file10.txt`. Compare this to regex where `?` means 'zero or one of the preceding'."
-
-        - question: "What is the key difference between a **glob** and a **regular expression**?"
-          options:
-            - "Globs are faster; regular expressions are more accurate"
-            - "Globs match filenames in the shell before commands run; regex matches text content inside running programs"
-            - "Globs support `|` for OR matching; regular expressions do not"
-            - "Globs are used by `grep`; regular expressions are used by the shell's `for` loops"
-          correct_index: 1
-          explanation: "**Globs** are expanded by the shell to match filenames before the command runs. **Regular expressions** are patterns interpreted by programs like `grep`, `sed`, and `awk` to match text content. They look similar but have different syntax and different contexts."
-
-        - question: "Which statements about brace expansion are correct? (Select all that apply)"
-          type: multiple
-          options:
-            - "Brace expansion does not require matching files to exist"
-            - "`mkdir project/{src,tests,docs}` creates three directories in one command"
-            - "`echo file{1..5}.txt` generates `file1.txt file2.txt file3.txt file4.txt file5.txt`"
-            - "Brace expansion is processed after glob expansion"
-          correct_indices:
-            - 0
-            - 1
-            - 2
-          explanation: "Brace expansion **generates text** without checking the filesystem — it works even for non-existent paths. It is processed **before** glob expansion in the shell's expansion order, making it useful for creating multiple directories or files at once."
-
-  - title: "Process Substitution & Advanced Pipes"
-    instructions: |
-      You now have all the core building blocks. These final exercises
-      give you less scaffolding — focus on designing the solution before
-      writing any code.
-
-      ### Process substitution `<(...)`
-
-      Some commands expect filenames, not pipes. Process substitution
-      makes the output of a command look like a file:
-
-      ```bash
-      diff file1.txt file2.txt                       # compare two files
-      diff <(sort file1.txt) <(sort file2.txt)       # compare sorted versions
-      ```
-
-      Without process substitution, you would create two temporary files,
-      sort into them, diff them, then delete them. Process substitution
-      handles all of that automatically.
-
-      ### tee — split a stream in two
-
-      `tee` writes its input to a file *and* passes it through to stdout:
-
-      ```bash
-      grep "ERROR" server_log.txt | tee errors.txt | wc -l
-      #                             ↑ saves to file  ↑ also counts
-      ```
-
-      Useful when you want to save an intermediate result for debugging
-      without breaking the pipeline.
-
-      ### Reading diff output
-
-      When `diff` compares two inputs, lines prefixed with `<` come from
-      the first source, and lines prefixed with `>` come from the second.
-      This tells you which entries are unique to each side.
-
-      ### Your task
-
-      Write `compare_logs.sh` that accepts two log filenames as arguments:
-
-      1. Validate both files exist (exit with an error if not).
-      2. Print the line count of each file.
-      3. Use process substitution with `diff` to compare the **sorted,
-         unique error messages** from each file. Extract just the message
-         text (everything after the log level keyword).
-      4. Summarize which errors appear only in file 1 and only in file 2.
-
-      `server_log2.txt` is provided for testing:
-
-      ```bash
-      chmod +x compare_logs.sh
-      ./compare_logs.sh server_log.txt server_log2.txt
-      ```
-    files:
-      - path: "server_log2.txt"
-        content: |
-          09:01:00 INFO server started on port 8080
-          09:02:15 ERROR failed to process request /api/users
-          09:05:30 ERROR disk full on /var/log
-          09:06:00 WARN high memory usage detected (85%)
-          09:08:12 ERROR authentication service unreachable
-          09:10:00 INFO health check passed
-      - path: "compare_logs.sh"
-        content: |
-          #!/bin/bash
-          set -e
-          # Compare error messages between two log files
-
-    open_file: "compare_logs.sh"
-    tests:
-      - description: "Exits with error if fewer than 2 arguments"
-        command: "! bash compare_logs.sh 2>/dev/null"
-      - description: "Reports line counts for both files"
-        command: "bash compare_logs.sh server_log.txt server_log2.txt 2>&1 | grep -qE '[0-9]+ lines|[0-9]+.*line'"
-      - description: "Uses process substitution <(...)"
-        command: "grep -q '<(' compare_logs.sh"
-      - description: "Identifies differences between the two logs"
-        command: "bash compare_logs.sh server_log.txt server_log2.txt 2>&1 | grep -qiE 'unique|only|diff|disk full|timeout|connection'"
-
-    quiz:
-      title: "Process Substitution & Advanced Pipes — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "You want to compare two **sorted** versions of files without creating temporary files. Which command is correct?"
-          options:
-            - "`sort file1.txt > /tmp/a && sort file2.txt > /tmp/b && diff /tmp/a /tmp/b`"
-            - "`diff <(sort file1.txt) <(sort file2.txt)`"
-            - "`sort file1.txt | diff file2.txt`"
-            - "`diff $(sort file1.txt) $(sort file2.txt)`"
-          correct_index: 1
-          explanation: "**Process substitution** `<(cmd)` makes the output of a command appear as a virtual file. `diff` expects file arguments, so `diff <(sort file1.txt) <(sort file2.txt)` passes two sorted streams directly without creating temporary files."
-
-        - question: "In the pipeline `grep 'ERROR' server_log.txt | tee errors.txt | wc -l`, what does `tee` do?"
-          options:
-            - "It splits the pipeline into two parallel streams"
-            - "It writes the stream to `errors.txt` AND passes it through to `wc -l`"
-            - "It counts lines and saves them to `errors.txt`"
-            - "It filters duplicates between the two outputs"
-          correct_index: 1
-          explanation: "`tee` reads stdin and writes it to **both** a file and stdout simultaneously. This lets you save intermediate results for debugging without breaking the pipeline — the data continues flowing to the next command unchanged."
-
-        - question: "Which describe correct use cases for `tee` and process substitution? (Select all that apply)"
-          type: multiple
-          options:
-            - "Using `tee` to save a pipeline's intermediate result while continuing to process it"
-            - "Using `<(cmd)` to pass command output as a filename argument to tools that don't accept stdin"
-            - "Using `tee` to simultaneously write output to two different files: `cmd | tee file1 | tee file2`"
-            - "Using `$(cmd)` instead of `<(cmd)` when the receiving command expects a filename argument"
-          correct_indices:
-            - 0
-            - 1
-            - 2
-          explanation: "`tee` can chain: `cmd | tee file1 | tee file2 > file3` writes to multiple files. `<(cmd)` is for tools expecting filenames. `$(cmd)` captures output as a *string* — it won't work when a real file descriptor is needed (like with `diff`)."
+          explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This is the *opposite* of most programming languages."
 
   - title: "Build a Log Monitor"
     instructions: |
-      Time to combine everything into a real tool. No starter code —
-      design the script yourself.
+      Time to combine everything into a real tool. This is a **retrieval practice** exercise: you have all the knowledge, now you must retrieve it from memory and synthesize it.
 
       ### Challenge
 
@@ -1433,44 +769,33 @@ steps:
 
       **Requirements:**
 
-      1. Accept an optional filename argument (default: `server_log.txt`).
-         Validate it exists.
-      2. Print a header: `=== Log Monitor Report ===`
-      3. **Summary section:**
-         - Total entries
-         - Count per log level (INFO, WARN, ERROR)
-         - Time range (first and last timestamp)
-      4. **Error details:** for each ERROR line, print the timestamp and
-         message in a readable format.
-      5. **Recommendations:** based on the data, print at least one
-         actionable recommendation (e.g., "High error rate — investigate
-         upstream services" if errors > 20% of total).
-      6. Exit with code 0 if no errors, code 1 if errors were found.
+      1. Accept an optional filename argument. If not provided, default to `server_log.txt`.
+      2. Validate that the file exists; if not, print to stderr and exit.
+      3. Print a header: `=== Log Monitor Report ===`
+      4. **Summary section:**
+         - Find the total number of entries
+         - Find the count of `ERROR` entries
+      5. **Error details:** Print the actual text of the lines containing `ERROR`.
+      6. Exit with code 0 if no errors are found, and code 1 if errors are present.
 
-      ### Design approach — plan before you code
-
-      Sketch your structure in comments first, then fill it in:
-
-      1. **What data do I need?** (counts, timestamps, error lines)
-      2. **Which tool extracts each piece?**
-         - `grep -c` for counts per level
-         - `head -1` / `tail -1` for first and last timestamps
-         - `grep "ERROR"` piped to `awk` or `cut` for error details
-         - `awk` for integer percentage: `$((errors * 100 / total))`
-      3. **What functions make sense?** e.g. `print_summary`,
-         `print_errors`, `print_recommendations`
+      ### Design Approach
+      Don't just write code immediately. In learning science, planning reduces cognitive load. 
+      Sketch your script out in comments first:
 
       ```bash
-      chmod +x monitor.sh
-      ./monitor.sh
+      # 1. Handle arguments and default file
+      # 2. Check if file exists
+      # 3. Print Header
+      # 4. Calculate counts using grep/wc
+      # ...
       ```
+      Once your structure is clear, write the bash code.
     files:
       - path: "monitor.sh"
         content: |
           #!/bin/bash
           set -e
-          # Log monitoring tool — design and implement from scratch
-
+          
     open_file: "monitor.sh"
     tests:
       - description: "Script is executable"
@@ -1479,16 +804,12 @@ steps:
         command: "bash monitor.sh 2>&1 | grep -qi 'log monitor\\|report'"
       - description: "Shows total entry count"
         command: "bash monitor.sh 2>&1 | grep -qE '15|[Tt]otal'"
-      - description: "Shows per-level counts (INFO, WARN, ERROR)"
-        command: "bash monitor.sh 2>&1 | grep -qi 'INFO' && bash monitor.sh 2>&1 | grep -qi 'ERROR'"
+      - description: "Shows ERROR count"
+        command: "bash monitor.sh 2>&1 | grep -qi 'ERROR'"
       - description: "Displays error details"
         command: "bash monitor.sh 2>&1 | grep -qE 'timeout|upstream|memory|failed'"
-      - description: "Includes a recommendation"
-        command: "bash monitor.sh 2>&1 | grep -qiE 'recommend|suggest|investigate|action|consider'"
       - description: "Exits with code 1 when errors are present"
         command: "bash monitor.sh; [ $? -eq 1 ]"
-      - description: "Uses functions to organize code"
-        command: "[ $(grep -cE '^[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(\\)' monitor.sh) -ge 2 ]"
 
     quiz:
       title: "Build a Log Monitor — Knowledge Check"
@@ -1498,11 +819,11 @@ steps:
         - question: "When designing a multi-function shell script, why should you sketch the structure in comments before writing code?"
           options:
             - "Comments run faster than code, so it helps with performance profiling"
-            - "It forces you to clarify what data you need, which tool extracts each piece, and how functions divide responsibilities — before getting lost in syntax"
+            - "It forces you to clarify what data you need, reducing cognitive load before getting lost in syntax"
             - "Bash requires a comment block at the start of every script for the interpreter"
             - "It automatically generates documentation that tools like `man` can display"
           correct_index: 1
-          explanation: "Planning in comments first helps you **think at the design level**: what data do I need, which command extracts it, how should functions be divided. Starting with code immediately often leads to tangled, hard-to-debug scripts. Good engineers design before they implement."
+          explanation: "Planning in comments first helps manage cognitive load by letting you think at the design level before dealing with syntax implementation."
 
         - question: "Your log monitor should exit with code 1 when errors are found, and 0 when clean. Why does this matter?"
           options:
@@ -1511,98 +832,4 @@ steps:
             - "Bash's `set -e` requires a non-zero exit when variables are unset"
             - "Exit code 1 is required for scripts that print to stderr"
           correct_index: 1
-          explanation: "Meaningful exit codes make scripts **composable**: a CI pipeline can run `./monitor.sh || alert_team` and automatically trigger an alert on failure. This is the Unix philosophy applied to scripts — small tools that chain together through exit codes."
-
-        - question: "Which design principles lead to a well-structured, maintainable shell script? (Select all that apply)"
-          type: multiple
-          options:
-            - "Use functions to group related logic (e.g., `print_summary`, `print_errors`)"
-            - "Validate all inputs at the start and exit early with clear error messages"
-            - "Write all logic in one long sequence without functions to avoid function call overhead"
-            - "Use meaningful variable names and `local` to prevent scope pollution"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "Good shell scripts use **functions** for modularity, **early validation** for robustness, and **`local` variables** to prevent scope leakage. Putting everything in a flat sequence makes scripts hard to test, debug, and extend."
-
-  - title: "Capstone — System Health Dashboard"
-    instructions: |
-      You have learned variables, quoting, pipes, conditionals, loops,
-      functions, text processing, and exit codes. Now combine them all
-      into a production-quality tool.
-
-      ### The challenge
-
-      Build `dashboard.sh` — a system health dashboard that gathers
-      information and produces a formatted report. **No starter code.
-      No hints. Design it yourself.**
-
-      ### Parsing flags — the while/case pattern
-
-      Real command-line tools accept flags like `-f file` and `-o output`.
-      The idiomatic Bash pattern uses a `while` loop with `case`:
-
-      ```bash
-      while [ $# -gt 0 ]; do
-          case "$1" in
-              -f) logfile="$2"; shift 2 ;;
-              -o) outfile="$2"; shift 2 ;;
-              -h) usage; exit 0 ;;
-              *)  echo "Unknown option: $1" >&2; exit 2 ;;
-          esac
-      done
-      ```
-
-      `shift N` discards the first N positional parameters, sliding
-      subsequent arguments into `$1`, `$2`, etc. for the next iteration.
-
-      ### Minimum requirements
-
-      1. A `usage()` function printed with `-h`.
-      2. Flag parsing: `-f <logfile>`, `-o <outfile>`, `-h`.
-      3. **System info section:** hostname, current date/time, disk usage.
-      4. **Log analysis section:**
-         - Entry counts per level (INFO, WARN, ERROR)
-         - Top 3 most frequent messages (strip timestamps)
-         - Error rate as a percentage
-      5. **Health verdict:**
-         - `HEALTHY` — 0 errors (exit 0)
-         - `DEGRADED` — error rate < 30% (exit 1)
-         - `CRITICAL` — error rate ≥ 30% (exit 2)
-      6. If `-o` is given, write the report to that file; otherwise
-         print to stdout.
-
-      ```bash
-      chmod +x dashboard.sh
-      ./dashboard.sh
-      ./dashboard.sh -f server_log.txt -o report.txt
-      cat report.txt
-      ```
-    files:
-      - path: "dashboard.sh"
-        content: |
-          #!/bin/bash
-          set -e
-          # System health dashboard — your capstone project
-
-    open_file: "dashboard.sh"
-    tests:
-      - description: "-h flag shows usage information"
-        command: "bash dashboard.sh -h 2>&1 | grep -qiE 'usage|help'"
-      - description: "Displays hostname or system info"
-        command: "bash dashboard.sh 2>&1 | grep -qiE 'host|system|$(hostname)'"
-      - description: "Shows log level counts"
-        command: "bash dashboard.sh 2>&1 | grep -qiE 'INFO.*[0-9]|ERROR.*[0-9]|WARN.*[0-9]'"
-      - description: "Calculates and displays error rate"
-        command: "bash dashboard.sh 2>&1 | grep -qiE '[0-9]+.*%|percent|rate'"
-      - description: "Reports a health verdict (HEALTHY, DEGRADED, or CRITICAL)"
-        command: "bash dashboard.sh 2>&1 | grep -qiE 'healthy|degraded|critical'"
-      - description: "-o flag writes output to a file"
-        command: "bash dashboard.sh -o /tmp/test_report_$$.txt && [ -f /tmp/test_report_$$.txt ] && rm /tmp/test_report_$$.txt"
-      - description: "Script uses functions for organization"
-        command: "[ $(grep -cE '^[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(\\)' dashboard.sh) -ge 3 ]"
-      - description: "Script parses flags with a while loop and case"
-        command: "grep -q 'while' dashboard.sh && grep -q 'case' dashboard.sh"
-      - description: "Exit code reflects health status"
-        command: "code=0; bash dashboard.sh >/dev/null 2>&1 || code=$?; [ $code -le 2 ]"
+          explanation: "Meaningful exit codes make scripts **composable**: a CI pipeline can run `./monitor.sh || alert_team` and automatically trigger an alert on failure."
