@@ -4,20 +4,20 @@ description: "Master shell scripting through hands-on exercises in an interactiv
 steps:
   - title: "Hello, Shell!"
     instructions: |
-      Welcome to the **Shell Scripting Tutorial**! On the left is a code
-      editor; on the right is a real Linux terminal. Files you save in the
-      editor are synced to `/tutorial/` on the VM.
+      Welcome to the **Shell Scripting Tutorial**! On the top is a code
+      editor; on the bottom is a real Linux terminal. 
 
-      ### Why shell scripting?
+      ### Why learn shell scripting?
 
-      Every time you repeat a task in the terminal — renaming files, checking
-      server logs, running builds — you are a candidate for automation. A
+      Every time you repeat a task in the terminal — processing files, checking
+      log files, running complex builds — you are a candidate for automation. A
       shell script captures those commands in a file so you can re-run,
-      share, and schedule them without retyping anything.
+      share, and schedule them without retyping anything.  So learning shell scripting can supercharge your productivity as a developer.
 
-      Shell scripts are the foundation of CI/CD pipelines, Docker
-      entrypoints, deployment scripts, and system administration. The skills
-      you learn here transfer directly to real production workflows.
+      Shell scripts are the foundation of Continuous Integration / Continuous
+      Delivery (CI/CD) pipelines, Docker entrypoints, deployment scripts,
+      and system administration. The skills you learn here transfer directly
+      to real production workflows.
 
       ### Two lines every script needs
 
