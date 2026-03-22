@@ -95,6 +95,10 @@ steps:
       Now let's create our first Python file. A file in your working
       directory starts as **untracked** — Git doesn't know about it yet.
 
+      > **Before you run:** You've saved `calculator.py` to disk but haven't
+      > told Git about it yet. Will `git status` show it as *tracked* or
+      > *untracked*? What color do you expect? Form your answer, then run:
+
       ### Task 1: Create a file and check status
 
       The editor shows `calculator.py` — a simple calculator module.
@@ -198,6 +202,11 @@ steps:
       The file is tracked, but your new changes haven't been staged yet.
 
       ### Task 2: See exactly what changed
+
+      > **Before you run:** `git diff` compares two areas. You've modified
+      > `calculator.py` but haven't staged it yet. Which two areas will it
+      > compare — working directory vs. staging area, or staging area vs. last
+      > commit? Will your new `multiply` function appear with a `+` or `-`?
 
       Before staging, review your changes:
 
@@ -507,7 +516,7 @@ steps:
       ```
 
       Press `q` to exit. Each entry shows:
-      - **Commit hash** — a unique 40-character ID (SHA-1) for this snapshot
+      - **Commit hash** — a unique 40-character ID for this snapshot (SHA-1 today; Git is actively migrating to SHA-256 to address hash-collision vulnerabilities)
       - **Author** — who made the commit
       - **Date** — when it was made
       - **Message** — what it describes
@@ -596,11 +605,11 @@ steps:
       ### Task 2: Create and switch to a new branch
 
       ```bash
-      git checkout -b feature-divide
+      git switch -c feature-divide
       ```
 
       This creates a new branch called `feature-divide` and switches to it.
-      (`-b` means "create the branch"). Run `git branch` to confirm you're
+      (`-c` means "create the branch"). Run `git branch` to confirm you're
       on the new branch.
 
       ### Task 3: Make changes on the feature branch
@@ -625,8 +634,12 @@ steps:
 
       ### Task 4: Switch back to main
 
+      > **Before you run:** When you switch back to `main`, will the `divide`
+      > function still be visible in `calculator.py`? Why or why not? Think
+      > about what a branch pointer actually represents, then check your answer.
+
       ```bash
-      git checkout main
+      git switch main
       ```
 
       Now look at `calculator.py` in the terminal:
@@ -642,11 +655,56 @@ steps:
       Switch back to see it again:
 
       ```bash
-      git checkout feature-divide
+      git switch feature-divide
       cat calculator.py
       ```
 
       The function is back. Each branch is a separate timeline.
+
+      ### Task 5: See the branch pointer yourself
+
+      A branch is not a copy of your project — it's a 41-byte text file
+      containing a single commit hash. Prove it:
+
+      ```bash
+      cat .git/refs/heads/main
+      cat .git/refs/heads/feature-divide
+      ```
+
+      Each file contains the SHA of the commit that branch currently points to.
+      Now inspect `HEAD` itself:
+
+      ```bash
+      cat .git/HEAD
+      ```
+
+      You'll see `ref: refs/heads/feature-divide` — HEAD is a *symbolic
+      reference* that points to a branch pointer, not directly to a commit.
+      When you make a commit, Git moves the branch pointer forward and HEAD
+      follows automatically.
+
+      ### Task 6: Inspecting individual commits (Detached HEAD)
+
+      Sometimes you need to inspect an old commit without being on any branch.
+      Use `--detach` with a commit hash or relative reference:
+
+      ```bash
+      git switch --detach HEAD~1
+      cat .git/HEAD
+      ```
+
+      Now `HEAD` contains a raw SHA hash instead of a branch ref — this is
+      **detached HEAD state**. You can look around freely, but:
+
+      **Warning:** Any commits you make here are not anchored to any branch.
+      If you switch away without creating a new branch first, those commits
+      become orphaned and will eventually be garbage-collected by Git.
+
+      Always return to a branch before doing real work:
+
+      ```bash
+      git switch feature-divide
+      ```
 
     watch_files:
       - "myproject/calculator.py"
@@ -658,6 +716,8 @@ steps:
         command: "cd /tutorial/myproject && git show feature-divide:calculator.py | grep -q 'def divide'"
       - description: "The divide function has been committed on feature-divide"
         command: "cd /tutorial/myproject && git log feature-divide --oneline | grep -qi 'divide'"
+      - description: "Currently on feature-divide branch (not in detached HEAD)"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
 
   # --------------------------------------------------------------------------
   # STEP 9: Merging — fast-forward and three-way merge
@@ -667,28 +727,57 @@ steps:
       ### Integrating your work
 
       When a feature is complete, you merge it back into the main branch.
-      This combines the histories of both branches.
+      Git has two strategies depending on the history.
+
+      **Fast-forward merge** — when `main` has no new commits since the branch
+      was created, Git simply slides the `main` pointer forward. No merge
+      commit is created; the history stays linear:
 
       ```
-      Before merge:
+      Before:
 
-        main:            [C1] ← [C2] ← [C3]
-                                          \
-        feature-divide:                   [C4]  (divide function)
+        main:  [C1] ← [C2] ← [C3]
+                                ↑ main
+                                └── feature-divide: [C4]
 
-      After merge:
+      After fast-forward merge:
 
-        main:            [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
-                                          \     /
-        feature-divide:                   [C4]
+        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD (main, feature-divide)
       ```
+
+      **Three-way merge** — when both branches have diverged (each has new
+      commits the other doesn't), Git compares both branch tips against their
+      common ancestor and creates a new **merge commit** with two parents:
+
+      ```
+      Before:
+
+        main:           [C1] ← [C2] ← [C3] ← [C5]
+                                         \
+        feature:                          [C4]
+
+      After three-way merge:
+
+        main:           [C1] ← [C2] ← [C3] ← [C5] ← [M]  ← HEAD
+                                         \              ↑
+        feature:                          [C4] ─────────┘
+      ```
+
+      This is exactly what happened in Steps 10–11: both `main` and
+      `update-add-function` had diverging changes, so Git created a merge
+      commit. Understanding the difference matters later when you learn
+      `git rebase`, which replays commits to produce a clean linear history
+      instead of a merge commit.
+
+      The merge in this step will be a **fast-forward** since `main` has no
+      new commits since we branched off.
 
       ### Task 1: Switch to main and merge
 
       First, switch to the branch you want to merge **into** (main):
 
       ```bash
-      git checkout main
+      git switch main
       ```
 
       Now merge the feature branch:
@@ -728,7 +817,7 @@ steps:
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
       - description: "calculator.py on main has the divide function"
-        command: "cd /tutorial/myproject && git checkout main 2>/dev/null; grep -q 'def divide' calculator.py"
+        command: "cd /tutorial/myproject && git switch main 2>/dev/null; grep -q 'def divide' calculator.py"
       - description: "Merge commit or fast-forward is in the log"
         command: "cd /tutorial/myproject && git log main --oneline | grep -qi 'divide'"
 
@@ -750,7 +839,7 @@ steps:
       ### Task 1: Create a new branch and modify calculator.py
 
       ```bash
-      git checkout -b update-add-function
+      git switch -c update-add-function
       ```
 
       Now open `calculator.py` in the editor and **change the `add`
@@ -774,7 +863,7 @@ steps:
       ### Task 2: Switch back to main
 
       ```bash
-      git checkout main
+      git switch main
       ```
 
       Verify that main still has the **original** `add` function
@@ -815,8 +904,7 @@ steps:
       Make sure you're on main:
 
       ```bash
-      
-      git checkout main
+      git switch main
       ```
 
       Open `calculator.py` in the editor and change the `add` function to
@@ -902,7 +990,7 @@ steps:
       - "myproject/calculator.py"
 
     setup_commands:
-      - " cd /tutorial/myproject && git checkout main 2>/dev/null; true"
+      - " cd /tutorial/myproject && git switch main 2>/dev/null; true"
 
     tests:
       - description: "calculator.py has no conflict markers"
@@ -915,7 +1003,89 @@ steps:
         command: "cd /tutorial/myproject && grep -q 'print' calculator.py"
 
   # --------------------------------------------------------------------------
-  # STEP 12: Review and best practices
+  # STEP 12: Safe undo with git revert
+  # --------------------------------------------------------------------------
+  - title: "Safe Undo with git revert"
+    instructions: |
+      ### Undoing committed mistakes safely
+
+      `git restore` only works on uncommitted changes. What if you've already
+      committed a mistake — or even merged it into `main`? You need a
+      different tool: `git revert`.
+
+      `git revert` creates a **new commit** that applies the exact inverse of
+      a previous commit, neutralising its changes while keeping the full
+      history intact. Think of it like an accountant's ledger: instead of
+      erasing the wrong entry (forbidden), you write a new correcting entry
+      that cancels it out.
+
+      ```
+      Before revert:
+
+        main:  [C1] ← [C2] ← [C3]  ← HEAD
+                              (bad commit)
+
+      After git revert HEAD:
+
+        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
+                              (bad)   (anti-commit: undoes C3)
+      ```
+
+      Compare this to `git reset --hard`, which *destroys* commits by
+      moving the branch pointer backward — a sledgehammer approach that
+      is dangerous on any shared branch:
+
+      | Command | Effect | Safe on shared branches? |
+      |---|---|---|
+      | `git revert <hash>` | New commit that undoes the target | **Yes** |
+      | `git reset --hard <hash>` | Destroys commits, rewrites history | Never |
+
+      ### Task 1: Introduce a bug commit
+
+      ```bash
+      echo "print('debug: this should not be here')" >> calculator.py
+      git add calculator.py
+      git commit -m "Accidentally add debug print"
+      git log --oneline
+      ```
+
+      You can see the bad commit at the top of the log.
+
+      ### Task 2: Revert it
+
+      Undo the last commit safely:
+
+      ```bash
+      git revert HEAD --no-edit
+      ```
+
+      `--no-edit` accepts the default commit message without opening an
+      editor. Git creates a new commit that reverses the debug line.
+
+      ### Task 3: Verify the result
+
+      ```bash
+      git log --oneline
+      cat calculator.py
+      ```
+
+      You'll see **two new commits** in the log: the bad commit and the
+      revert commit. The debug line is gone from the file, but the full
+      history of what happened is preserved — exactly as it should be.
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    tests:
+      - description: "A revert commit exists in the log"
+        command: "cd /tutorial/myproject && git log --oneline | grep -qi 'revert'"
+      - description: "calculator.py does not contain the debug print"
+        command: "cd /tutorial/myproject && ! grep -q 'debug: this should not be here' calculator.py"
+      - description: "Repository has at least 8 commits"
+        command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 8 ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 13: Review and best practices
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
     instructions: |
@@ -938,10 +1108,13 @@ steps:
       | `git diff` | See uncommitted changes |
       | `git show` | Inspect a commit |
       | `git restore --staged` | Unstage a file |
-      | `git restore` | Discard changes |
-      | `git branch` | List/create branches |
-      | `git checkout -b` | Create and switch branch |
+      | `git restore` | Discard working-directory changes |
+      | `git branch` | List branches |
+      | `git switch <branch>` | Switch to an existing branch |
+      | `git switch -c <branch>` | Create and switch to a new branch |
+      | `git switch --detach <ref>` | Inspect a commit in detached HEAD state |
       | `git merge` | Combine branch histories |
+      | `git revert <hash>` | Safely undo a commit (adds anti-commit) |
 
       ### Best practices for professional use
 
@@ -974,8 +1147,8 @@ steps:
       branching and merge conflict resolution — well done!
 
     tests:
-      - description: "Repository has at least 6 commits"
-        command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 6 ]"
+      - description: "Repository has at least 10 commits"
+        command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 10 ]"
       - description: "calculator.py has add, subtract, multiply, and divide functions"
         command: "cd /tutorial/myproject && grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py"
       - description: ".gitignore exists and is committed"
