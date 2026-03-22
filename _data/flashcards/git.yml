@@ -67,8 +67,8 @@ cards:
     explanation: "This command `git branch` creates a new branch pointer at your current commit, allowing you to diverge from the main line of development."
   - id: 17
     question: "You are currently on your feature branch and need to switch your working directory back to the 'main' branch."
-    answer: "`git checkout main`"
-    explanation: "Checking out a branch with `git checkout` updates your working directory to match the snapshot of that branch and moves the HEAD pointer to it."
+    answer: "`git switch main`"
+    explanation: "The modern `git switch` command navigates between branches, updating your working directory and moving HEAD. The legacy equivalent `git checkout main` still works and is widely seen in older documentation and scripts."
   - id: 18
     question: "Your feature branch is complete, and you want to integrate its entire commit history into your current 'main' branch."
     answer: "`git merge <branch-name>`"
@@ -93,3 +93,28 @@ cards:
     question: "You have a specific commit hash and want to see detailed information about it, including the commit message, author, and the exact code diff it introduced."
     answer: "`git show <commit-hash>`"
     explanation: "`git show` displays the details of a specific Git object, most commonly used to inspect exactly what changed in a single commit."
+
+  - id: 24
+    question: "You want to start working on a new feature in isolation. How do you create a new branch called 'feature-auth' and immediately switch to it in a single command?"
+    answer: "`git switch -c feature-auth`"
+    explanation: "`git switch -c` creates a new branch and switches to it in one step. The `-c` flag stands for 'create'. The legacy equivalent is `git checkout -b feature-auth`, which you will still encounter in older scripts and documentation."
+
+  - id: 25
+    question: "You accidentally staged a file you didn't intend to include in your next commit. How do you move it back to the working directory without losing your modifications?"
+    answer: "`git restore --staged <filename>`"
+    explanation: "`git restore --staged` unstages a file by copying the version from the last commit back into the staging area, leaving your working directory modifications completely untouched. It is the modern equivalent of the older `git reset HEAD <file>`."
+
+  - id: 26
+    question: "You made some experimental changes to a file but want to discard them entirely and revert to the version from your last commit."
+    answer: "`git restore <filename>`"
+    explanation: "`git restore <file>` discards all uncommitted changes in the working directory for that file, restoring it to its last staged or committed version. Warning: this is permanent — uncommitted changes cannot be recovered after this operation."
+
+  - id: 27
+    question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"
+    answer: "A **fast-forward merge** — occurs when 'main' has no new commits since the feature branch was created."
+    explanation: "A fast-forward merge happens when the target branch hasn't diverged. Git can simply advance its pointer in a straight line to the tip of the incoming branch, keeping the commit history perfectly linear. If both branches have diverged, Git performs a three-way merge and creates a merge commit instead."
+
+  - id: 28
+    question: "You want to safely inspect the codebase at a specific older commit without modifying any branch. How do you do this?"
+    answer: "`git switch --detach <commit-hash>`"
+    explanation: "`git switch --detach` places you in 'detached HEAD' state, where HEAD points directly to a specific commit rather than a branch. You can look around freely, but any commits made here are not anchored to a branch and can be lost when switching away. Use `git switch -c <name>` to anchor them to a new branch if needed."

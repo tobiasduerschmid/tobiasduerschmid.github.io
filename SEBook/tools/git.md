@@ -70,18 +70,19 @@ A typical Git workflow follows these steps:
 
 ## Branching and Merging
 
-A **branch** in Git is a pointer to the most recent commit of a sequence of separately developed code. The **HEAD** is a special pointer that tells Git which branch or commit you are currently looking at.
+A **branch** in Git is simply a lightweight, 41-byte text file stored in `.git/refs/heads/` that contains the SHA checksum of the commit it currently points to. Creating or destroying a branch is nearly instantaneous — Git writes or deletes a tiny file, not a copy of your project. The **HEAD** pointer (stored in `.git/HEAD`) normally holds a symbolic reference to the current branch, such as `ref: refs/heads/main`.
 
 ### Integrating Changes
-When it's time to bring changes from a feature branch back into the main codebase, you have two primary options:
-* **Merging**: Combines the histories. A **merge commit** is unique because it has two parent commits.
-* **Rebasing**: Re-applies commits from one branch onto a new "base" (another branch). This creates a linear history, which can be cleaner to read but requires caution on shared branches.
-* **Squashing**: `git merge --squash` combines all commits from a feature branch into a single commit on the main branch, preventing the main history from becoming cluttered with small, incremental updates.
+When it's time to bring changes from a feature branch back into the main codebase, Git chooses between two merge strategies based on whether the histories have diverged:
 
+* **Fast-Forward Merge**: When the target branch (`main`) has received no new commits since the feature branch was created, Git simply advances the `main` pointer to the tip of the feature branch. No merge commit is created; the history stays perfectly linear.
+* **Three-Way Merge**: When both branches have diverged — each has commits the other doesn't — Git compares both tips against their common ancestor and creates a new **merge commit** with two parents. The commit graph forms a diamond shape where the two diverging paths converge.
+* **Rebasing**: Re-applies commits from one branch onto a new base, producing new commit objects with new SHA hashes. Creates a linear history but must **never** be used on shared branches, as it rewrites history that collaborators may already have.
+* **Squashing**: `git merge --squash` collapses all commits from a feature branch into a single commit on the target branch, keeping the main history tidy.
 
 ### Complications
-* **Merge Conflict**: This happens when Git cannot automatically reconcile differences—usually when the same line of code was changed in two different versions.
-* **Detached HEAD**: This occurs when you check out a specific commit rather than a branch. In this state, any new commits you make will not belong to any branch and can be hard to find later.
+* **Merge Conflict**: Happens when Git cannot automatically reconcile differences — usually when the same lines of code were changed in both branches.
+* **Detached HEAD**: Occurs when HEAD points directly to a commit hash rather than a branch reference — for example, when using `git switch --detach <commit>` to inspect an older version of the codebase. New commits made in this state are not anchored to any branch and can easily be lost when switching away. To preserve work from a detached HEAD, create a new branch with `git switch -c <name>` before switching elsewhere.
 
 
 ## Advanced Power Tools
@@ -102,7 +103,8 @@ For very large projects, **Git Submodules** allow you to keep one Git repository
 
 * **Write Meaningful Commit Messages**: Messages should explain *what* was changed and *why*. Avoid vague messages like "bugfix" or "small changes".
 * **Commit Small and Often**: Aim for small, coherent commits rather than massive, "everything" updates.
-* **Never Force-Push (`git push -f`) on Shared Branches**: Force-pushing can remove changes others have already pushed to the remote branch, potentially destroying their work.
+* **Never Force-Push (`git push -f`) on Shared Branches**: Force-pushing overwrites the remote history to match your local copy, permanently deleting any commits your collaborators have already pushed.
+* **Use `git revert` to Undo Shared History**: When a bad commit has already been pushed, use `git revert <hash>` to create a new "anti-commit" that safely inverts the change while preserving the full history. Never use `git reset --hard` on shared branches — it rewrites history and breaks every collaborator's local copy.
 * **Use `.gitignore`**: Always include a `.gitignore` file to prevent tracking unnecessary or sensitive files, such as build artifacts or private keys.
 * **Pull Frequently**: Regularly pull the latest changes from the main branch to catch merge conflicts early.
 
@@ -125,14 +127,21 @@ These commands manage the lifecycle of your changes across the three Git states:
     * `git diff`: Compares the working directory to the staging area.
     * `git diff HEAD`: Compares the working directory to the latest commit.
     * `git diff HEAD^ HEAD`: Compares the latest commit to the one immediately preceding it.
+* **`git restore`** *(Git 2.23+)*: The modern command for undoing file changes, replacing the file-restoration uses of the older `git checkout` and `git reset`:
+    * `git restore --staged <file>`: **Unstages** a file, moving it out of the staging area while leaving working directory modifications untouched.
+    * `git restore <file>`: **Discards** all uncommitted changes to a file in the working directory, restoring it to its last staged or committed state. This is irreversible — uncommitted changes will be permanently lost.
 
 ## Branching and Merging
 Branching allows for parallel development, such as working on a new feature without affecting the main codebase.
-* **`git branch`**: Lists, creates, or deletes branches. A branch is essentially a pointer to the most recent commit in a sequence of development.
-* **`git checkout`**: Switches between branches or specific commits. Checking out a specific commit rather than a branch results in a "detached HEAD" state, where new commits are not associated with any branch.
+* **`git branch`**: Lists, creates, or deletes branches. A branch is a lightweight pointer (a 41-byte file in `.git/refs/heads/`) to a specific commit.
+* **`git switch`** *(recommended, Git 2.23+)*: The modern, dedicated command for navigating branches.
+    * `git switch <branch>`: Switches to an existing branch.
+    * `git switch -c <new-branch>`: Creates a new branch and immediately switches to it.
+    * `git switch --detach <commit>`: Checks out an arbitrary commit in detached HEAD state for safely inspecting older code without affecting any branch.
+* **`git checkout`** *(legacy)*: The older multi-purpose command that handled both branch switching and file restoration. Still widely encountered in documentation and scripts. `git checkout <branch>` is equivalent to `git switch <branch>`; `git checkout -b <name>` is equivalent to `git switch -c <name>`.
 * **`git merge`**: Integrates changes from one branch into another.
     * **`git merge --squash`**: Combines all commits from a feature branch into a single commit on the target branch to maintain a cleaner history.
-* **`git rebase`**: Re-applies commits from one branch onto a new base. This is often used to create a linear history, though it should be used with caution on shared branches.
+* **`git rebase`**: Re-applies commits from one branch onto a new base. This is often used to create a linear history, though it must never be used on shared branches.
 
 
 ## Remote Operations
@@ -147,7 +156,7 @@ Git includes powerful utilities for handling complex scenarios and tracking down
 * **`git cherry-pick`**: Selectively applies a single specific commit from one branch onto another.
 * **`git bisect`**: Uses a binary search through commit history to find the exact commit that introduced a bug.
 * **`git blame`**: Annotates each line of a file with the author and commit ID of the last person to modify it.
-* **`git revert`**: Creates a new commit that applies the exact inverse changes of a previous commit, safely "undoing" it without rewriting history.
+* **`git revert <commit>`**: Creates a new "anti-commit" that applies the exact inverse changes of a previous commit, safely undoing it without rewriting history. Prefer this over `git reset` whenever the commit to undo has already been pushed to a shared branch.
 * **`git show`**: Displays detailed information about a specific Git object, such as a commit.
 * **`git submodule`**: Allows you to include an external Git repository as a subdirectory of your project while maintaining its independent history.
 

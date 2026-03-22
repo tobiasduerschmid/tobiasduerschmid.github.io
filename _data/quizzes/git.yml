@@ -126,3 +126,30 @@ questions:
       - "`git blame`"
     correct_indices: [0, 1, 2]
     explanation: "Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
+
+  - question: "A faulty commit was pushed to a shared 'main' branch last week and your teammates have already synced it. Why should you use `git revert` to fix this rather than `git reset --hard` followed by a force-push?"
+    options:
+      - "`git revert` automatically resolves any merge conflicts introduced by the bad commit."
+      - "`git revert` moves the faulty files back to the staging area so you can manually edit and fix them."
+      - "`git revert` deletes the bad commit from the remote server without affecting local copies."
+      - "`git revert` creates a new commit with the exact inverse changes, preserving the shared history for all collaborators."
+    correct_index: 3
+    explanation: "`git revert` is the safe choice on shared branches because it adds a new forward-moving commit that nullifies the targeted commit, without rewriting or destroying history. Using `git reset --hard` and force-pushing would overwrite the shared history, causing serious disruption for any teammate who has already synced that commit."
+
+  - question: "When integrating a feature branch into 'main', under what condition will Git perform a fast-forward merge rather than creating a three-way merge commit?"
+    options:
+      - "When the feature branch has been squashed into a single commit before merging."
+      - "When 'main' has received no new commits since the feature branch was created."
+      - "When there are conflicting changes on the same lines in both branches."
+      - "When you explicitly pass the `--squash` flag to `git merge`."
+    correct_index: 1
+    explanation: "A fast-forward merge occurs when the target branch's history has not diverged — Git can simply slide its pointer forward to incorporate the changes linearly. If both branches have unique commits since they split, Git must perform a three-way merge using their common ancestor, resulting in a merge commit with two parents."
+
+  - question: "What does the file `.git/HEAD` contain when you are checked out on a branch, compared to when you are in a detached HEAD state?"
+    options:
+      - "On a branch, it contains an exact commit hash; in detached HEAD, it contains a symbolic reference to a branch."
+      - "Both states contain the same exact commit hash, but the detached HEAD state also includes a warning string."
+      - "On a branch, it contains a symbolic reference (e.g., `ref: refs/heads/main`); in detached HEAD, it contains a raw commit hash."
+      - "Both states contain `ref: refs/heads/main`, but detached HEAD additionally points to the staging area index."
+    correct_index: 2
+    explanation: "Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
