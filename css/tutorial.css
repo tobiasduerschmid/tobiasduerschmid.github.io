@@ -77,7 +77,7 @@ html, body {
    Left: Instructions Panel (full height)
 ─────────────────────────────────────────── */
 .tvm-instructions-panel {
-  flex: 0 0 38%;  /* overridden to px by splitter drag */
+  flex: 0 0 50%;  /* overridden to px by splitter drag */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -682,7 +682,7 @@ html, body {
 ─────────────────────────────────────────── */
 @media (max-width: 900px) {
   .tvm-container { flex-direction: column; }
-  .tvm-instructions-panel { flex: 0 0 40%; border-right: none; border-bottom: 1px solid #2a2a2e; }
+  .tvm-instructions-panel { flex: 0 0 45%; border-right: none; border-bottom: 1px solid #2a2a2e; }
   .tvm-hsplitter { cursor: row-resize; }
   .tvm-workspace { flex-direction: column; }
   .tvm-vsplitter { cursor: row-resize; }
