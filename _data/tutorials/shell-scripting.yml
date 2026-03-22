@@ -492,7 +492,7 @@ steps:
       Loops eliminate repetition. Let's look at iterating over globs (file expansions).
 
       ```bash
-      for f in *.sh; do          # expands to all matching filenames
+      for f in *.sh; do # expands to all matching filenames
           echo "Found: $f"
       done
       ```
@@ -515,8 +515,8 @@ steps:
       1. Initialize two variables tracking `passed` and `failed` counts.
       2. Loop over every `.sh` file in the current directory.
       3. For each file, read its first line and capture it in a variable. *(Hint: `first=$(head -1 "$f")`)*
-      4. If that variable equals exacty `#!/bin/bash`, print `✓ filename` and increment your `passed` counter. 
-      5. Otherwise, print `✗ filename (missing shebang)` and increment `failed`.
+      4. If that variable equals exacty `#!/bin/bash`, print `pass <filename>` and increment your `passed` counter. 
+      5. Otherwise, print `fail <filename> (missing shebang)` and increment `failed`.
       6. After the loop, print: `Checked N files: P passed, F failed` (where N is passed + failed).
 
       ```bash
@@ -528,15 +528,20 @@ steps:
         content: |
           #!/bin/bash
           set -e
+      - path: "no_shebang.sh"
+        content: |
+          set -e
 
     open_file: "batch_check.sh"
     tests:
       - description: "Script uses a for or while loop"
         command: "grep -qE 'for |while ' batch_check.sh"
-      - description: "Output includes a pass marker for morning.sh (which has a shebang)"
-        command: "bash batch_check.sh | grep -E 'morning' | grep -qE '✓|pass|ok|OK|PASS'"
+      - description: "Output includes a pass marker for morning.sh"
+        command: "bash batch_check.sh | grep -E 'morning' | grep -qE 'pass|ok|OK|PASS'"
+      - description: "Output includes a fail marker for no_shebang.sh"
+        command: "bash batch_check.sh | grep -E 'no_shebang' | grep -qE 'fail|missing shebang'"
       - description: "Output includes a summary with a count"
-        command: "bash batch_check.sh | grep -qiE 'checked.*[0-9]|[0-9]+.*files'"
+        command: "bash batch_check.sh | grep -qiE 'Checked 6 files: 5 passed, 1 failed'"
       - description: "Script examines the first line of files (uses head)"
         command: "grep -qE 'head' batch_check.sh"
 
