@@ -70,7 +70,7 @@ A typical Git workflow follows these steps:
 
 ## Branching and Merging
 
-A **branch** in Git is simply a lightweight, 41-byte text file stored in `.git/refs/heads/` that contains the SHA checksum of the commit it currently points to. Creating or destroying a branch is nearly instantaneous — Git writes or deletes a tiny file, not a copy of your project. The **HEAD** pointer (stored in `.git/HEAD`) normally holds a symbolic reference to the current branch, such as `ref: refs/heads/main`.
+A **branch** in Git is like a pointer to a commit (implemented simply as a lightweight, 41-byte text file stored in `.git/refs/heads/` that contains the SHA checksum of the commit it currently points to). Creating or destroying a branch is nearly instantaneous — Git writes or deletes a tiny file, not a copy of your project. The **HEAD** pointer (stored in `.git/HEAD`) normally holds a symbolic reference to the current branch, such as `ref: refs/heads/main`.
 
 ### Integrating Changes
 When it's time to bring changes from a feature branch back into the main codebase, Git chooses between two merge strategies based on whether the histories have diverged:
