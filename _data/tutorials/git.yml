@@ -2,8 +2,8 @@ title: "Version Control with Git"
 description: "Learn Git through hands-on practice — from your first commit to resolving merge conflicts, all inside an interactive Linux environment"
 
 setup_commands:
-  - "git config --global user.email 'strange@ucla.edu'"
-  - "git config --global user.name 'Steven Strange'"
+  - "git config --global user.email 'student@cs.ucla.edu'"
+  - "git config --global user.name 'Diligent Student'"
   - "git config --global init.defaultBranch main"
 
 steps:
