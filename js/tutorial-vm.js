@@ -884,13 +884,8 @@
       setTimeout(function () { self.refreshOpenFiles(); }, 1500);
     }
 
-    // Set up file watching for this step (reverse sync: VM → editor)
-    this._watchedFiles = step.watch_files || [];
-    if (this._watchedFiles.length > 0) {
-      this._startFileWatch(2000);
-    } else {
-      this._stopFileWatch();
-    }
+    // Set up file watching for all open files (reverse sync: VM → editor)
+    this._startFileWatch(2000);
   };
 
   TutorialVM.prototype._renderStepNav = function () {
@@ -1036,7 +1031,7 @@
   // ---------------------------------------------------------------------------
 
   /**
-   * Read all watched files from the VM's 9p filesystem and update
+   * Read all open files from the VM's 9p filesystem and update
    * their Monaco editor models if the content has changed.
    */
   TutorialVM.prototype._pollWatchedFiles = function () {
@@ -1044,16 +1039,13 @@
     if (this._reverseSyncBusy) return;
 
     var self = this;
-    var files = [];
-    this._watchedFiles.forEach(function (f) {
-      if (self.editorModels[f]) files.push(f);
-    });
+    var files = Object.keys(this.editorModels);
     if (files.length === 0) return;
 
     this._reverseSyncBusy = true;
 
     var promises = files.map(function (filename) {
-      return self.emulator.read_file('/tutorial/' + filename)
+      return self.emulator.read_file('/' + filename)
         .then(function (buf) {
           var content = new TextDecoder('utf-8').decode(buf);
           var entry = self.editorModels[filename];
@@ -1077,12 +1069,7 @@
    * Refresh all currently open editor files from the VM filesystem.
    */
   TutorialVM.prototype.refreshOpenFiles = function () {
-    var self = this;
-    var prev = this._watchedFiles;
-    this._watchedFiles = Object.keys(this.editorModels);
     this._pollWatchedFiles();
-    var restore = function () { self._watchedFiles = prev; };
-    setTimeout(restore, 5000);
   };
 
   /**
@@ -1093,7 +1080,7 @@
     intervalMs = intervalMs || 2000;
     this._stopFileWatch();
     this._reverseSyncTimer = setInterval(function () {
-      if (self.booted && self._watchedFiles.length > 0) {
+      if (self.booted) {
         self._pollWatchedFiles();
       }
     }, intervalMs);
