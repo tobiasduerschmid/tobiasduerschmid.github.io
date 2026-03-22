@@ -487,6 +487,82 @@ steps:
           correct_index: 2
           explanation: "Bash uses **`-eq`, `-lt`, `-gt`, `-le`, `-ge`, `-ne`** for integer comparisons. The `=` and `==` operators do string comparison."
 
+  - title: "Loops — Repeating Work"
+    instructions: |
+      Loops eliminate repetition. Let's look at iterating over globs (file expansions).
+
+      ```bash
+      for f in *.sh; do          # expands to all matching filenames
+          echo "Found: $f"
+      done
+      ```
+
+      ### Accumulating totals
+
+      A common pattern is keeping running counts across loop iterations using arithmetic expansion `$(( ... ))`:
+
+      ```bash
+      passed=0
+      # ... inside loop:
+      passed=$((passed + 1))
+      ```
+
+      ### Your task
+
+      Write `batch_check.sh` from scratch. Combine your knowledge of variables, file expansion (`*.sh`), `head`, conditionals, and arithmetic expansion.
+
+      **Requirements:**
+      1. Initialize two variables tracking `passed` and `failed` counts.
+      2. Loop over every `.sh` file in the current directory.
+      3. For each file, read its first line and capture it in a variable. *(Hint: `first=$(head -1 "$f")`)*
+      4. If that variable equals exacty `#!/bin/bash`, print `✓ filename` and increment your `passed` counter. 
+      5. Otherwise, print `✗ filename (missing shebang)` and increment `failed`.
+      6. After the loop, print: `Checked N files: P passed, F failed` (where N is passed + failed).
+
+      ```bash
+      chmod +x batch_check.sh
+      ./batch_check.sh
+      ```
+    files:
+      - path: "batch_check.sh"
+        content: |
+          #!/bin/bash
+          set -e
+
+    open_file: "batch_check.sh"
+    tests:
+      - description: "Script uses a for or while loop"
+        command: "grep -qE 'for |while ' batch_check.sh"
+      - description: "Output includes a pass marker for morning.sh (which has a shebang)"
+        command: "bash batch_check.sh | grep -E 'morning' | grep -qE '✓|pass|ok|OK|PASS'"
+      - description: "Output includes a summary with a count"
+        command: "bash batch_check.sh | grep -qiE 'checked.*[0-9]|[0-9]+.*files'"
+      - description: "Script examines the first line of files (uses head)"
+        command: "grep -qE 'head' batch_check.sh"
+
+    quiz:
+      title: "Loops — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "In a `for f in *.sh` loop, when does the shell substitute `*.sh`?"
+          options:
+            - "Inside the loop body, each time `$f` is referenced"
+            - "Before the loop runs — the shell expands `*.sh` to a list of matching filenames first"
+            - "After the loop completes, to validate the filenames used"
+            - "Only when running with `bash -e` safety flag enabled"
+          correct_index: 1
+          explanation: "Shell glob expansion happens **before** the loop executes. The shell replaces `*.sh` with the list of matching filenames, and the loop iterates over that fixed list."
+
+        - question: "What does `$((counter + 1))` do in Bash?"
+          options:
+            - "Runs the command `counter + 1` and substitutes its output"
+            - "Evaluates the integer arithmetic expression and substitutes the result"
+            - "Concatenates the string `counter` with `+ 1`"
+            - "Increments `counter` in place and returns the new value"
+          correct_index: 1
+          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates integer math inside it and substitutes the result. It does **not** modify the variable in place; you must assign it back."
+
   - title: "Arguments & Special Variables"
     instructions: |
       When you run `./script.sh one two three`, the shell sets special
@@ -568,82 +644,6 @@ steps:
             - "There is no practical difference between `\"$@\"` and `$@`"
           correct_index: 1
           explanation: "Without quotes, `$@` is subject to word splitting. `\"$@\"` preserves each argument as a single unit, regardless of spaces."
-
-  - title: "Loops — Repeating Work"
-    instructions: |
-      Loops eliminate repetition. Let's look at iterating over globs (file expansions).
-
-      ```bash
-      for f in *.sh; do          # expands to all matching filenames
-          echo "Found: $f"
-      done
-      ```
-
-      ### Accumulating totals
-
-      A common pattern is keeping running counts across loop iterations using arithmetic expansion `$(( ... ))`:
-
-      ```bash
-      passed=0
-      # ... inside loop:
-      passed=$((passed + 1))
-      ```
-
-      ### Your task
-
-      Write `batch_check.sh` from scratch. Combine your knowledge of variables, file expansion (`*.sh`), `head`, conditionals, and arithmetic expansion.
-
-      **Requirements:**
-      1. Initialize two variables tracking `passed` and `failed` counts.
-      2. Loop over every `.sh` file in the current directory.
-      3. For each file, read its first line and capture it in a variable. *(Hint: `first=$(head -1 "$f")`)*
-      4. If that variable equals exacty `#!/bin/bash`, print `✓ filename` and increment your `passed` counter. 
-      5. Otherwise, print `✗ filename (missing shebang)` and increment `failed`.
-      6. After the loop, print: `Checked N files: P passed, F failed` (where N is passed + failed).
-
-      ```bash
-      chmod +x batch_check.sh
-      ./batch_check.sh
-      ```
-    files:
-      - path: "batch_check.sh"
-        content: |
-          #!/bin/bash
-          set -e
-
-    open_file: "batch_check.sh"
-    tests:
-      - description: "Script uses a for or while loop"
-        command: "grep -qE 'for |while ' batch_check.sh"
-      - description: "Output includes a pass marker for morning.sh (which has a shebang)"
-        command: "bash batch_check.sh | grep -E 'morning' | grep -qE '✓|pass|ok|OK|PASS'"
-      - description: "Output includes a summary with a count"
-        command: "bash batch_check.sh | grep -qiE 'checked.*[0-9]|[0-9]+.*files'"
-      - description: "Script examines the first line of files (uses head)"
-        command: "grep -qE 'head' batch_check.sh"
-
-    quiz:
-      title: "Loops — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "In a `for f in *.sh` loop, when does the shell substitute `*.sh`?"
-          options:
-            - "Inside the loop body, each time `$f` is referenced"
-            - "Before the loop runs — the shell expands `*.sh` to a list of matching filenames first"
-            - "After the loop completes, to validate the filenames used"
-            - "Only when running with `bash -e` safety flag enabled"
-          correct_index: 1
-          explanation: "Shell glob expansion happens **before** the loop executes. The shell replaces `*.sh` with the list of matching filenames, and the loop iterates over that fixed list."
-
-        - question: "What does `$((counter + 1))` do in Bash?"
-          options:
-            - "Runs the command `counter + 1` and substitutes its output"
-            - "Evaluates the integer arithmetic expression and substitutes the result"
-            - "Concatenates the string `counter` with `+ 1`"
-            - "Increments `counter` in place and returns the new value"
-          correct_index: 1
-          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates integer math inside it and substitutes the result. It does **not** modify the variable in place; you must assign it back."
 
   - title: "Functions — Reusable Building Blocks"
     instructions: |
