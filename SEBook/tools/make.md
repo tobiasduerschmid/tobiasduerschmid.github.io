@@ -11,6 +11,8 @@ Imagine you are building a small C program. It just has one file, `main.c`. To c
 
 Easy enough, right? 
 
+> **Want to practice?** Try the [Interactive Makefile Tutorial](/SEBook/tools/makefile-tutorial.html) — 10 hands-on exercises that build from basic rules to automatic variables and pattern rules, with real-time feedback.
+
 Now, imagine your project grows. You add `utils.c`, `math.c`, and `network.c`. Your command grows too:
 
 `gcc main.c utils.c math.c network.c -o myapp`

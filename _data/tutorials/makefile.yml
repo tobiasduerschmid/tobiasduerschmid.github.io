@@ -1,0 +1,281 @@
+title: "Makefiles: From Pain to Power (C Edition)"
+description: "Learn how to write Makefiles, understand dependency graphs, and automate your C builds through hands-on practice in an interactive terminal."
+
+require_tests: true
+
+setup_commands:
+  - "mkdir -p /tutorial/make_project"
+
+steps:
+  # --------------------------------------------------------------------------
+  # STEP 1: The "Pain Point" Sandbox
+  # --------------------------------------------------------------------------
+  - title: "The Pain of Manual Compilation"
+    instructions: |
+      Welcome to the **Makefiles Tutorial**! 
+
+      Before you care *how* a Makefile works, you need to understand *why* it exists. In the real world, software projects consist of dozens, hundreds, or thousands of source files. 
+
+      ### Task 1: Compile the project manually
+      
+      We have a small C project with three files: `main.c`, `math.c`, and `io.c`. Let's compile them the hard way. Run this long command:
+
+      ```bash
+      cd make_project
+      gcc main.c math.c io.c -o app
+      ```
+
+      **Oh no!** The compilation failed. There is a syntax error in `math.c`.
+
+      ### Task 2: Fix the error and recompile
+      
+      1. Open `math.c` in the editor.
+      2. Fix the missing semicolon at the end of the `return` statement.
+      3. Save the file.
+      4. Go back to the terminal and **re-type** (or press Up arrow) that entire `gcc` command to try compiling again.
+      
+      Imagine doing this every time you fix a single typo in a project with 500 files. You'd waste hours waiting for files that didn't even change to recompile. We need a better way.
+
+    files:
+      - path: "make_project/main.c"
+        content: |
+          #include <stdio.h>
+          int add(int a, int b);
+          void init_io();
+          
+          int main() {
+              init_io();
+              printf("Math test: 2 + 3 = %d\n", add(2, 3));
+              return 0;
+          }
+        language: "c"
+      - path: "make_project/math.c"
+        content: |
+          int add(int a, int b) {
+              return a + b // BUG: missing semicolon
+          }
+        language: "c"
+      - path: "make_project/io.c"
+        content: |
+          #include <stdio.h>
+          void init_io() {
+              printf("IO Initialized.\n");
+          }
+        language: "c"
+
+    open_file: "make_project/math.c"
+
+    watch_files:
+      - "make_project/math.c"
+
+    tests:
+      - description: "The syntax error in math.c is fixed"
+        command: "cd /tutorial/make_project && grep -q 'a + b;' math.c"
+      - description: "The project compiled successfully into an executable named 'app'"
+        command: "cd /tutorial/make_project && [ -f app ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 2: The Core Anatomy & The "Tab" Trap
+  # --------------------------------------------------------------------------
+  - title: "Your First Makefile & The Tab Trap"
+    instructions: |
+      ### The Anatomy of a Rule
+      
+      Makefiles are made of **rules** that describe a dependency graph. A rule looks like this:
+      
+      ```make
+      target: prerequisites
+          recipe
+      ```
+      * **Target:** The file you want to build (e.g., your executable).
+      * **Prerequisites:** The files the target depends on (e.g., your `.c` files).
+      * **Recipe:** The shell command to create the target.
+      
+      ### Task 1: Run your first Make command
+      
+      A basic `Makefile` has been added to your project. Try running it:
+      
+      ```bash
+      make
+      ```
+      
+      **Error!** You should see: `Makefile:2: *** missing separator. Stop.`
+      
+      ### Task 2: Fix the Tab Trap
+      
+      Makefiles have one notoriously strict, invisible rule: **Recipes MUST be indented with a true `Tab` character, not spaces!** 1. Open `Makefile` in the editor.
+      2. Look at line 2 before the `gcc` command. It currently uses 4 spaces.
+      3. Delete the spaces and press `Tab` to insert a real tab character.
+      4. Save the file and run `make` again in the terminal.
+
+    setup_commands:
+      - "rm -f /tutorial/make_project/app"
+
+    files:
+      - path: "make_project/Makefile"
+        content: |
+          app: main.c math.c io.c
+              gcc main.c math.c io.c -o app
+        language: "makefile"
+
+    open_file: "make_project/Makefile"
+
+    watch_files:
+      - "make_project/Makefile"
+
+    tests:
+      - description: "The recipe uses a Tab character, not spaces"
+        command: "cd /tutorial/make_project && grep -q '$(printf '\t')gcc' Makefile"
+      - description: "Make ran successfully and built 'app'"
+        command: "cd /tutorial/make_project && [ -f app ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 3: The "DRY" Refactor
+  # --------------------------------------------------------------------------
+  - title: "Don't Repeat Yourself (DRY) with Variables"
+    instructions: |
+      ### Managing Complexity
+      
+      To get true incremental builds, we must compile each `.c` file into an intermediate Object file (`.o`) separately, then link them. 
+      
+      Look at the new `Makefile`. It works, but it violates the **DRY principle** (Don't Repeat Yourself). We've hardcoded `gcc -Wall -std=c11` everywhere! If we wanted to change the compiler to `clang`, we'd have to edit 4 different lines.
+      
+      ### Task: Refactor using Variables
+      
+      In Makefiles, you can define variables and reference them using `$(VAR_NAME)`.
+      
+      1. Open `Makefile`.
+      2. At the very top, define two variables (Make has standard names for the C compiler and its flags):
+         ```make
+         CC = gcc
+         CFLAGS = -Wall -std=c11
+         ```
+      3. Replace all 4 instances of `gcc` with `$(CC)`.
+      4. Replace all 4 instances of `-Wall -std=c11` with `$(CFLAGS)`.
+      5. Save the file and test it by running `make`. It should still compile successfully!
+
+    setup_commands:
+      - "rm -f /tutorial/make_project/*.o /tutorial/make_project/app"
+
+    files:
+      - path: "make_project/Makefile"
+        content: |
+          app: main.o math.o io.o
+          	gcc -Wall -std=c11 main.o math.o io.o -o app
+          
+          main.o: main.c
+          	gcc -Wall -std=c11 -c main.c
+          
+          math.o: math.c
+          	gcc -Wall -std=c11 -c math.c
+          
+          io.o: io.c
+          	gcc -Wall -std=c11 -c io.c
+        language: "makefile"
+
+    open_file: "make_project/Makefile"
+
+    watch_files:
+      - "make_project/Makefile"
+
+    tests:
+      - description: "Defined CC variable"
+        command: "cd /tutorial/make_project && grep -q 'CC *=' Makefile"
+      - description: "Defined CFLAGS variable"
+        command: "cd /tutorial/make_project && grep -q 'CFLAGS *=' Makefile"
+      - description: "Used $(CC) in recipes instead of hardcoded gcc"
+        command: "cd /tutorial/make_project && grep -q '\\$(CC)' Makefile && ! grep -q 'gcc' Makefile"
+      - description: "Code still builds successfully"
+        command: "cd /tutorial/make_project && make && [ -f app ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 4: Proving the Magic of the DAG
+  # --------------------------------------------------------------------------
+  - title: "The Magic of Incremental Builds"
+    instructions: |
+      ### The Directed Acyclic Graph (DAG)
+      
+      How does `make` know what needs to be compiled? It compares the **timestamps** of the Target and the Prerequisites. If a Prerequisite is newer than the Target, Make knows the Target is out of date and runs the recipe.
+      
+      Let's prove it.
+      
+      ### Task 1: Check if up to date
+      
+      Run `make` right now:
+      ```bash
+      make
+      ```
+      Make should tell you: `make: 'app' is up to date.` It skipped doing any work because the `.o` files and `app` are newer than the `.c` files.
+      
+      ### Task 2: Simulate a file change
+      
+      The `touch` command updates a file's timestamp to the current time, tricking Make into thinking you just edited it.
+      
+      Run this to "update" only `math.c`:
+      ```bash
+      touch math.c
+      ```
+      
+      ### Task 3: Observe the magic
+      
+      Run `make` one more time:
+      ```bash
+      make
+      ```
+      
+      Look closely at the output! It compiled `math.c` into `math.o`, and then linked `app`. **It completely skipped compiling `main.c` and `io.c`!** In a massive codebase, this timestamp logic is what reduces a 2-hour build to a 2-second build.
+
+    tests:
+      - description: "math.c was touched and recompiled (math.o is newer than main.o)"
+        command: "cd /tutorial/make_project && [ math.o -nt main.o ]"
+
+  # --------------------------------------------------------------------------
+  # STEP 5: The .PHONY Sabotage
+  # --------------------------------------------------------------------------
+  - title: "The .PHONY Sabotage"
+    instructions: |
+      ### Non-File Targets
+      
+      Make is obsessed with files. But sometimes we want a target that just executes a command, like cleaning up our directory.
+      
+      ### Task 1: Add a clean target
+      
+      Add this to the very bottom of your `Makefile`:
+      ```make
+      clean:
+      	rm -f *.o app
+      ```
+      Run `make clean` in the terminal. Your directory is now clean!
+      
+      ### Task 2: The Sabotage
+      
+      Because Make expects targets to be files, what happens if a file actually named `clean` exists? Let's find out.
+      
+      1. Create a dummy file named clean:
+         ```bash
+         touch clean
+         ```
+      2. Run `make app` to quickly generate the build files again.
+      3. Try to run `make clean`.
+      
+      **It fails!** Make says `make: 'clean' is up to date.` It sees the file named `clean`, notices it has no prerequisites, and decides no work needs to be done.
+      
+      ### Task 3: The Fix
+      
+      We must explicitly tell Make that `clean` is a "phony" target—a command, not a file. 
+      
+      At the bottom of your Makefile, right above the `clean:` target, add:
+      ```make
+      .PHONY: clean
+      ```
+      
+      Save and run `make clean` again. Even though the file named `clean` exists, Make ignores it and correctly deletes your build files. You have mastered Makefiles!
+
+    watch_files:
+      - "make_project/Makefile"
+
+    tests:
+      - description: "Added .PHONY: clean to Makefile"
+        command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
+      - description: "The clean target successfully executed, removing 'app' and '.o' files"
+        command: "cd /tutorial/make_project && [ ! -f app ] && ls *.o >/dev/null 2>&1 && exit 1 || exit 0"
