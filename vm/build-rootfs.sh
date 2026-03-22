@@ -48,6 +48,10 @@ docker run --rm --platform linux/386 \
     sed -i "s|^root:.*|root::0:0:root:/root:/bin/bash|" /etc/passwd
     echo "root::0::::::" > /etc/shadow
 
+    # Simulated gcc for tutorials
+    cp /overlay/gcc /usr/bin/gcc
+    chmod +x /usr/bin/gcc
+
     # Hostname
     echo "tutorial" > /etc/hostname
 

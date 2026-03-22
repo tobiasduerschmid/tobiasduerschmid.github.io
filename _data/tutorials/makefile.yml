@@ -125,7 +125,7 @@ steps:
 
     tests:
       - description: "The recipe uses a Tab character, not spaces"
-        command: "cd /tutorial/make_project && grep -q '$(printf '\t')gcc' Makefile"
+        command: "cd /tutorial/make_project && grep -qP '^\\tgcc' Makefile"
       - description: "Make ran successfully and built 'app'"
         command: "cd /tutorial/make_project && [ -f app ]"
 
@@ -184,7 +184,7 @@ steps:
       - description: "Defined CFLAGS variable"
         command: "cd /tutorial/make_project && grep -q 'CFLAGS *=' Makefile"
       - description: "Used $(CC) in recipes instead of hardcoded gcc"
-        command: "cd /tutorial/make_project && grep -q '\\$(CC)' Makefile && ! grep -q 'gcc' Makefile"
+        command: "cd /tutorial/make_project && grep -q '\\$(CC)' Makefile"
       - description: "Code still builds successfully"
         command: "cd /tutorial/make_project && make && [ -f app ]"
 
@@ -277,5 +277,5 @@ steps:
     tests:
       - description: "Added .PHONY: clean to Makefile"
         command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
-      - description: "The clean target successfully executed, removing 'app' and '.o' files"
-        command: "cd /tutorial/make_project && [ ! -f app ] && ls *.o >/dev/null 2>&1 && exit 1 || exit 0"
+      - description: "The clean target exists in Makefile and removes 'app' and '.o' files"
+        command: "cd /tutorial/make_project && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"

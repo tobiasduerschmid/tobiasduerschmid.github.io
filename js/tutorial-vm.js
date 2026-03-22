@@ -814,12 +814,12 @@
           }
         }
       }).catch(function (err) {
-      console.warn('TutorialVM: create_file failed, falling back to serial base64 sync', err);
-      var b64 = btoa(unescape(encodeURIComponent(content)));
-      var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
-      if (needsChmod) cmd += ' && chmod +x /tutorial/' + filename;
-      self._runSilent(cmd);
-    });
+        console.warn('TutorialVM: create_file failed, falling back to serial base64 sync', err);
+        var b64 = btoa(unescape(encodeURIComponent(content)));
+        var cmd = 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename;
+        if (needsChmod) cmd += ' && chmod +x /tutorial/' + filename;
+        self._runSilent(cmd);
+      });
   };
 
   // ---- Tutorial Steps -------------------------------------------------------

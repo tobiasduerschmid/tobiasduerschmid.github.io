@@ -1,0 +1,59 @@
+#!/bin/bash
+# Simulated gcc for SEBook Makefile tutorial
+# Simply concatenates input files for linking, or copies for -c
+
+output="a.out"
+compile_only=false
+inputs=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -o)
+      output="$2"
+      shift 2
+      ;;
+    -c)
+      compile_only=true
+      shift
+      ;;
+    -Wall|-std=*|-g|-O*)
+      # Ignore common CFLAGS
+      shift
+      ;;
+    *)
+      if [[ ! "$1" =~ ^- ]]; then
+        inputs+=("$1")
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [ ${#inputs[@]} -eq 0 ]; then
+  echo "gcc: error: no input files"
+  exit 1
+fi
+
+if $compile_only; then
+  for f in "${inputs[@]}"; do
+    if [ ! -f "$f" ]; then
+      echo "gcc: error: $f: No such file or directory"
+      exit 1
+    fi
+    # "Compile" by copying .c to .o
+    target="${f%.*}.o"
+    cp "$f" "$target" 2>/dev/null
+  done
+else
+  # "Link" by concatenating all inputs
+  # First check all inputs exist
+  for f in "${inputs[@]}"; do
+    if [ ! -f "$f" ]; then
+      echo "gcc: error: $f: No such file or directory"
+      exit 1
+    fi
+  done
+  cat "${inputs[@]}" > "$output" 2>/dev/null
+  chmod +x "$output" 2>/dev/null
+fi
+sleep 1;
