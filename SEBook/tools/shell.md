@@ -55,7 +55,8 @@ Unix treats text streams as a universal interface, and these tools allow you to 
 * **`grep`**: Search for patterns using regular expressions.
 * **`sed`**: Stream editor for filtering and transforming text (commonly search-and-replace).
 * **`tr`**: Translate or delete characters (e.g., changing case or removing digits).
-* **`sort`**: Sort lines of text files.
+* **`sort`**: Sort lines of text files alphabetically; add `-n` for numeric order, `-r` to reverse.
+* **`uniq`**: Filter adjacent duplicate lines; the `-c` flag prefixes each line with its occurrence count. Because it only compares *consecutive* lines, you almost always pipe `sort` first so that duplicates are adjacent.
 * **`wc`**: Word count (lines, words, characters).
 * **`cut`**: Extract specific sections/fields from lines.
 * **`comm`**: Compare two sorted files line by line.
@@ -147,8 +148,11 @@ Bash is a full-fledged programming language, but because it is an interpreted sc
 In our scripts, we also treat these keywords as "commands" for building logic:
 * **`#!` (Shebang)**: Tells the system which interpreter to use.
 * **`read`**: Read a line from standard input into a variable.
-* **`if` / `then` / `else` / `fi`**: Conditional execution.
+* **`if` / `then` / `elif` / `else` / `fi`**: Conditional execution.
 * **`for` / `do` / `done` / `while`**: Looping constructs.
+* **`case` / `in` / `esac`**: Multi-way branching on a single value.
+* **`local`**: Declare a variable scoped to the current function.
+* **`return`**: Exit a function with a numeric status code.
 * **`exit`**: Terminate the script with a specific status code.
 
 ### Variables
@@ -177,13 +181,32 @@ Bash supports standard control flow constructs.
 ```bash
 if [ "$sum" -gt 10 ]; then
     echo "Sum is greater than 10"
+elif [ "$sum" -eq 10 ]; then
+    echo "Sum is exactly 10"
 else
-    echo "Sum is 10 or less"
+    echo "Sum is less than 10"
 fi
 ```
-*(Note: `-gt` stands for "greater than", `-eq` for "equal", `-lt` for "less than").*
 
-> **`[` vs `[[`:** The single bracket `[ ... ]` is actually a shell builtin command equivalent to `test` — which is why spaces around its arguments are mandatory and it is sensitive to word splitting. The double bracket `[[ ... ]]` is a Bash keyword with additional power: it does not perform word splitting on variables, allows `&&` and `||` inside the condition, and supports regex matching with `=~`. Prefer `[[ ]]` in new Bash scripts.
+> **`[` is a real command:** The single bracket `[` is not special syntax — it is an actual program on your system (you can verify with `which [`). Like any command, its arguments must be separated by spaces: `[ -f "$file" ]` is correct, but `[-f "$file"]` tries to run a command named `[-f`, which fails. This is why the spaces inside brackets are mandatory, not just stylistic.
+
+The following table covers the most important tests available inside `[ ]`:
+
+| Test | Meaning |
+|:---|:---|
+| `-f path` | Path exists and is a regular file |
+| `-d path` | Path exists and is a directory |
+| `-z "$var"` | String is empty (zero length) |
+| `"$a" = "$b"` | Strings are equal |
+| `"$a" != "$b"` | Strings are not equal |
+| `$x -eq $y` | Integers are equal |
+| `$x -gt $y` | Integer greater than |
+| `$x -lt $y` | Integer less than |
+| `! condition` | Logical NOT (negates the test) |
+
+**Important:** use `-eq`, `-lt`, `-gt` for numbers and `=` / `!=` for strings. Mixing them produces wrong results silently.
+
+> **`[` vs `[[`:** The double bracket `[[ ... ]]` is a Bash keyword with additional power: it does not perform word splitting on variables, allows `&&` and `||` inside the condition, and supports regex matching with `=~`. Prefer `[[ ]]` in new Bash scripts.
 
 **Loops:**
 ```bash
@@ -222,8 +245,15 @@ Scripts receive command-line arguments via **positional parameters**. If you run
 | `$1` | `/src` | First argument |
 | `$2` | `/dest` | Second argument |
 | `$#` | `2` | Total number of arguments passed |
-| `$@` | `/src /dest` | All arguments as separate words |
+| `$@` | `/src /dest` | All arguments as separate, properly-quoted words |
 | `$?` | (exit code) | Exit status of the most recent command |
+
+When iterating over all arguments, always use `"$@"` (quoted). Without quotes, `$@` is subject to word splitting and arguments containing spaces are silently broken into multiple words:
+```bash
+for f in "$@"; do
+    echo "Processing: $f"
+done
+```
 
 ### Command Chaining with `&&` and `||`
 Because every command returns an exit status, you can chain commands conditionally without writing a full `if/then/fi` block:
@@ -235,6 +265,68 @@ Because every command returns an exit status, you can chain commands conditional
 This compact chaining idiom is widely used in professional scripts for concise, readable error handling.
 
 
+
+## Functions — Reusable Building Blocks
+
+When the same logic appears in multiple places, extract it into a **function**. Functions in Bash work like small scripts-within-a-script: they accept positional arguments via `$1`, `$2`, etc. — independently of the outer script's own arguments — and can be called just like any other command.
+
+```bash
+greet() {
+    local name="$1"
+    echo "Hello, ${name}!"
+}
+
+greet "engineer"   # → Hello, engineer!
+```
+
+### The `local` Keyword
+Without `local`, any variable set inside a function leaks into and overwrites the global script scope. Always declare function-internal variables with `local` to prevent subtle bugs:
+
+```bash
+process() {
+    local result="$1"   # visible only inside this function
+    echo "$result"
+}
+```
+
+### Returning Values from Functions
+The `return` statement only carries a numeric exit code (0–255), not data. To pass a string back to the caller, have the function `echo` the value and capture it with command substitution:
+
+```bash
+to_upper() {
+    echo "$1" | tr '[:lower:]' '[:upper:]'
+}
+
+loud=$(to_upper "hello")   # loud="HELLO"
+```
+
+You can also use functions directly in `if` statements, because a function's exit code is treated as its truth value: `return 0` is success (true), `return 1` is failure (false).
+
+## Case Statements — Readable Multi-Way Branching
+
+When you need to check one variable against many possible values, a `case` statement is far cleaner than a chain of `if/elif`:
+
+```bash
+case "$command" in
+    start)   echo "Starting service..."  ;;
+    stop)    echo "Stopping service..."  ;;
+    status)  echo "Checking status..."   ;;
+    *)       echo "Unknown command: $command" >&2; exit 2 ;;
+esac
+```
+
+Each branch ends with `;;`. The `*` pattern is the **catch-all default**, matching any value not handled by earlier branches. The block closes with `esac` (case backwards).
+
+### Exit Codes — The Language of Success and Failure
+Every command — including your own scripts — exits with a number. **0 always means success**; any non-zero value means failure. This is the *opposite* of most programming languages where 0 is falsy. Conventional exit codes are:
+
+| Code | Meaning |
+|:---|:---|
+| `0` | Success |
+| `1` | General error |
+| `2` | Misuse — wrong arguments or invalid input |
+
+Meaningful exit codes make scripts **composable**: other scripts, CI pipelines, and tools like `make` can call your script and take action based on the result. For example, `./monitor.sh || alert_team` only triggers the alert when your monitor exits non-zero.
 
 ## Supercharging Scripts with Regular Expressions
 
