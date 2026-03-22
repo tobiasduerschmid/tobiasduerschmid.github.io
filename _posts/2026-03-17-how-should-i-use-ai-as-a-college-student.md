@@ -97,4 +97,13 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 *   Generative AI should be utilized as a **"bicycle for the mind"**—a tool that amplifies your cognitive reach but still requires your active control, steering, and judgment
 </div>
 
+
+
+#### Withholding Feedback
+Research shows that *withholding feedback* can be beneficial for learning, because it creates a desirable difficulty that forces students to engage in more effortful retrieval and elaboration, which strengthens memory traces {% cite salmoni1984knowledge kulik1988timing %}. 
+
+Research found that that immediate feedback is superior for short-term acquisition on simple, applied classroom tests (like multiple-choice vocabulary). However, controlled studies measuring long-term retention found that delayed feedback is superior for the transfer of concepts to new situations {% cite salmoni1984knowledge kulik1988timing %}.
+Since you are learning for the long-term, resist the temptation to instantly ask for feedback. Practice your own evaluation skills by considering "*what defines 'goodness' of a solution for this problem?*", "*how can I evaluate my own solution based on these criteria?*", and  "*How can I improve this solution based on my own insights?*". Once you have reached the point at which you cannot think of anything else yourself, that is the point where AI feedback becomes very beneficial, because it can point out flaws that you might have missed and therefore help you improve and learn more effectively while the piece of work is still fresh in your mind. 
+However, **it it is crucial that you genuinely try your best at producing a solution that is ready for submission before you ask AI for feedback**.
+
 {% include quiz.html id="ai_quiz" %}
