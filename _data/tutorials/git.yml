@@ -37,7 +37,7 @@ steps:
       in one of **three states**:
 
       ```
-      ┌──────────────┐     git add     ┌──────────────┐   git commit   ┌──────────────┐
+      ┌──────────────┐     git add     ┌──────────────┐   git commit  ┌──────────────┐
       │   Working    │ ──────────────▶ │   Staging    │ ────────────▶ │    Local     │
       │  Directory   │                 │  Area (Index)│               │  Repository  │
       └──────────────┘                 └──────────────┘               └──────────────┘
