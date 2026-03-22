@@ -82,6 +82,7 @@
     this.setupCommands = options.setupCommands || [];
     this.requireTests = options.requireTests || false;
     this._stepsPassed = new Set();
+    this._quizPassed = new Set();
     this.currentStep = -1;
     this.emulator = null;
     this.term = null;
@@ -174,6 +175,7 @@
       '<div class="tvm-step-content-wrap">' +
       '<div class="tvm-step-content"></div>' +
       '</div>' +
+      '<div class="tvm-quiz-panel" style="display:none"></div>' +
       '<div class="tvm-step-controls-bar">' +
       '<div class="tvm-step-controls"></div>' +
       '</div>' +
@@ -196,6 +198,8 @@
     this.containerEl = this.root.querySelector('.tvm-container');
     this.stepNavEl = this.root.querySelector('.tvm-step-nav');
     this.stepContentEl = this.root.querySelector('.tvm-step-content');
+    this.stepContentWrapEl = this.root.querySelector('.tvm-step-content-wrap');
+    this.quizPanelEl = this.root.querySelector('.tvm-quiz-panel');
     this.stepControlsEl = this.root.querySelector('.tvm-step-controls');
     this.editorTabsEl = this.root.querySelector('.tvm-editor-tabs');
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
@@ -830,6 +834,10 @@
     this.currentStep = index;
     var step = this.steps[index];
 
+    // Ensure quiz panel is hidden when loading a step
+    if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
+    if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
+
     // Update step navigation
     this._renderStepNav();
 
@@ -840,42 +848,11 @@
     this.stepContentEl.innerHTML = html;
     this.stepContentEl.scrollTop = 0;
 
-    // Render controls in the fixed footer bar (always visible, below scroll)
-    var controlsHtml = '';
-    if (index > 0) {
-      controlsHtml += '<button class="tvm-btn tvm-btn-prev">\u2190 Previous</button>';
-    } else {
-      controlsHtml += '<span></span>';
-    }
-    if (step.tests && step.tests.length > 0) {
-      controlsHtml += '<button class="tvm-btn tvm-btn-test">\u2713 Test My Work</button>';
-    } else {
-      controlsHtml += '<span></span>';
-    }
-    var nextLocked = this.requireTests &&
-      step.tests && step.tests.length > 0 &&
-      !this._stepsPassed.has(index);
-    if (index < this.steps.length - 1) {
-      controlsHtml += '<button class="tvm-btn tvm-btn-next"' +
-        (nextLocked ? ' disabled title="Pass all tests to continue"' : '') +
-        '>Next \u2192</button>';
-    } else {
-      controlsHtml += '<span></span>';
-    }
-    this.stepControlsEl.innerHTML = controlsHtml;
-
-    // Wire up buttons
-    var self = this;
-    var prevBtn = this.stepControlsEl.querySelector('.tvm-btn-prev');
-    var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
-    var testBtn = this.stepControlsEl.querySelector('.tvm-btn-test');
-    if (prevBtn) prevBtn.addEventListener('click', function () { self.loadStep(index - 1); });
-    if (nextBtn) nextBtn.addEventListener('click', function () {
-      if (!nextBtn.disabled) self.loadStep(index + 1);
-    });
-    if (testBtn) testBtn.addEventListener('click', function () { self._runTests(); });
+    // Render step controls (prev / test / next buttons)
+    this._renderStepControls(index);
 
     // Open files for this step
+    var self = this;
     if (step.files) {
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
@@ -913,6 +890,368 @@
       btn.title = step.title;
       btn.addEventListener('click', function () { self.loadStep(i); });
       self.stepNavEl.appendChild(btn);
+    });
+  };
+
+  // ---- Step Controls --------------------------------------------------------
+
+  TutorialVM.prototype._renderStepControls = function (index) {
+    var self = this;
+    var step = this.steps[index];
+
+    var controlsHtml = '';
+    if (index > 0) {
+      controlsHtml += '<button class="tvm-btn tvm-btn-prev">\u2190 Previous</button>';
+    } else {
+      controlsHtml += '<span></span>';
+    }
+    if (step.tests && step.tests.length > 0) {
+      controlsHtml += '<button class="tvm-btn tvm-btn-test">\u2713 Test My Work</button>';
+    } else {
+      controlsHtml += '<span></span>';
+    }
+    var nextLocked = this.requireTests &&
+      step.tests && step.tests.length > 0 &&
+      !this._stepsPassed.has(index);
+    if (index < this.steps.length - 1) {
+      controlsHtml += '<button class="tvm-btn tvm-btn-next"' +
+        (nextLocked ? ' disabled title="Pass all tests to continue"' : '') +
+        '>Next \u2192</button>';
+    } else {
+      controlsHtml += '<span></span>';
+    }
+    this.stepControlsEl.innerHTML = controlsHtml;
+
+    var prevBtn = this.stepControlsEl.querySelector('.tvm-btn-prev');
+    var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
+    var testBtn = this.stepControlsEl.querySelector('.tvm-btn-test');
+    if (prevBtn) prevBtn.addEventListener('click', function () { self.loadStep(index - 1); });
+    if (nextBtn) nextBtn.addEventListener('click', function () {
+      if (!nextBtn.disabled) {
+        var hasQuiz = step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
+        if (hasQuiz && !self._quizPassed.has(index)) {
+          self._showStepQuiz(index);
+        } else {
+          self.loadStep(index + 1);
+        }
+      }
+    });
+    if (testBtn) testBtn.addEventListener('click', function () { self._runTests(); });
+  };
+
+  // ---- Step Quiz ------------------------------------------------------------
+
+  TutorialVM.prototype._showStepQuiz = function (stepIndex) {
+    var self = this;
+    var step = this.steps[stepIndex];
+    var quiz = step && step.quiz;
+    if (!quiz || !quiz.questions || !quiz.questions.length) return;
+
+    // Swap content area: hide step content, show quiz panel
+    if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = 'none';
+    if (this.quizPanelEl) {
+      this.quizPanelEl.style.display = '';
+      this.quizPanelEl.innerHTML = this._buildQuizHTML(stepIndex, quiz);
+      this.quizPanelEl.scrollTop = 0;
+      this._initQuizBehavior(stepIndex, quiz.min_score !== undefined ? quiz.min_score : 0.8);
+    }
+
+    // Replace controls with quiz navigation
+    var total = quiz.questions.length;
+    this.stepControlsEl.innerHTML =
+      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back">\u2190 Back to Step</button>' +
+      '<span class="tvm-quiz-status">Question 1\u2009/\u2009' + total + '</span>' +
+      '<span></span>';
+    var backBtn = this.stepControlsEl.querySelector('.tvm-quiz-back');
+    if (backBtn) backBtn.addEventListener('click', function () { self._hideStepQuiz(); });
+  };
+
+  TutorialVM.prototype._hideStepQuiz = function () {
+    if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
+    if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
+    this._renderStepControls(this.currentStep);
+  };
+
+  TutorialVM.prototype._shuffleArray = function (arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    return arr;
+  };
+
+  TutorialVM.prototype._buildQuizHTML = function (stepIndex, quiz) {
+    var self = this;
+    var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var doShuffle = quiz.shuffle !== false;
+    var minPct = Math.round((quiz.min_score !== undefined ? quiz.min_score : 0.8) * 100);
+    var nextStepNum = stepIndex + 2; // steps are 1-indexed for display
+
+    // Clone questions so originals are not mutated
+    var questions = (quiz.questions || []).map(function (q) {
+      var opts = (q.options || []).map(function (text, oi) {
+        return { text: text, originalIndex: oi };
+      });
+      if (doShuffle) self._shuffleArray(opts);
+      var correctOriginals = q.type === 'multiple'
+        ? (q.correct_indices || []).map(String).sort()
+        : [String(q.correct_index || 0)];
+      // Compute which display labels (A/B/C…) are correct after shuffle
+      var correctLabels = [];
+      opts.forEach(function (opt, oi) {
+        if (correctOriginals.indexOf(String(opt.originalIndex)) !== -1) {
+          correctLabels.push(alphabet[oi]);
+        }
+      });
+      return {
+        question: q.question || '',
+        type: q.type || 'single',
+        explanation: q.explanation || '',
+        options: opts,
+        correctOriginals: correctOriginals,
+        correctLabels: correctLabels
+      };
+    });
+    if (doShuffle) self._shuffleArray(questions);
+
+    // Gate banner
+    var html =
+      '<div class="tvm-quiz-gate-header">' +
+      '<span class="tvm-quiz-gate-icon">&#128203;</span>' +
+      '<div><strong>Knowledge Check</strong>' +
+      '<p>Score \u2265' + minPct + '% to continue to Step ' + nextStepNum + '</p></div>' +
+      '</div>';
+
+    // Quiz card
+    html += '<div class="quiz-container" id="tvm-quiz-' + stepIndex + '">';
+    html += '<div class="quiz-header">';
+    if (quiz.title) {
+      html += '<div class="quiz-title-row"><h3>' + self._escapeHtml(quiz.title) + '</h3></div>';
+    }
+    html += '<div class="quiz-progress-bar"><div class="progress-fill" style="width:0%"></div></div>';
+    html += '</div>'; // quiz-header
+
+    html += '<div class="quiz-questions">';
+    questions.forEach(function (q, qi) {
+      html += '<div class="quiz-question-card' + (qi === 0 ? ' active' : '') +
+        '" data-question-index="' + qi + '" data-type="' + q.type + '">';
+
+      // Question text (rendered as markdown)
+      html += '<div class="question-text">' + self._renderMarkdown(q.question) + '</div>';
+
+      // Options
+      html += '<div class="quiz-options">';
+      q.options.forEach(function (opt, oi) {
+        var origIdx = String(opt.originalIndex);
+        html += '<button class="quiz-option"' +
+          ' data-index="' + origIdx + '"' +
+          ' data-correct="' + q.correctOriginals[0] + '"' +
+          ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
+          '<span class="option-checkbox"></span>' +
+          '<span class="option-label">' + alphabet[oi] + '</span>' +
+          '<span class="option-content">' + self._escapeHtml(opt.text) + '</span>' +
+          '</button>';
+      });
+      html += '</div>'; // quiz-options
+
+      // Submit button for multiple choice
+      if (q.type === 'multiple') {
+        html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
+      }
+
+      // Correct answer badge
+      html += '<div class="quiz-correct-answers">Correct Answer' +
+        (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
+        q.correctLabels.map(function (l) {
+          return '<span class="correct-label-badge">' + l + '</span>';
+        }).join('') +
+        '</span></div>';
+
+      // Explanation + next button
+      html += '<div class="quiz-explanation hidden">' +
+        '<div class="explanation-title">Explanation</div>' +
+        '<div class="explanation-text">' + self._renderMarkdown(q.explanation) + '</div>' +
+        '<button class="next-btn">' + (qi < questions.length - 1 ? 'Next Question' : 'See Results') + '</button>' +
+        '</div>'; // quiz-explanation
+
+      html += '</div>'; // quiz-question-card
+    });
+    html += '</div>'; // quiz-questions
+
+    // Results
+    html += '<div class="quiz-results hidden">' +
+      '<div class="results-content">' +
+      '<h4>Knowledge Check Complete!</h4>' +
+      '<div class="score-display">Your Score: <span class="current-score">0</span>' +
+      '<span style="font-size:0.55em;font-weight:400;"> / ' + questions.length + '</span></div>' +
+      '<p class="score-summary"></p>' +
+      '<div class="tvm-quiz-threshold">Passing score: ' + minPct + '%</div>' +
+      '<div class="results-actions">' +
+      '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' \u2192</button>' +
+      '<button class="restart-btn">Try Again</button>' +
+      '</div></div></div>'; // results-content / quiz-results
+
+    html += '</div>'; // quiz-container
+    return html;
+  };
+
+  TutorialVM.prototype._initQuizBehavior = function (stepIndex, minScore) {
+    var self = this;
+    var container = this.quizPanelEl && this.quizPanelEl.querySelector('.quiz-container');
+    if (!container) return;
+
+    var progressBar = container.querySelector('.progress-fill');
+    var resultsArea = container.querySelector('.quiz-results');
+    var scoreDisplay = container.querySelector('.current-score');
+    var cards = container.querySelectorAll('.quiz-question-card');
+    var totalQuestions = cards.length;
+    var currentQ = 0;
+    var score = 0;
+
+    function updateProgress() {
+      if (progressBar) progressBar.style.width = (currentQ / totalQuestions * 100) + '%';
+      var statusEl = self.stepControlsEl.querySelector('.tvm-quiz-status');
+      if (statusEl) statusEl.textContent = 'Question ' + (currentQ + 1) + '\u2009/\u2009' + totalQuestions;
+    }
+
+    function showQuestion(idx) {
+      cards.forEach(function (c) { c.classList.remove('active'); });
+      if (cards[idx]) cards[idx].classList.add('active');
+      var submitBtn = cards[idx] && cards[idx].querySelector('.submit-answer-btn');
+      if (submitBtn) submitBtn.disabled = true;
+      updateProgress();
+      if (self.quizPanelEl) self.quizPanelEl.scrollTop = 0;
+    }
+
+    function handleOptionClick(e) {
+      var option = e.currentTarget;
+      var card = option.closest('.quiz-question-card');
+      if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
+      if (card.dataset.type === 'multiple') {
+        option.classList.toggle('selected');
+        var submitBtn = card.querySelector('.submit-answer-btn');
+        if (submitBtn) submitBtn.disabled = (card.querySelectorAll('.quiz-option.selected').length === 0);
+      } else {
+        validateSingleChoice(option, card);
+      }
+    }
+
+    function validateSingleChoice(option, card) {
+      var options = card.querySelectorAll('.quiz-option');
+      var explanation = card.querySelector('.quiz-explanation');
+      var correctAnswersEl = card.querySelector('.quiz-correct-answers');
+      var isCorrect = option.dataset.correct === option.dataset.index;
+      options.forEach(function (opt) { opt.setAttribute('disabled', 'true'); });
+      if (isCorrect) {
+        option.classList.add('correct');
+        score++;
+      } else {
+        option.classList.add('incorrect');
+        var correctOpt = Array.prototype.find
+          ? Array.prototype.find.call(options, function (o) { return o.dataset.index === option.dataset.correct; })
+          : (function () { for (var i = 0; i < options.length; i++) { if (options[i].dataset.index === option.dataset.correct) return options[i]; } })();
+        if (correctOpt) correctOpt.classList.add('correct');
+      }
+      if (correctAnswersEl) correctAnswersEl.style.display = 'flex';
+      if (explanation) explanation.classList.remove('hidden');
+    }
+
+    function handleSubmitClick(e) {
+      var card = e.currentTarget.closest('.quiz-question-card');
+      var options = card.querySelectorAll('.quiz-option');
+      var selectedOptions = card.querySelectorAll('.quiz-option.selected');
+      var explanation = card.querySelector('.quiz-explanation');
+      var correctAnswersEl = card.querySelector('.quiz-correct-answers');
+      var submitBtn = e.currentTarget;
+      var selectedIndices = Array.prototype.map.call(selectedOptions, function (o) { return o.dataset.index; }).sort().join(',');
+      var correctIndices = card.querySelector('.quiz-option').dataset.correctIndices.split(',').sort().join(',');
+      options.forEach(function (opt) { opt.setAttribute('disabled', 'true'); });
+      submitBtn.classList.add('hidden');
+      var isAnswerCorrect = (selectedIndices === correctIndices);
+      if (isAnswerCorrect) {
+        selectedOptions.forEach(function (o) { o.classList.add('correct'); });
+        score++;
+      } else {
+        var correctSet = correctIndices.split(',');
+        options.forEach(function (opt) {
+          if (correctSet.indexOf(opt.dataset.index) !== -1) opt.classList.add('correct');
+          else if (opt.classList.contains('selected')) opt.classList.add('incorrect');
+        });
+      }
+      if (correctAnswersEl) correctAnswersEl.style.display = 'flex';
+      if (explanation) explanation.classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+      currentQ++;
+      if (currentQ < totalQuestions) {
+        showQuestion(currentQ);
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      cards.forEach(function (c) { c.classList.remove('active'); });
+      if (resultsArea) resultsArea.classList.remove('hidden');
+      if (scoreDisplay) scoreDisplay.textContent = score;
+      if (progressBar) progressBar.style.width = '100%';
+
+      var statusEl = self.stepControlsEl.querySelector('.tvm-quiz-status');
+      var passed = (score / totalQuestions) >= minScore;
+      var summary = container.querySelector('.score-summary');
+      var continueBtn = container.querySelector('.tvm-quiz-continue-btn');
+      var restartBtn = container.querySelector('.restart-btn');
+
+      if (passed) {
+        if (summary) summary.textContent = 'Great job! You\'re ready for the next step.';
+        if (continueBtn) continueBtn.classList.remove('hidden');
+        if (restartBtn) restartBtn.classList.add('hidden');
+        if (statusEl) statusEl.textContent = '\u2713 Passed';
+      } else {
+        var needed = Math.round(minScore * totalQuestions);
+        if (summary) summary.textContent = 'You scored ' + score + '/' + totalQuestions + '. ' +
+          'Need at least ' + needed + ' correct (' + Math.round(minScore * 100) + '%) to continue. Review the step and try again!';
+        if (continueBtn) continueBtn.classList.add('hidden');
+        if (restartBtn) restartBtn.classList.remove('hidden');
+        if (statusEl) statusEl.textContent = '\u2717 ' + score + '/' + totalQuestions;
+      }
+      if (self.quizPanelEl) self.quizPanelEl.scrollTop = 0;
+    }
+
+    function restartQuiz() {
+      currentQ = 0; score = 0;
+      if (resultsArea) resultsArea.classList.add('hidden');
+      cards.forEach(function (card) {
+        var opts = card.querySelectorAll('.quiz-option');
+        var exp = card.querySelector('.quiz-explanation');
+        var sub = card.querySelector('.submit-answer-btn');
+        var ca = card.querySelector('.quiz-correct-answers');
+        opts.forEach(function (o) { o.classList.remove('correct', 'incorrect', 'selected'); o.removeAttribute('disabled'); });
+        if (exp) exp.classList.add('hidden');
+        if (sub) { sub.classList.remove('hidden'); sub.disabled = true; }
+        if (ca) ca.style.display = '';
+      });
+      showQuestion(0);
+    }
+
+    // Wire events
+    container.querySelectorAll('.quiz-option').forEach(function (btn) {
+      btn.addEventListener('click', handleOptionClick);
+    });
+    container.querySelectorAll('.submit-answer-btn').forEach(function (btn) {
+      btn.addEventListener('click', handleSubmitClick);
+    });
+    container.querySelectorAll('.next-btn').forEach(function (btn) {
+      btn.addEventListener('click', nextQuestion);
+    });
+    var restartBtnEl = container.querySelector('.restart-btn');
+    if (restartBtnEl) restartBtnEl.addEventListener('click', restartQuiz);
+    var continueBtnEl = container.querySelector('.tvm-quiz-continue-btn');
+    if (continueBtnEl) continueBtnEl.addEventListener('click', function () {
+      self._quizPassed.add(stepIndex);
+      self._hideStepQuiz();
+      self.loadStep(stepIndex + 1);
     });
   };
 

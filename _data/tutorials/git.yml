@@ -85,6 +85,42 @@ steps:
       - description: "myproject directory exists and is a Git repository"
         command: "[ -d /tutorial/myproject/.git ]"
 
+    quiz:
+      title: "Your First Repository — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "In Git's three-state model, what is the purpose of the **Staging Area**?"
+          options:
+            - "Where Git permanently stores committed snapshots"
+            - "Where you review and select exactly which changes will go into the next commit"
+            - "Where you write and save your source code files"
+            - "A remote server where you back up your work"
+          correct_index: 1
+          explanation: "The Staging Area (loading dock) is Git's way of letting you precisely control what goes into each commit. You can stage some changes but not others, creating clean, focused snapshots."
+
+        - question: "What does `git init` create inside your project directory?"
+          options:
+            - "A new branch called `main` on GitHub"
+            - "A hidden `.git` directory that stores all version history"
+            - "A remote repository on a server"
+            - "A commit containing all existing files"
+          correct_index: 1
+          explanation: "`git init` creates a hidden `.git/` directory containing the full version history database, configuration, and branch pointers. This is the entire repository — no network access required."
+
+        - question: "Which problems does version control solve? (Select all that apply)"
+          type: multiple
+          options:
+            - "Tracking exactly who changed what, and when"
+            - "Rolling back to any previous version of your project"
+            - "Automatically fixing bugs and syntax errors"
+            - "Allowing multiple developers to work in parallel without overwriting each other"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "Version control tracks history, enables rollbacks, and supports parallel work. It does NOT fix bugs — that part is still up to you!"
+
   # --------------------------------------------------------------------------
   # STEP 2: First commit — git add, git commit
   # --------------------------------------------------------------------------
@@ -169,6 +205,42 @@ steps:
       - description: "Commit message mentions 'calculator' or 'add'"
         command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'calc\\|add'"
 
+    quiz:
+      title: "Your First Commit — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `git status` show for a file that exists in your working directory but has never been added to Git?"
+          options:
+            - "Modified (red)"
+            - "Staged (green)"
+            - "Untracked (red)"
+            - "Committed"
+          correct_index: 2
+          explanation: "An **untracked** file is one Git has never been told to follow. It shows up in red under 'Untracked files'. Once you run `git add`, it moves to the staging area and Git begins tracking it."
+
+        - question: "Which sequence of commands correctly stages and commits a new file called `app.py`?"
+          options:
+            - "`git commit app.py` then `git add app.py`"
+            - "`git add app.py` then `git commit -m 'Add app module'`"
+            - "`git stage app.py` then `git save 'Add app module'`"
+            - "`git track app.py` then `git commit`"
+          correct_index: 1
+          explanation: "The correct two-step flow is **add** (move to staging area) then **commit** (save the snapshot). `git commit` only commits what's in the staging area, so you must `git add` first."
+
+        - question: "Which of the following are characteristics of a **good commit message**? (Select all that apply)"
+          type: multiple
+          options:
+            - "Describes what changed and why"
+            - "Is specific enough that your future self understands the context"
+            - "Uses a single letter like 'f' or 'x' for brevity"
+            - "Treats each commit as one logical, focused change"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "Good commit messages are descriptive, explain intent, and accompany small, focused changes. Cryptic single-letter messages make history useless for debugging and code review."
+
   # --------------------------------------------------------------------------
   # STEP 3: Making changes — edit, diff, add, commit cycle
   # --------------------------------------------------------------------------
@@ -248,6 +320,42 @@ steps:
         command: "cd /tutorial/myproject && git log --oneline | grep -qi 'multiply'"
       - description: "Repository has at least 2 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 2 ]"
+
+    quiz:
+      title: "Edit-Stage-Commit Cycle — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "You modified `calculator.py` but have NOT yet run `git add`. What does `git diff` compare?"
+          options:
+            - "Staging area vs. last commit"
+            - "Working directory vs. last commit"
+            - "Working directory vs. staging area"
+            - "Last commit vs. second-to-last commit"
+          correct_index: 2
+          explanation: "`git diff` (with no arguments) compares your **working directory** to the **staging area**. Since nothing is staged yet, the staging area still matches the last commit, so you see all your unstaged modifications."
+
+        - question: "In `git diff` output, what does a line starting with `+` indicate?"
+          options:
+            - "A line that was deleted"
+            - "A line that was added"
+            - "A line that is unchanged"
+            - "A file that was renamed"
+          correct_index: 1
+          explanation: "In diff output, lines starting with `+` are **additions** and lines starting with `-` are **deletions**. Unchanged context lines have no prefix symbol."
+
+        - question: "Which `git diff` variants compare which areas? (Select all correct pairs)"
+          type: multiple
+          options:
+            - "`git diff` → working directory vs. staging area"
+            - "`git diff --staged` → staging area vs. last commit"
+            - "`git diff HEAD` → staging area vs. second-to-last commit"
+            - "`git diff HEAD~1 HEAD` → previous commit vs. latest commit"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "`git diff` compares working dir to staging; `git diff --staged` compares staging to last commit; `git diff HEAD~1 HEAD` compares two commits. `git diff HEAD` actually compares working directory (including unstaged changes) to the last commit — not the staging area to an older commit."
 
   # --------------------------------------------------------------------------
   # STEP 4: Staging strategies — individual, wildcard, directory, all
@@ -347,6 +455,42 @@ steps:
       - description: "notes.txt has been committed"
         command: "cd /tutorial/myproject && git log --all --oneline -- notes.txt | grep -q '.'"
 
+    quiz:
+      title: "Staging Strategies — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "You have three modified files: `main.py`, `test_main.py`, and `config.json`. You only want to commit the test file. Which command stages **only** `test_main.py`?"
+          options:
+            - "`git add .`"
+            - "`git add test_main.py`"
+            - "`git add --all`"
+            - "`git commit test_main.py`"
+          correct_index: 1
+          explanation: "Naming the file explicitly (`git add test_main.py`) stages only that file. `git add .` and `git add --all` would stage everything, making it impossible to create a focused commit."
+
+        - question: "What is the key advantage of Git's staging area over a simple 'save everything' commit model?"
+          options:
+            - "It makes commits faster because fewer files are processed"
+            - "It lets you select exactly which changes belong together in one logical commit"
+            - "It automatically writes commit messages for you"
+            - "It prevents you from committing files with syntax errors"
+          correct_index: 1
+          explanation: "The staging area gives you **fine-grained control**: you can make many edits in your working directory, then assemble them into clean, focused commits that each represent one logical change. This keeps history readable and makes it easier to find bugs later."
+
+        - question: "Which staging commands match their descriptions? (Select all correct pairs)"
+          type: multiple
+          options:
+            - "`git add README.md` — stages one specific file"
+            - "`git add test_*.py` — stages all files matching a glob pattern"
+            - "`git add .` — stages only files that are already tracked (not new files)"
+            - "`git add --all` — stages all tracked changes and new untracked files"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "`git add .` stages ALL changes in the current directory — including new untracked files, modifications, and deletions. It is NOT limited to tracked files. `git add --all` does the same but from any working directory location."
+
   # --------------------------------------------------------------------------
   # STEP 5: Unstaging and undoing changes
   # --------------------------------------------------------------------------
@@ -415,6 +559,42 @@ steps:
         command: "cd /tutorial/myproject && ! grep -q 'BROKEN CODE' calculator.py"
       - description: "Working tree is clean (no uncommitted changes)"
         command: "cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet"
+
+    quiz:
+      title: "Unstaging and Undoing — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "You accidentally staged `config.py` with `git add`. Which command removes it from the staging area **without** discarding your edits?"
+          options:
+            - "`git restore config.py`"
+            - "`git restore --staged config.py`"
+            - "`git reset --hard`"
+            - "`git checkout config.py`"
+          correct_index: 1
+          explanation: "`git restore --staged <file>` unstages the file — it moves it off the loading dock back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
+
+        - question: "You run `git restore calculator.py` (without `--staged`). What happens to your unsaved edits?"
+          options:
+            - "They are moved to the staging area for review"
+            - "They are saved to a temporary stash automatically"
+            - "They are permanently discarded — there is no undo"
+            - "They are committed as a 'WIP' commit"
+          correct_index: 2
+          explanation: "`git restore <file>` replaces the working directory version with the last committed version. Because the changes were never committed, Git has **no record** of them — they are gone permanently with no way to recover them."
+
+        - question: "Which statements about `git reset --hard` are true? (Select all that apply)"
+          type: multiple
+          options:
+            - "It discards ALL uncommitted changes in the working directory and staging area"
+            - "It is safe to use on a shared branch because it creates a new revert commit"
+            - "It moves the branch pointer backward, rewriting history"
+            - "It should be used with caution because it permanently destroys committed work that others may depend on"
+          correct_indices:
+            - 0
+            - 2
+            - 3
+          explanation: "`git reset --hard` is powerful but destructive: it discards all uncommitted changes and rewrites branch history by moving the pointer. It does **not** create a safe revert commit — that's what `git revert` is for."
 
   # --------------------------------------------------------------------------
   # STEP 6: .gitignore
@@ -499,6 +679,42 @@ steps:
       - description: ".env is not tracked by Git"
         command: "cd /tutorial/myproject && ! git ls-files --cached | grep -q '.env'"
 
+    quiz:
+      title: "Ignoring Files — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "Which type of file is the **most dangerous** to accidentally commit to a public repository?"
+          options:
+            - "A compiled `.pyc` bytecode file"
+            - "An `.env` file containing API keys and database passwords"
+            - "An OS-generated `.DS_Store` file"
+            - "A `node_modules/` directory with downloaded packages"
+          correct_index: 1
+          explanation: "Committing a `.env` file exposes **secrets** (API keys, passwords, tokens) to anyone who can see the repository — even after deletion, the secret remains in Git history. The others are wasteful but not security risks."
+
+        - question: "After adding `*.log` to `.gitignore`, you run `git status`. Which statement is true?"
+          options:
+            - "All `.log` files are automatically deleted from your filesystem"
+            - "`.log` files are no longer shown as untracked in `git status`"
+            - "`.log` files are moved to a quarantine folder"
+            - "Git will error if you try to add a `.log` file"
+          correct_index: 1
+          explanation: "`.gitignore` tells Git to **pretend matching files don't exist** for tracking purposes. The files remain on disk — they simply won't appear in `git status` as untracked, and `git add .` won't stage them."
+
+        - question: "Why should the `.gitignore` file itself be committed to the repository? (Select all that apply)"
+          type: multiple
+          options:
+            - "All contributors automatically get the same ignore rules"
+            - "It prevents secrets from being checked in on any team member's machine"
+            - "It makes `.gitignore` patterns apply to all future clones of the project"
+            - "It removes ignored files from everyone's filesystem"
+          correct_indices:
+            - 0
+            - 1
+            - 2
+          explanation: "Committing `.gitignore` shares the ignore rules with the whole team and every future clone. This prevents accidental secret commits by anyone and keeps the repo free of generated/OS clutter. It does **not** delete files from anyone's filesystem."
+
   # --------------------------------------------------------------------------
   # STEP 7: Inspecting history — git log, git diff HEAD, git show
   # --------------------------------------------------------------------------
@@ -566,6 +782,42 @@ steps:
     tests:
       - description: "Repository has at least 3 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 3 ]"
+
+    quiz:
+      title: "Inspecting History — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `HEAD~2` refer to in a Git command like `git diff HEAD~2 HEAD`?"
+          options:
+            - "The second branch in your repository"
+            - "The commit two steps before the latest commit"
+            - "The second file changed in the latest commit"
+            - "The commit with index 2 in the log"
+          correct_index: 1
+          explanation: "`HEAD` points to the latest commit. `HEAD~1` is one commit before it, `HEAD~2` is two commits back, and so on. This relative notation lets you reference commits without copying their hash."
+
+        - question: "You want to see the full diff of what changed **in** the latest commit (not comparing to working directory). Which command is correct?"
+          options:
+            - "`git diff`"
+            - "`git diff HEAD`"
+            - "`git show HEAD`"
+            - "`git log --oneline`"
+          correct_index: 2
+          explanation: "`git show HEAD` displays the commit metadata plus the complete diff of that commit. `git diff HEAD` compares your working directory to the last commit — it would show your *uncommitted* changes, not the committed diff."
+
+        - question: "Which pieces of information does `git log` display for each commit? (Select all that apply)"
+          type: multiple
+          options:
+            - "A unique commit hash (SHA)"
+            - "The author's name and email"
+            - "The date and time of the commit"
+            - "The exact lines that were changed in each file"
+          correct_indices:
+            - 0
+            - 1
+            - 2
+          explanation: "`git log` shows the hash, author, date, and commit message for each commit. It does **not** show the file diffs — for that you need `git show <hash>` or `git diff`."
 
   # --------------------------------------------------------------------------
   # STEP 8: Branching — git branch, git checkout/switch
@@ -719,6 +971,42 @@ steps:
       - description: "Currently on feature-divide branch (not in detached HEAD)"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
 
+    quiz:
+      title: "Branching — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What is a Git branch, physically speaking?"
+          options:
+            - "A full copy of all project files stored separately"
+            - "A lightweight pointer (a 41-byte text file) containing a commit hash"
+            - "A separate network connection to a remote server"
+            - "A compressed archive of your working directory"
+          correct_index: 1
+          explanation: "A branch is just a tiny file in `.git/refs/heads/` containing a 40-character SHA hash. Creating a branch is nearly instantaneous and uses almost no storage — it's not a copy of your files."
+
+        - question: "You are on `feature-x` and run `git switch main`. What happens to the files in your working directory?"
+          options:
+            - "Your working directory is untouched — branches share the same files"
+            - "Git updates your working directory to match the state of the `main` branch"
+            - "Your changes are automatically committed to `feature-x`"
+            - "Git merges `feature-x` changes into `main`"
+          correct_index: 1
+          explanation: "When you switch branches, Git **updates your working directory** to match the commit that the target branch points to. Files unique to `feature-x` disappear; files in `main` (but not `feature-x`) reappear. This is why branches feel like separate timelines."
+
+        - question: "Which statements about **Detached HEAD** state are true? (Select all that apply)"
+          type: multiple
+          options:
+            - "HEAD points directly to a commit hash instead of a branch name"
+            - "You can safely make new commits here — they are automatically saved to the nearest branch"
+            - "Any commits made in detached HEAD state are not anchored to a branch and may be garbage-collected"
+            - "You should create a new branch before making commits if you want to keep the work"
+          correct_indices:
+            - 0
+            - 2
+            - 3
+          explanation: "In detached HEAD, `HEAD` contains a raw SHA instead of a branch ref. Commits here are orphaned — no branch pointer tracks them. Git will eventually garbage-collect them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work."
+
   # --------------------------------------------------------------------------
   # STEP 9: Merging — fast-forward and three-way merge
   # --------------------------------------------------------------------------
@@ -821,6 +1109,42 @@ steps:
       - description: "Merge commit or fast-forward is in the log"
         command: "cd /tutorial/myproject && git log main --oneline | grep -qi 'divide'"
 
+    quiz:
+      title: "Merging Branches — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "When does Git perform a **fast-forward merge** instead of creating a merge commit?"
+          options:
+            - "When the branches have conflicting changes"
+            - "When the target branch (e.g., main) has no new commits since the feature branch was created"
+            - "When you pass the `--fast-forward` flag explicitly"
+            - "When both branches have the same number of commits"
+          correct_index: 1
+          explanation: "A fast-forward merge is possible only when the target branch hasn't diverged — it's directly 'behind' the feature branch in history. Git simply slides the pointer forward. No merge commit is created and the history stays linear."
+
+        - question: "In a **three-way merge**, what are the three 'points' Git compares?"
+          options:
+            - "The working directory, the staging area, and the last commit"
+            - "The current branch tip, the incoming branch tip, and their common ancestor commit"
+            - "HEAD, HEAD~1, and HEAD~2"
+            - "The local branch, the remote branch, and the global config"
+          correct_index: 1
+          explanation: "Git finds the **common ancestor** (the commit where the two branches diverged), then compares both branch tips against it. This three-point comparison lets Git automatically combine non-overlapping changes and flag conflicts only where the same lines were changed."
+
+        - question: "Which statements about merging are correct? (Select all that apply)"
+          type: multiple
+          options:
+            - "You must switch to the branch you want to merge **into** before running `git merge`"
+            - "A fast-forward merge produces a clean linear history with no extra merge commit"
+            - "After merging, you should always immediately delete the feature branch"
+            - "A three-way merge creates a new commit with two parent commits"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "You always merge *into* your current branch, so switch first. Fast-forwards keep history linear; three-way merges create a merge commit with two parents. Deleting the feature branch after merging is optional (tidy but not required)."
+
   # --------------------------------------------------------------------------
   # STEP 10: Create a branch for merge conflict setup (student makes changes)
   # --------------------------------------------------------------------------
@@ -887,6 +1211,41 @@ steps:
         command: "cd /tutorial/myproject && git log update-add-function --oneline | grep -qi 'type\\|check\\|add'"
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
+
+    quiz:
+      title: "Preparing for a Merge Conflict — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What is the **root cause** of a merge conflict in Git?"
+          options:
+            - "One branch has more commits than the other"
+            - "Two branches modified the **same lines** of the same file"
+            - "The feature branch was not created from the latest commit"
+            - "The commit messages on the two branches are identical"
+          correct_index: 1
+          explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
+
+        - question: "You are setting up a merge conflict scenario. You made changes on `update-add-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
+          options:
+            - "Run `git merge update-add-function` immediately"
+            - "Make a **different** change to the same lines on `main`, commit it, then merge"
+            - "Delete the `update-add-function` branch and start over"
+            - "Run `git conflict update-add-function` to preview conflicts"
+          correct_index: 1
+          explanation: "To create a conflict, both branches must have **diverging changes** to the same lines. If you merge without making a competing change on main, Git will just fast-forward. Making a different edit to the same lines on main sets up a true three-way conflict."
+
+        - question: "Which scenarios will **definitely cause** a merge conflict? (Select all that apply)"
+          type: multiple
+          options:
+            - "Branch A adds a new function at the end of a file; Branch B also adds a different function at the end"
+            - "Branch A changes line 5 to say X; Branch B changes line 5 to say Y"
+            - "Branch A adds a new file; Branch B modifies an existing different file"
+            - "Branch A and Branch B both change the same function's body in different ways"
+          correct_indices:
+            - 1
+            - 3
+          explanation: "Conflicts happen when the **same lines** are changed differently on two branches. Adding different content at the same location (both adding to end of file) can also conflict if they overlap. Adding different files or editing completely separate files never conflicts."
 
   # --------------------------------------------------------------------------
   # STEP 11: Resolving a merge conflict
@@ -1002,6 +1361,42 @@ steps:
       - description: "calculator.py contains logging (print)"
         command: "cd /tutorial/myproject && grep -q 'print' calculator.py"
 
+    quiz:
+      title: "Resolving a Merge Conflict — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "In conflict markers, what does the section between `<<<<<<< HEAD` and `=======` represent?"
+          options:
+            - "The version from the branch being merged in"
+            - "The common ancestor version before either branch made changes"
+            - "Your current branch's version of the conflicting lines"
+            - "Git's automatically suggested resolution"
+          correct_index: 2
+          explanation: "The `<<<<<<< HEAD` section shows **your current branch's** version. The section after `=======` (up to `>>>>>>>`) shows the **incoming branch's** version. You must choose between them, combine them, or write something entirely new — then remove all markers."
+
+        - question: "After manually editing a file to resolve a conflict, what is the correct sequence of commands to complete the merge?"
+          options:
+            - "`git merge --continue` then `git push`"
+            - "`git add <resolved-file>` then `git commit`"
+            - "`git resolve <file>` then `git merge --done`"
+            - "`git conflict --resolved` then `git commit -m 'fixed'`"
+          correct_index: 1
+          explanation: "After editing the conflict away, you mark it resolved with `git add <file>` (which tells Git the conflict in that file is fixed), then `git commit` to create the merge commit. There is no `git resolve` command."
+
+        - question: "Which statements about merge conflicts are true? (Select all that apply)"
+          type: multiple
+          options:
+            - "A merge conflict is a Git error that indicates something went wrong with the repository"
+            - "You must remove all `<<<<<<<`, `=======`, and `>>>>>>>` markers before committing"
+            - "A merge conflict is Git's way of asking a human to decide which change to keep"
+            - "The resolved file can combine content from both conflicting versions"
+          correct_indices:
+            - 1
+            - 2
+            - 3
+          explanation: "Conflicts are **not errors** — they are Git's deliberate safety mechanism asking for human judgment. You must remove all markers (leaving them in is a bug). The resolution can be either version, a combination, or even entirely new code."
+
   # --------------------------------------------------------------------------
   # STEP 12: Safe undo with git revert
   # --------------------------------------------------------------------------
@@ -1083,6 +1478,42 @@ steps:
         command: "cd /tutorial/myproject && ! grep -q 'debug: this should not be here' calculator.py"
       - description: "Repository has at least 8 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 8 ]"
+
+    quiz:
+      title: "Safe Undo with git revert — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `git revert HEAD` do?"
+          options:
+            - "Deletes the latest commit and all its changes permanently"
+            - "Creates a new commit that applies the **inverse** of the latest commit"
+            - "Moves the branch pointer back one commit, rewriting history"
+            - "Opens the latest commit for editing so you can fix the mistake"
+          correct_index: 1
+          explanation: "`git revert` creates an **anti-commit** — a new commit that exactly undoes the target commit's changes. The original bad commit remains in history. This is safe because it never rewrites history."
+
+        - question: "Why is `git revert` safer than `git reset --hard` when working on a shared branch?"
+          options:
+            - "`git revert` is faster because it only changes one file"
+            - "`git revert` preserves history and doesn't cause problems for teammates who already pulled"
+            - "`git revert` automatically notifies other developers via email"
+            - "`git reset --hard` requires admin permissions on shared branches"
+          correct_index: 1
+          explanation: "`git reset --hard` **rewrites history** by destroying commits. If teammates already pulled those commits, a force-push would cause severe conflicts. `git revert` adds a new commit without touching existing history, so everyone stays in sync."
+
+        - question: "Which statements correctly describe `git revert`? (Select all that apply)"
+          type: multiple
+          options:
+            - "It creates a new commit — it never removes existing commits"
+            - "The original 'bad' commit remains visible in `git log` after reverting"
+            - "It can only undo the most recent commit"
+            - "It is the recommended way to undo committed mistakes on shared/public branches"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "`git revert` always adds an anti-commit, leaving the full history intact. You can revert any commit by hash — not just HEAD. The bad commit remains in the log, which is actually useful for auditing. This makes it the standard safe-undo tool for shared branches."
 
   # --------------------------------------------------------------------------
   # STEP 13: Review and best practices

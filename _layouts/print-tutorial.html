@@ -222,11 +222,136 @@
       color: #222236;
     }
 
+    /* ── Quiz styles ── */
+    .print-quiz {
+      margin-top: 20px;
+      border: 1px solid #c0c0d8;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .print-quiz-header {
+      background: #e8eef8;
+      border-bottom: 1px solid #c0c0d8;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .print-quiz-icon {
+      font-size: 1.1em;
+      color: #0060a8;
+    }
+
+    .print-quiz-title {
+      font-size: 0.9em;
+      font-weight: 700;
+      color: #0060a8;
+      margin: 0;
+    }
+
+    .print-quiz-threshold {
+      margin-left: auto;
+      font-size: 0.78em;
+      color: #505070;
+      font-weight: 600;
+    }
+
+    .print-quiz-body {
+      padding: 14px 16px;
+    }
+
+    .print-quiz-question {
+      margin-bottom: 18px;
+    }
+
+    .print-quiz-question:last-child {
+      margin-bottom: 0;
+    }
+
+    .print-quiz-q-text {
+      font-size: 0.9em;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 0 0 8px;
+    }
+
+    .print-quiz-q-type {
+      font-size: 0.75em;
+      font-weight: 600;
+      color: #7070a0;
+      margin-left: 6px;
+      font-weight: 400;
+    }
+
+    .print-quiz-options {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 8px;
+    }
+
+    .print-quiz-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-size: 0.87em;
+      color: #383848;
+      margin-bottom: 3px;
+    }
+
+    .print-quiz-option.correct {
+      background: #e8f5e9;
+      color: #1a472a;
+      font-weight: 600;
+    }
+
+    .print-quiz-option-marker {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #aaa;
+      border-radius: 50%;
+      margin-top: 1px;
+    }
+
+    .print-quiz-option.correct .print-quiz-option-marker {
+      border-color: #2e7d32;
+      background: #2e7d32;
+      position: relative;
+    }
+
+    .print-quiz-option.correct .print-quiz-option-marker::after {
+      content: '✓';
+      color: #fff;
+      font-size: 10px;
+      position: absolute;
+      top: -1px;
+      left: 1px;
+    }
+
+    .print-quiz-option-marker.multi {
+      border-radius: 3px;
+    }
+
+    .print-quiz-explanation {
+      font-size: 0.82em;
+      color: #505070;
+      background: #f4f4f8;
+      border-left: 3px solid #0078d4;
+      padding: 6px 10px;
+      border-radius: 0 4px 4px 0;
+      margin-top: 6px;
+    }
+
     @media print {
       body { padding: 16px 24px; }
       .print-controls { display: none; }
       .step { page-break-inside: avoid; }
       a { text-decoration: none; }
+      .print-quiz { page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -271,6 +396,53 @@
         <pre>{{ file.content }}</pre>
       </div>
       {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if step.quiz %}
+    {% assign quiz = step.quiz %}
+    <div class="print-quiz">
+      <div class="print-quiz-header">
+        <span class="print-quiz-icon"><i class="fa fa-question-circle"></i></span>
+        <h3 class="print-quiz-title">{{ quiz.title }}</h3>
+        {% if quiz.min_score %}
+        <span class="print-quiz-threshold">Min. score: {{ quiz.min_score | times: 100 | round }}%</span>
+        {% endif %}
+      </div>
+      <div class="print-quiz-body">
+        {% for q in quiz.questions %}
+        <div class="print-quiz-question">
+          <p class="print-quiz-q-text">
+            {{ forloop.index }}. {{ q.question | markdownify | remove: '<p>' | remove: '</p>' | strip }}
+            {% if q.type == 'multiple' %}<span class="print-quiz-q-type">(select all that apply)</span>{% endif %}
+          </p>
+          <ul class="print-quiz-options">
+            {% for opt in q.options %}
+            {% assign opt_index = forloop.index0 %}
+            {% if q.type == 'multiple' %}
+              {% assign is_correct = false %}
+              {% for ci in q.correct_indices %}
+                {% if ci == opt_index %}{% assign is_correct = true %}{% endif %}
+              {% endfor %}
+            {% else %}
+              {% if q.correct_index == opt_index %}
+                {% assign is_correct = true %}
+              {% else %}
+                {% assign is_correct = false %}
+              {% endif %}
+            {% endif %}
+            <li class="print-quiz-option{% if is_correct %} correct{% endif %}">
+              <span class="print-quiz-option-marker{% if q.type == 'multiple' %} multi{% endif %}"></span>
+              <span>{{ opt }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% if q.explanation %}
+          <div class="print-quiz-explanation">{{ q.explanation }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
   </div>
