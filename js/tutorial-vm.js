@@ -47,7 +47,7 @@
 
   // Language detection for Monaco
   var LANG_MAP = {
-    sh: 'shell', bash: 'shell', zsh: 'shell',
+    sh: 'shell-sebook', bash: 'shell-sebook', zsh: 'shell-sebook',
     py: 'python', js: 'javascript', json: 'json',
     yml: 'yaml', yaml: 'yaml', md: 'markdown',
     txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
@@ -105,6 +105,8 @@
     this._watchedFiles = [];
     // Timer for periodic reverse sync polling
     this._reverseSyncTimer = null;
+    // Prevents overlapping reverse sync reads
+    this._reverseSyncBusy = false;
   }
 
   // ---- Lifecycle ------------------------------------------------------------
@@ -159,33 +161,33 @@
     this.root.classList.add('tvm-root');
     this.root.innerHTML =
       '<div class="tvm-loading">' +
-        '<div class="tvm-loading-spinner"></div>' +
-        '<div class="tvm-loading-text">Loading…</div>' +
+      '<div class="tvm-loading-spinner"></div>' +
+      '<div class="tvm-loading-text">Loading…</div>' +
       '</div>' +
       '<div class="tvm-container" style="display:none">' +
-        '<div class="tvm-instructions-panel">' +
-          '<div class="tvm-step-nav-bar">' +
-            '<div class="tvm-step-nav"></div>' +
-          '</div>' +
-          '<div class="tvm-step-content-wrap">' +
-            '<div class="tvm-step-content"></div>' +
-          '</div>' +
-          '<div class="tvm-step-controls-bar">' +
-            '<div class="tvm-step-controls"></div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
-        '<div class="tvm-workspace">' +
-          '<div class="tvm-editor-panel">' +
-            '<div class="tvm-editor-tabs"></div>' +
-            '<div class="tvm-editor-container"></div>' +
-          '</div>' +
-          '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
-          '<div class="tvm-terminal-panel">' +
-            '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
-            '<div class="tvm-terminal-container"></div>' +
-          '</div>' +
-        '</div>' +
+      '<div class="tvm-instructions-panel">' +
+      '<div class="tvm-step-nav-bar">' +
+      '<div class="tvm-step-nav"></div>' +
+      '</div>' +
+      '<div class="tvm-step-content-wrap">' +
+      '<div class="tvm-step-content"></div>' +
+      '</div>' +
+      '<div class="tvm-step-controls-bar">' +
+      '<div class="tvm-step-controls"></div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
+      '<div class="tvm-workspace">' +
+      '<div class="tvm-editor-panel">' +
+      '<div class="tvm-editor-tabs"></div>' +
+      '<div class="tvm-editor-container"></div>' +
+      '</div>' +
+      '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
+      '<div class="tvm-terminal-panel">' +
+      '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
+      '<div class="tvm-terminal-container"></div>' +
+      '</div>' +
+      '</div>' +
       '</div>';
 
     this.loadingEl = this.root.querySelector('.tvm-loading');
@@ -215,7 +217,7 @@
     // Give the browser one frame to paint the revealed layout, then resize
     // xterm and Monaco so they measure actual container dimensions (not 0).
     requestAnimationFrame(function () {
-      if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) {} }
+      if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) { } }
       if (self.editor) { self.editor.layout(); }
     });
   };
@@ -306,49 +308,72 @@
             return new Promise(function (resolve) {
               window.require.config({ paths: { vs: CDN.MONACO_VS } });
               window.require(['vs/editor/editor.main'], function () {
+                // Register custom shell language to avoid built-in bracket matching conflicts
+                monaco.languages.register({ id: 'shell-sebook' });
+
+                monaco.languages.setLanguageConfiguration('shell-sebook', {
+                  brackets: [
+                    ['{', '}'],
+                    ['[', ']'],
+                    // Exclude () from matched brackets to prevent errors in case patterns
+                  ],
+                  autoClosingPairs: [
+                    { open: '{', close: '}' },
+                    { open: '[', close: ']' },
+                    { open: '(', close: ')' },
+                    { open: '"', close: '"' },
+                    { open: "'", close: "'" },
+                  ],
+                  surroundingPairs: [
+                    { open: '{', close: '}' },
+                    { open: '[', close: ']' },
+                    { open: '(', close: ')' },
+                  ]
+                });
+
                 // Define custom Monarch tokenizer for shell to support interpolation and specific coloring
-                monaco.languages.setMonarchTokensProvider('shell', {
+                monaco.languages.setMonarchTokensProvider('shell-sebook', {
                   keywords: ['if', 'then', 'else', 'elif', 'fi', 'for', 'in', 'do', 'done', 'case', 'esac', 'while', 'until', 'function'],
                   builtins: ['echo', 'set', 'cd', 'pwd', 'export', 'local', 'read', 'return', 'exit', 'grep', 'wc', 'head', 'sort', 'uniq', 'cut', 'cat', 'mkdir', 'touch', 'rm', 'cp', 'mv', 'whoami', 'date', 'sleep', 'which'],
                   tokenizer: {
                     root: [
-                      [/^#!.*$/, 'comment.shell'],
-                      [/\b(if|then|else|elif|fi|for|in|do|done|case|esac|while|until|function)\b/, 'keyword.shell'],
-                      [/[\[\]]/, 'keyword.shell'], // Blue for [ ]
-                      [/[a-zA-Z_][\w]*(?==)/, 'variable.shell'], // LHS of assignment
+                      [/^#!.*$/, 'comment.shell-sebook'],
+                      [/\b(if|then|else|elif|fi|for|in|do|done|case|esac|while|until|function)\b/, 'keyword.shell-sebook'],
+                      [/[\[\]]/, 'keyword.shell-sebook'], // Blue for [ ]
+                      [/[a-zA-Z_][\w]*(?==)/, 'variable.shell-sebook'], // LHS of assignment
                       [/[a-zA-Z_][\w]*/, {
                         cases: {
-                          '@builtins': 'command.shell',
-                          '@default': 'command.shell'
+                          '@builtins': 'command.shell-sebook',
+                          '@default': 'command.shell-sebook'
                         }
                       }],
-                      [/\$([#?@$!*0-9]|\{?[\w]+\}?)/, 'variable.shell'], // Special variables like $# and regular ones
-                      [/\$\(/, { token: 'variable.shell', next: '@interpolation' }],
-                      [/#.*$/, 'comment.shell'],
-                      [/"/, { token: 'string.shell', next: '@string' }],
-                      [/'/, { token: 'string.shell', next: '@sstring' }],
-                      [/\d+/, 'command.shell'], // Numbers as commands (Teal)
-                      [/;;/, 'command.shell'], // Double semicolon for case
+                      [/\$([#?@$!*0-9]|\{?[\w]+\}?)/, 'variable.shell-sebook'], // Special variables like $# and regular ones
+                      [/\$\(/, { token: 'variable.shell-sebook', next: '@interpolation' }],
+                      [/#.*$/, 'comment.shell-sebook'],
+                      [/"/, { token: 'string.shell-sebook', next: '@string' }],
+                      [/'/, { token: 'string.shell-sebook', next: '@sstring' }],
+                      [/\d+/, 'command.shell-sebook'], // Numbers as commands (Teal)
+                      [/;;/, 'command.shell-sebook'], // Double semicolon for case
                       [/[ \t\r\n]+/, 'white'],
-                      [/[{}()]/, 'command.shell'], // Braces and parens as Teal
-                      [/[<>|&;$]/, 'operator.shell'],
-                      [/-[\w-]+/, 'attribute.name.shell'],
-                      [/\+[\w-]+/, 'attribute.name.shell']
+                      [/[{}()]/, 'command.shell-sebook'], // Braces and parens as Teal
+                      [/[<>|&;$]/, 'operator.shell-sebook'],
+                      [/-[\w-]+/, 'attribute.name.shell-sebook'],
+                      [/\+[\w-]+/, 'attribute.name.shell-sebook']
                     ],
                     string: [
-                      [/\$\(/, { token: 'variable.shell', next: '@interpolation' }],
-                      [/\$([#?@$!*0-9]|\{?[\w]+\}?)/, 'variable.shell'],
-                      [/[^\\"$]+/, 'string.shell'],
-                      [/\\./, 'string.shell'],
-                      [/"/, { token: 'string.shell', next: '@pop' }]
+                      [/\$\(/, { token: 'variable.shell-sebook', next: '@interpolation' }],
+                      [/\$([#?@$!*0-9]|\{?[\w]+\}?)/, 'variable.shell-sebook'],
+                      [/[^\\"$]+/, 'string.shell-sebook'],
+                      [/\\./, 'string.shell-sebook'],
+                      [/"/, { token: 'string.shell-sebook', next: '@pop' }]
                     ],
                     sstring: [
-                      [/[^\\']+/, 'string.shell'],
-                      [/\\./, 'string.shell'],
-                      [/'/, { token: 'string.shell', next: '@pop' }]
+                      [/[^\\']+/, 'string.shell-sebook'],
+                      [/\\./, 'string.shell-sebook'],
+                      [/'/, { token: 'string.shell-sebook', next: '@pop' }]
                     ],
                     interpolation: [
-                      [/\)/, { token: 'variable.shell', next: '@pop' }],
+                      [/\)/, { token: 'variable.shell-sebook', next: '@pop' }],
                       { include: 'root' }
                     ]
                   }
@@ -358,13 +383,13 @@
                   base: 'vs',
                   inherit: true,
                   rules: [
-                    { token: 'keyword.shell', foreground: '0000ff' }, // Blue for if/then/case/[
-                    { token: 'command.shell', foreground: '267f99' }, // Teal for echo/set/1/(/)/;;
-                    { token: 'identifier.shell', foreground: '267f99' }, // Teal for patterns/other names
-                    { token: 'variable.shell', foreground: '001080' }, // Dark Blue for color= and $var
-                    { token: 'attribute.name.shell', foreground: 'a31515' },
-                    { token: 'string.shell', foreground: 'a31515' },
-                    { token: 'comment.shell', foreground: '008000' }
+                    { token: 'keyword.shell-sebook', foreground: '0000ff' }, // Blue for if/then/case/[
+                    { token: 'command.shell-sebook', foreground: '267f99' }, // Teal for echo/set/1/(/)/;;
+                    { token: 'identifier.shell-sebook', foreground: '267f99' }, // Teal for patterns/other names
+                    { token: 'variable.shell-sebook', foreground: '001080' }, // Dark Blue for color= and $var
+                    { token: 'attribute.name.shell-sebook', foreground: 'a31515' },
+                    { token: 'string.shell-sebook', foreground: 'a31515' },
+                    { token: 'comment.shell-sebook', foreground: '008000' }
                   ],
                   colors: {}
                 });
@@ -373,13 +398,13 @@
                   base: 'vs-dark',
                   inherit: true,
                   rules: [
-                    { token: 'keyword.shell', foreground: '569cd6' },
-                    { token: 'command.shell', foreground: '4ec9b0' },
-                    { token: 'identifier.shell', foreground: '4ec9b0' },
-                    { token: 'variable.shell', foreground: '9cdcfe' },
-                    { token: 'attribute.name.shell', foreground: 'f44747' },
-                    { token: 'string.shell', foreground: 'ce9178' },
-                    { token: 'comment.shell', foreground: '6a9955' }
+                    { token: 'keyword.shell-sebook', foreground: '569cd6' },
+                    { token: 'command.shell-sebook', foreground: '4ec9b0' },
+                    { token: 'identifier.shell-sebook', foreground: '4ec9b0' },
+                    { token: 'variable.shell-sebook', foreground: '9cdcfe' },
+                    { token: 'attribute.name.shell-sebook', foreground: 'f44747' },
+                    { token: 'string.shell-sebook', foreground: 'ce9178' },
+                    { token: 'comment.shell-sebook', foreground: '6a9955' }
                   ],
                   colors: {
                     'editor.background': '#1e1e1e'
@@ -415,22 +440,22 @@
         foreground: '#383a42',
         cursor: '#383a42',
         selectionBackground: '#add6ff',
-        black:         '#383a42',
-        red:           '#e45649',
-        green:         '#50a14f',
-        yellow:        '#986801',
-        blue:          '#4078f2',
-        magenta:       '#a626a4',
-        cyan:          '#0184bc',
-        white:         '#fafafa',
-        brightBlack:   '#4f525e',
-        brightRed:     '#e06c75',
-        brightGreen:   '#98c379',
-        brightYellow:  '#e5c07b',
-        brightBlue:    '#61afef',
+        black: '#383a42',
+        red: '#e45649',
+        green: '#50a14f',
+        yellow: '#986801',
+        blue: '#4078f2',
+        magenta: '#a626a4',
+        cyan: '#0184bc',
+        white: '#fafafa',
+        brightBlack: '#4f525e',
+        brightRed: '#e06c75',
+        brightGreen: '#98c379',
+        brightYellow: '#e5c07b',
+        brightBlue: '#61afef',
         brightMagenta: '#c678dd',
-        brightCyan:    '#56b6c2',
-        brightWhite:   '#ffffff',
+        brightCyan: '#56b6c2',
+        brightWhite: '#ffffff',
       },
     },
   };
@@ -486,7 +511,7 @@
       var ro = new ResizeObserver(function () {
         clearTimeout(fitTimer);
         fitTimer = setTimeout(function () {
-          if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) {} }
+          if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) { } }
         }, 50);
       });
       ro.observe(this.terminalContainerEl);
@@ -608,7 +633,7 @@
   TutorialVM.prototype._initEditor = function () {
     this.editor = monaco.editor.create(this.editorContainerEl, {
       value: '// Follow the tutorial steps on the left.\n// Files will appear here as you progress.\n',
-      language: 'shell',
+      language: 'shell-sebook',
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -752,7 +777,7 @@
     if (!entry) return;
 
     var content = entry.model.getValue();
-    
+
     // Convert content to Uint8Array for v86 9p filesystem
     var bytes;
     if (typeof TextEncoder !== 'undefined') {
@@ -909,8 +934,8 @@
 
     this._showTestPanel(
       '<div class="tvm-test-running">' +
-        '<div class="tvm-test-spinner"></div>' +
-        'Running tests\u2026' +
+      '<div class="tvm-test-spinner"></div>' +
+      'Running tests\u2026' +
       '</div>'
     );
 
@@ -1001,101 +1026,51 @@
   };
 
   // ---- Reverse File Sync (VM → Editor) --------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  // Reverse file sync: VM → Editor
+  //
+  // Reads files directly from v86's 9p filesystem using the Promise-based
+  // read_file() API. This operates entirely in the browser — no shell commands
+  // are sent to the VM, so the terminal is never polluted.
+  // ---------------------------------------------------------------------------
 
   /**
-   * Read a single file from the VM and update the corresponding Monaco model.
-   * Uses the v86 9p filesystem to read bytes directly (no shell command needed).
+   * Read all watched files from the VM's 9p filesystem and update
+   * their Monaco editor models if the content has changed.
    */
-  TutorialVM.prototype._syncFileFromVM = function (filename) {
+  TutorialVM.prototype._pollWatchedFiles = function () {
     if (!this.emulator || !this.booted) return;
-    var entry = this.editorModels[filename];
-    if (!entry) return;
+    if (this._reverseSyncBusy) return;
 
     var self = this;
-    try {
-      var result = this.emulator.fs9p.SearchPath('/' + filename);
-      if (!result || result.id === -1) return;
+    var files = [];
+    this._watchedFiles.forEach(function (f) {
+      if (self.editorModels[f]) files.push(f);
+    });
+    if (files.length === 0) return;
 
-      var inode = this.emulator.fs9p.inodes[result.id];
-      if (!inode || !inode.size) return;
+    this._reverseSyncBusy = true;
 
-      this.emulator.read_file('/' + filename, function (err, buf) {
-        if (err || !buf) return;
-
-        var content;
-        if (typeof TextDecoder !== 'undefined') {
-          content = new TextDecoder().decode(buf);
-        } else {
-          content = '';
-          for (var i = 0; i < buf.length; i++) {
-            content += String.fromCharCode(buf[i]);
-          }
-          content = decodeURIComponent(escape(content));
-        }
-
-        // Only update if content actually changed (avoid cursor jumps)
-        if (entry.model.getValue() !== content) {
-          self._suppressAutoSave = true;
-          entry.model.setValue(content);
-          self._suppressAutoSave = false;
-        }
-      });
-    } catch (e) {
-      // Fallback: use shell command to read the file via base64
-      self._readFileViaShell(filename);
-    }
-  };
-
-  /**
-   * Fallback: read a file from the VM using a shell command and base64 encoding.
-   */
-  TutorialVM.prototype._readFileViaShell = function (filename) {
-    var self = this;
-    var entry = this.editorModels[filename];
-    if (!entry) return;
-
-    var marker = '__FILEREAD_' + Date.now() + '__';
-    var cmd = 'echo "' + marker + 'START"; base64 /tutorial/' + filename + ' 2>/dev/null; echo "' + marker + 'END"';
-
-    var capturedOutput = '';
-    var capturing = false;
-
-    function onByte(byte) {
-      var ch = String.fromCharCode(byte);
-      capturedOutput += ch;
-
-      if (!capturing && capturedOutput.includes(marker + 'START\n')) {
-        capturing = true;
-        capturedOutput = '';
-      }
-
-      if (capturing && capturedOutput.includes(marker + 'END')) {
-        self.emulator.remove_listener('serial0-output-byte', onByte);
-        clearTimeout(timer);
-
-        var b64 = capturedOutput.replace(marker + 'END', '').replace(/[\r\n]/g, '').trim();
-        try {
-          var content = decodeURIComponent(escape(atob(b64)));
-          if (entry.model.getValue() !== content) {
+    var promises = files.map(function (filename) {
+      return self.emulator.read_file('/tutorial/' + filename)
+        .then(function (buf) {
+          var content = new TextDecoder('utf-8').decode(buf);
+          var entry = self.editorModels[filename];
+          if (entry && entry.model.getValue() !== content) {
             self._suppressAutoSave = true;
             entry.model.setValue(content);
             self._suppressAutoSave = false;
           }
-        } catch (e) {
-          console.warn('TutorialVM: reverse sync decode failed for', filename, e);
-        }
-      }
-    }
+        })
+        .catch(function () {
+          // File may not exist yet — silently skip
+        });
+    });
 
-    self.emulator.add_listener('serial0-output-byte', onByte);
-    var timer = setTimeout(function () {
-      self.emulator.remove_listener('serial0-output-byte', onByte);
-    }, 5000);
-
-    self._muted = true;
-    self.sendCommand(' ' + cmd);
-    // Unmute after a brief delay
-    setTimeout(function () { self._muted = false; }, 1500);
+    Promise.all(promises).then(function () {
+      self._reverseSyncBusy = false;
+    });
   };
 
   /**
@@ -1103,14 +1078,15 @@
    */
   TutorialVM.prototype.refreshOpenFiles = function () {
     var self = this;
-    Object.keys(this.editorModels).forEach(function (filename) {
-      self._syncFileFromVM(filename);
-    });
+    var prev = this._watchedFiles;
+    this._watchedFiles = Object.keys(this.editorModels);
+    this._pollWatchedFiles();
+    var restore = function () { self._watchedFiles = prev; };
+    setTimeout(restore, 5000);
   };
 
   /**
    * Start watching open files for VM-side changes (polling).
-   * Checks every intervalMs (default 2000ms) for changes.
    */
   TutorialVM.prototype._startFileWatch = function (intervalMs) {
     var self = this;
@@ -1118,11 +1094,7 @@
     this._stopFileWatch();
     this._reverseSyncTimer = setInterval(function () {
       if (self.booted && self._watchedFiles.length > 0) {
-        self._watchedFiles.forEach(function (filename) {
-          if (self.editorModels[filename]) {
-            self._syncFileFromVM(filename);
-          }
-        });
+        self._pollWatchedFiles();
       }
     }, intervalMs);
   };

@@ -4,6 +4,7 @@ description: "Learn Git through hands-on practice — from your first commit to 
 setup_commands:
   - "git config --global user.email 'strange@ucla.edu'"
   - "git config --global user.name 'Steven Strange'"
+  - "git config --global init.defaultBranch main"
 
 steps:
   # --------------------------------------------------------------------------
@@ -577,7 +578,7 @@ steps:
       git branch
       ```
 
-      You should see `* master` (or `* main`). The `*` indicates which
+      You should see `* main`. The `*` indicates which
       branch HEAD is currently pointing to.
 
       ### Task 2: Create and switch to a new branch
@@ -610,10 +611,10 @@ steps:
       git commit -m "Add divide function with zero-division check"
       ```
 
-      ### Task 4: Switch back to master
+      ### Task 4: Switch back to main
 
       ```bash
-      git checkout master
+      git checkout main
       ```
 
       Now look at `calculator.py` in the terminal:
@@ -623,7 +624,7 @@ steps:
       ```
 
       The `divide` function is **gone**! It only exists on the
-      `feature-divide` branch. Your `master` branch is untouched. This is
+      `feature-divide` branch. Your `main` branch is untouched. This is
       the power of branching.
 
       Switch back to see it again:
@@ -659,24 +660,24 @@ steps:
       ```
       Before merge:
 
-        master:          [C1] ← [C2] ← [C3]
+        main:            [C1] ← [C2] ← [C3]
                                           \
         feature-divide:                   [C4]  (divide function)
 
       After merge:
 
-        master:          [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
+        main:            [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
                                           \     /
         feature-divide:                   [C4]
       ```
 
-      ### Task 1: Switch to master and merge
+      ### Task 1: Switch to main and merge
 
-      First, switch to the branch you want to merge **into** (master):
+      First, switch to the branch you want to merge **into** (main):
 
       ```bash
       cd /tutorial/myproject
-      git checkout master
+      git checkout main
       ```
 
       Now merge the feature branch:
@@ -687,7 +688,7 @@ steps:
 
       ### Task 2: Verify the merge
 
-      Check that the divide function is now on master:
+      Check that the divide function is now on main:
 
       ```bash
       cat calculator.py
@@ -700,7 +701,7 @@ steps:
       ### Task 3: Clean up
 
       After merging, you can optionally delete the feature branch since its
-      work is now part of master:
+      work is now part of main:
 
       ```bash
       git branch -d feature-divide
@@ -713,12 +714,12 @@ steps:
       - "myproject/calculator.py"
 
     tests:
-      - description: "Currently on master branch"
-        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'master'"
-      - description: "calculator.py on master has the divide function"
-        command: "cd /tutorial/myproject && git checkout master 2>/dev/null; grep -q 'def divide' calculator.py"
+      - description: "Currently on main branch"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
+      - description: "calculator.py on main has the divide function"
+        command: "cd /tutorial/myproject && git checkout main 2>/dev/null; grep -q 'def divide' calculator.py"
       - description: "Merge commit or fast-forward is in the log"
-        command: "cd /tutorial/myproject && git log master --oneline | grep -qi 'divide'"
+        command: "cd /tutorial/myproject && git log main --oneline | grep -qi 'divide'"
 
   # --------------------------------------------------------------------------
   # STEP 10: Create a branch for merge conflict setup (student makes changes)
@@ -760,22 +761,22 @@ steps:
       git commit -m "Add type checking to add function"
       ```
 
-      ### Task 2: Switch back to master
+      ### Task 2: Switch back to main
 
       ```bash
-      git checkout master
+      git checkout main
       ```
 
-      Verify that master still has the **original** `add` function
+      Verify that main still has the **original** `add` function
       (without type checking):
 
       ```bash
       head -8 calculator.py
       ```
 
-      **Important:** Stay on `master` and proceed to the next step. In the
+      **Important:** Stay on `main` and proceed to the next step. In the
       next step, we'll make a *different* change to the same `add` function
-      on master, setting up a conflict!
+      on main, setting up a conflict!
 
     watch_files:
       - "myproject/calculator.py"
@@ -785,8 +786,8 @@ steps:
         command: "cd /tutorial/myproject && git branch | grep -q 'update-add-function'"
       - description: "update-add-function branch has the type checking commit"
         command: "cd /tutorial/myproject && git log update-add-function --oneline | grep -qi 'type\\|check\\|add'"
-      - description: "Currently on master branch"
-        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'master'"
+      - description: "Currently on main branch"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
 
   # --------------------------------------------------------------------------
   # STEP 11: Resolving a merge conflict
@@ -797,15 +798,15 @@ steps:
 
       In the previous step, you changed the `add` function on the
       `update-add-function` branch. Now we'll make a *different* change to
-      the same function on `master`, creating a conflict.
+      the same function on `main`, creating a conflict.
 
-      ### Task 1: Modify add on master
+      ### Task 1: Modify add on main
 
-      Make sure you're on master:
+      Make sure you're on main:
 
       ```bash
       cd /tutorial/myproject
-      git checkout master
+      git checkout main
       ```
 
       Open `calculator.py` in the editor and change the `add` function to
@@ -855,7 +856,7 @@ steps:
       >>>>>>> update-add-function
       ```
 
-      - `<<<<<<< HEAD` — your current branch's version (master)
+      - `<<<<<<< HEAD` — your current branch's version (main)
       - `=======` — separator
       - `>>>>>>> update-add-function` — the incoming branch's version
 
@@ -891,7 +892,7 @@ steps:
       - "myproject/calculator.py"
 
     setup_commands:
-      - " cd /tutorial/myproject && git checkout master 2>/dev/null; true"
+      - " cd /tutorial/myproject && git checkout main 2>/dev/null; true"
 
     tests:
       - description: "calculator.py has no conflict markers"
