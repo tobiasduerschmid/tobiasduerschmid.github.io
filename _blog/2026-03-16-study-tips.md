@@ -20,7 +20,7 @@ This post is intended to teach you actionable, research-backed study tips on how
 Interestingly, despite actually **measurably learning *more* effectively**, learners who study based on these techniques **often subjectively believe they have learned *less* effectively**, because short-term performance is often perceived to be worse due to the additional struggle of desirable difficulties {% cite Kornell2008learning Simon2001metacognition %}.
 This illustrates that **the *perception* of learning is not always aligned with the *actual* learning**. Actual learning is what predicts your *future* performance.
 What you observe is your *past* performance.
-**The study tips in this post are empirically validated to be effective and should help you pick learning strategies that *actually work* rather than just *feel like they work**.
+**The study tips in this post are empirically validated to be effective and should help you pick learning strategies that *actually work* rather than just *feel like they work***.
 
 
 Fun fact: a significant portion of the research presented in this post was actually done at UCLA by the [Bjork Learning and Forgetting Lab](https://bjorklab.psych.ucla.edu/research/)!
