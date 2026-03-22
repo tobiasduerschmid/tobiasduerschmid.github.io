@@ -57,3 +57,33 @@ cards:
     question: "You have a space-separated log file and want a tool to extract and print only the 3rd column of data."
     answer: "`awk '{print $3}'`"
     explanation: "`awk` is a versatile command-line utility and programming language designed for text processing and data extraction, particularly excelling at handling structured, column-based data."
+
+  - id: 15
+    question: "You want to store today's date (formatted as YYYY-MM-DD) in a variable called `TODAY` so you can use it to name a backup file dynamically."
+    answer: "`TODAY=$(date +%Y-%m-%d)`"
+    explanation: "Command substitution `$(...)` executes the inner command in a subshell and replaces itself with the command's standard output. This is the standard way to capture the result of a command into a variable."
+
+  - id: 16
+    question: "A variable `FILE` holds the value `my report.pdf`. Running `rm $FILE` fails with a 'No such file or directory' error for both 'my' and 'report.pdf'. How do you fix this?"
+    answer: "`rm \"$FILE\"`"
+    explanation: "Without quotes, the shell performs **word splitting** on the expanded variable, breaking `my report.pdf` into two separate arguments: `my` and `report.pdf`. Wrapping the variable in double quotes (`\"$FILE\"`) prevents word splitting and passes the entire value as a single argument."
+
+  - id: 17
+    question: "You are writing a script that requires exactly two arguments. How do you check how many arguments were passed to the script so you can print a usage error if the count is wrong?"
+    answer: "`$#`"
+    explanation: "`$#` expands to the total count of positional arguments passed to the script. A typical guard looks like: `if [ $# -ne 2 ]; then echo 'Usage: script.sh src dest'; exit 1; fi`. Other useful special variables: `$1`, `$2` (individual args), `$0` (script name), `$@` (all args)."
+
+  - id: 18
+    question: "You want to create a directory called 'build' and then immediately run `cmake ..` inside it, but only if the directory creation succeeded — all in a single command."
+    answer: "`mkdir build && cd build && cmake ..`"
+    explanation: "The `&&` (AND) operator runs the next command only if the previous one **succeeded** (exit code 0). If `mkdir` fails, neither `cd` nor `cmake` will execute. This is a concise alternative to a full `if/then/fi` block for simple success-guarded sequences."
+
+  - id: 19
+    question: "At the start of a script, you need to change into `/deploy/target`. If that directory doesn't exist, the script must abort immediately — write a defensive one-liner."
+    answer: "`cd /deploy/target || exit 1`"
+    explanation: "The `||` (OR) operator runs the right-hand command only if the left-hand command **fails** (non-zero exit code). This is the standard idiom for aborting a script when a critical precondition is not met, without needing a full `if` statement."
+
+  - id: 20
+    question: "You want to delete all files ending in `.tmp` in the current directory using a single command, without listing each filename explicitly."
+    answer: "`rm *.tmp`"
+    explanation: "The `*` wildcard is a **glob pattern** — it is expanded by the shell itself (filename expansion) before `rm` runs. Globbing is entirely separate from regular expressions: in RegEx, `*` means 'zero or more of the preceding character', not 'match anything'."

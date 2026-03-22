@@ -96,7 +96,7 @@ You can redirect these streams using special operators:
 * `>>`: Redirects `stdout` to a file, appending to it without overwriting.
 * `<`: Redirects `stdin` from a file. (e.g., `cat < input.txt`)
 * `2>`: Redirects `stderr` to a specific file to specifically log errors.
-* `2>&1`: Redirects `stderr` to the standard output stream.
+* `2>&1`: Redirects `stderr` to the standard output stream. **Note**: order matters — `command > file.txt 2>&1` sends both streams to the file, whereas `command 2>&1 > file.txt` only redirects stdout to the file while stderr still goes to the terminal.
 
 ### Piping
 The pipe operator `|` is the most powerful composition tool. It takes the `stdout` of the command on the left and sends it directly into the `stdin` for the command on the right. 
@@ -159,7 +159,7 @@ echo "Hello, $NAME"
 ```
 
 ### Scope Differences
-Unlike C++ or Java, Bash lacks strict block-level scoping (like `{}` blocks). Variables set within an `if` statement or loop body in Bash remain accessible outside that body in the global script scope unless explicitly declared as `local` inside a function.
+Unlike C++ or Java, Bash lacks strict block-level scoping (like `{}` blocks). Variables assigned anywhere in a script — including inside `if` statements and loops — remain accessible throughout the entire script's global scope. The only exception is **function-level scoping**: variables declared with the `local` builtin *inside a Bash function* are visible only to that function and its callees.
 
 ### Arithmetic
 Math in Bash is slightly idiosyncratic. While a language like C++ operates directly on integers with `+` or `/`, arithmetic in Bash needs to be enclosed within `$(( ... ))` or evaluated using the `let` command.
@@ -183,6 +183,8 @@ fi
 ```
 *(Note: `-gt` stands for "greater than", `-eq` for "equal", `-lt` for "less than").*
 
+> **`[` vs `[[`:** The single bracket `[ ... ]` is actually a shell builtin command equivalent to `test` — which is why spaces around its arguments are mandatory and it is sensitive to word splitting. The double bracket `[[ ... ]]` is a Bash keyword with additional power: it does not perform word splitting on variables, allows `&&` and `||` inside the condition, and supports regex matching with `=~`. Prefer `[[ ]]` in new Bash scripts.
+
 **Loops:**
 ```bash
 for i in 1 2 3 4 5; do
@@ -190,13 +192,55 @@ for i in 1 2 3 4 5; do
 done
 ```
 
- 
+### Quoting and Word Splitting
+How you quote text profoundly changes how Bash interprets it — this is one of the most common sources of bugs in shell scripts.
+* **Single quotes (`'...'`)**: All characters are literal. No variable or command substitution occurs. `echo 'Cost: $5'` prints exactly `Cost: $5`.
+* **Double quotes (`"..."`)**: Spaces are preserved, but `$VARIABLE` and `$(command)` are still expanded. `echo "Hello $USER"` prints `Hello Ada`.
+
+A critical pitfall is **word splitting**: when you reference an unquoted variable, the shell splits its value on whitespace and treats each word as a separate argument. Consider:
+```bash
+FILE="my report.pdf"
+rm $FILE      # WRONG: shell splits into two args: "my" and "report.pdf"
+rm "$FILE"    # CORRECT: the entire value is passed as one argument
+```
+Always quote variable references with double quotes to protect against word splitting.
+
+### Command Substitution
+**Command substitution** captures the standard output of a command and uses it as a value in-place. The modern syntax is `$(command)`:
+```bash
+TODAY=$(date +%Y-%m-%d)
+echo "Backup started on: $TODAY"
+```
+The shell runs the inner command in a subshell, then replaces the entire `$(...)` expression with its output. This is the standard way to assign the results of commands to variables.
+
+### Positional Parameters and Special Variables
+Scripts receive command-line arguments via **positional parameters**. If you run `./backup.sh /src /dest`, then inside the script:
+
+| Variable | Value | Description |
+|:---|:---|:---|
+| `$0` | `./backup.sh` | Name of the script itself |
+| `$1` | `/src` | First argument |
+| `$2` | `/dest` | Second argument |
+| `$#` | `2` | Total number of arguments passed |
+| `$@` | `/src /dest` | All arguments as separate words |
+| `$?` | (exit code) | Exit status of the most recent command |
+
+### Command Chaining with `&&` and `||`
+Because every command returns an exit status, you can chain commands conditionally without writing a full `if/then/fi` block:
+* **`&&` (AND)**: The right-hand command runs only if the left-hand command **succeeds** (exit code `0`).
+  `mkdir output && echo "Directory created"` — only prints if `mkdir` succeeded.
+* **`||` (OR)**: The right-hand command runs only if the left-hand command **fails** (non-zero exit code).
+  `cd /target || exit 1` — exits the script immediately if the directory cannot be entered.
+
+This compact chaining idiom is widely used in professional scripts for concise, readable error handling.
+
+
 
 ## Supercharging Scripts with Regular Expressions
 
-Because the UNIX philosophy is heavily centered around text streams, text processing is a massive part of shell scripting. **Regular Expressions (RegEx)** is a vital tool used within shell commands like `grep`, `sed`, and `awk` to find, validate, or transform text patterns quickly. 
+Because the UNIX philosophy is heavily centered around text streams, text processing is a massive part of shell scripting. **Regular Expressions (RegEx)** is a vital tool used within shell commands like `grep`, `sed`, and `awk` to find, validate, or transform text patterns quickly.
 
-
+> **Globbing vs. Regular Expressions:** These look similar but are entirely different systems. **Globbing** (filename expansion) uses `*`, `?`, and `[...]` to match filenames — the shell expands these *before* the command runs (e.g., `rm *.log` deletes all `.log` files). **Regular Expressions** use `^`, `$`, `.*`, `[0-9]+`, and similar constructs — they are pattern languages processed by specific tools like `grep`, `sed`, and `awk`; the shell itself does not interpret them. Critically, `*` means "match anything" in globbing, but "zero or more of the preceding character" in RegEx.
 
 RegEx allows you to match sub-strings in a longer sequence. Critical to this are **anchors**, which constrain matches based on their location:
 * `^` : Start of string. (Does not allow any other characters to come before).

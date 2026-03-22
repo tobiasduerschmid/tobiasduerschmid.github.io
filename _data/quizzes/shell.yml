@@ -96,3 +96,41 @@ questions:
       - "`$PATH` automatically crawls every single folder on your hard drive in real-time, which is why system commands are discovered so rapidly."
     correct_indices: [0, 1, 2]
     explanation: "`$PATH` is an explicit list of directories, not a global search crawler (which would be extremely slow). The OS checks these directories in order. Modifications in the terminal are bound to that specific session unless saved in a configuration file like `.bashrc`."
+  - id: 11
+    question: "A developer writes `LOGFILE=\"access errors.log\"` and then runs `wc -l $LOGFILE`. The command fails with 'No such file or directory' errors for both 'access' and 'errors.log'. What is the root cause?"
+    options:
+      - "The `wc` command does not support filenames with spaces."
+      - "The variable name `LOGFILE` must be lowercase in Bash."
+      - "The shell performs word splitting on the unquoted variable expansion, breaking the value into two separate arguments at the space boundary."
+      - "The `.log` extension is not recognized as a text file by `wc -l`."
+    correct_index: 2
+    explanation: "When a variable is expanded without double quotes, the shell splits the result on whitespace. `wc -l $LOGFILE` is interpreted as `wc -l access errors.log` — two separate arguments. The fix is to always quote variable expansions: `wc -l \"$LOGFILE\"`."
+  - id: 12
+    question: "A script is invoked with `./deploy.sh production 8080 myapp`. Inside the script, which variable holds the value `8080`?"
+    options:
+      - "`$0`"
+      - "`$1`"
+      - "`$2`"
+      - "`$#`"
+    correct_index: 2
+    explanation: "`$0` is the script name (`./deploy.sh`), `$1` is the first argument (`production`), `$2` is the second argument (`8080`), and `$3` would be `myapp`. `$#` holds the total argument count (3)."
+  - id: 13
+    question: "A script contains the line: `cd /deploy/target && ./run_tests.sh && echo 'All tests passed!'`. If `./run_tests.sh` exits with a non-zero status code, what happens next?"
+    options:
+      - "The script immediately exits and returns a non-zero status to the caller."
+      - "`echo 'All tests passed!'` runs regardless, because it is the last command in the chain."
+      - "`echo 'All tests passed!'` does not run, because `&&` short-circuits when the preceding command fails."
+      - "The shell re-tries `./run_tests.sh` once before giving up."
+    correct_index: 2
+    explanation: "The `&&` operator short-circuits on failure. Since `./run_tests.sh` returned a non-zero exit code, the shell skips all remaining `&&`-linked commands. Only if every command in the chain succeeds does `echo 'All tests passed!'` execute."
+  - id: 14
+    type: multiple
+    question: "Which of the following statements correctly describe Bash quoting and command substitution behavior? (Select all that apply)"
+    options:
+      - "Single quotes (`'...'`) prevent all variable and command substitution, treating the content as a completely literal string."
+      - "Double quotes (`\"...\"`) allow `$VARIABLE` and `$(command)` to be expanded while still preserving spaces."
+      - "Wrapping a variable in double quotes (e.g., `\"$FILE\"`) prevents the shell from splitting its value on whitespace."
+      - "Single quotes and double quotes are completely interchangeable in all Bash contexts."
+      - "The `$(command)` syntax runs the command in a subshell and replaces itself with the command's standard output."
+    correct_indices: [0, 1, 2, 4]
+    explanation: "Single quotes suppress all expansion; double quotes allow variable and command substitution while protecting spaces. Quoting `\"$VARIABLE\"` is essential to prevent word splitting on values containing spaces. Single and double quotes are NOT interchangeable when variable expansion is needed. `$(command)` is command substitution — the standard way to capture command output into a variable."
