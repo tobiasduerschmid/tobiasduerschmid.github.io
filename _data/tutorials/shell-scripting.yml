@@ -260,6 +260,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "**[Revisit Step 1]** Your script uses `set -e`. You run this pipeline: `cat big.log | grep ERROR | wc -l`. The file has no errors so `grep` exits with code 1. Does `set -e` catch this and exit the script?"
+          options:
+            - "Yes — `set -e` catches any non-zero exit code, including inside pipelines"
+            - "No — by default `set -e` only checks the exit code of the **last** command in a pipeline; `grep` failing mid-pipeline is silently ignored"
+            - "Yes — pipe operators automatically propagate non-zero exit codes"
+            - "No — `grep` returning 1 for no matches is not treated as a failure by Bash"
+          correct_index: 1
+          explanation: "By default, `set -e` only checks the exit code of the **last** command in a pipeline. If `grep` fails in the middle, Bash sees only `wc -l`'s exit code (0) and happily continues. To catch mid-pipeline failures, you need `set -o pipefail` in addition to `set -e`."
+
         - question: "In the pipeline `grep 'ERROR' server_log.txt | wc -l`, what does the `|` operator do?"
           options:
             - "Runs the two commands simultaneously in parallel and sums their output"
@@ -375,6 +384,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "**[Revisit Step 2]** You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
+          options:
+            - "`count=grep -c ERROR server.log`"
+            - "`count=$(grep -c ERROR server.log)`"
+            - "`count=| grep -c ERROR server.log`"
+            - "`count=\"${grep ERROR server.log}\"`"
+          correct_index: 1
+          explanation: "Command substitution `$(...)` captures a command's **stdout** into a variable. The `|` pipe connects two commands' stdin/stdout — it can't assign to a variable by itself. `${...}` is for variable/parameter expansion, not command execution."
+
         - question: "Which variable assignment is **syntactically correct** in Bash?"
           options:
             - "`name = \"Alice\"`"
@@ -499,6 +517,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "Inside a Bash `if` statement, you want to check whether `server.log` has **more than 100 lines**. Which is syntactically correct?"
+          options:
+            - "`if [ $(cat server.log) -gt 100 ]`"
+            - "`if [ $(wc -l < server.log) -gt 100 ]`"
+            - "`if [ grep -c \"\" server.log -gt 100 ]`"
+            - "`if | wc -l server.log > 100`"
+          correct_index: 1
+          explanation: "`$(wc -l < server.log)` uses command substitution and redirection to capture the **line count** as a plain integer for arithmetic comparison. Using `$(cat server.log)` would capture the file's entire *content*, not a count. The `grep -c` and pipe variants are syntactically invalid here — `[` is a command and its arguments must follow command syntax."
+
         - question: "Why are spaces **required** inside `[ ]` test brackets, like `[ -f \"$file\" ]`?"
           options:
             - "Bash style convention only — omitting spaces still works"
@@ -582,6 +609,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "You write `for f in *.log; do wc -l $f; done`. One of the log files is named `error log.txt` (with a space). What happens when the loop processes it?"
+          options:
+            - "`wc` correctly counts the lines in `error log.txt`"
+            - "The shell word-splits `$f` on the space, passing `error` and `log.txt` as two separate arguments"
+            - "Bash automatically handles spaces in filenames when iterating with `for`"
+            - "The loop silently skips any filenames that contain spaces"
+          correct_index: 1
+          explanation: "Without quotes, `$f` undergoes **word-splitting** on IFS characters (space, tab, newline). `wc - l error log.txt` becomes two arguments. The fix is always `\"$f\"`. This is the exact same quoting rule from the Variables step — it applies everywhere variables are used."
+
         - question: "In a `for f in *.sh` loop, when does the shell substitute `*.sh`?"
           options:
             - "Inside the loop body, each time `$f` is referenced"
@@ -665,6 +701,14 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "**[Revisit Step 4]** Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
+          options:
+            - "`if $1 -f; then`"
+            - "`if [ -f \"$1\" ]; then`"
+            - "`if exists \"$1\"; then`"
+            - "`if file \"$1\"; then`"
+          correct_index: 1
+          explanation: "`-f` tests whether a path exists and is a regular file. `\"$1\"` must be quoted to safely handle filenames with spaces. Together `[ -f \"$1\" ]` is the standard idiom — applying the file-test knowledge from Step 4 to incoming script arguments."
         - question: "What does `$#` contain when a script is called as `./deploy.sh app v1.2`?"
           options:
             - "The string `app v1.2`"
@@ -742,6 +786,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "**[Revisit Step 5]** A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
+          options:
+            - "2 — the two properly-separated arguments"
+            - "3 — word-splitting on the space inside `my report.txt` creates a third element"
+            - "1 — the entire argument list is treated as one string"
+            - "0 — `$@` is empty inside functions; use `$*` instead"
+          correct_index: 1
+          explanation: "Without quotes, `$@` undergoes **word-splitting**, breaking `my report.txt` into `my` and `report.txt`. The fix is `\"$@\"` — the same quoting rule from the Variables step applies everywhere, including inside functions. Always write `for f in \"$@\"; do`."
+
         - question: "What problem does the `local` keyword solve inside a Bash function?"
           options:
             - "It makes the function run faster by caching its variables"
@@ -822,6 +875,24 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
+        - question: "Your script uses `set -e`. Inside a `case` branch you run `count=$(grep -c ERROR app.log)`. The file has **zero** errors, so `grep` exits with code 1. What happens?"
+          options:
+            - "The script continues with `count` set to 0"
+            - "`set -e` triggers and the script exits immediately because `grep` returned non-zero"
+            - "The `case` statement suppresses exit codes from sub-commands"
+            - "Bash internally treats `grep -c` exit code 1 as a count of 1, not a failure"
+          correct_index: 1
+          explanation: "`grep -c` exits with **code 1** when it finds no matches — this is not a crash, it is the prescribed POSIX behavior for 'no matches'. But `set -e` treats *any* non-zero exit as fatal. FIX: `count=$(grep -c ERROR app.log || true)`. The `|| true` ensures the overall expression exits 0 even if grep finds nothing."
+
+        - question: "A function `count_errors` should return a **large number** to the caller. A teammate writes `return $(grep -c ERROR log.txt)`. What is the bug?"
+          options:
+            - "Nothing — `return` can carry any integer value"
+            - "`return` only carries exit codes (0–255); counts above 255 are silently truncated"
+            - "`grep -c` is not allowed inside Bash functions"
+            - "`return` requires a string argument, not a number"
+          correct_index: 1
+          explanation: "Bash's `return` carries only a numeric **exit code** in the range 0–255. A count of 300 would be silently truncated to 44 (300 mod 256). To return data from a function, use `echo` inside the function and capture with `result=$(count_errors file.log)`."
+
         - question: "In a Bash `case` statement, what does the `*` pattern in the last branch do?"
           options:
             - "It matches only numeric input"
@@ -895,24 +966,135 @@ steps:
         command: "bash monitor.sh; [ $? -eq 1 ]"
 
     quiz:
-      title: "Build a Log Monitor — Knowledge Check"
+      title: "Shell Scripting Mastery — Final Comprehensive Review"
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "When designing a multi-function shell script, why should you sketch the structure in comments before writing code?"
+        - question: |
+            **Scenario:** A script performs two steps: 1) Downloads a database dump, 2) Wipes the current database to prepare for import. 
+            The download step fails because the network drops. 
+            **Question:** If you forgot to include `set -e` at the top of this script, what catastrophic event will happen next?
           options:
-            - "Comments run faster than code, so it helps with performance profiling"
-            - "It forces you to clarify what data you need, reducing cognitive load before getting lost in syntax"
-            - "Bash requires a comment block at the start of every script for the interpreter"
-            - "It automatically generates documentation that tools like `man` can display"
+            - "The script will pause and wait for the network to return"
+            - "The script will continue and wipe the current database despite having no new data to import"
+            - "Bash will automatically detect the failure and stop the script"
+            - "The second step will be skipped automatically"
           correct_index: 1
-          explanation: "Planning in comments first helps manage cognitive load by letting you think at the design level before dealing with syntax implementation."
+          explanation: "Without `set -e`, Bash continues to the next line even if a previous command failed. This can lead to data loss if a destructive command (like wiping a DB) runs after a failed prerequisite (like downloading a backup)."
 
-        - question: "Your log monitor should exit with code 1 when errors are found, and 0 when clean. Why does this matter?"
+        - question: |
+            **Scenario:** You need to find out how many times a user named \"admin\" triggered a \"WARN\" event. 
+            **Question:** Write a pipeline that first filters `server.log` for lines containing \"WARN\", then pipes that into a second `grep` for \"admin\", and finally counts those resulting lines.
           options:
-            - "Exit code 1 causes the terminal to display output in red, making it visible"
-            - "Other scripts, CI pipelines, and Makefiles can call your monitor and take action based on the exit code"
-            - "Bash's `set -e` requires a non-zero exit when variables are unset"
-            - "Exit code 1 is required for scripts that print to stderr"
+            - "`grep \"WARN\" admin server.log | wc -l`"
+            - "`grep \"WARN\" server.log | grep \"admin\" | wc -l`"
+            - "`cat server.log > grep \"WARN\" | grep \"admin\" > wc -l`"
+            - "`grep \"WARN\" | grep \"admin\" < server.log | wc -l`"
           correct_index: 1
-          explanation: "Meaningful exit codes make scripts **composable**: a CI pipeline can run `./monitor.sh || alert_team` and automatically trigger an alert on failure."
+          explanation: "Pipes (`|`) pass the output of one command as the input to the next. This sequence correctly narrows down the lines step-by-step."
+
+        - question: |
+            **Scenario:** A junior developer on your team wrote a script to set up a database connection. It fails immediately with the error: `line 3: DB_PORT: command not found`.
+            ```bash
+            #!/bin/bash
+            DB_HOST=\"localhost\"
+            DB_PORT = \"5432\"
+            ```
+            **Question:** Identify the exact syntax error on line 3 and explain why Bash thinks `DB_PORT` is a command.
+          options:
+            - "The quotes around \"5432\" are not needed for numbers"
+            - "Spaces around the `=` sign cause Bash to treat `DB_PORT` as a command name and `=` as its first argument"
+            - "The variable name `DB_PORT` must be lowercase"
+            - "Line 3 is missing a semicolon"
+          correct_index: 1
+          explanation: "In Bash assignment, there **must be no spaces** around the `=` sign. Adding spaces makes Bash think you are trying to execute a program named `DB_PORT`."
+
+        - question: |
+            **Scenario:** Your deployment script checks for configuration files using this logic:
+            `if [ -d \"app_config\" ]; then echo \"Config found!\"; fi`
+            You know for a fact that `app_config` exists in the folder as a standard text file. 
+            **Question:** Will the script print \"Config found!\"? Why or why not? What flag should be used instead?
+          options:
+            - "Yes, because `-d` stands for 'data exists'"
+            - "No, because `-d` specifically checks for a **directory**. Use `-f` for a regular file."
+            - "Yes, because Git treats all files as directories internally"
+            - "No, because you need to use `[[ ... ]]` for file checks"
+          correct_index: 1
+          explanation: "`-d` tests if a path is a directory. To check if a path is a regular file, use `-f`."
+
+        - question: |
+            **Scenario:** You wrote a script to process user uploads: `for f in *.csv; do wc -l $f; done`. 
+            A user uploads a file named `Q1 Financial Report.csv`. 
+            **Question:** Because you forgot to quote `$f`, what three distinct \"files\" will the `wc -l` command try (and fail) to look for?
+          options:
+            - "`Q1`, `Financial`, and `Report.csv`"
+            - "`Q1 Financial`, `Report`, and `.csv`"
+            - "It will only fail on the spaces, not the words"
+            - "Bash will automatically escape the spaces"
+          correct_index: 0
+          explanation: "Without quotes, Bash performs **word-splitting** on the expanded variable. It treats the spaces as delimiters, passing three separate arguments to `wc`."
+
+        - question: |
+            **Scenario:** You are writing a deployment script that *must* receive exactly three arguments to work safely: `<environment> <version> <region>`.
+            **Question:** Using the special variable `$#`, which `if` condition will trigger an error if the user provides too few or too many arguments?
+          options:
+            - "`if [ $# -eq 3 ]; then`"
+            - "`if [ $# -ne 3 ]; then`"
+            - "`if [ args != 3 ]; then`"
+            - "`if [ $1 -and $2 -and $3 ]; then`"
+          correct_index: 1
+          explanation: "`$#` is the count of arguments. `-ne` (not equal) is used to detect if the count is anything other than the required 3."
+
+        - question: |
+            **Scenario:** Trace the output of the following script.
+            ```bash
+            target_dir=\"/var/www/html\"
+            setup_temp() {
+              target_dir=\"/tmp/workspace\"
+              echo \"Setting up $target_dir\"
+            }
+            setup_temp
+            echo \"Deploying to $target_dir\"
+            ```
+            **Question:** Because the developer forgot the `local` keyword inside the function, what will the final `echo` statement print?
+          options:
+            - "Deploying to /var/www/html"
+            - "Deploying to /tmp/workspace"
+            - "Deploying to (empty string)"
+            - "The script will crash with a scope error"
+          correct_index: 1
+          explanation: "Without `local`, variables inside functions are **global** by default. Reassigning `target_dir` inside the function overwrites the outside variable."
+
+        - question: |
+            **Scenario:** You have a script running on a server every night to back up logs. If the backup fails, you want your monitoring dashboard to trigger a pager alert. 
+            **Question:** What specific command must be executed at the end of your script's error-handling block to ensure the monitoring system knows the script failed?
+          options:
+            - "`echo \"FAILURE\"`"
+            - "`exit 1` (or any non-zero code)"
+            - "`return 0`"
+            - "`stop script`"
+          correct_index: 1
+          explanation: "Monitoring systems and CI/CD pipelines rely on **exit codes**. A code of `0` means success; any non-zero code (usually `1`) signals a failure."
+
+        - question: |
+            **Scenario:** You are reading a colleague's script and see this line: `LOG_LEVEL=\"${1:-INFO}\"`.
+            **Question:** If you run the script as `./start.sh DEBUG`, what is the value of `LOG_LEVEL`? (And what if you run it with no arguments?)
+          options:
+            - "`DEBUG` (and `INFO` if no arguments)"
+            - "`INFO` (and `DEBUG` if no arguments)"
+            - "`${1:-INFO}` (it treats it as literal text)"
+            - "It depends on the user's environment variables"
+          correct_index: 0
+          explanation: "The `${var:-default}` syntax provides a fallback. If `$1` is provided, it uses that; otherwise, it uses 'INFO'."
+
+        - question: |
+            **Scenario:** You wrote a script with `set -e` enabled. It checks a log file for errors: `error_count=$(grep -c \"ERROR\" server.log)`. 
+            Your server had a perfect day; there are zero errors in the log. However, your CI/CD pipeline reports that your script crashed. 
+            **Question:** Explain why a perfect log file caused `set -e` to kill your script.
+          options:
+            - "Bash cannot handle a variable containing the character '0'"
+            - "When `grep` finds zero matches, it exits with code 1. `set -e` sees this non-zero exit and immediately kills the script."
+            - "The `$(...)` syntax is incompatible with `set -e`"
+            - "Zero-length strings are treated as fatal errors in Bash"
+          correct_index: 1
+          explanation: "`grep` returns code 0 if found, and code 1 if not found. To fix this, use `error_count=$(grep -c \"ERROR\" server.log || true)`."
