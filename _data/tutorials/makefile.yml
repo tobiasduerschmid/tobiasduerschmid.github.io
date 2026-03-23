@@ -299,6 +299,15 @@ steps:
             - 1
           explanation: "Variables provide a single point of change for repeated values. They do NOT affect build speed or the Tab requirement — those are separate concerns entirely."
 
+        - question: "In the rule `app: $(OBJS)`, which part is the **target**?"
+          options:
+            - "app"
+            - "OBJS"
+            - "gcc"
+            - "The entire line"
+          correct_index: 0
+          explanation: "Even when using variables like `$(OBJS)`, the basic Rule structure remains `target: prerequisites`. Everything to the left of the colon is the target (what you want to build)."
+
   # --------------------------------------------------------------------------
   # STEP 4: Automatic Variables & Pattern Rules
   # --------------------------------------------------------------------------
@@ -437,6 +446,15 @@ steps:
             - 2
             - 3
           explanation: "The pattern rule `%.o: %.c` handles **any** `.c`→`.o` compilation automatically. Adding `newfile.c` to `OBJS` is all you need — no new rule required. `$^` gives all prerequisites (all `.o` files for the app rule), and `$<` gives the first prerequisite (the `.c` file for each pattern match)."
+
+        - question: "You use `%.o: %.c` and `$(CC) $(CFLAGS) -c $< -o $@`. You get `makefile:10: *** missing separator. Stop.` What is the most likely cause?"
+          options:
+            - "Missing Tab before the recipe line"
+            - "Incorrect automatic variable syntax"
+            - "The compiler 'gcc' is not installed"
+            - "The file 'math.c' is missing"
+          correct_index: 0
+          explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. This remains the #1 cause of build failures, even in advanced professional Makefiles."
 
   # --------------------------------------------------------------------------
   # STEP 5: Proving the Magic of the DAG
@@ -581,6 +599,33 @@ steps:
             - "To allow spaces instead of Tabs in recipes"
           correct_index: 1
           explanation: "`.PHONY` tells Make to ignore any files on disk with the same name as the target. This ensures that commands like `make clean` always run, even if a file named `clean` happens to exist."
+
+        - question: "What happens if a target name (like `test`) matches a directory name in your project, but is NOT declared `.PHONY`?"
+          options:
+            - "Make will delete the directory and replace it with a file"
+            - "Make will encounter a fatal error and stop"
+            - "Make will assume the target is up-to-date (since the directory exists) and will NOT run the recipe"
+            - "Make will always execute the recipe because directories are always considered 'new'"
+          correct_index: 2
+          explanation: "By default, Make looks for a file OR directory matching the target name. If a directory named `test` exists and has no dependencies, Make thinks its job is done. `.PHONY: test` forces it to run the recipe regardless."
+
+        - question: "How can you use Phony targets to bundle multiple independent builds together?"
+          options:
+            - "By creating a phony target (like `all`) and listing the other targets as its prerequisites"
+            - "By listing the phony target inside every other rule's recipe"
+            - "By using the `bundle:` keyword instead of `.PHONY:`"
+            - "Make cannot group multiple targets into one command"
+          correct_index: 0
+          explanation: "The conventional `all` target is usually a phony target that depends on every program you want to build. Running `make all` triggers all those prerequisites in sequence (or parallel)."
+
+        - question: "Why is it generally a bad idea to make a real file target (like `app`) depend on a `.PHONY` target?"
+          options:
+            - "It will cause the Makefile to be deleted"
+            - "The real target will be re-built every single time you run make, defeating incremental builds"
+            - "Make will refuse to run if real and phony targets are mixed"
+            - "It makes the resulting executable much slower"
+          correct_index: 1
+          explanation: "Because a Phony target is NEVER up-to-date, any real file that depends on it will also be considered out-of-date every time. This forces constant, unnecessary recompilation."
 
   # --------------------------------------------------------------------------
   # STEP 7: Summary & Best Practices
