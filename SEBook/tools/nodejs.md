@@ -25,7 +25,7 @@ const name = "UCLA"; // A constant that cannot be reassigned
 ### What is Node.js? (Taking off the Training Wheels)
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
 
-**Node.js is simply a C++ program (the V8 engine) that takes JavaScript out of the browser and lets it run directly on your computer's operating system.** This means you can use JavaScript to write backend servers, interact with the file system, and handle network requests, just like you would with Python or C++.
+**Node.js is a runtime environment that takes JavaScript out of the browser and lets it run directly on your computer's operating system.** It embeds Google's **V8 engine** to execute code, but also includes a powerful C library called **libuv** to handle the asynchronous event loop and system-level tasks like file I/O and networking. This means you can use JavaScript to write backend servers just like you would with Python or C++.
 
 
 
@@ -106,9 +106,10 @@ async function fetchUserData(userId) {
 ```
 
 ### Data Representation: JavaScript Objects and JSON
-When transferring data between your client and server, you will use **JSON** (JavaScript Object Notation). 
+If you understand Python dictionaries, you already understand the *general structure* of JavaScript Objects. Unlike C++, where you must define a `struct` or `class` before instantiating an object, JavaScript allows you to create objects on the fly using key-value pairs. 
 
-If you understand Python dictionaries, you already understand JavaScript Objects and JSON. Unlike C++, where you must define a `struct` or `class` before instantiating an object, JavaScript allows you to create objects on the fly using key-value pairs.
+**Wait, what about JSON?**
+While they look similar, JSON (JavaScript Object Notation) is a **strict** data-interchange format. Unlike JS objects, JSON *requires* double quotes for all keys and string values, and it cannot store functions or special values like `undefined`. JSON is simply this structure serialized into a string format so it can be sent over a network.
 
 ```javascript
 // This is a JavaScript Object (Identical to a Python Dictionary)

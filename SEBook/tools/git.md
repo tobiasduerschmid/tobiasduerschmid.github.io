@@ -65,18 +65,22 @@ A typical Git workflow follows these steps:
 `git diff` is used to compare different versions of your code:
 * **`git diff`**: Compares the working directory to the staging area.
 * **`git diff HEAD`**: Compares the working directory to the latest commit.
-* **`git diff HEAD^ HEAD`**: Compares the latest commit to the one immediately before it.
+* **`git diff HEAD^ HEAD`**: Compares the parent commit to the latest commit (shows what the latest commit changed).
 
 
 ## Branching and Merging
 
-A **branch** in Git is like a pointer to a commit (implemented simply as a lightweight, 41-byte text file stored in `.git/refs/heads/` that contains the SHA checksum of the commit it currently points to). Creating or destroying a branch is nearly instantaneous — Git writes or deletes a tiny file, not a copy of your project. The **HEAD** pointer (stored in `.git/HEAD`) normally holds a symbolic reference to the current branch, such as `ref: refs/heads/main`.
+A **branch** in Git is like a pointer to a commit (implemented as a lightweight, 41-byte text file stored in `.git/refs/heads/` that contains the SHA checksum of the commit it currently points to). Creating or destroying a branch is nearly instantaneous — Git writes or deletes a tiny reference, not a copy of your project. The **HEAD** pointer (stored in `.git/HEAD`) normally holds a symbolic reference to the current branch, such as `ref: refs/heads/main`.
 
 ### Integrating Changes
-When it's time to bring changes from a feature branch back into the main codebase, Git chooses between two merge strategies based on whether the histories have diverged:
+When you want to bring changes from a feature branch back into the main codebase, Git typically uses one of two automatic merge strategies:
 
 * **Fast-Forward Merge**: When the target branch (`main`) has received no new commits since the feature branch was created, Git simply advances the `main` pointer to the tip of the feature branch. No merge commit is created; the history stays perfectly linear.
 * **Three-Way Merge**: When both branches have diverged — each has commits the other doesn't — Git compares both tips against their common ancestor and creates a new **merge commit** with two parents. The commit graph forms a diamond shape where the two diverging paths converge.
+
+### Alternative Integration Workflows
+For more control over your project's history, you can use these manual techniques:
+
 * **Rebasing**: Re-applies commits from one branch onto a new base, producing new commit objects with new SHA hashes. Creates a linear history but must **never** be used on shared branches, as it rewrites history that collaborators may already have.
 * **Squashing**: `git merge --squash` collapses all commits from a feature branch into a single commit on the target branch, keeping the main history tidy.
 
@@ -126,7 +130,7 @@ These commands manage the lifecycle of your changes across the three Git states:
 * **`git diff`**: Compares different versions of your project:
     * `git diff`: Compares the working directory to the staging area.
     * `git diff HEAD`: Compares the working directory to the latest commit.
-    * `git diff HEAD^ HEAD`: Compares the latest commit to the one immediately preceding it.
+    * `git diff HEAD^ HEAD`: Compares the parent commit to the latest commit (shows what the latest commit changed).
 * **`git restore`** *(Git 2.23+)*: The modern command for undoing file changes, replacing the file-restoration uses of the older `git checkout` and `git reset`:
     * `git restore --staged <file>`: **Unstages** a file, moving it out of the staging area while leaving working directory modifications untouched.
     * `git restore <file>`: **Discards** all uncommitted changes to a file in the working directory, restoring it to its last staged or committed state. This is irreversible — uncommitted changes will be permanently lost.

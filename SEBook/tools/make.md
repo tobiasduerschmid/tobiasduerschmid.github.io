@@ -36,12 +36,9 @@ What you actually need is a smart tool that asks two questions before doing any 
 If `math.c` was saved at 10:05 AM, but `math.o` (its compiled object file) was created at 9:00 AM, the tool knows `math.c` has changed and *must* be recompiled. If `utils.c` hasn't been touched since yesterday, the tool completely skips recompiling it and just reuses the existing `utils.o`. 
 
 
-## The Solution: GNU Make
-This is exactly why **`make`** was created in 1976, and why it remains a staple of software engineering today. 
+This is exactly why **`make`** was created in 1976, and why it remains a staple of software engineering today. While the original utility was created at Bell Labs, modern development primarily relies on **GNU Make**, a powerful and widely-extended implementation that reads a configuration file called a **Makefile**. 
 
-GNU **`make`** is a build automation tool that remains a staple of software engineering. 
-It relies on a configuration file called a **Makefile**, which acts as a recipe book for your project.
-So GNU **`make`** is the *program* that reads **Makefiles** to build complex products.
+So GNU **`make`** is the project's *engine* that reads recipes from **Makefiles** to build complex products.
 
 ### How It Works
 Inside a Makefile, you define three main components:
@@ -354,15 +351,15 @@ SRCS = mysrc1.c mysrc2.c
 TARGET = myprog
 OBJS = $(SRCS:.c=.o)
 CC = clang
-CCFLAGS = -Wall
+CFLAGS = -Wall
 
 # Main Target Rule
 $(TARGET): $(OBJS)
-	$(CC) $(CCFLAGS) -o $(TARGET) $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
 # Pattern Rule for Object Files
 %.o: %.c
-	$(CC) $(CCFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean Target
 clean:
@@ -370,7 +367,7 @@ clean:
 ```
 
 **Breaking it down:**
-* **Line 2-6:** We define our variables. If we later want to use the `gcc` compiler instead, or add an optimization flag like `-O3`, we only need to change the `CC` or `CCFLAGS` variables at the top of the file. 
+* **Line 2-6:** We define our variables. If we later want to use the `gcc` compiler instead, or add an optimization flag like `-O3`, we only need to change the `CC` or `CFLAGS` variables at the top of the file. 
 * **Line 9-10:** This rule says: "To build `myprog`, I need `mysrc1.o` and `mysrc2.o`. To build it, run `clang -Wall -o myprog mysrc1.o mysrc2.o`."
 * **Line 13-14:** This pattern rule explains *how* to turn a `.c` file into a `.o` file. It tells Make: "To compile any object file, use the compiler to compile the first prerequisite (`$<`, which is the `.c` file) and output it to the target name (`$@`, which is the `.o` file)".
 * **Line 17-18:** The `clean` target is a convention used to remove all generated object files and the target executable, leaving only the original source files. You can execute it by running `make clean`.

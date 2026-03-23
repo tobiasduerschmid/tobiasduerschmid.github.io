@@ -258,8 +258,8 @@ To make a quantifier **lazy** (meaning it will match as few characters as possib
 * `*?` : Matches 0 or more times, but as few times as possible.
 * `+?` : Matches 1 or more times, but as few times as possible.
 
-If we change our pattern to `<.*?>`, the engine stops consuming the moment it sees the first closing `>`. 
-Running `<.*?>` against `<div>Hello World</div>` will successfully yield two separate matches: `<div>` and `</div>`.
+If we change our pattern to `<div>(.*?)</div>`, the engine matches the tags and **captures** only the text inside. 
+Running this against `<div>Hello World</div>` will successfully yield a match where the first capture group is exactly "Hello World".
 
 ## Advanced Pattern Control: Lookarounds
 
@@ -293,9 +293,9 @@ If you use `\$\d+`, your match will be `$100`. But you only want the number itse
 By using a positive lookbehind, you can check for the dollar sign without consuming it:
 `(?<=\$)\d+`
 
-* The engine finds a number.
+* The engine reaches a position in the string.
 * It peeks backward to see if there is a `$`.
-* If true, it extracts *only* the `\d+` portion. The match is exactly `100`. 
+* If true, it then attempts to match the `\d+` portion. The match is exactly `100`. 
 
 By mastering lazy quantifiers and lookarounds, you transition from simply searching for text to writing highly precise, surgical data-extraction algorithms!
 
