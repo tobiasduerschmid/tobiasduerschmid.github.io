@@ -31,12 +31,17 @@ steps:
       **Line 1 — the shebang (`#!`):** When you run a file, Linux reads the
       first two bytes to decide how to execute it. `#!` followed by a path
       tells the OS which interpreter to use. Without it, the OS guesses —
-      and often guesses wrong. Always write `#!/bin/bash` on line 1.
+      and often guesses wrong. `#!/bin/bash` is the standard choice when
+      Bash is at `/bin/bash` (true on most Linux systems). For maximum
+      portability across systems where Bash may live elsewhere, you can also
+      use `#!/usr/bin/env bash`, which finds the first `bash` in your `$PATH`.
 
       **Line 2 — the safety net (`set -e`):** By default, Bash happily
-      continues running after a failed command. `set -e` stops the script
-      immediately when something goes wrong, preventing a cascade of
-      confusing failures. Always include it.
+      continues running after a failed command. `set -e` exits the script
+      when a command fails, preventing a cascade of confusing failures.
+      Always include it. Note: `set -e` does **not** trigger when a failing
+      command is part of an `if` condition, a `&&`/`||` list, or negated
+      with `!` — those are intentional exceptions.
 
       ### New Concept: Command Substitution
       You can capture the output of a command and use it as a string by wrapping it in `$(...)`. 
@@ -110,7 +115,7 @@ steps:
             - "Stops the script immediately when any command returns a non-zero exit code"
             - "Enables extended glob patterns"
           correct_index: 2
-          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) changes this behavior: if any command fails (returns non-zero), the script stops immediately. This prevents a cascade of confusing failures from a single root cause."
+          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits the script when a command fails, preventing a cascade of confusing failures. Important exception: `set -e` does not trigger for commands used as `if` conditions, commands in `&&`/`||` lists, or commands negated with `!` — those are intentional control-flow patterns, not unexpected failures."
 
         - question: "Which statements about `$(...)` command substitution are true? (Select all that apply)"
           type: multiple
@@ -667,7 +672,13 @@ steps:
       Functions receive `$1`, `$2`, etc. independently of the script's own arguments.
 
       ### Return Values
-      Functions can `return 0` (success) or `return 1` (failure). This allows you to use functions directly in `if` statements! To return *strings*, you use `echo` inside the function and capture it outside using `$(...)`.
+      Functions exit with a numeric status code (0–255) set by `return`.
+      By convention, `return 0` means success and any non-zero value means
+      failure — which lets you use functions directly in `if` statements.
+      You can return specific non-zero codes (e.g., `return 2` for bad
+      arguments) to give callers richer information. To return *data*
+      (strings, numbers), use `echo` inside the function and capture it
+      outside with `$(...)` — `return` only carries an exit code, not data.
 
       ### Your task
 
