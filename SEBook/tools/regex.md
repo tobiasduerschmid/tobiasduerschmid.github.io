@@ -89,7 +89,7 @@ Character classes (or sets) allow you to match any single character from a speci
 * `[A-Za-z0-9]`: Matches any alphanumeric character.
 * `[^0-9]`: The caret inside the brackets means **negation**. This matches any character that is *not* a digit.
 
-### meta characteres
+### Metacharacters
 Because certain character sets are used so frequently, RegEx provides handy meta characters:
 * `\d`: Matches any digit (equivalent to `[0-9]`).
 * `\w`: Matches any "word" character (alphanumeric plus underscore: `[a-zA-Z0-9_]`).
@@ -167,21 +167,22 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
 **The Input String:** `"cats catalog cat"`
 
 **Step-by-Step Execution:**
-1. **Index 0 (`c` in "cats"):** * The pattern pointer starts at `\b`. Since `c` is the start of a word, `\b` is satisfied (zero characters consumed).
+1. **Index 0 (`c` in "cats"):**
+   * The pattern pointer starts at `\b`. Since `c` is the start of a word (a transition from the start of the string to a word character), the `\b` assertion passes (zero characters consumed).
    * `[Cc]` matches `c`. 
    * `[Aa]` matches `a`. 
    * `[Tt]` matches `t`.
    * `[Ss]?` looks for an optional 's'. It finds `s` and matches it.
-   * `\b` checks for a word boundary. The next character is a space, which is a boundary. Match successful!
+   * `\b` checks for a word boundary at the current position (between 's' and the space). Because 's' is a word character and the following space is a non-word character, the boundary assertion passes. Match successful!
    * **Match 1 Saved:** `"cats"`
 2. **Resuming at Index 4 (the space):**
    * The engine resumes exactly where it left off to look for more matches.
    * `\b` matches the boundary. `[Cc]` fails against the space. The engine bumps along.
 3. **Index 5 (`c` in "catalog"):**
    * `\b` matches. `[Cc]` matches `c`. `[Aa]` matches `a`. `[Tt]` matches `t`.
-   * The string pointer is now at the `a` in "catalog". 
+   * The string pointer is now positioned between the `t` and the `a` in "catalog".
    * The pattern asks for `[Ss]?`. Is 'a' an 's'? No. Since the 's' is optional (`?`), the engine says "That's fine, I matched it 0 times," and moves to the next pattern token.
-   * The pattern asks for `\b` (a word boundary). However, the string pointer is currently at `a`, which is a letter (not a boundary). 
+   * The pattern asks for `\b` (a word boundary). The string pointer is currently between `t` (a word character) and `a` (another word character). Because there is no transition to a non-word character, the boundary assertion fails.
    * **Match Fails!** The engine drops everything, resets the pattern, and bumps along to the next letter.
 4. **Index 13 (`c` in "cat"):**
    * The engine bumps along through "atalog " until it hits the final word.
@@ -276,9 +277,9 @@ Lookaheads look forward in the string from the current position.
 Lookaheads are the secret to writing complex password validators. Suppose a password must contain at least one number. You can use a positive lookahead at the very start of the string:
 `^(?=.*\d)[A-Za-z\d]{8,}$`
 
-* `^` starts at the beginning.
-* `(?=.*\d)` looks ahead through the whole string. If it finds a digit, the condition passes. **Crucially, the engine's pointer resets back to the beginning `^` after checking.**
-* `[A-Za-z\d]{8,}$` then evaluates the string normally to ensure it is 8+ valid characters.
+* `^` asserts the position at the beginning of the string.
+* `(?=.*\d)` looks ahead through the string from the current position. If it finds a digit, the condition passes. **Crucially, because lookaheads are zero-width, they do not consume characters. After the check passes, the engine's string pointer resets back to the exact position where the lookahead started** (which, in this specific case, is still the beginning of the string).
+* `[A-Za-z\d]{8,}$` then evaluates the string normally from that starting position to ensure it consists of 8+ valid characters.
 
 ### Positive and Negative Lookbehinds
 Lookbehinds look backward in the string from the current position.
