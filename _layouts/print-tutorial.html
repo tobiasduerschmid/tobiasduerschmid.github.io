@@ -511,8 +511,9 @@
       {% for file in step.files %}
       <div class="starter-file">
         <div class="starter-file-name">{{ file.path }}</div>
-        {% if file.language %}
-          {% capture fenced_content %}~~~{{ file.language }}
+        {% assign print_lang = file.print_language | default: file.language %}
+        {% if print_lang %}
+          {% capture fenced_content %}~~~{{ print_lang }}
 {{ file.content }}~~~{% endcapture %}
           <div class="starter-file-content">{{ fenced_content | markdownify }}</div>
         {% else %}
