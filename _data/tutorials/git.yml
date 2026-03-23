@@ -232,7 +232,7 @@ steps:
             - "`git commit`"
             - "`git add`"
             - "`git init`"
-            - "`git config`"x
+            - "`git config`"
           correct_index: 2
           explanation: "`git init` creates the hidden `.git` folder and initializes the metadata structures that allow Git to start tracking your project."
 
