@@ -4,7 +4,7 @@ cards:
   - id: 1
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. How do you temporarily save your current work without making a messy commit?"
     answer: "`git stash`"
-    explanation: "`git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+    explanation: "`git stash` temporarily shelves your staged and unstaged changes for tracked files. To include brand new, untracked files in the stash, you must use `git stash -u`."
   - id: 2
     question: "You know a bug was introduced recently, but you aren't sure which commit caused it. How do you perform a binary search through your commit history to find the exact commit that broke the code?"
     answer: "`git bisect`"
@@ -20,7 +20,7 @@ cards:
   - id: 5
     question: "You want to see exactly what has changed in your working directory compared to your last saved snapshot (the most recent commit)."
     answer: "`git diff HEAD`"
-    explanation: "Using `git diff HEAD` compares your current uncommitted files on disk with the most recent commit. `git diff` alone only compares the working directory to the staging area."
+    explanation: "Using `git diff HEAD` compares your current modified tracked files on disk with the most recent commit. Note that it does not show completely untracked files."
   - id: 6
     question: "You have a feature branch with several experimental commits, but you only want to move one specific, completed commit over to your main branch."
     answer: "`git cherry-pick`"
@@ -40,7 +40,7 @@ cards:
   - id: 10
     question: "You have just installed Git on a new computer and need to set up your username and email address so that your commits are properly attributed to you."
     answer: "`git config`"
-    explanation: "Using `git config --global user.name` and `user.email` establishes your identity for all repositories on your machine."
+    explanation: "Using `git config --global user.name` and `user.email` establishes your default identity, which can be overridden for specific projects using `git config --local`."
   - id: 11
     question: "You've made changes to three different files, but you only want two of them to be included in your next snapshot. How do you move those specific files to the staging area?"
     answer: "`git add <filename>`"
@@ -84,7 +84,7 @@ cards:
   - id: 21
     question: "Your team members have uploaded new commits to the shared remote repository. You want to fetch those changes and immediately integrate them into your current local branch."
     answer: "`git pull`"
-    explanation: "The `git pull` command is effectively a combination of `git fetch` (downloading the new data) and `git merge` (integrating it into your local working branch)."
+    explanation: "The `git pull` command is effectively a combination of `git fetch` and `git merge` (the default) or `git rebase` (if configured), integrating remote changes into your local branch."
   - id: 22
     question: "You have finished making several commits locally and want to upload them to the remote GitHub repository so your team can see them."
     answer: "`git push`"
@@ -107,7 +107,7 @@ cards:
   - id: 26
     question: "You made some experimental changes to a file but want to discard them entirely and revert to the version from your last commit."
     answer: "`git restore <filename>`"
-    explanation: "`git restore <file>` discards all uncommitted changes in the working directory for that file, restoring it to its last staged or committed version. Warning: this is permanent — uncommitted changes cannot be recovered after this operation."
+    explanation: "`git restore <file>` discards unstaged changes in the working directory, reverting it to the staged version (or the last commit if nothing is staged). To explicitly revert to the last commit, use `git restore --source=HEAD <file>`."
 
   - id: 27
     question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"
