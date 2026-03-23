@@ -81,7 +81,7 @@ questions:
       - "A False Negative occurs when the regex successfully rejects invalid text." 
       - "A False Negative occurs when the regex fails to match text that it was actually supposed to find." 
       - "A False Positive occurs when the regex engine throws a syntax error." 
-    correct_indices: [0, 3] 
+    correct_indices: [0, 2] 
     explanation: "A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns." 
 
   - id: 9 
