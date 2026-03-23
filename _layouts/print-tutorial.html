@@ -126,11 +126,124 @@
 
     .step-instructions pre code {
       background: none;
-      color: #222236;
+      color: #333333;
       padding: 0;
       font-size: 0.88em;
       border-radius: 0;
     }
+
+    /* Rouge syntax highlighting — VS Light theme */
+    .step-instructions .highlight,
+    .starter-file-content .highlight {
+      background: #f4f4f8;
+      border: 1px solid #d8d8e8;
+      border-radius: 6px;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+
+    .step-instructions .highlight pre,
+    .starter-file-content .highlight pre {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      margin: 0;
+      padding: 12px 16px;
+      overflow-x: auto;
+    }
+
+    .step-instructions .highlight pre code,
+    .starter-file-content .highlight pre code {
+      background: none;
+      color: #333333;
+      padding: 0;
+      font-size: 0.88em;
+      border-radius: 0;
+      font-family: 'Fira Code', Menlo, monospace;
+    }
+
+    .step-instructions .highlight .c,
+    .step-instructions .highlight .cm,
+    .step-instructions .highlight .c1,
+    .step-instructions .highlight .cs,
+    .starter-file-content .highlight .c,
+    .starter-file-content .highlight .cm,
+    .starter-file-content .highlight .c1,
+    .starter-file-content .highlight .cs { color: #008000; font-style: italic; }
+
+    .step-instructions .highlight .k,
+    .step-instructions .highlight .kd,
+    .step-instructions .highlight .kp,
+    .step-instructions .highlight .kr,
+    .step-instructions .highlight .kc,
+    .step-instructions .highlight .ow,
+    .starter-file-content .highlight .k,
+    .starter-file-content .highlight .kd,
+    .starter-file-content .highlight .kp,
+    .starter-file-content .highlight .kr,
+    .starter-file-content .highlight .kc,
+    .starter-file-content .highlight .ow { color: #0000ff; }
+
+    .step-instructions .highlight .kt,
+    .step-instructions .highlight .nc,
+    .step-instructions .highlight .nn,
+    .starter-file-content .highlight .kt,
+    .starter-file-content .highlight .nc,
+    .starter-file-content .highlight .nn { color: #267f99; }
+
+    .step-instructions .highlight .m,
+    .step-instructions .highlight .mf,
+    .step-instructions .highlight .mh,
+    .step-instructions .highlight .mi,
+    .step-instructions .highlight .mo,
+    .step-instructions .highlight .il,
+    .starter-file-content .highlight .m,
+    .starter-file-content .highlight .mf,
+    .starter-file-content .highlight .mh,
+    .starter-file-content .highlight .mi,
+    .starter-file-content .highlight .mo,
+    .starter-file-content .highlight .il { color: #098658; }
+
+    .step-instructions .highlight .s,
+    .step-instructions .highlight .s1,
+    .step-instructions .highlight .s2,
+    .step-instructions .highlight .sb,
+    .step-instructions .highlight .sc,
+    .step-instructions .highlight .sd,
+    .step-instructions .highlight .se,
+    .step-instructions .highlight .sh,
+    .step-instructions .highlight .sx,
+    .step-instructions .highlight .sr,
+    .step-instructions .highlight .ss,
+    .starter-file-content .highlight .s,
+    .starter-file-content .highlight .s1,
+    .starter-file-content .highlight .s2,
+    .starter-file-content .highlight .sb,
+    .starter-file-content .highlight .sc,
+    .starter-file-content .highlight .sd,
+    .starter-file-content .highlight .se,
+    .starter-file-content .highlight .sh,
+    .starter-file-content .highlight .sx,
+    .starter-file-content .highlight .sr,
+    .starter-file-content .highlight .ss { color: #a31515; }
+
+    .step-instructions .highlight .si,
+    .starter-file-content .highlight .si { color: #000000; }
+
+    .step-instructions .highlight .nb,
+    .step-instructions .highlight .bp,
+    .step-instructions .highlight .n,
+    .step-instructions .highlight .nf,
+    .starter-file-content .highlight .nb,
+    .starter-file-content .highlight .bp,
+    .starter-file-content .highlight .n,
+    .starter-file-content .highlight .nf { color: #267f99; }
+
+    .step-instructions .highlight .nt,
+    .starter-file-content .highlight .nt { color: #a31515; }
+
+    .step-instructions .highlight .o,
+    .starter-file-content .highlight .o { color: #000000; }
 
     .step-instructions ul,
     .step-instructions ol {
@@ -219,7 +332,12 @@
       line-height: 1.5;
       overflow-x: auto;
       white-space: pre;
-      color: #222236;
+      color: #333333;
+    }
+
+    .starter-file-content .highlight {
+      border-radius: 0 4px 4px 4px;
+      margin: 0;
     }
 
     /* ── Quiz styles ── */
@@ -393,7 +511,13 @@
       {% for file in step.files %}
       <div class="starter-file">
         <div class="starter-file-name">{{ file.path }}</div>
+        {% if file.language %}
+          {% capture fenced_content %}~~~{{ file.language }}
+{{ file.content }}~~~{% endcapture %}
+          <div class="starter-file-content">{{ fenced_content | markdownify }}</div>
+        {% else %}
         <pre>{{ file.content }}</pre>
+        {% endif %}
       </div>
       {% endfor %}
     </div>

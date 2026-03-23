@@ -441,7 +441,6 @@ steps:
         content: |
           TODO: add division
           DONE: add multiply
-        language: "plaintext"
 
     open_file: "myproject/notes.txt"
 
@@ -658,7 +657,6 @@ steps:
     files:
       - path: "myproject/.gitignore"
         content: ""
-        language: "plaintext"
 
     open_file: "myproject/.gitignore"
 

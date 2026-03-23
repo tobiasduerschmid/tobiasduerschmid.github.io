@@ -77,6 +77,7 @@ steps:
         useful features.
     files:
       - path: "morning.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -325,6 +326,7 @@ steps:
       3. Uses `echo` to print a single string combining all three variables, e.g., `Project: mytools v1.0 — 5 scripts found`
     files:
       - path: "buggy.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -340,6 +342,7 @@ steps:
 
           rm "$filename"
       - path: "inventory.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -442,6 +445,7 @@ steps:
       ```
     files:
       - path: "health_check.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -537,10 +541,12 @@ steps:
       ```
     files:
       - path: "batch_check.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
       - path: "no_shebang.sh"
+        language: bash
         content: |
           set -e
 
@@ -623,6 +629,7 @@ steps:
       ```
     files:
       - path: "file_info.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -700,6 +707,7 @@ steps:
       Write a small script below the functions to test them, ensuring they work!
     files:
       - path: "toolkit.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -779,6 +787,7 @@ steps:
 
     files:
       - path: "service.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
@@ -851,6 +860,7 @@ steps:
       Once your structure is clear, write the bash code.
     files:
       - path: "monitor.sh"
+        language: bash
         content: |
           #!/bin/bash
           set -e
