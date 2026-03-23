@@ -260,7 +260,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Revisit Step 1]** Your script uses `set -e`. You run this pipeline: `cat big.log | grep ERROR | wc -l`. The file has no errors so `grep` exits with code 1. Does `set -e` catch this and exit the script?"
+        - question: "**[Interleaved: Revisit Step 1]** Your script uses `set -e`. You run this pipeline: `cat big.log | grep ERROR | wc -l`. The file has no errors so `grep` exits with code 1. Does `set -e` catch this and exit the script?"
           options:
             - "Yes — `set -e` catches any non-zero exit code, including inside pipelines"
             - "No — by default `set -e` only checks the exit code of the **last** command in a pipeline; `grep` failing mid-pipeline is silently ignored"
@@ -384,7 +384,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Revisit Step 2]** You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
+        - question: "**[Interleaved: Revisit Step 2]** You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
           options:
             - "`count=grep -c ERROR server.log`"
             - "`count=$(grep -c ERROR server.log)`"
@@ -728,7 +728,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Revisit Step 4]** Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
+        - question: "**[Interleaved: Revisit Step 4]** Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
           options:
             - "`if $1 -f; then`"
             - "`if [ -f \"$1\" ]; then`"
@@ -813,7 +813,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Revisit Step 5]** A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
+        - question: "**[Interleaved: Revisit Step 5]** A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
           options:
             - "2 — the two properly-separated arguments"
             - "3 — word-splitting on the space inside `my report.txt` creates a third element"
@@ -1007,130 +1007,157 @@ steps:
       shuffle: true
       questions:
         - question: |
-            **[Interleaved: Revisit Step 1]** **Scenario:** A script performs two steps: 1) Downloads a database dump, 2) Wipes the current database to prepare for import. 
-            The download step fails because the network drops. 
-            **Question:** If you forgot to include `set -e` at the top of this script, what catastrophic event will happen next?
-          options:
-            - "The script will pause and wait for the network to return"
-            - "The script will continue and wipe the current database despite having no new data to import"
-            - "Bash will automatically detect the failure and stop the script"
-            - "The second step will be skipped automatically"
-          correct_index: 1
-          explanation: "Without `set -e`, Bash continues to the next line even if a previous command failed. This can lead to data loss if a destructive command (like wiping a DB) runs after a failed prerequisite (like downloading a backup)."
-
-        - question: |
-            **[Interleaved: Revisit Step 2]** **Scenario:** You need to find out how many times a user named "admin" triggered a "WARN" event. 
-            **Question:** Write a pipeline that first filters `server.log` for lines containing "WARN", then pipes that into a second `grep` for "admin", and finally counts those resulting lines.
-          options:
-            - "`grep \"WARN\" admin server.log | wc -l`"
-            - "`grep \"WARN\" server.log | grep \"admin\" | wc -l`"
-            - "`cat server.log > grep \"WARN\" | grep \"admin\" > wc -l`"
-            - "`grep \"WARN\" | grep \"admin\" < server.log | wc -l`"
-          correct_index: 1
-          explanation: "Pipes (`|`) pass the output of one command as the input to the next. This sequence correctly narrows down the lines step-by-step."
-
-        - question: |
-            **Scenario:** A junior developer on your team wrote a script to set up a database connection. It fails immediately with the error: `line 3: DB_PORT: command not found`.
+            **[Interleaved: Revisit Step 1]** **Scenario:** A developer wrote the following deployment script but forgot to include `set -e` at the top:
             ```bash
             #!/bin/bash
-            DB_HOST=\"localhost\"
-            DB_PORT = \"5432\"
+            cd /var/www/production_app
+            git pull origin main
+            rm -rf temp_cache/*
+            systemctl restart app
             ```
-            **Question:** Identify the exact syntax error on line 3 and explain why Bash thinks `DB_PORT` is a command.
+            Assume the `cd` command fails because the directory was recently renamed. What happens next?
           options:
-            - "The quotes around \"5432\" are not needed for numbers"
-            - "Spaces around the `=` sign cause Bash to treat `DB_PORT` as a command name and `=` as its first argument"
-            - "The variable name `DB_PORT` must be lowercase"
-            - "Line 3 is missing a semicolon"
-          correct_index: 1
-          explanation: "In Bash assignment, there **must be no spaces** around the `=` sign. Adding spaces makes Bash think you are trying to execute a program named `DB_PORT`."
+            - "The script immediately terminates with a non-zero exit code because the target directory does not exist"
+            - "Bash pauses execution and prompts the user in standard input to manually resolve the missing directory"
+            - "The script continues executing in the current directory, potentially pulling code and deleting cache files in the wrong location"
+            - "Bash's implicit error handling skips the next command (`git pull`) but resumes execution at `rm -rf`"
+          correct_index: 2
+          explanation: "Distractor D targets the common misconception that Bash has built-in `try/catch` logic. Distractor A tests if they realize Bash is 'optimistic' and will happily march into disaster without `set -e`."
 
         - question: |
-            **Scenario:** Your deployment script checks for configuration files using this logic:
-            `if [ -d \"app_config\" ]; then echo \"Config found!\"; fi`
-            You know for a fact that `app_config` exists in the folder as a standard text file. 
-            **Question:** Will the script print \"Config found!\"? Why or why not? What flag should be used instead?
+            **[Interleaved: Revisit Step 2]** **Scenario:** You are given a massive log file, `server.log`. You need to find out how many times the user "admin" triggered a "WARN" event. Which pipeline correctly filters and counts these logs?
           options:
-            - "Yes, because `-d` stands for 'data exists'"
-            - "No, because `-d` specifically checks for a **directory**. Use `-f` for a regular file."
-            - "Yes, because Git treats all files as directories internally"
-            - "No, because you need to use `[[ ... ]]` for file checks"
-          correct_index: 1
-          explanation: "`-d` tests if a path is a directory. To check if a path is a regular file, use `-f`."
-
-        - question: |
-            **Scenario:** You wrote a script to process user uploads: `for f in *.csv; do wc -l $f; done`. 
-            A user uploads a file named `Q1 Financial Report.csv`. 
-            **Question:** Because you forgot to quote `$f`, what three distinct \"files\" will the `wc -l` command try (and fail) to look for?
-          options:
-            - "`Q1`, `Financial`, and `Report.csv`"
-            - "`Q1 Financial`, `Report`, and `.csv`"
-            - "It will only fail on the spaces, not the words"
-            - "Bash will automatically escape the spaces"
+            - "`grep \"WARN\" server.log | grep \"admin\" | wc -l`"
+            - "`cat server.log | grep \"WARN\" && grep \"admin\" > wc -l`"
+            - "`grep \"WARN\" server.log > grep \"admin\" | wc -l`"
+            - "`wc -l $(grep \"WARN\" server.log | grep \"admin\")`"
           correct_index: 0
+          explanation: "Distractor D is highly attractive to students who over-rely on command substitution `$(...)` instead of understanding how memory-efficient stream piping `|` works. Distractor B tests their understanding of `&&` versus `|`."
+
+        - question: |
+            **Scenario:** A junior developer writes the following script:
+            ```bash
+            #!/bin/bash
+            DIR = "/tmp/build"
+            ```
+            When running the script, it crashes with the error: `line 2: DIR: command not found`. Why does Bash produce this specific error?
+          options:
+            - "Bash requires the `let` or `set` keyword to assign string variables"
+            - "Bash evaluates the spaces around the `=` sign and attempts to execute a program named `DIR` with `=` and `\"/tmp/build\"` as its arguments"
+            - "`/tmp/build` is a directory, not an executable, so Bash cannot assign it to a command substitution"
+            - "Variables in Bash must be entirely lowercase to avoid clashing with reserved environment commands"
+          correct_index: 1
+          explanation: "This tests their mental model of how the shell parses lines (Command -> Argument 1 -> Argument 2). Because of the space, `DIR` is treated as a command, which doesn't exist."
+
+        - question: |
+            **Scenario:** A deployment script runs the following logic to check for a required environment file:
+            ```bash
+            if [ -d ".env" ]; then
+                echo "Environment file loaded."
+            else
+                echo "Fatal: Missing .env file!"
+                exit 1
+            fi
+            ```
+            The `.env` file exists as a standard text file in the same directory as the script, yet the script exits with the "Fatal" message. Why?
+          options:
+            - "The `.env` file is hidden (starts with a dot), so Bash cannot detect it without the `-a` flag"
+            - "The `-d` flag specifically tests if the path is a directory, not a regular file"
+            - "The quotes around \".env\" prevent Bash from evaluating the file path correctly"
+            - "The `if` statement is missing the `test` keyword inside the brackets"
+          correct_index: 1
+          explanation: "Distractor A is a trap because it leverages their prior knowledge of the `ls -a` command for hidden files, forcing them to distinguish between command-line utilities and Bash conditional tests."
+
+        - question: |
+            **Scenario:** Consider the following loop running in a directory that contains exactly one file named `01 Financial Report.csv`:
+            ```bash
+            for f in *.csv; do 
+              wc -l $f
+            done
+            ```
+            Because `$f` is unquoted inside the loop body, what is the exact sequence of "files" the `wc -l` command will attempt to process?
+          options:
+            - "`01 Financial Report.csv`"
+            - "`01\\ Financial\\ Report.csv`"
+            - "`*.csv`"
+            - "`01`, `Financial`, and `Report.csv`"
+          correct_index: 3
           explanation: "Without quotes, Bash performs **word-splitting** on the expanded variable. It treats the spaces as delimiters, passing three separate arguments to `wc`."
 
         - question: |
-            **Scenario:** You are writing a deployment script that *must* receive exactly three arguments to work safely: `<environment> <version> <region>`.
-            **Question:** Using the special variable `$#`, which `if` condition will trigger an error if the user provides too few or too many arguments?
+            **Scenario:** A script `deploy.sh` requires exactly three arguments: `environment`, `version`, and `region`. A developer wrote this validation check:
+            ```bash
+            if [ "$@" -ne 3 ]; then
+                echo "Error: Expected 3 arguments."
+                exit 1
+            fi
+            ```
+            Why will this validation fail to work correctly?
           options:
-            - "`if [ $# -eq 3 ]; then`"
-            - "`if [ $# -ne 3 ]; then`"
-            - "`if [ args != 3 ]; then`"
-            - "`if [ $1 -and $2 -and $3 ]; then`"
-          correct_index: 1
-          explanation: "`$#` is the count of arguments. `-ne` (not equal) is used to detect if the count is anything other than the required 3."
+            - "`$@` expands to the actual string values of the arguments, not the total count of arguments"
+            - "`-ne` is used exclusively for string comparison, so it cannot compare against the integer `3`"
+            - "Bash arrays are zero-indexed, so the developer must check against `2` instead of `3`"
+            - "The variable should be unquoted (`$@`) to allow Bash to evaluate it as an integer"
+          correct_index: 0
+          explanation: "This directly tests the difference between `$@` (all arguments) and `$#` (count of arguments) in a realistic code review scenario."
 
         - question: |
-            **Scenario:** Trace the output of the following script.
+            **Scenario:** Trace the execution of the following script. What will the final `echo` statement print to the terminal?
             ```bash
-            target_dir=\"/var/www/html\"
+            target_dir="/var/www/html"
+
             setup_temp() {
-              target_dir=\"/tmp/workspace\"
-              echo \"Setting up $target_dir\"
+              target_dir="/tmp/workspace"
             }
+
             setup_temp
-            echo \"Deploying to $target_dir\"
+            echo "Deploying to $target_dir"
             ```
-            **Question:** Because the developer forgot the `local` keyword inside the function, what will the final `echo` statement print?
           options:
             - "Deploying to /var/www/html"
             - "Deploying to /tmp/workspace"
             - "Deploying to (empty string)"
-            - "The script will crash with a scope error"
+            - "The script will throw a syntax error because `target_dir` is declared twice"
           correct_index: 1
-          explanation: "Without `local`, variables inside functions are **global** by default. Reassigning `target_dir` inside the function overwrites the outside variable."
+          explanation: "Bash variables are **global by default**. Sophomores often assume block-scoping from Java/C++. This question reinforces that `local` must be explicitly used to prevent overwriting."
 
         - question: |
-            **Scenario:** You have a script running on a server every night to back up logs. If the backup fails, you want your monitoring dashboard to trigger a pager alert. 
-            **Question:** What specific command must be executed at the end of your script's error-handling block to ensure the monitoring system knows the script failed?
+            **Scenario:** You are writing a script `health_check.sh` that checks database connectivity. If the database is unreachable, you need the CI/CD pipeline running the script to immediately halt. What is the standard Unix mechanism to communicate this failure back to the CI/CD environment?
           options:
-            - "`echo \"FAILURE\"`"
-            - "`exit 1` (or any non-zero code)"
-            - "`return 0`"
-            - "`stop script`"
-          correct_index: 1
-          explanation: "Monitoring systems and CI/CD pipelines rely on **exit codes**. A code of `0` means success; any non-zero code (usually `1`) signals a failure."
+            - "Print \"FAILURE\" to `stdout` so the pipeline can parse the string"
+            - "Output the error message to `stderr` using `>&2`"
+            - "Use the command `exit 1` (or any non-zero integer) at the end of the failure block"
+            - "Return a boolean `false` using the `return` keyword"
+          correct_index: 2
+          explanation: "CS students often confuse logging (stdout/stderr) with exit codes (OS/pipelines). Distractor D tests their tendency to apply standard programming concepts (`return false;`) to shell scripting."
 
         - question: |
-            **Scenario:** You are reading a colleague's script and see this line: `LOG_LEVEL=\"${1:-INFO}\"`.
-            **Question:** If you run the script as `./start.sh DEBUG`, what is the value of `LOG_LEVEL`? (And what if you run it with no arguments?)
+            **Scenario:** Read the following script named `start_server.sh`:
+            ```bash
+            #!/bin/bash
+            LOG_LEVEL="${1:-INFO}"
+            PORT="${2:-8080}"
+            echo "Starting on port $PORT with level $LOG_LEVEL"
+            ```
+            If a user executes the script by typing `./start_server.sh DEBUG`, what will be printed to the terminal?
           options:
-            - "`DEBUG` (and `INFO` if no arguments)"
-            - "`INFO` (and `DEBUG` if no arguments)"
-            - "`${1:-INFO}` (it treats it as literal text)"
-            - "It depends on the user's environment variables"
-          correct_index: 0
-          explanation: "The `${var:-default}` syntax provides a fallback. If `$1` is provided, it uses that; otherwise, it uses 'INFO'."
+            - "Starting on port DEBUG with level INFO"
+            - "Starting on port 8080 with level DEBUG"
+            - "Starting on port 8080 with level INFO"
+            - "The script will crash because `$2` was not provided, causing an unbound variable error"
+          correct_index: 1
+          explanation: "This tests if they can track positional arguments while simultaneously recognizing that `$2` will gracefully fall back to its default rather than crashing."
 
         - question: |
-            **Scenario:** You wrote a script with `set -e` enabled. It checks a log file for errors: `error_count=$(grep -c \"ERROR\" server.log)`. 
-            Your server had a perfect day; there are zero errors in the log. However, your CI/CD pipeline reports that your script crashed. 
-            **Question:** Explain why a perfect log file caused `set -e` to kill your script.
+            **Scenario:** Your CI/CD pipeline runs a script with `set -e` enabled. The script contains this line:
+            ```bash
+            error_count=$(grep -c "ERROR" server.log)
+            ```
+            If `server.log` contains exactly ZERO errors, the script instantly crashes and fails the CI/CD pipeline. What is the root cause?
           options:
-            - "Bash cannot handle a variable containing the character '0'"
-            - "When `grep` finds zero matches, it exits with code 1. `set -e` sees this non-zero exit and immediately kills the script."
-            - "The `$(...)` syntax is incompatible with `set -e`"
-            - "Zero-length strings are treated as fatal errors in Bash"
-          correct_index: 1
-          explanation: "`grep` returns code 0 if found, and code 1 if not found. To fix this, use `error_count=$(grep -c \"ERROR\" server.log || true)`."
+            - "`grep -c` returns an empty string when there are no matches, causing a syntax error"
+            - "Bash cannot assign the integer `0` directly from a command substitution"
+            - "`grep` exits with status code 1 when no matches are found, and `set -e` kills the script"
+            - "The `$(...)` subshell execution is incompatible with `set -e` strict mode"
+          correct_index: 2
+          explanation: "This tests the intersection of `set -e` it's strictness and `grep` behavior. `grep` returns 1 if no matches are found, which triggers the exit."
