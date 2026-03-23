@@ -139,7 +139,12 @@ steps:
 
       Makefiles have one notoriously strict, invisible rule: **Recipes MUST be indented with a true `Tab` character, not spaces!**
 
-      In many text editors (like the one on the right) it is often hard to replace spaces with tabs. So for this task you will need to be a bit more creative. Hint: terminal-based editors like `nano` or `vi` might help or the `sed` command!
+      ```make
+      target: prerequisites
+      [TAB]recipe
+      ```
+
+      If you see 4 or 8 spaces, it will NOT work. In many text editors (like the one on the right) it is often hard to replace spaces with tabs. So for this task you will need to be a bit more creative. Hint: terminal-based editors like `nano` or `vi` might help or the `sed` command!
 
     setup_commands:
       - "rm -f /tutorial/make_project/app"
@@ -562,3 +567,35 @@ steps:
         command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
       - description: "The clean target exists in Makefile and removes 'app' and '.o' files"
         command: "cd /tutorial/make_project && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
+
+    quiz:
+      title: ".PHONY — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What is the primary purpose of `.PHONY`?"
+          options:
+            - "To make the build faster"
+            - "To tell Make that a target is a command name, not a physical file on disk"
+            - "To encrypt the Makefile for security"
+            - "To allow spaces instead of Tabs in recipes"
+          correct_index: 1
+          explanation: "`.PHONY` tells Make to ignore any files on disk with the same name as the target. This ensures that commands like `make clean` always run, even if a file named `clean` happens to exist."
+
+  # --------------------------------------------------------------------------
+  # STEP 7: Summary & Best Practices
+  # --------------------------------------------------------------------------
+  - title: "Mastering Make"
+    instructions: |
+      You've mastered the essentials of Make! You can now:
+      - Navigate the **Tab Trap** with confidence.
+      - Use **Variables** for DRY (Don't Repeat Yourself) builds.
+      - Leverage **Pattern Rules** and **Automatic Variables** for scalable automation.
+      - Understand the **Incremental Build** magic via the Dependency Graph.
+      - Use **.PHONY** to create reliable command shortcuts.
+
+      ### Final Pro-Tip: Recursive Make
+      As your projects grow, you might be tempted to put a Makefile in every subdirectory and call `make -C subdir` from a top-level Makefile. This is known as **Recursive Make**.
+      
+      > [!WARNING]
+      > **Recursive Make is often considered harmful.** It breaks the global visibility of the dependency graph, which can lead to subtle bugs where files aren't recompiled when they should be. For larger projects, consider modern alternatives or a single, "non-recursive" top-level Makefile that includes sub-makefiles.

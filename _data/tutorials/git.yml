@@ -31,10 +31,12 @@ steps:
       Git is the most widely used version control system in the world. Let's
       learn it by building a small Python project.
 
-      ### The three states of Git
+      Before we start, understand Git's core architecture. Unlike other version
+      control systems that track "Deltas" (changes between versions), **Git
+      takes Snapshots**. Every commit is a full picture of what all your
+      files looked like at that moment.
 
-      Before we start, understand Git's core architecture. Every file lives
-      in one of **three states**:
+      Every file lives in one of **three states**:
 
       ```
       ┌──────────────┐     git add     ┌──────────────┐   git commit  ┌──────────────┐
@@ -65,6 +67,12 @@ steps:
 
       `git init` creates a hidden `.git` folder that stores all version
       history. You now have an empty repository!
+
+      ### Plumbing vs. Porcelain
+      Git commands are often divided into two categories:
+      - **Porcelain**: User-friendly commands you use every day (`git commit`, `git add`).
+      - **Plumbing**: Low-level "under the hood" commands (`git hash-object`, `git update-index`) that the porcelain commands use.
+      You'll mostly use porcelain, but knowing the plumbing exists helps you understand Git's power.
 
       ### Task 2: Explore what was created
 
@@ -569,7 +577,7 @@ steps:
             - "`git restore config.py`"
             - "`git restore --staged config.py`"
             - "`git reset --hard`"
-            - "`git checkout config.py`"
+            - "`git restore config.py`"
           correct_index: 1
           explanation: "`git restore --staged <file>` unstages the file — it moves it off the loading dock back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
 
@@ -818,7 +826,7 @@ steps:
           explanation: "`git log` shows the hash, author, date, and commit message for each commit. It does **not** show the file diffs — for that you need `git show <hash>` or `git diff`."
 
   # --------------------------------------------------------------------------
-  # STEP 8: Branching — git branch, git checkout/switch
+  # STEP 8: Branching — git branch, git switch
   # --------------------------------------------------------------------------
   - title: "Branching"
     instructions: |

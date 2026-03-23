@@ -181,6 +181,13 @@ steps:
       sort names.txt | head -5   # the 5 alphabetically first names
       ```
 
+      **`find path -name PATTERN | xargs COMMAND`** — find files and run a command on each
+
+      ```bash
+      find . -name "*.log" | xargs rm   # find and delete all log files
+      ```
+      *Note: `xargs` takes the output from the pipe and turns it into arguments for the next command.*
+
       ### Explore the data
 
       A file called `server_log.txt` is provided. Browse it first:
@@ -429,6 +436,13 @@ steps:
 
       **Important:** use `-eq`, `-lt`, `-gt` for numbers; use `=` and `!=`
       for strings. Mixing them gives wrong results silently!
+
+      ### Pro Tip: `[[ ]]` vs `[ ]`
+      While `[ ]` is the standard POSIX way, Bash also provides `[[ ]]`. It is more powerful because:
+      - It doesn't require quoting variables to prevent word splitting.
+      - It supports Regex matching with `=~`.
+      - It's less prone to subtle syntax errors.
+      For Bash scripts, `[[ ]]` is generally preferred.
 
       ### Your task
 
