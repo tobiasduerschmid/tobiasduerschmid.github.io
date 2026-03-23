@@ -98,6 +98,15 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 </div>
 
 
+### The “Generation-Then-Comprehension” Protocol
+If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. 
+Research shows that developers who simply delegate code generation to AI completely bypass the skill formation process {% cite ShenTamkin2026 %}.
+However, the same researchers found that developers who ensure that they fully comprehend  
+
+<div class="action-box" markdown="1">
+#### **Actionable Tips:**
+*    Adopt a strict personal rule. If AI writes five lines of code, you must immediately read it, trace the variables manually on a piece of paper or whiteboard, and then explain it back to the AI line-by-line. Prompt the AI: “I want to make sure I understand the list comprehension you just generated. I believe the first part filters out the null values, and the second part applies the lambda function. Is my understanding correct?” If you cannot fully explain the underlying architecture of what you just copied, you should not use it.
+</div>
 
 #### Withholding Feedback
 Research shows that *withholding feedback* can be beneficial for learning, because it creates a desirable difficulty that forces students to engage in more effortful retrieval and elaboration, which strengthens memory traces {% cite salmoni1984knowledge kulik1988timing %}. 
