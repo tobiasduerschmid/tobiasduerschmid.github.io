@@ -39,9 +39,11 @@ steps:
       **Line 2 — the safety net (`set -e`):** By default, Bash happily
       continues running after a failed command. `set -e` exits the script
       when a command fails, preventing a cascade of confusing failures.
-      Always include it. Note: `set -e` does **not** trigger when a failing
-      command is part of an `if` condition, a `&&`/`||` list, or negated
-      with `!` — those are intentional exceptions.
+      Always include it. Note: `set -e` does **not** trigger for commands
+      used as an `if` condition, for commands negated with `!`, or for
+      commands that are not the last in a `&&`/`||` list — those are
+      intentional control-flow patterns. The final command in a `&&`/`||`
+      chain can still trigger `set -e` if it fails.
 
       ### New Concept: Command Substitution
       You can capture the output of a command and use it as a string by wrapping it in `$(...)`. 
@@ -115,7 +117,7 @@ steps:
             - "Stops the script immediately when any command returns a non-zero exit code"
             - "Enables extended glob patterns"
           correct_index: 2
-          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits the script when a command fails, preventing a cascade of confusing failures. Important exception: `set -e` does not trigger for commands used as `if` conditions, commands in `&&`/`||` lists, or commands negated with `!` — those are intentional control-flow patterns, not unexpected failures."
+          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits the script when a command fails, preventing a cascade of confusing failures. Key exceptions: `set -e` does not trigger for commands used as an `if` condition, commands negated with `!`, or commands that are not the last in a `&&`/`||` list — those are intentional control-flow patterns. The final command of a `&&`/`||` chain can still trigger `set -e` if it fails."
 
         - question: "Which statements about `$(...)` command substitution are true? (Select all that apply)"
           type: multiple
@@ -293,7 +295,9 @@ steps:
       ### The quoting problem
 
       When you write `$variable`, the shell replaces it with the value —
-      then *word-splits* the result on spaces. This causes chaos when values contain spaces:
+      then *word-splits* the result on any characters in `$IFS` (the
+      Internal Field Separator, which defaults to space, tab, and newline).
+      This causes chaos when values contain spaces:
 
       ```bash
       file="my report.txt"
@@ -574,7 +578,7 @@ steps:
             - "Concatenates the string `counter` with `+ 1`"
             - "Increments `counter` in place and returns the new value"
           correct_index: 1
-          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates the expression and substitutes the result as a string. The expression `$((counter + 1))` does **not** change `counter`; you must assign it back: `counter=$((counter + 1))`. Note: the standalone `(( counter++ ))` form (no leading `$`) *does* modify the variable in place — but that is a different construct."
+          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates the expression and substitutes the result as a string. The expression `$((counter + 1))` does **not** change `counter`; you must assign it back: `counter=$((counter + 1))`. Expressions that use assignment operators like `$((counter++))` or `$((counter += 1))` *do* modify the variable in place as a side effect, but for the simple `a + b` form shown here, you always assign back."
 
   - title: "Arguments & Special Variables"
     instructions: |
