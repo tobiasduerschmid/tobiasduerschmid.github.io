@@ -433,12 +433,12 @@
             {% endif %}
             <li class="print-quiz-option{% if is_correct %} correct{% endif %}">
               <span class="print-quiz-option-marker{% if q.type == 'multiple' %} multi{% endif %}"></span>
-              <span>{{ opt }}</span>
+              <span>{{ opt | markdownify | remove: '<p>' | remove: '</p>' | strip }}</span>
             </li>
             {% endfor %}
           </ul>
           {% if q.explanation %}
-          <div class="print-quiz-explanation">{{ q.explanation }}</div>
+          <div class="print-quiz-explanation">{{ q.explanation | markdownify }}</div>
           {% endif %}
         </div>
         {% endfor %}
