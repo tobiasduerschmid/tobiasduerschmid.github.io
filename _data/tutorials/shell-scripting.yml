@@ -398,13 +398,16 @@ steps:
 
       ### Why the spaces inside `[ ]` are mandatory
 
-      `[` is not special syntax — it is an actual command (try running `which [`).
-      Like any command, its arguments must be separated by spaces:
+      `[` is a shell **builtin** command (a synonym for `test`) — not special
+      syntax. Like any command, its arguments must be separated by spaces:
 
       ```bash
       [ -f "$file" ]    # correct: "[" receives "-f" and "$file" as args
       [-f "$file"]      # WRONG: shell tries to run a command named "[-f"
       ```
+
+      You can confirm this with `type -a [`, which shows both the builtin
+      and the external `/usr/bin/[` binary. Bash always uses the builtin.
 
       ### Common tests (Your Toolbox)
 
@@ -481,7 +484,7 @@ steps:
             - "Without spaces, the shell treats the entire bracket expression as a string"
             - "Spaces are only required when using string comparisons, not file tests"
           correct_index: 1
-          explanation: "`[` is not special syntax — it is a real command (you can verify with `which [`). Like any command, arguments must be separated by spaces."
+          explanation: "`[` is a shell builtin command (synonym for `test`) — not special syntax. Like any command, arguments must be separated by spaces. You can verify with `type -a [`, which shows both the builtin and the external `/usr/bin/[` binary; Bash uses the builtin by default."
 
         - question: "You want to compare two **integer** variables `$count` and `$max` in a Bash conditional. Which test is correct?"
           options:
@@ -571,7 +574,7 @@ steps:
             - "Concatenates the string `counter` with `+ 1`"
             - "Increments `counter` in place and returns the new value"
           correct_index: 1
-          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates integer math inside it and substitutes the result. It does **not** modify the variable in place; you must assign it back."
+          explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates the expression and substitutes the result as a string. The expression `$((counter + 1))` does **not** change `counter`; you must assign it back: `counter=$((counter + 1))`. Note: the standalone `(( counter++ ))` form (no leading `$`) *does* modify the variable in place — but that is a different construct."
 
   - title: "Arguments & Special Variables"
     instructions: |
@@ -583,7 +586,7 @@ steps:
       | `$0` | The script's own name (great for usage messages) |
       | `$1`, `$2`, ... | Positional arguments |
       | `$#` | Total number of arguments passed |
-      | `$@` | All arguments as separate, properly-quoted words |
+      | `$@` | All positional arguments (properly word-safe only when quoted as `"$@"`) |
 
       ### Looping over arguments
 
@@ -808,7 +811,7 @@ steps:
             - "The script exited before finishing all commands"
             - "Zero is falsy — it means the condition was false"
           correct_index: 1
-          explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This is the *opposite* of most programming languages."
+          explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This contrasts with how most languages evaluate boolean truthiness in code (where `0` is false and non-zero is true), even though languages like C and Java also use `return 0` / `exit(0)` to indicate process success to the OS."
 
   - title: "Build a Log Monitor"
     instructions: |
