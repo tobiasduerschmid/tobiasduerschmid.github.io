@@ -411,6 +411,15 @@ steps:
           correct_index: 1
           explanation: "Without quotes, Bash **word-splits** the expanded value on spaces. `ls $dir` becomes `ls my documents` — two arguments. The fix is always `\"$dir\"`."
 
+        - question: "**[Interleaved: Revisit Step 1]** What does the `#!/bin/bash` line at the very top of a script tell the Operating System?"
+          options:
+            - "It is a comment for documentation"
+            - "It specifies the interpreter that should execute the file"
+            - "It enables strict error checking"
+            - "It sets the script's permissions to executable"
+          correct_index: 1
+          explanation: "As we saw in Step 1, the shebang (`#!`) followed by a path tells the OS which program to use to run the script. Without it, the OS might guess the wrong interpreter."
+
   - title: "Conditionals — Making Decisions"
     instructions: |
       Scripts need to react to different situations. Bash's `if` statement
@@ -544,6 +553,15 @@ steps:
           correct_index: 2
           explanation: "Bash uses **`-eq`, `-lt`, `-gt`, `-le`, `-ge`, `-ne`** for integer comparisons. The `=` and `==` operators do string comparison."
 
+        - question: "**[Interleaved: Revisit Step 2]** Which operator is used to **append** output to an existing file without overwriting it?"
+          options:
+            - "`>`"
+            - "`>>`"
+            - "`|`"
+            - "`<`"
+          correct_index: 1
+          explanation: "As we learned in Step 2, `>` overwrites a file, while `>>` appends to it. Both are forms of output redirection."
+
   - title: "Loops — Repeating Work"
     instructions: |
       Loops eliminate repetition. Let's look at iterating over globs (file expansions).
@@ -635,6 +653,15 @@ steps:
             - "Increments `counter` in place and returns the new value"
           correct_index: 1
           explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates the expression and substitutes the result as a string. The expression `$((counter + 1))` does **not** change `counter`; you must assign it back: `counter=$((counter + 1))`. Expressions that use assignment operators like `$((counter++))` or `$((counter += 1))` *do* modify the variable in place as a side effect, but for the simple `a + b` form shown here, you always assign back."
+
+        - question: "**[Interleaved: Revisit Step 3]** Inside a loop, you use `wc -l $f`. If a file is named `data 2024.txt`, how does Bash interpret the unquoted `$f`?"
+          options:
+            - "It correctly processes the single file `data 2024.txt`"
+            - "It word-splits the name into two separate arguments: `data` and `2024.txt`"
+            - "It produces a syntax error because of the space"
+            - "It automatically adds quotes to handle the space"
+          correct_index: 1
+          explanation: "As we learned in Step 3, unquoted variables undergo **word-splitting**. The space in the filename breaks it into two arguments, likely causing `wc` to fail. Always use `\"$f\"` to treat the value as a single unit."
 
   - title: "Arguments & Special Variables"
     instructions: |
@@ -911,6 +938,15 @@ steps:
           correct_index: 1
           explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This contrasts with how most languages evaluate boolean truthiness in code (where `0` is false and non-zero is true), even though languages like C and Java also use `return 0` / `exit(0)` to indicate process success to the OS."
 
+        - question: "**[Interleaved: Revisit Step 6]** Which special variable contains the **number of arguments** passed to the script?"
+          options:
+            - "`$@`"
+            - "`$#`"
+            - "`$0`"
+            - "`$*`"
+          correct_index: 1
+          explanation: "As we practiced in Step 6, `$#` gives you the count of arguments, which is essential for input validation before your script starts its work."
+
   - title: "Build a Log Monitor"
     instructions: |
       Time to combine everything into a real tool. This is a **retrieval practice** exercise: you have all the knowledge, now you must retrieve it from memory and synthesize it.
@@ -971,7 +1007,7 @@ steps:
       shuffle: true
       questions:
         - question: |
-            **Scenario:** A script performs two steps: 1) Downloads a database dump, 2) Wipes the current database to prepare for import. 
+            **[Interleaved: Revisit Step 1]** **Scenario:** A script performs two steps: 1) Downloads a database dump, 2) Wipes the current database to prepare for import. 
             The download step fails because the network drops. 
             **Question:** If you forgot to include `set -e` at the top of this script, what catastrophic event will happen next?
           options:
@@ -983,8 +1019,8 @@ steps:
           explanation: "Without `set -e`, Bash continues to the next line even if a previous command failed. This can lead to data loss if a destructive command (like wiping a DB) runs after a failed prerequisite (like downloading a backup)."
 
         - question: |
-            **Scenario:** You need to find out how many times a user named \"admin\" triggered a \"WARN\" event. 
-            **Question:** Write a pipeline that first filters `server.log` for lines containing \"WARN\", then pipes that into a second `grep` for \"admin\", and finally counts those resulting lines.
+            **[Interleaved: Revisit Step 2]** **Scenario:** You need to find out how many times a user named "admin" triggered a "WARN" event. 
+            **Question:** Write a pipeline that first filters `server.log` for lines containing "WARN", then pipes that into a second `grep` for "admin", and finally counts those resulting lines.
           options:
             - "`grep \"WARN\" admin server.log | wc -l`"
             - "`grep \"WARN\" server.log | grep \"admin\" | wc -l`"

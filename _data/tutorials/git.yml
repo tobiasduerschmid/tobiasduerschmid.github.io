@@ -361,6 +361,15 @@ steps:
           correct_index: 1
           explanation: "Git only commits what is currently in the **staging area**. New files must be explicitly added with `git add` to be included in a commit snapshot."
 
+        - question: "**[Interleaved: Revisit Step 1]** Which hidden directory does `git init` create to store all version history?"
+          options:
+            - ".git/"
+            - ".config/"
+            - ".history/"
+            - ".git-init/"
+          correct_index: 0
+          explanation: "The hidden `.git/` folder contains your entire repository data. As we learned in Step 1, this is what `git init` creates to start versioning your project."
+
         - question: "In `git diff` output, what does a line starting with `+` indicate?"
           options:
             - "A line that was deleted"
@@ -502,6 +511,15 @@ steps:
             - "`git show`"
           correct_index: 1
           explanation: "`git diff --staged` (or `--cached`) shows what would be in the next commit if you ran `git commit` right now."
+
+        - question: "**[Interleaved: Revisit Step 2]** What color does `git status` use for a file that is **modified but not yet staged**?"
+          options:
+            - "Green"
+            - "Red"
+            - "Yellow"
+            - "Blue"
+          correct_index: 1
+          explanation: "In `git status`, red indicates untracked or modified files (not in the staging area), while green indicates staged files. This was the core change loop introduced in Step 2."
 
         - question: "What is the key advantage of Git's staging area over a simple 'save everything' commit model?"
           options:
@@ -865,6 +883,15 @@ steps:
             - "The commit with index 2 in the log"
           correct_index: 1
           explanation: "`HEAD` points to the latest commit. `HEAD~1` is one commit before it, `HEAD~2` is two commits back, and so on. This relative notation lets you reference commits without copying their hash."
+
+        - question: "**[Interleaved: Revisit Step 5]** Which command removes a file from the **Staging Area** without discarding your edits in the working directory?"
+          options:
+            - "`git restore`"
+            - "`git restore --staged`"
+            - "`git reset --hard`"
+            - "`git rm`"
+          correct_index: 1
+          explanation: "`git restore --staged` (from Step 5) is the 'undo' for `git add`. It moves your changes off the loading dock but keeps them in your warehouse floor (working directory)."
 
         - question: "You want to see the full diff of what changed **in** the latest commit (not comparing to working directory). Which command is correct?"
           options:
@@ -1331,6 +1358,15 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
+        - question: "**[Interleaved: Revisit Step 8]** Which command is the fastest way to create a new branch and switch to it immediately?"
+          options:
+            - "`git branch -n`"
+            - "`git switch -c`"
+            - "`git checkout -b`"
+            - "`git merge -n`"
+          correct_index: 1
+          explanation: "`git switch -c <name>` (introduced in Step 8) handles creating and switching in one go. You'll use this often before starting new work to keep branches clean."
+
         - question: "You are setting up a merge conflict scenario. You made changes on `update-add-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
             - "Run `git merge update-add-function` immediately"
@@ -1625,6 +1661,15 @@ steps:
           correct_index: 1
           explanation: "`git revert` creates an **anti-commit** — a new commit that exactly undoes the target commit's changes. The original bad commit remains in history. This is safe because it never rewrites history."
 
+        - question: "**[Interleaved: Revisit Step 7]** Which `git log` flag shows each commit as a single line with just the hash and message?"
+          options:
+            - "`--pretty`"
+            - "`--oneline`"
+            - "`--short`"
+            - "`--compact`"
+          correct_index: 1
+          explanation: "As we saw in Step 7, `--oneline` is essential for getting a high-level view of your project timeline without details overwhelming you."
+
         - question: "Why is `git revert` safer than `git reset --hard` when working on a shared branch?"
           options:
             - "`git revert` is faster because it only changes one file"
@@ -1734,6 +1779,15 @@ steps:
             - 3
           explanation: "`git revert` is the tool for safely undoing **committed, shared history**. `git restore --staged` handles accidentally staged files. `git restore <file>` discards uncommitted working-directory edits. `git reset --hard` on a shared branch rewrites history and would break teammates who already pulled."
 
+        - question: "**[Interleaved: Revisit Step 6]** Which file should you use to prevent temporary files or secrets from being tracked by Git?"
+          options:
+            - "`.gitconfig`"
+            - "`.gitignore`"
+            - "`.env`"
+            - "`.notes`"
+          correct_index: 1
+          explanation: "A `.gitignore` file (from Step 6) tells Git to ignore specific patterns. This keeps your repository clean and secure."
+
         - question: "Which statements about Git's snapshot model are true? (Select all that apply)"
           type: multiple
           options:
@@ -1797,6 +1851,15 @@ steps:
             - "`git commit -a`"
           correct_index: 1
           explanation: "Patch mode (`-p`) is the professional way to create clean, focused commits when you've done multiple unrelated edits."
+
+        - question: "**[Interleaved: Revisit Step 11]** After resolving a merge conflict in a file, what is the **final step** to finish the merge?"
+          options:
+            - "`git merge --finish`"
+            - "`git commit`"
+            - "`git add` followed by `git commit`"
+            - "`git resolve`"
+          correct_index: 2
+          explanation: "As we practiced in Step 11, you must manually `git add` the resolved file and then `git commit` to seal the merge snapshot."
 
         - question: "**[Phase 2: Staging]** If you've accidentally staged a file, how do you move it back to 'Modified' (unstaged) without losing your work?"
           options:

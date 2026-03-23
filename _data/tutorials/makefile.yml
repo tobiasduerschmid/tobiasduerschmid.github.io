@@ -308,6 +308,15 @@ steps:
           correct_index: 0
           explanation: "Even when using variables like `$(OBJS)`, the basic Rule structure remains `target: prerequisites`. Everything to the left of the colon is the target (what you want to build)."
 
+        - question: "**[Interleaved: Revisit Step 1]** What is the core problem that Make solves compared to running a manual `gcc` command on all files?"
+          options:
+            - "Make automatically fixes syntax errors"
+            - "Make recompiles every file in parallel by default"
+            - "Make only rebuilds the files that actually changed (incremental builds)"
+            - "Make compresses the binary to save disk space"
+          correct_index: 2
+          explanation: "As we felt in Step 1, manual compilation is slow because it rebuilds everything. Make's superpower is its ability to track changes and only run necessary commands."
+
   # --------------------------------------------------------------------------
   # STEP 4: Automatic Variables & Pattern Rules
   # --------------------------------------------------------------------------
@@ -456,6 +465,15 @@ steps:
           correct_index: 0
           explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. This remains the #1 cause of build failures, even in advanced professional Makefiles."
 
+        - question: "**[Interleaved: Revisit Step 2]** What invisible character is **required** at the start of every recipe line in a Makefile?"
+          options:
+            - "4 spaces"
+            - "8 spaces"
+            - "A Tab character"
+            - "A semicolon"
+          correct_index: 2
+          explanation: "As you discovered in Step 2, the 'Tab Trap' is real! Make strictly requires a literal Tab character to identify recipe lines. Spaces will cause a 'missing separator' error."
+
   # --------------------------------------------------------------------------
   # STEP 5: Proving the Magic of the DAG
   # --------------------------------------------------------------------------
@@ -531,6 +549,15 @@ steps:
             - "`make: Nothing to do for 'all'` — the default target is missing"
           correct_index: 1
           explanation: "When all targets are newer than their prerequisites, Make prints `make: 'app' is up to date` and does nothing. This is the incremental build in action — skipping all work when nothing needs rebuilding."
+
+        - question: "**[Interleaved: Revisit Step 3]** What is the correct syntax to reference a variable named `CC` inside a Makefile recipe?"
+          options:
+            - "`${CC}`"
+            - "`$(CC)`"
+            - "`$CC`"
+            - "Both `$(CC)` and `${CC}` are valid"
+          correct_index: 3
+          explanation: "As we practiced in Step 3, Make uses either parentheses `( )` or curly braces `{ }` to expand variables. Both are technically correct, though `$(CC)` is the more common convention."
 
   # --------------------------------------------------------------------------
   # STEP 6: The .PHONY Sabotage
@@ -626,6 +653,15 @@ steps:
             - "It makes the resulting executable much slower"
           correct_index: 1
           explanation: "Because a Phony target is NEVER up-to-date, any real file that depends on it will also be considered out-of-date every time. This forces constant, unnecessary recompilation."
+
+        - question: "**[Interleaved: Revisit Step 4]** In the pattern rule `%.o: %.c`, which automatic variable expands to the **target** (the `.o` file)?"
+          options:
+            - "`$<`"
+            - "`$^`"
+            - "`$@`"
+            - "`$*`"
+          correct_index: 2
+          explanation: "As we used in Step 4, `$@` is the target (think '@' = 'at the target'). `$<` is the first prerequisite (the `.c` file)."
 
   # --------------------------------------------------------------------------
   # STEP 7: Summary & Best Practices
