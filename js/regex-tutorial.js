@@ -373,8 +373,8 @@
       id: 'look-1', type: 'free',
       section: 'Lookaheads & Lookbehinds',
       title: 'Dollar Amounts',
-      goal: 'Match the numeric amount after a <code>$</code> sign — but do NOT include the <code>$</code> in the match. Use a positive lookbehind: <code>(?&lt;=\\$)</code>.',
-      sampleText: 'Prices: \$25, €30, \$100, £50, \$7.99, ¥500, \$0.50, and €12.50 on sale.',
+      goal: 'Match the numeric amount after a <code>$</code> sign — but do NOT include the <code>$</code> in the match. Hint: Use a positive lookbehind.',
+      sampleText: 'Prices: \$25, €30, \$100, £50, \$7.99, ¥500, \$0.50, and €12.50 have been on sale for 30 days.',
       solution: '(?<=\\$)[\\d.]+',
       tests: [
         { input: '$25', shouldMatch: true, label: 'dollar amount (match the number)' },
@@ -390,7 +390,7 @@
       id: 'look-2', type: 'free',
       section: 'Lookaheads & Lookbehinds',
       title: 'Password Check',
-      goal: 'Validate that the entire string has at least one digit <strong>and</strong> at least one uppercase letter. Chain positive lookaheads <code>(?=.*\\d)</code> and <code>(?=.*[A-Z])</code> at the start.',
+      goal: 'Validate that the entire string has at least one digit <strong>and</strong> at least one uppercase letter. Hint: Use positive lookaheads',
       sampleText: null,
       solution: '^(?=.*\\d)(?=.*[A-Z]).+$',
       tests: [
