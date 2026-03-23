@@ -66,8 +66,6 @@ Here is another example:
 > * **Given** the user is browsing the experiences list, **when** they apply the "Under $50" budget filter, **then** the list should refresh to display only the activities that fall within that price range.
 > * **Given** the user selects a specific local experience, **when** they tap "Check Availability", **then** a calendar widget should expand displaying open booking slots for their specific travel dates.
 
-
-
 # INVEST
 
 To evaluate if a user story is well-written, we apply the INVEST criteria:
@@ -489,6 +487,30 @@ User stories are ideal for iterative, customer-centric projects where requiremen
 
 # Limitations
 User stories can struggle to capture non-functional requirements like performance, security, or reliability, and they are generally considered insufficient for safety-critical systems like spacecraft or medical devices
+
+
+# User Stories in Practice
+
+While user stories are widely adopted for building shared understanding {% cite patton2014mapping %} and fostering a pleasant workplace among developers {% cite lucassen2016improving %}, empirical research highlights several significant challenges in their practical application.
+
+## Common Quality Issues
+- **The NFR Blindspot**: Practitioners systematically omit non-functional requirements (NFRs)—such as usability, security, and performance—because these constraints often do not fit neatly into the standard functional template {% cite lauesen2022quality %}. Mike Cohn notes that forcing NFRs into the "As a... I want..." format often results in untestable statements like "The software must be easy to use" {% cite cohn2004user %}.
+- **Rationale Hazard**: While specified rationale ("so that...") is essential for requirements quality {% cite lucassen2016improving %}, practitioners often fill this field in unjustifiably to satisfy templates. This forced inclusion of "filler" goals can directly lead to unverifiable requirements that obscure true business objectives {% cite lauesen2022quality %}.
+- **Ambiguity**: Ambiguity manifests across lexical, syntactic, semantic, and pragmatic levels {% cite amna2022ambiguity %}. When analyzed collectively, vague stories often lead to severe cross-story defects, including logical conflicts and missing dependencies {% cite amna2022ambiguity %}.
+
+## Process Anti-Patterns
+- **The "Template Zombie"**: This occurs when a team allows its work to be driven by templates rather than the thought process necessary to deliver a product {% cite patton2014mapping %}. Practitioners become "Template Zombies" when they mechanically force technical tasks or backend services into the story format, often ignoring the necessary collaborative conversation {% cite patton2014mapping %}.
+- **The Client-Vendor Anti-Pattern**: Jeff Patton identifies a toxic dynamic where one party (often a business stakeholder) takes a "client" role to dictate requirements, while the other (often a developer or analyst) takes a "vendor" role to merely take orders and provide estimates. This creates a "requirements contract" that kills the collaborative problem-solving at the heart of agile development {% cite patton2014mapping %}.
+- **Story Smells**: Common "smells" include *Goldplating* (adding unplanned features), *UI Detail Too Soon* (constraining design before understanding goals), and *Thinking Too Far Ahead* (exhaustive detailing long before implementation) {% cite cohn2004user %}.
+
+## Automation and LLMs
+Recent advancements in Large Language Models (LLMs) have introduced new capabilities for requirement engineering:
+- **Syntactic Maturity**: LLMs like GPT-4o excel at generating well-formed, atomic, and grammatically complete user stories, often outperforming novice analysts in following strict templates {% cite sharma2025llm %}.
+- **The Convergence Gap**: While LLMs achieve high coverage of standard requirements, they exhibit a "convergence vs. creativity" trade-off. They tend to converge on predictable patterns and may miss novel or domain-specific nuances that human analysts provide {% cite quattrocchi2025llm %}. 
+- **The Power of Prompting**: The quality of automated generation is highly sensitive to prompt design. Using a "Meta-Few-Shot" approach—combining structural rules with explicit positive and negative examples—can push LLM success rates significantly higher, even surpassing manual human generation in semantic accuracy {% cite santos2025chatgpt %}.
+
+## Story Mapping and INVEST
+The narrative flow of **User Story Mapping** captures the sequential and hierarchical relationships between stories {% cite patton2014mapping %}. From a theoretical perspective, this creates a notable tension with the **INVEST** criteria: while Story Mapping emphasizes the journey's context and narrative flow, it can challenge the **Independence** criterion by highlighting the deep relationships between individual stories in a user journey. However, this mapping generally helps achieve the other INVEST criteria—particularly **Valuable** and **Small**—by providing a clear framework for slicing features into manageable releases.
 
 # Quiz
 
