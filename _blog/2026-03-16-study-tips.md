@@ -12,13 +12,13 @@ audio: "/files/study_tips.mp3"
 **A Short Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
 
 If you are like many college students, your primary study strategies probably consist of rereading your textbooks or lecture slides, highlighting key passages, and cramming the day before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: ==rereading text and massed practice (cramming) are by far the *least productive* study strategies==.
-These common methods merely boost short-term memory and create an "illusion of knowing" {% cite BjorkBjork1992 benjamin1998mismeasure %}.
+These common methods merely boost short-term retrieval strength  {% cite BjorkBjork1992 benjamin1998mismeasure %} and create an "illusion of knowing" {% cite glenberg1982illusion %}.
 When you read a text multiple times, the material becomes familiar, and you mistake this perceptual fluency for true mastery of the subject.
 ==To build deep, durable knowledge, you need to embrace "desirable difficulties"—short-term impediments that make learning feel harder and slower, but ultimately trigger cognitive processes that optimize long-term retention and the transfer of skills== {% cite Bjork1994a bjork2011making %}.
 
 This post is intended to teach you actionable, research-backed study tips on how to learn effectively, with specific examples for computer science students to enable everyone to get the most out of their college experience!
 Interestingly, despite actually **measurably learning *more* effectively**, learners who study based on these techniques **often subjectively believe they have learned *less* effectively**, because short-term performance is often perceived to be worse due to the additional struggle of desirable difficulties {% cite Kornell2008learning Simon2001metacognition %}.
-This illustrates that **the *perception* of learning is not always aligned with the *actual* learning**. Actual learning is what predicts your *future* performance.
+This illustrates that **the *perception* of learning is not always aligned with the *actual* learning**. Actual learning is the permanent change in knowledge, understanding, or high-order skills that affects your *future* ability to perform well.
 What you observe is your *past* performance.
 **The study tips in this post are empirically validated to be effective and should help you pick learning strategies that *actually work* rather than just *feel like they work***.
 
