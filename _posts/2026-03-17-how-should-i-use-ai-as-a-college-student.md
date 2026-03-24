@@ -97,6 +97,10 @@ In a recent 12-week quasi-experimental study, researchers explicitly taught univ
 *   Generative AI should be utilized as a **"bicycle for the mind"**—a tool that amplifies your cognitive reach but still requires your active control, steering, and judgment
 </div>
 
+### 
+Am empty brain cannot critique and it cannot synthesize
+
+### Task completion goal vs. Learn the concept goal
 
 ### The “Generation-Then-Comprehension” Protocol
 If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. 
