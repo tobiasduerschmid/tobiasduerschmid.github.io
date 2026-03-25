@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: "[Draft] How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students"
+title: "[Claude-Generated] How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students"
 date: 2026-03-11
 category: "For Students"
 featured: true
