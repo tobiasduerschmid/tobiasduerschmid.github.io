@@ -5,7 +5,13 @@ steps:
   - title: "Hello, Shell!"
     instructions: |
       Welcome to the **Shell Scripting Tutorial**! On the top is a code
-      editor; on the bottom is a real Linux terminal. 
+      editor; on the bottom is a real Linux terminal.
+
+      > Shell scripting has a reputation for tricky syntax — even
+      > experienced developers regularly look up Bash quoting rules.
+      > If something feels confusing, that's a sign you're engaging
+      > with genuinely hard material, not a sign you're doing it wrong.
+      > Every error message is a clue; every mistake is a step forward.
 
       ### Why learn shell scripting?
 
@@ -130,6 +136,210 @@ steps:
             - 3
           explanation: "Command substitution `$(cmd)` runs `cmd` and injects its stdout into the surrounding expression. It can be nested arbitrarily and does NOT require `eval`. It is one of Bash's most powerful and widely-used features."
 
+  - title: "Navigating the Filesystem"
+    instructions: |
+      Before you can automate tasks with scripts, you need to move around
+      the filesystem confidently. In a GUI you click folders; in the shell
+      you type commands. Let's build muscle memory for the essential ones.
+
+      ### Where am I? What's here?
+
+      ```bash
+      pwd          # Print Working Directory — your current location
+      ls           # List what's in the current directory
+      ls -l        # Long format — shows permissions, size, dates
+      ```
+
+      **Predict:** Run `ls` now. You should see `morning.sh` from the
+      previous step. Now run `ls -a`. What extra entries appear?
+
+      Commit to your prediction, then run it. The `.` and `..` entries
+      are special: `.` is the current directory, `..` is the parent.
+      Files starting with `.` are "hidden" — `ls` skips them by default,
+      but `ls -a` shows everything.
+
+      ### Moving around with `cd`
+
+      ```bash
+      cd /tmp          # go to an absolute path
+      pwd              # confirm you moved
+      cd ..            # go up one level (to /)
+      pwd
+      cd ~             # go to your home directory (shortcut for $HOME)
+      pwd
+      ```
+
+      Try each command above. Notice that `cd` with no output is normal —
+      it silently changes your location. Use `pwd` to confirm.
+
+      **Important:** Now return to the tutorial working directory:
+      ```bash
+      cd /tutorial
+      ```
+
+      ### Creating structure with `mkdir`
+
+      ```bash
+      mkdir testdir                          # create one directory
+      ```
+
+      **Predict:** Now try `mkdir testdir/a/b` — what happens?
+      The parent `testdir/a/` doesn't exist yet.
+
+      Try it and see — then use the fix:
+
+      ```bash
+      mkdir -p testdir/a/b                   # -p creates parents too
+      ```
+
+      The `-p` flag creates all missing parent directories at once.
+      Without it, `mkdir` requires every parent to already exist.
+      Clean up the test directory before moving on: `rm -r testdir`
+
+      ### Copying with `cp`
+
+      `cp` duplicates files. The original stays in place.
+
+      ```bash
+      cp notes.txt notes_backup.txt          # copy a file (try it!)
+      ```
+
+      **Predict:** What happens if you try to copy a *directory*
+      without any flags? Run:
+
+      ```bash
+      mkdir temp_demo
+      cp temp_demo /tmp/backup
+      ```
+
+      Will it (a) copy the whole directory, (b) copy just the name,
+      or (c) fail with an error?
+
+      Try it — then read on. You need `cp -r` (recursive) to copy a
+      directory and everything inside it. Clean up: `rm -r temp_demo`
+
+      ### Moving and renaming with `mv`
+
+      `mv` does double duty — it moves *and* renames:
+
+      ```bash
+      mv notes_backup.txt notes_copy.txt    # rename (try it!)
+      ls                                     # notes_backup.txt is gone,
+                                             # notes_copy.txt appeared
+      ```
+
+      Unlike `cp`, `mv` works on directories without needing `-r` — it
+      just updates the path, it doesn't copy data.
+
+      ### Removing with `rm`
+
+      ```bash
+      rm notes_copy.txt        # remove the copy we just made (no undo!)
+      rm -r directory/         # remove a directory and ALL its contents
+      rmdir empty_dir/         # remove ONLY if the directory is empty
+      ```
+
+      Try the first command — `notes_copy.txt` from the `mv` example is
+      now gone. The other two are syntax references for the task below.
+
+      **Predict:** After building the project below, try running
+      `rm myproject/` — without the `-r` flag — on a directory that
+      contains files. Will it (a) delete everything, (b) delete just
+      the directory, or (c) refuse with an error?
+
+      Try it and see. The shell protects you: without `-r`, `rm` refuses
+      to touch directories. This is intentional.
+
+      ### Your task — Build a project skeleton
+
+      Use the commands you just learned to create this directory structure
+      and manipulate files within it. We've provided `notes.txt` and `data.csv`
+      as starting materials.
+
+      1. Create the directory tree: `myproject/src/`, `myproject/docs/`, `myproject/tests/`
+         *(Hint: `mkdir -p` can do this in one command)*
+      2. **Copy** `notes.txt` into `myproject/docs/`
+      3. **Move** `data.csv` into `myproject/src/` and **rename** it to `input.csv`
+      4. **Copy** `morning.sh` into `myproject/src/` as a backup
+      5. Create an empty file `myproject/tests/test_placeholder.txt`
+         *(Hint: `touch` creates empty files)*
+      6. Remove the now-empty `myproject/tests/test_placeholder.txt`
+      7. Verify your work: `ls -R myproject` (the `-R` flag lists recursively)
+
+    files:
+      - path: "notes.txt"
+        content: |
+          Project Notes
+          =============
+          - Set up directory structure
+          - Process log files
+          - Write monitoring script
+      - path: "data.csv"
+        content: |
+          timestamp,level,message
+          08:12:01,INFO,server started
+          08:15:45,ERROR,request failed
+          08:18:33,ERROR,timeout
+    open_file: "notes.txt"
+    tests:
+      - description: "myproject/ directory exists"
+        command: "[ -d /tutorial/myproject ]"
+      - description: "myproject/src/ directory exists"
+        command: "[ -d /tutorial/myproject/src ]"
+      - description: "myproject/docs/ directory exists"
+        command: "[ -d /tutorial/myproject/docs ]"
+      - description: "myproject/tests/ directory exists"
+        command: "[ -d /tutorial/myproject/tests ]"
+      - description: "notes.txt was copied to myproject/docs/"
+        command: "[ -f /tutorial/myproject/docs/notes.txt ] && [ -f /tutorial/notes.txt ]"
+      - description: "data.csv was moved and renamed to myproject/src/input.csv"
+        command: "[ -f /tutorial/myproject/src/input.csv ] && ! [ -f /tutorial/data.csv ]"
+      - description: "morning.sh was copied into myproject/src/"
+        command: "[ -f /tutorial/myproject/src/morning.sh ]"
+      - description: "test_placeholder.txt was removed from myproject/tests/"
+        command: "! [ -f /tutorial/myproject/tests/test_placeholder.txt ]"
+
+    quiz:
+      title: "Navigating the Filesystem — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "You run `mkdir projects/backend/api` but the `projects/` directory doesn't exist yet. What happens?"
+          options:
+            - "Bash creates all three directories automatically"
+            - "Bash creates only `projects/` and stops"
+            - "The command fails because the parent directories don't exist — you need `mkdir -p`"
+            - "Bash prompts you to confirm before creating multiple directories"
+          correct_index: 2
+          explanation: "Without `-p`, `mkdir` requires all parent directories to already exist. If they don't, it fails. The `-p` (parents) flag creates the entire chain of directories at once."
+
+        - question: "You run `cp mydir /tmp/backup` where `mydir` is a directory containing several files. What happens?"
+          options:
+            - "The entire directory and its contents are copied"
+            - "Only the directory itself is created, without its contents"
+            - "The command fails — `cp` requires `-r` to copy directories"
+            - "The files inside are copied but the directory structure is flattened"
+          correct_index: 2
+          explanation: "`cp` refuses to copy directories without the `-r` (recursive) flag. This is a safety feature — copying a large directory tree could be expensive, so the shell requires you to be explicit. `mv`, by contrast, works on directories without `-r` because moving just updates a path entry."
+
+        - question: "What is the difference between `cp file.txt dir/` and `mv file.txt dir/`?"
+          options:
+            - "There is no difference — both move the file"
+            - "`cp` creates a duplicate (original stays); `mv` relocates the file (original is gone)"
+            - "`cp` works on files only; `mv` works on directories only"
+            - "`cp` preserves permissions; `mv` resets them to default"
+          correct_index: 1
+          explanation: "`cp` (copy) creates a second copy of the file — the original remains untouched. `mv` (move) relocates the file — it disappears from its original location. `mv` also doubles as a rename command when source and destination are in the same directory."
+
+        - question: "**[Interleaved: Revisit Hello, Shell!]** After running `chmod +x morning.sh && ./morning.sh`, you move the script: `mv morning.sh scripts/morning.sh`. Can you still run it with `./morning.sh`?"
+          options:
+            - "Yes — `chmod +x` is permanent and follows the file"
+            - "No — the file is no longer at `./morning.sh`; you'd need `./scripts/morning.sh`"
+            - "Yes — the shell caches the file location after the first run"
+            - "No — `mv` strips the execute permission"
+          correct_index: 1
+          explanation: "`./morning.sh` means 'run the file named morning.sh in the current directory.' After `mv` moves it to `scripts/`, the file no longer exists at `./morning.sh`. The execute permission *does* travel with the file (it's a file attribute, not a path attribute), so `./scripts/morning.sh` would work. This reinforces what `./` means from Hello, Shell!."
+
   - title: "Pipes — Connecting Commands"
     instructions: |
       The **pipe** operator `|` is one of the most powerful ideas in Unix.
@@ -244,16 +454,33 @@ steps:
       makes them look the same — but they are separate streams that
       can be redirected independently.
 
-      Try this sequence and observe carefully:
+      Try this sequence — but **predict before you run each step:**
+
+      **Step A:** Run a command that produces both normal output AND an error:
 
       ```bash
-      # Step A: produces both normal output AND an error
       ls server_log.txt no_such_file.txt
+      ```
 
-      # Step B: redirect stdout to a file — the error STILL shows!
+      You should see both a successful listing and an error message on your terminal.
+
+      **Step B — Predict first!** If you redirect stdout to a file with `>`, what
+      happens to the error message? Will it (a) go into the file, (b) still
+      appear on your terminal, or (c) disappear entirely?
+
+      Commit to your answer, then run:
+
+      ```bash
       ls server_log.txt no_such_file.txt > ls_out.txt
+      ```
 
-      # Step C: now redirect stderr separately
+      Were you right? If the error still appeared on screen, that's the key
+      insight: `>` only captures stdout. The error traveled on a *completely
+      separate stream*.
+
+      **Step C:** Now redirect stderr separately:
+
+      ```bash
       ls server_log.txt no_such_file.txt > ls_out.txt 2> ls_err.txt
       cat ls_out.txt    # the successful listing
       cat ls_err.txt    # just the error message
@@ -324,7 +551,7 @@ steps:
       - description: "timestamps.txt has one timestamp per log entry (15 lines)"
         command: "[ -f timestamps.txt ] && [ $(wc -l < timestamps.txt) -eq 15 ]"
       - description: "top_message_types.txt lists INFO (8) and ERROR (4) with correct counts, and excludes WARN"
-        command: "[ -f top_message_types.txt ] && grep -q '8\\s*INFO' top_message_types.txt && grep -q '4\\s*ERROR' top_message_types.txt && ! grep -q 'WARN' top_message_types.txt"
+        command: "[ -f top_message_types.txt ] && grep -q '8 *INFO' top_message_types.txt && grep -q '4 *ERROR' top_message_types.txt && ! grep -q 'WARN' top_message_types.txt"
 
     quiz:
       title: "Pipes — Knowledge Check"
@@ -405,14 +632,25 @@ steps:
       **Rule: always double-quote your variables** unless you have a
       specific reason not to.
 
-      ### See the bug (Active Debugging)
+      ### See the bug (Predict → Debug)
 
-      `buggy.sh` has a deliberate bug. Run it first in the terminal to see the error, and read the error message carefully — it tells you exactly what went wrong. 
+      `buggy.sh` has a deliberate bug related to what you just learned.
+
+      **Before running it**, open `buggy.sh` in the editor and read it carefully.
+      The variable `filename` is set to `"my report.txt"` — a value with a space.
+      Look at every line that uses `$filename`. Can you spot which line will
+      break? **Predict the exact error message** you'll see, then run:
+
+      ```bash
+      bash buggy.sh
+      ```
+
+      Was your prediction correct? The error message tells you exactly what
+      Bash tried to do — and why it failed.
 
       **Fix it:**
-      1. Open `buggy.sh` in the editor.
-      2. Diagnose why `wc -l` is throwing an error based on what you just learned.
-      3. Fix the syntax and run the script again.
+      1. Diagnose why `wc -l` is throwing an error based on what you just learned.
+      2. Fix the syntax and run the script again.
 
       ### Build your own
 
@@ -551,6 +789,31 @@ steps:
       - It's less prone to subtle syntax errors.
       For Bash scripts, `[[ ]]` is generally preferred.
 
+      ### Discover a trap first
+
+      Before we start, try this experiment. **Predict what happens**, then run:
+
+      ```bash
+      grep -c "NONEXISTENT" server_log.txt
+      echo "Did this print?"
+      ```
+
+      Both lines should run fine. Now try it **with `set -e`** active:
+
+      ```bash
+      bash -c 'set -e; grep -c "NONEXISTENT" server_log.txt; echo "Did this print?"'
+      ```
+
+      **What happened?** `grep -c` found zero matches and returned exit
+      code 1. With `set -e`, that non-zero exit code killed the entire
+      script — `echo` never ran. But this isn't really an *error*; it's
+      just "no matches found." This is a common trap: `grep` treats "no
+      matches" as failure.
+
+      The fix is `|| true` — it means "if the command fails, succeed
+      anyway." The skeleton below uses this idiom. We'll cover `||` fully
+      in a later step.
+
       ### Your task
 
       We are providing a skeleton file `health_check.sh`. To help you structure your thinking, we've left blanks (`_____`) where the tests should go. Look at the "Common tests" toolbox above to fill them in logically:
@@ -558,11 +821,6 @@ steps:
       1. First blank: We want to exit if the file does **not** exist. How do you negate a file existence check?
       2. Second blank: We want to mark CRITICAL if `error_count` is **greater than 3**.
       3. Third blank: We want to mark WARNING if `error_count` is **greater than 0**.
-
-      > **Side note:** The skeleton uses `|| true` after `grep -c`. This
-      > means "if grep fails, succeed anyway." `grep` exits with code 1
-      > when it finds zero matches, which would crash our `set -e` script.
-      > `|| true` neutralizes that. We'll cover `||` fully in a later step.
 
       ```bash
       chmod +x health_check.sh
@@ -671,26 +929,61 @@ steps:
 
       ### Your task
 
-      Write `batch_check.sh` from scratch. Combine your knowledge of variables, file expansion (`*.sh`), `head`, conditionals, and arithmetic expansion.
+      Open `batch_check.sh`. We've provided the skeleton — the loop
+      structure, counters, and summary line are already in place. Your
+      job is to fill in the **body of the loop** (the three blanks):
 
-      **Requirements:**
-      1. Initialize two variables tracking `passed` and `failed` counts.
-      2. Loop over every `.sh` file in the current directory.
-      3. For each file, read its first line and capture it in a variable. *(Hint: `first=$(head -1 "$f")`)*
-      4. If that variable equals exactly `#!/bin/bash`, print `pass <filename>` and increment your `passed` counter. 
-      5. Otherwise, print `fail <filename> (missing shebang)` and increment `failed`.
-      6. After the loop, print: `Checked N files: P passed, F failed` (where N is passed + failed).
+      1. **First blank:** Capture the first line of the current file
+         into the variable `first`.
+         *(Hint: `head -1 "$f"` prints the first line.
+         Wrap it in `$(...)` to capture the output.)*
+      2. **Second blank:** Test whether `first` equals exactly
+         `#!/bin/bash`. *(Hint: use `=` for string comparison inside
+         `[ ]`. Remember to quote both sides!)*
+      3. **Third blank:** The `else` branch — print a fail message
+         and increment the `failed` counter.
+         *(Mirror the structure of the pass branch above it.)*
+
+      **Before running**, predict: How many `.sh` files are in the directory
+      right now? Which ones have a proper `#!/bin/bash` shebang and which
+      don't? *(Hint: look at the files created in earlier steps — including
+      `no_shebang.sh` that we've provided.)* Write down your expected
+      pass/fail counts, then run:
 
       ```bash
       chmod +x batch_check.sh
       ./batch_check.sh
       ```
+
+      Does the output match your prediction? If not, check which files
+      surprised you — that's where the learning happens.
     files:
       - path: "batch_check.sh"
         print_language: bash
         content: |
           #!/bin/bash
           set -e
+
+          passed=0
+          failed=0
+
+          for f in *.sh; do
+              # Blank 1: Capture the first line of "$f" into variable "first"
+              first=_____
+
+              # Blank 2: Check if "first" equals exactly "#!/bin/bash"
+              if [ _____ ]; then
+                  echo "pass $f"
+                  passed=$((passed + 1))
+              else
+                  # Blank 3: Print a fail message and increment "failed"
+                  _____
+                  _____
+              fi
+          done
+
+          total=$((passed + failed))
+          echo "Checked $total files: $passed passed, $failed failed"
       - path: "no_shebang.sh"
         print_language: bash
         content: |
@@ -749,6 +1042,15 @@ steps:
             - "It automatically adds quotes to handle the space"
           correct_index: 1
           explanation: "As we learned in the Variables step, unquoted variables undergo **word-splitting**. The space in the filename breaks it into two arguments, likely causing `wc` to fail. Always use `\"$f\"` to treat the value as a single unit."
+
+        - question: "**[Interleaved: Revisit Navigating the Filesystem]** Your loop creates a directory for each `.sh` file: `mkdir results/$f`. But `results/` doesn't exist yet. What happens?"
+          options:
+            - "Bash creates `results/` automatically when a subdirectory is needed"
+            - "`mkdir` fails because the parent directory `results/` doesn't exist — you need `mkdir -p`"
+            - "`mkdir` creates `results/` first, then the subdirectory"
+            - "The loop skips the file and continues to the next iteration"
+          correct_index: 1
+          explanation: "As we learned in the Filesystem step, `mkdir` requires all parent directories to already exist. Without `-p`, it fails. The fix is either `mkdir -p results/\"$f\"` or creating `results/` before the loop."
 
   - title: "Arguments & Special Variables"
     instructions: |
@@ -887,7 +1189,7 @@ steps:
     open_file: "toolkit.sh"
     tests:
       - description: "Defines at least three functions"
-        command: "[ $(grep -cE '^[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(\\)' toolkit.sh) -ge 3 ]"
+        command: "[ $(grep -cE '^[a-zA-Z_][a-zA-Z0-9_]* *\\(\\)' toolkit.sh) -ge 3 ]"
       - description: "to_upper converts text to uppercase"
         command: "bash -c 'source toolkit.sh; to_upper hello' 2>/dev/null | grep -q 'HELLO' || bash toolkit.sh | grep -q 'HELLO'"
       - description: "file_ext extracts the file extension"
@@ -997,8 +1299,10 @@ steps:
 
     open_file: "service.sh"
     tests:
-      - description: "Prints usage to stderr and exits 2 with no arguments"
-        command: "bash service.sh 2>&1 >/dev/null | grep -qi 'usage' && exit_code=0; bash service.sh 2>/dev/null; exit_code=$?; [ $exit_code -eq 2 ]"
+      - description: "Prints usage message with no arguments"
+        command: "bash service.sh 2>&1 | grep -qi 'usage'"
+      - description: "Exits with code 2 for invalid input"
+        command: "bash service.sh 2>/dev/null; [ $? -eq 2 ]"
       - description: "'start' prints a start message and exits 0"
         command: "bash service.sh start | grep -qi 'start'"
       - description: "'status' reports whether the service is running or stopped"
@@ -1049,7 +1353,15 @@ steps:
 
   - title: "Build a Log Monitor"
     instructions: |
-      Time to combine everything into a real tool. This is a **retrieval practice** exercise: you have all the knowledge, now you must retrieve it from memory and synthesize it.
+      Time to combine everything into a real tool. This is a **retrieval
+      practice** exercise: you have all the knowledge, now you must retrieve
+      it from memory and synthesize it.
+
+      **Before you write any code**, look at `server_log.txt` one more time
+      and predict: How many ERROR, WARN, and INFO lines are there? What
+      severity status should your script report? What exit code should it
+      return? Write your predictions down — you'll check them against your
+      script's actual output.
 
       ### Challenge
 
@@ -1131,7 +1443,7 @@ steps:
       - description: "Exits with code 1 when errors are present"
         command: "bash monitor.sh; [ $? -eq 1 ]"
       - description: "Defines a count_by_level function"
-        command: "grep -qE 'count_by_level\\s*\\(\\)' monitor.sh"
+        command: "grep -qE 'count_by_level *\\(\\)' monitor.sh"
       - description: "Uses a case statement for severity assessment"
         command: "grep -q 'case' monitor.sh && grep -q 'esac' monitor.sh"
       - description: "Reports a severity status (HEALTHY, WARNING, or CRITICAL)"
