@@ -181,29 +181,27 @@ test.describe('Shell Scripting Tutorial', () => {
     await expect(stepButtons.first()).toHaveClass(/active/);
   });
 
-  test('prev/next buttons navigate sequentially', async ({ page }) => {
+  test('prev button navigates back and next button opens quiz gate', async ({ page }) => {
     const stepButtons = page.locator('.tvm-step-btn');
 
-    // Step 1 should not have a prev button (or it's hidden)
+    // Navigate to step 2 via the step button (to skip step 1's quiz gate)
+    await stepButtons.nth(1).click();
+    await expect(stepButtons.nth(1)).toHaveClass(/active/);
+
+    // Step 2 should have a prev button
     const prevBtn = page.locator('.tvm-btn-prev');
-    const prevCount = await prevBtn.count();
-    if (prevCount > 0) {
-      // If prev exists on step 1, it might be hidden or missing
-    }
+    await expect(prevBtn).toBeVisible();
 
-    // Click next (should work unless tests are required)
+    // Click prev — should go back to step 1
+    await prevBtn.click();
+    await expect(stepButtons.first()).toHaveClass(/active/);
+
+    // Clicking Next on step 1 should open the quiz gate (not navigate),
+    // because every step has a quiz
     const nextBtn = page.locator('.tvm-btn-next');
-    if (await nextBtn.count() > 0 && !(await nextBtn.isDisabled())) {
-      await nextBtn.click();
-      // Second step button should now be active
-      await expect(stepButtons.nth(1)).toHaveClass(/active/);
-
-      // Now prev button should be visible
-      const prevBtnNow = page.locator('.tvm-btn-prev');
-      await expect(prevBtnNow).toBeVisible();
-      await prevBtnNow.click();
-      await expect(stepButtons.first()).toHaveClass(/active/);
-    }
+    await nextBtn.click();
+    const quizPanel = page.locator('.tvm-quiz-panel');
+    await expect(quizPanel).toBeVisible({ timeout: 5000 });
   });
 
   // --- Test Runner --------------------------------------------------------
