@@ -4,12 +4,11 @@ layout: sebook
 ---
 
 
-If you have ever found yourself performing the same repetitive tasks on your computer—renaming batches of files, searching through massive text logs, or configuring system environments—then shell scripting is the magic wand you need. Shell scripting is the bedrock of system administration, software development workflows, and server management. 
+> **Start here:** If you are new to shell scripting, begin with the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system. This article is a **reference** to deepen your understanding afterward.
+
+If you have ever found yourself performing the same repetitive tasks on your computer—renaming batches of files, searching through massive text logs, or configuring system environments—then shell scripting is the magic wand you need. Shell scripting is the bedrock of system administration, software development workflows, and server management.
 
 In this detailed educational article, we will explore the concepts, syntax, and power of shell scripting, specifically focusing on the most ubiquitous UNIX shell: Bash.
-
-
-> **Want to practice?** Try the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system!
  
 # Basics 
 ## What is the Shell?

@@ -1,5 +1,5 @@
 ---
-title: "RegEx Tutorial: Basics"
+title: "RegEx Tutorial: Advanced"
 layout: sebook
 ---
 
@@ -163,122 +163,72 @@ layout: sebook
 }
 </style>
 
-<div class="rt-progress-label" id="rt-progress-label">0 / 16 exercises completed</div>
+<div class="rt-progress-label" id="rt-progress-label">0 / 13 exercises completed</div>
 <div class="rt-progress">
   <div class="rt-progress-fill" id="rt-progress-fill"></div>
 </div>
 
-This hands-on tutorial will walk you through Regular Expressions step by step. Each section builds on the last. Complete exercises to unlock your progress. Don't worry about memorizing everything — focus on understanding the **patterns**.
+This is the second part of the Interactive RegEx Tutorial. If you haven't completed the [Basics Tutorial](/SEBook/tools/regex-tutorial.html) yet, start there first — the exercises here assume you're comfortable with literal matching, character classes, metacharacters, anchors, quantifiers, and alternation.
 
-Regular expressions look intimidating at first — that's completely normal. Even experienced developers regularly look up regex syntax. The key is to break patterns into small, logical pieces. By the end of this tutorial, you'll be able to read and write patterns that would have looked like gibberish an hour ago. If you get stuck, that means you're learning — every programmer has been exactly where you are.
+# Warm-Up Review
 
-**Three exercise types** appear throughout:
-- **Build it** (Parsons): drag and drop regex fragments into the correct order.
-- **Write it** (Free): type a regex from scratch.
-- **Fix it** (Fixer Upper): a broken regex is given — debug and repair it.
+Before diving into advanced features, let's make sure the basics are solid. These exercises combine concepts from the Basics tutorial. If any feel rusty, revisit the [Basics](/SEBook/tools/regex-tutorial.html).
 
-Your progress is saved in your browser automatically.
-
-# Literal Matching
-
-The simplest regex is just the text you want to find. The pattern `cat` matches the exact characters **c**, **a**, **t** — in that order, wherever they appear. This means it matches inside words too: `cat` appears in "edu**cat**ion" and "s**cat**ter".
-
-Key points:
-- RegEx is **case-sensitive** by default: `cat` does not match "Cat" or "CAT".
-- The engine scans left-to-right, reporting every non-overlapping match.
-
-<div class="rt-section" data-section="Literal Matching"></div>
+<div class="rt-section" data-section="Warm-Up Review"></div>
 
 
-# Character Classes
+# Greedy vs. Lazy
 
-A **character class** `[...]` matches any **single character** listed inside the brackets. For example, `[aeiou]` matches any one lowercase vowel.
+By default, quantifiers are **greedy** — they match as much text as possible. This often surprises beginners.
 
-You can also use **ranges**: `[a-z]` matches any lowercase letter, `[0-9]` matches any digit, and `[A-Za-z]` matches any letter regardless of case.
+Consider matching HTML tags with `<.*>` against the string `<b>bold</b>`:
+- **Greedy** `<.*>` matches `<b>bold</b>` — the entire string! The `.*` gobbles everything up, then backtracks just enough to find the **last** `>`.
+- **Lazy** `<.*?>` matches `<b>` and then `</b>` separately. Adding `?` after the quantifier makes it match as **little** as possible.
 
-To **negate** a class, place `^` right after the opening bracket: `[^a-z]` matches any character that is **not** a lowercase letter — digits, punctuation, spaces, etc.
+The lazy versions: `*?`, `+?`, `??`, `{n,m}?`
 
-<div class="rt-section" data-section="Character Classes"></div>
+Use the step-through visualizer in the first exercise below to see exactly how the engine behaves differently in each mode.
 
-
-# Meta Characters
-
-Writing out full character classes every time gets tedious. RegEx provides **meta character** escape sequences:
-
-| meta character | Meaning | Equivalent Class |
-|-----------|---------|-----------------|
-| `\d` | Any digit | `[0-9]` |
-| `\D` | Any non-digit | `[^0-9]` |
-| `\w` | Any "word" character | `[a-zA-Z0-9_]` |
-| `\W` | Any non-word character | `[^a-zA-Z0-9_]` |
-| `\s` | Any whitespace | `[ \t\n\r\f]` |
-| `\S` | Any non-whitespace | `[^ \t\n\r\f]` |
-
-The **dot** `.` is a wildcard that matches **any single character** (except newline). Because the dot matches almost everything, it is powerful but easy to overuse. When you actually need to match a literal period, **escape it**: `\.`
-
-<div class="rt-section" data-section="Meta Characters"></div>
+<div class="rt-section" data-section="Greedy vs. Lazy"></div>
 
 
-# Anchors
+# Groups & Capturing
 
-**Before reading this section**, try the first exercise below. Use what you already know to write a regex that matches *only* if the entire string is digits. You'll discover a gap in your toolkit — that's the point!
+Parentheses `(...)` serve two purposes:
 
-So far every pattern matches **anywhere** inside a string. **Anchors** constrain *where* a match can occur without consuming characters:
+1. **Grouping**: Treat multiple characters as a single unit for quantifiers. `(na){2,}` means "the sequence **na** repeated 2 or more times" — matching `nana`, `nanana`, etc.
 
-| Anchor | Meaning |
-|--------|---------|
-| `^` | Start of string (or line in multiline mode) |
-| `$` | End of string (or line in multiline mode) |
-| `\b` | Word boundary — the point between a "word" character (`\w`) and a "non-word" character (`\W`), or vice versa |
+2. **Capturing**: The engine remembers what each group matched, which is useful in search-and-replace operations (backreferences like `\1` or `$1`).
 
-Anchors are critical for **validation**. Without them, the pattern `\d+` would match the `42` inside `"hello42world"`. Adding anchors — `^\d+$` — ensures the **entire** string must be digits.
+If you only need grouping without capturing, use a **non-capturing group**: `(?:...)`
 
-Word boundaries (`\b`) let you match whole words. `\bgo\b` matches the standalone word "go" but not "goal" or "cargo".
-
-<div class="rt-section" data-section="Anchors"></div>
+<div class="rt-section" data-section="Groups & Capturing"></div>
 
 
-# Quantifiers
+# Lookaheads & Lookbehinds
 
-Quantifiers control **how many times** the preceding element must appear:
+**Lookaround** assertions check what comes before or after the current position **without including it in the match**. They are "zero-width" — they don't consume characters.
 
-| Quantifier | Meaning |
-|------------|---------|
-| `*` | Zero or more times |
-| `+` | One or more times |
-| `?` | Zero or one time (optional) |
-| `{n}` | Exactly *n* times |
-| `{n,}` | *n* or more times |
-| `{n,m}` | Between *n* and *m* times |
+| Syntax | Name | Meaning |
+|--------|------|---------|
+| `(?=...)` | Positive lookahead | What follows must match `...` |
+| `(?!...)` | Negative lookahead | What follows must NOT match `...` |
+| `(?<=...)` | Positive lookbehind | What precedes must match `...` |
+| `(?<!...)` | Negative lookbehind | What precedes must NOT match `...` |
 
-**Common misconception: `*` vs `+`**
+A classic use case: **password validation**. To require at least one digit AND one uppercase letter, you can chain lookaheads at the start: `^(?=.*\d)(?=.*[A-Z]).+$`. Each lookahead checks a condition independently, and the `.+` at the end actually consumes the string.
 
-Students frequently confuse these two. The key difference:
-- `a*b` matches `b`, `ab`, `aab`, `aaab`, ... — the `a` is **optional** (zero or more).
-- `a+b` matches `ab`, `aab`, `aaab`, ... — at least **one** `a` is required.
+Lookbehinds are useful for extracting values after a known prefix — like capturing dollar amounts after a `$` sign without including the `$` itself.
 
-If you want "one or more", reach for `+`. If you genuinely mean "zero or more", use `*`. Getting this wrong is one of the most common sources of regex bugs.
-
-<div class="rt-section" data-section="Quantifiers"></div>
+<div class="rt-section" data-section="Lookaheads & Lookbehinds"></div>
 
 
-# Alternation & Combining
+# Putting It All Together
 
-The **pipe** `|` works like a logical OR: `cat|dog` matches either "cat" or "dog". Alternation has low precedence, so `gray|grey` matches the full words — you don't need parentheses for simple cases.
+You've learned every major regex feature. The real skill is knowing **which tools to combine** for a given problem. These exercises don't tell you which section to draw from — you'll need to decide which combination of character classes, anchors, quantifiers, groups, and lookarounds to use.
 
-When you combine multiple regex features, patterns become expressive:
-- `gr[ae]y` — character class for the spelling variant.
-- `\d{2}:\d{2}` — two digits, a colon, two digits (time format).
-- `^(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])$` — a full date validator.
+This is where regex goes from "I can follow along" to "I can solve problems on my own."
 
-Start simple and add complexity only when tests demand it.
+<div class="rt-section" data-section="Putting It All Together"></div>
 
-<div class="rt-section" data-section="Alternation & Combining"></div>
-
----
-
-You've completed the basics! You now know how to match literal text, use character classes, metacharacters, anchors, quantifiers, and alternation.
-
-**Ready for more?** Continue to the [Advanced RegEx Tutorial](/SEBook/tools/regex-tutorial-advanced.html) to learn greedy vs. lazy matching, groups, lookaheads, and tackle integration challenges.
-
-<script src="/js/regex-tutorial.js"></script>
+<script src="/js/regex-tutorial-advanced.js"></script>

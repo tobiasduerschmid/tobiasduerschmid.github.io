@@ -1,17 +1,13 @@
 ---
-title: Regular Expressions (RegEx)
+title: "Regular Expressions (RegEx): Reference Guide"
 layout: sebook
 ---
 
-If you have ever stared at a string of characters like `^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$` and wondered if a cat walked across a keyboard, you have encountered a Regular Expression (RegEx). 
+> **New to RegEx? Start here:** The [RegEx Tutorial: Basics](/SEBook/tools/regex-tutorial.html) teaches you Regular Expressions step by step with hands-on exercises and real-time feedback. Then continue with the [Advanced Tutorial](/SEBook/tools/regex-tutorial-advanced.html) for greedy/lazy matching, groups, lookaheads, and integration challenges. Come back to this page as a reference.
 
-Regular Expressions are sequences of characters that define search patterns. They are widely used across almost all programming languages, command-line tools (like `grep`, `sed`, and `awk`), and text editors for string searching, validation, and manipulation. While their syntax can appear incredibly cryptic at first glance, learning RegEx is akin to acquiring a superpower for text processing.
+This page is a **reference guide** for Regular Expression syntax, engine mechanics, and worked examples. It is designed to be consulted alongside or after the interactive tutorial — not as a replacement for hands-on practice.
 
-This article will break down how Regular Expressions work, explore their syntax from basic to advanced, and provide real-world examples to help you master them.
-
-> **Want to practice?** Try the [Interactive RegEx Tutorial](/SEBook/tools/regex-tutorial.html) — 20 hands-on exercises that build from basics to lookaheads, with real-time feedback.
-
-# Basics
+# Overview
 
 ## The Core Purpose of RegEx
 
@@ -81,6 +77,8 @@ Anchors do not match any actual characters; instead, they constrain a match base
 * `^` (Caret): Asserts the **start** of a string. `^Hello` matches "Hello world" but not "Say Hello".
 * `$` (Dollar Sign): Asserts the **end** of a string. `end$` matches "The end" but not "endless".
 
+> **Practice this:** [Anchors exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#anchors)
+
 ### Character Classes: Matching Sets of Characters
 Character classes (or sets) allow you to match any single character from a specified group.
 
@@ -89,12 +87,16 @@ Character classes (or sets) allow you to match any single character from a speci
 * `[A-Za-z0-9]`: Matches any alphanumeric character.
 * `[^0-9]`: The caret inside the brackets means **negation**. This matches any character that is *not* a digit.
 
+> **Practice this:** [Character Classes exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#character-classes)
+
 ### Metacharacters
 Because certain character sets are used so frequently, RegEx provides handy meta characters:
 * `\d`: Matches any digit (equivalent to `[0-9]`).
 * `\w`: Matches any "word" character (alphanumeric plus underscore: `[a-zA-Z0-9_]`).
 * `\s`: Matches any whitespace character (spaces, tabs, line breaks).
 * `.` (Dot): The wildcard. Matches *any* single character except a newline. (To match a literal dot, you must escape it with a backslash: `\.`).
+
+> **Practice this:** [Meta Characters exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#meta-characters)
 
 ### Quantifiers: Controlling Repetition
 Quantifiers tell the RegEx engine how many times the preceding element is allowed to repeat.
@@ -104,6 +106,8 @@ Quantifiers tell the RegEx engine how many times the preceding element is allowe
 * `?` (Question Mark): Matches **0 or 1** time (makes the preceding element optional).
 * `{n}`: Matches exactly *n* times.
 * `{n,m}`: Matches between *n* and *m* times.
+
+> **Practice this:** [Quantifiers exercises in the Interactive Tutorial](/SEBook/tools/regex-tutorial.html#quantifiers)
 
 ## Real-World Examples
 

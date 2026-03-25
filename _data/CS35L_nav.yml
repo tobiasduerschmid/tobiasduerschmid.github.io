@@ -14,8 +14,10 @@ topics:
         url: /SEBook/tools/shell.html
       - name: Regular Expressions
         url: /SEBook/tools/regex.html
-      - name: RegEx Tutorial
+      - name: "RegEx Tutorial: Basics"
         url: /SEBook/tools/regex-tutorial.html
+      - name: "RegEx Tutorial: Advanced"
+        url: /SEBook/tools/regex-tutorial-advanced.html
       - name: Python
         url: /SEBook/tools/python.html
       - name: Git

@@ -1,4 +1,4 @@
-// RegEx Interactive Tutorial Engine
+// RegEx Interactive Tutorial Engine — Advanced
 // Supports: free-text exercises, Micro Parsons (drag-and-drop), Fixer Upper (debug),
 // engine visualizer, real-time highlighting, and test-case validation.
 
@@ -10,328 +10,293 @@
 
   var EXERCISES = [
 
-    // ═══ Section 1: Literal Matching ═══════════════════════════════════════
+    // ═══ Warm-Up Review ════════════════════════════════════════════════════
     {
-      id: 'literal-1', type: 'parsons',
-      section: 'Literal Matching',
-      title: 'Build Your First Pattern',
-      goal: 'Arrange the fragments to build a regex that matches <code>print</code> in the text.',
-      sampleText: 'The print function can print any value. To pretty-print JSON, use json.dumps. Don\'t forget to add a print statement for debugging — printf is different.',
-      fragments: ['p', 'r', 'i', 'n', 't'],
-      solution: 'print',
+      id: 'review-1', type: 'free',
+      section: 'Warm-Up Review',
+      title: 'Review: Standalone Numbers',
+      goal: 'Match standalone integers (one or more digits) that are NOT part of a word. Combine <code>\\b</code>, <code>\\d</code>, and <code>+</code>.',
+      sampleText: 'Scores: 42 points, code A7 rejected, player 3 scored 100, item99 skipped.',
+      solution: '\\b\\d+\\b',
       tests: [
-        { input: 'print this', shouldMatch: true, label: 'contains "print"' },
-        { input: 'sprint away', shouldMatch: true, label: '"print" inside "sprint"' },
-        { input: 'no match here', shouldMatch: false, label: 'no "print"' }
-      ],
-      hiddenTests: [
-        { input: 'PRINT', shouldMatch: false },
-        { input: 'printer', shouldMatch: true }
-      ]
-    },
-    {
-      id: 'literal-2', type: 'free',
-      section: 'Literal Matching',
-      title: 'Your Turn',
-      goal: 'Type a regex to match every occurrence of <code>error</code> in the text.',
-      sampleText: 'System log: error in module A. No error found in module B. Warning: terror alert is not an error. Error handling improved.',
-      solution: 'error',
-      tests: [
-        { input: 'error occurred', shouldMatch: true, label: 'contains "error"' },
-        { input: 'all clear', shouldMatch: false, label: 'no "error"' },
-        { input: 'Error', shouldMatch: false, label: 'capital E — should NOT match (case sensitive)' }
-      ],
-      hiddenTests: [
-        { input: 'terror', shouldMatch: true },
-        { input: 'ERROR', shouldMatch: false }
-      ]
-    },
-
-    // ═══ Section 2: Character Classes ══════════════════════════════════════
-    {
-      id: 'charclass-1', type: 'parsons',
-      section: 'Character Classes',
-      title: 'Build a Vowel Matcher',
-      goal: 'Arrange fragments to match any lowercase vowel.',
-      sampleText: 'Regular expressions give programmers superpowers for text manipulation and data extraction.',
-      fragments: ['[', 'a', 'e', 'i', 'o', 'u', ']'],
-      solution: '[aeiou]',
-      tests: [
-        { input: 'hello', shouldMatch: true, label: 'has vowels' },
-        { input: 'xyz', shouldMatch: false, label: 'no vowels' },
-        { input: 'HELLO', shouldMatch: false, label: 'uppercase — should NOT match' }
-      ],
-      hiddenTests: [
-        { input: 'aeiou', shouldMatch: true },
-        { input: 'bcdfg', shouldMatch: false }
-      ]
-    },
-    {
-      id: 'charclass-2', type: 'free',
-      section: 'Character Classes',
-      title: 'Not a Letter',
-      goal: 'Match every character that is <strong>not</strong> a letter. Use <code>[^...]</code> to negate.',
-      sampleText: 'Score: 42 points! Time remaining: 3:30. Player #7 wins $100.',
-      solution: '[^a-zA-Z]',
-      tests: [
-        { input: '123', shouldMatch: true, label: 'all digits — should match' },
-        { input: 'abc', shouldMatch: false, label: 'all letters — should NOT match' },
-        { input: 'hi!', shouldMatch: true, label: 'has punctuation — should match' }
-      ],
-      hiddenTests: [
-        { input: ' ', shouldMatch: true },
-        { input: 'ABCdef', shouldMatch: false }
-      ]
-    },
-
-    // ═══ Section 3: Meta Characters ════════════════════════════
-    {
-      id: 'meta character-1', type: 'free',
-      section: 'Meta Characters',
-      title: 'Digit Detector',
-      goal: 'Match every individual digit.',
-      sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3.',
-      solution: '\\d',
-      tests: [
-        { input: 'Room 101', shouldMatch: true, label: 'contains digits' },
-        { input: 'hello', shouldMatch: false, label: 'no digits' },
-        { input: '42!', shouldMatch: true, label: 'digits with punctuation' }
+        { input: '42', shouldMatch: true, label: 'standalone number' },
+        { input: 'A7', shouldMatch: false, label: 'letter+digit — should NOT match whole thing' },
+        { input: '100', shouldMatch: true, label: 'another standalone number' }
       ],
       hiddenTests: [
         { input: '0', shouldMatch: true },
-        { input: 'abc', shouldMatch: false }
+        { input: 'x', shouldMatch: false }
       ]
     },
     {
-      id: 'meta character-2', type: 'free',
-      section: 'Meta Characters',
-      title: 'File Extensions',
-      goal: 'Match file extensions: a literal dot followed by one or more lowercase letters. The dot <code>.</code> is a wildcard — escape it as <code>\\.</code> to match a real dot.',
-      sampleText: 'Files: report.pdf, data.csv, photo.jpg, README, notes.txt, archive.tar.gz, config.yaml',
-      solution: '\\.[a-z]+',
+      id: 'review-2', type: 'free',
+      section: 'Warm-Up Review',
+      title: 'Review: Simple Email Shape',
+      goal: 'Match strings that look like simple email addresses: one or more word characters, an <code>@</code>, one or more word characters, a dot, then one or more letters. Validate the entire string.',
+      sampleText: null,
+      solution: '^\\w+@\\w+\\.[a-zA-Z]+$',
       tests: [
-        { input: '.txt', shouldMatch: true, label: 'dot + letters' },
-        { input: 'txt', shouldMatch: false, label: 'no dot — should NOT match' },
-        { input: '.a', shouldMatch: true, label: 'single-letter extension' }
+        { input: 'user@example.com', shouldMatch: true, label: 'valid email shape' },
+        { input: 'test@host.org', shouldMatch: true, label: 'another valid shape' },
+        { input: 'no-at-sign.com', shouldMatch: false, label: 'missing @ — should NOT match' },
+        { input: '@host.com', shouldMatch: false, label: 'missing username — should NOT match' }
       ],
       hiddenTests: [
-        { input: '.PDF', shouldMatch: false },
-        { input: '.json', shouldMatch: true }
+        { input: 'a@b.c', shouldMatch: true },
+        { input: 'user@.com', shouldMatch: false },
+        { input: 'user@host', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'review-3', type: 'fixer',
+      section: 'Warm-Up Review',
+      title: 'Review: Fix the Year Matcher',
+      goal: 'This regex should match exactly 4-digit years (like 2024) as standalone numbers. But it matches "20" inside "2024" and accepts "12345". Fix it.',
+      sampleText: null,
+      brokenRegex: '\\d+',
+      solution: '\\b\\d{4}\\b',
+      hint: 'You need to constrain the length to exactly 4 digits AND ensure they stand alone (not part of a longer number).',
+      tests: [
+        { input: '2024', shouldMatch: true, label: '4-digit year' },
+        { input: '1999', shouldMatch: true, label: 'another year' },
+        { input: '12345', shouldMatch: false, label: '5 digits — should NOT match' },
+        { input: '99', shouldMatch: false, label: '2 digits — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: '0001', shouldMatch: true },
+        { input: '123', shouldMatch: false }
       ]
     },
 
-    // ═══ Section 4: Anchors (moved earlier per pedagogy) ══════
+    // ═══ Greedy vs. Lazy ═══════════════════════════════════════════════════
     {
-      id: 'anchor-0', type: 'free',
-      section: 'Anchors',
-      title: 'The Challenge (Try Before You Learn!)',
-      goal: 'Can you write a regex that matches <strong>only</strong> if the <em>entire</em> string is digits? Try <code>\\d+</code> — does it work? It shouldn\'t pass all the tests. Read the section above to discover why, then fix your answer.',
-      sampleText: null,
-      solution: '^\\d+$',
-      tests: [
-        { input: '12345', shouldMatch: true, label: 'all digits — should match' },
-        { input: 'abc', shouldMatch: false, label: 'all letters — should NOT match' },
-        { input: '123abc', shouldMatch: false, label: 'mixed — should NOT match' },
-        { input: '', shouldMatch: false, label: 'empty — should NOT match' }
-      ],
-      hiddenTests: [
-        { input: ' 42 ', shouldMatch: false },
-        { input: '007', shouldMatch: true }
-      ]
-    },
-    {
-      id: 'anchor-1', type: 'parsons',
-      section: 'Anchors',
-      title: 'Build a Full-String Validator',
-      goal: 'Arrange fragments so the regex matches <strong>only</strong> if the <em>entire</em> string is digits. Use <code>^</code> (start) and <code>$</code> (end) anchors.',
-      sampleText: null,
-      fragments: ['^', '\\d', '+', '$'],
-      solution: '^\\d+$',
-      tests: [
-        { input: '12345', shouldMatch: true, label: 'all digits' },
-        { input: '123abc', shouldMatch: false, label: 'mixed — should NOT match' },
-        { input: '', shouldMatch: false, label: 'empty — should NOT match' },
-        { input: '007', shouldMatch: true, label: 'leading zeros OK' }
-      ],
-      hiddenTests: [
-        { input: ' 123', shouldMatch: false },
-        { input: '42', shouldMatch: true }
-      ]
-    },
-    {
-      id: 'anchor-2', type: 'free',
-      section: 'Anchors',
-      title: 'Stand-Alone Words',
-      goal: 'Match only the standalone word <code>go</code> — not inside "goal" or "cargo". Use word boundaries <code>\\b</code>.',
-      sampleText: 'Ready, set, go! The goal is to outperform the algorithm. Let\'s go before the cargo ship departs. Go ahead.',
-      solution: '\\bgo\\b',
+      id: 'greedy-1', type: 'free',
+      section: 'Greedy vs. Lazy',
+      title: 'Tag Trouble',
+      goal: 'Match each <em>individual</em> HTML tag (like <code>&lt;b&gt;</code> or <code>&lt;/b&gt;</code>) — not the entire string. Try <code>&lt;.*&gt;</code> first to see the greedy problem, then add <code>?</code> to make it lazy.',
+      sampleText: '<b>bold</b> and <i>italic</i> text',
+      solution: '<.*?>',
       showVisualizer: true,
       tests: [
-        { input: "let's go", shouldMatch: true, label: '"go" as a word' },
-        { input: 'goal', shouldMatch: false, label: '"goal" — should NOT match' },
-        { input: 'cargo', shouldMatch: false, label: '"cargo" — should NOT match' }
+        { input: '<b>', shouldMatch: true, label: 'opening tag' },
+        { input: '</b>', shouldMatch: true, label: 'closing tag' },
+        { input: '<b>bold</b>', shouldMatch: true, matchCount: 2, label: 'two separate tags, not one big match' },
+        { input: 'bold', shouldMatch: false, label: 'plain text — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'go', shouldMatch: true },
-        { input: 'Go!', shouldMatch: false },
-        { input: 'ongoing', shouldMatch: false }
+        { input: '<i>', shouldMatch: true },
+        { input: 'text', shouldMatch: false }
       ]
     },
     {
-      id: 'anchor-3', type: 'fixer',
-      section: 'Anchors',
-      title: 'Fix the Username Validator',
-      goal: 'This regex is supposed to validate that a username is <strong>only</strong> alphanumeric characters. But it incorrectly accepts <code>admin!@#</code>. Fix it!',
+      id: 'greedy-2', type: 'free',
+      section: 'Greedy vs. Lazy',
+      title: 'Quoted Strings',
+      goal: 'Match each individual double-quoted string separately. Use a lazy quantifier.',
+      sampleText: 'He said "hello" and she replied "goodbye" before they both whispered "see you later" softly.',
+      solution: '".*?"',
+      tests: [
+        { input: '"hello"', shouldMatch: true, label: 'quoted string' },
+        { input: '"hello" and "goodbye"', shouldMatch: true, matchCount: 2, label: 'two quoted strings matched separately' },
+        { input: 'no quotes here', shouldMatch: false, label: 'no quotes — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: '""', shouldMatch: true },
+        { input: 'no quotes', shouldMatch: false }
+      ]
+    },
+
+    // ═══ Groups & Capturing ════════════════════════════════════════════════
+    {
+      id: 'group-1', type: 'free',
+      section: 'Groups & Capturing',
+      title: 'Repeated Syllables',
+      goal: 'Match the syllable <code>na</code> repeated <strong>2 or more</strong> times in a row. Use a group <code>(...)</code> with a quantifier.',
+      sampleText: 'The crowd chanted: na nana nanana nananana! A banana has na but also nan. Just na alone is not enough.',
+      solution: '(na){2,}',
+      tests: [
+        { input: 'nana', shouldMatch: true, label: '2 repetitions' },
+        { input: 'nanana', shouldMatch: true, label: '3 repetitions' },
+        { input: 'na', shouldMatch: false, label: 'only 1 — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: 'nananana', shouldMatch: true },
+        { input: 'nan', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'group-2', type: 'fixer',
+      section: 'Groups & Capturing',
+      title: 'Fix the Repeater',
+      goal: 'This regex tries to match 3-letter airport codes (like LAX, JFK) but it incorrectly matches <code>LA</code> and <code>ABCD</code>. Fix it.',
       sampleText: null,
-      brokenRegex: '[a-zA-Z0-9]+',
-      solution: '^[a-zA-Z0-9]+$',
-      hint: 'Without anchors, the regex finds "admin" as a substring match and considers it a success — ignoring the rest.',
+      brokenRegex: '[A-Z]+',
+      solution: '^[A-Z]{3}$',
+      hint: 'You need to specify exactly 3 letters, and use anchors to prevent partial matching.',
       tests: [
-        { input: 'admin', shouldMatch: true, label: 'valid username' },
-        { input: 'user123', shouldMatch: true, label: 'alphanumeric' },
-        { input: 'admin!@#', shouldMatch: false, label: 'special chars — should NOT match' },
-        { input: '', shouldMatch: false, label: 'empty — should NOT match' }
+        { input: 'LAX', shouldMatch: true, label: '3 uppercase letters' },
+        { input: 'JFK', shouldMatch: true, label: 'another valid code' },
+        { input: 'LA', shouldMatch: false, label: 'only 2 letters — should NOT match' },
+        { input: 'ABCD', shouldMatch: false, label: '4 letters — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'hello world', shouldMatch: false },
-        { input: 'Test', shouldMatch: true }
+        { input: 'SFO', shouldMatch: true },
+        { input: 'lax', shouldMatch: false },
+        { input: 'A', shouldMatch: false }
       ]
     },
 
-    // ═══ Section 5: Quantifiers ════════════════════════════════════════════
+    // ═══ Lookaheads & Lookbehinds ══════════════════════════════════════════
     {
-      id: 'quant-1', type: 'free',
-      section: 'Quantifiers',
-      title: 'ZIP Code Spotter',
-      goal: 'Match numbers that are <strong>exactly 5 digits</strong> — not shorter, not longer. Combine <code>\\b</code>, <code>\\d</code>, and <code>{n}</code>.',
-      sampleText: 'Locations: New York 10001, Los Angeles 90210, Chicago 60601, apt 42, serial 1234567, code 999.',
-      solution: '\\b\\d{5}\\b',
+      id: 'look-1', type: 'free',
+      section: 'Lookaheads & Lookbehinds',
+      title: 'Dollar Amounts',
+      goal: 'Match the numeric amount after a <code>$</code> sign — but do NOT include the <code>$</code> in the match. Hint: Use a positive lookbehind.',
+      sampleText: 'Prices: \$25, €30, \$100, £50, \$7.99, ¥500, \$0.50, and €12.50 have been on sale for 30 days.',
+      solution: '(?<=\\$)[\\d.]+',
       tests: [
-        { input: '90210', shouldMatch: true, label: 'exactly 5 digits' },
-        { input: '123', shouldMatch: false, label: '3 digits — too short' },
-        { input: '1234567', shouldMatch: false, label: '7 digits — too long' }
+        { input: '$25', shouldMatch: true, firstMatch: '25', label: 'match "25" only — not "$25"' },
+        { input: '€30', shouldMatch: false, label: 'euro — should NOT match' },
+        { input: '£50', shouldMatch: false, label: 'pound — should NOT match' }
       ],
       hiddenTests: [
-        { input: '00000', shouldMatch: true },
-        { input: '12 34', shouldMatch: false }
+        { input: '$0', shouldMatch: true },
+        { input: '100', shouldMatch: false }
       ]
     },
     {
-      id: 'quant-2', type: 'free',
-      section: 'Quantifiers',
-      title: 'Star vs. Plus',
-      goal: 'Match strings that start with one or more <code>a</code> followed by a <code>b</code>. Notice: <code>a*b</code> would also match a lone <code>b</code> — but <code>a+b</code> requires at least one <code>a</code>.',
-      sampleText: 'Test: ab, aab, aaab, b, xb, aaa, aaaab.',
-      solution: 'a+b',
-      tests: [
-        { input: 'ab', shouldMatch: true, label: 'one a + b' },
-        { input: 'aaab', shouldMatch: true, label: 'multiple a\'s + b' },
-        { input: 'b', shouldMatch: false, label: 'lone b — should NOT match (need at least one a)' },
-        { input: 'aaa', shouldMatch: false, label: 'no b — should NOT match' }
-      ],
-      hiddenTests: [
-        { input: 'aab', shouldMatch: true },
-        { input: 'bb', shouldMatch: false }
-      ]
-    },
-    {
-      id: 'quant-3', type: 'free',
-      section: 'Quantifiers',
-      title: 'Singular or Plural',
-      goal: 'Match both <code>file</code> and <code>files</code> — the trailing <code>s</code> should be optional.',
-      sampleText: 'Upload your file here. Multiple files are supported. The file manager shows all files in the current directory.',
-      solution: 'files?',
-      tests: [
-        { input: 'file', shouldMatch: true, label: 'singular' },
-        { input: 'files', shouldMatch: true, label: 'plural' },
-        { input: 'fil', shouldMatch: false, label: 'too short — should NOT match' }
-      ],
-      hiddenTests: [
-        { input: 'profile', shouldMatch: true },
-        { input: 'filed', shouldMatch: true }
-      ]
-    },
-
-    // ═══ Section 6: Alternation & Combining ════════════════════════════════
-    {
-      id: 'combine-1', type: 'free',
-      section: 'Alternation & Combining',
-      title: 'Spelling Variants',
-      goal: 'Match both <code>grey</code> and <code>gray</code>.',
-      sampleText: 'The grey sky turned dark gray by evening. Is it grey or gray? The greyhound ran across the gravel path, its grey fur blending into gray fog.',
-      solution: 'gr[ae]y',
-      tests: [
-        { input: 'grey', shouldMatch: true, label: 'British spelling' },
-        { input: 'gray', shouldMatch: true, label: 'American spelling' },
-        { input: 'gravy', shouldMatch: false, label: '"gravy" — should NOT match' }
-      ],
-      hiddenTests: [
-        { input: 'gry', shouldMatch: false },
-        { input: 'greyhound', shouldMatch: true }
-      ]
-    },
-    {
-      id: 'combine-2', type: 'free',
-      section: 'Alternation & Combining',
-      title: 'Time Format',
-      goal: 'Match times in <code>HH:MM</code> format — exactly two digits, a colon, two digits.',
-      sampleText: 'Schedule: standup at 09:30, lunch at 12:00, review at 15:45. Note: 9:5 is not valid. Neither is 123:456.',
-      solution: '\\d{2}:\\d{2}',
-      tests: [
-        { input: '09:30', shouldMatch: true, label: 'valid time' },
-        { input: '12:00', shouldMatch: true, label: 'noon' },
-        { input: '9:30', shouldMatch: false, label: 'single-digit hour — should NOT match' }
-      ],
-      hiddenTests: [
-        { input: '23:59', shouldMatch: true },
-        { input: 'ab:cd', shouldMatch: false },
-        { input: '09:3', shouldMatch: false }
-      ]
-    },
-    {
-      id: 'combine-3', type: 'fixer',
-      section: 'Alternation & Combining',
-      title: 'Fix the Date Validator',
-      goal: 'This regex is supposed to validate dates in <code>MM/DD</code> format. But it accepts <code>99/99</code> and rejects nothing. Debug it — the month should be 01–12 and the day 01–31.',
+      id: 'look-2', type: 'free',
+      section: 'Lookaheads & Lookbehinds',
+      title: 'Password Check',
+      goal: 'Validate that the entire string has at least one digit <strong>and</strong> at least one uppercase letter. Hint: Use positive lookaheads',
       sampleText: null,
-      brokenRegex: '\\d{2}/\\d{2}',
-      solution: '^(0[1-9]|1[0-2])/(0[1-9]|[12]\\d|3[01])$',
-      hint: 'The current pattern accepts any two digits for month and day. You need to restrict the ranges, and add anchors.',
+      solution: '^(?=.*\\d)(?=.*[A-Z]).+$',
       tests: [
-        { input: '03/15', shouldMatch: true, label: 'valid date' },
-        { input: '12/25', shouldMatch: true, label: 'December 25' },
-        { input: '99/99', shouldMatch: false, label: 'invalid — should NOT match' },
-        { input: '00/15', shouldMatch: false, label: 'month 00 — should NOT match' }
+        { input: 'Hello1', shouldMatch: true, label: 'uppercase + digit' },
+        { input: 'hello1', shouldMatch: false, label: 'no uppercase — should NOT match' },
+        { input: 'HELLO', shouldMatch: false, label: 'no digit — should NOT match' },
+        { input: 'H1', shouldMatch: true, label: 'minimal valid' }
       ],
       hiddenTests: [
-        { input: '01/01', shouldMatch: true },
-        { input: '13/01', shouldMatch: false },
-        { input: '12/32', shouldMatch: false }
+        { input: 'aB3cD', shouldMatch: true },
+        { input: '12345', shouldMatch: false },
+        { input: 'abcde', shouldMatch: false }
       ]
     },
 
+    // ═══ Putting It All Together ════════════════════════════════════════════
+    {
+      id: 'integrate-1', type: 'free',
+      section: 'Putting It All Together',
+      title: 'CSS Hex Color',
+      goal: 'Validate a CSS hex color code: a <code>#</code> followed by exactly 3 <strong>or</strong> 6 hex digits (0-9, a-f, A-F). The entire string must match. Combine: anchors, character classes, quantifiers, alternation, and grouping.',
+      sampleText: null,
+      solution: '^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$',
+      tests: [
+        { input: '#FFF', shouldMatch: true, label: '3-digit hex' },
+        { input: '#1A2B3C', shouldMatch: true, label: '6-digit hex' },
+        { input: '#GGG', shouldMatch: false, label: 'invalid hex chars — should NOT match' },
+        { input: '#12', shouldMatch: false, label: 'only 2 digits — should NOT match' },
+        { input: '123456', shouldMatch: false, label: 'missing # — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: '#abcdef', shouldMatch: true },
+        { input: '#1234', shouldMatch: false },
+        { input: '#AABBCC', shouldMatch: true },
+        { input: 'FFF', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'integrate-2', type: 'free',
+      section: 'Putting It All Together',
+      title: 'Student ID Validator',
+      goal: 'Validate a student ID: exactly one uppercase letter followed by exactly 9 digits (e.g., <code>A123456789</code>). The entire string must match. Combine: anchors, character classes, and quantifiers.',
+      sampleText: null,
+      solution: '^[A-Z]\\d{9}$',
+      tests: [
+        { input: 'A123456789', shouldMatch: true, label: 'valid ID' },
+        { input: 'B000000001', shouldMatch: true, label: 'another valid ID' },
+        { input: 'a123456789', shouldMatch: false, label: 'lowercase letter — should NOT match' },
+        { input: 'AB12345678', shouldMatch: false, label: 'two letters — should NOT match' },
+        { input: 'A12345', shouldMatch: false, label: 'too few digits — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: 'Z999999999', shouldMatch: true },
+        { input: '1234567890', shouldMatch: false },
+        { input: 'A1234567890', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'integrate-3', type: 'free',
+      section: 'Putting It All Together',
+      title: 'Extract Prices (Dollar Only)',
+      goal: 'Match dollar amounts like <code>$19.99</code> or <code>$5</code> in a string. The match should include the <code>$</code>, one or more digits, and an optional decimal part (dot + exactly 2 digits). Combine: escaping, quantifiers, grouping, and the <code>?</code> quantifier.',
+      sampleText: 'Items: $19.99 widget, $5 sticker, €12.50 imported, $100.00 premium, $0.99 candy, 50 cents.',
+      solution: '\\$\\d+(\\.\\d{2})?',
+      tests: [
+        { input: '$19.99', shouldMatch: true, label: 'dollars and cents' },
+        { input: '$5', shouldMatch: true, label: 'whole dollars' },
+        { input: '€12.50', shouldMatch: false, label: 'euro — should NOT match' },
+        { input: '50', shouldMatch: false, label: 'plain number — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: '$0.99', shouldMatch: true },
+        { input: '$100.00', shouldMatch: true },
+        { input: 'free', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'integrate-4', type: 'fixer',
+      section: 'Putting It All Together',
+      title: 'Fix the Log Extractor',
+      goal: 'This regex tries to extract the word after "ERROR:" in log lines (e.g., "ERROR: timeout" should match "timeout"). But it matches the entire line instead. Fix it so it only captures the first word after "ERROR: ".',
+      sampleText: null,
+      brokenRegex: 'ERROR: .+',
+      solution: '(?<=ERROR: )\\w+',
+      hint: 'The .+ is greedy and consumes everything. You want only the first word (\\w+) after "ERROR: ". A lookbehind can check for "ERROR: " without including it in the match.',
+      tests: [
+        { input: 'ERROR: timeout', shouldMatch: true, firstMatch: 'timeout', label: 'match "timeout" only — not "ERROR: timeout"' },
+        { input: 'ERROR: connection refused', shouldMatch: true, firstMatch: 'connection', label: 'match first word only' },
+        { input: 'INFO: all good', shouldMatch: false, label: 'INFO line — should NOT match' },
+        { input: 'WARNING: low memory', shouldMatch: false, label: 'WARNING line — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: 'ERROR: null', shouldMatch: true },
+        { input: 'ERRORS: none', shouldMatch: false }
+      ]
+    }
   ];
 
   // ── Visualizer Step Data ───────────────────────────────────────────────────
 
   var VISUALIZER_STEPS = {
-    'anchor-2': {
-      title: 'How the Engine Processes <code>\\bgo\\b</code>',
+    'greedy-1': {
+      title: 'How the Engine Processes <code>&lt;.*&gt;</code> vs <code>&lt;.*?&gt;</code>',
       scenarios: [
         {
-          label: 'Word Boundary Matching',
-          input: 'go! goal cargo go',
-          regex: '\\bgo\\b',
+          label: 'Greedy: <.*>',
+          input: '<b>bold</b>',
+          regex: '<.*>',
           steps: [
-            { regexHL: [0, 1], strHL: [0, 0], strMatch: null, desc: '<code>\\b</code> checks for a word boundary at position 0. Start of string = boundary. <strong>Satisfied.</strong>' },
-            { regexHL: [2, 2], strHL: [0, 0], strMatch: [0, 0], desc: '<code>g</code> matches <code>g</code>. Advance.' },
-            { regexHL: [3, 3], strHL: [1, 1], strMatch: [0, 1], desc: '<code>o</code> matches <code>o</code>. Advance.' },
-            { regexHL: [4, 5], strHL: [2, 2], strMatch: [0, 1], desc: '<code>\\b</code>: next char is <code>!</code> (non-word). Boundary exists. <strong>Match #1: "go"</strong>' },
-            { regexHL: [0, 1], strHL: [4, 4], strMatch: null, desc: 'Engine tries <code>g</code> in "goal". <code>\\b</code> satisfied (after space). <code>g</code> matches, <code>o</code> matches.' },
-            { regexHL: [4, 5], strHL: [6, 6], strMatch: [4, 5], desc: '<code>\\b</code>: next char is <code>a</code> (word char). <strong>No boundary! Match fails.</strong> "goal" rejected.' },
-            { regexHL: [0, 1], strHL: [12, 12], strMatch: null, desc: 'Engine tries <code>g</code> in "cargo". Previous char is <code>r</code> (word char). <code>\\b</code> <strong>not satisfied</strong>. Fails immediately.' },
-            { regexHL: [2, 2], strHL: [15, 15], strMatch: [15, 16], desc: 'Engine reaches final "go". <code>\\b</code> satisfied. <code>g</code> matches, <code>o</code> matches.' },
-            { regexHL: [4, 5], strHL: [17, 17], strMatch: [15, 16], desc: '<code>\\b</code>: end of string = boundary. <strong>Match #2: "go"</strong>. Only standalone words matched!' }
+            { regexHL: [0, 0], strHL: [0, 0], strMatch: null, desc: 'Engine starts. Pattern pointer at <code>&lt;</code>, string pointer at position 0.' },
+            { regexHL: [0, 0], strHL: [0, 0], strMatch: [0, 0], desc: '<strong>Match!</strong> Literal <code>&lt;</code> matches <code>&lt;</code>. Both pointers advance.' },
+            { regexHL: [1, 2], strHL: [1, 1], strMatch: [0, 10], desc: '<code>.*</code> is <em>greedy</em> — it consumes <strong>everything</strong> to the end: <code>b&gt;bold&lt;/b&gt;</code>.' },
+            { regexHL: [3, 3], strHL: [11, 11], strMatch: [0, 10], desc: 'Pattern needs <code>&gt;</code>, but the string pointer is past the end. <strong>Fails.</strong>' },
+            { regexHL: [1, 2], strHL: [10, 10], strMatch: [0, 9], desc: '<strong>Backtrack!</strong> <code>.*</code> gives back one character. Pointer moves back to <code>&gt;</code>.' },
+            { regexHL: [3, 3], strHL: [10, 10], strMatch: [0, 10], desc: 'Pattern <code>&gt;</code> matches the final <code>&gt;</code>. <strong>Match found</strong> — but it matched <em>everything</em>: <code>&lt;b&gt;bold&lt;/b&gt;</code>. Too much!' }
+          ]
+        },
+        {
+          label: 'Lazy: <.*?>',
+          input: '<b>bold</b>',
+          regex: '<.*?>',
+          steps: [
+            { regexHL: [0, 0], strHL: [0, 0], strMatch: [0, 0], desc: 'Literal <code>&lt;</code> matches <code>&lt;</code>. Both pointers advance.' },
+            { regexHL: [1, 3], strHL: [1, 1], strMatch: [0, 0], desc: '<code>.*?</code> is <em>lazy</em> — it tries matching <strong>zero</strong> characters first.' },
+            { regexHL: [4, 4], strHL: [1, 1], strMatch: [0, 0], desc: 'Pattern <code>&gt;</code> checks against <code>b</code>. <strong>No match.</strong>' },
+            { regexHL: [1, 3], strHL: [1, 1], strMatch: [0, 1], desc: 'Lazy quantifier <em>expands</em>: <code>.*?</code> now matches 1 character (<code>b</code>).' },
+            { regexHL: [4, 4], strHL: [2, 2], strMatch: [0, 1], desc: 'Pattern <code>&gt;</code> checks against <code>&gt;</code>. <strong>Match!</strong>' },
+            { regexHL: [4, 4], strHL: [2, 2], strMatch: [0, 2], desc: 'Result: matched just <code>&lt;b&gt;</code>. The engine continues and finds <code>&lt;/b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;/i&gt;</code> separately.' }
           ]
         }
       ]
@@ -343,11 +308,11 @@
   var completedExercises = loadProgress();
 
   function loadProgress() {
-    try { return JSON.parse(localStorage.getItem('regex-tutorial-progress') || '{}'); }
+    try { return JSON.parse(localStorage.getItem('regex-tutorial-advanced-progress') || '{}'); }
     catch (e) { return {}; }
   }
   function saveProgress() {
-    try { localStorage.setItem('regex-tutorial-progress', JSON.stringify(completedExercises)); }
+    try { localStorage.setItem('regex-tutorial-advanced-progress', JSON.stringify(completedExercises)); }
     catch (e) { /* ignore */ }
   }
 
@@ -376,6 +341,24 @@
     if (!re || re.error) return false;
     re.lastIndex = 0;
     return re.test(input);
+  }
+
+  // Extended test: supports firstMatch (exact text of first match) and matchCount
+  function checkSingleTest(pattern, t) {
+    var re = tryCompile(pattern, 'g');
+    if (!re || re.error) return !t.shouldMatch;
+    re.lastIndex = 0;
+    var matches = [], m, safety = 0;
+    while ((m = re.exec(t.input)) !== null) {
+      matches.push(m[0]);
+      if (m[0].length === 0) re.lastIndex++;
+      if (++safety > 1000) break;
+    }
+    var matched = matches.length > 0;
+    if (matched !== t.shouldMatch) return false;
+    if (matched && t.firstMatch !== undefined && matches[0] !== t.firstMatch) return false;
+    if (matched && t.matchCount !== undefined && matches.length !== t.matchCount) return false;
+    return true;
   }
 
   // ── HTML Helpers ───────────────────────────────────────────────────────────
@@ -628,8 +611,7 @@
       var t = ex.tests[i], el = testEls[i];
       if (!el) continue;
       if (!pattern) { el.className = 'rt-test'; el.querySelector('.rt-test-icon').innerHTML = '&#9679;'; continue; }
-      var matches = testRegex(pattern, t.input);
-      var ok = (matches === t.shouldMatch);
+      var ok = checkSingleTest(pattern, t);
       el.className = 'rt-test ' + (ok ? 'rt-test-pass' : 'rt-test-fail');
       el.querySelector('.rt-test-icon').innerHTML = ok ? '&#10003;' : '&#10007;';
     }
@@ -676,22 +658,19 @@
   // ── Self-Explanation Prompts ─────────────────────────────────────────────
 
   var SELF_EXPLANATIONS = {
-    'literal-1': { q: 'Why does this pattern also match "print" inside "sprint"?', a: 'Literal patterns match anywhere in the string — they don\'t care about word boundaries. The engine scans left to right and finds the substring "print" wherever it appears.' },
-    'literal-2': { q: 'Why does your regex match "error" inside "terror" but not "Error"?', a: 'Literal matching is case-sensitive by default. The lowercase "error" appears as a substring in "terror", but "Error" with a capital E is a different character sequence.' },
-    'charclass-1': { q: 'What would happen if you added A-Z inside the brackets?', a: 'The character class [aeiouAEIOU] would also match uppercase vowels. Character classes match any single character listed inside the brackets.' },
-    'charclass-2': { q: 'Why does [^a-zA-Z] match spaces and digits, not just punctuation?', a: 'The negated class [^a-zA-Z] matches any character that is NOT a letter — that includes digits, spaces, punctuation, and any other non-letter character.' },
-    'meta character-1': { q: 'What is the difference between \\d and [0-9]?', a: 'They are functionally equivalent — \\d is a shorthand for the character class [0-9]. Meta characters exist for convenience so you don\'t have to write the full class every time.' },
-    'meta character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches ANY character. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
-    'anchor-0': { q: 'Why did \\d+ fail to reject "123abc"?', a: 'Without anchors, the regex engine looks for a matching substring anywhere in the input. It found "123" inside "123abc" and reported success — it doesn\'t care about the rest of the string. Anchors (^ and $) force the match to span the entire input.' },
-    'anchor-1': { q: 'What would happen without the ^ and $ anchors?', a: 'Without anchors, \\d+ would match any sequence of digits anywhere in a string — "abc123def" would match on the "123" substring. Anchors force the entire string to consist of digits.' },
-    'anchor-2': { q: 'Why does \\b reject "go" inside "cargo" but accept "go" after punctuation?', a: '\\b matches the boundary between a word character (\\w) and a non-word character. In "cargo", both sides of "go" are word characters. After punctuation or at string edges, there\'s a word/non-word boundary.' },
-    'anchor-3': { q: 'When should you always use anchors in a regex?', a: 'Whenever you\'re validating that an entire input matches a format (usernames, passwords, ZIP codes, etc.). Without ^ and $, the regex can succeed by matching any valid substring, ignoring invalid characters elsewhere.' },
-    'quant-1': { q: 'Why do we need \\b on both sides of \\d{5}?', a: 'Without word boundaries, \\d{5} would match the first 5 digits of a longer number like "1234567". The \\b anchors ensure the 5 digits stand alone as a complete unit.' },
-    'quant-2': { q: 'When would you use a* instead of a+?', a: 'Use a* when the element is truly optional (zero occurrences is valid). Use a+ when at least one occurrence is required. Getting this wrong is one of the most common regex bugs.' },
-    'quant-3': { q: 'What does the ? quantifier do differently than * or +?', a: 'The ? means "zero or one" — it makes the preceding element optional but doesn\'t allow more than one. It\'s like a binary switch: the element is either there or not.' },
-    'combine-1': { q: 'Could you solve this with alternation (|) instead of a character class?', a: 'Yes! gr[ae]y and grey|gray produce the same matches. Character classes are more concise for single-character variations. Alternation is needed for multi-character alternatives.' },
-    'combine-2': { q: 'Would this pattern accept "25:99" as a valid time?', a: 'Yes — \\d{2}:\\d{2} only checks that there are exactly two digits, a colon, and two digits. It doesn\'t validate ranges (hours 00-23, minutes 00-59). Range validation requires more complex patterns.' },
-    'combine-3': { q: 'Why is range validation with regex so much more verbose than a simple if-statement?', a: 'Regex operates character by character, not on numeric values. It can\'t compute "is this number ≤ 12" — it must enumerate valid character patterns (0 followed by 1-9, or 1 followed by 0-2). For numeric ranges, code-level validation is often cleaner.' }
+    'review-1': { q: 'Which three concepts from the basics did you combine here?', a: 'Word boundaries (\\b) to ensure standalone matching, the metacharacter \\d to match digits, and the quantifier + to match one or more. This is a typical integration pattern — most real regex problems require combining 3+ features.' },
+    'review-2': { q: 'Why do you need \\. (escaped dot) between the domain and TLD?', a: 'An unescaped dot matches ANY character — so "user@hostXcom" would also match. Escaping the dot (\\.) ensures only a literal period separates the domain from the top-level domain.' },
+    'review-3': { q: 'Why are both \\b and {4} necessary?', a: '\\d{4} alone would match the first 4 digits of "12345". \\b\\d\\b alone would match digits of any length. You need both: {4} constrains the count, \\b constrains the boundaries.' },
+    'greedy-1': { q: 'In your own words, what is the difference between greedy and lazy matching?', a: 'Greedy (default): consume as much as possible, then backtrack if needed. Lazy (with ?): consume as little as possible, then expand if needed. Greedy goes big-to-small; lazy goes small-to-big.' },
+    'greedy-2': { q: 'What would happen if you used a greedy ".*" between the quotes instead of lazy ".*?"?', a: 'The greedy .* would consume everything from the first opening quote to the LAST closing quote in the entire string, treating all text in between as one match.' },
+    'group-1': { q: 'What is the difference between na{2,} and (na){2,}?', a: 'na{2,} means "n followed by 2 or more a\'s" (naaa...). (na){2,} means "the group na repeated 2 or more times" (nana, nanana...). Parentheses group multiple characters into a single unit.' },
+    'group-2': { q: 'Why did the original [A-Z]+ match both "LA" and "ABCD"?', a: 'The + quantifier means "one or more" with no upper limit. Without {3} to specify exactly 3, and without anchors to prevent substring matching, any sequence of uppercase letters is accepted.' },
+    'look-1': { q: 'Why use a lookbehind instead of just including \\$ in the pattern?', a: 'A lookbehind checks that $ precedes the match but doesn\'t include it in the result. If you used \\$[\\d.]+, the match would be "$25" (with the dollar sign). Lookbehinds let you extract just the number.' },
+    'look-2': { q: 'How do chained lookaheads work together at the same position?', a: 'Each lookahead independently checks a condition from the same starting position (like a logical AND). (?=.*\\d) verifies a digit exists somewhere, (?=.*[A-Z]) verifies an uppercase letter exists. Neither consumes characters, so the string pointer stays at the start for the next check.' },
+    'integrate-1': { q: 'Why is the alternation (|) inside a group, and why does the 6-digit option come first?', a: 'The group (...) contains the alternation so that ^ and $ still anchor the whole pattern. The 6-digit option comes first because regex tries alternatives left-to-right — if 3-digit came first, "AABBCC" would match only "AAB" (the first 3 hex chars).' },
+    'integrate-2': { q: 'Which regex features did you combine, and why was each necessary?', a: 'Anchors (^$) to validate the full string, a character class ([A-Z]) for exactly one uppercase letter, a metacharacter (\\d) for digits, and a quantifier ({9}) for exactly 9 repetitions. Remove any one and the validation breaks.' },
+    'integrate-3': { q: 'Why did you group the decimal part and make it optional?', a: 'The decimal part (.XX) is a multi-character unit — the dot and two digits must appear together or not at all. Grouping with (...) treats them as a single unit, and ? makes the whole group optional.' },
+    'integrate-4': { q: 'What is the difference between using a lookbehind here versus including "ERROR: " in the match?', a: 'A lookbehind asserts that "ERROR: " precedes the current position without consuming it — so the match result is just the word (e.g., "timeout"), not "ERROR: timeout". This is useful when you want to extract data after a known prefix.' }
   };
 
   function showSelfExplanation(ex) {
@@ -725,7 +704,7 @@
     var all = ex.tests.concat(ex.hiddenTests || []);
     var fails = 0;
     for (var i = 0; i < all.length; i++) {
-      if (testRegex(pattern, all[i].input) !== all[i].shouldMatch) fails++;
+      if (!checkSingleTest(pattern, all[i])) fails++;
     }
 
     if (fails === 0) {
