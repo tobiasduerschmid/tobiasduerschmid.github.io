@@ -96,7 +96,7 @@ steps:
       - description: "Script prints the day of the week"
         command: "bash morning.sh | grep -qiE 'monday|tuesday|wednesday|thursday|friday|saturday|sunday'"
       - description: "Script prints who you are logged in as"
-        command: "bash morning.sh | grep -qi 'root'"
+        command: "bash morning.sh | grep -qi \"$(whoami)\""
       - description: "morning.sh is executable"
         command: "[ -x morning.sh ]"
 
@@ -542,12 +542,12 @@ steps:
         command: "[ -f ls_out.txt ] && grep -q 'server_log' ls_out.txt"
       - description: "ls_err.txt captures stderr (contains error about missing file)"
         command: "[ -f ls_err.txt ] && grep -qi 'no such file' ls_err.txt"
-      - description: "line_count.txt contains the total number of log entries (15)"
-        command: "[ $(cat line_count.txt) -eq 15 ]"
+      - description: "line_count.txt contains the number 15 (use wc -l < file, not wc -l file)"
+        command: "[ $(awk '{print $1}' line_count.txt) -eq 15 ]"
       - description: "errors_only.txt contains exactly 4 ERROR lines"
         command: "[ -f errors_only.txt ] && [ $(grep -c 'ERROR' errors_only.txt) -eq 4 ]"
       - description: "error_count.txt contains 4 (the number of errors)"
-        command: "[ $(cat error_count.txt) -eq 4 ]"
+        command: "[ $(awk '{print $1}' error_count.txt) -eq 4 ]"
       - description: "timestamps.txt has one timestamp per log entry (15 lines)"
         command: "[ -f timestamps.txt ] && [ $(wc -l < timestamps.txt) -eq 15 ]"
       - description: "top_message_types.txt lists INFO (8) and ERROR (4) with correct counts, and excludes WARN"
@@ -602,6 +602,15 @@ steps:
             - "You need to use `>>` instead of `>` to capture error output"
           correct_index: 1
           explanation: "Programs have two separate output streams: **stdout** (file descriptor 1) and **stderr** (file descriptor 2). The `>` operator only redirects stdout. To capture stderr, use `2>`. To capture both to one file: `> file.txt 2>&1`."
+
+        - question: "The pipeline `cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn` chains four small tools. Which principle does this best illustrate?"
+          options:
+            - "The DRY (Don't Repeat Yourself) principle — avoid duplicating code"
+            - "The Unix Philosophy — write programs that do one thing well, work together, and use text streams as a universal interface"
+            - "The Principle of Least Privilege — each tool runs with minimal permissions"
+            - "The Single Responsibility Principle — each class should have only one reason to change"
+          correct_index: 1
+          explanation: "Each tool in the pipeline does **one thing well**: `cut` extracts fields, `sort` orders lines, `uniq` collapses duplicates, `sort -rn` ranks by count. They **work together** by passing text through pipes. Text is the **universal interface** that lets these tools compose freely — this is the Unix Philosophy in action."
 
   - title: "Variables & The Quoting Trap"
     instructions: |
@@ -685,7 +694,7 @@ steps:
     open_file: "buggy.sh"
     tests:
       - description: "The bug in buggy.sh is fixed (wc -l uses quoted variable)"
-        command: "grep 'wc -l' buggy.sh | grep -q '\"\\$filename\"'"
+        command: "grep 'wc -l' buggy.sh | grep -qE '\"\\$\\{?filename\\}?\"'"
       - description: "buggy.sh runs without error after the fix"
         command: "bash buggy.sh"
       - description: "inventory.sh defines at least two variables"
@@ -996,7 +1005,7 @@ steps:
       - description: "Output includes a pass marker for morning.sh"
         command: "bash batch_check.sh | grep -E 'morning' | grep -qE 'pass|ok|OK|PASS'"
       - description: "Output includes a fail marker for no_shebang.sh"
-        command: "bash batch_check.sh | grep -E 'no_shebang' | grep -qE 'fail|missing shebang'"
+        command: "bash batch_check.sh | grep -E 'no_shebang' | grep -qiE 'fail|missing shebang'"
       - description: "Output includes a summary with pass and fail counts"
         command: "bash batch_check.sh | grep -qiE 'checked.*files.*passed.*failed'"
       - description: "Script examines the first line of files (uses head)"
@@ -1179,6 +1188,11 @@ steps:
       3. **`is_number`**: Checks if its argument is a valid integer using the Regex test `[[ "$1" =~ ^-?[0-9]+$ ]]`. If true, `return 0`. Else, `return 1`.
 
       Write a small script below the functions to test them, ensuring they work!
+
+      > **Watch out for `set -e`:** `is_number` returns 1 (failure) for
+      > non-numbers. If you call `is_number abc` as a bare command,
+      > `set -e` will kill your script. Always test it inside an `if`
+      > or with `&&`/`||` — e.g., `if is_number "$val"; then ...`.
     files:
       - path: "toolkit.sh"
         print_language: bash
