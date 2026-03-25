@@ -39,11 +39,8 @@ steps:
       **Line 2 — the safety net (`set -e`):** By default, Bash happily
       continues running after a failed command. `set -e` exits the script
       when a command fails, preventing a cascade of confusing failures.
-      Always include it. Note: `set -e` does **not** trigger for commands
-      used as an `if` condition, for commands negated with `!`, or for
-      commands that are not the last in a `&&`/`||` list — those are
-      intentional control-flow patterns. The final command in a `&&`/`||`
-      chain can still trigger `set -e` if it fails.
+      Always include it. (We'll cover its edge cases in later steps —
+      for now, just know it makes scripts safer.)
 
       ### New Concept: Command Substitution
       You can capture the output of a command and use it as a string by wrapping it in `$(...)`. 
@@ -118,7 +115,7 @@ steps:
             - "Stops the script immediately when any command returns a non-zero exit code"
             - "Enables extended glob patterns"
           correct_index: 2
-          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits the script when a command fails, preventing a cascade of confusing failures. Key exceptions: `set -e` does not trigger for commands used as an `if` condition, commands negated with `!`, or commands that are not the last in a `&&`/`||` list — those are intentional control-flow patterns. The final command of a `&&`/`||` chain can still trigger `set -e` if it fails."
+          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits the script when a command fails, preventing a cascade of confusing failures. We'll cover its edge cases in later steps."
 
         - question: "Which statements about `$(...)` command substitution are true? (Select all that apply)"
           type: multiple
@@ -141,7 +138,11 @@ steps:
       single-purpose tools. Data flows through memory from one process to
       the next — no intermediate files needed.
 
-      ### Your toolkit
+      But before you connect tools, you need to know what each one does
+      on its own. First, explore each tool individually — then we'll
+      combine them with pipes.
+
+      ### Part 1: Meet your tools (one at a time)
 
       **`wc -l`** — count lines of input
 
@@ -172,21 +173,14 @@ steps:
       **`cut -d' ' -f<n>`** — extract the *n*-th space-separated field
 
       ```bash
-      cut -d' ' -f3 server_log.txt   # extract the third word on each line
+      cut -d' ' -f2 server_log.txt   # extract the message type on each line
       ```
 
       **`head -n`** — show only the first *n* lines
 
       ```bash
-      sort names.txt | head -5   # the 5 alphabetically first names
+      head -5 server_log.txt   # the first 5 log entries
       ```
-
-      **`find path -name PATTERN | xargs COMMAND`** — find files and run a command on each
-
-      ```bash
-      find . -name "*.log" | xargs rm   # find and delete all log files
-      ```
-      *Note: `xargs` takes the output from the pipe and turns it into arguments for the next command.*
 
       ### Explore the data
 
@@ -196,16 +190,69 @@ steps:
       cat server_log.txt
       ```
 
-      ### Redirection: saving output to files
+      Now try each tool **individually** on the log file. Run each
+      command in the terminal and observe what it does:
 
-      Pipes connect commands to commands. **Redirection** connects commands
-      to files:
+      ```bash
+      grep "ERROR" server_log.txt       # only ERROR lines
+      wc -l < server_log.txt             # total line count
+      cut -d' ' -f2 server_log.txt       # just the message types
+      head -3 server_log.txt             # first 3 lines only
+      ```
+
+      ### Tool isolation exercises
+
+      Save the result of each **single tool** to a file:
+
+      1. **grep practice:** Use `grep` to find all lines containing
+         `"WARN"`. Save to `grep_result.txt`.
+      2. **cut practice:** Use `cut` to extract the second field (the
+         message types: INFO, WARN, ERROR).
+         Save to `cut_result.txt`.
+      3. **head practice:** Use `head` to show only the first 3 lines
+         of the log. Save to `head_result.txt`.
+
+      ---
+
+      ### Part 2: Building pipelines
+
+      Now that you know what each tool does alone, let's connect them.
+
+      **Pipes** connect commands to commands. **Redirection** connects
+      commands to files:
 
       ```bash
       grep "INFO" server_log.txt > info_only.txt   # create/overwrite
       echo "extra line" >> info_only.txt             # append (safe)
       wc -l < info_only.txt                          # read from file
       ```
+
+      ### Where do errors go? (stderr)
+
+      Every program has **two** output streams: **stdout** (normal
+      output, file descriptor 1) and **stderr** (error messages, file
+      descriptor 2). By default both appear on your terminal, which
+      makes them look the same — but they are separate streams that
+      can be redirected independently.
+
+      Try this sequence and observe carefully:
+
+      ```bash
+      # Step A: produces both normal output AND an error
+      ls server_log.txt no_such_file.txt
+
+      # Step B: redirect stdout to a file — the error STILL shows!
+      ls server_log.txt no_such_file.txt > ls_out.txt
+
+      # Step C: now redirect stderr separately
+      ls server_log.txt no_such_file.txt > ls_out.txt 2> ls_err.txt
+      cat ls_out.txt    # the successful listing
+      cat ls_err.txt    # just the error message
+      ```
+
+      **Key insight:** `>` only captures stdout. Errors travel on
+      stderr (`2>`), which is why they "leak through" regular
+      redirection.
 
       ### Pipeline exercises
 
@@ -244,6 +291,16 @@ steps:
           08:32:01 INFO worker-3 restarted
     open_file: "server_log.txt"
     tests:
+      - description: "grep_result.txt contains all 3 WARN lines"
+        command: "[ -f grep_result.txt ] && [ $(wc -l < grep_result.txt) -eq 3 ]"
+      - description: "cut_result.txt contains the extracted message types"
+        command: "[ -f cut_result.txt ] && grep -q 'INFO' cut_result.txt && grep -q 'ERROR' cut_result.txt"
+      - description: "head_result.txt contains exactly 3 lines"
+        command: "[ -f head_result.txt ] && [ $(wc -l < head_result.txt) -eq 3 ]"
+      - description: "ls_out.txt captures stdout (contains server_log.txt)"
+        command: "[ -f ls_out.txt ] && grep -q 'server_log' ls_out.txt"
+      - description: "ls_err.txt captures stderr (contains error about missing file)"
+        command: "[ -f ls_err.txt ] && grep -qi 'no such file' ls_err.txt"
       - description: "line_count.txt contains the total number of log entries (15)"
         command: "[ $(cat line_count.txt) -eq 15 ]"
       - description: "errors_only.txt contains exactly 4 ERROR lines"
@@ -260,14 +317,14 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Step 1]** Your script uses `set -e`. You run this pipeline: `cat big.log | grep ERROR | wc -l`. The file has no errors so `grep` exits with code 1. Does `set -e` catch this and exit the script?"
+        - question: "**[Interleaved: Revisit Hello, Shell!]** A script starts with `#!/bin/bash` and `set -e`. The first command is `cd /nonexistent`. What happens?"
           options:
-            - "Yes — `set -e` catches any non-zero exit code, including inside pipelines"
-            - "No — by default `set -e` only checks the exit code of the **last** command in a pipeline; `grep` failing mid-pipeline is silently ignored"
-            - "Yes — pipe operators automatically propagate non-zero exit codes"
-            - "No — `grep` returning 1 for no matches is not treated as a failure by Bash"
-          correct_index: 1
-          explanation: "By default, `set -e` only checks the exit code of the **last** command in a pipeline. If `grep` fails in the middle, Bash sees only `wc -l`'s exit code (0) and happily continues. To catch mid-pipeline failures, you need `set -o pipefail` in addition to `set -e`."
+            - "Bash prints a warning but continues running the rest of the script"
+            - "Bash silently ignores the failed `cd` and stays in the current directory"
+            - "`set -e` catches the non-zero exit code from `cd` and the script exits immediately"
+            - "The shebang line prevents `cd` errors from being fatal"
+          correct_index: 2
+          explanation: "`set -e` exits the script when any command returns a non-zero exit code. Since `cd /nonexistent` fails, the script stops immediately — which is exactly the safety net behavior we learned in Hello, Shell!."
 
         - question: "In the pipeline `grep 'ERROR' server_log.txt | wc -l`, what does the `|` operator do?"
           options:
@@ -293,8 +350,17 @@ steps:
             - "It goes to the bottom of the file, finds the last 3 'WARN' logs, and displays them."
             - "It extracts the first 3 lines containing 'WARN', sorts them backward, and saves the sorted lines back into `server_log.txt`"
             - "It grabs the very first 3 lines in server_log.txt that contain 'WARN', and prints those 3 specific lines in reverse alphabetical order (Z to A)"
-          correct_index: 1
+          correct_index: 3
           explanation: "`grep 'WARN' server_log.txt` searches the file from top to bottom and streams out every line containing the word 'WARN'. `| head -n 3` acts as a gatekeeper. It accepts the first 3 lines it receives from grep and then immediately closes the gate, discarding the rest of the matches. `| sort -r:`  receives only those 3 lines. It sorts those specific three lines in reverse alphabetical order and prints the final result to your screen."
+
+        - question: "You run `./script.sh > output.txt` but error messages still appear on your terminal. Why?"
+          options:
+            - "The `>` operator is broken and does not capture all output"
+            - "`>` only redirects stdout; error messages go to stderr, a separate stream that still goes to the terminal"
+            - "Error messages always bypass file redirection for security reasons"
+            - "You need to use `>>` instead of `>` to capture error output"
+          correct_index: 1
+          explanation: "Programs have two separate output streams: **stdout** (file descriptor 1) and **stderr** (file descriptor 2). The `>` operator only redirects stdout. To capture stderr, use `2>`. To capture both to one file: `> file.txt 2>&1`."
 
   - title: "Variables & The Quoting Trap"
     instructions: |
@@ -338,7 +404,7 @@ steps:
 
       Open `inventory.sh` and write a script from scratch that:
       1. Declares a variable for a **project name** and another for a **version number**.
-      2. Uses command substitution `$(...)` to dynamically count the number of `.sh` files in the current directory and save it to a variable. (Hint: combine `ls *.sh` with `wc -l`).
+      2. Uses command substitution `$(...)` to dynamically count the number of `.sh` files in the current directory and save it to a variable. *(Hint: try `ls *.sh | wc -l`. This works for simple filenames; production scripts use `find` instead.)*
       3. Uses `echo` to print a single string combining all three variables, e.g., `Project: mytools v1.0 — 5 scripts found`
     files:
       - path: "buggy.sh"
@@ -352,7 +418,7 @@ steps:
           echo "creating a test file..."
           echo "important data" > "$filename"
 
-          # BUG: the variable below is not quoted!
+          # Something below is broken — can you find it?
           line_count=$(wc -l $filename)
           echo "Line count: $line_count"
 
@@ -384,7 +450,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Step 2]** You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
+        - question: "**[Interleaved: Revisit Pipes]** You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
           options:
             - "`count=grep -c ERROR server.log`"
             - "`count=$(grep -c ERROR server.log)`"
@@ -411,14 +477,14 @@ steps:
           correct_index: 1
           explanation: "Without quotes, Bash **word-splits** the expanded value on spaces. `ls $dir` becomes `ls my documents` — two arguments. The fix is always `\"$dir\"`."
 
-        - question: "**[Interleaved: Revisit Step 1]** What does the `#!/bin/bash` line at the very top of a script tell the Operating System?"
+        - question: "**[Interleaved: Revisit Hello, Shell!]** What does the `#!/bin/bash` line at the very top of a script tell the Operating System?"
           options:
             - "It is a comment for documentation"
             - "It specifies the interpreter that should execute the file"
             - "It enables strict error checking"
             - "It sets the script's permissions to executable"
           correct_index: 1
-          explanation: "As we saw in Step 1, the shebang (`#!`) followed by a path tells the OS which program to use to run the script. Without it, the OS might guess the wrong interpreter."
+          explanation: "As we saw in Hello, Shell!, the shebang (`#!`) followed by a path tells the OS which program to use to run the script. Without it, the OS might guess the wrong interpreter."
 
   - title: "Conditionals — Making Decisions"
     instructions: |
@@ -479,6 +545,11 @@ steps:
       2. Second blank: We want to mark CRITICAL if `error_count` is **greater than 3**.
       3. Third blank: We want to mark WARNING if `error_count` is **greater than 0**.
 
+      > **Side note:** The skeleton uses `|| true` after `grep -c`. This
+      > means "if grep fails, succeed anyway." `grep` exits with code 1
+      > when it finds zero matches, which would crash our `set -e` script.
+      > `|| true` neutralizes that. We'll cover `||` fully in a later step.
+
       ```bash
       chmod +x health_check.sh
       ./health_check.sh server_log.txt    # should report CRITICAL (4 errors)
@@ -500,7 +571,9 @@ steps:
           fi
 
           # Step 2: Count ERROR lines
-          error_count=$(grep -c "ERROR" "$file")
+          # Note: grep -c exits with code 1 when no matches are found.
+          # The "|| true" prevents set -e from killing the script in that case.
+          error_count=$(grep -c "ERROR" "$file" || true)
 
           # Step 3: Decide severity
           if [ _____ ]; then
@@ -553,14 +626,14 @@ steps:
           correct_index: 2
           explanation: "Bash uses **`-eq`, `-lt`, `-gt`, `-le`, `-ge`, `-ne`** for integer comparisons. The `=` and `==` operators do string comparison."
 
-        - question: "**[Interleaved: Revisit Step 2]** Which operator is used to **append** output to an existing file without overwriting it?"
+        - question: "**[Interleaved: Revisit Pipes]** Which operator is used to **append** output to an existing file without overwriting it?"
           options:
             - "`>`"
             - "`>>`"
             - "`|`"
             - "`<`"
           correct_index: 1
-          explanation: "As we learned in Step 2, `>` overwrites a file, while `>>` appends to it. Both are forms of output redirection."
+          explanation: "As we learned in the Pipes step, `>` overwrites a file, while `>>` appends to it. Both are forms of output redirection."
 
   - title: "Loops — Repeating Work"
     instructions: |
@@ -590,7 +663,7 @@ steps:
       1. Initialize two variables tracking `passed` and `failed` counts.
       2. Loop over every `.sh` file in the current directory.
       3. For each file, read its first line and capture it in a variable. *(Hint: `first=$(head -1 "$f")`)*
-      4. If that variable equals exacty `#!/bin/bash`, print `pass <filename>` and increment your `passed` counter. 
+      4. If that variable equals exactly `#!/bin/bash`, print `pass <filename>` and increment your `passed` counter. 
       5. Otherwise, print `fail <filename> (missing shebang)` and increment `failed`.
       6. After the loop, print: `Checked N files: P passed, F failed` (where N is passed + failed).
 
@@ -617,8 +690,8 @@ steps:
         command: "bash batch_check.sh | grep -E 'morning' | grep -qE 'pass|ok|OK|PASS'"
       - description: "Output includes a fail marker for no_shebang.sh"
         command: "bash batch_check.sh | grep -E 'no_shebang' | grep -qE 'fail|missing shebang'"
-      - description: "Output includes a summary with a count"
-        command: "bash batch_check.sh | grep -qiE 'Checked 6 files: 5 passed, 1 failed'"
+      - description: "Output includes a summary with pass and fail counts"
+        command: "bash batch_check.sh | grep -qiE 'checked.*files.*passed.*failed'"
       - description: "Script examines the first line of files (uses head)"
         command: "grep -qE 'head' batch_check.sh"
 
@@ -654,14 +727,14 @@ steps:
           correct_index: 1
           explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates the expression and substitutes the result as a string. The expression `$((counter + 1))` does **not** change `counter`; you must assign it back: `counter=$((counter + 1))`. Expressions that use assignment operators like `$((counter++))` or `$((counter += 1))` *do* modify the variable in place as a side effect, but for the simple `a + b` form shown here, you always assign back."
 
-        - question: "**[Interleaved: Revisit Step 3]** Inside a loop, you use `wc -l $f`. If a file is named `data 2024.txt`, how does Bash interpret the unquoted `$f`?"
+        - question: "**[Interleaved: Revisit Variables & Quoting]** Inside a loop, you use `wc -l $f`. If a file is named `data 2024.txt`, how does Bash interpret the unquoted `$f`?"
           options:
             - "It correctly processes the single file `data 2024.txt`"
             - "It word-splits the name into two separate arguments: `data` and `2024.txt`"
             - "It produces a syntax error because of the space"
             - "It automatically adds quotes to handle the space"
           correct_index: 1
-          explanation: "As we learned in Step 3, unquoted variables undergo **word-splitting**. The space in the filename breaks it into two arguments, likely causing `wc` to fail. Always use `\"$f\"` to treat the value as a single unit."
+          explanation: "As we learned in the Variables step, unquoted variables undergo **word-splitting**. The space in the filename breaks it into two arguments, likely causing `wc` to fail. Always use `\"$f\"` to treat the value as a single unit."
 
   - title: "Arguments & Special Variables"
     instructions: |
@@ -728,14 +801,14 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Step 4]** Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
+        - question: "**[Interleaved: Revisit Conditionals]** Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
           options:
             - "`if $1 -f; then`"
             - "`if [ -f \"$1\" ]; then`"
             - "`if exists \"$1\"; then`"
             - "`if file \"$1\"; then`"
           correct_index: 1
-          explanation: "`-f` tests whether a path exists and is a regular file. `\"$1\"` must be quoted to safely handle filenames with spaces. Together `[ -f \"$1\" ]` is the standard idiom — applying the file-test knowledge from Step 4 to incoming script arguments."
+          explanation: "`-f` tests whether a path exists and is a regular file. `\"$1\"` must be quoted to safely handle filenames with spaces. Together `[ -f \"$1\" ]` is the standard idiom — applying the file-test knowledge from the Conditionals step to incoming script arguments."
         - question: "What does `$#` contain when a script is called as `./deploy.sh app v1.2`?"
           options:
             - "The string `app v1.2`"
@@ -803,6 +876,8 @@ steps:
         command: "[ $(grep -cE '^[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(\\)' toolkit.sh) -ge 3 ]"
       - description: "to_upper converts text to uppercase"
         command: "bash -c 'source toolkit.sh; to_upper hello' 2>/dev/null | grep -q 'HELLO' || bash toolkit.sh | grep -q 'HELLO'"
+      - description: "file_ext extracts the file extension"
+        command: "bash -c 'source toolkit.sh; file_ext report.csv' 2>/dev/null | grep -q 'csv' || bash toolkit.sh | grep -q 'csv'"
       - description: "is_number succeeds for a valid integer"
         command: "bash -c 'source toolkit.sh; is_number 42'"
       - description: "Uses 'local' for variable scoping"
@@ -813,7 +888,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Step 5]** A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
+        - question: "**[Interleaved: Revisit Loops]** A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
           options:
             - "2 — the two properly-separated arguments"
             - "3 — word-splitting on the space inside `my report.txt` creates a third element"
@@ -866,14 +941,34 @@ steps:
       exit 2    # misuse / wrong arguments
       ```
 
+      ### Conditional chaining: `&&` and `||`
+
+      Because every command returns an exit code, you can chain
+      commands without a full `if/then/fi` block:
+
+      ```bash
+      mkdir output && echo "Directory created"   # runs echo only if mkdir succeeds
+      cd /target || exit 1                        # exits script if cd fails
+      ```
+
+      - **`&&` (AND):** The right-hand command runs only if the
+        left-hand command **succeeds** (exit code 0).
+      - **`||` (OR):** The right-hand command runs only if the
+        left-hand command **fails** (non-zero exit code).
+
+      This is widely used in professional scripts for concise error
+      handling. Note: `set -e` does **not** trigger for commands that
+      are not the last in a `&&`/`||` chain — those are treated as
+      intentional control flow.
+
       ### Your task
 
-      Write `service.sh` — a simulated service controller. 
+      Write `service.sh` — a simulated service controller.
       Use a `case` statement to check the first argument `$1`.
-      
+
       **Requirements:**
-      - If `start` — print `Starting service...`, exit 0.
-      - If `stop` — print `Stopping service...`, exit 0.
+      - If `start` — create a PID file using `touch /tmp/my_service.pid && echo "Starting service..."`, exit 0.
+      - If `stop` — remove the PID file using `rm /tmp/my_service.pid 2>/dev/null || true`, print `Stopping service...`, exit 0.
       - If `status` — check if `/tmp/my_service.pid` exists (`-f`).
         If yes: print `Service is running`, exit 0.
         If no: print `Service is stopped`, exit 1.
@@ -902,23 +997,14 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "Your script uses `set -e`. Inside a `case` branch you run `count=$(grep -c ERROR app.log)`. The file has **zero** errors, so `grep` exits with code 1. What happens?"
+        - question: "What does `cd /project || exit 1` do?"
           options:
-            - "The script continues with `count` set to 0"
-            - "`set -e` triggers and the script exits immediately because `grep` returned non-zero"
-            - "The `case` statement suppresses exit codes from sub-commands"
-            - "Bash internally treats `grep -c` exit code 1 as a count of 1, not a failure"
+            - "Runs `cd` and `exit 1` simultaneously in parallel"
+            - "Runs `exit 1` only if `cd /project` **fails** (non-zero exit code)"
+            - "Runs `exit 1` only if `cd /project` **succeeds** (exit code 0)"
+            - "The `||` operator is invalid syntax in Bash"
           correct_index: 1
-          explanation: "`grep -c` exits with **code 1** when it finds no matches — this is not a crash, it is the prescribed POSIX behavior for 'no matches'. But `set -e` treats *any* non-zero exit as fatal. FIX: `count=$(grep -c ERROR app.log || true)`. The `|| true` ensures the overall expression exits 0 even if grep finds nothing."
-
-        - question: "A function `count_errors` should return a **large number** to the caller. A teammate writes `return $(grep -c ERROR log.txt)`. What is the bug?"
-          options:
-            - "Nothing — `return` can carry any integer value"
-            - "`return` only carries exit codes (0–255); counts above 255 are silently truncated"
-            - "`grep -c` is not allowed inside Bash functions"
-            - "`return` requires a string argument, not a number"
-          correct_index: 1
-          explanation: "Bash's `return` carries only a numeric **exit code** in the range 0–255. A count of 300 would be silently truncated to 44 (300 mod 256). To return data from a function, use `echo` inside the function and capture with `result=$(count_errors file.log)`."
+          explanation: "`||` (OR) runs the right-hand command **only if the left-hand command fails**. If `cd /project` succeeds, Bash skips `exit 1` entirely. If it fails, the script exits. The counterpart `&&` (AND) runs the right side only on success: `mkdir out && echo \"Done\"` prints only if mkdir worked."
 
         - question: "In a Bash `case` statement, what does the `*` pattern in the last branch do?"
           options:
@@ -938,14 +1024,14 @@ steps:
           correct_index: 1
           explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This contrasts with how most languages evaluate boolean truthiness in code (where `0` is false and non-zero is true), even though languages like C and Java also use `return 0` / `exit(0)` to indicate process success to the OS."
 
-        - question: "**[Interleaved: Revisit Step 6]** Which special variable contains the **number of arguments** passed to the script?"
+        - question: "**[Interleaved: Revisit Arguments]** Which special variable contains the **number of arguments** passed to the script?"
           options:
             - "`$@`"
             - "`$#`"
             - "`$0`"
             - "`$*`"
           correct_index: 1
-          explanation: "As we practiced in Step 6, `$#` gives you the count of arguments, which is essential for input validation before your script starts its work."
+          explanation: "As we practiced in the Arguments step, `$#` gives you the count of arguments, which is essential for input validation before your script starts its work."
 
   - title: "Build a Log Monitor"
     instructions: |
@@ -961,11 +1047,16 @@ steps:
       1. Accept an optional filename argument. If not provided, default to `server_log.txt`.
       2. Validate that the file exists; if not, print to stderr and exit.
       3. Print a header: `=== Log Monitor Report ===`
-      4. **Summary section:**
-         - Find the total number of entries
-         - Find the count of `ERROR` entries
-      5. **Error details:** Print the actual text of the lines containing `ERROR`.
-      6. Exit with code 0 if no errors are found, and code 1 if errors are present.
+      4. **Summary section** — write a function called `count_by_level`
+         that takes a log level (e.g., "ERROR") and the filename,
+         and echoes the count. Use it to report:
+         - Total entries
+         - Count of `ERROR`, `WARN`, and `INFO` entries
+      5. **Error details:** Loop over ERROR lines and print each one.
+      6. **Severity assessment:** Use a `case` statement on the error
+         count: 0 → print `Status: HEALTHY`, 1-3 → `Status: WARNING`,
+         4+ → `Status: CRITICAL`.
+      7. Exit with code 0 if no errors are found, and code 1 if errors are present.
 
       ### Design Approach
       Don't just write code immediately. In learning science, planning reduces cognitive load. 
@@ -979,6 +1070,26 @@ steps:
       # ...
       ```
       Once your structure is clear, write the bash code.
+
+      ### When NOT to use Shell Scripting
+
+      Shell scripting is powerful for text processing and automation,
+      but it has real limits. Knowing when *not* to use a tool is as
+      important as knowing how to use it. Switch to Python (or another
+      general-purpose language) when:
+
+      - You need **complex data structures** (dictionaries, nested
+        lists, objects) — Bash only has strings and flat arrays.
+      - **Robust error handling** is critical — Bash's `set -e` has
+        many subtle exceptions that can bite you.
+      - Your script exceeds **~100 lines** — maintainability degrades
+        quickly without functions, types, and proper scoping.
+      - You need **cross-platform** support — Bash behaves differently
+        on macOS vs Linux, and isn't available on Windows by default.
+
+      Bash is a glue language: brilliant for orchestrating other
+      programs and processing text streams. Use it for that, and reach
+      for a real programming language when the task outgrows it.
     files:
       - path: "monitor.sh"
         print_language: bash
@@ -1000,6 +1111,12 @@ steps:
         command: "bash monitor.sh 2>&1 | grep -qE 'timeout|upstream|memory|failed'"
       - description: "Exits with code 1 when errors are present"
         command: "bash monitor.sh; [ $? -eq 1 ]"
+      - description: "Defines a count_by_level function"
+        command: "grep -qE 'count_by_level\\s*\\(\\)' monitor.sh"
+      - description: "Uses a case statement for severity assessment"
+        command: "grep -q 'case' monitor.sh && grep -q 'esac' monitor.sh"
+      - description: "Reports a severity status (HEALTHY, WARNING, or CRITICAL)"
+        command: "bash monitor.sh 2>&1 | grep -qiE 'healthy|warning|critical'"
 
     quiz:
       title: "Shell Scripting Mastery — Final Comprehensive Review"
@@ -1007,7 +1124,7 @@ steps:
       shuffle: true
       questions:
         - question: |
-            **[Interleaved: Revisit Step 1]** **Scenario:** A developer wrote the following deployment script but forgot to include `set -e` at the top:
+            **[Interleaved: Revisit Hello, Shell!]** **Scenario:** A developer wrote the following deployment script but forgot to include `set -e` at the top:
             ```bash
             #!/bin/bash
             cd /var/www/production_app
@@ -1022,17 +1139,17 @@ steps:
             - "The script continues executing in the current directory, potentially pulling code and deleting cache files in the wrong location"
             - "Bash's implicit error handling skips the next command (`git pull`) but resumes execution at `rm -rf`"
           correct_index: 2
-          explanation: "Distractor D targets the common misconception that Bash has built-in `try/catch` logic. Distractor A tests if they realize Bash is 'optimistic' and will happily march into disaster without `set -e`."
+          explanation: "Without `set -e`, Bash continues executing every line regardless of failures. The `cd` fails silently, and the script proceeds in whatever directory it was already in — potentially running `git pull` and `rm -rf` in the wrong location. This is exactly why `set -e` is a critical safety net."
 
         - question: |
-            **[Interleaved: Revisit Step 2]** **Scenario:** You are given a massive log file, `server.log`. You need to find out how many times the user "admin" triggered a "WARN" event. Which pipeline correctly filters and counts these logs?
+            **[Interleaved: Revisit Pipes]** **Scenario:** You are given a massive log file, `server.log`. You need to find out how many times the user "admin" triggered a "WARN" event. Which pipeline correctly filters and counts these logs?
           options:
             - "`grep \"WARN\" server.log | grep \"admin\" | wc -l`"
             - "`cat server.log | grep \"WARN\" && grep \"admin\" > wc -l`"
             - "`grep \"WARN\" server.log > grep \"admin\" | wc -l`"
             - "`wc -l $(grep \"WARN\" server.log | grep \"admin\")`"
           correct_index: 0
-          explanation: "Distractor D is highly attractive to students who over-rely on command substitution `$(...)` instead of understanding how memory-efficient stream piping `|` works. Distractor B tests their understanding of `&&` versus `|`."
+          explanation: "Chaining `grep | grep | wc -l` correctly pipes each command's stdout into the next command's stdin. Option D tries to use command substitution `$(...)` to pass the filtered text as an argument to `wc -l`, but `wc -l` expects either a filename argument or piped stdin — not raw text pasted into the command line. Option B uses `&&` (run next only if previous succeeds), which is not the same as `|` (connect stdout to stdin)."
 
         - question: |
             **Scenario:** A junior developer writes the following script:
@@ -1047,7 +1164,7 @@ steps:
             - "`/tmp/build` is a directory, not an executable, so Bash cannot assign it to a command substitution"
             - "Variables in Bash must be entirely lowercase to avoid clashing with reserved environment commands"
           correct_index: 1
-          explanation: "This tests their mental model of how the shell parses lines (Command -> Argument 1 -> Argument 2). Because of the space, `DIR` is treated as a command, which doesn't exist."
+          explanation: "Bash parses each line as: Command → Argument 1 → Argument 2. The spaces around `=` make Bash see three words: `DIR` (the command to run), `=` (first argument), and `\"/tmp/build\"` (second argument). Since no program named `DIR` exists, Bash reports 'command not found.' The fix is `DIR=\"/tmp/build\"` with no spaces."
 
         - question: |
             **Scenario:** A deployment script runs the following logic to check for a required environment file:
@@ -1066,7 +1183,7 @@ steps:
             - "The quotes around \".env\" prevent Bash from evaluating the file path correctly"
             - "The `if` statement is missing the `test` keyword inside the brackets"
           correct_index: 1
-          explanation: "Distractor A is a trap because it leverages their prior knowledge of the `ls -a` command for hidden files, forcing them to distinguish between command-line utilities and Bash conditional tests."
+          explanation: "The `-d` flag tests if a path is a **directory**, not a regular file. The correct test for a regular file is `-f`. Hidden files (starting with `.`) are perfectly visible to `[` / `test` — the `-a` flag in `ls` is unrelated to Bash conditionals."
 
         - question: |
             **Scenario:** Consider the following loop running in a directory that contains exactly one file named `01 Financial Report.csv`:
@@ -1119,7 +1236,7 @@ steps:
             - "Deploying to (empty string)"
             - "The script will throw a syntax error because `target_dir` is declared twice"
           correct_index: 1
-          explanation: "Bash variables are **global by default**. Sophomores often assume block-scoping from Java/C++. This question reinforces that `local` must be explicitly used to prevent overwriting."
+          explanation: "Bash variables are **global by default** — unlike C++ or Java, there is no block scoping. The function `setup_temp` overwrites the global `target_dir`. To prevent this, the function should declare `local target_dir=\"/tmp/workspace\"` so the change stays inside the function."
 
         - question: |
             **Scenario:** You are writing a script `health_check.sh` that checks database connectivity. If the database is unreachable, you need the CI/CD pipeline running the script to immediately halt. What is the standard Unix mechanism to communicate this failure back to the CI/CD environment?
@@ -1129,7 +1246,7 @@ steps:
             - "Use the command `exit 1` (or any non-zero integer) at the end of the failure block"
             - "Return a boolean `false` using the `return` keyword"
           correct_index: 2
-          explanation: "CS students often confuse logging (stdout/stderr) with exit codes (OS/pipelines). Distractor D tests their tendency to apply standard programming concepts (`return false;`) to shell scripting."
+          explanation: "Exit codes are the standard Unix mechanism for communicating success or failure to the calling environment (CI/CD, other scripts, `make`, etc.). `exit 1` signals failure; `exit 0` signals success. Printing to stdout/stderr is for human-readable messages — the pipeline does not parse those. `return` only works inside functions, not to terminate a script."
 
         - question: |
             **Scenario:** Read the following script named `start_server.sh`:
@@ -1146,18 +1263,18 @@ steps:
             - "Starting on port 8080 with level INFO"
             - "The script will crash because `$2` was not provided, causing an unbound variable error"
           correct_index: 1
-          explanation: "This tests if they can track positional arguments while simultaneously recognizing that `$2` will gracefully fall back to its default rather than crashing."
+          explanation: "`$1` receives `DEBUG`, so `LOG_LEVEL` is set to `DEBUG`. `$2` is empty, so `${2:-8080}` falls back to its default value `8080`. The `:-` operator substitutes the default only when the variable is unset or empty — it does not cause an error."
 
         - question: |
-            **Scenario:** Your CI/CD pipeline runs a script with `set -e` enabled. The script contains this line:
+            **[Interleaved: Revisit Case Statements & Exit Codes]** **Scenario:** A deployment script contains this line:
             ```bash
-            error_count=$(grep -c "ERROR" server.log)
+            cd /var/www/app && git pull && systemctl restart app
             ```
-            If `server.log` contains exactly ZERO errors, the script instantly crashes and fails the CI/CD pipeline. What is the root cause?
+            The `/var/www/app` directory does not exist. What happens?
           options:
-            - "`grep -c` returns an empty string when there are no matches, causing a syntax error"
-            - "Bash cannot assign the integer `0` directly from a command substitution"
-            - "`grep` exits with status code 1 when no matches are found, and `set -e` kills the script"
-            - "The `$(...)` subshell execution is incompatible with `set -e` strict mode"
-          correct_index: 2
-          explanation: "This tests the intersection of `set -e` it's strictness and `grep` behavior. `grep` returns 1 if no matches are found, which triggers the exit."
+            - "All three commands run; `cd` failure does not affect `git pull` or `systemctl`"
+            - "`cd` fails, so `&&` short-circuits — `git pull` and `systemctl restart` never run"
+            - "`cd` fails, but `&&` only checks the last command, so `systemctl restart` still runs"
+            - "Bash retries `cd` three times (once per `&&`) before giving up"
+          correct_index: 1
+          explanation: "`&&` runs the next command **only if the previous one succeeded** (exit code 0). Since `cd` fails, Bash stops the chain immediately — `git pull` and `systemctl restart` are never executed. This is a safe pattern for critical operations where each step depends on the previous one."
