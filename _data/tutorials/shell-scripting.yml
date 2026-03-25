@@ -147,7 +147,7 @@ steps:
       **`wc -l`** — count lines of input
 
       ```bash
-      wc -l < /etc/hosts   # how many entries are in /etc/hosts?
+      wc -l < /etc/hosts   # how many lines are in /etc/hosts?
       ```
 
       **`grep PATTERN file`** — print only lines that match a pattern
@@ -218,8 +218,17 @@ steps:
 
       Now that you know what each tool does alone, let's connect them.
 
-      **Pipes** connect commands to commands. **Redirection** connects
-      commands to files:
+      The **pipe** `|` takes the stdout of the left command and feeds
+      it directly into the stdin of the right command:
+
+      ```bash
+      grep "ERROR" server_log.txt | wc -l   # count ERROR lines
+      ```
+
+      No intermediate files — data flows through memory. You can
+      chain as many commands as you need.
+
+      **Redirection** connects commands to files:
 
       ```bash
       grep "INFO" server_log.txt > info_only.txt   # create/overwrite
@@ -259,12 +268,17 @@ steps:
       For each question, build a pipeline and **save the result to the named
       file** using `>`. The tests below will check every file.
 
+      > **Tip:** `wc -l server_log.txt` prints `15 server_log.txt`
+      > (count + filename). To get just the number, redirect:
+      > `wc -l < server_log.txt` prints only `15`. Use the redirect
+      > form when saving counts to files.
+
       1. **Count total lines:** Feed `server_log.txt` into `wc -l`.
          Save to `line_count.txt`.
       2. **Filter errors:** Print only lines containing "ERROR".
          Save to `errors_only.txt`.
-      3. **Count errors:** Pipe your ERROR filter into `wc -l`.
-         Save to `error_count.txt`.
+      3. **Count errors:** Pipe `grep "ERROR" server_log.txt` into
+         `wc -l`. Save to `error_count.txt`.
       4. **Extract timestamps:** Extract just the first field (the timestamps).
          Save to `timestamps.txt`.
       5. **Top message types:** Find the 2 most frequent message types.
@@ -351,7 +365,7 @@ steps:
             - "It extracts the first 3 lines containing 'WARN', sorts them backward, and saves the sorted lines back into `server_log.txt`"
             - "It grabs the very first 3 lines in server_log.txt that contain 'WARN', and prints those 3 specific lines in reverse alphabetical order (Z to A)"
           correct_index: 3
-          explanation: "`grep 'WARN' server_log.txt` searches the file from top to bottom and streams out every line containing the word 'WARN'. `| head -n 3` acts as a gatekeeper. It accepts the first 3 lines it receives from grep and then immediately closes the gate, discarding the rest of the matches. `| sort -r:`  receives only those 3 lines. It sorts those specific three lines in reverse alphabetical order and prints the final result to your screen."
+          explanation: "`grep 'WARN' server_log.txt` searches the file from top to bottom and streams out every line containing the word 'WARN'. `| head -n 3` acts as a gatekeeper. It accepts the first 3 lines it receives from grep and then immediately closes the gate, discarding the rest of the matches. `| sort -r` receives only those 3 lines. It sorts those specific three lines in reverse alphabetical order and prints the final result to your screen."
 
         - question: "You run `./script.sh > output.txt` but error messages still appear on your terminal. Why?"
           options:
@@ -393,7 +407,7 @@ steps:
 
       ### See the bug (Active Debugging)
 
-      `buggy.sh` has a deliberate quoting mistake. Run it first in the terminal to see the error, and read the error carefully. 
+      `buggy.sh` has a deliberate bug. Run it first in the terminal to see the error, and read the error message carefully — it tells you exactly what went wrong. 
 
       **Fix it:**
       1. Open `buggy.sh` in the editor.
@@ -412,7 +426,7 @@ steps:
         content: |
           #!/bin/bash
           set -e
-          # This script has a quoting bug — can you find it?
+          # This script has a bug — can you find it?
 
           filename="my report.txt"
           echo "creating a test file..."
@@ -1053,9 +1067,14 @@ steps:
          - Total entries
          - Count of `ERROR`, `WARN`, and `INFO` entries
       5. **Error details:** Loop over ERROR lines and print each one.
+         *(Remember: `grep -c` exits with code 1 when there are zero
+         matches. Use `|| true` to prevent `set -e` from killing your
+         script — just like in the health_check step.)*
       6. **Severity assessment:** Use a `case` statement on the error
-         count: 0 → print `Status: HEALTHY`, 1-3 → `Status: WARNING`,
-         4+ → `Status: CRITICAL`.
+         count: `0` → print `Status: HEALTHY`, `1|2|3` → `Status: WARNING`,
+         `*` (anything else) → `Status: CRITICAL`.
+         *(Note: `case` uses glob patterns, not numeric ranges. Use `|`
+         to match multiple values: `1|2|3)` matches 1, 2, or 3.)*
       7. Exit with code 0 if no errors are found, and code 1 if errors are present.
 
       ### Design Approach
@@ -1216,7 +1235,7 @@ steps:
             - "Bash arrays are zero-indexed, so the developer must check against `2` instead of `3`"
             - "The variable should be unquoted (`$@`) to allow Bash to evaluate it as an integer"
           correct_index: 0
-          explanation: "This directly tests the difference between `$@` (all arguments) and `$#` (count of arguments) in a realistic code review scenario."
+          explanation: "`$@` expands to the argument **values** themselves (e.g., `staging v2.1 us-west`), not a count. Comparing a string to the integer `3` with `-ne` produces an error or wrong result. The correct variable for counting arguments is `$#`, which holds the numeric count."
 
         - question: |
             **Scenario:** Trace the execution of the following script. What will the final `echo` statement print to the terminal?
