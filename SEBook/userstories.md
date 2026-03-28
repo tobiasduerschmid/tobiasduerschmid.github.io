@@ -383,11 +383,9 @@ The approach to fixing a story that violates the Small criterion depends on whet
 > **Quick Check:** *"**As a** job seeker, **I want to** manage my resume **so that** employers can find me."*
 >
 > Is this story appropriately sized?
-
-<details>
-<summary><i>Reveal Answer</i></summary>
-No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills."
-</details>
+>
+> <details> <summary><i>Reveal Answer</i></summary>
+No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills." </details>
 
 ## Testable
 
