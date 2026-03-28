@@ -206,7 +206,7 @@ blockquote {
 details summary {
     color: $brand-color;
     cursor: pointer;
-    font-style: italic;
+    font-weight: bold;
 
     &:hover {
         text-decoration: underline;

@@ -202,7 +202,7 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 > **Quick Check:** *"**As a** restaurant owner, **I want** customers to scan a QR code at their table to view the menu on their phone **so that** I don't have to print physical menus."*
 >
 > Does this story satisfy the Negotiable criterion?
-
+>
 > <details><summary><strong>Reveal Answer</strong></summary> "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
 
 ## Valuable
@@ -259,11 +259,9 @@ If stories violate the Valuable criterion, you can improve them using these tech
 > **Quick Check:** *"**As a** backend developer, **I want to** migrate our logging from printf statements to a structured logging framework **so that** log entries are in JSON format."*
 >
 > Does this story satisfy the Valuable criterion?
-
-<details>
-<summary><i>Reveal Answer</i></summary>
-No. The story is written in developer jargon ("printf statements", "structured logging framework", "JSON format") and the "so that" clause describes a technical format, not a user or business benefit. A product owner cannot prioritize "JSON format" against other work. A valuable rewrite: <i>"As an on-call engineer, I want to search and filter production logs by severity, timestamp, and service so that I can diagnose outages faster."</i>
-</details>
+> 
+><details> <summary><i>Reveal Answer</i></summary>
+No. The story is written in developer jargon ("printf statements", "structured logging framework", "JSON format") and the "so that" clause describes a technical format, not a user or business benefit. A product owner cannot prioritize "JSON format" against other work. A valuable rewrite: <i>"As an on-call engineer, I want to search and filter production logs by severity, timestamp, and service so that I can diagnose outages faster."</i> </details>
 
 ## Estimable
 
@@ -320,11 +318,9 @@ The approach to fixing an unestimable story depends on which barrier is blocking
 > **Quick Check:** *"**As a** content creator, **I want** the platform to automatically generate accurate subtitles for my uploaded videos **so that** my content is accessible to hearing-impaired viewers."*
 >
 > The development team has never worked with speech-to-text technology. Is this story estimable?
-
-<details>
-<summary><i>Reveal Answer</i></summary>
-No. The team lacks the technical knowledge required to estimate the effort — this is the "unknown technology" barrier. The fix: split into a time-boxed spike (<i>"Spend two days evaluating speech-to-text APIs and building a proof-of-concept"</i>) and the actual implementation story. After the spike, the team will have enough experience to estimate the real work.
-</details>
+> 
+>  <details> <summary><i>Reveal Answer</i></summary>
+No. The team lacks the technical knowledge required to estimate the effort — this is the "unknown technology" barrier. The fix: split into a time-boxed spike (<i>"Spend two days evaluating speech-to-text APIs and building a proof-of-concept"</i>) and the actual implementation story. After the spike, the team will have enough experience to estimate the real work.</details>
 
 ## Small
 
