@@ -142,11 +142,11 @@ If stories violate the Independent criterion, you can improve them using these t
 > * Story B: *"**As a** listener, **I want to** add songs to a playlist **so that** I can build my collection."*
 >
 > Are these stories independent? Why or why not?
->
-> \<details\>
-> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
-> They are <b>not independent</b> — they have an <i>order dependency</i> (the less harmful form, compared to overlap dependency) {% cite Wake2003INVESTinGoodStories %}. Story B requires playlists to exist (Story A). There are two valid approaches: (1) <b>Combine them:</b> "As a listener, I want to create and populate playlists so that I can organize my music." (2) <b>Accept the dependency:</b> Since order dependencies are less harmful than overlap dependencies, the team can keep both stories separate and simply ensure Story A is scheduled first. The business often naturally handles this ordering correctly {% cite Wake2003INVESTinGoodStories %}.
-> \</details\>
+
+<details>
+<summary><i>Reveal Answer</i></summary>
+They are <b>not independent</b> — they have an <i>order dependency</i> (the less harmful form, compared to overlap dependency) {% cite Wake2003INVESTinGoodStories %}. Story B requires playlists to exist (Story A). There are two valid approaches: (1) <b>Combine them:</b> "As a listener, I want to create and populate playlists so that I can organize my music." (2) <b>Accept the dependency:</b> Since order dependencies are less harmful than overlap dependencies, the team can keep both stories separate and simply ensure Story A is scheduled first. The business often naturally handles this ordering correctly {% cite Wake2003INVESTinGoodStories %}.
+</details>
 
 ## Negotiable
 
@@ -202,11 +202,11 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 > **Quick Check:** *"**As a** restaurant owner, **I want** customers to scan a QR code at their table to view the menu on their phone **so that** I don't have to print physical menus."*
 >
 > Does this story satisfy the Negotiable criterion?
->
-> \<details\>
-> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
-> "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i>
-> \</details\>
+
+<details>
+<summary><i>Reveal Answer</i></summary>
+"Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i>
+</details>
 
 ## Valuable
 
@@ -262,11 +262,11 @@ If stories violate the Valuable criterion, you can improve them using these tech
 > **Quick Check:** *"**As a** backend developer, **I want to** migrate our logging from printf statements to a structured logging framework **so that** log entries are in JSON format."*
 >
 > Does this story satisfy the Valuable criterion?
->
-> \<details\>
-> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
-> No. The story is written in developer jargon ("printf statements", "structured logging framework", "JSON format") and the "so that" clause describes a technical format, not a user or business benefit. A product owner cannot prioritize "JSON format" against other work. A valuable rewrite: <i>"As an on-call engineer, I want to search and filter production logs by severity, timestamp, and service so that I can diagnose outages faster."</i>
-> \</details\>
+
+<details>
+<summary><i>Reveal Answer</i></summary>
+No. The story is written in developer jargon ("printf statements", "structured logging framework", "JSON format") and the "so that" clause describes a technical format, not a user or business benefit. A product owner cannot prioritize "JSON format" against other work. A valuable rewrite: <i>"As an on-call engineer, I want to search and filter production logs by severity, timestamp, and service so that I can diagnose outages faster."</i>
+</details>
 
 ## Estimable
 
@@ -323,11 +323,11 @@ The approach to fixing an unestimable story depends on which barrier is blocking
 > **Quick Check:** *"**As a** content creator, **I want** the platform to automatically generate accurate subtitles for my uploaded videos **so that** my content is accessible to hearing-impaired viewers."*
 >
 > The development team has never worked with speech-to-text technology. Is this story estimable?
->
-> \<details\>
-> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
-> No. The team lacks the technical knowledge required to estimate the effort — this is the "unknown technology" barrier. The fix: split into a time-boxed spike (<i>"Spend two days evaluating speech-to-text APIs and building a proof-of-concept"</i>) and the actual implementation story. After the spike, the team will have enough experience to estimate the real work.
-> \</details\>
+
+<details>
+<summary><i>Reveal Answer</i></summary>
+No. The team lacks the technical knowledge required to estimate the effort — this is the "unknown technology" barrier. The fix: split into a time-boxed spike (<i>"Spend two days evaluating speech-to-text APIs and building a proof-of-concept"</i>) and the actual implementation story. After the spike, the team will have enough experience to estimate the real work.
+</details>
 
 ## Small
 
@@ -390,11 +390,11 @@ The approach to fixing a story that violates the Small criterion depends on whet
 > **Quick Check:** *"**As a** job seeker, **I want to** manage my resume **so that** employers can find me."*
 >
 > Is this story appropriately sized?
->
-> \<details\>
-> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
-> No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills."
-> \</details\>
+
+<details>
+<summary><i>Reveal Answer</i></summary>
+No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills."
+</details>
 
 ## Testable
 
@@ -518,7 +518,7 @@ Small refers to the physical magnitude of the work. A story should be a manageab
 2.  **Accuracy vs. Size**: While smaller stories tend to get more accurate estimates, a story can be small but still unestimatable. For example, a "Research Project" or investigative spike might involve a very small amount of work (reading one document), but because the outcome is unknown, it remains impossible to estimate the time required to actually solve the problem.
 3.  **Predictability vs. Flow**: Estimability is necessary for **planning** (knowing what fits in a release), while Smallness is necessary for **flow** (ensuring work moves through the system without bottlenecks).
 
-
+<!--
 
 ### Should bug reports be user stories?
     
@@ -527,6 +527,7 @@ Mike Cohn explicitly advocates for this unified approach, stating that the best 
 From the [Extreme Programming (XP)](/SEBook/process/xp) perspective, translating a bug report into a narrative user story addresses only the process layer; the technical reality is that a bug is a missing test. Kent Beck argues that problem reports must come with *test cases* demonstrating the problem in code {% cite beck2004XPExplained %}. 
 When a developer encounters or is assigned a problem, their immediate action must be to write an automated unit or functional test that isolates the issue {% cite beck2004XPExplained %}. In this paradigm, a bug report is fundamentally an *executable specification*. Writing the story card is merely a placeholder; the true confirmation of the defect's existence—and its subsequent resolution—is proven by a test that fails, and then passes {% cite beck2004XPExplained %}. 
 
+-->
 
 # Applicability
 User stories are ideal for iterative, customer-centric projects where requirements might change frequently. 
@@ -534,7 +535,7 @@ User stories are ideal for iterative, customer-centric projects where requiremen
 # Limitations
 User stories can struggle to capture non-functional requirements like performance, security, or reliability, and they are generally considered insufficient for safety-critical systems like spacecraft or medical devices
 
-
+<!-- 
 # User Stories in Practice
 
 ## Adoption and Prevalence
@@ -557,7 +558,7 @@ Five interviewees additionally noted that stakeholders *enjoy* working with user
 
 ## The Role of INVEST in Practice
 
-The INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable) are the most widely recognized quality guidelines for user stories {% cite Wake2003INVESTinGoodStories %}. In the Lucassen et al. survey, approximately 24% of practitioners use INVEST, 33% follow self-defined quality guidelines, and 40% use no quality guidelines at all {% cite lucassen2016use %}. Strikingly, interviewees who did *not* use quality guidelines reported that this was not a conscious decision—they were simply **unaware** that structured guidelines like INVEST existed {% cite lucassen2016use %}.
+The INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable) are the most widely recognized quality guidelines for user stories {% cite Wake2003INVESTinGoodStories %}. In the Lucassen et al. survey, 23.5% of practitioners use INVEST, 33% follow self-defined quality guidelines, and 39.5% use no quality guidelines at all {% cite lucassen2016use %}. Strikingly, interviewees who did *not* use quality guidelines reported that this was not a conscious decision—they were simply **unaware** that structured guidelines like INVEST existed {% cite lucassen2016use %}.
 
 The data reveals a statistically significant relationship between INVEST adoption and practitioner perceptions. Practitioners who use INVEST are substantially more positive about user stories than those who use no quality guidelines (chi-square tests for independence are statistically significant for four of six Likert-scale items) {% cite lucassen2016use %}:
 
@@ -581,7 +582,7 @@ The relationship between expertise and perception is confirmed quantitatively: p
 
 Beyond perceptions, a growing body of evidence links user story quality to measurable project outcomes. Scott, Tõemets, and Pfahl conducted a time series analysis of 3,414 user stories from six open-source agile projects, measuring quality using the QUS framework and AQUSA tool {% cite scott2021empirical %}. Using Windowed Time Lagged Cross Correlation (WTLCC), they found an inverse relationship between user story quality and three performance variables:
 
-- A **decrease in user story quality** is associated with an **increase in the number of bugs** after 1–13 weeks in short-to-medium projects and after 17–28 weeks in long-duration projects.
+- A **decrease in user story quality** is associated with an **increase in the number of bugs** after 1–13 weeks in short-to-medium projects and after 17–30 weeks in long-duration projects.
 - **Rework frequency** increases after 1–3 weeks in short projects and after 18–28 weeks in long projects following a quality decrease.
 - **Delayed issues** increase after 1–3 weeks in short projects and after 7–20 weeks in long projects {% cite scott2021empirical %}.
 
@@ -605,8 +606,6 @@ In a controlled experiment with 118 undergraduate students, Dalpiaz and Sturm co
 - **Ambiguity**: Ambiguity manifests across lexical, syntactic, semantic, and pragmatic levels {% cite amna2022ambiguity %}. When analyzed collectively, vague stories often lead to severe cross-story defects, including logical conflicts and missing dependencies {% cite amna2022ambiguity %}.
 
 ## Process Anti-Patterns
-- **The "Template Zombie"**: This occurs when a team allows its work to be driven by templates rather than the thought process necessary to deliver a product {% cite patton2014mapping %}. Practitioners become "Template Zombies" when they mechanically force technical tasks or backend services into the story format, often ignoring the necessary collaborative conversation {% cite patton2014mapping %}.
-- **The Client-Vendor Anti-Pattern**: Jeff Patton identifies a toxic dynamic where one party (often a business stakeholder) takes a "client" role to dictate requirements, while the other (often a developer or analyst) takes a "vendor" role to merely take orders and provide estimates. This creates a "requirements contract" that kills the collaborative problem-solving at the heart of agile development {% cite patton2014mapping %}.
 - **Story Smells**: Common "smells" include *Goldplating* (adding unplanned features), *UI Detail Too Soon* (constraining design before understanding goals), and *Thinking Too Far Ahead* (exhaustive detailing long before implementation) {% cite cohn2004user %}.
 
 ## Automation and LLMs
@@ -614,9 +613,7 @@ Recent advancements in Large Language Models (LLMs) have introduced new capabili
 - **Syntactic Maturity**: LLMs like GPT-4o excel at generating well-formed, atomic, and grammatically complete user stories, often outperforming novice analysts in following strict templates {% cite sharma2025llm %}.
 - **The Convergence Gap**: While LLMs achieve high coverage of standard requirements, they exhibit a "convergence vs. creativity" trade-off. They tend to converge on predictable patterns and may miss novel or domain-specific nuances that human analysts provide {% cite quattrocchi2025llm %}.
 - **The Power of Prompting**: The quality of automated generation is highly sensitive to prompt design. Using a "Meta-Few-Shot" approach—combining structural rules with explicit positive and negative examples—can push LLM success rates significantly higher, even surpassing manual human generation in semantic accuracy {% cite santos2025chatgpt %}.
-
-## Story Mapping and INVEST
-The narrative flow of **User Story Mapping** captures the sequential and hierarchical relationships between stories {% cite patton2014mapping %}. From a theoretical perspective, this creates a notable tension with the **INVEST** criteria: while Story Mapping emphasizes the journey's context and narrative flow, it can challenge the **Independence** criterion by highlighting the deep relationships between individual stories in a user journey. However, this mapping generally helps achieve the other INVEST criteria—particularly **Valuable** and **Small**—by providing a clear framework for slicing features into manageable releases.
+--> 
 
 # Quiz
 
