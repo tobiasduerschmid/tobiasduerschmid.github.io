@@ -142,11 +142,11 @@ If stories violate the Independent criterion, you can improve them using these t
 > * Story B: *"**As a** listener, **I want to** add songs to a playlist **so that** I can build my collection."*
 >
 > Are these stories independent? Why or why not?
-
-<details>
-<summary><i>Reveal Answer</i></summary>
-They are <b>not independent</b> — they have an <i>order dependency</i> (the less harmful form, compared to overlap dependency) {% cite Wake2003INVESTinGoodStories %}. Story B requires playlists to exist (Story A). There are two valid approaches: (1) <b>Combine them:</b> "As a listener, I want to create and populate playlists so that I can organize my music." (2) <b>Accept the dependency:</b> Since order dependencies are less harmful than overlap dependencies, the team can keep both stories separate and simply ensure Story A is scheduled first. The business often naturally handles this ordering correctly {% cite Wake2003INVESTinGoodStories %}.
-</details>
+>
+> <details>
+> <summary><i>Reveal Answer</i></summary>
+> They are <b>not independent</b> — they have an <i>order dependency</i> (the less harmful form, compared to overlap dependency) {% cite Wake2003INVESTinGoodStories %}. Story B requires playlists to exist (Story A). There are two valid approaches: (1) <b>Combine them:</b> "As a listener, I want to create and populate playlists so that I can organize my music." (2) <b>Accept the dependency:</b> Since order dependencies are less harmful than overlap dependencies, the team can keep both stories separate and simply ensure Story A is scheduled first. The business often naturally handles this ordering correctly {% cite Wake2003INVESTinGoodStories %}.
+> </details>
 
 ## Negotiable
 
@@ -203,10 +203,7 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 >
 > Does this story satisfy the Negotiable criterion?
 
-<details>
-<summary><i>Reveal Answer</i></summary>
-"Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i>
-</details>
+> <details><summary><strong>Reveal Answer</strong></summary> "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
 
 ## Valuable
 

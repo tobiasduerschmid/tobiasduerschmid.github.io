@@ -201,6 +201,19 @@ blockquote {
 
 
 /**
+ * Details/Summary (collapsible sections)
+ */
+details summary {
+    color: $brand-color;
+    cursor: pointer;
+    font-style: italic;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+/**
  * Code formatting
  */
 pre,
