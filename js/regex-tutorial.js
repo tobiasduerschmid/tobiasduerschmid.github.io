@@ -22,7 +22,8 @@
       tests: [
         { input: 'print this', shouldMatch: true, label: 'contains "print"' },
         { input: 'sprint away', shouldMatch: true, label: '"print" inside "sprint"' },
-        { input: 'no match here', shouldMatch: false, label: 'no "print"' }
+        { input: 'no match here', shouldMatch: false, label: 'no "print"' },
+        { input: 'a priori', shouldMatch: false, label: 'has "pri" but not "print"' }
       ],
       hiddenTests: [
         { input: 'PRINT', shouldMatch: false },
@@ -701,12 +702,12 @@
     if (!exEl) return;
     // Don't add if already present
     if (exEl.querySelector('.rt-self-explain')) return;
-    var html = '<details class="rt-self-explain">' +
-      '<summary>Explain it to yourself</summary>' +
+    var html = '<div class="rt-self-explain">' +
+      '<p class="rt-se-title"><strong>Explain it to yourself</strong></p>' +
       '<p class="rt-se-question"><strong>' + data.q + '</strong></p>' +
       '<p class="rt-se-think">Think about your answer, then click below to check.</p>' +
       '<details class="rt-se-answer"><summary>Reveal explanation</summary>' +
-      '<p>' + data.a + '</p></details></details>';
+      '<p>' + data.a + '</p></details></div>';
     var resultEl = exEl.querySelector('.rt-result');
     if (resultEl) resultEl.insertAdjacentHTML('afterend', html);
   }

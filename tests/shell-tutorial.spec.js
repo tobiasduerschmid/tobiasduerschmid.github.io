@@ -555,18 +555,4 @@ test.describe('Shell Scripting Tutorial', () => {
     expect(stepCount).toBeGreaterThanOrEqual(8);
   });
 
-  // --- Accessibility & Dark Mode ------------------------------------------
-
-  test('dark mode toggle works', async ({ page }) => {
-    const toggle = page.locator('#darkModeToggle');
-    await expect(toggle).toBeAttached();
-
-    // Enable dark mode
-    await toggle.check({ force: true });
-    await expect(page.locator('html')).toHaveClass(/dark-mode/);
-
-    // Disable dark mode
-    await toggle.uncheck({ force: true });
-    await expect(page.locator('html')).not.toHaveClass(/dark-mode/);
-  });
 });

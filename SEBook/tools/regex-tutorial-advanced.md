@@ -101,7 +101,7 @@ layout: sebook
 
 /* ── Self-Explanation Prompts ──────────────────────────────────── */
 .rt-self-explain { margin-top: 0.8em; padding: 0.8em 1em; background: #f0f7ff; border: 1px solid #b8d4f0; border-radius: 6px; }
-.rt-self-explain > summary { cursor: pointer; color: #005587; font-weight: 600; font-size: 0.95em; }
+.rt-se-title { color: #005587; font-weight: 600; font-size: 0.95em; margin: 0; }
 .rt-se-question { margin: 0.5em 0 0.3em; font-size: 0.93em; line-height: 1.5; }
 .rt-se-think { margin: 0 0 0.5em; font-size: 0.85em; color: #666; font-style: italic; }
 .rt-se-answer { margin-top: 0.3em; }
@@ -147,7 +147,7 @@ layout: sebook
 :root.dark-mode .rt-goal { color: #ccc; }
 :root.dark-mode .rt-delim { color: #888; }
 :root.dark-mode .rt-self-explain { background: #1a2a3a; border-color: #3a5a7a; }
-:root.dark-mode .rt-self-explain > summary { color: #7ec8e3; }
+:root.dark-mode .rt-se-title { color: #7ec8e3; }
 :root.dark-mode .rt-se-question { color: #ddd; }
 :root.dark-mode .rt-se-think { color: #999; }
 :root.dark-mode .rt-se-answer > summary { color: #7ec8e3; }

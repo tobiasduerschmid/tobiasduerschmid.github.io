@@ -353,8 +353,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     const selfExplain = page.locator('#ex-literal-2 .rt-self-explain');
     await expect(selfExplain).toBeAttached();
 
-    // Expand the outer details (first summary is "Explain it to yourself")
-    await selfExplain.locator(':scope > summary').click();
+    // The self-explain box is always visible (no outer details toggle)
     await expect(selfExplain.locator('.rt-se-question')).toBeVisible();
 
     // Nested reveal for the answer

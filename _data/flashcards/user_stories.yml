@@ -19,7 +19,7 @@ cards:
     explanation: "**Dependencies** make prioritization and planning difficult. If stories are tightly coupled, the team should look for ways to combine them or split them along different boundaries."
   - id: 5
     question: "Why must a user story be 'Negotiable'?"
-    answer: "Because a user story describes requirements, not implementation details or design decisions.."
+    answer: "Because a user story describes requirements, not implementation details or design decisions."
     explanation: "Developers and product owners collaborate and **negotiate the implementation details** just-in-time, allowing for better, more flexible solutions."
   - id: 6
     question: "What makes a user story 'Estimable'?"

@@ -11,7 +11,7 @@ audio: "/files/study_tips.mp3"
 
 **A Short Guide to Studying Effectively in College: How to Hack Your Brain for Better Learning**
 
-If you are like many college students, your primary study strategies probably consist of rereading your textbooks or lecture slides, highlighting key passages, and cramming the day before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: ==rereading text and massed practice (cramming) are by far the *least productive* study strategies=={% cite Dunlosky2013Improving_Students_Learning_With_Effective_Learning_Techniques %}.
+If you are like many college students, your primary study strategies probably consist of rereading your textbooks or lecture slides, highlighting key passages, and cramming the day before an exam. You might feel highly productive during these long study sessions, but the science of learning tells a different story: ==rereading text and massed practice (cramming) are by far the *least productive* study strategies=={% cite dunlosky2013 %}.
 These common methods merely boost short-term retrieval strength  {% cite BjorkBjork1992 benjamin1998mismeasure %} and create an "illusion of knowing" {% cite glenberg1982illusion %}.
 When you read a text multiple times, the material becomes familiar, and you mistake this perceptual fluency for true mastery of the subject.
 ==To build deep, durable knowledge, you need to embrace "desirable difficulties"—short-term impediments that make learning feel harder and slower, but ultimately trigger cognitive processes that optimize long-term retention and the transfer of skills== {% cite Bjork1994a bjork2011making %}.
@@ -49,7 +49,7 @@ The mental challenge you feel when you have to manually track down a missing bra
 
 
 ## Retrieval Practice: Ditch the Highlighter and Quiz Yourself
-One of the most powerful learning tools at your disposal is **"active retrieval"** {% cite Dunlosky2013Improving_Students_Learning_With_Effective_Learning_Techniques %}.
+One of the most powerful learning tools at your disposal is **"active retrieval"** {% cite dunlosky2013 %}.
 As a computer scientist, you might think that recalling memory does not have any side effects. While this might be true for most digital storage media (unless they use caching or log requests), it is not true for human memory.
 In fact, ==the act of retrieving information from human memory makes that information much easier to access in the future== {% cite RoedigerKarpicke2006 %}. The more often you try to recall information, the easier it becomes to retrieve it in the future.
 A single, simple quiz after reading a text produces better learning and remembering than reading the text multiple times.
@@ -64,7 +64,7 @@ Also consider that study methods in which you *produce* an answer yourself, even
 ## Spaced Practice: Space Out Your Study Sessions
 Cramming all your studying into one massive session might help you pass the mid-term the next day, but that knowledge will melt away for the final.
 *Massed practice* feels very productive in the moment, but it actively harms long-term retention.
-==To build durable memory, you must space out your practice== {% cite Cepeda2006 Dunlosky2013Improving_Students_Learning_With_Effective_Learning_Techniques %}.
+==To build durable memory, you must space out your practice== {% cite Cepeda2006 dunlosky2013 %}.
 Studying a little bit every week is much more effective than studying for the cumulative duration of these individual study sessions within one single day. Spacing allows time for your memories to consolidate—a process where memory traces are stabilized, given meaning, and connected to prior knowledge {% cite brown2014MakeItStick %}.
 A study session is more effective after you start to forget a little bit of the material {% cite brown2014MakeItStick %}. Repeating this process of incrementally studying the same material over increasing intervals of time is one of the most effective ways to build durable memory, because it feels more effortful and signals to your brain that the information is important and needs to be retained long-term {% cite brown2014MakeItStick %}.
 
@@ -74,7 +74,7 @@ A study session is more effective after you start to forget a little bit of the 
 
 
 ## Interleaving:  Mix Up Your Problem Types
-Most textbooks and many courses use "blocked practice": They first covers one topic entirely, then the second topic, then the third. The problem with blocked practice is that it never teaches you *when* to apply a specific solution. In contrast, ==interleaving mixes the practice of different but related topics or skills==. This helps you develop a broader understanding of the relationships between conditions and improve your ability to discriminate between problem types {% cite Kornell2008learning RohrerTaylor2007 Dunlosky2013Improving_Students_Learning_With_Effective_Learning_Techniques %}.
+Most textbooks and many courses use "blocked practice": They first covers one topic entirely, then the second topic, then the third. The problem with blocked practice is that it never teaches you *when* to apply a specific solution. In contrast, ==interleaving mixes the practice of different but related topics or skills==. This helps you develop a broader understanding of the relationships between conditions and improve your ability to discriminate between problem types {% cite Kornell2008learning RohrerTaylor2007 dunlosky2013 %}.
 This often makes students feel less confident in their knowledge, because they start working on the next topic before they feel they fully grasped the first one. But it is actually more effective for effective learning, because it naturally builds in spaced retrieval practice and it also makes you pay more attention to the connections, similarities, and differences between topics, which is more important for real-world application of the taught skills {% cite brown2014MakeItStick %}.
 
 

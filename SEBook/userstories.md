@@ -3,7 +3,7 @@ title: User Stories
 layout: sebook
 ---
 
-User stories are the ==most commonly used format to specify requirements in a light-weight, informal way== (particulalry in Agile projects).
+User stories are the ==most commonly used format to specify requirements in a light-weight, informal way== (particularly in Agile projects).
 Each user story is a high-level description of a software feature written from the perspective of the end-user.
 
 User stories act as placeholders for a conversation between the technical team and the "business" side to ensure both parties understand the why and what of a feature.
@@ -53,18 +53,18 @@ They follow this format:
 For example:
 
 > (*Smart Grocery Application*):  **As a** home cook, **I want to** swap out ingredients in a recipe **so that** I can accommodate my dietary restrictions and utilize what I already have in my kitchen.
-> * **Given** the user is viewing a recipe's ingredient list, **when** they tap on a specific ingredient, **then** a modal should appear suggesting a list of viable alternatives.
+> * **Given** the user is viewing a recipe's ingredient list, **when** they select a specific ingredient, **then** a list of viable alternatives should be suggested.
 > * **Given** the user selects a substitute from the alternatives list, **when** they confirm the swap, **then** the recipe's required quantities and nutritional estimates should recalculate and update on the screen.
-> * **Given** the user has modified a recipe with substitutions, **when** they tap the "Save to My Cookbook" button, **then** the customized version of the recipe should be stored in their personal profile without altering the original public recipe.
+> * **Given** the user has modified a recipe with substitutions, **when** they save it to their cookbook, **then** the customized version of the recipe should be stored in their personal profile without altering the original public recipe.
 
 These acceptance criteria add clarity to the user story by defining the specific conditions under which the feature should work as expected. They also help to identify potential edge cases and constraints that need to be considered during development. The acceptance criteria define the scope of conditions that check whether an implementation is "correct" and meets the user's needs. So naturally, ==acceptance criteria must be specific enough to be testable but should not be overly prescriptive about the implementation details, not to constraint the developers more than really needed to describe the true user need==.
 
 Here is another example:
 
 > (*Travel Itinerary Planner*):  **As a** frequent traveler, **I want to** discover unique, locally hosted activities **so that** I can experience the authentic culture of my destination rather than just the standard tourist traps.
-> * **Given** the user has set their upcoming trip destination to a city, **when** they navigate to the "Local Experiences" tab, **then** they should see a dynamically populated list of activities hosted by verified local residents.
-> * **Given** the user is browsing the experiences list, **when** they apply the "Under $50" budget filter, **then** the list should refresh to display only the activities that fall within that price range.
-> * **Given** the user selects a specific local experience, **when** they tap "Check Availability", **then** a calendar widget should expand displaying open booking slots for their specific travel dates.
+> * **Given** the user has set their upcoming trip destination to a city, **when** they browse local experiences, **then** they should see a list of activities hosted by verified local residents.
+> * **Given** the user is browsing the experiences list, **when** they filter by a maximum budget of $50, **then** only activities within that price range should be shown.
+> * **Given** the user selects a specific local experience, **when** they check availability, **then** open booking slots for their specific travel dates should be displayed.
 
 # INVEST
 
@@ -112,14 +112,14 @@ If stories violate the Independent criterion, you can improve them using these t
 >
 > Story B: *"**As a** team member, **I want to** reply to messages **so that** I can indicate which message I am responding to."*
 > * **Given** I have received a message, **When** I click the "Reply" button and submit my response, **Then** the reply is sent to the original sender.
-> * **Given** the reply has been received, **When** the original sender views the message, **Then** it is displayed has a reply to the original message.
+> * **Given** the reply has been received, **When** the original sender views the message, **Then** it is displayed as a reply to the original message.
 
 * **Negotiable:** Yes. Neither story dictates a specific UI or technology.
 * **Valuable:** Yes. Communication features are clearly valuable to users.
-* **Estimable:** Difficult. The overlapping "send" capability makes it unclear how to estimate each story independently.
-* **Small:** Yes. Each story is as small as it can be without losing value. Sending without receiving would be incomplete and thus not valuable, so we cannot split story A into seperate stories.
+* **Estimable:** Difficult. Because both stories share the "send" capability, whichever story is implemented second has unpredictable effort—parts of it may already be done, making estimates unreliable.
+* **Small:** Yes. Each story is a manageable chunk of work that fits within a sprint.
 * **Testable:** Yes. Clear acceptance criteria can be written for sending, receiving, and replying.
-* **Why it violates Independent:** Both stories include "sending a message." If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
+* **Why it violates Independent:** Both stories include "sending a message"—this is an *overlap dependency*, the most harmful form of story dependency {% cite Wake2003INVESTinGoodStories %}. If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
 * **How to fix it:** Repartition into three non-overlapping stories: "**As a** team member, **I want to** send a message", "**As a** team member, **I want to** receive messages", and "**As a** team member, **I want to** reply to a message."
 
 **Example 2: Technical (Horizontal) Splitting**
@@ -129,13 +129,24 @@ If stories violate the Independent criterion, you can improve them using these t
 > Story B: *"**As a** job seeker, **I want** my resume data to be saved **so that** it is available when I return."*
 > * **Given** I have filled out the resume form, **When** I click "Save", **Then** my resume data is available when I log back in.
 
-* **Negotiable:** No. Both stories dictate internal technical steps rather than user-facing capabilities.
+* **Negotiable:** Yes. Neither story mandates a specific technology, database, or framework—the implementation details are open to discussion.
 * **Valuable:** No. Neither story delivers value on its own—a form that does not save is useless, and saving data without a form to collect it is equally useless.
 * **Estimable:** Yes. Developers can estimate each technical task.
 * **Small:** Yes. Each is a small piece of work.
-* **Testable:** Yes. Each can be verified in isolation.
+* **Testable:** Yes, though the horizontal split makes end-to-end testing awkward.
 * **Why it violates Independent:** Story B is meaningless without Story A, and Story A is useless without Story B. They are completely interdependent because the feature was split along technical boundaries (UI layer vs. persistence layer) instead of user-facing functionality {% cite cohn2004user %}.
 * **How to fix it:** Combine into a single vertical slice: "**As a** job seeker, **I want to** submit a resume with basic information (name, address, education) **so that** employers can find me." This cuts through all layers and delivers value independently {% cite cohn2004user %}.
+
+> **Quick Check:** Consider these two stories for a music streaming app:
+> * Story A: *"**As a** listener, **I want to** create playlists **so that** I can organize my music."*
+> * Story B: *"**As a** listener, **I want to** add songs to a playlist **so that** I can build my collection."*
+>
+> Are these stories independent? Why or why not?
+>
+> \<details\>
+> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
+> They are <b>not independent</b> — they have an <i>order dependency</i> (the less harmful form, compared to overlap dependency) {% cite Wake2003INVESTinGoodStories %}. Story B requires playlists to exist (Story A). There are two valid approaches: (1) <b>Combine them:</b> "As a listener, I want to create and populate playlists so that I can organize my music." (2) <b>Accept the dependency:</b> Since order dependencies are less harmful than overlap dependencies, the team can keep both stories separate and simply ensure Story A is scheduled first. The business often naturally handles this ordering correctly {% cite Wake2003INVESTinGoodStories %}.
+> \</details\>
 
 ## Negotiable
 
@@ -177,17 +188,25 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 * **How to fix it:** *"**As a** subscriber, **I want** the system to remember my profile settings **so that** I don’t have to re-enter them every time I log in."*
 
 **Example 2: The UI-Specific Story**
-> *"**As a** student, **I want** the website to use HTTPS **so that** my data is safe."*
-> * **Given** I am submitting personal data on the website, **When** the data is transmitted to the server, **Then** the connection uses HTTPS encryption.
+> *"**As a** student, **I want to** select my courses from a dropdown menu **so that** I can register for the upcoming semester."*
+> * **Given** I am on the registration page, **When** I select a course from the dropdown menu and click "Register", **Then** the course is added to my schedule.
 
-* **Independent:** Yes. Security does not depend on other stories.
-* **Valuable:** Yes. Data safety is clearly valuable to the user.
-* **Estimable:** Yes. Enabling HTTPS is a well-understood task.
-* **Small:** Yes. This is a single, focused change.
-* **Testable:** Yes. You can verify that traffic is encrypted.
-* **Why it violates Negotiable:** "HTTPS" is a specific design decision. The user’s actual need is data confidentiality, which could be achieved in multiple ways depending on the system’s architecture.
-* **How to fix it:** *"**As a** student, **I want** the website to keep data I send and receive confidential **so that** my privacy is ensured."*
+* **Independent:** Yes. Course registration does not depend on other stories.
+* **Valuable:** Yes. Registering for courses is clearly valuable to the student.
+* **Estimable:** Yes. Building a course selection feature is well-understood work.
+* **Small:** Yes. This is a single, focused feature.
+* **Testable:** Yes. You can verify that selecting a course adds it to the schedule.
+* **Why it violates Negotiable:** "Dropdown menu" is a specific UI design decision. The user’s actual need is to select courses, which could be achieved through many different interfaces—a search bar, a visual schedule builder, a drag-and-drop interface, or even a conversational assistant. By prescribing the dropdown, the story constrains the design team before they have explored the problem space {% cite cohn2004user %}.
+* **How to fix it:** *"**As a** student, **I want to** select courses for the upcoming semester **so that** I can register for my classes."* Similarly, specifying protocols (e.g., "use HTTPS"), frameworks (e.g., "built with React"), or architectural patterns (e.g., "using microservices") are all design decisions that constrain the solution space.
 
+> **Quick Check:** *"**As a** restaurant owner, **I want** customers to scan a QR code at their table to view the menu on their phone **so that** I don't have to print physical menus."*
+>
+> Does this story satisfy the Negotiable criterion?
+>
+> \<details\>
+> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
+> "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i>
+> \</details\>
 
 ## Valuable
 
@@ -217,28 +236,37 @@ If stories violate the Valuable criterion, you can improve them using these tech
 ### Examples of Stories Violating ONLY the Valuable Criterion
 
 **Example 1: The Developer-Centric Story**
-> *"**As a** developer, **I want to** rewrite the core authentication API in Rust **so that** I can use a more modern programming language."*
-> * **Given** the authentication API currently runs on Node.js, **When** a developer deploys the new Rust-based API, **Then** all existing authentication endpoints return identical responses.
+> *"**As a** developer, **I want to** refactor the authentication module **so that** the codebase is easier to maintain."*
+> * **Given** the authentication module has been refactored, **When** a developer deploys the updated module, **Then** all existing authentication endpoints return identical responses.
 
-* **Independent:** Yes. Rewriting the auth API does not depend on other stories.
-* **Negotiable:** Yes. The story is phrased as a goal (rewrite auth), leaving room to discuss scope and approach.
-* **Estimable:** Yes. A developer experienced with Rust can estimate the effort of a rewrite.
-* **Small:** Yes. Rewriting a single API component can fit within a sprint.
-* **Testable:** Yes. You can verify the new API passes all existing authentication tests.
-* **Why it violates Valuable:** The story is written entirely from the developer's perspective. The user does not care which programming language the API uses. The "so that" clause ("use a more modern programming language") describes a developer preference, not a user benefit {% cite cohn2004user %}.
+* **Independent:** Yes. Refactoring the auth module does not depend on other stories.
+* **Negotiable:** Yes. The story does not dictate a specific technology, language, or design decision—the team is free to choose how to improve maintainability.
+* **Estimable:** Yes. A developer can estimate the effort of a refactoring task.
+* **Small:** Yes. Refactoring a single module can fit within a sprint.
+* **Testable:** Yes. You can verify the refactored module passes all existing authentication tests.
+* **Why it violates Valuable:** The story is written entirely from the developer's perspective. The user does not care about internal code quality. The "so that" clause ("the codebase is easier to maintain") describes a developer benefit, not a user benefit {% cite cohn2004user %}. A product owner cannot weigh "easier to maintain" against user-facing features.
 * **How to fix it:** If there is a legitimate user-facing reason (e.g., performance), rewrite the story around that benefit: *"**As a** registered member, **I want to** log in without noticeable delay **so that** I can start using the application immediately."*
 
-**Example 2: The Incomplete Story**
-> *"**As a** smart home owner, **I want to** schedule my porch lights to turn on automatically at a specific time **so that** I don't have to walk up to a dark house in the evening."*
-> **Given** I am logged into the smart home mobile app, **When** I set the porch light schedule to turn on at 6:00 PM, **Then** the porch lights will illuminate at exactly 6:00 PM every day.
+**Example 2: The Techno-Speak Story**
+> *"**As a** system administrator, **I want** all database connections to be routed through a connection pool **so that** resource usage is optimized."*
+> * **Given** the application is running, **When** a service requests a database connection, **Then** the connection is provided from the pool rather than created from scratch.
 
-* **Independent:** Yes. Scheduling lights does not depend on other stories.
-* **Negotiable:** Yes. The specific UI and scheduling mechanism are open to discussion.
-* **Estimable:** Yes. Implementing a time-based trigger is well-understood work.
-* **Small:** Yes. A single scheduling feature fits within a sprint.
-* **Testable:** Yes. The acceptance criteria define a clear pass/fail condition.
-* **Why it violates Valuable:** On first glance, this story looks valuable. But the acceptance criteria are missing the ability to *turn off* the lights. If lights stay on forever, they waste energy and the feature becomes a nuisance rather than a benefit. The story as written delivers incomplete value because its acceptance criteria do not capture the full scope needed to make the feature genuinely useful.
-* **How to fix it:** Add the missing acceptance criterion: *"Given I am logged into the smart home mobile app, When I set the porch light schedule to turn off at 6:00 AM and the lights are illuminated, Then the porch lights will turn off at 6:00 AM."* Now the story delivers complete value.
+* **Independent:** Yes. Connection pooling does not depend on other stories.
+* **Negotiable:** Yes. The specific pooling strategy and configuration are open to discussion.
+* **Estimable:** Yes. Implementing connection pooling is well-understood work.
+* **Small:** Yes. A single infrastructure change fits within a sprint.
+* **Testable:** Yes. You can verify that connections are served from the pool.
+* **Why it violates Valuable:** The story is written in technical jargon that a product owner or business stakeholder cannot evaluate. "Connection pool" and "resource optimization" describe an internal implementation detail, not an effect on the edge of the system {% cite cohn2004user %}. The customer cannot weigh this story's importance against other stories because they do not understand what it delivers {% cite cohn2004user %}.
+* **How to fix it:** Rewrite for external impact: *"**As a** hiring manager, **I want** up to fifty users to be able to use the application simultaneously with acceptable response times **so that** my team can all access the system during peak hours."* Now the value is clear and the product owner can prioritize it {% cite cohn2004user %}.
+
+> **Quick Check:** *"**As a** backend developer, **I want to** migrate our logging from printf statements to a structured logging framework **so that** log entries are in JSON format."*
+>
+> Does this story satisfy the Valuable criterion?
+>
+> \<details\>
+> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
+> No. The story is written in developer jargon ("printf statements", "structured logging framework", "JSON format") and the "so that" clause describes a technical format, not a user or business benefit. A product owner cannot prioritize "JSON format" against other work. A valuable rewrite: <i>"As an on-call engineer, I want to search and filter production logs by severity, timestamp, and service so that I can diagnose outages faster."</i>
+> \</details\>
 
 ## Estimable
 
@@ -283,13 +311,23 @@ The approach to fixing an unestimable story depends on which barrier is blocking
 > * **Given** an enterprise client sends a gRPC request for user data, **When** the system processes the request, **Then** the system returns the requested data in the correct Protobuf-defined format.
 
 * **Independent:** Yes. Adding an integration interface does not depend on other stories.
-* **Negotiable:** Partially. The customer has specified gRPC, but the service contract and data schema are open to discussion.
+* **Negotiable:** Partially. The customer has specified gRPC, which is normally a technology choice that would violate Negotiable. However, in this case the customer's existing microservices infrastructure genuinely requires gRPC compatibility, making it a hard constraint rather than an arbitrary design decision. The service contract and data schema remain open to discussion.
+
+> **Note:** Not all technology specifications violate Negotiable. When the customer's existing infrastructure genuinely requires a specific protocol or format, that constraint is a *hard requirement*, not an arbitrary design choice. The key question is: could the user's goal be met equally well with a different technology? If a gRPC customer cannot use REST, then gRPC is a requirement, not a design decision {% cite cohn2004user %}.
 * **Valuable:** Yes. Enterprise integration is clearly valuable to the purchasing organization.
 * **Small:** Yes. A single service endpoint can fit within a sprint—once the team understands the technology.
 * **Testable:** Yes. You can verify the interface returns the correct data in the correct format.
 * **Why it violates Estimable:** No one on the development team has ever built a gRPC service or worked with Protocol Buffers. They understand *what* the customer wants but have no experience with the technology required to deliver it, making any estimate unreliable {% cite cohn2004user %}.
 * **How to fix it:** Split into two stories: (1) a time-boxed spike—"Investigate gRPC integration: spend at most two days building a proof-of-concept service"—and (2) the actual implementation story. After the spike, the team has enough knowledge to estimate the real work {% cite cohn2004user %}.
 
+> **Quick Check:** *"**As a** content creator, **I want** the platform to automatically generate accurate subtitles for my uploaded videos **so that** my content is accessible to hearing-impaired viewers."*
+>
+> The development team has never worked with speech-to-text technology. Is this story estimable?
+>
+> \<details\>
+> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
+> No. The team lacks the technical knowledge required to estimate the effort — this is the "unknown technology" barrier. The fix: split into a time-boxed spike (<i>"Spend two days evaluating speech-to-text APIs and building a proof-of-concept"</i>) and the actual implementation story. After the spike, the team will have enough experience to estimate the real work.
+> \</details\>
 
 ## Small
 
@@ -332,8 +370,8 @@ The approach to fixing a story that violates the Small criterion depends on whet
 * **Independent:** Yes. Planning a vacation does not overlap with other stories.
 * **Negotiable:** Yes. The specific features and UI are open to discussion.
 * **Valuable:** Yes. End-to-end vacation planning is clearly valuable to travelers.
-* **Estimable:** No. The scope is so vast that developers cannot reliably predict the effort. (Violations of Small often cause violations of Estimable, since epics contain hidden complexity.)
-* **Testable:** Yes. Acceptance criteria can be written for individual planning features.
+* **Estimable:** Partially. A developer can give a rough order-of-magnitude estimate ("several months"), but the hidden complexity within this epic makes the estimate too unreliable for sprint planning. Violations of Small often cause violations of Estimable, since epics contain hidden complexity {% cite cohn2004user %}.
+* **Testable:** Yes. Acceptance criteria can be written, though they would need to be much more detailed once the epic is broken into smaller stories.
 * **Why it violates Small:** "Planning a vacation" involves searching for flights, comparing hotels, booking rental cars, managing an itinerary, handling payments, and much more. This is an epic containing many stories. It cannot be completed in a single sprint {% cite cohn2004user %}.
 * **How to fix it:** Disaggregate into smaller vertical slices: "**As a** traveler, **I want to** search for flights by date and destination **so that** I can find available options", "**As a** traveler, **I want to** compare hotel prices for my destination **so that** I can choose one within my budget", etc.
 
@@ -349,6 +387,14 @@ The approach to fixing a story that violates the Small criterion depends on whet
 * **Why it violates Small:** This story is *too small*. The administrative overhead of writing, estimating, and tracking this story card takes longer than actually implementing the change. Having dozens of stories at this granularity buries the team in disconnected details—what Wake calls a "bag of leaves" {% cite Wake2003INVESTinGoodStories %}.
 * **How to fix it:** Combine with related micro-stories into a single meaningful story: "**As a** job seeker, **I want to** edit all fields of my community service entries **so that** I can keep my resume accurate." {% cite cohn2004user %}
 
+> **Quick Check:** *"**As a** job seeker, **I want to** manage my resume **so that** employers can find me."*
+>
+> Is this story appropriately sized?
+>
+> \<details\>
+> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
+> No — it is too big (an epic). "Manage my resume" hides multiple stories: create a resume, edit sections, upload a photo, delete a resume, manage multiple versions. The word "manage" is often a signal that a story is a compound epic. Split by CRUD operations: "I want to create a resume", "I want to edit my resume", "I want to delete my resume" — or by data boundaries: "I want to add/edit my education", "I want to add/edit my work history", "I want to add/edit my skills."
+> \</details\>
 
 ## Testable
 
@@ -397,9 +443,9 @@ Below are two user stories that are not testable but still satisfy (most) other 
 * **Independent:** Yes. Optimizing or building this report can be done independently.
 * **Negotiable:** Yes. The team can negotiate *how* to achieve the speed (e.g., caching, database indexing, background processing).
 * **Valuable:** Yes. Saving the analyst's time is a clear operational benefit.
+* **Estimable:** Yes. A developer can estimate the effort for standard report optimizations (query tuning, caching, indexing, pagination) regardless of the specific latency threshold that will ultimately be defined. The implementation work is predictable even though the acceptance threshold is not—just as in Example 1 above, where the effort to build a landing page does not depend on the specific definition of "modern."
 * **Small:** Yes. It is a focused optimization on a single report.
-* **Why it violates Testable:** "Instantly" is physically impossible in computing, and it is a highly subjective standard. Does instantly mean 0.1 seconds, or 1.5 seconds? Without a benchmark, a test script cannot verify if the feature passes or fails.
-* **Estimable:** No. Without a clear definition of "instantly", the team cannot estimate the effort required to build the feature. Violations of testable are often also not estimable. In the example above, the Subjective UI was still estiable, because independent of the specific definition of "modern", the implementation effort would not change signifiantly, just the specific UI that would be chosen would change.
+* **Why it violates Testable:** "Instantly" is subjective. Does it mean 100 milliseconds? Two seconds? Zero perceived delay? Without a quantifiable threshold, QA cannot write a definitive pass/fail test—and the developer cannot know when to stop optimizing.
 * **How to fix it:** Replace the subjective word with a quantifiable service level indicator. *(e.g., "Acceptance Criteria: Given the database contains 5 years of sales data, when the analyst requests the monthly sales report, then the data renders on screen in under 2.5 seconds at the 95th percentile.")*
 
 
@@ -441,14 +487,14 @@ Here are examples of user stories that isolate those specific violations of the 
 **User Story:** *"**As a** site administrator, **I want** the dashboard to feel **snappy** when I log in **so that** I don't get frustrated with the interface."*
 
 *   **Why it violates Testable:** Terms like "snappy" or "fast" are subjective. Without a specific metric (e.g., "loads in under 2 seconds"), there is no objective "Yes" or "No" answer to determine if the story is done. 
-*   **Why it is still Estimable:** A developer might still estimate this as a "small" task if they assume it just requires basic front-end optimization, even though they can't formally verify the "snappy" feel.
+*   **Why it is still Estimable:** The developers know the dashboard and its tech stack well. Regardless of how "snappy" is ultimately defined, they can estimate the effort for standard front-end optimizations (lazy loading, caching, query tuning) that would improve perceived responsiveness. The implementation work is predictable even though the acceptance threshold is not.
 
  **Violates Estimable but not Testable**
-**User Story:** *"**As a** safety officer, **I want** the system to **automatically identify every pedestrian** in this complex, low-light video feed."*
+**User Story:** *"**As a** safety officer, **I want** the system to **automatically identify every pedestrian** in this complex, low-light video feed **so that** I can monitor crosswalk safety without reviewing hours of footage manually."*
 
 *   **Why it violates Estimable:** This is a "research project". Because the technical implementation is unknown or highly innovative, developers cannot put useful bounds on the time or cost required to solve it.
 *   **Why it is still Testable:** It is perfectly testable; you could poll 1,000 humans to verify if the software's identifications match reality. The outcome is clear, but the effort to reach it is not.
-*   **What about Small?** This user story is not small. It is a very large feature that takes a long time to implement.
+*   **What about Small?** This user story also violates Small—it is a very large feature that would span multiple sprints. However, the key insight is that even if we broke it into smaller pieces, each piece would still be unestimable due to the technical uncertainty. The Estimable violation is the root cause here, not the size.
 
 
 ### How are Estimable and Small different?
