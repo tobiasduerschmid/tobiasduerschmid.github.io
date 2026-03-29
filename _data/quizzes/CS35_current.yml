@@ -1,6 +1,5 @@
 title: "CS 35L Quiz"
 description: "Includes all quizzes taught until today"
 decks:
-  - shell
-  - git
-  - makefile
+  - user_stories
+  - effective_learning

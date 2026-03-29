@@ -1,5 +1,5 @@
 title: "Current CS35L Deck"
 description: "Includes all flash cards taught until today"
 decks:
-  - shell
-  - git
+  - user_stories
+  - study_tips
