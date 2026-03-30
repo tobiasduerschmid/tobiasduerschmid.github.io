@@ -120,7 +120,7 @@ If stories violate the Independent criterion, you can improve them using these t
 * **Small:** Yes. Each story is a manageable chunk of work that fits within a sprint.
 * **Testable:** Yes. Clear acceptance criteria can be written for sending, receiving, and replying.
 * **Why it violates Independent:** Both stories include "sending a message"—this is an *overlap dependency*, the most harmful form of story dependency {% cite Wake2003INVESTinGoodStories %}. If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
-* **How to fix it:** Repartition into three non-overlapping stories: "**As a** team member, **I want to** send a message", "**As a** team member, **I want to** receive messages", and "**As a** team member, **I want to** reply to a message."
+* **How to fix it:** Make the dependency explicit. Merging them into one story is not an option as it would violate the small criterion, splitting them into three stories (sending, receiving and replying) is not an option as it would still violate the independent criterion and also violate valuable for just sending without receiving.  
 
 **Example 2: Technical (Horizontal) Splitting**
 > Story A: *"**As a** job seeker, **I want to** fill out a resume form **so that** I can enter my information."*
