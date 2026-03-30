@@ -77,7 +77,7 @@ To evaluate if a user story is well-written, we apply the INVEST criteria:
 * **Small**: A story should be a manageable chunk of work that isn't easily split into smaller, still-valuable pieces.
 * **Testable**: It must be verifiable through its acceptance criteria.
 
-**Important:** ==The application of the Invest criteria is usually *content-dependent*==. 
+**Important:** ==The application of the INVEST criteria is often *content-dependent*==. 
 For example, a story that is quite large to implement but cannot be effectively split into separate user stories can still be considered "small enough" while a user story that is objectively faster and easier to implement can be considered "*not* small" if splitting it up into seperate user stories that are still valuable and independent is more elegant. 
 Or a user story that is "independent" in one set of user stories (because all its dependencies have already been implemented) is "*not* independent" if it is in a set of user stories where its dependencies have *not* been implemented yet and therefore a dependency is still in the user story set. 
 Understanding this crutial aspect of the INVEST criteria is key to evaluating user stories. 
