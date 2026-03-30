@@ -43,10 +43,14 @@ GEM
       logger
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    ffi (1.17.3-arm64-darwin)
     ffi (1.17.3-x64-mingw-ucrt)
+    ffi (1.17.3-x86_64-linux-gnu)
     forwardable (1.4.0)
     forwardable-extended (2.6.0)
+    google-protobuf (3.25.8-arm64-darwin)
     google-protobuf (3.25.8-x64-mingw-ucrt)
+    google-protobuf (3.25.8-x86_64-linux)
     http_parser.rb (0.8.1)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
@@ -128,7 +132,11 @@ GEM
     rexml (3.4.4)
     rouge (4.7.0)
     safe_yaml (1.0.5)
+    sass-embedded (1.77.5-arm64-darwin)
+      google-protobuf (>= 3.25, < 5.0)
     sass-embedded (1.77.5-x64-mingw-ucrt)
+      google-protobuf (>= 3.25, < 5.0)
+    sass-embedded (1.77.5-x86_64-linux-gnu)
       google-protobuf (>= 3.25, < 5.0)
     sawyer (0.9.3)
       addressable (>= 2.3.5)
@@ -150,7 +158,9 @@ GEM
     webrick (1.9.2)
 
 PLATFORMS
+  arm64-darwin
   x64-mingw-ucrt
+  x86_64-linux
 
 DEPENDENCIES
   jekyll (>= 4.0.0)
