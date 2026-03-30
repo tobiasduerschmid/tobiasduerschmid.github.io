@@ -6,7 +6,8 @@ source 'https://rubygems.org'
 gem "jekyll", ">=4.0.0"
 gem "jekyll-seo-tag"
 gem "wdm", "~> 0.1.0", platforms: [:x64_mingw, :mingw, :mswin]
-gem "tzinfo-data", platforms: [:x64_mingw, :mingw, :mswin, :jruby]
+gem "tzinfo"
+gem "tzinfo-data"
 
 gem "kramdown-parser-gfm"
 
