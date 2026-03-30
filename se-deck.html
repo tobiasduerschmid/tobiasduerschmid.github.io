@@ -86,7 +86,7 @@ title: "SE Gym"
 
       <div id="gym-entrance-sections">
 
-        <!-- Difficult Questions Gym (shown only when analyze is on and there are difficult questions) -->
+        <!-- Difficult Questions Deck (shown only when analyze is on and there are difficult questions) -->
         <div id="difficult-gym-section" style="display: none;">
           <h2 class="difficult-heading">Difficult Questions</h2>
           <div id="difficult-gym-container">
@@ -232,33 +232,33 @@ title: "SE Gym"
     var ALL_CARD_DATA = {
       quizzes: {
         {% for quiz_entry in site.data.quizzes %} {% assign qid = quiz_entry[0] %} {% assign qdata = quiz_entry[1] %} {% if qdata.questions %}
-    {{ qid | jsonify }}: {
-      title: {{ qdata.title | jsonify }},
-      description: {{ qdata.description | default: "" | jsonify }},
+    { { qid | jsonify } }: {
+      title: { { qdata.title | jsonify } },
+      description: { { qdata.description | default: "" | jsonify } },
       questions: [
         {% for q in qdata.questions %} {
-      question: {{ q.question | markdownify | jsonify }},
-      type: {{ q.type | default: "single" | jsonify }},
-      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
-    correct_index: {{ q.correct_index | jsonify }},
-    correct_indices: {{ q.correct_indices | jsonify }},
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
+      question: { { q.question | markdownify | jsonify } },
+      type: { { q.type | default: "single" | jsonify } },
+      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
+    correct_index: { { q.correct_index | jsonify } },
+    correct_indices: { { q.correct_indices | jsonify } },
+    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
             }, {% endfor %}
           ]
         },
     {% elsif qdata.decks %}
-    {{ qid | jsonify }}: {
-      title: {{ qdata.title | jsonify }},
-      description: {{ qdata.description | default: "" | jsonify }},
+    { { qid | jsonify } }: {
+      title: { { qdata.title | jsonify } },
+      description: { { qdata.description | default: "" | jsonify } },
       isMaster: true,
         questions: [
           {% for gym_id in qdata.decks %} {% assign ref_data = site.data.quizzes[gym_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
-      question: {{ q.question | markdownify | jsonify }},
-      type: {{ q.type | default: "single" | jsonify }},
-      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
-    correct_index: {{ q.correct_index | jsonify }},
-    correct_indices: {{ q.correct_indices | jsonify }},
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
+      question: { { q.question | markdownify | jsonify } },
+      type: { { q.type | default: "single" | jsonify } },
+      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
+    correct_index: { { q.correct_index | jsonify } },
+    correct_indices: { { q.correct_indices | jsonify } },
+    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
             }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -266,27 +266,27 @@ title: "SE Gym"
       },
     flashcards: {
       {% for fc_entry in site.data.flashcards %} {% assign fcid = fc_entry[0] %} {% assign fcdata = fc_entry[1] %} {% if fcdata.cards %}
-      {{ fcid | jsonify }}: {
-        title: {{ fcdata.title | jsonify }},
-        description: {{ fcdata.description | default: "" | jsonify }},
+      { { fcid | jsonify } }: {
+        title: { { fcdata.title | jsonify } },
+        description: { { fcdata.description | default: "" | jsonify } },
         cards: [
           {% for card in fcdata.cards %} {
-        question: {{ card.question | markdownify | jsonify }},
-        answer: {{ card.answer | markdownify | jsonify }},
-        explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
+        question: { { card.question | markdownify | jsonify } },
+        answer: { { card.answer | markdownify | jsonify } },
+        explanation: { { card.explanation | default: "" | markdownify | jsonify } }
       }, {% endfor %}
           ]
     },
     {% elsif fcdata.decks %}
-    {{ fcid | jsonify }}: {
-      title: {{ fcdata.title | jsonify }},
-      description: {{ fcdata.description | default: "" | jsonify }},
+    { { fcid | jsonify } }: {
+      title: { { fcdata.title | jsonify } },
+      description: { { fcdata.description | default: "" | jsonify } },
       isMaster: true,
         cards: [
           {% for gym_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[gym_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
-      question: {{ card.question | markdownify | jsonify }},
-      answer: {{ card.answer | markdownify | jsonify }},
-      explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
+      question: { { card.question | markdownify | jsonify } },
+      answer: { { card.answer | markdownify | jsonify } },
+      explanation: { { card.explanation | default: "" | markdownify | jsonify } }
     }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -579,7 +579,7 @@ title: "SE Gym"
       background: #d1d5da;
     }
 
-    /* Gym Items */
+    /* Deck Items */
     .gym-item {
       display: flex;
       align-items: center;
@@ -684,7 +684,7 @@ title: "SE Gym"
       border-radius: 8px;
     }
 
-    /* Workout */
+    /* Session */
     #gym-workout {
       padding-top: 10px;
     }
@@ -713,7 +713,7 @@ title: "SE Gym"
       margin-bottom: 8px;
     }
 
-    /* Workout Quiz Card */
+    /* Session Quiz Card */
     .workout-quiz-card {
       background: #ffffff;
       border: 1px solid #e1e4e8;
@@ -881,7 +881,7 @@ title: "SE Gym"
       display: inline-block;
     }
 
-    /* Workout Flashcard */
+    /* Session Flashcard */
     .workout-flashcard {
       background: #ffffff;
       border: 1px solid #e1e4e8;
@@ -999,7 +999,7 @@ title: "SE Gym"
       background: #c82333;
     }
 
-    /* Workout Results */
+    /* Session Results */
     .workout-results-content {
       text-align: center;
       padding: 32px 0;
@@ -1294,7 +1294,7 @@ title: "SE Gym"
       var difficultCountEl = document.getElementById('difficult-count');
       var difficultAddBtn = document.getElementById('difficult-add-btn');
 
-      // Workout state
+      // Session state
       var workoutCards = [];
       var workoutCurrentStep = 0;
       var workoutScore = 0;
@@ -1314,7 +1314,7 @@ title: "SE Gym"
       // ==================== LIBRARY VIEW ====================
 
       function refreshLibrary() {
-        var gym = PersonalGym.getGym();
+        var gym = PersonalGym.getDeck();
         var totalCards = 0;
 
         // Update add buttons and item states
@@ -1322,16 +1322,16 @@ title: "SE Gym"
           var type = item.dataset.type;
           var id = item.dataset.id;
           var btn = item.querySelector('.gym-add-btn');
-          var inGym = gym.some(function (d) { return d.type === type && d.id === id; });
+          var inDeck = gym.some(function (d) { return d.type === type && d.id === id; });
 
-          item.classList.toggle('in-gym', inGym);
-          btn.classList.toggle('in-gym', inGym);
+          item.classList.toggle('in-gym', inDeck);
+          btn.classList.toggle('in-gym', inDeck);
           var icon = btn.querySelector('i');
-          icon.className = inGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          btn.title = inGym ? 'Remove from gym' : 'Add to gym';
+          icon.className = inDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          btn.title = inDeck ? 'Remove from gym' : 'Add to gym';
         });
 
-        // ---- Difficult Questions Gym ----
+        // ---- Difficult Questions Deck ----
         var difficultCards = [];
         var hasDifficult = false;
         if (PersonalGym.isAnalyzePerformance()) {
@@ -1339,27 +1339,27 @@ title: "SE Gym"
           hasDifficult = difficultCards.length > 0;
         }
 
-        var difficultInGym = gym.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
+        var difficultInDeck = gym.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
 
         if (PersonalGym.isAnalyzePerformance() && hasDifficult) {
           difficultSection.style.display = 'block';
           difficultCountEl.textContent = '(' + difficultCards.length + ' cards)';
-          difficultAddBtn.classList.toggle('in-gym', difficultInGym);
+          difficultAddBtn.classList.toggle('in-gym', difficultInDeck);
           var dIcon = difficultAddBtn.querySelector('i');
-          dIcon.className = difficultInGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          difficultAddBtn.title = difficultInGym ? 'Remove from workout' : 'Add to workout';
-          if (difficultInGym) {
+          dIcon.className = difficultInDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
+          difficultAddBtn.title = difficultInDeck ? 'Remove from workout' : 'Add to workout';
+          if (difficultInDeck) {
             totalCards += difficultCards.length;
           }
         } else {
           difficultSection.style.display = 'none';
           // Remove difficult from gym if no longer applicable
           if (gym.some(function (d) { return d.type === 'difficult'; })) {
-            PersonalGym.removeFromGym('difficult', 'difficult');
+            PersonalGym.removeFromDeck('difficult', 'difficult');
           }
         }
 
-        // Build "Your Gym" section
+        // Build "Your Deck" section
         var selectedHtml = '';
         var seenQuestions = {};
         gym.forEach(function (entry) {
@@ -1374,7 +1374,7 @@ title: "SE Gym"
             }
           });
           var badgeClass = entry.type === 'quiz' ? 'quiz-badge' : 'flashcard-badge';
-          var badgeText = entry.type === 'quiz' ? (data.isMaster ? 'Master Quiz' : 'Quiz') : (data.isMaster ? 'Master Flashcards' : 'Flashcards');
+          var badgeText = entry.type === 'quiz' ? (data.isMaster ? 'Master Quiz' : 'Quiz') : (data.isMaster ? 'Master Flashcards' : 'Flashcard');
           selectedHtml += '<div class="gym-item in-gym" data-type="' + entry.type + '" data-id="' + entry.id + '">' +
             '<div class="gym-item-info">' +
             '<span class="gym-item-badge ' + badgeClass + '">' + badgeText + '</span>' +
@@ -1387,8 +1387,8 @@ title: "SE Gym"
             '</div>';
         });
 
-        // ---- "Your Gym" entry for difficult questions ----
-        if (difficultInGym && PersonalGym.isAnalyzePerformance() && hasDifficult) {
+        // ---- "Your Deck" entry for difficult questions ----
+        if (difficultInDeck && PersonalGym.isAnalyzePerformance() && hasDifficult) {
           selectedHtml += '<div class="gym-item in-gym difficult-gym-item" data-type="difficult" data-id="difficult">' +
             '<div class="gym-item-info">' +
             '<span class="gym-item-badge difficult-badge">Difficult</span>' +
@@ -1401,7 +1401,7 @@ title: "SE Gym"
             '</div>';
         }
 
-        var hasAnything = gym.length > 0 || (difficultInGym && hasDifficult);
+        var hasAnything = gym.length > 0 || (difficultInDeck && hasDifficult);
         if (!hasAnything) {
           gymSelectedDiv.innerHTML = '<p class="empty-gym-msg">Your gym is empty. Add quizzes and flashcard sets below.</p>';
         } else {
@@ -1516,13 +1516,13 @@ title: "SE Gym"
         });
       }
 
-      // ---- Empty Gym Button ----
+      // ---- Empty Deck Button ----
       document.getElementById('empty-gym-btn').addEventListener('click', function () {
-        PersonalGym.clearGym();
+        PersonalGym.clearDeck();
         refreshLibrary();
       });
 
-      // ---- Activate Personal Gym Toggle ----
+      // ---- Activate Personal Deck Toggle ----
       function applyActiveState(isActive) {
         gymControlsBody.classList.toggle('pd-inactive', !isActive);
         gymLibrarySections.classList.toggle('pd-inactive', !isActive);
@@ -1575,7 +1575,7 @@ title: "SE Gym"
       // ==================== WORKOUT ====================
 
       function buildWorkoutCards() {
-        var gym = PersonalGym.getGym();
+        var gym = PersonalGym.getDeck();
         var cards = [];
         var seenQuestions = {};
 
@@ -1808,7 +1808,7 @@ title: "SE Gym"
           });
         }
 
-        div.querySelector('.next-btn').addEventListener('click', nextWorkoutCard);
+        div.querySelector('.next-btn').addEventListener('click', nextSessionCard);
       }
 
       // ---- FLASHCARD RENDERING ----
@@ -1850,39 +1850,39 @@ title: "SE Gym"
         div.querySelector('.correct-btn').addEventListener('click', function () {
           workoutScore++;
           PersonalGym.recordResult(c.question, true);
-          nextWorkoutCard();
+          nextSessionCard();
         });
 
         div.querySelector('.incorrect-btn').addEventListener('click', function () {
           workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
           PersonalGym.recordResult(c.question, false);
-          nextWorkoutCard();
+          nextSessionCard();
         });
       }
 
       // ---- SESSION NAVIGATION ----
 
-      function nextWorkoutCard() {
+      function nextSessionCard() {
         if (workoutIsReview) {
           workoutReviewStep++;
           if (workoutReviewStep < workoutReviewQueue.length) {
-            showWorkoutCard(workoutReviewQueue[workoutReviewStep]);
+            showSessionCard(workoutReviewQueue[workoutReviewStep]);
             scrollToTop();
           } else {
-            finishWorkout();
+            finishSession();
           }
         } else {
           workoutCurrentStep++;
           if (workoutCurrentStep < workoutCards.length) {
-            showWorkoutCard(workoutCurrentStep);
+            showSessionCard(workoutCurrentStep);
             scrollToTop();
           } else {
-            finishWorkout();
+            finishSession();
           }
         }
       }
 
-      function finishWorkout() {
+      function finishSession() {
         workoutCardArea.innerHTML = '';
         workoutResults.style.display = 'block';
         workoutProgress.style.width = '100%';
@@ -1904,11 +1904,11 @@ title: "SE Gym"
         workoutIncorrectIndices = [];
         workoutReviewStep = 0;
         workoutResults.style.display = 'none';
-        showWorkoutCard(workoutReviewQueue[0]);
+        showSessionCard(workoutReviewQueue[0]);
         scrollToTop();
       }
 
-      function restartWorkout() {
+      function restartSession() {
         shuffleArray(workoutCards);
         workoutCurrentStep = 0;
         workoutScore = 0;
@@ -1917,7 +1917,7 @@ title: "SE Gym"
         workoutReviewQueue = [];
         workoutReviewStep = 0;
         workoutResults.style.display = 'none';
-        showWorkoutCard(0);
+        showSessionCard(0);
         scrollToTop();
       }
 
@@ -1936,9 +1936,9 @@ title: "SE Gym"
 
       // ==================== EVENT BINDINGS ====================
 
-      startBtn.addEventListener('click', startWorkout);
+      startBtn.addEventListener('click', startSession);
       backBtn.addEventListener('click', goBackToLibrary);
-      workoutRestartBtn.addEventListener('click', restartWorkout);
+      workoutRestartBtn.addEventListener('click', restartSession);
       workoutReviewBtn.addEventListener('click', startReview);
       workoutBackBtn.addEventListener('click', goBackToLibrary);
 
@@ -1961,7 +1961,7 @@ title: "SE Gym"
 
   {% else %}
   <div style="max-width: 800px; margin: 100px auto; padding: 20px; text-align: center;">
-    <p>Personal Gym feature is not currently available.</p>
+    <p>Personal Deck feature is not currently available.</p>
   </div>
   {% endif %}
 

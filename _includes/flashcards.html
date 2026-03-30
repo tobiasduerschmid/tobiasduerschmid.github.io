@@ -7,12 +7,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
 {% assign flashcard_data = site.data.flashcards[include.id] %}
 
 {% if flashcard_data %}
-{% if flashcard_data.gyms %}
+{% if flashcard_data.decks %}
 {% assign all_cards = "" | split: "" %}
-{% for gym_id in flashcard_data.gyms %}
-{% assign gym_data = site.data.flashcards[gym_id] %}
-{% if gym_data %}
-{% assign all_cards = all_cards | concat: gym_data.cards %}
+{% for deck_id in flashcard_data.decks %}
+{% assign deck_data = site.data.flashcards[deck_id] %}
+{% if deck_data %}
+{% assign all_cards = all_cards | concat: deck_data.cards %}
 {% endif %}
 {% endfor %}
 {% else %}

@@ -7,12 +7,12 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign quiz_data = site.data.quizzes[include.id] %}
 
 {% if quiz_data %}
-{% if quiz_data.gyms %}
+{% if quiz_data.decks %}
 {% assign all_questions = "" | split: "" %}
-{% for gym_id in quiz_data.gyms %}
-{% assign gym_data = site.data.quizzes[gym_id] %}
-{% if gym_data %}
-{% assign all_questions = all_questions | concat: gym_data.questions %}
+{% for deck_id in quiz_data.decks %}
+{% assign deck_data = site.data.quizzes[deck_id] %}
+{% if deck_data %}
+{% assign all_questions = all_questions | concat: deck_data.questions %}
 {% endif %}
 {% endfor %}
 {% else %}

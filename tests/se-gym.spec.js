@@ -114,7 +114,7 @@ test.describe('SE Gym - Library View', () => {
     await expect(gitAddBtn).toHaveClass(/in-gym/);
     await expect(gitAddBtn.locator('i')).toHaveClass(/fa-check/);
 
-    // Should appear in "Your Deck" section
+    // Should appear in "Your Gym" section
     await expect(page.locator('#gym-selected .gym-item')).toHaveCount(1);
     await expect(page.locator('#gym-selected .gym-item-title')).toContainText('Version Control and Git');
   });
