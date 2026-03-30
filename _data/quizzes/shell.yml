@@ -1,4 +1,4 @@
-title: "Self-Assessment Quiz: Shell Scripting & UNIX Philosophy"
+title: "Shell Scripting & UNIX Philosophy Quiz"
 description: "Test your conceptual understanding of shell environments, data streams, and scripting paradigms beyond basic command memorization."
 questions:
   - id: 1
