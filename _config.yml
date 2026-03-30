@@ -6,13 +6,16 @@ plugins:
 env: production
 
 # Feature flags
-personal_deck: true
+personal_gym: true
 
 sass:
   style: compressed
 
 # Site settings
-timezone: US/Los_Angeles
+# timezone: US/Los_Angeles
+
+
+
 
 baseurl: "" # the subpath of your site, e.g. /blog/
 url: "https://tobiasduerschmid.github.io/" # the base hostname & protocol for your site

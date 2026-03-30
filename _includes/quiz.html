@@ -7,12 +7,12 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% assign quiz_data = site.data.quizzes[include.id] %}
 
 {% if quiz_data %}
-{% if quiz_data.decks %}
+{% if quiz_data.gyms %}
 {% assign all_questions = "" | split: "" %}
-{% for deck_id in quiz_data.decks %}
-{% assign deck_data = site.data.quizzes[deck_id] %}
-{% if deck_data %}
-{% assign all_questions = all_questions | concat: deck_data.questions %}
+{% for gym_id in quiz_data.gyms %}
+{% assign gym_data = site.data.quizzes[gym_id] %}
+{% if gym_data %}
+{% assign all_questions = all_questions | concat: gym_data.questions %}
 {% endif %}
 {% endfor %}
 {% else %}
@@ -24,9 +24,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
   <div class="quiz-header">
     <div class="quiz-title-row">
       <h3>{{ quiz_data.title }}</h3>
-      {% if site.personal_deck %}
-      <button class="se-deck-toggle" data-deck-type="quiz" data-deck-id="{{ include.id }}"
-        title="Add to Personal Deck" style="display: none;">
+      {% if site.personal_gym %}
+      <button class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}" title="Add to Personal Gym"
+        style="display: none;">
         <i class="fa-solid fa-plus"></i>
       </button>
       {% endif %}
@@ -71,14 +71,14 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
   <div class="quiz-results hidden">
     <div class="results-content">
-      <h4>Quiz Complete!</h4>
+      <h4>Workout Complete!</h4>
       <div class="score-display">
         Your Score: <span class="current-score">0</span>/<span class="total-questions">{{ all_questions | size
           }}</span>
       </div>
       <p class="score-summary"></p>
       <div class="results-actions">
-        <button class="restart-btn">Restart Quiz</button>
+        <button class="restart-btn">Restart Workout</button>
         <button class="review-btn hidden">Review Incorrect Questions</button>
       </div>
     </div>
@@ -335,7 +335,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     margin: 0;
   }
 
-  .se-deck-toggle {
+  .se-gym-toggle {
     background: none;
     border: 2px solid #ccc;
     border-radius: 50%;
@@ -352,18 +352,18 @@ Data source: _data/quizzes/{{ include.id }}.yml
     padding: 0;
   }
 
-  .se-deck-toggle:hover {
+  .se-gym-toggle:hover {
     border-color: #2774AE;
     color: #2774AE;
   }
 
-  .se-deck-toggle.in-deck {
+  .se-gym-toggle.in-gym {
     background: #28a745;
     border-color: #28a745;
     color: white;
   }
 
-  .se-deck-toggle.in-deck:hover {
+  .se-gym-toggle.in-gym:hover {
     background: #dc3545;
     border-color: #dc3545;
   }
@@ -515,8 +515,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
-        PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
+      if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+        PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
       }
 
       explanation.classList.remove('hidden');
@@ -559,8 +559,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
-        PersonalDeck.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
+      if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+        PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
       }
 
       explanation.classList.remove('hidden');
@@ -673,28 +673,38 @@ Data source: _data/quizzes/{{ include.id }}.yml
     reviewBtn.addEventListener('click', startReview);
     restartBtn.addEventListener('click', restartQuiz);
 
-    // Personal Deck toggle
-    if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive()) {
-      const toggleBtn = container.querySelector('.se-deck-toggle');
+    // Personal Gym toggle
+    if (window.PersonalGym && PersonalGym.isPersonalGymActive()) {
+      const toggleBtn = container.querySelector('.se-gym-toggle');
       if (toggleBtn) {
         toggleBtn.style.display = '';
-        const deckType = toggleBtn.dataset.deckType;
-        const deckId = toggleBtn.dataset.deckId;
+        
+        function updateToggleButton(toggleBtn) {
+          const gymType = toggleBtn.dataset.gymType;
+          const gymId = toggleBtn.dataset.gymId;
 
-        function updateToggleState() {
-          const inDeck = PersonalDeck.isInDeck(deckType, deckId);
-          toggleBtn.classList.toggle('in-deck', inDeck);
-          const icon = toggleBtn.querySelector('i');
-          icon.className = inDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          toggleBtn.title = inDeck ? 'Remove from Personal Deck' : 'Add to Personal Deck';
+          if (PersonalGym && typeof PersonalGym.isInGym === 'function') {
+            const inGym = PersonalGym.isInGym(gymType, gymId);
+            toggleBtn.classList.toggle('in-gym', inGym);
+            toggleBtn.innerHTML = inGym ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>';
+            toggleBtn.title = inGym ? "Remove from Personal Gym" : "Add to Personal Gym";
+          }
         }
 
-        updateToggleState();
+        function toggleInGym(toggleBtn) {
+          const gymType = toggleBtn.dataset.gymType;
+          const gymId = toggleBtn.dataset.gymId;
 
+          if (PersonalGym && typeof PersonalGym.toggleGym === 'function') {
+            PersonalGym.toggleGym(gymType, gymId);
+            updateToggleButton(toggleBtn);
+          }
+        }
+
+        updateToggleButton(toggleBtn);
         toggleBtn.addEventListener('click', function (e) {
           e.preventDefault();
-          PersonalDeck.toggleDeck(deckType, deckId);
-          updateToggleState();
+          toggleInGym(toggleBtn);
         });
       }
     }

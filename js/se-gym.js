@@ -1,7 +1,7 @@
 (function () {
-  var COOKIE_NAME = 'se-deck';
+  var COOKIE_NAME = 'se-gym';
   var COOKIE_DAYS = 365;
-  var ACTIVE_COOKIE = 'se-deck-active';
+  var ACTIVE_COOKIE = 'se-gym-active';
 
   function setCookie(name, value, days) {
     var d = new Date();
@@ -19,39 +19,39 @@
     return null;
   }
 
-  function getDeck() {
+  function getGym() {
     var raw = getCookie(COOKIE_NAME);
     if (!raw) return [];
     try { return JSON.parse(raw); } catch (e) { return []; }
   }
 
-  function saveDeck(deck) {
-    setCookie(COOKIE_NAME, JSON.stringify(deck), COOKIE_DAYS);
+  function saveGym(gym) {
+    setCookie(COOKIE_NAME, JSON.stringify(gym), COOKIE_DAYS);
   }
 
-  function isInDeck(type, id) {
-    return getDeck().some(function (item) { return item.type === type && item.id === id; });
+  function isInGym(type, id) {
+    return getGym().some(function (item) { return item.type === type && item.id === id; });
   }
 
-  function addToDeck(type, id) {
-    var deck = getDeck();
-    if (!deck.some(function (item) { return item.type === type && item.id === id; })) {
-      deck.push({ type: type, id: id });
-      saveDeck(deck);
+  function addToGym(type, id) {
+    var gym = getGym();
+    if (!gym.some(function (item) { return item.type === type && item.id === id; })) {
+      gym.push({ type: type, id: id });
+      saveGym(gym);
     }
   }
 
-  function removeFromDeck(type, id) {
-    var deck = getDeck().filter(function (item) { return !(item.type === type && item.id === id); });
-    saveDeck(deck);
+  function removeFromGym(type, id) {
+    var gym = getGym().filter(function (item) { return !(item.type === type && item.id === id); });
+    saveGym(gym);
   }
 
-  function toggleDeck(type, id) {
-    if (isInDeck(type, id)) {
-      removeFromDeck(type, id);
+  function toggleGym(type, id) {
+    if (isInGym(type, id)) {
+      removeFromGym(type, id);
       return false;
     } else {
-      addToDeck(type, id);
+      addToGym(type, id);
       return true;
     }
   }
@@ -59,17 +59,17 @@
   // ==================== Performance Tracking ====================
 
   var PERF_COOKIE = 'analyze-performance';
-  var STATS_KEY = 'se-deck-stats';
+  var STATS_KEY = 'se-gym-stats';
 
-  function isPersonalDeckActive() {
+  function isPersonalGymActive() {
     return getCookie(ACTIVE_COOKIE) === 'true';
   }
 
-  function setPersonalDeckActive(value) {
+  function setPersonalGymActive(value) {
     setCookie(ACTIVE_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
   }
 
-  function clearDeck() {
+  function clearGym() {
     setCookie(COOKIE_NAME, '[]', COOKIE_DAYS);
   }
 
@@ -125,16 +125,16 @@
     return stats[h] || null;
   }
 
-  window.PersonalDeck = {
-    getDeck: getDeck,
-    saveDeck: saveDeck,
-    isInDeck: isInDeck,
-    addToDeck: addToDeck,
-    removeFromDeck: removeFromDeck,
-    toggleDeck: toggleDeck,
-    isPersonalDeckActive: isPersonalDeckActive,
-    setPersonalDeckActive: setPersonalDeckActive,
-    clearDeck: clearDeck,
+  window.PersonalGym = {
+    getGym: getGym,
+    saveGym: saveGym,
+    isInGym: isInGym,
+    addToGym: addToGym,
+    removeFromGym: removeFromGym,
+    toggleGym: toggleGym,
+    isPersonalGymActive: isPersonalGymActive,
+    setPersonalGymActive: setPersonalGymActive,
+    clearGym: clearGym,
     isAnalyzePerformance: isAnalyzePerformance,
     setAnalyzePerformance: setAnalyzePerformance,
     hashQuestion: hashQuestion,

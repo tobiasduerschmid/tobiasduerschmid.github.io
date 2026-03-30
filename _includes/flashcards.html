@@ -7,25 +7,25 @@ Data source: _data/flashcards/{{ include.id }}.yml
 {% assign flashcard_data = site.data.flashcards[include.id] %}
 
 {% if flashcard_data %}
-  {% if flashcard_data.decks %}
-    {% assign all_cards = "" | split: "" %}
-    {% for deck_id in flashcard_data.decks %}
-      {% assign deck_data = site.data.flashcards[deck_id] %}
-      {% if deck_data %}
-        {% assign all_cards = all_cards | concat: deck_data.cards %}
-      {% endif %}
-    {% endfor %}
-  {% else %}
-    {% assign all_cards = flashcard_data.cards %}
-  {% endif %}
+{% if flashcard_data.gyms %}
+{% assign all_cards = "" | split: "" %}
+{% for gym_id in flashcard_data.gyms %}
+{% assign gym_data = site.data.flashcards[gym_id] %}
+{% if gym_data %}
+{% assign all_cards = all_cards | concat: gym_data.cards %}
+{% endif %}
+{% endfor %}
+{% else %}
+{% assign all_cards = flashcard_data.cards %}
+{% endif %}
 
 <div class="flashcards-container" id="flashcards-{{ include.id }}" data-quiz-id="{{ include.id }}">
   <div class="quiz-header">
     <div class="quiz-title-row">
       <h3>{{ flashcard_data.title }}</h3>
-      {% if site.personal_deck %}
-      <button class="se-deck-toggle" data-deck-type="flashcard" data-deck-id="{{ include.id }}"
-        title="Add to Personal Deck" style="display: none;">
+      {% if site.personal_gym %}
+      <button class="se-gym-toggle" data-gym-type="flashcard" data-gym-id="{{ include.id }}"
+        title="Add to Personal Gym" style="display: none;">
         <i class="fa-solid fa-plus"></i>
       </button>
       {% endif %}
@@ -60,13 +60,13 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
   <div class="flashcards-results hidden">
     <div class="results-content">
-      <h4>Session Complete!</h4>
+      <h4>Workout Complete!</h4>
       <div class="score-display">
         Your Score: <span class="current-score">0</span>/<span class="total-cards">{{ all_cards | size }}</span>
       </div>
       <p class="score-summary">Come back later to improve your recall!</p>
       <div class="results-actions">
-        <button class="restart-btn">Restart Session</button>
+        <button class="restart-btn">Restart Workout</button>
         <button class="review-btn hidden">Review Incorrect Cards</button>
       </div>
     </div>
@@ -233,7 +233,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     margin: 0;
   }
 
-  .se-deck-toggle {
+  .se-gym-toggle {
     background: none;
     border: 2px solid #ccc;
     border-radius: 50%;
@@ -250,18 +250,18 @@ Data source: _data/flashcards/{{ include.id }}.yml
     padding: 0;
   }
 
-  .se-deck-toggle:hover {
+  .se-gym-toggle:hover {
     border-color: #2774AE;
     color: #2774AE;
   }
 
-  .se-deck-toggle.in-deck {
+  .se-gym-toggle.in-gym {
     background: #28a745;
     border-color: #28a745;
     color: white;
   }
 
-  .se-deck-toggle.in-deck:hover {
+  .se-gym-toggle.in-gym:hover {
     background: #dc3545;
     border-color: #dc3545;
   }
@@ -385,7 +385,6 @@ Data source: _data/flashcards/{{ include.id }}.yml
       display: none !important;
     }
   }
-
 </style>
 
 <script>
@@ -457,7 +456,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     function scrollToTop() {
       const navbar = document.getElementById('navnav');
       const navHeight = navbar ? navbar.offsetHeight : 50;
-      const yOffset = -navHeigh; // Dynamic navbar height + extra padding
+      const yOffset = -navHeight; // Dynamic navbar height + extra padding
       const y = container.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -479,8 +478,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive() && PersonalDeck.isAnalyzePerformance()) {
-        PersonalDeck.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
+      if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+        PersonalGym.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
       }
 
       nextCard();
@@ -494,14 +493,14 @@ Data source: _data/flashcards/{{ include.id }}.yml
           resetCard(nextIdx);
           showCard(nextIdx);
         } else {
-          finishSession();
+          finishWorkout();
         }
       } else {
         currentStep++;
         if (currentStep < cards.length) {
           showCard(currentStep);
         } else {
-          finishSession();
+          finishWorkout();
         }
       }
     }
@@ -513,7 +512,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       card.querySelector('.assessment-buttons').classList.add('hidden');
     }
 
-    function finishSession() {
+    function finishWorkout() {
       cards.forEach(c => c.classList.remove('active'));
       resultsArea.classList.remove('hidden');
       scoreDisplay.textContent = score;
@@ -573,28 +572,38 @@ Data source: _data/flashcards/{{ include.id }}.yml
       showCard(firstReviewIdx);
     }
 
-    // Personal Deck toggle
-    if (window.PersonalDeck && PersonalDeck.isPersonalDeckActive()) {
-      const toggleBtn = container.querySelector('.se-deck-toggle');
+    // Personal Gym toggle
+    if (window.PersonalGym && PersonalGym.isPersonalGymActive()) {
+      const toggleBtn = container.querySelector('.se-gym-toggle');
       if (toggleBtn) {
         toggleBtn.style.display = '';
-        const deckType = toggleBtn.dataset.deckType;
-        const deckId = toggleBtn.dataset.deckId;
+        
+        function updateToggleButton(toggleBtn) {
+          const gymType = toggleBtn.dataset.gymType;
+          const gymId = toggleBtn.dataset.gymId;
 
-        function updateToggleState() {
-          const inDeck = PersonalDeck.isInDeck(deckType, deckId);
-          toggleBtn.classList.toggle('in-deck', inDeck);
-          const icon = toggleBtn.querySelector('i');
-          icon.className = inDeck ? 'fa-solid fa-check' : 'fa-solid fa-plus';
-          toggleBtn.title = inDeck ? 'Remove from Personal Deck' : 'Add to Personal Deck';
+          if (PersonalGym && typeof PersonalGym.isInGym === 'function') {
+            const inGym = PersonalGym.isInGym(gymType, gymId);
+            toggleBtn.classList.toggle('in-gym', inGym);
+            toggleBtn.innerHTML = inGym ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>';
+            toggleBtn.title = inGym ? "Remove from Personal Gym" : "Add to Personal Gym";
+          }
         }
 
-        updateToggleState();
+        function toggleInGym(toggleBtn) {
+          const gymType = toggleBtn.dataset.gymType;
+          const gymId = toggleBtn.dataset.gymId;
 
+          if (PersonalGym && typeof PersonalGym.toggleGym === 'function') {
+            PersonalGym.toggleGym(gymType, gymId);
+            updateToggleButton(toggleBtn);
+          }
+        }
+
+        updateToggleButton(toggleBtn);
         toggleBtn.addEventListener('click', function (e) {
           e.preventDefault();
-          PersonalDeck.toggleDeck(deckType, deckId);
-          updateToggleState();
+          toggleInGym(toggleBtn);
         });
       }
     }

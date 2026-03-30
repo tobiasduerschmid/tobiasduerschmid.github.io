@@ -13,8 +13,10 @@ build:
 	bundle exec jekyll build --incremental
 
 check: build
-	./scripts/check_references.sh
-	./scripts/check_quizzes.sh
+	bash ./scripts/check_references.sh
+	bash ./scripts/check_quizzes.sh
+
+
 
 test: check
 	npx playwright test

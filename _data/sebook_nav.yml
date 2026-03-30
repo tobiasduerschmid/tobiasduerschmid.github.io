@@ -149,6 +149,6 @@ topics:
         url: /SEBook/tools/make.html
       - name: Makefile Tutorial
         url: /SEBook/tools/makefile-tutorial.html
-  - name: SE Deck
+  - name: SE Gym
     icon: null
-    url: /se-deck/
+    url: /se-gym/
