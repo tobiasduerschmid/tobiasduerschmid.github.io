@@ -1,5 +1,5 @@
 ---
-title: Abstract Factory Patern
+title: Abstract Factory Pattern
 layout: sebook
 ---
 

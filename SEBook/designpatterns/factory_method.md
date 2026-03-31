@@ -1,5 +1,5 @@
 ---
-title: Factory Method Patern
+title: Factory Method Pattern
 layout: sebook
 ---
 

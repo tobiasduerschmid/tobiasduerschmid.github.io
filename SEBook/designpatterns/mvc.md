@@ -9,7 +9,7 @@ The Model-View-Controller (MVC) architectural pattern decomposes an interactive 
 # Problem 
 
 User interface software is typically the most frequently modified portion of an interactive application. As systems evolve, menus are reorganized, graphical presentations change, and customers often demand to look at the same underlying data from multiple perspectives—such as simultaneously viewing a spreadsheet, a bar graph, and a pie chart. All of these representations must immediately and consistently reflect the current state of the data.
-A core architectural challenge thus arises: **How can multiple, simultanous user interface functionality be kept completely separate from application functionality while remaining highly responsive to user inputs and underlying data changes?** Furthermore, porting an application to another platform with a radically different "look and feel" standard (or simply upgrading windowing systems) should absolutely not require modifications to the core computational logic of the application.
+A core architectural challenge thus arises: **How can multiple, simultaneous user interface functionality be kept completely separate from application functionality while remaining highly responsive to user inputs and underlying data changes?** Furthermore, porting an application to another platform with a radically different "look and feel" standard (or simply upgrading windowing systems) should absolutely not require modifications to the core computational logic of the application.
 
 # Context
 

@@ -27,7 +27,7 @@ For example:
 
 > (*Travel Itinerary Planner*):  **As a** frequent traveler, **I want to** discover unique, locally hosted activities **so that** I can experience the authentic culture of my destination rather than just the standard tourist traps.
 
-This structure makes the team to identify not just the "what", but also the "who" and — most importantly — the "why".
+This structure helps the team identify not just the "what", but also the "who" and — most importantly — the "why".
 
 The main requirement of the user story is captured in the *I want* part.
 The *so that* part primarily clarifies the goal the user wants to achieve. While it should not prescribe implementation details, it may implicitly introduce quality constraints or dependencies that shape the acceptance criteria.
@@ -57,7 +57,7 @@ For example:
 > * **Given** the user selects a substitute from the alternatives list, **when** they confirm the swap, **then** the recipe's required quantities and nutritional estimates should recalculate and update on the screen.
 > * **Given** the user has modified a recipe with substitutions, **when** they save it to their cookbook, **then** the customized version of the recipe should be stored in their personal profile without altering the original public recipe.
 
-These acceptance criteria add clarity to the user story by defining the specific conditions under which the feature should work as expected. They also help to identify potential edge cases and constraints that need to be considered during development. The acceptance criteria define the scope of conditions that check whether an implementation is "correct" and meets the user's needs. So naturally, ==acceptance criteria must be specific enough to be testable but should not be overly prescriptive about the implementation details, not to constraint the developers more than really needed to describe the true user need==.
+These acceptance criteria add clarity to the user story by defining the specific conditions under which the feature should work as expected. They also help to identify potential edge cases and constraints that need to be considered during development. The acceptance criteria define the scope of conditions that check whether an implementation is "correct" and meets the user's needs. So naturally, ==acceptance criteria must be specific enough to be testable but should not be overly prescriptive about the implementation details, not to constrain the developers more than really needed to describe the true user need==.
 
 Here is another example:
 
@@ -462,7 +462,7 @@ Below are two user stories that are not testable but still satisfy (most) other 
 The INVEST principles matter because they act as a compass for creating high-quality, actionable user stories that align with Agile goals and principles of processes like [Scrum](/SEBook/process/scrum.html). 
 By ensuring stories are **Independent** and **Small**, teams gain the scheduling flexibility needed to implement and release features in any order within short iterations. 
 If user stories are not independent, it becomes hard to always select the highest value user stories. 
-If they are not small, it becomes hard to select a Sprint Backlog that fit the team's velocity.  
+If they are not small, it becomes hard to select a Sprint Backlog that fits the team's velocity.  
 **Negotiable** stories promote essential dialogue between developers and stakeholders, while **Valuable** ones ensure that every effort translates into a meaningful benefit for the user. Finally, stories that are **Estimable** and **Testable** provide the clarity required for accurate sprint planning and objective verification of the finished product. In 
 [Scrum](/SEBook/process/scrum.html) and [XP](/SEBook/process/xp.html), user stories are estimated during the Planning activity. 
 
@@ -511,7 +511,7 @@ Small refers to the physical magnitude of the work. A story should be a manageab
 
 ### **Key Differences**
 1.  **Nature of the Constraint**: **Small** is a constraint on **volume**, while **Estimable** is a constraint on **clarity**.
-2.  **Accuracy vs. Size**: While smaller stories tend to get more accurate estimates, a story can be small but still unestimatable. For example, a "Research Project" or investigative spike might involve a very small amount of work (reading one document), but because the outcome is unknown, it remains impossible to estimate the time required to actually solve the problem.
+2.  **Accuracy vs. Size**: While smaller stories tend to get more accurate estimates, a story can be small but still unestimable. For example, a "Research Project" or investigative spike might involve a very small amount of work (reading one document), but because the outcome is unknown, it remains impossible to estimate the time required to actually solve the problem.
 3.  **Predictability vs. Flow**: Estimability is necessary for **planning** (knowing what fits in a release), while Smallness is necessary for **flow** (ensuring work moves through the system without bottlenecks).
 
 <!--

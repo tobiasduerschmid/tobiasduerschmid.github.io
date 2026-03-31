@@ -1,5 +1,5 @@
 ---
-title: State Design Patern
+title: State Design Pattern
 layout: sebook
 ---
 
@@ -8,7 +8,7 @@ layout: sebook
 
 The core problem the State pattern addresses is when an object's behavior **needs to change dramatically based on its internal state**, and this leads to code that is complex, difficult to maintain, and hard to extend.
 
-If you try to manage state changes using traditional methods, the class containing the state often becomes polluted with large, complex if/else or switch statements that check the current state and execute the appropriate behavior. This results in cluttered code and a violation of the Separation of Concerns design principle, since the code different states is mixed together and it is hard to see what the behavior of the class is in different states. This also violates the Open/Closed principle, since adding additional states is very hard and requires changes in many different places in the code. 
+If you try to manage state changes using traditional methods, the class containing the state often becomes polluted with large, complex if/else or switch statements that check the current state and execute the appropriate behavior. This results in cluttered code and a violation of the Separation of Concerns design principle, since the code for different states is mixed together and it is hard to see what the behavior of the class is in different states. This also violates the Open/Closed principle, since adding additional states is very hard and requires changes in many different places in the code. 
 
 # Context
 
@@ -23,7 +23,7 @@ Create **Concrete State classes** that inherit from the Abstract State and imple
 
 
 
-The only interactions that should be allows are interactions between the Context and Concrete States. There are no interaction among Concrete States objects.
+The only interactions that should be allowed are interactions between the Context and Concrete States. There are no interaction among Concrete States objects.
 
 # Design Decisions
 

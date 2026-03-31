@@ -172,7 +172,7 @@ The middle section indicates attributes of the class (i.e., member variables). 
 
 The bottom section should include all methods that are implemented in this class (i.e., for which the implementation of the class contains a method definition). 
 
-Inheritance is visualized using an arrow with an empty triage pointing to the super class. 
+Inheritance is visualized using an arrow with an empty triangle pointing to the super class. 
 
 Attributes and methods can be marked as *public* (`+`), *private* (`-`), or *protected* (`#`), to indicate the visibility. 
 **Hint:** Avoid public attributes, as this leads to bad design. (Public means every class has access, private means only this class has access, protected means this class and its sub classes have access) 
@@ -185,7 +185,7 @@ Please include types for arguments and a meaningful parameter name. Include retu
 
 Interfaces are classes that do not have any method definitions and no attributes. Interfaces only contain method declarations. Interfaces are visualized using the `<<interface>>` stereotype
 
-To realize an interface, use then arrow with an empty triage pointing to the interface and a dashed line.
+To realize an interface, use the arrow with an empty triangle pointing to the interface and a dashed line.
 
 # Sequence Diagrams 
 
@@ -199,12 +199,12 @@ When showing interactions between objects then all arrows in the sequence diagra
 
 The names shown on the arrows have to be consistent with the method names shown in the class diagram, including the number or arguments, order of arguments, and types of arguments. Whenever an arrow with method x and arguments of type Y and Z are received by an object o, then either the class of which o is an instance of or one of its super classes needs to have an implementation of `x(Y,Z)`.     
 
-It is a modeling choice to decide whether you want to include concrete values (e.g., `caclulateTax(1400)`) or meaningful variable names (e.g., `calculateTax(income)`). If you reference a real variable that has been used before, please make sure to ensure it is the same one and it has the right type. 
+It is a modeling choice to decide whether you want to include concrete values (e.g., `calculateTax(1400)`) or meaningful variable names (e.g., `calculateTax(income)`). If you reference a real variable that has been used before, please make sure to ensure it is the same one and it has the right type. 
 
 # State Machine Diagrams 
 
 State machines model the transitions between different states. States are modeled either as oval, rectangles with rounded corners, or circles. 
 
-Transitions follow the patter `[condition] trigger / action`. 
+Transitions follow the pattern `[condition] trigger / action`. 
 
 State machines always need an initial state but don't always need a final state. 

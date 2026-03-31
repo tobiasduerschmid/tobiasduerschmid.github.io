@@ -63,7 +63,7 @@ Ultimately, Makefiles are heavily relied upon because they:
 
 # The Cake Analogy
 
-Think of Makefiles as a receipe book for baking a complex, multi-layered cake. 
+Think of Makefiles as a recipe book for baking a complex, multi-layered cake. 
 Let's make a spectacular three-tier chocolate cake with raspberry filling and buttercream frosting. 
 A **Makefile** is your ultimate, highly-efficient kitchen manager and master recipe combined.
 
@@ -211,7 +211,7 @@ clean:
 
 By typing `make clean` in your terminal, the kitchen is reset. By typing `make cake` (or just `make`, as it defaults to the first rule), your fully automated bakery springs to life.
 
-Now we get this completete Makefile:
+Now we get this complete Makefile:
 
 ```makefile
 # ---------------------------------------------------------

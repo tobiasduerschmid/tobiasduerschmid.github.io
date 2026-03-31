@@ -20,7 +20,7 @@ Extreme Programming (XP) challenged this BUFD mindset by introducing "merciless 
 The efficacy of TDD is found in its strict, rhythmic constraints, which grant developers the "confidence of moving fast." By operating in a state where a working system is never more than a few minutes away, engineers avoid the cognitive overload of large, unverified changes. This rhythm is governed by three non-negotiable rules:
 
 1. Rule One: You may not write any production code unless it is to make a failing unit test pass.
-2. Rule Three: You may not write more of a unit test than is sufficient to fail, and failing to compile is a failure.
+2. Rule Two: You may not write more of a unit test than is sufficient to fail, and failing to compile is a failure.
 3. Rule Three: You may not write more production code than is sufficient to pass the one failing unit test.
 
 This structure manifests as the Red-Green-Refactor cycle:

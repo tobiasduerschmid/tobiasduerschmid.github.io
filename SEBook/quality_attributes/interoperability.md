@@ -30,7 +30,7 @@ Without a shared interpretation, the system will fail even if the data is transm
 For example, if a client system sends a product price as a decimal value formatted perfectly in XML, but assumes the price excludes tax while the receiving server assumes the price includes tax, the resulting discrepancy represents a severe semantic failure. 
 An even more catastrophic example occurred with the Mars Climate Orbiter, where a spacecraft was lost because one component sent thrust commands in US customary units (pounds of force) while the receiving interface expected Standard International units (Newtons).
 
-To achieve true semantic interoperability, engineers must rigorously define the semantics of shared data. This is done by documenting the interface with a semantic view that details the purpose of the actions, expected coordinate systems, units of measurement, side-effects, and error-handling conditions. Furthermore, systems should rely on shared dictionaries, standardized terminologies.
+To achieve true semantic interoperability, engineers must rigorously define the semantics of shared data. This is done by documenting the interface with a semantic view that details the purpose of the actions, expected coordinate systems, units of measurement, side-effects, and error-handling conditions. Furthermore, systems should rely on shared dictionaries and standardized terminologies.
 
 
 # Architectural Tactics and Patterns
