@@ -208,7 +208,7 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 >
 > Does this story satisfy the Negotiable criterion?
 >
-> <details><summary><strong>Reveal Answer</strong></summary> "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
+> <details><summary><strong>Reveal Answer</strong></summary> No. "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
 
 ## Valuable
 
@@ -237,7 +237,28 @@ If stories violate the Valuable criterion, you can improve them using these tech
 
 ### Examples of Stories Violating the Valuable Criterion
 
-**Example 1: The Developer-Centric Story**
+**Example 1: Incomplete Acceptance Criteria That Miss the Value**
+> *"**As a** travel agent, **I want to** search for available flights for a client's trip **so that** I can find the best option for them."*
+> * **Given** the travel agent enters a departure city, destination city, and travel date, **When** they click "Search", **Then** a list of available flights for that route is displayed.
+> * **Given** the search results are displayed, **When** the travel agent selects a flight from the list, **Then** the booking page for that flight is shown.
+
+* **Independent:** Yes. Searching for flights does not depend on other stories.
+* **Negotiable:** Yes. The story does not prescribe any specific technology, UI layout, or data source—the team is free to decide how to build the search.
+* **Estimable:** Yes. Building a flight search with results display is well-understood work with clear scope.
+* **Small:** Yes. A single search-and-display feature fits within a sprint.
+* **Testable:** Yes. The given acceptance criteria can be translated into an unambigous test with concrete steps and clear testing criteria.
+* **Why it violates Valuable:** The story *text* promises real value ("find the best option"), but the acceptance criteria do not mention it. Since acceptance criteria define the scope of an acceptance implementation to the user story, these acceptance criteria accept user stories that do not implement the main functionality. A list of flight names and times is useless to a travel agent who needs to compare **prices, layover durations, and total travel time** to recommend the best option to a client. Without this comparison data, the agent cannot accomplish the goal stated in the "so that" clause. The feature technically works—flights are displayed and can be selected—but it does not solve the user's actual problem. This illustrates why ==acceptance criteria must capture the **essential functionality** that delivers the value promised by the story. A story may *appear* valuable based on its text, but if its acceptance criteria leave out the information or capability that makes the feature genuinely useful, the delivered feature might not provide real value to the user==. In this example, the acceptance criteria should help the developers understand what information is needed for the user to find the best option. Since the developers could pick any random subset of attributes their selection might not be what the user really needs to see. So our acceptance criteria should clearly communicate what it is the user really needs.
+* **How to fix it:** Add acceptance criteria that capture the comparison capability essential to the agent's real goal: *"**Given** the search results are displayed, **When** the travel agent views the list, **Then** each flight shows the ticket price, number of stops, layover durations, and total travel time so the agent can compare options side by side."*
+
+> **Quick Check:** *"**As a** backend developer, **I want to** migrate our logging from printf statements to a structured logging framework **so that** log entries are in JSON format."*
+>
+> Does this story satisfy the Valuable criterion?
+> 
+><details> <summary><i>Reveal Answer</i></summary>
+No. While this story might make it easier for developers to deliver more value to the user in the future due to better maintainability, it does not directly delivery value to a <i>user</i> of the system. We consider a user story valuable only if it meets the need of a <i>user</i>.</details>
+
+
+**Example 2: The Developer-Centric Story**
 > *"**As a** developer, **I want to** refactor the authentication module **so that** the codebase is easier to maintain."*
 > * **Given** the authentication module has been refactored, **When** a developer deploys the updated module, **Then** all existing authentication endpoints return identical responses.
 
@@ -248,26 +269,6 @@ If stories violate the Valuable criterion, you can improve them using these tech
 * **Testable:** Yes. You can verify the refactored module passes all existing authentication tests.
 * **Why it violates Valuable:** The story is written entirely from the developer's perspective. The user does not care about internal code quality. The "so that" clause ("the codebase is easier to maintain") describes a developer benefit, not a user benefit {% cite cohn2004user %}. A product owner cannot weigh "easier to maintain" against user-facing features.
 * **How to fix it:** If there is a legitimate user-facing reason (e.g., performance), rewrite the story around that benefit: *"**As a** registered member, **I want to** log in without noticeable delay **so that** I can start using the application immediately."*
-
-**Example 2: Incomplete Acceptance Criteria That Miss the Value**
-> *"**As a** travel agent, **I want to** search for available flights for a client's trip **so that** I can find the best option for them."*
-> * **Given** the travel agent enters a departure city, destination city, and travel date, **When** they click "Search", **Then** a list of available flights for that route is displayed.
-> * **Given** the search results are displayed, **When** the travel agent selects a flight from the list, **Then** the booking page for that flight is shown.
-
-* **Independent:** Yes. Searching for flights does not depend on other stories.
-* **Negotiable:** Yes. The story does not prescribe any specific technology, UI layout, or data source—the team is free to decide how to build the search.
-* **Estimable:** Yes. Building a flight search with results display is well-understood work with clear scope.
-* **Small:** Yes. A single search-and-display feature fits within a sprint.
-* **Testable:** Yes. The acceptance criteria define clear pass/fail conditions: enter inputs, click search, see results.
-* **Why it violates Valuable:** The story *text* promises real value ("find the best option"), but the acceptance criteria do not mention it. Since acceptance criteria define the scope of an acceptance implementation to the user story, these acceptance criteria accept user stories that do not implement the main functionality. A list of flight names and times is useless to a travel agent who needs to compare **prices, layover durations, and total travel time** to recommend the best option to a client. Without this comparison data, the agent cannot accomplish the goal stated in the "so that" clause. The feature technically works—flights are displayed and can be selected—but it does not solve the user's actual problem. This illustrates why ==acceptance criteria must capture the **essential functionality** that delivers the value promised by the story. A story may *appear* valuable based on its text, but if its acceptance criteria leave out the information or capability that makes the feature genuinely useful, the delivered feature will not provide real value to the user==.
-* **How to fix it:** Add acceptance criteria that capture the comparison capability essential to the agent's real goal: *"**Given** the search results are displayed, **When** the travel agent views the list, **Then** each flight shows the ticket price, number of stops, layover durations, and total travel time so the agent can compare options side by side."*
-
-> **Quick Check:** *"**As a** backend developer, **I want to** migrate our logging from printf statements to a structured logging framework **so that** log entries are in JSON format."*
->
-> Does this story satisfy the Valuable criterion?
-> 
-><details> <summary><i>Reveal Answer</i></summary>
-No. While this story might make it easier for developers to deliver more value to the user in the future due to better maintainability, it does not directly delivery value to a <i>user</i> of the system. We consider a user story valuable only if it meets the need of a <i>user</i>.</details>
 
 ## Estimable
 
