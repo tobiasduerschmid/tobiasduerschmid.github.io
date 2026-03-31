@@ -74,7 +74,7 @@ Blurring the lines between requirements and design is a common mistake that lead
 When you put design decisions into your requirements, you artificially limit the space of possible solutions before development even begins. If a product manager writes a requirement that says, "The system must use an SQL database to store user profiles", they have made a design decision. A NoSQL database or an in-memory cache might have been vastly superior for this specific use case, but the engineers are now blocked from exploring those better options.
 
 **Preserving Flexibility and Agility:**
-Design decisions change frequently. A team might start by using one sorting algorithm or database architecture, realize it doesn't scale well, and swap it out for another. If the *requirement* was strictly about the "what" (e.g., "Data must be sorted alphabetically"), the requirement stays the same even when the design changes. This iterative process of swinging between requirements and design helps manage the complexity of what Rittel and Webber termed "wicked" problems {% cite RittelWebber1973 %} -- problems where understanding the requirements depends on exploring the solution {% cite Dooley2011 %}. If the design was baked into the requirement, you now have to rewrite your requirements and change your acceptance criteria just to fix a technical issue.
+Design decisions change frequently. A team might start by using one sorting algorithm or database architecture, realize it doesn't scale well, and swap it out for another. If the *requirement* was strictly about the "what" (e.g., "Data must be sorted alphabetically"), the requirement stays the same even when the design changes. This iterative process of swinging between requirements and design helps manage the complexity of what Rittel and Webber termed "wicked" problems {% cite RittelWebber1973 %} -- problems where understanding the requirements depends on exploring the solution. If the design was baked into the requirement, you now have to rewrite your requirements and change your acceptance criteria just to fix a technical issue.
 
 **Utilizing the Right Expertise:**
 Requirements are typically *driven by* the customer or product manager / product owner — the people who understand the business needs. Design decisions are typically *led by* the software engineers and architects — the people who understand the technology. However, effective teams involve users in design validation (through prototyping and user testing) and engineers in requirements discovery (since technical possibilities shape what can be offered).
@@ -82,8 +82,9 @@ Mixing the two *without clear awareness* often results in non-technical stakehol
 
 In short: Requirements keep you focused on delivering **value** to the user. Leaving design out of your requirements empowers your engineers to deliver that value in the most **efficient and technically sound** way possible.
 
-Note that this separation is a useful mental model but not a rigid boundary. Nuseibeh's "Twin Peaks" model {% cite Nuseibeh2001 %} shows that requirements and architecture co-evolve -- exploring *how* something might be built often reveals new aspects of *what* is actually needed. This is especially true for quality attribute requirements (performance, security), which cannot be meaningfully specified without considering architectural trade-offs.
-
+<!--
+Note that this separation is a useful mental model but not a rigid boundary. Nuseibeh's "Twin Peaks" model shows that requirements and architecture co-evolve -- exploring *how* something might be built often reveals new aspects of *what* is actually needed. This is especially true for quality attribute requirements (performance, security), which cannot be meaningfully specified without considering architectural trade-offs.
+-->
 
 # Requirements Specifications
 

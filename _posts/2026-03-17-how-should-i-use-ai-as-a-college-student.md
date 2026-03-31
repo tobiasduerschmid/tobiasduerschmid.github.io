@@ -66,7 +66,7 @@ In computer science, this looks like asking an AI to "write a Python script to s
 
 When you outsource the intrinsic and/or germane load, you suffer several severe consequences:
 *   **Bypassing Schema Construction:** By letting the AI generate the logic, you skip the "desirable difficulties" necessary to move knowledge from your limited working memory into your long-term procedural memory {% cite deBruinEtAl2023 Duplice2025 %}. 
-A massive randomized experiment of nearly a thousand students using AI to solve math problems found that while their immediate performance was signifantly higher, their long-term, durable learning suffered significantly once the AI was removed because they never built the internal neural pathways to solve the problems themselves {% cite BastaniEtAl2025 %}.
+A massive randomized experiment of nearly a thousand students using AI to solve math problems found that while their immediate performance was significantly higher, their long-term, durable learning suffered significantly once the AI was removed because they never built the internal neural pathways to solve the problems themselves {% cite BastaniEtAl2025 %}.
 A smaller study conducted by Anthropic researchers shows similar results for coding tasks as well {% cite ShenTamkin2026 %}.
 However, both studies find that these negative learning effects can be fully mitigated by using different usage styles for AI (more on this later).
 
