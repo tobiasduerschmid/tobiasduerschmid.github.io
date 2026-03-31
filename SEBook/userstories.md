@@ -108,7 +108,7 @@ If stories violate the Independent criterion, you can improve them using these t
 * **Partition Along Different Dimensions:** If combining makes the story too large, re-split along a different dimension. For overlapping email stories like "Team member sends and receives messages" and "Team member sends and replies to messages", repartition by action: "Team member sends message", "Team member receives message", "Team member replies to message" {% cite Wake2003INVESTinGoodStories %}.
 * **Slice Vertically:** When stories have been split along technical layers (UI vs. database), re-slice them as vertical "slices of cake" that cut through all layers. Instead of "Job Seeker fills out a resume form" and "Resume data is written to the database", write "Job Seeker can submit a resume with basic information" {% cite cohn2004user %}.
 
-### Examples of Stories Violating ONLY the Independent Criterion
+### Examples of Stories Violating the Independent Criterion
 
 **Example 1: Overlap Dependency**
 > Story A: *"**As a** team member, **I want to** send and receive messages **so that** I can communicate with my colleagues."*
@@ -178,7 +178,7 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 * **Define Acceptance Criteria, Not Steps:** Define the outcomes that must be true, rather than the specific UI clicks or database queries required.
 * **Keep the UI Out as Long as Possible:** Avoid embedding interface details into stories early in the project {% cite cohn2004user %}. Focus on what the user needs to accomplish, not the specific controls they will use.
 
-### Examples of Stories Violating ONLY the Negotiable Criterion
+### Examples of Stories Violating the Negotiable Criterion
 
 **Example 1: The Technology-Specific Story**
 > *"**As a** subscriber, **I want** my profile settings saved in a MongoDB database **so that** they load quickly the next time I log in."*
@@ -235,7 +235,7 @@ If stories violate the Valuable criterion, you can improve them using these tech
 * **Focus on the "So That":** A well-written "so that" clause forces the author to articulate the real-world benefit. If you cannot complete "so that [some user benefit]" without referencing technology, the story is likely not valuable.
 * **Complete the Acceptance Criteria:** A story may *appear* valuable but have incomplete acceptance criteria that leave out essential functionality, effectively making the delivered feature useless.
 
-### Examples of Stories Violating ONLY the Valuable Criterion
+### Examples of Stories Violating the Valuable Criterion
 
 **Example 1: The Developer-Centric Story**
 > *"**As a** developer, **I want to** refactor the authentication module **so that** the codebase is easier to maintain."*
@@ -292,7 +292,7 @@ The approach to fixing an unestimable story depends on which barrier is blocking
 * **Spike (for Technical Knowledge Gaps):** Split the story into two: an investigative *spike*—a brief, time-boxed experiment to learn about the unknown technology—and the actual implementation story. The spike itself is always given a defined maximum time (e.g., "Spend exactly two days investigating credit card processing"), which makes it estimable. Once the spike is complete, the team has enough knowledge to estimate the real story {% cite cohn2004user %}.
 * **Disaggregate (for Stories That Are Too Big):** Break the epic into smaller, constituent stories. Each smaller piece isolates a specific slice of functionality, reducing the cognitive load and making estimation tractable {% cite cohn2004user %}.
 
-### Examples of Stories Violating ONLY the Estimable Criterion
+### Examples of Stories Violating the Estimable Criterion
 
 **Example 1: The Unknown Domain**
 > *"**As a** patient, **I want to** receive a personalized wellness screening **so that** I can understand my health risks."*
@@ -358,7 +358,7 @@ The approach to fixing a story that violates the Small criterion depends on whet
 *Stories that are too small:*
 * **Combine Related Stories:** Merge tiny, related items (e.g., a batch of small UI tweaks or minor bug fixes) into a single story representing a half-day to several days of work {% cite cohn2004user %}.
 
-### Examples of Stories Violating ONLY the Small Criterion
+### Examples of Stories Violating the Small Criterion
 
 **Example 1: The Epic (Too Big)**
 > *"**As a** traveler, **I want to** plan a vacation **so that** I can book all the arrangements I need in one place."*
@@ -416,7 +416,7 @@ If you find a story that violates the Testable criterion, you can improve it by 
 * **Use the Given/When/Then Format:** Borrow from Behavior-Driven Development (BDD) to write clear acceptance criteria. Establish the starting state (*Given*), the action taken (*When*), and the expected, observable outcome (*Then*).
 * **Define "Intuitive" or "Easy":** If the goal is a "user-friendly" interface, make it testable by tying it to a metric, such as: "A new user can complete the checkout process in fewer than 3 clicks without relying on a help menu."
 
-### Examples of Stories Violating ONLY the Testable Criterion
+### Examples of Stories Violating the Testable Criterion
 
 Below are two user stories that are not testable but still satisfy (most) other INVEST criteria.
 
@@ -617,3 +617,7 @@ Recent advancements in Large Language Models (LLMs) have introduced new capabili
 {% include flashcards.html id="user_stories" %}
 
 {% include quiz.html id="user_stories" %}
+
+
+# Acknowledgements
+Thanks to Allison Gao for constructive suggestions on how to improve this chapter.
