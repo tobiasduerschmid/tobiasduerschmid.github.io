@@ -30,7 +30,7 @@ For example:
 This structure makes the team to identify not just the "what", but also the "who" and — most importantly — the "why".
 
 The main requirement of the user story is captured in the *I want* part.
-The *so that* part clarifies the goal the user wants to achieve. It does **not** add additional requirements or constraints to the described requirements.
+The *so that* part primarily clarifies the goal the user wants to achieve. While it should not prescribe implementation details, it may implicitly introduce quality constraints or dependencies that shape the acceptance criteria.
 
 **Be specific about the actor.** Avoid generic labels like "user" in the *As a* clause. Instead, name the specific role that benefits from the feature (e.g., "job seeker", "hiring manager", "store owner"). A precise actor clarifies *who* needs the feature and *why*, helps the team understand the context, and prevents stories from becoming vague catch-alls. If you find yourself writing "**As a** user," ask: *which* user?
 
@@ -74,11 +74,11 @@ To evaluate if a user story is well-written, we apply the INVEST criteria:
 * **Negotiable**: They capture the essence of a need without dictating specific design decisions (like which database to use).
 * **Valuable**: The feature must deliver actual benefit to the user, not just the developer.
 * **Estimable**: The scope must be clear enough for developers to predict the effort required.
-* **Small**: A story should be a manageable chunk of work that isn't easily split into smaller, still-valuable pieces.
+* **Small**: A story should be small enough that the team can complete it within a single iteration and estimate it with reasonable confidence.
 * **Testable**: It must be verifiable through its acceptance criteria.
 
 **Important:** ==The application of the INVEST criteria is often *content-dependent*==. 
-For example, a story that is quite large to implement but cannot be effectively split into separate user stories can still be considered "small enough" while a user story that is objectively faster and easier to implement can be considered "*not* small" if splitting it up into seperate user stories that are still valuable and independent is more elegant. 
+For example, a story that is quite large to implement but cannot be effectively split into separate user stories can still be considered "small enough" while a user story that is objectively faster and easier to implement can be considered "*not* small" if splitting it up into separate user stories that are still valuable and independent is more elegant. 
 Or a user story that is "independent" in one set of user stories (because all its dependencies have already been implemented) is "*not* independent" if it is in a set of user stories where its dependencies have *not* been implemented yet and therefore a dependency is still in the user story set. 
 Understanding this crucial aspect of the INVEST criteria is key to evaluating user stories. 
 
@@ -125,7 +125,7 @@ If stories violate the Independent criterion, you can improve them using these t
 * **Small:** Yes. Each story is a manageable chunk of work that fits within a sprint.
 * **Testable:** Yes. Clear acceptance criteria can be written for sending, receiving, and replying.
 * **Why it violates Independent:** Both stories include "sending a message"—this is an *overlap dependency*, the most harmful form of story dependency {% cite Wake2003INVESTinGoodStories %}. If Story A is implemented first, parts of Story B are already done. If Story B is implemented first, parts of Story A are already done. This creates confusion about what is covered and makes estimation unreliable.
-* **How to fix it:** Make the dependency *explicit* (e.g., User story B depends on user story A). Merging them into one story is not an option as it would violate the small criterion, splitting them into three stories (sending, receiving and replying) is not an option as it would still violate the independent criterion and also violate valuable for just sending without receiving. So the best thing we can do is to accept that we cannot always create perfectly independent user stories and instead document this dependenncy so that when scheduling the implementation of user stories we can directly see that they have to be implemented in a specific order and when estimating user stories we can assume that the functionality in user story A has already been implemented. ==**Hidden dependencies are bad. Full independence is perfect but not always achievable. Explicit dependencies are the pragmatic workaround that addresses the core problem of hidden dependencies while still acknowledging praticality**==.
+* **How to fix it:** Make the dependency *explicit* (e.g., User story B depends on user story A). Merging them into one story is not an option as it would violate the small criterion, splitting them into three stories (sending, receiving and replying) is not an option as it would still violate the independent criterion and also violate valuable for just sending without receiving. So the best thing we can do is to accept that we cannot always create perfectly independent user stories and instead document this dependency so that when scheduling the implementation of user stories we can directly see that they have to be implemented in a specific order and when estimating user stories we can assume that the functionality in user story A has already been implemented. ==**Hidden dependencies are bad. Full independence is perfect but not always achievable. Explicit dependencies are the pragmatic workaround that addresses the core problem of hidden dependencies while still acknowledging practicality**==.
 
 **Example 2: Technical (Horizontal) Splitting**
 > Story A: *"**As a** job seeker, **I want to** fill out a resume form **so that** I can enter my information."*
