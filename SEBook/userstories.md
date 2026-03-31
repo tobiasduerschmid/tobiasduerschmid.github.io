@@ -3,7 +3,7 @@ title: User Stories
 layout: sebook
 ---
 
-User stories are the ==most commonly used format to specify requirements in a light-weight, informal way== (particularly in Agile projects).
+User stories are the ==most commonly used format to specify requirements in a light-weight, informal way== (particularly in projects following [Agile processes](/SEBook/process.html)).
 Each user story is a high-level description of a software feature written from the perspective of the end-user.
 
 User stories act as placeholders for a conversation between the technical team and the "business" side to ensure both parties understand the why and what of a feature.
