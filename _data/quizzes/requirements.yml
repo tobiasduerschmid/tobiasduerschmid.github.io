@@ -1,14 +1,14 @@
 title: "Software Requirements Quiz"
 description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your ability to discriminate between problem-space statements (requirements) and solution-space statements (design) in novel scenarios."
 questions:
-  - question: "A startup is building a new music streaming application. The product owner states, 'Listeners need the ability to seamlessly transition between songs without any perceived loading delays.' What does this statement best represent?"
+  - question: "A startup is building a new music streaming application. The product owner states, 'Listeners need the ability to seamlessly transition between songs without any perceivable loading delays.' What does this statement best represent?"
     options:
       - "A constraint on the technical solution space."
-      - "A functional requirement."
+      - "A (slighty vague) quality attribute requirement."
       - "A specific architectural implementation strategy."
       - "A concrete algorithmic choice for data caching."
     correct_index: 1
-    explanation: "The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**."
+    explanation: "The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**. To make it more specific, the definition of 'perceivable loading delays' needs to be included in the requirement."
 
   - question: "A Quality Assurance (QA) engineer is writing automated checks for a new e-commerce checkout flow. They ensure that every test maps directly back to a specific stakeholder request. Which core benefit of defining the problem space does this mapping best demonstrate?"
     options:
