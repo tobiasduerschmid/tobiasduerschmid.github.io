@@ -31,7 +31,7 @@ Studies conducted in educational settings show similar results: Experienced deve
 Methodologically, experts engage with GenAI *proactively* to *plan*, *steer*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 Huang2025 %}.
 Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind** {% cite LodgeLoble2026%}.
 
-This means that ==**as a college student, your main goal should be to  maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
+This means that ==**as a college student, your main goal should be to maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately {% cite Yan2024promises BastaniEtAl2025 %}. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
@@ -44,7 +44,7 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 
 Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick%}. Learn more about desirable difficulties and their importance for learning in my previous blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
 
-On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties** {% cite gkintonl2025 Dong2026 %}.
+On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties {% cite gkintonl2025 Dong2026 %}.
 
 This article is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
 
@@ -54,7 +54,7 @@ This article is intended to be a guide for students who are trying to elevate th
 To truly master how you integrate AI into your computer science education, we need to dive into the learning science theory of *cognitive offloading*. 
 
 **The Research:**
-Cognitive offloading is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016%}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constly think about the deadline. or asking ChatGPT to debug a script. They enable you get a task done with less cognitive work on your end, which of course sounds very enticing!
+Cognitive offloading is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016%}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constantly think about the deadline, or asking ChatGPT to debug a script. They enable you to get a task done with less cognitive work on your end, which of course sounds very enticing!
 
 However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory (CLT), which divides our mental effort into three categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn), *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal), and *germane load* (the mental effort that is directly contributing to learning and understanding) {% cite sweller2011cognitive KalyugaPlass2025  %}. 
 
@@ -77,10 +77,6 @@ However, both studies find that these negative learning effects can be fully mit
 Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026 gkintonl2025  %}. 
 
 In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025%}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025%}. 
-
-
-
-</div>
 
 
 ## Mastering the Interaction: Strategies for Deep Learning
@@ -185,7 +181,9 @@ Grounded in **Cognitive Load Theory**, Parsons Problems (scrambled code blocks) 
 Parsons Problems remove the burden of environment setup and syntax errors, letting you focus entirely on control flow and program logic {% cite Ericson2017 %}. Similarly, the "Explain in Plain English" rule proves whether you *understand* the code or are just recognizing patterns.
 
 **Example Prompt (Python):**
-> "Create a Python Parsons problem for implementing a Binary Search. Write a correct solution (about 10 lines). Present the lines to me in SCRAMBLED order, numbered randomly. Include 2 'distractor' lines that look plausible but are logically incorrect. Do NOT show me the correct solution ### The “Generation-Then-Comprehension” Protocol
+> "Create a Python Parsons problem for implementing a Binary Search. Write a correct solution (about 10 lines). Present the lines to me in SCRAMBLED order, numbered randomly. Include 2 'distractor' lines that look plausible but are logically incorrect. Do NOT show me the correct solution.”
+
+### The “Generation-Then-Comprehension” Protocol
 
 If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. 
 Research shows that developers who simply delegate code generation to AI completely bypass the skill formation process {% cite ShenTamkin2026%}. However, high-performing students naturally adopt a **"Generation-Then-Comprehension"** or **"Hybrid Code-Explanation"** workflow {% cite ShenTamkin2026%}. In this pattern, learners generate a piece of code and immediately follow up by prompting the AI for conceptual explanations of the underlying logic, ensuring they check and verify their own understanding rather than merely delegating the work.

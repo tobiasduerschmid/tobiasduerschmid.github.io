@@ -356,8 +356,6 @@ The approach to fixing a story that violates the Small criterion depends on whet
 * **Slice the Cake (Vertical Slicing):** Never split along technical boundaries (one story for UI, one for database). Instead, split into thin end-to-end "vertical slices" where each story touches every architectural layer and delivers complete, albeit narrow, functionality {% cite cohn2004user %}.
 * **Split by Happy/Sad Paths:** Build the "happy path" (successful transaction) as one story, and handle the error states (declined cards, expired sessions) in subsequent stories.
 
-*Stories that are too small:*
-* **Combine Related Stories:** Merge tiny, related items (e.g., a batch of small UI tweaks or minor bug fixes) into a single story representing a half-day to several days of work {% cite cohn2004user %}.
 
 ### Examples of Stories Violating the Small Criterion
 

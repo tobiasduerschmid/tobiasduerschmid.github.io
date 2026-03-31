@@ -60,7 +60,7 @@ A fascinating contradiction exists within the literature regarding AI's impact o
 
 ## NotebookLM 
 
-I often use NotebookLM and provide one with all course content to my students to assisted learning.
+I often use NotebookLM and provide one with all course content to my students for assisted learning.
 
 ---
 

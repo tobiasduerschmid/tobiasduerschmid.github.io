@@ -106,7 +106,7 @@ This illusion is not a minor bug in human cognition — it is a pervasive featur
 
 There is one finding that reframes the entire conversation about AI in education. Gu and Yan {% cite gu2025 %} conducted a meta-analysis of 19 experimental studies on GenAI interventions and found an overall positive effect (Hedges' *g* = 0.683). But when they examined whether teacher support was provided alongside AI, the results were dramatic: **with teacher support, the effect was *g* = 1.426; without teacher support, it was *g* = 0.077** — a difference of more than 18-fold. AI without pedagogical guidance produces essentially no measurable learning benefit. AI with guidance produces one of the largest effect sizes in education research.
 
-This finding echoes Alfieri et al.' {% cite alfieri2010 %} meta-analysis of discovery-based learning, which found that unassisted discovery actually *harms* learning (*d* = −0.38) while scaffolded discovery produces meaningful gains (*d* = 0.30, 95% CI [.23, .36]). The tool does not determine the outcome. The guidance does.
+This finding echoes Alfieri et al.'s {% cite alfieri2010 %} meta-analysis of discovery-based learning, which found that unassisted discovery actually *harms* learning (*d* = −0.38) while scaffolded discovery produces meaningful gains (*d* = 0.30, 95% CI [.23, .36]). The tool does not determine the outcome. The guidance does.
 
 This article is designed to serve as a step toward that guidance. An important caveat: Gu and Yan's finding measured *teacher involvement alongside AI use* — a live instructor adapting support in real time — which a written article cannot fully replicate. Reading about these techniques is not equivalent to having a teacher implement them with you. But the techniques below give you the conceptual framework to scaffold your *own* AI interactions — to serve as your own pedagogical guide. The 16 techniques that follow target specific cognitive mechanisms, drawing on the foundational concepts above, to help you use AI in ways that build skills rather than bypass them. The closer you can approximate the "guided" condition — whether through instructor support, peer study groups, or disciplined self-regulation — the more these techniques will achieve.
 
@@ -184,7 +184,7 @@ The core principle is: **configure your AI interactions to maintain productive s
 
    This prompt preserves the generation effect (you are still doing the thinking) while providing the scaffolded support that Alfieri et al. {% cite alfieri2010 %} showed transforms struggle from harmful to productive.
 
-2. **Use the Lead-and-Reveal pattern.** Based on Kazemitabaar et al.' {% cite Kazemitabaar2025 %} findings, structure your AI interaction as a dialogue where you lead and the AI confirms:
+2. **Use the Lead-and-Reveal pattern.** Based on Kazemitabaar et al.'s {% cite Kazemitabaar2025 %} findings, structure your AI interaction as a dialogue where you lead and the AI confirms:
 
    > *"I need to implement merge sort. I'm going to describe each step of my approach. After each step, tell me if I'm on the right track before I move to the next one. Step 1: I think I need to split the array in half recursively until I have single-element arrays..."*
 
@@ -421,7 +421,7 @@ The core principle: **structure your feedback requests to be specific, formative
 
    This prompt mirrors the structured feedback that Ambrose et al. {% cite Ambrose2010howLearningWorks %} identified as most effective — feedback tied to specific criteria that the learner can act on.
 
-2. **Request conceptual feedback, not just debugging.** Following Niousha et al.' {% cite niousha2026 %} finding that LLMs default to debugging mode, explicitly ask for higher-level feedback:
+2. **Request conceptual feedback, not just debugging.** Following Niousha et al.'s {% cite niousha2026 %} finding that LLMs default to debugging mode, explicitly ask for higher-level feedback:
 
    > *"Don't just tell me what's wrong with my code. Tell me what concept or principle I seem to be misunderstanding based on the errors you see. Am I misunderstanding how recursion works? Am I confused about pointer arithmetic? Diagnose the underlying conceptual issue, not just the surface bug."*
 
@@ -471,7 +471,7 @@ The core principle: **always attempt the problem yourself before consulting AI, 
 
 3. **Actively revise, never passively accept.** When AI generates code you intend to use, force yourself to modify it — even if the modifications are minor. Yang et al. {% cite yang2025 %} showed that active revision produces positive effects while passive acceptance produces negative ones. The act of revising engages you with the code at a deeper level than reading it.
 
-4. **Generate subgoals before generating code.** Following the 6% of tasks that used the more effective step-by-step approach in Kazemitabaar et al.' {% cite kazemitabaar2023 %} study, decompose the problem into subgoals *in your own words* before asking AI for help with any of them:
+4. **Generate subgoals before generating code.** Following the 6% of tasks that used the more effective step-by-step approach in Kazemitabaar et al.'s {% cite kazemitabaar2023 %} study, decompose the problem into subgoals *in your own words* before asking AI for help with any of them:
 
    > *"Before I start coding, here are the steps I think I need to take: (1) Parse the input into a graph structure, (2) Run BFS from the start node, (3) Track parent pointers to reconstruct the path. Am I thinking about this correctly? Are there steps I'm missing?"*
 
