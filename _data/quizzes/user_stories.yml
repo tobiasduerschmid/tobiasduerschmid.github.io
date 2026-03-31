@@ -81,8 +81,8 @@ questions:
       - "Estimable"
       - "Small"
       - "Testable"
-    correct_indices: [3, 4, 5]
-    explanation: "This violates **Small** because it is a massive 'Epic' (with wide-ranging acceptance criteria) that would take months or years to build. Furthermore, it violates **Testable** because 'run the entire hospital effectively' is too broad and subjective to objectively verify in a single iteration. Because of this, it also violates **Estimable**, as the team cannot possibly guess the accurate effort for an entire hospital system in one go."
+    correct_indices: [4]
+    explanation: "This violates **Small** because it is a massive 'Epic' (with many user stories combined into one) that would take months or years to build. Even though 'run the entire hospital effectively' is broad and subjective it is not part of the requirement (since it is in the 'so that' clause) so it does not impact testable or estimable."
   - id: 5
     type: multiple
     question: |
