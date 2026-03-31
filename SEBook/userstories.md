@@ -246,7 +246,7 @@ If stories violate the Valuable criterion, you can improve them using these tech
 * **Negotiable:** Yes. The story does not prescribe any specific technology, UI layout, or data source—the team is free to decide how to build the search.
 * **Estimable:** Yes. Building a flight search with results display is well-understood work with clear scope.
 * **Small:** Yes. A single search-and-display feature fits within a sprint.
-* **Testable:** Yes. The given acceptance criteria can be translated into an unambigous test with concrete steps and clear testing criteria.
+* **Testable:** Yes. The given acceptance criteria can be translated into an unambiguous test with concrete steps and clear testing criteria.
 * **Why it violates Valuable:** The story *text* promises real value ("find the best option"), but the acceptance criteria do not mention it. Since acceptance criteria define the scope of an acceptance implementation to the user story, these acceptance criteria accept user stories that do not implement the main functionality. A list of flight names and times is useless to a travel agent who needs to compare **prices, layover durations, and total travel time** to recommend the best option to a client. Without this comparison data, the agent cannot accomplish the goal stated in the "so that" clause. The feature technically works—flights are displayed and can be selected—but it does not solve the user's actual problem. This illustrates why ==acceptance criteria must capture the **essential functionality** that delivers the value promised by the story. A story may *appear* valuable based on its text, but if its acceptance criteria leave out the information or capability that makes the feature genuinely useful, the delivered feature might not provide real value to the user==. In this example, the acceptance criteria should help the developers understand what information is needed for the user to find the best option. Since the developers could pick any random subset of attributes their selection might not be what the user really needs to see. So our acceptance criteria should clearly communicate what it is the user really needs.
 * **How to fix it:** Add acceptance criteria that capture the comparison capability essential to the agent's real goal: *"**Given** the search results are displayed, **When** the travel agent views the list, **Then** each flight shows the ticket price, number of stops, layover durations, and total travel time so the agent can compare options side by side."*
 
@@ -255,7 +255,7 @@ If stories violate the Valuable criterion, you can improve them using these tech
 > Does this story satisfy the Valuable criterion?
 > 
 ><details> <summary><i>Reveal Answer</i></summary>
-No. While this story might make it easier for developers to deliver more value to the user in the future due to better maintainability, it does not directly delivery value to a <i>user</i> of the system. We consider a user story valuable only if it meets the need of a <i>user</i>.</details>
+No. While this story might make it easier for developers to deliver more value to the user in the future due to better maintainability, it does not directly deliver value to a <i>user</i> of the system. We consider a user story valuable only if it meets the need of a <i>user</i>.</details>
 
 
 **Example 2: The Developer-Centric Story**
@@ -343,10 +343,9 @@ This criterion matters for several fundamental reasons:
 
 **How to Evaluate It**
 To determine if a user story is appropriately sized, ask:
-1. **Can it be completed in one sprint?** If the answer is no, or "maybe, if everything goes perfectly," the story is too big. It is an epic and must be split {% cite cohn2004user %}.
-2. **Is it a compound story?** Words like *and*, *or*, and *but* in the story description (e.g., "**I want to** register *and* manage my profile *and* upload photos") often indicate that multiple stories are hiding inside one. A compound story is an epic that aggregates multiple easily identifiable shorter stories {% cite cohn2004user %}.
-3. **Is it a complex story?** If the story is large because of inherent *uncertainty* (new technology, novel algorithm), it is a complex story and should be split into a spike and an implementation story {% cite cohn2004user %}.
-4. **Is it too small?** If the administrative overhead of writing and estimating the story takes longer than implementing it, the story is too small and should be combined with related stories {% cite cohn2004user %}.
+1. **Is it a compound story?** Words like *and*, *or*, and *but* in the story description (e.g., "**I want to** register *and* manage my profile *and* upload photos") often indicate that multiple stories are hiding inside one. A compound story is an "epic" that aggregates multiple easily identifiable shorter stories {% cite cohn2004user %}.
+2. **Can it be be split while still being valuable?** If a user story can be split into separate stories that are still *valuable* then this is often a good idea. If the smaller parts do not individually satisfy valuable, we still consider the larger user story "small".
+3. **Is it a complex, uncertain story?** If the story is large because of inherent *uncertainty* (new technology, novel algorithm), it is a complex story and should be split into a spike and an implementation story {% cite cohn2004user %}.
 
 **How to Improve It**
 The approach to fixing a story that violates the Small criterion depends on whether it is too big or too small:
@@ -531,7 +530,7 @@ When a developer encounters or is assigned a problem, their immediate action mus
 User stories are ideal for iterative, customer-centric projects where requirements might change frequently. 
 
 # Limitations
-User stories can struggle to capture non-functional requirements like performance, security, or reliability, and they are generally considered insufficient for safety-critical systems like spacecraft or medical devices
+User stories can struggle to capture non-functional requirements like performance, security, or reliability, and they are generally considered insufficient for safety-critical systems like spacecraft or medical devices.
 
 <!-- 
 # User Stories in Practice
