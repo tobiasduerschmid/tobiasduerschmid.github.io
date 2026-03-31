@@ -232,33 +232,33 @@ title: "SE Gym"
     var ALL_CARD_DATA = {
       quizzes: {
         {% for quiz_entry in site.data.quizzes %} {% assign qid = quiz_entry[0] %} {% assign qdata = quiz_entry[1] %} {% if qdata.questions %}
-    { { qid | jsonify } }: {
-      title: { { qdata.title | jsonify } },
-      description: { { qdata.description | default: "" | jsonify } },
+    {{ qid | jsonify }}: {
+      title: {{ qdata.title | jsonify }},
+      description: {{ qdata.description | default: "" | jsonify }},
       questions: [
         {% for q in qdata.questions %} {
-      question: { { q.question | markdownify | jsonify } },
-      type: { { q.type | default: "single" | jsonify } },
-      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
-    correct_index: { { q.correct_index | jsonify } },
-    correct_indices: { { q.correct_indices | jsonify } },
-    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
+      question: {{ q.question | markdownify | jsonify }},
+      type: {{ q.type | default: "single" | jsonify }},
+      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
+    correct_index: {{ q.correct_index | jsonify }},
+    correct_indices: {{ q.correct_indices | jsonify }},
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
             }, {% endfor %}
           ]
         },
     {% elsif qdata.decks %}
-    { { qid | jsonify } }: {
-      title: { { qdata.title | jsonify } },
-      description: { { qdata.description | default: "" | jsonify } },
+    {{ qid | jsonify }}: {
+      title: {{ qdata.title | jsonify }},
+      description: {{ qdata.description | default: "" | jsonify }},
       isMaster: true,
         questions: [
           {% for gym_id in qdata.decks %} {% assign ref_data = site.data.quizzes[gym_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
-      question: { { q.question | markdownify | jsonify } },
-      type: { { q.type | default: "single" | jsonify } },
-      options: [{% for opt in q.options %} { { opt | markdownify | jsonify } }, {% endfor %}],
-    correct_index: { { q.correct_index | jsonify } },
-    correct_indices: { { q.correct_indices | jsonify } },
-    explanation: { { q.explanation | default: "" | markdownify | jsonify } }
+      question: {{ q.question | markdownify | jsonify }},
+      type: {{ q.type | default: "single" | jsonify }},
+      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
+    correct_index: {{ q.correct_index | jsonify }},
+    correct_indices: {{ q.correct_indices | jsonify }},
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
             }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -266,27 +266,27 @@ title: "SE Gym"
       },
     flashcards: {
       {% for fc_entry in site.data.flashcards %} {% assign fcid = fc_entry[0] %} {% assign fcdata = fc_entry[1] %} {% if fcdata.cards %}
-      { { fcid | jsonify } }: {
-        title: { { fcdata.title | jsonify } },
-        description: { { fcdata.description | default: "" | jsonify } },
+      {{ fcid | jsonify }}: {
+        title: {{ fcdata.title | jsonify }},
+        description: {{ fcdata.description | default: "" | jsonify }},
         cards: [
           {% for card in fcdata.cards %} {
-        question: { { card.question | markdownify | jsonify } },
-        answer: { { card.answer | markdownify | jsonify } },
-        explanation: { { card.explanation | default: "" | markdownify | jsonify } }
+        question: {{ card.question | markdownify | jsonify }},
+        answer: {{ card.answer | markdownify | jsonify }},
+        explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
       }, {% endfor %}
           ]
     },
     {% elsif fcdata.decks %}
-    { { fcid | jsonify } }: {
-      title: { { fcdata.title | jsonify } },
-      description: { { fcdata.description | default: "" | jsonify } },
+    {{ fcid | jsonify }}: {
+      title: {{ fcdata.title | jsonify }},
+      description: {{ fcdata.description | default: "" | jsonify }},
       isMaster: true,
         cards: [
           {% for gym_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[gym_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
-      question: { { card.question | markdownify | jsonify } },
-      answer: { { card.answer | markdownify | jsonify } },
-      explanation: { { card.explanation | default: "" | markdownify | jsonify } }
+      question: {{ card.question | markdownify | jsonify }},
+      answer: {{ card.answer | markdownify | jsonify }},
+      explanation: {{ card.explanation | default: "" | markdownify | jsonify }}
     }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
