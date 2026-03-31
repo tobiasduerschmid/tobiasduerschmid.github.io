@@ -3,6 +3,7 @@ layout: blog-post
 title: "Evidence-Based Study Tips for College Students"
 date: 2026-03-30
 category: "For Students"
+featured: true
 permalink: /blog/evidence-based-study-tips-for-college-students/
 image: "/img/learning.jpg"
 image_alt_text: "Students working on a laptop and whiteboard"
