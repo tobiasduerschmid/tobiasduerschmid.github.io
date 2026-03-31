@@ -109,12 +109,6 @@ print(val) # Output: 5. The original object is unchanged.
 ```
 
 
-Here is the continuation of your introduction to Python, building on the mental models we established in the first part.
-
-
-Here is the next part of your Python introduction, covering string formatting, core data structures, and the powerful slicing syntax.
-
-
 ### String Formatting: The Magic of f-strings
 
 In C++, building a complex string with variables traditionally requires chaining `<<` operators with `std::cout`, using `sprintf`, or utilizing the modern `std::format`. This can get verbose quickly.

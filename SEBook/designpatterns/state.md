@@ -23,7 +23,7 @@ Create **Concrete State classes** that inherit from the Abstract State and imple
 
 
 
-The only interactions that should be allowed are interactions between the Context and Concrete States. There are no interaction among Concrete States objects.
+The only interactions that should be allowed are interactions between the Context and Concrete States. There are no interactions among Concrete State objects.
 
 # Design Decisions
 

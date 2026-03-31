@@ -236,7 +236,7 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
    * `\d{1,3}` matches `10`.
    * `(?:\.\d{1,3}){3}` matches `.0`, then matches `.4`, then matches `.19`.
    * The engine saves the string `"10.0.4.19"` into a variable named "IP".
-7. **The Final Stretch:** * The final `.*` consumes the rest of the string again, backtracking until it can match the literal phrase `Critical Timeout`.
+7. **The Final Stretch:** The final `.*` consumes the rest of the string again, backtracking until it can match the literal phrase `Critical Timeout`.
    * `$` asserts the end of the string.
    * **Match Saved!** The group "IP" successfully holds `"10.0.4.19"`.
 
