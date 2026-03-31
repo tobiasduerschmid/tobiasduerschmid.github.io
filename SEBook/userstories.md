@@ -249,24 +249,25 @@ If stories violate the Valuable criterion, you can improve them using these tech
 * **Why it violates Valuable:** The story is written entirely from the developer's perspective. The user does not care about internal code quality. The "so that" clause ("the codebase is easier to maintain") describes a developer benefit, not a user benefit {% cite cohn2004user %}. A product owner cannot weigh "easier to maintain" against user-facing features.
 * **How to fix it:** If there is a legitimate user-facing reason (e.g., performance), rewrite the story around that benefit: *"**As a** registered member, **I want to** log in without noticeable delay **so that** I can start using the application immediately."*
 
-**Example 2: The Techno-Speak Story**
-> *"**As a** system administrator, **I want** all database connections to be routed through a connection pool **so that** resource usage is optimized."*
-> * **Given** the application is running, **When** a service requests a database connection, **Then** the connection is provided from the pool rather than created from scratch.
+**Example 2: Incomplete Acceptance Criteria That Miss the Value**
+> *"**As a** travel agent, **I want to** search for available flights for a client's trip **so that** I can find the best option for them."*
+> * **Given** the travel agent enters a departure city, destination city, and travel date, **When** they click "Search", **Then** a list of available flights for that route is displayed.
+> * **Given** the search results are displayed, **When** the travel agent selects a flight from the list, **Then** the booking page for that flight is shown.
 
-* **Independent:** Yes. Connection pooling does not depend on other stories.
-* **Negotiable:** Yes. The specific pooling strategy and configuration are open to discussion.
-* **Estimable:** Yes. Implementing connection pooling is well-understood work.
-* **Small:** Yes. A single infrastructure change fits within a sprint.
-* **Testable:** Yes. You can verify that connections are served from the pool.
-* **Why it violates Valuable:** The story is written in technical jargon that a product owner or business stakeholder cannot evaluate. "Connection pool" and "resource optimization" describe an internal implementation detail, not an effect on the edge of the system {% cite cohn2004user %}. The customer cannot weigh this story's importance against other stories because they do not understand what it delivers {% cite cohn2004user %}.
-* **How to fix it:** Rewrite for external impact: *"**As a** hiring manager, **I want** up to fifty users to be able to use the application simultaneously with acceptable response times **so that** my team can all access the system during peak hours."* Now the value is clear and the product owner can prioritize it {% cite cohn2004user %}.
+* **Independent:** Yes. Searching for flights does not depend on other stories.
+* **Negotiable:** Yes. The story does not prescribe any specific technology, UI layout, or data source—the team is free to decide how to build the search.
+* **Estimable:** Yes. Building a flight search with results display is well-understood work with clear scope.
+* **Small:** Yes. A single search-and-display feature fits within a sprint.
+* **Testable:** Yes. The acceptance criteria define clear pass/fail conditions: enter inputs, click search, see results.
+* **Why it violates Valuable:** The story *text* promises real value ("find the best option"), but the acceptance criteria do not mention it. Since acceptance criteria define the scope of an acceptance implementation to the user story, these acceptance criteria accept user stories that do not implement the main functionality. A list of flight names and times is useless to a travel agent who needs to compare **prices, layover durations, and total travel time** to recommend the best option to a client. Without this comparison data, the agent cannot accomplish the goal stated in the "so that" clause. The feature technically works—flights are displayed and can be selected—but it does not solve the user's actual problem. This illustrates why ==acceptance criteria must capture the **essential functionality** that delivers the value promised by the story. A story may *appear* valuable based on its text, but if its acceptance criteria leave out the information or capability that makes the feature genuinely useful, the delivered feature will not provide real value to the user==.
+* **How to fix it:** Add acceptance criteria that capture the comparison capability essential to the agent's real goal: *"**Given** the search results are displayed, **When** the travel agent views the list, **Then** each flight shows the ticket price, number of stops, layover durations, and total travel time so the agent can compare options side by side."*
 
 > **Quick Check:** *"**As a** backend developer, **I want to** migrate our logging from printf statements to a structured logging framework **so that** log entries are in JSON format."*
 >
 > Does this story satisfy the Valuable criterion?
 > 
 ><details> <summary><i>Reveal Answer</i></summary>
-No. The story is written in developer jargon ("printf statements", "structured logging framework", "JSON format") and the "so that" clause describes a technical format, not a user or business benefit. A product owner cannot prioritize "JSON format" against other work. A valuable rewrite: <i>"As an on-call engineer, I want to search and filter production logs by severity, timestamp, and service so that I can diagnose outages faster."</i> </details>
+No. While this story might make it easier for developers to deliver more value to the user in the future due to better maintainability, it does not directly delivery value to a <i>user</i> of the system. We consider a user story valuable only if it meets the need of a <i>user</i>.</details>
 
 ## Estimable
 
