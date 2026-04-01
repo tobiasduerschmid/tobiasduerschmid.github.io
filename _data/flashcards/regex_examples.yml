@@ -43,8 +43,8 @@ cards:
   
   - id: 9  
     question: "Write a regex to match an opening or closing HTML tag."  
-    answer: "`<\\/?[a-z][\\s\\S]*>`"  
-    explanation: "Matches the opening `<`, an optional `/` for closing tags, a starting letter, and then any characters (including newlines) until the closing `>`."  
+    answer: "`<\\/?[a-zA-Z][\\s\\S]*>`"
+    explanation: "Matches the opening `<`, an optional `/` for closing tags, a starting letter (upper or lowercase), and then any characters (including newlines) until the closing `>`."  
   
   - id: 10  
     question: "Write a regex to find all leading and trailing whitespaces in a string (commonly used for string trimming)."  

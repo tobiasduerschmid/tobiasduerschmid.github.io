@@ -74,7 +74,7 @@ These tools manage how your shell operates and how you access information:
 Tools used for remote work, debugging, and automating the construction process:
 * **`ssh`**: Secure shell to connect to remote machines like SEASnet.
 * **`scp`**: Securely copy files between hosts.
-* **`wget2` / `curl`**: Download files or data from the internet.
+* **`wget` / `curl`**: Download files or data from the internet.
 * **`make`**: Build automation tool that uses shell-like syntax to manage the incremental build process of complex software, ensuring that only changed files are recompiled.
 * **`gcc` / `clang`**: C/C++ compilers.
 * **`tar`**: Manipulate tape archives (compressing/decompressing).

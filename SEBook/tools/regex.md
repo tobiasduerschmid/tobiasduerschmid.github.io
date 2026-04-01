@@ -127,27 +127,27 @@ Suppose we need to validate a password that must be at least 8 characters long a
 ### Example B: Email Validation
 Validating an email address perfectly according to the RFC standard is notoriously difficult, but a highly effective, standard RegEx looks like this:
 
-**The Pattern:** `^[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+**The Pattern:** `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 
 **Breakdown:**
-1. `^[a-zA-Z0-9.-]+` : Starts with one or more alphanumeric characters, dots, or dashes (the username).
+1. `^[a-zA-Z0-9._%+-]+` : Starts with one or more alphanumeric characters, dots, underscores, percent signs, plus signs, or dashes (the username).
 2. `@` : A literal "@" symbol.
 3. `[a-zA-Z0-9.-]+` : The domain name (e.g., "ucla" or "google").
 4. `\.` : A literal dot (escaped).
 5. `[a-zA-Z]{2,}$` : The top-level domain (e.g., "edu" or "com"), consisting of 2 or more letters, extending to the end of the string.
 
 
-## Grouping and Capturing
+## Groups and Named Groups
 
 Often, you don't just want to know *if* a string matched; you want to extract specific parts of the string. This is done using **Groups**, denoted by parentheses `()`.
 
-### Standard Capture Groups
+### Groups
 If you want to extract the domain from an email, you can wrap that section in parentheses:
 `^.+@(.+\.[a-zA-Z]{2,})$`
 The engine will save whatever matched inside the `()` into a numbered variable that you can access in your programming language.
 
-### Named Capture Groups
-When dealing with complex patterns, remembering group numbers gets confusing. Modern RegEx engines (like Python's) support **Named Capture Groups** using the syntax `(?P<name>pattern)`.
+### Named Groups
+When dealing with complex patterns, remembering group numbers gets confusing. Modern RegEx engines support **Named Groups** using the syntax `(?<name>pattern)` (or `(?P<name>pattern)` in Python).
 
 **Example: Parsing HTML Hex Colors**
 Imagine you want to extract the Red, Green, and Blue values from a hex color string like `#FF00A1`:
@@ -197,17 +197,18 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
 
 ### Worked Example 2: The Phone Number Problem
 **The Goal:** Extract a uniquely formatted phone number from a string.
-**The Regex:** `\(?\d{3}\)?[- .]?\d{3}[- .]?\d{4}`
+**The Regex:** `(\(\d{3}\)|\d{3})[- .]?\d{3}[- .]?\d{4}`
 
 **The Input String:** `"Call (123) 456-7890 now"`
 
 **Step-by-Step Execution:**
-1. The engine starts at `C`. `\(` (an optional literal opening parenthesis) is not `C`, so it skips it. Next token `\d{3}` fails because `C` is not a digit. Bump along.
+1. The engine starts at `C`. The first alternative `\(\d{3}\)` needs a literal `(`, so `C` fails. The second alternative `\d{3}` needs a digit, so `C` also fails. Bump along.
 2. It bumps along through "Call " until it reaches index 5: `(`.
 3. **Index 5 (`(`):**
-   * `\(`? matches the `(`. (Consumed).
+   * The engine tries the first alternative in the group: `\(\d{3}\)`.
+   * `\(` matches the `(`. (Consumed).
    * `\d{3}` matches `123`. (Consumed).
-   * `\)?` matches the `)`. (Consumed).
+   * `\)` matches the `)`. (Consumed).
    * `[- .]?` looks for an optional space, dash, or dot. It finds the space after the parenthesis and matches it. (Consumed).
    * `\d{3}` matches `456`. (Consumed).
    * `[- .]?` finds the `-` and matches it. (Consumed).
