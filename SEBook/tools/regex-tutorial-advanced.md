@@ -198,7 +198,16 @@ Parentheses `(...)` serve two purposes:
 
 1. **Grouping**: Treat multiple characters as a single unit for quantifiers. `(na){2,}` means "the sequence **na** repeated 2 or more times" — matching `nana`, `nanana`, etc.
 
-2. **Capturing**: The engine remembers what each group matched, which is useful in search-and-replace operations (backreferences like `\1` or `$1`).
+2. **Capturing**: The engine remembers what each group matched, so your code can retrieve it afterward.
+
+**Named capturing groups** let you label what each group captures instead of counting parentheses:
+
+| Syntax | Meaning |
+|--------|---------|
+| `(?<name>...)` | Capture into a group called *name* |
+| `match.groups.name` | Retrieve the captured value in code |
+
+For example, `^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$` matches a date and lets you access `match.groups.year`, `match.groups.month`, and `match.groups.day` directly — much clearer than `match[1]`, `match[2]`, `match[3]`.
 
 If you only need grouping without capturing, use a **non-capturing group**: `(?:...)`
 

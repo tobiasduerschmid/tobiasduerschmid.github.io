@@ -145,6 +145,63 @@
         { input: 'A', shouldMatch: false }
       ]
     },
+    {
+      id: 'group-3', type: 'parsons',
+      section: 'Groups & Capturing',
+      title: 'Named Log Parser',
+      goal: 'Build a regex to parse log entries like <code>[ERROR] 404 Not Found</code>. Capture the level (e.g., ERROR) as <code>(?&lt;level&gt;...)</code> and the status code as <code>(?&lt;code&gt;...)</code>.',
+      sampleText: '[ERROR] 404 Not Found\n[WARN] 301 Moved\n[INFO] 200 OK',
+      fragments: ['\\[(?<level>', '\\w+', ')\\]', '\\s+', '(?<code>', '\\d+', ')'],
+      solution: '\\[(?<level>\\w+)\\]\\s+(?<code>\\d+)',
+      requiredGroups: ['level', 'code'],
+      tests: [
+        { input: '[ERROR] 404 Not Found', shouldMatch: true, namedGroups: { level: 'ERROR', code: '404' }, label: '"level" captures "ERROR", "code" captures "404"' },
+        { input: '[WARN] 301 Moved', shouldMatch: true, namedGroups: { level: 'WARN', code: '301' }, label: '"level" captures "WARN", "code" captures "301"' },
+        { input: 'ERROR 404', shouldMatch: false, label: 'missing brackets — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: '[INFO] 200 OK', shouldMatch: true, namedGroups: { level: 'INFO', code: '200' } },
+        { input: '[] 500', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'group-4', type: 'free',
+      section: 'Groups & Capturing',
+      title: 'Named Email Parts',
+      goal: 'Match a simple email address and capture the <strong>username</strong> and <strong>domain</strong> using named groups: <code>(?&lt;user&gt;...)</code> and <code>(?&lt;domain&gt;...)</code>. Username is one or more word characters, domain is one or more word characters, a dot, then one or more letters. Validate the entire string.',
+      sampleText: null,
+      solution: '^(?<user>\\w+)@(?<domain>\\w+\\.[a-zA-Z]+)$',
+      requiredGroups: ['user', 'domain'],
+      tests: [
+        { input: 'alice@example.com', shouldMatch: true, namedGroups: { user: 'alice', domain: 'example.com' }, label: '"user" captures "alice", "domain" captures "example.com"' },
+        { input: 'bob@host.org', shouldMatch: true, namedGroups: { user: 'bob', domain: 'host.org' }, label: '"user" captures "bob"' },
+        { input: 'no-at-sign.com', shouldMatch: false, label: 'missing @ — should NOT match' },
+        { input: '@host.com', shouldMatch: false, label: 'missing username — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: 'a@b.c', shouldMatch: true, namedGroups: { user: 'a', domain: 'b.c' } },
+        { input: 'user@host', shouldMatch: false }
+      ]
+    },
+    {
+      id: 'group-5', type: 'free',
+      section: 'Groups & Capturing',
+      title: 'Named Date Parts',
+      goal: 'Match dates in <code>YYYY-MM-DD</code> format using named groups: <code>(?&lt;year&gt;...)</code>, <code>(?&lt;month&gt;...)</code>, and <code>(?&lt;day&gt;...)</code>. Year is 4 digits, month and day are each 2 digits, separated by hyphens. Validate the entire string.',
+      sampleText: null,
+      solution: '^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$',
+      requiredGroups: ['year', 'month', 'day'],
+      tests: [
+        { input: '2026-04-01', shouldMatch: true, namedGroups: { year: '2026', month: '04', day: '01' }, label: 'groups capture year, month, day' },
+        { input: '1999-12-31', shouldMatch: true, namedGroups: { year: '1999', month: '12', day: '31' }, label: 'another valid date' },
+        { input: '26-04-01', shouldMatch: false, label: '2-digit year — should NOT match' },
+        { input: '2026/04/01', shouldMatch: false, label: 'wrong separator — should NOT match' }
+      ],
+      hiddenTests: [
+        { input: '0000-00-00', shouldMatch: true, namedGroups: { year: '0000', month: '00', day: '00' } },
+        { input: '2026-1-1', shouldMatch: false }
+      ]
+    },
 
     // ═══ Lookaheads & Lookbehinds ══════════════════════════════════════════
     {
@@ -343,13 +400,14 @@
     return re.test(input);
   }
 
-  // Extended test: supports firstMatch (exact text of first match) and matchCount
+  // Extended test: supports firstMatch (exact text of first match), matchCount, and namedGroups
   function checkSingleTest(pattern, t) {
     var re = tryCompile(pattern, 'g');
     if (!re || re.error) return !t.shouldMatch;
     re.lastIndex = 0;
-    var matches = [], m, safety = 0;
+    var matches = [], firstExec = null, m, safety = 0;
     while ((m = re.exec(t.input)) !== null) {
+      if (!firstExec) firstExec = m;
       matches.push(m[0]);
       if (m[0].length === 0) re.lastIndex++;
       if (++safety > 1000) break;
@@ -358,6 +416,21 @@
     if (matched !== t.shouldMatch) return false;
     if (matched && t.firstMatch !== undefined && matches[0] !== t.firstMatch) return false;
     if (matched && t.matchCount !== undefined && matches.length !== t.matchCount) return false;
+    if (matched && t.namedGroups && firstExec) {
+      var groups = firstExec.groups;
+      if (!groups) return false;
+      for (var k in t.namedGroups) {
+        if (groups[k] !== t.namedGroups[k]) return false;
+      }
+    }
+    return true;
+  }
+
+  // Check that a pattern uses specific named groups (validates the pattern itself, not just matches)
+  function hasNamedGroups(pattern, groupNames) {
+    for (var i = 0; i < groupNames.length; i++) {
+      if (pattern.indexOf('(?<' + groupNames[i] + '>') === -1) return false;
+    }
     return true;
   }
 
@@ -665,6 +738,9 @@
     'greedy-2': { q: 'What would happen if you used a greedy ".*" between the quotes instead of lazy ".*?"?', a: 'The greedy .* would consume everything from the first opening quote to the LAST closing quote in the entire string, treating all text in between as one match.' },
     'group-1': { q: 'What is the difference between na{2,} and (na){2,}?', a: 'na{2,} means "n followed by 2 or more a\'s" (naaa...). (na){2,} means "the group na repeated 2 or more times" (nana, nanana...). Parentheses group multiple characters into a single unit.' },
     'group-2': { q: 'Why did the original [A-Z]+ match both "LA" and "ABCD"?', a: 'The + quantifier means "one or more" with no upper limit. Without {3} to specify exactly 3, and without anchors to prevent substring matching, any sequence of uppercase letters is accepted.' },
+    'group-3': { q: 'Why are named groups especially useful for log parsing?', a: 'Log formats have many fields (level, code, message, timestamp, etc.). Named groups let you write match.groups.level and match.groups.code instead of remembering positional indices. When you add new groups later, existing code that uses names won\'t break.' },
+    'group-4': { q: 'How would you access the captured user and domain in JavaScript code?', a: 'After const m = str.match(regex), use m.groups.user and m.groups.domain. Named groups make the code self-documenting — compare m.groups.user vs m[1], especially when a regex has many groups.' },
+    'group-5': { q: 'How could you use the named groups year/month/day after matching?', a: 'In JavaScript, match.groups.year, match.groups.month, and match.groups.day give you direct access to each part by name — no need to remember that the year is group 1, month is group 2, etc. This makes code that processes the match much more readable.' },
     'look-1': { q: 'Why use a lookbehind instead of just including \\$ in the pattern?', a: 'A lookbehind checks that $ precedes the match but doesn\'t include it in the result. If you used \\$[\\d.]+, the match would be "$25" (with the dollar sign). Lookbehinds let you extract just the number.' },
     'look-2': { q: 'How do chained lookaheads work together at the same position?', a: 'Each lookahead independently checks a condition from the same starting position (like a logical AND). (?=.*\\d) verifies a digit exists somewhere, (?=.*[A-Z]) verifies an uppercase letter exists. Neither consumes characters, so the string pointer stays at the start for the next check.' },
     'integrate-1': { q: 'Why is the alternation (|) inside a group, and why does the 6-digit option come first?', a: 'The group (...) contains the alternation so that ^ and $ still anchor the whole pattern. The 6-digit option comes first because regex tries alternatives left-to-right — if 3-digit came first, "AABBCC" would match only "AAB" (the first 3 hex chars).' },
@@ -698,6 +774,12 @@
 
     if (!pattern) {
       if (rEl) { rEl.textContent = 'Please enter a regex pattern.'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
+      return;
+    }
+
+    // Check that required named groups are present in the pattern
+    if (ex.requiredGroups && !hasNamedGroups(pattern, ex.requiredGroups)) {
+      if (rEl) { rEl.innerHTML = '&#10007; Your regex must use named capturing groups: <code>' + ex.requiredGroups.map(function (g) { return '(?&lt;' + g + '&gt;...)'; }).join('</code>, <code>') + '</code>'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
       return;
     }
 
