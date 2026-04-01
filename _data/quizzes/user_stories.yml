@@ -5,12 +5,13 @@ questions:
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
-      "As a customer, I want to pay for my items using a credit card, so that I can complete my purchase. (Note: This story cannot be implemented until the User Registration and Cart Management stories are fully completed).
+      "As a customer, I want to pay for my items using a credit card, so that I can complete my purchase"
       
       Acceptance Criteria:
       - Given a user has items in their cart, when they enter valid credit card details and submit, then the payment is processed and an order confirmation is shown.
       - Given a user enters an expired credit card, when they submit, then the system displays an 'invalid card' error message.
-        
+
+       (Note: The user stories on User Registration and Cart Management are still not implemented and still in the backlog)  
       Which INVEST criteria are violated? (Select all that apply)
     options:
       - "Independent"
@@ -20,7 +21,7 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [0]
-    explanation: "This story violates the **Independent** criterion because it is explicitly blocked by other incomplete stories. All other INVEST criteria are met."
+    explanation: "This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
   - id: 2
     type: multiple
     question: |
