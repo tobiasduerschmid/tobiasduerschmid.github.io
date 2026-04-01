@@ -490,6 +490,10 @@ steps:
       stderr (`2>`), which is why they "leak through" regular
       redirection.
 
+      > **Note:** The tests below check that `ls_out.txt` and
+      > `ls_err.txt` exist with the expected content. Make sure you
+      > actually ran the commands from Steps B and C above!
+
       ### Pipeline exercises
 
       For each question, build a pipeline and **save the result to the named

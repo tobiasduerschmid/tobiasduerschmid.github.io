@@ -163,7 +163,7 @@ layout: sebook
 }
 </style>
 
-<div class="rt-progress-label" id="rt-progress-label">0 / 13 exercises completed</div>
+<div class="rt-progress-label" id="rt-progress-label">0 / 16 exercises completed</div>
 <div class="rt-progress">
   <div class="rt-progress-fill" id="rt-progress-fill"></div>
 </div>

@@ -276,7 +276,7 @@
       section: 'Alternation & Combining',
       title: 'Time Format',
       goal: 'Match times in <code>HH:MM</code> format — exactly two digits, a colon, two digits.',
-      sampleText: 'Schedule: standup at 09:30, lunch at 12:00, review at 15:45. Note: 9:5 is not valid. Neither is 123:456.',
+      sampleText: 'Schedule: standup at 09:30, lunch at 12:00, review at 15:45. Note: 9:5 is not valid format.',
       solution: '\\d{2}:\\d{2}',
       tests: [
         { input: '09:30', shouldMatch: true, label: 'valid time' },

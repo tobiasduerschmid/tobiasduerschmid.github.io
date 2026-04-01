@@ -426,10 +426,12 @@ test.describe('Shell Scripting Tutorial', () => {
 
       const type = await card.getAttribute('data-type');
       const firstOption = card.locator('.quiz-option').first();
-      const correctStr = await firstOption.getAttribute('data-correct-indices');
-      const correctIndices = new Set(correctStr.split(',').map(Number));
 
       if (type === 'multiple') {
+        // Read correct indices (multiple-choice uses data-correct-indices)
+        const correctStr = await firstOption.getAttribute('data-correct-indices') ?? '';
+        const correctIndices = new Set(correctStr.split(',').map(Number));
+
         // Select one wrong option
         const options = card.locator('.quiz-option');
         const count = await options.count();
@@ -442,12 +444,15 @@ test.describe('Shell Scripting Tutorial', () => {
         }
         await card.locator('.submit-answer-btn').click();
       } else {
+        // Single choice: read data-correct (not data-correct-indices)
+        const correctIdx = await firstOption.getAttribute('data-correct');
+
         // Click a wrong option
         const options = card.locator('.quiz-option');
         const count = await options.count();
         for (let i = 0; i < count; i++) {
-          const idx = Number(await options.nth(i).getAttribute('data-index'));
-          if (!correctIndices.has(idx)) {
+          const idx = await options.nth(i).getAttribute('data-index');
+          if (idx !== correctIdx) {
             await options.nth(i).click();
             break;
           }
@@ -527,32 +532,37 @@ test.describe('Shell Scripting Tutorial', () => {
   // --- Steps Have Quizzes -------------------------------------------------
 
   test('multiple steps have quiz gates', async ({ page }) => {
-    // Check step data for quizzes by examining the tutorial config
-    const stepsWithQuiz = await page.evaluate(() => {
-      // The tutorial VM stores step data — check how many have quizzes
-      const container = document.querySelector('#tutorial-container');
-      // Access via the script-injected config
-      const scripts = document.querySelectorAll('script');
-      let count = 0;
-      for (const s of scripts) {
-        const text = s.textContent;
-        if (text.includes('TutorialVM') && text.includes('steps:')) {
-          // Parse step count from config — this is fragile, use a simpler approach
-          break;
-        }
-      }
-      return count;
-    });
-
-    // Alternative: navigate through steps and check for quiz via the Next
-    // button behavior. Steps with quizzes have the quiz appear on Next click
-    // after tests pass. We can't easily test this without passing tests,
-    // so we just verify the tutorial YAML has quiz data by checking
-    // the step count is consistent.
+    // Navigate to each step and click Next to check if a quiz gate appears.
+    // We can't pass tests first, so we rely on the Next button opening the
+    // quiz panel even when tests haven't passed (the quiz gate blocks
+    // progression regardless).
     const stepButtons = page.locator('.tvm-step-btn');
     const stepCount = await stepButtons.count();
-    // The shell tutorial should have at least 8 steps
     expect(stepCount).toBeGreaterThanOrEqual(8);
+
+    let stepsWithQuiz = 0;
+    for (let i = 0; i < Math.min(stepCount, 5); i++) {
+      await stepButtons.nth(i).click();
+      await page.waitForTimeout(500);
+
+      const nextBtn = page.locator('.tvm-btn-next');
+      if (await nextBtn.count() > 0 && await nextBtn.isVisible()) {
+        await nextBtn.click();
+        const quizPanel = page.locator('.tvm-quiz-panel');
+        try {
+          await expect(quizPanel).toBeVisible({ timeout: 3000 });
+          stepsWithQuiz++;
+          // Dismiss quiz by navigating back to the step
+          await stepButtons.nth(i).click();
+          await page.waitForTimeout(300);
+        } catch {
+          // No quiz appeared — that's fine for some steps
+        }
+      }
+    }
+
+    // Most steps should have quiz gates
+    expect(stepsWithQuiz).toBeGreaterThanOrEqual(3);
   });
 
 });
