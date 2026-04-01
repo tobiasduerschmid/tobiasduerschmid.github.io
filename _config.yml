@@ -8,6 +8,12 @@ env: production
 # Feature flags
 personal_gym: true
 
+# SE Gym milestone thresholds (cumulative questions answered)
+gym_milestone_bronze: 20
+gym_milestone_silver: 100
+gym_milestone_gold: 500
+gym_milestone_diamond: 1000
+
 sass:
   style: compressed
 

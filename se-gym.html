@@ -38,6 +38,7 @@ title: "SE Gym"
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
       <h1>SE Study Gym</h1>
+      <div id="milestone-banner" class="milestone-banner" style="display:none;"></div>
       <p class="gym-subtitle"> Make studying fun while following <a
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
         your
@@ -500,6 +501,48 @@ title: "SE Gym"
     .gym-subtitle {
       color: #666;
       margin-bottom: 20px;
+    }
+
+    .milestone-banner {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      text-align: center;
+      font-size: 1.3em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .milestone-banner.milestone-bronze {
+      background: linear-gradient(135deg, #fdf0e0, #f5deb3);
+      color: #7a4a0a;
+      border: 1px solid #d4a76a;
+    }
+
+    .milestone-banner.milestone-silver {
+      background: linear-gradient(135deg, #f0f0f0, #d8d8d8);
+      color: #3a3a3a;
+      border: 1px solid #b0b0b0;
+    }
+
+    .milestone-banner.milestone-gold {
+      background: linear-gradient(135deg, #fff8e1, #ffe082);
+      color: #6d5200;
+      border: 1px solid #ffc107;
+    }
+
+    .milestone-banner.milestone-diamond {
+      background: linear-gradient(135deg, #e8f4fd, #b3e5fc, #e1f5fe);
+      color: #01579b;
+      border: 1px solid #4fc3f7;
+      box-shadow: 0 0 12px rgba(79, 195, 247, 0.3);
+    }
+
+    .milestone-icon {
+      font-size: 1.5em;
     }
 
     /* Controls */
@@ -1070,6 +1113,31 @@ title: "SE Gym"
       color: #aaa;
     }
 
+    html.dark-mode .milestone-banner.milestone-bronze {
+      background: linear-gradient(135deg, #3a2a10, #4a3520);
+      color: #d4a76a;
+      border-color: #7a5a2a;
+    }
+
+    html.dark-mode .milestone-banner.milestone-silver {
+      background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+      color: #c0c0c0;
+      border-color: #666;
+    }
+
+    html.dark-mode .milestone-banner.milestone-gold {
+      background: linear-gradient(135deg, #3a3000, #4a3e10);
+      color: #ffd54f;
+      border-color: #8a7a20;
+    }
+
+    html.dark-mode .milestone-banner.milestone-diamond {
+      background: linear-gradient(135deg, #0a2a3a, #0d3350, #0a2a3a);
+      color: #4fc3f7;
+      border-color: #0288d1;
+      box-shadow: 0 0 12px rgba(79, 195, 247, 0.2);
+    }
+
     html.dark-mode #gym-controls {
       background: #252525;
       border-color: #444;
@@ -1317,6 +1385,41 @@ title: "SE Gym"
       // ==================== LIBRARY VIEW ====================
 
       function refreshLibrary() {
+        // Show milestone banner based on total unique questions seen
+        var milestoneBanner = document.getElementById('milestone-banner');
+        milestoneBanner.className = 'milestone-banner';
+        if (PersonalGym.isAnalyzePerformance()) {
+          var stats = PersonalGym.getStats();
+          var totalAnswered = 0;
+          var keys = Object.keys(stats);
+          for (var i = 0; i < keys.length; i++) { totalAnswered += stats[keys[i]].seen; }
+          var MILESTONE_DIAMOND = {{ site.gym_milestone_diamond }};
+          var MILESTONE_GOLD = {{ site.gym_milestone_gold }};
+          var MILESTONE_SILVER = {{ site.gym_milestone_silver }};
+          var MILESTONE_BRONZE = {{ site.gym_milestone_bronze }};
+          if (totalAnswered >= MILESTONE_DIAMOND) {
+            milestoneBanner.innerHTML = '<span class="milestone-icon">&#128142;</span> Diamond milestone! You\'ve completed ' + MILESTONE_DIAMOND + '+ exercises. Legendary Superhero! &#129464;';
+            milestoneBanner.classList.add('milestone-diamond');
+            milestoneBanner.style.display = 'flex';
+          } else if (totalAnswered >= MILESTONE_GOLD) {
+            milestoneBanner.innerHTML = '<span class="milestone-icon">&#127942;</span> Gold milestone! You\'ve completed ' + MILESTONE_GOLD + '+ exercises. Only one more level to go!';
+            milestoneBanner.classList.add('milestone-gold');
+            milestoneBanner.style.display = 'flex';
+          } else if (totalAnswered >= MILESTONE_SILVER) {
+            milestoneBanner.innerHTML = '<span class="milestone-icon">&#129352;</span> Silver milestone! You\'ve completed ' + MILESTONE_SILVER + '+ exercises. Keep pushing!';
+            milestoneBanner.classList.add('milestone-silver');
+            milestoneBanner.style.display = 'flex';
+          } else if (totalAnswered >= MILESTONE_BRONZE) {
+            milestoneBanner.innerHTML = '<span class="milestone-icon">&#129353;</span> Bronze milestone! You\'ve completed ' + MILESTONE_BRONZE + '+ exercises. Keep going!';
+            milestoneBanner.classList.add('milestone-bronze');
+            milestoneBanner.style.display = 'flex';
+          } else {
+            milestoneBanner.style.display = 'none';
+          }
+        } else {
+          milestoneBanner.style.display = 'none';
+        }
+
         var gym = PersonalGym.getGym();
         var totalCards = 0;
 
