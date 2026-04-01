@@ -532,7 +532,13 @@ So aiming to write the smallest user stories that are still valuable is often a 
 A user story *can* become too small when writing and estimating it takes more time than implementing it. 
 Then it should be combined with other user stories even if the smaller user story is still somewhat valauble.
 Whether a user story is "good" or "bad" is not a binary criterion, but a spectrum. 
-Aiming to reasonably improve user stories is a desirable goal, but in a practical setting, "good enough" is often sufficient while "perfect" can be a waste of time. 
+Aiming to reasonably improve user stories is a desirable goal, but in a practical setting, "good enough" is often sufficient while "perfect" can be a waste of time.
+
+
+### Is INVEST evaluated primarily on the main body of the user story or the acceptance criteria
+Since acceptance critiera define the actual scope of what defines a correct implementation of the requirement, they are the decision driver for INVEST.
+The main body can be seen as a gentle summary. But for INVEST the acceptance criteria usually "overrule" the main body of the user story. 
+
 <!--
 
 ### Should bug reports be user stories?
