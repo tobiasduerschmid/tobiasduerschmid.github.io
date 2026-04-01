@@ -44,7 +44,7 @@ questions:
       - "The descriptive architecture becomes the new prescription."
       - "The system's performance improves through ad-hoc optimizations."
     correct_index: 1
-    explanation: "Complete divergence lead to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
+    explanation: "Complete divergence leads to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
 
   - question: "In the context of the JackTrip project, what was identified as a primary driver of 'link overload smells' and erosion?"
     options:

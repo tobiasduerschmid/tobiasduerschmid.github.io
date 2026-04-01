@@ -111,7 +111,7 @@ questions:
 
   - question: "What is a direct implication of the CAP theorem?"
     options:
-      - "MySQL is more suitable for data-intense systems that MongoDB"
+      - "MySQL is more suitable for data-intense systems than MongoDB"
       - "When designing distributed systems, there are inherent trade-offs between important data management properties"
       - "Non-error responses always include the most recent write"
       - "ATM systems do not let users withdraw money during a network outage"
@@ -123,7 +123,7 @@ questions:
       - "A web app that allows users to book flights"
       - "A web app that allows users to upload photos (without any meta data) to a shared drive"
       - "An Android app that allows users to communicate via direct messages"
-      - "A web app that allows users write and read reviews for movies"
+      - "A web app that allows users to write and read reviews for movies"
     correct_index: 3
     explanation: "Cross-Site Scripting (XSS) occurs when untrusted user input is rendered directly in a web application without proper sanitization. Applications that display user-generated text to other users are highly vulnerable, as malicious scripts can be injected and executed in victims' browsers."
 
