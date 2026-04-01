@@ -426,7 +426,7 @@ Below are two user stories that are not testable but still satisfy (most) other 
 * **Independent:** Yes. It doesn't inherently rely on other features being built first.
 * **Negotiable:** Yes. The exact layout and tech used to build it are open to discussion.
 * **Valuable:** Yes. A landing page to attract a younger demographic provides clear business value.
-* **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page.
+* **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page independent on what specific definiton of "gorgeous and modern" is used. 
 * **Small:** Yes. Building a single landing page easily fits within a single sprint.
 * **Why it violates Testable:** "Gorgeous," "modern," and "appeals to" are completely subjective. What one developer thinks is modern, the marketing manager might think is ugly. 
 * **How to fix it:** Tie it to a specific, measurable design system or user-testing metric. *(e.g., "Acceptance Criteria: The design strictly adheres to the new V2 Brand Guidelines and passes a 5-second usability test with a 4/5 rating from a focus group of 18-24 year olds.")*
@@ -482,7 +482,8 @@ Here are examples of user stories that isolate those specific violations of the 
 **User Story:** *"**As a** site administrator, **I want** the dashboard to feel **snappy** when I log in **so that** I don't get frustrated with the interface."*
 
 *   **Why it violates Testable:** Terms like "snappy" or "fast" are subjective. Without a specific metric (e.g., "loads in under 2 seconds"), there is no objective "Yes" or "No" answer to determine if the story is done. 
-*   **Why it is still Estimable:** The developers know the dashboard and its tech stack well. Regardless of how "snappy" is ultimately defined, they can estimate the effort for standard front-end optimizations (lazy loading, caching, query tuning) that would improve perceived responsiveness. The implementation work is predictable even though the acceptance threshold is not.
+*   **Why it is still Estimable:** The developers know the dashboard and its tech stack well. Regardless of how "snappy" is ultimately defined, they can estimate the effort for standard front-end optimizations (lazy loading, caching, query tuning) that would improve perceived responsiveness. The implementation work is predictable even though the acceptance threshold is not, because for all reasonable interpretations of snappy, the implementation effort is roughly the same, as these techniques are well understood and often available in libraries. 
+Note: Dependening on your personal experience with web development, you might evaluate this example as not estimable. That would also be valid judgement. In that case, check out the The Subjective UI Requirement Example above for another example.
 
  **Violates Estimable but not Testable**
 **User Story:** *"**As a** safety officer, **I want** the system to **automatically identify every pedestrian** in this complex, low-light video feed **so that** I can monitor crosswalk safety without reviewing hours of footage manually."*
