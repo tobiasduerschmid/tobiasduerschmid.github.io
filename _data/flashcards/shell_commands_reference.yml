@@ -1,0 +1,92 @@
+title: "Shell Commands — What Does It Do?"
+description: "Match each shell command to its purpose"
+cards:
+  - id: 1
+    question: "What does `ls` do?"
+    answer: "Lists files and directories in the current (or specified) directory"
+    explanation: "`ls` (list) shows the contents of a directory. Common flags: `-l` for a detailed long listing, `-a` to include hidden files (those starting with `.`), and `-lh` for human-readable file sizes."
+
+  - id: 2
+    question: "What does `mkdir` do?"
+    answer: "Creates a new directory"
+    explanation: "`mkdir` (make directory) creates one or more directories. Use `mkdir -p path/to/nested/dir` to create all intermediate directories at once without errors if they already exist."
+
+  - id: 3
+    question: "What does `cp` do?"
+    answer: "Copies a file or directory to a new location"
+    explanation: "`cp source dest` copies a file. To copy a directory and all its contents recursively, use `cp -r source/ dest/`. The original file is left unchanged."
+
+  - id: 4
+    question: "What does `mv` do?"
+    answer: "Moves or renames a file or directory"
+    explanation: "`mv old new` renames a file if both paths are on the same filesystem, or moves it otherwise. Unlike `cp`, the original is removed — there is no `-r` flag needed for directories."
+
+  - id: 5
+    question: "What does `rm` do?"
+    answer: "Permanently deletes files or directories"
+    explanation: "`rm file` deletes a file. Use `rm -r dir/` to delete a directory and all its contents recursively. There is no trash or undo — deleted files are gone immediately."
+
+  - id: 6
+    question: "What does `less` do?"
+    answer: "Displays file contents one screen at a time, with scrolling"
+    explanation: "`less file` opens an interactive pager. Navigate with arrow keys or Page Up/Down, search with `/keyword`, and quit with `q`. Unlike `cat`, it doesn't dump everything to the terminal at once — essential for large files."
+
+  - id: 7
+    question: "What does `cat` do?"
+    answer: "Prints the contents of a file to standard output"
+    explanation: "`cat` (concatenate) reads one or more files and writes them to stdout. It's commonly used to view small files, combine files (`cat a b > c`), or feed file contents into a pipeline."
+
+  - id: 8
+    question: "What does `sed` do?"
+    answer: "Edits a stream of text — most commonly used for find-and-replace"
+    explanation: "`sed` (stream editor) applies editing commands to each line of input. The most common usage is substitution: `sed 's/old/new/g'` replaces every occurrence of `old` with `new`. The `g` flag means global (all matches per line, not just the first)."
+
+  - id: 9
+    question: "What does `grep` do?"
+    answer: "Searches text and prints lines that match a pattern"
+    explanation: "`grep pattern file` prints every line containing the pattern. Key flags: `-i` (case-insensitive), `-r` (recursive search through directories), `-n` (show line numbers), `-v` (invert — show lines that do NOT match)."
+
+  - id: 10
+    question: "What does `head` do?"
+    answer: "Prints the first lines of a file (default: 10)"
+    explanation: "`head file` shows the first 10 lines. Use `head -n 20 file` to show the first 20 lines. Useful for quickly inspecting the start of a file or checking a CSV header."
+
+  - id: 11
+    question: "What does `tail` do?"
+    answer: "Prints the last lines of a file (default: 10)"
+    explanation: "`tail file` shows the last 10 lines. Use `tail -n 20` for more. The `-f` flag (follow) continuously streams new lines as they are appended — the standard way to monitor a live log file."
+
+  - id: 12
+    question: "What does `wc` do?"
+    answer: "Counts lines, words, and bytes in a file"
+    explanation: "`wc file` prints line count, word count, and byte count. Use flags to isolate each: `-l` (lines), `-w` (words), `-c` (bytes). For example, `wc -l access.log` tells you how many requests are in a log file."
+
+  - id: 13
+    question: "What does `sort` do?"
+    answer: "Sorts lines of text alphabetically (or numerically)"
+    explanation: "`sort file` outputs lines in ascending alphabetical order. Key flags: `-n` (numeric sort), `-r` (reverse/descending), `-u` (unique — remove duplicate lines). Combine with pipes: `cat file | sort -n | tail -5` finds the five largest numbers."
+
+  - id: 14
+    question: "What does `cut` do?"
+    answer: "Extracts specific columns or fields from each line of text"
+    explanation: "`cut -d',' -f2 file.csv` splits each line on `,` and prints the second field. Use `-d` to set the delimiter and `-f` to choose the field(s). Essential for quickly extracting a column from a CSV or colon-separated file like `/etc/passwd`."
+
+  - id: 15
+    question: "What does `ssh` do?"
+    answer: "Opens an encrypted remote shell session on another machine"
+    explanation: "`ssh user@host` connects to `host` as `user` over the SSH protocol. Everything — including your password and the session data — is encrypted. You can also use it to run a single remote command: `ssh user@host 'df -h'`."
+
+  - id: 16
+    question: "What does `htop` do?"
+    answer: "Shows an interactive, real-time view of running processes and system resource usage"
+    explanation: "`htop` is an improved alternative to `top`. It displays CPU, memory, and swap usage at the top, with a scrollable list of processes below. You can sort by CPU or memory, search for a process, and kill processes interactively — all with keyboard shortcuts."
+
+  - id: 17
+    question: "What does `pwd` do?"
+    answer: "Prints the absolute path of the current working directory"
+    explanation: "`pwd` (print working directory) tells you exactly where you are in the filesystem. Useful when you're deep in a directory tree or when writing scripts where you need to capture the script's launch location."
+
+  - id: 18
+    question: "What does `chmod` do?"
+    answer: "Changes the read, write, and execute permissions of a file or directory"
+    explanation: "`chmod` (change mode) controls who can read, write, or execute a file. `chmod +x script.sh` adds execute permission for everyone. You can also use numeric notation: `chmod 755 file` sets owner=rwx, group=rx, others=rx — a common pattern for executable scripts."

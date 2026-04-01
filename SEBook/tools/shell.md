@@ -459,4 +459,6 @@ Shell scripting is an indispensable skill for anyone working in tech. By viewing
 
 {% include quiz.html id="shell" %}
 
+{% include flashcards.html id="shell_commands_reference" %}
+
 After finishing these quizzes, you are now ready to practice in a real Linux system. Try the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html)!
