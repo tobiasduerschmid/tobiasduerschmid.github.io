@@ -106,10 +106,10 @@
       ]
     },
 
-    // ═══ Groups & Capturing ════════════════════════════════════════════════
+    // ═══ Groups & Named Groups ══════════════════════════════════════════════
     {
       id: 'group-1', type: 'free',
-      section: 'Groups & Capturing',
+      section: 'Groups & Named Groups',
       title: 'Repeated Syllables',
       goal: 'Match the syllable <code>na</code> repeated <strong>2 or more</strong> times in a row. Use a group <code>(...)</code> with a quantifier.',
       sampleText: 'The crowd chanted: na nana nanana nananana! A banana has na but also nan. Just na alone is not enough.',
@@ -126,7 +126,7 @@
     },
     {
       id: 'group-2', type: 'fixer',
-      section: 'Groups & Capturing',
+      section: 'Groups & Named Groups',
       title: 'Fix the Repeater',
       goal: 'This regex tries to match 3-letter airport codes (like LAX, JFK) but it incorrectly matches <code>LA</code> and <code>ABCD</code>. Fix it.',
       sampleText: null,
@@ -147,7 +147,7 @@
     },
     {
       id: 'group-3', type: 'parsons',
-      section: 'Groups & Capturing',
+      section: 'Groups & Named Groups',
       title: 'Named Log Parser',
       goal: 'Build a regex to parse log entries like <code>[ERROR] 404 Not Found</code>. Capture the level (e.g., ERROR) as <code>(?&lt;level&gt;...)</code> and the status code as <code>(?&lt;code&gt;...)</code>.',
       sampleText: '[ERROR] 404 Not Found\n[WARN] 301 Moved\n[INFO] 200 OK',
@@ -166,9 +166,9 @@
     },
     {
       id: 'group-4', type: 'free',
-      section: 'Groups & Capturing',
+      section: 'Groups & Named Groups',
       title: 'Named Email Parts',
-      goal: 'Match a simple email address and capture the <strong>username</strong> and <strong>domain</strong> using named groups: <code>(?&lt;user&gt;...)</code> and <code>(?&lt;domain&gt;...)</code>. Username is one or more word characters, domain is one or more word characters, a dot, then one or more letters. Validate the entire string.',
+      goal: 'Match a simple email address and extract the <strong>username</strong> and <strong>domain</strong> using named groups: <code>(?&lt;user&gt;...)</code> and <code>(?&lt;domain&gt;...)</code>. Username is one or more word characters, domain is one or more word characters, a dot, then one or more letters. Validate the entire string.',
       sampleText: null,
       solution: '^(?<user>\\w+)@(?<domain>\\w+\\.[a-zA-Z]+)$',
       requiredGroups: ['user', 'domain'],
@@ -185,7 +185,7 @@
     },
     {
       id: 'group-5', type: 'free',
-      section: 'Groups & Capturing',
+      section: 'Groups & Named Groups',
       title: 'Named Date Parts',
       goal: 'Match dates in <code>YYYY-MM-DD</code> format using named groups: <code>(?&lt;year&gt;...)</code>, <code>(?&lt;month&gt;...)</code>, and <code>(?&lt;day&gt;...)</code>. Year is 4 digits, month and day are each 2 digits, separated by hyphens. Validate the entire string.',
       sampleText: null,
@@ -306,7 +306,7 @@
       id: 'integrate-4', type: 'fixer',
       section: 'Putting It All Together',
       title: 'Fix the Log Extractor',
-      goal: 'This regex tries to extract the word after "ERROR:" in log lines (e.g., "ERROR: timeout" should match "timeout"). But it matches the entire line instead. Fix it so it only captures the first word after "ERROR: ".',
+      goal: 'This regex tries to extract the word after "ERROR:" in log lines (e.g., "ERROR: timeout" should match "timeout"). But it matches the entire line instead. Fix it so it only matches the first word after "ERROR: ".',
       sampleText: null,
       brokenRegex: 'ERROR: .+',
       solution: '(?<=ERROR: )\\w+',
@@ -739,7 +739,7 @@
     'group-1': { q: 'What is the difference between na{2,} and (na){2,}?', a: 'na{2,} means "n followed by 2 or more a\'s" (naaa...). (na){2,} means "the group na repeated 2 or more times" (nana, nanana...). Parentheses group multiple characters into a single unit.' },
     'group-2': { q: 'Why did the original [A-Z]+ match both "LA" and "ABCD"?', a: 'The + quantifier means "one or more" with no upper limit. Without {3} to specify exactly 3, and without anchors to prevent substring matching, any sequence of uppercase letters is accepted.' },
     'group-3': { q: 'Why are named groups especially useful for log parsing?', a: 'Log formats have many fields (level, code, message, timestamp, etc.). Named groups let you write match.groups.level and match.groups.code instead of remembering positional indices. When you add new groups later, existing code that uses names won\'t break.' },
-    'group-4': { q: 'How would you access the captured user and domain in JavaScript code?', a: 'After const m = str.match(regex), use m.groups.user and m.groups.domain. Named groups make the code self-documenting — compare m.groups.user vs m[1], especially when a regex has many groups.' },
+    'group-4': { q: 'How would you access the user and domain in JavaScript code?', a: 'After const m = str.match(regex), use m.groups.user and m.groups.domain. Named groups make the code self-documenting — compare m.groups.user vs m[1], especially when a regex has many groups.' },
     'group-5': { q: 'How could you use the named groups year/month/day after matching?', a: 'In JavaScript, match.groups.year, match.groups.month, and match.groups.day give you direct access to each part by name — no need to remember that the year is group 1, month is group 2, etc. This makes code that processes the match much more readable.' },
     'look-1': { q: 'Why use a lookbehind instead of just including \\$ in the pattern?', a: 'A lookbehind checks that $ precedes the match but doesn\'t include it in the result. If you used \\$[\\d.]+, the match would be "$25" (with the dollar sign). Lookbehinds let you extract just the number.' },
     'look-2': { q: 'How do chained lookaheads work together at the same position?', a: 'Each lookahead independently checks a condition from the same starting position (like a logical AND). (?=.*\\d) verifies a digit exists somewhere, (?=.*[A-Z]) verifies an uppercase letter exists. Neither consumes characters, so the string pointer stays at the start for the next check.' },
@@ -779,7 +779,7 @@
 
     // Check that required named groups are present in the pattern
     if (ex.requiredGroups && !hasNamedGroups(pattern, ex.requiredGroups)) {
-      if (rEl) { rEl.innerHTML = '&#10007; Your regex must use named capturing groups: <code>' + ex.requiredGroups.map(function (g) { return '(?&lt;' + g + '&gt;...)'; }).join('</code>, <code>') + '</code>'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
+      if (rEl) { rEl.innerHTML = '&#10007; Your regex must use named groups: <code>' + ex.requiredGroups.map(function (g) { return '(?&lt;' + g + '&gt;...)'; }).join('</code>, <code>') + '</code>'; rEl.className = 'rt-result rt-result-fail'; rEl.style.display = 'block'; }
       return;
     }
 

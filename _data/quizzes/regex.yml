@@ -24,37 +24,37 @@ questions:
   - id: 3 
     question: "You need to validate user input to ensure a password contains both a number and a special character, but you don't know what order they will appear in. What mechanism allows a RegEx engine to assert these conditions without actually 'consuming' the string character by character?" 
     options: 
-      - "Non-capturing groups `(?:...)`" 
+      - "Groups `(?:...)`" 
       - "Possessive quantifiers `*+`" 
       - "Lookarounds (e.g., Lookaheads `(?=...)`)" 
       - "Word boundaries `\\b`" 
     correct_index: 2 
     explanation: "Lookaheads and lookbehinds are 'zero-width assertions'. They look ahead in the string to verify a pattern exists, but they do not consume any characters. This allows you to chain multiple lookaheads at the start of a string to act like a logical 'AND' statement." 
   
-  - id: 4 
-    question: "A junior engineer writes a regex to validate an email address and deploys it. Later, the system crashes because the regex engine hangs infinitely when evaluating the malicious input: `aaaaaaaaaaaaaaaaaaaaaaaaa!`. What vulnerability did the engineer likely introduce?" 
-    options: 
-      - "A Cross-Site Scripting (XSS) vulnerability." 
-      - "Catastrophic Backtracking caused by nested or overlapping quantifiers (e.g., `(a+)+$`)." 
-      - "A stack overflow caused by too many capturing groups." 
-      - "Greedy matching on a string that exceeds the database's character limit." 
-    correct_index: 1 
-    explanation: "Catastrophic backtracking (often leading to a ReDoS - Regular Expression Denial of Service) occurs when a regex has multiple ways to match the same sequence (often via nested quantifiers). When a match fails at the very end (like the `!`), the engine attempts every possible exponential combination of the preceding characters before giving up." 
+  - id: 4
+    question: "You are given the regex `(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})` and apply it to the string `2026-04-01`. After a successful match, which of the following correctly describes how you can access the captured month value?"
+    options:
+      - "Only by its positional index (e.g., group 2), because named groups are just syntactic sugar that the engine discards."
+      - "Only by its name (e.g., `match.group('month')`), because named groups replace positional indexing."
+      - "By either its name (e.g., `match.group('month')`) or its positional index (e.g., `match.group(2)`), because named groups also receive a numeric index."
+      - "By referencing the original regex string at runtime, since named groups are not stored in the match object."
+    correct_index: 2
+    explanation: "Named groups are assigned both a name and a positional index. You can retrieve the match using either `match.group('month')` or `match.group(2)`. This dual-access design means named groups are a strict superset of numbered groups — they add readability without removing any existing functionality." 
 
-  - id: 5 
-    question: "When writing a complex regex to extract phone numbers, you group the area code using parentheses `(...)` so you can apply a `?` quantifier to it. However, you don't actually need to save the area code data in memory for later. What is the most optimized approach?" 
-    options: 
-      - "Use a lookahead instead of parentheses." 
-      - "Remove the parentheses and apply the `?` to the whole pattern." 
-      - "Use a non-capturing group `(?:...)` to group the logic without the memory overhead of capturing." 
-      - "Escape the parentheses `\\( \\)` to tell the engine to ignore them." 
-    correct_index: 2 
-    explanation: "Standard parentheses `(...)` create 'capturing groups', meaning the regex engine allocates memory to store the matched substring for later extraction. If you only need parentheses to group tokens for a quantifier, a non-capturing group `(?:...)` prevents this unnecessary memory overhead." 
+  - id: 5
+    question: "When writing a complex regex to extract phone numbers, you use parentheses `(...)` to group the area code so you can apply a `?` quantifier. However, you also want to extract the area code by name for later use in your code. What is the best approach?"
+    options:
+      - "Use a lookahead instead of parentheses."
+      - "Remove the parentheses and apply the `?` to the whole pattern."
+      - "Use a named group `(?<areaCode>...)` so you can access it via `match.groups.areaCode`."
+      - "Escape the parentheses `\\( \\)` to tell the engine to ignore them."
+    correct_index: 2
+    explanation: "Standard parentheses `(...)` create groups that can be accessed by index (e.g., `match[1]`). Named groups `(?<name>...)` let you assign a meaningful label, so you can access the matched value by name (e.g., `match.groups.areaCode`) — making your code self-documenting and easier to maintain."
 
   - id: 6 
     question: "You write a regex to ensure a username is strictly alphanumeric: `[a-zA-Z0-9]+`. However, a user successfully submits the username `admin!@#`. Why did this happen?" 
     options: 
-      - "You used a character class `[]` instead of a capturing group `()`." 
+      - "You used a character class `[]` instead of a group `()`." 
       - "The `+` quantifier allows special characters if they follow valid characters." 
       - "You failed to use start `^` and end `$` anchors, allowing the regex to simply match the 'admin' portion and ignore the rest." 
       - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed." 

@@ -218,7 +218,7 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
 
 ### Worked Example 3: The Server Log (with Backtracking)
 **The Goal:** Extract the IP address from a specific error line.
-**The Regex:** `^.*ERROR.*IP: (?P<IP>\d{1,3}(?:\.\d{1,3}){3}).*Critical Timeout$`
+**The Regex:** `^.*ERROR.*IP: (?P<IP>\d{1,3}(\.\d{1,3}){3}).*Critical Timeout$`
 *(Note: We use `.*` to skip over irrelevant parts of the log).*
 
 **The Input String:** `[14:32:05] ERROR - IP: 10.0.4.19 - Status: Critical Timeout`
@@ -232,9 +232,9 @@ Let's put the theory of pattern pointers, bumping along, and backtracking into p
    * `ERROR` matches `ERROR`.
    * The next `.*` consumes the rest of the string again.
    * It has to backtrack again until it finds `IP: `.
-6. **The Capture Group:** The engine enters the named capture group `(?P<IP>...)`.
+6. **The Named Group:** The engine enters the named group `(?P<IP>...)`.
    * `\d{1,3}` matches `10`.
-   * `(?:\.\d{1,3}){3}` matches `.0`, then matches `.4`, then matches `.19`.
+   * `(\.\d{1,3}){3}` matches `.0`, then matches `.4`, then matches `.19`.
    * The engine saves the string `"10.0.4.19"` into a variable named "IP".
 7. **The Final Stretch:** The final `.*` consumes the rest of the string again, backtracking until it can match the literal phrase `Critical Timeout`.
    * `$` asserts the end of the string.
@@ -264,7 +264,7 @@ To make a quantifier **lazy** (meaning it will match as few characters as possib
 * `+?` : Matches 1 or more times, but as few times as possible.
 
 If we change our pattern to `<div>(.*?)</div>`, the engine matches the tags and **captures** only the text inside. 
-Running this against `<div>Hello World</div>` will successfully yield a match where the first capture group is exactly "Hello World".
+Running this against `<div>Hello World</div>` will successfully yield a match where the first group is exactly "Hello World".
 
 ## Advanced Pattern Control: Lookarounds
 

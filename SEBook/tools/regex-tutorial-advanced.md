@@ -192,26 +192,20 @@ Use the step-through visualizer in the first exercise below to see exactly how t
 <div class="rt-section" data-section="Greedy vs. Lazy"></div>
 
 
-# Groups & Capturing
+# Groups & Named Groups
 
-Parentheses `(...)` serve two purposes:
+Parentheses `(...)` create a **group** — they treat multiple characters as a single unit for quantifiers. `(na){2,}` means "the sequence **na** repeated 2 or more times" — matching `nana`, `nanana`, etc. You can access what each group matched by index (e.g., `match[1]`).
 
-1. **Grouping**: Treat multiple characters as a single unit for quantifiers. `(na){2,}` means "the sequence **na** repeated 2 or more times" — matching `nana`, `nanana`, etc.
-
-2. **Capturing**: The engine remembers what each group matched, so your code can retrieve it afterward.
-
-**Named capturing groups** let you label what each group captures instead of counting parentheses:
+**Named groups** let you label what each group matches instead of counting parentheses:
 
 | Syntax | Meaning |
 |--------|---------|
-| `(?<name>...)` | Capture into a group called *name* |
-| `match.groups.name` | Retrieve the captured value in code |
+| `(?<name>...)` | Create a group called *name* |
+| `match.groups.name` | Retrieve the matched value in code |
 
 For example, `^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})$` matches a date and lets you access `match.groups.year`, `match.groups.month`, and `match.groups.day` directly — much clearer than `match[1]`, `match[2]`, `match[3]`.
 
-If you only need grouping without capturing, use a **non-capturing group**: `(?:...)`
-
-<div class="rt-section" data-section="Groups & Capturing"></div>
+<div class="rt-section" data-section="Groups & Named Groups"></div>
 
 
 # Lookaheads & Lookbehinds

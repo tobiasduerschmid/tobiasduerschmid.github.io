@@ -52,7 +52,7 @@ questions:
       - "Escape characters (`\\`) to neutralize the literal numbers."
       - "The `*` wildcard to capture the whole string."
       - "Anchors (`^` and `$`) to strictly bind the match to the start and end of the string."
-      - "Named capture groups to extract the exact digits into memory."
+      - "Named groups to extract the exact digits into memory."
     correct_index: 2
     explanation: "Without anchors, a regular expression looks for a match *anywhere* within the string. Because '12345' contains '1234', the pattern matches. Adding `^` (start) and `$` (end) ensures the pattern must account for the entire string."
   - id: 7

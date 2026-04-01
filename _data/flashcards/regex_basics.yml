@@ -61,12 +61,12 @@ cards:
     answer: "`{n}` (Curly braces with a number)"  
     explanation: "You can also specify a range of repetitions using `{n,m}`."  
 
-  - id: 13  
-    question: "What syntax is used to create a standard capture group?"  
-    answer: "`(...)` (Parentheses)"  
-    explanation: "This groups tokens together and saves the matched substring into memory for later extraction."  
+  - id: 13
+    question: "What syntax is used to create a group?"
+    answer: "`(...)` (Parentheses)"
+    explanation: "This groups tokens together as a single unit. You can apply quantifiers to the whole group and access the matched substring by index (e.g., `match[1]`)."
 
-  - id: 14  
-    question: "What is the syntax used to create a Named Capture Group?"  
-    answer: "`(?P<name>pattern)`"  
-    explanation: "This captures the matched substring and assigns it a specific variable name instead of just a numbered index."
+  - id: 14
+    question: "What is the syntax used to create a Named Group?"
+    answer: "`(?<name>pattern)` (or `(?P<name>pattern)` in Python)"
+    explanation: "A named group lets you assign a meaningful label to the match, so you can access it by name (e.g., `match.groups.name`) instead of just a numbered index."

@@ -28,8 +28,8 @@ cards:
   
   - id: 6  
     question: "Write a regex to extract the domain name from a URL, ignoring the protocol and 'www' (e.g., extracting 'example.com' from 'https://www.example.com/page')."  
-    answer: "`^(?:https?:\\/\\/)?(?:www\\.)?([^\\/]+)`"  
-    explanation: "The non-capturing groups `(?:...)` make the 'http(s)://' and 'www.' optional. It then captures all characters up to the first forward slash."  
+    answer: "`^(https?:\\/\\/)?(www\\.)?(?<domain>[^\\/]+)`"
+    explanation: "The groups `(...)` make the 'http(s)://' and 'www.' optional. The named group `(?<domain>...)` matches all characters up to the first forward slash, accessible via `match.groups.domain`."
   
   - id: 7  
     question: "Write a regex to match a date in the format `YYYY-MM-DD` (checking for valid month and day ranges)."  
