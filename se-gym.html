@@ -88,7 +88,10 @@ title: "SE Gym"
 
         <!-- Difficult Questions Gym (shown only when analyze is on and there are difficult questions) -->
         <div id="difficult-gym-section" style="display: none;">
-          <h2 class="difficult-heading">Difficult Questions</h2>
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #c0392b; padding-bottom: 8px; margin-bottom: 15px;">
+            <h2 class="difficult-heading" style="margin: 0; border-bottom: none; padding-bottom: 0;">Difficult Questions</h2>
+            <button id="start-hard-workout-btn" class="gym-btn primary" style="background-color: #c0392b;">Start Hard Workout</button>
+          </div>
           <div id="difficult-gym-container">
             <div class="gym-item difficult-gym-item" data-type="difficult" data-id="difficult">
               <div class="gym-item-info">
@@ -1515,6 +1518,33 @@ title: "SE Gym"
           infoBtn.classList.remove('active');
         });
       }
+
+      // ---- Start Hard Workout Button ----
+      document.getElementById('start-hard-workout-btn').addEventListener('click', function () {
+        var difficultCards = getDifficultCards();
+        if (difficultCards.length === 0) return;
+
+        shuffleArray(difficultCards);
+        workoutCards = difficultCards.map(function (dc) {
+          return { cardType: dc.cardType, source: dc.source + ' (Difficult)', data: dc.data };
+        });
+
+        workoutCurrentStep = 0;
+        workoutScore = 0;
+        workoutIncorrectIndices = [];
+        workoutIsReview = false;
+        workoutReviewQueue = [];
+        workoutReviewStep = 0;
+
+        libraryView.style.display = 'none';
+        workoutView.style.display = 'block';
+        workoutResults.style.display = 'none';
+        workoutCardArea.innerHTML = '';
+
+        workoutTotalEl.textContent = workoutCards.length;
+        showWorkoutCard(0);
+        scrollToTop();
+      });
 
       // ---- Empty Gym Button ----
       document.getElementById('empty-gym-btn').addEventListener('click', function () {
