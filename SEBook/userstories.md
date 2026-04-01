@@ -210,6 +210,14 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 >
 > <details><summary><strong>Reveal Answer</strong></summary> No. "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
 
+### What to do when the user *really needs* the specific technology?
+Sometimes the required solution to does indeed have to conform to the specific technology that the customer is using in their organization. 
+In software engineering we call this a "technical constraint". 
+In these cases user stories are usually not the ideal format to specify these requirement in, since these technical constraints are often cross-cutting and should be included in the design of many different independent features.
+User stories are a mechanism to document requirements that primarily concern the functionality of the software. 
+Other kinds of requirements, especially those that can't be declared "done" should use different kinds of requirements specifications. 
+
+
 ## Valuable
 
 *A **valuable** story delivers tangible benefit to the customer, purchaser, or user—not just to the development team.*
@@ -497,23 +505,34 @@ Note: Dependening on your personal experience with web development, you might ev
 
 While they are related, **Estimable** and **Small** focus on different dimensions of a user story's readiness for development.
 
-### **Estimable: Predictability of Effort**
+#### **Estimable: Predictability of Effort**
 Estimable refers to the developers' ability to provide a reasonable judgment regarding the size, cost, or time required to deliver a story.
 *   **Requirements**: For a story to be estimable, it must be understood well enough and be stable enough that developers can put "useful bounds" on their guesses. 
 *   **Barriers**: A story may fail this criterion if developers lack domain knowledge, technical knowledge (requiring a "technical spike" to learn), or if the story is so large (an epic) that its complexity is hidden.
 *   **Goal**: It ensures the Product Owner can prioritize stories by weighing their value against their cost.
 
-### **Small: Manageability of Scope**
+#### **Small: Manageability of Scope**
 Small refers to the physical magnitude of the work. A story should be a manageable chunk that can be completed within a single iteration or sprint.
 *   **Ideal Size**: Most teams prefer stories that represent between half a day and two weeks of work. 
 *   **Splitting**: If a story is too big, it should be split into smaller, still-valuable "vertical slices" of functionality. However, a story shouldn't be so small (like a "bag of leaves") that it loses its meaningful context or value to the user.
 *   **Goal**: Smaller stories provide more scheduling flexibility and help maintain momentum through continuous delivery.
 
-### **Key Differences**
+#### **Key Differences**
 1.  **Nature of the Constraint**: **Small** is a constraint on **volume**, while **Estimable** is a constraint on **clarity**.
 2.  **Accuracy vs. Size**: While smaller stories tend to get more accurate estimates, a story can be small but still unestimable. For example, a "Research Project" or investigative spike might involve a very small amount of work (reading one document), but because the outcome is unknown, it remains impossible to estimate the time required to actually solve the problem.
 3.  **Predictability vs. Flow**: Estimability is necessary for **planning** (knowing what fits in a release), while Smallness is necessary for **flow** (ensuring work moves through the system without bottlenecks).
 
+
+### Is there often a tradeoff between Small and Valueable?
+Yes! 
+When writing user stories this is one of the most common trade-offs to consider. 
+The more valuable a user story is, the larger it becomes.
+When considering this trade-off the best adivce would be think of valuable as a binary dimension. Once a user story adds some reasonable value to the user, we consider it valuable. 
+So aiming to write the smallest user stories that are still valuable is often a good approach. Optimizing for small until the user story becomes not valuable anymore. 
+A user story *can* become too small when writing and estimating it takes more time than implementing it. 
+Then it should be combined with other user stories even if the smaller user story is still somewhat valauble.
+Whether a user story is "good" or "bad" is not a binary criterion, but a spectrum. 
+Aiming to reasonably improve user stories is a desirable goal, but in a practical setting, "good enough" is often sufficient while "perfect" can be a waste of time. 
 <!--
 
 ### Should bug reports be user stories?
