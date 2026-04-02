@@ -550,6 +550,23 @@ When a developer encounters or is assigned a problem, their immediate action mus
 
 -->
 
+## Common mistakes in user stories
+
+**Acceptance criteria omit an essential step, yet the story is claimed to be “Valuable”**
+E.g., a user story about blocking a user whose acceptance criteria include “given I have blocked a user” but never specify how the user actually performs the block.
+
+**Dependent stories are claimed to be “Independent”**
+E.g., a story for creating a post and a story for liking a post are marked independent, even though liking requires a post to exist.
+E.g., a story for logging in and a story for creating or liking a post are marked independent, even though the latter presupposes authentication.
+
+**”So that...” is circular or merely restates the feature**
+E.g., “As a user, I want to like/unlike a post on my feed so that I can engage and interact with the content.”
+*Engage* is just a synonym for like/unlike, and *content* is just a synonym for post — the rationale explains nothing. A good “so that” states the underlying motivation: e.g., “so that I can signal approval to the author.”
+
+**Acceptance criteria are missing the key assertion**
+E.g., “Given I am on the login screen, when I enter the correct email and password and click Login, then I should be redirected to the home screen.”
+Being redirected to the home screen does not confirm a successful login. The criterion should also assert that the user is authenticated — for example, that their name appears in the header or that they can access protected content.
+
 # Applicability
 User stories are ideal for iterative, customer-centric projects where requirements might change frequently. 
 
