@@ -7,6 +7,164 @@ layout: sebook
 
 This page is a **reference guide** for Regular Expression syntax, engine mechanics, and worked examples. It is designed to be consulted alongside or after the interactive tutorial — not as a replacement for hands-on practice.
 
+<style>
+/* Quick Reference Styles */
+.qr-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+  font-size: 0.9em;
+}
+.qr-card {
+  background: var(--bg-color-secondary, #f8f9fa);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.dark-mode .qr-card {
+  background: #1e1e1e;
+  border-color: #333;
+}
+.qr-card h3 {
+  margin: 0;
+  padding: 1rem;
+  font-size: 1.1em;
+  font-weight: 600;
+  background: var(--bg-color-tertiary, #eef2f5);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  color: var(--text-color-primary, #333);
+}
+.dark-mode .qr-card h3 {
+  background: #252526;
+  border-bottom-color: #333;
+  color: #ddd;
+}
+.qr-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.qr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+}
+.dark-mode .qr-item {
+  border-bottom-color: #2d2d2d;
+}
+.qr-item:last-child {
+  border-bottom: none;
+}
+.qr-token {
+  background: var(--bg-code, #eaeeef);
+  color: #c7254e;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Cascadia Code', monospace;
+  font-weight: bold;
+  font-size: 0.95em;
+  white-space: nowrap;
+}
+.dark-mode .qr-token {
+  background: #2d2d2d;
+  color: #e06c75;
+}
+.qr-desc {
+  flex: 1;
+  text-align: right;
+  padding-left: 1rem;
+  color: var(--text-color-secondary, #666);
+  line-height: 1.3;
+}
+.dark-mode .qr-desc {
+  color: #aaa;
+}
+</style>
+
+# Quick Reference
+
+<div class="qr-container">
+  <!-- Literal Characters -->
+  <div class="qr-card">
+    <h3>Literal Characters</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">a</span><span class="qr-desc">Matches the exact character "a"</span></li>
+      <li class="qr-item"><span class="qr-token">123</span><span class="qr-desc">Matches the exact sequence "123"</span></li>
+      <li class="qr-item"><span class="qr-token">HeLLo</span><span class="qr-desc">Matches the exact (case-sensitive) sequence "HeLLo"</span></li>
+      <li class="qr-item"><span class="qr-token">\.</span><span class="qr-desc">Escaped dot — matches a literal "." (unescaped dot matches any character)</span></li>
+    </ul>
+  </div>
+
+  <!-- Character Classes -->
+  <div class="qr-card">
+    <h3>Character Classes</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">[abc]</span><span class="qr-desc">A single character of: a, b, or c</span></li>
+      <li class="qr-item"><span class="qr-token">[^abc]</span><span class="qr-desc">Any character except: a, b, or c</span></li>
+      <li class="qr-item"><span class="qr-token">[a-z]</span><span class="qr-desc">Any character in range a-z</span></li>
+      <li class="qr-item"><span class="qr-token">.</span><span class="qr-desc">Any character except newline</span></li>
+      <li class="qr-item"><span class="qr-token">\s</span><span class="qr-desc">Whitespace</span></li>
+      <li class="qr-item"><span class="qr-token">\S</span><span class="qr-desc">Not whitespace</span></li>
+      <li class="qr-item"><span class="qr-token">\d</span><span class="qr-desc">Digit (0-9)</span></li>
+      <li class="qr-item"><span class="qr-token">\D</span><span class="qr-desc">Not digit</span></li>
+      <li class="qr-item"><span class="qr-token">\w</span><span class="qr-desc">Word character (a-z, A-Z, 0-9, _)</span></li>
+      <li class="qr-item"><span class="qr-token">\W</span><span class="qr-desc">Not word character</span></li>
+    </ul>
+  </div>
+
+  <!-- Quantifiers -->
+  <div class="qr-card">
+    <h3>Quantifiers (Greedy)</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">a*</span><span class="qr-desc">0 or more</span></li>
+      <li class="qr-item"><span class="qr-token">a+</span><span class="qr-desc">1 or more</span></li>
+      <li class="qr-item"><span class="qr-token">a?</span><span class="qr-desc">0 or 1 (optional)</span></li>
+      <li class="qr-item"><span class="qr-token">a{n}</span><span class="qr-desc">Exactly n times</span></li>
+      <li class="qr-item"><span class="qr-token">a{n,}</span><span class="qr-desc">n or more times</span></li>
+      <li class="qr-item"><span class="qr-token">a{n,m}</span><span class="qr-desc">Between n and m times</span></li>
+    </ul>
+    <h3>Quantifiers (Lazy)</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">a*?</span><span class="qr-desc">0 or more, as few as possible</span></li>
+      <li class="qr-item"><span class="qr-token">a+?</span><span class="qr-desc">1 or more, as few as possible</span></li>
+    </ul>
+  </div>
+
+  <!-- Anchors & Alternation -->
+  <div class="qr-card">
+    <h3>Anchors & Boundaries</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">^</span><span class="qr-desc">Start of string/line</span></li>
+      <li class="qr-item"><span class="qr-token">$</span><span class="qr-desc">End of string/line</span></li>
+      <li class="qr-item"><span class="qr-token">\b</span><span class="qr-desc">Word boundary</span></li>
+      <li class="qr-item"><span class="qr-token">\B</span><span class="qr-desc">Not a word boundary</span></li>
+    </ul>
+  </div>
+
+  <!-- Groups & Lookarounds -->
+  <div class="qr-card">
+    <h3>Groups & Alternation</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">(...)</span><span class="qr-desc">Capturing group — treat as a single unit</span></li>
+      <li class="qr-item"><span class="qr-token">(a|b)</span><span class="qr-desc">Alternation — matches either a or b</span></li>
+      <li class="qr-item"><span class="qr-token">(?&lt;name&gt;...)</span><span class="qr-desc">Named group — access by name, not number</span></li>
+      <li class="qr-item"><span class="qr-token">(?:...)</span><span class="qr-desc">Non-capturing group</span></li>
+      <li class="qr-item"><span class="qr-token">\1</span><span class="qr-desc">Backreference to group 1</span></li>
+    </ul>
+    <h3>Lookarounds</h3>
+    <ul class="qr-list">
+      <li class="qr-item"><span class="qr-token">(?=...)</span><span class="qr-desc">Positive lookahead</span></li>
+      <li class="qr-item"><span class="qr-token">(?!...)</span><span class="qr-desc">Negative lookahead</span></li>
+      <li class="qr-item"><span class="qr-token">(?&lt;=...)</span><span class="qr-desc">Positive lookbehind</span></li>
+      <li class="qr-item"><span class="qr-token">(?&lt;!...)</span><span class="qr-desc">Negative lookbehind</span></li>
+    </ul>
+  </div>
+</div>
+
 # Overview
 
 ## The Core Purpose of RegEx
