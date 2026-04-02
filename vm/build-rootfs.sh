@@ -27,6 +27,7 @@ docker run --rm --platform linux/386 \
     apk add --no-cache \
         bash \
         coreutils \
+        diffutils \
         findutils \
         grep \
         sed \
@@ -36,7 +37,18 @@ docker run --rm --platform linux/386 \
         nano \
         less \
         file \
-        tree
+        tree \
+        mandoc \
+        man-pages \
+        bash-doc \
+        coreutils-doc \
+        diffutils-doc \
+        findutils-doc \
+        git-doc \
+        grep-doc \
+        less-doc \
+        nano-doc \
+        sed-doc 
 
     echo "[2/4] Configuring system..."
 
@@ -57,6 +69,12 @@ docker run --rm --platform linux/386 \
 
     # Bash configuration
     cp /overlay/bashrc /root/.bashrc
+
+    # Wrap man to always pipe output through cat.
+    # When man sees stdout is a pipe (not a TTY), it skips the internal pager
+    # fork entirely and just writes directly — avoiding the hang in v86.
+    printf "#!/bin/sh\n/usr/bin/man \"\$@\" | cat\n" > /usr/local/bin/man
+    chmod +x /usr/local/bin/man
 
     # Tutorial mount point
     mkdir -p /tutorial
