@@ -2,6 +2,18 @@
 
 topics:
   
+
+  - name: Requirements
+    icon: null
+    url: /SEBook/requirements.html
+    subtopics:
+      - name: User Stories
+        url: /SEBook/userstories.html
+
+  - name: UML
+    icon: null
+    url: /SEBook/uml.html
+
   - name: Design Patterns
     icon: null
     url: /SEBook/designpatterns.html
@@ -49,11 +61,3 @@ topics:
     url: /SEBook/quality_attributes.html
     subtopics:
 
-
-  - name: UML
-    icon: null
-    url: /SEBook/uml.html
-  
-  - name: User Stories
-    icon: null
-    url: /SEBook/userstories.html
