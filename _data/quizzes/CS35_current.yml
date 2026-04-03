@@ -3,3 +3,5 @@ description: "Includes all quizzes taught until today"
 decks:
   - user_stories
   - effective_learning
+  - shell
+  - regex

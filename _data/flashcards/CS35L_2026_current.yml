@@ -3,3 +3,7 @@ description: "Includes all flash cards taught until today"
 decks:
   - user_stories
   - study_tips
+  - shell
+  - shell_commands_reference
+  - shell_pipes
+  - regex_basics
