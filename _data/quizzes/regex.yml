@@ -84,16 +84,15 @@ questions:
     correct_indices: [0, 2] 
     explanation: "A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns." 
 
-  - id: 9 
-    type: multiple 
-    question: "Which of the following strategies are effective ways to prevent Catastrophic Backtracking (ReDoS)? (Select all that apply)" 
-    options: 
-      - "Avoiding nested quantifiers (e.g., changing `(a*)*` to a safer pattern)." 
-      - "Using Atomic Groups `(?>...)` if your regex engine supports them, to prevent the engine from backtracking into that group." 
-      - "Wrapping your entire expression in a global `.*` modifier." 
-      - "Using possessive quantifiers (e.g., `*+` or `++`) to forbid the engine from giving back characters." 
-    correct_indices: [0, 1, 3] 
-    explanation: "Catastrophic backtracking is solved by removing ambiguity in the pattern. You can do this by refactoring nested quantifiers, or by using advanced engine features like Atomic Groups and Possessive Quantifiers, which explicitly forbid the engine from backtracking over a match." 
+  - id: 9
+    question: "You use the regex `<.*>` to extract a single HTML tag from `<b>bold</b> text`, but it matches the entire string `<b>bold</b>` instead of just `<b>`. What is the simplest fix?"
+    options:
+      - "Change `.*` to `.+` to require at least one character inside the tag."
+      - "Add a `?` after `*` to make the quantifier lazy: `<.*?>`."
+      - "Wrap the dot in a group: `<(.)*>`."
+      - "Add the `g` flag to enable global matching."
+    correct_index: 1
+    explanation: "By default, `*` is **greedy** — it matches as many characters as possible, consuming everything from the first `<` to the last `>`. Adding `?` makes it **lazy** (`*?`), so it matches as *few* characters as possible and stops at the first `>` it encounters." 
 
   - id: 10 
     type: multiple 
