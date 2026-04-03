@@ -1,0 +1,72 @@
+title: "Shell Pipelines"
+description: "Practice connecting UNIX commands together with pipes to solve real tasks."
+cards:
+  - id: 1
+    question: "You want to count how many lines in `server.log` contain the word 'ERROR'."
+    answer: "`grep 'ERROR' server.log | wc -l`"
+    explanation: "`grep` filters and prints only the matching lines; `wc -l` counts them. Without the pipe you would have to save a temp file and count it separately."
+
+  - id: 2
+    question: "You have a file `names.txt` with one name per line. Print only the unique names, sorted alphabetically."
+    answer: "`sort names.txt | uniq`"
+    explanation: "`uniq` only removes *adjacent* duplicates, so `sort` must come first to bring duplicates together. Then `uniq` collapses consecutive identical lines into one."
+
+  - id: 3
+    question: "You have a file `names.txt` with one name per line. Print each unique name alongside a count of how many times it appears."
+    answer: "`sort names.txt | uniq -c`"
+    explanation: "`sort` brings duplicates together so they are adjacent; `uniq -c` then collapses consecutive identical lines into one and prefixes each with its count."
+
+  - id: 4
+    question: "List all running processes and show only those belonging to user `tobias`."
+    answer: "`ps aux | grep tobias`"
+    explanation: "`ps aux` prints every running process with its owner; piping to `grep tobias` filters to lines that contain that username."
+
+  - id: 5
+    question: "Print the 3rd line of `config.txt` without using `sed` or `awk`."
+    answer: "`head -3 config.txt | tail -1`"
+    explanation: "`head -3` keeps only the first three lines; `tail -1` then takes the very last of those — which is line 3 of the original file."
+
+  - id: 6
+    question: "List the 5 largest files in the current directory, with the biggest first, showing only their names."
+    answer: "`ls -S | head -5`"
+    explanation: "`ls -S` sorts directory entries by file size (largest first); `head -5` keeps only the first 5 lines of that output."
+
+  - id: 7
+    question: "You want to replace every occurrence of `http://` with `https://` in `links.txt` and save the result to `links_secure.txt`."
+    answer: "`sed 's|http://|https://|g' links.txt > links_secure.txt`"
+    explanation: "Here we redirect `sed`'s stdout to a file instead of piping it onward, but `sed` reads from a file argument, transforms the stream, and writes to stdout — which the shell redirects with `>`."
+
+  - id: 8
+    question: "Print only the unique error lines from `access.log` that contain the word 'ERROR', sorted alphabetically."
+    answer: "`grep 'ERROR' access.log | sort | uniq`"
+    explanation: "`grep` filters to matching lines; `sort` brings identical lines together; `uniq` collapses consecutive duplicates into one — a classic 3-step de-duplication pipeline."
+
+  - id: 9
+    question: "Count the total number of files (not directories) inside the current directory tree."
+    answer: "`find . -type f | wc -l`"
+    explanation: "`find . -type f` recursively lists every regular file, one per line; `wc -l` counts those lines."
+
+  - id: 10
+    question: "Show the 10 most recently modified files in the current directory, newest first."
+    answer: "`ls -t | head -10`"
+    explanation: "`ls -t` sorts directory entries by modification time (newest first); `head -10` keeps only the first 10 lines of that output."
+
+  - id: 11
+    question: "Extract the second column from comma-separated `data.csv`, sort the values, and print only the unique ones."
+    answer: "`cut -d',' -f2 data.csv | sort | uniq`"
+    explanation: "`cut -d','` splits each line on commas; `-f2` keeps the second field; `sort` brings duplicates together; `uniq` removes consecutive duplicates."
+
+  - id: 12
+    question: "Convert the contents of `readme.txt` to uppercase and save the result to `readme_upper.txt`."
+    answer: "`cat readme.txt | tr 'a-z' 'A-Z' > readme_upper.txt`"
+    explanation: "`cat` reads the file and feeds it into the pipeline; `tr 'a-z' 'A-Z'` translates every lowercase letter to uppercase; `>` redirects the final output to a new file."
+
+  - id: 13
+    question: "Print every line from `app.log` that does NOT contain the word 'DEBUG'."
+    answer: "`grep -v 'DEBUG' app.log`"
+    explanation: "The `-v` flag inverts the match — `grep` prints every line that does *not* match the pattern. No pipe is needed here, but `grep -v ... | ...` is a common pipeline building block."
+
+  - id: 14
+    question: "You have two files, `file1.txt` and `file2.txt`. Print all lines from both files that contain the word 'success', sorted alphabetically with duplicates removed."
+    answer: "`grep 'success' file1.txt file2.txt | sort | uniq`"
+    explanation: "`grep` can take multiple file arguments and searches all of them, prefixing each match with the filename; `sort` orders the results; `uniq` removes duplicate lines."

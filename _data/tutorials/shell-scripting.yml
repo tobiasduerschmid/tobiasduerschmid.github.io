@@ -52,6 +52,25 @@ steps:
       You can capture the output of a command and use it as a string by wrapping it in `$(...)`. 
       Try running this in your terminal right now: `echo "I am $(whoami)"`
 
+      ### Exploring Man Pages
+
+      Whenever you encounter an unfamiliar command or want to see all available
+      options, the built-in manual is your first stop:
+
+      ```bash
+      man date
+      man echo
+      man chmod
+      ```
+
+      Each manual page is divided into sections: **NAME**, **SYNOPSIS**,
+      **DESCRIPTION**, and **OPTIONS**. Navigate with the arrow keys, search
+      with `/keyword` (then `n` for next match), and quit with `q`.
+
+      Try `man date` now to browse all available format specifiers — that's
+      how you'd discover that `+%A` prints the full weekday name, `+%H:%M`
+      gives the time, and dozens of other options exist.
+
       ### Your task
 
       Add three commands to `morning.sh`:
