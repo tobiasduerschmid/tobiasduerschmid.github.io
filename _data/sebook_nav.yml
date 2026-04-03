@@ -152,3 +152,6 @@ topics:
   - name: SE Gym
     icon: null
     url: /se-gym/
+  - name: Bookmarks
+    icon: null
+    url: /SEBook/bookmarks.html

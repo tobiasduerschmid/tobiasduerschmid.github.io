@@ -189,6 +189,13 @@
               <span class="slider round"></span>
             </label>
           </div>
+          {% if site.bookmarks %}
+          <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none; align-items:center;">
+            <button id="bookmarkPageBtn" aria-label="Bookmark this page" style="background:none; border:none; cursor:pointer; padding:0 2px; font-size:1.3em; color:#2774AE; line-height:1; vertical-align:middle;">
+              <i id="bookmarkIcon" class="fa-regular fa-bookmark"></i>
+            </button>
+          </div>
+          {% endif %}
         </div>
 
         <div class="container">
@@ -382,6 +389,46 @@
     })();
   </script>
 
+  {% if site.bookmarks %}
+  <script>
+    (function () {
+      function initBookmarkBtn() {
+        if (!window.SEBookmarks || !SEBookmarks.isBookmarksActive()) return;
+        var wrapper = document.getElementById('bookmarkBtnWrapper');
+        var btn = document.getElementById('bookmarkPageBtn');
+        var icon = document.getElementById('bookmarkIcon');
+        if (!wrapper || !btn || !icon) return;
+        var url = window.location.pathname;
+        var title = wrapper.getAttribute('data-page-title') || document.title;
+        wrapper.style.display = 'flex';
+        var container = document.getElementById('togglesContainer');
+        if (container && container.style.display === 'none') {
+          container.style.display = 'flex';
+        }
+        function updateIcon() {
+          if (SEBookmarks.isBookmarked(url)) {
+            icon.className = 'fa-solid fa-bookmark';
+            btn.setAttribute('aria-label', 'Remove bookmark for this page');
+          } else {
+            icon.className = 'fa-regular fa-bookmark';
+            btn.setAttribute('aria-label', 'Bookmark this page');
+          }
+        }
+        updateIcon();
+        btn.addEventListener('click', function () {
+          SEBookmarks.toggleBookmark(url, title);
+          updateIcon();
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBookmarkBtn);
+      } else {
+        initBookmarkBtn();
+      }
+    })();
+  </script>
+  {% endif %}
+
   <script>
     function adjustNavbarPadding() {
       const navbar = document.getElementById('navnav');
@@ -419,6 +466,8 @@
     <p class="cookie-notice">
       <strong>Cookie &amp; Privacy Notice:</strong> This page stores your UI preferences
       (<em>dark mode</em>, <em>show highlights</em>, and <em>read aloud</em>) in browser cookies.
+      {% if site.bookmarks %}If you have activated <a href="/SEBook/bookmarks.html">Bookmarks</a>,
+      your saved pages are also stored in a cookie.{% endif %}
       {% if page.audio %}<em>Audio player</em> volume and playback speed are saved in your browser's localStorage.{%
       endif %}
       If you have enabled performance tracking on the <a href="/se-gym/">SE Gym</a> page,

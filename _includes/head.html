@@ -54,6 +54,10 @@
   <script src="{{ "/js/se-gym.js" | prepend: site.baseurl }}"></script>
   {% endif %}
 
+  {% if site.bookmarks %}
+  <script src="{{ "/js/se-bookmarks.js" | prepend: site.baseurl }}"></script>
+  {% endif %}
+
   <!-- MathJax Configuration for LaTeX Math Rendering -->
   <script>
     MathJax = {
