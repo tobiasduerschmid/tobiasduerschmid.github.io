@@ -61,7 +61,7 @@ steps:
 
     tests:
       - description: "hello.js contains a console.log statement"
-        command: "assert(source.includes('console.log'), 'Add a console.log() call to hello.js')"
+        command: "assert(source.split('\\n').some(function(l){return !l.trim().startsWith('//') && l.includes('console.log(');}), 'Add a console.log() call to hello.js')"
       - description: "Output includes 'Hello from Node.js!'"
         command: "assert(output.includes('Hello from Node.js'), 'Your console.log should print \"Hello from Node.js!\"')"
 
@@ -405,8 +405,8 @@ steps:
     open_file: "functions.js"
 
     tests:
-      - description: "Used an arrow function (=>) somewhere in the solution"
-        command: "assert(source.includes('=>'), 'Convert getLetterGrade to an arrow function using =>')"
+      - description: "Converted getLetterGrade to an arrow function (no longer a function declaration)"
+        command: "assert(!source.includes('function getLetterGrade'), 'Convert getLetterGrade from a function declaration to an arrow function assigned to const')"
       - description: "Used .filter() to select students"
         command: "assert(source.includes('.filter('), 'Use .filter() with an arrow function to select passing students')"
       - description: "Used .map() to transform the data"
