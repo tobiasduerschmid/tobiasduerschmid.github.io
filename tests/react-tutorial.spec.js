@@ -239,6 +239,8 @@ test.describe('React Tutorial', () => {
   // --- Test Runner ---------------------------------------------------------
 
   test('test button exists on step 1 and triggers test execution', async ({ page }) => {
+    // Wait for the preview iframe to fully load before running tests
+    await page.waitForTimeout(2_000);
     const testBtn = page.locator('.tvm-btn-test');
     await expect(testBtn).toBeVisible();
 
