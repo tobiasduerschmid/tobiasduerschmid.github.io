@@ -144,16 +144,16 @@ Understanding callbacks is essential — all of Node.js's async operations notif
 JavaScript has compact syntax for extracting values from arrays and objects:
 
 ```javascript
-// Array destructuring (like Python's tuple unpacking: lat, lng = coords)
-const [lat, lng] = [40.7, -74.0];
+// Array destructuring (like Python's tuple unpacking: r, g, b = color)
+const [red, green, blue] = [255, 128, 0];
 
 // Object destructuring (extract properties by name)
-const student = { name: "Alice", grade: 95 };
-const { name, grade } = student;   // name = "Alice", grade = 95
+const config = { host: "localhost", port: 3000, debug: true };
+const { host, port } = config;   // host = "localhost", port = 3000
 
-// Works in function parameters — you will see this in every React component:
-function printStudent({ name, grade }) {
-    console.log(`${name}: ${grade}`);
+// Works in function parameters — you will see this in every Express route and React component:
+function startServer({ host, port }) {
+    console.log(`Listening on ${host}:${port}`);
 }
 ```
 

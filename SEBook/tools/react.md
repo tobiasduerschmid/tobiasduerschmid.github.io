@@ -62,10 +62,10 @@ You are looking at **JSX** (JavaScript XML). It is a special syntax extension fo
 
 ```jsx
 // JSX (what you write):
-<h1 className="title">Hello</h1>
+<button className="btn-primary" disabled={false}>Save</button>
 
 // What Babel compiles it to:
-React.createElement('h1', { className: 'title' }, 'Hello')
+React.createElement('button', { className: 'btn-primary', disabled: false }, 'Save')
 ```
 
 `React.createElement` returns a lightweight JavaScript object — the **Virtual DOM** node. React then compares these object trees to determine the minimal set of real DOM changes needed.
@@ -78,18 +78,20 @@ A component with hardcoded values is like a function with no parameters — limi
 
 ```jsx
 // Defining a component that accepts props:
-function ProductCard({ name, price }) {
+function UserAvatar({ username, isOnline }) {
   return (
     <div>
-      <h3>{name}</h3>
-      <p>${price.toFixed(2)}</p>
+      <span>{username}</span>
+      <span style={{color: isOnline ? 'green' : 'grey'}}>
+        {isOnline ? 'Online' : 'Offline'}
+      </span>
     </div>
   );
 }
 
 // Using it — each instance gets different data:
-<ProductCard name="Laptop" price={999.99} />
-<ProductCard name="Mouse"  price={29.99}  />
+<UserAvatar username="alice" isOnline={true} />
+<UserAvatar username="bob"   isOnline={false} />
 ```
 
 **Key rules for props:**
