@@ -159,12 +159,12 @@ steps:
           type: single
           options:
             - "Call `React.update(h1, newTitle)` to tell React what changed"
-            - "Update a state variable that holds the title — React re-renders the component and patches the DOM automatically"
+            - "Change the data (a variable or, later, state) — React re-runs the component function and patches the DOM automatically"
             - "Use `document.querySelector` inside the component to directly update the DOM element"
             - "Manually traverse the Virtual DOM and apply diffs"
           correct_index: 1
           explanation: |
-            React's mental model: you update **state**, not the DOM. When state changes, React calls your component function again, builds a new Virtual DOM tree, diffs it against the previous snapshot, and applies only the minimal set of real DOM changes. You describe *what*; React figures out *how*.
+            React's mental model: you change the **data**, not the DOM. React calls your component function, builds a new Virtual DOM tree, diffs it against the previous one, and patches only what changed. You describe *what* the UI looks like for a given set of data; React figures out *how* to get there. In Step 4 you will learn about `useState`, which makes data changes automatically trigger this cycle.
 
         - question: "What does Babel compile `<h1>Hello</h1>` into?"
           type: single
@@ -429,6 +429,7 @@ steps:
       - **Props flow one way** — from parent to child, never the other direction
       - **Props are read-only** inside the component (like `const` function parameters in C++)
       - **Any JS value** can be a prop: string, number, boolean, object, array, function, or another component
+      - **Syntax:** String props use quotes (`title="Hello"`). All other types — numbers, booleans, expressions — use braces: `price={99.99}`, `active={true}`, `onClick={handleClick}`
 
       ### Conditional Rendering with `&&`
 
@@ -695,6 +696,29 @@ steps:
       ```
 
       **Rule of thumb:** Use `setCount(prev => prev + 1)` (functional form) whenever the new value depends on the old value. Use `setCount(5)` (direct form) when you know the exact new value.
+
+      ### ⚠️ State Updates Are Batched
+
+      React does **not** re-render between setter calls in the same event handler. It batches them and re-renders once at the end. This means multiple direct calls see the same stale value:
+
+      ```jsx
+      function handleTripleClick() {
+        setCount(count + 1);   // count is 0 → sets to 1
+        setCount(count + 1);   // count is still 0 → sets to 1 again!
+        setCount(count + 1);   // count is still 0 → sets to 1 again!
+        // Result: count goes from 0 to 1, not 0 to 3
+      }
+      ```
+
+      The functional form fixes this because each call receives the latest *pending* value, not the stale render-time value:
+
+      ```jsx
+      function handleTripleClick() {
+        setCount(prev => prev + 1);   // 0 → 1
+        setCount(prev => prev + 1);   // 1 → 2
+        setCount(prev => prev + 1);   // 2 → 3  ✓
+      }
+      ```
 
       ### Predict Before You Fix
 
@@ -969,13 +993,14 @@ steps:
             'Render all 6 tasks using .map(). Found ' + items.length + ' list items');
       - description: "Done/undone status is shown (✓ or ✗ or similar)"
         command: |
-          var text = frame.contentDocument.getElementById('root').textContent;
-          var hasDoneIndicator = text.includes('✓') || text.includes('✗') ||
-                                  text.includes('Done') || text.includes('done') ||
-                                  text.includes('✅') || text.includes('❌') ||
-                                  text.includes('complete');
+          var root = frame.contentDocument.getElementById('root');
+          var items = root.querySelectorAll('.list-group-item');
+          var firstItemText = items.length > 0 ? items[0].textContent : '';
+          var hasDoneIndicator = firstItemText.includes('✓') || firstItemText.includes('✗') ||
+                                  firstItemText.includes('✅') || firstItemText.includes('❌') ||
+                                  firstItemText.includes('[x]') || firstItemText.includes('[ ]');
           assert(hasDoneIndicator,
-            'Show a done/undone indicator for each task (e.g. ✓ or ✗ using a ternary)');
+            'Show a done/undone indicator inside each list item (e.g. ✓ or ✗ using a ternary). First item text: ' + firstItemText.slice(0, 60));
 
     quiz:
       title: "Lists & Keys — Knowledge Check"
@@ -1326,6 +1351,16 @@ steps:
         );
       }
       ```
+
+      ### ⚠️ Prop Drilling
+
+      As your component tree grows, you may find yourself passing a prop through several intermediate components that don't use it — just so a deeply nested child can access it. This is called **prop drilling**:
+
+      ```
+      App → Profile → Sidebar → UserCard   (only UserCard uses the `user` prop)
+      ```
+
+      Prop drilling is not a bug, but it makes code harder to maintain. If you are drilling more than 2-3 levels, consider React's **Context API** (not covered in this tutorial) to share data without threading it through every layer.
 
       ### Predict Before You Build
 
@@ -1736,12 +1771,13 @@ steps:
           type: single
           options:
             - "`{cart.includes(product) ? <span>In Cart</span>}` — ternary with one branch, since we only need the truthy case"
-            - "`{cart.some(item => item.id === product.id) && <span>In Cart</span>}` — `&&` short-circuit with stable ID comparison"
+            - "`{cart.filter(item => item.id === product.id).length > 0 && <span>In Cart</span>}` — `&&` short-circuit with ID-based lookup"
             - "`{if (cart.includes(product)) return <span>In Cart</span>}` — use an if-statement inside the JSX expression braces"
             - "`<span visible={cart.includes(product)}>In Cart</span>` — use the built-in `visible` prop to toggle display"
           correct_index: 1
           explanation: |
-            `&&` short-circuit is the correct pattern for show/hide. Use `.some()` with `item.id === product.id`
-            for identity comparison (reference equality on objects is unreliable after state updates create new arrays).
-            Option A is invalid syntax — ternary requires both branches. Option C is invalid — `if` statements
-            cannot appear inside JSX expression braces.
+            `&&` short-circuit is the correct pattern for show/hide. Use `.filter()` with `item.id === product.id`
+            to check membership by ID rather than object reference (reference equality on objects is unreliable
+            after state updates create new arrays — `[...cart, product]` creates a new array, so `cart.includes(product)` may fail).
+            Option A is invalid syntax — ternary requires both branches (`? ... : ...`). Option C is invalid — `if` statements
+            cannot appear inside JSX expression braces (JSX only accepts expressions, not statements).
