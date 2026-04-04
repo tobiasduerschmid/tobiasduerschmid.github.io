@@ -3,6 +3,10 @@ title: Python
 layout: sebook
 ---
 
+
+> **Want to practice?** Try the [Official Python Tutorial](https://docs.python.org/3/tutorial/) — Run it directly on your own machine
+
+
 Welcome to Python! Since you already know C++, you have a strong foundation in programming logic, control flow, and object-oriented design. However, moving from a compiled, statically typed systems language to an interpreted, dynamically typed scripting language requires a shift in how you think about memory and execution. 
 
 To help you make this transition, we will anchor Python's concepts directly against the C++ concepts you already know, adjusting your mental model along the way.

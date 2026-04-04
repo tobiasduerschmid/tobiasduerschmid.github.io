@@ -437,6 +437,200 @@ html, body {
 .tvm-terminal-container .xterm-viewport { scrollbar-width: thin; scrollbar-color: #333 transparent; }
 
 /* ───────────────────────────────────────────
+   Python Output Panel (Pyodide backend)
+   Replaces the terminal for Python tutorials.
+─────────────────────────────────────────── */
+.tvm-output-panel {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #141414;
+}
+
+.tvm-output-header {
+  background: #161618;
+  color: #888;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #2a2a2e;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.tvm-output-header::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #4caf50;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+  flex-shrink: 0;
+}
+
+.tvm-output-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.tvm-run-btn,
+.tvm-clear-btn {
+  padding: 3px 10px;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  letter-spacing: 0.03em;
+}
+
+.tvm-run-btn {
+  background: #0078d4;
+  color: #fff;
+  border-color: #0078d4;
+}
+.tvm-run-btn:hover:not(:disabled) { background: #005fa3; border-color: #005fa3; }
+.tvm-run-btn:disabled { background: #004a80; opacity: 0.6; cursor: not-allowed; }
+
+.tvm-clear-btn {
+  background: transparent;
+  color: #888;
+}
+.tvm-clear-btn:hover { background: #2a2a2e; color: #c0c0d0; border-color: #555566; }
+
+.tvm-output-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 14px;
+  background: #0e0e10;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.tvm-output-pre {
+  margin: 0;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #d4d4d4;
+}
+
+/* Output line types */
+.tvm-out-stdout { color: #d4d4d4; }
+.tvm-out-stderr { color: #f48771; }
+.tvm-out-info   { color: #9cdcfe; font-style: italic; }
+.tvm-out-err    { color: #f44747; font-weight: 600; }
+
+/* Light mode overrides */
+html:not(.dark-mode) .tvm-output-panel  { background: #f3f3f3; }
+html:not(.dark-mode) .tvm-output-header { background: #e8e8ec; border-bottom-color: #ccc; color: #555; }
+html:not(.dark-mode) .tvm-output-container { background: #ffffff; }
+html:not(.dark-mode) .tvm-output-pre   { color: #383a42; }
+html:not(.dark-mode) .tvm-out-stdout   { color: #383a42; }
+html:not(.dark-mode) .tvm-out-stderr   { color: #c0392b; }
+html:not(.dark-mode) .tvm-out-info     { color: #0070c1; }
+html:not(.dark-mode) .tvm-clear-btn    { color: #555; border-color: #bbb; }
+html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #999; }
+
+/* ───────────────────────────────────────────
+   React Live Preview Panel
+   Replaces the terminal/output panel for
+   the `react` backend.
+─────────────────────────────────────────── */
+.tvm-preview-panel {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.tvm-preview-header {
+  background: #161618;
+  color: #888;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #2a2a2e;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.tvm-preview-header::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #61dafb;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(97, 218, 251, 0.7);
+  flex-shrink: 0;
+}
+
+.tvm-preview-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.tvm-refresh-btn {
+  padding: 3px 10px;
+  border: 1px solid #3a3a44;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  letter-spacing: 0.03em;
+  background: transparent;
+  color: #61dafb;
+  border-color: #61dafb55;
+}
+.tvm-refresh-btn:hover { background: rgba(97,218,251,0.1); border-color: #61dafb; }
+
+.tvm-preview-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.tvm-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #ffffff;
+}
+
+/* Light mode: preview panel header matches other panels */
+html:not(.dark-mode) .tvm-preview-header { background: #e8e8ec; border-bottom-color: #ccc; color: #555; }
+html:not(.dark-mode) .tvm-preview-header::before { background: #0078d4; box-shadow: 0 0 6px rgba(0,120,212,0.5); }
+html:not(.dark-mode) .tvm-refresh-btn { color: #0078d4; border-color: #0078d466; }
+html:not(.dark-mode) .tvm-refresh-btn:hover { background: rgba(0,120,212,0.08); border-color: #0078d4; }
+
+/* ───────────────────────────────────────────
    Step Navigation
 ─────────────────────────────────────────── */
 .tvm-step-nav {

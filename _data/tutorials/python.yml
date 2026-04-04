@@ -1,0 +1,653 @@
+title: "Python Essentials: Scripting & Automation"
+description: "A hands-on introduction to Python for students who already know C++ and shell scripting. Build a solid Python mental model by mapping every concept to what you already know — and spotting where the analogies break."
+
+backend: pyodide
+
+require_tests: true
+
+# Global setup: add /tutorial to sys.path so imports work across steps
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — "Lay of the Land": Hello, Python
+  # Pedagogy:
+  #   Lay of the Land  — macro overview before diving into syntax.
+  #   Transfer Tutor   — explicit C++ / shell comparison table.
+  #   Guide-and-Release — short explanation, immediate hands-on task.
+  # --------------------------------------------------------------------------
+  - title: "Hello, Python!"
+    instructions: |
+      ## The Lay of the Land
+
+      You already write C++ and shell scripts. Here is how Python fits into your toolkit:
+
+      | | C++ | Bash | Python |
+      |---|---|---|---|
+      | Typing | Static (`int x`) | Untyped strings | **Dynamic** (`x = 5`) |
+      | Memory | Manual (`new`/`delete`) | N/A | Garbage-collected |
+      | Run with | Compile → `./app` | `bash script.sh` | `python3 script.py` |
+      | Strength | Speed, systems code | Glue commands together | **Rapid prototyping, data, automation** |
+
+      Python is the language of choice when you need to **get something done fast** — process a CSV, call an API, write a test harness, or prototype an algorithm before porting it to C++.
+
+      ### Your First Python Script
+
+      Python's `print()` is the equivalent of C++'s `printf()` / `cout` and Bash's `echo`:
+
+      ```python
+      # Bash:   echo "Hello, World!"
+      # C++:    printf("Hello, World!\n");
+      # Python:
+      print("Hello, World!")
+      ```
+
+      Notice there are no semicolons, no `#include`, and no `main()` function. Python scripts run top-to-bottom like shell scripts.
+
+      ### Task
+
+      Open `hello.py`. Change the message so it prints:
+      ```
+      Hello, CS 35L!
+      ```
+
+      Then click **▶ Run** (or press `Ctrl+Enter`) to execute your script and see the output.
+
+    files:
+      - path: "hello.py"
+        content: |
+          # Task: Change the message to "Hello, CS 35L!"
+          print("Hello, World!")
+        language: "python"
+
+    open_file: "hello.py"
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          output = __run_capture('/tutorial/hello.py')
+      - description: "Output contains 'Hello, CS 35L!'"
+        command: |
+          output = __run_capture('/tutorial/hello.py')
+          assert 'Hello, CS 35L!' in output, \
+              f"Expected 'Hello, CS 35L!' in output but got: {repr(output)}"
+
+    quiz:
+      title: "Hello, Python! — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A C++ programmer sees this Python file and says: *"This must be wrong — there's no `main()` function and no semicolons."*
+            What should you tell them?
+          type: single
+          options:
+            - "Python requires a main() function but it is inferred automatically"
+            - "Python scripts execute top-to-bottom without a main() entry point; semicolons are replaced by newlines and indentation"
+            - "Python is actually compiled, it just hides the main() function internally"
+            - "The programmer is correct — Python requires semicolons in production code"
+          correct_index: 1
+          explanation: |
+            Python is an interpreted scripting language. Like Bash, it executes statements from top to bottom.
+            There is no required `main()` entry point (though you can simulate one with `if __name__ == '__main__': ...`).
+            Semicolons are optional in Python and almost never used.
+
+        - question: |
+            Which of the following statements about Python is **false**?
+          type: single
+          options:
+            - "Python is garbage-collected, so you never call `delete` or `free()`"
+            - "Python is dynamically typed — you do not declare variable types"
+            - "Python must be compiled before running, just like C++"
+            - "Python is strong at rapid prototyping, automation, and data processing"
+          correct_index: 2
+          explanation: |
+            Python is an **interpreted** language — you run it directly with `python3 script.py` with no separate compile step.
+            Behind the scenes CPython does compile to bytecode (`.pyc`), but this is invisible to the programmer.
+
+        - question: |
+            In which scenario is Python a **better** choice than a shell script?
+          type: single
+          options:
+            - "Renaming 10 files using a simple glob pattern"
+            - "Starting and stopping system services"
+            - "Parsing a 50-column CSV, computing statistics, and writing a report"
+            - "Chaining three Unix commands with a pipe"
+          correct_index: 2
+          explanation: |
+            Shell scripts excel at chaining Unix commands. Python excels at anything involving
+            **data structures, algorithms, or complex logic** — like parsing structured data, calling APIs,
+            or processing text with conditionals and loops. The CSV/statistics task is exactly
+            where Python shines over Bash.
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — Variables, Types & the Indentation Trap
+  # Pedagogy:
+  #   Transfer Tutor   — C++ declaration syntax → Python implicit typing.
+  #   Fixer Upper      — deliberately broken code (mixed indentation / wrong type).
+  #   Negative Transfer warning — the single most common mistake from C++ students.
+  # --------------------------------------------------------------------------
+  - title: "Variables, Types & The Indentation Trap"
+    instructions: |
+      ## Bridging Your C++ Mental Model
+
+      ### No Type Declarations
+
+      In C++ every variable must be declared with its type:
+      ```cpp
+      int   score   = 95;
+      float gpa     = 3.8;
+      std::string name = "Alice";
+      ```
+
+      In Python, you just *assign*. Python infers the type:
+      ```python
+      score = 95        # int
+      gpa   = 3.8       # float
+      name  = "Alice"   # str
+      ```
+
+      You can always check the type at runtime: `print(type(score))` → `<class 'int'>`.
+
+      ### f-Strings — Like C++'s `printf` but Readable
+
+      ```python
+      # C++:    printf("Student: %s, GPA: %.1f\n", name, gpa);
+      # Python: (note the f prefix and {variable} syntax — same idea as shell's $variable)
+      print(f"Student: {name}, GPA: {gpa:.1f}")
+      ```
+
+      The `f"..."` string is called an **f-string** (formatted string literal). It is Python's idiomatic way to embed expressions inside strings.
+
+      ### ⚠️ The Indentation Trap (Negative Transfer from C++)
+
+      In C++, indentation is cosmetic — the compiler ignores it, `{}` defines blocks.
+      **In Python, indentation IS the syntax.** Wrong indentation = `IndentationError`.
+
+      ```python
+      # C++ programmer's instinct (WRONG in Python):
+      if score >= 90:
+      print("A")          # IndentationError: expected an indented block
+
+      # Correct Python:
+      if score >= 90:
+          print("A")      # 4 spaces (or 1 tab — never mix them!)
+      ```
+
+      > **Rule**: Use 4 spaces per indent level. Never mix tabs and spaces.
+
+      ### Task: Fixer Upper
+
+      The file `grades.py` below has **two bugs**:
+      1. An indentation error inside the `if` block
+      2. The grade boundary for a `B` is wrong (should be `>= 80`, not `>= 70`)
+
+      Fix both bugs so the script prints the correct letter grade for each score.
+
+    files:
+      - path: "grades.py"
+        content: |
+          # Fixer Upper: Find and fix the two bugs in this script.
+          # Bug 1: Indentation error
+          # Bug 2: Wrong grade boundary for B
+
+          scores = [95, 83, 71, 62, 55]
+
+          for score in scores:
+              if score >= 90:
+              print(f"Score {score}: A")    # Bug 1 is here
+              elif score >= 70:             # Bug 2: should be >= 80
+                  print(f"Score {score}: B")
+              elif score >= 60:
+                  print(f"Score {score}: C")
+              else:
+                  print(f"Score {score}: F")
+        language: "python"
+
+    open_file: "grades.py"
+
+    tests:
+      - description: "Script runs without IndentationError or SyntaxError"
+        command: |
+          output = __run_capture('/tutorial/grades.py')
+      - description: "Score 95 is graded 'A'"
+        command: |
+          output = __run_capture('/tutorial/grades.py')
+          assert 'Score 95: A' in output, f"Expected 'Score 95: A', got: {repr(output)}"
+      - description: "Score 83 is graded 'B' (boundary fix at 80)"
+        command: |
+          output = __run_capture('/tutorial/grades.py')
+          assert 'Score 83: B' in output, f"Expected 'Score 83: B', got: {repr(output)}"
+      - description: "Score 71 is graded 'C' (not B)"
+        command: |
+          output = __run_capture('/tutorial/grades.py')
+          assert 'Score 71: C' in output, f"Expected 'Score 71: C' (71 < 80 so not B), got: {repr(output)}"
+
+    quiz:
+      title: "Variables & Types — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A student writes the following Python and gets `IndentationError: expected an indented block`:
+            ```python
+            for item in inventory:
+            print(item)
+            ```
+            What is the fix?
+          type: single
+          options:
+            - "Add a semicolon at the end of the `for` line"
+            - "Add braces: `for item in inventory: { print(item) }`"
+            - "Indent `print(item)` with 4 spaces so it is inside the `for` block"
+            - "Use `for (item in inventory)` C-style syntax"
+          correct_index: 2
+          explanation: |
+            Python uses **indentation** to define blocks, not braces. Any statement inside a `for`, `if`, or `def`
+            must be indented by at least one consistent level (4 spaces is the convention).
+            Forgetting this is the most common mistake for students coming from C++ or Java.
+
+        - question: |
+            What does `type(3.14)` return in Python?
+          type: single
+          options:
+            - "`double`"
+            - "`float`"
+            - "`decimal`"
+            - "`number`"
+          correct_index: 1
+          explanation: |
+            Python uses `float` (not C++'s `double`) for floating-point numbers.
+            You can always use `type(x)` to inspect a variable's type at runtime —
+            a handy debugging tool that does not exist in C++ without runtime type info (RTTI).
+
+        - question: |
+            Which of the following correctly uses an f-string to print `"Price: $12.50"`?
+          type: single
+          options:
+            - '`print("Price: $" + price)`'
+            - '`print(f"Price: ${price:.2f}")`'
+            - '`printf("Price: $%.2f", price)`'
+            - '`print("Price: %s" % price)`'
+          correct_index: 1
+          explanation: |
+            f-strings use the `f"..."` prefix and embed expressions with `{expr}`.
+            Format specifiers like `:.2f` (two decimal places) go *inside* the braces.
+            The `%` operator (option D) is the old Python 2 way; f-strings are the modern idiom.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Functions, Loops & List Comprehensions
+  # Pedagogy:
+  #   Transfer Tutor    — C++ function signatures → Python `def`.
+  #   Guide-and-Release — partially-written function to complete.
+  #   Beacon            — list comprehension as a recognisable Python pattern.
+  # --------------------------------------------------------------------------
+  - title: "Functions, Loops & List Comprehensions"
+    instructions: |
+      ## Functions: `def` vs C++ Signatures
+
+      In C++ you must specify return types and parameter types:
+      ```cpp
+      int add(int a, int b) { return a + b; }
+      ```
+
+      In Python you just use `def`. Types are optional (you can add them as **type hints**, but they are not enforced):
+      ```python
+      def add(a, b):
+          return a + b          # No type declarations required
+
+      # With optional type hints (documents intent, not enforced at runtime):
+      def add(a: int, b: int) -> int:
+          return a + b
+      ```
+
+      ### Default Parameters
+
+      ```python
+      def greet(name, greeting="Hello"):
+          print(f"{greeting}, {name}!")
+
+      greet("Alice")             # → Hello, Alice!
+      greet("Bob", "Welcome")    # → Welcome, Bob!
+      ```
+
+      ### Python `for` Loops: Iterating Over Collections
+
+      C++ `for` loops typically count indices. Python loops iterate *over items directly*:
+
+      ```cpp
+      // C++: index-based
+      for (int i = 0; i < nums.size(); i++) { cout << nums[i]; }
+      ```
+
+      ```python
+      # Python: item-based (preferred)
+      for num in nums:
+          print(num)
+
+      # Need the index too? Use enumerate():
+      for i, num in enumerate(nums):
+          print(f"Index {i}: {num}")
+      ```
+
+      ### ✨ Python Beacon: List Comprehensions
+
+      A **list comprehension** is a compact way to build a list. Once you recognise the
+      pattern, you will see it everywhere in Python code:
+
+      ```python
+      # C++ equivalent: vector comprehension via loop
+      # std::vector<int> squares;
+      # for (int x : nums) squares.push_back(x * x);
+
+      # Python: one line
+      squares = [x * x for x in nums]
+
+      # With a filter (optional condition at the end):
+      evens = [x for x in nums if x % 2 == 0]
+      ```
+
+      ### Task
+
+      Complete the two functions in `stats.py`:
+
+      1. `mean(numbers)` — returns the average of a list of numbers.
+         *Hint: `sum()` and `len()` are built-in functions.*
+      2. `above_average(numbers)` — returns a new list containing only the numbers
+         that are **strictly greater than** the mean.
+         *Use a list comprehension.*
+
+    files:
+      - path: "stats.py"
+        content: |
+          def mean(numbers):
+              """Return the arithmetic mean of a list of numbers."""
+              # TODO: implement using sum() and len()
+              pass
+
+          def above_average(numbers):
+              """Return a list of numbers strictly greater than the mean."""
+              avg = mean(numbers)
+              # TODO: use a list comprehension with a condition
+              pass
+
+          # --- Quick self-test ---
+          data = [4, 8, 15, 16, 23, 42]
+          print(f"Data:          {data}")
+          print(f"Mean:          {mean(data)}")
+          print(f"Above average: {above_average(data)}")
+        language: "python"
+
+    open_file: "stats.py"
+
+    tests:
+      - description: "mean([4, 8, 15, 16, 23, 42]) == 18.0"
+        command: |
+          g = {}
+          exec(open('/tutorial/stats.py').read(), g)
+          result = g['mean']([4, 8, 15, 16, 23, 42])
+          assert result == 18.0, f"Expected 18.0, got {result}"
+      - description: "above_average returns numbers > mean (not >=)"
+        command: |
+          g = {}
+          exec(open('/tutorial/stats.py').read(), g)
+          result = g['above_average']([4, 8, 15, 16, 23, 42])
+          expected = [23, 42]
+          assert result == expected, f"Expected {expected}, got {result}"
+      - description: "mean of a single-element list equals that element"
+        command: |
+          g = {}
+          exec(open('/tutorial/stats.py').read(), g)
+          assert g['mean']([7]) == 7, "mean([7]) should be 7"
+      - description: "above_average uses a list comprehension (not a manual loop)"
+        command: |
+          import ast
+          src = open('/tutorial/stats.py').read()
+          tree = ast.parse(src)
+          # Find the above_average function and check for a ListComp inside it
+          for node in ast.walk(tree):
+              if isinstance(node, ast.FunctionDef) and node.name == 'above_average':
+                  has_comp = any(isinstance(n, ast.ListComp) for n in ast.walk(node))
+                  assert has_comp, "above_average should use a list comprehension [x for x in ...]"
+
+    quiz:
+      title: "Functions & Comprehensions — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            What is the output of the following code?
+            ```python
+            def describe(item, label="unknown"):
+                return f"{item} is {label}"
+
+            print(describe("gold", "rare"))
+            print(describe("rock"))
+            ```
+          type: single
+          options:
+            - "`gold is rare` then `rock is unknown`"
+            - "`gold is rare` then `rock is rare`"
+            - "SyntaxError — default parameters must come before non-default"
+            - "`gold is unknown` then `rock is unknown`"
+          correct_index: 0
+          explanation: |
+            `label="unknown"` is a **default parameter**. When `describe("rock")` is called without
+            a second argument, `label` falls back to `"unknown"`. When `describe("gold", "rare")` is called,
+            `label` is set to `"rare"`.
+
+        - question: |
+            A student rewrites `[x**2 for x in range(5)]` as a for-loop and gets the same result.
+            Why would a Python programmer prefer the list comprehension?
+          type: single
+          options:
+            - "List comprehensions run faster than for-loops for all input sizes"
+            - "List comprehensions are more readable and concise for simple transformations, and are a recognised Python idiom"
+            - "For-loops are deprecated in Python 3"
+            - "List comprehensions avoid creating a temporary list in memory"
+          correct_index: 1
+          explanation: |
+            List comprehensions are preferred for their **readability and conciseness** when the
+            transformation is simple. They are a recognised Python beacon — experienced Python
+            readers immediately understand their intent. Performance-wise, they are slightly
+            faster than equivalent for-loops, but readability is the primary motivation.
+
+        - question: |
+            Which expression correctly builds the list `[1, 4, 9, 16, 25]`
+            (the squares of 1 through 5)?
+          type: single
+          options:
+            - "`[i**2 for i in range(1, 6)]`"
+            - "`[i**2 for i in range(5)]`"
+            - "`[i*i for i in range(1, 5)]`"
+            - "`[i^2 for i in range(1, 6)]`"
+          correct_index: 0
+          explanation: |
+            `range(1, 6)` generates `[1, 2, 3, 4, 5]` (start inclusive, stop exclusive).
+            `i**2` is Python's exponentiation operator (C++ uses `pow()` or manual multiplication).
+            `i^2` in Python is **bitwise XOR**, not exponentiation — a common negative-transfer mistake from math.
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — Files, sys.argv & Python as a Scripting Tool
+  # Pedagogy:
+  #   Transfer Tutor    — C++ file I/O (fopen / fstream) → Python `open()` + `with`.
+  #   Lay of the Land   — Python's "batteries included" stdlib.
+  #   Guide-and-Release — complete a small data-processing script.
+  # --------------------------------------------------------------------------
+  - title: "Files, sys.argv & Python as a Scripting Tool"
+    instructions: |
+      ## Python's "Batteries Included" Philosophy
+
+      One of Python's greatest strengths is its **standard library** — hundreds of modules
+      ready to use with no installation:
+
+      | Module | What it does | C++ / Bash equivalent |
+      |---|---|---|
+      | `os`, `pathlib` | File paths, directory traversal | `<filesystem>` / `ls`, `find` |
+      | `sys` | Command-line args, exit codes | `argc/argv` / `$@` |
+      | `json` | Parse/write JSON | Requires a library |
+      | `re` | Regular expressions | `<regex>` / `grep` |
+      | `csv` | Read/write CSV | Manual parsing |
+      | `subprocess` | Run shell commands | `system()` / direct Bash |
+
+      ### Reading Files with `open()` and `with`
+
+      In C++ you `fopen`, check for `NULL`, process, and `fclose`. Python's `with` statement
+      handles the close automatically — even if an exception occurs:
+
+      ```python
+      # C++:
+      # FILE *f = fopen("data.txt", "r"); ... fclose(f);
+
+      # Python — the 'with' block closes the file automatically:
+      with open("data.txt") as f:
+          for line in f:
+              print(line.strip())   # .strip() removes the trailing newline
+      ```
+
+      ### Command-Line Arguments with `sys.argv`
+
+      ```python
+      import sys
+      # sys.argv is a list: ["script.py", "arg1", "arg2", ...]
+      # C++ equivalent:  argv[0], argv[1], ...
+
+      if len(sys.argv) < 2:
+          print("Usage: python3 script.py <filename>")
+          sys.exit(1)              # Exit with non-zero code — just like in C++
+
+      filename = sys.argv[1]
+      ```
+
+      ### Task
+
+      Complete `word_count.py`. It should:
+      1. Read every line from `data.txt`
+      2. Split each line into words (`.split()` does this — it splits on whitespace)
+      3. Count the **total number of words** across all lines
+      4. Print: `Total words: <count>`
+
+      The file `data.txt` is already created for you.
+
+    files:
+      - path: "word_count.py"
+        content: |
+          # Task: Count the total words in data.txt
+
+          total = 0
+
+          with open("data.txt") as f:
+              for line in f:
+                  words = line.split()   # split() splits on whitespace, returns a list
+                  # TODO: add len(words) to total
+                  pass
+
+          # TODO: print the total word count in the format: "Total words: <count>"
+          pass
+        language: "python"
+
+      - path: "data.txt"
+        content: |
+          the quick brown fox jumps over the lazy dog
+          pack my box with five dozen liquor jugs
+          how vexingly quick daft zebras jump
+        language: "plaintext"
+
+    open_file: "word_count.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/word_count.py')
+      - description: "Output contains 'Total words: 24'"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/word_count.py')
+          # 9 + 9 + 6 = 24 words across the three lines
+          assert 'Total words: 24' in output, \
+              f"Expected 'Total words: 24', got: {repr(output)}"
+
+    quiz:
+      title: "Files & Scripting — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A student writes this code and asks why Python is better than C++ for this task:
+            ```python
+            with open("log.txt") as f:
+                errors = [line for line in f if "ERROR" in line]
+            ```
+            What is the best answer?
+          type: single
+          options:
+            - "Python runs faster than C++ for file I/O operations"
+            - "Python's `with` statement, built-in file iteration, and list comprehensions make this 3-4 lines vs 20+ lines in C++ with error handling"
+            - "C++ cannot open text files, only binary files"
+            - "Python files never need to be closed because the OS does it automatically"
+          correct_index: 1
+          explanation: |
+            This is Python's **scripting sweet spot**: the `with` statement handles resource cleanup,
+            files are directly iterable (no manual buffering), and the list comprehension filters in one line.
+            The equivalent C++ code would need `ifstream`, a `while(getline(...))` loop, string search,
+            and explicit `close()` — easily 20+ lines for robust code.
+
+        - question: |
+            What does `line.strip()` do when reading lines from a file?
+          type: single
+          options:
+            - "Removes all spaces from the middle of the line"
+            - "Removes leading and trailing whitespace, including the newline character `\\n` at the end"
+            - "Converts the line to lowercase"
+            - "Splits the line into a list of characters"
+          correct_index: 1
+          explanation: |
+            When you read a line from a file, it includes the trailing newline `\n`.
+            `.strip()` removes **leading and trailing whitespace** (spaces, tabs, `\n`, `\r`).
+            This is analogous to trimming a C++ `std::string`.
+
+        - question: |
+            A script should exit with code `1` and print an error if the user provides no arguments.
+            Which Python code is correct?
+          type: single
+          options:
+            - |
+              ```python
+              import sys
+              if len(sys.argv) == 1:
+                  print("Error: no arguments", file=sys.stderr)
+                  sys.exit(1)
+              ```
+            - |
+              ```python
+              if argc == 0:
+                  printf("Error\n");
+                  exit(1);
+              ```
+            - |
+              ```python
+              import sys
+              if sys.argv.length == 0:
+                  sys.exit()
+              ```
+            - |
+              ```python
+              if no_args:
+                  raise SystemError(1)
+              ```
+          correct_index: 0
+          explanation: |
+            `sys.argv` is a list; `sys.argv[0]` is always the script name, so checking
+            `len(sys.argv) == 1` means no extra arguments were given.
+            `sys.exit(1)` exits with code 1 (error), just like `exit(1)` in C.
+            Printing to `sys.stderr` (not `sys.stdout`) is the correct convention for error messages.
