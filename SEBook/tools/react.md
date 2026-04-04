@@ -140,10 +140,139 @@ function Dashboard() {
 }
 ```
 
-### Summary & Next Steps
-1. **Components:** UI is broken down into reusable JavaScript functions.
-2. **JSX:** We write HTML inside JS to describe the UI layout.
-3. **State:** We use `useState` to give components memory. Updating state causes the screen to redraw automatically.
-4. **Integration:** React runs in the user's browser, acting as the client that makes HTTP requests to your Node.js/Express server.
+### Props: Passing Data Into Components
 
-**To practice:** Try setting up a simple React environment using a tool like Vite (`npm create vite@latest`), and try writing a `Counter` component yourself. Change the math, add a "Reset" button, and get a feel for how changing State updates the screen!
+Components without data are static. **Props** let you pass data into a component, exactly like function arguments:
+
+```jsx
+// C++:    void printCard(string name, double price) { ... }
+// Python: def render_card(name, price): ...
+
+// React — defining the component:
+function ProductCard({ name, price }) {
+  return (
+    <div>
+      <h3>{name}</h3>
+      <p>${price.toFixed(2)}</p>
+    </div>
+  );
+}
+
+// React — using the component (like calling a function with named args):
+<ProductCard name="Laptop" price={999.99} />
+```
+
+Key props rules:
+- **One-way flow** — props flow from parent to child, never the reverse
+- **Read-only** — props are immutable inside the component (like `const` parameters)
+- **Any JS value** — strings, numbers, booleans, objects, arrays, functions can all be props
+
+String props can use quotes (`title="Hello"`); all other types need braces (`price={99.99}`, `active={true}`).
+
+
+### JSX Rules — Where HTML Instincts Break
+
+JSX looks like HTML but is actually JavaScript. These rules catch most beginners:
+
+| Rule | Wrong (HTML instinct) | Correct (JSX) |
+|---|---|---|
+| CSS class | `class="..."` | `className="..."` (`class` is a JS keyword) |
+| Self-closing tags | `<img src={u}>` | `<img src={u} />` |
+| Inline style | `style="color:red"` | `style={% raw %}{{color: 'red'}}{% endraw %}` (JS object, not CSS string) |
+| Multiple root elements | `return <h1/><p/>` | `return <><h1/><p/></>` (fragment wrapper) |
+| Component names | `<card />` | `<Card />` (must be capitalized) |
+| Event handlers | `onclick` | `onClick` (camelCase) |
+
+
+
+### Lists, Keys, and Conditional Rendering
+
+In C++ you render lists with `for` loops. In React, you use `.map()` to transform data arrays into JSX:
+
+```jsx
+const tasks = [{id: 1, text: 'Learn React', done: true}, ...];
+
+// .map() transforms data → JSX; key identifies each item for React's diffing
+const taskList = tasks.map(task =>
+  <li key={task.id}>{task.done ? '✓' : '✗'} {task.text}</li>
+);
+return <ul>{taskList}</ul>;
+```
+
+**Keys** tell React which items are stable across re-renders. Without stable keys, React compares by position — causing bugs when items are reordered or deleted. Never use array index as a key for dynamic lists; use a stable ID from your data.
+
+**Conditional rendering** uses plain JavaScript inside JSX:
+
+```jsx
+// Short-circuit: only renders when condition is true
+{unreadCount > 0 && <Badge count={unreadCount} />}
+
+// Ternary: choose between two alternatives
+{isLoggedIn ? <Dashboard /> : <LoginForm />}
+```
+
+> **Watch out**: `{count && <Badge />}` renders the number `0` when `count` is `0`, because `0` is a valid React node. Use `{count > 0 && <Badge />}` instead.
+
+
+### Composition Over Inheritance
+
+In C++ and Java, you reuse code via inheritance (`class Dog : Animal`). React uses **composition** — building complex UIs by combining small, generic components:
+
+```jsx
+// Generic container — accepts anything as children
+function Card({ children, className }) {
+  return <div className={'card ' + (className || '')}>{children}</div>;
+}
+
+// Specific use — compose with the children prop
+function ProfileCard({ user }) {
+  return (
+    <Card className="profile">
+      <Avatar src={user.avatar} />
+      <h3>{user.name}</h3>
+    </Card>
+  );
+}
+```
+
+The `children` prop lets any content be nested inside a component, making it a composable container — analogous to C++ templates or Python's `*args`.
+
+
+### Thinking in React
+
+React's official methodology for building a new UI:
+
+1. **Break the UI into a component hierarchy** — each component does one job (single-responsibility)
+2. **Build a static version first** — props only, no state
+3. **Identify the minimal state** — don't duplicate data that can be derived
+4. **Determine where state lives** — the lowest common ancestor that needs it
+5. **Add inverse data flow** — children call callback functions passed as props
+
+### Lifting State Up
+
+When two sibling components need the same data, move the state to their **lowest common ancestor** and pass it down as props:
+
+```jsx
+function Parent() {
+  const [text, setText] = useState('');
+  return (
+    <>
+      <SearchBar value={text} onChange={setText} />
+      <ResultsList filter={text} />
+    </>
+  );
+}
+```
+
+`SearchBar` calls `onChange(e.target.value)` to notify the parent. The parent updates state, which triggers a re-render of both components. This is "inverse data flow" — data flows down via props, notifications flow up via callbacks.
+
+
+### Summary
+1. **Components:** UI is broken down into reusable JavaScript functions.
+2. **JSX:** We write HTML-like syntax inside JS to describe UI, compiled to `React.createElement` calls.
+3. **Props:** Data flows one-way from parent to child. Props are read-only.
+4. **State:** We use `useState` to give components memory. Updating state triggers re-renders.
+5. **Lists & Keys:** Use `.map()` with stable `key` props for dynamic lists.
+6. **Conditional Rendering:** Use `&&` and ternary operators inside JSX.
+7. **Composition:** Build complex UIs by combining small components via the `children` prop.
+8. **Integration:** React runs in the user's browser, acting as the client that makes HTTP requests to your Node.js/Express server.

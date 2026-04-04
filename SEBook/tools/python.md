@@ -381,5 +381,124 @@ except ValueError:
 ### Robust Command-Line Arguments (`argparse`)
 In C++, you typically handle command-line inputs by parsing `int argc` and `char* argv[]` directly in `main()`. While Python *does* have a direct equivalent (`sys.argv`), the course materials emphasize using the built-in `argparse` module. It automatically generates help/usage messages, enforces types, and parses flags, saving you from writing boilerplate C++ parsing code.
 
+### Division Operators: `/` vs `//`
+
+A common negative-transfer trap from C++: in C++, `7 / 2` gives `3` (integer division when both operands are ints). In Python 3, `/` **always** returns a float:
+
+```python
+7 / 2     # 3.5  (float division — different from C++!)
+7 // 2    # 3    (integer/floor division — like C++'s /)
+7 % 2     # 1    (modulo — same as C++)
+```
+
+Use `//` when you explicitly want integer division. Use `/` when you want precise results.
+
+### The `**` Exponentiation Operator
+
+Python uses `**` for exponentiation. In C++ you would use `pow()` or `std::pow()`. Be careful: `^` is **bitwise XOR** in Python, not exponentiation:
+
+```python
+2 ** 8    # 256  ✓  (exponentiation)
+9 ** 0.5  # 3.0  ✓  (square root)
+2 ^ 8     # 10   ✗  (bitwise XOR — NOT exponentiation!)
+```
+
+### Dynamic ≠ Weak: Python's Strong Typing
+
+Python is **dynamically** typed (you don't declare types) but also **strongly** typed (it won't silently convert between incompatible types). This is different from JavaScript, which is dynamically typed AND weakly typed:
+
+```python
+x = "5" + 3    # TypeError: can only concatenate str to str
+```
+
+Unlike JavaScript (which would give `"53"`), Python refuses to guess. You must be explicit: `int("5") + 3` → `8` or `"5" + str(3)` → `"53"`.
+
+
+### `enumerate()` — Index and Value Together
+
+In C++ you use index-based loops to get both the position and the value. Python's `enumerate()` provides this more elegantly:
+
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# Instead of: for i in range(len(fruits)): ...
+for i, fruit in enumerate(fruits):
+    print(f"{i}: {fruit}")
+```
+
+### List Comprehensions
+
+List comprehensions are a compact, idiomatic way to build lists in Python — a pattern you will see everywhere in Python code:
+
+```python
+# C++ equivalent:
+# std::vector<int> squares;
+# for (int i = 1; i <= 5; i++) squares.push_back(i * i);
+
+# Python: one line
+squares = [x**2 for x in range(1, 6)]          # [1, 4, 9, 16, 25]
+
+# With a filter condition:
+evens = [x for x in range(10) if x % 2 == 0]   # [0, 2, 4, 6, 8]
+```
+
+The general form is `[expression for variable in iterable if condition]`. Use comprehensions when the transformation is simple — they are more readable and slightly faster than equivalent `for` loops.
+
+
+### Reading Files with `open()` and `with`
+
+In C++ you `fopen`, check for `NULL`, process, and `fclose`. Python's `with` statement handles the close automatically — even if an exception occurs:
+
+```python
+# C++: FILE *f = fopen("data.txt", "r"); ... fclose(f);
+
+# Python — the 'with' block closes the file automatically:
+with open("data.txt") as f:
+    for line in f:
+        print(line.strip())   # .strip() removes the trailing newline
+```
+
+The `with` statement is Python's **context manager** idiom — just like RAII in C++, the file is guaranteed to be closed when the block exits. This also works with database connections, locks, and other resources.
+
+### Command-Line Arguments with `sys.argv` and `sys.stderr`
+
+C++'s `argc`/`argv` maps directly to Python's `sys.argv`:
+
+```python
+import sys
+
+# sys.argv[0] is the script name (like argv[0] in C++)
+# sys.argv[1], [2], ... are the arguments
+
+if len(sys.argv) < 2:
+    print("Error: no filename given", file=sys.stderr)  # stderr, like std::cerr
+    sys.exit(1)                                          # exit code 1, like exit(1)
+
+filename = sys.argv[1]
+```
+
+`print()` writes to stdout by default. Use `file=sys.stderr` to send error messages to stderr, keeping output and diagnostics separate — the same reason C++ separates `std::cout` from `std::cerr`.
+
+
 ### Regular Expressions (`re` module)
-Since Python is a scripting language, it is heavily utilized for text processing. The lecture transitions into using Python to read and parse text files (like User Stories) using the `re` module. While C++ has the `<regex>` library, Python's integration with RegEx and string manipulation is much more central to its everyday use case as a scripting tool.
+Since Python is a scripting language, it is heavily utilized for text processing. Python's built-in `re` module provides the same power as `grep` and `sed` inside a script:
+
+```python
+import re
+
+text = "Error 404: page not found. Error 500: server crash."
+
+# re.search() — find the FIRST match (like grep -q)
+m = re.search(r'Error \d+', text)
+if m:
+    print(m.group())     # "Error 404"
+
+# re.findall() — find ALL matches (like grep -o)
+codes = re.findall(r'\d+', text)   # ['404', '500']
+
+# re.sub() — replace matches (like sed 's/old/new/g')
+clean = re.sub(r'Error \d+', 'ERR', text)
+# "ERR: page not found. ERR: server crash."
+```
+
+Always use raw strings (`r'...'`) for regex patterns — they prevent Python from interpreting backslashes before the `re` module sees them.
