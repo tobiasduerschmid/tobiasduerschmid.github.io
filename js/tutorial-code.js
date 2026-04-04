@@ -1192,6 +1192,7 @@
       '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>\n' +
       '<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>\n' +
+      '<script src="https://cdn.tailwindcss.com"><\/script>\n' +
       '<style>\n* { box-sizing: border-box; }\n' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n' +
       '       padding: 0; margin: 0; background: #fff; color: #333; }\n' +
