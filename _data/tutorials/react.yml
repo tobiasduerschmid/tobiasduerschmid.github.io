@@ -207,7 +207,7 @@ steps:
           // Props: label (string), color (string — any CSS color)
           function Badge({ label, color }) {
             return (
-              <span style="background: color; color: #fff; padding: '6px 14px'; borderRadius: 20; fontWeight: 600;">
+              <span style="background: color; color: #222; padding: 6px 14px; borderRadius: 20px; fontWeight: 600;">
                 {label}
               </span>
             );
@@ -252,6 +252,12 @@ steps:
           var spans = frame.contentDocument.querySelectorAll('span');
           assert(spans.length >= 3,
             'Add a third <Badge> component. Currently found: ' + spans.length + ' span(s)');
+      - description: "Badge spans have a background color applied (style is an object, not a string)"
+        command: |
+          var spans = Array.from(frame.contentDocument.querySelectorAll('span'));
+          var styled = spans.filter(function(s) { return s.style.background || s.style.backgroundColor; });
+          assert(styled.length >= 2,
+            'Fix the Badge style — use style={{background: color, ...}} (a JS object), not style="..." (a CSS string). Found ' + styled.length + ' styled span(s).');
 
     quiz:
       title: "Components & JSX — Knowledge Check"
