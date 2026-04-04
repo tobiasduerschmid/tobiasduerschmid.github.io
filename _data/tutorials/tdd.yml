@@ -48,6 +48,10 @@ steps:
 
       Think of tests as a **ratchet**: once a test passes, your progress is locked in. You can never accidentally slip backward.
 
+      ### A Note Before We Begin
+
+      TDD asks you to write a test *before* the code exists. This feels backward at first — and that is completely normal. Every developer who learns TDD goes through an uncomfortable adjustment period. If TDD feels strange or slow, you are doing it right. Stick with the process; it gets natural with practice.
+
       ### Predict Before You Run
 
       The function below is supposed to convert a numeric score (0–100) to a letter grade. **Before running it**, read the code carefully and predict: what will `calculate_grade(85)` return? What about `calculate_grade(90)`?
@@ -136,10 +140,10 @@ steps:
             What is the main limitation of this approach?
           type: single
           options:
-            - "There is no limitation — this is the standard approach"
-            - "Tests written after the fact only verify what you *think* the code does, not what it *should* do. They also can't guide your design or catch regressions during development"
-            - "Writing tests afterward is fine as long as you achieve 100% code coverage"
-            - "The only problem is that it takes slightly longer"
+            - "There is no real limitation — writing tests after code is the industry standard, and the test suite ends up identical either way since you cover the same behaviors"
+            - "Post-hoc tests verify what you *think* the code does, not what it *should* do. They also can't guide your design during development"
+            - "Writing tests afterward is fine as long as you achieve 100% coverage, which ensures all behavior is verified"
+            - "The main problem is that it takes slightly longer because you have to context-switch back to code you already wrote"
           correct_index: 1
           explanation: |
             Post-hoc tests verify *your implementation* rather than *intended behavior*.
@@ -153,10 +157,10 @@ steps:
             ```
           type: single
           options:
-            - "It prints the message 'Expected 3 items' to the console"
-            - "It checks that `result` has exactly 3 elements; if not, it raises an `AssertionError` with the given message"
-            - "It creates a variable called `result` with 3 items"
-            - "It silently ignores the check if the condition is False"
+            - "It prints 'Expected 3 items' to the console, then continues execution normally"
+            - "It checks that `result` has 3 elements; if not, it raises an `AssertionError` with the message"
+            - "It creates a new list called `result` and populates it with exactly 3 items"
+            - "It evaluates the condition but silently continues even if the condition is `False`"
           correct_index: 1
           explanation: |
             `assert condition, message` evaluates the condition. If `True`, nothing happens and
@@ -181,10 +185,10 @@ steps:
             The "ratchet metaphor" for testing means:
           type: single
           options:
-            - "Tests should be run as fast as a ratchet clicks"
+            - "Tests should be run frequently and automatically, like a ratchet clicking on every code change"
             - "Once a test passes, it locks in that progress — you can never accidentally slip backward on that behavior"
-            - "You should ratchet up test coverage to 100% as quickly as possible"
-            - "Tests should be written in a specific mechanical order"
+            - "You should ratchet up test coverage incrementally, aiming for 100% before each release"
+            - "Tests should be written in a strict mechanical order: unit tests first, then integration, then end-to-end"
           correct_index: 1
           explanation: |
             The ratchet metaphor (from Harry Percival's "Obey the Testing Goat") captures the key
@@ -231,6 +235,10 @@ steps:
 
       A **PASSED** test means the assertion held. A **FAILED** test shows you exactly what went wrong.
 
+      ### Predict Before You Run
+
+      Before writing any code, predict: what will pytest print if a test function only has `pass` and no `assert`? Will it PASS or FAIL? Click **Run** on `test_temperature.py` now — before changing anything — and see if your prediction is correct.
+
       ### Task
 
       The `temperature.py` module is provided and working. Your job is to complete `test_temperature.py`:
@@ -239,11 +247,7 @@ steps:
       2. Fill in `test_boiling_point` — assert that `celsius_to_fahrenheit(100)` returns `212.0`
       3. Write `test_negative_forty` from scratch — assert that `celsius_to_fahrenheit(-40)` returns `-40.0` (the unique crossover point where Celsius equals Fahrenheit!)
 
-      ### Predict Before You Run
-
-      Before clicking Run, predict: what will pytest print if a test function only has `pass` and no `assert`? Will it PASS or FAIL? Try it and see.
-
-      Click **Run** on `test_temperature.py` to see your tests execute.
+      Click **Run** on `test_temperature.py` after each change to see your tests execute.
 
     files:
       - path: "temperature.py"
@@ -344,10 +348,10 @@ steps:
             ```
           type: single
           options:
-            - "Both tests ran successfully"
-            - "The `test_addition` assertion held; the `test_division` assertion did not"
-            - "The test file has a syntax error"
-            - "`test_division` was skipped"
+            - "Both tests ran and produced output, but only `test_addition` returned the value pytest expected as a success signal"
+            - "The assertions in `test_addition` all held; at least one assertion in `test_division` did not"
+            - "The test file has a syntax error in `test_division` that prevented it from being collected by the test runner"
+            - "`test_division` was skipped because it depends on `test_addition` completing first and pytest enforces execution order"
           correct_index: 1
           explanation: |
             PASSED means the assertions in that test function all held (no `AssertionError`).
@@ -387,17 +391,19 @@ steps:
             always "pass" even if the result is wrong.
 
         - question: |
-            **(Spaced review — Step 1)** What is the "ratchet" metaphor for testing?
+            **(Spaced review — Step 1)** A developer finishes a feature and deletes the tests because "the feature is done and working." What principle does this violate?
           type: single
           options:
-            - "Tests should be written very quickly"
-            - "Each passing test locks in progress, preventing regression"
-            - "You should ratchet up complexity one test at a time"
-            - "Tests should be deleted after the feature is complete"
+            - "The DRY principle — tests duplicate the code's logic unnecessarily"
+            - "The ratchet principle — passing tests are permanent safety nets that prevent regression, not disposable scaffolding"
+            - "The YAGNI principle — tests are speculative code that may not be needed"
+            - "No principle — deleting tests after a feature ships is standard practice"
           correct_index: 1
           explanation: |
-            The ratchet metaphor means that once a test passes, that behavior is permanently
-            verified. Even as you add new features, the old tests ensure nothing slips backward.
+            The ratchet metaphor means tests lock in progress permanently. Deleting passing
+            tests removes the safety net: if someone later modifies the code and introduces
+            a regression, there is no test to catch it. Tests are living documentation, not
+            temporary scaffolding.
 
 
   # --------------------------------------------------------------------------
@@ -476,7 +482,8 @@ steps:
       1. **SEE RED FIRST:** Click **Run** on `test_word_counter.py` *before writing any code*. You should see the test FAIL with an `ImportError` — this IS the RED phase. The test describes behavior that does not exist yet. This failure is expected and correct.
       2. **Go GREEN:** Now write the `WordCounter` class in `word_counter.py` to make the test pass. Run again — you should see GREEN.
       3. **Cycle 2:** Complete `test_count_repeated_words` (partially scaffolded). Run the tests — the new test should FAIL (RED). Then update your implementation if needed to pass it (GREEN).
-      4. **Cycle 3:** Write `test_count_empty_string` entirely on your own. What should `count("")` return? Decide, write the test, see it fail, then make it pass.
+      4. **REFACTOR:** After Cycle 2 passes, look at your `count()` method. If you used a manual dictionary loop, try refactoring to use Python's `collections.Counter` — which does the same thing in one line. Run the tests after refactoring to confirm they still pass. This is the REFACTOR phase: improve the code without changing behavior.
+      5. **Cycle 3:** Write `test_count_empty_string` entirely on your own. What should `count("")` return? Decide, write the test, see it fail, then make it pass.
 
       **Important:** Always run the tests and see RED before writing implementation. If you skip this step, you cannot be sure your test is actually testing something.
 
@@ -573,10 +580,10 @@ steps:
             A student writes five test functions, then starts implementing the code to make them all pass at once. What is wrong with this approach?
           type: single
           options:
-            - "Nothing — this is a valid TDD workflow"
-            - "TDD requires writing ONE test, making it pass, then writing the NEXT test. Writing all tests first means you cannot use the feedback from each cycle to guide your design"
-            - "You should write ten tests, not five"
-            - "The tests should be in a separate repository"
+            - "Nothing is wrong — writing all tests first gives you a complete specification before you start coding, which mirrors how requirements docs work in waterfall"
+            - "TDD requires writing ONE test at a time. Writing all tests first loses the incremental feedback each cycle provides for guiding design"
+            - "Five tests is too many for one function — each function should have at most two or three well-chosen tests to keep the suite maintainable"
+            - "The tests should be in a separate file from the implementation, but the ordering of writing tests vs code does not affect the final result"
           correct_index: 1
           explanation: |
             TDD's power comes from the rapid feedback loop. Each cycle (one test at a time)
@@ -587,10 +594,10 @@ steps:
             In the GREEN phase, a developer writes optimized, production-ready code. Is this correct?
           type: single
           options:
-            - "Yes — you should always write the best possible code"
-            - "No — the GREEN phase requires writing the MINIMUM code to pass the test. Optimization happens in the REFACTOR phase"
-            - "No — the GREEN phase is for writing comments, not code"
-            - "Yes — as long as the test passes, any amount of code is fine"
+            - "Yes — you should always write the best possible code since you are already in the flow"
+            - "No — GREEN means writing the MINIMUM code to pass. Optimization belongs in the REFACTOR phase"
+            - "No — the GREEN phase is only for writing comments and docstrings, not implementation"
+            - "Yes — as long as the test passes, writing extra code upfront saves time in later cycles"
           correct_index: 1
           explanation: |
             The GREEN phase is about making the test pass as quickly and simply as possible.
@@ -601,10 +608,10 @@ steps:
             **Analyze:** A teammate says *"TDD is just a way to write more tests."* How would you correct this?
           type: single
           options:
-            - "They are right — TDD is primarily about test coverage"
-            - "TDD is fundamentally a DESIGN technique. Writing the test first forces you to define the interface, expected behavior, and edge cases before implementation. Tests are a valuable byproduct, but the real value is the design thinking"
-            - "TDD is about writing fewer tests, not more"
-            - "TDD has nothing to do with testing — it is purely about refactoring"
+            - "They are right — TDD's primary goal is increasing test coverage to catch more bugs before release"
+            - "TDD is a design technique: writing the test first forces you to define the interface and behavior before implementation"
+            - "TDD actually reduces the number of tests by focusing on only the most critical paths through the code"
+            - "TDD is primarily a refactoring technique — the tests are just a safety net for the refactoring phase"
           correct_index: 1
           explanation: |
             This is the threshold concept in TDD: it is a design technique, not a testing technique.
@@ -673,11 +680,11 @@ steps:
 
       ### Cycle 3: Buzz (HINT ONLY)
 
-      Write `test_buzz_for_multiples_of_5` yourself. The function signature is provided — fill in the assertions and the implementation.
+      Write `test_buzz_for_multiples_of_5` yourself. The function signature is provided — fill in the assertions. **Run the tests and see RED first**, then write the implementation to go GREEN.
 
       ### Cycle 4: FizzBuzz (INDEPENDENT)
 
-      Write `test_fizzbuzz_for_multiples_of_15` and the corresponding implementation entirely on your own. Full TDD cycle, no scaffolding.
+      Write `test_fizzbuzz_for_multiples_of_15` and the corresponding implementation entirely on your own. Full TDD cycle, no scaffolding. **Start with the test. See RED. Then go GREEN.**
 
       **Remember the rhythm:** RED (see it fail) → GREEN (make it pass) → REFACTOR (clean up).
 
@@ -797,10 +804,10 @@ steps:
             Why do we add one test at a time instead of writing all four FizzBuzz tests upfront?
           type: single
           options:
-            - "To save time — fewer tests means less work"
-            - "Each test drives a small, incremental design decision. Writing all tests first would force you to design the entire solution upfront, losing the feedback that each cycle provides"
-            - "pytest can only run one test at a time"
-            - "It does not matter — both approaches produce the same result"
+            - "Writing fewer tests at a time reduces the total number of tests you need to maintain"
+            - "Each test drives a small, incremental design decision. Writing all tests first loses the feedback each cycle provides"
+            - "pytest can only discover and execute one test function per run, so you must add them sequentially"
+            - "It does not matter — both approaches produce the same code and the same test suite"
           correct_index: 1
           explanation: |
             Incremental test-writing is the heart of TDD. Each test cycle gives you feedback:
@@ -811,10 +818,10 @@ steps:
             You write a new test and run it. It **passes immediately** without you changing any code. What should you do?
           type: single
           options:
-            - "Celebrate — you are ahead of schedule"
-            - "Be suspicious — a test that passes without new code might not be testing anything meaningful. This is the 'Success Against All Odds' anti-pattern. Verify the test is checking the right behavior"
-            - "Delete the test since it is redundant"
-            - "Move on to the next test — passing is always good"
+            - "Celebrate — your existing code already handles this case, so you are ahead of schedule and can move to the next feature"
+            - "Be suspicious — a test that passes without new code may not be testing anything meaningful. Verify it checks real behavior"
+            - "Delete the test immediately since it is clearly redundant — keeping it would slow down future test runs without adding safety"
+            - "Move on to the next test — a passing test always indicates correct behavior, and questioning it wastes time"
           correct_index: 1
           explanation: |
             If a test passes immediately, it means one of two things: (1) the behavior was
@@ -826,10 +833,10 @@ steps:
             If you use `if/elif` to implement FizzBuzz, why should you check divisibility by 15 **before** checking 3 or 5?
           type: single
           options:
-            - "15 is a larger number and should be checked first by convention"
-            - "Because 15 is divisible by both 3 and 5. With `if/elif`, checking 3 first would return 'Fizz' for 15 instead of 'FizzBuzz' — the first matching branch wins"
-            - "Python requires if-statements to check larger numbers first"
-            - "It does not matter — the order of checks has no effect"
+            - "15 is a larger number — Python convention is to order conditionals from largest to smallest"
+            - "15 is divisible by both 3 and 5, so checking 3 first returns 'Fizz' instead of 'FizzBuzz' — the first matching branch wins"
+            - "Python evaluates if/elif branches in parallel, so the most specific condition must come first for performance"
+            - "The order does not matter — Python's `elif` evaluates all branches and picks the most specific match"
           correct_index: 1
           explanation: |
             With `if/elif`, the first matching branch executes and the rest are skipped. Since
@@ -991,7 +998,7 @@ steps:
       - description: "Brittle tests have been fixed (no private attribute access)"
         command: |
           source = open('/tutorial/test_brittle_audit.py').read()
-          assert '_items' not in source, \
+          assert '._items' not in source, \
               "Your tests still access the private attribute `_items`. Rewrite them to use public methods like item_count(), total(), or items() instead."
       - description: "All audit tests pass"
         command: |
@@ -1038,10 +1045,10 @@ steps:
             ```
           type: single
           options:
-            - "Test A — it checks the exact output"
-            - "Test B — it checks the behavioral property (sorted order) without hard-coding specific values, making it resilient to input changes"
-            - "Both are equally robust"
-            - "Neither is robust — they both need mocking"
+            - "Test A — checking the exact output is the most thorough way to verify correctness, and any deviation from the expected list reveals a bug immediately"
+            - "Test B — it verifies the behavioral property (sorted order) without hard-coding values, making it resilient to input changes"
+            - "Both are equally robust since they both test the same function with the same input data and would catch the same bugs"
+            - "Neither is robust — both tests should use mock objects to isolate the sort implementation from the comparison logic"
           correct_index: 1
           explanation: |
             Test A is fine for this specific input, but Test B expresses the *property* that matters:
@@ -1052,10 +1059,10 @@ steps:
             You refactor a function's internal algorithm (from bubble sort to quicksort) without changing its return value. Two of your tests break. What does this tell you?
           type: single
           options:
-            - "The refactoring introduced a bug"
-            - "The broken tests are testing implementation details (how the sort works internally) rather than behavior (what the function returns). They should be rewritten to test behavior"
-            - "You should revert the refactoring since it broke tests"
-            - "The tests are too strict — you should remove them"
+            - "The refactoring introduced a bug — changing the algorithm likely changed the output in a subtle way"
+            - "The broken tests are testing implementation details rather than behavior. They should be rewritten to assert on outputs"
+            - "You should revert the refactoring since passing tests must never be broken, even temporarily"
+            - "The tests are too strict — you should lower the assertion precision or add tolerance margins"
           correct_index: 1
           explanation: |
             If the function's behavior (inputs → outputs) is unchanged but tests break,
@@ -1063,17 +1070,18 @@ steps:
             The fix is to rewrite the tests to assert on observable behavior, not internal details.
 
         - question: |
-            **(Spaced review — Step 3)** What is the correct order of the TDD cycle?
+            **(Spaced review — Step 3)** A developer writes a test, sees it fail, then writes code to make it pass. Now she renames a variable for clarity and re-runs the tests. Which TDD phase is she in?
           type: single
           options:
-            - "Green → Red → Refactor"
-            - "Red → Green → Refactor"
-            - "Refactor → Green → Red"
-            - "Red → Refactor → Green"
-          correct_index: 1
+            - "RED — she is writing a new failing test"
+            - "GREEN — she is making the test pass with new logic"
+            - "REFACTOR — she is improving code structure without changing behavior, while keeping tests passing"
+            - "She is not following TDD — renaming is not part of the cycle"
+          correct_index: 2
           explanation: |
-            RED (write failing test) → GREEN (minimum code to pass) → REFACTOR (clean up).
-            You must always see the test fail first (RED) to confirm it is testing real behavior.
+            Renaming a variable for clarity without changing behavior is a textbook REFACTOR.
+            The key: all tests still pass before and after. RED (failing test) → GREEN (pass) →
+            REFACTOR (clean up, tests still pass). She completed GREEN and is now in REFACTOR.
 
 
   # --------------------------------------------------------------------------
@@ -1130,7 +1138,9 @@ steps:
                   (True, "Valid") if all rules pass.
                   (False, "reason") if a rule is violated.
               """
-              pass  # TODO: Implement the validation logic
+              # TODO: Replace this stub with real validation logic.
+              # The stub returns a failing tuple so tests show clean RED.
+              return (False, "Not implemented")
         language: "python"
 
       - path: "test_password.py"
@@ -1224,10 +1234,10 @@ steps:
             What is the problem with this approach?
           type: single
           options:
-            - "Nothing — this is a perfectly fine test"
-            - "All four assertions are in a single test function. If the first assertion fails, the remaining three never run, hiding additional failures. Each rule should be its own test function"
-            - "The test is too long"
-            - "The test function name is wrong"
+            - "Nothing — grouping related assertions keeps the suite compact, and pytest shows the line number of the failure so you can find it easily"
+            - "All four assertions are in one function. If the first fails, the rest never run — hiding failures. Each rule should be its own function"
+            - "The test is too long — each assertion should use a helper function to reduce duplication and improve the overall readability of the test suite"
+            - "The function name `test_password` is too generic — renaming it to something like `test_all_password_rules` would fix the issue"
           correct_index: 1
           explanation: |
             Each `assert` should be in its own test function so you can see exactly which
@@ -1238,10 +1248,10 @@ steps:
             You are writing a test for a new feature, but you find it very difficult to set up the test — you need to create five objects and configure them just to call one function. What does this difficulty tell you?
           type: single
           options:
-            - "Testing is inherently hard — just push through it"
-            - "The difficulty is diagnostic: it tells you the function is too tightly coupled or has too many dependencies. 'Listen to the test' — simplify the design so the function is easier to test"
-            - "Skip the test and write a comment instead"
-            - "Use more mocking to simplify the setup"
+            - "Testing is inherently hard for complex features — invest the setup time because the safety net is worth the effort in the long run"
+            - "The difficulty is diagnostic: the function is too tightly coupled. 'Listen to the test' — simplify the design to make testing easier"
+            - "Skip the test for this function and document the expected behavior in detailed comments and docstrings instead"
+            - "Use mocking and dependency injection to isolate the function from its five dependencies, leaving the design unchanged"
           correct_index: 1
           explanation: |
             This is the "listen to the test" principle. When a test is hard to write, the
@@ -1250,17 +1260,19 @@ steps:
             pain as architectural feedback — simplify the design, and the test becomes easy.
 
         - question: |
-            **(Spaced review — Step 1)** Which of the following is **not** a benefit of automated tests?
+            **(Spaced review — Step 1)** A PM says: *"We have 95% test coverage, so we can skip manual QA for this release."* What is wrong with this reasoning?
           type: single
           options:
-            - "They prevent regressions"
-            - "They guarantee zero bugs"
-            - "They enable safe refactoring"
-            - "They specify expected behavior"
+            - "95% is too low — you need 100% line coverage to have confidence that every behavior is verified and QA can be skipped"
+            - "Coverage measures which lines were executed, not whether assertions are meaningful — tests can cover code without verifying behavior"
+            - "Manual QA is always required regardless of coverage, because automated tests and human testers catch fundamentally different issues"
+            - "Nothing is wrong — 95% coverage statistically guarantees that fewer than 5% of behaviors contain bugs"
           correct_index: 1
           explanation: |
-            Tests reduce bugs and catch regressions, but they cannot guarantee zero bugs.
-            Testing shows the presence of bugs, not their absence.
+            High coverage does not mean high quality. A test that executes a function but
+            only asserts `True` covers the code but verifies nothing. Coverage is a
+            necessary but not sufficient condition for quality. This connects to Step 1:
+            tests show the presence of bugs, never their absence.
 
 
   # --------------------------------------------------------------------------
@@ -1299,7 +1311,7 @@ steps:
       ## Key Takeaways
 
       1. **TDD is a design technique**, not a testing technique — tests are a valuable byproduct
-      2. **Red-Green-Refactor** — one test at a time, cycling every 2–5 minutes
+      2. **Red-Green-Refactor** — one test at a time, in short iterations
       3. **Test behavior, not implementation** — if refactoring breaks tests, the tests are brittle
       4. **Listen to the test** — difficulty writing a test is diagnostic feedback about your design
       5. **The ratchet** — each passing test locks in progress permanently
@@ -1365,10 +1377,10 @@ steps:
             **Evaluate:** For which scenario is TDD **most** beneficial?
           type: single
           options:
-            - "Writing a quick one-off script to rename 100 files"
+            - "Writing a quick one-off script to rename 100 files, where the logic is straightforward and unlikely to change"
             - "Implementing a payment processing module with complex validation rules that must be correct"
-            - "Experimenting with a new plotting library to see what it can do"
-            - "Writing CSS for a landing page"
+            - "Experimenting with a new plotting library to explore its API and see what visualizations it can produce"
+            - "Writing CSS for a landing page where visual correctness is judged by eye, not by assertions"
           correct_index: 1
           explanation: |
             Payment processing has complex logic, strict correctness requirements, and is
@@ -1380,10 +1392,10 @@ steps:
             A student's test file contains a single function with 20 assertions testing five different behaviors. Another student has five functions with four assertions each. Which approach is better, and why?
           type: single
           options:
-            - "The single function — fewer functions means less code"
-            - "Five functions — each test function isolates one behavior, so when a test fails you immediately know which behavior is broken. The single function stops at the first failure, hiding the rest"
-            - "Both are equivalent"
-            - "Neither — 20 assertions is too many in total"
+            - "The single function — keeping all assertions together makes the file shorter and guarantees they run in a predictable sequential order"
+            - "Five functions — each isolates one behavior, so a failure pinpoints which broke. The single function hides failures after the first"
+            - "Both are equivalent — pytest reports the exact line number of every failure regardless of how you organize the test functions"
+            - "Neither — 20 assertions across any number of functions is too many and will slow down the test suite significantly"
           correct_index: 1
           explanation: |
             Test isolation is a core TDD principle. One test function = one behavior = one
@@ -1403,10 +1415,10 @@ steps:
             What anti-pattern is present?
           type: single
           options:
-            - "The test is too short"
-            - "The test accesses private attributes (`_name`, `_email`, `_id`) — it is testing implementation details instead of public behavior. If the internal field names change, this test breaks even though the User class works correctly"
-            - "The test does not use pytest.fixture"
-            - "The test should use assertEqual instead of assert"
+            - "The test is too short — it should also verify that the user can log in and update their profile"
+            - "The test accesses private attributes (`_name`, `_email`, `_id`) — testing implementation instead of public behavior"
+            - "The test does not use `pytest.fixture` to set up the User object, which reduces reusability"
+            - "The test should use `assertEqual` instead of plain `assert` for more descriptive failure messages"
           correct_index: 1
           explanation: |
             This is the "Nitpicker" anti-pattern. The test is coupled to the internal
@@ -1415,16 +1427,16 @@ steps:
             class exposes publicly. Internal details should be free to change without breaking tests.
 
         - question: |
-            **(Spaced review — Step 3)** A teammate says *"TDD is just a testing technique."* What is the key correction?
+            **(Spaced review — Step 3)** Two developers are arguing. Dev A says: *"I wrote the function first, then added tests — same result."* Dev B says: *"No, writing the test first changes the design."* Who is right, and why?
           type: single
           options:
-            - "TDD is a design technique — writing the test first forces you to define the interface and expected behavior before implementation"
-            - "TDD is a debugging technique"
-            - "TDD is a documentation technique"
-            - "TDD is a refactoring technique"
-          correct_index: 0
+            - "Dev A — the final code is identical either way. The only difference is workflow preference, not the quality of the resulting design"
+            - "Dev B — writing the test first forces you to design the interface and behavior before implementation, producing more modular code"
+            - "Both are right — TDD and test-last produce the same code, but TDD catches regressions earlier in the development timeline"
+            - "Neither — the real value of TDD is the refactoring phase, and both approaches include refactoring regardless of test order"
+          correct_index: 1
           explanation: |
-            The threshold concept of TDD: it is fundamentally a design technique.
-            Writing the test first forces you to answer design questions (what is the interface?
-            what is the expected behavior?) before writing any implementation code.
-            The tests themselves are a valuable byproduct of this design process.
+            Dev B is correct. Writing the test first means you must decide the function's name,
+            parameters, and return value BEFORE writing any implementation. This forces you to
+            think as a *caller* (API consumer) rather than an *implementer*. Research shows
+            TDD code tends to be more modular with smaller, more cohesive functions.
