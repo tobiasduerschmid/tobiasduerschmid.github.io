@@ -1,12 +1,9 @@
 title: "Node.js Essentials: JavaScript for the Backend"
-description: "A hands-on introduction to Node.js for students who already know Python and C++. Learn to run JavaScript, understand the event loop, and write modern async code — no npm installs required."
+description: "A hands-on introduction to Node.js for students who already know Python and C++. Learn to run JavaScript, understand the event loop, and write modern async code — all in the browser."
 
-backend: webcontainer
+backend: browser
 
 require_tests: true
-
-setup_commands:
-  - "mkdir -p /tutorial/nodejs_tutorial"
 
 steps:
   # --------------------------------------------------------------------------
@@ -34,7 +31,7 @@ steps:
 
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
 
-      ### Task 1: Your First Node.js Script
+      ### Task: Your First Node.js Script
 
       Open `hello.js` in the editor. Add a line to print your greeting:
 
@@ -44,41 +41,23 @@ steps:
       console.log("Hello from Node.js!");
       ```
 
-      Save the file, then run it in the terminal:
-
-      ```bash
-      cd nodejs_tutorial
-      node hello.js
-      ```
-
-      ### Task 2: Explore the REPL
-
-      Node.js has an interactive shell, just like Python's `python3` interactive mode:
-
-      ```bash
-      node
-      ```
-
-      Try typing `2 + 2`, then `"hello".toUpperCase()`, then `typeof 42`. Type `.exit` when done.
+      Click **▶ Run** to execute the script and see the output.
 
     files:
-      - path: "nodejs_tutorial/hello.js"
+      - path: "hello.js"
         content: |
           // Your first Node.js script!
           // Task: Add a console.log() statement below to print "Hello from Node.js!"
 
         language: "javascript"
 
-    open_file: "nodejs_tutorial/hello.js"
-
-    watch_files:
-      - "nodejs_tutorial/hello.js"
+    open_file: "hello.js"
 
     tests:
       - description: "hello.js contains a console.log statement"
-        command: "grep -q 'console.log' /tutorial/nodejs_tutorial/hello.js"
-      - description: "hello.js runs and prints 'Hello from Node.js!'"
-        command: "cd /tutorial/nodejs_tutorial && node hello.js 2>&1 | grep -q 'Hello from Node.js'"
+        command: "assert(source.includes('console.log'), 'Add a console.log() call to hello.js')"
+      - description: "Output includes 'Hello from Node.js!'"
+        command: "assert(output.includes('Hello from Node.js'), 'Your console.log should print \"Hello from Node.js!\"')"
 
     quiz:
       title: "Hello, Node.js! — Knowledge Check"
@@ -167,15 +146,10 @@ steps:
       2. A `let` declaration for a value that never changes — change it to `const`.
       3. A messy string concatenation — replace it with a **template literal** using backticks.
 
-      Run your fixed code:
-      ```bash
-      node types.js
-      ```
-
-      The output should no longer show any `[BUG]` messages.
+      Click **▶ Run** to check your output. It should no longer show any `[BUG]` messages.
 
     files:
-      - path: "nodejs_tutorial/types.js"
+      - path: "types.js"
         content: |
           // FIXER-UPPER: This file has three bugs. Find and fix them all.
 
@@ -200,27 +174,24 @@ steps:
           let MAX_STUDENTS = 200;
 
           // TASK: Replace this concatenation with a template literal
-          // Expected output format: "Alex scored 95 out of 200"
+          // Expected output format: "Student Alex scored 95 out of 200"
           let studentName = "Alex";
           let studentGrade = 95;
           let message = "Student " + studentName + " scored " + studentGrade + " out of " + MAX_STUDENTS;
           console.log(message);
         language: "javascript"
 
-    open_file: "nodejs_tutorial/types.js"
-
-    watch_files:
-      - "nodejs_tutorial/types.js"
+    open_file: "types.js"
 
     tests:
       - description: "Fixed both == comparisons to === (no [BUG] messages in output)"
-        command: "cd /tutorial/nodejs_tutorial && ! (node types.js 2>&1 | grep -q '\\[BUG\\]')"
+        command: "assert(!output.includes('[BUG]'), 'Fix both == comparisons to === — the [BUG] messages should disappear')"
       - description: "MAX_STUDENTS is now declared with const"
-        command: "grep -q 'const MAX_STUDENTS' /tutorial/nodejs_tutorial/types.js"
+        command: "assert(source.includes('const MAX_STUDENTS'), 'Change \"let MAX_STUDENTS\" to \"const MAX_STUDENTS\"')"
       - description: "Used a template literal (backtick with ${}) for the message"
-        command: "grep -q '[$][{]' /tutorial/nodejs_tutorial/types.js"
+        command: "assert(source.includes('${'), 'Replace the + concatenation with a template literal using backticks and ${}')"
       - description: "Code runs without errors"
-        command: "cd /tutorial/nodejs_tutorial && node types.js"
+        command: "assert(!output.toLowerCase().includes('error'), 'The code should run without any errors')"
 
     quiz:
       title: "Variables, Types & The === Trap — Knowledge Check"
@@ -305,7 +276,7 @@ steps:
       // Python equivalent: list(map(lambda x: x * 2, [1, 2, 3]))
       const numbers = [1, 2, 3, 4, 5];
 
-      const doubled = numbers.map(n => n * 2);       // [2, 4, 6, 8, 10]
+      const doubled = numbers.map(n => n * 2);          // [2, 4, 6, 8, 10]
       const evens   = numbers.filter(n => n % 2 === 0); // [2, 4]
       const sum     = numbers.reduce((acc, n) => acc + n, 0); // 15
       ```
@@ -320,13 +291,10 @@ steps:
       2. **Use** `.filter()` with an arrow function to keep only passing students (grade ≥ 60).
       3. **Use** `.map()` with an arrow function to format each passing student as `"Name: grade (Letter)"` (e.g. `"Alice: 95 (A)"`).
 
-      Run your result:
-      ```bash
-      node functions.js
-      ```
+      Click **▶ Run** to check your result.
 
     files:
-      - path: "nodejs_tutorial/functions.js"
+      - path: "functions.js"
         content: |
           // Grade processor — complete the three TODOs below
 
@@ -359,22 +327,17 @@ steps:
           report.forEach(line => console.log(line));
         language: "javascript"
 
-    open_file: "nodejs_tutorial/functions.js"
-
-    watch_files:
-      - "nodejs_tutorial/functions.js"
+    open_file: "functions.js"
 
     tests:
       - description: "Used an arrow function (=>) somewhere in the solution"
-        command: "grep -q '=>' /tutorial/nodejs_tutorial/functions.js"
+        command: "assert(source.includes('=>'), 'Convert getLetterGrade to an arrow function using =>')"
       - description: "Used .filter() to select students"
-        command: "grep -q '.filter(' /tutorial/nodejs_tutorial/functions.js"
+        command: "assert(source.includes('.filter('), 'Use .filter() with an arrow function to select passing students')"
       - description: "Used .map() to transform the data"
-        command: "grep -q '.map(' /tutorial/nodejs_tutorial/functions.js"
+        command: "assert(source.includes('.map('), 'Use .map() with an arrow function to format each student')"
       - description: "Output excludes Bob (grade 42) — he should fail the filter"
-        command: "cd /tutorial/nodejs_tutorial && ! (node functions.js 2>&1 | grep -q 'Bob')"
-      - description: "Code runs without errors"
-        command: "cd /tutorial/nodejs_tutorial && node functions.js"
+        command: "assert(!output.includes('Bob'), 'Bob (grade 42) should be filtered out — only students with grade >= 60 should appear')"
 
     quiz:
       title: "First-Class Functions — Knowledge Check"
@@ -455,18 +418,13 @@ steps:
 
       Open `event_loop.js`. It shows a long-running synchronous loop "blocking the chef."
 
-      1. **Run the file** and observe: the `setTimeout` fires LAST, even though it was scheduled FIRST.
+      1. Click **▶ Run** and observe: the `setTimeout` fires LAST, even though it was scheduled FIRST.
       2. **Your task**: At the END of the file, add a **second** `setTimeout` call with `0` ms delay that logs `"Event loop is free again!"`.
 
-      Run it:
-      ```bash
-      node event_loop.js
-      ```
-
-      Observe the order: both `setTimeout` callbacks fire only after ALL synchronous code has finished.
+      Click **▶ Run** again. Observe the order: both `setTimeout` callbacks fire only after ALL synchronous code has finished.
 
     files:
-      - path: "nodejs_tutorial/event_loop.js"
+      - path: "event_loop.js"
         content: |
           // The Blocked Chef Demo
           // PREDICT the output order BEFORE you run this file!
@@ -481,7 +439,7 @@ steps:
           // Synchronous code: this runs first, blocking everything else
           console.log("[1] Starting synchronous work...");
 
-          // Simulates a slow synchronous operation (like fs.readFileSync on a huge file)
+          // Simulates a slow synchronous operation (like processing a large dataset)
           // The chef is stuck here — no callbacks can fire while this loop runs
           let total = 0;
           for (let i = 0; i < 5000000; i++) {
@@ -495,18 +453,15 @@ steps:
 
         language: "javascript"
 
-    open_file: "nodejs_tutorial/event_loop.js"
-
-    watch_files:
-      - "nodejs_tutorial/event_loop.js"
+    open_file: "event_loop.js"
 
     tests:
       - description: "Added a second setTimeout call"
-        command: "[ $(grep -c 'setTimeout' /tutorial/nodejs_tutorial/event_loop.js) -ge 2 ]"
+        command: "assert((source.match(/setTimeout/g)||[]).length >= 2, 'Add a second setTimeout call at the end of the file')"
       - description: "Second setTimeout logs 'Event loop is free again!'"
-        command: "cd /tutorial/nodejs_tutorial && node event_loop.js 2>&1 | grep -q 'free again'"
-      - description: "Synchronous log [1] appears before both setTimeout callbacks"
-        command: "cd /tutorial/nodejs_tutorial && node event_loop.js 2>&1 | grep -n '\\[1\\]' | grep -q '^1:'"
+        command: "assert(output.includes('free again'), 'The second setTimeout should log \"Event loop is free again!\"')"
+      - description: "Synchronous log [1] appears before setTimeout callback [3]"
+        command: "assert(output.indexOf('[1]') < output.indexOf('[3]'), 'The synchronous log [1] should appear before the setTimeout callback [3]')"
 
     quiz:
       title: "The Event Loop — Knowledge Check"
@@ -540,7 +495,7 @@ steps:
           correct_index: 1
           explanation: "The Event Loop has exactly one job: check if the Call Stack is empty, and if so, dequeue the next callback from the Task Queue and push it onto the stack. It never interrupts mid-execution — run-to-completion is guaranteed in JavaScript. This is why a blocked call stack prevents ALL other work."
 
-        - question: "Why is it harmful to run a slow synchronous database query on Node.js's main thread?"
+        - question: "Why is it harmful to run a slow synchronous computation on Node.js's main thread?"
           options:
             - "It causes a syntax error that crashes the Node.js process"
             - "It occupies the call stack the entire time, preventing ALL other requests, timers, and I/O callbacks from being processed — the application appears frozen"
@@ -574,10 +529,9 @@ steps:
       ### Generation 1: Callbacks (Legacy — "Callback Hell")
 
       ```javascript
-      const fs = require('fs');
-      fs.readFile('a.txt', 'utf8', (err, dataA) => {        // Level 1
+      fetchData('a', (err, dataA) => {            // Level 1
           if (err) throw err;
-          fs.readFile('b.txt', 'utf8', (err2, dataB) => {   // Level 2
+          fetchData('b', (err2, dataB) => {        // Level 2
               if (err2) throw err2;
               // Level 3... "Pyramid of Doom"
           });
@@ -590,8 +544,8 @@ steps:
 
       ```javascript
       // C++ analogy: std::future   |   Python analogy: concurrent.futures.Future
-      fs.promises.readFile('a.txt', 'utf8')
-          .then(dataA => fs.promises.readFile('b.txt', 'utf8'))
+      fetchData('a')
+          .then(dataA => fetchData('b'))
           .then(dataB => console.log(dataB))
           .catch(err  => console.error(err));
       ```
@@ -599,17 +553,17 @@ steps:
       ### Generation 3: async/await (Modern — looks like synchronous code)
 
       ```javascript
-      async function loadFiles() {
+      async function loadData() {
           try {
               // 'await' suspends THIS function (non-blocking!) and lets other work proceed
-              const dataA = await fs.promises.readFile('a.txt', 'utf8');
-              const dataB = await fs.promises.readFile('b.txt', 'utf8');
+              const dataA = await fetchData('a');
+              const dataB = await fetchData('b');
               console.log(dataA, dataB);
           } catch (err) {
               console.error(err);
           }
       }
-      loadFiles();
+      loadData();
       ```
 
       This looks like synchronous C++/Python code — but it does **not** block the event loop. When JavaScript hits `await`, it suspends the async function, frees the call stack, and lets the Event Loop process other work. When the Promise resolves, execution resumes.
@@ -627,49 +581,44 @@ steps:
 
       ### Task: Refactor the Fixer-Upper
 
-      Open `async.js`. It reads `students.json` using the old Generation 1 callback style.
+      Open `async.js`. It loads student data using the old Generation 1 callback style.
+      `fetchStudents()` simulates an async data source (in a real app, this would be a database or file read).
 
-      1. Refactor `readStudents` to be an `async` function using `await fs.promises.readFile(...)`.
+      1. Refactor `readStudents` to be an `async` function using `await fetchStudents()`.
       2. Add a `try`/`catch` block for error handling (like C++'s try/catch or Python's try/except).
       3. Call your refactored function at the bottom.
 
-      Run it:
-      ```bash
-      node async.js
-      ```
+      Click **▶ Run** to check your output.
 
     files:
-      - path: "nodejs_tutorial/students.json"
+      - path: "async.js"
         content: |
-          [
-            { "name": "Alice",  "grade": 95 },
-            { "name": "Bob",    "grade": 42 },
-            { "name": "Carol",  "grade": 78 },
-            { "name": "Dave",   "grade": 55 },
-            { "name": "Eve",    "grade": 88 }
-          ]
-        language: "json"
-      - path: "nodejs_tutorial/async.js"
-        content: |
-          const fs = require('fs');
+          // Simulated async data source — in a real Node.js app this would be
+          // fs.promises.readFile, a database query, or a network fetch.
+          function fetchStudents() {
+              return new Promise((resolve) => {
+                  setTimeout(() => {
+                      resolve([
+                          { name: "Alice",  grade: 95 },
+                          { name: "Bob",    grade: 42 },
+                          { name: "Carol",  grade: 78 },
+                          { name: "Dave",   grade: 55 },
+                          { name: "Eve",    grade: 88 },
+                      ]);
+                  }, 100);
+              });
+          }
 
           // GENERATION 1: Old callback style — "Callback Hell" starts here
           // TASK: Refactor readStudents() to use async/await (Generation 3)
           function readStudents(callback) {
-              fs.readFile('students.json', 'utf8', (err, data) => {
-                  if (err) {
-                      callback(err, null);
-                      return;
-                  }
-                  const students = JSON.parse(data);
-                  callback(null, students);
-              });
+              fetchStudents().then(data => callback(null, data)).catch(err => callback(err, null));
           }
 
           // TODO: Replace the function above with an async function that:
           //   1. Is declared with 'async'
-          //   2. Uses 'await fs.promises.readFile('students.json', 'utf8')' to read the file
-          //   3. Parses the JSON and logs each student's name and grade
+          //   2. Uses 'await fetchStudents()' to get the data
+          //   3. Logs each student's name and grade
           //   4. Wraps everything in try/catch for error handling
 
           // Original invocation (for reference — replace this call too):
@@ -680,61 +629,14 @@ steps:
           });
         language: "javascript"
 
-    open_file: "nodejs_tutorial/async.js"
-
-    watch_files:
-      - "nodejs_tutorial/async.js"
-      - "nodejs_tutorial/students.json"
+    open_file: "async.js"
 
     tests:
       - description: "Function uses the 'async' keyword"
-        command: "grep -q 'async' /tutorial/nodejs_tutorial/async.js"
+        command: "assert(source.includes('async'), 'Declare your function with the async keyword')"
       - description: "Function uses 'await' to handle the Promise"
-        command: "grep -q 'await' /tutorial/nodejs_tutorial/async.js"
-      - description: "Uses fs.promises for the non-blocking file read"
-        command: "grep -q 'fs.promises' /tutorial/nodejs_tutorial/async.js"
+        command: "assert(source.includes('await'), 'Use await to wait for the fetchStudents() Promise')"
       - description: "Uses try/catch for error handling"
-        command: "grep -q 'try' /tutorial/nodejs_tutorial/async.js && grep -q 'catch' /tutorial/nodejs_tutorial/async.js"
-      - description: "Output includes student names from students.json"
-        command: "cd /tutorial/nodejs_tutorial && node async.js 2>&1 | grep -q 'Alice'"
-
-    quiz:
-      title: "async/await — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "A developer writes two sequential `await` calls to fetch from two independent APIs. Their tech lead says this is inefficient. Why?"
-          options:
-            - "You cannot use await more than once in the same async function"
-            - "Sequential awaits run one after the other: you wait for API 1 to finish before starting API 2 — wasting the time both could overlap in parallel"
-            - "Sequential awaits actually use less memory, but are otherwise identical in speed"
-            - "The second await will always fail if the first await succeeds"
-          correct_index: 1
-          explanation: "If two async operations are independent, sequential awaits are wasteful. `const a = await fetchA(); const b = await fetchB();` takes time(A) + time(B). Using `const [a, b] = await Promise.all([fetchA(), fetchB()])` runs both simultaneously: total time = max(time(A), time(B)). For two 500ms API calls, sequential takes 1000ms; parallel takes 500ms."
-
-        - question: "How does `await` interact with the Event Loop discussed in Step 4?"
-          options:
-            - "await bypasses the Event Loop by running code in a separate OS thread"
-            - "await suspends the current async function (non-blocking) and frees the call stack so the Event Loop can process other callbacks while waiting for the Promise"
-            - "async functions run synchronously and block the call stack until they return"
-            - "await can only be used inside setTimeout callbacks"
-          correct_index: 1
-          explanation: "`await` does NOT block the thread. When JavaScript hits an `await`, it pauses that async function, pops it off the call stack, and lets the Event Loop serve other work. When the Promise resolves, the Event Loop resumes the async function from where it paused. The Chef steps away to serve other tables while the oven runs — then returns when the timer rings."
-
-        - question: "What is 'Callback Hell' and why do Promises and async/await address it?"
-          options:
-            - "A runtime error that occurs when you register too many callback functions simultaneously"
-            - "Deeply nested callback functions that form hard-to-read pyramids — Promises flatten the nesting with .then(), and async/await makes async code read like familiar synchronous code"
-            - "A performance degradation caused by registering too many event listeners"
-            - "A Node.js version incompatibility when mixing callback and async styles"
-          correct_index: 1
-          explanation: "Callback Hell is when async operations nest inside each other, creating indented 'pyramids of doom' that are hard to follow, debug, and maintain. Promises flatten this with chained `.then()` calls. `async/await` goes further: async code reads exactly like the sequential synchronous code you know from C++ and Python — but without blocking the event loop."
-
-        - question: "**[Interleaved: Revisit Step 4]** A junior developer refactors file reading from callbacks to async/await. The code runs without errors, but the application freezes under heavy load. What is the most likely cause?"
-          options:
-            - "async/await is incompatible with Node.js versions below 16"
-            - "They accidentally used `fs.readFileSync` (synchronous, blocks the event loop) instead of `fs.promises.readFile` (async, non-blocking)"
-            - "The file being read is too large for async/await to handle efficiently"
-            - "async/await cannot be used with the built-in fs module"
-          correct_index: 1
-          explanation: "This is a critical gotcha that catches many developers. `fs.readFileSync` blocks the entire event loop — the Chef stares at the oven. `fs.promises.readFile` returns a Promise and is non-blocking. Under low load the difference is invisible; under heavy load the blocking version starves all concurrent connections. Always use `fs.promises` or `fs.readFile` in production Node.js."
+        command: "assert(source.includes('try') && source.includes('catch'), 'Wrap your await call in a try/catch block for error handling')"
+      - description: "Output includes student names from the data"
+        command: "assert(output.includes('Alice'), 'Your output should include student names — make sure you call your async function')"
