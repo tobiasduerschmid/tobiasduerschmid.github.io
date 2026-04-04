@@ -285,7 +285,8 @@ steps:
           fstrings = [n for n in ast.walk(tree) if isinstance(n, ast.JoinedStr)]
           assert fstrings, "Use an f-string (f\"...\") — a plain string literal was found instead"
           # Collect all variable names referenced inside f-string braces
-          fstring_exprs = re.findall(r'\{([^}]+)\}', source)
+          # (We ignore the starter code's f-strings that use type() to inspect types)
+          fstring_exprs = [e for e in re.findall(r'\{([^}]+)\}', source) if 'type(' not in e]
           assert fstring_exprs, "f-string must reference variables inside braces, e.g. {name}"
           for expr in fstring_exprs:
               stripped = expr.split(':')[0].strip()
