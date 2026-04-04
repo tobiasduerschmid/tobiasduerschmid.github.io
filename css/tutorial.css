@@ -1436,6 +1436,103 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   font-weight: 800;
   font-size: 0.84em;
 }
+/* ── Parsons Problem Styles ─────────────────────────────────────────────── */
+.parsons-container { margin-top: 12px; }
+.parsons-label {
+  font-size: 0.85em;
+  color: #8888a0;
+  margin-bottom: 8px;
+}
+.parsons-bank, .parsons-target {
+  min-height: 48px;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.parsons-bank {
+  background: #1a1a28;
+  border: 1px dashed #444;
+}
+.parsons-target {
+  background: #1c2a1c;
+  border: 2px dashed #3a6e3a;
+}
+.parsons-separator {
+  text-align: center;
+  padding: 6px;
+  color: #5a5a7a;
+  font-size: 0.8em;
+}
+.parsons-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: grab;
+  font-size: 0.9em;
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.parsons-line:hover { border-color: #0078d4; background: #2a2a50; }
+.parsons-line.dragging { opacity: 0.4; }
+.parsons-line code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.92em;
+  white-space: pre;
+  color: #e0e0f0;
+  background: transparent;
+  padding: 0;
+}
+.parsons-grip { color: #555; font-size: 0.8em; flex-shrink: 0; }
+.parsons-line.parsons-correct {
+  border-color: #3a8a3a;
+  background: rgba(58, 138, 58, 0.15);
+}
+.parsons-line.parsons-incorrect {
+  border-color: #cc4444;
+  background: rgba(204, 68, 68, 0.12);
+}
+.parsons-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.parsons-check-btn, .parsons-reset-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.parsons-check-btn {
+  background: #0078d4;
+  color: white;
+}
+.parsons-check-btn:hover:not(:disabled) { background: #006abc; }
+.parsons-reset-btn {
+  background: #333;
+  color: #ccc;
+}
+.parsons-reset-btn:hover:not(:disabled) { background: #444; }
+.parsons-check-btn:disabled, .parsons-reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* Light mode overrides for Parsons */
+html:not(.dark-mode) .parsons-bank { background: #f5f5f8; border-color: #ccc; }
+html:not(.dark-mode) .parsons-target { background: #f0f8f0; border-color: #6a6; }
+html:not(.dark-mode) .parsons-line { background: #fff; border-color: #ddd; }
+html:not(.dark-mode) .parsons-line:hover { background: #e8f0ff; border-color: #0078d4; }
+html:not(.dark-mode) .parsons-line code { color: #333; }
+html:not(.dark-mode) .parsons-label { color: #666; }
+html:not(.dark-mode) .parsons-separator { color: #888; }
+html:not(.dark-mode) .parsons-reset-btn { background: #eee; color: #333; }
 .tvm-quiz-panel .score-display {
   font-size: 1.9em;
   font-weight: 800;

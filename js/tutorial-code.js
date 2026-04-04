@@ -1526,6 +1526,17 @@
     var nextStepNum = stepIndex + 2;
 
     var questions = (quiz.questions || []).map(function (q) {
+      if (q.type === 'parsons') {
+        // Parsons problem: lines is the correct order, distractors are extra wrong lines
+        var allLines = (q.lines || []).slice();
+        var distractors = (q.distractors || []);
+        var correctOrder = allLines.slice(); // preserve correct order
+        var shuffled = allLines.concat(distractors).slice();
+        self._shuffleArray(shuffled);
+        return { question: q.question || '', type: 'parsons', explanation: q.explanation || '',
+                 shuffledLines: shuffled, correctOrder: correctOrder, distractors: distractors,
+                 options: [], correctOriginals: [], correctLabels: [] };
+      }
       var opts = (q.options || []).map(function (text, oi) { return { text: text, originalIndex: oi }; });
       if (doShuffle) self._shuffleArray(opts);
       var correctOriginals = q.type === 'multiple'
@@ -1551,20 +1562,49 @@
       html += '<div class="quiz-question-card' + (qi === 0 ? ' active' : '') +
         '" data-question-index="' + qi + '" data-type="' + q.type + '">';
       html += '<div class="question-text">' + self._renderMarkdown(q.question) + '</div>';
-      html += '<div class="quiz-options">';
-      q.options.forEach(function (opt, oi) {
-        html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"' +
-          ' data-correct="' + q.correctOriginals[0] + '"' +
-          ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
-          '<span class="option-checkbox"></span><span class="option-label">' + alphabet[oi] + '</span>' +
-          '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span></button>';
-      });
-      html += '</div>';
-      if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
-      html += '<div class="quiz-correct-answers">Correct Answer' +
-        (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
-        q.correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join('') +
-        '</span></div>';
+
+      if (q.type === 'parsons') {
+        // Parsons problem: drag-and-drop code lines
+        html += '<div class="parsons-container">';
+        html += '<div class="parsons-label">Drag lines into the solution area in the correct order' +
+          (q.distractors.length ? ' (some lines are distractors that should not be used)' : '') + ':</div>';
+        html += '<div class="parsons-bank" data-qi="' + qi + '">';
+        q.shuffledLines.forEach(function (line, li) {
+          var isDistractor = q.distractors.indexOf(line) !== -1;
+          html += '<div class="parsons-line" draggable="true" data-line="' +
+            self._escapeHtml(line) + '" data-distractor="' + isDistractor + '">' +
+            '<span class="parsons-grip">&#8942;&#8942;</span>' +
+            '<code>' + self._escapeHtml(line) + '</code></div>';
+        });
+        html += '</div>';
+        html += '<div class="parsons-separator"><span>&#8595; Drop here &#8595;</span></div>';
+        html += '<div class="parsons-target" data-qi="' + qi + '"></div>';
+        html += '<div class="parsons-actions">' +
+          '<button class="parsons-check-btn" data-qi="' + qi + '">Check Order</button>' +
+          '<button class="parsons-reset-btn" data-qi="' + qi + '">Reset</button></div>';
+        html += '</div>';
+        // Store correct order as data attribute
+        html += '<div class="parsons-correct-data hidden" data-correct="' +
+          self._escapeHtml(JSON.stringify(q.correctOrder)) + '"></div>';
+        html += '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels"><code>' +
+          q.correctOrder.map(function (l) { return self._escapeHtml(l); }).join('</code><br><code>') +
+          '</code></span></div>';
+      } else {
+        html += '<div class="quiz-options">';
+        q.options.forEach(function (opt, oi) {
+          html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"' +
+            ' data-correct="' + q.correctOriginals[0] + '"' +
+            ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
+            '<span class="option-checkbox"></span><span class="option-label">' + alphabet[oi] + '</span>' +
+            '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span></button>';
+        });
+        html += '</div>';
+        if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
+        html += '<div class="quiz-correct-answers">Correct Answer' +
+          (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
+          q.correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join('') +
+          '</span></div>';
+      }
       html += '<div class="quiz-explanation hidden"><div class="explanation-title">Explanation</div>' +
         '<div class="explanation-text">' + self._renderMarkdown(q.explanation) + '</div>' +
         '<button class="next-btn">' + (qi < questions.length - 1 ? 'Next Question' : 'See Results') + '</button></div>';
@@ -1690,6 +1730,24 @@
         if (exp) exp.classList.add('hidden');
         if (sub) { sub.classList.remove('hidden'); sub.disabled = true; }
         if (ca)  ca.style.display = '';
+        // Reset Parsons problems
+        var bank = card.querySelector('.parsons-bank');
+        var target = card.querySelector('.parsons-target');
+        if (bank && target) {
+          target.querySelectorAll('.parsons-line').forEach(function (el) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect');
+            el.setAttribute('draggable', 'true');
+            bank.appendChild(el);
+          });
+          bank.querySelectorAll('.parsons-line').forEach(function (el) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect');
+            el.setAttribute('draggable', 'true');
+          });
+          var checkBtn = card.querySelector('.parsons-check-btn');
+          var resetBtn = card.querySelector('.parsons-reset-btn');
+          if (checkBtn) checkBtn.disabled = false;
+          if (resetBtn) resetBtn.disabled = false;
+        }
       });
       showQ(0);
     }
@@ -1701,6 +1759,119 @@
     var cBtn = container.querySelector('.tvm-quiz-continue-btn');
     if (cBtn) cBtn.addEventListener('click', function () {
       self._quizPassed.add(stepIndex); self._hideStepQuiz(); self.loadStep(stepIndex + 1);
+    });
+
+    // ── Parsons Problem Drag & Drop ──────────────────────────────────────────
+    var parsonsDragEl = null;
+    container.addEventListener('dragstart', function (e) {
+      if (e.target.classList.contains('parsons-line')) {
+        parsonsDragEl = e.target;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    });
+    container.addEventListener('dragend', function (e) {
+      if (e.target.classList.contains('parsons-line')) {
+        e.target.classList.remove('dragging');
+        parsonsDragEl = null;
+      }
+    });
+    container.addEventListener('dragover', function (e) {
+      var zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+      if (zone && parsonsDragEl) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        // Show insertion point
+        var target = zone.querySelector('.parsons-target') ? null : zone;
+        if (!target) target = zone;
+        var afterEl = _getParsonsInsertAfter(target, e.clientY);
+        if (afterEl) target.insertBefore(parsonsDragEl, afterEl);
+        else target.appendChild(parsonsDragEl);
+      }
+    });
+    container.addEventListener('drop', function (e) {
+      var zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+      if (zone && parsonsDragEl) {
+        e.preventDefault();
+        var afterEl = _getParsonsInsertAfter(zone, e.clientY);
+        if (afterEl) zone.insertBefore(parsonsDragEl, afterEl);
+        else zone.appendChild(parsonsDragEl);
+      }
+    });
+    // Click to toggle between bank and target (mobile-friendly)
+    container.addEventListener('click', function (e) {
+      var line = e.target.closest('.parsons-line');
+      if (!line) return;
+      var parent = line.parentElement;
+      if (!parent) return;
+      var card = line.closest('.quiz-question-card');
+      if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
+      if (parent.classList.contains('parsons-bank')) {
+        var tgt = card.querySelector('.parsons-target');
+        if (tgt) tgt.appendChild(line);
+      } else if (parent.classList.contains('parsons-target')) {
+        var bnk = card.querySelector('.parsons-bank');
+        if (bnk) bnk.appendChild(line);
+      }
+    });
+    function _getParsonsInsertAfter(zone, y) {
+      var els = Array.prototype.slice.call(zone.querySelectorAll('.parsons-line:not(.dragging)'));
+      for (var i = 0; i < els.length; i++) {
+        var box = els[i].getBoundingClientRect();
+        if (y < box.top + box.height / 2) return els[i];
+      }
+      return null;
+    }
+    // Check Parsons answer
+    container.querySelectorAll('.parsons-check-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var qi = parseInt(btn.dataset.qi);
+        var card = btn.closest('.quiz-question-card');
+        if (!card) return;
+        var target = card.querySelector('.parsons-target');
+        var correctData = card.querySelector('.parsons-correct-data');
+        if (!target || !correctData) return;
+        var correct = JSON.parse(correctData.dataset.correct);
+        var placed = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'))
+          .map(function (el) { return el.dataset.line; });
+        var isCorrect = placed.length === correct.length &&
+          placed.every(function (line, i) { return line === correct[i]; });
+        // Mark lines
+        target.querySelectorAll('.parsons-line').forEach(function (el, i) {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          if (i < correct.length && el.dataset.line === correct[i]) el.classList.add('parsons-correct');
+          else el.classList.add('parsons-incorrect');
+        });
+        // Mark distractors left in bank as correct (they should stay in bank)
+        card.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
+          else el.classList.add('parsons-incorrect');
+        });
+        // Disable further interaction
+        card.querySelectorAll('.parsons-line').forEach(function (el) { el.setAttribute('draggable', 'false'); });
+        btn.disabled = true;
+        card.querySelector('.parsons-reset-btn').disabled = true;
+        if (isCorrect) score++;
+        var ca = card.querySelector('.quiz-correct-answers');
+        var exp = card.querySelector('.quiz-explanation');
+        if (ca) ca.style.display = 'flex';
+        if (exp) exp.classList.remove('hidden');
+      });
+    });
+    // Reset Parsons
+    container.querySelectorAll('.parsons-reset-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var card = btn.closest('.quiz-question-card');
+        if (!card) return;
+        var bank = card.querySelector('.parsons-bank');
+        var target = card.querySelector('.parsons-target');
+        if (!bank || !target) return;
+        target.querySelectorAll('.parsons-line').forEach(function (el) {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          bank.appendChild(el);
+        });
+      });
     });
   };
 

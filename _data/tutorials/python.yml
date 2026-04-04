@@ -669,6 +669,23 @@ steps:
             "run as script" code from "importable" code. C++ doesn't have this problem because
             `#include` only brings in declarations, not executable statements.
 
+        - question: |
+            **Arrange** the lines to define a function that returns the larger of two numbers, with a default for `b`.
+          type: parsons
+          lines:
+            - "def max_of(a, b=0):"
+            - "    if a >= b:"
+            - "        return a"
+            - "    else:"
+            - "        return b"
+          distractors:
+            - "    return a, b"
+          explanation: |
+            The function signature comes first with the default parameter `b=0`.
+            The `if`/`else` block must be indented inside the function.
+            The `return` statements must be indented inside their respective branches.
+            The distractor `return a, b` would return a tuple, not the max.
+
   # --------------------------------------------------------------------------
   # STEP 5 — Loops
   # Pedagogy:
@@ -1258,6 +1275,23 @@ steps:
             The `with` statement opens an indented block (note the `:`). Everything inside
             that block must be indented — including the `for` loop. This is the same
             indentation rule from Step 3: a colon `:` starts a block that must be indented.
+
+        - question: |
+            **Arrange** the lines to read a file and count total words.
+          type: parsons
+          lines:
+            - "total = 0"
+            - "with open('data.txt') as f:"
+            - "    for line in f:"
+            - "        total += len(line.split())"
+            - "print(f'Words: {total}')"
+          distractors:
+            - "f.close()"
+          explanation: |
+            Initialize the counter first, then open the file with `with` (no manual `close()` needed).
+            The `for` loop must be indented inside `with`, and the word-counting line inside `for`.
+            The `print` is outside both blocks (no indentation) because it runs after the file is processed.
+            The distractor `f.close()` is unnecessary — `with` handles closing automatically.
 
   # --------------------------------------------------------------------------
   # STEP 8 — Regular Expressions in Python: the re module
