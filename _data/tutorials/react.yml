@@ -866,19 +866,19 @@ steps:
         - question: |
             *(Spaced review — Step 2: JSX)*
 
-            Which is the correct way to write an inline style in JSX?
+            A student's component renders but looks wrong: the heading has no CSS class applied, clicking does nothing, and the image tag causes a syntax error. Which combination of JSX rules is being violated?
           type: single
           options:
-            - '`style="background-color: blue"`'
-            - '`style={{backgroundColor: "blue"}}`'
-            - '`style={backgroundColor: "blue"}`'
-            - '`style="backgroundColor: blue"`'
-          correct_index: 1
+            - "Using `class` instead of `className`, `onclick` instead of `onClick`, and `<img>` without self-closing `/>`"
+            - "Using `className` instead of `class`, `onClick` instead of `onclick`, and missing the `src` attribute"
+            - "Forgetting to wrap JSX in a Fragment, using an inline style string, and missing a `key` prop"
+            - "Using lowercase component name, returning multiple root elements, and missing curly braces around a variable"
+          correct_index: 0
           explanation: |
-            JSX `style` takes a **JavaScript object**, not a CSS string. CSS property names must be
-            camelCase (`backgroundColor`, not `background-color`). The double braces are: outer `{}`
-            for a JSX expression, inner `{}` for the object literal. This was covered in Step 2's
-            JSX rules — review the table if you got this wrong.
+            Three different JSX rules from Step 2: (1) `class` → `className` (reserved keyword),
+            (2) `onclick` → `onClick` (camelCase event handlers), (3) `<img>` → `<img />` (self-closing
+            tags required in JSX). This question tests whether you can *diagnose* which rules apply
+            to specific symptoms — not just recall the rules in isolation.
 
   # --------------------------------------------------------------------------
   # STEP 5: Lists & Keys — Rendering Collections
@@ -893,6 +893,18 @@ steps:
   - title: "Lists & Keys — Rendering Collections"
     instructions: |
       > **Learning objective:** After this step you will be able to **render** arrays as lists using `.map()` and **explain** why stable `key` props are essential for React's reconciliation.
+
+      ### JavaScript Array Methods — Quick Reference
+
+      This step and the next use three JavaScript array methods heavily. If any are unfamiliar, review them here before continuing:
+
+      | Method | What it does | Example |
+      |--------|-------------|---------|
+      | `.map(fn)` | Transforms each element, returns a **new array** | `[1,2,3].map(x => x * 2)` → `[2,4,6]` |
+      | `.filter(fn)` | Keeps elements where `fn` returns `true` | `[1,2,3].filter(x => x > 1)` → `[2,3]` |
+      | `.reduce(fn, init)` | Combines all elements into one value | `[1,2,3].reduce((sum, x) => sum + x, 0)` → `6` |
+
+      All three return **new arrays** (or values) — they never mutate the original. This is exactly the pattern React needs.
 
       ## From `for` Loops to `.map()`
 
@@ -1032,18 +1044,21 @@ steps:
         - question: |
             *(Spaced review — Step 3: Props)*
 
-            What happens if a child component mutates a prop it received?
+            A `TaskItem` component needs to let the user mark a task as done. The task data comes from the parent via props. Which approach is correct?
           type: single
           options:
-            - "The parent's data is updated automatically — React propagates mutations back up the component tree"
-            - "React throws a runtime TypeError because props are frozen objects that cannot be modified"
-            - "It breaks React's one-way data flow — the change won't propagate back to the parent and causes unpredictable behaviour"
-            - "Nothing happens — React deep-copies all props before passing them, so mutations are isolated"
+            - "`task.done = true` inside `TaskItem` — mutate the prop directly since it is the same object"
+            - "Add `const [done, setDone] = useState(task.done)` inside `TaskItem` — duplicate the prop into local state"
+            - "Call a callback prop from the parent: `onToggle(task.id)` — let the parent update the data and pass new props down"
+            - "Use `document.getElementById` to update the checkbox directly in the DOM"
           correct_index: 2
           explanation: |
-            Props are **read-only**. Mutating them corrupts the parent's data and breaks the predictable
-            top-down data flow React relies on. If a child needs to change something, it should call a
-            callback function passed as a prop (inverse data flow).
+            Props are **read-only** — mutating them breaks one-way data flow (option A).
+            Duplicating props into state (option B) creates a sync risk — the two copies diverge.
+            Direct DOM manipulation (option D) bypasses React entirely.
+            The correct pattern: the child calls a **callback prop** (`onToggle`), the parent updates
+            state, and React re-renders with new props. This combines props (Step 3), state (Step 4),
+            and one-way data flow into a single decision.
 
   # --------------------------------------------------------------------------
   # STEP 6: Conditional Rendering & Filtering
@@ -1257,34 +1272,49 @@ steps:
         - question: |
             *(Spaced review — Step 4: useState)*
 
-            `setCount(count + 1)` is called three times in one event handler. What is the final count if it started at `0`?
+            A shopping cart component has this handler:
+            ```jsx
+            function handleBuyTwo() {
+              setCart([...cart, product]);
+              setCart([...cart, product]);
+            }
+            ```
+            The user clicks "Buy Two" when the cart has 1 item. How many items are in the cart afterward?
           type: single
           options:
-            - "`3` — each call increments by 1"
-            - "`1` — React batches updates; all three calls use the same stale `count` value of `0`"
-            - "`0` — React ignores duplicate setter calls"
-            - "It depends on Strict Mode"
+            - "3 — each call adds one item to the existing cart"
+            - "2 — React batches both calls; both see the same stale `cart` (length 1) and both set it to length 2"
+            - "1 — React ignores the second setter call because the value is identical"
+            - "Error — you cannot call the same setter twice in one handler"
           correct_index: 1
           explanation: |
-            React batches state updates. All three calls see `count` as `0` (its value at render time),
-            so all three compute `0 + 1 = 1`. To queue multiple increments, use the **functional form**:
-            `setCount(prev => prev + 1)` — each call receives the latest pending value.
+            React batches state updates within the same event handler. Both `setCart` calls capture
+            the same `cart` reference (length 1), so both compute `[...cart, product]` → length 2.
+            The second call overwrites the first. Fix: use the functional form
+            `setCart(prev => [...prev, product])` — each call receives the latest pending value.
+            This combines the batching concept (Step 4) with the immutable array update pattern.
 
         - question: |
             *(Spaced review — Step 1: Declarative vs Imperative)*
 
-            A teammate writes `document.getElementById('counter').textContent = newCount` inside a React component to update the display. What is wrong?
+            A counter component needs to display the count and update when clicked. A student proposes three approaches. Which is correct?
+
+            **A:** `document.getElementById('count').textContent = newCount`
+            **B:** `const [count, setCount] = useState(0); return <p>{count}</p>;`
+            **C:** `let count = 0; return <p>{count}</p>;` with `count++` on click
           type: single
           options:
-            - "Nothing — directly updating the DOM is faster than React's Virtual DOM diffing and should be preferred for performance"
-            - "It bypasses React's declarative model — React doesn't know the DOM changed, so state and UI go out of sync"
-            - "`getElementById` doesn't work inside React components because React uses a shadow DOM that is isolated from the real DOM"
-            - "It works fine in function components but causes errors in class components due to lifecycle method conflicts"
+            - "A — direct DOM update is the most straightforward way to change displayed text"
+            - "B — declarative state with useState: React re-renders when the setter is called, keeping UI and data in sync"
+            - "C — a plain variable is simpler than useState and works the same way"
+            - "All three work — they are different syntaxes for the same result"
           correct_index: 1
           explanation: |
-            React manages the DOM declaratively: you update state, React re-renders. Directly mutating
-            the DOM means React's Virtual DOM no longer matches reality. On the next re-render, React
-            overwrites your manual change. Always update state, not the DOM.
+            This question combines three concepts: (A) direct DOM manipulation bypasses React's
+            declarative model (Step 1); (C) plain variables reset on every render and don't trigger
+            re-renders (Step 4); (B) `useState` is the correct pattern — it persists across renders
+            and triggers re-rendering. The student must discriminate between declarative vs. imperative
+            (Step 1) AND state vs. plain variables (Step 4).
 
   # --------------------------------------------------------------------------
   # STEP 7: Composition — Thinking in React
@@ -1551,18 +1581,20 @@ steps:
         - question: |
             *(Spaced review — Step 5: Lists & Keys)*
 
-            What happens if you use `key={Math.random()}` for list items?
+            A drag-and-drop todo list lets users reorder items. Each item has a text input for editing. The current code uses `key={index}`. A user drags item C from position 3 to position 1. What happens to the text typed into item A's input field?
           type: single
           options:
-            - "Nothing — React's reconciler handles random keys efficiently by sorting them internally before diffing"
-            - "React unmounts and remounts EVERY item on EVERY re-render — destroying internal state and killing performance, because the keys change every time"
-            - "React ignores random keys and falls back to index-based comparison, which is the default behavior anyway"
-            - "React throws a console warning about unstable keys but still renders the list correctly using fallback logic"
+            - "Item A's text stays with item A — React tracks components by their content"
+            - "Item A's text moves to item C — because React maps state to keys, and item A's key (0) now points to item C after reordering"
+            - "All text inputs are cleared — React destroys and recreates the entire list on reorder"
+            - "Nothing changes — React ignores key props for stateful inputs and uses the DOM position"
           correct_index: 1
           explanation: |
-            `Math.random()` produces a new key every render. React sees all-new keys and assumes every
-            item was removed and re-added — unmounting old components (destroying state like form inputs)
-            and mounting new ones. This is both a performance disaster and a correctness bug.
+            With index-based keys, React identifies components by *position*. After reordering,
+            position 0 is now item C, but React thinks it is still "the same component" (key=0) —
+            so it keeps item A's old input state and pairs it with item C's text. This is why stable
+            IDs (`key={task.id}`) are essential for dynamic lists. This tests the *consequence*
+            of bad keys in a realistic scenario, not just the rule.
 
   # --------------------------------------------------------------------------
   # STEP 8: Integration Project — Build a Mini Store
