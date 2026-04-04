@@ -33,6 +33,10 @@ steps:
 
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
 
+      ### Predict Before You Code
+
+      Look at `hello.js` — it is empty. Before adding any code, predict: is the syntax for printing in JavaScript closer to Python's `print()` or C++'s `printf()`? (Hint: it is neither.)
+
       ### Task: Your First Node.js Script
 
       Open `hello.js` in the editor. Add a line to print your greeting:
@@ -144,6 +148,10 @@ steps:
 
       > **Feeling confused by `==` vs `===`?** That is completely normal — this trips up experienced developers too. The fact that you are learning the distinction now puts you ahead of most JavaScript beginners.
 
+      ### Predict Before You Run
+
+      Before clicking Run on `types.js`, predict: will `userInput == expectedScore` (where `userInput` is the string `"42"` and `expectedScore` is the number `42`) be `true` or `false`? What would it be in Python?
+
       ### Task: Fix the Fixer-Upper
 
       Open `types.js`. It has **three bugs**:
@@ -246,10 +254,10 @@ steps:
 
         - question: "A teammate's code has `if (userRole == 'admin')` and it works in all their tests. Should you flag this in code review? Why or why not?"
           options:
-            - "No — it works correctly, so there is no reason to change it"
-            - "Yes — even though it works here (both sides are strings), using `==` hides the habit of relying on coercion, and a future change to a numeric role ID would silently introduce a bug"
-            - "Yes — `==` is slower than `===` at runtime, which will cause performance problems"
-            - "No — `==` and `===` behave identically when both operands are the same type"
+            - "No — both sides are strings so `==` and `===` behave identically, and there is no risk to flag"
+            - "Yes — using `==` hides a habit of relying on coercion, and a future change to a numeric role ID would silently introduce a bug"
+            - "Yes — `==` is measurably slower than `===` at runtime due to the type coercion step, which impacts performance"
+            - "No — `==` and `===` are identical for same-type operands, and linters will only flag cross-type comparisons"
           correct_index: 1
           explanation: "When both operands are already the same type, `==` and `===` produce the same result. But using `===` consistently prevents future bugs when types change (e.g., role becomes a number). This is a defensive coding practice — the code review should flag it as a latent risk, not a current bug."
 
@@ -264,6 +272,10 @@ steps:
       ## The Foundation of Async Programming
 
       > **Learning objective:** After this step you will be able to **write** arrow functions, **pass** functions as callbacks, and **use** `.map()`, `.filter()`, and destructuring.
+
+      ### This Step Covers a Lot
+
+      This step introduces several related concepts: arrow functions, callbacks, array methods, and destructuring. That is a lot for one step. Take it section by section — you do not need to memorize everything in one pass. The key insight is that **functions are values**, and everything else follows from that.
 
       In C++, you've encountered function pointers. In Python, you've passed functions to `sorted(key=...)` or `map()`. JavaScript takes this further: **functions are just values**, exactly like numbers or strings.
 
@@ -341,6 +353,10 @@ steps:
       ```
 
       You will use object destructuring in the task below to access `name` and `grade` from each student object.
+
+      ### Predict Before You Code
+
+      Before writing any code, predict: what does `[1,2,3].filter(n => n > 1)` return? What about `[1,2,3].map(n => n * 10)`? Write your predictions, then verify in the editor.
 
       ### Task: Build a Grade Processor
 
@@ -580,30 +596,30 @@ steps:
 
         - question: "Why is it harmful to run a slow synchronous computation on Node.js's main thread?"
           options:
-            - "It causes a syntax error that crashes the Node.js process"
-            - "It occupies the call stack the entire time, preventing ALL other requests, timers, and I/O callbacks from being processed — the application appears frozen"
-            - "Synchronous operations are not allowed in Node.js by design"
-            - "It uses more RAM than an equivalent asynchronous query"
+            - "It causes a syntax error that crashes the process — Node.js detects and rejects synchronous operations at parse time"
+            - "It occupies the call stack the entire time, preventing ALL other requests, timers, and callbacks from being processed"
+            - "Synchronous operations are not allowed in Node.js by design — the runtime throws a RuntimeError if one is attempted"
+            - "It uses significantly more RAM than an equivalent asynchronous query because synchronous code cannot be garbage collected"
           correct_index: 1
           explanation: "Node.js handles thousands of concurrent connections using a SINGLE thread. If that thread is occupied with a slow synchronous operation, no other request can be processed until it finishes. Under load, this is catastrophic. This is why Node.js best practices mandate non-blocking I/O."
 
         - question: "**[Spaced Practice: Revisit Step 3]** Why does Node.js use callbacks (functions passed as arguments) for async I/O — rather than making file reads and network requests synchronous?"
           options:
-            - "Callbacks are faster to type and more readable than synchronous code"
-            - "A synchronous read would occupy the call stack (block the Chef) until the I/O completes — a callback lets the Chef serve other orders while the oven runs"
-            - "The Node.js fs module does not support synchronous operations at all"
-            - "Callbacks are required by the POSIX operating system API"
+            - "Callbacks are faster to type and produce more readable code than synchronous alternatives like `readFileSync()`"
+            - "A synchronous read would block the Chef until I/O completes — a callback lets the Chef serve other orders while the oven runs"
+            - "The Node.js `fs` module does not support synchronous operations at all — every method requires a callback parameter"
+            - "Callbacks are required by the POSIX operating system API, and Node.js must conform to this standard"
           correct_index: 1
           explanation: "A synchronous file read would block the entire application — the Chef stares at the oven. A callback lets Node.js say: 'Start reading the file; call this function when done.' The call stack is free to handle other requests while the OS performs the actual I/O. This is the fundamental design that makes Node.js efficient."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** Without running the code, what does `console.log(typeof null)` print in JavaScript?"
+        - question: "**[Spaced Practice: Revisit Step 2]** A config file returns the string `'true'` (not the boolean `true`). A developer writes `if (value == true)`. Does this work?"
           options:
-            - "`'null'`"
-            - "`'undefined'`"
-            - "`'object'`"
-            - "`'NoneType'`"
+            - "Yes — `==` coerces `'true'` to the boolean `true`, so the check passes correctly"
+            - "Yes — strings and booleans are interchangeable in JavaScript's type system"
+            - "No — `==` does NOT coerce `'true'` to `true`. Only `'1'`, `1`, and `true` are coercion-equivalent. Use `value === 'true'` instead"
+            - "No — this throws a TypeError because you cannot compare strings and booleans with `==`"
           correct_index: 2
-          explanation: "`typeof null` returns `'object'` — a famous bug from JavaScript's first implementation in 1995 that was never fixed for backwards compatibility. This is another instance of JavaScript's type system behaving differently from your C++/Python intuitions. Knowing these quirks helps you write defensive code with `===` checks."
+          explanation: "JavaScript's `==` coercion rules are inconsistent: `1 == true` is `true`, but `'true' == true` is `false`! The string `'true'` is NOT coerced to the boolean `true`. This is exactly why `===` is safer — and why you should explicitly check `value === 'true'` when handling string config values."
 
   # --------------------------------------------------------------------------
   # STEP 5: From Callbacks to async/await
@@ -700,7 +716,7 @@ steps:
 
       Open `async.js`. It contains `fetchStudents()` — a function that returns a Promise (simulating a database or network call). Below it is a callback-style invocation that works but is messy.
 
-      **Your job:** Delete the callback-style code and replace it with a clean `async` function that:
+      **Your job:** Delete the callback-style code *below* `fetchStudents()` (keep `fetchStudents` — you need it!) and replace it with a clean `async` function that:
       - Uses `await` to get the student data
       - Logs each student's name and grade
       - Handles errors with `try`/`catch`
@@ -800,14 +816,14 @@ steps:
           correct_index: 1
           explanation: "`resolve` and `reject` are callbacks — the same pattern you learned in Step 3. The Promise machinery passes these functions to you as arguments. You call `resolve(value)` when the work succeeds and `reject(error)` when it fails. Promises are built on top of callbacks, not a replacement for the concept."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** An async function returns a student object. A teammate writes: `if (student.grade == '95')`. The grade is stored as a number. Will the check work? Should they keep it?"
+        - question: "**[Spaced Practice: Revisit Step 1]** A teammate says: 'Node.js is multi-threaded — that is how it handles thousands of connections at once.' What is wrong with this claim?"
           options:
-            - "It will not work — `==` cannot compare numbers and strings"
-            - "It works due to type coercion, but should be changed to `student.grade === 95` to avoid a hidden assumption about type conversion"
-            - "It works and is fine to keep — `==` is the recommended comparison operator in modern JavaScript"
-            - "It will throw a TypeError because grade is not a string"
+            - "Nothing — Node.js does use multiple threads, one per connection, managed by libuv"
+            - "Node.js is single-threaded. It handles concurrency via the Event Loop and non-blocking I/O, not by spawning a thread per connection"
+            - "Node.js is multi-threaded but only uses two threads: one for JavaScript and one for I/O"
+            - "Node.js was multi-threaded in early versions but switched to single-threaded in v12"
           correct_index: 1
-          explanation: "JavaScript's `==` coerces `'95'` to `95`, so the check passes — but it is fragile. Using `===` with the correct type makes the comparison explicit and safe. This is the same `===` principle from Step 2, now applied in an async context."
+          explanation: "Node.js runs JavaScript on a SINGLE thread. Its high concurrency comes from the Event Loop + libuv's non-blocking I/O — not from threads. While libuv uses a small thread pool internally for some OS operations, the JavaScript code you write always runs on one thread. This is the core architectural insight from Step 1."
 
   # --------------------------------------------------------------------------
   # STEP 6: Capstone — Integration Project
@@ -924,10 +940,10 @@ steps:
             Why is `Promise.all([fetchRoster(), fetchGrades()])` faster than awaiting each one sequentially?
           type: single
           options:
-            - "`Promise.all` uses multiple threads to run both functions in parallel"
-            - "`Promise.all` starts both Promises immediately; the Event Loop handles both timers concurrently, so total wait time is the maximum of the two, not the sum"
-            - "`Promise.all` skips the Event Loop entirely for performance"
-            - "It is not faster — `Promise.all` is just syntactic sugar for sequential awaits"
+            - "`Promise.all` spawns a separate thread for each Promise, running both functions in true parallel on multiple CPU cores"
+            - "`Promise.all` starts both Promises immediately; the Event Loop handles both concurrently, so total time is the max of the two"
+            - "`Promise.all` bypasses the Event Loop and runs both functions synchronously in a single batch for efficiency"
+            - "It is not faster — `Promise.all` is syntactic sugar that internally awaits each Promise sequentially in order"
           correct_index: 1
           explanation: "Both `setTimeout` timers start immediately when `fetchRoster()` and `fetchGrades()` are called. `Promise.all` simply waits for both to resolve. Since Node.js is single-threaded, there are no extra threads — the Event Loop manages both timers concurrently. Total wait is ~50ms (the slower one), not ~100ms."
 
@@ -958,3 +974,12 @@ steps:
             - "It depends on how fast the CPU is"
           correct_index: 1
           explanation: "When you `await` sequentially, the second call does not execute until the first Promise resolves. The first timer fires after ~50ms, then the second starts and fires after another ~50ms — total ~100ms. This is why `Promise.all` matters: it starts both timers at the same time."
+
+        - question: "**[Spaced Practice: Revisit Step 5]** A `try`/`catch` block wraps an `await` call, but the developer forgot to add `async` to the function declaration. What happens?"
+          options:
+            - "The code works fine — `async` is optional when using `await` inside `try`/`catch`"
+            - "`await` is only valid inside `async` functions. Without `async`, JavaScript throws a SyntaxError before the code even runs"
+            - "The `await` is silently ignored and the Promise object is assigned directly to the variable"
+            - "The function runs synchronously, blocking the Event Loop until the Promise resolves"
+          correct_index: 1
+          explanation: "`await` can only appear inside an `async` function. If you forget `async`, JavaScript throws a SyntaxError at parse time — the code never executes. This is a common mistake when refactoring callback-style code to async/await. Always check that the enclosing function is marked `async`."
