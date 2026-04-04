@@ -138,6 +138,39 @@ steps:
 
       This is **negative transfer**: your existing `==` intuition from C++ and Python is correct — but JavaScript's `==` does something different. Use `===` and it matches your expectation.
 
+      ### Destructuring: Unpacking Values
+
+      JavaScript has a compact shorthand for extracting values from arrays and objects. This is used **constantly** in modern JS and in every React tutorial that follows.
+
+      **Array destructuring** — assign items by position:
+
+      ```javascript
+      const coords = [40.7, -74.0];
+      const [lat, lng] = coords;    // lat = 40.7, lng = -74.0
+
+      // Python equivalent: lat, lng = coords  (tuple unpacking — same idea)
+
+      // Swap without a temp variable:
+      let a = 1, b = 2;
+      [a, b] = [b, a];              // a = 2, b = 1
+      ```
+
+      **Object destructuring** — extract properties by name:
+
+      ```javascript
+      const student = { name: "Alice", grade: 95 };
+
+      const { name, grade } = student;   // name = "Alice", grade = 95
+
+      // Works in function parameters — you will see this in every React component:
+      function printStudent({ name, grade }) {
+          console.log(`${name}: ${grade}`);
+      }
+      printStudent(student);   // Alice: 95
+      ```
+
+      This is not new data — it is a compact way to bind existing values to named variables.
+
       ### Task: Fix the Fixer-Upper
 
       Open `types.js`. It has **three bugs**:
@@ -238,6 +271,24 @@ steps:
             - 3
           explanation: "All three of these behaviors break the mental model from C++ and Python. C++ block scope (`{}`) strictly contains variables. Python raises a NameError if you use a variable before assignment. `var` violates both. `let` and `const` behave like C++/Python block-scoped variables — use them exclusively."
 
+        - question: "What does `const { name, grade } = student` do if `student = { name: 'Alice', grade: 95 }`?"
+          options:
+            - "Creates a new object with only the `name` and `grade` properties"
+            - "Declares two new variables, `name = 'Alice'` and `grade = 95`, extracting them from the object"
+            - "Modifies `student` so it only has `name` and `grade` properties"
+            - "Throws an error — you cannot destructure an object into two variables at once"
+          correct_index: 1
+          explanation: "Object destructuring extracts named properties into local variables in one step. `const { name, grade } = student` is equivalent to writing `const name = student.name; const grade = student.grade;`. The original object is unchanged. This pattern is used in every React component that receives props."
+
+        - question: "Given `const [first, second] = ['Alice', 'Bob', 'Carol']`, what is `first` and what is `second`?"
+          options:
+            - "`first = 'Alice'`, `second = 'Carol'`"
+            - "`first = 0`, `second = 1`"
+            - "`first = 'Alice'`, `second = 'Bob'`"
+            - "An error — array destructuring requires the lengths to match exactly"
+          correct_index: 2
+          explanation: "Array destructuring assigns by **position**. `first` gets index 0 (`'Alice'`), `second` gets index 1 (`'Bob'`). Extra array elements (`'Carol'`) are simply ignored. No error is thrown for length mismatches."
+
   # --------------------------------------------------------------------------
   # STEP 3: Functions as First-Class Values
   # Pedagogy: Transfer Tutor — C++ function pointers / Python callbacks → JS first-class functions.
@@ -282,6 +333,21 @@ steps:
       ```
 
       You are passing a function **as an argument**. That function is a **callback** — `map` calls it back for each element.
+
+      ### Callbacks in the Browser: Event Handlers
+
+      The same callback pattern drives all user interaction in the browser. When a user clicks a button, the browser calls your function:
+
+      ```javascript
+      // Vanilla JS — attaching a click handler:
+      button.addEventListener('click', () => {
+          console.log('Button clicked!');
+      });
+
+      // The arrow function IS the callback — the browser calls it when the event fires.
+      ```
+
+      In the React tutorial that follows this one, you will write `onClick={handler}` directly on elements. React is wiring up `addEventListener` for you behind the scenes. The mental model — *pass a function, get called back later* — is identical to what you just learned with `.map()` and `.filter()`.
 
       ### Task: Build a Grade Processor
 
@@ -522,6 +588,27 @@ steps:
   # --------------------------------------------------------------------------
   - title: "From Callbacks to `async`/`await`"
     instructions: |
+      ## What is a Promise?
+
+      Before the generations, you need to know what a **Promise** is: an object representing a value that does not exist yet.
+
+      ```javascript
+      // CREATING a Promise — this is how async operations are built under the hood:
+      const promise = new Promise((resolve, reject) => {
+          // The function you pass receives two callbacks:
+          //   resolve(value) — call this when the work succeeds
+          //   reject(error)  — call this when it fails
+          setTimeout(() => resolve("data ready!"), 100);
+      });
+
+      // CONSUMING a Promise (you will do this constantly):
+      promise.then(data => console.log(data));   // "data ready!" after 100ms
+      ```
+
+      The two arguments to `new Promise(...)` are just callbacks — the same concept you learned in step 3. `resolve` and `reject` are functions that the Promise machinery calls for you.
+
+      > **In practice**: you rarely *create* Promises from scratch. You mostly *consume* them using `await` or `.then()`. The step 5 task provides `fetchStudents()` as a Promise-returning function (built this way) so you can see what it looks like — and then practice consuming it with `async`/`await`.
+
       ## The Three Generations of Async
 
       Node.js async syntax has evolved through three generations. You need to recognize all three — and write the third.

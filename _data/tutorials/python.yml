@@ -901,7 +901,196 @@ steps:
             and eliminates the risk of forgetting to call `f.close()`.
 
   # --------------------------------------------------------------------------
-  # STEP 7 — sys.argv & stderr
+  # STEP 7 — Regular Expressions in Python: the re module
+  # Pedagogy:
+  #   Transfer Tutor    — bridges the RegEx tutorial (grep/sed patterns) to Python re.
+  #   Guide-and-Release — complete a log-parsing script using re.findall / re.sub.
+  # --------------------------------------------------------------------------
+  - title: "Regular Expressions in Python: the re Module"
+    instructions: |
+      ## From grep to Python
+
+      In the RegEx tutorial you used patterns with `grep -E` and `sed`. Python's built-in
+      `re` module gives you the same power inside a script — no subprocess needed:
+
+      | Shell | Python `re` equivalent |
+      |---|---|
+      | `grep -E 'pattern' file` | `re.findall(r'pattern', text)` |
+      | `grep -c 'pattern' file` | `len(re.findall(r'pattern', text))` |
+      | `sed 's/old/new/g' file` | `re.sub(r'old', 'new', text)` |
+      | Test if a match exists | `re.search(r'pattern', text)` |
+
+      ### The three essential functions
+
+      ```python
+      import re
+
+      text = "Error 404: page not found. Error 500: server crash."
+
+      # re.search() — find the FIRST match; returns a match object or None
+      m = re.search(r'Error \d+', text)
+      if m:
+          print(m.group())     # "Error 404"
+
+      # re.findall() — find ALL non-overlapping matches; returns a list of strings
+      codes = re.findall(r'\d+', text)
+      print(codes)             # ['404', '500']
+
+      # re.sub() — replace every match with a new string
+      clean = re.sub(r'Error \d+', 'ERR', text)
+      print(clean)             # "ERR: page not found. ERR: server crash."
+      ```
+
+      Raw strings (`r'...'`) are the standard for regex patterns in Python —
+      they prevent Python from interpreting backslashes before `re` sees them.
+
+      ### Task
+
+      Complete `log_parser.py`. Given `log.txt` (a server log already provided):
+
+      1. Read the entire file into a string with `f.read()`
+      2. Use `re.findall(r'\d{2}:\d{2}:\d{2}', text)` to collect every timestamp
+         and print `Timestamps found: <count>`
+      3. Use `re.findall(r'ERROR.*', text)` to collect every ERROR line
+         and print `Errors: <count>`
+      4. Use `re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)` to redact all
+         IP addresses, then print `Redacted log:` followed by the redacted text
+
+    files:
+      - path: "log_parser.py"
+        content: |
+          import re
+
+          with open("log.txt") as f:
+              text = f.read()
+
+          # 1. Extract all timestamps (HH:MM:SS)
+          timestamps = re.findall(r'\d{2}:\d{2}:\d{2}', text)
+          print(f"Timestamps found: {len(timestamps)}")
+
+          # 2. TODO: use re.findall() to collect lines containing "ERROR"
+          error_lines = []   # replace this with re.findall(r'ERROR.*', text)
+          print(f"Errors: {len(error_lines)}")
+
+          # 3. TODO: use re.sub() to replace IPv4 addresses with "x.x.x.x"
+          #    Pattern: r'\d+\.\d+\.\d+\.\d+'
+          redacted = text    # replace this with re.sub(...)
+          print("Redacted log:")
+          print(redacted)
+        language: "python"
+
+      - path: "log.txt"
+        content: |
+          2024-01-15 09:23:11 INFO  Server started on port 8080
+          2024-01-15 09:23:45 ERROR Connection failed: timeout
+          2024-01-15 09:24:02 INFO  Request from 192.168.1.42
+          2024-01-15 09:24:18 WARNING Slow response: 2345ms
+          2024-01-15 09:24:33 ERROR Disk usage at 94%
+          2024-01-15 09:24:51 INFO  Request from 10.0.0.7
+        language: "plaintext"
+
+    open_file: "log_parser.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/log_parser.py')
+      - description: "Found all 6 timestamps"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/log_parser.py')
+          assert 'Timestamps found: 6' in output, \
+              f"Expected 'Timestamps found: 6', got: {repr(output)}"
+      - description: "Counted 2 ERROR lines"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/log_parser.py')
+          assert 'Errors: 2' in output, \
+              f"Expected 'Errors: 2', got: {repr(output)}"
+      - description: "Redacted IP addresses with re.sub()"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/log_parser.py')
+          assert 'x.x.x.x' in output, \
+              f"Expected 'x.x.x.x' in redacted output, got: {repr(output)}"
+          assert '192.168.1.42' not in output, \
+              "IP address 192.168.1.42 should have been redacted"
+
+    quiz:
+      title: "Regular Expressions in Python — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            What does `re.findall(r'\d+', 'boot in 3... 2... 1...')` return?
+          type: single
+          options:
+            - "`'3 2 1'`"
+            - "`['3', '2', '1']`"
+            - "`'321'`"
+            - "`3`  (just the count)"
+          correct_index: 1
+          explanation: |
+            `re.findall()` returns a **list of strings** — one string per non-overlapping match.
+            `\d+` matches one or more digit characters, so it finds `'3'`, `'2'`, and `'1'`
+            independently, returning `['3', '2', '1']`.
+
+        - question: |
+            You want to know *whether* a log line contains an IP address, but you don't need
+            to extract it. Which function is most appropriate?
+          type: single
+          options:
+            - "`re.findall()` — it returns all matches, so you can check `len() > 0`"
+            - "`re.search()` — it returns a match object (truthy) or `None` (falsy) for a single check"
+            - "`re.sub()` — it can test for a match while replacing"
+            - "`re.compile()` — it tests patterns without needing a string"
+          correct_index: 1
+          explanation: |
+            `re.search()` is the idiomatic choice for a yes/no existence check:
+            ```python
+            if re.search(r'\d+\.\d+\.\d+\.\d+', line):
+                print("has IP")
+            ```
+            It short-circuits on the first match and returns `None` if there is none —
+            exactly like `grep -q` in the shell.
+
+        - question: |
+            What is the Python `re.sub()` equivalent of the shell command
+            `sed 's/foo/bar/g' file.txt`?
+          type: single
+          options:
+            - "`re.search(r'foo', text, 'bar')`"
+            - "`re.replace('foo', 'bar', text)`"
+            - "`re.sub(r'foo', 'bar', text)`"
+            - "`re.findall(r'foo', text).replace('bar')`"
+          correct_index: 2
+          explanation: |
+            `re.sub(pattern, replacement, string)` replaces **every** occurrence (like `sed`'s `/g` flag).
+            The argument order is pattern → replacement → string — remember it as
+            "what to find, what to put instead, where to look".
+
+        - question: |
+            Why are raw strings (`r'\d+'`) preferred over regular strings (`'\\d+'`) for regex patterns?
+          type: single
+          options:
+            - "Raw strings run faster because Python skips Unicode processing"
+            - "Raw strings prevent Python from interpreting backslashes before the `re` module sees them, so `\\d` stays as two characters `\\` and `d`"
+            - "The `re` module only accepts raw strings and will raise a TypeError otherwise"
+            - "Raw strings automatically escape special regex characters like `.` and `*`"
+          correct_index: 1
+          explanation: |
+            In a regular string, `'\d'` is just `'d'` (Python drops the unrecognised escape).
+            In a raw string `r'\d'`, the backslash is preserved literally, so `re` receives the
+            two-character sequence `\d` and interprets it as "any digit". Using raw strings avoids
+            double-escaping (`'\\d+'`) and matches the pattern you see in `grep` or `sed`.
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — sys.argv & stderr
   # Pedagogy:
   #   Transfer Tutor    — C argc/argv → sys.argv; std::cerr → sys.stderr.
   #   Guide-and-Release — complete a robust command-line script.

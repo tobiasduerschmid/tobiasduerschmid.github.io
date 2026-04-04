@@ -144,7 +144,20 @@ steps:
       [TAB]recipe
       ```
 
-      If you see 4 or 8 spaces, it will NOT work. In many text editors (like the one on the right) it is often hard to replace spaces with tabs. So for this task you will need to be a bit more creative. Hint: terminal-based editors like `nano` or `vi` might help or the `sed` command!
+      If you see 4 or 8 spaces, it will NOT work. Most GUI editors silently insert spaces when you press Tab — so you need to fix it in the terminal.
+
+      **`sed` to the rescue.** `sed` is a stream editor: it reads a file line by line, applies a substitution, and writes the result. The substitution syntax is `s/pattern/replacement/`:
+
+      ```bash
+      # Replace the leading spaces on the recipe line with a real Tab:
+      sed -i 's/^    /\t/' Makefile
+      ```
+
+      Breaking this down:
+      - `s/^    /\t/` — replace four leading spaces (`^    `) with a tab character (`\t`)
+      - `-i` — edit the file **in-place** (overwrite it directly)
+
+      Run `cat -A Makefile` after — recipe lines starting with `^I` have a real Tab (`^I` is how `cat -A` displays the Tab character). Then run `make` again.
 
     setup_commands:
       - "rm -f /tutorial/make_project/app"
@@ -202,6 +215,15 @@ steps:
             - 1
             - 2
           explanation: "A rule is `target: prerequisites` followed by a recipe on the next line. The recipe must use a literal Tab. Prerequisites can be in any order — Make builds a dependency graph from them."
+
+        - question: "The command `sed -i 's/^    /\\t/' Makefile` is used to fix the Tab Trap. What does the `s/^    /\\t/` part mean?"
+          options:
+            - "Search for four spaces anywhere in the line and replace all occurrences with a tab"
+            - "Replace the four leading spaces at the start of a line (`^`) with a real tab character"
+            - "Delete four-space-indented lines from the file"
+            - "Append a tab character after every line that starts with four spaces"
+          correct_index: 1
+          explanation: "`sed`'s `s/pattern/replacement/` syntax substitutes the pattern with the replacement. `^` anchors the match to the **start of the line**, so only leading spaces are replaced — not spaces that appear elsewhere on the line. `\\t` is the escape sequence for a real Tab character. The `-i` flag makes the edit in-place."
 
   # --------------------------------------------------------------------------
   # STEP 3: The "DRY" Refactor — Variables
