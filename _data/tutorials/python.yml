@@ -790,6 +790,25 @@ steps:
 
       > **Key rule**: `range(start, stop)` always includes `start` and excludes `stop` — exactly like C++'s `i < stop`.
 
+      ### List Operations (`append`, `remove`, `clear`)
+
+      Unlike fixed-size C++ arrays, Python lists are dynamic (like `std::vector`). A few common operations you will use:
+
+      ```python
+      # C++: vec.push_back(5);
+      # Python:
+      result = []       # 1. Create an empty list
+      result.append(5)  # 2. Add an item to the end
+      result.append(10) # result is now [5, 10]
+      
+      # Removing items:
+      result.remove(5)  # Removes the first occurrence of 5 (result is now [10])
+                        # (Raises ValueError if 5 is not in the list)
+      
+      result.clear()    # Empties the entire list (result is now [])
+                        # C++: vec.clear();
+      ```
+
       ### ⚠️ Two Operator Traps from C++
 
       **Trap 1: `**` for exponentiation — not `^`**

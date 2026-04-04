@@ -211,7 +211,12 @@ my_list = [1, "two", 3.14, True]
 
 my_list.append("new item") # Adds to the end (like push_back)
 my_list.pop()              # Removes and returns the last item
-print(len(my_list))        # len() gets the size of any collection
+
+# Other common operations
+my_list.remove("two")      # Removes the first occurrence of "two" (like std::remove + erase)
+my_list.clear()            # Empties the entire list (like std::vector::clear)
+
+print(len(my_list))        # len() gets the size of any collection (Output: 0)
 ```
 
 #### Sets (C++ Equivalent: `std::unordered_set`)
