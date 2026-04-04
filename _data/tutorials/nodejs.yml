@@ -16,6 +16,8 @@ steps:
     instructions: |
       ## The Lay of the Land
 
+      > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser and **write** a basic Node.js script.
+
       You already know two languages. Here is how JavaScript (via Node.js) fits into your mental model:
 
       | | C++ | Python | JavaScript (Node.js) |
@@ -30,6 +32,10 @@ steps:
       - **libuv** — A C library providing the **Event Loop** and non-blocking I/O access to the OS.
 
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
+
+      ### Predict Before You Code
+
+      Look at `hello.js` — it is empty. Before adding any code, predict: is the syntax for printing in JavaScript closer to Python's `print()` or C++'s `printf()`? (Hint: it is neither.)
 
       ### Task: Your First Node.js Script
 
@@ -55,7 +61,7 @@ steps:
 
     tests:
       - description: "hello.js contains a console.log statement"
-        command: "assert(source.includes('console.log'), 'Add a console.log() call to hello.js')"
+        command: "assert(source.split('\\n').some(function(l){return !l.trim().startsWith('//') && l.includes('console.log(');}), 'Add a console.log() call to hello.js')"
       - description: "Output includes 'Hello from Node.js!'"
         command: "assert(output.includes('Hello from Node.js'), 'Your console.log should print \"Hello from Node.js!\"')"
 
@@ -101,6 +107,8 @@ steps:
     instructions: |
       ## Bridging Your Mental Models
 
+      > **Learning objective:** After this step you will be able to **declare** variables with `let`/`const`, **use** template literals, and **explain** why `===` should be preferred over `==`.
+
       JavaScript's type system *looks* like Python but hides a critical landmine.
 
       ### `let` and `const`
@@ -138,38 +146,11 @@ steps:
 
       This is **negative transfer**: your existing `==` intuition from C++ and Python is correct — but JavaScript's `==` does something different. Use `===` and it matches your expectation.
 
-      ### Destructuring: Unpacking Values
+      > **Feeling confused by `==` vs `===`?** That is completely normal — this trips up experienced developers too. The fact that you are learning the distinction now puts you ahead of most JavaScript beginners.
 
-      JavaScript has a compact shorthand for extracting values from arrays and objects. This is used **constantly** in modern JS and in every React tutorial that follows.
+      ### Predict Before You Run
 
-      **Array destructuring** — assign items by position:
-
-      ```javascript
-      const coords = [40.7, -74.0];
-      const [lat, lng] = coords;    // lat = 40.7, lng = -74.0
-
-      // Python equivalent: lat, lng = coords  (tuple unpacking — same idea)
-
-      // Swap without a temp variable:
-      let a = 1, b = 2;
-      [a, b] = [b, a];              // a = 2, b = 1
-      ```
-
-      **Object destructuring** — extract properties by name:
-
-      ```javascript
-      const student = { name: "Alice", grade: 95 };
-
-      const { name, grade } = student;   // name = "Alice", grade = 95
-
-      // Works in function parameters — you will see this in every React component:
-      function printStudent({ name, grade }) {
-          console.log(`${name}: ${grade}`);
-      }
-      printStudent(student);   // Alice: 95
-      ```
-
-      This is not new data — it is a compact way to bind existing values to named variables.
+      Before clicking Run on `types.js`, predict: will `userInput == expectedScore` (where `userInput` is the string `"42"` and `expectedScore` is the number `42`) be `true` or `false`? What would it be in Python?
 
       ### Task: Fix the Fixer-Upper
 
@@ -271,23 +252,14 @@ steps:
             - 3
           explanation: "All three of these behaviors break the mental model from C++ and Python. C++ block scope (`{}`) strictly contains variables. Python raises a NameError if you use a variable before assignment. `var` violates both. `let` and `const` behave like C++/Python block-scoped variables — use them exclusively."
 
-        - question: "What does `const { name, grade } = student` do if `student = { name: 'Alice', grade: 95 }`?"
+        - question: "A teammate's code has `if (userRole == 'admin')` and it works in all their tests. Should you flag this in code review? Why or why not?"
           options:
-            - "Creates a new object with only the `name` and `grade` properties"
-            - "Declares two new variables, `name = 'Alice'` and `grade = 95`, extracting them from the object"
-            - "Modifies `student` so it only has `name` and `grade` properties"
-            - "Throws an error — you cannot destructure an object into two variables at once"
+            - "No — both sides are strings so `==` and `===` behave identically, and there is no risk to flag"
+            - "Yes — using `==` hides a habit of relying on coercion, and a future change to a numeric role ID would silently introduce a bug"
+            - "Yes — `==` is measurably slower than `===` at runtime due to the type coercion step, which impacts performance"
+            - "No — `==` and `===` are identical for same-type operands, and linters will only flag cross-type comparisons"
           correct_index: 1
-          explanation: "Object destructuring extracts named properties into local variables in one step. `const { name, grade } = student` is equivalent to writing `const name = student.name; const grade = student.grade;`. The original object is unchanged. This pattern is used in every React component that receives props."
-
-        - question: "Given `const [first, second] = ['Alice', 'Bob', 'Carol']`, what is `first` and what is `second`?"
-          options:
-            - "`first = 'Alice'`, `second = 'Carol'`"
-            - "`first = 0`, `second = 1`"
-            - "`first = 'Alice'`, `second = 'Bob'`"
-            - "An error — array destructuring requires the lengths to match exactly"
-          correct_index: 2
-          explanation: "Array destructuring assigns by **position**. `first` gets index 0 (`'Alice'`), `second` gets index 1 (`'Bob'`). Extra array elements (`'Carol'`) are simply ignored. No error is thrown for length mismatches."
+          explanation: "When both operands are already the same type, `==` and `===` produce the same result. But using `===` consistently prevents future bugs when types change (e.g., role becomes a number). This is a defensive coding practice — the code review should flag it as a latent risk, not a current bug."
 
   # --------------------------------------------------------------------------
   # STEP 3: Functions as First-Class Values
@@ -298,6 +270,12 @@ steps:
   - title: "Functions as First-Class Values"
     instructions: |
       ## The Foundation of Async Programming
+
+      > **Learning objective:** After this step you will be able to **write** arrow functions, **pass** functions as callbacks, and **use** `.map()`, `.filter()`, and destructuring.
+
+      ### This Step Covers a Lot
+
+      This step introduces several related concepts: arrow functions, callbacks, array methods, and destructuring. That is a lot for one step. Take it section by section — you do not need to memorize everything in one pass. The key insight is that **functions are values**, and everything else follows from that.
 
       In C++, you've encountered function pointers. In Python, you've passed functions to `sorted(key=...)` or `map()`. JavaScript takes this further: **functions are just values**, exactly like numbers or strings.
 
@@ -349,6 +327,37 @@ steps:
 
       In the React tutorial that follows this one, you will write `onClick={handler}` directly on elements. React is wiring up `addEventListener` for you behind the scenes. The mental model — *pass a function, get called back later* — is identical to what you just learned with `.map()` and `.filter()`.
 
+      ### Destructuring: Unpacking Values
+
+      Before the task, one more shorthand you will need. JavaScript has a compact syntax for extracting values from arrays and objects:
+
+      **Array destructuring** — assign items by position:
+
+      ```javascript
+      const coords = [40.7, -74.0];
+      const [lat, lng] = coords;    // lat = 40.7, lng = -74.0
+
+      // Python equivalent: lat, lng = coords  (tuple unpacking — same idea)
+      ```
+
+      **Object destructuring** — extract properties by name:
+
+      ```javascript
+      const student = { name: "Alice", grade: 95 };
+      const { name, grade } = student;   // name = "Alice", grade = 95
+
+      // Works in function parameters — you will see this in every React component:
+      function printStudent({ name, grade }) {
+          console.log(`${name}: ${grade}`);
+      }
+      ```
+
+      You will use object destructuring in the task below to access `name` and `grade` from each student object.
+
+      ### Predict Before You Code
+
+      Before writing any code, predict: what does `[1,2,3].filter(n => n > 1)` return? What about `[1,2,3].map(n => n * 10)`? Write your predictions, then verify in the editor.
+
       ### Task: Build a Grade Processor
 
       Open `functions.js`. Complete the three `TODO` items:
@@ -396,8 +405,8 @@ steps:
     open_file: "functions.js"
 
     tests:
-      - description: "Used an arrow function (=>) somewhere in the solution"
-        command: "assert(source.includes('=>'), 'Convert getLetterGrade to an arrow function using =>')"
+      - description: "Converted getLetterGrade to an arrow function (no longer a function declaration)"
+        command: "assert(!source.includes('function getLetterGrade'), 'Convert getLetterGrade from a function declaration to an arrow function assigned to const')"
       - description: "Used .filter() to select students"
         command: "assert(source.includes('.filter('), 'Use .filter() with an arrow function to select passing students')"
       - description: "Used .map() to transform the data"
@@ -437,6 +446,24 @@ steps:
           correct_index: 1
           explanation: "The entire Node.js async model is built on callbacks: 'start this operation, and when it finishes, call *this* function.' When you call `fs.readFile('data.txt', myCallback)`, you pass a function that Node.js will invoke once the file is ready. Callbacks are not just a style preference — they are how the Event Loop communicates results back to your code."
 
+        - question: "What does `const { name, grade } = student` do if `student = { name: 'Alice', grade: 95 }`?"
+          options:
+            - "Creates a new object with only the `name` and `grade` properties"
+            - "Declares two new variables, `name = 'Alice'` and `grade = 95`, extracting them from the object"
+            - "Modifies `student` so it only has `name` and `grade` properties"
+            - "Throws an error — you cannot destructure an object into two variables at once"
+          correct_index: 1
+          explanation: "Object destructuring extracts named properties into local variables in one step. `const { name, grade } = student` is equivalent to writing `const name = student.name; const grade = student.grade;`. The original object is unchanged. This pattern is used in every React component that receives props."
+
+        - question: "**[Spaced Practice: Revisit Step 2]** A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
+          options:
+            - "Yes, it works and is safe to keep — the comparison correctly identifies the admin"
+            - "Yes, it works due to type coercion, but you should change it to `===` and explicitly convert the ID to a number — relying on coercion hides a fragile assumption"
+            - "No, `==` will return `false` here because strings and numbers are never equal in JavaScript"
+            - "No, the code will throw a TypeError at runtime"
+          correct_index: 1
+          explanation: "JavaScript's `==` coerces `'42'` to `42`, so the check works — but it is fragile. If the ID format changes (e.g., UUID strings), the coercion silently breaks. Using `===` with explicit conversion (`Number(userId) === 42`) makes the intent clear and safe."
+
   # --------------------------------------------------------------------------
   # STEP 4: The Blocked Chef — The Event Loop
   # Pedagogy: "Restaurant and the Event Loop" metaphor from cognitive science research.
@@ -448,7 +475,11 @@ steps:
     instructions: |
       ## The Most Important Concept in Node.js
 
-      This is the paradigm shift that trips up every C++ and Python developer. Read carefully.
+      > **Learning objective:** After this step you will be able to **predict** the execution order of synchronous and asynchronous code and **explain** how the Event Loop, Call Stack, and Task Queue interact.
+
+      This is the paradigm shift that trips up every C++ and Python developer. Read carefully — and expect to be surprised.
+
+      > **Before you begin:** Rate your confidence: *"I understand how code execution order works"* — 1 (not sure) to 5 (very confident). Revisit this rating after completing the step.
 
       **JavaScript is single-threaded.** There is only one "chef" in the kitchen.
 
@@ -477,6 +508,8 @@ steps:
       ```
 
       Most C++/Python developers predict A → B → C. The actual output is **A → C → B**.
+
+      > **If your prediction was wrong, that is exactly the point.** The event loop violates the top-to-bottom intuition from every other language you know. Getting it wrong first makes the correct model stick — this is how experts learned it too.
 
       The synchronous code runs to completion before ANY callback fires — even with `0` ms delay. The Chef finishes all current tasks before the Manager hands over the next callback.
 
@@ -511,7 +544,7 @@ steps:
           for (let i = 0; i < 5000000; i++) {
               total += i;
           }
-          console.log("[2] Synchronous work done. total = " + total);
+          console.log(`[2] Synchronous work done. total = ${total}`);
 
           // TODO: Add a second setTimeout here that logs "Event loop is free again!"
           // with a 0ms delay.
@@ -563,21 +596,30 @@ steps:
 
         - question: "Why is it harmful to run a slow synchronous computation on Node.js's main thread?"
           options:
-            - "It causes a syntax error that crashes the Node.js process"
-            - "It occupies the call stack the entire time, preventing ALL other requests, timers, and I/O callbacks from being processed — the application appears frozen"
-            - "Synchronous operations are not allowed in Node.js by design"
-            - "It uses more RAM than an equivalent asynchronous query"
+            - "It causes a syntax error that crashes the process — Node.js detects and rejects synchronous operations at parse time"
+            - "It occupies the call stack the entire time, preventing ALL other requests, timers, and callbacks from being processed"
+            - "Synchronous operations are not allowed in Node.js by design — the runtime throws a RuntimeError if one is attempted"
+            - "It uses significantly more RAM than an equivalent asynchronous query because synchronous code cannot be garbage collected"
           correct_index: 1
           explanation: "Node.js handles thousands of concurrent connections using a SINGLE thread. If that thread is occupied with a slow synchronous operation, no other request can be processed until it finishes. Under load, this is catastrophic. This is why Node.js best practices mandate non-blocking I/O."
 
-        - question: "**[Interleaved: Revisit Step 3]** Why does Node.js use callbacks (functions passed as arguments) for async I/O — rather than making file reads and network requests synchronous?"
+        - question: "**[Spaced Practice: Revisit Step 3]** Why does Node.js use callbacks (functions passed as arguments) for async I/O — rather than making file reads and network requests synchronous?"
           options:
-            - "Callbacks are faster to type and more readable than synchronous code"
-            - "A synchronous read would occupy the call stack (block the Chef) until the I/O completes — a callback lets the Chef serve other orders while the oven runs"
-            - "The Node.js fs module does not support synchronous operations at all"
-            - "Callbacks are required by the POSIX operating system API"
+            - "Callbacks are faster to type and produce more readable code than synchronous alternatives like `readFileSync()`"
+            - "A synchronous read would block the Chef until I/O completes — a callback lets the Chef serve other orders while the oven runs"
+            - "The Node.js `fs` module does not support synchronous operations at all — every method requires a callback parameter"
+            - "Callbacks are required by the POSIX operating system API, and Node.js must conform to this standard"
           correct_index: 1
           explanation: "A synchronous file read would block the entire application — the Chef stares at the oven. A callback lets Node.js say: 'Start reading the file; call this function when done.' The call stack is free to handle other requests while the OS performs the actual I/O. This is the fundamental design that makes Node.js efficient."
+
+        - question: "**[Spaced Practice: Revisit Step 2]** A config file returns the string `'true'` (not the boolean `true`). A developer writes `if (value == true)`. Does this work?"
+          options:
+            - "Yes — `==` coerces `'true'` to the boolean `true`, so the check passes correctly"
+            - "Yes — strings and booleans are interchangeable in JavaScript's type system"
+            - "No — `==` does NOT coerce `'true'` to `true`. Only `'1'`, `1`, and `true` are coercion-equivalent. Use `value === 'true'` instead"
+            - "No — this throws a TypeError because you cannot compare strings and booleans with `==`"
+          correct_index: 2
+          explanation: "JavaScript's `==` coercion rules are inconsistent: `1 == true` is `true`, but `'true' == true` is `false`! The string `'true'` is NOT coerced to the boolean `true`. This is exactly why `===` is safer — and why you should explicitly check `value === 'true'` when handling string config values."
 
   # --------------------------------------------------------------------------
   # STEP 5: From Callbacks to async/await
@@ -589,6 +631,8 @@ steps:
   - title: "From Callbacks to `async`/`await`"
     instructions: |
       ## What is a Promise?
+
+      > **Learning objective:** After this step you will be able to **refactor** callback-based code to use `async`/`await`, **explain** what a Promise represents, and **use** `try`/`catch` for async error handling.
 
       Before the generations, you need to know what a **Promise** is: an object representing a value that does not exist yet.
 
@@ -625,7 +669,7 @@ steps:
       });
       ```
 
-      Every nested async operation adds another indentation level. This is "Callback Hell."
+      Every nested async operation adds another indentation level. This is "Callback Hell." If this looks messy and hard to follow, that is exactly the right instinct — an entire generation of JavaScript developers struggled with exactly this pattern, which is why Promises and async/await were invented.
 
       ### Generation 2: Promises (Flattened)
 
@@ -666,16 +710,18 @@ steps:
       > ```
       > If two operations are independent, always prefer `Promise.all()`.
 
-      ### Task: Refactor the Fixer-Upper
+      ### Task: Rewrite Using async/await
 
-      Open `async.js`. It loads student data using the old Generation 1 callback style.
-      `fetchStudents()` simulates an async data source (in a real app, this would be a database or file read).
+      > **Before you start:** write a one-line comment at the top of `async.js` predicting what `await` does to the event loop. Does it block the Chef, or free the Chef? Check your prediction after running.
 
-      1. Refactor `readStudents` to be an `async` function using `await fetchStudents()`.
-      2. Add a `try`/`catch` block for error handling (like C++'s try/catch or Python's try/except).
-      3. Call your refactored function at the bottom.
+      Open `async.js`. It contains `fetchStudents()` — a function that returns a Promise (simulating a database or network call). Below it is a callback-style invocation that works but is messy.
 
-      Click **▶ Run** to check your output.
+      **Your job:** Delete the callback-style code *below* `fetchStudents()` (keep `fetchStudents` — you need it!) and replace it with a clean `async` function that:
+      - Uses `await` to get the student data
+      - Logs each student's name and grade
+      - Handles errors with `try`/`catch`
+
+      No TODO comments this time — use the Generation 3 pattern from above as your reference. Click **▶ Run** to check your output.
 
     files:
       - path: "async.js"
@@ -696,19 +742,11 @@ steps:
               });
           }
 
-          // GENERATION 1: Old callback style — "Callback Hell" starts here
-          // TASK: Refactor readStudents() to use async/await (Generation 3)
+          // OLD: Callback-style invocation (Generation 1) — delete this and
+          // rewrite it as an async function using await.
           function readStudents(callback) {
               fetchStudents().then(data => callback(null, data)).catch(err => callback(err, null));
           }
-
-          // TODO: Replace the function above with an async function that:
-          //   1. Is declared with 'async'
-          //   2. Uses 'await fetchStudents()' to get the data
-          //   3. Logs each student's name and grade
-          //   4. Wraps everything in try/catch for error handling
-
-          // Original invocation (for reference — replace this call too):
           readStudents((err, students) => {
               if (err) { console.error(err); return; }
               console.log("=== Student Roster ===");
@@ -727,3 +765,221 @@ steps:
         command: "assert(source.includes('try') && source.includes('catch'), 'Wrap your await call in a try/catch block for error handling')"
       - description: "Output includes student names from the data"
         command: "assert(output.includes('Alice'), 'Your output should include student names — make sure you call your async function')"
+
+    quiz:
+      title: "async/await — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `await` actually do inside an `async` function?"
+          options:
+            - "It blocks the entire Node.js process until the Promise resolves, like a synchronous call in C++"
+            - "It suspends only this async function and frees the call stack, letting the Event Loop process other work until the Promise resolves"
+            - "It creates a new thread to wait for the Promise, similar to `std::thread` in C++"
+            - "It converts the Promise into a synchronous value by canceling the async operation"
+          correct_index: 1
+          explanation: "`await` suspends the current async function — not the entire program. The call stack is freed, so the Event Loop can process other callbacks, timers, and requests. When the awaited Promise resolves, the function resumes where it left off. This is why async/await is non-blocking despite *looking* synchronous."
+
+        - question: "Two independent API calls each take 100ms. Which approach is faster?\n```javascript\n// Option A\nconst a = await fetchA();\nconst b = await fetchB();\n\n// Option B\nconst [a, b] = await Promise.all([fetchA(), fetchB()]);\n```"
+          options:
+            - "Option A — sequential awaits are optimized by V8 to run in parallel"
+            - "Both are the same — await does not affect execution time"
+            - "Option B — `Promise.all` starts both operations concurrently, so total time is ~100ms instead of ~200ms"
+            - "Option A — `Promise.all` adds overhead that makes it slower for only two Promises"
+          correct_index: 2
+          explanation: "Option A awaits fetchA first (100ms), then starts fetchB (another 100ms) — total ~200ms. Option B starts both immediately and waits for the slower one — total ~100ms. When operations are independent, always use `Promise.all()`. This is one of the most common async/await performance mistakes."
+
+        - question: "What happens if the Promise passed to `await` rejects and there is no `try`/`catch` block?"
+          options:
+            - "The rejection is silently ignored and the variable receives `undefined`"
+            - "The async function throws an unhandled rejection error, which may crash the Node.js process"
+            - "JavaScript automatically retries the operation three times before giving up"
+            - "The `await` expression returns `null` and execution continues normally"
+          correct_index: 1
+          explanation: "An unhandled Promise rejection in an async function behaves like an uncaught exception. In modern Node.js (v15+), this crashes the process by default. Always wrap `await` calls in `try`/`catch` — just like you would use `try`/`catch` in C++ or `try`/`except` in Python for operations that can fail."
+
+        - question: "**[Spaced Practice: Revisit Step 4]** What is the output order?\n```javascript\nasync function demo() {\n    console.log('A');\n    await new Promise(r => setTimeout(r, 0));\n    console.log('B');\n}\ndemo();\nconsole.log('C');\n```"
+          options:
+            - "A, B, C"
+            - "A, C, B"
+            - "C, A, B"
+            - "A, B, C — await with 0ms resolves instantly"
+          correct_index: 1
+          explanation: "'A' prints synchronously. Then `await` suspends `demo()` and frees the call stack. 'C' prints (it is synchronous code after the `demo()` call). When the Promise resolves, 'B' prints. This is the same Event Loop principle from Step 4: synchronous code always completes before callbacks/continuations fire."
+
+        - question: "**[Spaced Practice: Revisit Step 3]** In the Promise constructor `new Promise((resolve, reject) => { ... })`, what are `resolve` and `reject`?"
+          options:
+            - "Global variables provided by Node.js for error handling"
+            - "Callbacks — functions passed as arguments that you call to signal success or failure"
+            - "Special keywords in JavaScript that only work inside Promise constructors"
+            - "Return values from the async operation that are automatically assigned"
+          correct_index: 1
+          explanation: "`resolve` and `reject` are callbacks — the same pattern you learned in Step 3. The Promise machinery passes these functions to you as arguments. You call `resolve(value)` when the work succeeds and `reject(error)` when it fails. Promises are built on top of callbacks, not a replacement for the concept."
+
+        - question: "**[Spaced Practice: Revisit Step 1]** A teammate says: 'Node.js is multi-threaded — that is how it handles thousands of connections at once.' What is wrong with this claim?"
+          options:
+            - "Nothing — Node.js does use multiple threads, one per connection, managed by libuv"
+            - "Node.js is single-threaded. It handles concurrency via the Event Loop and non-blocking I/O, not by spawning a thread per connection"
+            - "Node.js is multi-threaded but only uses two threads: one for JavaScript and one for I/O"
+            - "Node.js was multi-threaded in early versions but switched to single-threaded in v12"
+          correct_index: 1
+          explanation: "Node.js runs JavaScript on a SINGLE thread. Its high concurrency comes from the Event Loop + libuv's non-blocking I/O — not from threads. While libuv uses a small thread pool internally for some OS operations, the JavaScript code you write always runs on one thread. This is the core architectural insight from Step 1."
+
+  # --------------------------------------------------------------------------
+  # STEP 6: Capstone — Integration Project
+  # Pedagogy:
+  #   Desirable Difficulty — no scaffolding, full independence.
+  #   Integrative Practice — combines async/await, callbacks, destructuring,
+  #                          array methods, strict equality from Steps 1–5.
+  #   Bloom's level       — Create (exercise) / Evaluate + Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Capstone: Build a Student Grade Dashboard"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **design and implement** a complete async JavaScript program that integrates arrow functions, array methods, destructuring, the Event Loop, and `async`/`await`.
+
+      ## Putting It All Together
+
+      You now have all the component skills. This capstone integrates them into a single
+      program — with **no scaffolding**. You decide how to structure the code.
+
+      ### The Scenario
+
+      You are building a dashboard that fetches student records from two simulated API
+      endpoints, merges the data, and prints a formatted report. The two data sources
+      are already provided for you as helper functions in the starter file:
+
+      - `fetchRoster()` — returns a Promise that resolves with an array of `{ name, id }` objects
+      - `fetchGrades()` — returns a Promise that resolves with an array of `{ studentId, course, grade }` objects
+
+      ### Requirements
+
+      1. Write an `async` function called `buildDashboard()` that:
+         - Fetches **both** data sources **concurrently** using `Promise.all` (not sequentially)
+         - Merges each student with their grades using their `id`/`studentId` (use destructuring and `.filter()` / `.map()`)
+         - Computes each student's average grade (numeric)
+         - Identifies students who are **passing** (average **>=** 60) — use `===` or strict comparisons where appropriate
+      2. Print a report to the console in this exact format:
+         ```
+         === Grade Dashboard ===
+         Alice  | Avg: 87.7 | PASS
+         Bob    | Avg: 54.3 | FAIL
+         Clara  | Avg: 91.0 | PASS
+         ```
+         - Names should be left-padded to 6 characters (use `.padEnd(6)`)
+         - Averages should show exactly one decimal place (use `.toFixed(1)`)
+         - End with a summary line: `Passing: 2/3 students`
+      3. Call `buildDashboard()` at the bottom of the file
+      4. Wrap the entire body in `try`/`catch` for error handling
+
+      **Hints** (only if you're stuck):
+      - Use `const [roster, grades] = await Promise.all([...])` to fetch concurrently
+      - Use `grades.filter(g => g.studentId === student.id)` to find a student's grades
+      - Use `.map(g => g.grade)` then `.reduce((sum, g) => sum + g, 0) / length` for the average
+      - Use template literals and `.padEnd()` / `.toFixed()` for formatting
+
+    files:
+      - path: "dashboard.js"
+        content: |
+          // === Simulated API (do not modify) ===
+          function fetchRoster() {
+              return new Promise(resolve => {
+                  setTimeout(() => resolve([
+                      { name: "Alice", id: 1 },
+                      { name: "Bob",   id: 2 },
+                      { name: "Clara", id: 3 }
+                  ]), 50);
+              });
+          }
+
+          function fetchGrades() {
+              return new Promise(resolve => {
+                  setTimeout(() => resolve([
+                      { studentId: 1, course: "Math",    grade: 92 },
+                      { studentId: 1, course: "English", grade: 88 },
+                      { studentId: 1, course: "Science", grade: 83 },
+                      { studentId: 2, course: "Math",    grade: 45 },
+                      { studentId: 2, course: "English", grade: 61 },
+                      { studentId: 2, course: "Science", grade: 57 },
+                      { studentId: 3, course: "Math",    grade: 95 },
+                      { studentId: 3, course: "English", grade: 89 },
+                      { studentId: 3, course: "Science", grade: 89 }
+                  ]), 50);
+              });
+          }
+
+          // === Your code below — no scaffolding! ===
+        language: "javascript"
+
+    open_file: "dashboard.js"
+
+    tests:
+      - description: "Uses async/await"
+        command: "assert(source.includes('async') && source.includes('await'), 'Your solution should use async/await')"
+      - description: "Uses Promise.all for concurrent fetching"
+        command: "assert(source.includes('Promise.all'), 'Fetch both data sources concurrently with Promise.all')"
+      - description: "Uses try/catch for error handling"
+        command: "assert(source.includes('try') && source.includes('catch'), 'Wrap your code in try/catch for error handling')"
+      - description: "Output includes the dashboard header"
+        command: "assert(output.includes('Grade Dashboard'), 'Print the === Grade Dashboard === header')"
+      - description: "Output includes Alice with a passing average"
+        command: "assert(output.includes('Alice') && output.includes('87.7') && output.includes('PASS'), 'Alice should have Avg: 87.7 and PASS')"
+      - description: "Output includes Bob with a failing average"
+        command: "assert(output.includes('Bob') && output.includes('54.3') && output.includes('FAIL'), 'Bob should have Avg: 54.3 and FAIL')"
+      - description: "Output includes Clara with a passing average"
+        command: "assert(output.includes('Clara') && output.includes('91.0') && output.includes('PASS'), 'Clara should have Avg: 91.0 and PASS')"
+      - description: "Output includes passing summary"
+        command: "assert(output.includes('Passing: 2/3'), 'End with a summary line: Passing: 2/3 students')"
+
+    quiz:
+      title: "Capstone — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Why is `Promise.all([fetchRoster(), fetchGrades()])` faster than awaiting each one sequentially?
+          type: single
+          options:
+            - "`Promise.all` spawns a separate thread for each Promise, running both functions in true parallel on multiple CPU cores"
+            - "`Promise.all` starts both Promises immediately; the Event Loop handles both concurrently, so total time is the max of the two"
+            - "`Promise.all` bypasses the Event Loop and runs both functions synchronously in a single batch for efficiency"
+            - "It is not faster — `Promise.all` is syntactic sugar that internally awaits each Promise sequentially in order"
+          correct_index: 1
+          explanation: "Both `setTimeout` timers start immediately when `fetchRoster()` and `fetchGrades()` are called. `Promise.all` simply waits for both to resolve. Since Node.js is single-threaded, there are no extra threads — the Event Loop manages both timers concurrently. Total wait is ~50ms (the slower one), not ~100ms."
+
+        - question: |
+            **Evaluate** this code for computing a student's average grade. What is the bug?
+            ```javascript
+            const avg = grades
+                .filter(g => g.studentId == student.id)
+                .map(g => g.grade)
+                .reduce((sum, g) => sum + g) / grades.length;
+            ```
+          type: single
+          options:
+            - "`.reduce()` needs an initial value of `0` to handle empty arrays safely, and the division should use the filtered array's length, not `grades.length`"
+            - "`.filter()` should use `.find()` instead — filter returns only one element"
+            - "The `==` operator will crash because `studentId` and `id` are different types"
+            - "There is no bug — this code is correct"
+          correct_index: 0
+          explanation: "Two bugs: (1) `.reduce((sum, g) => sum + g)` with no initial value throws on empty arrays — always pass `0` as the second argument. (2) Dividing by `grades.length` (all grades) instead of the filtered array's length gives the wrong average. Also, `==` should be `===` for strict comparison (Step 2)."
+
+        - question: |
+            **[Spaced Practice: Revisit Step 4]** In the capstone, `fetchRoster()` and `fetchGrades()` both use `setTimeout` with 50ms. If you `await fetchRoster()` first (line A) then `await fetchGrades()` (line B), what is the minimum total wait time?
+          type: single
+          options:
+            - "~50ms — both timers run concurrently on the Event Loop"
+            - "~100ms — the second timer does not start until the first `await` resolves"
+            - "~0ms — `setTimeout` with small values resolves instantly"
+            - "It depends on how fast the CPU is"
+          correct_index: 1
+          explanation: "When you `await` sequentially, the second call does not execute until the first Promise resolves. The first timer fires after ~50ms, then the second starts and fires after another ~50ms — total ~100ms. This is why `Promise.all` matters: it starts both timers at the same time."
+
+        - question: "**[Spaced Practice: Revisit Step 5]** A `try`/`catch` block wraps an `await` call, but the developer forgot to add `async` to the function declaration. What happens?"
+          options:
+            - "The code works fine — `async` is optional when using `await` inside `try`/`catch`"
+            - "`await` is only valid inside `async` functions. Without `async`, JavaScript throws a SyntaxError before the code even runs"
+            - "The `await` is silently ignored and the Promise object is assigned directly to the variable"
+            - "The function runs synchronously, blocking the Event Loop until the Promise resolves"
+          correct_index: 1
+          explanation: "`await` can only appear inside an `async` function. If you forget `async`, JavaScript throws a SyntaxError at parse time — the code never executes. This is a common mistake when refactoring callback-style code to async/await. Always check that the enclosing function is marked `async`."

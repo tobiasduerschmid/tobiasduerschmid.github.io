@@ -84,6 +84,44 @@ for i in range(5):
 ```
 *Note: `range(5)` generates a sequence of numbers from 0 up to (but not including) 5.*
 
+### ⚠️ Scoping: The LEGB Rule (A "False Friend" from C++)
+
+In C++, a variable declared inside a `for` or `if` block is scoped to that block. In Python, **variables created inside a loop or `if` block are visible in the enclosing function scope** — there are no block-level scopes. This is one of the most common "false friend" traps for C++ programmers.
+
+```python
+for i in range(5):
+    last = i
+
+print(last)  # 4 — 'last' and 'i' are STILL accessible here!
+# In C++, this would be a compile error: 'last' was declared inside the for block
+```
+
+Python resolves variable names using the **LEGB rule** — it searches scopes in this order:
+
+1. **L**ocal — inside the current function
+2. **E**nclosing — inside enclosing functions (for nested functions/closures)
+3. **G**lobal — module-level
+4. **B**uilt-in — Python's built-in names (`print`, `len`, etc.)
+
+```python
+x = "global"
+
+def outer():
+    x = "enclosing"
+
+    def inner():
+        x = "local"
+        print(x)    # "local" — L wins
+
+    inner()
+    print(x)        # "enclosing" — E level
+
+outer()
+print(x)            # "global" — G level
+```
+
+**Key difference from C++:** If you want to *modify* a variable from an enclosing scope, you must use the `nonlocal` (for enclosing functions) or `global` keyword. Without it, Python creates a new local variable instead of modifying the outer one.
+
 ### Passing Arguments: "Pass-by-Object-Reference"
 
 In C++, you explicitly choose whether to pass variables by value (`int x`), by reference (`int& x`), or by pointer (`int* x`). 
@@ -179,6 +217,34 @@ player_scores["Charlie"] = 90 # Adding a new key-value pair
 print(f"Bob's score is {player_scores['Bob']}")
 ```
 
+#### "Pythonic" Iteration
+
+While C++ traditionally relies on index-based `for` loops (though modern C++ has range-based loops), Python strongly encourages iterating *directly* over the elements of a collection. This is considered writing "Pythonic" code.
+
+**C++ (Index-based iteration):**
+```cpp
+std::vector<std::string> fruits = {"apple", "banana", "cherry"};
+for (size_t i = 0; i < fruits.size(); i++) {
+    std::cout << fruits[i] << std::endl;
+}
+```
+
+**Python (Pythonic Iteration):**
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# Do not do: for i in range(len(fruits)): ...
+# Instead, iterate directly over the object:
+for fruit in fruits:
+    print(fruit)
+
+# Iterating over dictionary key-value pairs:
+student_grades = {"Alice": 95, "Bob": 82}
+
+for name, grade in student_grades.items():
+    print(f"{name} scored {grade}")
+```
+
 ### Memory Management: RAII vs. Garbage Collection
 
 In C++, you are the absolute master of memory. You allocate it (`new`), you free it (`delete`), or you utilize RAII (Resource Acquisition Is Initialization) and smart pointers to tie memory management to variable scope. If you make a mistake, you get a memory leak or a segmentation fault.
@@ -209,40 +275,6 @@ def create_list():
     # When the function ends, 'arr' goes out of scope. 
     # The list object's reference count drops to 0, and memory is freed automatically.
 ```
-
-
-### Data Structures and "Pythonic" Iteration
-
-In C++, you rely heavily on the Standard Template Library (STL) for data structures like `std::vector` and `std::unordered_map`. Because C++ is statically typed, a `std::vector<int>` can *only* hold integers.
-
-Because Python is dynamically typed (variables are just tags), its built-in data structures are incredibly flexible. A single Python List can hold an integer, a string, and another list simultaneously. 
-
-Additionally, while C++ traditionally relies on index-based `for` loops (though modern C++ has range-based loops), Python strongly encourages iterating *directly* over the elements of a collection. This is considered writing "Pythonic" code.
-
-**C++ (Index-based iteration):**
-```cpp
-std::vector<std::string> fruits = {"apple", "banana", "cherry"};
-for (size_t i = 0; i < fruits.size(); i++) {
-    std::cout << fruits[i] << std::endl;
-}
-```
-
-**Python (Pythonic Iteration):**
-```python
-fruits = ["apple", "banana", "cherry"]
-
-# Do not do: for i in range(len(fruits)): ...
-# Instead, iterate directly over the object:
-for fruit in fruits:
-    print(fruit)
-
-# Python's equivalent to std::unordered_map is a Dictionary
-student_grades = {"Alice": 95, "Bob": 82}
-
-for name, grade in student_grades.items():
-    print(f"{name} scored {grade}")
-```
-
 
 
 ### Object-Oriented Programming: Explicit `self` and "Duck Typing"
@@ -378,8 +410,334 @@ except ValueError:
     print("Invalid input, please enter a number.")
 ```
 
+#### EAFP vs. LBYL: A Python Philosophy Shift
+
+In C++, the standard approach is **LBYL** — "Look Before You Leap": check preconditions before performing an operation (e.g., check if a key exists before accessing it). Python encourages the opposite: **EAFP** — "Easier to Ask Forgiveness than Permission": just try the operation and handle the exception if it fails.
+
+```python
+# C++ instinct (LBYL — Look Before You Leap):
+if "key" in my_dict:
+    value = my_dict["key"]
+else:
+    value = "default"
+
+# Pythonic (EAFP — Easier to Ask Forgiveness than Permission):
+try:
+    value = my_dict["key"]
+except KeyError:
+    value = "default"
+
+# Even more Pythonic — dict.get() with a default:
+value = my_dict.get("key", "default")
+```
+
+EAFP is idiomatic Python because exceptions are cheap in Python (unlike C++, where they are expensive). Using `try/except` for expected cases like missing dictionary keys or file-not-found is standard practice, not an anti-pattern.
+
 ### Robust Command-Line Arguments (`argparse`)
 In C++, you typically handle command-line inputs by parsing `int argc` and `char* argv[]` directly in `main()`. While Python *does* have a direct equivalent (`sys.argv`), the course materials emphasize using the built-in `argparse` module. It automatically generates help/usage messages, enforces types, and parses flags, saving you from writing boilerplate C++ parsing code.
 
+### Division Operators: `/` vs `//`
+
+A common negative-transfer trap from C++: in C++, `7 / 2` gives `3` (integer division when both operands are ints). In Python 3, `/` **always** returns a float:
+
+```python
+7 / 2     # 3.5  (float division — different from C++!)
+7 // 2    # 3    (integer/floor division — like C++'s /)
+7 % 2     # 1    (modulo — same as C++)
+```
+
+Use `//` when you explicitly want integer division. Use `/` when you want precise results.
+
+### The `**` Exponentiation Operator
+
+Python uses `**` for exponentiation. In C++ you would use `pow()` or `std::pow()`. Be careful: `^` is **bitwise XOR** in Python, not exponentiation:
+
+```python
+2 ** 8    # 256  ✓  (exponentiation)
+9 ** 0.5  # 3.0  ✓  (square root)
+2 ^ 8     # 10   ✗  (bitwise XOR — NOT exponentiation!)
+```
+
+### Dynamic ≠ Weak: Python's Strong Typing
+
+Python is **dynamically** typed (you don't declare types) but also **strongly** typed (it won't silently convert between incompatible types). This is different from JavaScript, which is dynamically typed AND weakly typed:
+
+```python
+x = "5" + 3    # TypeError: can only concatenate str to str
+```
+
+Unlike JavaScript (which would give `"53"`), Python refuses to guess. You must be explicit: `int("5") + 3` → `8` or `"5" + str(3)` → `"53"`.
+
+
+### `enumerate()` — Index and Value Together
+
+In C++ you use index-based loops to get both the position and the value. Python's `enumerate()` provides this more elegantly:
+
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# Instead of: for i in range(len(fruits)): ...
+for i, fruit in enumerate(fruits):
+    print(f"{i}: {fruit}")
+```
+
+### List Comprehensions
+
+List comprehensions are a compact, idiomatic way to build lists in Python — a pattern you will see everywhere in Python code:
+
+```python
+# C++ equivalent:
+# std::vector<int> squares;
+# for (int i = 1; i <= 5; i++) squares.push_back(i * i);
+
+# Python: one line
+squares = [x**2 for x in range(1, 6)]          # [1, 4, 9, 16, 25]
+
+# With a filter condition:
+evens = [x for x in range(10) if x % 2 == 0]   # [0, 2, 4, 6, 8]
+```
+
+The general form is `[expression for variable in iterable if condition]`. Use comprehensions when the transformation is simple — they are more readable and slightly faster than equivalent `for` loops.
+
+
+### Reading Files with `open()` and `with`
+
+In C++ you `fopen`, check for `NULL`, process, and `fclose`. Python's `with` statement handles the close automatically — even if an exception occurs:
+
+```python
+# C++: FILE *f = fopen("data.txt", "r"); ... fclose(f);
+
+# Python — the 'with' block closes the file automatically:
+with open("data.txt") as f:
+    for line in f:
+        print(line.strip())   # .strip() removes the trailing newline
+```
+
+The `with` statement is Python's **context manager** idiom — just like RAII in C++, the file is guaranteed to be closed when the block exits. This also works with database connections, locks, and other resources.
+
+### Command-Line Arguments with `sys.argv` and `sys.stderr`
+
+C++'s `argc`/`argv` maps directly to Python's `sys.argv`:
+
+```python
+import sys
+
+# sys.argv[0] is the script name (like argv[0] in C++)
+# sys.argv[1], [2], ... are the arguments
+
+if len(sys.argv) < 2:
+    print("Error: no filename given", file=sys.stderr)  # stderr, like std::cerr
+    sys.exit(1)                                          # exit code 1, like exit(1)
+
+filename = sys.argv[1]
+```
+
+`print()` writes to stdout by default. Use `file=sys.stderr` to send error messages to stderr, keeping output and diagnostics separate — the same reason C++ separates `std::cout` from `std::cerr`.
+
+
 ### Regular Expressions (`re` module)
-Since Python is a scripting language, it is heavily utilized for text processing. The lecture transitions into using Python to read and parse text files (like User Stories) using the `re` module. While C++ has the `<regex>` library, Python's integration with RegEx and string manipulation is much more central to its everyday use case as a scripting tool.
+Since Python is a scripting language, it is heavily utilized for text processing. Python's built-in `re` module provides the same power as `grep` and `sed` inside a script:
+
+```python
+import re
+
+text = "Error 404: page not found. Error 500: server crash."
+
+# re.search() — find the FIRST match (like grep -q)
+m = re.search(r'Error \d+', text)
+if m:
+    print(m.group())     # "Error 404"
+
+# re.findall() — find ALL matches (like grep -o)
+codes = re.findall(r'\d+', text)   # ['404', '500']
+
+# re.sub() — replace matches (like sed 's/old/new/g')
+clean = re.sub(r'Error \d+', 'ERR', text)
+# "ERR: page not found. ERR: server crash."
+```
+
+Always use raw strings (`r'...'`) for regex patterns — they prevent Python from interpreting backslashes before the `re` module sees them.
+
+### Top 10 Python Best Practices
+
+These are the most important conventions and idioms that experienced Python programmers follow. Internalizing them will make your code more readable, less error-prone, and immediately recognizable as "Pythonic."
+
+#### 1. Use f-Strings for String Formatting
+
+F-strings (Python 3.6+) are the preferred way to embed values in strings. They are faster, more readable, and more concise than older approaches.
+
+```python
+name = "Alice"
+score = 95.678
+
+# ✓ Pythonic: f-string
+print(f"{name} scored {score:.1f}")
+
+# ✗ Avoid: concatenation (verbose, error-prone with types)
+print(name + " scored " + str(round(score, 1)))
+
+# ✗ Avoid: %-formatting (old Python 2 style)
+print("%s scored %.1f" % (name, score))
+```
+
+#### 2. Use `with` for Resource Management
+
+The `with` statement guarantees cleanup (closing files, releasing locks) even if an exception occurs — just like RAII in C++.
+
+```python
+# ✓ Pythonic: guaranteed close
+with open("data.txt") as f:
+    content = f.read()
+
+# ✗ Avoid: manual close (leaks on exception)
+f = open("data.txt")
+content = f.read()
+f.close()
+```
+
+#### 3. Iterate Directly Over Collections
+
+Python's `for` loop iterates over *items*, not indices. Never use `range(len(...))` when you only need the elements.
+
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# ✓ Pythonic: iterate directly
+for fruit in fruits:
+    print(fruit)
+
+# ✗ Avoid: C-style index loop
+for i in range(len(fruits)):
+    print(fruits[i])
+```
+
+#### 4. Use `enumerate()` When You Need the Index
+
+When you need both the index and the value, `enumerate()` is the Pythonic solution.
+
+```python
+# ✓ Pythonic: enumerate
+for i, fruit in enumerate(fruits):
+    print(f"{i}: {fruit}")
+
+# ✗ Avoid: manual counter
+i = 0
+for fruit in fruits:
+    print(f"{i}: {fruit}")
+    i += 1
+```
+
+#### 5. Follow PEP 8 Naming Conventions
+
+Consistent naming makes Python code instantly readable across any project.
+
+| Entity | Convention | Example |
+|---|---|---|
+| Variables, functions | `snake_case` | `total_count`, `get_area()` |
+| Classes | `PascalCase` | `HttpResponse`, `Rectangle` |
+| Constants | `UPPER_SNAKE_CASE` | `MAX_RETRIES`, `DEFAULT_PORT` |
+| "Private" attributes | Leading underscore | `_internal_state` |
+
+#### 6. Use List Comprehensions for Simple Transformations
+
+List comprehensions are more concise and slightly faster than equivalent `for` + `append` loops. Use them when the logic is simple and fits on one line.
+
+```python
+# ✓ Pythonic: list comprehension
+squares = [x**2 for x in range(10)]
+evens = [x for x in numbers if x % 2 == 0]
+
+# ✗ Avoid for simple cases: explicit loop
+squares = []
+for x in range(10):
+    squares.append(x**2)
+```
+
+**When to stop:** If the comprehension needs nested loops or complex logic, use a regular `for` loop instead — readability always wins.
+
+#### 7. Catch Specific Exceptions
+
+Never use bare `except:` or `except Exception:`. Catching too broadly hides real bugs and makes debugging much harder.
+
+```python
+# ✓ Pythonic: specific exception
+try:
+    value = int(user_input)
+except ValueError:
+    print("Please enter a valid integer")
+
+# ✗ Avoid: bare except (catches everything, including KeyboardInterrupt)
+try:
+    value = int(user_input)
+except:
+    print("Something went wrong")
+```
+
+#### 8. Use `None` as a Sentinel for Mutable Default Arguments
+
+Mutable default arguments (lists, dicts) are shared across all calls — one of Python's most common pitfalls.
+
+```python
+# ✓ Correct: None sentinel
+def add_item(item, items=None):
+    if items is None:
+        items = []
+    items.append(item)
+    return items
+
+# ✗ Bug: mutable default is shared across calls
+def add_item(item, items=[]):
+    items.append(item)    # Second call sees items from the first call!
+    return items
+```
+
+#### 9. Use Truthiness for Empty Collection Checks
+
+Empty collections (`[]`, `{}`, `""`, `set()`) are falsy in Python. Use this directly instead of checking length.
+
+```python
+my_list = []
+
+# ✓ Pythonic: truthiness
+if not my_list:
+    print("list is empty")
+
+if my_list:
+    print("list has items")
+
+# ✗ Avoid: explicit length check
+if len(my_list) == 0:
+    print("list is empty")
+```
+
+**Exception:** Use explicit `is not None` checks when `0`, `""`, or `False` are valid values that should not be treated as "empty."
+
+#### 10. Use `is` for `None` Comparisons
+
+`None` is a singleton object in Python. Always compare with `is` / `is not`, never `==`.
+
+```python
+result = some_function()
+
+# ✓ Pythonic: identity check
+if result is None:
+    print("no result")
+
+if result is not None:
+    process(result)
+
+# ✗ Avoid: equality check (can be overridden by __eq__)
+if result == None:
+    print("no result")
+```
+
+This matters because a class can override `__eq__` to return `True` when compared with `None`, which would break the equality check. The `is` operator checks *identity* (same object in memory), which cannot be overridden.
+
+
+### Test Your Knowledge
+
+{% include flashcards.html id="python_syntax_explain" %}
+
+{% include flashcards.html id="python_syntax_generate" %}
+
+{% include quiz.html id="python" %}

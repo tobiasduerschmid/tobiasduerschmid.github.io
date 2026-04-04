@@ -32,9 +32,9 @@ cards:
     explanation: "The groups `(...)` make the 'http(s)://' and 'www.' optional. The named group `(?<domain>...)` matches all characters up to the first forward slash, accessible via `match.groups.domain`."
   
   - id: 7  
-    question: "Write a regex to match a date in the format `YYYY-MM-DD` (checking for valid month and day ranges)."  
-    answer: "`^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$`"  
-    explanation: "Matches exactly 4 digits for the year, restricts the month to 01-12, and restricts the day to 01-31."  
+    question: "Write a regex to match a date in the format `YYYY-MM-DD` with basic month and day validation."
+    answer: "`^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$`"
+    explanation: "Matches exactly 4 digits for the year, restricts the month to 01-12, and restricts the day to 01-31. Note: this does not validate that the day is correct for the specific month (e.g., it would accept February 31)."
   
   - id: 8  
     question: "Write a regex to match a time in 24-hour format (HH:MM)."  

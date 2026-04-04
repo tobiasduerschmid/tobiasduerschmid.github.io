@@ -87,7 +87,7 @@
 
     // ═══ Section 3: Meta Characters ════════════════════════════
     {
-      id: 'meta character-1', type: 'free',
+      id: 'meta-character-1', type: 'free',
       section: 'Meta Characters',
       title: 'Digit Detector',
       goal: 'Match every individual digit.',
@@ -104,7 +104,7 @@
       ]
     },
     {
-      id: 'meta character-2', type: 'free',
+      id: 'meta-character-2', type: 'free',
       section: 'Meta Characters',
       title: 'File Extensions',
       goal: 'Match file extensions: a literal dot followed by one or more lowercase letters. The dot <code>.</code> is a wildcard — escape it as <code>\\.</code> to match a real dot.',
@@ -681,8 +681,8 @@
     'literal-2': { q: 'Why does your regex match "error" inside "terror" but not "Error"?', a: 'Literal matching is case-sensitive by default. The lowercase "error" appears as a substring in "terror", but "Error" with a capital E is a different character sequence.' },
     'charclass-1': { q: 'What would happen if you added A-Z inside the brackets?', a: 'The character class [aeiouAEIOU] would also match uppercase vowels. Character classes match any single character listed inside the brackets.' },
     'charclass-2': { q: 'Why does [^a-zA-Z] match spaces and digits, not just punctuation?', a: 'The negated class [^a-zA-Z] matches any character that is NOT a letter — that includes digits, spaces, punctuation, and any other non-letter character.' },
-    'meta character-1': { q: 'What is the difference between \\d and [0-9]?', a: 'They are functionally equivalent — \\d is a shorthand for the character class [0-9]. Meta characters exist for convenience so you don\'t have to write the full class every time.' },
-    'meta character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches ANY character. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
+    'meta-character-1': { q: 'What is the difference between \\d and [0-9]?', a: 'They are functionally equivalent — \\d is a shorthand for the character class [0-9]. Meta characters exist for convenience so you don\'t have to write the full class every time.' },
+    'meta-character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches ANY character. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
     'anchor-0': { q: 'Why did \\d+ fail to reject "123abc"?', a: 'Without anchors, the regex engine looks for a matching substring anywhere in the input. It found "123" inside "123abc" and reported success — it doesn\'t care about the rest of the string. Anchors (^ and $) force the match to span the entire input.' },
     'anchor-1': { q: 'What would happen without the ^ and $ anchors?', a: 'Without anchors, \\d+ would match any sequence of digits anywhere in a string — "abc123def" would match on the "123" substring. Anchors force the entire string to consist of digits.' },
     'anchor-2': { q: 'Why does \\b reject "go" inside "cargo" but accept "go" after punctuation?', a: '\\b matches the boundary between a word character (\\w) and a non-word character. In "cargo", both sides of "go" are word characters. After punctuation or at string edges, there\'s a word/non-word boundary.' },

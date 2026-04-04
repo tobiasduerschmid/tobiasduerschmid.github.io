@@ -1,0 +1,84 @@
+title: "Node.js/JavaScript Syntax — What Does This Code Do?"
+description: "You are shown JavaScript/Node.js code. Explain what it does and what it outputs."
+cards:
+  - id: 1
+    question: |
+      ```javascript
+      let count = 0;
+      const MAX = 200;
+      ```
+    answer: "`let` declares a **mutable** variable (can be reassigned). `const` declares an **immutable binding** (cannot be reassigned). Never use `var` — it has hoisting and scoping bugs."
+  - id: 2
+    question: |
+      ```javascript
+      console.log(1 == "1");
+      console.log(1 === "1");
+      ```
+    answer: "First: `true` — `==` triggers **implicit type coercion**, converting `\"1\"` to `1` before comparing. Second: `false` — `===` checks both value AND type with no coercion. Always use `===`."
+  - id: 3
+    question: |
+      ```javascript
+      const name = "Alice";
+      console.log(`Hello, ${name}!`);
+      ```
+    answer: "Prints `Hello, Alice!` — **template literals** use backticks (`` ` ``) and `${expression}` for interpolation. This is the JavaScript equivalent of Python's f-strings."
+  - id: 4
+    question: |
+      ```javascript
+      const double = n => n * 2;
+      ```
+    answer: "Declares an **arrow function** that takes one parameter `n` and returns `n * 2`. Arrow functions are the modern, concise syntax for anonymous functions."
+  - id: 5
+    question: |
+      ```javascript
+      const nums = [1, 2, 3, 4, 5];
+      const evens = nums.filter(n => n % 2 === 0);
+      ```
+    answer: "Produces `[2, 4]` — `.filter()` creates a new array containing only elements where the callback returns `true`. The arrow function is a **callback** passed as an argument."
+  - id: 6
+    question: |
+      ```javascript
+      const sum = [1, 2, 3].reduce((acc, n) => acc + n, 0);
+      ```
+    answer: "Produces `6` — `.reduce()` accumulates a single value by calling the callback for each element. `acc` starts at `0` (the second argument) and each step adds `n` to it."
+  - id: 7
+    question: |
+      ```javascript
+      const { name, grade } = { name: "Alice", grade: 95 };
+      ```
+    answer: "**Object destructuring** — extracts the `name` and `grade` properties into separate variables: `name = \"Alice\"`, `grade = 95`. Equivalent to `const name = obj.name; const grade = obj.grade;`."
+  - id: 8
+    question: |
+      ```javascript
+      const [lat, lng] = [40.7, -74.0];
+      ```
+    answer: "**Array destructuring** — assigns items by position: `lat = 40.7`, `lng = -74.0`. This is the JavaScript equivalent of Python's tuple unpacking `lat, lng = (40.7, -74.0)`."
+  - id: 9
+    question: |
+      ```javascript
+      setTimeout(() => console.log("B"), 0);
+      console.log("A");
+      console.log("C");
+      ```
+    answer: "Output: `A`, `C`, `B` — NOT `A`, `B`, `C`. The `setTimeout` callback goes to the **Task Queue** and only runs when the **Call Stack is empty**. Synchronous code always completes first, even with a 0ms delay."
+  - id: 10
+    question: |
+      ```javascript
+      async function getData() {
+          const result = await fetch('/api/data');
+          return result.json();
+      }
+      ```
+    answer: "An **async function** that fetches data from an API. `await` suspends this function (non-blocking — the Event Loop can do other work) until the Promise from `fetch()` resolves. `result.json()` also returns a Promise."
+  - id: 11
+    question: |
+      ```javascript
+      const [a, b] = await Promise.all([fetchA(), fetchB()]);
+      ```
+    answer: "Runs `fetchA()` and `fetchB()` **in parallel** and waits for both to finish. Total time = max(A, B), not A + B. Uses array destructuring to assign results."
+  - id: 12
+    question: |
+      ```javascript
+      const doubled = [1, 2, 3].map(n => n * 2);
+      ```
+    answer: "Produces `[2, 4, 6]` — `.map()` transforms each element by calling the callback and returns a **new array** of results. The original array is unchanged."

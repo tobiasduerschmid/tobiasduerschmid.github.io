@@ -1,0 +1,92 @@
+title: "React Syntax — Write the Code"
+description: "You are given a task description. Write the React/JSX code that accomplishes it."
+cards:
+  - id: 1
+    question: "Write a React component `Greeting` that renders an `<h1>` saying `Hello, Alice!` using a variable `name`."
+    answer: |
+      ```jsx
+      function Greeting() {
+        const name = "Alice";
+        return <h1>Hello, {name}!</h1>;
+      }
+      ```
+    explanation: "Components are functions that return JSX. Embed JS expressions inside `{}`."
+  - id: 2
+    question: "Write JSX that applies an inline style with a blue background and white text to a `<div>`."
+    answer: '`<div style={{background: "blue", color: "white"}}>Content</div>`'
+    explanation: "JSX `style` takes a JS object (not a CSS string). Double braces: outer = JSX expression, inner = object literal. CSS properties use camelCase."
+  - id: 3
+    question: "Write a component `ProductCard` that accepts `name`, `price`, and `onSale` props. Show the name in an `<h3>`, the price formatted to 2 decimals, and a 'Sale!' span only when `onSale` is true."
+    answer: |
+      ```jsx
+      function ProductCard({ name, price, onSale }) {
+        return (
+          <div>
+            <h3>{name}</h3>
+            <p>${price.toFixed(2)}</p>
+            {onSale && <span style={{color: 'red'}}>Sale!</span>}
+          </div>
+        );
+      }
+      ```
+    explanation: "Destructure props in the parameter. Use `&&` for conditional rendering. `toFixed(2)` formats to 2 decimal places."
+  - id: 4
+    question: "Declare a state variable `count` with initial value `0` using React's `useState` hook."
+    answer: "`const [count, setCount] = React.useState(0);`"
+    explanation: "`useState` returns a pair: `[currentValue, setterFunction]`. Use array destructuring. Call `setCount(newValue)` to update and trigger re-render."
+  - id: 5
+    question: "Create a button that increments a `count` state variable by 1 when clicked."
+    answer: "`<button onClick={() => setCount(count + 1)}>+1</button>`"
+    explanation: "Use `onClick` (camelCase). Pass an arrow function as the handler. Never mutate state directly — always use the setter."
+  - id: 6
+    question: "Render a list of `users` (each with `id` and `name`) as `<li>` elements with proper keys."
+    answer: |
+      ```jsx
+      <ul>
+        {users.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+      ```
+    explanation: "Use `.map()` to transform data into JSX. Each element needs a stable `key` prop (use `id`, never array index for dynamic lists)."
+  - id: 7
+    question: "Show `<Dashboard />` if `isLoggedIn` is true, otherwise show `<LoginForm />`."
+    answer: "`{isLoggedIn ? <Dashboard /> : <LoginForm />}`"
+    explanation: "Ternary operator inside JSX for conditional rendering. Both branches must be valid JSX expressions."
+  - id: 8
+    question: "Show a `<Badge />` only when `count` is greater than 0. Be careful not to render the number `0`."
+    answer: "`{count > 0 && <Badge count={count} />}`"
+    explanation: "Use `count > 0` (not just `count`) because the number `0` is a valid React node and would render as text. `false` renders as nothing."
+  - id: 9
+    question: "Add an item to an array stored in state (`items`/`setItems`) without mutating the original array."
+    answer: "`setItems([...items, newItem])`"
+    explanation: "Spread the existing array into a new one and append the item. Never use `.push()` — it mutates in-place and React won't detect the change."
+  - id: 10
+    question: "Write a generic `Card` component that wraps any content passed between its opening and closing tags."
+    answer: |
+      ```jsx
+      function Card({ children }) {
+        return <div className="card">{children}</div>;
+      }
+      // Usage: <Card><h2>Title</h2><p>Body</p></Card>
+      ```
+    explanation: "The `children` prop contains whatever JSX is nested inside the component tags. This is the foundation of composition in React."
+  - id: 11
+    question: "Pass a callback function from a parent to a child component so the child can update the parent's state."
+    answer: |
+      ```jsx
+      // Parent:
+      function Parent() {
+        const [text, setText] = React.useState('');
+        return <SearchBar value={text} onChange={setText} />;
+      }
+      // Child:
+      function SearchBar({ value, onChange }) {
+        return <input value={value} onChange={e => onChange(e.target.value)} />;
+      }
+      ```
+    explanation: "This is **lifting state up** — state lives in the parent, child notifies parent via callback prop. This is the standard React pattern for two-way data binding."
+  - id: 12
+    question: "Use `className` (not `class`) to apply the CSS class `app-title` to an `<h1>` element in JSX."
+    answer: '`<h1 className="app-title">My App</h1>`'
+    explanation: "`class` is a reserved JavaScript keyword (for ES6 classes). JSX uses `className` instead, which maps to the DOM property `element.className`."

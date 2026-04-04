@@ -1,0 +1,1442 @@
+title: "TDD & Testing with pytest"
+description: "Learn Test-Driven Development hands-on: write failing tests first, make them pass with minimal code, then refactor. Build the TDD mindset — testing as a design tool, not just verification."
+
+backend: pyodide
+
+require_tests: true
+
+# Global setup: install pytest, add /tutorial to sys.path, patch module cache
+setup_commands:
+  - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
+  - "import sys; sys.path.insert(0, '/tutorial')"
+  - |
+    import pytest as _pytest, sys as _sys
+    _orig_main = _pytest.main
+    def _patched_main(*a, **kw):
+        for m in list(_sys.modules):
+            if m.startswith('test_') or m in ('password','fizzbuzz','word_counter','temperature','grades','shopping_cart'):
+                del _sys.modules[m]
+        return _orig_main(*a, **kw)
+    _pytest.main = _patched_main
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — Why Test? The Bug That Got Away
+  # Pedagogy:
+  #   Lay of the Land   — macro overview: why testing matters.
+  #   Generation Effect  — predict the bug before running.
+  #   Growth Mindset     — normalize errors and debugging.
+  #   Ratchet metaphor   — tests lock in progress (from Percival).
+  #   Bloom's level      — Remember / Understand / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Why Test? The Bug That Got Away"
+    instructions: |
+      ## The Lay of the Land
+
+      > **Learning objective:** After this step you will be able to **explain** why automated tests are valuable and **use** `assert` to verify function behavior.
+
+      You write Python code that works... until someone changes it and breaks something you did not expect. Testing is the safety net that catches those breaks *before* they reach users.
+
+      ### A Common Misconception
+
+      Many students think testing is about **finding bugs after you write code**. That is only half the story. Tests also:
+
+      - **Specify behavior** — a test says *"this function should do X"* before you write it
+      - **Prevent regressions** — once a bug is fixed, a test ensures it never comes back
+      - **Enable fearless refactoring** — change code confidently because tests catch breakage
+
+      Think of tests as a **ratchet**: once a test passes, your progress is locked in. You can never accidentally slip backward.
+
+      ### A Note Before We Begin
+
+      TDD asks you to write a test *before* the code exists. This feels backward at first — and that is completely normal. Every developer who learns TDD goes through an uncomfortable adjustment period. If TDD feels strange or slow, you are doing it right. Stick with the process; it gets natural with practice.
+
+      ### Predict Before You Run
+
+      The function below is supposed to convert a numeric score (0–100) to a letter grade. **Before running it**, read the code carefully and predict: what will `calculate_grade(85)` return? What about `calculate_grade(90)`?
+
+      Write your predictions down, then click **Run** to see if you were right.
+
+      ### Task
+
+      1. Run `grades.py` and observe the output. Was your prediction correct?
+      2. Find and fix the bug in `calculate_grade()`.
+      3. Add three `assert` statements at the bottom of the file to verify:
+         - `calculate_grade(95)` returns `"A"`
+         - `calculate_grade(85)` returns `"B"`
+         - `calculate_grade(72)` returns `"C"`
+
+      An `assert` works like this:
+      ```python
+      assert calculate_grade(95) == "A", "95 should be an A"
+      ```
+      If the condition is `False`, Python raises an `AssertionError` with the message.
+
+    files:
+      - path: "grades.py"
+        content: |
+          def calculate_grade(score):
+              """Convert a numeric score (0-100) to a letter grade."""
+              if score > 90:
+                  return "A"
+              if score >= 80:
+                  return "B"
+              if score >= 70:
+                  return "C"
+              if score >= 60:
+                  return "D"
+              return "F"
+
+
+          # Try it out — predict the output before running!
+          print("grade(95) =", calculate_grade(95))
+          print("grade(85) =", calculate_grade(85))
+          print("grade(90) =", calculate_grade(90))
+          print("grade(45) =", calculate_grade(45))
+
+          # TODO: Add three assert statements below to verify:
+          #   calculate_grade(95) == "A"
+          #   calculate_grade(85) == "B"
+          #   calculate_grade(72) == "C"
+        language: "python"
+
+    open_file: "grades.py"
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          output = __run_capture('/tutorial/grades.py')
+      - description: "Contains assert for grade 95 == 'A'"
+        command: |
+          source = open('/tutorial/grades.py').read()
+          assert 'assert' in source and '95' in source, \
+              "Add an assert statement that checks calculate_grade(95) == 'A'"
+      - description: "Contains assert for grade 85 == 'B'"
+        command: |
+          source = open('/tutorial/grades.py').read()
+          assert 'assert' in source and '85' in source, \
+              "Add an assert statement that checks calculate_grade(85) == 'B'"
+      - description: "Contains assert for grade 72 == 'C'"
+        command: |
+          source = open('/tutorial/grades.py').read()
+          assert 'assert' in source and '72' in source, \
+              "Add an assert statement that checks calculate_grade(72) == 'C'"
+      - description: "All assertions pass (function is correct)"
+        command: |
+          output = __run_capture('/tutorial/grades.py')
+          assert 'AssertionError' not in output and 'Error' not in output, \
+              f"Your assertions failed — is the function correct? Output: {output}"
+
+    quiz:
+      title: "Why Test? — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A teammate says: *"I only write tests after I finish all my code, to check for bugs."*
+
+            What is the main limitation of this approach?
+          type: single
+          options:
+            - "There is no real limitation — writing tests after code is the industry standard, and the test suite ends up identical either way since you cover the same behaviors"
+            - "Post-hoc tests verify what you *think* the code does, not what it *should* do. They also can't guide your design during development"
+            - "Writing tests afterward is fine as long as you achieve 100% coverage, which ensures all behavior is verified"
+            - "The main problem is that it takes slightly longer because you have to context-switch back to code you already wrote"
+          correct_index: 1
+          explanation: |
+            Post-hoc tests verify *your implementation* rather than *intended behavior*.
+            They also cannot serve as a safety net during development because they don't exist yet.
+            TDD flips this: tests are written first to specify behavior, then code is written to satisfy them.
+
+        - question: |
+            What does this code do?
+            ```python
+            assert len(result) == 3, "Expected 3 items"
+            ```
+          type: single
+          options:
+            - "It prints 'Expected 3 items' to the console, then continues execution normally"
+            - "It checks that `result` has 3 elements; if not, it raises an `AssertionError` with the message"
+            - "It creates a new list called `result` and populates it with exactly 3 items"
+            - "It evaluates the condition but silently continues even if the condition is `False`"
+          correct_index: 1
+          explanation: |
+            `assert condition, message` evaluates the condition. If `True`, nothing happens and
+            execution continues. If `False`, Python raises an `AssertionError` with the message.
+            This is the simplest form of automated testing in Python.
+
+        - question: |
+            Which of the following is **not** a benefit of automated tests?
+          type: single
+          options:
+            - "They prevent regressions — bugs that were fixed from coming back"
+            - "They enable fearless refactoring by catching breakage immediately"
+            - "They guarantee your code has zero bugs"
+            - "They specify expected behavior as executable documentation"
+          correct_index: 2
+          explanation: |
+            Tests **reduce** bugs and catch **regressions**, but they cannot guarantee zero bugs.
+            A test suite is only as good as the scenarios it covers. Dijkstra famously said:
+            "Testing can show the presence of bugs, but never their absence."
+
+        - question: |
+            The "ratchet metaphor" for testing means:
+          type: single
+          options:
+            - "Tests should be run frequently and automatically, like a ratchet clicking on every code change"
+            - "Once a test passes, it locks in that progress — you can never accidentally slip backward on that behavior"
+            - "You should ratchet up test coverage incrementally, aiming for 100% before each release"
+            - "Tests should be written in a strict mechanical order: unit tests first, then integration, then end-to-end"
+          correct_index: 1
+          explanation: |
+            The ratchet metaphor (from Harry Percival's "Obey the Testing Goat") captures the key
+            psychological benefit of TDD: each passing test is a permanent checkpoint. Even if you
+            are stuck on a new feature, you know everything that passed before still works.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — Your First pytest Test
+  # Pedagogy:
+  #   Guide-and-Release  — explain conventions, then immediate hands-on.
+  #   Component Skills    — isolate test-writing from TDD cycle.
+  #   Bloom's level       — Remember / Apply (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Your First pytest Test"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **write** pytest test functions and **interpret** pytest output.
+
+      ## From `assert` to pytest
+
+      Raw `assert` statements work, but they give minimal feedback when things fail. **pytest** is Python's most popular testing framework. It discovers and runs your tests automatically, gives clear failure output, and scales from tiny scripts to enormous projects.
+
+      ### pytest Conventions
+
+      pytest uses simple naming conventions — no classes, no boilerplate:
+
+      | Convention | Rule | Example |
+      |---|---|---|
+      | **File name** | Must start with `test_` | `test_temperature.py` |
+      | **Function name** | Must start with `test_` | `def test_freezing_point():` |
+      | **Assertions** | Plain `assert` — same as before | `assert celsius_to_fahrenheit(0) == 32` |
+
+      That is it. No `import unittest`, no `class TestSomething(unittest.TestCase)`, no `self.assertEqual()`. Just functions and `assert`.
+
+      ### Running Tests
+
+      In this tutorial, clicking **Run** on a test file will execute pytest automatically.
+      You will see output like:
+
+      ```
+      test_temperature.py::test_freezing_point PASSED
+      test_temperature.py::test_boiling_point PASSED
+      ```
+
+      A **PASSED** test means the assertion held. A **FAILED** test shows you exactly what went wrong.
+
+      ### Predict Before You Run
+
+      Before writing any code, predict: what will pytest print if a test function only has `pass` and no `assert`? Will it PASS or FAIL? Click **Run** on `test_temperature.py` now — before changing anything — and see if your prediction is correct.
+
+      ### Task
+
+      The `temperature.py` module is provided and working. Your job is to complete `test_temperature.py`:
+
+      1. Fill in `test_freezing_point` — assert that `celsius_to_fahrenheit(0)` returns `32.0`
+      2. Fill in `test_boiling_point` — assert that `celsius_to_fahrenheit(100)` returns `212.0`
+      3. Write `test_negative_forty` from scratch — assert that `celsius_to_fahrenheit(-40)` returns `-40.0` (the unique crossover point where Celsius equals Fahrenheit!)
+
+      Click **Run** on `test_temperature.py` after each change to see your tests execute.
+
+    files:
+      - path: "temperature.py"
+        content: |
+          """Temperature conversion utilities."""
+
+
+          def celsius_to_fahrenheit(celsius):
+              """Convert Celsius to Fahrenheit."""
+              return celsius * 9 / 5 + 32
+
+
+          def fahrenheit_to_celsius(fahrenheit):
+              """Convert Fahrenheit to Celsius."""
+              return (fahrenheit - 32) * 5 / 9
+        language: "python"
+
+      - path: "test_temperature.py"
+        content: |
+          """Tests for the temperature module."""
+          import pytest
+          from temperature import celsius_to_fahrenheit, fahrenheit_to_celsius
+
+
+          def test_freezing_point():
+              # TODO: assert that celsius_to_fahrenheit(0) returns 32.0
+              pass
+
+
+          def test_boiling_point():
+              # TODO: assert that celsius_to_fahrenheit(100) returns 212.0
+              pass
+
+
+          # TODO: Write a test_negative_forty function from scratch.
+          # Assert that celsius_to_fahrenheit(-40) returns -40.0
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_temperature.py"
+
+    tests:
+      - description: "test_temperature.py runs without errors"
+        command: |
+          output = __run_capture('/tutorial/test_temperature.py')
+      - description: "test_freezing_point has a real assertion (not just pass)"
+        command: |
+          source = open('/tutorial/test_temperature.py').read()
+          # Find the test_freezing_point function body
+          assert 'assert' in source.split('test_freezing_point')[1].split('def ')[0], \
+              "test_freezing_point still has 'pass' — replace it with an assert statement"
+      - description: "test_boiling_point has a real assertion"
+        command: |
+          source = open('/tutorial/test_temperature.py').read()
+          assert 'assert' in source.split('test_boiling_point')[1].split('def ')[0], \
+              "test_boiling_point still has 'pass' — replace it with an assert statement"
+      - description: "test_negative_forty function exists"
+        command: |
+          source = open('/tutorial/test_temperature.py').read()
+          assert 'def test_negative_forty' in source, \
+              "Write a new function called test_negative_forty"
+      - description: "All tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_temperature.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests failed:\n{output}"
+
+    quiz:
+      title: "pytest Basics — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which file name will pytest **automatically discover** as a test file?
+          type: single
+          options:
+            - "`testing_temperature.py`"
+            - "`test_temperature.py`"
+            - "`check_temperature.py`"
+            - "`temperature_tests.py`"
+          correct_index: 1
+          explanation: |
+            pytest discovers files whose names start with `test_` or end with `_test.py`.
+            `test_temperature.py` matches the `test_` prefix. The others do not match either pattern.
+            Functions inside must also start with `test_`.
+
+        - question: |
+            What does this pytest output mean?
+            ```
+            test_math.py::test_addition PASSED
+            test_math.py::test_division FAILED
+            ```
+          type: single
+          options:
+            - "Both tests ran and produced output, but only `test_addition` returned the value pytest expected as a success signal"
+            - "The assertions in `test_addition` all held; at least one assertion in `test_division` did not"
+            - "The test file has a syntax error in `test_division` that prevented it from being collected by the test runner"
+            - "`test_division` was skipped because it depends on `test_addition` completing first and pytest enforces execution order"
+          correct_index: 1
+          explanation: |
+            PASSED means the assertions in that test function all held (no `AssertionError`).
+            FAILED means at least one assertion in `test_division` was `False`. pytest will
+            show the exact line and values that caused the failure.
+
+        - question: |
+            Which is a valid pytest test function?
+          type: single
+          options:
+            - |
+              ```python
+              class TestMath(unittest.TestCase):
+                  def test_add(self):
+                      self.assertEqual(add(1, 2), 3)
+              ```
+            - |
+              ```python
+              def test_add():
+                  assert add(1, 2) == 3
+              ```
+            - |
+              ```python
+              def check_add():
+                  assert add(1, 2) == 3
+              ```
+            - |
+              ```python
+              def test_add():
+                  return add(1, 2) == 3
+              ```
+          correct_index: 1
+          explanation: |
+            pytest uses plain functions (no class needed) that start with `test_` and use `assert`.
+            Option A is the older `unittest` style — it works but is verbose. Option C won't be
+            discovered (wrong prefix). Option D returns a boolean but never asserts — it would
+            always "pass" even if the result is wrong.
+
+        - question: |
+            **(Spaced review — Step 1)** A developer finishes a feature and deletes the tests because "the feature is done and working." What principle does this violate?
+          type: single
+          options:
+            - "The DRY principle — tests duplicate the code's logic unnecessarily"
+            - "The ratchet principle — passing tests are permanent safety nets that prevent regression, not disposable scaffolding"
+            - "The YAGNI principle — tests are speculative code that may not be needed"
+            - "No principle — deleting tests after a feature ships is standard practice"
+          correct_index: 1
+          explanation: |
+            The ratchet metaphor means tests lock in progress permanently. Deleting passing
+            tests removes the safety net: if someone later modifies the code and introduces
+            a regression, there is no test to catch it. Tests are living documentation, not
+            temporary scaffolding.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — The Red-Green-Refactor Rhythm
+  # Pedagogy:
+  #   Worked Example     — full R-G-R cycle with sub-goal labels.
+  #   PRIMM              — predict before running.
+  #   Threshold concept  — TDD is design, not verification (from PDF).
+  #   Fading begins      — first test given, second scaffolded, third TODO.
+  #   Bloom's level      — Understand / Apply / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "The Red-Green-Refactor Rhythm"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **execute** a complete Red-Green-Refactor TDD cycle and **explain** why TDD is a design technique, not just testing.
+
+      ## The Core Insight
+
+      Here is the single most important idea in this tutorial:
+
+      > **TDD is a design technique, not a testing technique.**
+
+      When you write the test *first*, you are forced to decide:
+      - What is the **public interface**? (function name, parameters, return type)
+      - What is the **expected behavior**? (given this input, what should happen?)
+      - What are the **edge cases**? (empty input, negative numbers, etc.)
+
+      You answer all these design questions *before writing a single line of implementation*. The tests are a byproduct — the real value is the design thinking.
+
+      ## The Three Phases
+
+      TDD follows a strict three-phase cycle, repeated in short iterations:
+
+      | Phase | Color | What You Do | Key Rule |
+      |-------|-------|-------------|----------|
+      | **1. RED** | :red_circle: | Write ONE failing test | The test describes desired behavior that does not exist yet |
+      | **2. GREEN** | :green_circle: | Write the MINIMUM code to pass | Do not optimize. Do not add features. Just make the test pass |
+      | **3. REFACTOR** | :large_blue_circle: | Clean up the code | Remove duplication, improve names — but don't change behavior. All tests must still pass |
+
+      **Critical misconception:** You do NOT write all your tests first. You write **one test**, make it pass, refactor, then write the **next** test. One cycle at a time.
+
+      ## Worked Example: WordCounter
+
+      Let's build a `WordCounter` class using TDD. We will walk through one full cycle together, then you will continue.
+
+      ### Cycle 1: Count words in a simple sentence (WORKED EXAMPLE)
+
+      **RED** — Write a test that describes the behavior we want:
+      ```python
+      # Sub-goal: Define WHAT we want (the interface + expected behavior)
+      def test_count_words_simple():
+          counter = WordCounter()
+          result = counter.count("hello world")
+          assert result == {"hello": 1, "world": 1}
+      ```
+      Run this test — it fails because `WordCounter` does not exist yet. This is the **RED** phase. The failure is expected and correct.
+
+      **GREEN** — Write the *minimum* code to make it pass:
+      ```python
+      # Sub-goal: Write just enough code to pass the test
+      class WordCounter:
+          def count(self, text):
+              words = text.split()
+              result = {}
+              for word in words:
+                  result[word] = result.get(word, 0) + 1
+              return result
+      ```
+      Run the test again — it passes. This is the **GREEN** phase.
+
+      **REFACTOR** — The code is clean enough for now, so no refactoring needed. All tests still pass.
+
+      ### Task
+
+      Open `test_word_counter.py`. Cycle 1's test is already provided.
+
+      1. **SEE RED FIRST:** Click **Run** on `test_word_counter.py` *before writing any code*. You should see the test FAIL with an `ImportError` — this IS the RED phase. The test describes behavior that does not exist yet. This failure is expected and correct.
+      2. **Go GREEN:** Now write the `WordCounter` class in `word_counter.py` to make the test pass. Run again — you should see GREEN.
+      3. **Cycle 2:** Complete `test_count_repeated_words` (partially scaffolded). Run the tests — the new test should FAIL (RED). Then update your implementation if needed to pass it (GREEN).
+      4. **REFACTOR:** After Cycle 2 passes, look at your `count()` method. If you used a manual dictionary loop, try refactoring to use Python's `collections.Counter` — which does the same thing in one line. Run the tests after refactoring to confirm they still pass. This is the REFACTOR phase: improve the code without changing behavior.
+      5. **Cycle 3:** Write `test_count_empty_string` entirely on your own. What should `count("")` return? Decide, write the test, see it fail, then make it pass.
+
+      **Important:** Always run the tests and see RED before writing implementation. If you skip this step, you cannot be sure your test is actually testing something.
+
+    files:
+      - path: "word_counter.py"
+        content: |
+          # TODO: Implement the WordCounter class here.
+          # It should have a count(text) method that returns
+          # a dictionary of {word: count} for each word in the text.
+        language: "python"
+
+      - path: "test_word_counter.py"
+        content: |
+          """TDD for WordCounter — practice the Red-Green-Refactor rhythm."""
+          import pytest
+          from word_counter import WordCounter
+
+
+          # --- Cycle 1 (test provided — see RED first, then write implementation to go GREEN) ---
+          def test_count_words_simple():
+              """A simple sentence with no repeated words."""
+              counter = WordCounter()
+              result = counter.count("hello world")
+              assert result == {"hello": 1, "world": 1}
+
+
+          # --- Cycle 2 (partially scaffolded — complete the assertion) ---
+          def test_count_repeated_words():
+              """A sentence with repeated words should count each occurrence."""
+              counter = WordCounter()
+              result = counter.count("the cat sat on the mat")
+              # TODO: assert that 'the' appears 2 times and 'cat' appears 1 time
+              # Hint: assert result["the"] == ??? and result["cat"] == ???
+              pass
+
+
+          # --- Cycle 3 (write this test entirely on your own) ---
+          # TODO: Write test_count_empty_string
+          # What should counter.count("") return? Decide, then test it.
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_word_counter.py"
+
+    tests:
+      - description: "WordCounter class exists and is importable"
+        command: |
+          exec(open('/tutorial/word_counter.py').read())
+          assert 'WordCounter' in dir() or 'WordCounter' in open('/tutorial/word_counter.py').read(), \
+              "Define a class called WordCounter in word_counter.py"
+      - description: "test_count_words_simple passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_word_counter.py::test_count_words_simple', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"test_count_words_simple failed:\n{output}"
+      - description: "test_count_repeated_words has a real assertion (not just pass)"
+        command: |
+          source = open('/tutorial/test_word_counter.py').read()
+          func_body = source.split('test_count_repeated_words')[1].split('def ')[0]
+          assert 'assert' in func_body, \
+              "Replace 'pass' in test_count_repeated_words with an assert statement"
+      - description: "test_count_repeated_words passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_word_counter.py::test_count_repeated_words', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"test_count_repeated_words failed:\n{output}"
+      - description: "test_count_empty_string function exists"
+        command: |
+          source = open('/tutorial/test_word_counter.py').read()
+          assert 'def test_count_empty_string' in source, \
+              "Write a test function called test_count_empty_string"
+      - description: "All tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_word_counter.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests failed:\n{output}"
+
+    quiz:
+      title: "Red-Green-Refactor — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A student writes five test functions, then starts implementing the code to make them all pass at once. What is wrong with this approach?
+          type: single
+          options:
+            - "Nothing is wrong — writing all tests first gives you a complete specification before you start coding, which mirrors how requirements docs work in waterfall"
+            - "TDD requires writing ONE test at a time. Writing all tests first loses the incremental feedback each cycle provides for guiding design"
+            - "Five tests is too many for one function — each function should have at most two or three well-chosen tests to keep the suite maintainable"
+            - "The tests should be in a separate file from the implementation, but the ordering of writing tests vs code does not affect the final result"
+          correct_index: 1
+          explanation: |
+            TDD's power comes from the rapid feedback loop. Each cycle (one test at a time)
+            tells you something about your design. If you write all tests upfront, you
+            lose this feedback and often end up with tests that don't match the final design.
+
+        - question: |
+            In the GREEN phase, a developer writes optimized, production-ready code. Is this correct?
+          type: single
+          options:
+            - "Yes — you should always write the best possible code since you are already in the flow"
+            - "No — GREEN means writing the MINIMUM code to pass. Optimization belongs in the REFACTOR phase"
+            - "No — the GREEN phase is only for writing comments and docstrings, not implementation"
+            - "Yes — as long as the test passes, writing extra code upfront saves time in later cycles"
+          correct_index: 1
+          explanation: |
+            The GREEN phase is about making the test pass as quickly and simply as possible.
+            Resist the urge to optimize or add features. The REFACTOR phase is where you
+            clean up, remove duplication, and improve the design — with all tests still passing.
+
+        - question: |
+            **Analyze:** A teammate says *"TDD is just a way to write more tests."* How would you correct this?
+          type: single
+          options:
+            - "They are right — TDD's primary goal is increasing test coverage to catch more bugs before release"
+            - "TDD is a design technique: writing the test first forces you to define the interface and behavior before implementation"
+            - "TDD actually reduces the number of tests by focusing on only the most critical paths through the code"
+            - "TDD is primarily a refactoring technique — the tests are just a safety net for the refactoring phase"
+          correct_index: 1
+          explanation: |
+            This is the threshold concept in TDD: it is a design technique, not a testing technique.
+            The test forces you to think about the public interface (how will I call this?)
+            and expected behavior (what should it return?) before you write any implementation.
+            This produces better-designed, more modular code as a natural consequence.
+
+        - question: |
+            What is the correct order of the TDD cycle?
+          type: single
+          options:
+            - "Green → Red → Refactor"
+            - "Refactor → Red → Green"
+            - "Red → Green → Refactor"
+            - "Red → Refactor → Green"
+          correct_index: 2
+          explanation: |
+            RED (write a failing test) → GREEN (write minimum code to pass) → REFACTOR (clean up).
+            The order matters: you must see the test fail first to confirm it is testing something real.
+            If a test passes immediately, it is not testing new behavior — this is the "Success Against
+            All Odds" anti-pattern.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — TDD Kata: FizzBuzz
+  # Pedagogy:
+  #   PPP Framework     — Presentation → Practice → Production via fading.
+  #   Fading            — 4 cycles with decreasing scaffolding.
+  #   Component → Integration — combine test-writing + implementation.
+  #   Bloom's level     — Apply / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "TDD Kata: FizzBuzz"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **apply** the Red-Green-Refactor cycle independently across multiple iterations with fading scaffolding.
+
+      ## The FizzBuzz Kata
+
+      A "kata" is a small, focused exercise designed to practice the TDD rhythm. We will build the classic FizzBuzz function using **four TDD cycles**, with the scaffolding fading at each step:
+
+      **FizzBuzz rules:**
+      - If divisible by 3 → return `"Fizz"`
+      - If divisible by 5 → return `"Buzz"`
+      - If divisible by both 3 and 5 → return `"FizzBuzz"`
+      - Otherwise → return the number as a string (e.g., `"1"`, `"2"`)
+
+      ### Cycle 1: Regular numbers (FULL WORKED EXAMPLE)
+
+      The first test and implementation are **provided for you**. Study how the cycle works:
+
+      **RED:** `test_returns_number_as_string` checks that `fizzbuzz(1)` returns `"1"` and `fizzbuzz(2)` returns `"2"`.
+
+      **GREEN:** The simplest implementation is `return str(number)`.
+
+      **REFACTOR:** Nothing to refactor yet.
+
+      Run the tests to confirm Cycle 1 passes (GREEN).
+
+      **Self-check:** Why does the Cycle 1 implementation use `return str(number)` instead of a more complete solution? What TDD principle does this follow? (Answer: the GREEN phase requires writing the *minimum* code to pass the current test. We do not add logic for requirements that have no test yet.)
+
+      ### Cycle 2: Fizz (PARTIAL SCAFFOLD)
+
+      The test `test_fizz_for_multiples_of_3` is written for you. Your job:
+      1. Run the tests — you should see this new test **FAIL** (RED)
+      2. Modify `fizzbuzz()` in `fizzbuzz.py` to make it pass (GREEN)
+      3. Refactor if needed
+
+      ### Cycle 3: Buzz (HINT ONLY)
+
+      Write `test_buzz_for_multiples_of_5` yourself. The function signature is provided — fill in the assertions. **Run the tests and see RED first**, then write the implementation to go GREEN.
+
+      ### Cycle 4: FizzBuzz (INDEPENDENT)
+
+      Write `test_fizzbuzz_for_multiples_of_15` and the corresponding implementation entirely on your own. Full TDD cycle, no scaffolding. **Start with the test. See RED. Then go GREEN.**
+
+      **Remember the rhythm:** RED (see it fail) → GREEN (make it pass) → REFACTOR (clean up).
+
+    files:
+      - path: "fizzbuzz.py"
+        content: |
+          def fizzbuzz(number):
+              """Return FizzBuzz result for the given number.
+
+              Rules:
+              - Divisible by 3 -> "Fizz"
+              - Divisible by 5 -> "Buzz"
+              - Divisible by both 3 and 5 -> "FizzBuzz"
+              - Otherwise -> the number as a string
+              """
+              # TODO: Add Fizz/Buzz/FizzBuzz logic ABOVE the return below.
+              # Each cycle should add a new condition.
+              return str(number)
+        language: "python"
+
+      - path: "test_fizzbuzz.py"
+        content: |
+          """TDD Kata: FizzBuzz — practice the rhythm with fading scaffolding."""
+          import pytest
+          from fizzbuzz import fizzbuzz
+
+
+          # --- Cycle 1 (FULL WORKED EXAMPLE — provided) ---
+          def test_returns_number_as_string():
+              assert fizzbuzz(1) == "1"
+              assert fizzbuzz(2) == "2"
+              assert fizzbuzz(4) == "4"
+
+
+          # --- Cycle 2 (PARTIAL SCAFFOLD — test provided, write the implementation) ---
+          def test_fizz_for_multiples_of_3():
+              assert fizzbuzz(3) == "Fizz"
+              assert fizzbuzz(6) == "Fizz"
+              assert fizzbuzz(9) == "Fizz"
+
+
+          # --- Cycle 3 (HINT ONLY — write the assertions and implementation) ---
+          def test_buzz_for_multiples_of_5():
+              # TODO: assert that fizzbuzz(5), fizzbuzz(10), fizzbuzz(20)
+              # all return "Buzz"
+              pass
+
+
+          # --- Cycle 4 (INDEPENDENT — write this test from scratch) ---
+          # TODO: Write test_fizzbuzz_for_multiples_of_15
+          # Test that fizzbuzz(15), fizzbuzz(30), fizzbuzz(45) return "FizzBuzz"
+          # Then update fizzbuzz.py to make it pass.
+          # Hint: If using if/elif, check divisibility by 15 BEFORE 3 or 5. Why?
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_fizzbuzz.py"
+
+    tests:
+      - description: "Cycle 1 passes — regular numbers return as strings"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py::test_returns_number_as_string', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Cycle 1 failed:\n{output}"
+      - description: "Cycle 2 passes — multiples of 3 return 'Fizz'"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py::test_fizz_for_multiples_of_3', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Cycle 2 failed:\n{output}"
+      - description: "Cycle 3 — test_buzz_for_multiples_of_5 has real assertions"
+        command: |
+          source = open('/tutorial/test_fizzbuzz.py').read()
+          func_body = source.split('test_buzz_for_multiples_of_5')[1].split('def ')[0]
+          assert 'assert' in func_body, \
+              "Replace 'pass' in test_buzz_for_multiples_of_5 with assert statements"
+      - description: "Cycle 3 passes — multiples of 5 return 'Buzz'"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py::test_buzz_for_multiples_of_5', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Cycle 3 failed:\n{output}"
+      - description: "Cycle 4 — test_fizzbuzz_for_multiples_of_15 exists"
+        command: |
+          source = open('/tutorial/test_fizzbuzz.py').read()
+          assert 'def test_fizzbuzz_for_multiples_of_15' in source, \
+              "Write a test function called test_fizzbuzz_for_multiples_of_15"
+      - description: "Cycle 4 passes — multiples of 15 return 'FizzBuzz'"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py::test_fizzbuzz_for_multiples_of_15', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Cycle 4 failed:\n{output}"
+      - description: "All FizzBuzz tests pass together"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests failed:\n{output}"
+
+    quiz:
+      title: "TDD Kata — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Why do we add one test at a time instead of writing all four FizzBuzz tests upfront?
+          type: single
+          options:
+            - "Writing fewer tests at a time reduces the total number of tests you need to maintain"
+            - "Each test drives a small, incremental design decision. Writing all tests first loses the feedback each cycle provides"
+            - "pytest can only discover and execute one test function per run, so you must add them sequentially"
+            - "It does not matter — both approaches produce the same code and the same test suite"
+          correct_index: 1
+          explanation: |
+            Incremental test-writing is the heart of TDD. Each test cycle gives you feedback:
+            "Does this design still work? Do I need to refactor?" Writing all tests first
+            is essentially waterfall planning disguised as TDD.
+
+        - question: |
+            You write a new test and run it. It **passes immediately** without you changing any code. What should you do?
+          type: single
+          options:
+            - "Celebrate — your existing code already handles this case, so you are ahead of schedule and can move to the next feature"
+            - "Be suspicious — a test that passes without new code may not be testing anything meaningful. Verify it checks real behavior"
+            - "Delete the test immediately since it is clearly redundant — keeping it would slow down future test runs without adding safety"
+            - "Move on to the next test — a passing test always indicates correct behavior, and questioning it wastes time"
+          correct_index: 1
+          explanation: |
+            If a test passes immediately, it means one of two things: (1) the behavior was
+            already implemented by a previous cycle (which is fine — but verify), or (2) the
+            test is not actually testing what you think. Always see RED first to confirm the
+            test is meaningful.
+
+        - question: |
+            If you use `if/elif` to implement FizzBuzz, why should you check divisibility by 15 **before** checking 3 or 5?
+          type: single
+          options:
+            - "15 is a larger number — Python convention is to order conditionals from largest to smallest"
+            - "15 is divisible by both 3 and 5, so checking 3 first returns 'Fizz' instead of 'FizzBuzz' — the first matching branch wins"
+            - "Python evaluates if/elif branches in parallel, so the most specific condition must come first for performance"
+            - "The order does not matter — Python's `elif` evaluates all branches and picks the most specific match"
+          correct_index: 1
+          explanation: |
+            With `if/elif`, the first matching branch executes and the rest are skipped. Since
+            15 is divisible by both 3 and 5, checking `if number % 3 == 0` first would return
+            "Fizz" and never reach the 15 check. The most specific condition must come first.
+            (Note: the string-concatenation approach from Step 5 avoids this issue entirely
+            because it uses two separate `if` statements instead of `elif`.)
+
+        - question: |
+            **(Spaced review — Step 2)** A test function is named `def check_fizzbuzz():`. Will pytest discover and run it?
+          type: single
+          options:
+            - "Yes — pytest runs all functions in test files"
+            - "No — pytest only discovers functions whose names start with `test_`"
+            - "Yes — but only if you pass the function name explicitly"
+            - "No — pytest requires class-based tests"
+          correct_index: 1
+          explanation: |
+            pytest auto-discovers functions starting with `test_`. A function named
+            `check_fizzbuzz` would be silently ignored — a common mistake that leads
+            to tests never running without the developer realizing it.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — Test Behavior, Not Implementation
+  # Pedagogy:
+  #   Negative Transfer   — CS1 instinct to test line-by-line.
+  #   Anti-pattern        — The Nitpicker (from PDF taxonomy).
+  #   Bloom's level       — Analyze / Evaluate (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Test Behavior, Not Implementation"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **distinguish** between brittle (implementation-coupled) and robust (behavior-focused) tests, and **explain** why this matters for refactoring.
+
+      ## The Key Principle
+
+      > **Test what a function DOES, not how it does it.**
+
+      A **brittle test** breaks when you change the internal implementation, even if the behavior is unchanged. A **robust test** only breaks when the actual behavior changes.
+
+      ### Example: Two Ways to Test the Same Function
+
+      Consider testing a function that sorts a list of students by GPA:
+
+      ```python
+      # BRITTLE — tests implementation details
+      def test_sort_brittle():
+          sorter = StudentSorter()
+          sorter.sort(students)
+          # Checks internal state — breaks if we rename the field
+          assert sorter._sorted_list[0].name == "Alice"
+          assert sorter._comparison_count == 3  # Why do we care?
+
+      # ROBUST — tests behavior
+      def test_sort_robust():
+          sorter = StudentSorter()
+          result = sorter.sort(students)
+          # Checks what the function RETURNS — the observable behavior
+          assert result[0].gpa >= result[1].gpa  # Sorted descending
+          assert len(result) == len(students)     # No items lost
+      ```
+
+      The brittle test will break if you rename `_sorted_list` or change the sort algorithm (even to a faster one). The robust test only cares about the result.
+
+      ### The Refactoring Litmus Test
+
+      Here is a simple rule: **if you refactor the internals of a function and all tests still pass, your tests are robust.** If tests break after a pure refactoring (no behavior change), they are testing implementation.
+
+      ### Task 1: Spot the Brittle Tests
+
+      Open `test_brittle_audit.py`. It contains four tests for a simple `ShoppingCart` class. **Two tests are brittle** (they test implementation details) and **two are robust** (they test behavior). Your job:
+
+      1. Read each test carefully
+      2. Identify which two are brittle and which two are robust
+      3. Fix the two brittle tests by rewriting them to test behavior instead of implementation
+      4. Run the tests to confirm they all pass
+
+      ### Task 2: The Refactoring Litmus Test
+
+      Now refactor your FizzBuzz from Step 4 using a different approach — for example, string concatenation instead of `if/elif`:
+      ```python
+      def fizzbuzz(number):
+          result = ""
+          if number % 3 == 0:
+              result += "Fizz"
+          if number % 5 == 0:
+              result += "Buzz"
+          return result or str(number)
+      ```
+      Run `test_fizzbuzz.py` — all tests should still pass, proving they test *behavior*, not *implementation*.
+
+    files:
+      - path: "shopping_cart.py"
+        content: |
+          class ShoppingCart:
+              def __init__(self):
+                  self._items = []
+
+              def add(self, name, price):
+                  self._items.append({"name": name, "price": price})
+
+              def total(self):
+                  return sum(item["price"] for item in self._items)
+
+              def item_count(self):
+                  return len(self._items)
+
+              def items(self):
+                  return [item["name"] for item in self._items]
+        language: "python"
+
+      - path: "test_brittle_audit.py"
+        content: |
+          """AUDIT: Two of these tests are brittle. Find and fix them."""
+          import pytest
+          from shopping_cart import ShoppingCart
+
+
+          # Test 1
+          def test_add_item_updates_count():
+              cart = ShoppingCart()
+              cart.add("Apple", 1.50)
+              assert cart.item_count() == 1
+
+
+          # Test 2 — BRITTLE? Check if this tests behavior or implementation.
+          def test_add_item_internal_list():
+              cart = ShoppingCart()
+              cart.add("Apple", 1.50)
+              # Accesses private attribute directly
+              assert cart._items[0]["name"] == "Apple"
+              assert cart._items[0]["price"] == 1.50
+
+
+          # Test 3
+          def test_total_sums_prices():
+              cart = ShoppingCart()
+              cart.add("Apple", 1.50)
+              cart.add("Bread", 2.00)
+              assert cart.total() == 3.50
+
+
+          # Test 4 — BRITTLE? Check if this tests behavior or implementation.
+          def test_internal_list_length():
+              cart = ShoppingCart()
+              cart.add("Apple", 1.50)
+              cart.add("Bread", 2.00)
+              # Accesses private attribute directly
+              assert len(cart._items) == 2
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_brittle_audit.py"
+
+    tests:
+      - description: "Brittle tests have been fixed (no private attribute access)"
+        command: |
+          source = open('/tutorial/test_brittle_audit.py').read()
+          assert '._items' not in source, \
+              "Your tests still access the private attribute `_items`. Rewrite them to use public methods like item_count(), total(), or items() instead."
+      - description: "All audit tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_brittle_audit.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests failed:\n{output}"
+      - description: "FizzBuzz has been refactored"
+        command: |
+          source = open('/tutorial/fizzbuzz.py').read()
+          assert 'Fizz' in source, \
+              "Refactor your fizzbuzz.py using a different approach (e.g., string concatenation)"
+      - description: "All FizzBuzz tests still pass after refactoring"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_fizzbuzz.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Tests broke after refactoring — your tests may be too brittle:\n{output}"
+
+    quiz:
+      title: "Behavior vs. Implementation — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Which test is **more robust**?
+
+            **Test A:**
+            ```python
+            def test_sort_a():
+                result = sort_names(["Charlie", "Alice", "Bob"])
+                assert result == ["Alice", "Bob", "Charlie"]
+            ```
+
+            **Test B:**
+            ```python
+            def test_sort_b():
+                result = sort_names(["Charlie", "Alice", "Bob"])
+                assert result[0] < result[1] < result[2]
+                assert len(result) == 3
+            ```
+          type: single
+          options:
+            - "Test A — checking the exact output is the most thorough way to verify correctness, and any deviation from the expected list reveals a bug immediately"
+            - "Test B — it verifies the behavioral property (sorted order) without hard-coding values, making it resilient to input changes"
+            - "Both are equally robust since they both test the same function with the same input data and would catch the same bugs"
+            - "Neither is robust — both tests should use mock objects to isolate the sort implementation from the comparison logic"
+          correct_index: 1
+          explanation: |
+            Test A is fine for this specific input, but Test B expresses the *property* that matters:
+            the output is sorted and the same length. If you add a fourth name to the input,
+            Test A breaks but Test B still works. Robust tests verify behavioral properties.
+
+        - question: |
+            You refactor a function's internal algorithm (from bubble sort to quicksort) without changing its return value. Two of your tests break. What does this tell you?
+          type: single
+          options:
+            - "The refactoring introduced a bug — changing the algorithm likely changed the output in a subtle way"
+            - "The broken tests are testing implementation details rather than behavior. They should be rewritten to assert on outputs"
+            - "You should revert the refactoring since passing tests must never be broken, even temporarily"
+            - "The tests are too strict — you should lower the assertion precision or add tolerance margins"
+          correct_index: 1
+          explanation: |
+            If the function's behavior (inputs → outputs) is unchanged but tests break,
+            those tests are coupled to the implementation. This is the "Nitpicker" anti-pattern.
+            The fix is to rewrite the tests to assert on observable behavior, not internal details.
+
+        - question: |
+            **(Spaced review — Step 3)** A developer writes a test, sees it fail, then writes code to make it pass. Now she renames a variable for clarity and re-runs the tests. Which TDD phase is she in?
+          type: single
+          options:
+            - "RED — she is writing a new failing test"
+            - "GREEN — she is making the test pass with new logic"
+            - "REFACTOR — she is improving code structure without changing behavior, while keeping tests passing"
+            - "She is not following TDD — renaming is not part of the cycle"
+          correct_index: 2
+          explanation: |
+            Renaming a variable for clarity without changing behavior is a textbook REFACTOR.
+            The key: all tests still pass before and after. RED (failing test) → GREEN (pass) →
+            REFACTOR (clean up, tests still pass). She completed GREEN and is now in REFACTOR.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — TDD Kata: Password Validator
+  # Pedagogy:
+  #   Production phase   — PPP framework, full scaffolding removal.
+  #   Generation Effect   — desirable difficulty, blank slate.
+  #   Bloom's level       — Apply / Create (quiz).
+  # --------------------------------------------------------------------------
+  - title: "TDD Kata: Password Validator"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **independently apply** the full TDD cycle — writing tests first, then implementation — for a new problem.
+
+      ## The Production Phase
+
+      This is the real test of your TDD skills. You will receive **requirements** and a minimal scaffold — a stub function and one example test. The rest is up to you.
+
+      ## Requirements: `validate_password(password)`
+
+      Build a function that validates passwords. It should return a tuple: `(is_valid, message)`.
+
+      | Rule | Valid Example | Invalid Example |
+      |------|--------------|-----------------|
+      | At least 8 characters | `"SecureP1"` | `"Short1"` |
+      | Contains at least one uppercase letter | `"Password1"` | `"password1"` |
+      | Contains at least one digit | `"Password1"` | `"Password"` |
+
+      **Return values:**
+      - Valid: `(True, "Valid")`
+      - Invalid: `(False, "<reason>")` — e.g., `(False, "Password must be at least 8 characters")`
+
+      ## Your TDD Workflow
+
+      The first test (`test_valid_password`) is provided as scaffolding. Your job:
+
+      1. **Write at least 3 more test functions** in `test_password.py` — one for each rule (too short, missing uppercase, missing digit). The function signatures are suggested in the comments.
+      2. **Run tests** — they should all FAIL (RED) since `password.py` only has a stub
+      3. **Implement `validate_password()`** in `password.py` to make tests pass (GREEN)
+      4. **Refactor** if needed
+
+      ### If You Feel Stuck
+
+      That is completely normal. Writing tests for something that does not exist yet feels backward at first. Every TDD practitioner felt this way initially. Focus on what the function *should return* for each input — that is all a test needs to express.
+
+      **Remember:** Write the tests *before* the implementation. This forces you to design the interface (function name, parameters, return type) before writing any logic.
+
+    files:
+      - path: "password.py"
+        content: |
+          def validate_password(password):
+              """Validate a password against security rules.
+
+              Returns:
+                  (True, "Valid") if all rules pass.
+                  (False, "reason") if a rule is violated.
+              """
+              # TODO: Replace this stub with real validation logic.
+              # The stub returns a failing tuple so tests show clean RED.
+              return (False, "Not implemented")
+        language: "python"
+
+      - path: "test_password.py"
+        content: |
+          """TDD Kata: Password Validator — write your tests FIRST."""
+          import pytest
+          from password import validate_password
+
+
+          # Here is the first test as an example (the "happy path"):
+          def test_valid_password():
+              is_valid, message = validate_password("SecureP1")
+              assert is_valid is True
+              assert message == "Valid"
+
+
+          # TODO: Write at least 3 more test functions below.
+          # Each test should check ONE validation rule:
+          #
+          # def test_rejects_short_password():
+          #     ...
+          #
+          # def test_rejects_missing_uppercase():
+          #     ...
+          #
+          # def test_rejects_missing_digit():
+          #     ...
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_password.py"
+
+    tests:
+      - description: "test_password.py contains at least 4 test functions"
+        command: |
+          source = open('/tutorial/test_password.py').read()
+          test_count = source.count('def test_')
+          assert test_count >= 4, \
+              f"Write at least 4 test functions (found {test_count}). Test valid passwords, too-short, missing uppercase, and missing digit."
+      - description: "validate_password function exists"
+        command: |
+          source = open('/tutorial/password.py').read()
+          assert 'def validate_password' in source, \
+              "Implement the validate_password function in password.py"
+      - description: "All student tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_password.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Your tests failed:\n{output}"
+      - description: "Valid passwords are accepted"
+        command: |
+          exec(open('/tutorial/password.py').read())
+          result = validate_password("SecureP1")
+          assert result[0] is True, f"Expected (True, ...) for 'SecureP1', got {result}"
+      - description: "Too-short passwords are rejected"
+        command: |
+          exec(open('/tutorial/password.py').read())
+          result = validate_password("Short1")
+          assert result[0] is False, f"Expected (False, ...) for 'Short1', got {result}"
+      - description: "Passwords without uppercase are rejected"
+        command: |
+          exec(open('/tutorial/password.py').read())
+          result = validate_password("password1")
+          assert result[0] is False, f"Expected (False, ...) for 'password1', got {result}"
+      - description: "Passwords without digits are rejected"
+        command: |
+          exec(open('/tutorial/password.py').read())
+          result = validate_password("Password")
+          assert result[0] is False, f"Expected (False, ...) for 'Password', got {result}"
+
+    quiz:
+      title: "Independent TDD — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A student's test for the password validator looks like this:
+            ```python
+            def test_password():
+                assert validate_password("SecureP1") == (True, "Valid")
+                assert validate_password("short") == (False, "Password must be at least 8 characters")
+                assert validate_password("nouppercase1") == (False, "Password must contain an uppercase letter")
+                assert validate_password("NoDigits") == (False, "Password must contain a digit")
+            ```
+            What is the problem with this approach?
+          type: single
+          options:
+            - "Nothing — grouping related assertions keeps the suite compact, and pytest shows the line number of the failure so you can find it easily"
+            - "All four assertions are in one function. If the first fails, the rest never run — hiding failures. Each rule should be its own function"
+            - "The test is too long — each assertion should use a helper function to reduce duplication and improve the overall readability of the test suite"
+            - "The function name `test_password` is too generic — renaming it to something like `test_all_password_rules` would fix the issue"
+          correct_index: 1
+          explanation: |
+            Each `assert` should be in its own test function so you can see exactly which
+            rule failed. If `test_password()` fails on line 2, you don't know if lines 3 and 4
+            would also fail. Separate test functions give you precise, independent feedback.
+
+        - question: |
+            You are writing a test for a new feature, but you find it very difficult to set up the test — you need to create five objects and configure them just to call one function. What does this difficulty tell you?
+          type: single
+          options:
+            - "Testing is inherently hard for complex features — invest the setup time because the safety net is worth the effort in the long run"
+            - "The difficulty is diagnostic: the function is too tightly coupled. 'Listen to the test' — simplify the design to make testing easier"
+            - "Skip the test for this function and document the expected behavior in detailed comments and docstrings instead"
+            - "Use mocking and dependency injection to isolate the function from its five dependencies, leaving the design unchanged"
+          correct_index: 1
+          explanation: |
+            This is the "listen to the test" principle. When a test is hard to write, the
+            function's design is often the problem. A function that requires complex setup
+            usually has too many responsibilities or hidden dependencies. TDD uses this
+            pain as architectural feedback — simplify the design, and the test becomes easy.
+
+        - question: |
+            **(Spaced review — Step 1)** A PM says: *"We have 95% test coverage, so we can skip manual QA for this release."* What is wrong with this reasoning?
+          type: single
+          options:
+            - "95% is too low — you need 100% line coverage to have confidence that every behavior is verified and QA can be skipped"
+            - "Coverage measures which lines were executed, not whether assertions are meaningful — tests can cover code without verifying behavior"
+            - "Manual QA is always required regardless of coverage, because automated tests and human testers catch fundamentally different issues"
+            - "Nothing is wrong — 95% coverage statistically guarantees that fewer than 5% of behaviors contain bugs"
+          correct_index: 1
+          explanation: |
+            High coverage does not mean high quality. A test that executes a function but
+            only asserts `True` covers the code but verifies nothing. Coverage is a
+            necessary but not sufficient condition for quality. This connects to Step 1:
+            tests show the presence of bugs, never their absence.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — The Big Picture
+  # Pedagogy:
+  #   Metacognitive reflection — evaluate when to use TDD.
+  #   Anti-pattern identification — recognize code smells.
+  #   Spaced review — questions from earlier steps.
+  #   Bloom's level — Evaluate (quiz).
+  # --------------------------------------------------------------------------
+  - title: "The Big Picture"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **evaluate** when TDD is appropriate, **identify** common TDD anti-patterns, and **articulate** the key principles you learned.
+
+      ## When TDD Shines
+
+      TDD is most valuable when:
+      - Building **new features** with clear behavioral requirements
+      - Working with **complex logic** (validation, calculation, state machines)
+      - Designing **APIs and interfaces** — the test forces you to think from the caller's perspective
+      - Working on a **team** — tests document expected behavior for other developers
+
+      ## When TDD is Overkill
+
+      TDD is less useful for:
+      - **One-off scripts** — quick data transformations you will use once
+      - **Exploratory prototyping** — when you are still figuring out the problem
+      - **UI layout code** — visual correctness is hard to assert programmatically
+
+      Even in these cases, *some* tests are almost always valuable. The question is whether to write them *first*.
+
+      ## The Residual Effect
+
+      Research shows that students who learn TDD properly continue to write **significantly more tests** in future projects, even when not explicitly asked to. TDD doesn't just teach testing — it permanently shifts how you think about code quality.
+
+      ## Key Takeaways
+
+      1. **TDD is a design technique**, not a testing technique — tests are a valuable byproduct
+      2. **Red-Green-Refactor** — one test at a time, in short iterations
+      3. **Test behavior, not implementation** — if refactoring breaks tests, the tests are brittle
+      4. **Listen to the test** — difficulty writing a test is diagnostic feedback about your design
+      5. **The ratchet** — each passing test locks in progress permanently
+
+      ## What's Next
+
+      This tutorial covered the fundamentals. In more advanced TDD work, you will encounter:
+      - **`@pytest.mark.parametrize`** — test multiple inputs without duplicate test functions
+      - **Fixtures** — reusable test setup with `@pytest.fixture`
+      - **Mocking** — isolate code from external dependencies (databases, APIs)
+      - **The Double Loop** — outer acceptance tests + inner unit tests (from "Obey the Testing Goat")
+
+      ### Final Exercise: Diagnose This Test Suite
+
+      Open `test_diagnose.py`. It contains a test suite written by a junior developer. Read each test and identify which TDD principle it violates (if any). Add a `# VERDICT:` comment to each test function explaining your analysis. This is not graded — it is a reflection exercise.
+
+    files:
+      - path: "test_diagnose.py"
+        content: |
+          """Diagnose: Which principles does each test violate (if any)?"""
+          import pytest
+
+
+          # --- Test 1 ---
+          def test_login_system():
+              """Tests login, logout, session, and password reset all in one."""
+              user = {"username": "alice", "password": "Secret1"}
+              assert authenticate(user["username"], user["password"]) == True
+              assert create_session(user["username"]) is not None
+              assert logout(user["username"]) == True
+              assert reset_password(user["username"], "NewSecret1") == True
+              # VERDICT: (your analysis here)
+
+
+          # --- Test 2 ---
+          def test_add_returns_sum():
+              assert add(2, 3) == 5
+              # VERDICT: (your analysis here)
+
+
+          # --- Test 3 ---
+          def test_user_internals():
+              user = User("Bob")
+              assert user._internal_id is not None
+              assert user._created_at is not None
+              # VERDICT: (your analysis here)
+
+
+          # --- Test 4 ---
+          def test_divide_by_zero():
+              result = safe_divide(10, 0)
+              assert result is None
+              # VERDICT: (your analysis here)
+        language: "python"
+
+    quiz:
+      title: "The Big Picture — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            **Evaluate:** For which scenario is TDD **most** beneficial?
+          type: single
+          options:
+            - "Writing a quick one-off script to rename 100 files, where the logic is straightforward and unlikely to change"
+            - "Implementing a payment processing module with complex validation rules that must be correct"
+            - "Experimenting with a new plotting library to explore its API and see what visualizations it can produce"
+            - "Writing CSS for a landing page where visual correctness is judged by eye, not by assertions"
+          correct_index: 1
+          explanation: |
+            Payment processing has complex logic, strict correctness requirements, and is
+            modified by multiple developers over time. TDD excels here because the tests
+            specify exact behavior and prevent regressions. The other scenarios are either
+            too exploratory or too visual for TDD to add significant value.
+
+        - question: |
+            A student's test file contains a single function with 20 assertions testing five different behaviors. Another student has five functions with four assertions each. Which approach is better, and why?
+          type: single
+          options:
+            - "The single function — keeping all assertions together makes the file shorter and guarantees they run in a predictable sequential order"
+            - "Five functions — each isolates one behavior, so a failure pinpoints which broke. The single function hides failures after the first"
+            - "Both are equivalent — pytest reports the exact line number of every failure regardless of how you organize the test functions"
+            - "Neither — 20 assertions across any number of functions is too many and will slow down the test suite significantly"
+          correct_index: 1
+          explanation: |
+            Test isolation is a core TDD principle. One test function = one behavior = one
+            potential failure point. When `test_valid_password` fails but `test_missing_digit`
+            passes, you know exactly where the problem is. A monolithic test function hides
+            this information behind the first failure.
+
+        - question: |
+            **(Anti-pattern identification)** A developer writes this test:
+            ```python
+            def test_user_creation():
+                user = User("Alice", "alice@example.com")
+                assert user._name == "Alice"
+                assert user._email == "alice@example.com"
+                assert user._id is not None
+            ```
+            What anti-pattern is present?
+          type: single
+          options:
+            - "The test is too short — it should also verify that the user can log in and update their profile"
+            - "The test accesses private attributes (`_name`, `_email`, `_id`) — testing implementation instead of public behavior"
+            - "The test does not use `pytest.fixture` to set up the User object, which reduces reusability"
+            - "The test should use `assertEqual` instead of plain `assert` for more descriptive failure messages"
+          correct_index: 1
+          explanation: |
+            This is the "Nitpicker" anti-pattern. The test is coupled to the internal
+            representation (private attributes) rather than the public interface. A robust
+            test would check `user.name` (public property) or `str(user)` or whatever the
+            class exposes publicly. Internal details should be free to change without breaking tests.
+
+        - question: |
+            **(Spaced review — Step 3)** Two developers are arguing. Dev A says: *"I wrote the function first, then added tests — same result."* Dev B says: *"No, writing the test first changes the design."* Who is right, and why?
+          type: single
+          options:
+            - "Dev A — the final code is identical either way. The only difference is workflow preference, not the quality of the resulting design"
+            - "Dev B — writing the test first forces you to design the interface and behavior before implementation, producing more modular code"
+            - "Both are right — TDD and test-last produce the same code, but TDD catches regressions earlier in the development timeline"
+            - "Neither — the real value of TDD is the refactoring phase, and both approaches include refactoring regardless of test order"
+          correct_index: 1
+          explanation: |
+            Dev B is correct. Writing the test first means you must decide the function's name,
+            parameters, and return value BEFORE writing any implementation. This forces you to
+            think as a *caller* (API consumer) rather than an *implementer*. Research shows
+            TDD code tends to be more modular with smaller, more cohesive functions.

@@ -149,7 +149,7 @@ This page is a **reference guide** for Regular Expression syntax, engine mechani
   <div class="qr-card">
     <h3>Groups & Alternation</h3>
     <ul class="qr-list">
-      <li class="qr-item"><span class="qr-token">(...)</span><span class="qr-desc">Capturing group — treat as a single unit</span></li>
+      <li class="qr-item"><span class="qr-token">(...)</span><span class="qr-desc">Group — treat as a single unit</span></li>
       <li class="qr-item"><span class="qr-token">(a|b)</span><span class="qr-desc">Alternation — matches either a or b</span></li>
       <li class="qr-item"><span class="qr-token">(?&lt;name&gt;...)</span><span class="qr-desc">Named group — access by name, not number</span></li>
       <li class="qr-item"><span class="qr-token">(?:...)</span><span class="qr-desc">Non-capturing group</span></li>

@@ -141,7 +141,8 @@
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
         memoryMB: {{ page.memory_mb  | default: 256 }},
         fontSize: {{ page.font_size  | default: 14 }},
-        workerPath: '{{ "/js/pyodide-worker.js" | relative_url }}',
+        workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
+        sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
       });
       tutorial.start();
     });

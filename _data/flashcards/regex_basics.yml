@@ -22,7 +22,7 @@ cards:
     explanation: "If the caret is the very first character inside the brackets, it inverts the character class."  
 
   - id: 5  
-    question: "What meta character is used to match any single digit?"  
+    question: "What metacharacter is used to match any single digit?"
     answer: "`\\d`"  
     explanation: "This is the direct equivalent of the character class `[0-9]`."  
 

@@ -58,7 +58,7 @@
     sh: 'shell-sebook', bash: 'shell-sebook', zsh: 'shell-sebook',
     py: 'python', js: 'javascript', json: 'json',
     yml: 'yaml', yaml: 'yaml', md: 'markdown',
-    txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
+    css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
   };
 
@@ -84,7 +84,8 @@
       vmPath:     options.vmPath   || '/vm/dist',
       memoryMB:   options.memoryMB || 256,
       fontSize:   options.fontSize || 14,
-      workerPath: options.workerPath || '/js/pyodide-worker.js',
+      workerPath:    options.workerPath    || '/js/pyodide-worker.js',
+      sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview:  (backend === 'react'),    // live iframe preview for React tutorials
@@ -658,6 +659,7 @@
     if (backend === 'webcontainer') return this._initWebContainer();
     if (backend === 'react')        return this._initReactBackend();
     if (backend === 'browser')      return this._initBrowserBackend();
+    if (backend === 'sql')          return this._initSQL();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -811,6 +813,104 @@
     });
   };
 
+  // ---- SQL backend -----------------------------------------------------------
+  TutorialCode.prototype._initSQL = function () {
+    var self = this;
+    this._showLoading('Loading SQL runtime\u2026 (first load may take a moment)');
+    return new Promise(function (resolve, reject) {
+      self._worker = new Worker(self.config.sqlWorkerPath);
+
+      self._worker.onmessage = function (e) {
+        var msg = e.data;
+        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
+        if (msg.type === 'ready') {
+          self.booted = true;
+          var setupCmds = self.setupCommands;
+          if (setupCmds && setupCmds.length > 0) {
+            self._postWorker(
+              { type: 'runSQL', sql: setupCmds.join('\n'), silent: true },
+              function () { resolve(); }
+            );
+          } else {
+            resolve();
+          }
+          return;
+        }
+        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
+        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
+        if (msg.type === 'table')  { self._appendTable(msg.columns, msg.rows); return; }
+        if (msg.type === 'error')  { reject(new Error(msg.message)); return; }
+        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
+          var cb = self._workerCallbacks[msg.id];
+          delete self._workerCallbacks[msg.id];
+          cb(msg);
+        }
+      };
+
+      self._worker.onerror = function (err) {
+        reject(new Error('SQL worker error: ' + (err.message || err)));
+      };
+    });
+  };
+
+  /** Render a SQL result set as a table inside the output panel. */
+  TutorialCode.prototype._appendTable = function (columns, rows) {
+    if (!this.outputPre) return;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'tvm-sql-table-wrapper';
+
+    var table = document.createElement('table');
+    table.className = 'tvm-sql-table';
+
+    // Header
+    var thead = document.createElement('thead');
+    var headerTr = document.createElement('tr');
+    (columns || []).forEach(function (col) {
+      var th = document.createElement('th');
+      th.textContent = col;
+      headerTr.appendChild(th);
+    });
+    thead.appendChild(headerTr);
+    table.appendChild(thead);
+
+    // Body
+    var tbody = document.createElement('tbody');
+    if (rows && rows.length > 0) {
+      rows.forEach(function (row) {
+        var tr = document.createElement('tr');
+        row.forEach(function (cell) {
+          var td = document.createElement('td');
+          if (cell === null) { td.textContent = 'NULL'; td.classList.add('tvm-sql-null'); }
+          else { td.textContent = String(cell); }
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    } else {
+      var emptyTr = document.createElement('tr');
+      var emptyTd = document.createElement('td');
+      emptyTd.colSpan = (columns || []).length || 1;
+      emptyTd.className = 'tvm-sql-empty';
+      emptyTd.textContent = '(0 rows)';
+      emptyTr.appendChild(emptyTd);
+      tbody.appendChild(emptyTr);
+    }
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+
+    // Row count
+    if (rows && rows.length > 0) {
+      var footer = document.createElement('span');
+      footer.className = 'tvm-out-info';
+      footer.textContent = rows.length + ' row' + (rows.length === 1 ? '' : 's') + '\n';
+      wrapper.appendChild(footer);
+    }
+
+    this.outputPre.appendChild(wrapper);
+    var container = this.outputPre.parentElement;
+    if (container) container.scrollTop = container.scrollHeight;
+  };
+
   /** Post a message to the Pyodide worker; optional callback on response. */
   TutorialCode.prototype._postWorker = function (msg, callback) {
     if (!this._worker) return;
@@ -853,6 +953,21 @@
         self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
       }, function () {
         if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+      });
+      return;
+    }
+
+    if (backend === 'sql') {
+      var sqlPath = '/tutorial/' + filename;
+      this._syncFileToBackend(filename, function () {
+        self._clearOutput();
+        self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+        var runBtn = self.root.querySelector('.tvm-run-btn');
+        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
+        self._postWorker({ type: 'run', path: sqlPath }, function (msg) {
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (msg.exitCode !== 0) self._appendOutput('\n\u2717 Error\n', 'err');
+        });
       });
       return;
     }
@@ -1041,10 +1156,16 @@
       fileOrder = Object.keys(self.editorModels);
     }
 
+    var userCss = [];
     var scripts = fileOrder.map(function (filename) {
       var entry = self.editorModels[filename];
       if (!entry) return '';
       var content = entry.model.getValue();
+      // CSS files go into a <style> tag, not a script tag
+      if (filename.endsWith('.css')) {
+        userCss.push(content);
+        return '';
+      }
       // Strip ES module import/export (global-script approach for browser sandbox)
       content = content.replace(/^\s*import\s+.*$/gm, '');
       content = content.replace(/^\s*export\s+default\s+/gm, '');
@@ -1054,7 +1175,7 @@
       return '<script type="text/babel">\n' + content + '\n<\/script>';
     }).join('\n');
 
-    var customStyles = (step && step.preview_styles) || '';
+    var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
 
     return '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
       '<meta charset="UTF-8">\n' +
@@ -1071,6 +1192,8 @@
       '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>\n' +
       '<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>\n' +
+      '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n' +
+      '<script src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
       '<style>\n* { box-sizing: border-box; }\n' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n' +
       '       padding: 0; margin: 0; background: #fff; color: #333; }\n' +
@@ -1223,6 +1346,12 @@
     } else if (this.config.backend === 'browser') {
       // Content stays in editor models; nothing to sync to a filesystem
       if (callback) callback();
+
+    } else if (this.config.backend === 'sql') {
+      this._postWorker(
+        { type: 'write', path: '/tutorial/' + filename, content: content },
+        function () { if (callback) callback(); }
+      );
     }
   };
 
@@ -1268,7 +1397,7 @@
     html += '<div class="tvm-step-instructions">' +
       (step.instructionsHTML || this._renderMarkdown(step.instructions || '')) + '</div>';
     this.stepContentEl.innerHTML = html;
-    this.stepContentEl.scrollTop = 0;
+    if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
 
     this._renderStepControls(index);
 
@@ -1397,6 +1526,17 @@
     var nextStepNum = stepIndex + 2;
 
     var questions = (quiz.questions || []).map(function (q) {
+      if (q.type === 'parsons') {
+        // Parsons problem: lines is the correct order, distractors are extra wrong lines
+        var allLines = (q.lines || []).slice();
+        var distractors = (q.distractors || []);
+        var correctOrder = allLines.slice(); // preserve correct order
+        var shuffled = allLines.concat(distractors).slice();
+        self._shuffleArray(shuffled);
+        return { question: q.question || '', type: 'parsons', explanation: q.explanation || '',
+                 shuffledLines: shuffled, correctOrder: correctOrder, distractors: distractors,
+                 options: [], correctOriginals: [], correctLabels: [] };
+      }
       var opts = (q.options || []).map(function (text, oi) { return { text: text, originalIndex: oi }; });
       if (doShuffle) self._shuffleArray(opts);
       var correctOriginals = q.type === 'multiple'
@@ -1422,20 +1562,49 @@
       html += '<div class="quiz-question-card' + (qi === 0 ? ' active' : '') +
         '" data-question-index="' + qi + '" data-type="' + q.type + '">';
       html += '<div class="question-text">' + self._renderMarkdown(q.question) + '</div>';
-      html += '<div class="quiz-options">';
-      q.options.forEach(function (opt, oi) {
-        html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"' +
-          ' data-correct="' + q.correctOriginals[0] + '"' +
-          ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
-          '<span class="option-checkbox"></span><span class="option-label">' + alphabet[oi] + '</span>' +
-          '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span></button>';
-      });
-      html += '</div>';
-      if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
-      html += '<div class="quiz-correct-answers">Correct Answer' +
-        (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
-        q.correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join('') +
-        '</span></div>';
+
+      if (q.type === 'parsons') {
+        // Parsons problem: drag-and-drop code lines
+        html += '<div class="parsons-container">';
+        html += '<div class="parsons-label">Drag lines into the solution area in the correct order' +
+          (q.distractors.length ? ' (some lines are distractors that should not be used)' : '') + ':</div>';
+        html += '<div class="parsons-bank" data-qi="' + qi + '">';
+        q.shuffledLines.forEach(function (line, li) {
+          var isDistractor = q.distractors.indexOf(line) !== -1;
+          html += '<div class="parsons-line" draggable="true" data-line="' +
+            self._escapeHtml(line) + '" data-distractor="' + isDistractor + '">' +
+            '<span class="parsons-grip">&#8942;&#8942;</span>' +
+            '<code>' + self._escapeHtml(line) + '</code></div>';
+        });
+        html += '</div>';
+        html += '<div class="parsons-separator"><span>&#8595; Drop here &#8595;</span></div>';
+        html += '<div class="parsons-target" data-qi="' + qi + '"></div>';
+        html += '<div class="parsons-actions">' +
+          '<button class="parsons-check-btn" data-qi="' + qi + '">Check Order</button>' +
+          '<button class="parsons-reset-btn" data-qi="' + qi + '">Reset</button></div>';
+        html += '</div>';
+        // Store correct order as data attribute
+        html += '<div class="parsons-correct-data hidden" data-correct="' +
+          self._escapeHtml(JSON.stringify(q.correctOrder)) + '"></div>';
+        html += '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels"><code>' +
+          q.correctOrder.map(function (l) { return self._escapeHtml(l); }).join('</code><br><code>') +
+          '</code></span></div>';
+      } else {
+        html += '<div class="quiz-options">';
+        q.options.forEach(function (opt, oi) {
+          html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"' +
+            ' data-correct="' + q.correctOriginals[0] + '"' +
+            ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
+            '<span class="option-checkbox"></span><span class="option-label">' + alphabet[oi] + '</span>' +
+            '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span></button>';
+        });
+        html += '</div>';
+        if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
+        html += '<div class="quiz-correct-answers">Correct Answer' +
+          (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
+          q.correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join('') +
+          '</span></div>';
+      }
       html += '<div class="quiz-explanation hidden"><div class="explanation-title">Explanation</div>' +
         '<div class="explanation-text">' + self._renderMarkdown(q.explanation) + '</div>' +
         '<button class="next-btn">' + (qi < questions.length - 1 ? 'Next Question' : 'See Results') + '</button></div>';
@@ -1561,6 +1730,24 @@
         if (exp) exp.classList.add('hidden');
         if (sub) { sub.classList.remove('hidden'); sub.disabled = true; }
         if (ca)  ca.style.display = '';
+        // Reset Parsons problems
+        var bank = card.querySelector('.parsons-bank');
+        var target = card.querySelector('.parsons-target');
+        if (bank && target) {
+          target.querySelectorAll('.parsons-line').forEach(function (el) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect');
+            el.setAttribute('draggable', 'true');
+            bank.appendChild(el);
+          });
+          bank.querySelectorAll('.parsons-line').forEach(function (el) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect');
+            el.setAttribute('draggable', 'true');
+          });
+          var checkBtn = card.querySelector('.parsons-check-btn');
+          var resetBtn = card.querySelector('.parsons-reset-btn');
+          if (checkBtn) checkBtn.disabled = false;
+          if (resetBtn) resetBtn.disabled = false;
+        }
       });
       showQ(0);
     }
@@ -1572,6 +1759,119 @@
     var cBtn = container.querySelector('.tvm-quiz-continue-btn');
     if (cBtn) cBtn.addEventListener('click', function () {
       self._quizPassed.add(stepIndex); self._hideStepQuiz(); self.loadStep(stepIndex + 1);
+    });
+
+    // ── Parsons Problem Drag & Drop ──────────────────────────────────────────
+    var parsonsDragEl = null;
+    container.addEventListener('dragstart', function (e) {
+      if (e.target.classList.contains('parsons-line')) {
+        parsonsDragEl = e.target;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    });
+    container.addEventListener('dragend', function (e) {
+      if (e.target.classList.contains('parsons-line')) {
+        e.target.classList.remove('dragging');
+        parsonsDragEl = null;
+      }
+    });
+    container.addEventListener('dragover', function (e) {
+      var zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+      if (zone && parsonsDragEl) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        // Show insertion point
+        var target = zone.querySelector('.parsons-target') ? null : zone;
+        if (!target) target = zone;
+        var afterEl = _getParsonsInsertAfter(target, e.clientY);
+        if (afterEl) target.insertBefore(parsonsDragEl, afterEl);
+        else target.appendChild(parsonsDragEl);
+      }
+    });
+    container.addEventListener('drop', function (e) {
+      var zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+      if (zone && parsonsDragEl) {
+        e.preventDefault();
+        var afterEl = _getParsonsInsertAfter(zone, e.clientY);
+        if (afterEl) zone.insertBefore(parsonsDragEl, afterEl);
+        else zone.appendChild(parsonsDragEl);
+      }
+    });
+    // Click to toggle between bank and target (mobile-friendly)
+    container.addEventListener('click', function (e) {
+      var line = e.target.closest('.parsons-line');
+      if (!line) return;
+      var parent = line.parentElement;
+      if (!parent) return;
+      var card = line.closest('.quiz-question-card');
+      if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
+      if (parent.classList.contains('parsons-bank')) {
+        var tgt = card.querySelector('.parsons-target');
+        if (tgt) tgt.appendChild(line);
+      } else if (parent.classList.contains('parsons-target')) {
+        var bnk = card.querySelector('.parsons-bank');
+        if (bnk) bnk.appendChild(line);
+      }
+    });
+    function _getParsonsInsertAfter(zone, y) {
+      var els = Array.prototype.slice.call(zone.querySelectorAll('.parsons-line:not(.dragging)'));
+      for (var i = 0; i < els.length; i++) {
+        var box = els[i].getBoundingClientRect();
+        if (y < box.top + box.height / 2) return els[i];
+      }
+      return null;
+    }
+    // Check Parsons answer
+    container.querySelectorAll('.parsons-check-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var qi = parseInt(btn.dataset.qi);
+        var card = btn.closest('.quiz-question-card');
+        if (!card) return;
+        var target = card.querySelector('.parsons-target');
+        var correctData = card.querySelector('.parsons-correct-data');
+        if (!target || !correctData) return;
+        var correct = JSON.parse(correctData.dataset.correct);
+        var placed = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'))
+          .map(function (el) { return el.dataset.line; });
+        var isCorrect = placed.length === correct.length &&
+          placed.every(function (line, i) { return line === correct[i]; });
+        // Mark lines
+        target.querySelectorAll('.parsons-line').forEach(function (el, i) {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          if (i < correct.length && el.dataset.line === correct[i]) el.classList.add('parsons-correct');
+          else el.classList.add('parsons-incorrect');
+        });
+        // Mark distractors left in bank as correct (they should stay in bank)
+        card.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
+          else el.classList.add('parsons-incorrect');
+        });
+        // Disable further interaction
+        card.querySelectorAll('.parsons-line').forEach(function (el) { el.setAttribute('draggable', 'false'); });
+        btn.disabled = true;
+        card.querySelector('.parsons-reset-btn').disabled = true;
+        if (isCorrect) score++;
+        var ca = card.querySelector('.quiz-correct-answers');
+        var exp = card.querySelector('.quiz-explanation');
+        if (ca) ca.style.display = 'flex';
+        if (exp) exp.classList.remove('hidden');
+      });
+    });
+    // Reset Parsons
+    container.querySelectorAll('.parsons-reset-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var card = btn.closest('.quiz-question-card');
+        if (!card) return;
+        var bank = card.querySelector('.parsons-bank');
+        var target = card.querySelector('.parsons-target');
+        if (!bank || !target) return;
+        target.querySelectorAll('.parsons-line').forEach(function (el) {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          bank.appendChild(el);
+        });
+      });
     });
   };
 
@@ -1598,6 +1898,7 @@
     else if (backend === 'webcontainer') this._runTestsWebContainer();
     else if (backend === 'react')        this._runTestsReact();
     else if (backend === 'browser')      this._runTestsBrowser();
+    else if (backend === 'sql')          this._runTestsSQL();
   };
 
   // v86 — same marker approach as original tutorial-vm.js
@@ -1640,6 +1941,25 @@
     this._testListening = false; this._testBuffer = '';
     var cbs = this._testCallbacks.splice(0);
     cbs.forEach(function (cb) { cb(); });
+  };
+
+  // SQL — each test.command is a JS snippet with __run_query / assert helpers
+  TutorialCode.prototype._runTestsSQL = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+    var results = [];
+
+    function runNext(i) {
+      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      self._postWorker(
+        { type: 'runCode', code: tests[i].command, silent: true },
+        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
+      );
+    }
+    runNext(0);
   };
 
   // Pyodide — each test.command is run as Python code; exit 0 if no exception
