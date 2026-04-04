@@ -3,6 +3,10 @@ title: React
 layout: sebook
 ---
 
+This is a **reference page** for React, designed to be kept open alongside the [React Tutorial](/SEBook/tools/react-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
+
+> **New to React?** Start with the [interactive tutorial](/SEBook/tools/react-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
+
 Welcome to the world of Frontend Development! Since you already have experience with Node.js, you actually have a massive head start
 
 You already know how to build the "brain" of an application—the server that crunches data, talks to a database, and serves APIs. But right now, your Express server only speaks in raw data (like JSON). UI (User Interface) development is about building the "face" of your application. It’s how your users will interact with the data your Node.js server provides.
@@ -276,6 +280,9 @@ function Parent() {
 6. **Conditional Rendering:** Use `&&` and ternary operators inside JSX.
 7. **Composition:** Build complex UIs by combining small components via the `children` prop.
 8. **Integration:** React runs in the user's browser, acting as the client that makes HTTP requests to your Node.js/Express server.
+
+### Ready to Practice?
+Head to the [React Tutorial](/SEBook/tools/react-tutorial) for hands-on exercises with immediate feedback — no setup required.
 
 ### Test Your Knowledge
 

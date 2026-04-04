@@ -3,7 +3,7 @@ title: Node.js
 layout: sebook
 ---
 
-This is a **quick-reference card** for JavaScript and Node.js, designed to be kept open alongside the [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
+This is a **reference page** for JavaScript and Node.js, designed to be kept open alongside the [Node.js Essentials Tutorial](/SEBook/tools/nodejs-tutorial). Use it to look up syntax, concepts, and comparisons while you work through the hands-on exercises.
 
 > **New to Node.js?** Start with the [interactive tutorial](/SEBook/tools/nodejs-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
 

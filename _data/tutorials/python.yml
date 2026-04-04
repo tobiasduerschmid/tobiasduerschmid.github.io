@@ -248,6 +248,16 @@ steps:
           output = __run_capture('/tutorial/profile.py')
           assert '3.82' in output, \
               f"Expected GPA '3.82' in output, got: {repr(output)}"
+      - description: "f-string uses variables, not hard-coded literals"
+        command: |
+          source = open('/tutorial/profile.py').read()
+          import re
+          # Find all expressions inside f-string braces
+          fstring_exprs = re.findall(r'\{([^}]+)\}', source)
+          for expr in fstring_exprs:
+              stripped = expr.split(':')[0].strip()
+              assert stripped in ('name', 'year', 'major', 'gpa'), \
+                  f"f-string must use variables (name, year, major, gpa), not literals. Found: {{{expr}}}"
 
     quiz:
       title: "Variables & Types — Knowledge Check"
@@ -270,12 +280,12 @@ steps:
             a handy debugging tool that does not exist in C++ without runtime type info (RTTI).
 
         - question: |
-            Which of the following correctly uses an f-string to print `"Price: $12.50"`?
+            Which of the following correctly uses an f-string to print `"Price: €12.50"`?
           type: single
           options:
-            - '`print("Price: $" + price)`'
-            - '`print(f"Price: ${price:.2f}")`'
-            - '`printf("Price: $%.2f", price)`'
+            - '`print("Price: €" + price)`'
+            - '`print(f"Price: €{price:.2f}")`'
+            - '`printf("Price: €%.2f", price)`'
             - '`print("Price: %s" % price)`'
           correct_index: 1
           explanation: |
@@ -350,7 +360,7 @@ steps:
 
       The file `grades.py` below has **two bugs**:
       1. An indentation error inside the `if` block
-      2. The grade boundary for a `B` is wrong (should be `>= 80`, not `>= 70`)
+      2. A type error in one of the print statements
 
       Fix both bugs so the script prints the correct letter grade for each score.
 
@@ -359,15 +369,15 @@ steps:
         content: |
           # Fixer Upper: Find and fix the two bugs in this script.
           # Bug 1: Indentation error
-          # Bug 2: Wrong grade boundary for B
+          # Bug 2: Type error in a print statement
 
           scores = [95, 83, 71, 62, 55]
 
           for score in scores:
               if score >= 90:
-              print(f"Score {score}: A")    # Bug 1 is here
-              elif score >= 70:             # Bug 2: should be >= 80
-                  print(f"Score {score}: B")
+              print(f"Score {score}: A")
+              elif score >= 80:
+                  print("Score " + score + ": B")
               elif score >= 60:
                   print(f"Score {score}: C")
               else:
@@ -377,21 +387,21 @@ steps:
     open_file: "grades.py"
 
     tests:
-      - description: "Script runs without IndentationError or SyntaxError"
+      - description: "Script runs without errors"
         command: |
           output = __run_capture('/tutorial/grades.py')
       - description: "Score 95 is graded 'A'"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 95: A' in output, f"Expected 'Score 95: A', got: {repr(output)}"
-      - description: "Score 83 is graded 'B' (boundary fix at 80)"
+      - description: "Score 83 is graded 'B'"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 83: B' in output, f"Expected 'Score 83: B', got: {repr(output)}"
-      - description: "Score 71 is graded 'C' (not B)"
+      - description: "Score 71 is graded 'C'"
         command: |
           output = __run_capture('/tutorial/grades.py')
-          assert 'Score 71: C' in output, f"Expected 'Score 71: C' (71 < 80 so not B), got: {repr(output)}"
+          assert 'Score 71: C' in output, f"Expected 'Score 71: C', got: {repr(output)}"
 
     quiz:
       title: "The Indentation Trap — Knowledge Check"

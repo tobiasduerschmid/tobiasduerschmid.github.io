@@ -22,9 +22,19 @@ topics:
         url: /SEBook/tools/regex-tutorial-advanced.html
       - name: Python
         url: /SEBook/tools/python.html
+      - name: Python Tutorial
+        url: /SEBook/tools/python-tutorial.html
+      - name: Node.js
+        url: /SEBook/tools/nodejs.html
+      - name: Node.js Tutorial
+        url: /SEBook/tools/nodejs-tutorial.html
+      - name: React
+        url: /SEBook/tools/react.html
+      - name: React Tutorial
+        url: /SEBook/tools/react-tutorial.html
       - name: Git
         url: /SEBook/tools/git.html
-      - name: Interactive Git Tutorial
+      - name: Git Tutorial
         url: /SEBook/tools/git-tutorial.html
       - name: Make
         url: /SEBook/tools/make.html
