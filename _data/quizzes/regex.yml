@@ -102,5 +102,52 @@ questions:
       - "They can be chained together at the same position in the string to test multiple independent conditions." 
       - "They are natively supported by basic POSIX standard utilities like standard `grep` or `sed`." 
       - "They allow you to validate logical 'AND' requirements (e.g., must have a letter AND a number)." 
-    correct_indices: [0, 1, 3] 
+    correct_indices: [0, 1, 3]
     explanation: "Lookaheads do not consume characters, can be chained to check multiple conditions from the exact same starting position, and are the standard way to enforce logical 'AND' in regex. However, they are a feature of PCRE (Perl Compatible Regular Expressions) and are generally NOT supported by basic POSIX tools like standard `sed`."
+
+  - id: 11
+    question: "**Arrange** the regex fragments to build a pattern that validates a simple email address like `user@example.com`. The pattern should be anchored to match the entire string."
+    type: parsons
+    display: inline
+    lines:
+      - "^"
+      - "[a-zA-Z0-9._%+-]+"
+      - "@"
+      - "[a-zA-Z0-9.-]+"
+      - "\\.[a-zA-Z]{2,}"
+      - "$"
+    distractors:
+      - "\\d{3}"
+      - "\\s+"
+    explanation: "The pattern anchors with `^` and `$` to match the full string. `[a-zA-Z0-9._%+-]+` matches the local part (username), `@` is the literal at-sign, `[a-zA-Z0-9.-]+` matches the domain name, and `\\.[a-zA-Z]{2,}` matches the dot followed by a TLD of at least 2 letters. The distractors `\\d{3}` (three digits) and `\\s+` (whitespace) have no place in an email pattern."
+
+  - id: 12
+    question: "**Arrange** the regex fragments to build a pattern that matches a date in `YYYY-MM-DD` format (e.g., `2024-01-15`). Anchor the pattern."
+    type: parsons
+    display: inline
+    lines:
+      - "^"
+      - "\\d{4}"
+      - "-"
+      - "\\d{2}"
+      - "-"
+      - "\\d{2}"
+      - "$"
+    distractors:
+      - "/"
+      - "\\w+"
+    explanation: "The date pattern uses `\\d{4}` for the 4-digit year, literal `-` as separators, and `\\d{2}` for 2-digit month and day. Anchors `^` and `$` ensure the entire string is a date. The `/` distractor would be for a different date format (MM/DD/YYYY), and `\\w+` is too broad (matches letters, digits, and underscores)."
+
+  - id: 13
+    question: "**Arrange** the regex fragments to extract the protocol and domain from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
+    type: parsons
+    display: inline
+    lines:
+      - "https?://"
+      - "("
+      - "[^/]+"
+      - ")"
+    distractors:
+      - "\\w+://"
+      - "[a-z]"
+    explanation: "`https?://` matches both `http://` and `https://` (the `s` is optional via `?`). The capturing group `([^/]+)` matches one or more characters that are NOT a forward slash — i.e., the domain name. `\\w+://` is a distractor that would also match things like `ftp://` which wasn't the intent, and `[a-z]` matches only a single lowercase letter."

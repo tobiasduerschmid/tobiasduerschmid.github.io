@@ -74,3 +74,29 @@ questions:
       - "Bug: default arguments must be `None` in Python — `[]` causes a SyntaxError"
     correct_index: 1
     explanation: "This is one of Python's most notorious gotchas. Mutable default arguments (`list`, `dict`, `set`) are shared across all calls. The fix: use `None` as the default and create a new list inside the function: `def add_item(item, items=None): if items is None: items = []; ...`"
+
+  - question: |
+      **Arrange** the lines to define a function that safely reads a file and returns the word count, using `with` for resource management.
+    type: parsons
+    lines:
+      - "def count_words(filename):"
+      - "    total = 0"
+      - "    with open(filename) as f:"
+      - "        for line in f:"
+      - "            total += len(line.split())"
+      - "    return total"
+    distractors:
+      - "    f.close()"
+      - "    return len(f)"
+    explanation: "The function opens the file with `with` (so no manual `close()` needed), iterates line by line, and accumulates the word count. `return total` is at the function level (one indent), not inside the loop. `f.close()` is a distractor because `with` handles cleanup. `return len(f)` is wrong because file objects don't have a meaningful `len()`."
+
+  - question: |
+      **Arrange** the lines to create a list comprehension that filters and transforms data, then prints the result.
+    type: parsons
+    lines:
+      - "scores = [95, 83, 71, 62, 55]"
+      - "passing = [s for s in scores if s >= 70]"
+      - "print(f'Passing scores: {passing}')"
+    distractors:
+      - "passing = scores.filter(s >= 70)"
+    explanation: "List comprehensions use the form `[expr for var in iterable if condition]`. Python lists do not have a `.filter()` method — that syntax is from JavaScript. The `f-string` in the print statement automatically converts the list to its string representation."

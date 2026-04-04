@@ -246,7 +246,10 @@ title: "SE Gym"
       options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
     correct_index: {{ q.correct_index | jsonify }},
     correct_indices: {{ q.correct_indices | jsonify }},
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
+    lines: {{ q.lines | jsonify | default: "null" }},
+    distractors: {{ q.distractors | jsonify | default: "null" }},
+    display: {{ q.display | default: "block" | jsonify }}
             }, {% endfor %}
           ]
         },
@@ -262,7 +265,10 @@ title: "SE Gym"
       options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
     correct_index: {{ q.correct_index | jsonify }},
     correct_indices: {{ q.correct_indices | jsonify }},
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }}
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
+    lines: {{ q.lines | jsonify | default: "null" }},
+    distractors: {{ q.distractors | jsonify | default: "null" }},
+    display: {{ q.display | default: "block" | jsonify }}
             }, {% endfor %} {% endif %} {% endfor %}
           ]
         },
@@ -925,6 +931,53 @@ title: "SE Gym"
       font-weight: 800;
       font-size: 0.85em;
       display: inline-block;
+    }
+
+    /* ── Parsons Problem Styles ─────────────────────────────────────── */
+    .parsons-container { margin-top: 12px; }
+    .parsons-label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+    .parsons-bank, .parsons-target {
+      min-height: 48px; padding: 8px; border-radius: 6px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .parsons-bank { background: #f5f5f8; border: 1px dashed #ccc; }
+    .parsons-target { background: #f0f8f0; border: 2px dashed #6a6; }
+    .parsons-separator { text-align: center; padding: 6px; color: #888; font-size: 0.8em; }
+    .parsons-line {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;
+      cursor: grab; font-size: 0.9em; transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+    .parsons-line:hover { border-color: #2774AE; background: #e8f0ff; }
+    .parsons-line.dragging { opacity: 0.4; }
+    .parsons-line code {
+      font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.92em;
+      white-space: pre; color: #333; background: transparent; padding: 0;
+    }
+    .parsons-grip { color: #aaa; font-size: 0.8em; flex-shrink: 0; }
+    .parsons-line.parsons-correct { border-color: #28a745; background: #e6ffed; }
+    .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
+    .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .parsons-check-btn, .parsons-reset-btn {
+      padding: 6px 16px; border-radius: 4px; border: none; cursor: pointer;
+      font-size: 0.85em; font-weight: 600;
+    }
+    .parsons-check-btn { background: #2774AE; color: white; }
+    .parsons-check-btn:hover:not(:disabled) { background: #1d5d8a; }
+    .parsons-reset-btn { background: #eee; color: #333; }
+    .parsons-reset-btn:hover:not(:disabled) { background: #ddd; }
+    .parsons-check-btn:disabled, .parsons-reset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .parsons-container.parsons-inline .parsons-bank,
+    .parsons-container.parsons-inline .parsons-target {
+      flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .parsons-container.parsons-inline .parsons-line { padding: 4px 10px; }
+    .parsons-container.parsons-inline .parsons-line code { white-space: nowrap; }
+    .parsons-container.parsons-inline .parsons-target { min-height: 40px; }
+    .quiz-correct-answers code {
+      font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em;
+      background: #f0f0f5; padding: 1px 4px; border-radius: 2px;
     }
 
     /* Workout Flashcard */
@@ -1824,6 +1877,7 @@ title: "SE Gym"
       function renderQuizCard(card, workoutIndex) {
         var q = card.data;
         var type = q.type || 'single';
+        if (type === 'parsons') { renderParsonsCard(card, workoutIndex); return; }
         var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
         // Shuffle options while tracking correct indices
@@ -1942,6 +1996,166 @@ title: "SE Gym"
         }
 
         div.querySelector('.next-btn').addEventListener('click', nextWorkoutCard);
+      }
+
+      // ---- PARSONS CARD RENDERING ----
+
+      function renderParsonsCard(card, workoutIndex) {
+        var q = card.data;
+        var correctOrder = q.lines || [];
+        var distractors = q.distractors || [];
+        var display = q.display || 'block';
+        var allLines = correctOrder.concat(distractors).slice();
+        shuffleArray(allLines);
+
+        var div = document.createElement('div');
+        div.className = 'workout-quiz-card';
+        div.setAttribute('data-type', 'parsons');
+
+        var sourceHtml = '<span class="workout-source-badge quiz-badge">' + escapeHtml(card.source) + '</span>';
+        var questionHtml = '<div class="question-text">' + q.question + '</div>';
+
+        var isInline = display === 'inline';
+        var containerClass = 'parsons-container' + (isInline ? ' parsons-inline' : '');
+
+        var bankHtml = '<div class="parsons-bank">';
+        allLines.forEach(function (line) {
+          var isDist = distractors.indexOf(line) !== -1;
+          bankHtml += '<div class="parsons-line" draggable="true" data-line="' + escapeHtml(line) +
+            '" data-distractor="' + isDist + '">' +
+            '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code></div>';
+        });
+        bankHtml += '</div>';
+
+        var sepText = isInline ? '&rarr; Drop here &rarr;' : '&darr; Drop here &darr;';
+        var labelText = isInline
+          ? 'Drag fragments into the answer area in the correct order'
+          : 'Drag lines into the solution area in the correct order';
+        if (distractors.length) labelText += ' (some items are distractors)';
+
+        var correctDisplay = isInline
+          ? '<code>' + escapeHtml(correctOrder.join('')) + '</code>'
+          : correctOrder.map(function (l) { return '<code>' + escapeHtml(l) + '</code>'; }).join('<br>');
+
+        var html = sourceHtml + questionHtml +
+          '<div class="' + containerClass + '">' +
+          '<div class="parsons-label">' + labelText + ':</div>' +
+          bankHtml +
+          '<div class="parsons-separator"><span>' + sepText + '</span></div>' +
+          '<div class="parsons-target"></div>' +
+          '<div class="parsons-actions">' +
+          '<button class="parsons-check-btn">Check Order</button>' +
+          '<button class="parsons-reset-btn">Reset</button></div>' +
+          '</div>' +
+          '<div class="quiz-correct-answers">Correct order:<br><span class="correct-labels">' +
+          correctDisplay + '</span></div>' +
+          '<div class="quiz-explanation hidden">' +
+          '<div class="explanation-title">Explanation</div>' +
+          '<div class="explanation-text">' + q.explanation + '</div>' +
+          '<button class="next-btn">Next</button></div>';
+
+        div.innerHTML = html;
+        workoutCardArea.appendChild(div);
+
+        // Bind drag-and-drop
+        var parsonsDragEl = null;
+        div.addEventListener('dragstart', function (e) {
+          if (e.target.classList.contains('parsons-line')) {
+            parsonsDragEl = e.target; e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+          }
+        });
+        div.addEventListener('dragend', function (e) {
+          if (e.target.classList.contains('parsons-line')) {
+            e.target.classList.remove('dragging'); parsonsDragEl = null;
+          }
+        });
+        div.addEventListener('dragover', function (e) {
+          var zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+          if (zone && parsonsDragEl) {
+            e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+            var after = getParsonsInsertAfter(zone, e.clientY, e.clientX, isInline);
+            if (after) zone.insertBefore(parsonsDragEl, after);
+            else zone.appendChild(parsonsDragEl);
+          }
+        });
+        div.addEventListener('drop', function (e) {
+          var zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+          if (zone && parsonsDragEl) {
+            e.preventDefault();
+            var after = getParsonsInsertAfter(zone, e.clientY, e.clientX, isInline);
+            if (after) zone.insertBefore(parsonsDragEl, after);
+            else zone.appendChild(parsonsDragEl);
+          }
+        });
+        // Click-to-move for mobile
+        div.addEventListener('click', function (e) {
+          var line = e.target.closest('.parsons-line');
+          if (!line) return;
+          var parent = line.parentElement;
+          var expEl = div.querySelector('.quiz-explanation');
+          if (expEl && !expEl.classList.contains('hidden')) return;
+          if (parent.classList.contains('parsons-bank')) {
+            var tgt = div.querySelector('.parsons-target');
+            if (tgt) tgt.appendChild(line);
+          } else if (parent.classList.contains('parsons-target')) {
+            var bnk = div.querySelector('.parsons-bank');
+            if (bnk) bnk.appendChild(line);
+          }
+        });
+
+        // Check button
+        div.querySelector('.parsons-check-btn').addEventListener('click', function () {
+          var target = div.querySelector('.parsons-target');
+          var placed = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'))
+            .map(function (el) { return el.dataset.line; });
+          var isCorrect = placed.length === correctOrder.length &&
+            placed.every(function (line, i) { return line === correctOrder[i]; });
+
+          target.querySelectorAll('.parsons-line').forEach(function (el, i) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect');
+            if (i < correctOrder.length && el.dataset.line === correctOrder[i]) el.classList.add('parsons-correct');
+            else el.classList.add('parsons-incorrect');
+          });
+          div.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect');
+            if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
+            else el.classList.add('parsons-incorrect');
+          });
+          div.querySelectorAll('.parsons-line').forEach(function (el) { el.draggable = false; });
+          div.querySelector('.parsons-check-btn').disabled = true;
+          div.querySelector('.parsons-reset-btn').disabled = true;
+
+          if (isCorrect) workoutScore++;
+          else workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
+
+          PersonalGym.recordResult(q.question, isCorrect);
+          var ca = div.querySelector('.quiz-correct-answers');
+          var exp = div.querySelector('.quiz-explanation');
+          if (ca) ca.style.display = 'flex';
+          if (exp) { exp.classList.remove('hidden'); exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+        });
+
+        // Reset button
+        div.querySelector('.parsons-reset-btn').addEventListener('click', function () {
+          var bank = div.querySelector('.parsons-bank');
+          var target = div.querySelector('.parsons-target');
+          target.querySelectorAll('.parsons-line').forEach(function (el) {
+            el.classList.remove('parsons-correct', 'parsons-incorrect'); bank.appendChild(el);
+          });
+        });
+
+        div.querySelector('.next-btn').addEventListener('click', nextWorkoutCard);
+      }
+
+      function getParsonsInsertAfter(zone, y, x, isInline) {
+        var els = Array.prototype.slice.call(zone.querySelectorAll('.parsons-line:not(.dragging)'));
+        for (var i = 0; i < els.length; i++) {
+          var box = els[i].getBoundingClientRect();
+          if (isInline) { if (x < box.left + box.width / 2) return els[i]; }
+          else { if (y < box.top + box.height / 2) return els[i]; }
+        }
+        return null;
       }
 
       // ---- FLASHCARD RENDERING ----
