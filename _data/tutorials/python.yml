@@ -54,6 +54,10 @@ steps:
 
       Notice there are no semicolons, no `#include`, and no `main()` function. Python scripts run top-to-bottom like shell scripts.
 
+      ### Predict Before You Run
+
+      Before changing anything, look at `hello.py` and predict: what will Python print when you click **Run**? Try it now and compare.
+
       ### Task
 
       Open `hello.py`. Change the message so it prints:
@@ -137,10 +141,10 @@ steps:
             **Evaluate** both suggestions. Which response best captures the trade-off?
           type: single
           options:
-            - "Python is always slower than C++, so C++ is the only correct choice"
-            - "Python is fine — modern hardware makes the speed difference irrelevant"
-            - "C++ is better for the real-time processing core due to its speed, but Python could be used for prototyping the algorithm first or for non-latency-critical parts like config parsing and visualization"
-            - "They should use Bash instead since it can pipe data between Unix tools"
+            - "Python is always slower than C++, so C++ is the only correct choice for any project with performance requirements"
+            - "Python is fine for real-time processing — modern hardware makes the speed difference between Python and C++ negligible"
+            - "C++ is better for the real-time core due to speed, but Python is ideal for prototyping and non-latency-critical parts like config and visualization"
+            - "They should use Bash — piping data between Unix tools is faster than either Python or C++ for data processing"
           correct_index: 2
           explanation: |
             This is a real-world trade-off. Python's strength is rapid development; C++'s strength is
@@ -299,10 +303,10 @@ steps:
             **Analyze** their misunderstanding. What is wrong with their reasoning?
           type: single
           options:
-            - "They are correct — this is a Python bug that should be fixed"
-            - "Dynamic typing means types are checked at runtime, not that types don't exist. Python is *strongly* typed — it refuses to implicitly convert between incompatible types like `str` and `int`"
-            - "The error happens because `x` was already declared as a string elsewhere"
-            - "Python only allows concatenation with the `concat()` function"
+            - "They are correct — dynamically typed languages should convert between types automatically, so this is a Python bug"
+            - "Dynamic typing means types are checked at runtime, not that types don't exist. Python is *strongly* typed and refuses to implicitly convert `str` + `int`"
+            - "The error happens because `x` was already declared as a string elsewhere, and Python does not allow reassignment to a different type"
+            - "Python only allows concatenation through the explicit `concat()` function, not the `+` operator which is reserved for numbers"
           correct_index: 1
           explanation: |
             This is a critical distinction: **dynamic** typing (types checked at runtime, not compile time) is
@@ -432,10 +436,10 @@ steps:
             In Python, what marks the start of a new indented block (instead of `{` in C++)?
           type: single
           options:
-            - "An opening brace `{`"
-            - "The `begin` keyword"
+            - "An opening brace `{` — same as C++ and Java"
+            - "The `begin` keyword — like Pascal or Ruby"
             - "A colon `:` at the end of the control statement"
-            - "A semicolon `;`"
+            - "A semicolon `;` followed by increased indentation"
           correct_index: 2
           explanation: |
             Every block-opening statement (`if`, `for`, `while`, `def`, `class`, ...) ends with a colon `:`.
@@ -623,10 +627,10 @@ steps:
             **Analyze** the bug. What went wrong, and how does this differ from C++?
           type: single
           options:
-            - "Python functions cannot perform multiplication"
-            - "The function is missing `return`. In C++, the last expression is implicitly returned; in Python, a function without `return` returns `None`"
-            - "`double` is a reserved word in Python"
-            - "The function needs a type annotation to return a value"
+            - "Python functions cannot perform multiplication — the `*` operator only works for string repetition"
+            - "The function is missing `return`. In C++, the last expression may be implicitly returned; in Python, no `return` means `None`"
+            - "`double` is a reserved word in Python (like C++'s `double` type), so it shadows the function definition"
+            - "The function needs a type annotation like `def double(x: int) -> int:` before Python will return a value"
           correct_index: 1
           explanation: |
             In C++, forgetting `return` in a non-void function is undefined behavior — the compiler
@@ -648,6 +652,23 @@ steps:
             This differs from C++, where `30 / 2` → `15` (integer division).
             Python uses `//` for integer (floor) division: `30 // 2` → `15`.
 
+        - question: |
+            *(Spaced review — Step 1: Python Execution Model)*
+
+            A teammate is confused: *"I wrote a Python file with a helper function and some test prints, but when I import it from another file, all the test prints run too."* What should they use to prevent this?
+          type: single
+          options:
+            - "Move the test prints into a `main()` function — Python automatically detects and skips `main()` during import"
+            - "Wrap the test prints in `if __name__ == '__main__':` — this block only runs when the file is executed directly, not when imported"
+            - "Use `#pragma once` at the top of the file to prevent double execution, similar to C++ header guards"
+            - "Add `import guard` at the top — this is Python's built-in mechanism to prevent code from running during import"
+          correct_index: 1
+          explanation: |
+            Python scripts run top-to-bottom (like Bash). When imported, all top-level code
+            executes. `if __name__ == '__main__':` is the standard Python idiom to separate
+            "run as script" code from "importable" code. C++ doesn't have this problem because
+            `#include` only brings in declarations, not executable statements.
+
   # --------------------------------------------------------------------------
   # STEP 5 — Loops
   # Pedagogy:
@@ -661,6 +682,10 @@ steps:
   - title: "Loops"
     instructions: |
       > **Learning objective:** After this step you will be able to **use** Python's `for` loops, `enumerate()`, and `range()`, and **identify** the key operator differences between Python and C++ (`**` vs `^`, `/` vs `//`).
+
+      ### If Loops Feel Different
+
+      Python's loops may feel unfamiliar after C++. That is expected — Python's `for` iterates over *items*, not *indices*. The adjustment takes a few exercises but becomes second nature quickly. If you catch yourself reaching for `for i in range(len(...))`, pause — there is usually a more Pythonic way.
 
       ## Python `for` Loops: Iterating Over Collections
 
@@ -852,6 +877,10 @@ steps:
     instructions: |
       > **Learning objective:** After this step you will be able to **write** list comprehensions with filters, and **compare** them with equivalent for-loop code.
 
+      ### Comprehensions Look Strange at First
+
+      List comprehensions are one of Python's most powerful idioms, but their compact syntax can feel cryptic at first. That is normal — everyone reads comprehensions slowly when they first encounter them. After a few exercises they become natural. Do not worry if you need to mentally "unpack" each one into a for-loop to understand it.
+
       ## Try It First (Productive Failure)
 
       **Challenge:** Before reading further, try to build the list `[1, 4, 9, 16, 25]` (the squares of 1 through 5) in a **single line of Python**. You already know `range()` and `**` from the previous step. Give it your best shot in the editor, then read on.
@@ -900,6 +929,10 @@ steps:
 
       List comprehensions are preferred when the transformation is simple — they are a
       recognised Python idiom that experienced readers understand at a glance.
+
+      ### Predict Before You Code
+
+      Before writing any code, predict: what does `[x**2 for x in range(4)]` produce? Write your answer, then verify by typing it into the editor and clicking Run.
 
       ### Task
 
@@ -1089,6 +1122,10 @@ steps:
 
       The `with` statement is Python's **resource management** idiom — just like RAII in C++,
       the file is guaranteed to be closed when the block exits.
+
+      ### Predict Before You Code
+
+      Before writing any code, look at `data.txt` and predict: how many total words does it contain? Then click Run on the starter code and see if your mental count matches.
 
       ### Task
 
@@ -1488,6 +1525,10 @@ steps:
       python3 script.py > output.txt 2> errors.txt
       ```
 
+      ### Predict Before You Code
+
+      Before writing any code, predict: if you run `python3 script.py` with no arguments, what is `sys.argv`? Is it an empty list, or does it contain something? Verify by adding `print(sys.argv)` to a test script.
+
       ### Task
 
       Write `safe_word_count.py` **from scratch**. It should:
@@ -1634,25 +1675,26 @@ steps:
             Approach B "works" but violates the Unix convention of separating output from diagnostics.
 
         - question: |
-            *(Spaced review — Step 4: Functions)*
+            *(Spaced review — Step 5: Loops)*
 
-            What does this function return when called as `count_words("hello world")`?
+            A student writes this code to print each word with its position number. What is wrong?
             ```python
-            def count_words(text):
-                return len(text.split())
+            words = ["apple", "banana", "cherry"]
+            for i in words:
+                print(f"{i}: {words[i]}")
             ```
           type: single
           options:
-            - "`11` — the number of characters"
-            - "`2` — the number of words"
-            - "`['hello', 'world']` — the list of words"
-            - "TypeError — strings don't have a split method"
+            - "Nothing is wrong — this correctly prints each word with its index number"
+            - "`i` is the word itself (e.g., `'apple'`), not an index. Using `words[i]` causes a TypeError because you cannot index a list with a string. Use `enumerate(words)` to get both index and value"
+            - "The f-string syntax is incorrect — it should use `%d` formatting instead of `{i}`"
+            - "The loop should use `range(words)` instead of iterating over the list directly"
           correct_index: 1
           explanation: |
-            `text.split()` splits on whitespace, returning `['hello', 'world']`.
-            `len(...)` returns the length of that list: `2`.
-            This combines string methods (`.split()`), built-in functions (`len()`),
-            and function definitions (`def`) — all from earlier steps.
+            Python's `for i in words` gives you the *elements*, not indices — this is
+            different from C++'s `for (int i = 0; ...)`. Using `words['apple']` causes
+            a TypeError. The Pythonic fix: `for i, word in enumerate(words):` gives both
+            the index and the value. This is a common negative transfer trap from C++.
 
         - question: |
             *(Spaced review — Step 7: File I/O)*
@@ -1871,10 +1913,10 @@ steps:
             ```
           type: single
           options:
-            - "The regex patterns are wrong — `.*` doesn't match anything"
-            - "The script will crash with IndexError if no filename is given (missing `sys.argv` check), and `len(ips)` counts total IPs, not unique IPs (should use `len(set(ips))`)"
-            - "The file is never closed because `with` doesn't work with `f.read()`"
-            - "There is no bug — this code is correct"
+            - "The regex patterns are wrong — `ERROR.*` only matches the literal characters E-R-R-O-R, not the full line"
+            - "Two bugs: no `sys.argv` check (crashes with IndexError if no filename given), and `len(ips)` counts total IPs including duplicates (should use `set(ips)`)"
+            - "The file is never properly closed because `with` blocks do not support the `.read()` method on the file handle"
+            - "There is no bug — the `with` statement, regex patterns, and f-string formatting are all correct as written"
           correct_index: 1
           explanation: |
             Two bugs: (1) No argument validation — `sys.argv[1]` will raise `IndexError` if the user
@@ -1899,3 +1941,36 @@ steps:
             can be imported by other scripts). This is the same principle as C++'s function decomposition,
             and it becomes even more important as scripts grow. Even for short scripts, named functions
             act as documentation.
+
+        - question: |
+            *(Spaced review — Step 5: Loops)*
+
+            You need to process a list of log lines and print each line's number alongside it (starting from 1). Which approach is most Pythonic?
+          type: single
+          options:
+            - "`for i in range(len(lines)): print(f'{i+1}: {lines[i]}')` — use range to generate index numbers"
+            - "`for n, line in enumerate(lines, 1): print(f'{n}: {line}')` — enumerate gives index and value together, and `start=1` avoids the +1"
+            - "`i = 0; for line in lines: i += 1; print(f'{i}: {line}')` — manually track the counter like in C++"
+            - "`for line in lines: print(f'{lines.index(line)+1}: {line}')` — use index() to find the position"
+          correct_index: 1
+          explanation: |
+            `enumerate(lines, 1)` is the Pythonic way: it yields `(index, value)` pairs without
+            manual indexing. The `start=1` parameter avoids the `+1` hack. Option A works but is
+            unpythonic. Option C is C-style manual counting. Option D is O(n²) and breaks on duplicates.
+
+        - question: |
+            *(Spaced review — Step 8: Regular Expressions)*
+
+            A log analyzer needs to extract all timestamps matching the pattern `2024-01-15 14:30:22` from a log string. Which `re` call is correct?
+          type: single
+          options:
+            - "`re.search(r'\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}', log)` — search finds the first match only"
+            - "`re.findall(r'\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}', log)` — findall returns a list of all matching strings"
+            - "`re.match(r'\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}', log)` — match scans the entire string for all occurrences"
+            - "`re.split(r'\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}', log)` — split extracts everything that matches the pattern"
+          correct_index: 1
+          explanation: |
+            `re.findall()` returns a list of ALL non-overlapping matches — exactly what you need
+            to extract every timestamp. `re.search()` finds only the first match. `re.match()` only
+            checks the start of the string. `re.split()` splits the string AT the pattern,
+            returning the parts between matches, not the matches themselves.
