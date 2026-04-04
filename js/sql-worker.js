@@ -126,11 +126,12 @@ function runSQL(id, sql, silent) {
  *   __run_query(sql) — execute SQL, return rows as [{col: val}, ...]
  *   __exec(sql)    — execute SQL, ignore results (for setup within a test)
  *   assert(cond, msg) — throw if condition is falsy
+ *   __read_file(path) — return the editor content of a file (from the in-memory file map)
  */
 function runCode(id, code, silent) {
   try {
     /* jshint evil:true */
-    var fn = new Function('db', '__run_query', '__exec', 'assert', code);
+    var fn = new Function('db', '__run_query', '__exec', 'assert', '__read_file', code);
     fn(
       db,
       function __run_query(sql) {
@@ -146,6 +147,9 @@ function runCode(id, code, silent) {
       function __exec(sql) { db.run(sql); },
       function assert(cond, msg) {
         if (!cond) throw new Error(msg || 'Assertion failed');
+      },
+      function __read_file(path) {
+        return files[path] || '';
       }
     );
     self.postMessage({ type: 'run_done', id: id, exitCode: 0 });

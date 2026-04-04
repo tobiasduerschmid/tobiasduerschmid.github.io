@@ -25,7 +25,8 @@ setup_commands:
       (5, 'Eve',    2, 'CS',      3.50),
       (6, 'Frank',  3, 'Math',    3.10),
       (7, 'Grace',  1, 'Physics', 3.60),
-      (8, 'Hank',   4, 'CS',      3.20);
+      (8, 'Hank',   4, 'CS',      3.20),
+      (9, 'Iris',   3, NULL,      3.00);
 
 steps:
 
@@ -65,11 +66,11 @@ steps:
       `CREATE TABLE` is SQL's equivalent of defining a `struct` — not creating an instance, just declaring the shape:
 
       ```sql
-      CREATE TABLE courses (
-        id      INTEGER PRIMARY KEY,
-        code    TEXT    NOT NULL,
-        name    TEXT    NOT NULL,
-        credits INTEGER
+      CREATE TABLE books (
+        id     INTEGER PRIMARY KEY,
+        title  TEXT    NOT NULL,
+        author TEXT    NOT NULL,
+        pages  INTEGER
       );
       ```
 
@@ -102,12 +103,6 @@ steps:
           -- TODO: write the CREATE TABLE statement below.
           -- Columns: id (INTEGER PRIMARY KEY), code (TEXT NOT NULL),
           --          name (TEXT NOT NULL), credits (INTEGER)
-          CREATE TABLE courses (
-            id      INTEGER PRIMARY KEY,
-            code    TEXT    NOT NULL,
-            name    TEXT    NOT NULL,
-            credits INTEGER
-          );
         language: "sql"
 
     open_file: "schema.sql"
@@ -132,6 +127,11 @@ steps:
           var info = __run_query("PRAGMA table_info(courses)");
           var cols = info.map(function(r) { return r.name; });
           assert(cols.indexOf('name') !== -1, "Expected a column named 'name'");
+      - description: "courses has a 'credits' column"
+        command: |
+          var info = __run_query("PRAGMA table_info(courses)");
+          var cols = info.map(function(r) { return r.name; });
+          assert(cols.indexOf('credits') !== -1, "Expected a column named 'credits'");
 
     quiz:
       title: "Your First Table — Knowledge Check"
@@ -213,48 +213,31 @@ steps:
 
       `*` means "all columns". In production SQL you should always list columns explicitly — `SELECT *` is fine for exploration but breaks applications when the schema changes.
 
-      ### The logical execution order
-
-      SQL does **not** execute top-to-bottom like Python. Regardless of how you write a query, the database evaluates clauses in this fixed order:
-
-      ```
-      1. FROM      — which tables to read
-      2. WHERE     — filter rows           (Step 3)
-      3. GROUP BY  — group rows            (Step 4)
-      4. HAVING    — filter groups         (Step 4)
-      5. SELECT    — project columns  ← written first, evaluated fifth
-      6. ORDER BY  — sort the result
-      7. LIMIT     — truncate the result
-      ```
-
-      This is why you cannot use a `SELECT` alias inside a `WHERE` clause — the alias doesn't exist yet when `WHERE` is evaluated.
-
       ### Task
 
-      Complete `populate.sql`:
-      1. Insert at least **3 courses** into the `courses` table
-      2. Add a `SELECT *` to retrieve all courses
-      3. Add a second `SELECT` that retrieves only `code` and `name`
+      This step has two files:
+
+      1. **`populate.sql`** — Insert at least **3 courses** into the `courses` table. The file starts with `DELETE FROM courses` so you can re-run it as many times as you like without duplicate-key errors. Experiment freely.
+      2. **`query.sql`** — Write a `SELECT *` to retrieve all courses, and a second `SELECT` that retrieves only `code` and `name`.
 
     files:
       - path: "populate.sql"
         content: |
-          -- The courses table was created in Step 1.
-          -- Re-create it here if needed:
-          -- DROP TABLE IF EXISTS courses;
-          -- CREATE TABLE courses (id INTEGER PRIMARY KEY, code TEXT NOT NULL, name TEXT NOT NULL, credits INTEGER);
+          -- Safe to re-run: clear previous data first.
+          DELETE FROM courses;
 
-          -- TODO 1: Insert at least 3 courses (write separate INSERT statements)
+          -- TODO: Insert at least 3 courses
           INSERT INTO courses (id, code, name, credits) VALUES
             (1, 'CS 35L', 'Software Construction', 4);
 
           -- Add 2 more INSERT statements here ...
+        language: "sql"
+      - path: "query.sql"
+        content: |
+          -- TODO 1: Select all columns from courses
 
-          -- TODO 2: Select all columns
-          SELECT * FROM courses;
+          -- TODO 2: Select only the code and name columns
 
-          -- TODO 3: Select only code and name
-          SELECT code, name FROM courses;
         language: "sql"
 
     open_file: "populate.sql"
@@ -272,10 +255,18 @@ steps:
         command: |
           var rows = __run_query("SELECT * FROM courses WHERE code IS NULL OR name IS NULL");
           assert(rows.length === 0, "All courses must have a non-null code and name (NOT NULL constraint)");
+      - description: "query.sql contains a SELECT * query"
+        command: |
+          var src = __read_file('query.sql').toLowerCase();
+          assert(src.indexOf('select *') !== -1 || src.indexOf('select*') !== -1, "query.sql should contain a SELECT * query to retrieve all columns");
+      - description: "query.sql selects specific columns"
+        command: |
+          var src = __read_file('query.sql').toLowerCase();
+          assert(src.indexOf('select') !== -1 && (src.indexOf('code') !== -1 && src.indexOf('name') !== -1), "query.sql should contain a SELECT that retrieves the code and name columns");
       - description: "students table is still intact"
         command: |
           var rows = __run_query("SELECT COUNT(*) AS n FROM students");
-          assert(rows[0].n === 8, "The students table should have 8 rows — do not modify it");
+          assert(rows[0].n === 9, "The students table should have 9 rows — do not modify it");
 
     quiz:
       title: "INSERT & SELECT — Knowledge Check"
@@ -300,16 +291,16 @@ steps:
             A **semantic error** is a query that is grammatically correct SQL but references something that doesn't exist (wrong column name, wrong table). A syntax error violates grammar (wrong clause order, missing parentheses). A logical error is when the query runs but returns the wrong answer for the intended question. Semantic errors are the second-most common class of SQL mistakes after logical errors.
 
         - question: |
-            In SQL's logical execution order, the `SELECT` clause is written first. When is it actually evaluated?
+            What happens if you `INSERT INTO` a row but omit a column declared `NOT NULL` with no default?
           type: single
           options:
-            - "First — it defines what data to retrieve"
-            - "Second — immediately after FROM determines the source table"
-            - "Fifth — after FROM, WHERE, GROUP BY, and HAVING"
-            - "Last — after ORDER BY and LIMIT"
+            - "The column is automatically set to 0 or an empty string"
+            - "The row is inserted with NULL in that column"
+            - "The database raises an error and the row is not inserted"
+            - "The row is inserted but flagged as incomplete"
           correct_index: 2
           explanation: |
-            `SELECT` is evaluated **fifth**: FROM → WHERE → GROUP BY → HAVING → **SELECT** → ORDER BY → LIMIT. This is why an alias defined in `SELECT` cannot be used in `WHERE` — the alias doesn't exist until after `WHERE` has already filtered the rows.
+            A `NOT NULL` column with no default value **requires** an explicit value. Omitting it in the `INSERT` causes an error — the database enforces the constraint and refuses the row. This is one of the key differences between SQL tables and ad-hoc data structures like Python dictionaries.
 
         - question: |
             Which statement about `SELECT *` is true?
@@ -333,6 +324,22 @@ steps:
       ## WHERE and ORDER BY — The filter() and sort() of SQL
 
       > **Learning objective:** After this step you will be able to **write** `WHERE` clauses using boolean predicates and `ORDER BY` to sort results, and **explain** SQL's three-valued logic (3VL) and why it matters for NULL handling.
+
+      ### The logical execution order
+
+      SQL does **not** execute top-to-bottom like Python. Regardless of how you write a query, the database evaluates clauses in this fixed order:
+
+      ```
+      1. FROM      — which tables to read
+      2. WHERE     — filter rows           ← this step
+      3. GROUP BY  — group rows            (Step 4)
+      4. HAVING    — filter groups         (Step 4)
+      5. SELECT    — project columns  ← written first, evaluated fifth
+      6. ORDER BY  — sort the result  ← this step
+      7. LIMIT     — truncate the result
+      ```
+
+      This is why you cannot use a `SELECT` alias inside a `WHERE` clause — the alias doesn't exist yet when `WHERE` is evaluated.
 
       ### SQL's functional cousins
 
@@ -392,27 +399,33 @@ steps:
 
       1. All CS students with a GPA above 3.5, ordered by GPA descending
       2. All students in year 1 or year 2
-      3. All students whose major is **not** `'CS'` — write a NULL-safe predicate (use `OR major IS NULL`)
+      3. All students whose major is **not** `'CS'` — note that one student has a NULL major! Write a NULL-safe predicate (use `OR major IS NULL`)
 
     files:
       - path: "filter.sql"
         content: |
           -- Query 1: CS students with GPA > 3.5, highest GPA first
-          SELECT name, major, gpa
-          FROM students
-          WHERE major = 'CS' AND gpa > 3.5
-          ORDER BY gpa DESC;
+          -- TODO
 
           -- Query 2: Students in year 1 or year 2
           -- TODO
 
           -- Query 3: Students NOT in CS (NULL-safe — include rows where major IS NULL)
+          -- Hint: one student has a NULL major — make sure your predicate catches them
           -- TODO
         language: "sql"
 
     open_file: "filter.sql"
 
     tests:
+      - description: "filter.sql uses WHERE"
+        command: |
+          var src = __read_file('filter.sql').toLowerCase();
+          assert(src.indexOf('where') !== -1, "Your queries should use WHERE clauses to filter rows");
+      - description: "filter.sql uses ORDER BY"
+        command: |
+          var src = __read_file('filter.sql').toLowerCase();
+          assert(src.indexOf('order by') !== -1, "Query 1 should use ORDER BY to sort results");
       - description: "CS + GPA > 3.5 returns 2 students (Alice 3.9, Carol 3.7)"
         command: |
           var rows = __run_query("SELECT name FROM students WHERE major = 'CS' AND gpa > 3.5 ORDER BY gpa DESC");
@@ -422,10 +435,12 @@ steps:
         command: |
           var rows = __run_query("SELECT * FROM students WHERE year = 1 OR year = 2");
           assert(rows.length === 4, "Expected 4 students in year 1 or 2: Alice, Carol, Eve, Grace");
-      - description: "Non-CS (NULL-safe) returns 4 students"
+      - description: "Non-CS (NULL-safe) returns 5 students"
         command: |
+          var src = __read_file('filter.sql').toLowerCase();
+          assert(src.indexOf('is null') !== -1, "Query 3 must handle NULL — use OR major IS NULL");
           var rows = __run_query("SELECT * FROM students WHERE major != 'CS' OR major IS NULL");
-          assert(rows.length === 4, "Expected 4 non-CS students: Bob, Dan, Frank, Grace");
+          assert(rows.length === 5, "Expected 5 non-CS students: Bob, Dan, Frank, Grace, and Iris (NULL major)");
 
     quiz:
       title: "Filtering & Sorting — Knowledge Check"
@@ -472,6 +487,18 @@ steps:
           correct_index: 3
           explanation: |
             A SQL table is a **set**, not a list. Without `ORDER BY` the database may return rows in any order based on storage layout, index usage, or query plan. Never rely on implicit ordering. If order matters, always add `ORDER BY`.
+
+        - question: |
+            In SQL's logical execution order, the `SELECT` clause is written first. When is it actually evaluated?
+          type: single
+          options:
+            - "First — it defines what data to retrieve"
+            - "Second — immediately after FROM determines the source table"
+            - "Fifth — after FROM, WHERE, GROUP BY, and HAVING"
+            - "Last — after ORDER BY and LIMIT"
+          correct_index: 2
+          explanation: |
+            `SELECT` is evaluated **fifth**: FROM → WHERE → GROUP BY → HAVING → **SELECT** → ORDER BY → LIMIT. This is why an alias defined in `SELECT` cannot be used in `WHERE` — the alias doesn't exist until after `WHERE` has already filtered the rows.
 
   # --------------------------------------------------------------------------
   # STEP 4: GROUP BY + HAVING — the reduce() of SQL
@@ -547,23 +574,27 @@ steps:
       - path: "aggregate.sql"
         content: |
           -- Query 1: count students per major, most students first
-          SELECT   major,
-                   COUNT(*) AS student_count
-          FROM     students
-          GROUP BY major
-          ORDER BY student_count DESC;
+          -- TODO: use GROUP BY and COUNT(*)
 
           -- Query 2: average GPA per major, only majors with avg GPA > 3.3
-          -- TODO: write this query using HAVING
+          -- TODO: use GROUP BY, AVG(), and HAVING
         language: "sql"
 
     open_file: "aggregate.sql"
 
     tests:
-      - description: "3 distinct majors exist"
+      - description: "aggregate.sql uses GROUP BY"
+        command: |
+          var src = __read_file('aggregate.sql').toLowerCase();
+          assert(src.indexOf('group by') !== -1, "Your queries should use GROUP BY to aggregate data");
+      - description: "aggregate.sql uses HAVING"
+        command: |
+          var src = __read_file('aggregate.sql').toLowerCase();
+          assert(src.indexOf('having') !== -1, "Query 2 should use HAVING to filter groups by aggregate condition");
+      - description: "4 groups exist (CS, Math, Physics, and one NULL major)"
         command: |
           var rows = __run_query("SELECT major, COUNT(*) AS n FROM students GROUP BY major ORDER BY n DESC");
-          assert(rows.length === 3, "Expected 3 distinct majors: CS, Math, Physics");
+          assert(rows.length === 4, "Expected 4 groups: CS (4), Math (2), Physics (2), and NULL (1)");
       - description: "CS has the most students (4) and appears first"
         command: |
           var rows = __run_query("SELECT major, COUNT(*) AS n FROM students GROUP BY major ORDER BY n DESC");
@@ -648,7 +679,7 @@ steps:
 
       ```sql
       DELETE FROM students
-      WHERE year = 4;   -- removes all year-4 students
+      WHERE gpa < 3.0;   -- removes all students below 3.0
       ```
 
       `DELETE FROM students` with no `WHERE` removes every row. The table schema remains — only the data is gone.
@@ -672,20 +703,18 @@ steps:
 
       Complete `cleanup.sql`:
 
-      1. Update Dan's GPA from 2.80 to 3.00 (he improved this semester)
+      1. Update Eve's GPA from 3.50 to 3.60 (she improved this semester)
       2. Delete all year-4 students from the `students` table
       3. Drop the `courses` table you created in Step 1
 
     files:
       - path: "cleanup.sql"
         content: |
-          -- Task 1: Update Dan's GPA to 3.0
-          UPDATE students
-          SET    gpa = 3.0
-          WHERE  name = 'Dan';
+          -- Task 1: Update Eve's GPA to 3.6
+          -- TODO: use UPDATE ... SET ... WHERE ...
 
           -- Task 2: Delete all year-4 students
-          -- TODO
+          -- TODO: use DELETE FROM ... WHERE ...
 
           -- Task 3: Drop the courses table
           -- TODO: use DROP TABLE IF EXISTS
@@ -694,11 +723,19 @@ steps:
     open_file: "cleanup.sql"
 
     tests:
-      - description: "Dan's GPA has been updated to 3.0"
+      - description: "cleanup.sql uses UPDATE"
         command: |
-          var rows = __run_query("SELECT gpa FROM students WHERE name = 'Dan'");
-          assert(rows.length > 0, "Dan should still be in the table at this point");
-          assert(Math.abs(rows[0].gpa - 3.0) < 0.001, "Dan's GPA should be 3.0 after UPDATE");
+          var src = __read_file('cleanup.sql').toLowerCase();
+          assert(src.indexOf('update') !== -1, "Task 1 should use an UPDATE statement");
+      - description: "cleanup.sql uses DELETE"
+        command: |
+          var src = __read_file('cleanup.sql').toLowerCase();
+          assert(src.indexOf('delete') !== -1, "Task 2 should use a DELETE statement");
+      - description: "Eve's GPA has been updated to 3.6"
+        command: |
+          var rows = __run_query("SELECT gpa FROM students WHERE name = 'Eve'");
+          assert(rows.length > 0, "Eve should still be in the table");
+          assert(Math.abs(rows[0].gpa - 3.6) < 0.001, "Eve's GPA should be 3.6 after UPDATE, got " + rows[0].gpa);
       - description: "Year-4 students have been deleted"
         command: |
           var rows = __run_query("SELECT * FROM students WHERE year = 4");
