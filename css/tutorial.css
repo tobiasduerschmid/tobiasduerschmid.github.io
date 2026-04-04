@@ -1295,6 +1295,24 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
   border: 1px solid #3a3a48;
 }
+.tvm-quiz-panel .question-text pre,
+.tvm-quiz-panel .explanation-text pre {
+  background: #1e1e2e;
+  border: 1px solid #3a3a4a;
+  border-radius: 6px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.tvm-quiz-panel .question-text pre code,
+.tvm-quiz-panel .explanation-text pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #d4d4d4;
+  font-size: 0.87em;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+}
 
 /* Options */
 .tvm-quiz-panel .quiz-options { display: flex; flex-direction: column; gap: 4px; }
@@ -1584,6 +1602,15 @@ html:not(.dark-mode) .tvm-quiz-panel .explanation-text code {
   background: #eaeaf4;
   color: #b03010;
   border-color: #c8c8d8;
+}
+html:not(.dark-mode) .tvm-quiz-panel .question-text pre,
+html:not(.dark-mode) .tvm-quiz-panel .explanation-text pre {
+  background: #f6f8fa;
+  border-color: #d0d0e0;
+}
+html:not(.dark-mode) .tvm-quiz-panel .question-text pre code,
+html:not(.dark-mode) .tvm-quiz-panel .explanation-text pre code {
+  color: #333333;
 }
 html:not(.dark-mode) .tvm-quiz-panel .quiz-option {
   background: white;
