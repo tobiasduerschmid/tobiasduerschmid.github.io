@@ -271,6 +271,85 @@ function Parent() {
 `SearchBar` calls `onChange(e.target.value)` to notify the parent. The parent updates state, which triggers a re-render of both components. This is "inverse data flow" — data flows down via props, notifications flow up via callbacks.
 
 
+### Top 10 React Best Practices
+
+These are the most important habits to build early. Every one of them prevents real bugs that trip up beginners — and professionals.
+
+**1. Use `useState` for component memory — never bare variables.**
+A `let` variable inside a component resets to its initial value on every render. Only `useState` persists data and triggers re-renders when it changes.
+
+**2. Keep state minimal — derive what you can.**
+If a value can be computed from existing state or props, compute it during render instead of storing a second copy. Two copies can drift out of sync.
+```jsx
+// Good — filter is the only state; visibleTasks is derived
+const [filter, setFilter] = useState('all');
+const visibleTasks = tasks.filter(t => filter === 'all' || t.status === filter);
+```
+
+**3. Never mutate state — always create new arrays and objects.**
+React detects changes by *reference*. `array.push()` returns the same reference, so React skips the re-render. Spread into a new array instead.
+```jsx
+// Bad — mutates in place, React sees no change
+items.push(newItem);
+setItems(items);
+
+// Good — new array, React re-renders
+setItems([...items, newItem]);
+```
+
+**4. Use stable, unique keys for lists — never the array index.**
+Keys tell React which element is which across re-renders. If items are reordered or deleted, index-based keys cause state to attach to the wrong element (e.g., checked checkboxes shifting). Use a unique ID from your data.
+
+**5. Destructure props in the function signature.**
+It makes the component's API visible at a glance and avoids repetitive `props.` prefixes throughout the body.
+```jsx
+// Good
+function ProductCard({ name, price, onSale }) { ... }
+
+// Avoid
+function ProductCard(props) { return <h3>{props.name}</h3>; }
+```
+
+**6. Lift state to the lowest common ancestor.**
+When two sibling components need the same data, move the state up to their nearest shared parent and pass it down as props. The child notifies the parent through a callback prop — never by reaching into siblings directly.
+
+**7. One component, one job.**
+If a component handles product display *and* cart management *and* filtering, it is doing too much. Split it into focused pieces (`ProductCard`, `CartSummary`, `FilterBar`). Small components are easier to read, test, and reuse.
+
+**8. Name event handlers `handle*`, callback props `on*`.**
+Inside a component, the function that handles a click is `handleClick`. When you pass it to a child as a prop, call the prop `onClick`. This convention makes it immediately clear which end owns the logic and which end fires the event.
+```jsx
+function App() {
+  const handleDelete = (id) => { /* ... */ };
+  return <TodoItem onDelete={handleDelete} />;
+}
+```
+
+**9. Guard `&&` rendering against falsy numbers.**
+{% raw %}`{count && <Badge />}`{% endraw %} renders the literal `0` when `count` is `0`, because `0` is a valid React node. Use an explicit boolean: {% raw %}`{count > 0 && <Badge />}`{% endraw %}.
+
+**10. Never call hooks inside conditions or loops.**
+React tracks hooks by their *call order*. If a `useState` call is skipped on one render because it is inside an `if`, every hook after it shifts position — causing crashes or silent data corruption. Always call hooks at the top level of your component.
+
+
+### Glossary
+
+| Term | Definition |
+|------|-----------|
+| **Component** | A JavaScript function that returns JSX. The building block of React UIs. |
+| **JSX** | A syntax extension that lets you write HTML-like markup inside JavaScript. Babel compiles it to `React.createElement()` calls. |
+| **Props** | Read-only data passed from a parent component to a child, like function arguments. |
+| **State** | Data managed inside a component via `useState`. Changing state triggers a re-render. |
+| **Hook** | A special function (prefixed with `use`) that lets components use React features. Must be called at the top level. |
+| **Re-render** | When React re-calls your component function because state or props changed, producing a new JSX tree. |
+| **Virtual DOM** | A lightweight JavaScript object tree that React builds from your JSX. React diffs the old and new trees and patches only the changed real DOM nodes. |
+| **Reconciliation** | The algorithm React uses to compare the old and new Virtual DOM trees and determine the minimal set of DOM updates. |
+| **Key** | A special prop on list items that helps React identify which items changed, were added, or were removed during reconciliation. |
+| **Fragment** | A wrapper (`<>...</>`) that groups multiple JSX elements without adding an extra DOM node. |
+| **Derived state** | A value computed from existing state or props during render, rather than stored in its own `useState`. |
+| **Lifting state up** | Moving state to the lowest common ancestor of the components that need it, then passing it down as props. |
+
+
 ### Summary
 1. **Components:** UI is broken down into reusable JavaScript functions.
 2. **JSX:** We write HTML-like syntax inside JS to describe UI, compiled to `React.createElement` calls.

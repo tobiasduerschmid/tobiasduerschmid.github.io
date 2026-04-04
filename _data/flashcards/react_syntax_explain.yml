@@ -5,7 +5,7 @@ cards:
     question: |
       ```jsx
       function App() {
-        return <h1 style={{color: 'steelblue'}}>Hello!</h1>;
+        return <h1 style={{color: '#2774AE'}}>Hello!</h1>;
       }
       ```
     answer: "A **React component** — a function that returns JSX. It renders an `<h1>` with blue text. The double braces in `style={{...}}` are: outer `{}` = JSX expression, inner `{}` = JavaScript object literal."

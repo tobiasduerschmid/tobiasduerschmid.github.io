@@ -29,7 +29,7 @@ steps:
       // Imperative: You write the HOW
       const h1 = document.getElementById('greeting');
       h1.textContent = 'Hello, CS 130!';
-      h1.style.color = 'steelblue';
+      h1.style.color = '#2774AE';
       ```
 
       React asks you to think **declaratively** — you describe *what* the UI should look like for a given moment, and React figures out the minimal DOM updates needed to get there:
@@ -37,7 +37,7 @@ steps:
       ```jsx
       // Declarative (React): You describe the WHAT
       function App() {
-        return <h1 className="text-blue-600 text-3xl">Hello, CS 130!</h1>;
+        return <h1 className="greeting">Hello, CS 130!</h1>;
       }
       ```
 
@@ -52,47 +52,74 @@ steps:
 
       The declarative mindset feels strange at first — you are used to telling the computer exactly what to do, step by step. In React, you describe the destination and let React figure out the route. This shift takes time. If it feels unnatural, that is a sign you are learning something fundamentally new, not that you are doing it wrong. Every React developer went through this disorientation.
 
-      ### JSX: A Quick Preview
+      ### HTML Tags — A Quick Reminder
 
-      The `<h1>...</h1>` syntax inside JavaScript is called **JSX**. It is *not* HTML — Babel compiles it to `React.createElement(...)` calls that build a lightweight JavaScript object tree (the Virtual DOM). You will learn the details and rules of JSX in the next step.
+      React's JSX uses the same tags as HTML. Here are the ones you will see throughout this tutorial:
 
-      ### A Quick Note on Styling
+      | Tag | Purpose | Example |
+      |-----|---------|---------|
+      | `<h1>` – `<h6>` | Headings (h1 = largest) | `<h1>Hello!</h1>` |
+      | `<p>` | Paragraph of text | `<p>Welcome to React.</p>` |
+      | `<div>` | Generic container (no visual meaning) | `<div>...</div>` |
+      | `<span>` | Inline container (for styling a word or phrase) | `<span>Sale!</span>` |
+      | `<button>` | Clickable button | `<button>Click me</button>` |
+      | `<ul>`, `<li>` | Unordered list and list items | `<ul><li>Item</li></ul>` |
+      | `<img>` | Image (self-closing) | `<img src="photo.jpg" />` |
 
-      This tutorial uses **Tailwind CSS**, a popular utility-first CSS framework. Tailwind provides ready-made class names that you apply via the `className` prop:
+      These tags describe **structure** — *what* each piece of content is. They say nothing about how it looks. That is the job of CSS.
 
-      ```jsx
-      <h1 className="text-red-500 text-4xl font-bold">Hello!</h1>
+      ### What Is CSS?
+
+      **CSS** (Cascading Style Sheets) controls how elements look — colors, spacing, fonts, borders, and layout. A CSS **class** is a reusable set of styles that you apply to elements by name:
+
+      ```css
+      .greeting { color: tomato; font-size: 24px; }
       ```
 
-      Each class does one thing: `text-red-500` sets the text color, `text-4xl` sets the font size, `font-bold` makes it bold, `p-8` adds padding. You do not need to memorize these — they are provided for you in every step after this one.
+      In React, you attach a CSS class with the `className` prop (not `class` — that is a reserved JavaScript keyword):
 
-      > In React, use `className` (not `class`) because `class` is a reserved JavaScript keyword. You will learn more about this in the next step.
+      ```jsx
+      <h1 className="greeting">Hello!</h1>
+      ```
+
+      This tutorial loads **Bootstrap** (a CSS library) automatically, so layout and typography are handled for you. The `styles.css` file is for your own custom styles. You do not need to learn CSS for this tutorial — styling is provided in every step after this one. Here, you will make one small change to get comfortable with the idea.
+
+      ### JSX: A Quick Preview
+
+      The `<h1>...</h1>` syntax inside JavaScript is called **JSX**. It looks like HTML, but it is *not* — Babel compiles it to `React.createElement(...)` calls that build a lightweight JavaScript object tree (the Virtual DOM). You will learn the details and rules of JSX in the next step.
 
       ### Predict Before You Modify
 
-      Before changing anything, look at the `App` component. Predict: what does `{name}` inside the JSX evaluate to? What does `className="text-red-500"` do to the heading? Write your predictions, then read on.
+      Before changing anything, look at the `App` component. Predict: what does `{name}` inside the JSX evaluate to? What does `className="greeting"` connect to in `styles.css`? Write your predictions, then read on.
 
       ### Task
 
       The preview shows a greeting component. Make two changes:
 
-      1. Change `"World"` to your own name in the `name` variable
-      2. Change the heading color from `text-red-500` to `text-blue-600` (or any other Tailwind color like `text-green-600`, `text-purple-500`, etc.)
+      1. In `App.jsx`: Change `"World"` to your own name in the `name` variable
+      2. In `styles.css`: Change the color from `tomato` to `#2774AE` (or any other color)
 
       The preview rebuilds automatically when you save (Ctrl+S). Use **↻ Refresh** if needed.
 
     files:
+      - path: "styles.css"
+        content: |
+          .greeting {
+            color: tomato;        /* Task 2: Change this color */
+          }
+        language: "css"
+
       - path: "App.jsx"
         content: |
           function App() {
             const name = "World";       // Task 1: Change this to your name
 
             return (
-              <div className="p-8 font-sans">
-                <h1 className="text-red-500 text-3xl font-bold">
+              <div className="p-4">
+                <h1 className="greeting display-6 fw-bold">
                   Hello, {name}!
                 </h1>
-                <p className="mt-2 text-gray-600">Welcome to React.</p>
+                <p className="mt-2 text-secondary">Welcome to React.</p>
               </div>
             );
           }
@@ -101,6 +128,10 @@ steps:
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<App />);
         language: "javascript"
+
+    react_files:
+      - "styles.css"
+      - "App.jsx"
 
     open_file: "App.jsx"
 
@@ -111,12 +142,13 @@ steps:
           assert(h1, 'No <h1> found in the preview');
           assert(h1.textContent.trim() !== 'Hello, World!',
             'Change the name variable from "World" to your own name');
-      - description: "The heading color class has been changed"
+      - description: "The heading color is not 'tomato'"
         command: |
           var h1 = frame.contentDocument.querySelector('h1');
           assert(h1, 'No <h1> found');
-          assert(!h1.className.includes('text-red-500'),
-            'Change the color class from "text-red-500" to a different Tailwind color (e.g. "text-blue-600")');
+          var color = getComputedStyle(h1).color;
+          assert(color !== 'rgb(255, 99, 71)' && color !== 'tomato',
+            'Change the color in styles.css to something other than "tomato"');
 
     quiz:
       title: "Hello, React! — Knowledge Check"
@@ -206,13 +238,13 @@ steps:
 
       Before fixing the bugs below: look at the Badge component's `style` prop. It says `style="background: color;"`. Predict: what is wrong with this syntax? Write your prediction, then fix it.
 
-      ### Fixer-Upper: Four Classic JSX Bugs
+      ### Fixer-Upper: Three Classic JSX Bugs
 
-      The file below has **four bugs** that prevent it from rendering correctly.
+      The file below has **three bugs** that prevent it from rendering correctly.
 
       ### Task
 
-      1. Find and fix all **four JSX bugs** in `App.jsx` (hint: use the table above)
+      1. Find and fix all **three JSX bugs** in `App.jsx` (hint: use the table above)
       2. Once it renders, add a third `<Badge>` below the existing two, with a label of your choice and a different color
 
       The `Badge` component is already defined — you just need to use it.
@@ -224,7 +256,7 @@ steps:
           // Props: label (string), color (string — any CSS color)
           function Badge({ label, color }) {
             return (
-              <span className="inline-block px-3 py-1 rounded-full font-semibold text-gray-800" style="background: color;">
+              <span className="badge rounded-pill fw-semibold" style="background: color;">
                 {label}
               </span>
             );
@@ -233,8 +265,8 @@ steps:
           function App() {
             return (
               // BUG: Multiple root elements without a wrapper
-              <h1 class="text-2xl font-bold text-gray-800 mb-4">My Badges</h1>
-              <div className="flex gap-3 mt-4">
+              <h1 class="h3 mb-3">My Badges</h1>
+              <div className="d-flex gap-2 mt-3">
                 <Badge label="React" color="#61dafb" />
                 <Badge label="JavaScript" color="#f7df1e" />
                 {/* Task: Add a third <Badge> here */}
@@ -248,6 +280,7 @@ steps:
 
     preview_styles: |
       body { padding: 24px; }
+      .badge { color: #222 !important; font-size: 0.95rem; }
 
     open_file: "App.jsx"
 
@@ -260,16 +293,19 @@ steps:
         command: |
           var src = frame.contentDocument.querySelector('[type="text/babel"]');
           var code = src ? src.textContent : '';
-          assert(code.includes('className='),
+          var withoutClassName = code.replace(/className=/g, '');
+          assert(!withoutClassName.includes(' class='),
             'Fix the <h1> tag: use className="..." instead of class="..." (class is a reserved JS keyword)');
       - description: "Three or more Badge spans are rendered"
         command: |
-          var spans = frame.contentDocument.querySelectorAll('span');
+          var root = frame.contentDocument.getElementById('root');
+          var spans = root.querySelectorAll('span');
           assert(spans.length >= 3,
             'Add a third <Badge> component. Currently found: ' + spans.length + ' span(s)');
       - description: "Badge spans have a background color applied (style is an object, not a string)"
         command: |
-          var spans = Array.from(frame.contentDocument.querySelectorAll('span'));
+          var root = frame.contentDocument.getElementById('root');
+          var spans = Array.from(root.querySelectorAll('span'));
           var styled = spans.filter(function(s) { return s.style.background || s.style.backgroundColor; });
           assert(styled.length >= 2,
             'Fix the Badge style — use style={{background: color, ...}} (a JS object), not style="..." (a CSS string). Found ' + styled.length + ' styled span(s).');
@@ -362,11 +398,14 @@ steps:
       // React — defining the component:
       function ProductCard({ name, price }) {
         return (
-          <div>
-            {/* SUB-GOAL: Use props to render dynamic content */}
-            <h3>{name}</h3>
-            <p>${price.toFixed(2)}</p>
-          </div>
+          <Card>
+            <Card.Body>
+              {/* SUB-GOAL: Use props to render dynamic content */}
+              <h3>{name}</h3>
+              <p>${price.toFixed(2)}</p>
+              {/* TODO: Add more elements here */}
+            </Card.Body>
+          </Card>
         );
       }
 
@@ -375,15 +414,45 @@ steps:
       <ProductCard name="Mouse"  price={29.99}  />
       ```
 
+      ### Destructuring: Unpacking Props
+
+      The `{ name, price }` syntax in the function signature is called **destructuring** — it unpacks properties from the props object into separate variables. If you have used C++17 structured bindings, it works the same way:
+
+      ```
+      C++:    const auto [name, price] = product;   // structured binding
+      Python: name, price = product                  // tuple unpacking
+      React:  function Card({ name, price }) { ... } // destructuring
+      ```
+
       ### Key Props Rules
 
       - **Props flow one way** — from parent to child, never the other direction
       - **Props are read-only** inside the component (like `const` function parameters in C++)
       - **Any JS value** can be a prop: string, number, boolean, object, array, function, or another component
 
+      ### Conditional Rendering with `&&`
+
+      Task 4 below asks you to show a badge *only when* `onSale` is `true`. In C++ or Python, you would use an `if` statement. But JSX is an **expression** (it produces a value), not a block of statements — you cannot write `if` inside it, just like you cannot write `if` inside `cout << ...` or an f-string.
+
+      Instead, React uses JavaScript's **`&&` (logical AND)** operator:
+
+      ```jsx
+      {soldOut && <Badge bg="danger">Sold Out!</Badge>}
+      ```
+
+      How it works: JavaScript evaluates the left side first. If `soldOut` is `false`, it **short-circuits** — the right side is never evaluated, and React renders nothing (because `false` is ignored in JSX). If `soldOut` is `true`, JavaScript returns the right side, and React renders the Badge.
+
+      This is the React equivalent of:
+      ```python
+      # Python — you can't embed if-statements in f-strings either
+      sale_text = "Sale!" if on_sale else ""
+      ```
+
+      You will learn more conditional rendering patterns (ternary, early return) in Step 6.
+
       ### Predict Before You Code
 
-      Before writing any code, predict: what will the `ProductCard` look like when `onSale` is `true` vs `false`? How would you conditionally show a "Sale!" badge in C++ or Python? Write your approach, then implement it.
+      Before writing any code, predict: what will the `ProductCard` look like when `onSale` is `true` vs `false`? Now that you know the `&&` pattern, write the JSX in your head, then implement it.
 
       ### Task
 
@@ -392,13 +461,17 @@ steps:
       1. Displays the product `name` as an `<h3>`
       2. Displays the `price` formatted to two decimal places (use `price.toFixed(2)`)
       3. Displays the `description` in a `<p>` tag
-      4. Shows a "Sale!" badge (e.g. a red `<span>`) if the `onSale` prop is `true`
+      4. Shows a "Sale!" badge only when `onSale` is `true`
 
       The `App` function already passes the right props — you only need to build the card.
+
+      **Challenge (optional):** After passing the tests, add a third `ProductCard` in `App` with your own product data and `onSale` value. Notice how the same component renders differently based on the data you pass — that is the power of props.
 
     files:
       - path: "App.jsx"
         content: |
+          const { Card, Badge } = ReactBootstrap;
+
           function ProductCard({ name, price, description, onSale }) {
             // Task: Build the card UI using the four props above.
             // Requirements:
@@ -406,16 +479,20 @@ steps:
             //   2. Price formatted to 2 decimal places
             //   3. <p> showing description
             //   4. A "Sale!" badge (shown only if onSale is true)
+            //
+            // Hint: Use <Badge bg="danger">Sale!</Badge> for the badge
             return (
-              <div className="border border-gray-300 rounded-lg p-5 max-w-xs shadow-sm">
-                {/* Your code here */}
-              </div>
+              <Card className="product-card">
+                <Card.Body>
+                  {/* Your code here */}
+                </Card.Body>
+              </Card>
             );
           }
 
           function App() {
             return (
-              <div className="p-8 flex gap-6 flex-wrap">
+              <div className="p-4 d-flex gap-4 flex-wrap">
                 <ProductCard
                   name="Mechanical Keyboard"
                   price={129.99}
@@ -436,30 +513,40 @@ steps:
           root.render(<App />);
         language: "javascript"
 
+    preview_styles: |
+      .product-card { max-width: 280px; }
+
     open_file: "App.jsx"
 
     tests:
       - description: "Component renders two product cards (two <h3> elements)"
         command: |
-          var h3s = frame.contentDocument.querySelectorAll('h3');
+          var root = frame.contentDocument.getElementById('root');
+          var h3s = root.querySelectorAll('h3');
           assert(h3s.length >= 2,
             'Render at least one <h3> per card. Found: ' + h3s.length);
       - description: "Product name appears in an <h3>"
         command: |
-          var h3s = frame.contentDocument.querySelectorAll('h3');
+          var root = frame.contentDocument.getElementById('root');
+          var h3s = root.querySelectorAll('h3');
           var names = Array.from(h3s).map(function(el) { return el.textContent; });
           assert(names.some(function(n) { return n.includes('Keyboard'); }),
             '<h3> should display the product name. Got: ' + JSON.stringify(names));
       - description: "Price is displayed and formatted to two decimal places"
         command: |
-          var text = frame.contentDocument.body.textContent;
+          var root = frame.contentDocument.getElementById('root');
+          var text = root ? root.textContent : '';
           assert(text.includes('129.99') || text.includes('$129.99'),
-            'Display the price with .toFixed(2). Text found: ' + text.slice(0, 200));
+            'Display the price with .toFixed(2). Render it inside the card, e.g. <p>${price.toFixed(2)}</p>');
       - description: "'Sale!' badge appears for the keyboard (onSale=true) but not for the hub"
         command: |
-          var text = frame.contentDocument.body.textContent;
-          assert(text.toLowerCase().includes('sale'),
-            'Show a "Sale!" badge when onSale is true. Not found in: ' + text.slice(0,200));
+          var root = frame.contentDocument.getElementById('root');
+          var badges = root ? Array.from(root.querySelectorAll('.badge, [class*="badge"]')) : [];
+          var saleBadges = badges.filter(function(b) { return b.textContent.toLowerCase().includes('sale'); });
+          assert(saleBadges.length >= 1,
+            'Show a <Badge> with "Sale!" text when onSale is true. Found 0 badge elements. Use: {onSale && <Badge bg="danger">Sale!</Badge>}');
+          assert(saleBadges.length < 2,
+            'The "Sale!" badge should only appear for products where onSale is true (the Keyboard), not for all products. Found ' + saleBadges.length + ' badges.');
 
     quiz:
       title: "Props — Knowledge Check"
@@ -503,6 +590,21 @@ steps:
             Only string literals can use the quote syntax. This is a common source of confusion
             for beginners who try `price=99.99` (without braces) and get unexpected results.
 
+        - question: |
+            A `ProductCard` receives `price` as a prop and renders `${price.toFixed(2)}`. What happens if the parent passes `price={undefined}`?
+          type: single
+          options:
+            - "React renders `$undefined` as text — ugly but harmless"
+            - "The call `undefined.toFixed(2)` throws a TypeError and the component crashes"
+            - "React silently ignores the undefined prop and renders `$0.00` as a default"
+            - "The component renders but `.toFixed(2)` returns the string `'NaN'`"
+          correct_index: 1
+          explanation: |
+            `undefined.toFixed(2)` is a runtime error — `undefined` has no methods.
+            In production, you would guard against this with a default value:
+            `function ProductCard({ price = 0 }) { ... }` or `(price ?? 0).toFixed(2)`.
+            React does not provide automatic fallbacks for missing props.
+
   # --------------------------------------------------------------------------
   # STEP 4: useState — State & Interactivity
   # Pedagogy:
@@ -538,9 +640,22 @@ steps:
       }
       ```
 
+      ### How React Renders — The Mental Model
+
+      Understanding *why* this breaks requires knowing what React does when state changes:
+
+      1. **You call the setter** — e.g. `setCount(1)`
+      2. **React re-calls your component function** — `Counter()` runs again from the top
+      3. **A new JSX tree is returned** — describing what the UI should look like now
+      4. **React diffs old tree vs. new tree** — and patches only the changed DOM nodes
+
+      A `let count = 0` at the top of the function is re-executed in step 2, resetting it to `0` every time. The variable *does* change in memory when you do `count++`, but React never knows — it has no way to detect that a plain variable changed, so it never triggers step 1.
+
       ### ⚠️ OOP Instinct That Will Hurt You
 
       In C++, you control when member functions execute. In React, you **don't** control when your component function runs — React calls it whenever state changes. This means your component must be a pure function of its props and state, with no side effects.
+
+      Another instinct that hurts: in C++, `vec.push_back(item)` modifies the vector in-place and that is perfectly fine. In React, `items.push(item)` does **not** trigger a re-render because React compares state by **reference equality** (`===`). The array reference hasn't changed, so React thinks nothing happened. You must create a **new** array: `setItems([...items, item])`.
 
       React provides **`useState`** to give your component persistent memory:
 
@@ -567,7 +682,19 @@ steps:
 
       ### ⚠️ Watch Out: Stale Closures
 
-      A common bug: `setTimeout(() => setCount(count + 1), 1000)`. The closure captures `count` at render time. If `count` is `3`, the callback always sets it to `4`, even if the user clicked more. Fix: use the **functional update form**: `setCount(prev => prev + 1)`.
+      When you write an arrow function inside a component, it **captures** the current value of variables — just like a C++ lambda with `[count]` captures by value. If state changes between when the function was created and when it runs, the captured value is stale:
+
+      ```jsx
+      // BUG — both timeouts capture count = 0 at render time
+      setTimeout(() => setCount(count + 1), 1000);   // sets to 1
+      setTimeout(() => setCount(count + 1), 2000);   // also sets to 1 (not 2!)
+
+      // FIX — functional update always receives the latest value
+      setTimeout(() => setCount(prev => prev + 1), 1000);   // 0 → 1
+      setTimeout(() => setCount(prev => prev + 1), 2000);   // 1 → 2 ✓
+      ```
+
+      **Rule of thumb:** Use `setCount(prev => prev + 1)` (functional form) whenever the new value depends on the old value. Use `setCount(5)` (direct form) when you know the exact new value.
 
       ### Predict Before You Fix
 
@@ -585,9 +712,25 @@ steps:
       2. Add a **"Reset"** button that sets the count back to `0`
       3. Add a **"−1"** button that decrements the count (don't let it go below 0)
 
+      ### 🔍 Debugging Tip
+
+      When something doesn't update, add a `console.log` at the **top** of your component function (before the `return`):
+
+      ```jsx
+      function Counter() {
+        const [count, setCount] = React.useState(0);
+        console.log('Counter rendered, count =', count);  // ← appears in browser console on every render
+        ...
+      }
+      ```
+
+      If the log never appears after a click, the state setter was never called. If it appears but shows the wrong value, check for stale closures. The browser's **React DevTools** extension also lets you inspect component state live.
+
     files:
       - path: "App.jsx"
         content: |
+          const { Button } = ReactBootstrap;
+
           function Counter() {
             // BUG: Using a regular variable — React won't re-render when this changes
             let count = 0;
@@ -598,12 +741,12 @@ steps:
             }
 
             return (
-              <div className="p-8 text-center">
-                <h2 className="text-5xl mb-6">{count}</h2>
-                <div className="flex gap-3 justify-center">
-                  <button className="px-6 py-2 text-lg rounded-lg bg-blue-600 text-white cursor-pointer" onClick={increment}>
+              <div className="p-4 text-center">
+                <h2 className="display-1 mb-4">{count}</h2>
+                <div className="d-flex gap-2 justify-content-center">
+                  <Button variant="primary" size="lg" onClick={increment}>
                     +1
-                  </button>
+                  </Button>
                   {/* Task: Add a −1 button and a Reset button */}
                 </div>
               </div>
@@ -625,19 +768,22 @@ steps:
             'Replace the let variable with React.useState()');
       - description: "The +1 button and a Reset button are both present"
         command: |
-          var buttons = frame.contentDocument.querySelectorAll('button');
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = root.querySelectorAll('button');
           assert(buttons.length >= 2,
             'Add at least two buttons (+1 and Reset). Found: ' + buttons.length);
       - description: "A button with 'Reset' text exists"
         command: |
-          var buttons = Array.from(frame.contentDocument.querySelectorAll('button'));
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
           var hasReset = buttons.some(function(b) {
             return b.textContent.toLowerCase().includes('reset');
           });
           assert(hasReset, 'Add a Reset button that sets count back to 0');
       - description: "A decrement (−1) button exists"
         command: |
-          var buttons = Array.from(frame.contentDocument.querySelectorAll('button'));
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
           assert(buttons.length >= 3,
             'Add a −1 button. Found only ' + buttons.length + ' button(s)');
 
@@ -735,10 +881,10 @@ steps:
       // React:
       // SUB-GOAL: Transform data array into JSX array
       const taskElements = tasks.map(task =>
-        <li key={task.id}>{task.text}</li>
+        <ListGroup.Item key={task.id}>{task.text}</ListGroup.Item>
       );
       // SUB-GOAL: Render the array inside a container
-      return <ul>{taskElements}</ul>;
+      return <ListGroup>{taskElements}</ListGroup>;
       ```
 
       ### The `key` Prop — React's Reconciliation Hint
@@ -763,9 +909,11 @@ steps:
 
       A task list is partially implemented. Your job:
 
-      1. Replace the placeholder `<li>Task goes here</li>` with a `.map()` call over the `tasks` array
-      2. Give each `<li>` a `key` prop using `task.id` (not the index!)
+      1. Replace the placeholder `<ListGroup.Item>` with a `.map()` call over the `tasks` array
+      2. Give each `<ListGroup.Item>` a `key` prop using `task.id` (not the index!)
       3. Show a ✓ or ✗ icon based on `task.done` using a ternary
+
+      **Challenge (optional):** After passing the tests, add a 7th task to the `tasks` array (e.g., `{ id: 7, text: 'Deploy to production', done: false }`). Does your `.map()` handle it automatically without any other code changes? That is the power of data-driven rendering.
 
     files:
       - path: "App.jsx"
@@ -779,17 +927,19 @@ steps:
             { id: 6, text: 'Build a real React app',               done: false },
           ];
 
+          const { ListGroup } = ReactBootstrap;
+
           function TaskList() {
             return (
-              <div className="p-8 max-w-lg">
-                <h2 className="text-xl font-bold mb-4">React Learning Checklist</h2>
+              <div className="p-4 checklist-container">
+                <h2 className="h4 mb-3">React Learning Checklist</h2>
 
-                <ul className="list-none p-0">
+                <ListGroup>
                   {/* Task: Replace this with a .map() call over tasks */}
-                  <li>Task goes here</li>
-                </ul>
+                  <ListGroup.Item>Task goes here</ListGroup.Item>
+                </ListGroup>
 
-                <p className="text-gray-400 text-sm mt-3">
+                <p className="text-muted small mt-3">
                   {tasks.filter(t => t.done).length} / {tasks.length} complete
                 </p>
               </div>
@@ -800,6 +950,9 @@ steps:
           root.render(<TaskList />);
         language: "javascript"
 
+    preview_styles: |
+      .checklist-container { max-width: 540px; }
+
     open_file: "App.jsx"
 
     tests:
@@ -808,14 +961,15 @@ steps:
           var src = frame.contentDocument.querySelector('[type="text/babel"]');
           assert(src && src.textContent.includes('.map('),
             'Use .map() to render the tasks array into JSX elements');
-      - description: "All 6 tasks are rendered as <li> elements"
+      - description: "All 6 tasks are rendered as list items"
         command: |
-          var lis = frame.contentDocument.querySelectorAll('li');
-          assert(lis.length === 6,
-            'Render all 6 tasks. Found ' + lis.length + ' <li> elements');
+          var root = frame.contentDocument.getElementById('root');
+          var items = root.querySelectorAll('.list-group-item');
+          assert(items.length === 6,
+            'Render all 6 tasks using .map(). Found ' + items.length + ' list items');
       - description: "Done/undone status is shown (✓ or ✗ or similar)"
         command: |
-          var text = frame.contentDocument.body.textContent;
+          var text = frame.contentDocument.getElementById('root').textContent;
           var hasDoneIndicator = text.includes('✓') || text.includes('✗') ||
                                   text.includes('Done') || text.includes('done') ||
                                   text.includes('✅') || text.includes('❌') ||
@@ -893,9 +1047,24 @@ steps:
 
       > **Watch out**: `{count && <Badge />}` — if `count` is `0`, React renders the number `0`, not nothing! Use `{count > 0 && <Badge />}` instead.
 
-      ### Combining State and Lists
+      ### Combining State and Lists — The Derived State Principle
 
-      Now you can combine `useState` (Step 4) with `.map()` (Step 5) to build interactive, filtered views:
+      Now you can combine `useState` (Step 4) with `.map()` (Step 5) to build interactive, filtered views. A critical principle: **store the minimum state and derive everything else**.
+
+      ```jsx
+      // BAD — two state variables that must stay in sync
+      const [allTasks, setAllTasks] = React.useState(tasks);
+      const [visibleTasks, setVisibleTasks] = React.useState(tasks);
+      // Bug: if you add a task to allTasks, visibleTasks is stale!
+
+      // GOOD — one state variable; visibleTasks is computed fresh every render
+      const [filter, setFilter] = React.useState('all');
+      const visibleTasks = allTasks.filter(t => filter === 'all' || t.status === filter);
+      ```
+
+      The good version has a **single source of truth** (`filter`). `visibleTasks` is not state — it is a value *derived* from state on every render. This eliminates an entire class of sync bugs.
+
+      Here is a more complete example:
 
       ```jsx
       function FilteredList() {
@@ -912,9 +1081,15 @@ steps:
         // SUB-GOAL: Render filter controls and filtered list
         return (
           <div>
-            <button onClick={() => setFilter('all')}>All</button>
-            <button onClick={() => setFilter('done')}>Done</button>
-            <ul>{visible.map(item => <li key={item.id}>{item.text}</li>)}</ul>
+            <ButtonGroup>
+              <Button onClick={() => setFilter('all')}>All</Button>
+              <Button onClick={() => setFilter('done')}>Done</Button>
+            </ButtonGroup>
+            <ListGroup>
+              {visible.map(item =>
+                <ListGroup.Item key={item.id}>{item.text}</ListGroup.Item>
+              )}
+            </ListGroup>
           </div>
         );
       }
@@ -928,10 +1103,10 @@ steps:
 
       Add filter functionality to the task list from the previous step:
 
-      1. Add three filter buttons: "All", "Active", "Done"
+      1. Add three `<Button>` components inside the `<ButtonGroup>`: "All", "Active", "Done"
       2. Use `useState` to track the current filter
       3. Filter the tasks array based on the selected filter
-      4. Highlight the currently active filter button (e.g. with a different background color)
+      4. Highlight the active filter button using react-bootstrap's `variant` prop (e.g. `variant="primary"` for active, `variant="outline-secondary"` for inactive)
 
     files:
       - path: "App.jsx"
@@ -945,6 +1120,8 @@ steps:
             { id: 6, text: 'Build a real React app',               done: false },
           ];
 
+          const { Button, ButtonGroup, ListGroup } = ReactBootstrap;
+
           function TaskList() {
             const [filter, setFilter] = React.useState('all');
 
@@ -952,23 +1129,23 @@ steps:
             const visibleTasks = initialTasks; // Replace with filtered list
 
             return (
-              <div className="p-8 max-w-lg">
-                <h2 className="text-xl font-bold mb-4">React Learning Checklist</h2>
+              <div className="p-4 checklist-container">
+                <h2 className="h4 mb-3">React Learning Checklist</h2>
 
                 {/* Task: Add filter buttons — "All", "Active", "Done" */}
-                <div className="flex gap-2 mb-4">
+                <ButtonGroup className="mb-3">
                   {/* Your filter buttons here */}
-                </div>
+                </ButtonGroup>
 
-                <ul className="list-none p-0">
+                <ListGroup>
                   {visibleTasks.map(task => (
-                    <li key={task.id} className="py-2 border-b border-gray-200">
+                    <ListGroup.Item key={task.id}>
                       {task.done ? '✓' : '✗'} {task.text}
-                    </li>
+                    </ListGroup.Item>
                   ))}
-                </ul>
+                </ListGroup>
 
-                <p className="text-gray-400 text-sm mt-3">
+                <p className="text-muted small mt-3">
                   {initialTasks.filter(t => t.done).length} / {initialTasks.length} complete
                 </p>
               </div>
@@ -979,12 +1156,16 @@ steps:
           root.render(<TaskList />);
         language: "javascript"
 
+    preview_styles: |
+      .checklist-container { max-width: 540px; }
+
     open_file: "App.jsx"
 
     tests:
       - description: "Filter buttons (All, Active, Done) are present"
         command: |
-          var buttons = Array.from(frame.contentDocument.querySelectorAll('button'));
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
           var labels = buttons.map(function(b) { return b.textContent.toLowerCase(); });
           assert(labels.some(function(l) { return l.includes('all'); }),
             'Add an "All" filter button');
@@ -1160,6 +1341,8 @@ steps:
       - `ProfileCard`: Uses `Avatar` and three `StatBadge` components to build the full card
       - `App`: Renders two `ProfileCard` components with the provided user data
 
+      **Challenge (optional):** After passing the tests, add a third user to the `users` array in `App`. Does your component hierarchy display the new card without any changes to `Avatar`, `StatBadge`, or `ProfileCard`? If yes, your composition is working — the same components render any number of users.
+
     files:
       - path: "Avatar.jsx"
         content: |
@@ -1191,13 +1374,17 @@ steps:
 
       - path: "App.jsx"
         content: |
+          const { Card } = ReactBootstrap;
+
           // Task: Implement ProfileCard using Avatar and StatBadge
           // Props: user object with: name, username, avatarUrl, repos, followers, following
           function ProfileCard({ user }) {
             return (
-              <div className="border border-gray-200 rounded-xl p-6 max-w-xs bg-white shadow-md">
-                {/* Task: Use Avatar and StatBadge here */}
-              </div>
+              <Card className="shadow-sm profile-card">
+                <Card.Body>
+                  {/* Task: Use Avatar and StatBadge here */}
+                </Card.Body>
+              </Card>
             );
           }
 
@@ -1218,7 +1405,7 @@ steps:
             ];
 
             return (
-              <div className="p-8 flex gap-6 flex-wrap bg-gray-50 min-h-screen">
+              <div className="p-4 d-flex gap-4 flex-wrap bg-light min-vh-100">
                 {users.map(user => (
                   <ProfileCard key={user.username} user={user} />
                 ))}
@@ -1235,17 +1422,22 @@ steps:
       - "StatBadge.jsx"
       - "App.jsx"
 
+    preview_styles: |
+      .profile-card { max-width: 300px; }
+
     open_file: "App.jsx"
 
     tests:
       - description: "Two ProfileCard sections are rendered (two user cards)"
         command: |
-          var cards = frame.contentDocument.querySelectorAll('img');
+          var root = frame.contentDocument.getElementById('root');
+          var cards = root.querySelectorAll('img');
           assert(cards.length >= 2,
             'Render both user cards, each with an avatar image. Found: ' + cards.length + ' image(s)');
       - description: "Avatar images are circular (border-radius applied)"
         command: |
-          var imgs = Array.from(frame.contentDocument.querySelectorAll('img'));
+          var root = frame.contentDocument.getElementById('root');
+          var imgs = Array.from(root.querySelectorAll('img'));
           var hasRound = imgs.some(function(img) {
             var style = img.style.borderRadius || getComputedStyle(img).borderRadius;
             return style && style !== '0px';
@@ -1253,14 +1445,14 @@ steps:
           assert(hasRound, 'Make the avatar images circular using border-radius: "50%"');
       - description: "Usernames are displayed"
         command: |
-          var text = frame.contentDocument.body.textContent;
+          var text = frame.contentDocument.getElementById('root').textContent;
           assert(text.includes('ada-lovelace') || text.includes('Ada Lovelace'),
             'Display the username in the Avatar component');
           assert(text.includes('alan-turing') || text.includes('Alan Turing'),
             'Display both usernames');
       - description: "Stats (repos, followers) are displayed"
         command: |
-          var text = frame.contentDocument.body.textContent;
+          var text = frame.contentDocument.getElementById('root').textContent;
           assert(text.includes('12') && text.includes('2048'),
             'Display repo and follower counts using StatBadge. Expected "12" and "2048" in the output.');
       - description: "StatBadge and Avatar components are both used inside ProfileCard"
@@ -1350,9 +1542,11 @@ steps:
     instructions: |
       > **Learning objective:** After this step you will be able to **design and implement** a complete React application that integrates components, props, state, lists, conditional rendering, and composition.
 
-      ## Putting It All Together
+      ## The Training Wheels Come Off
 
-      You now have all the component skills. This integration project combines them into a realistic app — with **no scaffolding**. You decide how to structure the components and where state lives.
+      In Steps 1-7 you had scaffolding: pre-built component signatures, provided data structures, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. This is intentional — applying concepts independently is how they transfer from tutorial exercises to real projects.
+
+      If you feel uncertain, that is a sign the earlier steps did their job: you know enough to recognize the design space, but haven't yet internalized the patterns through unguided practice. Work through the "Thinking in React" methodology below — it will guide your decisions.
 
       ### Requirements
 
@@ -1380,11 +1574,27 @@ steps:
       - Total: `cart.reduce((sum, item) => sum + item.price, 0).toFixed(2)`
       - Filter: same pattern as Step 6
 
+      ### Defensive Coding Tip
+
+      Real-world data is messy. What if a product's `price` is `undefined` or a string? You can guard against this with **default values** and **optional chaining**:
+
+      ```jsx
+      // Default value — if price is missing, show 0.00
+      <p>${(price ?? 0).toFixed(2)}</p>
+
+      // Optional chaining — safely access nested properties
+      <p>{product?.category}</p>
+      ```
+
+      You do not need these for the tests (the data is clean), but they are essential habits for production code.
+
     files:
       - path: "App.jsx"
         content: |
           // Integration Project: Build a mini product store.
           // No scaffolding — apply everything you have learned.
+          // Available: ReactBootstrap.Card, .Button, .Badge, .ButtonGroup, .ListGroup, etc.
+          const { Card, Button, Badge, ButtonGroup } = ReactBootstrap;
 
           const products = [
             { id: 1, name: 'Wireless Mouse',       price: 29.99,  category: 'Electronics',  onSale: false },
@@ -1399,8 +1609,8 @@ steps:
 
           function App() {
             return (
-              <div className="p-8">
-                <h1 className="text-2xl font-bold mb-4">Mini Store</h1>
+              <div className="p-4">
+                <h1 className="h2 mb-4">Mini Store</h1>
                 {/* Your implementation */}
               </div>
             );
@@ -1415,7 +1625,7 @@ steps:
     tests:
       - description: "All 6 products are displayed"
         command: |
-          var text = frame.contentDocument.body.textContent;
+          var text = frame.contentDocument.getElementById('root').textContent;
           assert(text.includes('Wireless Mouse') && text.includes('Cable Management Kit'),
             'Display all 6 products from the data array');
       - description: "Products are rendered using .map() with keys"
@@ -1427,19 +1637,21 @@ steps:
             'Add key props to mapped elements');
       - description: "Prices are displayed"
         command: |
-          var text = frame.contentDocument.body.textContent;
+          var text = frame.contentDocument.getElementById('root').textContent;
           assert(text.includes('29.99') || text.includes('$29.99'),
             'Display product prices');
       - description: "'Add to Cart' buttons exist"
         command: |
-          var buttons = Array.from(frame.contentDocument.querySelectorAll('button'));
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
           var hasAdd = buttons.some(function(b) {
             return b.textContent.toLowerCase().includes('add') || b.textContent.toLowerCase().includes('cart');
           });
           assert(hasAdd, 'Add an "Add to Cart" button to each product card');
       - description: "Category filter buttons exist"
         command: |
-          var buttons = Array.from(frame.contentDocument.querySelectorAll('button'));
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
           var labels = buttons.map(function(b) { return b.textContent.toLowerCase(); });
           assert(labels.some(function(l) { return l.includes('all'); }),
             'Add an "All" category filter button');

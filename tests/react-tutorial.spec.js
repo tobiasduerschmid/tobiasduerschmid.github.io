@@ -55,7 +55,7 @@ async function passCurrentStepTests(page) {
   await setEditorContent(page, [
     'function App() {',
     '  const name = "Alice";',
-    '  const color = "steelblue";',
+    '  const color = "#2774AE";',
     '  return (',
     '    <div style={{fontFamily: "sans-serif", padding: "32px"}}>',
     '      <h1 style={{color: color}}>Hello, {name}!</h1>',
@@ -265,7 +265,7 @@ test.describe('React Tutorial', () => {
     await setEditorContent(page, [
       'function App() {',
       '  const name = "Alice";',
-      '  const color = "steelblue";',
+      '  const color = "#2774AE";',
       '  return (',
       '    <div style={{fontFamily: "sans-serif", padding: "32px"}}>',
       '      <h1 style={{color: color}}>Hello, {name}!</h1>',
