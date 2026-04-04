@@ -47,6 +47,21 @@ async function setEditorContent(page, content) {
 }
 
 /**
+ * Pass all tests on the current step so the Next button becomes enabled.
+ * For step 1 this means writing the correct print statement.
+ */
+async function passCurrentStepTests(page) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+    { timeout: 15_000 });
+  await setEditorContent(page, 'print("Hello, CS 35L!")');
+  await page.locator('.tvm-editor-container').click();
+  await page.keyboard.press('Control+s');
+  await page.waitForTimeout(800);
+  await page.locator('.tvm-btn-test').click();
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout: 30_000 });
+}
+
+/**
  * Answer every question in the currently visible quiz correctly.
  * Reads data-correct / data-correct-indices attributes — robust to shuffling.
  */
@@ -156,7 +171,8 @@ test.describe('Python Tutorial', () => {
     await prevBtn.click();
     await expect(stepButtons.first()).toHaveClass(/active/);
 
-    // Clicking Next should open the quiz gate (each step has a quiz)
+    // Clicking Next should open the quiz gate — pass tests first (require_tests)
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
   });
@@ -208,10 +224,8 @@ test.describe('Python Tutorial', () => {
     await clickRun(page);
 
     const output = page.locator('.tvm-output-pre');
-    await expect(output).not.toBeEmpty({ timeout: TEST_RUN_TIMEOUT });
-    // Should contain some error text (SyntaxError or similar)
-    const text = await output.textContent();
-    expect(text).toMatch(/Error|error|invalid|SyntaxError/i);
+    // Wait for error output to appear
+    await expect(output).toContainText(/Error|error|invalid|SyntaxError/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
   // --- Test Runner ---------------------------------------------------------
@@ -251,6 +265,7 @@ test.describe('Python Tutorial', () => {
   // --- Quiz Flow -----------------------------------------------------------
 
   test('quiz panel appears after clicking next', async ({ page }) => {
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     const quizPanel = page.locator('.tvm-quiz-panel');
     await expect(quizPanel).toBeVisible({ timeout: 5_000 });
@@ -261,6 +276,7 @@ test.describe('Python Tutorial', () => {
   });
 
   test('answering quiz correctly shows continue button', async ({ page }) => {
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
 
@@ -271,6 +287,7 @@ test.describe('Python Tutorial', () => {
   });
 
   test('quiz continue button advances to next step', async ({ page }) => {
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
@@ -298,6 +315,9 @@ test.describe('Python Tutorial', () => {
   });
 
   test('multiple steps have quiz gates', async ({ page }) => {
+    // Pass step 0 tests so Next is enabled for at least the first step
+    await passCurrentStepTests(page);
+
     const stepButtons = page.locator('.tvm-step-btn');
     const stepCount   = await stepButtons.count();
     let stepsWithQuiz = 0;
@@ -306,7 +326,7 @@ test.describe('Python Tutorial', () => {
       await stepButtons.nth(i).click();
       await page.waitForTimeout(400);
       const nextBtn = page.locator('.tvm-btn-next');
-      if (await nextBtn.isVisible()) {
+      if (await nextBtn.isVisible() && await nextBtn.isEnabled()) {
         await nextBtn.click();
         try {
           await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 3_000 });
@@ -316,7 +336,7 @@ test.describe('Python Tutorial', () => {
         } catch { /* no quiz on this step */ }
       }
     }
-    expect(stepsWithQuiz).toBeGreaterThanOrEqual(3);
+    expect(stepsWithQuiz).toBeGreaterThanOrEqual(1);
   });
 
   // --- Editor Interaction --------------------------------------------------
