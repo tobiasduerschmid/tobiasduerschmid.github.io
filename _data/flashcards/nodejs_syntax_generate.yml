@@ -1,0 +1,71 @@
+title: "Node.js/JavaScript Syntax — Write the Code"
+description: "You are given a task description. Write the JavaScript code that accomplishes it."
+cards:
+  - id: 1
+    question: "Declare a mutable variable `count` set to `0` and an immutable constant `MAX` set to `200`."
+    answer: |
+      ```javascript
+      let count = 0;
+      const MAX = 200;
+      ```
+    explanation: "Use `let` for mutable variables and `const` for constants. Never use `var` — it has hoisting/scoping issues."
+  - id: 2
+    question: "Check if a variable `userInput` (which might be a string) equals the number `42`, without being tricked by type coercion."
+    answer: "`userInput === 42` or `Number(userInput) === 42`"
+    explanation: "Always use `===` (strict equality). `==` would coerce `\"42\"` to `42`, silently masking a type mismatch."
+  - id: 3
+    question: "Create a string that says `Hello, Alice! Score: 95` using variables `name = \"Alice\"` and `score = 95`, with interpolation."
+    answer: "`` `Hello, ${name}! Score: ${score}` ``"
+    explanation: "Template literals use backticks and `${expression}`. This is the JS equivalent of Python's f-strings. Single/double quotes do NOT support interpolation."
+  - id: 4
+    question: "Write an arrow function `add` that takes two parameters and returns their sum."
+    answer: "`const add = (a, b) => a + b;`"
+    explanation: "Arrow functions use `=>`. For a single expression, the `return` keyword and braces can be omitted."
+  - id: 5
+    question: "Given `const nums = [1, 2, 3, 4, 5]`, create a new array containing only the even numbers using a higher-order function."
+    answer: "`const evens = nums.filter(n => n % 2 === 0);`"
+    explanation: "`.filter()` takes a callback and returns a new array with only elements where the callback returns `true`."
+  - id: 6
+    question: "Given `const nums = [1, 2, 3]`, create a new array where each number is doubled."
+    answer: "`const doubled = nums.map(n => n * 2);`"
+    explanation: "`.map()` transforms each element by applying the callback and returns a new array. The original is unchanged."
+  - id: 7
+    question: "Compute the sum of `[1, 2, 3, 4, 5]` using a single expression."
+    answer: "`[1, 2, 3, 4, 5].reduce((acc, n) => acc + n, 0)`"
+    explanation: "`.reduce()` accumulates a value. The second argument (`0`) is the initial accumulator value."
+  - id: 8
+    question: "Extract `name` and `grade` from `const student = { name: \"Alice\", grade: 95 }` into separate variables in one line."
+    answer: "`const { name, grade } = student;`"
+    explanation: "Object destructuring extracts named properties. This pattern is used in every React component to destructure props."
+  - id: 9
+    question: "Schedule a function to run after the current call stack empties (with minimal delay)."
+    answer: "`setTimeout(() => { /* code */ }, 0);`"
+    explanation: "`setTimeout(fn, 0)` does NOT run immediately — it queues `fn` in the Task Queue. The Event Loop only dequeues it when the Call Stack is completely empty."
+  - id: 10
+    question: "Write an async function `loadUser` that fetches user data from `/api/user`, handles errors, and logs the result."
+    answer: |
+      ```javascript
+      async function loadUser() {
+          try {
+              const res = await fetch('/api/user');
+              const data = await res.json();
+              console.log(data);
+          } catch (err) {
+              console.error(err);
+          }
+      }
+      ```
+    explanation: "`async`/`await` makes async code look synchronous. `await` suspends the function (non-blocking) until the Promise resolves. `try/catch` handles rejections."
+  - id: 11
+    question: "Fetch two independent API endpoints in parallel (not sequentially) and assign the results to `a` and `b`."
+    answer: "`const [a, b] = await Promise.all([fetchA(), fetchB()]);`"
+    explanation: "`Promise.all()` runs both Promises concurrently. Total time = max(A, B). Sequential `await` would take A + B."
+  - id: 12
+    question: "Write a function that accepts an object parameter with `name` and `grade` properties, using destructuring in the parameter list."
+    answer: |
+      ```javascript
+      function printStudent({ name, grade }) {
+          console.log(`${name}: ${grade}`);
+      }
+      ```
+    explanation: "Object destructuring in parameters is the standard pattern for React component props: `function Card({ title, color }) { ... }`."

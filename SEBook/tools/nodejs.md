@@ -241,3 +241,11 @@ Here is how you should approach mastering this new ecosystem:
 * **Utilize Pair Programming:** Don't learn Node.js in isolation. Sit at a single screen with a peer (one "Driver" typing, one "Navigator" reviewing and strategizing). Research shows pair programming significantly increases confidence and code quality while reducing frustration for novices transitioning to a new language paradigm {% cite mcdowell2006pair cockburn2000costs williams2000all %}.
 * **Embrace [Test-Driven Development (TDD)](/SEBook/testing/tdd.html):** In Python, you might have used `pytest`; in C++, `gtest`. In JavaScript, frameworks like **Jest** are the standard. Before you write a complex API endpoint in Express, write a test for what it *should* do. This acts as a formative assessment, giving you immediate, automated feedback on whether your mental model of the code aligns with reality.
 * **Avoid "Vibe Coding" with AI:** While Large Language Models (LLMs) can generate Node.js boilerplate instantly, relying on them before you understand the asynchronous Event Loop will lead to "unsound abstractions." Use AI to *explain* confusing syntax or error messages, but do not let it rob you of the cognitive struggle required to build your own notional machine of how JavaScript executes.
+
+### Test Your Knowledge
+
+{% include flashcards.html id="nodejs_syntax_explain" %}
+
+{% include flashcards.html id="nodejs_syntax_generate" %}
+
+{% include quiz.html id="nodejs" %}

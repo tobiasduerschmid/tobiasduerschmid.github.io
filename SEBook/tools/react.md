@@ -276,3 +276,11 @@ function Parent() {
 6. **Conditional Rendering:** Use `&&` and ternary operators inside JSX.
 7. **Composition:** Build complex UIs by combining small components via the `children` prop.
 8. **Integration:** React runs in the user's browser, acting as the client that makes HTTP requests to your Node.js/Express server.
+
+### Test Your Knowledge
+
+{% include flashcards.html id="react_syntax_explain" %}
+
+{% include flashcards.html id="react_syntax_generate" %}
+
+{% include quiz.html id="react" %}

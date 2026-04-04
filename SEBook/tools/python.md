@@ -502,3 +502,11 @@ clean = re.sub(r'Error \d+', 'ERR', text)
 ```
 
 Always use raw strings (`r'...'`) for regex patterns — they prevent Python from interpreting backslashes before the `re` module sees them.
+
+### Test Your Knowledge
+
+{% include flashcards.html id="python_syntax_explain" %}
+
+{% include flashcards.html id="python_syntax_generate" %}
+
+{% include quiz.html id="python" %}

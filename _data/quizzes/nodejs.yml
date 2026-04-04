@@ -1,0 +1,96 @@
+title: "Node.js Concepts Quiz"
+description: "Test your deeper understanding of JavaScript's async model, type system, and paradigm differences from C++ and Python."
+questions:
+  - question: "A C++ developer argues: 'Single-threaded means Node.js can only handle one request at a time, so it's useless for servers.' What is the flaw in this reasoning?"
+    options:
+      - "Node.js is actually multi-threaded — each request gets its own thread"
+      - "Node.js IS single-threaded, but its Event Loop delegates I/O operations to the OS (via libuv) and processes callbacks when results arrive. This lets it handle thousands of concurrent I/O-bound connections with one thread — unlike C++ where each connection typically needs its own thread"
+      - "Single-threaded is slower, but Node.js compensates with a faster garbage collector"
+      - "The flaw is that Node.js compiles to C++ before running, so it actually uses threads internally"
+    correct_index: 1
+    explanation: "The key insight is that most server work is I/O-bound (waiting for databases, files, network), not CPU-bound. While the Chef (call stack) can only do one thing at a time, the Appliances (OS) handle I/O in the background. The Chef stays free to serve other requests. This model is efficient for I/O workloads but unsuitable for CPU-heavy tasks like video encoding."
+
+  - question: |
+      A developer writes this code and is confused why the output is `A, C, B` instead of `A, B, C`:
+      ```javascript
+      console.log("A");
+      setTimeout(() => console.log("B"), 0);
+      console.log("C");
+      ```
+      Explain the output using the Event Loop model.
+    options:
+      - "`setTimeout` has a minimum delay of 1ms, so B is slightly delayed"
+      - "The `setTimeout` callback enters the **Task Queue** immediately, but the Event Loop only dequeues it when the **Call Stack is empty**. `A` and `C` are synchronous and execute first. Only after both complete does the Event Loop hand the `B` callback to the Chef"
+      - "`console.log` is asynchronous in Node.js, so the order is random"
+      - "Arrow functions execute after regular functions by design"
+    correct_index: 1
+    explanation: "The 0ms delay means 'as soon as possible', NOT 'immediately'. The callback waits in the Task Queue. The Event Loop's rule: never interrupt the Call Stack. Synchronous code runs to completion first. This is why blocking the main thread (e.g., with a long loop) prevents ALL callbacks from firing."
+
+  - question: "A teammate's code uses `==` for all comparisons and it 'works fine in tests.' You suggest changing to `===` in code review. They push back: 'If it works, why change it?' What is the strongest argument for `===`?"
+    options:
+      - "`===` is measurably faster at runtime"
+      - "`==` works when both operands happen to be the same type (common in tests), but silently masks bugs when types diverge — e.g., if a form field returns a string `'0'` instead of the number `0`, `==` would equate them. Using `===` consistently prevents this entire class of latent bugs"
+      - "`==` is deprecated and will be removed in future JavaScript versions"
+      - "There is no strong argument — `==` and `===` are interchangeable when types match"
+    correct_index: 1
+    explanation: "The danger isn't that `==` fails now — it's that it hides a fragile assumption. When requirements change (e.g., user ID becomes a string UUID instead of a number), `==` comparisons silently coerce and produce wrong results with no error. `===` is defensive coding — it fails loudly when types don't match."
+
+  - question: |
+      **Evaluate** these two approaches for fetching data from two independent APIs:
+
+      **Approach A (Sequential):**
+      ```javascript
+      const users = await fetchUsers();
+      const posts = await fetchPosts();
+      ```
+
+      **Approach B (Parallel):**
+      ```javascript
+      const [users, posts] = await Promise.all([fetchUsers(), fetchPosts()]);
+      ```
+
+      When should you prefer B over A?
+    options:
+      - "Always — parallel is always better than sequential"
+      - "When the two operations are **independent** (neither needs the other's result). B takes `max(A, B)` time; A takes `A + B` time. If `fetchPosts()` depends on `fetchUsers()`'s result, you must use A"
+      - "Only when the server supports HTTP/2 multiplexing"
+      - "Never — `Promise.all` is harder to debug and should be avoided"
+    correct_index: 1
+    explanation: "Sequential `await` is correct when operations depend on each other (fetch user, then fetch that user's posts). For independent operations, `Promise.all` cuts wall-clock time significantly. Example: if each fetch takes 200ms, sequential = 400ms, parallel = 200ms."
+
+  - question: "A student writes `var x = 5` inside a `for` loop body. After the loop, they access `x` and are surprised it's still in scope. A C++ programmer would expect `x` to be destroyed at the closing brace. What JavaScript concept explains this?"
+    options:
+      - "`var` uses **function scope**, not block scope — it ignores `{}` blocks entirely and is scoped to the enclosing function. This violates C++ and Python scoping rules. `let` and `const` use block scope and behave as expected"
+      - "`var` creates a global variable that persists for the entire program"
+      - "JavaScript does not have any form of block scoping"
+      - "`for` loops in JavaScript are macros that expand inline, so there is no inner scope"
+    correct_index: 0
+    explanation: "`var` hoists to the enclosing function scope and ignores block boundaries (`if`, `for`, `while`). This is one of JavaScript's most confusing legacy features. `let` and `const` (introduced in ES6) use block scope — matching the behavior you expect from C++ and Python. Always use `let`/`const`."
+
+  - question: "Why is the callback pattern fundamental to ALL of Node.js — not just a stylistic choice?"
+    options:
+      - "Callbacks are the only way to define functions in JavaScript"
+      - "Node.js's single-threaded Event Loop communicates results of async operations (file reads, network requests, timers) by **calling a function you provided**. Without callbacks, there is no mechanism for the Event Loop to notify your code that an operation completed"
+      - "Callbacks are required by the V8 engine's garbage collector"
+      - "Callbacks are only used in legacy Node.js — modern versions use a different mechanism"
+    correct_index: 1
+    explanation: "Every async API in Node.js follows the pattern: 'start this operation and call this function when done.' `fs.readFile(path, callback)`, `setTimeout(callback, ms)`, `fetch(url).then(callback)` — they all accept functions. Even `async/await` is syntactic sugar over Promises, which are themselves built on callbacks. Understanding this chain is essential."
+
+  - question: |
+      A student writes:
+      ```javascript
+      async function processAll(items) {
+          items.forEach(async (item) => {
+              await processItem(item);
+          });
+          console.log("All done!");
+      }
+      ```
+      They expect "All done!" to print after all items are processed. What is the bug?
+    options:
+      - "`.forEach()` doesn't support async callbacks — the `await` inside is ignored, and `\"All done!\"` prints immediately while items are still being processed. Use `for...of` or `Promise.all(items.map(...))` instead"
+      - "The `async` keyword is not needed inside `.forEach()`"
+      - "`processItem` must return a string, not a Promise"
+      - "There is no bug — `.forEach()` correctly awaits each callback"
+    correct_index: 0
+    explanation: "`.forEach()` does not await the async callbacks it spawns — it fires them all and returns immediately. The `await` inside each callback works, but `.forEach` itself doesn't wait for them. Fix: `for (const item of items) { await processItem(item); }` (sequential) or `await Promise.all(items.map(item => processItem(item)))` (parallel)."

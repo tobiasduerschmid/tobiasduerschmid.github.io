@@ -1,0 +1,85 @@
+title: "React Syntax — What Does This Code Do?"
+description: "You are shown React/JSX code. Explain what it does and what it renders."
+cards:
+  - id: 1
+    question: |
+      ```jsx
+      function App() {
+        return <h1 style={{color: 'steelblue'}}>Hello!</h1>;
+      }
+      ```
+    answer: "A **React component** — a function that returns JSX. It renders an `<h1>` with blue text. The double braces in `style={{...}}` are: outer `{}` = JSX expression, inner `{}` = JavaScript object literal."
+  - id: 2
+    question: |
+      ```jsx
+      <ProductCard name="Laptop" price={999.99} />
+      ```
+    answer: "Renders the `ProductCard` component with two **props**: `name` (string `\"Laptop\"`) and `price` (number `999.99`). String props use quotes; all other types use `{}`."
+  - id: 3
+    question: |
+      ```jsx
+      function Card({ title, children }) {
+        return <div className="card"><h2>{title}</h2>{children}</div>;
+      }
+      ```
+    answer: "A **composable container** component. `title` is a regular prop. `children` is a special prop containing whatever JSX is nested between `<Card>` and `</Card>`. This enables composition over inheritance."
+  - id: 4
+    question: |
+      ```jsx
+      const [count, setCount] = React.useState(0);
+      ```
+    answer: "Declares a **state variable** `count` with initial value `0` and a **setter function** `setCount`. Calling `setCount(newValue)` triggers a re-render. The array destructuring extracts the pair returned by `useState`."
+  - id: 5
+    question: |
+      ```jsx
+      <button onClick={() => setCount(count + 1)}>+1</button>
+      ```
+    answer: "A button with a **click event handler**. When clicked, it calls `setCount(count + 1)` which updates state and triggers a re-render. Note: `onClick` (camelCase), not `onclick`."
+  - id: 6
+    question: |
+      ```jsx
+      {tasks.map(task => <li key={task.id}>{task.text}</li>)}
+      ```
+    answer: "Renders an array of `<li>` elements from the `tasks` data array using `.map()`. Each element has a **stable `key` prop** (`task.id`) that helps React's reconciler track which items changed."
+  - id: 7
+    question: |
+      ```jsx
+      {isLoggedIn ? <Dashboard /> : <LoginForm />}
+      ```
+    answer: "**Conditional rendering** using a ternary — renders `Dashboard` if `isLoggedIn` is true, `LoginForm` otherwise. This is one of two standard patterns (the other is `&&`)."
+  - id: 8
+    question: |
+      ```jsx
+      {unreadCount > 0 && <Badge count={unreadCount} />}
+      ```
+    answer: "**Short-circuit conditional rendering** — renders `Badge` ONLY when `unreadCount > 0`. When the left side is `false`, React renders nothing. Note: use `> 0`, not just `unreadCount &&`, to avoid rendering `0` as text."
+  - id: 9
+    question: |
+      ```jsx
+      setItems([...items, newItem]);
+      ```
+    answer: "Correctly adds `newItem` to state. Creates a **new array** with the spread operator (`...items` copies all existing items, then `newItem` is appended). You must create a new array — `items.push(newItem)` mutates in-place and React won't detect the change."
+  - id: 10
+    question: |
+      ```jsx
+      <SearchBar value={text} onChange={setText} />
+      ```
+    answer: "Passes the state value `text` as a prop and the setter `setText` as a **callback prop**. This is **inverse data flow** — the child calls `onChange(newValue)` to notify the parent, which updates state and triggers re-render of both."
+  - id: 11
+    question: |
+      ```jsx
+      <img src={url} alt="logo" />
+      ```
+    answer: "A self-closing JSX tag for an image. In JSX, self-closing tags **must** include the `/>`  (unlike HTML where `<img>` is valid). `src={url}` passes a JS variable; `alt=\"logo\"` passes a string literal."
+  - id: 12
+    question: |
+      ```jsx
+      function Badge({ label, color }) {
+        return (
+          <span style={{background: color, padding: '4px 12px', borderRadius: 12}}>
+            {label}
+          </span>
+        );
+      }
+      ```
+    answer: "A **reusable component** that renders a colored badge. It destructures `label` and `color` from props. The `style` prop takes a JS object with camelCase properties (`borderRadius`, not `border-radius`)."

@@ -1,0 +1,74 @@
+title: "Python Syntax — Write the Code"
+description: "You are given a task description. Write the Python code that accomplishes it."
+cards:
+  - id: 1
+    question: "Print a formatted string that says `Student: Alice, GPA: 3.82` using a variable `name = \"Alice\"` and `gpa = 3.82`. Format the GPA to 2 decimal places."
+    answer: "`print(f\"Student: {name}, GPA: {gpa:.2f}\")`"
+    explanation: "f-strings use the `f\"...\"` prefix. `{variable}` embeds a value. `:.2f` formats to 2 decimal places."
+  - id: 2
+    question: "Perform integer (floor) division of 7 by 2, getting `3` as the result (not `3.5`)."
+    answer: "`7 // 2`"
+    explanation: "Python's `/` always returns a float. Use `//` for integer/floor division, which behaves like C++'s `/` for integers."
+  - id: 3
+    question: "Compute 2 to the power of 10 (should give 1024)."
+    answer: "`2 ** 10`"
+    explanation: "Python uses `**` for exponentiation. Do NOT use `^` — that is bitwise XOR in Python."
+  - id: 4
+    question: "Create a list of the squares of numbers 1 through 5: `[1, 4, 9, 16, 25]` using a single line of Python."
+    answer: "`[x**2 for x in range(1, 6)]`"
+    explanation: "A list comprehension: `[expression for variable in iterable]`. `range(1, 6)` generates 1, 2, 3, 4, 5 (stop is exclusive)."
+  - id: 5
+    question: "From a list `nums = [4, 8, 15, 16, 23, 42]`, create a new list containing only the numbers greater than 20."
+    answer: "`[x for x in nums if x > 20]`"
+    explanation: "A list comprehension with a filter: `[expression for var in iterable if condition]`."
+  - id: 6
+    question: "Read a file called `data.txt` line by line, safely closing it even if an error occurs."
+    answer: |
+      ```python
+      with open("data.txt") as f:
+          for line in f:
+              print(line.strip())
+      ```
+    explanation: "The `with` statement is a context manager — it guarantees the file is closed when the block exits, like RAII in C++."
+  - id: 7
+    question: "Iterate over a list `fruits = [\"apple\", \"banana\"]` and print both the index and the value."
+    answer: |
+      ```python
+      for i, fruit in enumerate(fruits):
+          print(f"{i}: {fruit}")
+      ```
+    explanation: "`enumerate()` yields `(index, value)` pairs. This is the Pythonic alternative to `for i in range(len(fruits))`."
+  - id: 8
+    question: "Find all numbers (sequences of digits) in the string `\"Error 404 and 500\"` using regex."
+    answer: |
+      ```python
+      import re
+      codes = re.findall(r'\d+', "Error 404 and 500")
+      ```
+    explanation: "`re.findall()` returns a list of all matches. `\\d+` matches one or more digits. Use raw strings `r'...'` for regex patterns."
+  - id: 9
+    question: "Replace all IP addresses in a string `text` with `\"x.x.x.x\"` using regex."
+    answer: "`re.sub(r'\\d+\\.\\d+\\.\\d+\\.\\d+', 'x.x.x.x', text)`"
+    explanation: "`re.sub(pattern, replacement, string)` replaces all matches. This is the Python equivalent of `sed 's/old/new/g'`."
+  - id: 10
+    question: "Write a script that prints an error to stderr and exits with code 1 if no command-line argument is provided."
+    answer: |
+      ```python
+      import sys
+      if len(sys.argv) < 2:
+          print("Error: no filename", file=sys.stderr)
+          sys.exit(1)
+      ```
+    explanation: "`sys.argv[0]` is the script name; real args start at index 1. `file=sys.stderr` sends output to stderr. `sys.exit(1)` exits with a non-zero code."
+  - id: 11
+    question: "Check the type of a variable `x` at runtime and print it."
+    answer: "`print(type(x))`"
+    explanation: "`type()` returns the type of any object. Python is dynamically typed — types are checked at runtime, not compile time."
+  - id: 12
+    question: "Check if a regex pattern matches anywhere in a string `line`, returning `True` or `False`."
+    answer: |
+      ```python
+      if re.search(r'pattern', line):
+          print("Found!")
+      ```
+    explanation: "`re.search()` returns a match object (truthy) or `None` (falsy). It is the Python equivalent of `grep -q`."
