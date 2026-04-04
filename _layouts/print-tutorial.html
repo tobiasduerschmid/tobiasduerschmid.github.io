@@ -464,6 +464,62 @@
       margin-top: 6px;
     }
 
+    /* ── Parsons problem styles ── */
+    .print-parsons-lines {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 4px;
+      counter-reset: parsons-line;
+    }
+
+    .print-parsons-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      margin-bottom: 3px;
+      border-radius: 4px;
+      font-size: 0.87em;
+      font-family: 'Fira Code', Menlo, monospace;
+      background: #e8f5e9;
+      color: #1a472a;
+      counter-increment: parsons-line;
+    }
+
+    .print-parsons-line::before {
+      content: counter(parsons-line);
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2e7d32;
+      color: #fff;
+      font-size: 0.75em;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .print-parsons-distractor {
+      background: #fbe9e7;
+      color: #7f1d1d;
+      text-decoration: line-through;
+    }
+
+    .print-parsons-distractor::before {
+      content: '✗';
+      background: #c62828;
+    }
+
+    .print-parsons-label {
+      font-size: 0.8em;
+      font-weight: 600;
+      color: #7070a0;
+      margin-bottom: 4px;
+    }
+
     @media print {
       body { padding: 16px 24px; }
       .print-controls { display: none; }
@@ -540,7 +596,24 @@
           <p class="print-quiz-q-text">
             {{ forloop.index }}. {{ q.question | markdownify | remove: '<p>' | remove: '</p>' | strip }}
             {% if q.type == 'multiple' %}<span class="print-quiz-q-type">(select all that apply)</span>{% endif %}
+            {% if q.type == 'parsons' %}<span class="print-quiz-q-type">(arrange in order)</span>{% endif %}
           </p>
+          {% if q.type == 'parsons' %}
+          <div class="print-parsons-label">Correct order:</div>
+          <ol class="print-parsons-lines">
+            {% for line in q.lines %}
+            <li class="print-parsons-line"><code>{{ line }}</code></li>
+            {% endfor %}
+          </ol>
+          {% if q.distractors %}
+          <div class="print-parsons-label">Distractors (not used):</div>
+          <ul class="print-parsons-lines">
+            {% for d in q.distractors %}
+            <li class="print-parsons-line print-parsons-distractor"><code>{{ d }}</code></li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% else %}
           <ul class="print-quiz-options">
             {% for opt in q.options %}
             {% assign opt_index = forloop.index0 %}
@@ -562,6 +635,7 @@
             </li>
             {% endfor %}
           </ul>
+          {% endif %}
           {% if q.explanation %}
           <div class="print-quiz-explanation">{{ q.explanation | markdownify }}</div>
           {% endif %}

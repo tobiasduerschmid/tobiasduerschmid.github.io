@@ -1885,7 +1885,8 @@
   };
 
   TutorialCode.prototype._escapeHtml = function (str) {
-    var d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+    var d = document.createElement('div'); d.textContent = str;
+    return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   };
 
   // ---------------------------------------------------------------------------

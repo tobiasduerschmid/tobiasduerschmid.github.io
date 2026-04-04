@@ -222,7 +222,7 @@ steps:
         content: |
           name  = "Alice"
           year  = 2
-          gpa   = 3.82
+          gpa   = 3.819
           major = "Computer Science"
 
           # TODO: print the line below using a single f-string:
@@ -255,13 +255,23 @@ steps:
       - description: "f-string uses variables, not hard-coded literals"
         command: |
           source = open('/tutorial/profile.py').read()
-          import re
-          # Find all expressions inside f-string braces
+          import re, ast
+          # Must contain at least one f-string
+          tree = ast.parse(source)
+          fstrings = [n for n in ast.walk(tree) if isinstance(n, ast.JoinedStr)]
+          assert fstrings, "Use an f-string (f\"...\") — a plain string literal was found instead"
+          # Collect all variable names referenced inside f-string braces
           fstring_exprs = re.findall(r'\{([^}]+)\}', source)
+          assert fstring_exprs, "f-string must reference variables inside braces, e.g. {name}"
           for expr in fstring_exprs:
               stripped = expr.split(':')[0].strip()
               assert stripped in ('name', 'year', 'major', 'gpa'), \
                   f"f-string must use variables (name, year, major, gpa), not literals. Found: {{{expr}}}"
+          # All four variables must appear in the f-string braces
+          var_names = {e.split(':')[0].strip() for e in fstring_exprs}
+          for var in ('name', 'year', 'major', 'gpa'):
+              assert var in var_names, \
+                  f"f-string must reference the variable '{var}' inside braces"
 
     quiz:
       title: "Variables & Types — Knowledge Check"
@@ -514,12 +524,15 @@ steps:
 
       ### Default Parameters
 
+      A parameter can have a **default value**, used when the caller omits that argument.
+      Default parameters must come *after* required ones — the same rule as in C++.
+
       ```python
       def greet(name, greeting="Hello"):
           print(f"{greeting}, {name}!")
 
-      greet("Alice")             # → Hello, Alice!
-      greet("Bob", "Welcome")    # → Welcome, Bob!
+      greet("Alice")             # → Hello, Alice!   (uses default)
+      greet("Bob", "Welcome")    # → Welcome, Bob!   (overrides default)
       ```
 
       ### Predict Before You Code
@@ -531,7 +544,7 @@ steps:
       Complete two functions in `functions.py`:
 
       1. `mean(numbers)` — returns the arithmetic mean.
-         *Hint: `sum()` and `len()` are built-in Python functions.*
+         *Hint: `sum()` and `len()` are **built-in** Python functions — no `import` needed. Python ships dozens of these ([builtins](https://docs.python.org/3/library/functions.html)) that are always available, similar to how `printf` is always available in C via `<stdio.h>` — except builtins require no `#include` at all.*
       2. `label_score(score, threshold=50)` — returns `"pass"` if `score >= threshold`, otherwise `"fail"`.
 
     files:
@@ -704,6 +717,17 @@ steps:
 
       If you have used modern C++ range-based `for` (`for (auto& x : vec)`), Python's iteration model will feel familiar — Python just makes it the *default*. The key habit to build: reach for `for x in collection` first, not `for i in range(len(...))`.
 
+      ## Tuple Unpacking
+
+      Before diving into loops, one quick concept. Python can **unpack** a pair (or tuple) into separate variables in a single assignment:
+
+      ```python
+      pair = (0, "Alice")
+      i, name = pair        # i = 0, name = "Alice"
+      ```
+
+      This works anywhere Python assigns a value — including in `for` loops. You will see this pattern immediately below with `enumerate()`.
+
       ## Python `for` Loops: Iterating Over Collections
 
       C++ `for` loops typically count indices. Python loops iterate *over items directly*:
@@ -718,7 +742,8 @@ steps:
       for num in nums:
           print(num)
 
-      # Need the index too? Use enumerate():
+      # Need the index too? enumerate() yields (index, item) pairs.
+      # Tuple unpacking splits each pair into two loop variables:
       for i, num in enumerate(nums):
           print(f"Index {i}: {num}")
       ```
@@ -859,6 +884,23 @@ steps:
             In Python 3, `/` is **always** float division: `7 / 2` → `3.5`.
             For integer (floor) division like C++, use `//`: `7 // 2` → `3`.
             This is one of the most common negative-transfer traps from C++.
+
+        - question: |
+            What are the values of `a` and `b` after this line?
+            ```python
+            a, b = (3, 7)
+            ```
+          type: single
+          options:
+            - "`a = (3, 7)`, `b` is undefined"
+            - "`a = 3`, `b = 7`"
+            - "`a = 7`, `b = 3`"
+            - "TypeError — cannot assign a tuple to two variables"
+          correct_index: 1
+          explanation: |
+            Python **tuple unpacking** splits the right-hand side into individual variables left-to-right:
+            `a` gets `3`, `b` gets `7`. This is the same mechanism that lets `for i, x in enumerate(...):`
+            split each `(index, value)` pair into two loop variables.
 
         - question: |
             *(Spaced review — Step 4: Functions)*
