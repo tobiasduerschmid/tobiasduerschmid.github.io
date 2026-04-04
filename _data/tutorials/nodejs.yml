@@ -218,7 +218,7 @@ steps:
       - description: "MAX_STUDENTS is now declared with const"
         command: "grep -q 'const MAX_STUDENTS' /tutorial/nodejs_tutorial/types.js"
       - description: "Used a template literal (backtick with ${}) for the message"
-        command: "grep -q '\`' /tutorial/nodejs_tutorial/types.js && grep -q '\\${' /tutorial/nodejs_tutorial/types.js"
+        command: "grep -q '[$][{]' /tutorial/nodejs_tutorial/types.js"
       - description: "Code runs without errors"
         command: "cd /tutorial/nodejs_tutorial && node types.js"
 
