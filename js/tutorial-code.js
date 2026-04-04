@@ -23,9 +23,9 @@
   // CDN URLs
   // ---------------------------------------------------------------------------
   var CDN = {
-    XTERM_JS:     'https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.min.js',
-    XTERM_CSS:    'https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css',
-    XTERM_FIT:    'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js',
+    XTERM_JS:     'https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js',
+    XTERM_CSS:    'https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css',
+    XTERM_FIT:    'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js',
     MONACO_LOADER:'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js',
     MONACO_VS:    'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
     MARKED:       'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
