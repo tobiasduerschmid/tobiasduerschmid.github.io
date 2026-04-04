@@ -469,8 +469,8 @@ steps:
             **Evaluate** both claims. Which assessment is most accurate?
           type: single
           options:
-            - "The first teammate is right — braces are always superior to indentation"
-            - "The second teammate is right — indentation-as-syntax has no drawbacks"
+            - "The first teammate is right — braces are always superior because you can collapse blocks and see structure without relying on whitespace"
+            - "The second teammate is right — indentation-as-syntax is strictly better because it eliminates an entire category of bugs with zero tradeoffs"
             - "Both have valid points: indentation eliminates formatting inconsistency and reduces visual clutter, but it can cause subtle bugs when copy-pasting code or mixing editors with different tab settings"
             - "Neither is right — the choice of block syntax has no practical effect on code quality"
           correct_index: 2
@@ -1227,8 +1227,8 @@ steps:
             **Evaluate** both approaches. Which is better for a 2 GB file, and why?
           type: single
           options:
-            - "Both are identical — Python handles memory automatically"
-            - "`f.read()` is better because it's faster to process one big string"
+            - "Both are identical in behavior and memory usage — Python handles buffering automatically regardless of which method you use"
+            - "`f.read()` is better because reading the entire file into one string is faster than processing line by line due to fewer I/O calls"
             - "`for line in f:` is better — it processes one line at a time, using constant memory regardless of file size, while `f.read()` would load 2 GB into RAM"
             - "Neither works — Python can't handle files over 1 GB"
           correct_index: 2
@@ -1685,10 +1685,10 @@ steps:
             ```
           type: single
           options:
-            - "Nothing is wrong — this correctly prints each word with its index number"
-            - "`i` is the word itself (e.g., `'apple'`), not an index. Using `words[i]` causes a TypeError because you cannot index a list with a string. Use `enumerate(words)` to get both index and value"
-            - "The f-string syntax is incorrect — it should use `%d` formatting instead of `{i}`"
-            - "The loop should use `range(words)` instead of iterating over the list directly"
+            - "Nothing is wrong — `for i in words` gives `i` as the index, and `words[i]` retrieves each element correctly"
+            - "`i` is the word itself (not an index), so `words[i]` causes TypeError. Use `enumerate(words)` to get both index and value"
+            - "The f-string syntax is incorrect — f-strings cannot contain variable references inside braces, so `{i}` fails at runtime"
+            - "The loop should use `range(words)` instead — passing a list to `range()` automatically generates valid indices"
           correct_index: 1
           explanation: |
             Python's `for i in words` gives you the *elements*, not indices — this is
