@@ -58,7 +58,7 @@
     sh: 'shell-sebook', bash: 'shell-sebook', zsh: 'shell-sebook',
     py: 'python', js: 'javascript', json: 'json',
     yml: 'yaml', yaml: 'yaml', md: 'markdown',
-    txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
+    css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
   };
 
@@ -1156,10 +1156,16 @@
       fileOrder = Object.keys(self.editorModels);
     }
 
+    var userCss = [];
     var scripts = fileOrder.map(function (filename) {
       var entry = self.editorModels[filename];
       if (!entry) return '';
       var content = entry.model.getValue();
+      // CSS files go into a <style> tag, not a script tag
+      if (filename.endsWith('.css')) {
+        userCss.push(content);
+        return '';
+      }
       // Strip ES module import/export (global-script approach for browser sandbox)
       content = content.replace(/^\s*import\s+.*$/gm, '');
       content = content.replace(/^\s*export\s+default\s+/gm, '');
@@ -1169,7 +1175,7 @@
       return '<script type="text/babel">\n' + content + '\n<\/script>';
     }).join('\n');
 
-    var customStyles = (step && step.preview_styles) || '';
+    var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
 
     return '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
       '<meta charset="UTF-8">\n' +
