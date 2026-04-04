@@ -56,6 +56,10 @@ steps:
 
       The `<h1>...</h1>` syntax inside JavaScript is called **JSX**. It is *not* HTML — Babel compiles it to `React.createElement(...)` calls that build a lightweight JavaScript object tree (the Virtual DOM). You will learn the details and rules of JSX in the next step.
 
+      ### Predict Before You Modify
+
+      Before changing anything, look at the `App` component. Predict: what does `{name}` inside the JSX evaluate to? What does `style={{color: color}}` mean — why are there two sets of braces? Write your predictions, then read on.
+
       ### Task
 
       The preview shows a greeting component. Make two changes:
@@ -136,10 +140,10 @@ steps:
             **Evaluate** this suggestion for a project with 50+ interactive UI components that update frequently.
           type: single
           options:
-            - "They're right — vanilla JS is always simpler and faster"
-            - "For a small page, vanilla JS is fine, but with 50+ interactive components, manually tracking which DOM elements need updating becomes error-prone. React's declarative model eliminates entire classes of stale-UI bugs by automatically re-rendering when state changes"
-            - "React is always better than vanilla JS, regardless of project size"
-            - "They should use jQuery instead — it's a good middle ground"
+            - "They're right — vanilla JS with direct DOM manipulation is always simpler, faster, and more maintainable than using a framework"
+            - "For a small page, vanilla JS is fine, but with 50+ components, manually tracking DOM updates becomes error-prone. React eliminates stale-UI bugs"
+            - "React is always the better choice regardless of project size — even a static landing page benefits from the Virtual DOM's efficiency"
+            - "They should use jQuery instead — it offers the same declarative model as React but with a smaller bundle size"
           correct_index: 1
           explanation: |
             This is a real trade-off. For a static page or 2-3 interactive widgets, vanilla JS is
@@ -303,10 +307,10 @@ steps:
             **Analyze** this code. A student writes `function card() { return <div>A card</div>; }` and uses `<card />`. It renders an empty box. Why?
           type: single
           options:
-            - "Components must be class-based — function components are not supported"
-            - "React uses capitalization to distinguish HTML elements (lowercase) from React components (uppercase) — `<card />` is treated as an unknown HTML element, not the function"
-            - "The function is missing a `return` keyword"
-            - "JSX only supports standard HTML tag names"
+            - "Components must extend `React.Component` — plain function components cannot return JSX without a base class"
+            - "React uses capitalization: lowercase → HTML element, uppercase → component. `<card />` becomes an unknown HTML tag"
+            - "The function body is missing `return` — without it, the JSX is created but never returned to React for rendering"
+            - "JSX only supports standard HTML tag names — custom element names must be registered via `React.registerElement()`"
           correct_index: 1
           explanation: |
             React uses the capitalization of a JSX tag to decide: lowercase → HTML element (passes to the browser's DOM), uppercase → React component (calls your function). `<card />` silently becomes an unknown HTML element. The fix: rename to `Card` and use `<Card />`.
@@ -511,6 +515,10 @@ steps:
 
       ## Try It First (Productive Failure)
 
+      ### The Hardest Paradigm Shift
+
+      This step is where most students get stuck. The idea that changing a variable doesn't update the UI — and that you need a special React function to do it — feels deeply wrong after years of imperative programming. That confusion is normal and expected. Every React developer had the same "but why doesn't this just work?" moment.
+
       **Before reading further**, look at the counter code below. It doesn't work — clicking +1 does nothing. Spend 2 minutes trying to fix it using what you know from C++ and Python. What approaches did you try? Why didn't they work?
 
       ## Why Regular Variables Don't Work
@@ -555,6 +563,10 @@ steps:
       ### ⚠️ Watch Out: Stale Closures
 
       A common bug: `setTimeout(() => setCount(count + 1), 1000)`. The closure captures `count` at render time. If `count` is `3`, the callback always sets it to `4`, even if the user clicked more. Fix: use the **functional update form**: `setCount(prev => prev + 1)`.
+
+      ### Predict Before You Fix
+
+      Look at the broken counter code. Predict: when you click the +1 button, does `count` actually change in memory? If so, why doesn't the display update? Write your hypothesis before reading the explanation above.
 
       ### Task: Fix the Broken Counter
 
@@ -645,10 +657,10 @@ steps:
         - question: "What is wrong with this code? `if (isLoggedIn) { const [user, setUser] = React.useState(null); }`"
           type: single
           options:
-            - "useState cannot store `null` as an initial value"
+            - "useState cannot store `null` as an initial value — only strings, numbers, and booleans are supported"
             - "Hooks must be called at the top level of a component — calling useState conditionally breaks React's internal order-tracking and causes crashes"
-            - "You cannot use const with array destructuring in React"
-            - "There is nothing wrong with this code"
+            - "You cannot use `const` with array destructuring in React — `let` is required for state variables"
+            - "There is nothing wrong — React handles conditional hook calls automatically using internal tracking"
           correct_index: 1
           explanation: |
             React identifies hooks by their **call order**, not by name. Every render must call hooks in exactly the same order. If you conditionally call `useState`, the order changes between renders, and React's internal array of hook values gets misaligned — causing subtle, hard-to-debug crashes. Always call hooks unconditionally at the top of your component.
@@ -670,10 +682,10 @@ steps:
             **Evaluate** this approach — what breaks?
           type: single
           options:
-            - "Nothing breaks — global variables are a valid alternative to useState"
+            - "Nothing breaks — global variables persist across renders and React detects changes to them automatically"
             - "The global variable persists, but changing it doesn't trigger a re-render — the UI stays frozen. Also, if the component is used twice, both instances share the same global, causing conflicts"
-            - "Global variables are slower than useState because they bypass the Virtual DOM"
-            - "React throws an error when it detects global variable access inside a component"
+            - "Global variables bypass the Virtual DOM diffing process, making them significantly slower than useState"
+            - "React throws a strict-mode error when it detects global variable access inside any component function"
           correct_index: 1
           explanation: |
             Two problems: (1) React doesn't know about the global variable, so changing it doesn't trigger a re-render. (2) Global state is shared across ALL instances of the component — if you render two `<Counter />` components, they'd share the same counter. `useState` is per-instance and triggers re-renders. This is the same reason C++ classes use member variables, not global variables.
@@ -819,10 +831,10 @@ steps:
         - question: "Why is it dangerous to use the array index as a `key` for a dynamic list?"
           type: single
           options:
-            - "Array indices are numbers, and React requires string keys"
+            - "Array indices are numbers, but React requires string keys — converting indices to strings adds overhead"
             - "If items are reordered, inserted, or removed, the index of items changes — React maps keys to component instances, so incorrect keys cause wrong state to be associated with the wrong component"
-            - "Using indices is slower because React must convert them to strings internally"
-            - "Array indices are not unique across sibling lists, causing conflicts"
+            - "Using indices is significantly slower because React must convert each numeric index to a string internally"
+            - "Array indices are not globally unique across sibling lists, causing key collisions and rendering conflicts"
           correct_index: 1
           explanation: |
             Keys tell React *which* element is which across re-renders. If item at index 2 is deleted, items at index 3, 4, 5... all shift to 2, 3, 4... React sees those keys as "the same" elements, potentially mismatching stateful inputs (like checked checkboxes or text fields) with the wrong items. Use a stable, unique ID from your data source.
@@ -844,10 +856,10 @@ steps:
             What happens if a child component mutates a prop it received?
           type: single
           options:
-            - "The parent's data is updated automatically"
-            - "React throws an error at runtime"
+            - "The parent's data is updated automatically — React propagates mutations back up the component tree"
+            - "React throws a runtime TypeError because props are frozen objects that cannot be modified"
             - "It breaks React's one-way data flow — the change won't propagate back to the parent and causes unpredictable behaviour"
-            - "Nothing — props are automatically deep-copied"
+            - "Nothing happens — React deep-copies all props before passing them, so mutations are isolated"
           correct_index: 2
           explanation: |
             Props are **read-only**. Mutating them corrupts the parent's data and breaks the predictable
@@ -907,6 +919,10 @@ steps:
         );
       }
       ```
+
+      ### Predict Before You Code
+
+      Before implementing, predict: if `filter` state is `'done'`, which tasks from the data array should be visible? How many items will the `.filter()` call return?
 
       ### Task
 
@@ -1005,10 +1021,10 @@ steps:
             **Analyze** this bug: `{count && <Badge count={count} />}`. When `count` is `0`, a `0` appears in the UI instead of nothing. Why?
           type: single
           options:
-            - "React treats `0` as `true` in boolean contexts"
+            - "React treats all numbers as truthy in boolean contexts, including zero, so `0 &&` always renders the right side"
             - "Unlike `false`, `null`, and `undefined`, the number `0` IS a valid React node — React renders it as text. Use `{count > 0 && <Badge />}` instead"
-            - "`&&` doesn't work with numbers in JavaScript"
-            - "This is a React bug that will be fixed in a future version"
+            - "The `&&` operator does not work with numbers in JavaScript — it is designed only for boolean operands"
+            - "This is a known React bug in the reconciler that incorrectly renders falsy values, expected to be fixed in React 19"
           correct_index: 1
           explanation: |
             JavaScript's `&&` returns the left operand if it's falsy. `0 && <Badge />` evaluates to `0`.
@@ -1025,10 +1041,10 @@ steps:
             Which is better?
           type: single
           options:
-            - "A is better — pre-filtered arrays are faster to render"
+            - "A is better — pre-filtering into a separate state variable avoids recomputing the filter on every render"
             - "B is better — derived data should be computed from minimal state, not stored separately. A duplicates data, creating sync bugs when the source changes"
-            - "Both are equivalent — choose whichever feels more natural"
-            - "Neither is correct — filters should use React Context"
+            - "Both are equivalent in behavior and performance — choose whichever approach matches your team's coding style"
+            - "Neither is correct — filtered data should be managed through React Context to avoid prop drilling"
           correct_index: 1
           explanation: |
             React's principle: store the **minimal** state and **derive** everything else. Storing both the
@@ -1051,6 +1067,22 @@ steps:
             so all three compute `0 + 1 = 1`. To queue multiple increments, use the **functional form**:
             `setCount(prev => prev + 1)` — each call receives the latest pending value.
 
+        - question: |
+            *(Spaced review — Step 1: Declarative vs Imperative)*
+
+            A teammate writes `document.getElementById('counter').textContent = newCount` inside a React component to update the display. What is wrong?
+          type: single
+          options:
+            - "Nothing — directly updating the DOM is faster than React's Virtual DOM diffing and should be preferred for performance"
+            - "It bypasses React's declarative model — React doesn't know the DOM changed, so state and UI go out of sync"
+            - "`getElementById` doesn't work inside React components because React uses a shadow DOM that is isolated from the real DOM"
+            - "It works fine in function components but causes errors in class components due to lifecycle method conflicts"
+          correct_index: 1
+          explanation: |
+            React manages the DOM declaratively: you update state, React re-renders. Directly mutating
+            the DOM means React's Virtual DOM no longer matches reality. On the next re-render, React
+            overwrites your manual change. Always update state, not the DOM.
+
   # --------------------------------------------------------------------------
   # STEP 7: Composition — Thinking in React
   # Pedagogy:
@@ -1066,6 +1098,10 @@ steps:
       > **Learning objective:** After this step you will be able to **use** the `children` prop for composition, and **apply** the "Thinking in React" methodology to decompose a UI.
 
       ## Thinking in React
+
+      ### Putting the Pieces Together
+
+      This step asks you to combine everything you have learned into a structured design process. It is normal to feel overwhelmed by the number of moving parts — components, props, state, lists, conditionals. Take it one step at a time: start with a static version (no state), then add interactivity piece by piece.
 
       React's official methodology for approaching a new UI:
 
@@ -1112,6 +1148,10 @@ steps:
         );
       }
       ```
+
+      ### Predict Before You Build
+
+      Before writing any code, look at the user data in `App`. Predict: how many components do you need? Which component should accept `children`? Which should receive individual props like `label` and `value`? Sketch a component tree on paper (or in your head), then compare with the specification below.
 
       ### Task: Build a GitHub-style Profile Page
 
@@ -1295,10 +1335,10 @@ steps:
             What happens if you use `key={Math.random()}` for list items?
           type: single
           options:
-            - "Nothing — random keys work fine for any list"
+            - "Nothing — React's reconciler handles random keys efficiently by sorting them internally before diffing"
             - "React unmounts and remounts EVERY item on EVERY re-render — destroying internal state and killing performance, because the keys change every time"
-            - "React ignores random keys and falls back to index-based comparison"
-            - "React throws a warning but it still works correctly"
+            - "React ignores random keys and falls back to index-based comparison, which is the default behavior anyway"
+            - "React throws a console warning about unstable keys but still renders the list correctly using fallback logic"
           correct_index: 1
           explanation: |
             `Math.random()` produces a new key every render. React sees all-new keys and assumes every
@@ -1460,10 +1500,10 @@ steps:
             **Analyze** the component design of a store app. A student puts product rendering, cart management, filtering, and the total calculation ALL in the `App` component. What is wrong with this approach?
           type: single
           options:
-            - "Nothing — keeping everything in one component is simpler"
+            - "Nothing wrong — keeping everything in one component is simpler and avoids the overhead of passing props between components"
             - "It violates single-responsibility: each concern (product display, cart, filters) should be its own component. A monolithic component is hard to test, hard to reuse, and hard to modify without breaking other features"
-            - "React limits components to 100 lines of code"
-            - "It is slower because React can't optimize re-renders for a single large component"
+            - "React enforces a 100-line limit per component — exceeding this causes a build-time warning in strict mode"
+            - "It is slower because React's Virtual DOM diffing algorithm has O(n²) complexity for components over 500 lines"
           correct_index: 1
           explanation: |
             Single-responsibility applies to components just as it does to C++ classes. A `ProductCard`
@@ -1484,3 +1524,20 @@ steps:
             **Lifting state up**: the cart state belongs in the lowest common ancestor of all components
             that need it. `App` owns `[cart, setCart]`, passes `cart` to `CartSummary` and an
             `onAdd` callback to `ProductCard`. This is the same "Thinking in React" pattern from Step 7.
+
+        - question: |
+            *(Spaced review — Step 6: Conditional Rendering)*
+
+            A product card should show "In Cart" only when the product is already in the cart array. Which JSX pattern is correct?
+          type: single
+          options:
+            - "`{cart.includes(product) ? <span>In Cart</span>}` — ternary with one branch, since we only need the truthy case"
+            - "`{cart.some(item => item.id === product.id) && <span>In Cart</span>}` — `&&` short-circuit with stable ID comparison"
+            - "`{if (cart.includes(product)) return <span>In Cart</span>}` — use an if-statement inside the JSX expression braces"
+            - "`<span visible={cart.includes(product)}>In Cart</span>` — use the built-in `visible` prop to toggle display"
+          correct_index: 1
+          explanation: |
+            `&&` short-circuit is the correct pattern for show/hide. Use `.some()` with `item.id === product.id`
+            for identity comparison (reference equality on objects is unreliable after state updates create new arrays).
+            Option A is invalid syntax — ternary requires both branches. Option C is invalid — `if` statements
+            cannot appear inside JSX expression braces.
