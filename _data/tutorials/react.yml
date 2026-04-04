@@ -37,7 +37,7 @@ steps:
       ```jsx
       // Declarative (React): You describe the WHAT
       function App() {
-        return <h1 style={{color: 'steelblue'}}>Hello, CS 130!</h1>;
+        return <h1 className="text-blue-600 text-3xl">Hello, CS 130!</h1>;
       }
       ```
 
@@ -56,16 +56,28 @@ steps:
 
       The `<h1>...</h1>` syntax inside JavaScript is called **JSX**. It is *not* HTML — Babel compiles it to `React.createElement(...)` calls that build a lightweight JavaScript object tree (the Virtual DOM). You will learn the details and rules of JSX in the next step.
 
+      ### A Quick Note on Styling
+
+      This tutorial uses **Tailwind CSS**, a popular utility-first CSS framework. Tailwind provides ready-made class names that you apply via the `className` prop:
+
+      ```jsx
+      <h1 className="text-red-500 text-4xl font-bold">Hello!</h1>
+      ```
+
+      Each class does one thing: `text-red-500` sets the text color, `text-4xl` sets the font size, `font-bold` makes it bold, `p-8` adds padding. You do not need to memorize these — they are provided for you in every step after this one.
+
+      > In React, use `className` (not `class`) because `class` is a reserved JavaScript keyword. You will learn more about this in the next step.
+
       ### Predict Before You Modify
 
-      Before changing anything, look at the `App` component. Predict: what does `{name}` inside the JSX evaluate to? What does `style={{color: color}}` mean — why are there two sets of braces? Write your predictions, then read on.
+      Before changing anything, look at the `App` component. Predict: what does `{name}` inside the JSX evaluate to? What does `className="text-red-500"` do to the heading? Write your predictions, then read on.
 
       ### Task
 
       The preview shows a greeting component. Make two changes:
 
       1. Change `"World"` to your own name in the `name` variable
-      2. Change the `color` from `'tomato'` to `'steelblue'`
+      2. Change the heading color from `text-red-500` to `text-blue-600` (or any other Tailwind color like `text-green-600`, `text-purple-500`, etc.)
 
       The preview rebuilds automatically when you save (Ctrl+S). Use **↻ Refresh** if needed.
 
@@ -74,14 +86,13 @@ steps:
         content: |
           function App() {
             const name = "World";       // Task 1: Change this to your name
-            const color = 'tomato';     // Task 2: Change the color
 
             return (
-              <div style={{fontFamily: 'sans-serif', padding: '32px'}}>
-                <h1 style={{color: color}}>
+              <div className="p-8 font-sans">
+                <h1 className="text-red-500 text-3xl font-bold">
                   Hello, {name}!
                 </h1>
-                <p>Welcome to React.</p>
+                <p className="mt-2 text-gray-600">Welcome to React.</p>
               </div>
             );
           }
@@ -100,12 +111,12 @@ steps:
           assert(h1, 'No <h1> found in the preview');
           assert(h1.textContent.trim() !== 'Hello, World!',
             'Change the name variable from "World" to your own name');
-      - description: "The heading color is not 'tomato'"
+      - description: "The heading color class has been changed"
         command: |
           var h1 = frame.contentDocument.querySelector('h1');
           assert(h1, 'No <h1> found');
-          assert(h1.style.color !== 'tomato',
-            'Change the color variable to something other than "tomato"');
+          assert(!h1.className.includes('text-red-500'),
+            'Change the color class from "text-red-500" to a different Tailwind color (e.g. "text-blue-600")');
 
     quiz:
       title: "Hello, React! — Knowledge Check"
@@ -186,14 +197,14 @@ steps:
       |---|---|---|
       | CSS class attribute | `class="..."` | `className="..."` (`class` is a JS keyword) |
       | Self-closing tags | `<img src={u}>` | `<img src={u} />` (required in JSX) |
-      | Inline style | `style="color:red"` | `style={{color: 'red'}}` (JS object, not CSS string) |
+      | Inline style | `style="color:red"` | `style={{color: 'red'}}` (JS object, not CSS string; prefer CSS classes when possible) |
       | Multiple root elements | `return <h1/><p/>` | `return <><h1/><p/></>` (single root required) |
       | Component names | `<card />` | `<Card />` (must be capitalized) |
       | Embed JS expressions | `<p>name</p>` | `<p>{name}</p>` (curly braces for expressions) |
 
       ### Predict Before You Code
 
-      Before fixing the bugs below: look at the Badge component's `style` prop. It says `style="background: color; ..."`. Predict: what are the **two** things wrong with this? Write your predictions, then fix them.
+      Before fixing the bugs below: look at the Badge component's `style` prop. It says `style="background: color;"`. Predict: what is wrong with this syntax? Write your prediction, then fix it.
 
       ### Fixer-Upper: Four Classic JSX Bugs
 
@@ -213,7 +224,7 @@ steps:
           // Props: label (string), color (string — any CSS color)
           function Badge({ label, color }) {
             return (
-              <span style="background: color; color: #222; padding: 6px 14px; borderRadius: 20px; fontWeight: 600;">
+              <span className="inline-block px-3 py-1 rounded-full font-semibold text-gray-800" style="background: color;">
                 {label}
               </span>
             );
@@ -222,8 +233,8 @@ steps:
           function App() {
             return (
               // BUG: Multiple root elements without a wrapper
-              <h1 class="app-title">My Badges</h1>
-              <div style={{display: 'flex', gap: 12, marginTop: 16}}>
+              <h1 class="text-2xl font-bold text-gray-800 mb-4">My Badges</h1>
+              <div className="flex gap-3 mt-4">
                 <Badge label="React" color="#61dafb" />
                 <Badge label="JavaScript" color="#f7df1e" />
                 {/* Task: Add a third <Badge> here */}
@@ -237,7 +248,6 @@ steps:
 
     preview_styles: |
       body { padding: 24px; }
-      .app-title { font-family: sans-serif; color: #333; margin-bottom: 16px; }
 
     open_file: "App.jsx"
 
@@ -248,11 +258,10 @@ steps:
           assert(h1, 'Fix all JSX bugs so the component renders. No <h1> found yet.');
       - description: "Uses className instead of class"
         command: |
-          var src = frame.contentDocument.querySelector('script[type="text/babel"]');
-          var text = frame.contentDocument.body.innerHTML;
-          assert(!frame.contentDocument.querySelector('[class]') ||
-                  frame.contentDocument.querySelector('h1.app-title'),
-            'Make sure you use className="app-title" (not class=)');
+          var src = frame.contentDocument.querySelector('[type="text/babel"]');
+          var code = src ? src.textContent : '';
+          assert(code.includes('className='),
+            'Fix the <h1> tag: use className="..." instead of class="..." (class is a reserved JS keyword)');
       - description: "Three or more Badge spans are rendered"
         command: |
           var spans = frame.contentDocument.querySelectorAll('span');
@@ -398,11 +407,7 @@ steps:
             //   3. <p> showing description
             //   4. A "Sale!" badge (shown only if onSale is true)
             return (
-              <div style={{
-                border: '1px solid #ddd', borderRadius: 8,
-                padding: 20, maxWidth: 280,
-                fontFamily: 'sans-serif', boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-              }}>
+              <div className="border border-gray-300 rounded-lg p-5 max-w-xs shadow-sm">
                 {/* Your code here */}
               </div>
             );
@@ -410,7 +415,7 @@ steps:
 
           function App() {
             return (
-              <div style={{padding: 32, display: 'flex', gap: 24, flexWrap: 'wrap'}}>
+              <div className="p-8 flex gap-6 flex-wrap">
                 <ProductCard
                   name="Mechanical Keyboard"
                   price={129.99}
@@ -593,12 +598,10 @@ steps:
             }
 
             return (
-              <div style={{fontFamily: 'sans-serif', padding: 32, textAlign: 'center'}}>
-                <h2 style={{fontSize: 48, margin: '0 0 24px'}}>{count}</h2>
-                <div style={{display: 'flex', gap: 12, justifyContent: 'center'}}>
-                  <button onClick={increment}
-                    style={{padding: '10px 24px', fontSize: 18, borderRadius: 8,
-                            border: 'none', background: '#0078d4', color: '#fff', cursor: 'pointer'}}>
+              <div className="p-8 text-center">
+                <h2 className="text-5xl mb-6">{count}</h2>
+                <div className="flex gap-3 justify-center">
+                  <button className="px-6 py-2 text-lg rounded-lg bg-blue-600 text-white cursor-pointer" onClick={increment}>
                     +1
                   </button>
                   {/* Task: Add a −1 button and a Reset button */}
@@ -778,15 +781,15 @@ steps:
 
           function TaskList() {
             return (
-              <div style={{fontFamily: 'sans-serif', padding: 32, maxWidth: 520}}>
-                <h2 style={{marginBottom: 16}}>React Learning Checklist</h2>
+              <div className="p-8 max-w-lg">
+                <h2 className="text-xl font-bold mb-4">React Learning Checklist</h2>
 
-                <ul style={{listStyle: 'none', padding: 0}}>
+                <ul className="list-none p-0">
                   {/* Task: Replace this with a .map() call over tasks */}
                   <li>Task goes here</li>
                 </ul>
 
-                <p style={{color: '#888', fontSize: 13, marginTop: 12}}>
+                <p className="text-gray-400 text-sm mt-3">
                   {tasks.filter(t => t.done).length} / {tasks.length} complete
                 </p>
               </div>
@@ -796,9 +799,6 @@ steps:
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<TaskList />);
         language: "javascript"
-
-    preview_styles: |
-      body { background: #f8f9fa; }
 
     open_file: "App.jsx"
 
@@ -952,23 +952,23 @@ steps:
             const visibleTasks = initialTasks; // Replace with filtered list
 
             return (
-              <div style={{fontFamily: 'sans-serif', padding: 32, maxWidth: 520}}>
-                <h2 style={{marginBottom: 16}}>React Learning Checklist</h2>
+              <div className="p-8 max-w-lg">
+                <h2 className="text-xl font-bold mb-4">React Learning Checklist</h2>
 
                 {/* Task: Add filter buttons — "All", "Active", "Done" */}
-                <div style={{display: 'flex', gap: 8, marginBottom: 16}}>
+                <div className="flex gap-2 mb-4">
                   {/* Your filter buttons here */}
                 </div>
 
-                <ul style={{listStyle: 'none', padding: 0}}>
+                <ul className="list-none p-0">
                   {visibleTasks.map(task => (
-                    <li key={task.id} style={{padding: '8px 0', borderBottom: '1px solid #eee'}}>
+                    <li key={task.id} className="py-2 border-b border-gray-200">
                       {task.done ? '✓' : '✗'} {task.text}
                     </li>
                   ))}
                 </ul>
 
-                <p style={{color: '#888', fontSize: 13, marginTop: 12}}>
+                <p className="text-gray-400 text-sm mt-3">
                   {initialTasks.filter(t => t.done).length} / {initialTasks.length} complete
                 </p>
               </div>
@@ -978,9 +978,6 @@ steps:
           const root = ReactDOM.createRoot(document.getElementById('root'));
           root.render(<TaskList />);
         language: "javascript"
-
-    preview_styles: |
-      body { background: #f8f9fa; }
 
     open_file: "App.jsx"
 
@@ -1198,12 +1195,7 @@ steps:
           // Props: user object with: name, username, avatarUrl, repos, followers, following
           function ProfileCard({ user }) {
             return (
-              <div style={{
-                border: '1px solid #e1e4e8', borderRadius: 12,
-                padding: 24, maxWidth: 300,
-                fontFamily: 'sans-serif', background: '#fff',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
-              }}>
+              <div className="border border-gray-200 rounded-xl p-6 max-w-xs bg-white shadow-md">
                 {/* Task: Use Avatar and StatBadge here */}
               </div>
             );
@@ -1226,7 +1218,7 @@ steps:
             ];
 
             return (
-              <div style={{padding: 32, display: 'flex', gap: 24, flexWrap: 'wrap', background: '#f6f8fa', minHeight: '100vh'}}>
+              <div className="p-8 flex gap-6 flex-wrap bg-gray-50 min-h-screen">
                 {users.map(user => (
                   <ProfileCard key={user.username} user={user} />
                 ))}
@@ -1407,8 +1399,8 @@ steps:
 
           function App() {
             return (
-              <div style={{fontFamily: 'sans-serif', padding: 32}}>
-                <h1>Mini Store</h1>
+              <div className="p-8">
+                <h1 className="text-2xl font-bold mb-4">Mini Store</h1>
                 {/* Your implementation */}
               </div>
             );
