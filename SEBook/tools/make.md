@@ -337,9 +337,10 @@ To write flexible and scalable Makefiles, you will use a few specific syntactic 
 
 * **Variables (Macros)**: Variables act as placeholders for command-line options, making the build rules cleaner and easier to modify. For example, you can define a variable for your compiler (`CC = clang`) and your compiler flags (`CFLAGS = -Wall -g`). When you want to use the variable, you wrap it in parentheses and a dollar sign: `$(CC)`.
 * **String Substitution**: You can easily transform lists of files. For example, to generate a list of `.o` object files from a list of `.c` source files, you can use the syntax: `OBJS = $(SRCS:.c=.o)`.
-* **Automatic Variables**: `make` provides special variables to make rules more concise. 
+* **Automatic Variables**: `make` provides special variables to make rules more concise.
     * `$@` represents the target name.
     * `$<` represents the first prerequisite.
+    * `$^` represents all prerequisites.
 * **Pattern Rules**: Pattern rules serve as templates for creating many rules with the identical structure. For instance, `%.o : %.c` defines a generic rule for creating a `.o` (object) file from a corresponding `.c` (source) file.
 
 ### A Worked Example

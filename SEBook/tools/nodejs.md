@@ -20,6 +20,26 @@ let count = 0;       // A variable that can be reassigned
 const name = "UCLA"; // A constant that cannot be reassigned
 ```
 
+> **Never use `var`** — it has function-scoped hoisting rules that violate the block-scope behavior you learned in C++ and Python. Always prefer `let` or `const`.
+
+**Destructuring:**
+JavaScript provides a concise shorthand for unpacking values from arrays and objects — used constantly in modern JS and React:
+
+```javascript
+// Array destructuring (like Python's tuple unpacking):
+const coords = [40.7, -74.0];
+const [lat, lng] = coords;      // lat = 40.7, lng = -74.0
+
+// Object destructuring — extract properties by name:
+const student = { name: "Alice", grade: 95 };
+const { name, grade } = student;   // name = "Alice", grade = 95
+
+// Commonly used in function parameters:
+function printStudent({ name, grade }) {
+    console.log(`${name}: ${grade}`);
+}
+```
+
 ### What is Node.js? (Taking off the Training Wheels)
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
 
@@ -124,16 +144,16 @@ Understanding callbacks is essential — all of Node.js's async operations notif
 JavaScript has compact syntax for extracting values from arrays and objects:
 
 ```javascript
-// Array destructuring (like Python's tuple unpacking: lat, lng = coords)
-const [lat, lng] = [40.7, -74.0];
+// Array destructuring (like Python's tuple unpacking: r, g, b = color)
+const [red, green, blue] = [255, 128, 0];
 
 // Object destructuring (extract properties by name)
-const student = { name: "Alice", grade: 95 };
-const { name, grade } = student;   // name = "Alice", grade = 95
+const config = { host: "localhost", port: 3000, debug: true };
+const { host, port } = config;   // host = "localhost", port = 3000
 
-// Works in function parameters — you will see this in every React component:
-function printStudent({ name, grade }) {
-    console.log(`${name}: ${grade}`);
+// Works in function parameters — you will see this in every Express route and React component:
+function startServer({ host, port }) {
+    console.log(`Listening on ${host}:${port}`);
 }
 ```
 
@@ -194,7 +214,7 @@ fetchData('a')
 async function fetchUserData(userId) {
     try {
         // 'await' suspends THIS function (non-blocking!) and lets other work proceed
-        const response = await database.getUser(userId); 
+        const response = await database.getUser(userId);
         console.log(`User found: ${response.name}`);
     } catch (error) {
         // Error handling looks exactly like C++ or Python
