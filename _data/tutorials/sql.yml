@@ -1,12 +1,755 @@
 title: "SQL Essentials"
-description: "A hands-on introduction to SQL using SQLite, running entirely in your browser. Learn to create tables, query data, and manage a relational database — no installation required."
+description: "A hands-on introduction to SQL using SQLite, running entirely in your browser. Learn to create tables, query data with filters and aggregates, and clean up — no installation required."
 
 backend: sql
 
 require_tests: true
 
-# setup_commands run as SQL before the first step is loaded.
-# Use this to pre-populate shared reference data available across all steps.
-setup_commands: []
+# Pre-populate a students table that query steps read from.
+# Safe to re-run: DROP TABLE IF EXISTS handles re-loads.
+setup_commands:
+  - |
+    DROP TABLE IF EXISTS students;
+    CREATE TABLE students (
+      id      INTEGER PRIMARY KEY,
+      name    TEXT    NOT NULL,
+      year    INTEGER,
+      major   TEXT,
+      gpa     REAL
+    );
+    INSERT INTO students VALUES
+      (1, 'Alice',  2, 'CS',      3.90),
+      (2, 'Bob',    3, 'Math',    3.40),
+      (3, 'Carol',  1, 'CS',      3.70),
+      (4, 'Dan',    4, 'Physics', 2.80),
+      (5, 'Eve',    2, 'CS',      3.50),
+      (6, 'Frank',  3, 'Math',    3.10),
+      (7, 'Grace',  1, 'Physics', 3.60),
+      (8, 'Hank',   4, 'CS',      3.20);
 
-steps: []
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1: CREATE TABLE — the schema declaration
+  # Pedagogy: Lay of the Land, Transfer Tutor (struct → table), Guide-and-Release
+  # Bloom's: Remember / Understand / Apply
+  # --------------------------------------------------------------------------
+  - title: "Your First Table"
+    instructions: |
+      ## Declare, Don't Loop
+
+      > **Learning objective:** After this step you will be able to **explain** the difference between imperative and declarative programming and **write** a `CREATE TABLE` statement with appropriate types and constraints.
+
+      You already write Python, JavaScript, and Shell scripts. All three share one assumption with C++: you tell the computer **how** to solve a problem, step by step.
+
+      SQL is fundamentally different. You describe **what** you want, and the database engine decides how to retrieve it efficiently. This shift — from **imperative** to **declarative** — is the single most important idea in this tutorial.
+
+      ### Tables are not arrays
+
+      In Python or JavaScript you store collections in arrays:
+
+      ```python
+      students = [
+          {"id": 1, "name": "Alice", "gpa": 3.9},
+          {"id": 2, "name": "Bob",   "gpa": 3.4},
+      ]
+      ```
+
+      A SQL **table** is similar in spirit but with two critical differences:
+
+      1. **Strict schema** — every row must have exactly the same columns with declared types. No mixed-type columns, no missing keys.
+      2. **Unordered set** — rows have no guaranteed position. `students[0]` is meaningless in SQL. The only way to access a specific row is to filter by its content.
+
+      ### CREATE TABLE
+
+      `CREATE TABLE` is SQL's equivalent of defining a `struct` — not creating an instance, just declaring the shape:
+
+      ```sql
+      CREATE TABLE courses (
+        id      INTEGER PRIMARY KEY,
+        code    TEXT    NOT NULL,
+        name    TEXT    NOT NULL,
+        credits INTEGER
+      );
+      ```
+
+      | SQL type  | Python / JS equivalent |
+      |-----------|------------------------|
+      | `INTEGER` | `int`                  |
+      | `REAL`    | `float`                |
+      | `TEXT`    | `str` / `string`       |
+      | `BLOB`    | `bytes` / `Buffer`     |
+
+      `PRIMARY KEY` guarantees uniqueness — no two rows may share the same value, and it cannot be NULL. `NOT NULL` prevents missing values in that column.
+
+      ### Task
+
+      Complete `schema.sql` to create a `courses` table with these four columns:
+      - `id` — integer, primary key
+      - `code` — text, not null (e.g. `'CS 35L'`)
+      - `name` — text, not null (e.g. `'Software Construction'`)
+      - `credits` — integer (nullable)
+
+      Click **▶ Run** to execute your file. A `students` table has already been set up — try adding `SELECT * FROM students;` to preview the data you will query in later steps.
+
+    files:
+      - path: "schema.sql"
+        content: |
+          -- Task: create a courses table.
+          -- DROP IF EXISTS makes this safe to re-run.
+          DROP TABLE IF EXISTS courses;
+
+          -- TODO: write the CREATE TABLE statement below.
+          -- Columns: id (INTEGER PRIMARY KEY), code (TEXT NOT NULL),
+          --          name (TEXT NOT NULL), credits (INTEGER)
+          CREATE TABLE courses (
+            id      INTEGER PRIMARY KEY,
+            code    TEXT    NOT NULL,
+            name    TEXT    NOT NULL,
+            credits INTEGER
+          );
+        language: "sql"
+
+    open_file: "schema.sql"
+
+    tests:
+      - description: "courses table exists"
+        command: |
+          var rows = __run_query("SELECT name FROM sqlite_master WHERE type='table' AND name='courses'");
+          assert(rows.length === 1, "Expected a table named 'courses' — run your CREATE TABLE statement first");
+      - description: "courses has an 'id' column"
+        command: |
+          var info = __run_query("PRAGMA table_info(courses)");
+          var cols = info.map(function(r) { return r.name; });
+          assert(cols.indexOf('id') !== -1, "Expected a column named 'id'");
+      - description: "courses has a 'code' column"
+        command: |
+          var info = __run_query("PRAGMA table_info(courses)");
+          var cols = info.map(function(r) { return r.name; });
+          assert(cols.indexOf('code') !== -1, "Expected a column named 'code'");
+      - description: "courses has a 'name' column"
+        command: |
+          var info = __run_query("PRAGMA table_info(courses)");
+          var cols = info.map(function(r) { return r.name; });
+          assert(cols.indexOf('name') !== -1, "Expected a column named 'name'");
+
+    quiz:
+      title: "Your First Table — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A Python programmer says: *"A SQL table is just like a Python list of dictionaries."*
+            What is the most important difference they are missing?
+          type: single
+          options:
+            - "SQL tables are stored on disk; Python lists live in memory"
+            - "SQL tables enforce a rigid schema with fixed types, and rows have no guaranteed order"
+            - "SQL tables cannot be modified after creation"
+            - "Python lists can hold more data than SQL tables"
+          correct_index: 1
+          explanation: |
+            The two critical differences are (1) **rigid schema** — every column has a declared type and every row must conform, and (2) **unordered set semantics** — unlike a Python list, there is no "row 0". You retrieve rows by filtering their content, not by index.
+
+        - question: |
+            What does `PRIMARY KEY` guarantee about a column's values?
+          type: single
+          options:
+            - "Values are sorted in ascending order"
+            - "The column cannot contain text"
+            - "Each value is unique and non-null across all rows"
+            - "The column is indexed for faster lookups only"
+          correct_index: 2
+          explanation: |
+            `PRIMARY KEY` enforces two things: uniqueness (no two rows share the same value) and non-nullability. It also creates an implicit index, but its core purpose is to uniquely identify every row.
+
+        - question: |
+            Which SQL statement **defines the structure** of a table (the schema), as opposed to adding data?
+          type: single
+          options:
+            - "INSERT INTO"
+            - "SELECT"
+            - "CREATE TABLE"
+            - "UPDATE"
+          correct_index: 2
+          explanation: |
+            `CREATE TABLE` is Data Definition Language (DDL) — it defines the schema (column names, types, constraints). `INSERT INTO` is Data Manipulation Language (DML) — it adds rows. `SELECT` reads data. `UPDATE` modifies existing rows.
+
+  # --------------------------------------------------------------------------
+  # STEP 2: INSERT INTO + SELECT — populate and read
+  # Pedagogy: Guide-and-Release, Execution Order front-loaded
+  # Bloom's: Apply / Understand
+  # --------------------------------------------------------------------------
+  - title: "Populating & Querying"
+    instructions: |
+      ## INSERT and SELECT — Adding and Reading Data
+
+      > **Learning objective:** After this step you will be able to **write** `INSERT INTO` to add rows and `SELECT` to retrieve them, and **explain** SQL's logical execution order.
+
+      ### Adding rows: INSERT INTO
+
+      `INSERT INTO` adds new rows. It is the SQL equivalent of `.push()` / `.append()` — but permanent and schema-enforced:
+
+      ```sql
+      INSERT INTO courses (id, code, name, credits) VALUES
+        (1, 'CS 35L',  'Software Construction', 4);
+
+      INSERT INTO courses (id, code, name, credits) VALUES
+        (2, 'CS 111',  'Operating Systems',     4);
+      ```
+
+      `NOT NULL` columns that are omitted and have no default will cause an error. Nullable columns (like `credits`) can be omitted from the list.
+
+      ### Reading rows: SELECT
+
+      ```sql
+      -- All columns, all rows
+      SELECT * FROM courses;
+
+      -- Specific columns only
+      SELECT code, name FROM courses;
+      ```
+
+      `*` means "all columns". In production SQL you should always list columns explicitly — `SELECT *` is fine for exploration but breaks applications when the schema changes.
+
+      ### The logical execution order
+
+      SQL does **not** execute top-to-bottom like Python. Regardless of how you write a query, the database evaluates clauses in this fixed order:
+
+      ```
+      1. FROM      — which tables to read
+      2. WHERE     — filter rows           (Step 3)
+      3. GROUP BY  — group rows            (Step 4)
+      4. HAVING    — filter groups         (Step 4)
+      5. SELECT    — project columns  ← written first, evaluated fifth
+      6. ORDER BY  — sort the result
+      7. LIMIT     — truncate the result
+      ```
+
+      This is why you cannot use a `SELECT` alias inside a `WHERE` clause — the alias doesn't exist yet when `WHERE` is evaluated.
+
+      ### Task
+
+      Complete `populate.sql`:
+      1. Insert at least **3 courses** into the `courses` table
+      2. Add a `SELECT *` to retrieve all courses
+      3. Add a second `SELECT` that retrieves only `code` and `name`
+
+    files:
+      - path: "populate.sql"
+        content: |
+          -- The courses table was created in Step 1.
+          -- Re-create it here if needed:
+          -- DROP TABLE IF EXISTS courses;
+          -- CREATE TABLE courses (id INTEGER PRIMARY KEY, code TEXT NOT NULL, name TEXT NOT NULL, credits INTEGER);
+
+          -- TODO 1: Insert at least 3 courses (write separate INSERT statements)
+          INSERT INTO courses (id, code, name, credits) VALUES
+            (1, 'CS 35L', 'Software Construction', 4);
+
+          -- Add 2 more INSERT statements here ...
+
+          -- TODO 2: Select all columns
+          SELECT * FROM courses;
+
+          -- TODO 3: Select only code and name
+          SELECT code, name FROM courses;
+        language: "sql"
+
+    open_file: "populate.sql"
+
+    tests:
+      - description: "courses table exists"
+        command: |
+          var t = __run_query("SELECT name FROM sqlite_master WHERE type='table' AND name='courses'");
+          assert(t.length === 1, "courses table must exist — complete Step 1 first");
+      - description: "courses has at least 3 rows"
+        command: |
+          var rows = __run_query("SELECT COUNT(*) AS n FROM courses");
+          assert(rows[0].n >= 3, "Expected at least 3 rows in courses — insert 2 more courses");
+      - description: "all courses have non-null code and name"
+        command: |
+          var rows = __run_query("SELECT * FROM courses WHERE code IS NULL OR name IS NULL");
+          assert(rows.length === 0, "All courses must have a non-null code and name (NOT NULL constraint)");
+      - description: "students table is still intact"
+        command: |
+          var rows = __run_query("SELECT COUNT(*) AS n FROM students");
+          assert(rows[0].n === 8, "The students table should have 8 rows — do not modify it");
+
+    quiz:
+      title: "INSERT & SELECT — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A student writes:
+            ```sql
+            SELECT full_name FROM students WHERE full_name = 'Alice';
+            ```
+            The column is actually named `name`, not `full_name`. What *type* of SQL error is this?
+          type: single
+          options:
+            - "Logical error — the query is valid SQL but returns the wrong data"
+            - "Semantic error — the query is syntactically valid but references a non-existent column"
+            - "Syntax error — the SQL grammar rules are violated"
+            - "Runtime error — the database ran out of memory"
+          correct_index: 1
+          explanation: |
+            A **semantic error** is a query that is grammatically correct SQL but references something that doesn't exist (wrong column name, wrong table). A syntax error violates grammar (wrong clause order, missing parentheses). A logical error is when the query runs but returns the wrong answer for the intended question. Semantic errors are the second-most common class of SQL mistakes after logical errors.
+
+        - question: |
+            In SQL's logical execution order, the `SELECT` clause is written first. When is it actually evaluated?
+          type: single
+          options:
+            - "First — it defines what data to retrieve"
+            - "Second — immediately after FROM determines the source table"
+            - "Fifth — after FROM, WHERE, GROUP BY, and HAVING"
+            - "Last — after ORDER BY and LIMIT"
+          correct_index: 2
+          explanation: |
+            `SELECT` is evaluated **fifth**: FROM → WHERE → GROUP BY → HAVING → **SELECT** → ORDER BY → LIMIT. This is why an alias defined in `SELECT` cannot be used in `WHERE` — the alias doesn't exist until after `WHERE` has already filtered the rows.
+
+        - question: |
+            Which statement about `SELECT *` is true?
+          type: single
+          options:
+            - "It is the recommended style for production queries, for maximum code reuse"
+            - "It retrieves all rows regardless of any WHERE clause"
+            - "It is convenient for exploration but can break downstream code if the schema changes"
+            - "It is faster than listing specific columns"
+          correct_index: 2
+          explanation: |
+            `SELECT *` pulls all columns. It is fine for quick exploration, but in production it creates fragile code: adding, removing, or reordering a column can silently break applications that expect a specific shape. Always list columns explicitly in production SQL.
+
+  # --------------------------------------------------------------------------
+  # STEP 3: WHERE + ORDER BY — declarative filtering and sorting
+  # Pedagogy: Transfer Tutor (filter/sort → WHERE/ORDER BY), 3VL NULL trap
+  # Bloom's: Apply / Analyze
+  # --------------------------------------------------------------------------
+  - title: "Filtering & Sorting"
+    instructions: |
+      ## WHERE and ORDER BY — The filter() and sort() of SQL
+
+      > **Learning objective:** After this step you will be able to **write** `WHERE` clauses using boolean predicates and `ORDER BY` to sort results, and **explain** SQL's three-valued logic (3VL) and why it matters for NULL handling.
+
+      ### SQL's functional cousins
+
+      You already know JavaScript's array methods. SQL clauses map directly onto them:
+
+      | JavaScript | SQL | What it does |
+      |---|---|---|
+      | `arr.filter(x => x.gpa > 3.5)` | `WHERE gpa > 3.5` | Keep rows matching a boolean predicate |
+      | `arr.map(x => x.name)` | `SELECT name` | Project specific attributes |
+      | `arr.sort((a,b) => b.gpa - a.gpa)` | `ORDER BY gpa DESC` | Sort the output |
+
+      A `SELECT` query is roughly equivalent to chaining `.filter().map().sort()` — but expressed declaratively, with the optimizer choosing the execution strategy.
+
+      ### WHERE predicates
+
+      ```sql
+      WHERE gpa >= 3.5                        -- numeric comparison
+      WHERE major = 'CS'                      -- string equality (single quotes)
+      WHERE major = 'CS' AND gpa > 3.7        -- compound predicate
+      WHERE major IN ('CS', 'Math')           -- set membership
+      WHERE name LIKE 'A%'                    -- pattern match (% = any chars)
+      ```
+
+      ### NULL and Three-Valued Logic — the biggest trap
+
+      In C++, Python, and JavaScript boolean logic is two-valued: `true` or `false`. In SQL it is **three-valued**: `TRUE`, `FALSE`, and `UNKNOWN`.
+
+      `NULL` does not mean zero or empty string. It means **unknown value**. Comparing anything to `NULL` — even another `NULL` — yields `UNKNOWN`:
+
+      ```sql
+      -- WRONG: silently excludes rows where credits is NULL
+      WHERE credits != 4
+
+      -- RIGHT: explicitly handle NULL
+      WHERE credits != 4 OR credits IS NULL
+
+      -- Testing for NULL
+      WHERE credits IS NULL       -- present and unknown
+      WHERE credits IS NOT NULL   -- known value
+      ```
+
+      `WHERE` only keeps rows where the predicate is `TRUE`. Rows evaluating to `UNKNOWN` are silently discarded — a common source of hard-to-trace bugs.
+
+      ### ORDER BY
+
+      ```sql
+      SELECT name, gpa
+      FROM students
+      ORDER BY gpa DESC;   -- highest first (ASC is the default)
+      ```
+
+      `ORDER BY` is the **only guarantee of row order**. Without it the database may return rows in any order.
+
+      ### Task
+
+      Write three queries in `filter.sql` against the pre-populated `students` table:
+
+      1. All CS students with a GPA above 3.5, ordered by GPA descending
+      2. All students in year 1 or year 2
+      3. All students whose major is **not** `'CS'` — write a NULL-safe predicate (use `OR major IS NULL`)
+
+    files:
+      - path: "filter.sql"
+        content: |
+          -- Query 1: CS students with GPA > 3.5, highest GPA first
+          SELECT name, major, gpa
+          FROM students
+          WHERE major = 'CS' AND gpa > 3.5
+          ORDER BY gpa DESC;
+
+          -- Query 2: Students in year 1 or year 2
+          -- TODO
+
+          -- Query 3: Students NOT in CS (NULL-safe — include rows where major IS NULL)
+          -- TODO
+        language: "sql"
+
+    open_file: "filter.sql"
+
+    tests:
+      - description: "CS + GPA > 3.5 returns 2 students (Alice 3.9, Carol 3.7)"
+        command: |
+          var rows = __run_query("SELECT name FROM students WHERE major = 'CS' AND gpa > 3.5 ORDER BY gpa DESC");
+          assert(rows.length === 2, "Expected 2 CS students with GPA > 3.5: Alice (3.9) and Carol (3.7)");
+          assert(rows[0].name === 'Alice', "Alice (3.9) should be first when ordered by GPA DESC");
+      - description: "Year 1 or 2 returns 4 students"
+        command: |
+          var rows = __run_query("SELECT * FROM students WHERE year = 1 OR year = 2");
+          assert(rows.length === 4, "Expected 4 students in year 1 or 2: Alice, Carol, Eve, Grace");
+      - description: "Non-CS (NULL-safe) returns 4 students"
+        command: |
+          var rows = __run_query("SELECT * FROM students WHERE major != 'CS' OR major IS NULL");
+          assert(rows.length === 4, "Expected 4 non-CS students: Bob, Dan, Frank, Grace");
+
+    quiz:
+      title: "Filtering & Sorting — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A student writes:
+            ```sql
+            WHERE status != 'Active'
+            ```
+            The `status` column has some `NULL` values. What happens to those rows?
+          type: single
+          options:
+            - "They are included — NULL is not equal to 'Active'"
+            - "They are excluded — `NULL != 'Active'` evaluates to UNKNOWN, and WHERE discards UNKNOWN rows"
+            - "They cause a runtime error"
+            - "They are included only if NULL is explicitly listed as a valid status"
+          correct_index: 1
+          explanation: |
+            In SQL's Three-Valued Logic (3VL), `NULL != 'Active'` evaluates to **UNKNOWN** — not TRUE. `WHERE` only keeps rows where the predicate is TRUE. Rows where the predicate is UNKNOWN are silently discarded. To include NULL rows, write: `WHERE status != 'Active' OR status IS NULL`.
+
+        - question: |
+            Which expression correctly tests whether a column value is missing (NULL)?
+          type: single
+          options:
+            - "`WHERE credits = NULL`"
+            - "`WHERE credits == NULL`"
+            - "`WHERE credits IS NULL`"
+            - "`WHERE ISNULL(credits) = 1`"
+          correct_index: 2
+          explanation: |
+            `NULL = NULL` evaluates to UNKNOWN, not TRUE — so `WHERE credits = NULL` never matches any row. The only portable, standard-SQL way to test for NULL is `IS NULL`. `== NULL` is not valid SQL syntax. `ISNULL()` is a non-standard extension that only some databases provide.
+
+        - question: |
+            Without an `ORDER BY` clause, in what order does SQL return rows?
+          type: single
+          options:
+            - "In insertion order — the order rows were added"
+            - "In primary key order — ascending by id"
+            - "Alphabetically by the first column"
+            - "In no guaranteed order — the database may return rows in any sequence"
+          correct_index: 3
+          explanation: |
+            A SQL table is a **set**, not a list. Without `ORDER BY` the database may return rows in any order based on storage layout, index usage, or query plan. Never rely on implicit ordering. If order matters, always add `ORDER BY`.
+
+  # --------------------------------------------------------------------------
+  # STEP 4: GROUP BY + HAVING — the reduce() of SQL
+  # Pedagogy: Transfer Tutor (reduce → GROUP BY), WHERE vs HAVING misconception
+  # Bloom's: Apply / Analyze
+  # --------------------------------------------------------------------------
+  - title: "Aggregating Data"
+    instructions: |
+      ## GROUP BY — The reduce() of SQL
+
+      > **Learning objective:** After this step you will be able to **write** aggregate queries using `COUNT`, `AVG`, and `SUM` with `GROUP BY`, and **explain** why `HAVING` is needed instead of `WHERE` for aggregate conditions.
+
+      ### Aggregation maps to reduce()
+
+      JavaScript's `.reduce()` collapses a collection into a single value:
+
+      ```javascript
+      const total = students.reduce((sum, s) => sum + s.gpa, 0);
+      ```
+
+      SQL's `GROUP BY` does the same, but computes aggregates **per group** in one query:
+
+      ```sql
+      SELECT   major,
+               COUNT(*) AS student_count,
+               AVG(gpa)  AS avg_gpa
+      FROM     students
+      GROUP BY major;
+      ```
+
+      ### The GROUP BY rule
+
+      Every column in `SELECT` must be either:
+      1. Listed in `GROUP BY` (a grouping column), or
+      2. Inside an aggregate function (`COUNT`, `AVG`, `SUM`, `MIN`, `MAX`)
+
+      ```sql
+      -- WRONG: name is in SELECT but not in GROUP BY and not aggregated
+      SELECT major, name, COUNT(*) FROM students GROUP BY major;
+
+      -- RIGHT
+      SELECT major, COUNT(*) AS n FROM students GROUP BY major;
+      ```
+
+      ### WHERE vs HAVING — the most common mistake
+
+      `WHERE` filters individual rows **before** grouping. `HAVING` filters groups **after** aggregation. You cannot use aggregate functions inside `WHERE`.
+
+      ```sql
+      -- Find majors (excluding year-1 students) where 2+ students remain
+      SELECT   major, COUNT(*) AS n
+      FROM     students
+      WHERE    year > 1             -- filter individual rows first
+      GROUP BY major
+      HAVING   COUNT(*) >= 2;       -- filter groups after counting
+      ```
+
+      `WHERE AVG(gpa) > 3.5` is always an error. The average doesn't exist yet when `WHERE` runs.
+
+      ### COUNT(*) vs COUNT(column)
+
+      - `COUNT(*)` — counts every row in the group, including rows with NULL in other columns
+      - `COUNT(gpa)` — counts only rows where `gpa` is **not NULL**
+
+      ### Task
+
+      Write two aggregate queries in `aggregate.sql` against the `students` table:
+
+      1. Count students per major, ordered by count descending
+      2. The average GPA per major — but only include majors where the average GPA is above 3.3
+
+    files:
+      - path: "aggregate.sql"
+        content: |
+          -- Query 1: count students per major, most students first
+          SELECT   major,
+                   COUNT(*) AS student_count
+          FROM     students
+          GROUP BY major
+          ORDER BY student_count DESC;
+
+          -- Query 2: average GPA per major, only majors with avg GPA > 3.3
+          -- TODO: write this query using HAVING
+        language: "sql"
+
+    open_file: "aggregate.sql"
+
+    tests:
+      - description: "3 distinct majors exist"
+        command: |
+          var rows = __run_query("SELECT major, COUNT(*) AS n FROM students GROUP BY major ORDER BY n DESC");
+          assert(rows.length === 3, "Expected 3 distinct majors: CS, Math, Physics");
+      - description: "CS has the most students (4) and appears first"
+        command: |
+          var rows = __run_query("SELECT major, COUNT(*) AS n FROM students GROUP BY major ORDER BY n DESC");
+          assert(rows[0].major === 'CS' && rows[0].n === 4, "CS should have 4 students and appear first");
+      - description: "Only CS has an average GPA above 3.3"
+        command: |
+          var rows = __run_query("SELECT major FROM students GROUP BY major HAVING AVG(gpa) > 3.3");
+          assert(rows.length === 1, "Expected 1 major with average GPA > 3.3 (only CS at 3.575)");
+          assert(rows[0].major === 'CS', "CS (avg 3.575) is the only major above 3.3");
+
+    quiz:
+      title: "Aggregation — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A student writes:
+            ```sql
+            SELECT major, name, COUNT(*) AS n
+            FROM students
+            GROUP BY major;
+            ```
+            What is wrong?
+          type: single
+          options:
+            - "COUNT(*) is not a valid aggregate function"
+            - "`name` is in SELECT but not in GROUP BY or inside an aggregate — this violates the grouping rule"
+            - "GROUP BY must appear before SELECT in the written query"
+            - "You cannot mix a non-aggregate column and an aggregate in the same SELECT"
+          correct_index: 1
+          explanation: |
+            The **grouping rule**: every column in `SELECT` must either appear in `GROUP BY` or be wrapped in an aggregate. `name` is neither — there are multiple names per major, so it's undefined which one to return. SQLite may pick an arbitrary name; PostgreSQL and strict-mode MySQL reject this entirely.
+
+        - question: |
+            Which clause filters **groups** based on an aggregate condition?
+          type: single
+          options:
+            - "`WHERE`"
+            - "`HAVING`"
+            - "`FILTER`"
+            - "`SELECT ... WHERE`"
+          correct_index: 1
+          explanation: |
+            `WHERE` filters individual rows *before* grouping. `HAVING` filters groups *after* aggregation. `WHERE COUNT(*) > 5` is always an error because the count doesn't exist yet when `WHERE` runs. Use `HAVING COUNT(*) > 5`.
+
+        - question: |
+            If 3 out of 10 students have a NULL value in the `gpa` column, what does each of these return?
+            `COUNT(*)` vs `COUNT(gpa)`
+          type: single
+          options:
+            - "Both return 10 — COUNT always includes every row"
+            - "Both return 7 — COUNT skips NULL rows"
+            - "`COUNT(*)` returns 10; `COUNT(gpa)` returns 7"
+            - "`COUNT(*)` returns 7; `COUNT(gpa)` returns 10"
+          correct_index: 2
+          explanation: |
+            `COUNT(*)` counts every row regardless of NULLs. `COUNT(column)` counts only rows where that column is **not NULL**. The distinction is critical whenever a column is optional — use the right one depending on whether you want to count the group size or the number of known values.
+
+  # --------------------------------------------------------------------------
+  # STEP 5: UPDATE + DELETE + DROP TABLE — modifying and removing data
+  # Pedagogy: Fixer Upper (dangerous no-WHERE pattern), Guide-and-Release
+  # Bloom's: Apply / Evaluate
+  # --------------------------------------------------------------------------
+  - title: "Modifying & Cleaning Up"
+    instructions: |
+      ## UPDATE, DELETE, and DROP TABLE
+
+      > **Learning objective:** After this step you will be able to **write** `UPDATE` to modify rows, `DELETE` to remove rows, and `DROP TABLE` to remove an entire table — and **explain** the difference between them.
+
+      ### UPDATE — changing existing rows
+
+      ```sql
+      UPDATE students
+      SET    gpa = 3.95
+      WHERE  name = 'Alice';
+      ```
+
+      `UPDATE` without a `WHERE` clause modifies **every row in the table** — a common and painful mistake in production. The safe habit: write and test the equivalent `SELECT ... WHERE ...` first, then convert it to `UPDATE`.
+
+      ### DELETE — removing rows
+
+      ```sql
+      DELETE FROM students
+      WHERE year = 4;   -- removes all year-4 students
+      ```
+
+      `DELETE FROM students` with no `WHERE` removes every row. The table schema remains — only the data is gone.
+
+      ### DROP TABLE — removing the table itself
+
+      ```sql
+      DROP TABLE courses;
+      DROP TABLE IF EXISTS courses;   -- safer: no error if table is already gone
+      ```
+
+      `DROP TABLE` permanently removes both the data and the schema. There is no undo.
+
+      | Statement | Removes | Schema remains? |
+      |---|---|---|
+      | `DELETE FROM t WHERE ...` | Matching rows | Yes |
+      | `DELETE FROM t` | All rows | Yes |
+      | `DROP TABLE t` | All rows + schema | No |
+
+      ### Task
+
+      Complete `cleanup.sql`:
+
+      1. Update Dan's GPA from 2.80 to 3.00 (he improved this semester)
+      2. Delete all year-4 students from the `students` table
+      3. Drop the `courses` table you created in Step 1
+
+    files:
+      - path: "cleanup.sql"
+        content: |
+          -- Task 1: Update Dan's GPA to 3.0
+          UPDATE students
+          SET    gpa = 3.0
+          WHERE  name = 'Dan';
+
+          -- Task 2: Delete all year-4 students
+          -- TODO
+
+          -- Task 3: Drop the courses table
+          -- TODO: use DROP TABLE IF EXISTS
+        language: "sql"
+
+    open_file: "cleanup.sql"
+
+    tests:
+      - description: "Dan's GPA has been updated to 3.0"
+        command: |
+          var rows = __run_query("SELECT gpa FROM students WHERE name = 'Dan'");
+          assert(rows.length > 0, "Dan should still be in the table at this point");
+          assert(Math.abs(rows[0].gpa - 3.0) < 0.001, "Dan's GPA should be 3.0 after UPDATE");
+      - description: "Year-4 students have been deleted"
+        command: |
+          var rows = __run_query("SELECT * FROM students WHERE year = 4");
+          assert(rows.length === 0, "Expected no year-4 students — write a DELETE WHERE year = 4");
+      - description: "courses table has been dropped"
+        command: |
+          var rows = __run_query("SELECT name FROM sqlite_master WHERE type='table' AND name='courses'");
+          assert(rows.length === 0, "Expected courses table to be gone — write DROP TABLE IF EXISTS courses");
+
+    quiz:
+      title: "Modifying & Cleaning Up — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A developer runs:
+            ```sql
+            DELETE FROM orders;
+            ```
+            What is the result?
+          type: single
+          options:
+            - "The orders table is removed from the database"
+            - "All rows are deleted but the table structure remains"
+            - "An error — DELETE requires a WHERE clause"
+            - "Only rows matching the implicit WHERE TRUE condition are deleted"
+          correct_index: 1
+          explanation: |
+            `DELETE FROM orders` without a `WHERE` deletes every row but leaves the table schema intact. The table still exists — it is just empty. To remove the schema too, use `DROP TABLE orders`. SQL does not require a `WHERE` clause on `DELETE`, which makes this mistake easy to make in production.
+
+        - question: |
+            What is the safest way to remove a table that may or may not exist, without causing an error?
+          type: single
+          options:
+            - "`REMOVE TABLE IF EXISTS courses;`"
+            - "`DELETE TABLE courses;`"
+            - "`DROP TABLE IF EXISTS courses;`"
+            - "`TRUNCATE TABLE IF EXISTS courses;`"
+          correct_index: 2
+          explanation: |
+            `DROP TABLE IF EXISTS tablename` is the idiomatic safe form. Plain `DROP TABLE tablename` raises an error if the table doesn't exist. `DELETE TABLE` is not valid SQL. `TRUNCATE` removes all rows (like `DELETE`) but keeps the schema, and is not supported by all databases (including SQLite).
+
+        - question: |
+            Before running an `UPDATE` on a production table, what should you do first?
+          type: single
+          options:
+            - "Run EXPLAIN to check the query plan"
+            - "Run the equivalent SELECT with the same WHERE clause to preview which rows will change"
+            - "Create a backup (or use a transaction) so you can roll back if wrong"
+            - "Both B and C are good production practices"
+          correct_index: 3
+          explanation: |
+            Both are correct. Running `SELECT ... WHERE ...` first lets you verify exactly which rows the `UPDATE` will touch before it happens. Wrapping the `UPDATE` in a transaction (`BEGIN; UPDATE ...; SELECT ...; COMMIT;` or `ROLLBACK;`) gives you a safety net. Many developers do both.
