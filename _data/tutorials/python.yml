@@ -185,6 +185,26 @@ steps:
 
       You can always check the type at runtime: `print(type(score))` → `<class 'int'>`.
 
+      ### String Quotes: `"..."` and `'...'` Are Interchangeable
+
+      In C++, single quotes and double quotes mean different things: `'A'` is a `char`, while `"Alice"` is a `const char*` (or `std::string`). Mixing them up is a compile error.
+
+      In Python, **single and double quotes are completely interchangeable** for strings — there is no `char` type:
+      ```python
+      name = "Alice"    # str
+      name = 'Alice'    # also str — identical result
+      ```
+
+      This is handy when your string itself contains quotes:
+      ```python
+      msg = "It's easy"          # double quotes avoid escaping the apostrophe
+      html = '<div class="box">' # single quotes avoid escaping the double quotes
+      ```
+
+      In C++ you'd have to escape: `"It\'s easy"` or `"<div class=\"box\">"`. Python lets you pick whichever quote style avoids the clash.
+
+      > **Convention:** Most Python style guides (including PEP 8) accept either, but recommend picking one and being consistent. You'll see both in the wild.
+
       ### ⚠️ Dynamic ≠ Weak: Python Still Has Type Rules
 
       Python is **dynamically** typed (you don't declare types) but **strongly** typed (it won't silently convert between incompatible types). This trips up C++ programmers who assume "no declarations" means "no type errors":
@@ -224,6 +244,10 @@ steps:
           year  = 2
           gpa   = 3.819
           major = "Computer Science"
+
+          print(f'The type of 3.14 is {type(3.14)}')
+          print(f'The type of "3.14" is {type("3.14")}')
+
 
           # TODO: print the line below using a single f-string:
           # Student: Alice | Year: 2 | Major: Computer Science | GPA: 3.82
@@ -1319,6 +1343,25 @@ steps:
             indentation rule from Step 3: a colon `:` starts a block that must be indented.
 
         - question: |
+            *(Spaced review — Step 2: String Quotes)*
+
+            A student writes this Python code and gets a `SyntaxError`. Why?
+            ```python
+            message = 'It's a beautiful day'
+            ```
+          type: single
+          options:
+            - "Single quotes can't be used for strings in Python"
+            - "The apostrophe in `It's` ends the string early because it matches the opening `'`. Fix: use double quotes (`\"It's a beautiful day\"`) or escape the apostrophe (`'It\\'s a beautiful day'`)"
+            - "Python strings must use double quotes"
+            - "The string is too long for single quotes"
+          correct_index: 1
+          explanation: |
+            Unlike C++ where `'x'` is a `char` and `"x"` is a string, Python uses `'...'` and `"..."` interchangeably
+            for strings. This flexibility lets you pick whichever quote style avoids conflicts with the string's content.
+            Here, `"It's a beautiful day"` avoids the problem entirely — no escaping needed.
+
+        - question: |
             **Arrange** the lines to read a file and count total words.
           type: parsons
           lines:
@@ -1790,6 +1833,23 @@ steps:
             You must manually call `f.close()`. If an exception occurs between `open()` and
             `close()`, the file handle leaks — exactly the same problem as forgetting `fclose()`
             in C. The `with` statement guarantees cleanup via Python's context manager protocol.
+
+        - question: |
+            *(Spaced review — Step 2: String Quotes)*
+
+            In C++, `'A'` is a `char` and `"Alice"` is a string — they are different types. What is the equivalent distinction in Python?
+          type: single
+          options:
+            - "Python also distinguishes `'A'` as a character and `\"Alice\"` as a string"
+            - "There is no distinction — Python has no `char` type. Single quotes (`'...'`) and double quotes (`\"...\"`) both create `str` objects and are fully interchangeable"
+            - "Single quotes create byte strings, double quotes create Unicode strings"
+            - "Single quotes are for single characters, but Python stores them as length-1 strings"
+          correct_index: 1
+          explanation: |
+            Python has no `char` type at all. `'A'` and `"A"` are both `str` objects of length 1.
+            This means you can freely choose whichever quote style avoids escaping —
+            e.g., `"It's easy"` or `'<div class="box">'`. This is a key difference from C++
+            where mixing up `'x'` and `"x"` is a compile error.
 
   # --------------------------------------------------------------------------
   # STEP 10 — Capstone: Build a Log Analyzer

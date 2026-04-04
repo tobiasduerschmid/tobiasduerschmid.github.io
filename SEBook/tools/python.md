@@ -176,6 +176,28 @@ print(f"{name} is {age} years old and will be {age + 1} next year.")
 *Pedagogical Note:* Under the hood, Python calls the `__str__()` method of the objects placed inside the curly braces to get their string representation.
 
 
+### String Quotes: `"..."` and `'...'` Are Interchangeable
+
+In C++, single quotes and double quotes mean completely different things: `'A'` is a `char`, while `"Alice"` is a `const char*` (or `std::string`). Mixing them up is a compile error.
+
+In Python, **there is no `char` type** — single quotes and double quotes both create `str` objects and are fully interchangeable:
+
+```python
+name = "Alice"    # str
+name = 'Alice'    # also str — identical result
+```
+
+This is especially handy when your string itself contains quotes, because you can pick whichever style avoids escaping:
+
+```python
+msg = "It's easy"          # double quotes avoid escaping the apostrophe
+html = '<div class="box">' # single quotes avoid escaping the double quotes
+```
+
+In C++ you would need to escape: `"It\'s easy"` or `"<div class=\"box\">"`. Python lets you sidestep the backslashes entirely by choosing the other quote style.
+
+> **Convention:** PEP 8 accepts either style but recommends picking one and being consistent throughout a project. Both are equally common in the wild.
+
 ### Core Collections: Lists, Sets, and Dictionaries
 
 Because Python does not enforce static typing, its built-in collections are highly flexible. You do not need to `#include` external libraries to use them; they are native to the language syntax. 

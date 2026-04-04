@@ -10,6 +10,15 @@ questions:
     correct_index: 1
     explanation: "Dynamic typing = types are checked at runtime (not compile time). Strong typing = no implicit coercion between incompatible types. Python's `TypeError` on `\"5\" + 3` is a feature, not a limitation — it prevents an entire class of silent bugs that plague JavaScript code."
 
+  - question: "In C++, `'A'` is a `char` and `\"Alice\"` is a `const char*` — they are fundamentally different types. A C++ student writes `name = 'Alice'` in Python and worries they've created a character array instead of a string. Are they right?"
+    options:
+      - "Yes — Python's single quotes create a character array, just like C++'s `char[]`"
+      - "No — Python has no `char` type. Single quotes (`'...'`) and double quotes (`\"...\"`) are completely interchangeable and both create `str` objects. This lets you pick whichever style avoids escaping: `\"It's easy\"` or `'<div class=\"box\">'`"
+      - "No — single quotes create byte strings, while double quotes create Unicode strings"
+      - "Yes — while both work, single-quoted strings are immutable and double-quoted strings are mutable"
+    correct_index: 1
+    explanation: "Python has no `char` type — this is one of the cleanest simplifications over C++. `'Alice'` and `\"Alice\"` produce identical `str` objects. The practical benefit is that you can choose the quote style that avoids backslash escaping: use double quotes when the string contains an apostrophe (`\"It's easy\"`), and single quotes when it contains double quotes (`'<div class=\"box\">'`). PEP 8 accepts either style but recommends consistency."
+
   - question: "A C++ programmer writes `total = sum(scores) / len(scores)` and expects integer division (like C++'s `/`). They get `85.5` instead of `85`. What happened, and how should they get integer division?"
     options:
       - "Python's `sum()` always returns a float, even for integer lists"
