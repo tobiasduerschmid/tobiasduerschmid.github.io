@@ -1,0 +1,102 @@
+title: "Python Concepts Quiz"
+description: "Test your deeper understanding of Python's design choices, paradigm differences from C++, and when to use which tool."
+questions:
+  - question: "Python is **dynamically** typed AND **strongly** typed. JavaScript is dynamically typed AND **weakly** typed. What is the practical difference for a developer?"
+    options:
+      - "There is no practical difference — 'strong' and 'weak' typing are just academic labels"
+      - "Strong typing means Python refuses to implicitly convert between incompatible types (`\"5\" + 3` errors), while weak typing means JavaScript silently coerces (`\"5\" + 3` → `\"53\"`). Strong typing catches more bugs at runtime"
+      - "Strong typing means Python is faster because the interpreter can optimize known types"
+      - "Weak typing means JavaScript variables can change type, while Python variables cannot"
+    correct_index: 1
+    explanation: "Dynamic typing = types are checked at runtime (not compile time). Strong typing = no implicit coercion between incompatible types. Python's `TypeError` on `\"5\" + 3` is a feature, not a limitation — it prevents an entire class of silent bugs that plague JavaScript code."
+
+  - question: "A C++ programmer writes `total = sum(scores) / len(scores)` and expects integer division (like C++'s `/`). They get `85.5` instead of `85`. What happened, and how should they get integer division?"
+    options:
+      - "Python's `sum()` always returns a float, even for integer lists"
+      - "Python 3's `/` always performs float division. Use `//` for integer (floor) division: `sum(scores) // len(scores)`"
+      - "The `len()` function returns a float in Python 3"
+      - "Python rounds up by default — use `math.floor()` to get integer results"
+    correct_index: 1
+    explanation: "This is one of the most common negative-transfer traps from C++. In C++, `int / int` gives an `int`. In Python 3, `/` ALWAYS gives a `float`. The `//` operator performs floor division and returns an `int` when both operands are `int`. This change was intentional in Python 3 to prevent a whole class of bugs where integer division silently truncated results."
+
+  - question: "A student writes a function that opens a file, but forgets to close it. Their C++ instinct says 'this will leak the file handle.' Is this concern valid in Python, and what is the recommended solution?"
+    options:
+      - "Not valid — Python's garbage collector will always close the file immediately"
+      - "Valid — forgetting `f.close()` can leave file handles open. The recommended solution is the `with` statement (context manager), which guarantees cleanup even if an exception occurs — analogous to RAII in C++"
+      - "Not valid — Python files are always auto-closed when the variable goes out of scope"
+      - "Valid, but there is no Python equivalent of RAII — you must always use try/finally"
+    correct_index: 1
+    explanation: "Python's GC will eventually close the file, but 'eventually' may be too late — especially in long-running servers or when writing. The `with` statement is Python's RAII equivalent: `with open('file') as f:` guarantees `f.close()` runs when the block exits, even on exception. Always use `with` for files, database connections, and locks."
+
+  - question: "A student uses `re.findall(r'ERROR', text)` to count errors in a log. Their teammate suggests `text.count('ERROR')` instead. When is `re.findall()` the better choice?"
+    options:
+      - "`re.findall()` is always better because it's faster for string searching"
+      - "`text.count()` suffices for literal string matching. `re.findall()` is better when you need **pattern matching** — e.g., extracting timestamps (`r'\\d{2}:\\d{2}:\\d{2}'`), IP addresses, or any variable-format text that a literal string can't describe"
+      - "`text.count()` only works on single characters, not multi-character strings"
+      - "They are always interchangeable — use whichever you prefer"
+    correct_index: 1
+    explanation: "For a fixed literal like 'ERROR', `text.count('ERROR')` is simpler and faster. `re.findall()` shines when the target is a **pattern** — 'any sequence of digits', 'an IP address', 'a timestamp in HH:MM:SS format'. Use the simplest tool that works."
+
+  - question: "A script needs to report both results (to stdout) and diagnostics (to stderr). A student puts everything in `print()`. Why is this problematic in a pipeline like `python script.py > results.txt`?"
+    options:
+      - "It is not problematic — `print()` already separates output and errors"
+      - "All output goes to stdout by default, so `> results.txt` captures both results AND error messages. Downstream tools or files will receive error text mixed with data. Use `print(..., file=sys.stderr)` for diagnostics"
+      - "`print()` is too slow for pipelines — use `sys.stdout.write()` instead"
+      - "Pipelines only work with Bash scripts, not Python"
+    correct_index: 1
+    explanation: "UNIX separates stdout (file descriptor 1) and stderr (fd 2) for exactly this reason. `> results.txt` only redirects stdout. If errors go to stdout, they contaminate the data. This is why C++ has both `std::cout` and `std::cerr`, and Python has `file=sys.stderr`."
+
+  - question: |
+      A student writes this list comprehension:
+      ```python
+      result = [x**2 for x in range(1000000) if x % 2 == 0]
+      ```
+      Their teammate says: "This creates a huge list in memory. Use a **generator expression** instead." What would the generator version look like, and why is it better?
+    options:
+      - "Replace `[]` with `()`: `(x**2 for x in range(1000000) if x % 2 == 0)`. Generators produce values one at a time (lazy evaluation), using constant memory instead of building the entire list upfront"
+      - "Use `list()` around the comprehension to make it a generator"
+      - "Generators don't exist in Python — the student should use `itertools.imap()` instead"
+      - "There is no memory difference — Python automatically optimizes large comprehensions into generators"
+    correct_index: 0
+    explanation: "Replacing `[...]` with `(...)` creates a generator expression. It produces values lazily — one at a time — instead of building a 500,000-element list in memory. For large datasets or when you only need to iterate once (not store the full list), generators are dramatically more memory-efficient."
+
+  - question: |
+      **Evaluate** this code. Is there a bug?
+      ```python
+      def add_item(item, items=[]):
+          items.append(item)
+          return items
+      ```
+    options:
+      - "No bug — the default empty list is created fresh on each call"
+      - "Bug: the default argument `items=[]` is created **once** when the function is defined, not on each call. Subsequent calls mutate the same list object, so `add_item('a')` then `add_item('b')` returns `['a', 'b']` — not `['b']`"
+      - "Bug: `append()` doesn't work on lists — you should use `items + [item]`"
+      - "Bug: default arguments must be `None` in Python — `[]` causes a SyntaxError"
+    correct_index: 1
+    explanation: "This is one of Python's most notorious gotchas. Mutable default arguments (`list`, `dict`, `set`) are shared across all calls. The fix: use `None` as the default and create a new list inside the function: `def add_item(item, items=None): if items is None: items = []; ...`"
+
+  - question: |
+      **Arrange** the lines to define a function that safely reads a file and returns the word count, using `with` for resource management.
+    type: parsons
+    lines:
+      - "def count_words(filename):"
+      - "    total = 0"
+      - "    with open(filename) as f:"
+      - "        for line in f:"
+      - "            total += len(line.split())"
+      - "    return total"
+    distractors:
+      - "    f.close()"
+      - "    return len(f)"
+    explanation: "The function opens the file with `with` (so no manual `close()` needed), iterates line by line, and accumulates the word count. `return total` is at the function level (one indent), not inside the loop. `f.close()` is a distractor because `with` handles cleanup. `return len(f)` is wrong because file objects don't have a meaningful `len()`."
+
+  - question: |
+      **Arrange** the lines to create a list comprehension that filters and transforms data, then prints the result.
+    type: parsons
+    lines:
+      - "scores = [95, 83, 71, 62, 55]"
+      - "passing = [s for s in scores if s >= 70]"
+      - "print(f'Passing scores: {passing}')"
+    distractors:
+      - "passing = scores.filter(s >= 70)"
+    explanation: "List comprehensions use the form `[expr for var in iterable if condition]`. Python lists do not have a `.filter()` method — that syntax is from JavaScript. The `f-string` in the print statement automatically converts the list to its string representation."

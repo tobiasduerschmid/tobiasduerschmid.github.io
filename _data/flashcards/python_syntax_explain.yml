@@ -1,0 +1,88 @@
+title: "Python Syntax — What Does This Code Do?"
+description: "You are shown Python code. Explain what it does and what it returns or prints."
+cards:
+  - id: 1
+    question: |
+      ```python
+      score = 95
+      gpa = 3.82
+      print(f"Score: {score}, GPA: {gpa:.1f}")
+      ```
+    answer: "Prints `Score: 95, GPA: 3.8` — the `f\"...\"` is an **f-string** that embeds variables inside `{}`. The `:.1f` format specifier rounds the float to 1 decimal place."
+  - id: 2
+    question: |
+      ```python
+      7 / 2
+      7 // 2
+      ```
+    answer: "`7 / 2` → `3.5` (float division — always returns a float in Python 3). `7 // 2` → `3` (floor/integer division — like C++'s `/` for ints)."
+  - id: 3
+    question: |
+      ```python
+      x = "5" + 3
+      ```
+    answer: "Raises `TypeError: can only concatenate str to str`. Python is **strongly typed** — it refuses to implicitly convert between `str` and `int`. Fix: `int(\"5\") + 3` → `8` or `\"5\" + str(3)` → `\"53\"`."
+  - id: 4
+    question: |
+      ```python
+      squares = [x**2 for x in range(1, 6)]
+      ```
+    answer: "Produces `[1, 4, 9, 16, 25]` — a **list comprehension** that squares each number from 1 to 5. `range(1, 6)` is exclusive of the stop value. `**` is the exponentiation operator."
+  - id: 5
+    question: |
+      ```python
+      nums = [4, 8, 15, 16, 23, 42]
+      big = [x for x in nums if x > 20]
+      ```
+    answer: "Produces `[23, 42]` — a list comprehension with a **filter condition**. Only elements where `x > 20` are included."
+  - id: 6
+    question: |
+      ```python
+      with open("data.txt") as f:
+          for line in f:
+              print(line.strip())
+      ```
+    answer: "Opens `data.txt`, reads it line by line, and prints each line with leading/trailing whitespace removed. The `with` statement is a **context manager** that automatically closes the file when the block exits, even if an exception occurs."
+  - id: 7
+    question: |
+      ```python
+      for i, fruit in enumerate(["apple", "banana", "cherry"]):
+          print(f"{i}: {fruit}")
+      ```
+    answer: "Prints `0: apple`, `1: banana`, `2: cherry`. `enumerate()` yields `(index, value)` pairs — the Pythonic way to get both index and element without using `range(len(...))`."
+  - id: 8
+    question: |
+      ```python
+      import re
+      codes = re.findall(r'\d+', "Error 404 and 500")
+      ```
+    answer: "Returns `['404', '500']` — a **list of strings** matching all non-overlapping occurrences of one or more digits (`\\d+`). The `r'...'` is a raw string that preserves backslashes for the regex engine."
+  - id: 9
+    question: |
+      ```python
+      import re
+      clean = re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)
+      ```
+    answer: "Replaces all IPv4 addresses in `text` with `'x.x.x.x'`. `re.sub(pattern, replacement, string)` is the Python equivalent of `sed 's/old/new/g'`."
+  - id: 10
+    question: |
+      ```python
+      import sys
+      print("Error: file not found", file=sys.stderr)
+      sys.exit(1)
+      ```
+    answer: "Prints the error message to **stderr** (not stdout), then exits with code 1 (failure). `file=sys.stderr` is like C++'s `std::cerr`. `sys.exit(1)` is like C's `exit(1)`."
+  - id: 11
+    question: |
+      ```python
+      2 ** 8
+      2 ^ 8
+      ```
+    answer: "`2 ** 8` → `256` (exponentiation — two to the eighth power). `2 ^ 8` → `10` (**bitwise XOR** — NOT exponentiation!). This is a common mistake from math notation."
+  - id: 12
+    question: |
+      ```python
+      import sys
+      filename = sys.argv[1]
+      ```
+    answer: "Gets the first command-line argument. `sys.argv[0]` is the script name itself (like C's `argv[0]`). If no argument is provided, this raises an `IndexError`."

@@ -174,7 +174,7 @@
       requiredGroups: ['user', 'domain'],
       tests: [
         { input: 'alice@example.com', shouldMatch: true, namedGroups: { user: 'alice', domain: 'example.com' }, label: '"user" captures "alice", "domain" captures "example.com"' },
-        { input: 'bob@host.org', shouldMatch: true, namedGroups: { user: 'bob', domain: 'host.org' }, label: '"user" captures "bob"' },
+        { input: 'bob@host.org', shouldMatch: true, namedGroups: { user: 'bob', domain: 'host.org' }, label: '"user" captures "bob", "domain" captures "host.org"' },
         { input: 'no-at-sign.com', shouldMatch: false, label: 'missing @ — should NOT match' },
         { input: '@host.com', shouldMatch: false, label: 'missing username — should NOT match' }
       ],
@@ -733,7 +733,7 @@
   var SELF_EXPLANATIONS = {
     'review-1': { q: 'Which three concepts from the basics did you combine here?', a: 'Word boundaries (\\b) to ensure standalone matching, the metacharacter \\d to match digits, and the quantifier + to match one or more. This is a typical integration pattern — most real regex problems require combining 3+ features.' },
     'review-2': { q: 'Why do you need \\. (escaped dot) between the domain and TLD?', a: 'An unescaped dot matches ANY character — so "user@hostXcom" would also match. Escaping the dot (\\.) ensures only a literal period separates the domain from the top-level domain.' },
-    'review-3': { q: 'Why are both \\b and {4} necessary?', a: '\\d{4} alone would match the first 4 digits of "12345". \\b\\d\\b alone would match digits of any length. You need both: {4} constrains the count, \\b constrains the boundaries.' },
+    'review-3': { q: 'Why are both \\b and {4} necessary?', a: '\\d{4} alone would match the first 4 digits of "12345". \\b\\d+\\b alone would match standalone numbers of any length (like "5" or "12345"). You need both: {4} constrains the count to exactly 4 digits, \\b constrains the boundaries so it must be a standalone number.' },
     'greedy-1': { q: 'In your own words, what is the difference between greedy and lazy matching?', a: 'Greedy (default): consume as much as possible, then backtrack if needed. Lazy (with ?): consume as little as possible, then expand if needed. Greedy goes big-to-small; lazy goes small-to-big.' },
     'greedy-2': { q: 'What would happen if you used a greedy ".*" between the quotes instead of lazy ".*?"?', a: 'The greedy .* would consume everything from the first opening quote to the LAST closing quote in the entire string, treating all text in between as one match.' },
     'group-1': { q: 'What is the difference between na{2,} and (na){2,}?', a: 'na{2,} means "n followed by 2 or more a\'s" (naaa...). (na){2,} means "the group na repeated 2 or more times" (nana, nanana...). Parentheses group multiple characters into a single unit.' },

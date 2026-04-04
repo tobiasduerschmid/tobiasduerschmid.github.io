@@ -97,25 +97,52 @@
   <!-- Tutorial styles -->
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
 
-  <!-- Tutorial engine -->
-  <script src="{{ '/js/tutorial-vm.js' | relative_url }}"></script>
+  <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
+  <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+
+  {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
+  {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
+
+  {% if tutorial_backend == 'webcontainer' %}
+  <!-- Register Cross-Origin Isolation service worker required by WebContainers -->
+  <script>
+    (function () {
+      if (window.crossOriginIsolated) return; // already isolated — no action needed
+      if (!('serviceWorker' in navigator)) return;
+      navigator.serviceWorker.register('{{ "/js/coi-serviceworker.js" | relative_url }}')
+        .then(function (reg) {
+          function reload() { window.location.reload(); }
+          if (reg.installing) {
+            reg.installing.addEventListener('statechange', function () {
+              if (this.state === 'installed') reload();
+            });
+          } else if (reg.active) {
+            reload();
+          }
+        });
+    })();
+  </script>
+  {% endif %}
 
   <!-- Initialize tutorial with data from _data/tutorials/ -->
-  {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var config = {{ tutorial_data | jsonify }};
-      // Pre-rendered instruction HTML using Jekyll/Rouge for server-side syntax highlighting
+      // Server-side markdown rendering (Rouge syntax highlighting)
       var instructionHTML = [{% for step in tutorial_data.steps %}{{ step.instructions | markdownify | jsonify }}{% unless forloop.last %},{% endunless %}{% endfor %}];
       config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
-      var tutorial = new TutorialVM('#tutorial-container', {
-        steps: config.steps,
+
+      var tutorial = new TutorialCode('#tutorial-container', {
+        backend:      '{{ tutorial_backend }}',
+        steps:        config.steps,
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
-        v86Path: '{{ page.v86_path | default: "/assets/v86" }}',
-        vmPath: '{{ page.vm_path | default: "/vm/dist" }}',
-        memoryMB: {{ page.memory_mb | default: 256 }},
-        fontSize: {{ page.font_size | default: 14 }},
+        v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
+        vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
+        memoryMB: {{ page.memory_mb  | default: 256 }},
+        fontSize: {{ page.font_size  | default: 14 }},
+        workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
+        sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
       });
       tutorial.start();
     });

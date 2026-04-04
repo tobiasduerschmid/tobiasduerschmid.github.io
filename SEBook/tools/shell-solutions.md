@@ -1,3 +1,8 @@
+---
+title: "Shell Scripting Tutorial — Sample Solutions"
+layout: sebook
+---
+
 # Shell Scripting Tutorial — Sample Solutions
 
 These are reference solutions for each exercise in the interactive tutorial.

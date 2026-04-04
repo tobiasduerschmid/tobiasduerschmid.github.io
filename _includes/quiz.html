@@ -42,6 +42,32 @@ Data source: _data/quizzes/{{ include.id }}.yml
     <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
       id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}">
       <div class="question-text">{{ q.question | markdownify }}</div>
+      {% if q.type == 'parsons' %}
+      <div class="parsons-container{% if q.display == 'inline' %} parsons-inline{% endif %}">
+        <div class="parsons-label">{% if q.display == 'inline' %}Drag fragments into the answer area in the correct order{% else %}Drag lines into the solution area in the correct order{% endif %}{% if q.distractors.size > 0 %} (some items are distractors that should not be used){% endif %}:</div>
+        <div class="parsons-bank"></div>
+        <div class="parsons-separator"><span>{% if q.display == 'inline' %}&rarr; Drop here &rarr;{% else %}&darr; Drop here &darr;{% endif %}</span></div>
+        <div class="parsons-target"></div>
+        <div class="parsons-actions">
+          <button class="parsons-check-btn">Check Order</button>
+          <button class="parsons-reset-btn">Reset</button>
+        </div>
+      </div>
+      <div class="parsons-correct-data hidden"
+        data-correct="{{ q.lines | jsonify | escape }}"
+        data-distractors="{{ q.distractors | default: '' | jsonify | escape }}"
+        data-display="{{ q.display | default: 'block' }}"></div>
+      <div class="quiz-correct-answers">
+        Correct order:<br>
+        <span class="correct-labels">
+          {% if q.display == 'inline' %}
+          <code>{{ q.lines | join: '' }}</code>
+          {% else %}
+          {% for line in q.lines %}<code>{{ line }}</code>{% unless forloop.last %}<br>{% endunless %}{% endfor %}
+          {% endif %}
+        </span>
+      </div>
+      {% else %}
       <div class="quiz-options">
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
         {% for option in q.options %}
@@ -60,6 +86,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
         Correct Answer{% if q.type == 'multiple' %}s{% endif %}:
         <span class="correct-labels"></span>
       </div>
+      {% endif %}
       <div class="quiz-explanation hidden">
         <div class="explanation-title">Explanation</div>
         <div class="explanation-text">{{ q.explanation | markdownify }}</div>
@@ -367,6 +394,55 @@ Data source: _data/quizzes/{{ include.id }}.yml
     background: #dc3545;
     border-color: #dc3545;
   }
+
+  /* ── Parsons Problem Styles ─────────────────────────────────────────── */
+  .parsons-container { margin-top: 12px; }
+  .parsons-label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+  .parsons-bank, .parsons-target {
+    min-height: 48px; padding: 8px; border-radius: 6px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .parsons-bank { background: #f5f5f8; border: 1px dashed #ccc; }
+  .parsons-target { background: #f0f8f0; border: 2px dashed #6a6; }
+  .parsons-separator { text-align: center; padding: 6px; color: #888; font-size: 0.8em; }
+  .parsons-line {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;
+    cursor: grab; font-size: 0.9em; transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .parsons-line:hover { border-color: #2774AE; background: #e8f0ff; }
+  .parsons-line.dragging { opacity: 0.4; }
+  .parsons-line code {
+    font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.92em;
+    white-space: pre; color: #333; background: transparent; padding: 0;
+  }
+  .parsons-grip { color: #aaa; font-size: 0.8em; flex-shrink: 0; }
+  .parsons-line.parsons-correct { border-color: #28a745; background: #e6ffed; }
+  .parsons-line.parsons-incorrect { border-color: #dc3545; background: #ffeef0; }
+  .parsons-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .parsons-check-btn, .parsons-reset-btn {
+    padding: 6px 16px; border-radius: 4px; border: none; cursor: pointer;
+    font-size: 0.85em; font-weight: 600;
+  }
+  .parsons-check-btn { background: #2774AE; color: white; }
+  .parsons-check-btn:hover:not(:disabled) { background: #1d5d8a; }
+  .parsons-reset-btn { background: #eee; color: #333; }
+  .parsons-reset-btn:hover:not(:disabled) { background: #ddd; }
+  .parsons-check-btn:disabled, .parsons-reset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Inline variant (regex, shell) — horizontal chip layout */
+  .parsons-container.parsons-inline .parsons-bank,
+  .parsons-container.parsons-inline .parsons-target {
+    flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .parsons-container.parsons-inline .parsons-line { padding: 4px 10px; }
+  .parsons-container.parsons-inline .parsons-line code { white-space: nowrap; }
+  .parsons-container.parsons-inline .parsons-target { min-height: 40px; }
+  /* Correct-answer display for parsons */
+  .quiz-correct-answers code {
+    font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em;
+    background: #f0f0f5; padding: 1px 4px; border-radius: 2px;
+  }
 </style>
 
 <script>
@@ -388,6 +464,10 @@ Data source: _data/quizzes/{{ include.id }}.yml
         [array[i], array[j]] = [array[j], array[i]];
       }
       return array;
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -412,6 +492,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     // Shuffle Options for each card and update labels
     questionCards.forEach(card => {
       const optionsContainer = card.querySelector('.quiz-options');
+      if (!optionsContainer) return; // Skip parsons cards
       const options = Array.from(optionsContainer.querySelectorAll('.quiz-option'));
       if (!noShuffle) {
         shuffleArray(options);
@@ -444,6 +525,32 @@ Data source: _data/quizzes/{{ include.id }}.yml
           badge.textContent = label;
           connectAnswersElem.appendChild(badge);
         });
+      }
+    });
+
+    // Initialize Parsons problem banks
+    questionCards.forEach(card => {
+      if (card.dataset.type !== 'parsons') return;
+      const correctDataEl = card.querySelector('.parsons-correct-data');
+      if (!correctDataEl) return;
+      const correctLines = JSON.parse(correctDataEl.dataset.correct);
+      const distractorRaw = correctDataEl.dataset.distractors;
+      const distractors = (distractorRaw && distractorRaw !== '') ? JSON.parse(distractorRaw) : [];
+      const display = correctDataEl.dataset.display || 'block';
+      const allLines = correctLines.concat(distractors);
+      if (!noShuffle) shuffleArray(allLines);
+      const bank = card.querySelector('.parsons-bank');
+      allLines.forEach(line => {
+        const el = document.createElement('div');
+        el.className = 'parsons-line';
+        el.draggable = true;
+        el.dataset.line = line;
+        el.dataset.distractor = String(distractors.indexOf(line) !== -1);
+        el.innerHTML = '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
+        bank.appendChild(el);
+      });
+      if (display === 'inline') {
+        card.querySelector('.parsons-container').classList.add('parsons-inline');
       }
     });
 
@@ -611,6 +718,26 @@ Data source: _data/quizzes/{{ include.id }}.yml
         submitBtn.classList.remove('hidden');
         submitBtn.disabled = true;
       }
+      // Reset Parsons problems
+      const bank = card.querySelector('.parsons-bank');
+      const target = card.querySelector('.parsons-target');
+      if (bank && target) {
+        target.querySelectorAll('.parsons-line').forEach(el => {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          el.draggable = true;
+          bank.appendChild(el);
+        });
+        bank.querySelectorAll('.parsons-line').forEach(el => {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          el.draggable = true;
+        });
+        const checkBtn = card.querySelector('.parsons-check-btn');
+        const resetBtn = card.querySelector('.parsons-reset-btn');
+        if (checkBtn) checkBtn.disabled = false;
+        if (resetBtn) resetBtn.disabled = false;
+      }
+      const ca = card.querySelector('.quiz-correct-answers');
+      if (ca) ca.style.display = '';
     }
 
     function finishQuiz() {
@@ -672,6 +799,136 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
     reviewBtn.addEventListener('click', startReview);
     restartBtn.addEventListener('click', restartQuiz);
+
+    // ── Parsons Drag & Drop ────────────────────────────────────────────
+    let parsonsDragEl = null;
+
+    container.addEventListener('dragstart', e => {
+      if (e.target.classList.contains('parsons-line')) {
+        parsonsDragEl = e.target;
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    });
+    container.addEventListener('dragend', e => {
+      if (e.target.classList.contains('parsons-line')) {
+        e.target.classList.remove('dragging');
+        parsonsDragEl = null;
+      }
+    });
+    container.addEventListener('dragover', e => {
+      const zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+      if (zone && parsonsDragEl) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const after = getParsonsInsertAfter(zone, e.clientY, e.clientX, zone.closest('.parsons-inline'));
+        if (after) zone.insertBefore(parsonsDragEl, after);
+        else zone.appendChild(parsonsDragEl);
+      }
+    });
+    container.addEventListener('drop', e => {
+      const zone = e.target.closest('.parsons-target') || e.target.closest('.parsons-bank');
+      if (zone && parsonsDragEl) {
+        e.preventDefault();
+        const after = getParsonsInsertAfter(zone, e.clientY, e.clientX, zone.closest('.parsons-inline'));
+        if (after) zone.insertBefore(parsonsDragEl, after);
+        else zone.appendChild(parsonsDragEl);
+      }
+    });
+    // Click-to-move for mobile
+    container.addEventListener('click', e => {
+      const line = e.target.closest('.parsons-line');
+      if (!line) return;
+      const parent = line.parentElement;
+      if (!parent) return;
+      const card = line.closest('.quiz-question-card');
+      if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
+      if (parent.classList.contains('parsons-bank')) {
+        const tgt = card.querySelector('.parsons-target');
+        if (tgt) tgt.appendChild(line);
+      } else if (parent.classList.contains('parsons-target')) {
+        const bnk = card.querySelector('.parsons-bank');
+        if (bnk) bnk.appendChild(line);
+      }
+    });
+
+    function getParsonsInsertAfter(zone, y, x, isInline) {
+      const els = Array.from(zone.querySelectorAll('.parsons-line:not(.dragging)'));
+      for (const el of els) {
+        const box = el.getBoundingClientRect();
+        if (isInline) {
+          if (x < box.left + box.width / 2) return el;
+        } else {
+          if (y < box.top + box.height / 2) return el;
+        }
+      }
+      return null;
+    }
+
+    // Parsons Check
+    container.querySelectorAll('.parsons-check-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.quiz-question-card');
+        if (!card) return;
+        const target = card.querySelector('.parsons-target');
+        const correctDataEl = card.querySelector('.parsons-correct-data');
+        if (!target || !correctDataEl) return;
+        const correct = JSON.parse(correctDataEl.dataset.correct);
+        const distractorRaw = correctDataEl.dataset.distractors;
+        const distractors = (distractorRaw && distractorRaw !== '') ? JSON.parse(distractorRaw) : [];
+        const placed = Array.from(target.querySelectorAll('.parsons-line')).map(el => el.dataset.line);
+        const isCorrect = placed.length === correct.length &&
+          placed.every((line, i) => line === correct[i]);
+
+        // Mark lines in target
+        target.querySelectorAll('.parsons-line').forEach((el, i) => {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          if (i < correct.length && el.dataset.line === correct[i]) el.classList.add('parsons-correct');
+          else el.classList.add('parsons-incorrect');
+        });
+        // Mark distractors left in bank as correct (they belong there)
+        card.querySelectorAll('.parsons-bank .parsons-line').forEach(el => {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          if (el.dataset.distractor === 'true') el.classList.add('parsons-correct');
+          else el.classList.add('parsons-incorrect');
+        });
+        // Disable interaction
+        card.querySelectorAll('.parsons-line').forEach(el => { el.draggable = false; });
+        btn.disabled = true;
+        card.querySelector('.parsons-reset-btn').disabled = true;
+
+        if (isCorrect) score++;
+        else incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
+
+        // Track performance
+        if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+          PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
+        }
+
+        const ca = card.querySelector('.quiz-correct-answers');
+        const exp = card.querySelector('.quiz-explanation');
+        if (ca) ca.style.display = 'flex';
+        if (exp) {
+          exp.classList.remove('hidden');
+          exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+
+    // Parsons Reset
+    container.querySelectorAll('.parsons-reset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.quiz-question-card');
+        if (!card) return;
+        const bank = card.querySelector('.parsons-bank');
+        const target = card.querySelector('.parsons-target');
+        if (!bank || !target) return;
+        target.querySelectorAll('.parsons-line').forEach(el => {
+          el.classList.remove('parsons-correct', 'parsons-incorrect');
+          bank.appendChild(el);
+        });
+      });
+    });
 
     // Personal Gym toggle
     if (window.PersonalGym && PersonalGym.isPersonalGymActive()) {
