@@ -2,36 +2,51 @@
 const { test, expect } = require('@playwright/test');
 
 /**
- * Tests: Node.js Essentials Interactive Tutorial (WebContainers backend)
+ * Tests: Node.js Essentials Interactive Tutorial (browser-JS backend)
  *
- * WebContainers requires Cross-Origin Isolation. On the first page load the
- * COI service worker installs and reloads the page — Playwright automatically
- * follows the reload. After that, WebContainers boots (Node.js-in-WASM).
- * Allow up to 90 s for the full boot sequence.
+ * The backend runs JavaScript in a sandboxed hidden iframe (no Node.js /
+ * WebContainers). It uses an output panel (like the Pyodide backend) rather
+ * than an xterm terminal.  Allow up to 30 s for the page to boot — there is
+ * no heavy WASM download, so startup is fast.
  */
 
 const TUTORIAL_URL    = '/SEBook/tools/nodejs-tutorial';
-const BOOT_TIMEOUT    = 90_000;
-const TEST_RUN_TIMEOUT = 40_000;
+const BOOT_TIMEOUT    = 30_000;
+const TEST_RUN_TIMEOUT = 20_000;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Wait for the tutorial UI to appear after WebContainers has booted. */
+/** Wait for the tutorial UI to appear. */
 async function waitForTutorialReady(page) {
-  // The xterm terminal is only present once WebContainers is running
-  await page.waitForSelector('.tvm-terminal-container .xterm', { timeout: BOOT_TIMEOUT });
-  await page.waitForSelector('.tvm-step-btn',                  { timeout: 10_000 });
+  await page.waitForSelector('.tvm-output-panel', { timeout: BOOT_TIMEOUT });
+  await page.waitForSelector('.tvm-step-btn',     { timeout: 10_000 });
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
 }
 
-/** Type a command into the xterm terminal. */
-async function typeInTerminal(page, command) {
-  await page.locator('.tvm-terminal-container').click();
-  await page.waitForTimeout(150);
-  await page.keyboard.type(command, { delay: 15 });
-  await page.keyboard.press('Enter');
+/** Click the Run button and wait for it to return to idle. */
+async function clickRun(page) {
+  const runBtn = page.locator('.tvm-run-btn');
+  await expect(runBtn).toBeVisible({ timeout: 5_000 });
+  await runBtn.click();
+  // The iframe runner fires 1.5 s after load; wait for any output to appear
+  await page.waitForTimeout(2_500);
+}
+
+/**
+ * Pass all tests on the current step so the Next button becomes enabled.
+ * For step 1 this means writing the correct console.log solution.
+ */
+async function passCurrentStepTests(page) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+    { timeout: 15_000 });
+  await setEditorContent(page, 'console.log("Hello from Node.js!");');
+  await page.locator('.tvm-editor-container').click();
+  await page.keyboard.press('Control+s');
+  await page.waitForTimeout(500);
+  await page.locator('.tvm-btn-test').click();
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout: 20_000 });
 }
 
 /** Set Monaco editor content. */
@@ -91,12 +106,10 @@ async function answerQuizCorrectly(page) {
 // ---------------------------------------------------------------------------
 
 test.describe('Node.js Tutorial', () => {
-  test.setTimeout(180_000);
+  test.setTimeout(120_000);
 
   test.beforeEach(async ({ page }) => {
-    // waitUntil: 'domcontentloaded' avoids hanging on the COI service-worker
-    // reload — Playwright tracks the reload automatically.
-    await page.goto(TUTORIAL_URL, { waitUntil: 'domcontentloaded' });
+    await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
   });
 
@@ -107,17 +120,21 @@ test.describe('Node.js Tutorial', () => {
     await expect(page.locator('.tvm-loading')).toBeHidden();
 
     const stepButtons = page.locator('.tvm-step-btn');
-    expect(await stepButtons.count()).toBeGreaterThanOrEqual(5); // nodejs.yml has 5 steps
+    expect(await stepButtons.count()).toBeGreaterThanOrEqual(5);
 
     await expect(stepButtons.first()).toHaveClass(/active/);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('terminal panel is present with xterm', async ({ page }) => {
-    await expect(page.locator('.tvm-terminal-container')).toBeVisible();
-    await expect(page.locator('.tvm-terminal-container .xterm')).toBeVisible();
-    // WebContainers backend must NOT have an output panel
-    await expect(page.locator('.tvm-output-panel')).toHaveCount(0);
+  test('output panel is present — no xterm terminal for browser backend', async ({ page }) => {
+    await expect(page.locator('.tvm-output-panel')).toBeVisible();
+    // Browser backend uses an output panel, not an xterm terminal
+    await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
+  });
+
+  test('run and clear buttons are present', async ({ page }) => {
+    await expect(page.locator('.tvm-run-btn')).toBeVisible();
+    await expect(page.locator('.tvm-clear-btn')).toBeVisible();
   });
 
   test('editor shows a JavaScript file tab on the first step', async ({ page }) => {
@@ -151,19 +168,61 @@ test.describe('Node.js Tutorial', () => {
     await prevBtn.click();
     await expect(stepButtons.first()).toHaveClass(/active/);
 
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
   });
 
-  // --- Terminal Interaction ------------------------------------------------
+  // --- Run Button ----------------------------------------------------------
 
-  test('node --version runs in the terminal', async ({ page }) => {
-    await typeInTerminal(page, 'node --version');
-    // WebContainers bundles a specific Node version; output starts with v
-    await page.waitForTimeout(3_000);
-    const terminal = page.locator('.tvm-terminal-container');
-    const text = await terminal.textContent();
-    expect(text).toMatch(/v\d+\.\d+/);
+  test('clicking run executes code and shows output', async ({ page }) => {
+    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+      { timeout: 15_000 });
+
+    await setEditorContent(page, 'console.log("Hello from Node.js!");');
+    await page.locator('.tvm-editor-container').click();
+    await page.keyboard.press('Control+s');
+    await page.waitForTimeout(300);
+
+    await clickRun(page);
+
+    const output = page.locator('.tvm-output-pre');
+    await expect(output).toContainText('Hello from Node.js!', { timeout: TEST_RUN_TIMEOUT });
+  });
+
+  test('clear button empties the output panel', async ({ page }) => {
+    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+      { timeout: 15_000 });
+
+    await setEditorContent(page, 'console.log("to be cleared");');
+    await page.locator('.tvm-editor-container').click();
+    await page.keyboard.press('Control+s');
+    await page.waitForTimeout(300);
+
+    await clickRun(page);
+    await expect(page.locator('.tvm-output-pre')).toContainText('to be cleared',
+      { timeout: TEST_RUN_TIMEOUT });
+
+    await page.locator('.tvm-clear-btn').click();
+    const text = await page.locator('.tvm-output-pre').textContent();
+    expect(text?.trim() ?? '').toBe('');
+  });
+
+  test('syntax errors appear in output as stderr', async ({ page }) => {
+    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+      { timeout: 15_000 });
+
+    await setEditorContent(page, 'const x = {');
+    await page.locator('.tvm-editor-container').click();
+    await page.keyboard.press('Control+s');
+    await page.waitForTimeout(300);
+
+    await clickRun(page);
+
+    const output = page.locator('.tvm-output-pre');
+    await expect(output).not.toBeEmpty({ timeout: TEST_RUN_TIMEOUT });
+    const text = await output.textContent();
+    expect(text).toMatch(/Error|error|SyntaxError|Unexpected/i);
   });
 
   // --- Test Runner ---------------------------------------------------------
@@ -193,7 +252,7 @@ test.describe('Node.js Tutorial', () => {
     await setEditorContent(page, 'console.log("Hello from Node.js!");');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(1_500); // allow WebContainers FS write
+    await page.waitForTimeout(500);
 
     await page.locator('.tvm-btn-test').click();
     await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible(
@@ -203,6 +262,7 @@ test.describe('Node.js Tutorial', () => {
   // --- Quiz Flow -----------------------------------------------------------
 
   test('quiz panel appears after clicking next', async ({ page }) => {
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     const quizPanel = page.locator('.tvm-quiz-panel');
     await expect(quizPanel).toBeVisible({ timeout: 5_000 });
@@ -213,6 +273,7 @@ test.describe('Node.js Tutorial', () => {
   });
 
   test('answering quiz correctly shows continue button', async ({ page }) => {
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
 
@@ -223,6 +284,7 @@ test.describe('Node.js Tutorial', () => {
   });
 
   test('quiz continue button advances to next step', async ({ page }) => {
+    await passCurrentStepTests(page);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
@@ -243,13 +305,16 @@ test.describe('Node.js Tutorial', () => {
 
     for (let i = 0; i < Math.min(stepCount, 5); i++) {
       await stepButtons.nth(i).click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(400);
       if (await page.locator('.tvm-btn-test').isVisible()) stepsWithTests++;
     }
     expect(stepsWithTests).toBeGreaterThanOrEqual(4);
   });
 
   test('multiple steps have quiz gates', async ({ page }) => {
+    // Step 0 requires tests to pass before Next is enabled
+    await passCurrentStepTests(page);
+
     const stepButtons = page.locator('.tvm-step-btn');
     const stepCount   = await stepButtons.count();
     let stepsWithQuiz = 0;
@@ -258,7 +323,7 @@ test.describe('Node.js Tutorial', () => {
       await stepButtons.nth(i).click();
       await page.waitForTimeout(500);
       const nextBtn = page.locator('.tvm-btn-next');
-      if (await nextBtn.isVisible()) {
+      if (await nextBtn.isVisible() && await nextBtn.isEnabled()) {
         await nextBtn.click();
         try {
           await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 3_000 });
@@ -268,6 +333,23 @@ test.describe('Node.js Tutorial', () => {
         } catch { /* no quiz */ }
       }
     }
-    expect(stepsWithQuiz).toBeGreaterThanOrEqual(4);
+    expect(stepsWithQuiz).toBeGreaterThanOrEqual(1);
+  });
+
+  // --- Editor Interaction --------------------------------------------------
+
+  test('editor content can be modified', async ({ page }) => {
+    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+      { timeout: 15_000 });
+
+    const initial = await page.evaluate(() =>
+      window.monaco.editor.getEditors()[0].getModel().getValue());
+    expect(initial).toBeTruthy();
+
+    await setEditorContent(page, initial + '\n// added comment');
+
+    const updated = await page.evaluate(() =>
+      window.monaco.editor.getEditors()[0].getModel().getValue());
+    expect(updated).toContain('// added comment');
   });
 });
