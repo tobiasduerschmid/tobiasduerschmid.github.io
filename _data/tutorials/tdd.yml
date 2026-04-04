@@ -130,7 +130,7 @@ steps:
 
     quiz:
       title: "Why Test? — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -322,7 +322,7 @@ steps:
 
     quiz:
       title: "pytest Basics — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -572,7 +572,7 @@ steps:
 
     quiz:
       title: "Red-Green-Refactor — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -796,7 +796,7 @@ steps:
 
     quiz:
       title: "TDD Kata — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1022,7 +1022,7 @@ steps:
 
     quiz:
       title: "Behavior vs. Implementation — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1218,7 +1218,7 @@ steps:
 
     quiz:
       title: "Independent TDD — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1369,7 +1369,7 @@ steps:
 
     quiz:
       title: "The Big Picture — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 

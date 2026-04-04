@@ -105,7 +105,7 @@ steps:
 
     quiz:
       title: "Hello, React! — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "In vanilla JS you'd write `h1.textContent = newTitle` to update a heading. What is the declarative React equivalent?"
@@ -263,7 +263,7 @@ steps:
 
     quiz:
       title: "Components & JSX — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Why does React use `className` instead of `class` for CSS classes?"
@@ -454,7 +454,7 @@ steps:
 
     quiz:
       title: "Props — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Inside a component, you have `function Card({ title }) { title = 'New'; ... }`. What is wrong with this?"
@@ -628,7 +628,7 @@ steps:
 
     quiz:
       title: "useState — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Why doesn't `let count = 0; count++;` cause the UI to update in React?"
@@ -813,7 +813,7 @@ steps:
 
     quiz:
       title: "Lists & Keys — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "Why is it dangerous to use the array index as a `key` for a dynamic list?"
@@ -987,7 +987,7 @@ steps:
 
     quiz:
       title: "Conditional Rendering & Filtering — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "What does `{showBadge && <Badge />}` render when `showBadge` is `false`?"
@@ -1240,7 +1240,7 @@ steps:
 
     quiz:
       title: "Composition — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: "React favors composition over inheritance. Which statement best explains why?"
@@ -1428,7 +1428,7 @@ steps:
 
     quiz:
       title: "Integration — Knowledge Check"
-      min_score: 0.75
+      min_score: 0.8
       shuffle: true
       questions:
         - question: |

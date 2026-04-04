@@ -88,7 +88,7 @@ steps:
 
     quiz:
       title: "Hello, Python! — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -265,7 +265,7 @@ steps:
 
     quiz:
       title: "Variables & Types — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -409,7 +409,7 @@ steps:
 
     quiz:
       title: "The Indentation Trap — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -591,7 +591,7 @@ steps:
 
     quiz:
       title: "Functions — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -798,7 +798,7 @@ steps:
 
     quiz:
       title: "Loops — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1003,7 +1003,7 @@ steps:
 
     quiz:
       title: "List Comprehensions — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1183,7 +1183,7 @@ steps:
 
     quiz:
       title: "Reading Files — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1381,7 +1381,7 @@ steps:
 
     quiz:
       title: "Regular Expressions in Python — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1609,7 +1609,7 @@ steps:
 
     quiz:
       title: "sys.argv & stderr — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -1873,7 +1873,7 @@ steps:
 
     quiz:
       title: "Capstone — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 

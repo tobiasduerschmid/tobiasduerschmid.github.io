@@ -1389,7 +1389,7 @@
     html += '<div class="tvm-step-instructions">' +
       (step.instructionsHTML || this._renderMarkdown(step.instructions || '')) + '</div>';
     this.stepContentEl.innerHTML = html;
-    this.stepContentEl.scrollTop = 0;
+    if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
 
     this._renderStepControls(index);
 

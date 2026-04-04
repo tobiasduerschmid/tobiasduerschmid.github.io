@@ -135,7 +135,7 @@ steps:
 
     quiz:
       title: "Your First Table — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -270,7 +270,7 @@ steps:
 
     quiz:
       title: "INSERT & SELECT — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -444,7 +444,7 @@ steps:
 
     quiz:
       title: "Filtering & Sorting — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -607,7 +607,7 @@ steps:
 
     quiz:
       title: "Aggregation — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
@@ -747,7 +747,7 @@ steps:
 
     quiz:
       title: "Modifying & Cleaning Up — Knowledge Check"
-      min_score: 0.67
+      min_score: 0.8
       shuffle: true
       questions:
 
