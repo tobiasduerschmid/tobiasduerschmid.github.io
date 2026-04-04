@@ -544,7 +544,7 @@ steps:
           for (let i = 0; i < 5000000; i++) {
               total += i;
           }
-          console.log("[2] Synchronous work done. total = " + total);
+          console.log(`[2] Synchronous work done. total = ${total}`);
 
           // TODO: Add a second setTimeout here that logs "Event loop is free again!"
           // with a 0ms delay.

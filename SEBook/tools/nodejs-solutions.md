@@ -53,16 +53,16 @@ if (isAdmin === 0) {
 const MAX_STUDENTS = 200;
 
 // TASK DONE: Replaced + concatenation with a template literal
-let studentName = "Alex";
-let studentGrade = 95;
-let message = `Student ${studentName} scored ${studentGrade} out of ${MAX_STUDENTS}`;
+const studentName = "Alex";
+const studentGrade = 95;
+const message = `Student ${studentName} scored ${studentGrade} out of ${MAX_STUDENTS}`;
 console.log(message);
 ```
 
 **Why this is correct:**
 
 - **`===` instead of `==`:** JavaScript's `==` performs implicit type coercion — `"42" == 42` is `true` and `false == 0` is `true`. These are the dangerous surprises shown in the tutorial. `===` checks both value AND type, matching the behavior you expect from C++ and Python. After both fixes, neither `[BUG]` message appears in output.
-- **`const MAX_STUDENTS`:** The value `200` never changes, so `const` is the correct declaration — it prevents accidental reassignment and signals intent to readers. The test checks `source.includes('const MAX_STUDENTS')`.
+- **`const MAX_STUDENTS`:** The value `200` never changes, so `const` is the correct declaration — it prevents accidental reassignment and signals intent to readers. The test checks `source.includes('const MAX_STUDENTS')`. The same logic applies to `studentName`, `studentGrade`, and `message` — none are reassigned, so `const` is the correct choice for all of them.
 - **Template literal:** Backtick strings with `${expression}` syntax replace the `+` concatenation. The test checks `source.includes('${')`. Template literals are the direct JavaScript equivalent of Python's f-strings.
 - **Test: no `[BUG]` in output:** The test `assert(!output.includes('[BUG]'), ...)` verifies both `===` fixes worked — neither branch with `[BUG]` in its message should execute.
 
@@ -129,7 +129,7 @@ let total = 0;
 for (let i = 0; i < 5000000; i++) {
     total += i;
 }
-console.log("[2] Synchronous work done. total = " + total);
+console.log(`[2] Synchronous work done. total = ${total}`);
 
 // Second setTimeout added at the end
 setTimeout(() => {

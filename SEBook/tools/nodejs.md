@@ -242,6 +242,209 @@ Here is how you should approach mastering this new ecosystem:
 * **Embrace [Test-Driven Development (TDD)](/SEBook/testing/tdd.html):** In Python, you might have used `pytest`; in C++, `gtest`. In JavaScript, frameworks like **Jest** are the standard. Before you write a complex API endpoint in Express, write a test for what it *should* do. This acts as a formative assessment, giving you immediate, automated feedback on whether your mental model of the code aligns with reality.
 * **Avoid "Vibe Coding" with AI:** While Large Language Models (LLMs) can generate Node.js boilerplate instantly, relying on them before you understand the asynchronous Event Loop will lead to "unsound abstractions." Use AI to *explain* confusing syntax or error messages, but do not let it rob you of the cognitive struggle required to build your own notional machine of how JavaScript executes.
 
+### Top 10 JavaScript & Node.js Best Practices
+
+These are the most important conventions and idioms that experienced JavaScript developers follow. Internalizing them will make your code more predictable, less error-prone, and immediately recognizable as modern JavaScript.
+
+#### 1. Default to `const`, Use `let` Only When Reassigning, Never Use `var`
+
+`const` prevents accidental reassignment and signals intent. `let` is for values that genuinely change. `var` has broken scoping rules — never use it.
+
+```javascript
+// ✓ const — value never changes
+const MAX_RETRIES = 3;
+const students = ["Alice", "Bob"];  // The array can be mutated, but the binding cannot
+
+// ✓ let — value changes
+let count = 0;
+for (let i = 0; i < 5; i++) {
+    count += i;
+}
+
+// ✗ Never use var — it leaks out of blocks and hoists unexpectedly
+var x = 10;
+if (true) { var x = 20; }
+console.log(x);  // 20 — surprised?
+```
+
+**Note:** `const` prevents reassignment, not mutation. A `const` array can still be `.push()`-ed to. To prevent mutation, use `Object.freeze()`.
+
+#### 2. Always Use `===` (Strict Equality), Never `==`
+
+JavaScript's `==` performs implicit type coercion, producing dangerous surprises. `===` checks both value AND type — matching the behavior you expect from C++ and Python.
+
+```javascript
+// ✓ Strict equality — no surprises
+1 === "1"     // false
+0 === false   // false
+"" === false  // false
+
+// ✗ Loose equality — implicit coercion traps
+1 == "1"      // true  ← DANGER
+0 == false    // true  ← DANGER
+"" == false   // true  ← DANGER
+```
+
+The same applies to `!==` (use it) vs `!=` (avoid it).
+
+#### 3. Use `async`/`await` for Asynchronous Code
+
+Modern JavaScript uses `async`/`await` for asynchronous operations. It reads like synchronous code while remaining non-blocking. Always wrap `await` in `try`/`catch`.
+
+```javascript
+// ✓ Modern: async/await with error handling
+async function loadData() {
+    try {
+        const data = await fetchFromAPI();
+        return process(data);
+    } catch (err) {
+        console.error("Failed to load:", err.message);
+    }
+}
+
+// ✗ Avoid: deeply nested callbacks ("Callback Hell")
+fetchA((err, a) => {
+    fetchB((err, b) => {
+        fetchC((err, c) => { /* pyramid of doom */ });
+    });
+});
+```
+
+#### 4. Use `Promise.all()` for Independent Async Operations
+
+When two operations do not depend on each other, run them concurrently. Sequential `await` wastes time.
+
+```javascript
+// ✓ Concurrent — total time = max(time(A), time(B))
+const [users, posts] = await Promise.all([
+    fetchUsers(),
+    fetchPosts(),
+]);
+
+// ✗ Sequential — total time = time(A) + time(B)
+const users = await fetchUsers();   // waits...
+const posts = await fetchPosts();   // then waits again
+```
+
+#### 5. Use Template Literals for String Formatting
+
+Backtick strings with `${expression}` are JavaScript's equivalent of Python's f-strings. They are more readable and less error-prone than `+` concatenation.
+
+```javascript
+const name = "Alice";
+const score = 95;
+
+// ✓ Template literal — clear and concise
+const msg = `${name} scored ${score} points`;
+
+// ✗ Concatenation — verbose and easy to break
+const msg = name + " scored " + score + " points";
+```
+
+Template literals also support multi-line strings and arbitrary expressions inside `${}`.
+
+#### 6. Use Arrow Functions for Callbacks
+
+Arrow functions are concise and lexically bind `this` (they inherit `this` from the enclosing scope, avoiding a common class of bugs).
+
+```javascript
+const numbers = [1, 2, 3, 4, 5];
+
+// ✓ Arrow functions — concise
+const doubled = numbers.map(n => n * 2);
+const evens = numbers.filter(n => n % 2 === 0);
+const sum = numbers.reduce((acc, n) => acc + n, 0);
+
+// ✗ Verbose equivalent
+const doubled = numbers.map(function(n) { return n * 2; });
+```
+
+**When NOT to use arrow functions:** Object methods that need their own `this`, and constructor functions.
+
+#### 7. Use Destructuring to Extract Values
+
+Destructuring makes code more concise and self-documenting by extracting values from objects and arrays in one step.
+
+```javascript
+// ✓ Object destructuring
+const { name, grade } = student;
+
+// ✓ In function parameters (common in React)
+function printStudent({ name, grade }) {
+    console.log(`${name}: ${grade}`);
+}
+
+// ✓ Array destructuring with Promise.all
+const [roster, grades] = await Promise.all([fetchRoster(), fetchGrades()]);
+
+// ✗ Verbose alternative
+const name = student.name;
+const grade = student.grade;
+```
+
+#### 8. Never Block the Event Loop
+
+Node.js is single-threaded. Blocking the main thread prevents ALL other requests, timers, and callbacks from executing. Always use asynchronous I/O.
+
+```javascript
+// ✓ Non-blocking — other requests can proceed
+const data = await fs.promises.readFile("data.json", "utf8");
+
+// ✗ Blocking — entire server freezes until file is read
+const data = fs.readFileSync("data.json", "utf8");
+```
+
+For CPU-intensive work, offload to Worker Threads instead of running it on the main thread.
+
+#### 9. Use Optional Chaining (`?.`) and Nullish Coalescing (`??`)
+
+These modern operators replace verbose null-checking patterns and make code more robust.
+
+```javascript
+// ✓ Optional chaining — safe deep access
+const city = user?.address?.city;           // undefined if any link is null
+const first = results?.[0];                 // safe array access
+
+// ✓ Nullish coalescing — default only for null/undefined
+const port = config.port ?? 3000;           // 0 is preserved as valid
+const name = user.name ?? "Anonymous";      // "" is preserved as valid
+
+// ✗ Verbose null checking
+const city = user && user.address && user.address.city;
+
+// ✗ || treats 0, "", and false as "missing"
+const port = config.port || 3000;           // if port is 0, uses 3000!
+```
+
+#### 10. Use `.map()`, `.filter()`, `.reduce()` Instead of Manual Loops
+
+These array methods are more declarative, less error-prone, and do not mutate the original array. They are the JavaScript equivalents of Python's `map()`, `filter()`, and `functools.reduce()`.
+
+```javascript
+const students = [
+    { name: "Alice", grade: 95 },
+    { name: "Bob",   grade: 42 },
+    { name: "Carol", grade: 78 },
+];
+
+// ✓ Declarative — chain operations fluently
+const honors = students
+    .filter(s => s.grade >= 90)
+    .map(s => s.name);
+// ["Alice"]
+
+// ✗ Imperative — more code, mutation, more room for bugs
+const honors = [];
+for (let i = 0; i < students.length; i++) {
+    if (students[i].grade >= 90) {
+        honors.push(students[i].name);
+    }
+}
+```
+
+Use regular `for` loops when you need early termination (`break`), when performance on very large arrays matters, or when the logic is too complex for a single chain.
+
+
 ### Test Your Knowledge
 
 {% include flashcards.html id="nodejs_syntax_explain" %}
