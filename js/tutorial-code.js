@@ -84,7 +84,8 @@
       vmPath:     options.vmPath   || '/vm/dist',
       memoryMB:   options.memoryMB || 256,
       fontSize:   options.fontSize || 14,
-      workerPath: options.workerPath || '/js/pyodide-worker.js',
+      workerPath:    options.workerPath    || '/js/pyodide-worker.js',
+      sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview:  (backend === 'react'),    // live iframe preview for React tutorials
@@ -658,6 +659,7 @@
     if (backend === 'webcontainer') return this._initWebContainer();
     if (backend === 'react')        return this._initReactBackend();
     if (backend === 'browser')      return this._initBrowserBackend();
+    if (backend === 'sql')          return this._initSQL();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -811,6 +813,104 @@
     });
   };
 
+  // ---- SQL backend -----------------------------------------------------------
+  TutorialCode.prototype._initSQL = function () {
+    var self = this;
+    this._showLoading('Loading SQL runtime\u2026 (first load may take a moment)');
+    return new Promise(function (resolve, reject) {
+      self._worker = new Worker(self.config.sqlWorkerPath);
+
+      self._worker.onmessage = function (e) {
+        var msg = e.data;
+        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
+        if (msg.type === 'ready') {
+          self.booted = true;
+          var setupCmds = self.setupCommands;
+          if (setupCmds && setupCmds.length > 0) {
+            self._postWorker(
+              { type: 'runSQL', sql: setupCmds.join('\n'), silent: true },
+              function () { resolve(); }
+            );
+          } else {
+            resolve();
+          }
+          return;
+        }
+        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
+        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
+        if (msg.type === 'table')  { self._appendTable(msg.columns, msg.rows); return; }
+        if (msg.type === 'error')  { reject(new Error(msg.message)); return; }
+        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
+          var cb = self._workerCallbacks[msg.id];
+          delete self._workerCallbacks[msg.id];
+          cb(msg);
+        }
+      };
+
+      self._worker.onerror = function (err) {
+        reject(new Error('SQL worker error: ' + (err.message || err)));
+      };
+    });
+  };
+
+  /** Render a SQL result set as a table inside the output panel. */
+  TutorialCode.prototype._appendTable = function (columns, rows) {
+    if (!this.outputPre) return;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'tvm-sql-table-wrapper';
+
+    var table = document.createElement('table');
+    table.className = 'tvm-sql-table';
+
+    // Header
+    var thead = document.createElement('thead');
+    var headerTr = document.createElement('tr');
+    (columns || []).forEach(function (col) {
+      var th = document.createElement('th');
+      th.textContent = col;
+      headerTr.appendChild(th);
+    });
+    thead.appendChild(headerTr);
+    table.appendChild(thead);
+
+    // Body
+    var tbody = document.createElement('tbody');
+    if (rows && rows.length > 0) {
+      rows.forEach(function (row) {
+        var tr = document.createElement('tr');
+        row.forEach(function (cell) {
+          var td = document.createElement('td');
+          if (cell === null) { td.textContent = 'NULL'; td.classList.add('tvm-sql-null'); }
+          else { td.textContent = String(cell); }
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    } else {
+      var emptyTr = document.createElement('tr');
+      var emptyTd = document.createElement('td');
+      emptyTd.colSpan = (columns || []).length || 1;
+      emptyTd.className = 'tvm-sql-empty';
+      emptyTd.textContent = '(0 rows)';
+      emptyTr.appendChild(emptyTd);
+      tbody.appendChild(emptyTr);
+    }
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+
+    // Row count
+    if (rows && rows.length > 0) {
+      var footer = document.createElement('span');
+      footer.className = 'tvm-out-info';
+      footer.textContent = rows.length + ' row' + (rows.length === 1 ? '' : 's') + '\n';
+      wrapper.appendChild(footer);
+    }
+
+    this.outputPre.appendChild(wrapper);
+    var container = this.outputPre.parentElement;
+    if (container) container.scrollTop = container.scrollHeight;
+  };
+
   /** Post a message to the Pyodide worker; optional callback on response. */
   TutorialCode.prototype._postWorker = function (msg, callback) {
     if (!this._worker) return;
@@ -853,6 +953,21 @@
         self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
       }, function () {
         if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+      });
+      return;
+    }
+
+    if (backend === 'sql') {
+      var sqlPath = '/tutorial/' + filename;
+      this._syncFileToBackend(filename, function () {
+        self._clearOutput();
+        self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+        var runBtn = self.root.querySelector('.tvm-run-btn');
+        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
+        self._postWorker({ type: 'run', path: sqlPath }, function (msg) {
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (msg.exitCode !== 0) self._appendOutput('\n\u2717 Error\n', 'err');
+        });
       });
       return;
     }
@@ -1223,6 +1338,12 @@
     } else if (this.config.backend === 'browser') {
       // Content stays in editor models; nothing to sync to a filesystem
       if (callback) callback();
+
+    } else if (this.config.backend === 'sql') {
+      this._postWorker(
+        { type: 'write', path: '/tutorial/' + filename, content: content },
+        function () { if (callback) callback(); }
+      );
     }
   };
 
@@ -1598,6 +1719,7 @@
     else if (backend === 'webcontainer') this._runTestsWebContainer();
     else if (backend === 'react')        this._runTestsReact();
     else if (backend === 'browser')      this._runTestsBrowser();
+    else if (backend === 'sql')          this._runTestsSQL();
   };
 
   // v86 — same marker approach as original tutorial-vm.js
@@ -1640,6 +1762,25 @@
     this._testListening = false; this._testBuffer = '';
     var cbs = this._testCallbacks.splice(0);
     cbs.forEach(function (cb) { cb(); });
+  };
+
+  // SQL — each test.command is a JS snippet with __run_query / assert helpers
+  TutorialCode.prototype._runTestsSQL = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+    var results = [];
+
+    function runNext(i) {
+      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      self._postWorker(
+        { type: 'runCode', code: tests[i].command, silent: true },
+        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
+      );
+    }
+    runNext(0);
   };
 
   // Pyodide — each test.command is run as Python code; exit 0 if no exception

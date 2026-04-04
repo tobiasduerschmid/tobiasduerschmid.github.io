@@ -1,0 +1,12 @@
+title: "SQL Essentials"
+description: "A hands-on introduction to SQL using SQLite, running entirely in your browser. Learn to create tables, query data, and manage a relational database — no installation required."
+
+backend: sql
+
+require_tests: true
+
+# setup_commands run as SQL before the first step is loaded.
+# Use this to pre-populate shared reference data available across all steps.
+setup_commands: []
+
+steps: []

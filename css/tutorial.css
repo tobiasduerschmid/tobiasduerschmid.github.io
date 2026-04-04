@@ -535,6 +535,42 @@ html, body {
 .tvm-out-info   { color: #9cdcfe; font-style: italic; }
 .tvm-out-err    { color: #f44747; font-weight: 600; }
 
+/* SQL result tables (rendered inside .tvm-output-pre) */
+.tvm-sql-table-wrapper {
+  margin: 6px 0 10px;
+  overflow-x: auto;
+}
+.tvm-sql-table {
+  border-collapse: collapse;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+.tvm-sql-table th,
+.tvm-sql-table td {
+  padding: 4px 12px;
+  border: 1px solid #3a3a4a;
+  text-align: left;
+  vertical-align: top;
+}
+.tvm-sql-table thead th {
+  background: #1e2233;
+  color: #9cdcfe;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.tvm-sql-table tbody tr:nth-child(even) { background: #16161e; }
+.tvm-sql-table tbody tr:nth-child(odd)  { background: #0e0e15; }
+.tvm-sql-null  { color: #888; font-style: italic; }
+.tvm-sql-empty { color: #777; font-style: italic; text-align: center; }
+
+/* Light mode SQL table overrides */
+html:not(.dark-mode) .tvm-sql-table th,
+html:not(.dark-mode) .tvm-sql-table td { border-color: #ccc; }
+html:not(.dark-mode) .tvm-sql-table thead th { background: #e8eaf0; color: #2c5282; }
+html:not(.dark-mode) .tvm-sql-table tbody tr:nth-child(even) { background: #f7f7fb; }
+html:not(.dark-mode) .tvm-sql-table tbody tr:nth-child(odd)  { background: #ffffff; }
+
 /* Light mode overrides */
 html:not(.dark-mode) .tvm-output-panel  { background: #f3f3f3; }
 html:not(.dark-mode) .tvm-output-header { background: #e8e8ec; border-bottom-color: #ccc; color: #555; }
