@@ -503,6 +503,182 @@ clean = re.sub(r'Error \d+', 'ERR', text)
 
 Always use raw strings (`r'...'`) for regex patterns — they prevent Python from interpreting backslashes before the `re` module sees them.
 
+### Top 10 Python Best Practices
+
+These are the most important conventions and idioms that experienced Python programmers follow. Internalizing them will make your code more readable, less error-prone, and immediately recognizable as "Pythonic."
+
+#### 1. Use f-Strings for String Formatting
+
+F-strings (Python 3.6+) are the preferred way to embed values in strings. They are faster, more readable, and more concise than older approaches.
+
+```python
+name = "Alice"
+score = 95.678
+
+# ✓ Pythonic: f-string
+print(f"{name} scored {score:.1f}")
+
+# ✗ Avoid: concatenation (verbose, error-prone with types)
+print(name + " scored " + str(round(score, 1)))
+
+# ✗ Avoid: %-formatting (old Python 2 style)
+print("%s scored %.1f" % (name, score))
+```
+
+#### 2. Use `with` for Resource Management
+
+The `with` statement guarantees cleanup (closing files, releasing locks) even if an exception occurs — just like RAII in C++.
+
+```python
+# ✓ Pythonic: guaranteed close
+with open("data.txt") as f:
+    content = f.read()
+
+# ✗ Avoid: manual close (leaks on exception)
+f = open("data.txt")
+content = f.read()
+f.close()
+```
+
+#### 3. Iterate Directly Over Collections
+
+Python's `for` loop iterates over *items*, not indices. Never use `range(len(...))` when you only need the elements.
+
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# ✓ Pythonic: iterate directly
+for fruit in fruits:
+    print(fruit)
+
+# ✗ Avoid: C-style index loop
+for i in range(len(fruits)):
+    print(fruits[i])
+```
+
+#### 4. Use `enumerate()` When You Need the Index
+
+When you need both the index and the value, `enumerate()` is the Pythonic solution.
+
+```python
+# ✓ Pythonic: enumerate
+for i, fruit in enumerate(fruits):
+    print(f"{i}: {fruit}")
+
+# ✗ Avoid: manual counter
+i = 0
+for fruit in fruits:
+    print(f"{i}: {fruit}")
+    i += 1
+```
+
+#### 5. Follow PEP 8 Naming Conventions
+
+Consistent naming makes Python code instantly readable across any project.
+
+| Entity | Convention | Example |
+|---|---|---|
+| Variables, functions | `snake_case` | `total_count`, `get_area()` |
+| Classes | `PascalCase` | `HttpResponse`, `Rectangle` |
+| Constants | `UPPER_SNAKE_CASE` | `MAX_RETRIES`, `DEFAULT_PORT` |
+| "Private" attributes | Leading underscore | `_internal_state` |
+
+#### 6. Use List Comprehensions for Simple Transformations
+
+List comprehensions are more concise and slightly faster than equivalent `for` + `append` loops. Use them when the logic is simple and fits on one line.
+
+```python
+# ✓ Pythonic: list comprehension
+squares = [x**2 for x in range(10)]
+evens = [x for x in numbers if x % 2 == 0]
+
+# ✗ Avoid for simple cases: explicit loop
+squares = []
+for x in range(10):
+    squares.append(x**2)
+```
+
+**When to stop:** If the comprehension needs nested loops or complex logic, use a regular `for` loop instead — readability always wins.
+
+#### 7. Catch Specific Exceptions
+
+Never use bare `except:` or `except Exception:`. Catching too broadly hides real bugs and makes debugging much harder.
+
+```python
+# ✓ Pythonic: specific exception
+try:
+    value = int(user_input)
+except ValueError:
+    print("Please enter a valid integer")
+
+# ✗ Avoid: bare except (catches everything, including KeyboardInterrupt)
+try:
+    value = int(user_input)
+except:
+    print("Something went wrong")
+```
+
+#### 8. Use `None` as a Sentinel for Mutable Default Arguments
+
+Mutable default arguments (lists, dicts) are shared across all calls — one of Python's most common pitfalls.
+
+```python
+# ✓ Correct: None sentinel
+def add_item(item, items=None):
+    if items is None:
+        items = []
+    items.append(item)
+    return items
+
+# ✗ Bug: mutable default is shared across calls
+def add_item(item, items=[]):
+    items.append(item)    # Second call sees items from the first call!
+    return items
+```
+
+#### 9. Use Truthiness for Empty Collection Checks
+
+Empty collections (`[]`, `{}`, `""`, `set()`) are falsy in Python. Use this directly instead of checking length.
+
+```python
+my_list = []
+
+# ✓ Pythonic: truthiness
+if not my_list:
+    print("list is empty")
+
+if my_list:
+    print("list has items")
+
+# ✗ Avoid: explicit length check
+if len(my_list) == 0:
+    print("list is empty")
+```
+
+**Exception:** Use explicit `is not None` checks when `0`, `""`, or `False` are valid values that should not be treated as "empty."
+
+#### 10. Use `is` for `None` Comparisons
+
+`None` is a singleton object in Python. Always compare with `is` / `is not`, never `==`.
+
+```python
+result = some_function()
+
+# ✓ Pythonic: identity check
+if result is None:
+    print("no result")
+
+if result is not None:
+    process(result)
+
+# ✗ Avoid: equality check (can be overridden by __eq__)
+if result == None:
+    print("no result")
+```
+
+This matters because a class can override `__eq__` to return `True` when compared with `None`, which would break the equality check. The `is` operator checks *identity* (same object in memory), which cannot be overridden.
+
+
 ### Test Your Knowledge
 
 {% include flashcards.html id="python_syntax_explain" %}
