@@ -76,3 +76,53 @@ questions:
       - "React does not support class components at all"
     correct_index: 1
     explanation: "The 'fragile base class' problem: modifying a parent class can unexpectedly break subclasses. React's composition model avoids this — a `Card` component that accepts `children` can wrap ANY content without knowing what it is. This gives more flexibility than inheritance and follows the same 'prefer composition over inheritance' principle from OOP courses."
+
+  - question: |
+      **Arrange** the lines to build a React component with a controlled input that filters a list of items.
+    type: parsons
+    lines:
+      - "function FilterList({ items }) {"
+      - "    const [query, setQuery] = useState('');"
+      - "    const filtered = items.filter(item => item.includes(query));"
+      - "    return ("
+      - "        <>"
+      - "            <input value={query} onChange={e => setQuery(e.target.value)} />"
+      - "            <ul>{filtered.map(item => <li key={item}>{item}</li>)}</ul>"
+      - "        </>"
+      - "    );"
+      - "}"
+    distractors:
+      - "    const [filtered, setFiltered] = useState(items);"
+      - "    <input onChange={e => query = e.target.value} />"
+    explanation: "The component uses `useState` for the filter query only — the filtered list is DERIVED from `items` and `query` (minimal state principle). The controlled `<input>` binds `value` to state and updates via `setQuery`. The first distractor stores filtered as separate state (sync bug — violates minimal state). The second distractor mutates `query` directly without `setQuery`, which won't trigger a re-render."
+
+  - question: |
+      **Arrange** the lines to create a custom React hook that fetches data from an API on mount.
+    type: parsons
+    lines:
+      - "function useFetch(url) {"
+      - "    const [data, setData] = useState(null);"
+      - "    useEffect(() => {"
+      - "        fetch(url)"
+      - "            .then(res => res.json())"
+      - "            .then(json => setData(json));"
+      - "    }, [url]);"
+      - "    return data;"
+      - "}"
+    distractors:
+      - "    }, []);"
+      - "    setData(fetch(url));"
+    explanation: "Custom hooks start with `use`. `useState(null)` initializes the data holder. `useEffect` runs the fetch after render — the `[url]` dependency array ensures it re-fetches when `url` changes. The `then` chain parses JSON and stores it via `setData`. The distractor `[]` would never re-fetch when `url` changes (stale closure bug). `setData(fetch(url))` would store a Promise object in state, not the resolved data."
+
+  - question: |
+      **Arrange** the fragments to write a JSX expression that conditionally renders a badge, avoiding the `0` rendering bug.
+    type: parsons
+    display: inline
+    lines:
+      - "{count > 0"
+      - "&&"
+      - "<Badge count={count} />}"
+    distractors:
+      - "{count"
+      - "||"
+    explanation: "Using `count > 0` ensures the left operand is a boolean (`true`/`false`), not a number. If `count` is `0`, `count > 0` evaluates to `false`, and React renders nothing. The distractor `{count` would render the number `0` as text when count is 0 — a common React bug. `||` would render Badge when count is falsy, which is the opposite of what's intended."

@@ -134,3 +134,57 @@ questions:
       - "The `$(command)` syntax runs the command in a subshell and replaces itself with the command's standard output."
     correct_indices: [0, 1, 2, 4]
     explanation: "Single quotes suppress all expansion; double quotes allow variable and command substitution while protecting spaces. Quoting `\"$VARIABLE\"` is essential to prevent word splitting on values containing spaces. Single and double quotes are NOT interchangeable when variable expansion is needed. `$(command)` is command substitution — the standard way to capture command output into a variable."
+
+  - id: 15
+    question: |
+      **Arrange** the pipeline fragments to build a command that extracts all ERROR lines from a log, sorts them, removes duplicates, and counts how many unique errors remain.
+    type: parsons
+    display: inline
+    lines:
+      - "grep 'ERROR' server.log"
+      - "|"
+      - "sort"
+      - "|"
+      - "uniq"
+      - "|"
+      - "wc -l"
+    distractors:
+      - "cat"
+      - ">"
+    explanation: "`grep` filters for ERROR lines, `sort` orders them (required before `uniq`), `uniq` removes adjacent duplicates, and `wc -l` counts the remaining lines. Each `|` pipes stdout to the next command's stdin — the UNIX philosophy of chaining single-purpose tools. `cat` is unnecessary here (UUOC — Useless Use of Cat) and `>` would redirect to a file rather than pipe."
+
+  - id: 16
+    question: |
+      **Arrange** the lines to write a shell script that validates a command-line argument, prints an error to stderr if missing, and exits with a non-zero code.
+    type: parsons
+    lines:
+      - "#!/bin/bash"
+      - "if [ $# -lt 1 ]; then"
+      - "    echo \"Error: no filename given\" >&2"
+      - "    exit 1"
+      - "fi"
+      - "echo \"Processing $1...\""
+    distractors:
+      - "    return 1"
+      - "fi;"
+    explanation: "The shebang (`#!/bin/bash`) must be the first line. The `if [ $# -lt 1 ]` test checks argument count, `>&2` redirects echo to stderr, and `exit 1` terminates with a failure code. `fi` closes the `if` block (no semicolon). The distractor `return 1` only works inside functions, not at the top level of a script. `fi;` with a trailing semicolon is unnecessary and unconventional."
+
+  - id: 17
+    question: |
+      **Arrange** the pipeline fragments to find the 5 most frequently occurring IP addresses in an access log.
+    type: parsons
+    display: inline
+    lines:
+      - "grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+' access.log"
+      - "|"
+      - "sort"
+      - "|"
+      - "uniq -c"
+      - "|"
+      - "sort -rn"
+      - "|"
+      - "head -5"
+    distractors:
+      - "tail -5"
+      - "wc -l"
+    explanation: "The `grep -oE` extracts all IPv4 addresses (one per line). `sort` groups identical IPs together (required for `uniq`). `uniq -c` counts each group. `sort -rn` sorts by count in descending numeric order. `head -5` takes the top 5. `tail -5` would give the *least* frequent, and `wc -l` would just count total lines."

@@ -94,3 +94,51 @@ questions:
       - "There is no bug — `.forEach()` correctly awaits each callback"
     correct_index: 0
     explanation: "`.forEach()` does not await the async callbacks it spawns — it fires them all and returns immediately. The `await` inside each callback works, but `.forEach` itself doesn't wait for them. Fix: `for (const item of items) { await processItem(item); }` (sequential) or `await Promise.all(items.map(item => processItem(item)))` (parallel)."
+
+  - question: |
+      **Arrange** the lines to write an async function that reads a file and returns its parsed JSON content, handling errors gracefully.
+    type: parsons
+    lines:
+      - "async function loadConfig(path) {"
+      - "    try {"
+      - "        const data = await fs.promises.readFile(path, 'utf-8');"
+      - "        return JSON.parse(data);"
+      - "    } catch (err) {"
+      - "        console.error('Failed to load config:', err.message);"
+      - "        return null;"
+      - "    }"
+      - "}"
+    distractors:
+      - "        fs.readFileSync(path);"
+      - "    finally { return data; }"
+    explanation: "The function uses `async/await` with `fs.promises.readFile` (the async version). The `try/catch` handles both file-not-found and invalid JSON errors. The distractor `readFileSync` would block the Event Loop — the cardinal sin in Node.js. The `finally { return data; }` distractor would override the return value from both try and catch, which is a subtle JavaScript bug."
+
+  - question: |
+      **Arrange** the lines to set up a basic Express.js route handler that reads a query parameter and sends a JSON response.
+    type: parsons
+    lines:
+      - "const express = require('express');"
+      - "const app = express();"
+      - "app.get('/api/greet', (req, res) => {"
+      - "    const name = req.query.name || 'World';"
+      - "    res.json({ message: `Hello, ${name}!` });"
+      - "});"
+      - "app.listen(3000);"
+    distractors:
+      - "app.post('/api/greet', (req, res) => {"
+      - "    res.send(name);"
+    explanation: "`require('express')` imports the framework, `express()` creates the app. `app.get()` registers a GET route handler. Inside the handler, `req.query.name` reads the `?name=` query parameter, and `res.json()` sends a JSON response with correct headers. `app.listen(3000)` starts the server. The `app.post` distractor uses the wrong HTTP method. `res.send(name)` would send plain text without JSON formatting."
+
+  - question: |
+      **Arrange** the fragments to build a Promise chain that fetches data, parses JSON, and handles errors.
+    type: parsons
+    display: inline
+    lines:
+      - "fetch(url)"
+      - ".then(res => res.json())"
+      - ".then(data => console.log(data))"
+      - ".catch(err => console.error(err))"
+    distractors:
+      - ".finally(data => process(data))"
+      - ".then(res => res.text)"
+    explanation: "`fetch(url)` returns a Promise that resolves to a Response object. `.then(res => res.json())` parses the body as JSON (also returns a Promise). `.then(data => ...)` receives the parsed data. `.catch()` handles any error in the chain — network failure, JSON parse error, etc. The `finally` distractor takes no argument (it doesn't receive data). `res.text` without `()` is just a property reference, not a method call."

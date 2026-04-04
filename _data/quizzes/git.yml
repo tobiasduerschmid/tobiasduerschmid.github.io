@@ -153,3 +153,52 @@ questions:
       - "Both states contain `ref: refs/heads/main`, but detached HEAD additionally points to the staging area index."
     correct_index: 2
     explanation: "Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
+
+  - question: |
+      **Arrange** the Git commands into the correct order to: create a feature branch, make changes, and integrate them back into main via a merge.
+    type: parsons
+    display: inline
+    lines:
+      - "git switch -c feature"
+      - "&&"
+      - "git add app.py"
+      - "&&"
+      - "git commit -m 'Add feature'"
+      - "&&"
+      - "git switch main"
+      - "&&"
+      - "git merge feature"
+    distractors:
+      - "git push -f"
+      - "git init"
+    explanation: "The workflow is: create and switch to a feature branch (`switch -c`), stage changes (`add`), commit them, switch back to main, and merge the feature branch in. `git push -f` is dangerous on shared branches and is not part of a local merge workflow. `git init` creates a new repository — irrelevant here."
+
+  - question: |
+      **Arrange** the commands to safely stash your work, pull remote changes, and restore your stashed work.
+    type: parsons
+    display: inline
+    lines:
+      - "git stash"
+      - "&&"
+      - "git pull"
+      - "&&"
+      - "git stash pop"
+    distractors:
+      - "git stash drop"
+      - "git reset --hard"
+    explanation: "`git stash` saves uncommitted changes temporarily, `git pull` fetches and merges remote changes onto a clean working directory, and `git stash pop` re-applies the stashed changes on top. `git stash drop` would *discard* the stash without applying it. `git reset --hard` would destroy all local changes — dangerous!"
+
+  - question: |
+      **Arrange** the commands to undo a bad commit on a shared branch safely: first identify the commit, then revert it, then push the fix.
+    type: parsons
+    display: inline
+    lines:
+      - "git log --oneline"
+      - "&&"
+      - "git revert <bad-commit-hash>"
+      - "&&"
+      - "git push"
+    distractors:
+      - "git reset --hard <bad-commit-hash>"
+      - "git push -f"
+    explanation: "`git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
