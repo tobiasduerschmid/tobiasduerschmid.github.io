@@ -23,9 +23,9 @@
   // CDN URLs
   // ---------------------------------------------------------------------------
   var CDN = {
-    XTERM_JS:     'https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js',
-    XTERM_CSS:    'https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css',
-    XTERM_FIT:    'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js',
+    XTERM_JS:     'https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.min.js',
+    XTERM_CSS:    'https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css',
+    XTERM_FIT:    'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js',
     MONACO_LOADER:'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js',
     MONACO_VS:    'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
     MARKED:       'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
@@ -138,6 +138,10 @@
     // React preview state
     this._previewFrame      = null;
     this._reactRebuildTimer = null;
+
+    // Browser JS runner state
+    this._jsRunnerFrame  = null;
+    this._jsRunnerMsgId  = 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -432,6 +436,127 @@
       },
     });
 
+    // ---- Python Monarch tokenizer with f-string interpolation support ----
+    monaco.languages.setMonarchTokensProvider('python', {
+      defaultToken: '',
+      tokenizer: {
+        root: [
+          // f-strings — rf/fr prefixes included, triple-quoted first
+          [/[fF][rR]?"""/, { token: 'string.fstring', next: '@fstr_tdq' }],
+          [/[rR][fF]"""/, { token: 'string.fstring', next: '@fstr_tdq' }],
+          [/[fF][rR]?'''/, { token: 'string.fstring', next: '@fstr_tsq' }],
+          [/[rR][fF]'''/, { token: 'string.fstring', next: '@fstr_tsq' }],
+          [/[fF][rR]?"/, { token: 'string.fstring', next: '@fstr_dq' }],
+          [/[rR][fF]?"/, { token: 'string.fstring', next: '@fstr_dq' }],
+          [/[fF][rR]?'/, { token: 'string.fstring', next: '@fstr_sq' }],
+          [/[rR][fF]?'/, { token: 'string.fstring', next: '@fstr_sq' }],
+          // Regular strings
+          [/[bBrRuU]{0,2}"""/, { token: 'string', next: '@str_tdq' }],
+          [/[bBrRuU]{0,2}'''/, { token: 'string', next: '@str_tsq' }],
+          [/[bBrRuU]{0,2}"/, { token: 'string', next: '@str_dq' }],
+          [/[bBrRuU]{0,2}'/, { token: 'string', next: '@str_sq' }],
+          // Comments
+          [/#.*$/, 'comment'],
+          // Decorators
+          [/@[A-Za-z_][\w.]*/, 'tag'],
+          // Keywords
+          [/\b(?:False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)\b/, 'keyword'],
+          // Built-in functions
+          [/\b(?:abs|all|any|ascii|bin|bool|breakpoint|bytearray|bytes|callable|chr|classmethod|compile|complex|delattr|dict|dir|divmod|enumerate|eval|exec|filter|float|format|frozenset|getattr|globals|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|locals|map|max|memoryview|min|next|object|oct|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|staticmethod|str|sum|super|tuple|type|vars|zip)\b/, 'support.function'],
+          // self / cls
+          [/\b(?:self|cls)\b/, 'variable.language'],
+          // Numbers
+          [/\b0[xX][0-9a-fA-F_]+\b/, 'number.hex'],
+          [/\b0[bBoO][01_]+\b/, 'number'],
+          [/\b\d[\d_]*\.[\d_]*(?:[eE][+-]?[\d_]+)?\b/, 'number.float'],
+          [/\b\d[\d_]*[eE][+-]?[\d_]+\b/, 'number.float'],
+          [/\b\d[\d_]*\b/, 'number'],
+          // Identifiers
+          [/[A-Za-z_]\w*/, 'identifier'],
+          // Operators
+          [/[+\-*/%&|^~<>=!@]+/, 'operator'],
+          [/[,;:.]/, 'delimiter'],
+          [/[(){}\[\]]/, '@brackets'],
+          [/\s+/, ''],
+        ],
+
+        // f-string body states — {{ and }} are escaped literal braces
+        fstr_dq: [
+          [/"/, { token: 'string.fstring', next: '@pop' }],
+          [/\\./, 'string.escape'],
+          [/\{\{|\}\}/, 'string.fstring'],
+          [/\{/, { token: 'string.fstring.delimiter', next: '@fstr_expr' }],
+          [/[^"\\{]+/, 'string.fstring'],
+        ],
+        fstr_sq: [
+          [/'/, { token: 'string.fstring', next: '@pop' }],
+          [/\\./, 'string.escape'],
+          [/\{\{|\}\}/, 'string.fstring'],
+          [/\{/, { token: 'string.fstring.delimiter', next: '@fstr_expr' }],
+          [/[^'\\{]+/, 'string.fstring'],
+        ],
+        fstr_tdq: [
+          [/"""/, { token: 'string.fstring', next: '@pop' }],
+          [/\\./, 'string.escape'],
+          [/\{\{|\}\}/, 'string.fstring'],
+          [/\{/, { token: 'string.fstring.delimiter', next: '@fstr_expr' }],
+          [/"(?!"")/, 'string.fstring'],
+          [/[^"\\{]+/, 'string.fstring'],
+        ],
+        fstr_tsq: [
+          [/'''/, { token: 'string.fstring', next: '@pop' }],
+          [/\\./, 'string.escape'],
+          [/\{\{|\}\}/, 'string.fstring'],
+          [/\{/, { token: 'string.fstring.delimiter', next: '@fstr_expr' }],
+          [/'(?!'')/, 'string.fstring'],
+          [/[^'\\{]+/, 'string.fstring'],
+        ],
+
+        // Inside {expression} — highlight as code
+        fstr_expr: [
+          [/}/, { token: 'string.fstring.delimiter', next: '@pop' }],
+          // Track nested parens/brackets so inner } doesn't close the expression
+          [/\(/, { token: '@brackets', next: '@fstr_paren' }],
+          [/\[/, { token: '@brackets', next: '@fstr_bracket' }],
+          // Inline strings in format spec
+          [/"[^"]*"/, 'string'],
+          [/'[^']*'/, 'string'],
+          // Code tokens inside expression
+          [/\b(?:not|and|or|in|is|if|else|for|lambda|None|True|False)\b/, 'keyword'],
+          [/[A-Za-z_]\w*/, 'identifier'],
+          [/\d[\d_]*\.[\d_]*(?:[eE][+-]?[\d_]+)?/, 'number.float'],
+          [/\d[\d_]*/, 'number'],
+          [/[+\-*/%&|^~<>=!@,.: ]+/, 'operator'],
+        ],
+        fstr_paren: [
+          [/\)/, { token: '@brackets', next: '@pop' }],
+          [/\(/, { token: '@brackets', next: '@push' }],
+          [/[^()]*/, 'identifier'],
+        ],
+        fstr_bracket: [
+          [/\]/, { token: '@brackets', next: '@pop' }],
+          [/\[/, { token: '@brackets', next: '@push' }],
+          [/[^[\]]*/, 'identifier'],
+        ],
+
+        // Regular string body states
+        str_dq:  [
+          [/"/, { token: 'string', next: '@pop' }], [/\\./, 'string.escape'], [/[^"\\]+/, 'string'],
+        ],
+        str_sq:  [
+          [/'/, { token: 'string', next: '@pop' }], [/\\./, 'string.escape'], [/[^'\\]+/, 'string'],
+        ],
+        str_tdq: [
+          [/"""/, { token: 'string', next: '@pop' }], [/\\./, 'string.escape'],
+          [/"(?!"")/, 'string'], [/[^"\\]+/, 'string'],
+        ],
+        str_tsq: [
+          [/'''/, { token: 'string', next: '@pop' }], [/\\./, 'string.escape'],
+          [/'(?!'')/, 'string'], [/[^'\\]+/, 'string'],
+        ],
+      },
+    });
+
     monaco.editor.defineTheme('sebook-light', {
       base: 'vs', inherit: true,
       rules: [
@@ -441,6 +566,8 @@
         { token: 'attribute.name.shell-sebook',  foreground: 'a31515' },
         { token: 'string.shell-sebook',          foreground: 'a31515' },
         { token: 'comment.shell-sebook',         foreground: '008000' },
+        // f-string interpolation delimiters — blue to signal "code zone"
+        { token: 'string.fstring.delimiter',     foreground: '0451a5' },
       ],
       colors: {},
     });
@@ -453,6 +580,8 @@
         { token: 'attribute.name.shell-sebook',  foreground: 'f44747' },
         { token: 'string.shell-sebook',          foreground: 'ce9178' },
         { token: 'comment.shell-sebook',         foreground: '6a9955' },
+        // f-string interpolation delimiters — light blue to signal "code zone"
+        { token: 'string.fstring.delimiter',     foreground: '569cd6' },
       ],
       colors: { 'editor.background': '#1e1e1e' },
     });
@@ -528,6 +657,7 @@
     if (backend === 'pyodide')      return this._initPyodide();
     if (backend === 'webcontainer') return this._initWebContainer();
     if (backend === 'react')        return this._initReactBackend();
+    if (backend === 'browser')      return this._initBrowserBackend();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -708,9 +838,26 @@
   };
 
   TutorialCode.prototype._runCurrentFile = function () {
-    if (!this.activeFileName || this.config.backend !== 'pyodide') return;
+    if (!this.activeFileName) return;
+    var backend = this.config.backend;
     var self = this;
     var filename = this.activeFileName;
+
+    if (backend === 'browser') {
+      var code = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
+      self._clearOutput();
+      self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+      var runBtn = self.root.querySelector('.tvm-run-btn');
+      if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
+      self._runBrowserCode(code, function (text, kind) {
+        self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
+      }, function () {
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+      });
+      return;
+    }
+
+    if (backend !== 'pyodide') return;
     var path = '/tutorial/' + filename;
 
     // Sync first, then run
@@ -791,6 +938,80 @@
     return Promise.resolve();
   };
 
+  // ---- Browser JS backend (in-browser JS runner with output panel) ----------
+  TutorialCode.prototype._initBrowserBackend = function () {
+    this.booted = true;
+    return Promise.resolve();
+  };
+
+  /**
+   * Run `code` in a sandboxed hidden iframe.
+   * Console output is forwarded via postMessage.
+   * `onOutput(text, 'stdout'|'stderr')` is called for each line.
+   * `onDone()` fires 1.5 s after the iframe loads (enough for short async code).
+   */
+  TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone) {
+    // Tear down any previous runner
+    if (this._jsRunnerFrame) {
+      try { document.body.removeChild(this._jsRunnerFrame); } catch (e) {}
+      this._jsRunnerFrame = null;
+    }
+
+    var frame = document.createElement('iframe');
+    frame.style.cssText = 'display:none;position:absolute;left:-9999px;width:1px;height:1px;';
+    frame.setAttribute('sandbox', 'allow-scripts');
+    document.body.appendChild(frame);
+    this._jsRunnerFrame = frame;
+
+    var runId = ++this._jsRunnerMsgId;
+    var done  = false;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', msgListener);
+      if (onDone) onDone();
+    }
+
+    var safetyTimer = setTimeout(finish, 6000);
+
+    function msgListener(e) {
+      if (!e.data || e.data.__jsrun !== true || e.data.__rid !== runId) return;
+      if (e.data.type === 'done') { clearTimeout(safetyTimer); finish(); return; }
+      if (onOutput) onOutput(e.data.text || '', e.data.type === 'stderr' ? 'stderr' : 'stdout');
+    }
+    window.addEventListener('message', msgListener);
+
+    var rid = runId;
+    var escaped = code.split('<\/script>').join('<\\/script>');
+
+    frame.srcdoc = '<!DOCTYPE html><html><head><script>\n' +
+      '(function(){\n' +
+      'var rid=' + rid + ';\n' +
+      'function __s(t,x){parent.postMessage({__jsrun:true,__rid:rid,type:t,text:x},"*");}\n' +
+      'function __f(a){return Array.from(a).map(function(v){\n' +
+      '  return typeof v==="object"&&v!==null?JSON.stringify(v,null,2):String(v);\n' +
+      '}).join(" ");}\n' +
+      'console.log =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
+      'console.info =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
+      'console.warn =function(){__s("stdout","[warn] "+__f(arguments)+"\\n");};\n' +
+      'console.error=function(){__s("stderr",__f(arguments)+"\\n");};\n' +
+      'window.onerror=function(m,src,l,c,e){\n' +
+      '  __s("stderr",(e&&(e.stack||e.message)?e.stack||e.message:m)+"\\n");\n' +
+      '  return true;\n' +
+      '};\n' +
+      'window.addEventListener("unhandledrejection",function(e){\n' +
+      '  __s("stderr","UnhandledPromiseRejection: "+(e.reason?e.reason.message||String(e.reason):"Unknown")+"\\n");\n' +
+      '});\n' +
+      '})();\n' +
+      '<\/script></head><body><script>\n' +
+      'try{\n' +
+      escaped + '\n' +
+      '}catch(e){console.error(e.stack||e.message);}\n' +
+      'setTimeout(function(){parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"done"},"*");},1500);\n' +
+      '<\/script></body></html>';
+  };
+
   TutorialCode.prototype._rebuildReactPreview = function (onReady) {
     if (!this._previewFrame) return;
     var self = this;
@@ -865,7 +1086,8 @@
     this.editor = monaco.editor.create(this.editorContainerEl, {
       value: '// Follow the tutorial steps on the left.\n',
       language: this.config.backend === 'pyodide'  ? 'python'      :
-                this.config.backend === 'react'     ? 'javascript'  : 'shell-sebook',
+                this.config.backend === 'react'    ? 'javascript'  :
+                this.config.backend === 'browser'  ? 'javascript'  : 'shell-sebook',
       theme:    this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -884,8 +1106,8 @@
       function () { self._saveCurrentFile(); }
     );
 
-    // Ctrl/Cmd+Enter — run (Python only)
-    if (this.config.backend === 'pyodide') {
+    // Ctrl/Cmd+Enter — run (Python and browser JS)
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser') {
       this.editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -997,6 +1219,10 @@
         self._rebuildReactPreview();
         if (callback) callback();
       }, 400);
+
+    } else if (this.config.backend === 'browser') {
+      // Content stays in editor models; nothing to sync to a filesystem
+      if (callback) callback();
     }
   };
 
@@ -1070,8 +1296,8 @@
 
     if (this.config.backend === 'v86') this._startFileWatch(2000);
 
-    // Clear Python output panel between steps
-    if (this.config.backend === 'pyodide') this._clearOutput();
+    // Clear output panel between steps
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -1371,6 +1597,7 @@
     else if (backend === 'pyodide')      this._runTestsPyodide();
     else if (backend === 'webcontainer') this._runTestsWebContainer();
     else if (backend === 'react')        this._runTestsReact();
+    else if (backend === 'browser')      this._runTestsBrowser();
   };
 
   // v86 — same marker approach as original tutorial-vm.js
@@ -1497,6 +1724,44 @@
         } catch (e) {
           results[i] = false;
           console.warn('React test ' + i + ' failed:', e.message);
+        }
+        runNext(i + 1);
+      }
+      runNext(0);
+    });
+  };
+
+  // Browser — runs user code, collects output, then evaluates JS assertions
+  // test.command receives: output (string), source (string), assert(cond, msg)
+  TutorialCode.prototype._runTestsBrowser = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+
+    var filename = this.activeFileName || (step.files && step.files[0] && step.files[0].path) || '';
+    var source = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
+    var outputLines = [];
+
+    this._runBrowserCode(source, function (text) {
+      outputLines.push(text);
+    }, function () {
+      var output = outputLines.join('');
+      var results = [];
+
+      function runNext(i) {
+        if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+        try {
+          /* jshint evil:true */
+          var fn = new Function('output', 'source', 'assert', tests[i].command);
+          fn(output, source, function assertFn(cond, msg) {
+            if (!cond) throw new Error(msg || 'Assertion failed');
+          });
+          results[i] = true;
+        } catch (e) {
+          results[i] = false;
+          console.warn('Browser test ' + i + ' failed:', e.message);
         }
         runNext(i + 1);
       }
