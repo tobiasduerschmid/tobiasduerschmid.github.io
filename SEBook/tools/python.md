@@ -84,6 +84,44 @@ for i in range(5):
 ```
 *Note: `range(5)` generates a sequence of numbers from 0 up to (but not including) 5.*
 
+### ⚠️ Scoping: The LEGB Rule (A "False Friend" from C++)
+
+In C++, a variable declared inside a `for` or `if` block is scoped to that block. In Python, **variables created inside a loop or `if` block are visible in the enclosing function scope** — there are no block-level scopes. This is one of the most common "false friend" traps for C++ programmers.
+
+```python
+for i in range(5):
+    last = i
+
+print(last)  # 4 — 'last' and 'i' are STILL accessible here!
+# In C++, this would be a compile error: 'last' was declared inside the for block
+```
+
+Python resolves variable names using the **LEGB rule** — it searches scopes in this order:
+
+1. **L**ocal — inside the current function
+2. **E**nclosing — inside enclosing functions (for nested functions/closures)
+3. **G**lobal — module-level
+4. **B**uilt-in — Python's built-in names (`print`, `len`, etc.)
+
+```python
+x = "global"
+
+def outer():
+    x = "enclosing"
+
+    def inner():
+        x = "local"
+        print(x)    # "local" — L wins
+
+    inner()
+    print(x)        # "enclosing" — E level
+
+outer()
+print(x)            # "global" — G level
+```
+
+**Key difference from C++:** If you want to *modify* a variable from an enclosing scope, you must use the `nonlocal` (for enclosing functions) or `global` keyword. Without it, Python creates a new local variable instead of modifying the outer one.
+
 ### Passing Arguments: "Pass-by-Object-Reference"
 
 In C++, you explicitly choose whether to pass variables by value (`int x`), by reference (`int& x`), or by pointer (`int* x`). 
@@ -179,6 +217,34 @@ player_scores["Charlie"] = 90 # Adding a new key-value pair
 print(f"Bob's score is {player_scores['Bob']}")
 ```
 
+#### "Pythonic" Iteration
+
+While C++ traditionally relies on index-based `for` loops (though modern C++ has range-based loops), Python strongly encourages iterating *directly* over the elements of a collection. This is considered writing "Pythonic" code.
+
+**C++ (Index-based iteration):**
+```cpp
+std::vector<std::string> fruits = {"apple", "banana", "cherry"};
+for (size_t i = 0; i < fruits.size(); i++) {
+    std::cout << fruits[i] << std::endl;
+}
+```
+
+**Python (Pythonic Iteration):**
+```python
+fruits = ["apple", "banana", "cherry"]
+
+# Do not do: for i in range(len(fruits)): ...
+# Instead, iterate directly over the object:
+for fruit in fruits:
+    print(fruit)
+
+# Iterating over dictionary key-value pairs:
+student_grades = {"Alice": 95, "Bob": 82}
+
+for name, grade in student_grades.items():
+    print(f"{name} scored {grade}")
+```
+
 ### Memory Management: RAII vs. Garbage Collection
 
 In C++, you are the absolute master of memory. You allocate it (`new`), you free it (`delete`), or you utilize RAII (Resource Acquisition Is Initialization) and smart pointers to tie memory management to variable scope. If you make a mistake, you get a memory leak or a segmentation fault.
@@ -209,40 +275,6 @@ def create_list():
     # When the function ends, 'arr' goes out of scope. 
     # The list object's reference count drops to 0, and memory is freed automatically.
 ```
-
-
-### Data Structures and "Pythonic" Iteration
-
-In C++, you rely heavily on the Standard Template Library (STL) for data structures like `std::vector` and `std::unordered_map`. Because C++ is statically typed, a `std::vector<int>` can *only* hold integers.
-
-Because Python is dynamically typed (variables are just tags), its built-in data structures are incredibly flexible. A single Python List can hold an integer, a string, and another list simultaneously. 
-
-Additionally, while C++ traditionally relies on index-based `for` loops (though modern C++ has range-based loops), Python strongly encourages iterating *directly* over the elements of a collection. This is considered writing "Pythonic" code.
-
-**C++ (Index-based iteration):**
-```cpp
-std::vector<std::string> fruits = {"apple", "banana", "cherry"};
-for (size_t i = 0; i < fruits.size(); i++) {
-    std::cout << fruits[i] << std::endl;
-}
-```
-
-**Python (Pythonic Iteration):**
-```python
-fruits = ["apple", "banana", "cherry"]
-
-# Do not do: for i in range(len(fruits)): ...
-# Instead, iterate directly over the object:
-for fruit in fruits:
-    print(fruit)
-
-# Python's equivalent to std::unordered_map is a Dictionary
-student_grades = {"Alice": 95, "Bob": 82}
-
-for name, grade in student_grades.items():
-    print(f"{name} scored {grade}")
-```
-
 
 
 ### Object-Oriented Programming: Explicit `self` and "Duck Typing"
@@ -377,6 +409,29 @@ try:
 except ValueError:
     print("Invalid input, please enter a number.")
 ```
+
+#### EAFP vs. LBYL: A Python Philosophy Shift
+
+In C++, the standard approach is **LBYL** — "Look Before You Leap": check preconditions before performing an operation (e.g., check if a key exists before accessing it). Python encourages the opposite: **EAFP** — "Easier to Ask Forgiveness than Permission": just try the operation and handle the exception if it fails.
+
+```python
+# C++ instinct (LBYL — Look Before You Leap):
+if "key" in my_dict:
+    value = my_dict["key"]
+else:
+    value = "default"
+
+# Pythonic (EAFP — Easier to Ask Forgiveness than Permission):
+try:
+    value = my_dict["key"]
+except KeyError:
+    value = "default"
+
+# Even more Pythonic — dict.get() with a default:
+value = my_dict.get("key", "default")
+```
+
+EAFP is idiomatic Python because exceptions are cheap in Python (unlike C++, where they are expensive). Using `try/except` for expected cases like missing dictionary keys or file-not-found is standard practice, not an anti-pattern.
 
 ### Robust Command-Line Arguments (`argparse`)
 In C++, you typically handle command-line inputs by parsing `int argc` and `char* argv[]` directly in `main()`. While Python *does* have a direct equivalent (`sys.argv`), the course materials emphasize using the built-in `argparse` module. It automatically generates help/usage messages, enforces types, and parses flags, saving you from writing boilerplate C++ parsing code.

@@ -683,9 +683,9 @@ steps:
     instructions: |
       > **Learning objective:** After this step you will be able to **use** Python's `for` loops, `enumerate()`, and `range()`, and **identify** the key operator differences between Python and C++ (`**` vs `^`, `/` vs `//`).
 
-      ### If Loops Feel Different
+      ### Transfer Note: C++ Range-Based Loops → Python `for`
 
-      Python's loops may feel unfamiliar after C++. That is expected — Python's `for` iterates over *items*, not *indices*. The adjustment takes a few exercises but becomes second nature quickly. If you catch yourself reaching for `for i in range(len(...))`, pause — there is usually a more Pythonic way.
+      If you have used modern C++ range-based `for` (`for (auto& x : vec)`), Python's iteration model will feel familiar — Python just makes it the *default*. The key habit to build: reach for `for x in collection` first, not `for i in range(len(...))`.
 
       ## Python `for` Loops: Iterating Over Collections
 
