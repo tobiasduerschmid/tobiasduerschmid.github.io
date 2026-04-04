@@ -124,13 +124,12 @@ steps:
             where Python shines over Bash.
 
   # --------------------------------------------------------------------------
-  # STEP 2 — Variables, Types & the Indentation Trap
+  # STEP 2 — Variables, Types & f-Strings
   # Pedagogy:
   #   Transfer Tutor   — C++ declaration syntax → Python implicit typing.
-  #   Fixer Upper      — deliberately broken code (mixed indentation / wrong type).
-  #   Negative Transfer warning — the single most common mistake from C++ students.
+  #   Guide-and-Release — write a formatted output script using f-strings.
   # --------------------------------------------------------------------------
-  - title: "Variables, Types & The Indentation Trap"
+  - title: "Variables, Types & f-Strings"
     instructions: |
       ## Bridging Your C++ Mental Model
 
@@ -162,7 +161,107 @@ steps:
 
       The `f"..."` string is called an **f-string** (formatted string literal). It is Python's idiomatic way to embed expressions inside strings.
 
-      ### ⚠️ The Indentation Trap (Negative Transfer from C++)
+      ### Task
+
+      Complete `profile.py` by replacing the `print(...)` placeholder with an f-string that produces:
+      ```
+      Student: Alice | Year: 2 | Major: Computer Science | GPA: 3.82
+      ```
+      Use `:.2f` inside the braces to format the GPA to two decimal places.
+
+    files:
+      - path: "profile.py"
+        content: |
+          name  = "Alice"
+          year  = 2
+          gpa   = 3.82
+          major = "Computer Science"
+
+          # TODO: print the line below using a single f-string:
+          # Student: Alice | Year: 2 | Major: Computer Science | GPA: 3.82
+          # Hint: format gpa with :.2f inside the braces
+          print(...)
+        language: "python"
+
+    open_file: "profile.py"
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          output = __run_capture('/tutorial/profile.py')
+      - description: "Output contains 'Student: Alice'"
+        command: |
+          output = __run_capture('/tutorial/profile.py')
+          assert 'Student: Alice' in output, \
+              f"Expected 'Student: Alice' in output, got: {repr(output)}"
+      - description: "Output contains 'Year: 2' and 'Major: Computer Science'"
+        command: |
+          output = __run_capture('/tutorial/profile.py')
+          assert 'Year: 2' in output and 'Major: Computer Science' in output, \
+              f"Expected 'Year: 2' and 'Major: Computer Science' in output, got: {repr(output)}"
+      - description: "GPA is formatted to 2 decimal places (3.82)"
+        command: |
+          output = __run_capture('/tutorial/profile.py')
+          assert '3.82' in output, \
+              f"Expected GPA '3.82' in output, got: {repr(output)}"
+
+    quiz:
+      title: "Variables & Types — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            What does `type(3.14)` return in Python?
+          type: single
+          options:
+            - "`double`"
+            - "`float`"
+            - "`decimal`"
+            - "`number`"
+          correct_index: 1
+          explanation: |
+            Python uses `float` (not C++'s `double`) for floating-point numbers.
+            You can always use `type(x)` to inspect a variable's type at runtime —
+            a handy debugging tool that does not exist in C++ without runtime type info (RTTI).
+
+        - question: |
+            Which of the following correctly uses an f-string to print `"Price: $12.50"`?
+          type: single
+          options:
+            - '`print("Price: $" + price)`'
+            - '`print(f"Price: ${price:.2f}")`'
+            - '`printf("Price: $%.2f", price)`'
+            - '`print("Price: %s" % price)`'
+          correct_index: 1
+          explanation: |
+            f-strings use the `f"..."` prefix and embed expressions with `{expr}`.
+            Format specifiers like `:.2f` (two decimal places) go *inside* the braces.
+            The `%` operator (option D) is the old Python 2 way; f-strings are the modern idiom.
+
+        - question: |
+            A student writes `x = 42` in Python. What is the type of `x`?
+          type: single
+          options:
+            - "`integer`"
+            - "`int`"
+            - "`number`"
+            - "`float`"
+          correct_index: 1
+          explanation: |
+            Python infers the type from the assigned value. Integer literals like `42` become `int`.
+            Unlike C++, there is no explicit type declaration — Python does this automatically.
+            You can verify with `type(x)`, which returns `<class 'int'>`.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — The Indentation Trap
+  # Pedagogy:
+  #   Negative Transfer warning — the single most common mistake from C++ students.
+  #   Fixer Upper — deliberately broken code to diagnose and repair.
+  # --------------------------------------------------------------------------
+  - title: "The Indentation Trap"
+    instructions: |
+      ## ⚠️ The Indentation Trap (Negative Transfer from C++)
 
       In C++, indentation is cosmetic — the compiler ignores it, `{}` defines blocks.
       **In Python, indentation IS the syntax.** Wrong indentation = `IndentationError`.
@@ -178,6 +277,9 @@ steps:
       ```
 
       > **Rule**: Use 4 spaces per indent level. Never mix tabs and spaces.
+
+      Every block-opening statement (`if`, `elif`, `else`, `for`, `while`, `def`, `class`, ...)
+      ends with a `:` and the body must be indented one level further.
 
       ### Task: Fixer Upper
 
@@ -227,7 +329,7 @@ steps:
           assert 'Score 71: C' in output, f"Expected 'Score 71: C' (71 < 80 so not B), got: {repr(output)}"
 
     quiz:
-      title: "Variables & Types — Knowledge Check"
+      title: "The Indentation Trap — Knowledge Check"
       min_score: 0.67
       shuffle: true
       questions:
@@ -252,41 +354,41 @@ steps:
             Forgetting this is the most common mistake for students coming from C++ or Java.
 
         - question: |
-            What does `type(3.14)` return in Python?
+            In Python, what marks the start of a new indented block (instead of `{` in C++)?
           type: single
           options:
-            - "`double`"
-            - "`float`"
-            - "`decimal`"
-            - "`number`"
-          correct_index: 1
+            - "An opening brace `{`"
+            - "The `begin` keyword"
+            - "A colon `:` at the end of the control statement"
+            - "A semicolon `;`"
+          correct_index: 2
           explanation: |
-            Python uses `float` (not C++'s `double`) for floating-point numbers.
-            You can always use `type(x)` to inspect a variable's type at runtime —
-            a handy debugging tool that does not exist in C++ without runtime type info (RTTI).
+            Every block-opening statement (`if`, `for`, `while`, `def`, `class`, ...) ends with a colon `:`.
+            The body of the block is then indented one level. There are no braces — the indentation alone
+            defines where the block ends. This is unlike C++, Java, or JavaScript.
 
         - question: |
-            Which of the following correctly uses an f-string to print `"Price: $12.50"`?
+            A student accidentally mixes tabs and spaces for indentation in the same Python file.
+            What will happen when they run it?
           type: single
           options:
-            - '`print("Price: $" + price)`'
-            - '`print(f"Price: ${price:.2f}")`'
-            - '`printf("Price: $%.2f", price)`'
-            - '`print("Price: %s" % price)`'
-          correct_index: 1
+            - "Python auto-converts tabs to spaces and runs fine"
+            - "The code runs but indented blocks are silently skipped"
+            - "Python raises a `TabError` or `IndentationError`"
+            - "Only the lines with tabs produce output"
+          correct_index: 2
           explanation: |
-            f-strings use the `f"..."` prefix and embed expressions with `{expr}`.
-            Format specifiers like `:.2f` (two decimal places) go *inside* the braces.
-            The `%` operator (option D) is the old Python 2 way; f-strings are the modern idiom.
+            Mixing tabs and spaces is a syntax error in Python 3. Python raises `TabError: inconsistent use
+            of tabs and spaces in indentation`. Always use 4 spaces (the universal Python convention) and
+            configure your editor to insert spaces when you press Tab.
 
   # --------------------------------------------------------------------------
-  # STEP 3 — Functions, Loops & List Comprehensions
+  # STEP 4 — Functions & Loops
   # Pedagogy:
   #   Transfer Tutor    — C++ function signatures → Python `def`.
-  #   Guide-and-Release — partially-written function to complete.
-  #   Beacon            — list comprehension as a recognisable Python pattern.
+  #   Guide-and-Release — partially-written functions to complete.
   # --------------------------------------------------------------------------
-  - title: "Functions, Loops & List Comprehensions"
+  - title: "Functions & Loops"
     instructions: |
       ## Functions: `def` vs C++ Signatures
 
@@ -334,88 +436,97 @@ steps:
           print(f"Index {i}: {num}")
       ```
 
-      ### ✨ Python Beacon: List Comprehensions
+      ### `range()` — Generating Integer Sequences
 
-      A **list comprehension** is a compact way to build a list. Once you recognise the
-      pattern, you will see it everywhere in Python code:
+      C++ counting loops translate directly to `range()` in Python:
 
       ```python
-      # C++ equivalent: vector comprehension via loop
-      # std::vector<int> squares;
-      # for (int x : nums) squares.push_back(x * x);
+      # C++: for (int i = 0; i < 5; i++) { ... }
+      for i in range(5):           # i = 0, 1, 2, 3, 4
 
-      # Python: one line
-      squares = [x * x for x in nums]
+      # C++: for (int i = 1; i <= 5; i++) { ... }
+      for i in range(1, 6):        # i = 1, 2, 3, 4, 5  (stop is *exclusive*, like C++'s <)
 
-      # With a filter (optional condition at the end):
-      evens = [x for x in nums if x % 2 == 0]
+      # C++: for (int i = 0; i < 10; i += 2) { ... }
+      for i in range(0, 10, 2):    # i = 0, 2, 4, 6, 8  (optional step argument)
+      ```
+
+      > **Key rule**: `range(start, stop)` always includes `start` and excludes `stop` — exactly like C++'s `i < stop`.
+
+      ### ⚠️ `**` for Exponentiation — Not `^`
+
+      Python uses `**` for exponentiation. `^` is **bitwise XOR** — a common mistake from math notation or C++ (`pow()`):
+
+      ```python
+      2 ** 8    # 256  ✓  (two to the eighth power)
+      9 ** 0.5  # 3.0  ✓  (square root — works on floats)
+      2 ^ 8     # 10   ✗  (bitwise XOR — NOT exponentiation!)
       ```
 
       ### Task
 
-      Complete the two functions in `stats.py`:
+      Complete two functions in `functions.py`:
 
-      1. `mean(numbers)` — returns the average of a list of numbers.
-         *Hint: `sum()` and `len()` are built-in functions.*
-      2. `above_average(numbers)` — returns a new list containing only the numbers
-         that are **strictly greater than** the mean.
-         *Use a list comprehension.*
+      1. `mean(numbers)` — returns the arithmetic mean.
+         *Hint: `sum()` and `len()` are built-in Python functions.*
+      2. `running_total(numbers)` — returns a new list where each element is the cumulative sum up to that index.
+         *Example: `running_total([1, 2, 3])` → `[1, 3, 6]`. Use a `for` loop.*
 
     files:
-      - path: "stats.py"
+      - path: "functions.py"
         content: |
           def mean(numbers):
               """Return the arithmetic mean of a list of numbers."""
               # TODO: implement using sum() and len()
               pass
 
-          def above_average(numbers):
-              """Return a list of numbers strictly greater than the mean."""
-              avg = mean(numbers)
-              # TODO: use a list comprehension with a condition
-              pass
+          def running_total(numbers):
+              """Return a list of cumulative sums.
+              Example: running_total([1, 2, 3]) == [1, 3, 6]
+              """
+              result = []
+              total = 0
+              for n in numbers:
+                  # TODO: add n to total, then append total to result
+                  pass
+              return result
 
           # --- Quick self-test ---
           data = [4, 8, 15, 16, 23, 42]
           print(f"Data:          {data}")
           print(f"Mean:          {mean(data)}")
-          print(f"Above average: {above_average(data)}")
+          print(f"Running total: {running_total(data)}")
         language: "python"
 
-    open_file: "stats.py"
+    open_file: "functions.py"
 
     tests:
       - description: "mean([4, 8, 15, 16, 23, 42]) == 18.0"
         command: |
           g = {}
-          exec(open('/tutorial/stats.py').read(), g)
+          exec(open('/tutorial/functions.py').read(), g)
           result = g['mean']([4, 8, 15, 16, 23, 42])
           assert result == 18.0, f"Expected 18.0, got {result}"
-      - description: "above_average returns numbers > mean (not >=)"
-        command: |
-          g = {}
-          exec(open('/tutorial/stats.py').read(), g)
-          result = g['above_average']([4, 8, 15, 16, 23, 42])
-          expected = [23, 42]
-          assert result == expected, f"Expected {expected}, got {result}"
       - description: "mean of a single-element list equals that element"
         command: |
           g = {}
-          exec(open('/tutorial/stats.py').read(), g)
+          exec(open('/tutorial/functions.py').read(), g)
           assert g['mean']([7]) == 7, "mean([7]) should be 7"
-      - description: "above_average uses a list comprehension (not a manual loop)"
+      - description: "running_total([1, 2, 3]) == [1, 3, 6]"
         command: |
-          import ast
-          src = open('/tutorial/stats.py').read()
-          tree = ast.parse(src)
-          # Find the above_average function and check for a ListComp inside it
-          for node in ast.walk(tree):
-              if isinstance(node, ast.FunctionDef) and node.name == 'above_average':
-                  has_comp = any(isinstance(n, ast.ListComp) for n in ast.walk(node))
-                  assert has_comp, "above_average should use a list comprehension [x for x in ...]"
+          g = {}
+          exec(open('/tutorial/functions.py').read(), g)
+          result = g['running_total']([1, 2, 3])
+          assert result == [1, 3, 6], f"Expected [1, 3, 6], got {result}"
+      - description: "running_total([10, 20]) == [10, 30]"
+        command: |
+          g = {}
+          exec(open('/tutorial/functions.py').read(), g)
+          result = g['running_total']([10, 20])
+          assert result == [10, 30], f"Expected [10, 30], got {result}"
 
     quiz:
-      title: "Functions & Comprehensions — Knowledge Check"
+      title: "Functions & Loops — Knowledge Check"
       min_score: 0.67
       shuffle: true
       questions:
@@ -440,6 +551,177 @@ steps:
             `label="unknown"` is a **default parameter**. When `describe("rock")` is called without
             a second argument, `label` falls back to `"unknown"`. When `describe("gold", "rare")` is called,
             `label` is set to `"rare"`.
+
+        - question: |
+            Which of the following iterates over a list and gives both the index and the item?
+          type: single
+          options:
+            - "`for i, x in index(nums):`"
+            - "`for i, x in enumerate(nums):`"
+            - "`for i in nums.keys():`"
+            - "`for i in range(nums):`"
+          correct_index: 1
+          explanation: |
+            `enumerate(iterable)` yields `(index, value)` pairs. Unpacking them into `i, x` gives you both
+            at once. This is the Pythonic replacement for C++'s index-based `for (int i = 0; i < nums.size(); i++)`.
+
+        - question: |
+            What does `list(range(2, 8, 2))` evaluate to?
+          type: single
+          options:
+            - "`[2, 4, 6, 8]`"
+            - "`[2, 4, 6]`"
+            - "`[2, 3, 4, 5, 6, 7]`"
+            - "`[2, 8]`"
+          correct_index: 1
+          explanation: |
+            `range(start, stop, step)` generates numbers from `start` up to but not including `stop`,
+            counting by `step`. So `range(2, 8, 2)` → 2, 4, 6 (8 is excluded because stop is exclusive).
+            This matches C++'s `for (int i = 2; i < 8; i += 2)`.
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — List Comprehensions
+  # Pedagogy:
+  #   Beacon            — list comprehension as a recognisable Python pattern.
+  #   Guide-and-Release — complete functions using the comprehension pattern.
+  # --------------------------------------------------------------------------
+  - title: "List Comprehensions"
+    instructions: |
+      ## ✨ Python Beacon: List Comprehensions
+
+      A **list comprehension** is a compact way to build a list. Once you recognise the
+      pattern, you will see it everywhere in Python code:
+
+      ```python
+      # C++ equivalent:
+      # std::vector<int> squares;
+      # for (int i = 1; i <= 5; i++) squares.push_back(i * i);
+
+      # Python: one line — combines range() and **
+      squares = [x**2 for x in range(1, 6)]          # [1, 4, 9, 16, 25]
+      ```
+
+      The general form is:
+      ```
+      [expression  for variable in iterable]
+      ```
+
+      ### Filtering with a Condition
+
+      Add an `if` at the end to keep only items that match:
+
+      ```python
+      evens = [x for x in range(10) if x % 2 == 0]   # [0, 2, 4, 6, 8]
+      nums  = [4, 8, 15, 16, 23, 42]
+      big   = [x for x in nums if x > 20]             # [23, 42]
+      ```
+
+      ### Compared to a for-loop
+
+      ```python
+      # For-loop version:
+      result = []
+      for x in range(10):
+          if x % 2 == 0:
+              result.append(x)
+
+      # List comprehension — same result, one line:
+      result = [x for x in range(10) if x % 2 == 0]
+      ```
+
+      List comprehensions are preferred when the transformation is simple — they are a
+      recognised Python idiom that experienced readers understand at a glance.
+
+      ### Task
+
+      Complete two functions in `listcomp.py`. `mean()` is already implemented for you.
+
+      1. `above_average(numbers)` — returns a list of numbers **strictly greater than** the mean.
+         *Use a list comprehension with a condition.*
+      2. `squares_up_to(n)` — returns `[1, 4, 9, ..., n**2]`.
+         *Use `range()` starting at 1 and `**` for exponentiation in a list comprehension.*
+
+    files:
+      - path: "listcomp.py"
+        content: |
+          def mean(numbers):
+              """Already implemented — returns the arithmetic mean."""
+              return sum(numbers) / len(numbers)
+
+          def above_average(numbers):
+              """Return a list of numbers strictly greater than the mean."""
+              avg = mean(numbers)
+              # TODO: use a list comprehension with a condition
+              pass
+
+          def squares_up_to(n):
+              """Return [1**2, 2**2, ..., n**2] using range() and **."""
+              # TODO: use range() starting at 1 and ** in a list comprehension
+              pass
+
+          # --- Quick self-test ---
+          data = [4, 8, 15, 16, 23, 42]
+          print(f"Data:          {data}")
+          print(f"Above average: {above_average(data)}")
+          print(f"Squares to 5:  {squares_up_to(5)}")
+        language: "python"
+
+    open_file: "listcomp.py"
+
+    tests:
+      - description: "above_average returns numbers > mean (not >=)"
+        command: |
+          g = {}
+          exec(open('/tutorial/listcomp.py').read(), g)
+          result = g['above_average']([4, 8, 15, 16, 23, 42])
+          expected = [23, 42]
+          assert result == expected, f"Expected {expected}, got {result}"
+      - description: "above_average uses a list comprehension (not a manual loop)"
+        command: |
+          import ast
+          src = open('/tutorial/listcomp.py').read()
+          tree = ast.parse(src)
+          for node in ast.walk(tree):
+              if isinstance(node, ast.FunctionDef) and node.name == 'above_average':
+                  has_comp = any(isinstance(n, ast.ListComp) for n in ast.walk(node))
+                  assert has_comp, "above_average should use a list comprehension [x for x in ...]"
+      - description: "squares_up_to(5) == [1, 4, 9, 16, 25]"
+        command: |
+          g = {}
+          exec(open('/tutorial/listcomp.py').read(), g)
+          result = g['squares_up_to'](5)
+          assert result == [1, 4, 9, 16, 25], f"Expected [1, 4, 9, 16, 25], got {result}"
+      - description: "squares_up_to uses range() and ** operator"
+        command: |
+          import ast
+          src = open('/tutorial/listcomp.py').read()
+          tree = ast.parse(src)
+          for node in ast.walk(tree):
+              if isinstance(node, ast.FunctionDef) and node.name == 'squares_up_to':
+                  has_pow = any(isinstance(n, ast.BinOp) and isinstance(n.op, ast.Pow)
+                                for n in ast.walk(node))
+                  assert has_pow, "squares_up_to should use ** (exponentiation operator)"
+
+    quiz:
+      title: "List Comprehensions — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            Which list comprehension correctly produces only the **odd** numbers from 1 to 9?
+          type: single
+          options:
+            - "`[x for x in range(1, 10) if x % 2 != 0]`"
+            - "`[x if x % 2 != 0 for x in range(1, 10)]`"
+            - "`[x for x in range(1, 10, 1) if odd(x)]`"
+            - "`(x for x in range(1, 10) if x % 2 != 0)`"
+          correct_index: 0
+          explanation: |
+            The filter condition goes at the end: `[expr for var in iterable if condition]`.
+            Option B has the `if` before `for` — that is a syntax error.
+            Option C calls `odd(x)` which is not a built-in Python function.
+            Option D uses `()` which creates a *generator*, not a list.
 
         - question: |
             A student rewrites `[x**2 for x in range(5)]` as a for-loop and gets the same result.
@@ -473,13 +755,13 @@ steps:
             `i^2` in Python is **bitwise XOR**, not exponentiation — a common negative-transfer mistake from math.
 
   # --------------------------------------------------------------------------
-  # STEP 4 — Files, sys.argv & Python as a Scripting Tool
+  # STEP 6 — Reading Files with open() and with
   # Pedagogy:
   #   Transfer Tutor    — C++ file I/O (fopen / fstream) → Python `open()` + `with`.
   #   Lay of the Land   — Python's "batteries included" stdlib.
   #   Guide-and-Release — complete a small data-processing script.
   # --------------------------------------------------------------------------
-  - title: "Files, sys.argv & Python as a Scripting Tool"
+  - title: "Reading Files with open() and with"
     instructions: |
       ## Python's "Batteries Included" Philosophy
 
@@ -510,25 +792,14 @@ steps:
               print(line.strip())   # .strip() removes the trailing newline
       ```
 
-      ### Command-Line Arguments with `sys.argv`
-
-      ```python
-      import sys
-      # sys.argv is a list: ["script.py", "arg1", "arg2", ...]
-      # C++ equivalent:  argv[0], argv[1], ...
-
-      if len(sys.argv) < 2:
-          print("Usage: python3 script.py <filename>")
-          sys.exit(1)              # Exit with non-zero code — just like in C++
-
-      filename = sys.argv[1]
-      ```
+      The `with` statement is Python's **resource management** idiom — just like RAII in C++,
+      the file is guaranteed to be closed when the block exits.
 
       ### Task
 
       Complete `word_count.py`. It should:
       1. Read every line from `data.txt`
-      2. Split each line into words (`.split()` does this — it splits on whitespace)
+      2. Split each line into words (`.split()` splits on whitespace)
       3. Count the **total number of words** across all lines
       4. Print: `Total words: <count>`
 
@@ -538,7 +809,6 @@ steps:
       - path: "word_count.py"
         content: |
           # Task: Count the total words in data.txt
-
           total = 0
 
           with open("data.txt") as f:
@@ -577,7 +847,7 @@ steps:
               f"Expected 'Total words: 24', got: {repr(output)}"
 
     quiz:
-      title: "Files & Scripting — Knowledge Check"
+      title: "Reading Files — Knowledge Check"
       min_score: 0.67
       shuffle: true
       questions:
@@ -615,6 +885,189 @@ steps:
             When you read a line from a file, it includes the trailing newline `\n`.
             `.strip()` removes **leading and trailing whitespace** (spaces, tabs, `\n`, `\r`).
             This is analogous to trimming a C++ `std::string`.
+
+        - question: |
+            What happens to a file opened with `with open("file.txt") as f:` when the `with` block finishes?
+          type: single
+          options:
+            - "Nothing — you must call `f.close()` manually after the block"
+            - "The file is automatically closed, even if an exception occurred inside the block"
+            - "The file is deleted from disk"
+            - "The file stays open until the Python interpreter exits"
+          correct_index: 1
+          explanation: |
+            The `with` statement calls `f.__exit__()` (which closes the file) automatically when the block
+            exits — whether normally or due to an exception. This is Python's answer to C++'s RAII pattern
+            and eliminates the risk of forgetting to call `f.close()`.
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — sys.argv & stderr
+  # Pedagogy:
+  #   Transfer Tutor    — C argc/argv → sys.argv; std::cerr → sys.stderr.
+  #   Guide-and-Release — complete a robust command-line script.
+  # --------------------------------------------------------------------------
+  - title: "sys.argv & stderr"
+    instructions: |
+      ## Command-Line Arguments with `sys.argv`
+
+      ```python
+      import sys
+      # sys.argv is a list: ["script.py", "arg1", "arg2", ...]
+      # C++ equivalent:  argv[0], argv[1], ...
+
+      if len(sys.argv) < 2:
+          print("Usage: python3 script.py <filename>")
+          sys.exit(1)              # Exit with non-zero code — just like in C++
+
+      filename = sys.argv[1]
+      ```
+
+      `sys.argv[0]` is always the script name itself. Extra arguments start at index 1.
+      `sys.exit(1)` terminates the process with exit code 1 — the same convention as C's `exit(1)`.
+
+      ### Writing to `stderr` with `print()`
+
+      By default `print()` writes to **stdout**. Error and diagnostic messages should go to **stderr**,
+      matching C++'s `std::cerr` and Bash's `>&2` redirect:
+
+      ```python
+      import sys
+
+      # C++: std::cout << "Done." << std::endl;
+      print("Done.")                                    # → stdout
+
+      # C++: std::cerr << "Warning: file not found" << std::endl;
+      print("Warning: file not found", file=sys.stderr) # → stderr
+      ```
+
+      Separating them lets callers redirect each stream independently:
+
+      ```bash
+      python3 script.py > output.txt 2> errors.txt
+      ```
+
+      ### Task
+
+      Complete `safe_word_count.py`. It should:
+      1. If no filename argument is provided (`len(sys.argv) < 2`), print `Error: no filename given` to `sys.stderr` and call `sys.exit(1)`
+      2. Read `filename = sys.argv[1]` and print `Reading: <filename>` to `sys.stderr`
+      3. Count words and print `Total words: <count>` to stdout
+
+      The word-counting logic and file opening are already provided — focus on the argument check and the stderr output.
+
+    files:
+      - path: "safe_word_count.py"
+        content: |
+          import sys
+
+          # TODO: if len(sys.argv) < 2, print "Error: no filename given" to sys.stderr
+          #       and call sys.exit(1)
+
+          filename = sys.argv[1]
+
+          # TODO: print "Reading: <filename>" to sys.stderr
+
+          total = 0
+          with open(filename) as f:
+              for line in f:
+                  total += len(line.split())
+
+          print(f"Total words: {total}")
+        language: "python"
+
+      - path: "data.txt"
+        content: |
+          the quick brown fox jumps over the lazy dog
+          pack my box with five dozen liquor jugs
+          how vexingly quick daft zebras jump
+        language: "plaintext"
+
+    open_file: "safe_word_count.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    tests:
+      - description: "Prints 'Reading: data.txt' to sys.stderr when given data.txt"
+        command: |
+          import sys, io, os; os.chdir('/tutorial')
+          old_argv = sys.argv
+          sys.argv = ['safe_word_count.py', 'data.txt']
+          buf = io.StringIO()
+          old_err = sys.stderr
+          sys.stderr = buf
+          try:
+              exec(open('/tutorial/safe_word_count.py').read(), {"__name__": "__main__"})
+          finally:
+              sys.stderr = old_err
+              sys.argv = old_argv
+          assert 'Reading: data.txt' in buf.getvalue(), \
+              f"Expected 'Reading: data.txt' in stderr, got: {repr(buf.getvalue())}"
+      - description: "Counts words correctly (Total words: 24)"
+        command: |
+          import sys, os; os.chdir('/tutorial')
+          old_argv = sys.argv
+          sys.argv = ['safe_word_count.py', 'data.txt']
+          try:
+              output = __run_capture('/tutorial/safe_word_count.py')
+          finally:
+              sys.argv = old_argv
+          assert 'Total words: 24' in output, \
+              f"Expected 'Total words: 24', got: {repr(output)}"
+      - description: "Exits with code 1 and prints error to stderr when no argument given"
+        command: |
+          import sys, io, os; os.chdir('/tutorial')
+          old_argv = sys.argv
+          sys.argv = ['safe_word_count.py']
+          buf = io.StringIO()
+          old_err = sys.stderr
+          sys.stderr = buf
+          exited = False
+          try:
+              exec(open('/tutorial/safe_word_count.py').read(), {"__name__": "__main__"})
+          except SystemExit as e:
+              exited = (e.code != 0)
+          finally:
+              sys.stderr = old_err
+              sys.argv = old_argv
+          assert exited, "Script should call sys.exit(1) when no argument is given"
+          assert 'Error' in buf.getvalue(), \
+              f"Expected an error message in stderr, got: {repr(buf.getvalue())}"
+
+    quiz:
+      title: "sys.argv & stderr — Knowledge Check"
+      min_score: 0.67
+      shuffle: true
+      questions:
+
+        - question: |
+            A script is run with `python3 myscript.py hello world`. What is `sys.argv[0]`?
+          type: single
+          options:
+            - "`\"hello\"`"
+            - "`\"world\"`"
+            - "`\"myscript.py\"`"
+            - "`None`"
+          correct_index: 2
+          explanation: |
+            `sys.argv[0]` is always the **script name** itself. Arguments start at index 1:
+            `sys.argv[1]` is `"hello"`, `sys.argv[2]` is `"world"`.
+            This mirrors C/C++'s `argv[0]` convention.
+
+        - question: |
+            Why should error messages be written to `sys.stderr` rather than printed normally?
+          type: single
+          options:
+            - "stderr is faster than stdout in Python"
+            - "stdout can only handle one line at a time"
+            - "Separating stdout and stderr lets users redirect normal output and errors independently"
+            - "Python automatically color-codes stderr messages in red"
+          correct_index: 2
+          explanation: |
+            When stdout and stderr are separate streams, users can capture output (`> out.txt`) and errors
+            (`2> err.txt`) independently. Mixing error messages into stdout breaks pipelines —
+            a downstream command would receive the error text as data. This is the same reason C++ uses
+            `std::cerr` and Bash scripts use `echo "error" >&2`.
 
         - question: |
             A script should exit with code `1` and print an error if the user provides no arguments.
