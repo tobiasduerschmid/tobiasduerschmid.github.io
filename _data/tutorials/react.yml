@@ -182,7 +182,7 @@ steps:
 
       ### Fixer-Upper: Four Classic JSX Bugs
 
-      The file below has **four bugs** that prevent it from rendering correctly.
+      The file below has **three bugs** that prevent it from rendering correctly.
 
       **Common JSX gotchas for C++/Python developers:**
 

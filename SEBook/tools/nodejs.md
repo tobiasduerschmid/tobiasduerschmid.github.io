@@ -22,6 +22,26 @@ let count = 0;       // A variable that can be reassigned
 const name = "UCLA"; // A constant that cannot be reassigned
 ```
 
+> **Never use `var`** — it has function-scoped hoisting rules that violate the block-scope behavior you learned in C++ and Python. Always prefer `let` or `const`.
+
+**Destructuring:**
+JavaScript provides a concise shorthand for unpacking values from arrays and objects — used constantly in modern JS and React:
+
+```javascript
+// Array destructuring (like Python's tuple unpacking):
+const coords = [40.7, -74.0];
+const [lat, lng] = coords;      // lat = 40.7, lng = -74.0
+
+// Object destructuring — extract properties by name:
+const student = { name: "Alice", grade: 95 };
+const { name, grade } = student;   // name = "Alice", grade = 95
+
+// Commonly used in function parameters:
+function printStudent({ name, grade }) {
+    console.log(`${name}: ${grade}`);
+}
+```
+
 ### What is Node.js? (Taking off the Training Wheels)
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
 
@@ -94,9 +114,9 @@ A Promise is exactly what it sounds like: an object representing the eventual co
 // A modern asynchronous function
 async function fetchUserData(userId) {
     try {
-        // 'await' tells the Event Loop: "Pause this function's execution 
+        // 'await' tells the Event Loop: "Pause this function's execution
         // until the database responds, but go do other things in the meantime."
-        const response = await database.getUser(userId); 
+        const response = await database.getUser(userId);
         console.log(`User found: ${response.name}`);
     } catch (error) {
         // Error handling looks exactly like C++ or Python
@@ -104,6 +124,17 @@ async function fetchUserData(userId) {
     }
 }
 ```
+
+> **⚠️ Sequential vs. Parallel `await`:** A critical performance trap is awaiting independent operations one after the other, when they could run in parallel:
+> ```javascript
+> // SLOWER — sequential: total time = time(A) + time(B)
+> const userA = await fetchUser('alice');
+> const userB = await fetchUser('bob');
+>
+> // FASTER — parallel: total time = max(time(A), time(B))
+> const [userA, userB] = await Promise.all([fetchUser('alice'), fetchUser('bob')]);
+> ```
+> When two async operations are independent, always prefer `Promise.all()` to run them concurrently.
 
 ### Data Representation: JavaScript Objects and JSON
 If you understand Python dictionaries, you already understand the *general structure* of JavaScript Objects. Unlike C++, where you must define a `struct` or `class` before instantiating an object, JavaScript allows you to create objects on the fly using key-value pairs. 
