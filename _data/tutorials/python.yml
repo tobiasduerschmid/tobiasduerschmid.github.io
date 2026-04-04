@@ -1329,9 +1329,11 @@ steps:
 
           # 1. Extract all timestamps (HH:MM:SS) and print count
           # Hint: pattern is r'\d{2}:\d{2}:\d{2}'
+          # Expected output: Timestamps found: 6
 
           # 2. Extract all ERROR lines and print count
           # Hint: pattern is r'ERROR.*'
+          # Expected output: Errors: 2
 
           # 3. Redact IPv4 addresses and print redacted log
           # Hint: pattern is r'\d+\.\d+\.\d+\.\d+'
