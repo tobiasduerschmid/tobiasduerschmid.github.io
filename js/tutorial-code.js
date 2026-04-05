@@ -2278,7 +2278,12 @@
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
 
-    // Sync all open files before running tests
+    // Get the active file content to send with each test
+    var activeFile = this.activeFileName;
+    var program = (activeFile && this.editorModels[activeFile])
+      ? this.editorModels[activeFile].model.getValue() : '';
+
+    // Sync files first, then run tests sequentially
     var filenames = Object.keys(this.editorModels);
     var syncCount = 0;
     var totalFiles = filenames.length;
@@ -2286,22 +2291,14 @@
     function afterSync() {
       syncCount++;
       if (syncCount < totalFiles) return;
-      // First consult the active file so tests can query it
-      var activeFile = self.activeFileName;
-      if (activeFile) {
-        var content = self.editorModels[activeFile] ? self.editorModels[activeFile].model.getValue() : '';
-        self._postWorker({ type: 'runProlog', code: content, silent: true }, function () {
-          runNext(0);
-        });
-      } else {
-        runNext(0);
-      }
+      runNext(0);
     }
 
     function runNext(i) {
       if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      // Each test gets a fresh consult of the program + async query execution
       self._postWorker(
-        { type: 'runCode', code: tests[i].command, silent: true },
+        { type: 'runTest', program: program, code: tests[i].command },
         function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
       );
     }

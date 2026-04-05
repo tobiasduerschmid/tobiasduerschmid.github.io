@@ -36,6 +36,26 @@ var document = {
   createElement: function () { return {}; },
 };
 
+// Intercept console.log BEFORE loading Tau Prolog.
+// In browser mode, Tau Prolog's write/1 and nl/0 call console.log(char).
+// We capture these and forward them to the main thread as stdout.
+var _writeBuffer = '';
+var _writeSilent = false;
+var _origLog = console.log;
+console.log = function () {
+  if (_writeSilent) return;
+  var text = Array.prototype.slice.call(arguments).join('');
+  _writeBuffer += text;
+};
+
+/** Flush any buffered write/1 output to the main thread. */
+function flushWriteBuffer() {
+  if (_writeBuffer.length > 0) {
+    self.postMessage({ type: 'stdout', text: _writeBuffer });
+    _writeBuffer = '';
+  }
+}
+
 // Tau Prolog — ISO Prolog interpreter in pure JavaScript
 importScripts('https://cdn.jsdelivr.net/npm/tau-prolog@0.3.4/modules/core.js');
 importScripts('https://cdn.jsdelivr.net/npm/tau-prolog@0.3.4/modules/lists.js');
@@ -67,6 +87,7 @@ self.onmessage = function (e) {
   if      (msg.type === 'run')        runFile(msg.id, msg.path, msg.query || '');
   else if (msg.type === 'runProlog')  runProlog(msg.id, msg.code, !!msg.silent);
   else if (msg.type === 'runCode')    runCode(msg.id, msg.code, !!msg.silent);
+  else if (msg.type === 'runTest')    runTest(msg.id, msg.program, msg.code);
   else if (msg.type === 'write')      writeFile(msg.id, msg.path, msg.content);
   else if (msg.type === 'read')       readFile(msg.id, msg.path);
   else if (msg.type === 'reset')      resetSession(msg.id);
@@ -117,21 +138,34 @@ function collectAnswers(id, silent, found, count, onDone) {
     onDone(0);
     return;
   }
+  _writeSilent = silent;
   session.answer({
     success: function (answer) {
-      if (!silent) self.postMessage({ type: 'stdout', text: pl.format_answer(answer) + '\n' });
+      if (!silent) {
+        flushWriteBuffer();
+        self.postMessage({ type: 'stdout', text: pl.format_answer(answer) + '\n' });
+      }
       collectAnswers(id, silent, true, count + 1, onDone);
     },
     fail: function () {
-      if (!found && !silent) self.postMessage({ type: 'stdout', text: 'false.\n' });
+      if (!silent) {
+        flushWriteBuffer();
+        if (!found) self.postMessage({ type: 'stdout', text: 'false.\n' });
+      }
       onDone(found ? 0 : 1);
     },
     error: function (err) {
-      if (!silent) self.postMessage({ type: 'stderr', text: 'Runtime error: ' + formatErr(err) + '\n' });
+      if (!silent) {
+        flushWriteBuffer();
+        self.postMessage({ type: 'stderr', text: 'Runtime error: ' + formatErr(err) + '\n' });
+      }
       onDone(1);
     },
     limit: function () {
-      if (!silent) self.postMessage({ type: 'stderr', text: 'Inference limit reached.\n' });
+      if (!silent) {
+        flushWriteBuffer();
+        self.postMessage({ type: 'stderr', text: 'Inference limit reached.\n' });
+      }
       onDone(1);
     }
   });
@@ -206,22 +240,20 @@ function runCode(id, code, silent) {
         if (goal.charAt(goal.length - 1) !== '.') goal += '.';
         var answers = [];
         var qErr = null;
-        var done = false;
 
         session.query(goal, {
           success: function () {
-            // Query parsed — now collect answers
             function next() {
               session.answer({
                 success: function (answer) { answers.push(pl.format_answer(answer)); next(); },
-                fail: function () { done = true; },
-                error: function (err) { done = true; qErr = formatErr(err); },
-                limit: function () { done = true; }
+                fail: function () { /* done */ },
+                error: function (err) { qErr = formatErr(err); },
+                limit: function () { /* done */ }
               });
             }
             next();
           },
-          error: function (err) { done = true; qErr = formatErr(err); }
+          error: function (err) { qErr = formatErr(err); }
         });
 
         if (qErr) throw new Error('Query error: ' + qErr);
@@ -246,6 +278,116 @@ function runCode(id, code, silent) {
     self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
   } catch (err) {
     if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
+    self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+  }
+}
+
+// ---- Test Runner (async-safe) ------------------------------------------------
+//
+// runTest consults a program then runs a JS assertion that can call __query.
+// Unlike runCode, __query here uses the proven async callback chain to collect
+// answers, then invokes a continuation with the results.
+//
+// Message: { type: 'runTest', id, program, code }
+//   - program: Prolog source to consult (the student's file content)
+//   - code:    JS assertion code (same as runCode tests)
+
+function runTest(id, program, code) {
+  consultProgram(program, function (consultErr) {
+    if (consultErr) {
+      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+      return;
+    }
+    // Now run the JS assertion with an async-safe __query
+    runTestCode(id, code);
+  });
+}
+
+/** Run a JS test assertion with async-safe __query.
+ *  __query collects all answers via the callback chain, then calls a continuation. */
+function runTestCode(id, code) {
+  // Parse the test code to extract __query calls and assertions.
+  // We wrap the entire test in an async execution model:
+  // the test code calls __query(goal) which returns a Promise-like object,
+  // but since we're in a Worker we use a simpler continuation approach.
+
+  // Strategy: extract query goals from the test code, run them via the async
+  // callback chain, then evaluate the assertion with the collected answers.
+
+  // Simple approach: find all __query('...') calls, run them sequentially,
+  // then evaluate the full test code with __query replaced by a synchronous lookup.
+  var queryPattern = /__query\(\s*'([^']*)'\s*\)/g;
+  var goals = [];
+  var match;
+  while ((match = queryPattern.exec(code)) !== null) {
+    goals.push(match[1]);
+  }
+
+  // Collect answers for each goal sequentially using async chain
+  var goalResults = {};
+  function runNextGoal(i) {
+    if (i >= goals.length) {
+      // All goals resolved — now run the assertion synchronously
+      evaluateTest(id, code, goalResults);
+      return;
+    }
+    var goal = goals[i];
+    if (goal.charAt(goal.length - 1) !== '.') goal += '.';
+    var answers = [];
+
+    session.query(goal, {
+      success: function () {
+        function nextAnswer() {
+          session.answer({
+            success: function (answer) {
+              answers.push(pl.format_answer(answer));
+              nextAnswer();
+            },
+            fail: function () {
+              goalResults[goals[i]] = answers;
+              runNextGoal(i + 1);
+            },
+            error: function () {
+              goalResults[goals[i]] = answers;
+              runNextGoal(i + 1);
+            },
+            limit: function () {
+              goalResults[goals[i]] = answers;
+              runNextGoal(i + 1);
+            }
+          });
+        }
+        nextAnswer();
+      },
+      error: function () {
+        goalResults[goals[i]] = [];
+        runNextGoal(i + 1);
+      }
+    });
+  }
+  runNextGoal(0);
+}
+
+/** Evaluate the test code with pre-collected query results. */
+function evaluateTest(id, code, goalResults) {
+  try {
+    var fn = new Function('__query', 'assert', '__read_file', 'session', 'pl', code);
+    fn(
+      function __query(goal) {
+        // Return pre-collected results (synchronous lookup)
+        return goalResults[goal] || [];
+      },
+      function assert(cond, msg) {
+        if (!cond) throw new Error(msg || 'Assertion failed');
+      },
+      function __read_file(path) {
+        return files[path] || '';
+      },
+      session,
+      pl
+    );
+    self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+  } catch (err) {
     self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
   }
 }
