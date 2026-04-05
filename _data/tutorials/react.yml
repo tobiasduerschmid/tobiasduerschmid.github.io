@@ -1750,16 +1750,28 @@ steps:
           function App() {
             const users = [
               {
-                name: 'Ada Lovelace',
-                username: 'ada-lovelace',
-                avatarUrl: 'https://i.pravatar.cc/80?img=47',
+                name: 'Margaret Hamilton',
+                username: 'margaret-hamilton',
+                avatarUrl: '/img/hamilton.png',
+                repos: 15, followers: 4096, following: 12
+              },
+              {
+                name: 'Fred Brooks',
+                username: 'fred-brooks',
+                avatarUrl: '/img/brooks.png',
+                repos: 7, followers: 1024, following: 300
+              },
+              {
+                name: 'Barbara Liskov',
+                username: 'barbara-liskov',
+                avatarUrl: '/img/liskov.png',
                 repos: 12, followers: 2048, following: 64
               },
               {
-                name: 'Alan Turing',
-                username: 'alan-turing',
-                avatarUrl: 'https://i.pravatar.cc/80?img=60',
-                repos: 7, followers: 9999, following: 3
+                name: 'David Parnas',
+                username: 'david-parnas',
+                avatarUrl: '/img/parnas.png',
+                repos: 9, followers: 512, following: 8
               },
             ];
 
@@ -1797,7 +1809,7 @@ steps:
                     src={avatarUrl}
                     alt={username}
                     className="rounded-circle mb-2"
-                    width="80" height="80"
+                    width="160" height="160"
                   />
                   <span className="fw-semibold text-secondary">@{username}</span>
                 </div>
@@ -1838,16 +1850,28 @@ steps:
             function App() {
               const users = [
                 {
-                  name: 'Ada Lovelace',
-                  username: 'ada-lovelace',
-                  avatarUrl: 'https://i.pravatar.cc/80?img=47',
+                  name: 'Barbara Liskov',
+                  username: 'barbara-liskov',
+                  avatarUrl: '/img/liskov.png',
                   repos: 12, followers: 2048, following: 64
                 },
                 {
-                  name: 'Alan Turing',
-                  username: 'alan-turing',
-                  avatarUrl: 'https://i.pravatar.cc/80?img=60',
-                  repos: 7, followers: 9999, following: 3
+                  name: 'Fred Brooks',
+                  username: 'fred-brooks',
+                  avatarUrl: '/img/brooks.png',
+                  repos: 7, followers: 1024, following: 300
+                },
+                {
+                  name: 'Margaret Hamilton',
+                  username: 'margaret-hamilton',
+                  avatarUrl: '/img/hamilton.png',
+                  repos: 15, followers: 4096, following: 12
+                },
+                {
+                  name: 'David Parnas',
+                  username: 'david-parnas',
+                  avatarUrl: '/img/parnas.png',
+                  repos: 9, followers: 512, following: 8
                 },
               ];
 
@@ -1874,8 +1898,8 @@ steps:
         command: |
           var root = frame.contentDocument.getElementById('root');
           var cards = root.querySelectorAll('img');
-          assert(cards.length >= 2,
-            'Render both user cards, each with an avatar image. Found: ' + cards.length + ' image(s)');
+          assert(cards.length >= 4,
+            'Render all user cards, each with an avatar image. Found: ' + cards.length + ' image(s)');
       - description: "Avatar images are circular (border-radius applied)"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1888,9 +1912,9 @@ steps:
       - description: "Usernames are displayed"
         command: |
           var text = frame.contentDocument.getElementById('root').textContent;
-          assert(text.includes('ada-lovelace') || text.includes('Ada Lovelace'),
+          assert(text.includes('barbara-liskov') || text.includes('Barbara Liskov'),
             'Display the username in the Avatar component');
-          assert(text.includes('alan-turing') || text.includes('Alan Turing'),
+          assert(text.includes('fred-brooks') || text.includes('Fred Brooks'),
             'Display both usernames');
       - description: "Stats (repos, followers) are displayed"
         command: |

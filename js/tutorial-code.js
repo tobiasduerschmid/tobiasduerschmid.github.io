@@ -2178,9 +2178,15 @@
         try {
           /* jshint evil:true */
           var fn = new Function('frame', 'assert', tests[i].command);
-          fn(frame, function assertFn(cond, msg) {
+          var ret = fn(frame, function assertFn(cond, msg) {
             if (!cond) throw new Error(msg || 'Assertion failed');
           });
+          // Support async tests (e.g. click then wait for React re-render)
+          if (ret && typeof ret.then === 'function') {
+            ret.then(function () { results[i] = true; runNext(i + 1); })
+               .catch(function (e) { results[i] = false; console.warn('React test ' + i + ' failed:', e.message); runNext(i + 1); });
+            return;
+          }
           results[i] = true;
         } catch (e) {
           results[i] = false;
