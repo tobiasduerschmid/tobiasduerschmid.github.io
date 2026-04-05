@@ -2435,9 +2435,12 @@
         }, 15000);
 
         try {
+          var scripts = frame.contentDocument.querySelectorAll('[type="text/babel"]');
+          var source = Array.from(scripts).map(function(s) { return s.textContent; }).join('\n');
+          var code = self._stripCode(source);
           /* jshint evil:true */
-          var fn = new AsyncFunction('frame', 'assert', tests[i].command);
-          fn(frame, function assertFn(cond, msg) {
+          var fn = new AsyncFunction('frame', 'code', 'assert', tests[i].command);
+          fn(frame, code, function assertFn(cond, msg) {
             if (!cond) throw new Error(msg || 'Assertion failed');
           }).then(function () {
             results[i] = true;
@@ -2479,9 +2482,10 @@
       function runNext(i) {
         if (i >= tests.length) { self._renderTestResults(tests, results); return; }
         try {
+          var code = self._stripCode(source);
           /* jshint evil:true */
-          var fn = new Function('output', 'source', 'assert', tests[i].command);
-          fn(output, source, function assertFn(cond, msg) {
+          var fn = new Function('output', 'source', 'code', 'assert', tests[i].command);
+          fn(output, source, code, function assertFn(cond, msg) {
             if (!cond) throw new Error(msg || 'Assertion failed');
           });
           results[i] = true;
@@ -2493,6 +2497,44 @@
       }
       runNext(0);
     });
+  };
+
+  // Shared helper: strips JS/JSX string literals and comments so keyword
+  // searches in test assertions cannot false-match on string *contents*.
+  // Handles: "...", '...', `...` (simplified — no nested ${}), // and /* */
+  TutorialCode.prototype._stripCode = function (src) {
+    var out = '';
+    var i = 0;
+    var n = src.length;
+    while (i < n) {
+      var c = src[i];
+      if (c === '/' && i + 1 < n && src[i + 1] === '/') {         // line comment
+        i += 2;
+        while (i < n && src[i] !== '\n') i++;
+      } else if (c === '/' && i + 1 < n && src[i + 1] === '*') {  // block comment
+        i += 2;
+        while (i < n && !(src[i] === '*' && i + 1 < n && src[i + 1] === '/')) i++;
+        if (i < n) i += 2;
+      } else if (c === '"' || c === "'") {                         // string literal
+        var q = c;
+        out += q; i++;
+        while (i < n && src[i] !== q) {
+          if (src[i] === '\\') i++;   // skip escaped char
+          i++;
+        }
+        out += q; i++;                // closing quote, content blanked
+      } else if (c === '`') {         // template literal (simplified)
+        out += '`'; i++;
+        while (i < n && src[i] !== '`') {
+          if (src[i] === '\\') { i += 2; continue; }
+          i++;
+        }
+        out += '`'; i++;              // closing backtick, content blanked
+      } else {
+        out += c; i++;
+      }
+    }
+    return out;
   };
 
   TutorialCode.prototype._showTestPanel = function (innerHtml) {
