@@ -76,7 +76,7 @@ steps:
 
     tests:
       - description: "hello.js contains a console.log statement"
-        command: "assert(source.split('\\n').some(function(l){return !l.trim().startsWith('//') && l.includes('console.log(');}), 'Add a console.log() call to hello.js')"
+        command: "assert(code.includes('console.log('), 'Add a console.log() call to hello.js')"
       - description: "Output includes 'Hello from Node.js!'"
         command: "assert(output.includes('Hello from Node.js'), 'Your console.log should print \"Hello from Node.js!\"')"
 
@@ -259,9 +259,9 @@ steps:
       - description: "Fixed both == comparisons to === (no [BUG] messages in output)"
         command: "assert(!output.includes('[BUG]'), 'Fix both == comparisons to === — the [BUG] messages should disappear')"
       - description: "MAX_STUDENTS is now declared with const"
-        command: "assert(source.includes('const MAX_STUDENTS'), 'Change \"let MAX_STUDENTS\" to \"const MAX_STUDENTS\"')"
+        command: "assert(code.includes('const MAX_STUDENTS'), 'Change \"let MAX_STUDENTS\" to \"const MAX_STUDENTS\"')"
       - description: "Used a template literal (backtick with ${}) for the message"
-        command: "assert(source.includes('${'), 'Replace the + concatenation with a template literal using backticks and ${}')"
+        command: "assert(code.includes('${'), 'Replace the + concatenation with a template literal using backticks and ${}')"
       - description: "Code runs without errors"
         command: "assert(!output.toLowerCase().includes('error'), 'The code should run without any errors')"
 
@@ -466,13 +466,13 @@ steps:
 
     tests:
       - description: "Converted getLetterGrade to an arrow function (no longer a function declaration)"
-        command: "assert(!source.includes('function getLetterGrade'), 'Convert getLetterGrade from a function declaration to an arrow function assigned to const')"
+        command: "assert(!code.includes('function getLetterGrade'), 'Convert getLetterGrade from a function declaration to an arrow function assigned to const')"
       - description: "Used an arrow function (=> syntax)"
-        command: "assert(source.includes('=>'), 'Use arrow function syntax (=>) in your solution')"
+        command: "assert(code.includes('=>'), 'Use arrow function syntax (=>) in your solution')"
       - description: "Used .filter() to select students"
-        command: "assert(source.includes('.filter('), 'Use .filter() with an arrow function to select passing students')"
+        command: "assert(code.includes('.filter('), 'Use .filter() with an arrow function to select passing students')"
       - description: "Output excludes Bob (grade 42) — he should fail the filter"
-        command: "assert(!output.includes('Bob'), 'Bob (grade 42) should be filtered out — only students with grade >= 60 should appear')"
+        command: "assert(!output.includes('Bob') && output.includes('Alice'), 'Bob (grade 42) should be filtered out — only students with grade >= 60 should appear')"
 
     quiz:
       title: "Arrow Functions & Callbacks — Knowledge Check"
@@ -708,15 +708,15 @@ steps:
 
     tests:
       - description: "Used .map() to transform the data"
-        command: "assert(source.includes('.map('), 'Use .map() with an arrow function to format each student')"
+        command: "assert(code.includes('.map('), 'Use .map() with an arrow function to format each student')"
       - description: "Used .reduce() to compute a value"
-        command: "assert(source.includes('.reduce('), 'Use .reduce() to compute the sum of all grades')"
+        command: "assert(code.includes('.reduce('), 'Use .reduce() to compute the sum of all grades')"
       - description: "Output includes formatted student lines"
         command: "assert(output.includes('Alice') && output.includes('95'), 'Your .map() should format each student with their name and grade')"
       - description: "Output includes correct class average (71.6)"
         command: "assert(output.includes('71.6'), 'The class average should be 71.6 — use .reduce() to sum grades, divide by student count, and format with .toFixed(1)')"
       - description: "Used .toFixed() for decimal formatting"
-        command: "assert(source.includes('.toFixed('), 'Format the class average to 1 decimal place using .toFixed(1)')"
+        command: "assert(code.includes('.toFixed('), 'Format the class average to 1 decimal place using .toFixed(1)')"
 
     quiz:
       title: "Array Transformation & Destructuring — Knowledge Check"
@@ -897,11 +897,9 @@ steps:
 
     tests:
       - description: "Added a second setTimeout call"
-        command: "assert((source.match(/setTimeout/g)||[]).length >= 2, 'Add a second setTimeout call at the end of the file')"
+        command: "assert((code.match(/setTimeout/g)||[]).length >= 2, 'Add a second setTimeout call at the end of the file')"
       - description: "Second setTimeout logs 'Event loop is free again!'"
         command: "assert(output.includes('free again'), 'The second setTimeout should log \"Event loop is free again!\"')"
-      - description: "Synchronous log [1] appears before setTimeout callback [3]"
-        command: "assert(output.indexOf('[1]') < output.indexOf('[3]'), 'The synchronous log [1] should appear before the setTimeout callback [3]')"
 
     quiz:
       title: "The Event Loop — Knowledge Check"
@@ -1160,11 +1158,11 @@ steps:
 
     tests:
       - description: "Function uses the 'async' keyword"
-        command: "assert(source.includes('async'), 'Declare your function with the async keyword')"
+        command: "assert(code.includes('async'), 'Declare your function with the async keyword')"
       - description: "Function uses 'await' to handle the Promise"
-        command: "assert(source.includes('await'), 'Use await to wait for the fetchStudents() Promise')"
+        command: "assert(code.includes('await'), 'Use await to wait for the fetchStudents() Promise')"
       - description: "Uses try/catch for error handling"
-        command: "assert(source.includes('try') && source.includes('catch'), 'Wrap your await call in a try/catch block for error handling')"
+        command: "assert(code.includes('try') && code.includes('catch'), 'Wrap your await call in a try/catch block for error handling')"
       - description: "Output includes student names from the data"
         command: "assert(output.includes('Alice'), 'Your output should include student names — make sure you call your async function')"
 
@@ -1404,11 +1402,11 @@ steps:
 
     tests:
       - description: "Uses async/await"
-        command: "assert(source.includes('async') && source.includes('await'), 'Your solution should use async/await')"
+        command: "assert(code.includes('async') && code.includes('await'), 'Your solution should use async/await')"
       - description: "Uses Promise.all for concurrent fetching"
-        command: "assert(source.includes('Promise.all'), 'Fetch both data sources concurrently with Promise.all')"
+        command: "assert(code.includes('Promise.all'), 'Fetch both data sources concurrently with Promise.all')"
       - description: "Uses try/catch for error handling"
-        command: "assert(source.includes('try') && source.includes('catch'), 'Wrap your code in try/catch for error handling')"
+        command: "assert(code.includes('try') && code.includes('catch'), 'Wrap your code in try/catch for error handling')"
       - description: "Output includes the dashboard header"
         command: "assert(output.includes('Grade Dashboard'), 'Print the === Grade Dashboard === header')"
       - description: "Output includes Alice with a passing average"

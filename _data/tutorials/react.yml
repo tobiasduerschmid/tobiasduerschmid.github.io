@@ -360,8 +360,6 @@ steps:
           assert(h1, 'Fix all JSX bugs so the component renders. No <h1> found yet.');
       - description: "Uses className instead of class"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          var code = src ? src.textContent : '';
           var withoutClassName = code.replace(/className=/g, '');
           assert(!withoutClassName.includes(' class='),
             'Fix the <h1> tag: use className="..." instead of class="..." (class is a reserved JS keyword)');
@@ -957,9 +955,7 @@ steps:
     tests:
       - description: "Uses React.useState (not a bare let variable)"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          assert(src, 'No Babel script found');
-          assert(src.textContent.includes('useState'),
+          assert(code.includes('useState'),
             'Replace the let variable with React.useState()');
       - description: "The +1 button and a Reset button are both present"
         command: |
@@ -1209,8 +1205,7 @@ steps:
     tests:
       - description: "Uses .map() to render the tasks (not a hardcoded list)"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          assert(src && src.textContent.includes('.map('),
+          assert(code.includes('.map('),
             'Use .map() to render the tasks array into JSX elements');
       - description: "All 6 tasks are rendered as list items"
         command: |
@@ -1487,8 +1482,7 @@ steps:
             'Add a "Done" filter button');
       - description: "Filtering logic is implemented (not just showing all tasks)"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          assert(src && src.textContent.includes('.filter('),
+          assert(code.includes('.filter('),
             'Use .filter() to filter the tasks based on the selected filter');
       - description: "Clicking a filter button changes the visible tasks"
         command: |
@@ -1923,9 +1917,7 @@ steps:
             'Display repo and follower counts using StatBadge. Expected "12" and "2048" in the output.');
       - description: "StatBadge and Avatar components are both used inside ProfileCard"
         command: |
-          var src = frame.contentDocument.querySelectorAll('[type="text/babel"]');
-          var combined = Array.from(src).map(function(s) { return s.textContent; }).join('\n');
-          assert(combined.includes('Avatar') && combined.includes('StatBadge'),
+          assert(code.includes('Avatar') && code.includes('StatBadge'),
             'Use both the Avatar and StatBadge components inside ProfileCard');
 
     quiz:
@@ -2193,10 +2185,9 @@ steps:
             'Display all 6 products from the data array');
       - description: "Products are rendered using .map() with keys"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          assert(src && src.textContent.includes('.map('),
+          assert(code.includes('.map('),
             'Use .map() to render the products');
-          assert(src.textContent.includes('key=') || src.textContent.includes('key =' ),
+          assert(code.includes('key=') || code.includes('key =' ),
             'Add key props to mapped elements');
       - description: "Prices are displayed"
         command: |
@@ -2223,13 +2214,11 @@ steps:
             'Add category filter buttons');
       - description: "Uses useState for cart or filter state"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          assert(src && src.textContent.includes('useState'),
+          assert(code.includes('useState'),
             'Use React.useState for cart items and/or filter state');
       - description: "Uses at least 3 component functions"
         command: |
-          var src = frame.contentDocument.querySelector('[type="text/babel"]');
-          var matches = src.textContent.match(/function\s+[A-Z]\w*\s*\(/g) || [];
+          var matches = code.match(/function\s+[A-Z]\w*\s*\(/g) || [];
           assert(matches.length >= 3,
             'Define at least 3 components (e.g. ProductCard, CartSummary, FilterBar). Found: ' + matches.length);
 

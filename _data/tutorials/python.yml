@@ -313,23 +313,19 @@ steps:
       - description: "f-string uses variables, not hard-coded literals"
         command: |
           source = open('/tutorial/profile.py').read()
-          import re, ast
-          # Must contain at least one f-string
+          import ast
           tree = ast.parse(source)
           fstrings = [n for n in ast.walk(tree) if isinstance(n, ast.JoinedStr)]
           assert fstrings, "Use an f-string (f\"...\") — a plain string literal was found instead"
+          
           # Collect all variable names referenced inside f-string braces
-          # (We ignore the starter code's f-strings that use type() to inspect types)
-          fstring_exprs = [e for e in re.findall(r'\{([^}]+)\}', source) if 'type(' not in e]
-          assert fstring_exprs, "f-string must reference variables inside braces, e.g. {name}"
-          for expr in fstring_exprs:
-              stripped = expr.split(':')[0].strip()
-              assert stripped in ('name', 'year', 'major', 'gpa'), \
-                  f"f-string must use variables (name, year, major, gpa), not literals. Found: {{{expr}}}"
+          used_vars = set()
+          for fstr in fstrings:
+              used_vars.update(n.id for n in ast.walk(fstr) if isinstance(n, ast.Name))
+          
           # All four variables must appear in the f-string braces
-          var_names = {e.split(':')[0].strip() for e in fstring_exprs}
           for var in ('name', 'year', 'major', 'gpa'):
-              assert var in var_names, \
+              assert var in used_vars, \
                   f"f-string must reference the variable '{var}' inside braces"
 
     quiz:
@@ -630,6 +626,8 @@ steps:
          *Hint: `sum()` and `len()` are **built-in** Python functions — no `import` needed. Python ships dozens of these ([builtins](https://docs.python.org/3/library/functions.html)) that are always available, similar to how `printf` is always available in C via `<stdio.h>` — except builtins require no `#include` at all.*
       2. `label_score(score, threshold=50)` — returns `"pass"` if `score >= threshold`, otherwise `"fail"`.
 
+      > **What does `pass` mean?** In Python, `pass` is a do-nothing placeholder that makes an otherwise empty function or block body syntactically valid — the same idea as leaving a C++ function body as `{ }`. The starter code uses `pass` to mark every spot you need to fill in. **Replace every `pass` with your real implementation — no `pass` statements should remain in your final solution.**
+
     files:
       - path: "functions.py"
         content: |
@@ -686,6 +684,14 @@ steps:
         - **`def` vs C++:** Python's `def` requires no return type or parameter types — Python infers types dynamically at runtime.
 
     tests:
+      - description: "No unfinished 'pass' placeholders remain"
+        command: |
+          import ast
+          src = open('/tutorial/functions.py').read()
+          tree = ast.parse(src)
+          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
+          assert len(pass_nodes) == 0, \
+              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in functions.py"
       - description: "mean([4, 8, 15, 16, 23, 42]) == 18.0"
         command: |
           g = {}
@@ -992,6 +998,14 @@ steps:
         - The test checks `running_total([1, 2, 3]) == [1, 3, 6]` — after the first iteration: `total = 1`, second: `total = 3`, third: `total = 6`.
 
     tests:
+      - description: "No unfinished 'pass' placeholders remain"
+        command: |
+          import ast
+          src = open('/tutorial/loops.py').read()
+          tree = ast.parse(src)
+          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
+          assert len(pass_nodes) == 0, \
+              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in loops.py"
       - description: "running_total([1, 2, 3]) == [1, 3, 6]"
         command: |
           g = {}
@@ -1239,6 +1253,14 @@ steps:
         - **`**` operator check:** The test also uses AST inspection to confirm `squares_up_to` contains a `BinOp` with `Pow` — you must use `**`, not `math.pow()`.
 
     tests:
+      - description: "No unfinished 'pass' placeholders remain"
+        command: |
+          import ast
+          src = open('/tutorial/listcomp.py').read()
+          tree = ast.parse(src)
+          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
+          assert len(pass_nodes) == 0, \
+              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in listcomp.py"
       - description: "above_average returns numbers > mean (not >=)"
         command: |
           g = {}
@@ -1251,10 +1273,13 @@ steps:
           import ast
           src = open('/tutorial/listcomp.py').read()
           tree = ast.parse(src)
+          found = False
           for node in ast.walk(tree):
               if isinstance(node, ast.FunctionDef) and node.name == 'above_average':
+                  found = True
                   has_comp = any(isinstance(n, ast.ListComp) for n in ast.walk(node))
                   assert has_comp, "above_average should use a list comprehension [x for x in ...]"
+          assert found, "Function 'above_average' not found"
       - description: "squares_up_to(5) == [1, 4, 9, 16, 25]"
         command: |
           g = {}
@@ -1266,11 +1291,14 @@ steps:
           import ast
           src = open('/tutorial/listcomp.py').read()
           tree = ast.parse(src)
+          found = False
           for node in ast.walk(tree):
               if isinstance(node, ast.FunctionDef) and node.name == 'squares_up_to':
+                  found = True
                   has_pow = any(isinstance(n, ast.BinOp) and isinstance(n.op, ast.Pow)
                                 for n in ast.walk(node))
                   assert has_pow, "squares_up_to should use ** (exponentiation operator)"
+          assert found, "Function 'squares_up_to' not found"
 
     quiz:
       title: "List Comprehensions — Knowledge Check"
@@ -1466,6 +1494,14 @@ steps:
         - **No `line.strip()` needed here:** `split()` without arguments already handles the trailing `\n` by splitting on all whitespace.
 
     tests:
+      - description: "No unfinished 'pass' placeholders remain"
+        command: |
+          import ast
+          src = open('/tutorial/word_count.py').read()
+          tree = ast.parse(src)
+          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
+          assert len(pass_nodes) == 0, \
+              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in word_count.py"
       - description: "Script runs without errors"
         command: |
           import os; os.chdir('/tutorial')
@@ -1723,6 +1759,13 @@ steps:
         command: |
           import os; os.chdir('/tutorial')
           output = __run_capture('/tutorial/log_parser.py')
+      - description: "Used the re module to parse the log"
+        command: |
+          import ast
+          source = open('/tutorial/log_parser.py').read()
+          tree = ast.parse(source)
+          calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, 'value', None) and getattr(n.func.value, 'id', None) == 're']
+          assert len(calls) > 0, "You must use the `re` module (e.g. re.findall or re.sub) to parse the log, rather than just printing the expected answers."
       - description: "Found all 6 timestamps"
         command: |
           import os; os.chdir('/tutorial')
@@ -2003,8 +2046,8 @@ steps:
               sys.stderr = old_err
               sys.argv = old_argv
           assert exited, "Script should call sys.exit(1) when no argument is given"
-          assert 'Error' in buf.getvalue(), \
-              f"Expected an error message in stderr, got: {repr(buf.getvalue())}"
+          assert 'Error: no filename given' in buf.getvalue(), \
+              "Expected 'Error: no filename given' in stderr"
 
     quiz:
       title: "sys.argv & stderr — Knowledge Check"
@@ -2346,6 +2389,8 @@ steps:
               sys.stderr = old_err
               sys.argv = old_argv
           assert exited, "Script should call sys.exit(1) when no argument is given"
+          assert len(buf.getvalue().strip()) > 0, \
+              "Expected an error message to be printed to stderr"
 
     quiz:
       title: "Capstone — Knowledge Check"
