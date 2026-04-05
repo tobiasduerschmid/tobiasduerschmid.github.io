@@ -18,6 +18,16 @@
         </span>
       </div>
       <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
+        <a id="saveProgressBtn" href="#"
+           style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;"
+           title="Save your current step and code to resume later">
+          <i class="fa-solid fa-floppy-disk"></i> Save Progress
+        </a>
+        <a id="resetStepBtn" href="#"
+           style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;"
+           title="Reset current step to original code">
+          <i class="fa fa-undo"></i> Reset Step
+        </a>
         <a id="solutionBtn" href="#"
            style="display:none; color:#fff; font-size:14px; font-weight:600; text-decoration:none; align-items:center; gap:5px;"
            title="Apply solution for current step">
@@ -150,6 +160,7 @@
 
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',
+        tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
@@ -163,6 +174,22 @@
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
       });
       tutorial.start();
+
+      // Wire Save Progress + Reset Step buttons
+      var saveBtn = document.getElementById('saveProgressBtn');
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          tutorial.saveProgress();
+        });
+      }
+      var resetBtn = document.getElementById('resetStepBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          tutorial.resetStep();
+        });
+      }
 
       // Instructor mode: show and wire Solution button + update Print link
       if (instructorMode) {

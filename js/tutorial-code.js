@@ -97,8 +97,11 @@
     this.setupCommands = options.setupCommands || [];
     this.requireTests  = options.requireTests  || false;
     this.instructorMode = options.instructorMode || false;
+    this.tutorialId    = options.tutorialId   || 'default';
     this._stepsPassed  = new Set();
     this._quizPassed   = new Set();
+    this._stepsUnlocked = new Set([0]);   // step 0 is always unlocked
+    this._stepsVisited  = new Set();      // tracks first-time entry
     this.currentStep   = -1;
     this.booted        = false;
 
@@ -168,8 +171,34 @@
         return self._initBackend();
       })
       .then(function () {
+        // Watch for dark-mode class changes and re-theme Monaco + terminal (all backends).
+        // Also rebuild the React iframe preview so its body colours update.
+        if (window.MutationObserver) {
+          var mo = new MutationObserver(function () {
+            self._applyTheme(self._isDarkMode());
+            if (self.config.usePreview) self._rebuildReactPreview();
+          });
+          mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        }
         self._hideLoading();
-        if (self.steps.length > 0) self.loadStep(0);
+        if (self.steps.length > 0) {
+          var saved = self._loadSavedProgress();
+          if (saved) {
+            if (saved.stepsUnlocked) self._stepsUnlocked = new Set(saved.stepsUnlocked);
+            // Always ensure all steps up to the saved step are unlocked
+            // (handles old saves AND incomplete unlock data)
+            for (var si = 0; si <= saved.step; si++) self._stepsUnlocked.add(si);
+            if (saved.stepsVisited) self._stepsVisited = new Set(saved.stepsVisited);
+            if (saved.stepsPassed) self._stepsPassed = new Set(saved.stepsPassed);
+            if (saved.quizPassed) self._quizPassed = new Set(saved.quizPassed);
+            // Mark saved step as already visited so loadStep won't override files
+            self._stepsVisited.add(saved.step);
+            self.loadStep(saved.step);
+            self._applySavedFiles(saved.files);
+          } else {
+            self.loadStep(0);
+          }
+        }
       })
       .catch(function (err) {
         self._showError('Failed to start tutorial: ' + err.message);
@@ -734,10 +763,6 @@
         }, 50);
       });
       ro.observe(this.terminalContainerEl);
-    }
-    if (window.MutationObserver) {
-      var mo = new MutationObserver(function () { self._applyTheme(self._isDarkMode()); });
-      mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     }
   };
 
@@ -1313,6 +1338,12 @@
       fileOrder = Object.keys(self.editorModels);
     }
 
+    // Give the App component a step-unique name so it never collides across
+    // steps when Babel compiles all <script type="text/babel"> tags into the
+    // same global scope.  e.g. step 0 → App_s0, step 2 → App_s2.
+    var stepIdx  = this.currentStep >= 0 ? this.currentStep : 0;
+    var appAlias = 'App_s' + stepIdx;
+
     var userCss = [];
     var scripts = fileOrder.map(function (filename) {
       var entry = self.editorModels[filename];
@@ -1327,6 +1358,10 @@
       content = content.replace(/^\s*import\s+.*$/gm, '');
       content = content.replace(/^\s*export\s+\{[^}]*\};?\s*$/gm, '');
       content = content.replace(/^\s*export\s+(?:default\s+)?/gm, '');
+      // Rename the top-level App component/class to the step-scoped alias so
+      // that re-builds on the same or adjacent steps never hit a "already
+      // defined" collision in the shared Babel global scope.
+      content = content.replace(/\bApp\b/g, appAlias);
       // Escape </script> closing tags inside content to avoid breaking the outer tag
       content = content.split('<\/script>').join('<\\/script>');
       return '<script type="text/babel">\n' + content + '\n<\/script>';
@@ -1334,7 +1369,12 @@
 
     var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
 
-    return '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
+    var isDark = this._isDarkMode();
+    var bodyBg    = isDark ? '#1e1e1e' : '#fff';
+    var bodyColor = isDark ? '#d4d4d4' : '#333';
+    var bsTheme   = isDark ? 'dark'    : 'light';
+
+    return '<!DOCTYPE html>\n<html lang="en" data-bs-theme="' + bsTheme + '">\n<head>\n' +
       '<meta charset="UTF-8">\n' +
       '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
       '<script>\n' +
@@ -1356,7 +1396,7 @@
       '<script src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
       '<style>\n* { box-sizing: border-box; }\n' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n' +
-      '       padding: 0; margin: 0; background: #fff; color: #333; }\n' +
+      '       padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
       customStyles + '\n</style>\n</head>\n<body>\n<div id="root"></div>\n' +
       scripts + '\n</body>\n</html>';
   };
@@ -1647,12 +1687,127 @@
   };
 
   // ---------------------------------------------------------------------------
+  // Progress Persistence (localStorage)
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._storageKey = function () {
+    return 'tutorial-progress-' + this.tutorialId;
+  };
+
+  /**
+   * Save the current step index and all open file contents to localStorage.
+   */
+  TutorialCode.prototype.saveProgress = function () {
+    var files = {};
+    for (var name in this.editorModels) {
+      if (this.editorModels.hasOwnProperty(name)) {
+        files[name] = {
+          content: this.editorModels[name].model.getValue(),
+          language: this.editorModels[name].model.getLanguageId()
+        };
+      }
+    }
+    var data = {
+      step: this.currentStep,
+      files: files,
+      stepsUnlocked: Array.from(this._stepsUnlocked),
+      stepsVisited: Array.from(this._stepsVisited),
+      stepsPassed: Array.from(this._stepsPassed),
+      quizPassed: Array.from(this._quizPassed)
+    };
+    try {
+      localStorage.setItem(this._storageKey(), JSON.stringify(data));
+    } catch (e) {
+      console.warn('TutorialCode: could not save progress', e);
+    }
+    this._showSaveToast();
+  };
+
+  /**
+   * Load saved progress from localStorage. Returns the parsed object or null.
+   */
+  TutorialCode.prototype._loadSavedProgress = function () {
+    try {
+      var raw = localStorage.getItem(this._storageKey());
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (typeof data.step !== 'number' || data.step < 0 || data.step >= this.steps.length) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  /**
+   * Apply saved file contents on top of the currently loaded step.
+   */
+  TutorialCode.prototype._applySavedFiles = function (files) {
+    if (!files) return;
+    var self = this;
+    self._suppressAutoSave = true;
+    for (var name in files) {
+      if (files.hasOwnProperty(name)) {
+        self.openFile(name, files[name].content, files[name].language);
+        self._syncFileToBackend(name);
+      }
+    }
+    self._suppressAutoSave = false;
+    self._renderTabs();
+  };
+
+  /**
+   * Reset the current step to its original starter-code files.
+   */
+  TutorialCode.prototype.resetStep = function () {
+    var step = this.steps[this.currentStep];
+    if (!step || !step.files) return;
+    var self = this;
+    self._suppressAutoSave = true;
+    step.files.forEach(function (f) {
+      self.openFile(f.path, f.content, f.language);
+      self._syncFileToBackend(f.path);
+    });
+    self._suppressAutoSave = false;
+    if (step.open_file) { self._setActiveFile(step.open_file); }
+    self._renderTabs();
+  };
+
+  /**
+   * Show a brief toast confirming progress was saved.
+   */
+  TutorialCode.prototype._showSaveToast = function () {
+    var existing = this.root.querySelector('.tvm-save-toast');
+    if (existing) existing.remove();
+    var toast = document.createElement('div');
+    toast.className = 'tvm-save-toast';
+    toast.textContent = 'Progress saved! Your current step and code will be restored next time you open this tutorial.';
+    this.root.appendChild(toast);
+    setTimeout(function () { toast.classList.add('tvm-save-toast-visible'); }, 10);
+    setTimeout(function () {
+      toast.classList.remove('tvm-save-toast-visible');
+      setTimeout(function () { toast.remove(); }, 300);
+    }, 3000);
+  };
+
+  // ---------------------------------------------------------------------------
   // Tutorial Steps
   // ---------------------------------------------------------------------------
   TutorialCode.prototype.loadStep = function (index) {
     if (index < 0 || index >= this.steps.length) return;
+    // Block navigation to locked steps (unless instructor mode)
+    if (!this.instructorMode && !this._stepsUnlocked.has(index)) return;
+
+    var firstVisit = !this._stepsVisited.has(index);
+    this._stepsVisited.add(index);
     this.currentStep = index;
     var step = this.steps[index];
+
+    // Auto-unlock next step if this step has no test gate.
+    // Quizzes are interstitials shown on Next click, not navigation locks.
+    var hasTestGate = this.requireTests && step.tests && step.tests.length > 0;
+    if (!hasTestGate && index + 1 < this.steps.length) {
+      this._stepsUnlocked.add(index + 1);
+    }
 
     if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
     if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
@@ -1667,8 +1822,9 @@
 
     this._renderStepControls(index);
 
+    // Only load original files on first visit; revisits keep student's edits
     var self = this;
-    if (step.files) {
+    if (step.files && firstVisit) {
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
         self.openFile(f.path, f.content, f.language);
@@ -1676,6 +1832,9 @@
       });
       self._suppressAutoSave = false;
       if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
+    } else if (step.open_file && self.editorModels[step.open_file]) {
+      self._setActiveFile(step.open_file);
+      self._renderTabs();
     }
 
     if (step.setup_commands) {
@@ -1747,9 +1906,14 @@
     this.stepNavEl.innerHTML = '';
     this.steps.forEach(function (step, i) {
       var btn = document.createElement('button');
-      btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '');
-      btn.textContent = i + 1; btn.title = step.title;
-      btn.addEventListener('click', function () { self.loadStep(i); });
+      var unlocked = self.instructorMode || self._stepsUnlocked.has(i);
+      btn.className = 'tvm-step-btn' + (i === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked');
+      btn.textContent = i + 1; btn.title = unlocked ? step.title : step.title + ' (locked)';
+      if (unlocked) {
+        btn.addEventListener('click', function () { self.loadStep(i); });
+      } else {
+        btn.disabled = true;
+      }
       self.stepNavEl.appendChild(btn);
     });
   };
@@ -1760,7 +1924,8 @@
   TutorialCode.prototype._renderStepControls = function (index) {
     var self = this;
     var step = this.steps[index];
-    var nextLocked = this.requireTests && step.tests && step.tests.length > 0 && !this._stepsPassed.has(index);
+    var nextStepUnlocked = this.instructorMode || this._stepsUnlocked.has(index + 1);
+    var nextLocked = !nextStepUnlocked;
 
     var html = '';
     html += index > 0
@@ -2066,7 +2231,7 @@
     if (rBtn) rBtn.addEventListener('click', restartQuiz);
     var cBtn = container.querySelector('.tvm-quiz-continue-btn');
     if (cBtn) cBtn.addEventListener('click', function () {
-      self._quizPassed.add(stepIndex); self._hideStepQuiz(); self.loadStep(stepIndex + 1);
+      self._quizPassed.add(stepIndex); self._stepsUnlocked.add(stepIndex + 1); self._hideStepQuiz(); self.loadStep(stepIndex + 1);
     });
 
     // ── Parsons Problem Drag & Drop ──────────────────────────────────────────
@@ -2567,6 +2732,8 @@
     this._showTestPanel(html);
     if (allPass && this.requireTests) {
       this._stepsPassed.add(this.currentStep);
+      this._stepsUnlocked.add(this.currentStep + 1);
+      this._renderStepNav();
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
     }
