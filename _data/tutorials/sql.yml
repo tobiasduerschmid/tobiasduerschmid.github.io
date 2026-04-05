@@ -74,6 +74,13 @@ steps:
 
       Think of `SELECT` as a projection — like Python's list comprehension `[s['name'] for s in students]` or JavaScript's `.map(s => s.name)`.
 
+      If you have used **pandas**, the equivalents are even more direct:
+
+      | SQL | pandas |
+      |-----|--------|
+      | `SELECT * FROM students` | `students` (the whole DataFrame) |
+      | `SELECT name, gpa FROM students` | `students[['name', 'gpa']]` |
+
       ### Two things to notice about SQL tables
 
       1. **No guaranteed order** — rows may come back in any sequence. Unlike a Python list, there is no "row 0". If order matters, you must explicitly request it (you will learn how in Step 2).
@@ -197,15 +204,15 @@ steps:
 
       ### SQL's functional cousins
 
-      You already know JavaScript's array methods. SQL clauses map directly onto them:
+      You already know JavaScript's array methods — and if you know pandas, the mapping is even closer:
 
-      | JavaScript | SQL | What it does |
+      | JavaScript | pandas | SQL |
       |---|---|---|
-      | `arr.filter(x => x.gpa > 3.5)` | `WHERE gpa > 3.5` | Keep rows matching a boolean predicate |
-      | `arr.map(x => x.name)` | `SELECT name` | Project specific attributes |
-      | `arr.sort((a,b) => b.gpa - a.gpa)` | `ORDER BY gpa DESC` | Sort the output |
+      | `arr.filter(x => x.gpa > 3.5)` | `df[df['gpa'] > 3.5]` | `WHERE gpa > 3.5` |
+      | `arr.map(x => x.name)` | `df[['name']]` | `SELECT name` |
+      | `arr.sort((a,b) => b.gpa - a.gpa)` | `df.sort_values('gpa', ascending=False)` | `ORDER BY gpa DESC` |
 
-      A `SELECT` query is roughly equivalent to chaining `.filter().map().sort()` — but expressed declaratively, with the optimizer choosing the execution strategy.
+      A `SELECT` query is roughly equivalent to chaining `.filter().map().sort()` in JS, or method-chaining in pandas — but expressed declaratively, with the optimizer choosing the execution strategy.
 
       ### WHERE predicates
 
@@ -249,6 +256,13 @@ steps:
       This is genuinely difficult. Even experienced developers get tripped up by NULL logic. If it feels confusing, you are in good company — take it slow and re-read the examples above.
 
       In Python, `None != "Active"` evaluates to `True`. In SQL, `NULL != 'Active'` evaluates to `UNKNOWN`. This difference catches many students transitioning from Python.
+
+      **pandas note:** pandas uses `NaN`, which behaves differently again. `df[df['major'] != 'CS']` in pandas *does* exclude NaN rows (similar to SQL), but `df['major'].isna()` is the pandas equivalent of `IS NULL`. The three-way comparison:
+
+      | Operation | Python | pandas | SQL |
+      |-----------|--------|--------|-----|
+      | Test for missing | `x is None` | `df['col'].isna()` | `col IS NULL` |
+      | Filter not equal | `x != 'CS'` is `True` when `x` is `None` | `df[df['col'] != 'CS']` excludes NaN | `WHERE col != 'CS'` excludes NULL |
 
       ### ORDER BY
 
@@ -443,6 +457,14 @@ steps:
       -- Sub-goal: Define how rows are grouped
       GROUP BY major;
       ```
+
+      If you know pandas, the mapping is tight:
+
+      | SQL | pandas |
+      |-----|--------|
+      | `SELECT major, COUNT(*) FROM students GROUP BY major` | `students.groupby('major').size()` |
+      | `SELECT major, AVG(gpa) FROM students GROUP BY major` | `students.groupby('major')['gpa'].mean()` |
+      | `... HAVING AVG(gpa) > 3.3` | `result[result > 3.3]` (filter after `.mean()`) |
 
       ### The GROUP BY rule
 
@@ -663,6 +685,17 @@ steps:
 
       You already know `SELECT` — use it to check your work. This is a real workflow habit: after any DDL or DML operation, run a quick `SELECT` to confirm the result.
 
+      ### pandas comparison
+
+      If you know pandas, notice how SQL separates *defining* the schema from *adding* data — pandas bundles both together:
+
+      | SQL | pandas |
+      |-----|--------|
+      | `CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT NOT NULL, ...)` | `books = pd.DataFrame(columns=['id', 'title', 'author', 'pages'])` |
+      | `INSERT INTO books VALUES (1, 'SICP', 'Abelson', 657)` | `books.loc[len(books)] = [1, 'SICP', 'Abelson', 657]` |
+
+      The key difference: SQL *enforces* the schema (wrong types or missing NOT NULL values cause an error). pandas accepts anything — a string in an integer column, a missing value in a required field — silently. SQL's strictness catches bugs early; pandas' flexibility makes exploration fast.
+
       ### Three types of SQL errors
 
       As your queries grow more complex, you will encounter three distinct types of errors:
@@ -875,6 +908,16 @@ steps:
       | `DELETE FROM t WHERE ...` | Matching rows | Yes |
       | `DELETE FROM t` | All rows | Yes |
       | `DROP TABLE t` | All rows + schema | No |
+
+      ### pandas comparison
+
+      | SQL | pandas |
+      |-----|--------|
+      | `UPDATE students SET gpa = 3.6 WHERE name = 'Eve'` | `students.loc[students['name'] == 'Eve', 'gpa'] = 3.6` |
+      | `DELETE FROM students WHERE year = 4` | `students = students[students['year'] != 4]` |
+      | `DROP TABLE courses` | `del courses` |
+
+      Notice that SQL modifies data **in place** — the table is permanently changed. pandas operations often produce new DataFrames (unless you use `inplace=True`). In SQL, `UPDATE` and `DELETE` without `WHERE` are permanent and dangerous. In pandas, you can always re-read the original CSV.
 
       ### Task
 
