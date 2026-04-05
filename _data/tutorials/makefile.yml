@@ -4,7 +4,7 @@ description: "Learn how to write Makefiles, understand dependency graphs, and au
 require_tests: true
 
 setup_commands:
-  - "mkdir -p /tutorial/make_project"
+  - 'mkdir -p /tutorial/make_project && echo "sleep 2" >> /usr/bin/gcc'
 
 steps:
   # --------------------------------------------------------------------------
