@@ -328,6 +328,10 @@ steps:
       fgets(name, sizeof(name), stdin);  // reads at most 9 chars + '\0'
       ```
 
+      ### Why `fflush(stdout)` Matters
+
+      Notice the template code has `fflush(stdout)` after each `printf` prompt. Why? When your program writes to stdout, C doesn't send the text to the screen immediately — it buffers it for efficiency. A newline `\n` usually flushes the buffer, but our prompts (`"Enter server name: "`) don't end with `\n`. Without `fflush(stdout)`, the prompt might never appear before `scanf`/`fgets` blocks waiting for input — the user sees a blank screen. `fflush(stdout)` forces the buffer to the screen immediately.
+
       ### Task: Fix the vulnerable program
 
       The file `input_lab.c` has a buffer overflow bug. This is a **Bug Hunt** — you'll learn more from finding and fixing broken code than from writing it yourself. Let's go.
@@ -357,10 +361,12 @@ steps:
               int players;
 
               printf("Enter server name: ");
-              // BUG: scanf with %s has no length limit — buffer overflow!
+              fflush(stdout);
+              // BUG: this scanf has no length limit — buffer overflow!
               scanf("%s", server);
 
               printf("Enter player count: ");
+              fflush(stdout);
               scanf("%d", &players);
 
               printf("Server %s: %d players online.\n", server, players);
@@ -393,10 +399,12 @@ steps:
                 int players;
 
                 printf("Enter server name: ");
+                fflush(stdout);
                 fgets(server, sizeof(server), stdin);
                 strip_newline(server);
 
                 printf("Enter player count: ");
+                fflush(stdout);
                 scanf("%d", &players);
 
                 printf("Server %s: %d players online.\n", server, players);
@@ -407,11 +415,12 @@ steps:
         - **`fgets(server, sizeof(server), stdin)`:** Reads at most `sizeof(server) - 1` characters (19), leaving room for the null terminator `\0`. This prevents buffer overflow.
         - **`sizeof(server)`** returns 20 (the array size). `fgets` uses this to cap input length.
         - **`strip_newline`:** `fgets` includes the `\n` in the buffer, unlike `scanf`. We must manually remove it.
+        - **`fflush(stdout)`:** When stdout is not connected to a terminal (e.g., piped output), it's line-buffered — `printf` without `\n` won't appear until the buffer fills. `fflush(stdout)` forces the prompt to appear immediately before the read. Without it, the prompt may never show up.
         - **Why `scanf("%d", &players)` is still OK:** For integers, `scanf` reads digits until it hits a non-digit. There's no buffer to overflow — it just writes a single `int`. The risk is only with `%s` (strings).
 
     tests:
       - description: "Replaced scanf %s with fgets for the server name"
-        command: "cd /tutorial/c_project && grep -q 'fgets' input_lab.c"
+        command: "cd /tutorial/c_project && grep -q 'fgets(server' input_lab.c && ! grep -qE '^[^/]*scanf.*%s' input_lab.c"
       - description: "The program compiles without errors"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 input_lab.c -o input_lab"
       - description: "The program runs correctly with test input"
@@ -649,11 +658,11 @@ steps:
 
     tests:
       - description: "Uses malloc to allocate memory"
-        command: "cd /tutorial/c_project && grep -q 'malloc(' memory_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*= *malloc\\(' memory_lab.c"
       - description: "Checks for NULL after malloc"
-        command: "cd /tutorial/c_project && grep -q '== NULL\\|!squares' memory_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*(== NULL|!squares)' memory_lab.c"
       - description: "Frees the allocated memory"
-        command: "cd /tutorial/c_project && grep -q 'free(' memory_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*free\\(' memory_lab.c"
       - description: "Program compiles and produces correct output"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 memory_lab.c -o memory_lab && ./memory_lab | grep -q 'Squares: 0 1 4 9 16'"
 
@@ -846,7 +855,7 @@ steps:
       - description: "Uses strncpy instead of strcpy for the long string copy"
         command: "cd /tutorial/c_project && grep 'strncpy.*dest' strings_lab.c | head -1 | grep -q 'strncpy'"
       - description: "Manually null-terminates after strncpy"
-        command: "cd /tutorial/c_project && grep -qE \"= *'\\\\0'|= *0;\" strings_lab.c"
+        command: "cd /tutorial/c_project && grep -F \"'\\0'\" strings_lab.c"
       - description: "Program compiles and runs without crashing"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 strings_lab.c -o strings_lab && ./strings_lab | grep -q 'Language is C'"
 
@@ -1050,9 +1059,9 @@ steps:
       - description: "Defined a Character struct or typedef"
         command: "cd /tutorial/c_project && grep -q 'typedef struct' structs_lab.c || grep -q 'struct Character' structs_lab.c"
       - description: "Implemented character_init function"
-        command: "cd /tutorial/c_project && grep -q 'character_init' structs_lab.c && grep -q 'strncpy\\|strcpy' structs_lab.c"
+        command: "cd /tutorial/c_project && grep -q 'void character_init' structs_lab.c && grep -qE '^[^/]*strncpy|^[^/]*strcpy' structs_lab.c"
       - description: "Implemented character_print function"
-        command: "cd /tutorial/c_project && grep -q 'character_print' structs_lab.c"
+        command: "cd /tutorial/c_project && grep -q 'void character_print' structs_lab.c && grep -A10 'void character_print' structs_lab.c | grep -q 'printf'"
       - description: "Program compiles and runs correctly"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 structs_lab.c -o structs_lab && ./structs_lab | grep -q 'LinkSlayer99'"
 
@@ -1254,7 +1263,7 @@ steps:
 
     tests:
       - description: "Implemented print_value with a switch statement"
-        command: "cd /tutorial/c_project && grep -q 'switch' unions_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*switch *\\(' unions_lab.c"
       - description: "Handles all three types (int, double, string)"
         command: "cd /tutorial/c_project && grep -c 'case TYPE_' unions_lab.c | grep -qE '^[3-9]'"
       - description: "Program compiles and produces correct output"
@@ -1957,13 +1966,13 @@ steps:
 
     tests:
       - description: "Uses fopen to open files"
-        command: "cd /tutorial/c_project && grep -c 'fopen' fileio_lab.c | grep -qE '^[2-9]'"
+        command: "cd /tutorial/c_project && grep -cE '^[^/]*fopen\\(' fileio_lab.c | grep -qE '^[2-9]'"
       - description: "Checks for NULL after fopen"
-        command: "cd /tutorial/c_project && grep -q 'NULL' fileio_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*== *NULL' fileio_lab.c"
       - description: "Uses fprintf to write to the file"
-        command: "cd /tutorial/c_project && grep -q 'fprintf' fileio_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*fprintf\\(' fileio_lab.c"
       - description: "Uses fgets to read from the file"
-        command: "cd /tutorial/c_project && grep -q 'fgets' fileio_lab.c"
+        command: "cd /tutorial/c_project && grep -qE '^[^/]*fgets\\(' fileio_lab.c"
       - description: "Closes files with fclose"
         command: "cd /tutorial/c_project && grep -c 'fclose' fileio_lab.c | grep -qE '^[2-9]'"
       - description: "Program compiles and produces correct output"
@@ -2242,9 +2251,9 @@ steps:
       - description: "Implemented node_create with malloc"
         command: "cd /tutorial/c_project && grep -q 'malloc(' linked_list.c"
       - description: "Implemented list_print that traverses the list"
-        command: "cd /tutorial/c_project && grep -q '->next' linked_list.c"
+        command: "cd /tutorial/c_project && grep -A15 'void list_print' linked_list.c | grep -qE -- '->next|->value'"
       - description: "Implemented list_free that frees nodes"
-        command: "cd /tutorial/c_project && grep -A15 'void list_free' linked_list.c | grep -q 'free('"
+        command: "cd /tutorial/c_project && grep -A15 'void list_free' linked_list.c | grep -qE '[^_]free\\(|^free\\('"
       - description: "Program compiles and produces correct output"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 linked_list.c -o linked_list && echo '4 10 20 30 40' | ./linked_list | grep -q 'List: 10 20 30 40'"
 
