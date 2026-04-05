@@ -1325,8 +1325,8 @@
       }
       // Strip ES module import/export (global-script approach for browser sandbox)
       content = content.replace(/^\s*import\s+.*$/gm, '');
-      content = content.replace(/^\s*export\s+default\s+/gm, '');
-      content = content.replace(/^\s*export\s+\{[^}]*\};\s*$/gm, '');
+      content = content.replace(/^\s*export\s+\{[^}]*\};?\s*$/gm, '');
+      content = content.replace(/^\s*export\s+(?:default\s+)?/gm, '');
       // Escape </script> closing tags inside content to avoid breaking the outer tag
       content = content.split('<\/script>').join('<\\/script>');
       return '<script type="text/babel">\n' + content + '\n<\/script>';
@@ -1340,10 +1340,13 @@
       '<script>\n' +
       'window.addEventListener("error", function(e) {\n' +
       '  var r = document.getElementById("root");\n' +
-      '  if (r) r.innerHTML = \'<div style="color:#c0392b;background:#fdf2f2;border-left:4px \' +\n' +
+      '  if (!r) return;\n' +
+      '  var msg = (e.error ? e.error.message : e.message) || "";\n' +
+      '  msg = msg.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");\n' +
+      '  r.innerHTML = \'<div style="color:#c0392b;background:#fdf2f2;border-left:4px \' +\n' +
       '    \'solid #c0392b;padding:16px;margin:16px;font-family:monospace;font-size:13px;\' +\n' +
       '    \'border-radius:4px;white-space:pre-wrap"><strong>Error:</strong><br>\' +\n' +
-      '    (e.error ? e.error.message : e.message) + \'</div>\';\n' +
+      '    msg + \'</div>\';\n' +
       '});\n' +
       '<\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
@@ -2258,9 +2261,22 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
+    var testTimeout;
 
     function runNext(i) {
+      clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+
+      // 15s timeout for infinite loops within AsyncFunction test execution
+      testTimeout = setTimeout(function () {
+        console.warn('SQL test execution timed out. Infinite loop suspected.');
+        if (self.term) {
+          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (15s).\x1b[0m\n\r');
+          self.term.write('\x1b[33mIf you wrote an infinite loop, your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
+        }
+        self._renderTestResults(tests, new Array(tests.length).fill(null));
+      }, 15000);
+
       self._postWorker(
         { type: 'runCode', code: tests[i].command, silent: true },
         function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
@@ -2315,9 +2331,22 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
+    var testTimeout;
 
     function runNext(i) {
+      clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+
+      // 15 seconds per-test timeout for spotting infinite loops
+      testTimeout = setTimeout(function () {
+        console.warn('Pyodide test execution timed out. Infinite loop suspected.');
+        if (self.term) {
+          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (15s).\x1b[0m\n\r');
+          self.term.write('\x1b[33mIf you wrote an infinite loop (e.g. `while True:`), your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
+        }
+        self._renderTestResults(tests, new Array(tests.length).fill(null));
+      }, 15000);
+
       self._postWorker(
         { type: 'runCode', code: tests[i].command, silent: true },
         function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
@@ -2335,20 +2364,33 @@
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
 
     var script = tests.map(function (t, i) {
-      return '( ' + t.command + ' ) 2>/dev/null; printf "__TRESULT_' + i + '_%d__\\n" $?';
+      return '( ' + t.command + ' ) 2>/dev/null; printf "\\n__TRESULT_' + i + '_%d__\\n" $?';
     }).join('; ') + '; echo "__TDONE__"';
 
     this._webcontainer.spawn('sh', ['-c', script], { cwd: '/tutorial' })
       .then(function (proc) {
         var output = '';
+        var testTimeout;
         var reader = proc.output.getReader();
+        var cleanup = function () {
+          clearTimeout(testTimeout);
+          try { reader.cancel(); } catch (e) {}
+          try { proc.kill(); } catch (e) {}
+        };
+        
+        testTimeout = setTimeout(function () {
+          console.warn('WebContainer test timeout exceeded (15s). Force canceling.');
+          cleanup();
+          parseResults(output);
+        }, 15000);
+
         (function readLoop() {
           reader.read().then(function (result) {
-            if (result.done) { parseResults(output); return; }
+            if (result.done) { cleanup(); parseResults(output); return; }
             output += result.value;
-            if (output.includes('__TDONE__')) { reader.cancel(); parseResults(output); return; }
+            if (output.includes('__TDONE__')) { cleanup(); parseResults(output); return; }
             readLoop();
-          }).catch(function () { parseResults(output); });
+          }).catch(function () { cleanup(); parseResults(output); });
         })();
       }).catch(function (err) {
         self._renderTestResults(tests, new Array(tests.length).fill(null));
@@ -2376,27 +2418,40 @@
     this._rebuildReactPreview(function () {
       var frame = self._previewFrame;
       var results = [];
+      var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      var testTimeout;
 
       function runNext(i) {
+        clearTimeout(testTimeout);
         if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+
+        testTimeout = setTimeout(function () {
+          console.warn('React test execution timed out. Asynchronous promise deadlock reached.');
+          if (self.term) {
+            self.term.write('\n\r\n\r\x1b[31;1mError: React evaluation timed out (15s).\x1b[0m\n\r');
+            self.term.write('\x1b[33mTests were unable to complete cleanly (did an awaited promise never resolve?). Please reload the page if frozen!\x1b[0m\n\r');
+          }
+          self._renderTestResults(tests, new Array(tests.length).fill(null));
+        }, 15000);
+
         try {
           /* jshint evil:true */
-          var fn = new Function('frame', 'assert', tests[i].command);
-          var ret = fn(frame, function assertFn(cond, msg) {
+          var fn = new AsyncFunction('frame', 'assert', tests[i].command);
+          fn(frame, function assertFn(cond, msg) {
             if (!cond) throw new Error(msg || 'Assertion failed');
+          }).then(function () {
+            results[i] = true;
+            runNext(i + 1);
+          }).catch(function (e) {
+            results[i] = false;
+            console.warn('React test ' + i + ' failed:', e.message);
+            runNext(i + 1);
           });
-          // Support async tests (e.g. click then wait for React re-render)
-          if (ret && typeof ret.then === 'function') {
-            ret.then(function () { results[i] = true; runNext(i + 1); })
-               .catch(function (e) { results[i] = false; console.warn('React test ' + i + ' failed:', e.message); runNext(i + 1); });
-            return;
-          }
-          results[i] = true;
         } catch (e) {
           results[i] = false;
           console.warn('React test ' + i + ' failed:', e.message);
+          runNext(i + 1);
         }
-        runNext(i + 1);
       }
       runNext(0);
     });

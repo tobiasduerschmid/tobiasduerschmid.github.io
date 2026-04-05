@@ -87,29 +87,22 @@ function runFile(id, path) {
  *  DDL/DML success emits a brief 'stdout' status line. */
 function runSQL(id, sql, silent) {
   try {
-    // Split on semicolons but ignore empty statements
-    var stmts = sql.split(';').map(function (s) { return s.trim(); })
-                              .filter(function (s) { return s.length > 0; });
-
-    stmts.forEach(function (stmt) {
-      var results = db.exec(stmt);
-      if (!silent) {
-        if (results && results.length > 0) {
-          // Query returned rows — emit as a table
-          results.forEach(function (res) {
-            self.postMessage({ type: 'table', columns: res.columns, rows: res.values });
-          });
-        } else {
-          // DDL / DML — report rows affected
-          var changed = db.getRowsModified();
-          var feedback = changed > 0
-            ? 'OK \u2014 ' + changed + ' row' + (changed === 1 ? '' : 's') + ' affected\n'
-            : 'OK\n';
-          self.postMessage({ type: 'stdout', text: feedback });
-        }
+    var results = db.exec(sql);
+    if (!silent) {
+      if (results && results.length > 0) {
+        // Query returned rows — emit as a table
+        results.forEach(function (res) {
+          self.postMessage({ type: 'table', columns: res.columns, rows: res.values });
+        });
+      } else {
+        // DDL / DML — report rows affected
+        var changed = db.getRowsModified();
+        var feedback = changed > 0
+          ? 'OK \u2014 ' + changed + ' row' + (changed === 1 ? '' : 's') + ' affected\n'
+          : 'OK\n';
+        self.postMessage({ type: 'stdout', text: feedback });
       }
-    });
-
+    }
     self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
   } catch (err) {
     if (!silent) {
@@ -129,9 +122,10 @@ function runSQL(id, sql, silent) {
  *   __read_file(path) — return the editor content of a file (from the in-memory file map)
  */
 function runCode(id, code, silent) {
+  var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
   try {
     /* jshint evil:true */
-    var fn = new Function('db', '__run_query', '__exec', 'assert', '__read_file', code);
+    var fn = new AsyncFunction('db', '__run_query', '__exec', 'assert', '__read_file', code);
     fn(
       db,
       function __run_query(sql) {
@@ -151,8 +145,12 @@ function runCode(id, code, silent) {
       function __read_file(path) {
         return files[path] || '';
       }
-    );
-    self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+    ).then(function() {
+      self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+    }).catch(function(err) {
+      if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
+      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+    });
   } catch (err) {
     if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
     self.postMessage({ type: 'run_done', id: id, exitCode: 1 });

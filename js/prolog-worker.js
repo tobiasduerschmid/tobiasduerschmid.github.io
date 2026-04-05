@@ -214,182 +214,96 @@ function runProlog(id, code, silent) {
   });
 }
 
-/** Evaluate a JS test assertion snippet.
- *
- * Available in test scope:
- *   session        — the live Tau Prolog session
- *   pl             — the Tau Prolog module
- *   __query(goal)  — run query on current session, return array of answer strings
- *   __consult(code)— consult a Prolog program (resets session)
- *   assert(cond, msg) — throw if condition is falsy
- *   __read_file(path) — return editor content from in-memory file map
- *
- * NOTE: __query and __consult use a synchronous-looking wrapper that spins on
- * Tau Prolog's internal thread until all answers are collected. This works
- * because Tau Prolog's callbacks fire synchronously within the answer() call
- * when there is no asynchronous I/O involved (pure in-memory Prolog).
- */
-function runCode(id, code, silent) {
+// ---- Async Test Runner -------------------------------------------------------
+
+/** Wraps Tau Prolog query execution in a Promise with MAX_ANSWERS cutoff. */
+function __queryAsync(goal) {
+  return new Promise(function(resolve, reject) {
+    if (goal.charAt(goal.length - 1) !== '.') goal += '.';
+    var answers = [];
+    var qErr = null;
+
+    session.query(goal, {
+      success: function () {
+        function nextAnswer() {
+          if (answers.length >= MAX_ANSWERS) {
+            resolve(answers);
+            return;
+          }
+          session.answer({
+            success: function (answer) {
+              answers.push(pl.format_answer(answer));
+              nextAnswer();
+            },
+            fail: function () { resolve(answers); },
+            error: function (err) { reject(new Error(formatErr(err))); },
+            limit: function () { resolve(answers); }
+          });
+        }
+        nextAnswer();
+      },
+      error: function (err) { reject(new Error(formatErr(err))); }
+    });
+  });
+}
+
+/** Wraps Tau Prolog consult execution in a Promise. */
+function __consultAsync(program) {
+  return new Promise(function(resolve, reject) {
+    session = pl.create();
+    session.consult(program, {
+      success: function () { resolve(); },
+      error: function (err) { reject(new Error(formatErr(err))); }
+    });
+  });
+}
+
+/** Compiles and evaluates JS assertion code natively as an AsyncFunction. */
+function runAsyncCode(id, code, silent) {
+  // Transpile standard synchronous test semantics to await their Promises
+  var asyncCode = code.replace(/\b__query\s*\(/g, 'await __query(')
+                      .replace(/\b__consult\s*\(/g, 'await __consult(');
+  
+  var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
   try {
     /* jshint evil:true */
-    var fn = new Function('session', 'pl', '__query', '__consult', 'assert', '__read_file', code);
+    var fn = new AsyncFunction('session', 'pl', '__query', '__consult', 'assert', '__read_file', asyncCode);
     fn(
       session,
       pl,
-      function __query(goal) {
-        if (goal.charAt(goal.length - 1) !== '.') goal += '.';
-        var answers = [];
-        var qErr = null;
-
-        session.query(goal, {
-          success: function () {
-            function next() {
-              session.answer({
-                success: function (answer) { answers.push(pl.format_answer(answer)); next(); },
-                fail: function () { /* done */ },
-                error: function (err) { qErr = formatErr(err); },
-                limit: function () { /* done */ }
-              });
-            }
-            next();
-          },
-          error: function (err) { qErr = formatErr(err); }
-        });
-
-        if (qErr) throw new Error('Query error: ' + qErr);
-        return answers;
-      },
-      function __consult(program) {
-        var err = null;
-        session = pl.create();
-        session.consult(program, {
-          success: function () {},
-          error: function (e) { err = formatErr(e); }
-        });
-        if (err) throw new Error('Consult error: ' + err);
-      },
+      __queryAsync,
+      __consultAsync,
       function assert(cond, msg) {
         if (!cond) throw new Error(msg || 'Assertion failed');
       },
       function __read_file(path) {
         return files[path] || '';
       }
-    );
-    self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+    ).then(function() {
+      self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+    }).catch(function(err) {
+      if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
+      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+    });
   } catch (err) {
     if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
     self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
   }
 }
 
-// ---- Test Runner (async-safe) ------------------------------------------------
-//
-// runTest consults a program then runs a JS assertion that can call __query.
-// Unlike runCode, __query here uses the proven async callback chain to collect
-// answers, then invokes a continuation with the results.
-//
-// Message: { type: 'runTest', id, program, code }
-//   - program: Prolog source to consult (the student's file content)
-//   - code:    JS assertion code (same as runCode tests)
+function runCode(id, code, silent) {
+  runAsyncCode(id, code, silent);
+}
 
 function runTest(id, program, code) {
   consultProgram(program, function (consultErr) {
     if (consultErr) {
+      self.postMessage({ type: 'stderr', text: consultErr + '\n' });
       self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
       return;
     }
-    // Now run the JS assertion with an async-safe __query
-    runTestCode(id, code);
+    runAsyncCode(id, code, false);
   });
-}
-
-/** Run a JS test assertion with async-safe __query.
- *  __query collects all answers via the callback chain, then calls a continuation. */
-function runTestCode(id, code) {
-  // Parse the test code to extract __query calls and assertions.
-  // We wrap the entire test in an async execution model:
-  // the test code calls __query(goal) which returns a Promise-like object,
-  // but since we're in a Worker we use a simpler continuation approach.
-
-  // Strategy: extract query goals from the test code, run them via the async
-  // callback chain, then evaluate the assertion with the collected answers.
-
-  // Simple approach: find all __query('...') calls, run them sequentially,
-  // then evaluate the full test code with __query replaced by a synchronous lookup.
-  var queryPattern = /__query\(\s*'([^']*)'\s*\)/g;
-  var goals = [];
-  var match;
-  while ((match = queryPattern.exec(code)) !== null) {
-    goals.push(match[1]);
-  }
-
-  // Collect answers for each goal sequentially using async chain
-  var goalResults = {};
-  function runNextGoal(i) {
-    if (i >= goals.length) {
-      // All goals resolved — now run the assertion synchronously
-      evaluateTest(id, code, goalResults);
-      return;
-    }
-    var goal = goals[i];
-    if (goal.charAt(goal.length - 1) !== '.') goal += '.';
-    var answers = [];
-
-    session.query(goal, {
-      success: function () {
-        function nextAnswer() {
-          session.answer({
-            success: function (answer) {
-              answers.push(pl.format_answer(answer));
-              nextAnswer();
-            },
-            fail: function () {
-              goalResults[goals[i]] = answers;
-              runNextGoal(i + 1);
-            },
-            error: function () {
-              goalResults[goals[i]] = answers;
-              runNextGoal(i + 1);
-            },
-            limit: function () {
-              goalResults[goals[i]] = answers;
-              runNextGoal(i + 1);
-            }
-          });
-        }
-        nextAnswer();
-      },
-      error: function () {
-        goalResults[goals[i]] = [];
-        runNextGoal(i + 1);
-      }
-    });
-  }
-  runNextGoal(0);
-}
-
-/** Evaluate the test code with pre-collected query results. */
-function evaluateTest(id, code, goalResults) {
-  try {
-    var fn = new Function('__query', 'assert', '__read_file', 'session', 'pl', code);
-    fn(
-      function __query(goal) {
-        // Return pre-collected results (synchronous lookup)
-        return goalResults[goal] || [];
-      },
-      function assert(cond, msg) {
-        if (!cond) throw new Error(msg || 'Assertion failed');
-      },
-      function __read_file(path) {
-        return files[path] || '';
-      },
-      session,
-      pl
-    );
-    self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
-  } catch (err) {
-    self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
-  }
 }
 
 // ---- Session Reset -----------------------------------------------------------

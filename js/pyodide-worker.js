@@ -124,7 +124,22 @@ function runCode(id, code, silent) {
     }});
   }
 
-  pyodide.runPythonAsync(code)
+  pyodide.loadPackagesFromImports(code)
+    .then(function () {
+      try {
+        pyodide.runPython([
+          'import sys as _sys',
+          'for _m in list(_sys.modules):',
+          '    _f = getattr(_sys.modules[_m], "__file__", "") or ""',
+          '    if "/tutorial/" in _f: del _sys.modules[_m]',
+          'for _k in list(globals().keys()):',
+          '    if _k not in ["__name__", "__doc__", "__package__", "__loader__", "__spec__", "__annotations__", "__builtins__", "__run_capture", "sys", "io", "_sys", "_m", "_f", "_k"]:',
+          '        del globals()[_k]'
+        ].join('\n'));
+      } catch (err) { /* Safely ignore internal wipe errors */ }
+      
+      return pyodide.runPythonAsync(code);
+    })
     .then(function () {
       _running = false;
       self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
