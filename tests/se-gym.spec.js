@@ -271,11 +271,17 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard).toBeVisible();
     const type = await quizCard.getAttribute('data-type');
 
-    // Click first option
-    await quizCard.locator('.quiz-option').first().click();
-    // If multiple choice, need to submit
-    if (type === 'multiple') {
-      await quizCard.locator('.submit-answer-btn').click();
+    if (type === 'parsons') {
+      // Click a parsons line to move it to the target, then check
+      await quizCard.locator('.parsons-line').first().click();
+      await quizCard.locator('.parsons-check-btn').click();
+    } else {
+      // Click first option
+      await quizCard.locator('.quiz-option').first().click();
+      // If multiple choice, need to submit
+      if (type === 'multiple') {
+        await quizCard.locator('.submit-answer-btn').click();
+      }
     }
 
     // Explanation should appear
@@ -420,9 +426,14 @@ test.describe('Personal Gym - Workout', () => {
       await expect(card).toBeVisible();
       const type = await card.getAttribute('data-type');
 
-      await card.locator('.quiz-option').first().click();
-      if (type === 'multiple') {
-        await card.locator('.submit-answer-btn').click();
+      if (type === 'parsons') {
+        await card.locator('.parsons-line').first().click();
+        await card.locator('.parsons-check-btn').click();
+      } else {
+        await card.locator('.quiz-option').first().click();
+        if (type === 'multiple') {
+          await card.locator('.submit-answer-btn').click();
+        }
       }
       await card.locator('.next-btn').click();
     }
