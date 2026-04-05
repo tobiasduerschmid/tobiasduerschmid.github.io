@@ -497,24 +497,24 @@ steps:
       Before diving into malloc, you need to know *where* your variables live:
 
       ```
-      ┌─────────────────────┐ High address
-      │       Stack         │ ← local variables (int x, char buf[20])
-      │  (grows downward)   │   automatic: created on function entry,
-      │         ↓           │   destroyed on function return
-      ├─────────────────────┤
-      │                     │
-      │    (free space)     │
-      │                     │
-      ├─────────────────────┤
-      │         ↑           │
-      │   (grows upward)    │
-      │        Heap         │ ← malloc'd memory
-      │                     │   manual: you create it, you destroy it
-      ├─────────────────────┤
-      │   Global/Static     │ ← global variables, string literals
-      ├─────────────────────┤
-      │    Code (Text)      │ ← your compiled functions
-      └─────────────────────┘ Low address
+      +---------------------+ High address
+      |       Stack         | <-- local variables (int x, char buf[20])
+      |  (grows downward)   |     automatic: created on function entry,
+      |         v           |     destroyed on function return
+      +---------------------+
+      |                     |
+      |    (free space)     |
+      |                     |
+      +---------------------+
+      |         ^           |
+      |   (grows upward)    |
+      |        Heap         | <-- malloc'd memory
+      |                     |     manual: you create it, you destroy it
+      +---------------------+
+      |   Global/Static     | <-- global variables, string literals
+      +---------------------+
+      |    Code (Text)      | <-- your compiled functions
+      +---------------------+ Low address
       ```
 
       **Key insight:** Stack memory is free and automatic — but it dies when the function returns. Heap memory survives function calls — but you must `free()` it yourself. Returning a pointer to a local stack variable is a classic bug: the memory is gone by the time the caller uses the pointer.
@@ -531,16 +531,14 @@ steps:
       Here's a mental model that will save you hours of debugging. Every pointer variable is in one of **four states**:
 
       ```
-      ┌──────────────┐   malloc()   ┌───────┐
-      │ Uninitialized │────────────▶│ Alive │
-      └──────────────┘             └───┬───┘
-                                       │
-                              free()   │   = NULL
-                                 ┌─────┴─────┐
-                                 ▼           ▼
-                             ┌──────┐   ┌──────┐
-                             │ Dead │   │ Null │
-                             └──────┘   └──────┘
+                        malloc()
+      [Uninitialized] -----------> [Alive]
+                                      |
+                                      |
+                           free()     |     = NULL
+                              |       |       |
+                              v       |       v
+                           [Dead]           [Null]
       ```
 
       | State | Meaning | Safe Operations |
