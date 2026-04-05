@@ -131,6 +131,12 @@ steps:
           injects it into the string. The test checks for any day-of-week name.
         - **`$(whoami)`:** Similarly captures the current username. In the tutorial
           environment this is `root`.
+
+        After writing the script, the student runs:
+        ```bash
+        chmod +x morning.sh   # grants execute permission
+        ./morning.sh           # runs it from the current directory
+        ```
     tests:
       - description: "morning.sh starts with the shebang (#!/bin/bash)"
         command: "head -1 morning.sh | grep -q '#!/bin/bash'"
@@ -1247,6 +1253,10 @@ steps:
           — Mirrors the pass branch structure. `$((failed + 1))` evaluates the
           arithmetic and you must assign it back — `$(( ))` alone doesn't modify
           the variable.
+
+        The loop structure, counters (`passed=0`, `failed=0`), and summary line
+        (`Checked $total files: $passed passed, $failed failed`) were provided
+        in the skeleton.
     tests:
       - description: "Script uses a for or while loop"
         command: "grep -qE 'for |while ' batch_check.sh"
@@ -1916,6 +1926,8 @@ steps:
         - **Pipes and redirection:** `wc -l < "$file"` counts lines (using `<` to
           get just the number). `grep "ERROR" "$file" || true` prints error lines
           without crashing on zero matches.
+        - **Loop over ERROR lines:** `grep "ERROR"` outputs all matching lines.
+          The `|| true` is needed in case there are zero errors.
         - **`case` statement for severity:** Uses `0)`, `1|2|3)`, and `*)` as
           patterns. The `|` operator matches multiple values (1 OR 2 OR 3). The
           `*` catch-all handles 4 or more errors as CRITICAL. Note: `case` uses
@@ -1924,6 +1936,8 @@ steps:
         - **Meaningful exit codes:** `exit 1` if errors are present (non-zero =
           failure in Unix), `exit 0` if clean. This allows callers (CI/CD pipelines,
           other scripts) to react programmatically.
+        - **`chmod +x monitor.sh`:** Required before running with `./monitor.sh`
+          (the test checks that the execute bit is set).
     tests:
       - description: "Script is executable"
         command: "[ -x monitor.sh ]"

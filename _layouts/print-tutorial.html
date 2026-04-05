@@ -645,6 +645,13 @@
       </div>
       {% endfor %}
       {% endif %}
+      {% if step.solution.commands %}
+      <div class="step-solution-commands">
+        <div class="starter-file-name">Commands</div>
+        <pre><code class="bash">{% for cmd in step.solution.commands %}{{ cmd }}
+{% endfor %}</code></pre>
+      </div>
+      {% endif %}
       {% if step.solution.explanation %}
       <div class="step-solution-explanation">
         {{ step.solution.explanation | markdownify }}

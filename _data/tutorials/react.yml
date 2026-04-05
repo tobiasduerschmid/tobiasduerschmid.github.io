@@ -349,7 +349,7 @@ steps:
           language: "jsx"
       explanation: |
         - **Bug 1 — `style` must be a JS object, not a string:** The original `style="background: color;"` is an HTML attribute string. In JSX, `style` takes a JavaScript object: `style={{ background: color }}`. Because `color` is a **dynamic prop**, it stays as an inline style. The test checks that at least 2 spans have a background color applied via `element.style.background`.
-        - **Bug 2 — `class` to `className`:** The original `<h1 class="...">` uses an HTML attribute name. `class` is a reserved keyword in JavaScript, so JSX uses `className`.
+        - **Bug 2 — `class` → `className`:** The original `<h1 class="...">` uses an HTML attribute name. `class` is a reserved keyword in JavaScript, so JSX uses `className`.
         - **Bug 3 — multiple root elements need a wrapper:** The original `App` returned two siblings without a wrapper. Wrap siblings in a `<>...</>` Fragment.
         - **Third Badge added:** The test checks `spans.length >= 3`.
 

@@ -795,10 +795,21 @@ steps:
       explanation: |
         No file edits are required for this step — it is a review and summary.
 
-        This Makefile demonstrates every concept from the tutorial in 10 lines:
-        - **Variables (`CC`, `CFLAGS`, `OBJS`):** DRY principle — change the compiler or flags in one place.
-        - **`$(OBJS)` prerequisite:** Declarative dependency graph — Make knows which `.o` files `app` needs.
-        - **`$^` and `$@`:** Automatic variables — no repetition of filenames in the link command.
-        - **Pattern rule `%.o: %.c`:** One rule handles all source files; adding `newfile.c` just requires adding `newfile.o` to `OBJS`.
-        - **`.PHONY: clean`:** Guarantees `make clean` always runs regardless of filesystem state.
-        - **Tab characters on recipe lines:** The invisible but critical requirement that separates Make from all other config formats.
+        - This Makefile demonstrates every concept from the tutorial in 10 lines:
+          - **Variables (`CC`, `CFLAGS`, `OBJS`):** DRY principle — change the compiler or flags in one place.
+          - **`$(OBJS)` prerequisite:** Declarative dependency graph — Make knows which `.o` files `app` needs.
+          - **`$^` and `$@`:** Automatic variables — no repetition of filenames in the link command.
+          - **Pattern rule `%.o: %.c`:** One rule handles all source files; adding `newfile.c` just requires adding `newfile.o` to `OBJS`.
+          - **`.PHONY: clean`:** Guarantees `make clean` always runs regardless of filesystem state.
+          - **Tab characters on recipe lines:** The invisible but critical requirement that separates Make from all other config formats.
+
+        **Key concept connections:**
+
+        | Makefile feature | Why it matters |
+        |---|---|
+        | Tab trap | Parser requirement — spaces cause `missing separator` error |
+        | Variables (`CC`, `CFLAGS`) | DRY — one-line change to switch compilers |
+        | Pattern rule `%.o: %.c` | Scalable — one rule for any number of source files |
+        | Automatic variables `$@`, `$<`, `$^` | No filename repetition in recipes |
+        | Timestamp-based DAG | Incremental builds — only recompiles what changed |
+        | `.PHONY` | Non-file targets always run, even if a same-named file exists |

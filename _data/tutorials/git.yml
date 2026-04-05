@@ -91,7 +91,9 @@ steps:
         - "cd myproject"
         - "ls -la"
       explanation: |
-        `git init myproject` creates a new directory `myproject/` and initializes a `.git/` folder inside it. The `.git/` folder is the entire repository — it stores all history, branches, and configuration. Without it, the directory is just a regular folder. `git init` is a porcelain command. Internally it creates low-level object store directories (`objects/`, `refs/`) — the plumbing that all other commands build on.
+        - **`git init myproject`:** Creates a new directory `myproject/` and initializes a `.git/` folder inside it. The `.git/` folder is the entire repository — it stores all history, branches, and configuration. Without it, the directory is just a regular folder.
+        - The tests check: (1) `git config user.name` returns a non-empty value (already configured by the tutorial setup), (2) `git config user.email` returns a value, and (3) `/tutorial/myproject/.git` exists as a directory.
+        - **Plumbing vs. porcelain:** `git init` is a porcelain command. Internally it creates low-level object store directories (`objects/`, `refs/`) — the plumbing that all other commands build on.
 
     tests:
       - description: "Git user name is configured"
@@ -222,7 +224,10 @@ steps:
         - "git commit -m \"Add calculator module with add and subtract\""
         - "git status"
       explanation: |
-        `git add calculator.py` moves the file from the Working Directory to the Staging Area. Before `git add`, the file is "untracked" — Git sees it but does not track it. After, it is "staged" (green in `git status`). `git commit -m "Add calculator module with add and subtract"` creates a permanent snapshot. The commit message must contain "calc" or "add" (case-insensitive). The two-step add/commit flow exists because the Staging Area lets you precisely control what goes into each commit.
+        - **`git add calculator.py`:** Moves the file from the Working Directory to the Staging Area. Before `git add`, the file is "untracked" — Git sees it but doesn't track it. After, it's "staged" (green in `git status`).
+        - **`git commit -m "Add calculator module with add and subtract"`:** Creates a permanent snapshot. The test checks `git log --oneline | head -1 | grep -qi 'calc\|add'` — so the commit message must contain "calc" or "add" (case-insensitive).
+        - The test also verifies `git log --oneline -- calculator.py | grep -q '.'` — `calculator.py` must appear in at least one commit's history.
+        - **Why the two-step add/commit?** The Staging Area lets you precisely control what goes into each commit. You can edit 10 files but commit only 3 as one logical change.
 
     tests:
       - description: "calculator.py exists in the repository"
@@ -377,7 +382,10 @@ steps:
         - "git commit -m \"Add multiply function to calculator\""
         - "git log"
       explanation: |
-        The multiply function must exist in the file and the commit message must contain "multiply" (case-insensitive). The repository must have at least 2 commits total. `git diff` before staging compares the Working Directory to the Staging Area. Since nothing is staged yet, the staging area still matches the last commit — so `git diff` shows your multiply function as new lines with `+`.
+        - **Test 1:** `grep -q 'def multiply' calculator.py` — the `multiply` function must exist in the file.
+        - **Test 2:** `git log --oneline | grep -qi 'multiply'` — the commit message must contain "multiply" (case-insensitive). The sample message `"Add multiply function to calculator"` satisfies this.
+        - **Test 3:** `[ $(git log --oneline | wc -l) -ge 2 ]` — the repository must have at least 2 commits total.
+        - **`git diff` before staging:** Compares the Working Directory to the Staging Area. Since nothing is staged yet, the staging area still matches the last commit — so `git diff` shows your `multiply` function as new lines with `+`.
 
     tests:
       - description: "calculator.py contains a multiply function"
@@ -539,7 +547,10 @@ steps:
         - "git status"
         - "git commit -m \"Add test files, README, and project notes\""
       explanation: |
-        `git add README.md` stages only README.md. `git add test_*.py` uses shell glob expansion to stage test_calc.py and test_utils.py. `git add .` stages everything in the current directory and subdirectories — including notes.txt. Four staging strategies demonstrated: individual file (`git add README.md`), wildcard (`git add test_*.py`), current directory (`git add .`), and all tracked+untracked (`git add --all`). All achieve the same end result here but give different levels of control.
+        - **`git add README.md`:** Stages only `README.md`. The test verifies `git log --all --oneline -- README.md | grep -q '.'`.
+        - **`git add test_*.py`:** The shell glob expands to `test_calc.py test_utils.py`. Both are staged. Tests verify both files appear in history.
+        - **`git add .`:** Stages everything in the current directory and subdirectories — including `notes.txt`. The test verifies `notes.txt` is in history.
+        - **Four staging strategies:** Individual file (`git add README.md`), wildcard (`git add test_*.py`), current directory (`git add .`), all tracked+untracked (`git add --all`). All achieve the same end result here but give different levels of control.
 
     tests:
       - description: "README.md has been committed"
@@ -678,7 +689,11 @@ steps:
         - "git restore calculator.py"
         - "git status"
       explanation: |
-        `git restore --staged calculator.py` moves the file from staged to modified-but-unstaged. Edits are preserved — they stay in the working directory. `git restore calculator.py` (without --staged) discards working directory changes permanently. There is no undo — the file was never committed, so Git has no record of the "BROKEN CODE" version. `git reset --hard` would discard ALL uncommitted changes across all files — the nuclear option. Use it only when you are sure.
+        - **Test 1:** `! grep -q 'BROKEN CODE' calculator.py` — the "BROKEN CODE" line must NOT be in the file. `git restore calculator.py` restores it to the last committed version.
+        - **Test 2:** `git diff --quiet && git diff --cached --quiet` — both the working directory and the staging area must be clean (no uncommitted changes).
+        - **`git restore --staged`:** Moves the file from staged → modified-but-unstaged. Edits are preserved — they stay in the working directory.
+        - **`git restore` (without `--staged`):** Discards working directory changes permanently. There is no undo — the file was never committed, so Git has no record of the "BROKEN CODE" version.
+        - **Warning:** `git reset --hard` would discard ALL uncommitted changes across all files — the nuclear option. Use it only when you're sure.
 
     tests:
       - description: "calculator.py does NOT contain 'BROKEN CODE'"
@@ -816,7 +831,12 @@ steps:
         - "git add .gitignore"
         - "git commit -m \"Add .gitignore to exclude compiled and secret files\""
       explanation: |
-        Each pattern in .gitignore tells Git to pretend matching files do not exist. `__pycache__/` with the trailing slash matches only directories named __pycache__, not a hypothetical file with that name. `*.pyc` is a glob that matches any file ending in .pyc in any subdirectory. `.env` matches the secret environment file. `*.log` matches any log file. Committing .gitignore ensures all contributors automatically get the same ignore rules — including protection against accidentally committing .env secrets.
+        - **Tests verify each pattern:** `grep -q '__pycache__' .gitignore`, `grep -q '.env' .gitignore`, `grep -q '\*.pyc' .gitignore`.
+        - **`.gitignore` is committed:** `git log --oneline -- .gitignore | grep -q '.'` — the file must appear in history.
+        - **`.env` is not tracked:** `! git ls-files --cached | grep -q '.env'` — the secret file must never have been staged or committed.
+        - **`__pycache__/`:** The trailing `/` matches only directories named `__pycache__`, not a hypothetical file with that name.
+        - **`*.pyc`:** A glob that matches any file ending in `.pyc` in any subdirectory.
+        - **Why commit `.gitignore`?** Sharing it ensures all contributors automatically get the same ignore rules — including protection against accidentally committing `.env` secrets.
 
     tests:
       - description: ".gitignore file exists"
@@ -957,7 +977,15 @@ steps:
         - "git show HEAD"
         - "git diff HEAD~1 HEAD"
       explanation: |
-        The repository must have at least 3 commits by this point. `git log` shows hash, author, date, and message for each commit. The hash is a 40-character SHA-1 identifier for each snapshot. `git show HEAD` displays the metadata plus the complete diff of the most recent commit. HEAD is a symbolic reference that always points to the currently checked-out commit. `HEAD~1` is relative syntax for "one commit before HEAD".
+        - **Test:** `[ $(git log --oneline | wc -l) -ge 3 ]` — the repository must have at least 3 commits. By this step, you have: initial commit (Step 2), multiply commit (Step 3), and gitignore commit (Step 6).
+        - **`git log`:** Shows hash, author, date, and message for each commit. The hash is a 40-character SHA-1 identifier for each snapshot.
+        - **`git show HEAD`:** Displays the metadata plus the complete diff of the most recent commit. `HEAD` is a symbolic reference that always points to the currently checked-out commit.
+        - **`HEAD~1`:** Relative syntax for "one commit before HEAD". `HEAD~2` is two commits back, etc.
+        - **`git diff` variants to know:**
+          - `git diff` — Working Directory vs. Staging Area (unstaged changes)
+          - `git diff HEAD` — Working Directory vs. Last Commit (all uncommitted changes)
+          - `git diff --staged` — Staging Area vs. Last Commit (what would be committed)
+          - `git diff HEAD~1 HEAD` — Previous commit vs. latest commit
 
     tests:
       - description: "Repository has at least 3 commits"
@@ -1203,7 +1231,12 @@ steps:
         - "git switch --detach HEAD~1"
         - "git switch feature-divide"
       explanation: |
-        `git switch -c feature-divide` creates and switches in one command. A branch is just a 41-byte file in `.git/refs/heads/` containing the current commit's SHA. When you `git switch main`, Git updates your working directory to match the snapshot that main points to — the divide function was never committed to main, so it vanishes. This is the power of branches as separate timelines. The detached HEAD state is entered with `git switch --detach HEAD~1` and you must return to a branch before doing real work.
+        - **Test 1:** `git branch | grep -q 'feature-divide'` — the branch must exist.
+        - **Test 2:** `git show feature-divide:calculator.py | grep -q 'def divide'` — the divide function must exist on the feature branch.
+        - **Test 3:** `git log feature-divide --oneline | grep -qi 'divide'` — the commit message must reference "divide".
+        - **Test 4:** `git branch --show-current | grep -q 'feature-divide'` — you must finish on the `feature-divide` branch (after returning from detached HEAD).
+        - **`git switch -c feature-divide`:** `-c` creates and switches in one command. A branch is just a 41-byte file in `.git/refs/heads/` containing the current commit's SHA.
+        - **Disappearing divide function:** When you `git switch main`, Git updates your working directory to match the snapshot that `main` points to — the `divide` function was never committed to `main`, so it vanishes. This is the power of branches as separate timelines.
 
     tests:
       - description: "Branch 'feature-divide' exists"
@@ -1371,7 +1404,11 @@ steps:
         - "git log --oneline"
         - "git branch -d feature-divide"
       explanation: |
-        First switch to the branch you want to merge INTO (main), then merge the feature branch. Because main had no new commits since feature-divide was created, Git simply slides the main pointer forward to the same commit as feature-divide (fast-forward merge). No merge commit is created; the history stays perfectly linear. `git branch -d feature-divide` safely deletes the branch only if it is fully merged. Its work is now part of main, so this is tidy cleanup.
+        - **Test 1:** `git branch --show-current | grep -q 'main'` — you must be on main.
+        - **Test 2:** `grep -q 'def divide' calculator.py` — the divide function must be in the working file on main after the merge.
+        - **Test 3:** `git log main --oneline | grep -qi 'divide'` — the divide commit must be in main's history.
+        - **Fast-forward merge:** Because `main` had no new commits since `feature-divide` was created, Git simply slides the `main` pointer forward to the same commit as `feature-divide`. No merge commit is created; the history stays perfectly linear.
+        - **`git branch -d feature-divide`:** The `-d` flag safely deletes only if the branch is fully merged. Its work is now part of `main`, so this is tidy cleanup.
 
     tests:
       - description: "Currently on main branch"
@@ -1531,7 +1568,10 @@ steps:
         - "git switch main"
         - "head -8 calculator.py"
       explanation: |
-        The update-add-function branch changes the add function to include type checking. This creates a conflict setup because in the next step, you will make a different change to the same function on main. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
+        - **Test 1:** `git branch | grep -q 'update-add-function'` — the branch must exist.
+        - **Test 2:** `git log update-add-function --oneline | grep -qi 'type\|check\|add'` — the commit message must reference "type", "check", or "add".
+        - **Test 3:** `git branch --show-current | grep -q 'main'` — you must end on `main`.
+        - **Why this creates a conflict:** The `update-add-function` branch changed the `add` function. In the next step, you'll make a *different* change to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
 
     tests:
       - description: "Branch 'update-add-function' exists"
@@ -1728,7 +1768,12 @@ steps:
         - "git add calculator.py"
         - "git commit -m \"Merge update-add-function: combine type checking and logging\""
       explanation: |
-        First, modify the add function on main to add logging, then commit. When you run `git merge update-add-function`, Git detects that both branches changed the same lines in the add function — triggering a conflict. The conflict markers (`<<<<<<< HEAD`, `=======`, `>>>>>>> update-add-function`) must all be removed. The resolved version combines both the type checking from update-add-function and the logging from main. After editing, `git add calculator.py` signals to Git that the conflict is resolved AND stages the content. Without it, `git commit` refuses with "unmerged paths".
+        - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' calculator.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
+        - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
+        - **Test 3:** `grep -q 'isinstance' calculator.py` — the type-checking code from `update-add-function` must be present.
+        - **Test 4:** `grep -q 'print' calculator.py` — the logging code from `main` must be present.
+        - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
+        - **`git add` after resolution:** Signals to Git that the conflict is resolved AND stages the content. Without it, `git commit` refuses with "unmerged paths". This is the same `git add` as always — it just takes on this extra role during a merge.
 
     tests:
       - description: "calculator.py has no conflict markers"
@@ -1878,7 +1923,11 @@ steps:
         - "git log --oneline"
         - "cat calculator.py"
       explanation: |
-        `git revert HEAD --no-edit` creates a new commit that applies the exact inverse of HEAD. `--no-edit` accepts the default message without opening a text editor. Unlike `git reset --hard` which destroys commits by moving the branch pointer backward and rewriting history, `git revert` is always safe because it only adds new commits and never changes existing history. On a shared branch where teammates have already pulled, `reset --hard` would cause severe conflicts and require a force-push.
+        - **Test 1:** `git log --oneline | grep -qi 'revert'` — a revert commit must exist in the log (Git's default message is "Revert '...'").
+        - **Test 2:** `! grep -q 'debug: this should not be here' calculator.py` — the debug line must be gone from the file.
+        - **Test 3:** `[ $(git log --oneline | wc -l) -ge 8 ]` — the repository must have at least 8 commits by now.
+        - **`git revert HEAD --no-edit`:** Creates a new commit that applies the exact inverse of `HEAD`. `--no-edit` accepts the default message without opening a text editor.
+        - **Why NOT `git reset --hard`:** `reset --hard` destroys commits by moving the branch pointer backward — rewriting history. On a shared branch where teammates have already pulled, this would cause severe conflicts and require a force-push. `git revert` is always safe because it only adds new commits and never changes existing history.
 
     tests:
       - description: "A revert commit exists in the log"
@@ -2009,7 +2058,9 @@ steps:
         - "git log --oneline --graph --all"
         - "cat calculator.py"
       explanation: |
-        The repository must have at least 10 commits in total. By this step, you have: initial commit (Step 2), multiply commit (Step 3), staging commit (Step 4), gitignore commit (Step 6), divide commit (Step 8), merge commit (Step 9), type checking commit (Step 10), logging commit (Step 11), merge conflict resolution commit (Step 11), bad commit (Step 12), and revert commit (Step 12). All four functions (add, subtract, multiply, divide) must be present in the final calculator.py. The .gitignore must be in the commit history.
+        - **Test 1:** `[ $(git log --oneline | wc -l) -ge 10 ]` — at least 10 commits in total.
+        - **Test 2:** `grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py` — all four functions must be present in the final `calculator.py`.
+        - **Test 3:** `.gitignore` must be in the commit history.
 
     tests:
       - description: "Repository has at least 10 commits"
