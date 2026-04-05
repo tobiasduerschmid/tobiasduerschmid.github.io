@@ -27,7 +27,7 @@ concepts taught in that step.
 
 ```jsx
 function App() {
-  const name = "Alex";           // Changed from "World" to any non-"World" name
+  const name = "CS35L";           // Changed from "World" to any non-"World" name
 
   return (
     <div className="p-4">
