@@ -235,6 +235,28 @@ const b = await fetchB();
 const [a, b] = await Promise.all([fetchA(), fetchB()]);
 ```
 
+**⚠️ The `.forEach()` Trap:** `.forEach()` does NOT await async callbacks — it fires them all and returns immediately:
+
+```javascript
+// BUG: "All done!" prints BEFORE items are processed
+items.forEach(async (item) => {
+    await processItem(item);
+});
+console.log("All done!");  // runs immediately!
+
+// FIX (sequential): use for...of
+for (const item of items) {
+    await processItem(item);
+}
+console.log("All done!");  // runs after all items
+
+// FIX (parallel): use Promise.all + .map()
+await Promise.all(items.map(item => processItem(item)));
+console.log("All done!");
+```
+
+`.forEach()` ignores the Promises returned by its async callbacks — it has no mechanism to wait for them. This is one of the most common async bugs in JavaScript.
+
 ### Data Representation: JavaScript Objects and JSON
 If you understand Python dictionaries, you already understand the *general structure* of JavaScript Objects. Unlike C++, where you must define a `struct` or `class` before instantiating an object, JavaScript allows you to create objects on the fly using key-value pairs. 
 

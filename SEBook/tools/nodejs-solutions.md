@@ -62,7 +62,8 @@ console.log(message);
 **Why this is correct:**
 
 - **`===` instead of `==`:** JavaScript's `==` performs implicit type coercion — `"42" == 42` is `true` and `false == 0` is `true`. These are the dangerous surprises shown in the tutorial. `===` checks both value AND type, matching the behavior you expect from C++ and Python. After both fixes, neither `[BUG]` message appears in output.
-- **`const MAX_STUDENTS`:** The value `200` never changes, so `const` is the correct declaration — it prevents accidental reassignment and signals intent to readers. The test checks `source.includes('const MAX_STUDENTS')`. The same logic applies to `studentName`, `studentGrade`, and `message` — none are reassigned, so `const` is the correct choice for all of them.
+- **`const MAX_STUDENTS`:** The value `200` never changes, so `const` is the correct declaration — it prevents accidental reassignment and signals intent to readers. The test checks `source.includes('const MAX_STUDENTS')`.
+- **Bonus improvement:** The solution also changes `studentName`, `studentGrade`, and `message` from `let` to `const` — none are reassigned, so `const` is the better choice. This is not required by the task (only `MAX_STUDENTS` is listed as a bug), but it follows best practice #1: "default to `const`, use `let` only when reassigning."
 - **Template literal:** Backtick strings with `${expression}` syntax replace the `+` concatenation. The test checks `source.includes('${')`. Template literals are the direct JavaScript equivalent of Python's f-strings.
 - **Test: no `[BUG]` in output:** The test `assert(!output.includes('[BUG]'), ...)` verifies both `===` fixes worked — neither branch with `[BUG]` in its message should execute.
 

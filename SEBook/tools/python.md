@@ -526,6 +526,20 @@ evens = [x for x in range(10) if x % 2 == 0]   # [0, 2, 4, 6, 8]
 
 The general form is `[expression for variable in iterable if condition]`. Use comprehensions when the transformation is simple — they are more readable and slightly faster than equivalent `for` loops.
 
+#### Generator Expressions: Lazy Comprehensions
+
+Replacing the square brackets `[...]` with parentheses `(...)` creates a **generator expression** — it produces values one at a time (lazy evaluation) instead of building the entire list in memory:
+
+```python
+# List comprehension — builds a full list in memory:
+squares = [x**2 for x in range(1_000_000)]      # ~8 MB in memory
+
+# Generator expression — produces values on demand:
+squares = (x**2 for x in range(1_000_000))       # near-zero memory
+```
+
+Use generators when you only need to iterate once and don't need to store the full collection — for example, passing directly to `sum()`, `max()`, or a `for` loop.
+
 
 ### Reading Files with `open()` and `with`
 

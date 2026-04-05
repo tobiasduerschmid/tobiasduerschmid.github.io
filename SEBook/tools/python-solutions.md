@@ -31,7 +31,7 @@ print("Hello, CS 35L!")
 ```python
 name  = "Alice"
 year  = 2
-gpa   = 3.82
+gpa   = 3.819
 major = "Computer Science"
 
 # Using a single f-string with :.2f to format GPA
@@ -41,7 +41,7 @@ print(f"Student: {name} | Year: {year} | Major: {major} | GPA: {gpa:.2f}")
 **Why this is correct:**
 
 - **`f"..."` prefix:** Marks the string as an f-string so `{variable}` expressions are evaluated and interpolated. The `f` prefix is analogous to backtick template literals in JavaScript or C++'s `printf` format specifiers.
-- **`{gpa:.2f}`:** The `:.2f` format specifier inside the braces tells Python to format `gpa` as a float with exactly two decimal places. `3.82` formats as `3.82`, which is what the test checks.
+- **`{gpa:.2f}`:** The `:.2f` format specifier inside the braces tells Python to format `gpa` as a float with exactly two decimal places. `3.819` rounds to `3.82` in the output, which is what the test checks. The variable still holds the original value `3.819` — the formatting happens only at display time.
 - **Variables, not literals:** The test uses AST inspection to ensure you used the variable names (`name`, `year`, `major`, `gpa`) inside the f-string rather than hard-coding the values as strings.
 - **Dynamic vs. weak typing:** Python infers `year` as `int` and `gpa` as `float` from the assigned values — no type declarations needed. But Python will refuse `"Year: " + year` (a `TypeError`) because it won't silently coerce `int` to `str`.
 
