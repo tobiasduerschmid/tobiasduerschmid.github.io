@@ -1,39 +1,67 @@
 title: "Prolog Essentials"
-description: "A hands-on introduction to Prolog, running entirely in your browser. Learn to define facts, write rules, and query a knowledge base — no installation required."
+description: "A hands-on introduction to logic programming with Prolog, running entirely in your browser. Learn to think declaratively — define facts, write rules, and let Prolog find the answers."
 
 backend: prolog
 
 require_tests: true
 
 steps:
-  # Step 1: Facts & Queries
+
+  # --------------------------------------------------------------------------
+  # STEP 1: FACTS & QUERIES — the declarative mental model
+  # Pedagogy: Establish declarative mindset, multi-directional querying
+  # Research: Fleck 2007 (start with logic), Kumar 2002 (family domain)
+  # Bloom's: Remember / Understand / Apply
+  # --------------------------------------------------------------------------
   - title: "Facts and Queries"
     instructions: |
-      ## Facts: The Building Blocks
+      ## A Different Kind of Programming
 
-      Prolog programs are built from **facts**, **rules**, and **queries**.
-      A *fact* states something that is unconditionally true:
+      > **Learning objective:** After this step you will be able to **define** Prolog facts and **query** a knowledge base in multiple directions.
+
+      You already know Python, JavaScript, and C++. In all three, you tell the computer **how** to solve a problem — step by step, with loops, variables, and function calls.
+
+      Prolog is fundamentally different. You describe **what is true**, and Prolog figures out the answers. This is called **declarative programming** — the single most important idea in this tutorial.
+
+      ### Facts: Declaring what is true
+
+      A **fact** states something unconditionally:
 
       ```prolog
       parent(tom, bob).
       ```
 
-      This says "Tom is a parent of Bob." Every fact ends with a **period**.
+      This says: *"Tom is a parent of Bob."* Every fact ends with a **period**.
+
+      There is no `return` statement. No variables being assigned. You are simply recording a relationship.
+
+      ### Queries: Asking questions
+
+      Use the **?-** input to ask Prolog questions:
+
+      | Query | Meaning | Expected answer |
+      |-------|---------|-----------------|
+      | `parent(tom, bob)` | "Is Tom a parent of Bob?" | `true` |
+      | `parent(tom, X)` | "Who are Tom's children?" | `X = bob` |
+      | `parent(X, bob)` | "Who are Bob's parents?" | `X = tom` |
+
+      Notice that **the same predicate works in multiple directions**. This is *not* a function with fixed inputs and outputs — it's a *relation* that Prolog can query from any angle.
+
+      > **Imperative trap:** In Python, `parent(tom, bob)` would be a function call returning a value. In Prolog, it's a *question* — and the answer is yes/no, plus any variable bindings.
 
       ### Your Task
 
-      The editor contains a small family database. Add the following facts:
+      The editor has one fact. Add two more:
 
-      1. `parent(bob, ann).`  — Bob is a parent of Ann
-      2. `parent(bob, pat).`  — Bob is a parent of Pat
+      1. `parent(bob, ann).`
+      2. `parent(bob, pat).`
 
-      Then use the **?-** query input to explore:
+      Then try these queries (one at a time in the **?-** input):
 
-      - `parent(tom, bob)` — Is Tom a parent of Bob?
-      - `parent(tom, X)` — Who are Tom's children?
-      - `parent(X, ann)` — Who are Ann's parents?
-
-      Click **Run** to consult the file and execute your query.
+      - `parent(tom, bob)` — yes/no question
+      - `parent(tom, X)` — "who" question
+      - `parent(X, ann)` — reverse direction!
+      - `parent(X, Y)` — enumerate all parent relationships
 
     default_query: "parent(tom, X)"
     files:
@@ -48,6 +76,59 @@ steps:
           % parent(bob, ann).
           % parent(bob, pat).
     open_file: "family.pl"
+
+    quiz:
+      title: "Facts & Queries — Predict Before You Run"
+      min_score: 1.0
+      questions:
+        - question: |
+            Given these facts:
+            ```prolog
+            likes(alice, pizza).
+            likes(bob, pasta).
+            likes(alice, sushi).
+            ```
+            What does the query `likes(alice, X)` return?
+          type: single
+          options:
+            - "`X = pizza` (only the first match)"
+            - "`X = pizza` and `X = sushi` (all matches)"
+            - "`true`"
+            - "Error — X is not defined"
+          correct_index: 1
+          explanation: |
+            Prolog finds **all** facts that match the query pattern. Since Alice likes both pizza and sushi, both are returned. This is fundamentally different from a function call that returns one value.
+
+        - question: |
+            In Python, `parent(tom, bob)` is a function call. In Prolog, it is:
+          type: single
+          options:
+            - "A function that returns `true`"
+            - "A relationship that Prolog checks against its knowledge base"
+            - "A variable assignment"
+            - "A class constructor"
+          correct_index: 1
+          explanation: |
+            Prolog predicates are **relations**, not functions. `parent(tom, bob)` asks: "does the knowledge base contain this relationship?" There is no return value — Prolog either succeeds or fails.
+
+    solution:
+      files:
+        - path: "family.pl"
+          content: |
+            % Family database
+            % A fact parent(X, Y) means "X is a parent of Y".
+
+            parent(tom, bob).
+            parent(bob, ann).
+            parent(bob, pat).
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - Each fact is a simple declaration: `parent(bob, ann).` tells Prolog that Bob is a parent of Ann. There is no function call, no return value — just a statement of truth.
+        - The period `.` at the end is mandatory — it terminates every Prolog clause (fact, rule, or query).
+        - Once these facts are in the knowledge base, Prolog can answer queries from **any direction**: `parent(bob, X)` finds Bob's children, `parent(X, ann)` finds Ann's parents, and `parent(X, Y)` lists all parent-child pairs. This multi-directionality is what makes Prolog predicates *relations*, not *functions*.
+
     tests:
       - description: "parent(bob, ann) is defined"
         command: |
@@ -62,12 +143,202 @@ steps:
           var answers = __query('parent(bob, X)');
           assert(answers.length === 2, 'Bob should have exactly 2 children, got ' + answers.length);
 
-  # Step 2: Rules
-  - title: "Rules"
+  # --------------------------------------------------------------------------
+  # STEP 2: UNIFICATION — the core mechanism
+  # Pedagogy: Explicit misconception confrontation (= is NOT assignment)
+  # Research: Kumar 2002 (unification misconceptions), PRIMM (predict first)
+  # Bloom's: Understand / Analyze
+  # --------------------------------------------------------------------------
+  - title: "Unification: = Is Not Assignment"
     instructions: |
-      ## Rules: Deriving New Knowledge
+      ## The Most Important Concept in Prolog
 
-      A **rule** lets Prolog derive facts from other facts. The syntax is:
+      > **Learning objective:** After this step you will be able to **explain** how unification differs from assignment and **predict** whether two terms unify.
+
+      In Python, `X = 5` stores the value 5 in a variable named X. In Prolog, `X = 5` means something completely different.
+
+      ### Unification: bidirectional pattern matching
+
+      The `=` operator in Prolog asks: *"Can these two terms be made identical?"*
+
+      ```prolog
+      ?- X = 5.          % Yes: X becomes 5
+      ?- 5 = 5.          % Yes: identical
+      ?- 5 = 6.          % No: cannot make 5 equal to 6
+      ?- f(X) = f(3).    % Yes: X becomes 3
+      ?- f(X, b) = f(a, Y).  % Yes: X = a, Y = b
+      ```
+
+      This is called **unification** — the engine of Prolog. It works by matching the *structure* of two terms and finding variable bindings that make them equal.
+
+      ### Variables are NOT mutable boxes
+
+      > **Imperative trap:** In Python, you can write `x = 3` then `x = 4`. In Prolog, once a variable is bound, it cannot be changed:
+
+      ```prolog
+      ?- X = 3, X = 4.   % FAILS! X is already 3, and 3 ≠ 4.
+      ```
+
+      This is called **single assignment** — a variable gets one value per query. If you need a different value, you need a different variable or a different branch of the search.
+
+      ### Unification with structures
+
+      Prolog terms can be nested structures (like trees):
+
+      ```prolog
+      ?- date(Day, march, 2024) = date(15, Month, Year).
+      % Day = 15, Month = march, Year = 2024
+      ```
+
+      Both sides are made identical by binding variables to values. Neither side is "input" or "output" — unification is symmetric.
+
+      ### Your Task
+
+      The file contains several unification queries as facts. For each one, **predict** whether it will succeed or fail, then uncomment it and run it to check.
+
+    default_query: "test_unify"
+    files:
+      - path: "unify.pl"
+        content: |
+          % Unification exercises
+          % For each, PREDICT: will it succeed or fail? What are the bindings?
+          % Then uncomment and query: test1, test2, etc.
+
+          % Example: X = hello succeeds with X = hello
+          test_example :- X = hello, write('X = '), write(X), nl.
+
+          % 1. Does this succeed? What is X?
+          test1 :- X = f(a, b), write('X = '), write(X), nl.
+
+          % 2. Does this succeed? What are X and Y?
+          test2 :- f(X, b) = f(a, Y), write('X = '), write(X), write(', Y = '), write(Y), nl.
+
+          % 3. Does this succeed or FAIL?
+          test3 :- a = b, write('This should not print'), nl.
+
+          % 4. Does this succeed or FAIL? (tricky!)
+          test4 :- X = 3, X = 3, write('X = '), write(X), nl.
+
+          % 5. Does this succeed or FAIL?
+          test5 :- X = 3, X = 4, write('This should not print'), nl.
+
+          % Run all tests:
+          test_unify :-
+            write('--- Test 1 ---'), nl, (test1 -> true ; write('FAILED'), nl),
+            write('--- Test 2 ---'), nl, (test2 -> true ; write('FAILED'), nl),
+            write('--- Test 3 ---'), nl, (test3 -> true ; write('FAILED'), nl),
+            write('--- Test 4 ---'), nl, (test4 -> true ; write('FAILED'), nl),
+            write('--- Test 5 ---'), nl, (test5 -> true ; write('FAILED'), nl).
+    open_file: "unify.pl"
+
+    quiz:
+      title: "Unification — Predict the Outcome"
+      min_score: 0.75
+      questions:
+        - question: |
+            What happens when Prolog processes `X = 3, X = 4`?
+          type: single
+          options:
+            - "X becomes 4 (reassignment, like Python)"
+            - "X becomes [3, 4] (list of values)"
+            - "It fails — X is already bound to 3, and 3 cannot unify with 4"
+            - "Error — variables cannot be used twice"
+          correct_index: 2
+          explanation: |
+            Once X is bound to 3, `X = 4` attempts to unify 3 with 4, which fails. Prolog variables are **single-assignment** within a query. This is the #1 source of confusion for imperative programmers.
+
+        - question: |
+            Does `point(X, 2) = point(1, Y)` succeed? If so, what are X and Y?
+          type: single
+          options:
+            - "Fails — the arguments don't match"
+            - "Succeeds: X = 1, Y = 2"
+            - "Succeeds: X = point(1), Y = point(2)"
+            - "Error — point is not defined"
+          correct_index: 1
+          explanation: |
+            Unification matches corresponding arguments: X unifies with 1, and 2 unifies with Y. Both sides become `point(1, 2)`. Prolog doesn't need `point` to be "defined" — it's just a structure.
+
+        - question: |
+            How does Prolog's `=` differ from Python's `=`?
+          type: single
+          options:
+            - "They are the same — both assign values"
+            - "Prolog's `=` is bidirectional pattern matching; Python's `=` is one-way assignment"
+            - "Prolog's `=` only works with numbers"
+            - "Prolog's `=` compares without binding"
+          correct_index: 1
+          explanation: |
+            Python's `=` always assigns the right side to the left. Prolog's `=` finds bindings that make both sides identical — it works symmetrically. `f(X) = f(3)` and `f(3) = f(X)` both bind X to 3.
+
+    solution:
+      files:
+        - path: "unify.pl"
+          content: |
+            % Unification exercises — all uncommented
+
+            test_example :- X = hello, write('X = '), write(X), nl.
+
+            % 1. Succeeds: X = f(a, b)
+            test1 :- X = f(a, b), write('X = '), write(X), nl.
+
+            % 2. Succeeds: X = a, Y = b
+            test2 :- f(X, b) = f(a, Y), write('X = '), write(X), write(', Y = '), write(Y), nl.
+
+            % 3. FAILS: a and b are different atoms — cannot unify
+            test3 :- a = b, write('This should not print'), nl.
+
+            % 4. Succeeds: X = 3, and 3 = 3 trivially unifies
+            test4 :- X = 3, X = 3, write('X = '), write(X), nl.
+
+            % 5. FAILS: X = 3, then X = 4 tries to unify 3 with 4
+            test5 :- X = 3, X = 4, write('This should not print'), nl.
+
+            test_unify :-
+              write('--- Test 1 ---'), nl, (test1 -> true ; write('FAILED'), nl),
+              write('--- Test 2 ---'), nl, (test2 -> true ; write('FAILED'), nl),
+              write('--- Test 3 ---'), nl, (test3 -> true ; write('FAILED'), nl),
+              write('--- Test 4 ---'), nl, (test4 -> true ; write('FAILED'), nl),
+              write('--- Test 5 ---'), nl, (test5 -> true ; write('FAILED'), nl).
+          language: "prolog"
+      explanation: |
+        **Key insights:**
+
+        - **Test 1:** `X = f(a, b)` succeeds — X is bound to the *structure* `f(a, b)`. Unification works with any term, not just numbers.
+        - **Test 2:** `f(X, b) = f(a, Y)` matches corresponding arguments: X with `a`, `b` with Y. Both sides become `f(a, b)`.
+        - **Test 3 FAILS:** `a = b` tries to make two different atoms identical — impossible. This is the core of unification: it only succeeds when terms *can* be made equal.
+        - **Test 4 SUCCEEDS:** `X = 3, X = 3` — after X is bound to 3, unifying X with 3 again just checks that 3 = 3 (trivially true).
+        - **Test 5 FAILS:** `X = 3, X = 4` — X is bound to 3, so `X = 4` becomes `3 = 4`, which fails. **Variables are single-assignment** — this is the #1 difference from imperative languages.
+
+    tests:
+      - description: "test1 succeeds (X = f(a,b))"
+        command: |
+          var answers = __query('test1');
+          assert(answers.length > 0, 'test1 should succeed');
+      - description: "test3 fails (a cannot unify with b)"
+        command: |
+          var answers = __query('test3');
+          assert(answers.length === 0, 'test3 should fail — a and b do not unify');
+      - description: "test5 fails (X=3 then X=4 is a contradiction)"
+        command: |
+          var answers = __query('test5');
+          assert(answers.length === 0, 'test5 should fail — X cannot be both 3 and 4');
+
+  # --------------------------------------------------------------------------
+  # STEP 3: RULES — composing predicates
+  # Pedagogy: Rules as logical implications, worked example with fading
+  # Research: Fleck 2007 (goal-directed), Wick & Stevenson 2006 (exercise design)
+  # Bloom's: Understand / Apply
+  # --------------------------------------------------------------------------
+  - title: "Rules: Deriving New Knowledge"
+    instructions: |
+      ## From Facts to Logic
+
+      > **Learning objective:** After this step you will be able to **write** rules that derive new relationships from existing facts.
+
+      Facts are things you state directly. **Rules** let Prolog *derive* new knowledge from existing facts.
+
+      ### Rule syntax
 
       ```prolog
       grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
@@ -75,25 +346,31 @@ steps:
 
       Read `:-` as **"if"** and `,` as **"and"**:
 
-      > X is a grandparent of Z **if** X is a parent of some Y **and** Y is a parent of Z.
+      > *X is a grandparent of Z **if** X is a parent of some Y **and** Y is a parent of Z.*
 
-      Variables start with an **uppercase letter** (e.g., `X`, `Y`, `Person`).
+      The left side is the **head** (what we're defining). The right side is the **body** (the conditions).
+
+      ### How Prolog uses rules
+
+      When you query `grandparent(tom, ann)`, Prolog:
+
+      1. Finds the rule for `grandparent`
+      2. Tries to satisfy the body: find a Y where `parent(tom, Y)` AND `parent(Y, ann)`
+      3. Tries `Y = bob`: is `parent(tom, bob)` true? **Yes.** Is `parent(bob, ann)` true? **Yes.**
+      4. Both conditions met — the query **succeeds**.
+
+      > **Imperative trap:** There is no `if/else`, no loop. Prolog tries all possibilities automatically. You declare the *logic*, and Prolog handles the *search*.
+
+      ### Variables in rules
+
+      Variables in rules (like `X`, `Y`, `Z`) are **universally quantified** — they stand for *any* value that makes the rule work. When Prolog uses a rule, it creates fresh copies of all variables for that specific use.
 
       ### Your Task
 
-      Add these two rules to the file:
+      Define two rules:
 
-      1. **`grandparent(X, Z)`** — X is a grandparent of Z
-         (already shown above)
-
-      2. **`sibling(X, Y)`** — X and Y are siblings
-         *Hint:* Two people are siblings if they share a parent, but are not the same person. Use `X \= Y` for "X is not equal to Y".
-
-      Then query:
-
-      - `grandparent(tom, ann)` — Is Tom a grandparent of Ann?
-      - `sibling(ann, pat)` — Are Ann and Pat siblings?
-      - `sibling(X, Y)` — Find all sibling pairs
+      1. **`grandparent(X, Z)`** — as shown above
+      2. **`sibling(X, Y)`** — X and Y are siblings if they share a parent, but are not the same person. Use `X \= Y` for "not equal".
 
     default_query: "grandparent(tom, X)"
     files:
@@ -104,12 +381,67 @@ steps:
           parent(bob, ann).
           parent(bob, pat).
 
-          % TODO: Define grandparent/2
-          % grandparent(X, Z) :- ...
+          % Rule: grandparent
+          % TODO: Define grandparent(X, Z) :- ...
 
-          % TODO: Define sibling/2
-          % sibling(X, Y) :- ...
+
+          % Rule: sibling
+          % Two people are siblings if they share a parent
+          % but are not the same person.
+          % TODO: Define sibling(X, Y) :- ...
+
     open_file: "family.pl"
+
+    quiz:
+      title: "Rules — Predict the Derivation"
+      min_score: 0.75
+      questions:
+        - question: |
+            Given `parent(tom, bob)` and `parent(bob, ann)`, what does `grandparent(tom, ann)` do?
+          type: single
+          options:
+            - "Returns `true` because tom and ann are in the database"
+            - "Fails because there is no fact `grandparent(tom, ann)`"
+            - "Succeeds by finding Y = bob such that parent(tom, bob) AND parent(bob, ann)"
+            - "Returns the string 'grandparent'"
+          correct_index: 2
+          explanation: |
+            Even though there is no *fact* `grandparent(tom, ann)`, Prolog uses the *rule* to derive it. It finds Y = bob that satisfies both conditions. Rules allow Prolog to answer questions that aren't explicitly stated.
+
+        - question: |
+            If we define `sibling(X, Y) :- parent(P, X), parent(P, Y).` (without `X \= Y`), what happens when we query `sibling(ann, ann)`?
+          type: single
+          options:
+            - "Fails — a person cannot be their own sibling"
+            - "Succeeds — bob is a parent of ann AND ann, so both conditions are met"
+            - "Error — you can't use the same variable twice"
+            - "Returns `false`"
+          correct_index: 1
+          explanation: |
+            Without the `X \= Y` check, ann would be her own sibling (bob is a parent of ann AND ann). This is logically correct but semantically wrong — we need the inequality constraint to exclude self-siblings.
+
+    solution:
+      files:
+        - path: "family.pl"
+          content: |
+            % Family database
+            parent(tom, bob).
+            parent(bob, ann).
+            parent(bob, pat).
+
+            % Rule: grandparent
+            grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
+
+            % Rule: sibling
+            sibling(X, Y) :- parent(P, X), parent(P, Y), X \= Y.
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - **`grandparent(X, Z) :- parent(X, Y), parent(Y, Z).`** — Read as: "X is a grandparent of Z *if* there exists some Y such that X is a parent of Y *and* Y is a parent of Z." The variable Y is an *existential* — Prolog searches for any value that makes both conditions true.
+        - **`sibling(X, Y) :- parent(P, X), parent(P, Y), X \= Y.`** — Two people share a parent P, but `X \= Y` ensures they aren't the same person. Without this check, `sibling(ann, ann)` would incorrectly succeed (bob is a parent of ann AND ann).
+        - **No loops, no `if/else`:** Prolog checks all possibilities automatically via backtracking. When you query `sibling(X, Y)`, Prolog tries every combination of P, X, Y that satisfies all three conditions.
+
     tests:
       - description: "grandparent(tom, ann) succeeds"
         command: |
@@ -123,85 +455,825 @@ steps:
         command: |
           var answers = __query('sibling(ann, pat)');
           assert(answers.length > 0, 'sibling(ann, pat) should succeed');
-      - description: "A person is not their own sibling"
+      - description: "sibling(ann, ann) fails (not own sibling)"
         command: |
           var answers = __query('sibling(ann, ann)');
-          assert(answers.length === 0, 'sibling(ann, ann) should fail — a person is not their own sibling');
+          assert(answers.length === 0, 'sibling(ann, ann) should fail');
 
-  # Step 3: Lists & Recursion
-  - title: "Lists and Recursion"
+  # --------------------------------------------------------------------------
+  # STEP 4: BACKTRACKING — multiple solutions
+  # Pedagogy: Make the search visible, trace the execution
+  # Research: Fleck 2007 (trace facility essential), Fogel 2010 (graphical trace)
+  # Bloom's: Understand / Analyze
+  # --------------------------------------------------------------------------
+  - title: "Backtracking: The Search for Solutions"
     instructions: |
-      ## Lists
+      ## How Prolog Finds Answers
 
-      Prolog lists use square brackets: `[a, b, c]`. The **head|tail** pattern splits a list:
+      > **Learning objective:** After this step you will be able to **trace** how Prolog searches through facts and rules using backtracking.
 
+      When Prolog encounters a query, it doesn't just find *one* answer — it systematically searches for *all* answers. This is called **backtracking**.
+
+      ### The search process
+
+      Consider this knowledge base:
       ```prolog
-      [H|T] = [1, 2, 3]
-      % H = 1, T = [2, 3]
+      food(pizza).
+      food(pasta).
+      food(sushi).
+      drink(water).
+      drink(juice).
+      meal(F, D) :- food(F), drink(D).
       ```
 
-      The empty list is `[]`.
+      Query: `meal(X, Y)` — "What are all possible meals?"
 
-      ## Recursive Rules
+      Prolog's search:
+      1. Try `food(pizza)` — success! Now try `drink(water)` — success! **Answer: X=pizza, Y=water**
+      2. **Backtrack** to try next drink: `drink(juice)` — success! **Answer: X=pizza, Y=juice**
+      3. No more drinks. **Backtrack** to try next food: `food(pasta)`, then try drinks again...
+      4. Continue until all combinations are exhausted.
 
-      Most list operations are defined recursively:
+      Result: **6 answers** (3 foods x 2 drinks).
 
+      > **Imperative trap:** In Python, you'd write nested `for` loops. In Prolog, the "looping" happens automatically through backtracking. You never write loop syntax.
+
+      ### Controlling backtracking with `;` (or)
+
+      The `;` operator means "or":
       ```prolog
-      my_length([], 0).
-      my_length([_|T], N) :- my_length(T, N1), N is N1 + 1.
+      pet(X) :- cat(X) ; dog(X).
       ```
+      *X is a pet if X is a cat OR X is a dog.*
 
       ### Your Task
 
-      Define a predicate **`my_member(X, List)`** that succeeds when `X` is an element of `List`:
+      The file defines a small meal planning database. Define the `meal/2` predicate, then explore how backtracking produces multiple solutions.
 
-      - **Base case:** `X` is the head of the list
-      - **Recursive case:** `X` is a member of the tail
+      Try these queries:
+      - `meal(X, Y)` — all possible meals
+      - `meal(pizza, Y)` — what can you drink with pizza?
+      - `meal(X, water)` — what food goes with water?
 
-      Then define **`my_append(L1, L2, L3)`** where `L3` is the concatenation of `L1` and `L2`:
+    default_query: "meal(X, Y)"
+    files:
+      - path: "meals.pl"
+        content: |
+          % Foods and drinks
+          food(pizza).
+          food(pasta).
+          food(sushi).
 
-      - **Base case:** appending anything to `[]` gives that thing
-      - **Recursive case:** `[H|T1]` appended with `L2` is `[H|T3]` where `T3` is `T1` appended with `L2`
+          drink(water).
+          drink(juice).
 
-      Try querying:
-      - `my_member(b, [a, b, c])`
-      - `my_member(X, [a, b, c])` — enumerate elements
-      - `my_append([1,2], [3,4], X)` — concatenate lists
+          % TODO: Define meal(F, D) - a meal is a food paired with a drink
+          % meal(F, D) :- ...
 
-    default_query: "my_member(X, [a, b, c])"
+
+          % Bonus: Define healthy_meal/2 where the food is sushi
+          % and the drink is water.
+          % healthy_meal(F, D) :- ...
+
+    open_file: "meals.pl"
+
+    quiz:
+      title: "Backtracking — Trace the Search"
+      min_score: 0.75
+      questions:
+        - question: |
+            How many answers does `meal(X, Y)` produce, given 3 foods and 2 drinks?
+          type: single
+          options:
+            - "2 (one food + one drink)"
+            - "3 (one per food)"
+            - "5 (3 + 2)"
+            - "6 (3 x 2, all combinations)"
+          correct_index: 3
+          explanation: |
+            Prolog tries every combination: each food with each drink. With 3 foods and 2 drinks, that's 3 x 2 = 6 meals. This is like nested for-loops, but Prolog does it automatically through backtracking.
+
+        - question: |
+            In Python, to get all food-drink pairs you'd write:
+            ```python
+            for f in foods:
+                for d in drinks:
+                    print(f, d)
+            ```
+            What is the Prolog equivalent?
+          type: single
+          options:
+            - "`for(food(F), drink(D), print(F, D))`"
+            - "`meal(F, D) :- food(F), drink(D).` then query `meal(X, Y)`"
+            - "`loop(foods, drinks, meal)`"
+            - "You can't do this in Prolog"
+          correct_index: 1
+          explanation: |
+            In Prolog, you define the *relationship* (a meal is a food plus a drink), then *query* it. Prolog's backtracking mechanism produces all combinations automatically. No explicit loops needed.
+
+    solution:
+      files:
+        - path: "meals.pl"
+          content: |
+            % Foods and drinks
+            food(pizza).
+            food(pasta).
+            food(sushi).
+
+            drink(water).
+            drink(juice).
+
+            % A meal is a food paired with a drink
+            meal(F, D) :- food(F), drink(D).
+
+            % A healthy meal: sushi with water
+            healthy_meal(F, D) :- meal(F, D), F = sushi, D = water.
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - **`meal(F, D) :- food(F), drink(D).`** — A meal is any food-drink combination. Prolog's backtracking systematically tries every food with every drink, producing 3 x 2 = 6 answers. This is equivalent to nested `for` loops in Python, but you never write loop syntax.
+        - **`healthy_meal(F, D)`** adds constraints on top of `meal`: the food must be sushi AND the drink must be water. Only one combination survives.
+        - **Multi-directional use:** `meal(pizza, Y)` finds drinks for pizza, `meal(X, water)` finds foods for water, `meal(X, Y)` finds all pairs. Same predicate, different query directions.
+
+    tests:
+      - description: "meal(pizza, water) succeeds"
+        command: |
+          var answers = __query('meal(pizza, water)');
+          assert(answers.length > 0, 'meal(pizza, water) should succeed');
+      - description: "meal/2 produces 6 combinations"
+        command: |
+          var answers = __query('meal(X, Y)');
+          assert(answers.length === 6, 'Expected 6 meal combinations, got ' + answers.length);
+      - description: "meal works in reverse: meal(X, water) finds 3 foods"
+        command: |
+          var answers = __query('meal(X, water)');
+          assert(answers.length === 3, 'Expected 3 foods with water, got ' + answers.length);
+
+  # --------------------------------------------------------------------------
+  # STEP 5: ARITHMETIC — is/2 vs =
+  # Pedagogy: Explicit misconception (= does NOT evaluate), worked examples
+  # Research: Kumar 2002 (arithmetic misconceptions are common)
+  # Bloom's: Understand / Apply
+  # --------------------------------------------------------------------------
+  - title: "Arithmetic: is vs ="
+    instructions: |
+      ## Numbers in a Logic Language
+
+      > **Learning objective:** After this step you will be able to **use** Prolog arithmetic correctly and **explain** why `X = 2 + 3` does not compute 5.
+
+      Arithmetic in Prolog has a critical gotcha that trips up every imperative programmer.
+
+      ### The trap: `=` does NOT evaluate
+
+      ```prolog
+      ?- X = 2 + 3.
+      % X = 2+3    (NOT 5! It's the structure +(2,3))
+      ```
+
+      Remember: `=` is **unification**. It makes two terms structurally identical. `2 + 3` is a *structure* (like a tree node with `+` as the functor), not a computation.
+
+      ### The solution: `is/2` forces evaluation
+
+      ```prolog
+      ?- X is 2 + 3.
+      % X = 5      (evaluates the right side, then unifies)
+      ```
+
+      `is` evaluates the arithmetic expression on the **right** side, then unifies the result with the **left** side. The right side must be fully instantiated (no unbound variables).
+
+      ### Comparison operators
+
+      | Operator | Meaning | Example |
+      |----------|---------|---------|
+      | `=:=` | Arithmetic equality | `2+3 =:= 5` succeeds |
+      | `=\=` | Arithmetic inequality | `2+3 =\=  6` succeeds |
+      | `<` | Less than | `3 < 5` succeeds |
+      | `>` | Greater than | `5 > 3` succeeds |
+      | `>=` | Greater or equal | `5 >= 5` succeeds |
+      | `=<` | Less or equal | `3 =< 5` succeeds |
+
+      Note: `=<` not `<=`! This is a common Prolog syntax surprise.
+
+      ### Your Task
+
+      Define these predicates:
+
+      1. **`bmi(Height, Weight, BMI)`** — BMI is Weight / Height^2. Use `is` to compute it.
+      2. **`is_overweight(Height, Weight)`** — succeeds if BMI > 25.
+      3. **`abs_diff(X, Y, D)`** — D is the absolute difference between X and Y.
+
+    default_query: "bmi(1.75, 70, BMI)"
+    files:
+      - path: "arithmetic.pl"
+        content: |
+          % BMI calculator
+          % bmi(Height, Weight, BMI) - compute BMI = Weight / Height^2
+          % Hint: use ** for exponentiation: Height ** 2
+          % TODO: bmi(Height, Weight, BMI) :- BMI is ...
+
+
+          % is_overweight(Height, Weight) - succeeds if BMI > 25
+          % TODO: is_overweight(Height, Weight) :- ...
+
+
+          % abs_diff(X, Y, D) - D is the absolute difference |X - Y|
+          % Hint: use two clauses, one for X >= Y and one for X < Y
+          % TODO: abs_diff(X, Y, D) :- ...
+
+    open_file: "arithmetic.pl"
+
+    quiz:
+      title: "Arithmetic — Predict the Output"
+      min_score: 0.75
+      questions:
+        - question: |
+            What does `X = 2 + 3` bind X to?
+          type: single
+          options:
+            - "5"
+            - "The structure `2 + 3` (unevaluated)"
+            - "Error — cannot add with `=`"
+            - "`true`"
+          correct_index: 1
+          explanation: |
+            The `=` operator is **unification**, not evaluation. It makes X structurally identical to `2 + 3`, which is a compound term `+(2, 3)`. To get 5, use `X is 2 + 3`.
+
+        - question: |
+            What happens with `X is Y + 1` when Y is unbound (not yet assigned a value)?
+          type: single
+          options:
+            - "X becomes `Y + 1` (symbolic)"
+            - "X becomes 1 (Y defaults to 0)"
+            - "Error — `is` requires the right side to be fully evaluated"
+            - "X becomes a variable"
+          correct_index: 2
+          explanation: |
+            The `is` operator requires the right-hand side to be a ground arithmetic expression (all variables must be bound to numbers). If Y is unbound, Prolog throws an instantiation error.
+
+    solution:
+      files:
+        - path: "arithmetic.pl"
+          content: |
+            % BMI calculator
+            bmi(Height, Weight, BMI) :- BMI is Weight / (Height ** 2).
+
+            % is_overweight: succeeds if BMI > 25
+            is_overweight(Height, Weight) :- bmi(Height, Weight, BMI), BMI > 25.
+
+            % abs_diff: absolute difference using two clauses
+            abs_diff(X, Y, D) :- X >= Y, D is X - Y.
+            abs_diff(X, Y, D) :- X < Y, D is Y - X.
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - **`BMI is Weight / (Height ** 2)`** — The `is` operator *evaluates* the arithmetic expression on the right and unifies the result with BMI. Using `=` instead would give you the unevaluated structure `/(Weight, **(Height, 2))` — not a number!
+        - **`is_overweight` composes predicates:** It calls `bmi/3` to compute the BMI, then checks `BMI > 25`. This is the Prolog way of "calling a function then using its result."
+        - **`abs_diff` uses two clauses:** Instead of an `if/else`, Prolog tries the first clause (`X >= Y`). If it fails (because `X < Y`), Prolog backtracks and tries the second clause. Multiple clauses for the same predicate is Prolog's version of pattern matching / case analysis.
+
+    tests:
+      - description: "bmi(1.75, 70, BMI) computes correctly"
+        command: |
+          var answers = __query('bmi(1.75, 70, BMI)');
+          assert(answers.length > 0, 'bmi/3 should succeed');
+          var match = answers[0].match(/[\d.]+/);
+          assert(match, 'Should contain a number');
+          var bmi = parseFloat(match[0]);
+          assert(bmi > 22 && bmi < 23, 'BMI of 1.75m/70kg should be ~22.86, got ' + bmi);
+      - description: "is_overweight(1.70, 80) succeeds (BMI ~27.7)"
+        command: |
+          var answers = __query('is_overweight(1.70, 80)');
+          assert(answers.length > 0, 'is_overweight(1.70, 80) should succeed');
+      - description: "abs_diff(7, 3, D) gives D = 4"
+        command: |
+          var answers = __query('abs_diff(7, 3, D)');
+          assert(answers.length > 0, 'abs_diff(7, 3, D) should succeed');
+          assert(answers[0].indexOf('4') !== -1, 'Expected D = 4, got: ' + answers[0]);
+      - description: "abs_diff(3, 7, D) also gives D = 4"
+        command: |
+          var answers = __query('abs_diff(3, 7, D)');
+          assert(answers.length > 0, 'abs_diff(3, 7, D) should succeed');
+          assert(answers[0].indexOf('4') !== -1, 'Expected D = 4, got: ' + answers[0]);
+
+  # --------------------------------------------------------------------------
+  # STEP 6: LISTS & PATTERN MATCHING
+  # Pedagogy: Head|Tail as destructuring, non-recursive first
+  # Research: Wick & Stevenson 2006 (list exercises), worked examples with fading
+  # Bloom's: Understand / Apply
+  # --------------------------------------------------------------------------
+  - title: "Lists and Pattern Matching"
+    instructions: |
+      ## Prolog's Fundamental Data Structure
+
+      > **Learning objective:** After this step you will be able to **decompose** lists using head|tail pattern matching and **write** simple list predicates.
+
+      Lists in Prolog look familiar:
+      ```prolog
+      [a, b, c]        % a list of three atoms
+      [1, 2, 3]        % a list of three numbers
+      []               % the empty list
+      ```
+
+      But how you *work* with them is very different from Python/JS.
+
+      ### Head|Tail decomposition
+
+      The `[H|T]` pattern splits a list into its first element (head) and the rest (tail):
+
+      ```prolog
+      ?- [H|T] = [a, b, c].
+      % H = a, T = [b, c]
+      ```
+
+      This is Prolog's equivalent of destructuring — but powered by unification:
+
+      ```prolog
+      ?- [X, Y | Rest] = [1, 2, 3, 4, 5].
+      % X = 1, Y = 2, Rest = [3, 4, 5]
+      ```
+
+      > **Transfer from Python:** This is similar to Python's `head, *tail = [1, 2, 3]`. But in Prolog, it works *bidirectionally* — you can also build lists this way.
+
+      ### Writing list predicates (non-recursive)
+
+      ```prolog
+      % first(X, List) - X is the first element of List
+      first(X, [X|_]).
+
+      % second(X, List) - X is the second element
+      second(X, [_, X|_]).
+      ```
+
+      The underscore `_` means "I don't care about this value." Each `_` is independent.
+
+      ### Your Task
+
+      Define these predicates using pattern matching (no recursion needed):
+
+      1. **`head(X, List)`** — X is the first element of List
+      2. **`tail(T, List)`** — T is the tail (everything except the first element)
+      3. **`has_two([_, _])`** — succeeds only if the list has exactly two elements
+      4. **`swap_first_two(List, Swapped)`** — swap the first two elements: `[a,b,c]` becomes `[b,a,c]`
+
+    default_query: "swap_first_two([a, b, c], X)"
     files:
       - path: "lists.pl"
         content: |
+          % head(X, List) - X is the first element
+          % TODO: head(X, [... | ...]).
+
+
+          % tail(T, List) - T is everything after the first element
+          % TODO: tail(T, [... | ...]).
+
+
+          % has_two(List) - succeeds only if List has exactly 2 elements
+          % Hint: use the pattern [_, _]
+          % TODO: has_two(...).
+
+
+          % swap_first_two(List, Swapped) - swap first two elements
+          % [a, b | Rest] becomes [b, a | Rest]
+          % TODO: swap_first_two([... | ...], [... | ...]).
+
+    open_file: "lists.pl"
+
+    quiz:
+      title: "Lists — Predict the Unification"
+      min_score: 0.75
+      questions:
+        - question: |
+            What does `[H|T] = [42]` bind H and T to?
+          type: single
+          options:
+            - "H = 42, T = [] (empty list)"
+            - "H = [42], T = []"
+            - "Fails — list must have at least 2 elements"
+            - "H = 42, T = 42"
+          correct_index: 0
+          explanation: |
+            A single-element list `[42]` is really `[42|[]]`. So H unifies with 42 and T unifies with the empty list `[]`. The tail of a one-element list is always `[]`.
+
+        - question: |
+            What does `[_, X | _] = [a, b, c, d]` bind X to?
+          type: single
+          options:
+            - "a"
+            - "b"
+            - "[c, d]"
+            - "[b, c, d]"
+          correct_index: 1
+          explanation: |
+            The first `_` matches `a`, `X` matches `b` (the second element), and the trailing `_` matches the rest `[c, d]`. Each `_` is independent and can match anything.
+
+    solution:
+      files:
+        - path: "lists.pl"
+          content: |
+            % head(X, List) - X is the first element
+            head(X, [X|_]).
+
+            % tail(T, List) - T is everything after the first element
+            tail(T, [_|T]).
+
+            % has_two(List) - succeeds only if List has exactly 2 elements
+            has_two([_, _]).
+
+            % swap_first_two(List, Swapped) - swap first two elements
+            swap_first_two([A, B | Rest], [B, A | Rest]).
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - **`head(X, [X|_]).`** — The pattern `[X|_]` unifies X with the head of the list. The `_` discards the tail. This is pure pattern matching — no code body needed.
+        - **`tail(T, [_|T]).`** — The same variable `T` appears in both the argument and the pattern. Unification makes them equal, so T is bound to the tail.
+        - **`has_two([_, _]).`** — The pattern `[_, _]` only matches lists with *exactly* two elements. One element gives `[_]` (no match), three gives `[_, _, _|_]` (no match).
+        - **`swap_first_two([A, B | Rest], [B, A | Rest]).`** — Destructures the first two elements, then reconstructs with them swapped. `Rest` is shared — the tail stays unchanged. No recursion needed; unification does all the work.
+
+    tests:
+      - description: "head(X, [a, b, c]) gives X = a"
+        command: |
+          var answers = __query('head(X, [a, b, c])');
+          assert(answers.length > 0, 'head/2 should succeed');
+          assert(answers[0].indexOf('a') !== -1, 'Expected X = a, got: ' + answers[0]);
+      - description: "tail(T, [a, b, c]) gives T = [b, c]"
+        command: |
+          var answers = __query('tail(T, [a, b, c])');
+          assert(answers.length > 0, 'tail/2 should succeed');
+          assert(answers[0].indexOf('[b,c]') !== -1, 'Expected T = [b,c], got: ' + answers[0]);
+      - description: "has_two([a, b]) succeeds"
+        command: |
+          var answers = __query('has_two([a, b])');
+          assert(answers.length > 0, 'has_two([a, b]) should succeed');
+      - description: "has_two([a]) fails"
+        command: |
+          var answers = __query('has_two([a])');
+          assert(answers.length === 0, 'has_two([a]) should fail — only 1 element');
+      - description: "swap_first_two([a, b, c], X) gives X = [b, a, c]"
+        command: |
+          var answers = __query('swap_first_two([a, b, c], X)');
+          assert(answers.length > 0, 'swap_first_two should succeed');
+          assert(answers[0].indexOf('[b,a,c]') !== -1, 'Expected [b,a,c], got: ' + answers[0]);
+
+  # --------------------------------------------------------------------------
+  # STEP 7: RECURSIVE LIST PROCESSING
+  # Pedagogy: Worked examples with fading (full -> partial -> write)
+  # Research: Rinderknecht 2014 (recursion pedagogy), sub-goal labeling
+  # Bloom's: Apply / Analyze
+  # --------------------------------------------------------------------------
+  - title: "Recursive List Processing"
+    instructions: |
+      ## Recursion: Prolog's Loops
+
+      > **Learning objective:** After this step you will be able to **write** recursive predicates over lists using the base-case/recursive-case pattern.
+
+      Prolog has no `for` or `while` loops. Instead, you use **recursion** — a predicate that calls itself with a smaller input.
+
+      ### The pattern: Base case + Recursive case
+
+      Every recursive predicate has two clauses:
+
+      ```prolog
+      % Sub-goal: Base case — empty list
+      my_length([], 0).
+
+      % Sub-goal: Recursive case — strip head, recurse on tail
+      my_length([_|T], N) :- my_length(T, N1), N is N1 + 1.
+      ```
+
+      > **Transfer from Python:** This is like:
+      > ```python
+      > def my_length(lst):
+      >     if lst == []:       # base case
+      >         return 0
+      >     return 1 + my_length(lst[1:])  # recursive case
+      > ```
+
+      The key difference: Prolog's version works **in both directions!**
+
+      ### Worked example: `my_member/2`
+
+      ```prolog
+      % Sub-goal: Base case — X is the head of the list
+      my_member(X, [X|_]).
+
+      % Sub-goal: Recursive case — X is in the tail
+      my_member(X, [_|T]) :- my_member(X, T).
+      ```
+
+      Try `my_member(b, [a, b, c])` — succeeds. Try `my_member(X, [a, b, c])` — returns all elements!
+
+      ### Your Task
+
+      Using the `my_member` worked example as a model:
+
+      1. **`my_last(X, List)`** — X is the last element of List
+         - Base case: the last element of a one-element list `[X]` is X
+         - Recursive case: the last element of `[_|T]` is the last element of T
+
+      2. **`my_append(L1, L2, L3)`** — L3 is L1 concatenated with L2
+         - Base case: appending L to `[]` gives L
+         - Recursive case: appending `[H|T1]` to L2 gives `[H|T3]` where T3 is T1 appended to L2
+
+      3. **`my_reverse(List, Reversed)`** — reverse a list
+         - Base case: reverse of `[]` is `[]`
+         - Recursive case: reverse of `[H|T]` is reverse of T appended with `[H]`
+         - *Hint:* use your `my_append` predicate!
+
+    default_query: "my_append([a, b], [c, d], X)"
+    files:
+      - path: "recursion.pl"
+        content: |
+          % --- Worked example (provided) ---
+
           % my_member(X, List) - X is an element of List
-          % TODO: Define the base case and recursive case
-          % my_member(X, [X|_]).
-          % my_member(X, [_|T]) :- my_member(X, T).
+          % Sub-goal: Base case — X is the head
+          my_member(X, [X|_]).
+          % Sub-goal: Recursive case — X is in the tail
+          my_member(X, [_|T]) :- my_member(X, T).
+
+
+          % --- Your turn: follow the same pattern ---
+
+          % my_last(X, List) - X is the last element of List
+          % Sub-goal: Base case — last of a one-element list
+          % TODO: my_last(X, [X]).
+          % Sub-goal: Recursive case — skip head, recurse on tail
+          % TODO: my_last(X, [_|T]) :- my_last(X, T).
 
 
           % my_append(L1, L2, L3) - L3 is L1 concatenated with L2
-          % TODO: Define the base case and recursive case
-          % my_append([], L, L).
-          % my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
-    open_file: "lists.pl"
+          % Sub-goal: Base case — appending to empty list
+          % TODO: my_append([], L, L).
+          % Sub-goal: Recursive case — move head to result
+          % TODO: my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
+
+
+          % my_reverse(List, Reversed) - reverse a list
+          % Sub-goal: Base case — reverse of empty is empty
+          % TODO: my_reverse([], []).
+          % Sub-goal: Recursive case — reverse tail, append head
+          % TODO: my_reverse([H|T], R) :- my_reverse(T, RT), my_append(RT, [H], R).
+
+    open_file: "recursion.pl"
+
+    quiz:
+      title: "Recursion — Trace the Execution"
+      min_score: 0.75
+      questions:
+        - question: |
+            How does `my_member(b, [a, b, c])` succeed?
+          type: single
+          options:
+            - "It checks all elements simultaneously"
+            - "First clause fails (b ≠ a), backtracks to second clause which recurses on [b, c], then first clause succeeds (b = b)"
+            - "It converts the list to a set and checks membership"
+            - "It loops through the list with a counter"
+          correct_index: 1
+          explanation: |
+            Prolog tries the first clause: does `b` unify with the head `a`? No. So it tries the second clause, which recurses on the tail `[b, c]`. Now the first clause tries: does `b` unify with `b`? Yes! The query succeeds.
+
+        - question: |
+            What does `my_append(X, Y, [1, 2, 3])` do?
+          type: single
+          options:
+            - "Error — X and Y must be given"
+            - "Returns X = [1,2,3], Y = []"
+            - "Returns ALL ways to split [1,2,3] into two parts"
+            - "Returns X = [1], Y = [2, 3]"
+          correct_index: 2
+          explanation: |
+            Because `my_append` is a *relation* (not a function), Prolog can find ALL combinations: X=[], Y=[1,2,3]; X=[1], Y=[2,3]; X=[1,2], Y=[3]; X=[1,2,3], Y=[]. This is the power of multi-directional predicates!
+
+    solution:
+      files:
+        - path: "recursion.pl"
+          content: |
+            % --- Worked example (provided) ---
+
+            % my_member(X, List) - X is an element of List
+            my_member(X, [X|_]).
+            my_member(X, [_|T]) :- my_member(X, T).
+
+
+            % --- Solutions ---
+
+            % my_last(X, List) - X is the last element of List
+            my_last(X, [X]).
+            my_last(X, [_|T]) :- my_last(X, T).
+
+            % my_append(L1, L2, L3) - L3 is L1 concatenated with L2
+            my_append([], L, L).
+            my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
+
+            % my_reverse(List, Reversed) - reverse a list
+            my_reverse([], []).
+            my_reverse([H|T], R) :- my_reverse(T, RT), my_append(RT, [H], R).
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - **`my_last`:** The base case `my_last(X, [X])` says the last element of a one-element list is that element. The recursive case skips the head and recurses on the tail. Each recursive call makes the list one element shorter until only one remains.
+        - **`my_append`:** The base case `my_append([], L, L)` says appending anything to `[]` gives that thing. The recursive case moves the head `H` from L1 to the result, and recurses on the tail. Try `my_append(X, Y, [1,2,3])` — it finds ALL ways to split the list! This is the power of relational programming.
+        - **`my_reverse`:** Reverses the tail first, then appends `[H]` at the end. This is an O(n^2) algorithm (each `my_append` is O(n)), but it clearly shows the recursive structure. A more efficient version uses an accumulator.
+
     tests:
-      - description: "my_member(b, [a, b, c]) succeeds"
+      - description: "my_last(c, [a, b, c]) succeeds"
         command: |
-          var answers = __query('my_member(b, [a, b, c])');
-          assert(answers.length > 0, 'my_member(b, [a,b,c]) should succeed');
-      - description: "my_member(d, [a, b, c]) fails"
+          var answers = __query('my_last(c, [a, b, c])');
+          assert(answers.length > 0, 'my_last(c, [a,b,c]) should succeed');
+      - description: "my_last(X, [a, b, c]) gives X = c"
         command: |
-          var answers = __query('my_member(d, [a, b, c])');
-          assert(answers.length === 0, 'my_member(d, [a,b,c]) should fail');
-      - description: "my_member enumerates all elements"
+          var answers = __query('my_last(X, [a, b, c])');
+          assert(answers.length > 0, 'my_last/2 should succeed');
+          assert(answers[0].indexOf('c') !== -1, 'Expected X = c, got: ' + answers[0]);
+      - description: "my_append([a, b], [c], X) gives X = [a, b, c]"
         command: |
-          var answers = __query('my_member(X, [a, b, c])');
-          assert(answers.length === 3, 'Should find 3 members, got ' + answers.length);
-      - description: "my_append([1,2], [3,4], [1,2,3,4]) succeeds"
+          var answers = __query('my_append([a, b], [c], X)');
+          assert(answers.length > 0, 'my_append should succeed');
+          assert(answers[0].indexOf('[a,b,c]') !== -1, 'Expected [a,b,c], got: ' + answers[0]);
+      - description: "my_append works in reverse: split [1,2,3]"
         command: |
-          var answers = __query('my_append([1,2], [3,4], [1,2,3,4])');
-          assert(answers.length > 0, 'my_append([1,2],[3,4],[1,2,3,4]) should succeed');
-      - description: "my_append computes the result"
+          var answers = __query('my_append(X, Y, [1, 2, 3])');
+          assert(answers.length === 4, 'Expected 4 ways to split [1,2,3], got ' + answers.length);
+      - description: "my_reverse([a, b, c], X) gives X = [c, b, a]"
         command: |
-          var answers = __query('my_append([a,b], [c], X)');
-          assert(answers.length > 0, 'my_append([a,b],[c],X) should succeed');
-          assert(answers[0].indexOf('[a,b,c]') !== -1, 'Expected X = [a,b,c], got: ' + answers[0]);
+          var answers = __query('my_reverse([a, b, c], X)');
+          assert(answers.length > 0, 'my_reverse should succeed');
+          assert(answers[0].indexOf('[c,b,a]') !== -1, 'Expected [c,b,a], got: ' + answers[0]);
+
+  # --------------------------------------------------------------------------
+  # STEP 8: PUTTING IT ALL TOGETHER — synthesis
+  # Pedagogy: Integration exercise, minimal scaffolding (faded support)
+  # Research: Ambrose et al. 2010 (component -> integration)
+  # Bloom's: Apply / Create
+  # --------------------------------------------------------------------------
+  - title: "Putting It All Together"
+    instructions: |
+      ## Synthesis: A Mini Knowledge Base
+
+      > **Learning objective:** After this step you will be able to **design** a small Prolog program that combines facts, rules, arithmetic, and list processing.
+
+      You've learned all the building blocks. Now combine them.
+
+      ### Challenge: Student Grade Analyzer
+
+      Build a knowledge base that stores student grades and provides useful queries:
+
+      **Facts** (provided):
+      ```prolog
+      student(alice, [88, 92, 75, 95]).
+      student(bob,   [70, 65, 80, 72]).
+      student(carol, [95, 98, 92, 97]).
+      ```
+
+      Each student has a name and a list of exam scores.
+
+      **Your task — define these predicates:**
+
+      1. **`sum_list(List, Sum)`** — compute the sum of a list of numbers
+         - Base: sum of `[]` is 0
+         - Recursive: sum of `[H|T]` is H plus the sum of T
+
+      2. **`length_list(List, Len)`** — compute the length of a list
+         - (Same pattern as `my_length` from Step 6)
+
+      3. **`average(Name, Avg)`** — a student's average score
+         - Look up the student's scores, compute sum and length, divide
+
+      4. **`above_average(Name, Threshold)`** — succeeds if the student's average is above Threshold
+
+      Then query:
+      - `average(alice, A)` — What is Alice's average?
+      - `above_average(carol, 90)` — Does Carol average above 90?
+      - `above_average(Name, 80)` — Which students average above 80?
+
+    default_query: "average(alice, Avg)"
+    files:
+      - path: "grades.pl"
+        content: |
+          % Student grade database
+          student(alice, [88, 92, 75, 95]).
+          student(bob,   [70, 65, 80, 72]).
+          student(carol, [95, 98, 92, 97]).
+
+          % sum_list(List, Sum) - sum of all numbers in List
+          % Sub-goal: Base case
+          % TODO: sum_list([], 0).
+          % Sub-goal: Recursive case
+          % TODO: sum_list([H|T], Sum) :- sum_list(T, Rest), Sum is H + Rest.
+
+
+          % length_list(List, Len) - number of elements in List
+          % Sub-goal: Base case
+          % TODO: length_list([], 0).
+          % Sub-goal: Recursive case
+          % TODO: length_list([_|T], Len) :- length_list(T, L1), Len is L1 + 1.
+
+
+          % average(Name, Avg) - compute a student's average score
+          % TODO: average(Name, Avg) :- ...
+
+
+          % above_average(Name, Threshold) - true if average > Threshold
+          % TODO: above_average(Name, Threshold) :- ...
+
+    open_file: "grades.pl"
+
+    quiz:
+      title: "Synthesis — Think Declaratively"
+      min_score: 0.75
+      questions:
+        - question: |
+            To find all students with average above 80, an imperative programmer would write a loop. In Prolog, you:
+          type: single
+          options:
+            - "Write a for-loop over all students"
+            - "Define `above_average(Name, 80)` and query it — Prolog finds all matching students via backtracking"
+            - "Create an array and filter it"
+            - "Use a `while` loop with a counter"
+          correct_index: 1
+          explanation: |
+            You define the *relationship* (what it means to be above average), then query with a variable for Name. Prolog's backtracking finds all students that satisfy the condition. No explicit iteration needed.
+
+        - question: |
+            What makes `above_average(Name, 80)` work for finding ALL qualifying students?
+          type: single
+          options:
+            - "It returns a list of all students"
+            - "Prolog backtracks through all `student/2` facts, trying each name"
+            - "It uses an internal loop"
+            - "You must call it repeatedly"
+          correct_index: 1
+          explanation: |
+            When `average(Name, Avg)` tries to satisfy itself, it looks up `student(Name, Scores)`. Prolog tries each `student` fact through backtracking. For each one where `Avg > 80`, it reports a solution. This is the declarative way to "search" — you describe what you want, and backtracking does the searching.
+
+    solution:
+      files:
+        - path: "grades.pl"
+          content: |
+            % Student grade database
+            student(alice, [88, 92, 75, 95]).
+            student(bob,   [70, 65, 80, 72]).
+            student(carol, [95, 98, 92, 97]).
+
+            % sum_list(List, Sum) - sum of all numbers in List
+            sum_list([], 0).
+            sum_list([H|T], Sum) :- sum_list(T, Rest), Sum is H + Rest.
+
+            % length_list(List, Len) - number of elements in List
+            length_list([], 0).
+            length_list([_|T], Len) :- length_list(T, L1), Len is L1 + 1.
+
+            % average(Name, Avg) - compute a student's average score
+            average(Name, Avg) :-
+                student(Name, Scores),
+                sum_list(Scores, Sum),
+                length_list(Scores, Len),
+                Avg is Sum / Len.
+
+            % above_average(Name, Threshold) - true if average > Threshold
+            above_average(Name, Threshold) :-
+                average(Name, Avg),
+                Avg > Threshold.
+          language: "prolog"
+      explanation: |
+        **Why this works:**
+
+        - **`sum_list` and `length_list`** follow the standard recursive list pattern: base case for `[]`, recursive case strips the head and recurses on the tail.
+        - **`average/2` composes predicates:** It looks up the student's scores with `student(Name, Scores)`, computes the sum and length, then divides. This is Prolog's equivalent of calling helper functions — but notice there are no explicit return values. Each predicate *binds* its result to a variable.
+        - **`above_average/2`** computes the average then checks the threshold. When you query `above_average(Name, 80)` with an unbound `Name`, Prolog backtracks through all `student` facts, computing each average and checking the condition. This is the declarative way to "filter" — no loops, no list comprehensions.
+        - **Multi-directional power:** `above_average(carol, 90)` checks one student. `above_average(Name, 80)` finds all students above 80. Same predicate, different query directions.
+
+    tests:
+      - description: "sum_list([1, 2, 3], S) gives S = 6"
+        command: |
+          var answers = __query('sum_list([1, 2, 3], S)');
+          assert(answers.length > 0, 'sum_list should succeed');
+          assert(answers[0].indexOf('6') !== -1, 'Expected S = 6, got: ' + answers[0]);
+      - description: "length_list([a, b, c], L) gives L = 3"
+        command: |
+          var answers = __query('length_list([a, b, c], L)');
+          assert(answers.length > 0, 'length_list should succeed');
+          assert(answers[0].indexOf('3') !== -1, 'Expected L = 3, got: ' + answers[0]);
+      - description: "average(alice, Avg) computes correctly"
+        command: |
+          var answers = __query('average(alice, Avg)');
+          assert(answers.length > 0, 'average/2 should succeed');
+          var match = answers[0].match(/[\d.]+/);
+          assert(match, 'Should contain a number');
+          var avg = parseFloat(match[0]);
+          assert(avg > 87 && avg < 88, 'Alice average should be 87.5, got ' + avg);
+      - description: "above_average(carol, 90) succeeds"
+        command: |
+          var answers = __query('above_average(carol, 90)');
+          assert(answers.length > 0, 'Carol should average above 90');
+      - description: "above_average(bob, 80) fails"
+        command: |
+          var answers = __query('above_average(bob, 80)');
+          assert(answers.length === 0, 'Bob should NOT average above 80');
+      - description: "above_average(Name, 80) finds alice and carol"
+        command: |
+          var answers = __query('above_average(Name, 80)');
+          assert(answers.length === 2, 'Expected 2 students above 80, got ' + answers.length);
