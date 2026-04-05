@@ -77,7 +77,8 @@ steps:
             }
           language: "c"
       commands:
-        - "cd make_project && gcc main.c math.c io.c -o app"
+        - "cd /tutorial/make_project/"
+        - "gcc main.c math.c io.c -o app"
       explanation: |
         - **Test 1:** `grep -q 'a + b;' math.c` — the semicolon must be present at the end of the `return` statement.
         - **Test 2:** `[ -f app ]` — the compiled executable `app` must exist.
@@ -195,8 +196,8 @@ steps:
           content: "app: main.c math.c io.c\n\tgcc main.c math.c io.c -o app\n"
           language: "makefile"
       commands:
-        - "cd make_project && sed -i 's/^    /\t/' Makefile"
-        - "cd make_project && make"
+        - "sed -i 's/^    /\t/' Makefile"
+        - "make"
       explanation: |
         - **Test 1:** `grep -qP '^\tgcc' Makefile` — the recipe line must start with a real Tab character (`\t`), not spaces. `grep -P` uses Perl-compatible regex where `\t` matches a literal Tab.
         - **Test 2:** `[ -f app ]` — Make must have run successfully and produced the `app` executable.
@@ -596,9 +597,9 @@ steps:
 
     solution:
       commands:
-        - "cd make_project && make"
-        - "cd make_project && touch math.c"
-        - "cd make_project && make"
+        - "make"
+        - "touch math.c"
+        - "make"
       explanation: |
         - **Test:** `[ math.o -nt main.o ]` — `math.o` must be newer than `main.o`. After `touch math.c` + `make`, only `math.c` → `math.o` was recompiled, so `math.o` has a newer timestamp than `main.o` (which was not recompiled).
         - **Make's timestamp heuristic:** Make compares the last-modified time of each target against its prerequisites. If a prerequisite is newer than the target, the target is out-of-date and its recipe runs.
@@ -790,8 +791,8 @@ steps:
           content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n"
           language: "makefile"
       commands:
-        - "cd make_project && make clean"
-        - "cd make_project && make"
+        - "make clean"
+        - "make"
       explanation: |
         No file edits are required for this step — it is a review and summary.
 
