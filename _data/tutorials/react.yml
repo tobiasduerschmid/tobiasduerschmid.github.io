@@ -1469,36 +1469,61 @@ steps:
         - **Derived `visibleTasks`:** Computed from `initialTasks` and the `filter` state every render. The test checks `src.textContent.includes('.filter(')`.
 
     tests:
-      - description: "Filter buttons (All, Active, Done) are present"
+      - description: "All, Active, and Done filter buttons are present"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var buttons = Array.from(root.querySelectorAll('button'));
           var labels = buttons.map(function(b) { return b.textContent.toLowerCase(); });
           assert(labels.some(function(l) { return l.includes('all'); }),
-            'Add an "All" filter button');
+            'Add an "All" filter button inside the ButtonGroup');
           assert(labels.some(function(l) { return l.includes('active') || l.includes('pending'); }),
-            'Add an "Active" filter button');
+            'Add an "Active" filter button inside the ButtonGroup');
           assert(labels.some(function(l) { return l.includes('done') || l.includes('complet'); }),
-            'Add a "Done" filter button');
-      - description: "Filtering logic is implemented (not just showing all tasks)"
-        command: |
-          assert(code.includes('.filter('),
-            'Use .filter() to filter the tasks based on the selected filter');
-      - description: "Clicking a filter button changes the visible tasks"
+            'Add a "Done" filter button inside the ButtonGroup');
+      - description: "Clicking 'Done' shows only completed tasks (3 of 6)"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var buttons = Array.from(root.querySelectorAll('button'));
-          var doneBtn = buttons.find(function(b) {
-            var t = b.textContent.toLowerCase();
-            return t.includes('done') || t.includes('complet');
-          });
+          var doneBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('done') || b.textContent.toLowerCase().includes('complet'); });
           assert(doneBtn, 'No "Done" filter button found');
           doneBtn.click();
           return new Promise(function(resolve) {
             setTimeout(function() {
               var items = root.querySelectorAll('.list-group-item');
-              assert(items.length > 0 && items.length < 6,
-                'After clicking "Done", only completed tasks should be visible (fewer than 6). Found: ' + items.length + '. Make sure your filter buttons update the filter state.');
+              assert(items.length === 3,
+                'After clicking "Done", exactly 3 completed tasks should be visible. Found: ' + items.length + '. Wire onClick to call setFilter and use filter state in visibleTasks.');
+              resolve();
+            }, 100);
+          });
+      - description: "Clicking 'Active' shows only incomplete tasks (3 of 6)"
+        command: |
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
+          var activeBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('active') || b.textContent.toLowerCase().includes('pending'); });
+          assert(activeBtn, 'No "Active" filter button found');
+          activeBtn.click();
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              var items = root.querySelectorAll('.list-group-item');
+              assert(items.length === 3,
+                'After clicking "Active", exactly 3 incomplete tasks should be visible. Found: ' + items.length + '.');
+              resolve();
+            }, 100);
+          });
+      - description: "Active filter button is visually highlighted (variant='primary')"
+        command: |
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
+          var doneBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('done') || b.textContent.toLowerCase().includes('complet'); });
+          assert(doneBtn, 'No "Done" filter button found');
+          doneBtn.click();
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              assert(doneBtn.classList.contains('btn-primary'),
+                'The active filter button should have variant="primary" (adds the btn-primary class). Currently it does not. Use variant={filter === "done" ? "primary" : "outline-secondary"}.');
+              var allBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('all'); });
+              assert(allBtn && !allBtn.classList.contains('btn-primary'),
+                'Only the active filter button should be highlighted — "All" should not have btn-primary when "Done" is selected.');
               resolve();
             }, 100);
           });
