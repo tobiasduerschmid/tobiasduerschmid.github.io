@@ -9,17 +9,17 @@
   <!-- Navbar — same style as SEBook but simplified -->
   <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
     <div class="container-fluid">
-      <div class="navbar-header page-scroll">
-        <a class="navbar-brand" href="/SEBook">
-          <i class="fa fa-arrow-left"></i> SE Book
+      <div class="navbar-header page-scroll" style="display: flex; align-items: center; height: 45px;">
+        <a class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
+          <i class="fa fa-arrow-left" style="margin-right: 10px; font-size: 18px;"></i> SE Book
         </a>
-        <span class="navbar-brand" style="color: #fff; font-weight: 600;">
+        <span class="navbar-brand" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; color: #fff; font-size: 20px; font-weight: 600; margin-left: 5px;">
           {{ page.title }}
         </span>
       </div>
-      <div class="navbar-right" style="display:flex; align-items:center; height:50px; padding-right:16px; gap:14px;">
+      <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
         <a href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
-           style="color:#fff; font-size:13px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
+           style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
           <i class="fa fa-print"></i> Print
         </a>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;">

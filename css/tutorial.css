@@ -970,7 +970,7 @@ html:not(.dark-mode) .tvm-refresh-btn:hover { background: rgba(0,120,212,0.08); 
 .tutorial-page {
   /* Pin to exact viewport edges below the fixed navbar — robust in fullscreen */
   position: fixed !important;
-  top: 50px !important;
+  top: 45px !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
