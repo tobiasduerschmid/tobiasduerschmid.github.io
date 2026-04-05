@@ -916,16 +916,16 @@ steps:
             This matches C++'s `for (int i = 2; i < 8; i += 2)`.
 
         - question: |
-            A C++ programmer expects `7 / 2` to return `3` in Python. What actually happens?
+            A C++ programmer expects `6 / 2` to return the integer `3` in Python. What actually happens?
           type: single
           options:
-            - "It returns `3` — Python division works just like C++"
-            - "It returns `3.5` — Python's `/` always gives a float; use `//` for integer division"
+            - "It returns the integer `3` — Python division works just like C++"
+            - "It returns `3.0` — Python's `/` always gives a float; use `//` for integer division"
             - "It raises a TypeError because both operands are integers"
-            - "It returns `3.0` — Python rounds down automatically"
+            - "It returns the fraction object `fractions.Fraction(6, 2)` — Python automatically converts integer division to a rational number"
           correct_index: 1
           explanation: |
-            In Python 3, `/` is **always** float division: `7 / 2` → `3.5`.
+            In Python 3, `/` is **always** float division: `6 / 2` → `3.0`.
             For integer (floor) division like C++, use `//`: `7 // 2` → `3`.
             This is one of the most common negative-transfer traps from C++.
 
@@ -1069,6 +1069,9 @@ steps:
         language: "python"
 
     open_file: "listcomp.py"
+
+    setup_commands:
+      - "import sys; sys.modules.pop('functions', None)"
 
     tests:
       - description: "above_average returns numbers > mean (not >=)"
