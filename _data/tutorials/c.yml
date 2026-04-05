@@ -1,0 +1,2259 @@
+title: "C for C++ Programmers"
+description: "Learn C by leveraging what you already know from C++. Master printf/scanf, manual memory management, structs, function pointers, and idiomatic C — all through hands-on practice in an interactive Linux terminal."
+
+require_tests: true
+
+setup_commands:
+  - "mkdir -p /tutorial/c_project"
+
+steps:
+  # --------------------------------------------------------------------------
+  # STEP 1: Hello C — What's Missing from C++
+  # --------------------------------------------------------------------------
+  - title: "Hello C — What's Missing from C++"
+    instructions: |
+      Welcome to the **C Tutorial**! You already know C++ — so instead of starting from zero, we'll focus on what's **different** and what's **missing**.
+
+      **A note before we begin:** Moving from C++ to C can feel like losing superpowers — no classes, no RAII, no `std::string`. That's normal. Every C programmer has felt that friction. But C's simplicity is also its strength: you'll develop a deep understanding of exactly what the machine does with your code, with no abstractions hiding the truth. Expect to be confused by things that "should just work" — that confusion is the learning.
+
+      C is not a "simpler C++." It's an *older, smaller* language that C++ grew out of. Many features you rely on in C++ simply don't exist:
+
+      | C++ Feature | C Equivalent |
+      |-------------|--------------|
+      | `cout << x` | `printf("%d", x)` |
+      | `new` / `delete` | `malloc()` / `free()` |
+      | `class` | `struct` (no methods, no access control) |
+      | `string` | `char[]` arrays + string functions |
+      | References (`&`) | Pointers only |
+      | `bool` | `#include <stdbool.h>` or use `int` |
+      | Namespaces | None — everything is global |
+      | Function overloading | Not supported |
+      | Templates | Not supported |
+
+      ### Task: Compile and run your first C program
+
+      A file `hello.c` has been created. Look at it in the editor, then compile and run it:
+
+      ```bash
+      cd c_project
+      gcc -Wall -std=c11 hello.c -o hello
+      ./hello
+      ```
+
+      **Important:** We use `gcc`, not `g++`. Using `g++` would compile as C++ and mask the differences we're here to learn.
+
+      Before you start editing code, **study the program first**. You'll learn more by reading code before writing it. Read `hello.c` carefully and identify all the differences from C++ you can spot.
+
+      Notice:
+      - `#include <stdio.h>` instead of `#include <iostream>`
+      - `printf()` instead of `cout <<`
+      - No `using namespace std;` — C has no namespaces
+
+    files:
+      - path: "c_project/hello.c"
+        content: |
+          #include <stdio.h>
+
+          int main(void) {
+              printf("=== Welcome to the Danger Zone ===\n");
+              printf("No classes. No RAII. No safety net.\n");
+              printf("Just you, raw memory, and a compiler.\n");
+              printf("Let's go.\n");
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/hello.c"
+
+    solution:
+      commands:
+        - "cd /tutorial/c_project && gcc -Wall -std=c11 hello.c -o hello && ./hello"
+      explanation: |
+        - **`gcc` vs `g++`:** `gcc` compiles C code. `g++` compiles C++ code. Using the wrong compiler masks important differences — C code that accidentally uses C++ features will compile under `g++` but fail under `gcc`.
+        - **`-Wall`:** Enables all common warnings. In C, warnings are even more important than in C++ because C gives you far less safety by default.
+        - **`-std=c11`:** Uses the C11 standard, which adds useful features like `_Bool` and anonymous structs.
+        - **`int main(void)`:** In C, `int main()` means "main takes an *unspecified* number of arguments." Writing `int main(void)` explicitly says "main takes zero arguments" — this is the correct C idiom.
+
+    tests:
+      - description: "Compiled hello.c successfully"
+        command: "cd /tutorial/c_project && [ -f hello ]"
+      - description: "The program runs and produces output"
+        command: "cd /tutorial/c_project && ./hello | grep -q 'Danger Zone'"
+
+    quiz:
+      title: "Hello C — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "In C, what is the correct way to print text to the terminal?"
+          options:
+            - "cout << \"hello\";"
+            - "printf(\"hello\");"
+            - "System.out.println(\"hello\");"
+            - "print(\"hello\");"
+          correct_index: 1
+          explanation: "C uses `printf()` from `<stdio.h>` for output. `cout` is C++ only. C has no objects, no operator overloading, and no `<<` for I/O."
+
+        - question: "Why do we compile with `gcc` instead of `g++` in this tutorial?"
+          options:
+            - "gcc produces faster binaries"
+            - "g++ cannot compile .c files"
+            - "gcc compiles as C — g++ would allow C++ features and hide the differences"
+            - "gcc is newer than g++"
+          correct_index: 2
+          explanation: "g++ compiles .c files as C++, silently accepting features like references, classes, and overloading that don't exist in C. Using gcc ensures we learn real C."
+
+        - question: "What does `int main(void)` mean in C, and how does it differ from `int main()`?"
+          options:
+            - "They are identical in both C and C++"
+            - "`main(void)` explicitly takes zero arguments; `main()` means unspecified arguments in C"
+            - "`main(void)` returns void; `main()` returns int"
+            - "`main()` is invalid C syntax"
+          correct_index: 1
+          explanation: "In C, `int main()` means 'main can take any number of arguments' — it's an old-style declaration. `int main(void)` explicitly says 'no arguments.' In C++, both mean the same thing, but in C, the distinction matters."
+
+        - question: "A C++ program uses `std::string name = \"Alice\"; std::cout << name.length();`. Why can't this approach work in C? (Select the **most fundamental** reason.)"
+          options:
+            - "C doesn't have a `length()` function"
+            - "C has no objects, methods, or operator overloading — strings are raw char arrays with no built-in operations"
+            - "C strings are immutable"
+            - "C uses `printf` instead of `cout`, but otherwise strings work the same"
+          correct_index: 1
+          explanation: "The core issue isn't a missing function — it's a missing *paradigm*. C has no objects, no methods, no operator overloading. A C 'string' is just a `char[]` array. You must use standalone functions like `strlen()` from `<string.h>`. This is the fundamental shift: C gives you data and functions, not objects and methods."
+
+        - question: |
+            **Arrange** the lines to write a minimal C program that prints `"42"` to the terminal.
+          type: parsons
+          lines:
+            - "#include <stdio.h>"
+            - "int main(void) {"
+            - "    printf(\"%d\\n\", 42);"
+            - "    return 0;"
+            - "}"
+          distractors:
+            - "#include <iostream>"
+            - "    std::cout << 42 << std::endl;"
+          explanation: "A C program needs `#include <stdio.h>` (not `<iostream>`), uses `printf` with a format specifier (not `cout`), and has the standard `int main(void)` signature. The distractors are C++ syntax that won't compile under `gcc`."
+
+  # --------------------------------------------------------------------------
+  # STEP 2: printf — Formatted Output
+  # --------------------------------------------------------------------------
+  - title: "printf — Formatted Output"
+    instructions: |
+      ### The Format String
+
+      `printf` is C's Swiss Army knife for output. It takes a **format string** containing ordinary text and **conversion specifiers** that start with `%`:
+
+      | Specifier | Type | Example |
+      |-----------|------|---------|
+      | `%d` | `int` | `printf("%d", 42)` → `42` |
+      | `%f` | `double` | `printf("%f", 3.14)` → `3.140000` |
+      | `%c` | `char` | `printf("%c", 'A')` → `A` |
+      | `%s` | `char*` (string) | `printf("%s", "hi")` → `hi` |
+      | `%p` | pointer | `printf("%p", ptr)` → `0x7fff...` |
+      | `%x` | hex `int` | `printf("%x", 255)` → `ff` |
+      | `%%` | literal `%` | `printf("100%%")` → `100%` |
+
+      ### Width and Precision
+
+      You can control formatting with **width** and **precision** modifiers:
+
+      - `%10d` — right-align integer in a field 10 characters wide
+      - `%-10s` — left-align string in a field 10 characters wide
+      - `%.2f` — show exactly 2 decimal places
+      - `%05d` — pad with zeros: `00042`
+
+      ### Predict Before You Run (PRIMM)
+
+      Before compiling, **predict** what each line in `format_lab.c` will print. Write down your predictions on paper, then compile and check. This predict-then-verify cycle is called **PRIMM** (Predict, Run, Investigate, Modify, Make) — and it's one of the most effective ways to learn a new language's quirks.
+
+      ```bash
+      gcc -Wall -std=c11 format_lab.c -o format_lab
+      ./format_lab
+      ```
+
+      How many did you get right?
+
+      ### Investigate and Modify
+
+      Now try these modifications to deepen your understanding:
+
+      1. **Investigate:** Change `%.2f` to `%.5f`. How many decimal places appear now?
+      2. **Investigate:** What does `%+d` do? Try `printf("%+d", 42)` and `printf("%+d", -7)`.
+      3. **Modify:** Add a new line that prints: `Score in hex: 0x2a` (Hint: use `%x` and the `0x` prefix).
+
+    files:
+      - path: "c_project/format_lab.c"
+        content: |
+          #include <stdio.h>
+
+          int main(void) {
+              int xp = 42;
+              double hp = 97.5;
+              char rank = 'S';
+              char player[] = "xX_SlayerKing_Xx";
+
+              // Basic specifiers
+              printf("Player: %s\n", player);
+              printf("XP: %d\n", xp);
+              printf("HP: %f\n", hp);
+              printf("Rank: %c\n", rank);
+
+              // Width and precision
+              printf("HP (1 decimal):   %.1f\n", hp);
+              printf("HP (no decimals): %.0f\n", hp);
+              printf("XP (zero-padded): [%05d]\n", xp);
+              printf("Player (right-20):[%20s]\n", player);
+              printf("Player (left-20): [%-20s]\n", player);
+
+              // Multiple values in one call
+              printf("%s: %d/%d XP (%.1f%% to next level)\n",
+                     player, xp, 100, (xp / 100.0) * 100);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/format_lab.c"
+
+    solution:
+      commands:
+        - "cd /tutorial/c_project && gcc -Wall -std=c11 format_lab.c -o format_lab && ./format_lab"
+      explanation: |
+        - **`%f` default precision:** `printf("%f", 97.5)` prints `97.500000` — six decimal places by default. Use `%.1f` to control this.
+        - **`%.0f` rounding:** `%.0f` rounds to the nearest integer: `97.5` → `98`. Note this *rounds*, not truncates.
+        - **`%05d` zero-padding:** Pads with leading zeros to fill the width: `42` → `00042`.
+        - **`%%` for literal percent:** Since `%` starts a format specifier, you need `%%` to print an actual `%` character.
+        - **`xp / 100.0`:** Using `100.0` (not `100`) forces floating-point division. `42 / 100` would give `0` (integer division truncates).
+
+    tests:
+      - description: "Compiled format_lab.c successfully"
+        command: "cd /tutorial/c_project && [ -f format_lab ]"
+      - description: "The program runs and produces formatted output"
+        command: "cd /tutorial/c_project && ./format_lab | grep -q '42.0%'"
+
+    quiz:
+      title: "printf — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `printf(\"%.2f\", 3.14159)` print?"
+          options:
+            - "3.14159"
+            - "3.14"
+            - "3.1"
+            - "3"
+          correct_index: 1
+          explanation: "`.2f` means 'show exactly 2 decimal places.' The value is rounded to 3.14."
+
+        - question: "You want to print a literal `%` character. Which format string is correct?"
+          options:
+            - "printf(\"%\");"
+            - "printf(\"%%\");"
+            - "printf(\"\\%\");"
+            - "printf(\"%c\", '%');"
+          correct_index: 1
+          explanation: "Since `%` starts a conversion specifier, the only way to print a literal `%` in printf is `%%`. Using `\\%` is not valid in C's printf (unlike some other languages)."
+
+        - question: "What happens if you use the wrong specifier, like `printf(\"%d\", 3.14)`?"
+          options:
+            - "It prints 3 (truncates to int)"
+            - "The compiler prevents it — compile error"
+            - "Undefined behavior — the output is unpredictable garbage"
+            - "It prints 3.14 anyway because printf is smart"
+          correct_index: 2
+          explanation: "printf reads raw bytes from the stack based on the format specifier. `%d` reads 4 bytes as an int, but 3.14 was passed as an 8-byte double. The result is undefined behavior — typically garbage output. The compiler may warn (`-Wall`) but won't stop you."
+
+        - question: |
+            **Arrange** the printf arguments to correctly print: `Player xX_SlayerKing_Xx has 42/100 XP (42.0%)`
+          type: parsons
+          display: inline
+          lines:
+            - "printf(\"Player"
+            - " %s has %d/%d XP (%.1f%%%%)"
+            - "\\n\","
+            - "\"xX_SlayerKing_Xx\","
+            - "42,"
+            - "100,"
+            - "42.0"
+            - ");"
+          distractors:
+            - "%f has %s"
+            - "\"42\","
+          explanation: "`%s` matches the string `\"xX_SlayerKing_Xx\"`, `%d` matches ints `42` and `100`, `%.1f` matches the double `42.0`, and `%%%%` produces the literal `%%` which renders as `%`. The distractor `\"42\"` is wrong because `%d` expects an int, not a string."
+
+        - question: "**[Interleaved: Revisit Step 1]** Which of the following C++ features does NOT exist in C?"
+          options:
+            - "Pointers"
+            - "Structs"
+            - "Function overloading"
+            - "Header files"
+          correct_index: 2
+          explanation: "C has pointers, structs, and header files — these are shared with C++. But function overloading (two functions with the same name but different parameters) is a C++ feature. In C, every function must have a unique name."
+
+  # --------------------------------------------------------------------------
+  # STEP 3: scanf — Reading Input (and Its Dangers)
+  # --------------------------------------------------------------------------
+  - title: "scanf — Reading Input (and Its Dangers)"
+    instructions: |
+      ### scanf: The Dangerous Twin of printf
+
+      `scanf` reads formatted input from the user. It uses the same `%` specifiers as `printf`, but with a critical difference: **scanf needs pointers** because it must *store* the input somewhere.
+
+      ```c
+      int age;
+      scanf("%d", &age);   // & gives the ADDRESS of age
+      ```
+
+      The `&` (address-of operator) is required for basic types. Without it, `scanf` would receive the *value* of `age` (garbage, since it's uninitialized), interpret it as a memory address, and write to a random location — a classic undefined behavior bug.
+
+      ### The Buffer Overflow Danger
+
+      Reading strings with `scanf` is notoriously dangerous:
+
+      ```c
+      char name[10];
+      scanf("%s", name);   // DANGER: no length limit!
+      ```
+
+      If the user types more than 9 characters, `scanf` writes past the end of the array — a **buffer overflow**. This is the exact vulnerability class that has caused thousands of real-world security exploits.
+
+      **The safe alternative:** Use `fgets()` to read a line with a length limit:
+      ```c
+      fgets(name, sizeof(name), stdin);  // reads at most 9 chars + '\0'
+      ```
+
+      ### Task: Fix the vulnerable program
+
+      The file `input_lab.c` has a buffer overflow bug. This is a **Bug Hunt** — you'll learn more from finding and fixing broken code than from writing it yourself. Let's go.
+
+      1. Replace the dangerous `scanf("%s", ...)` with `fgets()`.
+      2. Compile with `gcc -Wall -std=c11 input_lab.c -o input_lab`.
+      3. Run `./input_lab` and test it.
+
+      **Hint:** `fgets` includes the newline character `\n` in the buffer. The provided `strip_newline` helper removes it.
+
+    files:
+      - path: "c_project/input_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <string.h>
+
+          // Helper: remove trailing newline from fgets input
+          void strip_newline(char *str) {
+              size_t len = strlen(str);
+              if (len > 0 && str[len - 1] == '\n') {
+                  str[len - 1] = '\0';
+              }
+          }
+
+          int main(void) {
+              char server[20];
+              int players;
+
+              printf("Enter server name: ");
+              // BUG: scanf with %s has no length limit — buffer overflow!
+              scanf("%s", server);
+
+              printf("Enter player count: ");
+              scanf("%d", &players);
+
+              printf("Server %s: %d players online.\n", server, players);
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/input_lab.c"
+
+    watch_files:
+      - "c_project/input_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/input_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <string.h>
+
+            // Helper: remove trailing newline from fgets input
+            void strip_newline(char *str) {
+                size_t len = strlen(str);
+                if (len > 0 && str[len - 1] == '\n') {
+                    str[len - 1] = '\0';
+                }
+            }
+
+            int main(void) {
+                char server[20];
+                int players;
+
+                printf("Enter server name: ");
+                fgets(server, sizeof(server), stdin);
+                strip_newline(server);
+
+                printf("Enter player count: ");
+                scanf("%d", &players);
+
+                printf("Server %s: %d players online.\n", server, players);
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **`fgets(server, sizeof(server), stdin)`:** Reads at most `sizeof(server) - 1` characters (19), leaving room for the null terminator `\0`. This prevents buffer overflow.
+        - **`sizeof(server)`** returns 20 (the array size). `fgets` uses this to cap input length.
+        - **`strip_newline`:** `fgets` includes the `\n` in the buffer, unlike `scanf`. We must manually remove it.
+        - **Why `scanf("%d", &players)` is still OK:** For integers, `scanf` reads digits until it hits a non-digit. There's no buffer to overflow — it just writes a single `int`. The risk is only with `%s` (strings).
+
+    tests:
+      - description: "Replaced scanf %s with fgets for the server name"
+        command: "cd /tutorial/c_project && grep -q 'fgets' input_lab.c"
+      - description: "The program compiles without warnings"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 input_lab.c -o input_lab 2>&1 | grep -v '^$' | wc -l | grep -q '^0$'"
+      - description: "The program runs correctly with test input"
+        command: "cd /tutorial/c_project && echo -e 'Azeroth\n5000' | ./input_lab | grep -q 'Azeroth'"
+
+    quiz:
+      title: "scanf — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "Why does `scanf(\"%d\", &age)` need the `&` before `age`?"
+          options:
+            - "& converts age from int to string"
+            - "scanf needs the memory ADDRESS where it should store the result"
+            - "& is optional — it works either way"
+            - "& tells scanf to read from a file instead of stdin"
+          correct_index: 1
+          explanation: "scanf must *write* the parsed value somewhere. `&age` provides the memory address of `age`. Without `&`, scanf would interpret the current (garbage) value of `age` as an address — undefined behavior."
+
+        - question: "What is the specific danger of `scanf(\"%s\", buffer)` when the user types more characters than `buffer` can hold?"
+          options:
+            - "scanf truncates the input automatically"
+            - "The program prints an error and stops"
+            - "Buffer overflow — scanf writes past the end of the array, corrupting memory"
+            - "The extra characters are silently discarded"
+          correct_index: 2
+          explanation: "scanf with `%s` has no built-in length limit. It keeps writing characters until it sees whitespace, potentially overwriting adjacent memory. This is a classic security vulnerability."
+
+        - question: "`fgets(buf, 20, stdin)` reads at most how many characters into `buf`?"
+          options:
+            - "20 characters"
+            - "19 characters (reserves 1 byte for the null terminator)"
+            - "21 characters (20 plus the newline)"
+            - "It reads until newline, regardless of the size argument"
+          correct_index: 1
+          explanation: "fgets reads at most `size - 1` characters, reserving the last byte for `\\0`. So `fgets(buf, 20, stdin)` reads at most 19 characters. This is what makes it safe — unlike scanf, it respects the buffer boundary."
+
+        - question: |
+            **Arrange** the lines to safely read a username (max 50 chars) and print a greeting.
+          type: parsons
+          lines:
+            - "char username[50];"
+            - "printf(\"Enter name: \");"
+            - "fgets(username, sizeof(username), stdin);"
+            - "strip_newline(username);"
+            - "printf(\"Hello, %s!\\n\", username);"
+          distractors:
+            - "scanf(\"%s\", username);"
+            - "gets(username);"
+          explanation: "Declare the buffer first, prompt the user, read safely with `fgets` (which limits input to `sizeof(username) - 1` chars), strip the trailing newline that `fgets` includes, then print. `scanf(\"%s\")` and `gets()` are both unsafe — `gets` was removed from the C standard entirely because it cannot be used safely."
+
+        - question: "**[Interleaved: Revisit Step 2]** What does `printf(\"%05d\", 42)` print?"
+          options:
+            - "   42 (3 spaces then 42)"
+            - "00042"
+            - "42000"
+            - "42.00"
+          correct_index: 1
+          explanation: "The `0` flag means 'pad with zeros instead of spaces,' and `5` is the field width. So 42 gets zero-padded to 5 digits: `00042`. Without the `0` flag, `%5d` would give `   42` (space-padded)."
+
+  # --------------------------------------------------------------------------
+  # STEP 4: Pointers and malloc — Manual Memory Management
+  # --------------------------------------------------------------------------
+  - title: "Pointers and malloc — Manual Memory Management"
+    instructions: |
+      ### No new/delete — Welcome to malloc/free
+
+      Pointer and memory errors are the most common bugs in C programs. When researchers tracked real CS2 students, they found that **74% created memory leaks**, **70% dereferenced dead pointers**, and **57% dereferenced null pointers** — and most of these errors were completely silent. No crash, no warning, just corrupted memory that manifests as mysterious bugs way later. Spooky.
+
+      This step teaches you the discipline that prevents these errors.
+
+      In C++, you allocate heap memory with `new` and release it with `delete`. C uses lower-level functions from `<stdlib.h>`:
+
+      | C++ | C |
+      |-----|---|
+      | `int *p = new int;` | `int *p = malloc(sizeof(int));` |
+      | `int *a = new int[10];` | `int *a = malloc(10 * sizeof(int));` |
+      | `delete p;` | `free(p);` |
+      | `delete[] a;` | `free(a);` |
+
+      ### Key Differences from C++
+
+      1. **`malloc` returns `void*`** — in C, this implicitly converts to any pointer type (no cast needed). Don't add a cast; it hides bugs.
+      2. **`malloc` does NOT initialize memory** — the bytes are garbage. Use `calloc()` if you need zeroed memory.
+      3. **`malloc` can fail** — it returns `NULL` if there's no memory. Always check.
+      4. **No constructors** — `malloc` just gives you raw bytes. You must initialize fields yourself.
+
+      ### The Pointer Lifecycle: A Mental Model
+
+      Here's a mental model that will save you hours of debugging. Every pointer variable is in one of **four states**:
+
+      ```
+      ┌──────────────┐   malloc()   ┌───────┐
+      │ Uninitialized │────────────▶│ Alive │
+      └──────────────┘             └───┬───┘
+                                       │
+                              free()   │   = NULL
+                                 ┌─────┴─────┐
+                                 ▼           ▼
+                             ┌──────┐   ┌──────┐
+                             │ Dead │   │ Null │
+                             └──────┘   └──────┘
+      ```
+
+      | State | Meaning | Safe Operations |
+      |-------|---------|-----------------|
+      | **Uninitialized** | Declared but not assigned | None — using it is undefined behavior |
+      | **Alive** | Points to valid, allocated memory | Dereference (`*p`), member access (`p->x`), free |
+      | **Null** | Explicitly set to `NULL` | Compare (`p == NULL`), reassign |
+      | **Dead** | Was freed — memory returned to OS | **Nothing!** Accessing a dead pointer is use-after-free |
+
+      The most dangerous transition is **Alive → Dead** (via `free()`), because the pointer variable *still holds the old address* — it just doesn't point to valid memory anymore. The pointer looks fine, but the memory behind it is gone. This is why 70% of students hit use-after-free bugs. **Pro tip:** set pointers to `NULL` immediately after freeing them.
+
+      ### Task: Build a dynamic array
+
+      Complete the program in `memory_lab.c`:
+
+      1. Allocate an array of `count` integers using `malloc`.
+      2. Check if `malloc` returned `NULL`.
+      3. Fill the array with squares: `arr[i] = i * i`.
+      4. Print the array.
+      5. **Free the memory** when done.
+
+      ```bash
+      gcc -Wall -std=c11 memory_lab.c -o memory_lab
+      ./memory_lab
+      ```
+
+    files:
+      - path: "c_project/memory_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <stdlib.h>
+
+          int main(void) {
+              int count = 5;
+
+              // Sub-goal 1: Allocate heap memory
+              // Use malloc(count * sizeof(int)) to request space for 'count' ints
+              int *squares = NULL;  // Replace NULL with your malloc call
+
+              // Sub-goal 2: Validate allocation
+              // Check if malloc returned NULL (out of memory). If so, print error and exit.
+
+              // Sub-goal 3: Initialize data
+              // Fill array with squares: squares[i] = i * i
+
+              // Print the array
+              printf("Squares:");
+              for (int i = 0; i < count; i++) {
+                  printf(" %d", squares[i]);
+              }
+              printf("\n");
+
+              // Sub-goal 4: Release memory
+              // Every malloc must have a matching free
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/memory_lab.c"
+
+    watch_files:
+      - "c_project/memory_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/memory_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <stdlib.h>
+
+            int main(void) {
+                int count = 5;
+
+                // Allocate an array of 'count' ints with malloc
+                int *squares = malloc(count * sizeof(int));
+
+                // Check if malloc failed (returned NULL)
+                if (squares == NULL) {
+                    fprintf(stderr, "malloc failed\n");
+                    return 1;
+                }
+
+                // Fill array with squares (arr[i] = i * i)
+                for (int i = 0; i < count; i++) {
+                    squares[i] = i * i;
+                }
+
+                // Print the array
+                printf("Squares:");
+                for (int i = 0; i < count; i++) {
+                    printf(" %d", squares[i]);
+                }
+                printf("\n");
+
+                // Free the allocated memory
+                free(squares);
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **`malloc(count * sizeof(int))`:** Allocates `count * 4` bytes (on most systems, `sizeof(int)` is 4). Always use `sizeof` — never hardcode sizes.
+        - **No cast needed:** In C, `void*` implicitly converts to `int*`. Writing `(int*)malloc(...)` is a C++ habit — in C it can hide the bug of forgetting `#include <stdlib.h>`.
+        - **NULL check:** `malloc` returns `NULL` if the system is out of memory. Dereferencing `NULL` is undefined behavior (usually a segfault).
+        - **`free(squares)`:** Every `malloc` must have a matching `free`. Forgetting to free causes a **memory leak**. In C, there is no garbage collector.
+        - **`fprintf(stderr, ...)`:** Error messages should go to stderr, not stdout.
+
+    tests:
+      - description: "Uses malloc to allocate memory"
+        command: "cd /tutorial/c_project && grep -q 'malloc' memory_lab.c"
+      - description: "Checks for NULL after malloc"
+        command: "cd /tutorial/c_project && grep -q 'NULL' memory_lab.c"
+      - description: "Frees the allocated memory"
+        command: "cd /tutorial/c_project && grep -q 'free' memory_lab.c"
+      - description: "Program compiles and produces correct output"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 memory_lab.c -o memory_lab && ./memory_lab | grep -q 'Squares: 0 1 4 9 16'"
+
+    quiz:
+      title: "malloc/free — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `malloc(10 * sizeof(int))` return?"
+          options:
+            - "An array of 10 integers initialized to zero"
+            - "A pointer to 40 bytes of uninitialized memory (or NULL on failure)"
+            - "An integer with value 10"
+            - "A pointer to 10 bytes of memory"
+          correct_index: 1
+          explanation: "malloc allocates raw, uninitialized bytes and returns a pointer. `10 * sizeof(int)` = 40 bytes (assuming 4-byte ints). Unlike `calloc`, malloc does NOT zero-initialize. It returns NULL if allocation fails."
+
+        - question: "In C, should you cast the return value of `malloc`? E.g., `int *p = (int*)malloc(...);`"
+          options:
+            - "Yes — C requires the cast just like C++"
+            - "No — in C, void* implicitly converts to any pointer type, and the cast can hide bugs"
+            - "Yes — otherwise you get a compile error"
+            - "It doesn't matter either way"
+          correct_index: 1
+          explanation: "In C, `void*` implicitly converts to any pointer type — no cast needed. Adding a cast like `(int*)` can mask the bug of forgetting `#include <stdlib.h>`, because without the header, the compiler assumes `malloc` returns `int` (in older C standards), and the cast silently converts the wrong type."
+
+        - question: "What happens if you forget to call `free()` on malloc'd memory?"
+          options:
+            - "The program crashes immediately"
+            - "Nothing — the OS reclaims it when the process exits"
+            - "Memory leak — the memory stays allocated, reducing available RAM; in long-running programs this is a serious bug"
+            - "The compiler warns you"
+          correct_index: 2
+          explanation: "While the OS does reclaim memory on process exit, memory leaks in long-running programs (servers, daemons) gradually consume all available RAM. In C, there is no garbage collector — you are responsible for every byte you allocate."
+
+        - question: |
+            **Arrange** the lines to dynamically allocate an array of 100 doubles, check for failure, use it, and clean up.
+          type: parsons
+          lines:
+            - "double *data = malloc(100 * sizeof(double));"
+            - "if (data == NULL) { return 1; }"
+            - "data[0] = 3.14;"
+            - "printf(\"%.2f\\n\", data[0]);"
+            - "free(data);"
+          distractors:
+            - "double *data = new double[100];"
+            - "delete[] data;"
+          explanation: "The sequence is: (1) allocate with `malloc`, (2) check for NULL, (3) use the memory, (4) print, (5) free. The distractors use C++ syntax (`new`/`delete[]`), which doesn't exist in C."
+
+        - question: "**[Interleaved: Revisit Step 3]** You write `scanf(\"%d\", age)` (without `&`). What happens?"
+          options:
+            - "scanf stores the value in age normally"
+            - "Compile error — scanf requires a pointer"
+            - "Undefined behavior — scanf interprets the uninitialized value of age as a memory address and writes to a random location"
+            - "scanf ignores the missing & and reads into a default location"
+          correct_index: 2
+          explanation: "Without `&`, scanf receives the *value* of `age` (which is uninitialized garbage), interprets that garbage as a memory address, and writes the parsed input there. This is undefined behavior — it might crash, corrupt memory, or appear to work by coincidence. The compiler may warn with `-Wall`, but won't stop you."
+
+  # --------------------------------------------------------------------------
+  # STEP 5: C Strings — char Arrays, Not Objects
+  # --------------------------------------------------------------------------
+  - title: "C Strings — char Arrays, Not Objects"
+    instructions: |
+      ### Strings in C Are Just char Arrays
+
+      In C++, `std::string` handles memory, length tracking, and concatenation for you. In C, a "string" is just an array of `char` terminated by a null byte `'\0'`:
+
+      ```
+      char name[] = "Alice";
+      // Memory layout: ['A']['l']['i']['c']['e']['\0']
+      //                  [0]  [1]  [2]  [3]  [4]  [5]
+      ```
+
+      The null terminator `'\0'` marks where the string ends. Every string function (`strlen`, `printf %s`, etc.) scans forward until it hits `'\0'`. **If you forget the null terminator, functions will read past the end of your array** — undefined behavior.
+
+      ### String Functions (from `<string.h>`)
+
+      | Function | Purpose | Gotcha |
+      |----------|---------|--------|
+      | `strlen(s)` | Returns length (not counting `'\0'`) | O(n) — scans for `'\0'` every time |
+      | `strcpy(dst, src)` | Copies src into dst | **No bounds checking!** Use `strncpy` |
+      | `strcat(dst, src)` | Appends src to dst | **No bounds checking!** |
+      | `strcmp(a, b)` | Compares: returns 0 if equal | You CANNOT use `==` to compare strings |
+      | `strncpy(dst, src, n)` | Copies at most n chars | May NOT null-terminate if src >= n |
+
+      ### "False Friends" from C++
+
+      Research on language transfer (Du et al., 2025, CSEE&T) found that C++ students transitioning to C-like string handling exhibit a specific form of **negative transfer**: they try to process strings character-by-character using array indexing (a C habit) even when higher-level functions exist, and they forget that C strings require manual null-termination. The study calls these "false friends" — syntax that *looks* the same but behaves differently. For example, `+` concatenates `std::string` in C++, but in C, `+` on `char*` does pointer arithmetic, not concatenation. You must use `strcat()` instead.
+
+      ### The #1 Mistake: Using `==` to Compare Strings
+
+      ```c
+      if (name == "Alice")  // WRONG! Compares pointer addresses, not contents
+      if (strcmp(name, "Alice") == 0)  // CORRECT! Compares character-by-character
+      ```
+
+      ### Task: Fix the string bugs
+
+      The file `strings_lab.c` has three bugs related to C strings. Find and fix all of them:
+
+      1. A string comparison using `==` instead of `strcmp`
+      2. An unsafe `strcpy` that should use `strncpy`
+      3. A missing null terminator after `strncpy`
+
+      ```bash
+      gcc -Wall -std=c11 strings_lab.c -o strings_lab
+      ./strings_lab
+      ```
+
+    files:
+      - path: "c_project/strings_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <string.h>
+
+          int main(void) {
+              // Bug 1: comparing strings with ==
+              char lang[] = "C";
+              if (lang == "C") {
+                  printf("Language is C\n");
+              } else {
+                  printf("Language is not C\n");
+              }
+
+              // Bug 2: strcpy with no size limit
+              char dest[8];
+              char src[] = "A very long string that overflows the buffer";
+              strcpy(dest, src);
+              printf("Copied: %s\n", dest);
+
+              // Bug 3: strncpy may not null-terminate
+              char abbrev[4];
+              strncpy(abbrev, "Pittsburgh", sizeof(abbrev));
+              printf("Abbreviation: %s\n", abbrev);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/strings_lab.c"
+
+    watch_files:
+      - "c_project/strings_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/strings_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <string.h>
+
+            int main(void) {
+                // Fixed Bug 1: use strcmp instead of ==
+                char lang[] = "C";
+                if (strcmp(lang, "C") == 0) {
+                    printf("Language is C\n");
+                } else {
+                    printf("Language is not C\n");
+                }
+
+                // Fixed Bug 2: use strncpy with size limit
+                char dest[8];
+                char src[] = "A very long string that overflows the buffer";
+                strncpy(dest, src, sizeof(dest) - 1);
+                dest[sizeof(dest) - 1] = '\0';
+                printf("Copied: %s\n", dest);
+
+                // Fixed Bug 3: manually null-terminate after strncpy
+                char abbrev[4];
+                strncpy(abbrev, "Pittsburgh", sizeof(abbrev) - 1);
+                abbrev[sizeof(abbrev) - 1] = '\0';
+                printf("Abbreviation: %s\n", abbrev);
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **Bug 1:** `==` compares *pointer addresses*, not string contents. `strcmp` returns 0 when strings match.
+        - **Bug 2:** `strcpy` copies without limit — classic buffer overflow. `strncpy(dest, src, sizeof(dest) - 1)` limits the copy, and we manually add `'\0'`.
+        - **Bug 3:** If `src` is longer than `n`, `strncpy` does NOT add a null terminator. You must always ensure the last byte is `'\0'`.
+        - **Why `sizeof(dest) - 1`?** Reserve one byte for the null terminator. `sizeof` returns the total array size (8), so we copy at most 7 characters plus `'\0'`.
+
+    tests:
+      - description: "Uses strcmp for string comparison (not ==)"
+        command: "cd /tutorial/c_project && grep -q 'strcmp' strings_lab.c"
+      - description: "Uses strncpy instead of strcpy for the long string copy"
+        command: "cd /tutorial/c_project && grep 'strncpy.*dest' strings_lab.c | head -1 | grep -q 'strncpy'"
+      - description: "Manually null-terminates after strncpy"
+        command: "cd /tutorial/c_project && grep -q \"'..0'\" strings_lab.c || grep -q \"'\\\\0'\" strings_lab.c"
+      - description: "Program compiles and runs without crashing"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 strings_lab.c -o strings_lab && ./strings_lab | grep -q 'Language is C'"
+
+    quiz:
+      title: "C Strings — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What is the length of the string `\"Hello\"` in memory (including the null terminator)?"
+          options:
+            - "5 bytes"
+            - "6 bytes"
+            - "7 bytes"
+            - "It depends on the system"
+          correct_index: 1
+          explanation: "'Hello' has 5 visible characters, plus the invisible `\\0` null terminator = 6 bytes total. `strlen(\"Hello\")` returns 5 (it doesn't count `\\0`), but the array needs 6 bytes of storage."
+
+        - question: "Why can't you use `==` to compare C strings?"
+          options:
+            - "`==` is only for integers"
+            - "`==` compares the pointer addresses, not the actual characters"
+            - "`==` triggers a compilation error on char arrays"
+            - "`==` compares only the first character"
+          correct_index: 1
+          explanation: "In C, a string is an array, and array names decay to pointers. `str1 == str2` compares whether both pointers refer to the *same memory address*, not whether the characters match. Use `strcmp(str1, str2) == 0` to compare contents."
+
+        - question: |
+            **Arrange** the lines to safely copy a string from `src` into `dest` (size 20), ensuring null-termination.
+          type: parsons
+          lines:
+            - "char dest[20];"
+            - "char *src = \"Hello, World!\";"
+            - "strncpy(dest, src, sizeof(dest) - 1);"
+            - "dest[sizeof(dest) - 1] = '\\0';"
+            - "printf(\"%s\\n\", dest);"
+          distractors:
+            - "strcpy(dest, src);"
+            - "dest = src;"
+          explanation: "Declare the buffer, define the source, copy safely with `strncpy` (reserving space for `\\0`), manually null-terminate, then print. `strcpy` has no size limit (unsafe). `dest = src` doesn't copy — it just changes the pointer (and is illegal for arrays)."
+
+        - question: "**[Interleaved: Revisit Step 4]** After `char *s = malloc(50);`, what is the content of the 50 bytes?"
+          options:
+            - "All zeros"
+            - "All null characters (\\0)"
+            - "Uninitialized — garbage values from whatever was in that memory before"
+            - "Empty string"
+          correct_index: 2
+          explanation: "malloc returns uninitialized memory. The bytes could be anything — remnants of previous allocations. If you need zeroed memory, use `calloc(50, 1)` instead. For a string buffer, you must at minimum set `s[0] = '\\0'` before using it with string functions."
+
+  # --------------------------------------------------------------------------
+  # STEP 6: Structs — C's Classes (Without Methods)
+  # --------------------------------------------------------------------------
+  - title: "Structs — C's Classes (Without Methods)"
+    instructions: |
+      ### C Has No Classes — Only Structs
+
+      In C++, `class` and `struct` are nearly identical (differing only in default access). In C, `struct` is all you have, and it's much more limited:
+
+      - **No methods** — functions that operate on a struct are standalone
+      - **No access control** — no `private`, `protected`, or `public`
+      - **No constructors/destructors** — you write init/cleanup functions yourself
+      - **No inheritance** — you can nest structs for composition
+
+      ### Declaring and Using Structs
+
+      ```c
+      struct Point {
+          double x;
+          double y;
+      };
+
+      // Without typedef, you must write 'struct Point' everywhere:
+      struct Point p1;
+      p1.x = 3.0;
+      p1.y = 4.0;
+      ```
+
+      ### typedef Saves Typing
+
+      ```c
+      typedef struct {
+          double x;
+          double y;
+      } Point;
+
+      // Now you can just write 'Point':
+      Point p1 = {3.0, 4.0};
+      ```
+
+      ### The Arrow Operator (->)
+
+      When you have a **pointer to a struct**, use `->` instead of `.`:
+
+      ```c
+      Point *pp = &p1;
+      pp->x = 5.0;       // same as (*pp).x = 5.0
+      ```
+
+      ### Task: Build a Student record system
+
+      Complete `structs_lab.c` to create a `Student` struct and functions that operate on it. This is how you do "object-oriented" programming in C — structs hold data, standalone functions provide behavior.
+
+      Research on teaching well-structured code emphasizes that **scaffolded code-writing tasks** — where students fill in parts of an existing structure rather than starting from a blank file — are among the most effective instructional approaches (Nurollahian et al., 2025, CSEE&T). That's why this exercise provides the `main()` function and asks you to implement the struct and its associated functions.
+
+      1. Define the `Student` struct using `typedef`.
+      2. Implement `student_init` to populate a student.
+      3. Implement `student_print` to display a student's info.
+
+      ```bash
+      gcc -Wall -std=c11 structs_lab.c -o structs_lab
+      ./structs_lab
+      ```
+
+    files:
+      - path: "c_project/structs_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <string.h>
+
+          // TODO: Define a Student struct using typedef with fields:
+          //   - char name[50]
+          //   - int id
+          //   - double gpa
+
+
+          // TODO: Implement student_init
+          // Takes a POINTER to Student, plus name, id, gpa as parameters
+          // Copies name into s->name using strncpy (safely!)
+          // Sets s->id and s->gpa
+
+
+          // TODO: Implement student_print
+          // Takes a POINTER to Student (use const for safety)
+          // Prints: "Student: <name> (ID: <id>, GPA: <gpa>)"
+
+
+          int main(void) {
+              Student s1;
+              student_init(&s1, "Grace Hopper", 1906, 3.95);
+              student_print(&s1);
+
+              Student s2;
+              student_init(&s2, "Alan Turing", 1912, 3.88);
+              student_print(&s2);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/structs_lab.c"
+
+    watch_files:
+      - "c_project/structs_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/structs_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <string.h>
+
+            typedef struct {
+                char name[50];
+                int id;
+                double gpa;
+            } Student;
+
+            void student_init(Student *s, const char *name, int id, double gpa) {
+                strncpy(s->name, name, sizeof(s->name) - 1);
+                s->name[sizeof(s->name) - 1] = '\0';
+                s->id = id;
+                s->gpa = gpa;
+            }
+
+            void student_print(const Student *s) {
+                printf("Student: %s (ID: %d, GPA: %.2f)\n", s->name, s->id, s->gpa);
+            }
+
+            int main(void) {
+                Student s1;
+                student_init(&s1, "Grace Hopper", 1906, 3.95);
+                student_print(&s1);
+
+                Student s2;
+                student_init(&s2, "Alan Turing", 1912, 3.88);
+                student_print(&s2);
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **`typedef struct { ... } Student;`:** Defines an anonymous struct and gives it the alias `Student`. Without `typedef`, you'd have to write `struct Student` everywhere.
+        - **Pointer parameters (`Student *s`):** We pass pointers so the function modifies the *original* struct, not a copy. In C, all arguments are passed by value — passing a large struct by value copies the entire thing.
+        - **`s->name`:** The arrow operator `->` dereferences the pointer and accesses the member. It's shorthand for `(*s).name`.
+        - **`const Student *s`:** In `student_print`, `const` promises we won't modify the struct — a C convention for read-only access. This is the closest C gets to "const methods."
+        - **Safe string copy:** `strncpy` + manual null-termination, as learned in Step 5.
+
+    tests:
+      - description: "Defined a Student struct or typedef"
+        command: "cd /tutorial/c_project && grep -q 'typedef struct' structs_lab.c || grep -q 'struct Student' structs_lab.c"
+      - description: "Implemented student_init function"
+        command: "cd /tutorial/c_project && grep -q 'student_init' structs_lab.c && grep -q 'strncpy\\|strcpy' structs_lab.c"
+      - description: "Implemented student_print function"
+        command: "cd /tutorial/c_project && grep -q 'student_print' structs_lab.c"
+      - description: "Program compiles and runs correctly"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 structs_lab.c -o structs_lab && ./structs_lab | grep -q 'Grace Hopper'"
+
+    quiz:
+      title: "Structs — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "Why do C programmers pass struct pointers to functions instead of passing structs by value?"
+          options:
+            - "C doesn't allow passing structs by value"
+            - "Passing by value copies the entire struct — wasteful for large structs, and the function can't modify the original"
+            - "Pointers are faster because they use less CPU"
+            - "Structs cannot be returned from functions"
+          correct_index: 1
+          explanation: "C passes everything by value. Passing a 200-byte struct copies all 200 bytes onto the stack. A pointer is just 8 bytes and lets the function modify the original. C has no references — pointers are the only option for 'pass by reference' behavior."
+
+        - question: "Given `Student *s = &my_student;`, which syntax accesses the `name` field?"
+          options:
+            - "s.name"
+            - "s->name"
+            - "*s.name"
+            - "s[name]"
+          correct_index: 1
+          explanation: "`->` is the member access operator for pointers to structs. `s->name` is equivalent to `(*s).name`. Using `s.name` would fail because `s` is a pointer, not a struct."
+
+        - question: |
+            **Arrange** the lines to define a `Rectangle` struct and a function that calculates its area.
+          type: parsons
+          lines:
+            - "typedef struct {"
+            - "    double width;"
+            - "    double height;"
+            - "} Rectangle;"
+            - "double rect_area(const Rectangle *r) {"
+            - "    return r->width * r->height;"
+            - "}"
+          distractors:
+            - "class Rectangle {"
+            - "    return r.width * r.height;"
+          explanation: "`typedef struct { ... } Rectangle;` defines the struct. The area function takes a `const` pointer (read-only) and uses `->` to access members through the pointer. `class` doesn't exist in C. `r.width` would be wrong because `r` is a pointer — you need `r->width`."
+
+        - question: "**[Interleaved: Revisit Step 3]** Why does `student_init` use `strncpy` instead of `strcpy` for the name?"
+          options:
+            - "strncpy is faster than strcpy"
+            - "strncpy limits the number of characters copied, preventing buffer overflow if the name is too long"
+            - "strcpy doesn't work with struct members"
+            - "strncpy automatically adds a null terminator"
+          correct_index: 1
+          explanation: "As we learned in the strings step, `strcpy` has no length limit and can overflow the destination buffer. `strncpy` copies at most `n` characters, making it safe for fixed-size char arrays like `name[50]`. But remember: `strncpy` may NOT null-terminate, so we add `'\\0'` manually."
+
+  # --------------------------------------------------------------------------
+  # STEP 7: Unions — One Memory, Multiple Interpretations
+  # --------------------------------------------------------------------------
+  - title: "Unions — One Memory, Multiple Interpretations"
+    instructions: |
+      ### What Is a Union?
+
+      Unions are one of C's more abstract features, and it's normal to wonder "when would I ever use this?" The answer: unions show up in parsers, network protocols, and any system that handles multiple data types through the same interface. If this step feels harder than previous ones, that's expected — you're building a more sophisticated mental model.
+
+      A `union` looks like a `struct`, but with a critical difference: **all members share the same memory**. The size of a union equals the size of its *largest* member.
+
+      ```c
+      union Value {
+          int    i;    // 4 bytes
+          double d;    // 8 bytes
+          char   s[8]; // 8 bytes
+      };
+      // sizeof(union Value) == 8 (size of largest member)
+      ```
+
+      At any moment, only **one member is valid**. Writing to `val.d` overwrites whatever was in `val.i`. Reading a member you didn't last write to is undefined behavior.
+
+      ### Tagged Unions: The C Pattern for "Variant Types"
+
+      Since the union doesn't know which member is active, you need to track it yourself. The standard pattern is a struct with a **tag** (enum) and a union:
+
+      ```c
+      typedef enum { TYPE_INT, TYPE_DOUBLE, TYPE_STRING } ValueType;
+
+      typedef struct {
+          ValueType type;     // tag: which union member is valid
+          union {
+              int    i;
+              double d;
+              char   s[32];
+          };                  // anonymous union (C11)
+      } TaggedValue;
+      ```
+
+      This is C's version of `std::variant` from C++17.
+
+      ### Task: Build a tagged value system
+
+      Complete `unions_lab.c` to implement a `TaggedValue` that can hold an int, double, or string. Implement the `print_value` function that uses a `switch` on the tag.
+
+      ```bash
+      gcc -Wall -std=c11 unions_lab.c -o unions_lab
+      ./unions_lab
+      ```
+
+    files:
+      - path: "c_project/unions_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <string.h>
+
+          typedef enum { TYPE_INT, TYPE_DOUBLE, TYPE_STRING } ValueType;
+
+          typedef struct {
+              ValueType type;
+              union {
+                  int    i;
+                  double d;
+                  char   s[32];
+              };
+          } TaggedValue;
+
+          // TODO: Implement print_value
+          // Use a switch on val->type to print the correct member:
+          //   TYPE_INT:    printf("int: %d\n", ...)
+          //   TYPE_DOUBLE: printf("double: %.2f\n", ...)
+          //   TYPE_STRING: printf("string: %s\n", ...)
+          void print_value(const TaggedValue *val) {
+
+          }
+
+          int main(void) {
+              TaggedValue v1 = { .type = TYPE_INT, .i = 42 };
+              TaggedValue v2 = { .type = TYPE_DOUBLE, .d = 3.14 };
+              TaggedValue v3 = { .type = TYPE_STRING };
+              strncpy(v3.s, "hello", sizeof(v3.s) - 1);
+              v3.s[sizeof(v3.s) - 1] = '\0';
+
+              print_value(&v1);
+              print_value(&v2);
+              print_value(&v3);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/unions_lab.c"
+
+    watch_files:
+      - "c_project/unions_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/unions_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <string.h>
+
+            typedef enum { TYPE_INT, TYPE_DOUBLE, TYPE_STRING } ValueType;
+
+            typedef struct {
+                ValueType type;
+                union {
+                    int    i;
+                    double d;
+                    char   s[32];
+                };
+            } TaggedValue;
+
+            void print_value(const TaggedValue *val) {
+                switch (val->type) {
+                    case TYPE_INT:
+                        printf("int: %d\n", val->i);
+                        break;
+                    case TYPE_DOUBLE:
+                        printf("double: %.2f\n", val->d);
+                        break;
+                    case TYPE_STRING:
+                        printf("string: %s\n", val->s);
+                        break;
+                }
+            }
+
+            int main(void) {
+                TaggedValue v1 = { .type = TYPE_INT, .i = 42 };
+                TaggedValue v2 = { .type = TYPE_DOUBLE, .d = 3.14 };
+                TaggedValue v3 = { .type = TYPE_STRING };
+                strncpy(v3.s, "hello", sizeof(v3.s) - 1);
+                v3.s[sizeof(v3.s) - 1] = '\0';
+
+                print_value(&v1);
+                print_value(&v2);
+                print_value(&v3);
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **Tagged union pattern:** The `type` field (tag) tells you which union member is valid. This is essential because the union itself doesn't track this — reading the wrong member is undefined behavior.
+        - **Anonymous union (C11):** The `union { ... };` inside the struct has no name, so you access members directly as `val->i` instead of `val->u.i`. This is a C11 feature.
+        - **Designated initializers:** `{ .type = TYPE_INT, .i = 42 }` initializes specific fields by name. This is standard C99/C11 syntax.
+        - **`switch` on enum:** The natural way to dispatch on the tag. If you compile with `-Wall`, gcc will warn you about unhandled enum values — a safety net.
+
+    tests:
+      - description: "Implemented print_value with a switch statement"
+        command: "cd /tutorial/c_project && grep -q 'switch' unions_lab.c"
+      - description: "Handles all three types (int, double, string)"
+        command: "cd /tutorial/c_project && grep -c 'case TYPE_' unions_lab.c | grep -qE '^[3-9]'"
+      - description: "Program compiles and produces correct output"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 unions_lab.c -o unions_lab && ./unions_lab | grep -q 'int: 42' && ./unions_lab | grep -q 'double: 3.14' && ./unions_lab | grep -q 'string: hello'"
+
+    quiz:
+      title: "Unions — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "A union with an `int` (4 bytes), `double` (8 bytes), and `char[4]` (4 bytes). What is `sizeof` this union?"
+          options:
+            - "4 bytes (smallest member)"
+            - "8 bytes (largest member)"
+            - "16 bytes (sum of all members)"
+            - "Depends on the compiler"
+          correct_index: 1
+          explanation: "A union's size equals its largest member. All members share the same starting address in memory, so the union must be large enough to hold any one of them. Here, `double` at 8 bytes is largest."
+
+        - question: "What happens if you write to `val.i` and then read `val.d` (without writing to `val.d` first)?"
+          options:
+            - "You get 0.0"
+            - "You get the integer value converted to double"
+            - "Undefined behavior — you're reading bytes that were written as a different type"
+            - "The compiler prevents this"
+          correct_index: 2
+          explanation: "Only the last-written member is valid. Reading a different member reinterprets the raw bytes as a different type — the result is unpredictable. This is why tagged unions use an explicit type tag."
+
+        - question: |
+            **Arrange** the lines to create a tagged union for a `Shape` that can be a circle (with radius) or rectangle (with width and height), and print the area.
+          type: parsons
+          lines:
+            - "typedef enum { CIRCLE, RECT } ShapeType;"
+            - "typedef struct {"
+            - "    ShapeType type;"
+            - "    union { double radius; struct { double w, h; }; };"
+            - "} Shape;"
+            - "if (s.type == CIRCLE) printf(\"%.2f\\n\", 3.14 * s.radius * s.radius);"
+            - "else printf(\"%.2f\\n\", s.w * s.h);"
+          distractors:
+            - "class Shape { virtual double area(); };"
+          explanation: "First define the enum for shape types, then the tagged struct with an anonymous union containing either a `radius` or a `{w, h}` sub-struct. The `if` dispatches on the tag. The distractor uses C++ classes/virtual functions, which don't exist in C."
+
+        - question: "**[Interleaved: Revisit Step 5]** In the `TaggedValue` struct, the string member is `char s[32]`. If you assign `strncpy(v.s, \"hello\", sizeof(v.s))`, is the string safely null-terminated?"
+          options:
+            - "Yes — strncpy always null-terminates"
+            - "Yes — because \"hello\" is shorter than 32 chars, strncpy will null-terminate in this case"
+            - "No — strncpy never null-terminates, regardless of input length"
+            - "It depends on the compiler"
+          correct_index: 1
+          explanation: "strncpy null-terminates ONLY if the source string is shorter than `n`. Since `\"hello\"` (5 chars) < 32, the remaining bytes are filled with `\\0`. But if the source were 32+ chars, no null terminator would be added. The safe habit is always `s[sizeof(s)-1] = '\\0'` after strncpy."
+
+  # --------------------------------------------------------------------------
+  # STEP 8: Function Pointers — Callbacks in C
+  # --------------------------------------------------------------------------
+  - title: "Function Pointers — Callbacks in C"
+    instructions: |
+      ### Functions as Values
+
+      In C, a function name (without parentheses) evaluates to the function's **memory address**. You can store this address in a **function pointer** and call the function through it.
+
+      ```c
+      int add(int a, int b) { return a + b; }
+      int sub(int a, int b) { return a - b; }
+
+      // Declare a function pointer
+      int (*operation)(int, int);
+
+      operation = add;          // point to 'add'
+      int result = operation(3, 4);  // calls add(3, 4) → 7
+
+      operation = sub;          // repoint to 'sub'
+      result = operation(3, 4);      // calls sub(3, 4) → -1
+      ```
+
+      ### Reading the Syntax (Pair Up!)
+
+      Function pointer syntax is notoriously confusing. If you're working alongside a classmate, this is an excellent moment for **pair programming** — a meta-analysis of 13 studies found that pair programming significantly improves code quality and student confidence, particularly on conceptually challenging tasks like this one (Umapathy & Ritzhaupt, 2017, ACM TOCE).
+
+      The syntax `int (*operation)(int, int)` reads as:
+      - `operation` is a **pointer** (the `*`)
+      - to a **function** (the parameter list `(int, int)`)
+      - that **returns `int`**
+
+      **Warning:** Without the inner parentheses, `int *operation(int, int)` means "a function returning `int*`" — completely different!
+
+      ### qsort: The Classic Callback Example
+
+      The C standard library's `qsort` sorts any array using a comparison function you provide:
+
+      ```c
+      void qsort(void *base, size_t nmemb, size_t size,
+                  int (*compar)(const void*, const void*));
+      ```
+
+      The comparison function receives `void*` pointers (generic pointers — C's limited version of templates). You must cast them to the correct type inside.
+
+      ### Worked Example: A Complete Comparator
+
+      Before you write your own, study this fully worked comparator for sorting doubles:
+
+      ```c
+      // Sub-goal: Cast void* to the actual type
+      int compare_doubles(const void *a, const void *b) {
+          double da = *(const double *)a;   // cast void* → double*, then dereference
+          double db = *(const double *)b;
+
+          // Sub-goal: Return comparison result
+          if (da < db) return -1;
+          if (da > db) return 1;
+          return 0;
+      }
+      ```
+
+      Notice the pattern: (1) cast `void*` to the real type, (2) dereference to get the value, (3) compare. Your task below follows the same pattern but for `int`.
+
+      ### Task: Sort an array with qsort
+
+      Complete `funcptr_lab.c`:
+
+      1. Implement `compare_ascending` for `qsort` (return negative if `*a < *b`, zero if equal, positive if `*a > *b`).
+      2. Implement `compare_descending` (reverse order).
+      3. Use `qsort` with each comparator.
+
+      ```bash
+      gcc -Wall -std=c11 funcptr_lab.c -o funcptr_lab
+      ./funcptr_lab
+      ```
+
+    files:
+      - path: "c_project/funcptr_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <stdlib.h>
+
+          void print_array(const int *arr, int n) {
+              for (int i = 0; i < n; i++) {
+                  printf("%d ", arr[i]);
+              }
+              printf("\n");
+          }
+
+          // TODO: Implement compare_ascending for qsort
+          // Parameters are const void* pointers — cast to const int*
+          // Return: negative if *a < *b, zero if equal, positive if *a > *b
+          int compare_ascending(const void *a, const void *b) {
+              return 0; // Replace this
+          }
+
+          // TODO: Implement compare_descending (reverse of ascending)
+          int compare_descending(const void *a, const void *b) {
+              return 0; // Replace this
+          }
+
+          int main(void) {
+              int data[] = {42, 17, 93, 8, 56, 31, 74};
+              int n = sizeof(data) / sizeof(data[0]);
+
+              printf("Original: ");
+              print_array(data, n);
+
+              qsort(data, n, sizeof(int), compare_ascending);
+              printf("Ascending: ");
+              print_array(data, n);
+
+              qsort(data, n, sizeof(int), compare_descending);
+              printf("Descending: ");
+              print_array(data, n);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/funcptr_lab.c"
+
+    watch_files:
+      - "c_project/funcptr_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/funcptr_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <stdlib.h>
+
+            void print_array(const int *arr, int n) {
+                for (int i = 0; i < n; i++) {
+                    printf("%d ", arr[i]);
+                }
+                printf("\n");
+            }
+
+            int compare_ascending(const void *a, const void *b) {
+                int ia = *(const int *)a;
+                int ib = *(const int *)b;
+                return ia - ib;
+            }
+
+            int compare_descending(const void *a, const void *b) {
+                int ia = *(const int *)a;
+                int ib = *(const int *)b;
+                return ib - ia;
+            }
+
+            int main(void) {
+                int data[] = {42, 17, 93, 8, 56, 31, 74};
+                int n = sizeof(data) / sizeof(data[0]);
+
+                printf("Original: ");
+                print_array(data, n);
+
+                qsort(data, n, sizeof(int), compare_ascending);
+                printf("Ascending: ");
+                print_array(data, n);
+
+                qsort(data, n, sizeof(int), compare_descending);
+                printf("Descending: ");
+                print_array(data, n);
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **`const void*` → `const int*`:** `qsort` uses `void*` for genericity. Inside the comparator, you cast to the actual type. `*(const int *)a` means: cast the `void*` to `int*`, then dereference to get the `int` value.
+        - **Return value convention:** Negative means "a goes before b", positive means "b goes before a", zero means "equal." The `ia - ib` trick works for ints but can overflow with extreme values — a production comparator should use explicit `<` / `>` checks.
+        - **`sizeof(data) / sizeof(data[0])`:** A C idiom to compute array length. `sizeof(data)` is the total byte size; dividing by one element's size gives the count.
+        - **Why `void*`?** C has no templates or generics. `void*` is the only way to write type-agnostic functions. You trade type safety for flexibility.
+
+    tests:
+      - description: "Implemented compare_ascending with void* casting"
+        command: "cd /tutorial/c_project && grep -q 'int \\*' funcptr_lab.c && ! grep -q 'return 0; // Replace' funcptr_lab.c"
+      - description: "Implemented compare_descending"
+        command: "cd /tutorial/c_project && grep -A3 'compare_descending' funcptr_lab.c | grep -v 'return 0; // Replace' | grep -q 'return'"
+      - description: "Program sorts correctly in both directions"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 funcptr_lab.c -o funcptr_lab && ./funcptr_lab | grep -q 'Ascending: 8 17 31 42 56 74 93' && ./funcptr_lab | grep -q 'Descending: 93 74 56 42 31 17 8'"
+
+    quiz:
+      title: "Function Pointers — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does the declaration `int (*fp)(double, double);` mean?"
+          options:
+            - "A function named fp that takes two doubles and returns an int pointer"
+            - "A pointer to a function that takes two doubles and returns an int"
+            - "A double pointer to a function"
+            - "A function that returns a pointer to an int"
+          correct_index: 1
+          explanation: "The parentheses in `(*fp)` are critical. They make `fp` a pointer to a function. Without them, `int *fp(double, double)` would declare a function returning `int*` — very different!"
+
+        - question: "Why does `qsort` use `void*` parameters in its comparison function?"
+          options:
+            - "void* is faster than typed pointers"
+            - "C has no templates/generics, so void* is the only way to make qsort work with any data type"
+            - "void* automatically detects the element type"
+            - "void* prevents buffer overflows"
+          correct_index: 1
+          explanation: "C lacks C++ templates. `void*` is C's mechanism for generic programming — it's a pointer to 'any type.' The downside: you must manually cast to the correct type inside the callback, with no compiler safety net."
+
+        - question: |
+            **Arrange** the lines to define a comparison function for sorting strings with `qsort`, then call `qsort` on a string array.
+          type: parsons
+          lines:
+            - "int cmp_str(const void *a, const void *b) {"
+            - "    return strcmp(*(const char **)a, *(const char **)b);"
+            - "}"
+            - "char *words[] = {\"banana\", \"apple\", \"cherry\"};"
+            - "qsort(words, 3, sizeof(char *), cmp_str);"
+          distractors:
+            - "    return *(char *)a - *(char *)b;"
+            - "std::sort(words, words + 3);"
+          explanation: "For an array of `char*` strings, `qsort` passes pointers to array elements — i.e., `char**` cast as `void*`. We cast back to `const char**` and dereference to get the `char*`, then compare with `strcmp`. The distractor `*(char*)a - *(char*)b` compares single characters, not full strings. `std::sort` is C++ only."
+
+        - question: "**[Interleaved: Revisit Step 6]** How do function pointers relate to structs in C?"
+          options:
+            - "Structs automatically generate function pointers for each field"
+            - "You can store function pointers as struct members, simulating methods from C++"
+            - "Function pointers can only be used in global scope, not in structs"
+            - "Structs and function pointers are completely unrelated features"
+          correct_index: 1
+          explanation: "By putting function pointers inside structs, C programmers can simulate object-oriented patterns — the struct holds data + function pointers, like a C++ vtable. This is how early 'C with Classes' (the precursor to C++) worked."
+
+  # --------------------------------------------------------------------------
+  # STEP 9: Arrays, Pointers, and the "Decay" Trap
+  # --------------------------------------------------------------------------
+  - title: "Arrays, Pointers, and the Decay Trap"
+    instructions: |
+      ### The Most Confusing "False Friend" in C
+
+      In C++, arrays and pointers are related but distinct. In C, they are so intertwined that students routinely confuse them — research on language transfer calls this a "false friend" that causes negative transfer (Du et al., 2025, CSEE&T).
+
+      **The Decay Rule:** When you pass an array to a function, it silently **decays** into a pointer to its first element. The function receives *just* a pointer — all size information is lost.
+
+      ```c
+      void print_size(int arr[]) {
+          // SURPRISE: sizeof(arr) is 8 (pointer size), NOT the array size!
+          printf("sizeof = %zu\n", sizeof(arr));  // prints 8
+      }
+
+      int main(void) {
+          int data[100];
+          printf("sizeof = %zu\n", sizeof(data));  // prints 400
+          print_size(data);                         // prints 8!
+      }
+      ```
+
+      **This is the #1 source of bugs in C array code.** The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
+
+      ### C Is Strictly Pass-by-Value
+
+      C++ has references (`int &x`). C does not. **Everything in C is passed by value** — including pointers. When you pass a pointer, the function gets a *copy* of the pointer (the address), not a reference to the original pointer variable.
+
+      This means:
+      - Modifying `*ptr` inside a function changes the pointed-to data (the copy points to the same address)
+      - Modifying `ptr` itself (e.g., `ptr = malloc(...)`) does NOT affect the caller's pointer
+
+      To modify a pointer from inside a function, you need a **pointer to a pointer** (`int **pp`).
+
+      ### Task: Find and fix the array/pointer bugs
+
+      The file `arrays_lab.c` has three bugs, ordered by difficulty:
+
+      - **Bug 1 (easy):** `array_length` uses `sizeof` on a decayed array — fix: pass length as parameter.
+      - **Bug 2 (easy):** `zero_fill` has the same sizeof bug.
+      - **Bug 3 (hard):** `allocate` modifies a local copy of the pointer. Fix: change the parameter to `int **ptr` and use `*ptr = malloc(...)`. Also update the caller to pass `&heap_data`.
+
+      Start with Bugs 1-2. Once those compile and run, tackle Bug 3 — it's conceptually different (pass-by-value for pointers).
+
+      ```bash
+      gcc -Wall -std=c11 arrays_lab.c -o arrays_lab
+      ./arrays_lab
+      ```
+
+    files:
+      - path: "c_project/arrays_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <stdlib.h>
+
+          // Bug 1: This function tries to compute array length
+          // but sizeof(arr) gives POINTER size, not array size!
+          int array_length(int arr[]) {
+              return sizeof(arr) / sizeof(arr[0]);
+          }
+
+          // Bug 2: This function tries to zero-fill an array
+          // but uses the wrong size
+          void zero_fill(int arr[]) {
+              int len = sizeof(arr) / sizeof(arr[0]);  // BUG: decay!
+              for (int i = 0; i < len; i++) {
+                  arr[i] = 0;
+              }
+          }
+
+          // Bug 3: This function tries to allocate memory for the caller
+          // but the caller's pointer never changes (pass-by-value!)
+          void allocate(int *ptr, int n) {
+              ptr = malloc(n * sizeof(int));  // BUG: modifies local copy only
+              if (ptr != NULL) {
+                  for (int i = 0; i < n; i++) {
+                      ptr[i] = i * 10;
+                  }
+              }
+          }
+
+          int main(void) {
+              // Test Bug 1 & 2
+              int data[5] = {1, 2, 3, 4, 5};
+              printf("Array length: %d (expected 5)\n", array_length(data));
+
+              zero_fill(data);
+              printf("After zero_fill: %d %d %d %d %d (expected all 0s)\n",
+                     data[0], data[1], data[2], data[3], data[4]);
+
+              // Test Bug 3
+              int *heap_data = NULL;
+              allocate(heap_data, 5);
+              if (heap_data == NULL) {
+                  printf("heap_data is still NULL! allocate() didn't work.\n");
+              }
+
+              // After fixing: uncomment these lines
+              // printf("heap_data[0] = %d (expected 0)\n", heap_data[0]);
+              // free(heap_data);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/arrays_lab.c"
+
+    watch_files:
+      - "c_project/arrays_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/arrays_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <stdlib.h>
+
+            // Fixed Bug 1: Pass the length explicitly — sizeof doesn't work on decayed arrays
+            int array_length(int arr[], int n) {
+                return n;  // Must be passed from the caller, who knows the real size
+            }
+
+            // Fixed Bug 2: Accept length as a parameter
+            void zero_fill(int arr[], int len) {
+                for (int i = 0; i < len; i++) {
+                    arr[i] = 0;
+                }
+            }
+
+            // Fixed Bug 3: Use pointer-to-pointer so we can modify the caller's pointer
+            void allocate(int **ptr, int n) {
+                *ptr = malloc(n * sizeof(int));
+                if (*ptr != NULL) {
+                    for (int i = 0; i < n; i++) {
+                        (*ptr)[i] = i * 10;
+                    }
+                }
+            }
+
+            int main(void) {
+                // Test Bug 1 & 2
+                int data[5] = {1, 2, 3, 4, 5};
+                printf("Array length: %d (expected 5)\n", array_length(data, 5));
+
+                zero_fill(data, 5);
+                printf("After zero_fill: %d %d %d %d %d (expected all 0s)\n",
+                       data[0], data[1], data[2], data[3], data[4]);
+
+                // Test Bug 3
+                int *heap_data = NULL;
+                allocate(&heap_data, 5);
+                if (heap_data == NULL) {
+                    printf("heap_data is still NULL! allocate() didn't work.\n");
+                } else {
+                    printf("heap_data[0] = %d (expected 0)\n", heap_data[0]);
+                    free(heap_data);
+                }
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **Bug 1 & 2 — Array Decay:** When an array is passed to a function, it decays to a pointer. `sizeof(arr)` returns the pointer size (8 bytes), not the array size. The fix: always pass the array length as a separate parameter. This is a universal C idiom — virtually every C function that takes an array also takes its length.
+        - **Bug 3 — Pass-by-Value:** `allocate(int *ptr, ...)` receives a *copy* of the pointer. Assigning `ptr = malloc(...)` only modifies the local copy — the caller's `heap_data` stays NULL. The fix: pass a pointer-to-pointer (`int **ptr`) and dereference with `*ptr = malloc(...)`. This is how C simulates "output parameters."
+        - **`(*ptr)[i]`:** Parentheses are needed because `[]` binds tighter than `*`. Without them, `*ptr[i]` would mean "dereference the pointer at index i" — a different operation.
+
+    tests:
+      - description: "Fixed array_length to accept a length parameter"
+        command: "cd /tutorial/c_project && grep -q 'array_length.*int.*n\\|array_length.*int.*len\\|array_length.*int.*size' arrays_lab.c"
+      - description: "Fixed zero_fill to accept a length parameter"
+        command: "cd /tutorial/c_project && grep -q 'zero_fill.*int.*len\\|zero_fill.*int.*n\\|zero_fill.*int.*size' arrays_lab.c"
+      - description: "Fixed allocate to use pointer-to-pointer (int **)"
+        command: "cd /tutorial/c_project && grep -q 'int \\*\\*' arrays_lab.c"
+      - description: "Program compiles and runs correctly"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 arrays_lab.c -o arrays_lab && ./arrays_lab | grep -q 'expected 5' && ./arrays_lab | grep -q 'expected all 0s'"
+
+    quiz:
+      title: "Arrays, Pointers, and Pass-by-Value — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What happens to an array when you pass it to a function in C?"
+          options:
+            - "The entire array is copied onto the stack (pass-by-value)"
+            - "The array decays into a pointer to its first element — size information is lost"
+            - "The function receives a reference to the array (like C++)"
+            - "The compiler inlines the array into the function"
+          correct_index: 1
+          explanation: "Array decay is one of C's most important rules. `void f(int arr[])` is identical to `void f(int *arr)` — both receive a pointer. `sizeof(arr)` inside the function returns the pointer size (8 bytes), not the array size. You must pass the length separately."
+
+        - question: "A function `void resize(int *p, int new_size)` calls `p = realloc(p, new_size * sizeof(int))` inside. After `resize(data, 100)` returns, what is `data` in the caller?"
+          options:
+            - "Points to the resized memory"
+            - "Unchanged — still points to the original (possibly freed!) memory"
+            - "NULL"
+            - "Compiler error — can't reassign a parameter"
+          correct_index: 1
+          explanation: "C is strictly pass-by-value. The function modifies its local copy of `p`, not the caller's `data`. After `realloc`, the original memory may have been freed and moved, so `data` now points to freed memory — a use-after-free bug. Fix: use `int **p` or return the new pointer."
+
+        - question: |
+            **Arrange** the lines to write a function that doubles every element in an array, accepting the length as a parameter (since sizeof won't work on a decayed array).
+          type: parsons
+          lines:
+            - "void double_array(int *arr, int len) {"
+            - "    for (int i = 0; i < len; i++) {"
+            - "        arr[i] *= 2;"
+            - "    }"
+            - "}"
+          distractors:
+            - "    int len = sizeof(arr) / sizeof(arr[0]);"
+            - "void double_array(int arr[100]) {"
+          explanation: "The function must accept `len` as a parameter because `sizeof(arr)` would return 8 (pointer size) due to array decay. The distractor `sizeof(arr) / sizeof(arr[0])` is the classic bug this step teaches. `int arr[100]` in a parameter is misleading — it's still just a pointer."
+
+        - question: "**[Interleaved: Revisit Step 4]** After `free(p)`, what state is the pointer `p` in (using Adcock et al.'s model)?"
+          options:
+            - "Null — free automatically sets pointers to NULL"
+            - "Dead — the pointer still holds the old address, but the memory is no longer valid"
+            - "Alive — free just marks the memory as available but the pointer is still usable"
+            - "Uninitialized — free resets the pointer to its original state"
+          correct_index: 1
+          explanation: "After `free(p)`, the pointer is in the Dead state. It still holds the old memory address — `free` does NOT set it to NULL automatically. Any dereference of a dead pointer is undefined behavior (use-after-free). Best practice: immediately write `p = NULL;` after `free(p);`."
+
+  # --------------------------------------------------------------------------
+  # STEP 10: File I/O — Reading and Writing Files
+  # --------------------------------------------------------------------------
+  - title: "File I/O — Reading and Writing Files"
+    instructions: |
+      ### Files in C: Open, Use, Close
+
+      File I/O in C follows a simple pattern that mirrors how you use files in real life:
+
+      1. **Open** the file with `fopen()` → get a `FILE*` handle
+      2. **Read or write** using the handle
+      3. **Close** the file with `fclose()`
+
+      ```c
+      FILE *fp = fopen("data.txt", "r");  // "r" = read mode
+      if (fp == NULL) {
+          perror("fopen failed");          // prints reason (e.g., file not found)
+          return 1;
+      }
+      // ... use fp ...
+      fclose(fp);
+      ```
+
+      ### File Modes
+
+      | Mode | Meaning | If file doesn't exist |
+      |------|---------|----------------------|
+      | `"r"` | Read only | Returns NULL (error) |
+      | `"w"` | Write (truncates existing content!) | Creates new file |
+      | `"a"` | Append (adds to end) | Creates new file |
+      | `"r+"` | Read and write | Returns NULL (error) |
+
+      **Warning:** `"w"` **destroys** existing file contents. Use `"a"` to append.
+
+      ### Predict: What happens here?
+
+      Before reading further, predict what this code does:
+      ```c
+      FILE *fp = fopen("important_data.txt", "w");
+      fclose(fp);
+      ```
+      Does `important_data.txt` still have its original contents? (Answer: No — `"w"` truncated it to zero bytes. This two-line program just erased the file's contents.)
+
+      ### Reading and Writing Functions
+
+      | Function | Purpose | Like printf/scanf but to files |
+      |----------|---------|-------------------------------|
+      | `fprintf(fp, fmt, ...)` | Write formatted text to file | `printf` → stdout; `fprintf` → file |
+      | `fscanf(fp, fmt, ...)` | Read formatted input from file | `scanf` → stdin; `fscanf` → file |
+      | `fgets(buf, n, fp)` | Read a line (safe, with limit) | Same as stdin version, but from file |
+      | `feof(fp)` | Check if end-of-file reached | Returns non-zero at EOF |
+
+      Notice the pattern: `printf`, `scanf`, and `fgets` all have file-based counterparts — just add `f` and pass the `FILE*` as the first (or last) argument.
+
+      ### The Resource Management Pattern
+
+      C has no RAII (like C++ destructors) and no `with` statement (like Python). You must **manually close every file you open**. Forgetting `fclose()` can cause:
+      - Data loss (buffered writes not flushed to disk)
+      - File descriptor leaks (the OS limits how many files a process can have open)
+
+      ### Task: Build a word frequency counter
+
+      Complete `fileio_lab.c` to:
+
+      1. Write a list of words to a file using `fprintf`.
+      2. Read the file back line by line using `fgets`.
+      3. Count the total number of lines and print the result.
+      4. Properly close all files.
+
+      ```bash
+      gcc -Wall -std=c11 fileio_lab.c -o fileio_lab
+      ./fileio_lab
+      ```
+
+    files:
+      - path: "c_project/fileio_lab.c"
+        content: |
+          #include <stdio.h>
+          #include <string.h>
+
+          int main(void) {
+              // === PART 1: Write words to a file ===
+              // TODO: Open "words.txt" for writing ("w" mode)
+              // TODO: Check if fopen returned NULL (use perror for error message)
+
+              const char *words[] = {"hello", "world", "from", "C", "file", "I/O"};
+              int num_words = sizeof(words) / sizeof(words[0]);
+
+              // TODO: Write each word on its own line using fprintf
+
+              // TODO: Close the file
+              printf("Wrote %d words to words.txt\n", num_words);
+
+              // === PART 2: Read the file back and count lines ===
+              // TODO: Open "words.txt" for reading ("r" mode)
+              // TODO: Check if fopen returned NULL
+
+              char line[100];
+              int line_count = 0;
+
+              // TODO: Read lines with fgets until it returns NULL (EOF)
+              // TODO: Increment line_count for each line
+
+              // TODO: Close the file
+
+              printf("Read back %d lines from words.txt\n", line_count);
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/fileio_lab.c"
+
+    watch_files:
+      - "c_project/fileio_lab.c"
+
+    solution:
+      files:
+        - path: "c_project/fileio_lab.c"
+          content: |
+            #include <stdio.h>
+            #include <string.h>
+
+            int main(void) {
+                // === PART 1: Write words to a file ===
+                FILE *fp = fopen("words.txt", "w");
+                if (fp == NULL) {
+                    perror("fopen failed");
+                    return 1;
+                }
+
+                const char *words[] = {"hello", "world", "from", "C", "file", "I/O"};
+                int num_words = sizeof(words) / sizeof(words[0]);
+
+                for (int i = 0; i < num_words; i++) {
+                    fprintf(fp, "%s\n", words[i]);
+                }
+
+                fclose(fp);
+                printf("Wrote %d words to words.txt\n", num_words);
+
+                // === PART 2: Read the file back and count lines ===
+                fp = fopen("words.txt", "r");
+                if (fp == NULL) {
+                    perror("fopen failed");
+                    return 1;
+                }
+
+                char line[100];
+                int line_count = 0;
+
+                while (fgets(line, sizeof(line), fp) != NULL) {
+                    line_count++;
+                }
+
+                fclose(fp);
+
+                printf("Read back %d lines from words.txt\n", line_count);
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **`fopen("words.txt", "w")`:** Opens the file for writing. `"w"` creates the file if it doesn't exist, or truncates it if it does. Always check the return value — it's NULL on failure.
+        - **`perror("fopen failed")`:** Prints your message plus the system error (e.g., "fopen failed: No such file or directory"). Much more informative than a generic error.
+        - **`fprintf(fp, "%s\n", words[i])`:** Exactly like `printf`, but writes to the file instead of stdout. The `FILE*` is the first argument.
+        - **`fgets(line, sizeof(line), fp)`:** Reads one line (up to 99 chars + null terminator). Returns `NULL` at end-of-file — this is the loop termination condition.
+        - **`fclose(fp)`:** Flushes any buffered writes and releases the file descriptor. Always close files when done. In C, there is no automatic cleanup — forgetting `fclose` can cause data loss.
+        - **Reusing `fp`:** We reuse the same `FILE*` variable for both open calls. After `fclose(fp)`, the old handle is invalid, so reassigning `fp` is safe and clean.
+
+    tests:
+      - description: "Uses fopen to open files"
+        command: "cd /tutorial/c_project && grep -c 'fopen' fileio_lab.c | grep -qE '^[2-9]'"
+      - description: "Checks for NULL after fopen"
+        command: "cd /tutorial/c_project && grep -q 'NULL' fileio_lab.c"
+      - description: "Uses fprintf to write to the file"
+        command: "cd /tutorial/c_project && grep -q 'fprintf' fileio_lab.c"
+      - description: "Uses fgets to read from the file"
+        command: "cd /tutorial/c_project && grep -q 'fgets' fileio_lab.c"
+      - description: "Closes files with fclose"
+        command: "cd /tutorial/c_project && grep -c 'fclose' fileio_lab.c | grep -qE '^[2-9]'"
+      - description: "Program compiles and produces correct output"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 fileio_lab.c -o fileio_lab && ./fileio_lab | grep -q 'Wrote 6 words' && ./fileio_lab | grep -q 'Read back 6 lines'"
+
+    quiz:
+      title: "File I/O — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What happens if you open an existing file with `fopen(\"data.txt\", \"w\")`?"
+          options:
+            - "The file is opened for reading"
+            - "The existing contents are preserved, and new writes are appended"
+            - "The existing contents are DESTROYED — the file is truncated to zero length"
+            - "fopen returns NULL because the file already exists"
+          correct_index: 2
+          explanation: "The `\"w\"` mode truncates the file to zero length before writing. This is a common source of data loss. If you want to add to an existing file, use `\"a\"` (append mode) instead."
+
+        - question: "What does `fgets(buf, 100, fp)` return when it reaches the end of the file?"
+          options:
+            - "An empty string"
+            - "The number of bytes read"
+            - "NULL"
+            - "EOF (a special integer constant)"
+          correct_index: 2
+          explanation: "`fgets` returns `NULL` when there is nothing more to read (end-of-file or error). This is why the standard reading loop is `while (fgets(buf, size, fp) != NULL)`. Note: `EOF` is used with character-level functions like `fgetc`, not with `fgets`."
+
+        - question: "Why is it important to call `fclose()` on every file you open?"
+          options:
+            - "It's just good style — the OS closes files automatically when the program exits"
+            - "Buffered writes may not be flushed to disk without fclose, causing data loss; also prevents file descriptor leaks"
+            - "fclose frees the memory used by the file contents"
+            - "fclose is only needed for files opened in write mode"
+          correct_index: 1
+          explanation: "C I/O is buffered — `fprintf` writes to an in-memory buffer, not directly to disk. `fclose` flushes this buffer. Without it, the last writes may never reach the file. Additionally, each open file uses a file descriptor, and the OS limits how many a process can hold."
+
+        - question: |
+            **Arrange** the lines to safely read all lines from a file and print them with line numbers.
+          type: parsons
+          lines:
+            - "FILE *fp = fopen(\"input.txt\", \"r\");"
+            - "if (fp == NULL) { perror(\"open\"); return 1; }"
+            - "char buf[256];"
+            - "int n = 1;"
+            - "while (fgets(buf, sizeof(buf), fp) != NULL) {"
+            - "    printf(\"%d: %s\", n++, buf);"
+            - "}"
+            - "fclose(fp);"
+          distractors:
+            - "while (!feof(fp)) {"
+            - "fp.close();"
+          explanation: "Open the file, check for NULL, declare buffer and counter, loop with `fgets` (which returns NULL at EOF), print each line with its number, then close. The distractor `while (!feof(fp))` is a classic C bug — `feof` only returns true *after* a read fails, causing the last line to be processed twice. `fp.close()` is C++/Java syntax — C uses `fclose(fp)`."
+
+        - question: "**[Interleaved: Revisit Step 3]** How is `fprintf(fp, \"%s\\n\", word)` related to `printf(\"%s\\n\", word)`?"
+          options:
+            - "They are completely different functions with different syntax"
+            - "fprintf writes to a file (FILE*); printf writes to stdout. Otherwise identical format strings."
+            - "fprintf is safer because it does bounds checking"
+            - "printf is a macro that calls fprintf(stdout, ...) internally"
+          correct_index: 1
+          explanation: "In fact, `printf(...)` is essentially `fprintf(stdout, ...)`. The C standard I/O library uses the same formatting engine for both. `stdout`, `stdin`, and `stderr` are all `FILE*` pointers — they're just pre-opened for you."
+
+  # --------------------------------------------------------------------------
+  # STEP 11: Putting It All Together — A Linked List in C (Capstone)
+  # --------------------------------------------------------------------------
+  - title: "Putting It All Together — A Linked List in C"
+    instructions: |
+      ### The Final Challenge: Build a Linked List
+
+      Now you'll combine everything you've learned — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch.
+
+      This exercise deliberately removes all scaffolding. You've practiced each component skill individually; now you must integrate them.
+
+      **This step is hard — and that's the point.** If you get stuck, that doesn't mean you're bad at C. It means you're doing real systems programming. Professional C developers debug linked list code regularly. When you're stuck, go back and re-read the specific step that covers the concept you're struggling with. The component skills you've built are all here — the challenge is combining them.
+
+      **Why linked lists are the ultimate pointer test:** Research tracking real student code found three categories of pointer errors that account for nearly all bugs (Adcock et al., 2007):
+
+      | Error Category | % of Students Who Make It |
+      |----------------|--------------------------|
+      | Memory leak (pointer leaves scope without free) | 74% |
+      | Dereferencing a dead pointer (use-after-free) | 70% |
+      | Dereferencing a null pointer | 57% |
+
+      Building a linked list exercises all three. Pay special attention to freeing nodes and checking for NULL.
+
+      ### Requirements
+
+      Your program should:
+
+      1. **Read an integer `n`** from stdin (how many values to insert).
+      2. **Read `n` integers** and insert each into a linked list.
+      3. **Print the list** (space-separated values, then a newline).
+      4. **Free all memory** — every node must be deallocated.
+
+      ### The Node Struct
+
+      ```c
+      typedef struct Node {
+          int value;
+          struct Node *next;
+      } Node;
+      ```
+
+      Note: For recursive (self-referencing) structs, you **must** name the struct (`struct Node`) and use `struct Node *next` inside — because `Node` (the typedef) isn't defined yet at that point.
+
+      ### Example Run
+
+      ```
+      Enter count: 4
+      Enter value: 10
+      Enter value: 20
+      Enter value: 30
+      Enter value: 40
+      List: 10 20 30 40
+      ```
+
+      ### Hints
+
+      - To **insert at the tail**, track a `tail` pointer.
+      - `malloc(sizeof(Node))` allocates one node.
+      - Set `new_node->next = NULL` for the last node.
+      - To **free the list**, walk through and free each node — but save `next` *before* calling `free`!
+
+      ```bash
+      gcc -Wall -std=c11 linked_list.c -o linked_list
+      echo "4 10 20 30 40" | ./linked_list
+      ```
+
+    files:
+      - path: "c_project/linked_list.c"
+        content: |
+          #include <stdio.h>
+          #include <stdlib.h>
+
+          typedef struct Node {
+              int value;
+              struct Node *next;
+          } Node;
+
+          // Create a new node with the given value
+          Node *node_create(int value) {
+              // TODO: malloc a Node, set its fields, return it
+              return NULL;
+          }
+
+          // Print all values in the list, space-separated, followed by newline
+          void list_print(const Node *head) {
+              // TODO: walk the list and print each value
+          }
+
+          // Free all nodes in the list
+          void list_free(Node *head) {
+              // TODO: free each node (save 'next' before freeing!)
+          }
+
+          int main(void) {
+              int n;
+              printf("Enter count: ");
+              scanf("%d", &n);
+
+              Node *head = NULL;
+              Node *tail = NULL;
+
+              for (int i = 0; i < n; i++) {
+                  int val;
+                  printf("Enter value: ");
+                  scanf("%d", &val);
+
+                  Node *new_node = node_create(val);
+                  if (new_node == NULL) {
+                      fprintf(stderr, "malloc failed\n");
+                      list_free(head);
+                      return 1;
+                  }
+
+                  if (head == NULL) {
+                      head = new_node;
+                      tail = new_node;
+                  } else {
+                      tail->next = new_node;
+                      tail = new_node;
+                  }
+              }
+
+              printf("List: ");
+              list_print(head);
+              list_free(head);
+
+              return 0;
+          }
+        language: "c"
+
+    open_file: "c_project/linked_list.c"
+
+    watch_files:
+      - "c_project/linked_list.c"
+
+    solution:
+      files:
+        - path: "c_project/linked_list.c"
+          content: |
+            #include <stdio.h>
+            #include <stdlib.h>
+
+            typedef struct Node {
+                int value;
+                struct Node *next;
+            } Node;
+
+            Node *node_create(int value) {
+                Node *n = malloc(sizeof(Node));
+                if (n == NULL) return NULL;
+                n->value = value;
+                n->next = NULL;
+                return n;
+            }
+
+            void list_print(const Node *head) {
+                const Node *curr = head;
+                while (curr != NULL) {
+                    printf("%d", curr->value);
+                    if (curr->next != NULL) printf(" ");
+                    curr = curr->next;
+                }
+                printf("\n");
+            }
+
+            void list_free(Node *head) {
+                Node *curr = head;
+                while (curr != NULL) {
+                    Node *next = curr->next;
+                    free(curr);
+                    curr = next;
+                }
+            }
+
+            int main(void) {
+                int n;
+                printf("Enter count: ");
+                scanf("%d", &n);
+
+                Node *head = NULL;
+                Node *tail = NULL;
+
+                for (int i = 0; i < n; i++) {
+                    int val;
+                    printf("Enter value: ");
+                    scanf("%d", &val);
+
+                    Node *new_node = node_create(val);
+                    if (new_node == NULL) {
+                        fprintf(stderr, "malloc failed\n");
+                        list_free(head);
+                        return 1;
+                    }
+
+                    if (head == NULL) {
+                        head = new_node;
+                        tail = new_node;
+                    } else {
+                        tail->next = new_node;
+                        tail = new_node;
+                    }
+                }
+
+                printf("List: ");
+                list_print(head);
+                list_free(head);
+
+                return 0;
+            }
+          language: "c"
+      explanation: |
+        - **`node_create`:** Allocates a `Node`, checks for `NULL`, initializes fields, returns it. This is C's equivalent of a constructor.
+        - **`list_print`:** Walks the list using `curr = curr->next` until `curr` is `NULL`. This is the fundamental linked list traversal pattern.
+        - **`list_free`:** The trickiest part — you must save `curr->next` *before* calling `free(curr)`, because after `free`, the memory at `curr` is invalid. Accessing `curr->next` after `free(curr)` is a **use-after-free** bug.
+        - **Tail insertion:** We track both `head` and `tail` pointers. New nodes go at the tail, preserving insertion order. Without a `tail` pointer, each insertion would require walking the entire list — O(n) per insert.
+        - **Error handling:** If `malloc` fails mid-list, we free all previously allocated nodes before exiting. This prevents memory leaks even on failure paths.
+
+    tests:
+      - description: "Implemented node_create with malloc"
+        command: "cd /tutorial/c_project && grep -A5 'node_create' linked_list.c | grep -q 'malloc'"
+      - description: "Implemented list_print that traverses the list"
+        command: "cd /tutorial/c_project && grep -A8 'list_print' linked_list.c | grep -q 'curr.*next\\|->next'"
+      - description: "Implemented list_free that saves next before freeing"
+        command: "cd /tutorial/c_project && grep -A8 'list_free' linked_list.c | grep -q 'free'"
+      - description: "Program compiles and produces correct output"
+        command: "cd /tutorial/c_project && gcc -Wall -std=c11 linked_list.c -o linked_list && echo '4 10 20 30 40' | ./linked_list | grep -q 'List: 10 20 30 40'"
+
+    quiz:
+      title: "Linked List & Integration — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "Why must you save `curr->next` BEFORE calling `free(curr)` in `list_free`?"
+          options:
+            - "free() modifies the next pointer to NULL"
+            - "After free(curr), the memory at curr is released — accessing curr->next is a use-after-free bug (undefined behavior)"
+            - "free() returns the next pointer automatically"
+            - "It's a style convention — either order works"
+          correct_index: 1
+          explanation: "After `free(curr)`, the memory is returned to the allocator. Any access to `curr->next` is undefined behavior — the allocator may have already overwritten that memory, or the page may be unmapped. Always save what you need before freeing."
+
+        - question: "In `typedef struct Node { ... struct Node *next; } Node;`, why do we need both the struct tag `Node` and the typedef name `Node`?"
+          options:
+            - "They serve the same purpose — either one would work"
+            - "The struct must reference itself using the struct tag (`struct Node *next`) because the typedef isn't complete until the closing `}`"
+            - "The typedef must match the struct tag name"
+            - "The struct tag is for the compiler, the typedef is for the linker"
+          correct_index: 1
+          explanation: "Inside the struct definition, the typedef `Node` doesn't exist yet — it's defined at the closing brace. So self-referential structs must use the tag name `struct Node`. The typedef `Node` only becomes available after the full definition is complete."
+
+        - question: |
+            **Arrange** the lines to free a linked list without leaking memory or causing use-after-free.
+          type: parsons
+          lines:
+            - "Node *curr = head;"
+            - "while (curr != NULL) {"
+            - "    Node *next = curr->next;"
+            - "    free(curr);"
+            - "    curr = next;"
+            - "}"
+          distractors:
+            - "    curr = curr->next;"
+            - "    free(next);"
+          explanation: "Save `curr->next` into a temp variable BEFORE freeing `curr`. Then advance to the saved `next`. The distractor `curr = curr->next` after `free(curr)` is a use-after-free bug — the most common mistake. `free(next)` would free the wrong node."
+
+        - question: |
+            **Arrange** the lines to create a node, insert it at the tail of a linked list, and update the tail pointer.
+          type: parsons
+          lines:
+            - "Node *new_node = malloc(sizeof(Node));"
+            - "new_node->value = val;"
+            - "new_node->next = NULL;"
+            - "tail->next = new_node;"
+            - "tail = new_node;"
+          distractors:
+            - "new_node->next = tail;"
+            - "head = new_node;"
+          explanation: "Allocate a new node, set its value, set its next to NULL (it's the new tail). Link it to the current tail with `tail->next = new_node`, then update the tail pointer. `new_node->next = tail` would create a circular reference (wrong direction). `head = new_node` would lose the rest of the list."
+
+        - question: "**[Final Integration]** Which of the following C features have you used in the linked list program? (Select all that apply)"
+          type: multiple
+          options:
+            - "Structs with typedef for the Node type"
+            - "malloc/free for dynamic memory management"
+            - "Pointers for linked list traversal and modification"
+            - "printf/scanf for I/O"
+          correct_indices:
+            - 0
+            - 1
+            - 2
+            - 3
+          explanation: "The linked list integrates everything: structs (Node), malloc/free (allocation/cleanup), pointers (traversal, next-links, pass-by-reference), and printf/scanf (I/O). This is why it's the capstone — it requires fluency in all the component skills."
