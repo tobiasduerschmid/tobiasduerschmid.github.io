@@ -102,14 +102,14 @@ steps:
       The preview rebuilds automatically when you save (Ctrl+S). Use **↻ Refresh** if needed.
 
     files:
-      - path: "styles.css"
+      - path: "step1/styles.css"
         content: |
           .greeting {
             color: tomato;        /* Task 2: Change this color */
           }
         language: "css"
 
-      - path: "App.jsx"
+      - path: "step1/App.jsx"
         content: |
           function App() {
             const name = "World";       // Task 1: Change this to your name
@@ -130,20 +130,20 @@ steps:
         language: "javascript"
 
     react_files:
-      - "styles.css"
-      - "App.jsx"
+      - "step1/styles.css"
+      - "step1/App.jsx"
 
-    open_file: "App.jsx"
+    open_file: "step1/App.jsx"
 
     solution:
       files:
-        - path: "styles.css"
+        - path: "step1/styles.css"
           content: |
             .greeting {
               color: #2774AE; /* Changed from tomato */
             }
           language: "css"
-        - path: "App.jsx"
+        - path: "step1/App.jsx"
           content: |
             function App() {
               const name = "CS35L"; // Changed from "World" to any non-"World" name
@@ -282,7 +282,7 @@ steps:
       The `Badge` component is already defined — you just need to use it.
 
     files:
-      - path: "App.jsx"
+      - path: "step2/App.jsx"
         content: |
           // A reusable Badge component
           // Props: label (string), color (string — any CSS color)
@@ -314,11 +314,11 @@ steps:
       body { padding: 24px; }
       .badge { color: #222 !important; font-size: 0.95rem; }
 
-    open_file: "App.jsx"
+    open_file: "step2/App.jsx"
 
     solution:
       files:
-        - path: "App.jsx"
+        - path: "step2/App.jsx"
           content: |
             // A reusable Badge component — all three JSX bugs fixed
             function Badge({ label, color }) {
@@ -536,7 +536,7 @@ steps:
       **Challenge (optional):** After passing the tests, add a third `ProductCard` in `App` with your own product data and `onSale` value. Notice how the same component renders differently based on the data you pass — that is the power of props.
 
     files:
-      - path: "App.jsx"
+      - path: "step3/App.jsx"
         content: |
           const { Card, Badge } = ReactBootstrap;
 
@@ -584,11 +584,11 @@ steps:
     preview_styles: |
       .product-card { max-width: 280px; }
 
-    open_file: "App.jsx"
+    open_file: "step3/App.jsx"
 
     solution:
       files:
-        - path: "App.jsx"
+        - path: "step3/App.jsx"
           content: |
             const { Card, Badge } = ReactBootstrap;
 
@@ -890,7 +890,7 @@ steps:
       If the log never appears after a click, the state setter was never called. If it appears but shows the wrong value, check for stale closures. The browser's **React DevTools** extension also lets you inspect component state live.
 
     files:
-      - path: "App.jsx"
+      - path: "step4/App.jsx"
         content: |
           const { Button } = ReactBootstrap;
 
@@ -920,11 +920,11 @@ steps:
           root.render(<Counter />);
         language: "javascript"
 
-    open_file: "App.jsx"
+    open_file: "step4/App.jsx"
 
     solution:
       files:
-        - path: "App.jsx"
+        - path: "step4/App.jsx"
           content: |
             const { Button } = ReactBootstrap;
 
@@ -1119,7 +1119,7 @@ steps:
       **Challenge (optional):** After passing the tests, add a 7th task to the `tasks` array (e.g., `{ id: 7, text: 'Deploy to production', done: false }`). Does your `.map()` handle it automatically without any other code changes? That is the power of data-driven rendering.
 
     files:
-      - path: "App.jsx"
+      - path: "step5/App.jsx"
         content: |
           const tasks = [
             { id: 1, text: 'Set up React development environment', done: true },
@@ -1156,11 +1156,11 @@ steps:
     preview_styles: |
       .checklist-container { max-width: 540px; }
 
-    open_file: "App.jsx"
+    open_file: "step5/App.jsx"
 
     solution:
       files:
-        - path: "App.jsx"
+        - path: "step5/App.jsx"
           content: |
             const { ListGroup } = ReactBootstrap;
 
@@ -1359,7 +1359,7 @@ steps:
       4. Highlight the active filter button using react-bootstrap's `variant` prop (e.g. `variant="primary"` for active, `variant="outline-secondary"` for inactive)
 
     files:
-      - path: "App.jsx"
+      - path: "step6/App.jsx"
         content: |
           const initialTasks = [
             { id: 1, text: 'Set up React development environment', done: true },
@@ -1409,11 +1409,11 @@ steps:
     preview_styles: |
       .checklist-container { max-width: 540px; }
 
-    open_file: "App.jsx"
+    open_file: "step6/App.jsx"
 
     solution:
       files:
-        - path: "App.jsx"
+        - path: "step6/App.jsx"
           content: |
             const { Button, ButtonGroup, ListGroup } = ReactBootstrap;
 
@@ -1722,7 +1722,7 @@ steps:
       **Challenge 2 (optional):** Extract a reusable `StatsRow` component that accepts `children` and wraps them in a flex container (`<div className="d-flex justify-content-around">`). Use it inside `ProfileCard` to wrap the three `StatBadge` components. This directly practices the `children` prop pattern from the Composition section above.
 
     files:
-      - path: "Avatar.jsx"
+      - path: "step7/Avatar.jsx"
         content: |
           // Task: Implement Avatar
           // Props: avatarUrl (string), username (string)
@@ -1736,7 +1736,7 @@ steps:
           }
         language: "javascript"
 
-      - path: "StatBadge.jsx"
+      - path: "step7/StatBadge.jsx"
         content: |
           // Task: Implement StatBadge
           // Props: label (string), value (number)
@@ -1750,7 +1750,7 @@ steps:
           }
         language: "javascript"
 
-      - path: "App.jsx"
+      - path: "step7/App.jsx"
         content: |
           const { Card } = ReactBootstrap;
 
@@ -1808,18 +1808,18 @@ steps:
         language: "javascript"
 
     react_files:
-      - "Avatar.jsx"
-      - "StatBadge.jsx"
-      - "App.jsx"
+      - "step7/Avatar.jsx"
+      - "step7/StatBadge.jsx"
+      - "step7/App.jsx"
 
     preview_styles: |
       .profile-card { max-width: 250px; }
 
-    open_file: "App.jsx"
+    open_file: "step7/App.jsx"
 
     solution:
       files:
-        - path: "Avatar.jsx"
+        - path: "step7/Avatar.jsx"
           content: |
             function Avatar({ avatarUrl, username }) {
               return (
@@ -1835,7 +1835,7 @@ steps:
               );
             }
           language: "jsx"
-        - path: "StatBadge.jsx"
+        - path: "step7/StatBadge.jsx"
           content: |
             function StatBadge({ label, value }) {
               return (
@@ -1846,7 +1846,7 @@ steps:
               );
             }
           language: "jsx"
-        - path: "App.jsx"
+        - path: "step7/App.jsx"
           content: |
             const { Card } = ReactBootstrap;
 
@@ -2074,7 +2074,7 @@ steps:
       You do not need these for the tests (the data is clean), but they are essential habits for production code.
 
     files:
-      - path: "App.jsx"
+      - path: "step8/App.jsx"
         content: |
           // Integration Project: Build a mini product store.
           // No scaffolding — apply everything you have learned.
@@ -2105,11 +2105,11 @@ steps:
           root.render(<App />);
         language: "javascript"
 
-    open_file: "App.jsx"
+    open_file: "step8/App.jsx"
 
     solution:
       files:
-        - path: "App.jsx"
+        - path: "step8/App.jsx"
           content: |
             const { Card, Button, Badge, ButtonGroup } = ReactBootstrap;
 
