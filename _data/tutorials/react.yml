@@ -140,13 +140,13 @@ steps:
         - path: "styles.css"
           content: |
             .greeting {
-              color: #2774AE;          /* Changed from tomato */
+              color: #2774AE; /* Changed from tomato */
             }
           language: "css"
         - path: "App.jsx"
           content: |
             function App() {
-              const name = "CS35L";           // Changed from "World" to any non-"World" name
+              const name = "CS35L"; // Changed from "World" to any non-"World" name
 
               return (
                 <div className="p-4">
