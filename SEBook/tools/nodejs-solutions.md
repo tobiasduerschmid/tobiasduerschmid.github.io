@@ -69,10 +69,10 @@ console.log(message);
 
 ---
 
-## Step 3: Functions as First-Class Values — `functions.js`
+## Step 3: Arrow Functions & Callbacks — `functions.js`
 
 ```javascript
-// Grade processor — complete the three TODOs
+// Arrow Functions & Callbacks — complete the two TODOs
 
 const students = [
     { name: "Alice", grade: 95 },
@@ -94,25 +94,63 @@ const getLetterGrade = (score) => {
 // TODO 2 DONE: .filter() keeps only passing students (grade >= 60)
 const passingStudents = students.filter(({ grade }) => grade >= 60);
 
-// TODO 3 DONE: .map() formats each entry as "Name: grade (Letter)"
-const report = passingStudents.map(({ name, grade }) =>
-    `${name}: ${grade} (${getLetterGrade(grade)})`
-);
-
-console.log("=== Grade Report (Passing Students Only) ===");
-report.forEach(line => console.log(line));
+console.log("=== Passing Students ===");
+passingStudents.forEach(s => console.log(`${s.name}: ${s.grade} (${getLetterGrade(s.grade)})`));
 ```
 
 **Why this is correct:**
 
-- **Arrow function:** `const getLetterGrade = (score) => { ... }` converts the `function` declaration to an arrow function assigned to a `const`. The test checks `source.includes('=>')`.
+- **Arrow function:** `const getLetterGrade = (score) => { ... }` converts the `function` declaration to an arrow function assigned to a `const`. The test checks that the source no longer contains `function getLetterGrade` and does contain `=>`.
 - **`.filter()`:** Receives an arrow function that returns `true` for students with `grade >= 60`. Bob (42) and Dave (55) fail the test and are excluded. The test checks both `source.includes('.filter(')` and `!output.includes('Bob')`.
-- **`.map()`:** Transforms each passing student object into a formatted string. Object destructuring `({ name, grade })` in the arrow function parameter extracts the two properties — the same shorthand covered in the tutorial. The test checks `source.includes('.map(')`.
-- **First-class functions:** Both `.filter()` and `.map()` receive arrow functions as arguments — this is the core concept. Functions are values that can be passed to other functions, just like numbers or strings.
+- **First-class functions:** `.filter()` receives an arrow function as an argument — this is the core concept. Functions are values that can be passed to other functions, just like numbers or strings.
 
 ---
 
-## Step 4: The Blocked Chef — The Event Loop — `event_loop.js`
+## Step 4: Array Transformation & Destructuring — `transform.js`
+
+```javascript
+// Array Transformation — complete the three TODOs
+
+const students = [
+    { name: "Alice", grade: 95 },
+    { name: "Bob",   grade: 42 },
+    { name: "Carol", grade: 78 },
+    { name: "Dave",  grade: 55 },
+    { name: "Eve",   grade: 88 },
+];
+
+const getLetterGrade = (score) => {
+    if (score >= 90) return "A";
+    if (score >= 80) return "B";
+    if (score >= 70) return "C";
+    if (score >= 60) return "D";
+    return "F";
+};
+
+// TODO 1 DONE: .map() with destructuring formats each student
+const report = students.map(({ name, grade }) =>
+    `${name.padEnd(7)}| ${grade} (${getLetterGrade(grade)})`
+);
+
+// TODO 2 DONE: .reduce() computes class average
+const classAverage = students.reduce((acc, s) => acc + s.grade, 0) / students.length;
+
+// TODO 3 DONE: Print report and formatted average
+console.log("=== Student Report ===");
+report.forEach(line => console.log(line));
+console.log(`Class average: ${classAverage.toFixed(1)}`);
+```
+
+**Why this is correct:**
+
+- **`.map()` with destructuring:** `({ name, grade })` in the arrow function parameter extracts the two properties from each student object — the destructuring shorthand covered in this step. `.padEnd(7)` left-aligns names to 7 characters for columnar output.
+- **`getLetterGrade()` call:** The arrow function from Step 3 is provided and called inside the template literal. This reinforces that functions are values — here used as a helper inside `.map()`.
+- **`.reduce()`:** `students.reduce((acc, s) => acc + s.grade, 0)` sums all grades. The `0` initial value is critical — without it, `.reduce()` throws on empty arrays. Dividing by `students.length` gives the average: (95+42+78+55+88)/5 = 71.6.
+- **`.toFixed(1)`:** Formats the number `71.6` to one decimal place. The test checks `output.includes('71.6')` and `source.includes('.toFixed(')`.
+
+---
+
+## Step 5: The Blocked Chef — The Event Loop — `event_loop.js`
 
 ```javascript
 // The Blocked Chef Demo
@@ -147,7 +185,7 @@ setTimeout(() => {
 
 ---
 
-## Step 5: From Callbacks to `async`/`await` — `async.js`
+## Step 6: From Callbacks to `async`/`await` — `async.js`
 
 ```javascript
 // Simulated async data source (provided — do not modify)
@@ -162,6 +200,14 @@ function fetchStudents() {
                 { name: "Eve",    grade: 88 },
             ]);
         }, 100);
+    });
+}
+
+// Simulated FAILING data source — swap fetchStudents() for fetchFailing()
+// to test your error handling!
+function fetchFailing() {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => reject(new Error("Database connection lost")), 100);
     });
 }
 
@@ -189,7 +235,7 @@ displayStudents();
 
 ---
 
-## Step 6: Capstone: Build a Student Grade Dashboard — `dashboard.js`
+## Step 7: Capstone: Build a Student Grade Dashboard — `dashboard.js`
 
 ```javascript
 // === Simulated API (do not modify) ===

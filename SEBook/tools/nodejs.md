@@ -22,24 +22,6 @@ const name = "UCLA"; // A constant that cannot be reassigned
 
 > **Never use `var`** — it has function-scoped hoisting rules that violate the block-scope behavior you learned in C++ and Python. Always prefer `let` or `const`.
 
-**Destructuring:**
-JavaScript provides a concise shorthand for unpacking values from arrays and objects — used constantly in modern JS and React:
-
-```javascript
-// Array destructuring (like Python's tuple unpacking):
-const coords = [40.7, -74.0];
-const [lat, lng] = coords;      // lat = 40.7, lng = -74.0
-
-// Object destructuring — extract properties by name:
-const student = { name: "Alice", grade: 95 };
-const { name, grade } = student;   // name = "Alice", grade = 95
-
-// Commonly used in function parameters:
-function printStudent({ name, grade }) {
-    console.log(`${name}: ${grade}`);
-}
-```
-
 ### What is Node.js? (Taking off the Training Wheels)
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
 
@@ -155,6 +137,24 @@ const { host, port } = config;   // host = "localhost", port = 3000
 function startServer({ host, port }) {
     console.log(`Listening on ${host}:${port}`);
 }
+```
+
+### Formatting Output: `.toFixed()` and `.padEnd()`
+
+Two utilities you will use when formatting output:
+
+```javascript
+// .toFixed(n) — format a number to exactly n decimal places (returns a string)
+const avg = 87.666;
+console.log(avg.toFixed(1));   // "87.7"
+console.log(avg.toFixed(2));   // "87.67"
+
+// .padEnd(n) — pad a string with spaces to reach length n (left-aligns text in columns)
+console.log("Alice".padEnd(7) + "| 95");   // "Alice  | 95"
+console.log("Bob".padEnd(7) + "| 42");     // "Bob    | 42"
+
+// .padStart(n) — pad from the left (right-aligns text)
+console.log("42".padStart(5));   // "   42"
 ```
 
 ### Ready to Practice?
