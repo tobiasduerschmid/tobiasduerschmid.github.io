@@ -1,5 +1,5 @@
 title: "React Concepts Quiz"
-description: "Test your deeper understanding of React's design philosophy, state management, and component architecture."
+description: "Test your deeper understanding of React's design philosophy, state management, and component architecture. Questions 1–7 cover tutorial material. Questions 8–9 test advanced concepts from the reference page (controlled inputs, useEffect)."
 questions:
   - question: |
       A C++ developer writes this React component and is confused why clicking the button does nothing:
@@ -78,6 +78,8 @@ questions:
     explanation: "The 'fragile base class' problem: modifying a parent class can unexpectedly break subclasses. React's composition model avoids this — a `Card` component that accepts `children` can wrap ANY content without knowing what it is. This gives more flexibility than inheritance and follows the same 'prefer composition over inheritance' principle from OOP courses."
 
   - question: |
+      *(Advanced — uses controlled inputs from the reference page)*
+
       **Arrange** the lines to build a React component with a controlled input that filters a list of items.
     type: parsons
     lines:
@@ -97,6 +99,8 @@ questions:
     explanation: "The component uses `useState` for the filter query only — the filtered list is DERIVED from `items` and `query` (minimal state principle). The controlled `<input>` binds `value` to state and updates via `setQuery`. The first distractor stores filtered as separate state (sync bug — violates minimal state). The second distractor mutates `query` directly without `setQuery`, which won't trigger a re-render."
 
   - question: |
+      *(Advanced — uses useEffect and custom hooks from the reference page)*
+
       **Arrange** the lines to create a custom React hook that fetches data from an API on mount.
     type: parsons
     lines:

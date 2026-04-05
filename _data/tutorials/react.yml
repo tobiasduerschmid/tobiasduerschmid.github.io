@@ -1,5 +1,5 @@
 title: "React Essentials: From Imperative to Declarative UI"
-description: "A hands-on introduction to React for students who already know C++ and Python. Learn to think declaratively, build components, manage state, and compose real UIs — all live in your browser."
+description: "A hands-on introduction to React for students who already know C++ and Python and have completed the Node.js tutorial. Assumes basic familiarity with HTML tags and CSS classes (a refresher is provided in Step 1). Learn to think declaratively, build components, manage state, and compose real UIs — all live in your browser."
 
 backend: react
 
@@ -676,10 +676,35 @@ steps:
 
       `React.useState(initialValue)` returns a **pair**: the current value, and a **setter function**. Calling the setter triggers a re-render with the new value.
 
+      ### Event Handlers in React
+
+      The `onClick` in the counter example above is an **event handler prop**. In C++, you might register a callback with `button.setCallback(handleClick)`. In React, you pass a function directly as a JSX prop:
+
+      ```jsx
+      // C++:    button.setCallback(handleClick);
+      // Python: button.on_click = handle_click
+
+      // React — pass a function reference:
+      <button onClick={handleClick}>Click me</button>
+
+      // Or use an inline arrow function:
+      <button onClick={() => setCount(count + 1)}>+1</button>
+      ```
+
+      Two key details:
+      - Use **camelCase** event names: `onClick`, `onChange`, `onSubmit` (not `onclick`)
+      - Pass a **function reference**, not a function call: `onClick={handleClick}` is correct; `onClick={handleClick()}` calls the function immediately during render, which is almost never what you want
+
       ### Rules of Hooks (important!)
 
       1. **Only call hooks at the top level** — never inside `if`, `for`, or nested functions
       2. **Only call hooks from React components** — not from regular JS functions
+
+      ---
+
+      ### Going Deeper (optional)
+
+      > You do not need the material below for the current task. Revisit this section when you encounter unexpected state behavior in your own projects.
 
       ### ⚠️ Watch Out: Stale Closures
 
@@ -1218,6 +1243,19 @@ steps:
           var src = frame.contentDocument.querySelector('[type="text/babel"]');
           assert(src && src.textContent.includes('.filter('),
             'Use .filter() to filter the tasks based on the selected filter');
+      - description: "Clicking a filter button changes the visible tasks"
+        command: |
+          var root = frame.contentDocument.getElementById('root');
+          var buttons = Array.from(root.querySelectorAll('button'));
+          var doneBtn = buttons.find(function(b) {
+            var t = b.textContent.toLowerCase();
+            return t.includes('done') || t.includes('complet');
+          });
+          assert(doneBtn, 'No "Done" filter button found');
+          doneBtn.click();
+          var items = root.querySelectorAll('.list-group-item');
+          assert(items.length > 0 && items.length < 6,
+            'After clicking "Done", only completed tasks should be visible (fewer than 6). Found: ' + items.length + '. Make sure your filter buttons update the filter state.');
 
     quiz:
       title: "Conditional Rendering & Filtering — Knowledge Check"
@@ -1406,7 +1444,11 @@ steps:
       - `ProfileCard`: Uses `Avatar` and three `StatBadge` components to build the full card
       - `App`: Renders two `ProfileCard` components with the provided user data
 
-      **Challenge (optional):** After passing the tests, add a third user to the `users` array in `App`. Does your component hierarchy display the new card without any changes to `Avatar`, `StatBadge`, or `ProfileCard`? If yes, your composition is working — the same components render any number of users.
+      > **Connection to `children`:** When you nest `Avatar` and `StatBadge` inside `<Card.Body>`, you are using `children` in action — Bootstrap's `Card.Body` renders whatever is placed between its tags. Your own components can do the same.
+
+      **Challenge 1 (optional):** After passing the tests, add a third user to the `users` array in `App`. Does your component hierarchy display the new card without any changes to `Avatar`, `StatBadge`, or `ProfileCard`? If yes, your composition is working — the same components render any number of users.
+
+      **Challenge 2 (optional):** Extract a reusable `StatsRow` component that accepts `children` and wraps them in a flex container (`<div className="d-flex justify-content-around">`). Use it inside `ProfileCard` to wrap the three `StatBadge` components. This directly practices the `children` prop pattern from the Composition section above.
 
     files:
       - path: "Avatar.jsx"
