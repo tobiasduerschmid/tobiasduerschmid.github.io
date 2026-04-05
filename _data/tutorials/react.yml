@@ -1794,7 +1794,7 @@ steps:
       - "App.jsx"
 
     preview_styles: |
-      .profile-card { max-width: 300px; }
+      .profile-card { max-width: 250px; }
 
     open_file: "App.jsx"
 
@@ -1809,7 +1809,7 @@ steps:
                     src={avatarUrl}
                     alt={username}
                     className="rounded-circle mb-2"
-                    width="160" height="160"
+                    width="180" height="180"
                   />
                   <span className="fw-semibold text-secondary">@{username}</span>
                 </div>
@@ -1820,8 +1820,8 @@ steps:
           content: |
             function StatBadge({ label, value }) {
               return (
-                <div className="text-center px-3 py-2">
-                  <div className="fs-5 fw-bold">{value}</div>
+                <div className="text-center px-2 py-2">
+                  <div className="small fw-bold">{value}</div>
                   <div className="small text-muted">{label}</div>
                 </div>
               );
