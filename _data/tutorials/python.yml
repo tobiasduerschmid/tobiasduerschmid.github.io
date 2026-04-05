@@ -1624,6 +1624,8 @@ steps:
   #   Bloom's level      — Apply / Evaluate (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "sys.argv & stderr"
+    has_args: true
+    has_stderr: true
     instructions: |
       > **Learning objective:** After this step you will be able to **implement** command-line argument handling with `sys.argv` and **use** `sys.stderr` for error messages.
 
@@ -1675,7 +1677,7 @@ steps:
 
       ### Task
 
-      Write `safe_word_count.py` **from scratch**. It should:
+      Write `safe_word_count.py` **from scratch**. (Note: type `data.txt` into the "args: " input box in the Output panel to add it to the program args to read this file). It should:
       1. If no filename argument is provided (`len(sys.argv) < 2`), print `Error: no filename given` to `sys.stderr` and call `sys.exit(1)`
       2. Read `filename = sys.argv[1]` and print `Reading: <filename>` to `sys.stderr`
       3. Count words and print `Total words: <count>` to stdout
@@ -1884,6 +1886,8 @@ steps:
   #   Bloom's level      — Create (exercise) / Evaluate + Analyze (quiz).
   # --------------------------------------------------------------------------
   - title: "Capstone: Build a Log Analyzer"
+    has_args: true
+    has_stderr: true
     instructions: |
       > **Learning objective:** After this step you will be able to **design and implement** a complete Python script that integrates functions, file I/O, regex, list comprehensions, and command-line arguments.
 
@@ -1894,7 +1898,7 @@ steps:
 
       ### Task
 
-      Build `log_analyzer.py` — a command-line tool that analyzes a server log.
+      Build `log_analyzer.py` — a command-line tool that analyzes a server log. (Note: type `server.log` into the "args: " input box in the Output panel to add it to the program args to read this file).
 
       **Requirements:**
 

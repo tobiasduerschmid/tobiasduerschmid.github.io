@@ -535,6 +535,52 @@ html, body {
 .tvm-out-info   { color: #9cdcfe; font-style: italic; }
 .tvm-out-err    { color: #f44747; font-weight: 600; }
 
+/* Arguments input styling */
+.tvm-args-input {
+  background: #0e0e10;
+  border: 1px solid #3a3a44;
+  color: #ccc;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  width: 140px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+}
+html:not(.dark-mode) .tvm-args-input {
+  background: #fff;
+  border-color: #bbb;
+  color: #333;
+}
+.tvm-args-input:focus {
+  outline: none;
+  border-color: #0078d4;
+}
+
+/* Stream filter styling */
+.tvm-stream-filter {
+  background: #141414;
+  border: 1px solid #3a3a44;
+  color: #888;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+html:not(.dark-mode) .tvm-stream-filter {
+  background: #f3f3f3;
+  border-color: #bbb;
+  color: #555;
+}
+
+/* Stream filters logic */
+.tvm-output-container.tvm-filter-stdout-only .tvm-out-stderr {
+  display: none !important;
+}
+.tvm-output-container.tvm-filter-stderr-only .tvm-out-stdout,
+.tvm-output-container.tvm-filter-stderr-only .tvm-out-info,
+.tvm-output-container.tvm-filter-stderr-only .tvm-sql-table-wrapper {
+  display: none !important;
+}
 /* SQL result tables (rendered inside .tvm-output-pre) */
 .tvm-sql-table-wrapper {
   margin: 6px 0 10px;

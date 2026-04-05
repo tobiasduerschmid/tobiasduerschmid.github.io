@@ -73,7 +73,7 @@ self.onmessage = function (e) {
   }
 
   if (msg.type === 'run') {
-    runFile(msg.id, msg.path);
+    runFile(msg.id, msg.path, msg.args || []);
   } else if (msg.type === 'runCode') {
     runCode(msg.id, msg.code, !!msg.silent);
   } else if (msg.type === 'write') {
@@ -85,7 +85,7 @@ self.onmessage = function (e) {
 
 // ---- Execution --------------------------------------------------------------
 
-function runFile(id, path) {
+function runFile(id, path, args) {
   var code;
   try {
     code = pyodide.FS.readFile(path, { encoding: 'utf8' });
@@ -94,6 +94,12 @@ function runFile(id, path) {
     self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
     return;
   }
+  
+  var pyArgsStr = '[' + [path].concat(args || []).map(function(a) { 
+    return '"' + (a || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; 
+  }).join(',') + ']';
+  pyodide.runPython('import sys; sys.argv = ' + pyArgsStr);
+  
   runCode(id, code, false);
 }
 

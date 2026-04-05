@@ -214,6 +214,13 @@
         '<div class="tvm-output-header">' +
         '<span>Output</span>' +
         '<div class="tvm-output-actions">' +
+        '<span class="tvm-args-label" style="display:none; font-size:11px; color:#888; font-family:\'Fira Code\', \'Cascadia Code\', Menlo, monospace;">args:</span>' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" />' +
+        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams">' +
+        '<option value="all">All Output</option>' +
+        '<option value="stdout">Stdout Only</option>' +
+        '<option value="stderr">Stderr Only</option>' +
+        '</select>' +
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '</div></div>' +
@@ -268,6 +275,18 @@
       var clearBtn = this.root.querySelector('.tvm-clear-btn');
       if (runBtn)   runBtn.addEventListener('click',  function () { self._runCurrentFile(); });
       if (clearBtn) clearBtn.addEventListener('click', function () { self._clearOutput(); });
+      
+      var filterSel = this.root.querySelector('.tvm-stream-filter');
+      if (filterSel) {
+        filterSel.addEventListener('change', function () {
+          var c = self.root.querySelector('.tvm-output-container');
+          if (c) {
+            c.classList.remove('tvm-filter-stdout-only', 'tvm-filter-stderr-only');
+            if (this.value === 'stdout') c.classList.add('tvm-filter-stdout-only');
+            if (this.value === 'stderr') c.classList.add('tvm-filter-stderr-only');
+          }
+        });
+      }
     }
 
     this._initSplitters();
@@ -983,7 +1002,14 @@
       var runBtn = self.root.querySelector('.tvm-run-btn');
       if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
 
-      self._postWorker({ type: 'run', path: path }, function (msg) {
+      var args = [];
+      var argsInp = self.root.querySelector('.tvm-args-input');
+      if (argsInp && argsInp.style.display !== 'none' && argsInp.value.trim() !== '') {
+        var matches = argsInp.value.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+        args = matches.map(function(s) { return s.replace(/^"|"$/g, ''); });
+      }
+
+      self._postWorker({ type: 'run', path: path, args: args }, function (msg) {
         if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
         if (msg.exitCode === 0) {
           self._appendOutput('\n\u2713 Done\n', 'info');
@@ -1424,6 +1450,26 @@
     }
 
     if (this.config.backend === 'v86') this._startFileWatch(2000);
+
+    // Configure args and filter visibility
+    if (this.config.backend === 'pyodide') {
+      var argsInp = this.root.querySelector('.tvm-args-input');
+      var argsLbl = this.root.querySelector('.tvm-args-label');
+      var filterSel = this.root.querySelector('.tvm-stream-filter');
+      if (argsInp) {
+        argsInp.style.display = step.has_args ? 'inline-block' : 'none';
+        argsInp.value = '';
+      }
+      if (argsLbl) {
+        argsLbl.style.display = step.has_args ? 'inline-block' : 'none';
+      }
+      if (filterSel) {
+        filterSel.style.display = step.has_stderr ? 'inline-block' : 'none';
+        filterSel.value = 'all';
+        var c = this.root.querySelector('.tvm-output-container');
+        if (c) c.classList.remove('tvm-filter-stdout-only', 'tvm-filter-stderr-only');
+      }
+    }
 
     // Clear output panel between steps
     if (this.config.backend === 'pyodide' || this.config.backend === 'browser') this._clearOutput();
