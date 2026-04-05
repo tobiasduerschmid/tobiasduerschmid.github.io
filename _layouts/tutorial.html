@@ -18,7 +18,12 @@
         </span>
       </div>
       <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
-        <a href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
+        <a id="solutionBtn" href="#"
+           style="display:none; color:#fff; font-size:14px; font-weight:600; text-decoration:none; align-items:center; gap:5px;"
+           title="Apply solution for current step">
+          <i class="fa fa-key"></i> Solution
+        </a>
+        <a id="printBtn" href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
            style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;" title="Print view">
           <i class="fa fa-print"></i> Print
         </a>
@@ -76,7 +81,8 @@
 
       // Intercept print (Ctrl/Cmd+P and File > Print) — open the
       // dedicated print view instead of printing the live tutorial UI.
-      var PRINT_URL = '{{ page.url | replace: ".html", "" | relative_url }}/print?autoprint=1';
+      var PRINT_URL = '{{ page.url | replace: ".html", "" | relative_url }}/print?autoprint=1'
+        + (window.location.search.indexOf('instructor-mode=true') !== -1 ? '&instructor-mode=true' : '');
       document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
           e.preventDefault();
@@ -132,11 +138,22 @@
       var instructionHTML = [{% for step in tutorial_data.steps %}{{ step.instructions | markdownify | jsonify }}{% unless forloop.last %},{% endunless %}{% endfor %}];
       config.steps.forEach(function (step, i) { step.instructionsHTML = instructionHTML[i]; });
 
+      // Pre-render solution explanation markdown (same Rouge highlighting)
+      var solutionExplanationHTML = [{% for step in tutorial_data.steps %}{% if step.solution.explanation %}{{ step.solution.explanation | markdownify | jsonify }}{% else %}null{% endif %}{% unless forloop.last %},{% endunless %}{% endfor %}];
+      config.steps.forEach(function (step, i) {
+        if (step.solution && solutionExplanationHTML[i]) {
+          step.solution.explanationHTML = solutionExplanationHTML[i];
+        }
+      });
+
+      var instructorMode = new URLSearchParams(window.location.search).get('instructor-mode') === 'true';
+
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',
         steps:        config.steps,
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
+        instructorMode: instructorMode,
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
         memoryMB: {{ page.memory_mb  | default: 256 }},
@@ -145,6 +162,22 @@
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
       });
       tutorial.start();
+
+      // Instructor mode: show and wire Solution button + update Print link
+      if (instructorMode) {
+        var solBtn = document.getElementById('solutionBtn');
+        if (solBtn) {
+          solBtn.style.display = 'flex';
+          solBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            tutorial.applySolution();
+          });
+        }
+        var printBtn = document.getElementById('printBtn');
+        if (printBtn) {
+          printBtn.href += '?instructor-mode=true';
+        }
+      }
     });
   </script>
 

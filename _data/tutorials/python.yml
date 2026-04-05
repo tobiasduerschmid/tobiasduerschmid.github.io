@@ -76,6 +76,20 @@ steps:
 
     open_file: "hello.py"
 
+    solution:
+      files:
+        - path: "hello.py"
+          content: |
+            # Task: Change the message to "Hello, CS 35L!"
+            print("Hello, CS 35L!")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`print("Hello, CS 35L!")`:** Python's `print()` is the direct equivalent of C++'s `printf()` / `cout` and Bash's `echo`. The test checks that the exact string `"Hello, CS 35L!"` appears in the output.
+        - Python scripts run top-to-bottom with no `main()` function, no `#include`, and no semicolons — unlike C++. This is the same execution model as a Bash script.
+        - The string is surrounded by double quotes; Python accepts both single and double quotes interchangeably.
+
     tests:
       - description: "Script runs without errors"
         command: |
@@ -257,6 +271,26 @@ steps:
 
     open_file: "profile.py"
 
+    solution:
+      files:
+        - path: "profile.py"
+          content: |
+            name  = "Alice"
+            year  = 2
+            gpa   = 3.819
+            major = "Computer Science"
+
+            # Using a single f-string with :.2f to format GPA
+            print(f"Student: {name} | Year: {year} | Major: {major} | GPA: {gpa:.2f}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`f"..."` prefix:** Marks the string as an f-string so `{variable}` expressions are evaluated and interpolated.
+        - **`{gpa:.2f}`:** The `:.2f` format specifier formats `gpa` as a float with exactly two decimal places. `3.819` rounds to `3.82`.
+        - **Variables, not literals:** The test uses AST inspection to ensure you used the variable names inside the f-string rather than hard-coding the values.
+        - **Dynamic vs. weak typing:** Python infers `year` as `int` and `gpa` as `float` from the assigned values — no type declarations needed.
+
     tests:
       - description: "Script runs without errors"
         command: |
@@ -424,6 +458,30 @@ steps:
         language: "python"
 
     open_file: "grades.py"
+
+    solution:
+      files:
+        - path: "grades.py"
+          content: |
+            # Fixer Upper: both bugs fixed
+            scores = [95, 83, 71, 62, 55]
+
+            for score in scores:
+                if score >= 90:
+                    print(f"Score {score}: A")    # Bug 1 fixed: indented 8 spaces
+                elif score >= 80:
+                    print(f"Score {score}: B")    # Bug 2 fixed: f-string instead of + concatenation
+                elif score >= 60:
+                    print(f"Score {score}: C")
+                else:
+                    print(f"Score {score}: F")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **Bug 1 — indentation error:** The original `print(f"Score {score}: A")` was at the same indentation level as `if score >= 90:`, which is an `IndentationError`. The body of an `if` block must be indented one level further.
+        - **Bug 2 — type error:** The original `print("Score " + score + ": B")` fails with `TypeError`. Python will not silently convert `score` (an `int`) to a string. The fix is to use an f-string.
+        - The tests verify that scores 95, 83, and 71 produce the correct letter grades A, B, and C respectively.
 
     tests:
       - description: "Script runs without errors"
@@ -595,6 +653,37 @@ steps:
         language: "python"
 
     open_file: "functions.py"
+
+    solution:
+      files:
+        - path: "functions.py"
+          content: |
+            def mean(numbers):
+                """Return the arithmetic mean of a list of numbers."""
+                return sum(numbers) / len(numbers)
+
+            def label_score(score, threshold=50):
+                """Return 'pass' if score >= threshold, else 'fail'."""
+                if score >= threshold:
+                    return 'pass'
+                else:
+                    return 'fail'
+
+            # --- Quick self-test ---
+            data = [4, 8, 15, 16, 23, 42]
+            print(f"Data: {data}")
+            print(f"Mean: {mean(data)}")
+            print(f"Score 75: {label_score(75)}")
+            print(f"Score 30: {label_score(30)}")
+            print(f"Score 75 (threshold=80): {label_score(75, 80)}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`mean`:** `sum(numbers)` and `len(numbers)` are Python built-ins. In Python 3, `/` always performs **float division**, so `mean([4, 8, 15, 16, 23, 42])` returns `18.0`. The test checks `== 18.0`.
+        - **`label_score` with default parameter:** `threshold=50` is a default parameter — calling `label_score(75)` uses `50` (returns `'pass'`), while `label_score(75, 80)` overrides it (returns `'fail'`).
+        - **`return` is explicit:** Python functions without `return` silently return `None`.
+        - **`def` vs C++:** Python's `def` requires no return type or parameter types.
 
     tests:
       - description: "mean([4, 8, 15, 16, 23, 42]) == 18.0"
@@ -868,6 +957,38 @@ steps:
 
     open_file: "loops.py"
 
+    solution:
+      files:
+        - path: "loops.py"
+          content: |
+            def running_total(numbers):
+                """Return a list of cumulative sums.
+                Example: running_total([1, 2, 3]) == [1, 3, 6]
+                """
+                result = []
+                total = 0
+                for n in numbers:
+                    total += n          # add n to the running sum
+                    result.append(total)  # append the current cumulative total
+                return result
+
+            # --- Quick self-test ---
+            data = [4, 8, 15, 16, 23, 42]
+            print(f"Data:          {data}")
+            print(f"Running total: {running_total(data)}")
+
+            # Verify your understanding of / vs //
+            print(f"7 / 2  = {7 / 2}")    # 3.5
+            print(f"7 // 2 = {7 // 2}")   # 3
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`for n in numbers:`** Python's `for` loop iterates over items directly — no index variable needed.
+        - **`total += n`:** Adds each element to the running sum before appending.
+        - **`result.append(total)`:** `list.append()` is Python's equivalent of `std::vector::push_back()`. Appending `total` (not `n`) gives the cumulative sum at each position.
+        - **`7 / 2` → `3.5`:** Python 3's `/` always gives a `float`. For C++-style integer division, use `//`.
+
     tests:
       - description: "running_total([1, 2, 3]) == [1, 3, 6]"
         command: |
@@ -1073,6 +1194,47 @@ steps:
     setup_commands:
       - "import sys; sys.modules.pop('functions', None)"
 
+    solution:
+      files:
+        - path: "functions.py"
+          content: |
+            def mean(numbers):
+                """Return the arithmetic mean of a list of numbers."""
+                return sum(numbers) / len(numbers)
+
+            def label_score(score, threshold=50):
+                """Return 'pass' if score >= threshold, else 'fail'."""
+                if score >= threshold:
+                    return 'pass'
+                else:
+                    return 'fail'
+          language: "python"
+        - path: "listcomp.py"
+          content: |
+            from functions import mean
+
+            def above_average(numbers):
+                """Return a list of numbers strictly greater than the mean."""
+                avg = mean(numbers)
+                return [x for x in numbers if x > avg]
+
+            def squares_up_to(n):
+                """Return [1**2, 2**2, ..., n**2] using range() and **."""
+                return [x**2 for x in range(1, n + 1)]
+
+            # --- Quick self-test ---
+            data = [4, 8, 15, 16, 23, 42]
+            print(f"Data:          {data}")
+            print(f"Above average: {above_average(data)}")
+            print(f"Squares to 5:  {squares_up_to(5)}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`above_average`:** The general form is `[expression for variable in iterable if condition]`. The condition `x > avg` is strictly greater than (not `>=`).
+        - **AST check:** The test uses Python's `ast` module to verify that `above_average` contains a `ListComp` node — a manual loop with `append` would fail this test.
+        - **`squares_up_to`:** `range(1, n + 1)` generates `1` through `n` inclusive. `x**2` uses the `**` exponentiation operator — not `^` which is bitwise XOR.
+
     tests:
       - description: "above_average returns numbers > mean (not >=)"
         command: |
@@ -1273,6 +1435,31 @@ steps:
 
     setup_commands:
       - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "word_count.py"
+          content: |
+            # SUB-GOAL: Initialize the counter
+            total = 0
+
+            # SUB-GOAL: Open and read the file
+            with open("data.txt") as f:
+                for line in f:
+                    words = line.split()
+                    # SUB-GOAL: Accumulate the count
+                    total += len(words)
+
+            # SUB-GOAL: Report the result
+            print(f"Total words: {total}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`with open("data.txt") as f:`** The `with` statement is Python's context manager — it guarantees the file is closed when the block exits, even if an exception occurs. Analogous to RAII in C++.
+        - **`for line in f:`** Files are directly iterable in Python. Each iteration yields one line including the trailing `\n`. Memory-efficient — only one line at a time.
+        - **`line.split()`** without arguments splits on any whitespace and discards empty strings, so `len(words)` correctly counts words per line.
+        - **`total += len(words)`:** Accumulates the count across all lines. The three lines in `data.txt` have 9 + 9 + 6 = 24 words.
 
     tests:
       - description: "Script runs without errors"
@@ -1497,6 +1684,35 @@ steps:
     setup_commands:
       - "import os; os.chdir('/tutorial')"
 
+    solution:
+      files:
+        - path: "log_parser.py"
+          content: |
+            import re
+
+            with open("log.txt") as f:
+                text = f.read()
+
+            # 1. Extract all timestamps (HH:MM:SS) and print count
+            timestamps = re.findall(r'\d{2}:\d{2}:\d{2}', text)
+            print(f"Timestamps found: {len(timestamps)}")
+
+            # 2. Extract all ERROR lines and print count
+            errors = re.findall(r'ERROR.*', text)
+            print(f"Errors: {len(errors)}")
+
+            # 3. Redact IPv4 addresses and print redacted log
+            redacted = re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)
+            print(redacted)
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`re.findall(r'\d{2}:\d{2}:\d{2}', text)`:** `\d{2}` matches exactly two digits; the colons are literal. Matches all 6 timestamps.
+        - **`re.findall(r'ERROR.*', text)`:** `ERROR` matches literally; `.*` matches to end of line (`.` doesn't match `\n` by default). Finds the 2 ERROR lines.
+        - **`re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)`:** `\d+` matches one or more digits; `\.` matches a literal dot. Replaces all IP addresses with `x.x.x.x`.
+        - **Raw strings (`r'...'`):** The `r` prefix prevents Python from interpreting backslashes before `re` sees them.
+
     tests:
       - description: "Script runs without errors"
         command: |
@@ -1705,6 +1921,37 @@ steps:
 
     setup_commands:
       - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "safe_word_count.py"
+          content: |
+            import sys
+
+            # 1. Check sys.argv — error to stderr + exit(1) if no filename
+            if len(sys.argv) < 2:
+                print("Error: no filename given", file=sys.stderr)
+                sys.exit(1)
+
+            # 2. Print "Reading: <filename>" to stderr
+            filename = sys.argv[1]
+            print(f"Reading: {filename}", file=sys.stderr)
+
+            # 3. Count words, print "Total words: <count>" to stdout
+            total = 0
+            with open(filename) as f:
+                for line in f:
+                    total += len(line.split())
+
+            print(f"Total words: {total}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`sys.argv`:** A list where index `0` is the script name and index `1` onwards are the arguments. `len(sys.argv) < 2` means no filename was given.
+        - **`print(..., file=sys.stderr)`:** Redirects print to `sys.stderr` instead of `sys.stdout`. Python's equivalent of C++'s `std::cerr` and Bash's `>&2`.
+        - **`sys.exit(1)`:** Terminates the process with exit code 1 — the Unix convention for failure.
+        - **Separation of stdout/stderr:** Normal output goes to stdout; diagnostic messages go to stderr. This is essential for composable Unix pipelines.
 
     tests:
       - description: "Prints 'Reading: data.txt' to sys.stderr when given data.txt"
@@ -1948,6 +2195,63 @@ steps:
 
     setup_commands:
       - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "log_analyzer.py"
+          content: |
+            import sys
+            import re
+
+            def count_by_level(text, level):
+                """Return the number of lines matching the given log level."""
+                return len(re.findall(rf'{level}.*', text))
+
+            def extract_ips(text):
+                """Return all unique IP addresses found in text."""
+                return set(re.findall(r'\d+\.\d+\.\d+\.\d+', text))
+
+            def parse_args():
+                """Validate and return the filename argument."""
+                if len(sys.argv) < 2:
+                    print("Error: no filename given", file=sys.stderr)
+                    sys.exit(1)
+                return sys.argv[1]
+
+            def read_log(filename):
+                """Read and return the full log file as a string."""
+                print(f"Reading: {filename}", file=sys.stderr)
+                with open(filename) as f:
+                    return f.read()
+
+            def print_report(text):
+                """Print the analysis report to stdout."""
+                lines = text.strip().splitlines()
+                total = len(lines)
+                unique_ips = len(extract_ips(text))
+                errors = count_by_level(text, 'ERROR')
+                warnings = count_by_level(text, 'WARNING')
+
+                print("Log Analysis Report")
+                print("===================")
+                print(f"Total lines:    {total}")
+                print(f"Unique IPs:     {unique_ips}")
+                print(f"Errors:         {errors}")
+                print(f"Warnings:       {warnings}")
+
+            # Main flow
+            filename = parse_args()
+            text = read_log(filename)
+            print_report(text)
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`parse_args()`:** Validates `sys.argv`, prints error to `sys.stderr`, and calls `sys.exit(1)` if no argument.
+        - **`read_log()`:** Prints `"Reading: <filename>"` to `sys.stderr`. Returns full file content as string.
+        - **`count_by_level(text, 'ERROR')`:** Uses `re.findall(r'ERROR.*', text)` — `.*` matches to end of line. The log has 2 ERROR and 1 WARNING line.
+        - **`extract_ips(text)` with `set(...)`:** `re.findall()` returns all matches including duplicates. `set()` removes duplicates. The log has 2 unique IPs.
+        - **Function decomposition:** Each function has a single responsibility, making the code testable and readable.
 
     tests:
       - description: "Script runs without errors when given server.log"

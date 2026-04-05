@@ -72,35 +72,6 @@ React.createElement('button', { className: 'btn-primary', disabled: false }, 'Sa
 
 Notice the `{username}` syntax? Just like f-strings in Python (`f"Hello {username}"`), JSX allows you to seamlessly inject JavaScript variables directly into your UI using curly braces `{}`.
 
-### Passing Data: Props
-
-A component with hardcoded values is like a function with no parameters — limited and not reusable. **Props** (short for properties) let you pass data *into* a component, exactly like function arguments in C++ or Python.
-
-```jsx
-// Defining a component that accepts props:
-function UserAvatar({ username, isOnline }) {
-  return (
-    <div>
-      <span>{username}</span>
-      <span style={{color: isOnline ? 'green' : 'grey'}}>
-        {isOnline ? 'Online' : 'Offline'}
-      </span>
-    </div>
-  );
-}
-
-// Using it — each instance gets different data:
-<UserAvatar username="alice" isOnline={true} />
-<UserAvatar username="bob"   isOnline={false} />
-```
-
-**Key rules for props:**
-* **Props flow one way** — from parent component down to child, never upward. This predictable, top-down data flow makes it easy to reason about where data comes from.
-* **Props are read-only** inside the component. Mutating a prop would corrupt the parent's data and break React's data flow model. If a component needs to change a value, it should use local state (`useState`) instead.
-* **Any JavaScript value** can be a prop: string, number, boolean, object, array, function, or even another component.
-
-A common challenge as your app grows is **prop drilling** — passing a prop through several intermediate layers of components that don't use it themselves, just to reach a deeply nested component that does. Solutions include the React Context API or dedicated state management libraries.
-
 ### Adding Memory: State
 
 A UI isn't very useful if it can't change. In a C++ class, you use member variables to keep track of an object's current status. In React, we use **State**.

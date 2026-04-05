@@ -68,6 +68,21 @@ steps:
     watch_files:
       - "make_project/math.c"
 
+    solution:
+      files:
+        - path: "make_project/math.c"
+          content: |
+            int add(int a, int b) {
+                return a + b;   // Bug fixed: added the missing semicolon
+            }
+          language: "c"
+      commands:
+        - "cd make_project && gcc main.c math.c io.c -o app"
+      explanation: |
+        - **Test 1:** `grep -q 'a + b;' math.c` — the semicolon must be present at the end of the `return` statement.
+        - **Test 2:** `[ -f app ]` — the compiled executable `app` must exist.
+        - **The pain of manual compilation:** After fixing the one-character bug, you had to re-type (or recall) the entire `gcc` command to recompile all three files — even `main.c` and `io.c` were untouched. This is the core problem Make solves: in a 500-file project, fixing one typo means recompiling everything.
+
     tests:
       - description: "The syntax error in math.c is fixed"
         command: "cd /tutorial/make_project && grep -q 'a + b;' math.c"
@@ -174,6 +189,20 @@ steps:
     watch_files:
       - "make_project/Makefile"
 
+    solution:
+      files:
+        - path: "make_project/Makefile"
+          content: "app: main.c math.c io.c\n\tgcc main.c math.c io.c -o app\n"
+          language: "makefile"
+      commands:
+        - "cd make_project && sed -i 's/^    /\t/' Makefile"
+        - "cd make_project && make"
+      explanation: |
+        - **Test 1:** `grep -qP '^\tgcc' Makefile` — the recipe line must start with a real Tab character (`\t`), not spaces. `grep -P` uses Perl-compatible regex where `\t` matches a literal Tab.
+        - **Test 2:** `[ -f app ]` — Make must have run successfully and produced the `app` executable.
+        - **The Tab Trap:** Make's parser uses the Tab character specifically to identify recipe lines. Spaces look identical on screen but cause the infamous `missing separator. Stop.` error. Most editors silently convert Tab keypresses to spaces, which is why this trap catches beginners.
+        - **`sed -i 's/^    /\t/'`:** `s/pattern/replacement/` substitutes the pattern. `^    ` matches four spaces only at the start of a line (`^` anchors to line start). `\t` is a Tab character. `-i` edits the file in-place.
+
     tests:
       - description: "The recipe uses a Tab character, not spaces"
         command: "cd /tutorial/make_project && grep -qP '^\\tgcc' Makefile"
@@ -275,6 +304,19 @@ steps:
 
     watch_files:
       - "make_project/Makefile"
+
+    solution:
+      files:
+        - path: "make_project/Makefile"
+          content: "CC = gcc\nCFLAGS = -Wall -std=c11\n\napp: main.o math.o io.o\n\t$(CC) $(CFLAGS) main.o math.o io.o -o app\n\nmain.o: main.c\n\t$(CC) $(CFLAGS) -c main.c\n\nmath.o: math.c\n\t$(CC) $(CFLAGS) -c math.c\n\nio.o: io.c\n\t$(CC) $(CFLAGS) -c io.c\n"
+          language: "makefile"
+      explanation: |
+        - **Test 1:** `grep -q 'CC *=' Makefile` — the `CC` variable must be defined.
+        - **Test 2:** `grep -q 'CFLAGS *=' Makefile` — the `CFLAGS` variable must be defined.
+        - **Test 3:** `grep -q '\$(CC)' Makefile` — `$(CC)` must appear in the file (replacing the hardcoded `gcc`).
+        - **Test 4:** `make && [ -f app ]` — the build must still succeed.
+        - **DRY principle:** Before this refactor, `gcc -Wall -std=c11` appeared 4 times. With `CC = gcc` and `CFLAGS = -Wall -std=c11`, a switch from `gcc` to `clang` requires editing exactly one line. This is the same principle as C++ `#define` or Python constants.
+        - **`$(CC)` syntax:** Make expands variables with `$(VAR_NAME)` or `${VAR_NAME}`. The parentheses (or braces) are required for multi-character variable names — `$CC` alone would be interpreted as `$C` followed by the literal character `C`.
 
     tests:
       - description: "Defined CC variable"
@@ -430,6 +472,22 @@ steps:
     watch_files:
       - "make_project/Makefile"
 
+    solution:
+      files:
+        - path: "make_project/Makefile"
+          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n"
+          language: "makefile"
+      explanation: |
+        - **Test 1:** `grep -q 'OBJS *=' Makefile` — the `OBJS` variable must be defined.
+        - **Test 2:** `grep -q '\$(OBJS)' Makefile` — `$(OBJS)` must appear in the `app` rule.
+        - **Test 3:** `grep -qP '%\.o.*:.*%\.c' Makefile` — a pattern rule `%.o: %.c` must exist.
+        - **Test 4:** `grep -qP '\$[<^@]' Makefile` — at least one automatic variable (`$<`, `$^`, or `$@`) must be used.
+        - **Test 5:** `make && [ -f app ]` — build must succeed.
+        - **`$^` (all prerequisites):** In the `app` rule, `$^` expands to `main.o math.o io.o` — all the files listed in `$(OBJS)`. This replaces the repetitive `main.o math.o io.o` in the recipe.
+        - **`$@` (target name):** In the `app` rule, `$@` expands to `app`. In the pattern rule when building `math.o`, `$@` expands to `math.o`.
+        - **`$<` (first prerequisite):** In the pattern rule, `$<` expands to the `.c` file (e.g., `math.c`). Using `$<` instead of `$^` compiles only the single matching source file.
+        - **Pattern rule `%.o: %.c`:** The `%` wildcard matches any filename stem. This single rule replaces all three explicit `.o` rules. Adding `newfile.c` to `OBJS` is all that's needed — no new explicit rule required.
+
     tests:
       - description: "Defined OBJS variable"
         command: "cd /tutorial/make_project && grep -q 'OBJS *=' Makefile"
@@ -536,6 +594,17 @@ steps:
     setup_commands:
       - "make -C /tutorial/make_project 2>/dev/null || true"
 
+    solution:
+      commands:
+        - "cd make_project && make"
+        - "cd make_project && touch math.c"
+        - "cd make_project && make"
+      explanation: |
+        - **Test:** `[ math.o -nt main.o ]` — `math.o` must be newer than `main.o`. After `touch math.c` + `make`, only `math.c` → `math.o` was recompiled, so `math.o` has a newer timestamp than `main.o` (which was not recompiled).
+        - **Make's timestamp heuristic:** Make compares the last-modified time of each target against its prerequisites. If a prerequisite is newer than the target, the target is out-of-date and its recipe runs.
+        - **`touch math.c`:** Updates `math.c`'s modification timestamp without changing its content. Make sees `math.c` is now newer than `math.o` and recompiles just that one file, then re-links `app`. `main.c` and `io.c` are untouched.
+        - **Why this matters:** In a large project, this turns a potential hours-long full rebuild into a seconds-long incremental one.
+
     tests:
       - description: "math.c was touched and recompiled (math.o is newer than main.o)"
         command: "cd /tutorial/make_project && [ math.o -nt main.o ]"
@@ -629,6 +698,18 @@ steps:
     watch_files:
       - "make_project/Makefile"
 
+    solution:
+      files:
+        - path: "make_project/Makefile"
+          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n"
+          language: "makefile"
+      explanation: |
+        - **Test 1:** `grep -q '\.PHONY:.*clean' Makefile` — `.PHONY: clean` must appear in the file (before or after the `clean:` rule).
+        - **Test 2:** `grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null` — the `clean` target must exist, `make clean` must succeed, and afterwards no `app` or `.o` files should remain.
+        - **The sabotage scenario:** If a file named `clean` exists in your project directory and `.PHONY` is absent, Make thinks `clean` is a real file target. Since `clean` has no prerequisites, Make sees it as always up-to-date and refuses to run the recipe (`make: 'clean' is up to date.`).
+        - **`.PHONY: clean`:** Tells Make that `clean` is a command name, not a filename. Make ignores any file on disk named `clean` and always runs the recipe. Always declare non-file targets (like `clean`, `test`, `all`) as `.PHONY`.
+        - **`rm -f *.o app`:** `-f` suppresses errors when files don't exist. Without it, `make clean` would fail if called when already clean.
+
     tests:
       - description: "Added .PHONY: clean to Makefile"
         command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
@@ -702,3 +783,22 @@ steps:
       
       > [!WARNING]
       > **Recursive Make is often considered harmful.** It breaks the global visibility of the dependency graph, which can lead to subtle bugs where files aren't recompiled when they should be. For larger projects, consider modern alternatives or a single, "non-recursive" top-level Makefile that includes sub-makefiles.
+
+    solution:
+      files:
+        - path: "make_project/Makefile"
+          content: "CC = gcc\nCFLAGS = -Wall -std=c11\nOBJS = main.o math.o io.o\n\napp: $(OBJS)\n\t$(CC) $(CFLAGS) $^ -o $@\n\n%.o: %.c\n\t$(CC) $(CFLAGS) -c $< -o $@\n\n.PHONY: clean\nclean:\n\trm -f *.o app\n"
+          language: "makefile"
+      commands:
+        - "cd make_project && make clean"
+        - "cd make_project && make"
+      explanation: |
+        No file edits are required for this step — it is a review and summary.
+
+        This Makefile demonstrates every concept from the tutorial in 10 lines:
+        - **Variables (`CC`, `CFLAGS`, `OBJS`):** DRY principle — change the compiler or flags in one place.
+        - **`$(OBJS)` prerequisite:** Declarative dependency graph — Make knows which `.o` files `app` needs.
+        - **`$^` and `$@`:** Automatic variables — no repetition of filenames in the link command.
+        - **Pattern rule `%.o: %.c`:** One rule handles all source files; adding `newfile.c` just requires adding `newfile.o` to `OBJS`.
+        - **`.PHONY: clean`:** Guarantees `make clean` always runs regardless of filesystem state.
+        - **Tab characters on recipe lines:** The invisible but critical requirement that separates Make from all other config formats.

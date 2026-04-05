@@ -94,6 +94,7 @@
     this.steps         = options.steps        || [];
     this.setupCommands = options.setupCommands || [];
     this.requireTests  = options.requireTests  || false;
+    this.instructorMode = options.instructorMode || false;
     this._stepsPassed  = new Set();
     this._quizPassed   = new Set();
     this.currentStep   = -1;
@@ -1404,6 +1405,99 @@
         self._runSilent('printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
           (needsChmod ? ' && chmod +x /tutorial/' + filename : ''));
       });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Instructor Mode — Apply Solution
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Apply the solution for the current step. Loads solution files into the
+   * editor, syncs them to the backend, runs any solution commands, and shows
+   * the explanation. Backend-specific concerns (import cache, preview rebuild)
+   * are handled here so the YAML spec stays backend-independent.
+   */
+  TutorialCode.prototype.applySolution = function () {
+    var step = this.steps[this.currentStep];
+    if (!step || !step.solution) return;
+    var solution = step.solution;
+    var self = this;
+
+    // 1. Pyodide: clear Python import cache before writing files
+    if (this.config.backend === 'pyodide' && solution.files) {
+      this._postWorker({
+        type: 'runCode',
+        code: [
+          'import sys as _sys',
+          'for _m in list(_sys.modules):',
+          '    _f = getattr(_sys.modules[_m], "__file__", "") or ""',
+          '    if "/tutorial/" in _f: del _sys.modules[_m]',
+        ].join('\n'),
+        silent: true
+      });
+    }
+
+    // 2. Apply file overrides — reuse existing openFile + _syncFileToBackend
+    if (solution.files) {
+      self._suppressAutoSave = true;
+      solution.files.forEach(function (f) {
+        self.openFile(f.path, f.content, f.language);
+        self._syncFileToBackend(f.path);
+      });
+      self._suppressAutoSave = false;
+      // Activate the step's open_file (the main file the student works on),
+      // not the first solution file (which may be a dependency).
+      var target = step.open_file || solution.files[solution.files.length - 1].path;
+      self._setActiveFile(target);
+      self._renderTabs();
+    }
+
+    // 3. Run solution commands (backend-specific dispatch)
+    if (solution.commands && solution.commands.length > 0) {
+      if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
+        solution.commands.forEach(function (cmd) { self.sendCommand(cmd); });
+      } else if (this.config.backend === 'pyodide') {
+        this._postWorker({
+          type: 'runCode',
+          code: solution.commands.join('\n'),
+          silent: true
+        });
+      }
+    }
+
+    // 4. React: rebuild live preview after file changes
+    if (this.config.backend === 'react') {
+      setTimeout(function () { self._rebuildReactPreview(); }, 400);
+    }
+
+    // 5. v86: re-sync watched files after a short delay
+    if (this.config.backend === 'v86') {
+      setTimeout(function () { self._pollWatchedFiles(); }, 1500);
+    }
+
+    // 6. Show explanation if present
+    if (solution.explanationHTML) {
+      self._showSolutionExplanation(solution.explanationHTML);
+    }
+  };
+
+  /**
+   * Show the solution explanation below the step instructions.
+   */
+  TutorialCode.prototype._showSolutionExplanation = function (html) {
+    // Remove any previous explanation
+    var prev = this.stepContentEl.querySelector('.tvm-solution-explanation');
+    if (prev) prev.remove();
+
+    var div = document.createElement('div');
+    div.className = 'tvm-solution-explanation';
+    div.innerHTML = '<h3>Solution Explanation</h3>' + html;
+    this.stepContentEl.appendChild(div);
+
+    // Scroll to explanation
+    if (this.stepContentWrapEl) {
+      this.stepContentWrapEl.scrollTop = this.stepContentWrapEl.scrollHeight;
+    }
   };
 
   // ---------------------------------------------------------------------------

@@ -1710,3 +1710,34 @@ html:not(.dark-mode) .tvm-quiz-panel .score-display { color: #2774AE; }
 html:not(.dark-mode) .tvm-quiz-panel .score-summary { color: #555; }
 html:not(.dark-mode) .tvm-quiz-panel .tvm-quiz-threshold { color: #888; }
 html:not(.dark-mode) .tvm-quiz-status { color: #555; }
+
+/* ── Solution Explanation (instructor mode) ─────────────────────────────── */
+.tvm-solution-explanation {
+  margin-top: 1.5em;
+  padding: 1em 1.2em;
+  border-left: 4px solid #f0ad4e;
+  background: #fcf8e3;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.tvm-solution-explanation h3 {
+  margin-top: 0;
+  margin-bottom: 0.6em;
+  color: #8a6d3b;
+  font-size: 16px;
+}
+.tvm-solution-explanation ul { margin: 0.4em 0; padding-left: 1.4em; }
+.tvm-solution-explanation li { margin-bottom: 0.3em; }
+.tvm-solution-explanation code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+.dark-mode .tvm-solution-explanation {
+  background: #3a3520;
+  border-left-color: #d4a017;
+}
+.dark-mode .tvm-solution-explanation h3 { color: #f0c674; }
+.dark-mode .tvm-solution-explanation code { background: rgba(255,255,255,0.1); }
