@@ -1850,22 +1850,22 @@ steps:
             function App() {
               const users = [
                 {
-                  name: 'Barbara Liskov',
-                  username: 'barbara-liskov',
-                  avatarUrl: '/img/liskov.png',
-                  repos: 12, followers: 2048, following: 64
+                  name: 'Margaret Hamilton',
+                  username: 'margaret-hamilton',
+                  avatarUrl: '/img/hamilton.png',
+                  repos: 15, followers: 4096, following: 12
                 },
-                {
+              {
                   name: 'Fred Brooks',
                   username: 'fred-brooks',
                   avatarUrl: '/img/brooks.png',
                   repos: 7, followers: 1024, following: 300
                 },
                 {
-                  name: 'Margaret Hamilton',
-                  username: 'margaret-hamilton',
-                  avatarUrl: '/img/hamilton.png',
-                  repos: 15, followers: 4096, following: 12
+                  name: 'Barbara Liskov',
+                  username: 'barbara-liskov',
+                  avatarUrl: '/img/liskov.png',
+                  repos: 12, followers: 2048, following: 64
                 },
                 {
                   name: 'David Parnas',
