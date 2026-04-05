@@ -92,7 +92,7 @@ const getLetterGrade = (score) => {
 };
 
 // TODO 2 DONE: .filter() keeps only passing students (grade >= 60)
-const passingStudents = students.filter(({ grade }) => grade >= 60);
+const passingStudents = students.filter(student => student.grade >= 60);
 
 console.log("=== Passing Students ===");
 passingStudents.forEach(s => console.log(`${s.name}: ${s.grade} (${getLetterGrade(s.grade)})`));
