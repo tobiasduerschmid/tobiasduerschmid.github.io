@@ -38,7 +38,7 @@ topics:
         url: /SEBook/tools/git-tutorial.html
       - name: Make
         url: /SEBook/tools/make.html
-      - name: Interactive Make Tutorial
+      - name: Make Tutorial
         url: /SEBook/tools/makefile-tutorial.html
 
   - name: Design Patterns
