@@ -38,6 +38,7 @@ docker run --rm --platform linux/386 \
         less \
         file \
         tree \
+        musl-dev \
         mandoc \
         man-pages \
         bash-doc \
@@ -48,7 +49,30 @@ docker run --rm --platform linux/386 \
         grep-doc \
         less-doc \
         nano-doc \
-        sed-doc 
+        sed-doc
+
+    # Build TCC (Tiny C Compiler) from source — not in Alpine repos for 386
+    echo "    Installing TCC (Tiny C Compiler)..."
+    apk add --no-cache gcc 2>&1 | tail -1
+    git clone --depth 1 https://repo.or.cz/tinycc.git /tmp/tcc
+    cd /tmp/tcc
+    ./configure --prefix=/usr \
+        --elfinterp=/lib/ld-musl-i386.so.1 \
+        --crtprefix=/usr/lib \
+        --sysincludepaths=/usr/include \
+        --libpaths=/usr/lib \
+        --config-bcheck=no
+    make -j$(nproc)
+    make install
+    # TCC looks for libtcc1.a in /usr/lib (its libdir), not /usr/lib/tcc
+    cp /usr/lib/tcc/libtcc1.a /usr/lib/libtcc1.a
+    cp /usr/lib/tcc/runmain.o /usr/lib/runmain.o
+    cp /usr/lib/tcc/bt-exe.o /usr/lib/bt-exe.o
+    cp /usr/lib/tcc/bt-log.o /usr/lib/bt-log.o
+    cd /
+    rm -rf /tmp/tcc
+    # Remove build-time GCC (huge), keep only TCC
+    apk del gcc 2>&1 | tail -1
 
     echo "[2/4] Configuring system..."
 
@@ -60,7 +84,7 @@ docker run --rm --platform linux/386 \
     sed -i "s|^root:.*|root::0:0:root:/root:/bin/bash|" /etc/passwd
     echo "root::0::::::" > /etc/shadow
 
-    # Simulated gcc for tutorials
+    # gcc wrapper that delegates to tcc
     cp /overlay/gcc /usr/bin/gcc
     chmod +x /usr/bin/gcc
 
