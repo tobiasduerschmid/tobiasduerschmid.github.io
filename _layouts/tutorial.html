@@ -123,6 +123,7 @@
 
   {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
   {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
+  {% assign tutorial_allow_autosave = tutorial_data.allow_autosave | default: true %}
 
   {% if tutorial_backend == 'webcontainer' %}
   <!-- Register Cross-Origin Isolation service worker required by WebContainers -->
@@ -169,6 +170,7 @@
         steps:        config.steps,
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
+        allowAutosave: {{ tutorial_allow_autosave }},
         instructorMode: instructorMode,
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
@@ -182,7 +184,12 @@
 
       // Wire Auto-save toggle + Reset Step button
       var autoSaveToggle = document.getElementById('autoSaveToggle');
-      if (autoSaveToggle) {
+      var autoSaveLabel = document.getElementById('autoSaveLabel');
+      if (!tutorial.allowAutosave) {
+        // Tutorial disables autosave entirely — hide toggle
+        if (autoSaveLabel) autoSaveLabel.style.display = 'none';
+        tutorial.autoSaveEnabled = false;
+      } else if (autoSaveToggle) {
         // Restore persisted preference (default: on)
         var savedPref = localStorage.getItem('tutorial-autosave');
         var autoSaveOn = savedPref !== 'false';

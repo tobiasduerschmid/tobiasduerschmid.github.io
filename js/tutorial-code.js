@@ -103,7 +103,9 @@
     this._stepsUnlocked = new Set([0]);   // step 0 is always unlocked
     this._stepsVisited  = new Set();      // tracks first-time entry
     this.currentStep   = -1;
-    this.autoSaveEnabled = true;          // toggled from navbar
+    this.allowAutosave   = options.allowAutosave !== false; // tutorial-level kill switch
+    this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
+    this._originalContent = {};           // tracks original file content for dirty detection
     this.booted        = false;
 
     // v86 state
@@ -183,7 +185,7 @@
         }
         self._hideLoading();
         if (self.steps.length > 0) {
-          var saved = self._loadSavedProgress();
+          var saved = self.allowAutosave ? self._loadSavedProgress() : null;
           if (saved) {
             if (saved.stepsUnlocked) self._stepsUnlocked = new Set(saved.stepsUnlocked);
             // Always ensure all steps up to the saved step are unlocked
@@ -1500,7 +1502,7 @@
     this._syncFileToBackend(this.activeFileName);
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
-    if (this.autoSaveEnabled) this._autoSaveProgress();
+    if (this.autoSaveEnabled) this._saveFile(this.activeFileName);
   };
 
   // ---------------------------------------------------------------------------
@@ -1699,14 +1701,23 @@
   /**
    * Save the current step index and all open file contents to localStorage.
    */
+  /**
+   * Full save: persists step, unlock state, and only files changed from original.
+   */
   TutorialCode.prototype.saveProgress = function () {
+    if (!this.allowAutosave) return;
     var files = {};
+    var self = this;
     for (var name in this.editorModels) {
       if (this.editorModels.hasOwnProperty(name)) {
-        files[name] = {
-          content: this.editorModels[name].model.getValue(),
-          language: this.editorModels[name].model.getLanguageId()
-        };
+        var current = this.editorModels[name].model.getValue();
+        var original = self._originalContent[name];
+        if (original === undefined || current !== original) {
+          files[name] = {
+            content: current,
+            language: this.editorModels[name].model.getLanguageId()
+          };
+        }
       }
     }
     var data = {
@@ -1722,6 +1733,31 @@
       localStorage.setItem(this._storageKey(), JSON.stringify(data));
     } catch (e) {
       console.warn('TutorialCode: could not save progress', e);
+    }
+  };
+
+  /**
+   * Targeted save: persists only a single file (if changed) plus current step.
+   * Used by auto-save on Ctrl+S to avoid re-serializing everything.
+   */
+  TutorialCode.prototype._saveFile = function (filename) {
+    if (!this.allowAutosave) return;
+    var entry = this.editorModels[filename];
+    if (!entry) return;
+    var current = entry.model.getValue();
+    var original = this._originalContent[filename];
+    if (original !== undefined && current === original) return; // unchanged
+
+    try {
+      var raw = localStorage.getItem(this._storageKey());
+      var data = raw ? JSON.parse(raw) : {};
+      if (!data.files) data.files = {};
+      data.files[filename] = { content: current, language: entry.model.getLanguageId() };
+      data.step = this.currentStep;
+      data.activeFile = this.activeFileName;
+      localStorage.setItem(this._storageKey(), JSON.stringify(data));
+    } catch (e) {
+      console.warn('TutorialCode: could not save file', e);
     }
   };
 
@@ -1771,6 +1807,7 @@
     step.files.forEach(function (f) {
       self.openFile(f.path, f.content, f.language);
       self._syncFileToBackend(f.path);
+      self._originalContent[f.path] = f.content || '';
     });
     self._suppressAutoSave = false;
     if (step.open_file) { self._setActiveFile(step.open_file); }
@@ -1827,6 +1864,7 @@
         if (firstVisit || !self.editorModels[f.path]) {
           self.openFile(f.path, f.content, f.language);
           self._syncFileToBackend(f.path);
+          self._originalContent[f.path] = f.content || '';
         }
       });
       self._suppressAutoSave = false;

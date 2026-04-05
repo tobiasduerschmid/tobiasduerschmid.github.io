@@ -2,6 +2,7 @@ title: "Version Control with Git"
 description: "Learn Git through hands-on practice — from your first commit to resolving merge conflicts, all inside an interactive Linux environment"
 
 require_tests: true
+allow_autosave: false
 
 setup_commands:
   - "git config --global user.email 'student@cs.ucla.edu'"
