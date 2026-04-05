@@ -160,6 +160,7 @@
         fontSize: {{ page.font_size  | default: 14 }},
         workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
+        prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
       });
       tutorial.start();
 

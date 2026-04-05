@@ -1,0 +1,207 @@
+title: "Prolog Essentials"
+description: "A hands-on introduction to Prolog, running entirely in your browser. Learn to define facts, write rules, and query a knowledge base — no installation required."
+
+backend: prolog
+
+require_tests: true
+
+steps:
+  # Step 1: Facts & Queries
+  - title: "Facts and Queries"
+    instructions: |
+      ## Facts: The Building Blocks
+
+      Prolog programs are built from **facts**, **rules**, and **queries**.
+      A *fact* states something that is unconditionally true:
+
+      ```prolog
+      parent(tom, bob).
+      ```
+
+      This says "Tom is a parent of Bob." Every fact ends with a **period**.
+
+      ### Your Task
+
+      The editor contains a small family database. Add the following facts:
+
+      1. `parent(bob, ann).`  — Bob is a parent of Ann
+      2. `parent(bob, pat).`  — Bob is a parent of Pat
+
+      Then use the **?-** query input to explore:
+
+      - `parent(tom, bob)` — Is Tom a parent of Bob?
+      - `parent(tom, X)` — Who are Tom's children?
+      - `parent(X, ann)` — Who are Ann's parents?
+
+      Click **Run** to consult the file and execute your query.
+
+    default_query: "parent(tom, X)"
+    files:
+      - path: "family.pl"
+        content: |
+          % Family database
+          % A fact parent(X, Y) means "X is a parent of Y".
+
+          parent(tom, bob).
+
+          % TODO: Add two more facts:
+          % parent(bob, ann).
+          % parent(bob, pat).
+    open_file: "family.pl"
+    tests:
+      - description: "parent(bob, ann) is defined"
+        command: |
+          var answers = __query('parent(bob, ann)');
+          assert(answers.length > 0, 'parent(bob, ann) should be a fact');
+      - description: "parent(bob, pat) is defined"
+        command: |
+          var answers = __query('parent(bob, pat)');
+          assert(answers.length > 0, 'parent(bob, pat) should be a fact');
+      - description: "Bob has exactly two children"
+        command: |
+          var answers = __query('parent(bob, X)');
+          assert(answers.length === 2, 'Bob should have exactly 2 children, got ' + answers.length);
+
+  # Step 2: Rules
+  - title: "Rules"
+    instructions: |
+      ## Rules: Deriving New Knowledge
+
+      A **rule** lets Prolog derive facts from other facts. The syntax is:
+
+      ```prolog
+      grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
+      ```
+
+      Read `:-` as **"if"** and `,` as **"and"**:
+
+      > X is a grandparent of Z **if** X is a parent of some Y **and** Y is a parent of Z.
+
+      Variables start with an **uppercase letter** (e.g., `X`, `Y`, `Person`).
+
+      ### Your Task
+
+      Add these two rules to the file:
+
+      1. **`grandparent(X, Z)`** — X is a grandparent of Z
+         (already shown above)
+
+      2. **`sibling(X, Y)`** — X and Y are siblings
+         *Hint:* Two people are siblings if they share a parent, but are not the same person. Use `X \= Y` for "X is not equal to Y".
+
+      Then query:
+
+      - `grandparent(tom, ann)` — Is Tom a grandparent of Ann?
+      - `sibling(ann, pat)` — Are Ann and Pat siblings?
+      - `sibling(X, Y)` — Find all sibling pairs
+
+    default_query: "grandparent(tom, X)"
+    files:
+      - path: "family.pl"
+        content: |
+          % Family database
+          parent(tom, bob).
+          parent(bob, ann).
+          parent(bob, pat).
+
+          % TODO: Define grandparent/2
+          % grandparent(X, Z) :- ...
+
+          % TODO: Define sibling/2
+          % sibling(X, Y) :- ...
+    open_file: "family.pl"
+    tests:
+      - description: "grandparent(tom, ann) succeeds"
+        command: |
+          var answers = __query('grandparent(tom, ann)');
+          assert(answers.length > 0, 'grandparent(tom, ann) should succeed');
+      - description: "grandparent(tom, pat) succeeds"
+        command: |
+          var answers = __query('grandparent(tom, pat)');
+          assert(answers.length > 0, 'grandparent(tom, pat) should succeed');
+      - description: "sibling(ann, pat) succeeds"
+        command: |
+          var answers = __query('sibling(ann, pat)');
+          assert(answers.length > 0, 'sibling(ann, pat) should succeed');
+      - description: "A person is not their own sibling"
+        command: |
+          var answers = __query('sibling(ann, ann)');
+          assert(answers.length === 0, 'sibling(ann, ann) should fail — a person is not their own sibling');
+
+  # Step 3: Lists & Recursion
+  - title: "Lists and Recursion"
+    instructions: |
+      ## Lists
+
+      Prolog lists use square brackets: `[a, b, c]`. The **head|tail** pattern splits a list:
+
+      ```prolog
+      [H|T] = [1, 2, 3]
+      % H = 1, T = [2, 3]
+      ```
+
+      The empty list is `[]`.
+
+      ## Recursive Rules
+
+      Most list operations are defined recursively:
+
+      ```prolog
+      my_length([], 0).
+      my_length([_|T], N) :- my_length(T, N1), N is N1 + 1.
+      ```
+
+      ### Your Task
+
+      Define a predicate **`my_member(X, List)`** that succeeds when `X` is an element of `List`:
+
+      - **Base case:** `X` is the head of the list
+      - **Recursive case:** `X` is a member of the tail
+
+      Then define **`my_append(L1, L2, L3)`** where `L3` is the concatenation of `L1` and `L2`:
+
+      - **Base case:** appending anything to `[]` gives that thing
+      - **Recursive case:** `[H|T1]` appended with `L2` is `[H|T3]` where `T3` is `T1` appended with `L2`
+
+      Try querying:
+      - `my_member(b, [a, b, c])`
+      - `my_member(X, [a, b, c])` — enumerate elements
+      - `my_append([1,2], [3,4], X)` — concatenate lists
+
+    default_query: "my_member(X, [a, b, c])"
+    files:
+      - path: "lists.pl"
+        content: |
+          % my_member(X, List) - X is an element of List
+          % TODO: Define the base case and recursive case
+          % my_member(X, [X|_]).
+          % my_member(X, [_|T]) :- my_member(X, T).
+
+
+          % my_append(L1, L2, L3) - L3 is L1 concatenated with L2
+          % TODO: Define the base case and recursive case
+          % my_append([], L, L).
+          % my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
+    open_file: "lists.pl"
+    tests:
+      - description: "my_member(b, [a, b, c]) succeeds"
+        command: |
+          var answers = __query('my_member(b, [a, b, c])');
+          assert(answers.length > 0, 'my_member(b, [a,b,c]) should succeed');
+      - description: "my_member(d, [a, b, c]) fails"
+        command: |
+          var answers = __query('my_member(d, [a, b, c])');
+          assert(answers.length === 0, 'my_member(d, [a,b,c]) should fail');
+      - description: "my_member enumerates all elements"
+        command: |
+          var answers = __query('my_member(X, [a, b, c])');
+          assert(answers.length === 3, 'Should find 3 members, got ' + answers.length);
+      - description: "my_append([1,2], [3,4], [1,2,3,4]) succeeds"
+        command: |
+          var answers = __query('my_append([1,2], [3,4], [1,2,3,4])');
+          assert(answers.length > 0, 'my_append([1,2],[3,4],[1,2,3,4]) should succeed');
+      - description: "my_append computes the result"
+        command: |
+          var answers = __query('my_append([a,b], [c], X)');
+          assert(answers.length > 0, 'my_append([a,b],[c],X) should succeed');
+          assert(answers[0].indexOf('[a,b,c]') !== -1, 'Expected X = [a,b,c], got: ' + answers[0]);

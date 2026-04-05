@@ -60,6 +60,7 @@
     yml: 'yaml', yaml: 'yaml', md: 'markdown',
     css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
+    pl: 'prolog', pro: 'prolog',
   };
 
   function detectLanguage(filename) {
@@ -86,6 +87,7 @@
       fontSize:   options.fontSize || 14,
       workerPath:    options.workerPath    || '/js/pyodide-worker.js',
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
+      prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview:  (backend === 'react'),    // live iframe preview for React tutorials
@@ -457,6 +459,72 @@
       },
     });
 
+    // ---- Prolog Monarch tokenizer ----
+    monaco.languages.register({ id: 'prolog' });
+    monaco.languages.setLanguageConfiguration('prolog', {
+      comments: { lineComment: '%', blockComment: ['/*', '*/'] },
+      brackets: [['(',')'],['{','}'],['[',']']],
+      autoClosingPairs: [
+        {open:'(',close:')'},{open:'[',close:']'},{open:'{',close:'}'},
+        {open:'"',close:'"'},{open:"'",close:"'"}
+      ],
+      surroundingPairs: [
+        {open:'(',close:')'},{open:'[',close:']'},{open:'{',close:'}'}
+      ],
+    });
+    monaco.languages.setMonarchTokensProvider('prolog', {
+      keywords: ['is','not','true','fail','halt','assert','retract','asserta','assertz',
+                 'retractall','findall','bagof','setof','forall','between','succ','plus',
+                 'length','append','member','last','reverse','msort','sort','nth0','nth1',
+                 'write','writeln','nl','read','atom','number','var','nonvar','integer','float',
+                 'atom_string','atom_chars','atom_length','number_chars','number_codes',
+                 'char_code','sub_atom','atom_concat','copy_term','functor','arg',
+                 'ground','compound','callable','throw','catch'],
+      operators: [':-','?-','-->','->',';','\\+','=','\\=','==','\\==','=:=','=\\=',
+                  '<','>','>=','=<','@<','@>','@>=','@=<','+','-','*','/','//','mod',
+                  'rem','**','is','=..','\\'],
+      tokenizer: {
+        root: [
+          [/%.*$/, 'comment'],
+          [/\/\*/, 'comment', '@blockComment'],
+          [/\?-/, 'keyword'],
+          [/:-/, 'keyword'],
+          [/!/, 'keyword'],           // cut
+          [/_[A-Za-z0-9_]*/, 'variable'], // anonymous / underscore vars
+          [/[A-Z_][A-Za-z0-9_]*/, 'variable'], // variables
+          [/'/, 'string', '@quotedAtom'],
+          [/"/, 'string', '@string'],
+          [/\d+(\.\d+)?([eE][+-]?\d+)?/, 'number'],
+          [/0[xX][0-9a-fA-F]+/, 'number'],
+          [/0[oO][0-7]+/, 'number'],
+          [/0[bB][01]+/, 'number'],
+          [/0'[^\s]/, 'number'],      // character code 0'a
+          [/[a-z][A-Za-z0-9_]*/, { cases: {
+            '@keywords': 'keyword',
+            '@default': 'atom'
+          }}],
+          [/[+\-*/\\^<>=~:.?@#$&]+/, 'operator'],
+          [/[\[\](){}|,;.]/, 'delimiter'],
+          [/\s+/, 'white'],
+        ],
+        blockComment: [
+          [/[^/*]+/, 'comment'],
+          [/\*\//, 'comment', '@pop'],
+          [/./, 'comment'],
+        ],
+        quotedAtom: [
+          [/\\./, 'string'],
+          [/[^'\\]+/, 'string'],
+          [/'/, 'string', '@pop'],
+        ],
+        string: [
+          [/\\./, 'string'],
+          [/[^"\\]+/, 'string'],
+          [/"/, 'string', '@pop'],
+        ],
+      },
+    });
+
     // ---- Python Monarch tokenizer with f-string interpolation support ----
     monaco.languages.setMonarchTokensProvider('python', {
       defaultToken: '',
@@ -589,6 +657,8 @@
         { token: 'comment.shell-sebook',         foreground: '008000' },
         // f-string interpolation delimiters — blue to signal "code zone"
         { token: 'string.fstring.delimiter',     foreground: '0451a5' },
+        // Prolog tokens
+        { token: 'atom',                         foreground: 'a31515' },
       ],
       colors: {},
     });
@@ -603,6 +673,8 @@
         { token: 'comment.shell-sebook',         foreground: '6a9955' },
         // f-string interpolation delimiters — light blue to signal "code zone"
         { token: 'string.fstring.delimiter',     foreground: '569cd6' },
+        // Prolog tokens
+        { token: 'atom',                         foreground: 'ce9178' },
       ],
       colors: { 'editor.background': '#1e1e1e' },
     });
@@ -680,6 +752,7 @@
     if (backend === 'react')        return this._initReactBackend();
     if (backend === 'browser')      return this._initBrowserBackend();
     if (backend === 'sql')          return this._initSQL();
+    if (backend === 'prolog')       return this._initProlog();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -873,6 +946,45 @@
     });
   };
 
+  // ---- Prolog backend (Tau Prolog via Web Worker) ----------------------------
+  TutorialCode.prototype._initProlog = function () {
+    var self = this;
+    this._showLoading('Loading Prolog runtime\u2026 (first load may take a moment)');
+    return new Promise(function (resolve, reject) {
+      self._worker = new Worker(self.config.prologWorkerPath);
+
+      self._worker.onmessage = function (e) {
+        var msg = e.data;
+        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
+        if (msg.type === 'ready') {
+          self.booted = true;
+          var setupCmds = self.setupCommands;
+          if (setupCmds && setupCmds.length > 0) {
+            self._postWorker(
+              { type: 'runProlog', code: setupCmds.join('\n'), silent: true },
+              function () { resolve(); }
+            );
+          } else {
+            resolve();
+          }
+          return;
+        }
+        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
+        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
+        if (msg.type === 'error')  { reject(new Error(msg.message)); return; }
+        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
+          var cb = self._workerCallbacks[msg.id];
+          delete self._workerCallbacks[msg.id];
+          cb(msg);
+        }
+      };
+
+      self._worker.onerror = function (err) {
+        reject(new Error('Prolog worker error: ' + (err.message || err)));
+      };
+    });
+  };
+
   /** Render a SQL result set as a table inside the output panel. */
   TutorialCode.prototype._appendTable = function (columns, rows) {
     if (!this.outputPre) return;
@@ -987,6 +1099,24 @@
         self._postWorker({ type: 'run', path: sqlPath }, function (msg) {
           if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
           if (msg.exitCode !== 0) self._appendOutput('\n\u2717 Error\n', 'err');
+        });
+      });
+      return;
+    }
+
+    if (backend === 'prolog') {
+      var plPath = '/tutorial/' + filename;
+      this._syncFileToBackend(filename, function () {
+        self._clearOutput();
+        self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+        var runBtn = self.root.querySelector('.tvm-run-btn');
+        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
+        var query = '';
+        var argsInp = self.root.querySelector('.tvm-args-input');
+        if (argsInp) query = argsInp.value.trim();
+        self._postWorker({ type: 'run', path: plPath, query: query }, function (msg) {
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (msg.exitCode !== 0 && !query) self._appendOutput('\n\u2717 Error\n', 'err');
         });
       });
       return;
@@ -1237,7 +1367,8 @@
       value: '// Follow the tutorial steps on the left.\n',
       language: this.config.backend === 'pyodide'  ? 'python'      :
                 this.config.backend === 'react'    ? 'javascript'  :
-                this.config.backend === 'browser'  ? 'javascript'  : 'shell-sebook',
+                this.config.backend === 'browser'  ? 'javascript'  :
+                this.config.backend === 'prolog'   ? 'prolog'      : 'shell-sebook',
       theme:    this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -1379,6 +1510,12 @@
         { type: 'write', path: '/tutorial/' + filename, content: content },
         function () { if (callback) callback(); }
       );
+
+    } else if (this.config.backend === 'prolog') {
+      this._postWorker(
+        { type: 'write', path: '/tutorial/' + filename, content: content },
+        function () { if (callback) callback(); }
+      );
     }
   };
 
@@ -1462,6 +1599,12 @@
           code: solution.commands.join('\n'),
           silent: true
         });
+      } else if (this.config.backend === 'prolog') {
+        this._postWorker({
+          type: 'runProlog',
+          code: solution.commands.join('\n'),
+          silent: true
+        });
       }
     }
 
@@ -1540,10 +1683,32 @@
         }
       } else if (this.config.backend === 'pyodide') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
+      } else if (this.config.backend === 'prolog') {
+        this._postWorker({ type: 'runProlog', code: step.setup_commands.join('\n'), silent: true });
       }
     }
 
     if (this.config.backend === 'v86') this._startFileWatch(2000);
+
+    // Configure query input for Prolog backend
+    if (this.config.backend === 'prolog') {
+      var plArgsInp = this.root.querySelector('.tvm-args-input');
+      var plArgsLbl = this.root.querySelector('.tvm-args-label');
+      if (plArgsInp) {
+        plArgsInp.style.display = 'inline-block';
+        plArgsInp.style.minWidth = '260px';
+        plArgsInp.style.flex = '1';
+        plArgsInp.placeholder = 'e.g. parent(tom, X)';
+        plArgsInp.value = step.default_query || '';
+        plArgsInp.title = 'Prolog query (without trailing period)';
+      }
+      if (plArgsLbl) {
+        plArgsLbl.style.display = 'inline-block';
+        plArgsLbl.textContent = '?-';
+        plArgsLbl.style.fontSize = '13px';
+        plArgsLbl.style.fontWeight = '600';
+      }
+    }
 
     // Configure args and filter visibility
     if (this.config.backend === 'pyodide') {
@@ -1566,7 +1731,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'prolog') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -2040,6 +2205,7 @@
     else if (backend === 'react')        this._runTestsReact();
     else if (backend === 'browser')      this._runTestsBrowser();
     else if (backend === 'sql')          this._runTestsSQL();
+    else if (backend === 'prolog')       this._runTestsProlog();
   };
 
   // v86 — same marker approach as original tutorial-vm.js
@@ -2101,6 +2267,47 @@
       );
     }
     runNext(0);
+  };
+
+  // Prolog — each test.command is a JS snippet with __query / __consult / assert
+  TutorialCode.prototype._runTestsProlog = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+    var results = [];
+
+    // Sync all open files before running tests
+    var filenames = Object.keys(this.editorModels);
+    var syncCount = 0;
+    var totalFiles = filenames.length;
+
+    function afterSync() {
+      syncCount++;
+      if (syncCount < totalFiles) return;
+      // First consult the active file so tests can query it
+      var activeFile = self.activeFileName;
+      if (activeFile) {
+        var content = self.editorModels[activeFile] ? self.editorModels[activeFile].model.getValue() : '';
+        self._postWorker({ type: 'runProlog', code: content, silent: true }, function () {
+          runNext(0);
+        });
+      } else {
+        runNext(0);
+      }
+    }
+
+    function runNext(i) {
+      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      self._postWorker(
+        { type: 'runCode', code: tests[i].command, silent: true },
+        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
+      );
+    }
+
+    if (totalFiles === 0) { runNext(0); return; }
+    filenames.forEach(function (fn) { self._syncFileToBackend(fn, afterSync); });
   };
 
   // Pyodide — each test.command is run as Python code; exit 0 if no exception
