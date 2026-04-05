@@ -39,7 +39,7 @@ html:not(.dark-mode) #printBtn:hover,        html:not(.dark-mode) #printBtn:focu
   flex-shrink: 0;
 }
 
-#darkModeToggle:checked + .tvm-dark-toggle-track {
+.tvm-dark-toggle-wrap input:checked + .tvm-dark-toggle-track {
   background: #0078d4;
 }
 
@@ -54,8 +54,13 @@ html:not(.dark-mode) #printBtn:hover,        html:not(.dark-mode) #printBtn:focu
   transition: left 0.2s;
 }
 
-#darkModeToggle:checked + .tvm-dark-toggle-track .tvm-dark-toggle-thumb {
+.tvm-dark-toggle-wrap input:checked + .tvm-dark-toggle-track .tvm-dark-toggle-thumb {
   left: 18px;
+}
+
+/* Auto-save toggle: UCLA gold when on */
+#autoSaveLabel .tvm-dark-toggle-wrap input:checked + .tvm-dark-toggle-track {
+  background: #FFD100;
 }
 
 /* ─────────────────────────────────────────── */
@@ -718,6 +723,11 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
   display: block;
   background: #ffffff;
 }
+
+/* Dark mode: match container/frame bg to the iframe body so there is no white
+   flash between the old and new srcdoc loading. */
+html.dark-mode .tvm-preview-container { background: #1e1e1e; }
+html.dark-mode .tvm-preview-frame     { background: #1e1e1e; }
 
 /* Light mode: preview panel header matches other panels */
 html:not(.dark-mode) .tvm-preview-header { background: #e8e8ec; border-bottom-color: #ccc; color: #555; }
@@ -1754,31 +1764,6 @@ html:not(.dark-mode) .tvm-quiz-status { color: #555; }
 }
 .dark-mode .tvm-solution-explanation h3 { color: #f0c674; }
 .dark-mode .tvm-solution-explanation code { background: rgba(255,255,255,0.1); }
-
-/* Save-progress toast */
-.tvm-save-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: #1a7f3c;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  opacity: 0;
-  transition: opacity 0.3s, transform 0.3s;
-  z-index: 10000;
-  pointer-events: none;
-  max-width: 500px;
-  text-align: center;
-}
-.tvm-save-toast-visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
 
 /* Locked step buttons */
 .tvm-step-btn.locked {

@@ -103,6 +103,7 @@
     this._stepsUnlocked = new Set([0]);   // step 0 is always unlocked
     this._stepsVisited  = new Set();      // tracks first-time entry
     this.currentStep   = -1;
+    this.autoSaveEnabled = true;          // toggled from navbar
     this.booted        = false;
 
     // v86 state
@@ -194,7 +195,7 @@
             // Mark saved step as already visited so loadStep won't override files
             self._stepsVisited.add(saved.step);
             self.loadStep(saved.step);
-            self._applySavedFiles(saved.files);
+            self._applySavedFiles(saved.files, saved.activeFile);
           } else {
             self.loadStep(0);
           }
@@ -1499,6 +1500,7 @@
     this._syncFileToBackend(this.activeFileName);
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
+    if (this.autoSaveEnabled) this._autoSaveProgress();
   };
 
   // ---------------------------------------------------------------------------
@@ -1710,6 +1712,7 @@
     var data = {
       step: this.currentStep,
       files: files,
+      activeFile: this.activeFileName,
       stepsUnlocked: Array.from(this._stepsUnlocked),
       stepsVisited: Array.from(this._stepsVisited),
       stepsPassed: Array.from(this._stepsPassed),
@@ -1720,7 +1723,6 @@
     } catch (e) {
       console.warn('TutorialCode: could not save progress', e);
     }
-    this._showSaveToast();
   };
 
   /**
@@ -1741,7 +1743,7 @@
   /**
    * Apply saved file contents on top of the currently loaded step.
    */
-  TutorialCode.prototype._applySavedFiles = function (files) {
+  TutorialCode.prototype._applySavedFiles = function (files, activeFile) {
     if (!files) return;
     var self = this;
     self._suppressAutoSave = true;
@@ -1752,6 +1754,9 @@
       }
     }
     self._suppressAutoSave = false;
+    if (activeFile && self.editorModels[activeFile]) {
+      self._setActiveFile(activeFile);
+    }
     self._renderTabs();
   };
 
@@ -1773,20 +1778,11 @@
   };
 
   /**
-   * Show a brief toast confirming progress was saved.
+   * Silently auto-save progress to localStorage (no toast).
    */
-  TutorialCode.prototype._showSaveToast = function () {
-    var existing = this.root.querySelector('.tvm-save-toast');
-    if (existing) existing.remove();
-    var toast = document.createElement('div');
-    toast.className = 'tvm-save-toast';
-    toast.textContent = 'Progress saved! Your current step and code will be restored next time you open this tutorial.';
-    this.root.appendChild(toast);
-    setTimeout(function () { toast.classList.add('tvm-save-toast-visible'); }, 10);
-    setTimeout(function () {
-      toast.classList.remove('tvm-save-toast-visible');
-      setTimeout(function () { toast.remove(); }, 300);
-    }, 3000);
+  TutorialCode.prototype._autoSaveProgress = function () {
+    if (this.currentStep < 0) return;
+    this.saveProgress();
   };
 
   // ---------------------------------------------------------------------------
@@ -1822,19 +1818,19 @@
 
     this._renderStepControls(index);
 
-    // Only load original files on first visit; revisits keep student's edits
+    // On first visit: load all files from step definition.
+    // On revisit: only load files that are missing from the editor (keeps student edits).
     var self = this;
-    if (step.files && firstVisit) {
+    if (step.files) {
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
-        self.openFile(f.path, f.content, f.language);
-        self._syncFileToBackend(f.path);
+        if (firstVisit || !self.editorModels[f.path]) {
+          self.openFile(f.path, f.content, f.language);
+          self._syncFileToBackend(f.path);
+        }
       });
       self._suppressAutoSave = false;
       if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
-    } else if (step.open_file && self.editorModels[step.open_file]) {
-      self._setActiveFile(step.open_file);
-      self._renderTabs();
     }
 
     if (step.setup_commands) {
@@ -1899,6 +1895,9 @@
       var stepSelf = this;
       setTimeout(function () { stepSelf._rebuildReactPreview(); }, 400);
     }
+
+    // Auto-save progress when navigating to a new step
+    if (this.autoSaveEnabled) this._autoSaveProgress();
   };
 
   TutorialCode.prototype._renderStepNav = function () {
@@ -2231,7 +2230,9 @@
     if (rBtn) rBtn.addEventListener('click', restartQuiz);
     var cBtn = container.querySelector('.tvm-quiz-continue-btn');
     if (cBtn) cBtn.addEventListener('click', function () {
-      self._quizPassed.add(stepIndex); self._stepsUnlocked.add(stepIndex + 1); self._hideStepQuiz(); self.loadStep(stepIndex + 1);
+      self._quizPassed.add(stepIndex); self._stepsUnlocked.add(stepIndex + 1);
+      if (self.autoSaveEnabled) self._autoSaveProgress();
+      self._hideStepQuiz(); self.loadStep(stepIndex + 1);
     });
 
     // ── Parsons Problem Drag & Drop ──────────────────────────────────────────
@@ -2736,6 +2737,7 @@
       this._renderStepNav();
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
+      if (this.autoSaveEnabled) this._autoSaveProgress();
     }
   };
 

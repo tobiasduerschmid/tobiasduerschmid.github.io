@@ -18,15 +18,20 @@
         </span>
       </div>
       <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
-        <a id="saveProgressBtn" href="#"
-           style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;"
-           title="Save your current step and code to resume later">
-          <i class="fa-solid fa-floppy-disk"></i> Save Progress
-        </a>
+        <label id="autoSaveLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
+               title="Automatically save step and code so you can resume later">
+          <i class="fa-solid fa-floppy-disk"></i> Auto-save
+          <span class="tvm-dark-toggle-wrap">
+            <input type="checkbox" id="autoSaveToggle" checked style="display:none;">
+            <span class="tvm-dark-toggle-track">
+              <span class="tvm-dark-toggle-thumb"></span>
+            </span>
+          </span>
+        </label>
         <a id="resetStepBtn" href="#"
            style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;"
            title="Reset current step to original code">
-          <i class="fa fa-undo"></i> Reset Step
+          <i class="fa fa-undo"></i> Reset Current Step
         </a>
         <a id="solutionBtn" href="#"
            style="display:none; color:#fff; font-size:14px; font-weight:600; text-decoration:none; align-items:center; gap:5px;"
@@ -175,12 +180,18 @@
       });
       tutorial.start();
 
-      // Wire Save Progress + Reset Step buttons
-      var saveBtn = document.getElementById('saveProgressBtn');
-      if (saveBtn) {
-        saveBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          tutorial.saveProgress();
+      // Wire Auto-save toggle + Reset Step button
+      var autoSaveToggle = document.getElementById('autoSaveToggle');
+      if (autoSaveToggle) {
+        // Restore persisted preference (default: on)
+        var savedPref = localStorage.getItem('tutorial-autosave');
+        var autoSaveOn = savedPref !== 'false';
+        autoSaveToggle.checked = autoSaveOn;
+        tutorial.autoSaveEnabled = autoSaveOn;
+        autoSaveToggle.addEventListener('change', function () {
+          tutorial.autoSaveEnabled = this.checked;
+          localStorage.setItem('tutorial-autosave', this.checked);
+          if (this.checked) tutorial.saveProgress();
         });
       }
       var resetBtn = document.getElementById('resetStepBtn');
