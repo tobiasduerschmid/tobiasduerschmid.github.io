@@ -1500,9 +1500,14 @@ steps:
           });
           assert(doneBtn, 'No "Done" filter button found');
           doneBtn.click();
-          var items = root.querySelectorAll('.list-group-item');
-          assert(items.length > 0 && items.length < 6,
-            'After clicking "Done", only completed tasks should be visible (fewer than 6). Found: ' + items.length + '. Make sure your filter buttons update the filter state.');
+          return new Promise(function(resolve) {
+            setTimeout(function() {
+              var items = root.querySelectorAll('.list-group-item');
+              assert(items.length > 0 && items.length < 6,
+                'After clicking "Done", only completed tasks should be visible (fewer than 6). Found: ' + items.length + '. Make sure your filter buttons update the filter state.');
+              resolve();
+            }, 100);
+          });
 
     quiz:
       title: "Conditional Rendering & Filtering — Knowledge Check"

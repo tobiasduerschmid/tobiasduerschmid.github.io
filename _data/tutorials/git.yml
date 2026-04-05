@@ -2062,6 +2062,52 @@ steps:
         - **Test 2:** `grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py` — all four functions must be present in the final `calculator.py`.
         - **Test 3:** `.gitignore` must be in the commit history.
 
+        **The final `calculator.py`:**
+
+        ```python
+        """A simple calculator module."""
+
+
+        def add(a, b):
+            """Return the sum of a and b (with type checking and logging)."""
+            if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+                raise TypeError("Arguments must be numbers")
+            print(f"Adding {a} + {b}")
+            return a + b
+
+
+        def subtract(a, b):
+            """Return the difference of a and b."""
+            return a - b
+
+
+        def multiply(a, b):
+            """Return the product of a and b."""
+            return a * b
+
+
+        def divide(a, b):
+            """Return the quotient of a and b."""
+            if b == 0:
+                raise ValueError("Cannot divide by zero")
+            return a / b
+        ```
+
+        **Git workflow summary:** The complete workflow practiced in this tutorial:
+
+        ```
+        git init          → create repository
+        git add           → stage changes (loading dock)
+        git commit        → save snapshot (truck drives away)
+        git status        → check current state
+        git log           → view history
+        git diff          → see what changed
+        git switch -c     → create and switch to branch
+        git merge         → combine branches
+        git restore       → discard uncommitted changes
+        git revert        → safely undo a committed change
+        ```
+
     tests:
       - description: "Repository has at least 10 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 10 ]"
