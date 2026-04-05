@@ -1,0 +1,2079 @@
+title: "Test Doubles: Stubs, Spies & Mocks"
+description: "Learn to isolate code under test using test doubles. Build manual stubs, spies, and mocks by hand before graduating to unittest.mock — so you understand what the framework does, not just how to call it."
+
+backend: pyodide
+
+require_tests: true
+
+# Global setup: install pytest, add /tutorial to sys.path, patch module cache
+setup_commands:
+  - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
+  - "import sys; sys.path.insert(0, '/tutorial')"
+  - |
+    import pytest as _pytest, sys as _sys
+    _orig_main = _pytest.main
+    def _patched_main(*a, **kw):
+        for m in list(_sys.modules):
+            if m.startswith('test_') or m in (
+                'weather_reporter','weather_service','notification_service',
+                'email_sender','user_service','order_processor','logger',
+                'payment_processor','invoice_processor','github_client',
+                'report_generator','daily_report'):
+                del _sys.modules[m]
+        return _orig_main(*a, **kw)
+    _pytest.main = _patched_main
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — The Dependency Problem
+  # Pedagogy:
+  #   Lay of the Land    — why test doubles exist before any mechanics.
+  #   Generation Effect   — "how would YOU test this?" before the answer.
+  #   Growth Mindset      — normalize that this is genuinely hard.
+  #   Bloom's level       — Understand / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "The Dependency Problem"
+    instructions: |
+      ## The Lay of the Land
+
+      > **Learning objective:** After this step you will be able to **explain** why external dependencies make tests unreliable and **identify** the dependencies in a function that need isolation.
+
+      ### Prerequisites
+
+      This tutorial assumes you have completed the **TDD & Testing with pytest** tutorial. You should be comfortable with:
+      - Writing `pytest` test functions with `assert`
+      - The Red-Green-Refactor cycle
+      - The principle: "test behavior, not implementation"
+
+      ### The Problem You Cannot Solve (Yet)
+
+      Look at the code in `weather_reporter.py`. The `WeatherReporter` class produces a weather summary for a city.
+
+      ### Predict Before You Run
+
+      **Before clicking Run**, read `weather_reporter.py` and predict: if you call `daily_summary("Los Angeles")` twice in a row, will the output be the same both times? Write your prediction down.
+
+      Now click **Run** on `weather_reporter.py`. Was your prediction correct? Run it again — does the output change?
+
+      ### Try (and Fail) to Test It
+
+      Now think about this question:
+
+      > How would you write a pytest test for `daily_summary()` that is fast, reliable, and works offline?
+
+      Try it — open `test_weather.py` and write a test. You will quickly discover the problem. That frustration is the point.
+
+      ### Why Tests Need Isolation
+
+      The function depends on an external HTTP API. This makes tests:
+      - **Slow** — network calls take hundreds of milliseconds
+      - **Flaky** — the API might be down, rate-limited, or return different data
+      - **Non-deterministic** — the weather changes! Today's test might fail tomorrow
+      - **Impossible offline** — no Wi-Fi = no test
+
+      The core issue is that `daily_summary()` has a **dependency** it cannot control. In testing vocabulary:
+
+      | Term | Definition |
+      |------|-----------|
+      | **SUT** (System Under Test) | The code you are testing — `WeatherReporter.daily_summary()` |
+      | **DOC** (Depended-On Component) | The external component the SUT uses — the weather API |
+      | **Test Double** | A replacement for the DOC that you control — like a "stunt double" in cinema |
+
+      ### The Meszaros Taxonomy
+
+      Gerard Meszaros coined the term "Test Double" and defined five types. This tutorial covers the three most important:
+
+      | Type | What it does | Controls inputs? | Records outputs? | Verifies calls? |
+      |------|-------------|-----------------|-----------------|----------------|
+      | **Stub** | Returns pre-configured data | ✓ | ✗ | ✗ |
+      | **Spy** | Records all calls for later assertion | ✓ | ✓ | ✗ |
+      | **Mock** | Verifies expected calls during execution | ✓ | ✓ | ✓ |
+
+      We will learn them in this order — each builds on the last.
+
+      ### The Enabling Technique: Dependency Injection
+
+      To replace a dependency with a test double, the SUT must **accept** the dependency rather than create it internally. This is called **dependency injection**:
+
+      ```python
+      # HARD TO TEST — creates its own dependency
+      class WeatherReporter:
+          def daily_summary(self, city):
+              response = requests.get(f"https://api.weather.com/{city}")  # ← hard-coded
+              ...
+
+      # EASY TO TEST — accepts the dependency
+      class WeatherReporter:
+          def __init__(self, weather_service):     # ← injected
+              self.service = weather_service
+
+          def daily_summary(self, city):
+              temp = self.service.get_temperature(city)  # ← uses the injected service
+              ...
+      ```
+
+      With injection, tests can pass in a test double instead of the real service.
+
+      ### A Note About Difficulty
+
+      Test doubles are one of the hardest topics in software testing. If the vocabulary feels overwhelming right now, that is completely normal — every developer goes through this. We will build understanding one concept at a time, starting with the simplest type (stubs) and working up.
+
+      ### Task
+
+      Open `report_generator.py`. It has a `ReportGenerator` class with three dependencies: `database`, `email_sender`, and `logger`.
+
+      In `test_report.py`, complete the analysis comments:
+      1. For each dependency, identify whether it provides **indirect input** (data the SUT reads) or receives **indirect output** (actions the SUT performs)
+      2. Explain why each dependency would make a test unreliable if left as-is
+
+      This is a **pure analysis** task — no stubs or mocks yet. Understanding the problem comes before the solution.
+
+    files:
+      - path: "weather_reporter.py"
+        content: |
+          """A weather reporter that depends on an external API.
+          Try to test daily_summary() — you'll see the problem."""
+
+          class WeatherReporter:
+              def daily_summary(self, city):
+                  # In real code, this would call requests.get(...)
+                  # For this exercise, it simulates an unreliable API
+                  import random
+                  temp = random.randint(-10, 45)  # Non-deterministic!
+                  if temp > 30:
+                      return "Hot day ahead!"
+                  elif temp > 15:
+                      return "Pleasant weather."
+                  else:
+                      return "Bundle up, it's cold!"
+
+          if __name__ == "__main__":
+              reporter = WeatherReporter()
+              print(reporter.daily_summary("Los Angeles"))
+              print(reporter.daily_summary("Los Angeles"))  # Different result!
+        language: "python"
+
+      - path: "report_generator.py"
+        content: |
+          """ReportGenerator with three dependencies.
+          Your task: analyze each dependency."""
+
+          class ReportGenerator:
+              def __init__(self, database, email_sender, logger):
+                  self.db = database
+                  self.email = email_sender
+                  self.logger = logger
+
+              def generate_daily_report(self, date):
+                  # Uses database to READ sales data (indirect input)
+                  sales = self.db.get_sales(date)
+                  total = sum(item['amount'] for item in sales)
+
+                  # Uses logger to WRITE a log message (indirect output)
+                  self.logger.info(f"Report generated: {total:.2f}")
+
+                  # Uses email_sender to SEND the report (indirect output)
+                  self.email.send(
+                      to="team@company.com",
+                      subject=f"Daily Report: {date}",
+                      body=f"Total sales: ${total:.2f}"
+                  )
+
+                  return {"date": date, "total": total}
+        language: "python"
+
+      - path: "test_report.py"
+        content: |
+          """Dependency Analysis — no test doubles yet, just analysis."""
+
+          # TASK: For each dependency of ReportGenerator, answer:
+          #   1. Does it provide INDIRECT INPUT or receive INDIRECT OUTPUT?
+          #   2. Why would it make tests unreliable if we used the real thing?
+
+          # database:
+          #   Direction: ??? (indirect input / indirect output)
+          #   Why unreliable: ???
+
+          # email_sender:
+          #   Direction: ??? (indirect input / indirect output)
+          #   Why unreliable: ???
+
+          # logger:
+          #   Direction: ??? (indirect input / indirect output)
+          #   Why unreliable: ???
+
+
+          def test_analysis_complete():
+              """This test just checks you filled in the analysis."""
+              source = open('/tutorial/test_report.py').read()
+              # Check that placeholder '???' has been replaced
+              assert source.count('???') == 0, \
+                  "Replace all '???' placeholders with your analysis"
+              # Check that key terms appear
+              assert 'indirect input' in source.lower() or 'indirect output' in source.lower(), \
+                  "Use the terms 'indirect input' and/or 'indirect output' in your analysis"
+        language: "python"
+
+      - path: "test_weather.py"
+        content: |
+          """Try to write a reliable test for WeatherReporter.
+          You will discover the problem — that's the point!"""
+          from weather_reporter import WeatherReporter
+
+          def test_daily_summary():
+              reporter = WeatherReporter()
+              result = reporter.daily_summary("Los Angeles")
+              # What do you assert here?
+              # The result is random — you can't predict it!
+              assert isinstance(result, str)  # This passes but tests nothing useful
+        language: "python"
+
+    open_file: "test_report.py"
+
+    tests:
+      - description: "Analysis is complete (no ??? placeholders remain)"
+        command: |
+          source = open('/tutorial/test_report.py').read()
+          assert source.count('???') == 0, \
+              "Replace all '???' placeholders with your analysis"
+      - description: "Analysis uses correct terminology"
+        command: |
+          source = open('/tutorial/test_report.py').read().lower()
+          assert 'indirect input' in source or 'indirect output' in source, \
+              "Use the terms 'indirect input' and/or 'indirect output'"
+      - description: "Database identified as providing indirect input"
+        command: |
+          source = open('/tutorial/test_report.py').read().lower()
+          # Find the database section and check it mentions input
+          db_section = source[source.find('database'):source.find('email_sender')]
+          assert 'input' in db_section, \
+              "The database provides indirect INPUT (data the SUT reads)"
+
+    quiz:
+      title: "The Dependency Problem — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A test for a function that sends SMS messages passes on Monday but fails on Tuesday. The function's code has not changed. What is the most likely cause?
+          type: single
+          options:
+            - "The test framework has a bug that causes intermittent failures"
+            - "The test depends on a real external service (the SMS provider) that was unavailable or rate-limited on Tuesday"
+            - "The test was written incorrectly and the Monday pass was a false positive"
+            - "Python's random seed changes daily, causing different execution paths"
+          correct_index: 1
+          explanation: |
+            This is a **flaky test** — it depends on a real external service that can be unavailable,
+            slow, or rate-limited. The fix: replace the real SMS provider with a test double that
+            you control. This is the core problem test doubles solve.
+
+        - question: |
+            In the Meszaros taxonomy, what does **SUT** stand for, and what is the **DOC**?
+          type: single
+          options:
+            - "SUT = Software Under Testing, DOC = Dependency Object Class"
+            - "SUT = System Under Test (the code you're testing), DOC = Depended-On Component (the external dependency)"
+            - "SUT = Standard Unit Test, DOC = Direct Object Connector"
+            - "SUT = Stub Under Test, DOC = Double-Object Controller"
+          correct_index: 1
+          explanation: |
+            The **SUT** is the code you're testing. The **DOC** is the external component
+            it depends on. A **Test Double** replaces the DOC so you can control the test environment.
+
+        - question: |
+            Why is **dependency injection** essential for using test doubles?
+          type: single
+          options:
+            - "It makes the code run faster by avoiding object creation overhead"
+            - "It allows tests to pass in a test double instead of the real dependency, because the SUT receives its dependency from outside rather than creating it internally"
+            - "It is required by pytest — tests cannot run without dependency injection"
+            - "It automatically generates test doubles for all dependencies"
+          correct_index: 1
+          explanation: |
+            If a class creates its own dependency internally (e.g., `requests.get()` inside the method),
+            there is no way for a test to substitute a double. Dependency injection means the dependency
+            is passed in from outside — the test can pass a stub, spy, or mock instead of the real thing.
+
+        - question: |
+            The `ReportGenerator` class uses `self.db.get_sales(date)` to read data and `self.email.send(...)` to send a report. Which dependency provides an **indirect input** and which receives an **indirect output**?
+          type: single
+          options:
+            - "Both are indirect inputs — the SUT reads from both"
+            - "`database` provides indirect input (data flows IN to the SUT); `email_sender` receives indirect output (an action flows OUT from the SUT)"
+            - "`email_sender` provides indirect input; `database` receives indirect output"
+            - "Neither is indirect — they are both direct inputs via function parameters"
+          correct_index: 1
+          explanation: |
+            **Indirect input:** The database returns sales data that the SUT uses — data flows in.
+            **Indirect output:** The email sender receives a send command — an action flows out.
+            This distinction matters because stubs control inputs and spies/mocks observe outputs.
+
+        - question: |
+            Which of the following are valid reasons to replace a real dependency with a test double? (Select all that apply)
+          type: multiple
+          options:
+            - "The dependency is a network API that may be unavailable or rate-limited"
+            - "The dependency performs an irreversible side effect (sending a real email)"
+            - "The dependency is a simple helper function that adds two numbers"
+            - "The dependency introduces non-determinism (randomness, current time)"
+          correct_indices: [0, 1, 3]
+          explanation: |
+            Test doubles replace dependencies that are **slow, flaky, non-deterministic, or have side effects**.
+            A simple helper function that adds two numbers is fast, deterministic, and side-effect-free —
+            use the real thing. This foreshadows Step 7's "Mock Skeptic's Checklist."
+
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — Test Stubs: Controlling Indirect Inputs
+  # Pedagogy:
+  #   Worked Example      — full stub with sub-goal labels.
+  #   PRIMM               — predict → run → modify.
+  #   Fading: Heavy       — signature given, body to complete.
+  #   Bloom's level       — Understand / Apply (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Test Stubs — Controlling Indirect Inputs"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **implement** a manual test stub and **use** dependency injection to isolate a SUT from its dependencies.
+
+      ## What Is a Test Stub?
+
+      A Test Stub replaces a DOC to **control indirect inputs** — the values the SUT receives from its dependency. The stub returns pre-configured data, allowing you to test the SUT's behavior under specific conditions.
+
+      Key properties of a stub:
+      - It **provides data** to the SUT (controls indirect inputs)
+      - It does **NOT verify** anything — your `assert` statements do the verification
+      - This is **state verification**: you check the SUT's *return value* or *final state*
+
+      ## Worked Example: WeatherReporter with a Stub
+
+      Let's fix the untestable `WeatherReporter` from Step 1. We will:
+      1. Refactor the SUT to accept an injectable dependency
+      2. Build a manual stub
+      3. Write tests that use the stub
+
+      ```python
+      # SUB-GOAL: Define the SUT with an injectable dependency
+      class WeatherReporter:
+          def __init__(self, weather_service):
+              self.service = weather_service
+
+          def daily_summary(self, city):
+              temp = self.service.get_temperature(city)  # ← indirect input
+              if temp > 30:
+                  return "Hot day ahead!"
+              elif temp > 15:
+                  return "Pleasant weather."
+              else:
+                  return "Bundle up, it's cold!"
+
+      # SUB-GOAL: Build a manual stub that controls the indirect input
+      class StubWeatherService:
+          def __init__(self, temperature):
+              self.temperature = temperature
+
+          def get_temperature(self, city):
+              return self.temperature  # ← always returns our configured value
+
+      # SUB-GOAL: Write the test using the stub (Arrange-Act-Assert)
+      def test_hot_day():
+          stub = StubWeatherService(temperature=35)      # Arrange: create stub
+          reporter = WeatherReporter(stub)               # Arrange: inject stub
+          result = reporter.daily_summary("LA")          # Act
+          assert result == "Hot day ahead!"              # Assert: check SUT's output
+      ```
+
+      Notice: the stub has **no knowledge of the test's assertions**. It simply provides data. The test's `assert` does all the verification. This is **state verification** — we check what the SUT *returns*, not how it called the stub.
+
+      ### Predict Before You Code
+
+      Before implementing anything, trace through the worked example mentally: if `StubWeatherService(temperature=10)` is injected, what will `daily_summary("NYC")` return?
+
+      ### Task
+
+      Complete the files:
+
+      1. **`weather_service.py`**: The `WeatherReporter` class is already refactored with dependency injection. Read and understand it.
+      2. **`test_weather_stub.py`**: Complete the `StubWeatherService` class (the `get_temperature` method) and write three tests:
+         - `test_hot_day` — temperature > 30 → "Hot day ahead!"
+         - `test_pleasant_day` — temperature between 16 and 30 → "Pleasant weather."
+         - `test_cold_day` — temperature ≤ 15 → "Bundle up, it's cold!"
+
+    files:
+      - path: "weather_service.py"
+        content: |
+          """WeatherReporter — refactored with dependency injection."""
+
+          class WeatherReporter:
+              def __init__(self, weather_service):
+                  """Accept the weather service as a dependency."""
+                  self.service = weather_service
+
+              def daily_summary(self, city):
+                  """Return a human-readable weather summary for a city."""
+                  temp = self.service.get_temperature(city)
+                  if temp > 30:
+                      return "Hot day ahead!"
+                  elif temp > 15:
+                      return "Pleasant weather."
+                  else:
+                      return "Bundle up, it's cold!"
+        language: "python"
+
+      - path: "test_weather_stub.py"
+        content: |
+          """Test WeatherReporter using a manual Test Stub."""
+          import pytest
+          from weather_service import WeatherReporter
+
+
+          # SUB-GOAL: Build a manual stub
+          class StubWeatherService:
+              """A test stub that returns a pre-configured temperature."""
+              def __init__(self, temperature):
+                  self.temperature = temperature
+
+              def get_temperature(self, city):
+                  # TODO: Return the pre-configured temperature
+                  pass
+
+
+          # SUB-GOAL: Write tests using the stub
+
+          def test_hot_day():
+              """Temperature > 30 should produce 'Hot day ahead!'"""
+              # TODO: Create a stub with temperature=35
+              # TODO: Create a WeatherReporter with the stub
+              # TODO: Call daily_summary and assert the result
+              pytest.fail("TODO: implement this test")
+
+          def test_pleasant_day():
+              """Temperature 16-30 should produce 'Pleasant weather.'"""
+              # TODO: stub with temperature=22, assert result
+              pytest.fail("TODO: implement this test")
+
+          def test_cold_day():
+              """Temperature <= 15 should produce 'Bundle up, it's cold!'"""
+              # TODO: stub with temperature=5, assert result
+              pytest.fail("TODO: implement this test")
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_weather_stub.py"
+
+    tests:
+      - description: "StubWeatherService returns the configured temperature"
+        command: |
+          g = {}
+          exec(open('/tutorial/test_weather_stub.py').read(), g)
+          stub = g['StubWeatherService'](temperature=42)
+          assert stub.get_temperature("any") == 42, \
+              "StubWeatherService.get_temperature() should return self.temperature"
+      - description: "test_hot_day passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_weather_stub.py::test_hot_day', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_hot_day failed:\n{output}"
+      - description: "test_pleasant_day passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_weather_stub.py::test_pleasant_day', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_pleasant_day failed:\n{output}"
+      - description: "test_cold_day passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_weather_stub.py::test_cold_day', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_cold_day failed:\n{output}"
+
+    quiz:
+      title: "Test Stubs — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A test creates a `StubDatabase` that always returns `[{"amount": 100}]` when `get_sales()` is called. The test then asserts that `ReportGenerator.generate_daily_report()` returns `{"total": 100}`. What type of verification is this?
+          type: single
+          options:
+            - "Behavior verification — the test checks how the SUT called the database"
+            - "State verification — the test checks the SUT's return value, not how it interacted with the stub"
+            - "Mock verification — the stub automatically verified the correct calls"
+            - "Integration verification — the test checks the real database connection"
+          correct_index: 1
+          explanation: |
+            The test checks the SUT's **output** (the return value), not the interaction with the stub.
+            This is **state verification** — the hallmark of stub-based testing.
+            The stub only provides data; the `assert` does all the checking.
+
+        - question: |
+            **Analyze** this test. Is the stub being used correctly?
+            ```python
+            def test_report():
+                stub_db = StubDatabase(sales=[{"amount": 50}])
+                generator = ReportGenerator(stub_db)
+                result = generator.generate_report("2024-01-15")
+                assert stub_db.get_sales_called_with == "2024-01-15"  # ← checks the stub
+            ```
+          type: single
+          options:
+            - "Yes — the test correctly verifies the SUT passes the right date to the database"
+            - "No — a stub should NOT be used for verification. This test is checking how the SUT called the stub (implementation) rather than what the SUT returned (behavior). Use a spy or mock for call verification"
+            - "No — the stub should return more realistic data"
+            - "Yes — stubs always track their arguments for assertion"
+          correct_index: 1
+          explanation: |
+            This is a subtle but important distinction: a **stub** only provides data.
+            If you start asserting on *how* the stub was called, you've turned it into a spy.
+            The test should assert on `result` (the SUT's output), not on the stub's internals.
+            This reinforces the "test behavior, not implementation" principle from TDD.
+
+        - question: |
+            **Arrange** the lines to write a test using a stub. The test should create a stub, inject it, exercise the SUT, and assert on the return value.
+          type: parsons
+          lines:
+            - "stub = StubWeatherService(temperature=35)"
+            - "reporter = WeatherReporter(stub)"
+            - "result = reporter.daily_summary('LA')"
+            - "assert result == 'Hot day ahead!'"
+          distractors:
+            - "stub.get_temperature.assert_called_once()"
+          explanation: |
+            The test follows the **Arrange-Act-Assert** pattern: create the stub (Arrange),
+            inject it and call the SUT (Act), then assert on the return value (Assert).
+            The distractor `assert_called_once()` is spy/mock behavior — stubs do NOT verify calls.
+
+        - question: |
+            **(Spaced review — TDD)** A developer writes a test, runs it, sees it fail (RED), then writes code to make it pass (GREEN). Now she notices duplicated logic and cleans it up. Which TDD phase is she in?
+          type: single
+          options:
+            - "RED — she is writing a new failing test"
+            - "GREEN — she is making the test pass"
+            - "REFACTOR — she is improving code structure while keeping tests green"
+            - "She broke TDD discipline by changing code after GREEN"
+          correct_index: 2
+          explanation: |
+            Cleaning up duplicated logic without changing behavior is a textbook REFACTOR.
+            The key: all tests still pass. RED → GREEN → REFACTOR is the TDD heartbeat.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Test Spies: Observing Indirect Outputs
+  # Pedagogy:
+  #   Transfer Tutor      — builds on stub, adds recording.
+  #   Compare-and-Contrast — stub vs spy side-by-side.
+  #   Bloom's level        — Apply / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Test Spies — Observing Indirect Outputs"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **implement** a manual test spy and **explain** the difference between controlling inputs (stub) and observing outputs (spy).
+
+      ## The Limitation of Stubs
+
+      In Step 2, you tested what `WeatherReporter` *returns* — that is an indirect **input** flowing through the stub into the SUT, producing an observable return value.
+
+      But what if the SUT performs an **action** that has no return value? For example:
+      - Sending an email
+      - Writing to a log
+      - Posting to an API
+
+      A stub cannot tell us whether `send()` was actually called, or what arguments it received. We need an **observation point** — a Test Spy.
+
+      ## What Is a Test Spy?
+
+      A Test Spy extends a Test Stub:
+      - It **provides values** back to the SUT (like a stub)
+      - It also **records all method calls** made by the SUT
+
+      After the SUT executes, the test retrieves the recorded calls and asserts on them. This is called **Procedural Behavior Verification** — assertions come AFTER execution, in the test method itself.
+
+      ## Worked Example: Spying on Email
+
+      The spy lifecycle has four phases (from Meszaros):
+
+      ```python
+      # SUB-GOAL: Build a manual spy that records calls
+      class SpyEmailSender:
+          def __init__(self):
+              self.sent_emails = []    # ← records every call
+
+          def send(self, to, subject, body):
+              self.sent_emails.append({
+                  "to": to,
+                  "subject": subject,
+                  "body": body
+              })
+
+      def test_sends_welcome_email():
+          # PHASE 1: Install the spy in place of the DOC
+          spy = SpyEmailSender()
+          service = UserService(email_sender=spy)
+
+          # PHASE 2: Exercise the SUT
+          service.register("alice@example.com")
+
+          # PHASE 3: Retrieve recorded information from the spy
+          recorded = spy.sent_emails
+
+          # PHASE 4: Use standard assertions to verify
+          assert len(recorded) == 1
+          assert recorded[0]["to"] == "alice@example.com"
+          assert "Welcome" in recorded[0]["subject"]
+      ```
+
+      > **Note:** Not every spy needs to return data. In this example, `send()` has no return value — the spy only records. When the SUT *does* need a return value from the DOC (like a database query), the spy acts as both stub (provides data) and spy (records calls).
+
+      Notice the key difference from stubs:
+
+      | | **Stub** | **Spy** |
+      |---|---------|---------|
+      | Controls indirect inputs? | ✓ | ✓ |
+      | Records calls for verification? | ✗ | ✓ |
+      | Where is verification done? | `assert` on SUT's return value | `assert` on spy's recorded calls |
+      | What is verified? | SUT's output (state) | SUT's actions (behavior, procedurally) |
+
+      ### Predict Before You Code
+
+      If `UserService.register()` sends TWO emails (a welcome email and a verification email), what would `len(spy.sent_emails)` be after calling `register()`?
+
+      ### Task
+
+      Complete `test_order_spy.py`:
+
+      1. Build a `SpyLogger` class that records all calls to `log(message)` in a list
+      2. Write `test_logs_order_placed` — verify that processing an order logs "Order 42 placed"
+      3. Write `test_logs_multiple_orders` — verify that processing two orders produces two log entries
+
+    files:
+      - path: "order_processor.py"
+        content: |
+          """OrderProcessor — the SUT. It logs each processed order."""
+
+          class OrderProcessor:
+              def __init__(self, logger):
+                  self.logger = logger
+
+              def process(self, order_id, amount):
+                  """Process an order and log it."""
+                  # Business logic would go here...
+                  self.logger.log(f"Order {order_id} placed")
+                  return {"id": order_id, "amount": amount, "status": "processed"}
+        language: "python"
+
+      - path: "test_order_spy.py"
+        content: |
+          """Test OrderProcessor using a manual Test Spy."""
+          import pytest
+          from order_processor import OrderProcessor
+
+
+          # SUB-GOAL: Build a manual spy that records log messages
+          class SpyLogger:
+              """A test spy that records all log() calls."""
+              def __init__(self):
+                  self.messages = []    # ← records every call
+
+              def log(self, message):
+                  # TODO: Append the message to self.messages
+                  pass
+
+
+          def test_logs_order_placed():
+              """Processing order 42 should log 'Order 42 placed'."""
+              # TODO:
+              # 1. Create a SpyLogger
+              # 2. Create an OrderProcessor with the spy
+              # 3. Call process(42, 29.99)
+              # 4. Assert that exactly 1 message was logged
+              # 5. Assert that the message contains "Order 42 placed"
+              pytest.fail("TODO: implement this test")
+
+          def test_logs_multiple_orders():
+              """Processing two orders should produce two log entries."""
+              # TODO:
+              # 1. Create a SpyLogger
+              # 2. Create an OrderProcessor with the spy
+              # 3. Process order 1 and order 2
+              # 4. Assert that exactly 2 messages were logged
+              pytest.fail("TODO: implement this test")
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_order_spy.py"
+
+    tests:
+      - description: "SpyLogger records messages"
+        command: |
+          g = {}
+          exec(open('/tutorial/test_order_spy.py').read(), g)
+          spy = g['SpyLogger']()
+          spy.log("test message")
+          assert spy.messages == ["test message"], \
+              "SpyLogger.log() should append the message to self.messages"
+      - description: "test_logs_order_placed passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_order_spy.py::test_logs_order_placed', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_logs_order_placed failed:\n{output}"
+      - description: "test_logs_multiple_orders passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_order_spy.py::test_logs_multiple_orders', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_logs_multiple_orders failed:\n{output}"
+
+    quiz:
+      title: "Test Spies — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A test uses a spy to verify that `send_email()` was called with `to="boss@company.com"`. The assertion is written AFTER the SUT executes:
+            ```python
+            assert spy.sent_emails[0]["to"] == "boss@company.com"
+            ```
+            What verification technique is this?
+          type: single
+          options:
+            - "State verification — it checks the SUT's return value"
+            - "Procedural behavior verification — the spy records calls and the test asserts on them after execution"
+            - "Expected behavior specification — the spy was pre-programmed with expectations"
+            - "Mock verification — the spy fails the test automatically on wrong arguments"
+          correct_index: 1
+          explanation: |
+            The spy **records** calls and the test **asserts** on them after execution.
+            This is **procedural behavior verification** — the test procedure includes
+            explicit assertions on the recorded data. Contrast with mocks (Step 4),
+            which use **expected behavior specification** (pre-programmed expectations).
+
+        - question: |
+            What is the key difference between a Test Stub and a Test Spy?
+          type: single
+          options:
+            - "A stub is faster to execute than a spy"
+            - "A stub only controls indirect inputs; a spy also records the SUT's calls for later assertion"
+            - "A spy requires `unittest.mock` while a stub can be written manually"
+            - "A stub is used for unit tests; a spy is used for integration tests"
+          correct_index: 1
+          explanation: |
+            Both can be written manually (as you've done). The distinction is what they do:
+            **Stub** = provides data (controls inputs). **Spy** = provides data AND records
+            calls (observes outputs). A spy is a "stub with a recording device."
+
+        - question: |
+            **Arrange** the spy test lifecycle (Meszaros's 4 phases) into the correct order.
+          type: parsons
+          lines:
+            - "spy = SpyEmailSender()"
+            - "service = UserService(email_sender=spy)"
+            - "service.register('alice@example.com')"
+            - "recorded = spy.sent_emails"
+            - "assert recorded[0]['to'] == 'alice@example.com'"
+          distractors:
+            - "spy.verify()"
+          explanation: |
+            The four phases are: (1) Install the spy, (2) Inject and exercise the SUT,
+            (3) Retrieve the recorded data, (4) Assert using standard assertions.
+            The distractor `spy.verify()` is mock behavior (Expected Behavior Specification),
+            not spy behavior (Procedural Verification). Spies use YOUR assertions, not self-verification.
+
+        - question: |
+            **(Spaced review — Step 2)** A test creates `StubWeatherService(temperature=35)` and injects it into `WeatherReporter`. The test then asserts the return value of `daily_summary()`. Is this testing **behavior** or **implementation**?
+          type: single
+          options:
+            - "Implementation — it tests how the SUT calls the stub"
+            - "Behavior — it checks what the SUT returns (its observable output) given a controlled input"
+            - "Neither — stubs cannot be used for behavior testing"
+            - "Both — stubs always test behavior and implementation simultaneously"
+          correct_index: 1
+          explanation: |
+            The test checks the SUT's **return value** — its observable behavior.
+            It does NOT check how the SUT called the stub internally.
+            This is exactly the "test behavior, not implementation" principle from TDD.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — Mock Objects: Expected Behavior Specification
+  # Pedagogy:
+  #   Compare-and-Contrast — spy vs mock, same test both ways.
+  #   Bloom's level        — Apply / Analyze / Evaluate (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Mock Objects — Expected Behavior Specification"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **contrast** procedural verification (spy) with expected behavior specification (mock) and **evaluate** the trade-offs.
+
+      ## Spy vs Mock: Two Approaches to the Same Problem
+
+      Both spies and mocks verify the SUT's indirect outputs. The difference is *when* and *how* they verify:
+
+      | | **Spy** (Procedural Verification) | **Mock** (Expected Behavior Specification) |
+      |---|---|---|
+      | When are expectations set? | After execution (in assertions) | Before execution (pre-programmed) |
+      | When does verification happen? | After execution (your `assert`) | During execution (mock checks itself) |
+      | What fails the test? | Your `assert` statement | The mock object itself |
+      | Flexibility | High — assert only what matters | Lower — must specify all expected calls upfront |
+
+      ## The Same Test, Two Ways
+
+      Here is the **spy version** (from Step 3):
+      ```python
+      def test_welcome_email_spy():
+          spy = SpyEmailSender()
+          service = UserService(email_sender=spy)
+
+          service.register("alice@example.com")          # Exercise
+
+          # Verify AFTER — the test controls what to check
+          assert len(spy.sent_emails) == 1
+          assert spy.sent_emails[0]["to"] == "alice@example.com"
+      ```
+
+      And the **mock version**:
+      ```python
+      def test_welcome_email_mock():
+          mock = MockEmailSender(
+              expected_calls=[
+                  ("send", {"to": "alice@example.com"})  # Expectation set BEFORE
+              ]
+          )
+          service = UserService(email_sender=mock)
+
+          service.register("alice@example.com")          # Exercise
+
+          mock.verify()  # ← Mock checks itself: were all expectations met?
+      ```
+
+      ### Which Should You Prefer?
+
+      Martin Fowler, Kent Beck, and DHH — three of the most influential voices in software testing — all "claimed to almost never use mocks." Why?
+
+      - **Spies are more flexible:** You assert only on what matters for THIS test
+      - **Spies give better error messages:** When an assertion fails, you see the actual vs expected values
+      - **Mocks are more brittle:** If the SUT makes an unexpected call (even a harmless one), the mock fails
+
+      The general recommendation: **prefer spies (and stubs) over mocks** unless you specifically need to verify that something was NOT called.
+
+      ### Predict Before You Code
+
+      If the SUT calls `mock.send()` with `to="bob@example.com"` instead of `"alice@example.com"`, what happens with the spy approach? What happens with the mock approach?
+
+      ### Task
+
+      Open `test_mock_vs_spy.py`. It contains a `UserService` that sends a welcome email when a user registers.
+
+      1. Complete `test_register_sends_email_spy` using the `SpyEmailSender` (verify the email was sent with correct `to` address)
+      2. Complete `test_register_sends_email_mock` using the `MockEmailSender` (set expectations before, verify after)
+      3. Answer the reflection question in the comment: which version is more maintainable?
+
+    files:
+      - path: "user_service.py"
+        content: |
+          """UserService — sends a welcome email on registration."""
+
+          class UserService:
+              def __init__(self, email_sender):
+                  self.email = email_sender
+
+              def register(self, email_address):
+                  """Register a new user and send a welcome email."""
+                  # ... (user creation logic would go here) ...
+                  self.email.send(
+                      to=email_address,
+                      subject="Welcome!",
+                      body=f"Hello {email_address}, welcome to our platform!"
+                  )
+                  return {"email": email_address, "status": "registered"}
+        language: "python"
+
+      - path: "test_mock_vs_spy.py"
+        content: |
+          """Compare: Spy approach vs Mock approach for the same test."""
+          import pytest
+          from user_service import UserService
+
+
+          # ── SPY (from Step 3 — records calls, assert after) ──
+
+          class SpyEmailSender:
+              def __init__(self):
+                  self.sent_emails = []
+
+              def send(self, to, subject, body):
+                  self.sent_emails.append({"to": to, "subject": subject, "body": body})
+
+
+          def test_register_sends_email_spy():
+              """Verify registration sends a welcome email — SPY approach."""
+              # TODO:
+              # 1. Create a SpyEmailSender
+              # 2. Create a UserService with the spy
+              # 3. Call register("alice@example.com")
+              # 4. Assert: exactly 1 email was sent
+              # 5. Assert: the email was sent to "alice@example.com"
+              # 6. Assert: the subject contains "Welcome"
+              pytest.fail("TODO: implement this test")
+
+
+          # ── MOCK (pre-programmed expectations, verifies itself) ──
+
+          class MockEmailSender:
+              """A simple mock that verifies expected calls."""
+              def __init__(self, expected_to, expected_subject_contains):
+                  self.expected_to = expected_to
+                  self.expected_subject_contains = expected_subject_contains
+                  self.was_called = False
+
+              def send(self, to, subject, body):
+                  self.was_called = True
+                  if to != self.expected_to:
+                      raise AssertionError(
+                          f"MockEmailSender: expected to={self.expected_to!r}, "
+                          f"got to={to!r}"
+                      )
+                  if self.expected_subject_contains not in subject:
+                      raise AssertionError(
+                          f"MockEmailSender: expected subject containing "
+                          f"{self.expected_subject_contains!r}, got {subject!r}"
+                      )
+
+              def verify(self):
+                  if not self.was_called:
+                      raise AssertionError("MockEmailSender: send() was never called")
+
+
+          def test_register_sends_email_mock():
+              """Verify registration sends a welcome email — MOCK approach."""
+              # TODO:
+              # 1. Create a MockEmailSender with expected_to="alice@example.com"
+              #    and expected_subject_contains="Welcome"
+              # 2. Create a UserService with the mock
+              # 3. Call register("alice@example.com")
+              # 4. Call mock.verify() to confirm send() was called
+              pytest.fail("TODO: implement this test")
+
+
+          # REFLECTION: Which version (spy or mock) is more maintainable?
+          # If the email subject changed from "Welcome!" to "Welcome aboard!",
+          # which test would still pass and which would break?
+          #
+          # Your answer: ???
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_mock_vs_spy.py"
+
+    tests:
+      - description: "test_register_sends_email_spy passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_mock_vs_spy.py::test_register_sends_email_spy', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_register_sends_email_spy failed:\n{output}"
+      - description: "test_register_sends_email_mock passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_mock_vs_spy.py::test_register_sends_email_mock', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_register_sends_email_mock failed:\n{output}"
+      - description: "Reflection question answered"
+        command: |
+          source = open('/tutorial/test_mock_vs_spy.py').read()
+          assert '???' not in source, "Answer the reflection question — replace '???' with your analysis"
+
+    quiz:
+      title: "Mock Objects — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A mock is pre-programmed with: "expect `send()` to be called with `to='alice@example.com'`". During execution, the SUT calls `send(to='bob@example.com')`. What happens?
+          type: single
+          options:
+            - "Nothing — the mock silently records the mismatch for later inspection"
+            - "The mock raises an error IMMEDIATELY during execution, failing the test at the point of the wrong call"
+            - "The mock converts the argument to match the expectation automatically"
+            - "The test passes because the mock only checks that `send()` was called, not the arguments"
+          correct_index: 1
+          explanation: |
+            This is the defining characteristic of **Expected Behavior Specification** —
+            the mock verifies during execution and fails immediately on mismatch.
+            A spy, by contrast, would silently record the call and let the test's
+            `assert` statements catch the mismatch after execution.
+
+        - question: |
+            Martin Fowler, Kent Beck, and DHH all "claimed to almost never use mocks." Why do they prefer spies/stubs?
+          type: single
+          options:
+            - "Mocks are slower to execute than spies"
+            - "Spies are more flexible — they let the test assert only on what matters, while mocks require specifying ALL expected interactions upfront, making tests brittle"
+            - "Spies are part of the Python standard library; mocks require a third-party package"
+            - "Mocks do not support dependency injection"
+          correct_index: 1
+          explanation: |
+            Mocks require you to specify every expected interaction before execution.
+            If the SUT makes a harmless call you didn't expect, the mock fails.
+            Spies record everything but let the test assert only on what matters.
+            This makes spy-based tests more resilient to minor implementation changes.
+
+        - question: |
+            **Arrange** the lines to write a mock-based test that sets expectations BEFORE exercising the SUT, then verifies.
+          type: parsons
+          lines:
+            - "mock = MockEmailSender(expected_to='alice@example.com')"
+            - "service = UserService(email_sender=mock)"
+            - "service.register('alice@example.com')"
+            - "mock.verify()"
+          distractors:
+            - "assert mock.sent_emails[0]['to'] == 'alice@example.com'"
+          explanation: |
+            Mock-based tests set expectations BEFORE execution (`MockEmailSender(expected_to=...)`),
+            exercise the SUT, then call `mock.verify()` to confirm all expectations were met.
+            The distractor assertion is the SPY pattern (assert on recorded data after execution) —
+            that belongs in a procedural verification test, not an expected behavior specification test.
+
+        - question: |
+            **(Spaced review — Step 3)** A test needs to verify that `send_notification()` was called during execution. The developer uses a spy. Where do the assertions appear?
+          type: single
+          options:
+            - "Before the SUT executes — assertions are pre-programmed into the spy"
+            - "After the SUT executes — the test retrieves recorded calls from the spy and asserts on them"
+            - "During execution — the spy checks automatically as each call is made"
+            - "In a separate verification file that runs after the test suite"
+          correct_index: 1
+          explanation: |
+            Spies use **Procedural Behavior Verification** — they record calls silently,
+            and the test asserts on the recorded data AFTER execution. This keeps assertions
+            visible in the test method. Contrast with mocks, which verify DURING execution.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — unittest.mock: The Framework
+  # Pedagogy:
+  #   Transfer             — manual → framework mapping.
+  #   Guide-and-Release    — show mapping, then rewrite.
+  #   Fading: Medium       — less scaffolding than Steps 2-4.
+  #   Bloom's level        — Apply / Understand (quiz).
+  # --------------------------------------------------------------------------
+  - title: "unittest.mock — The Framework"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **use** `MagicMock`, `return_value`, and `assert_called` to replace manual test doubles with `unittest.mock`.
+
+      ## From Manual to Framework
+
+      You have built stubs, spies, and mocks by hand. Now meet `unittest.mock` — Python's standard library that generates them automatically.
+
+      The key insight: **`unittest.mock` doesn't do anything you couldn't do manually**. It just writes the boilerplate for you. Every `MagicMock` is a stub + spy + mock in one object.
+
+      ### The Mapping
+
+      | Manual Concept | `unittest.mock` Equivalent |
+      |---|---|
+      | Stub with canned return | `mock.method.return_value = value` |
+      | Stub that raises exception | `mock.method.side_effect = Exception(...)` |
+      | Spy recording calls | `mock.method.call_args_list` |
+      | Mock verifying calls | `mock.method.assert_called_once_with(...)` |
+      | Typed double (respects interface) | `MagicMock(spec=RealClass)` |
+
+      ### Example: Manual Stub → MagicMock
+
+      **Manual (from Step 2):**
+      ```python
+      class StubWeatherService:
+          def __init__(self, temperature):
+              self.temperature = temperature
+          def get_temperature(self, city):
+              return self.temperature
+
+      def test_hot_day():
+          stub = StubWeatherService(temperature=35)
+          reporter = WeatherReporter(stub)
+          assert reporter.daily_summary("LA") == "Hot day ahead!"
+      ```
+
+      **With `unittest.mock`:**
+      ```python
+      from unittest.mock import MagicMock
+
+      def test_hot_day():
+          mock_service = MagicMock()
+          mock_service.get_temperature.return_value = 35      # ← stub behavior
+          reporter = WeatherReporter(mock_service)
+          assert reporter.daily_summary("LA") == "Hot day ahead!"
+          # Optionally verify the call (spy/mock behavior):
+          mock_service.get_temperature.assert_called_once_with("LA")
+      ```
+
+      ### ⚠️ Always Use `spec=True`
+
+      Without `spec`, a `MagicMock` accepts ANY attribute — even typos:
+      ```python
+      mock = MagicMock()
+      mock.get_temperture.return_value = 35  # ← Typo! No error raised!
+      ```
+
+      With `spec`, the mock mirrors the real class's interface:
+      ```python
+      mock = MagicMock(spec=WeatherService)
+      mock.get_temperture.return_value = 35  # ← AttributeError! Typo caught!
+      ```
+
+      **Rule: Always pass `spec=RealClass`** when creating mocks. This catches bugs that silent mocks would hide.
+
+      ### If the API Feels Overwhelming
+
+      `unittest.mock` has a large API with many methods. That is completely normal to find intimidating. You don't need to memorize everything — just three things: `return_value` (stub), `assert_called_once_with` (spy/mock), and `spec=` (safety). Everything else is a convenience on top of these three.
+
+      ### Predict Before You Code
+
+      Before writing any code, predict: if you write `mock = MagicMock()` and then call `mock.any_method_name()`, what happens? Does it raise an error? What if you use `MagicMock(spec=WeatherService)` instead?
+
+      ### Task
+
+      Open `test_framework.py`. Rewrite two of your earlier manual tests using `unittest.mock.MagicMock`:
+
+      1. `test_hot_day_with_mock` — use `MagicMock(spec=...)` to replace `StubWeatherService`
+      2. `test_order_logged_with_mock` — use `MagicMock` to replace `SpyLogger`
+
+      For each test, add a `assert_called` verification to practice the spy/mock behavior.
+
+    files:
+      - path: "test_framework.py"
+        content: |
+          """Rewrite manual tests using unittest.mock."""
+          import pytest
+          from unittest.mock import MagicMock
+          from weather_service import WeatherReporter
+          from order_processor import OrderProcessor
+
+
+          def test_hot_day_with_mock():
+              """Rewrite of test_hot_day using MagicMock."""
+              # TODO:
+              # 1. Create mock_service = MagicMock()
+              # 2. Set mock_service.get_temperature.return_value = 35
+              # 3. Create WeatherReporter(mock_service)
+              # 4. Assert daily_summary("LA") == "Hot day ahead!"
+              # 5. Assert mock_service.get_temperature.assert_called_once_with("LA")
+              pytest.fail("TODO: implement this test")
+
+
+          def test_order_logged_with_mock():
+              """Rewrite of test_logs_order_placed using MagicMock."""
+              # TODO:
+              # 1. Create mock_logger = MagicMock()
+              # 2. Create OrderProcessor(mock_logger)
+              # 3. Call process(42, 29.99)
+              # 4. Assert mock_logger.log.assert_called_once_with("Order 42 placed")
+              pytest.fail("TODO: implement this test")
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_framework.py"
+
+    tests:
+      - description: "test_hot_day_with_mock passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_framework.py::test_hot_day_with_mock', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_hot_day_with_mock failed:\n{output}"
+      - description: "test_order_logged_with_mock passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_framework.py::test_order_logged_with_mock', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_order_logged_with_mock failed:\n{output}"
+      - description: "Uses MagicMock (not manual classes)"
+        command: |
+          source = open('/tutorial/test_framework.py').read()
+          assert 'MagicMock()' in source or 'MagicMock(spec' in source, \
+              "Create a MagicMock instance in your tests (e.g. MagicMock() or MagicMock(spec=...))"
+          assert '.assert_called' in source, \
+              "Add assert_called verification (e.g. mock.method.assert_called_once_with(...))"
+
+    quiz:
+      title: "unittest.mock — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            What does `mock_service.get_temperature.return_value = 35` do?
+          type: single
+          options:
+            - "It calls `get_temperature()` and stores the result 35 in memory"
+            - "It configures the mock so that whenever `get_temperature()` is called, it returns 35 — this is stub behavior"
+            - "It asserts that `get_temperature()` was called and returned 35"
+            - "It creates a new method called `return_value` on the mock"
+          correct_index: 1
+          explanation: |
+            `return_value` configures the mock's stub behavior — what it returns when called.
+            This is the `unittest.mock` equivalent of the manual `StubWeatherService` you wrote
+            in Step 2. The mock does not call the method; it configures what future calls will return.
+
+        - question: |
+            Why should you use `MagicMock(spec=WeatherService)` instead of just `MagicMock()`?
+          type: single
+          options:
+            - "`spec` makes the mock run faster"
+            - "`spec` mirrors the real class's interface — typos like `mock.get_temperture` raise `AttributeError` instead of silently succeeding"
+            - "`spec` is required by pytest — `MagicMock()` without spec raises an error"
+            - "`spec` automatically generates test assertions from the class's docstrings"
+          correct_index: 1
+          explanation: |
+            Without `spec`, a `MagicMock` accepts ANY attribute — including typos.
+            This can hide bugs where you configure the wrong method name.
+            `spec=RealClass` constrains the mock to only accept attributes that
+            the real class actually has, catching errors early.
+
+        - question: |
+            **Arrange** the lines to write a test using `MagicMock` that stubs a return value and verifies the call.
+          type: parsons
+          lines:
+            - "from unittest.mock import MagicMock"
+            - "mock_service = MagicMock()"
+            - "mock_service.get_temperature.return_value = 35"
+            - "reporter = WeatherReporter(mock_service)"
+            - "assert reporter.daily_summary('LA') == 'Hot day ahead!'"
+            - "mock_service.get_temperature.assert_called_once_with('LA')"
+          distractors:
+            - "mock_service = MagicMock(return_value=35)"
+          explanation: |
+            The test creates a MagicMock, configures `return_value` on the specific method
+            (not the mock itself — that's the distractor's error), injects it, exercises the SUT,
+            asserts the return value, then verifies the call with `assert_called_once_with`.
+
+        - question: |
+            Which of the following are valid uses of `MagicMock`? (Select all that apply)
+          type: multiple
+          options:
+            - "Setting `mock.get_data.return_value = [1, 2, 3]` to stub a return value"
+            - "Calling `mock.get_data.assert_called_once_with('key')` to verify a call was made"
+            - "Using `MagicMock(spec=DatabaseClient)` to catch typos in method names"
+            - "Using `mock.get_data.return_value` to make the mock automatically detect test failures"
+          correct_indices: [0, 1, 2]
+          explanation: |
+            `return_value` configures stub behavior, `assert_called_once_with` provides spy/mock
+            verification, and `spec=` constrains the mock to a real class's interface.
+            Option D is wrong — mocks do not automatically detect test failures; you must
+            write assertions (or use `assert_called` methods) explicitly.
+
+        - question: |
+            **(Spaced review — Step 3)** You need to verify that `process_order()` called `logger.log("Order placed")`. Which approach keeps the assertion visible in the test method?
+          type: single
+          options:
+            - "Mock — pre-program the expectation and let the mock verify during execution"
+            - "Spy — record the call and assert on the recorded data after execution"
+            - "Stub — configure the return value and check the SUT's output"
+            - "All three approaches keep assertions visible in the test"
+          correct_index: 1
+          explanation: |
+            A spy records the call and your explicit `assert` statement verifies it —
+            the assertion is right there in the test method, easy to read.
+            A mock verifies during execution (less visible). A stub only provides data.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — @patch and Patching Strategies
+  # Pedagogy:
+  #   Fading: Medium       — less scaffolding, multiple techniques.
+  #   Negative Transfer    — "patch where it's looked up" rule.
+  #   Bloom's level        — Apply / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "@patch and Patching Strategies"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **apply** `@patch` to replace module-level dependencies and **explain** the "patch where it's looked up" rule.
+
+      ## When You Cannot Inject
+
+      Dependency injection works great when you design for it. But sometimes the SUT uses a module-level import that you cannot inject:
+
+      ```python
+      # daily_report.py
+      from datetime import datetime
+
+      def generate_report():
+          today = datetime.now()     # ← How do you control this?
+          return f"Report for {today.strftime('%Y-%m-%d')}"
+      ```
+
+      You cannot inject `datetime` without changing the function signature. Instead, use `@patch` to temporarily replace it during the test.
+
+      ## The `@patch` Decorator
+
+      ```python
+      from unittest.mock import patch
+
+      @patch('daily_report.datetime')    # ← patches WHERE it's looked up
+      def test_report_date(mock_dt):
+          mock_dt.now.return_value = datetime(2024, 1, 15)
+          result = generate_report()
+          assert result == "Report for 2024-01-15"
+      ```
+
+      ### ⚠️ The #1 Mistake: Patching the Wrong Location
+
+      > **Rule: Patch where the name is LOOKED UP, not where it's DEFINED.**
+
+      ```python
+      # daily_report.py
+      from datetime import datetime     # ← 'datetime' is now in daily_report's namespace
+
+      # WRONG: @patch('datetime.datetime')          ← patches the definition
+      # RIGHT: @patch('daily_report.datetime')       ← patches the lookup location
+      ```
+
+      This is the single most common `@patch` mistake. The import `from datetime import datetime` copies the name into `daily_report`'s namespace. You must patch it *there*.
+
+      ### Predict Before You Code
+
+      Before writing any code, predict: what happens if you use `@patch('datetime.datetime')` instead of `@patch('daily_report.datetime')`? Will the test fail? Will it silently pass while testing the wrong thing? Write your prediction, then try it in the editor.
+
+      ### `side_effect` — Dynamic Responses
+
+      Use `side_effect` for more complex scenarios:
+
+      ```python
+      # Raise an exception
+      mock.get.side_effect = ConnectionError("timeout")
+
+      # Return different values on successive calls
+      mock.get.side_effect = [200, 500, 200]
+      # First call returns 200, second returns 500, third returns 200
+
+      # Call a function instead
+      mock.get.side_effect = lambda url: {"status": 200} if "valid" in url else {"status": 404}
+      ```
+
+      ### Task
+
+      Complete `test_daily_report.py`:
+
+      1. `test_report_uses_todays_date` — patch `datetime.now()` to return a fixed date, verify the report contains that date
+      2. `test_report_file_not_found` — patch `builtins.open` to raise `FileNotFoundError`, verify the function handles it gracefully
+      3. `test_report_with_side_effect` — use `side_effect` to make a mock return different values on successive calls
+
+    files:
+      - path: "daily_report.py"
+        content: |
+          """Daily report generator — uses datetime and file I/O."""
+          from datetime import datetime
+
+
+          def generate_report():
+              """Generate a report header with today's date."""
+              today = datetime.now()
+              return f"Report for {today.strftime('%Y-%m-%d')}"
+
+
+          def read_config(path):
+              """Read a config file. Returns default config if file not found."""
+              try:
+                  with open(path) as f:
+                      return f.read().strip()
+              except FileNotFoundError:
+                  return "default-config"
+
+
+          def fetch_prices(api_client, symbols):
+              """Fetch prices for multiple symbols. Returns a dict."""
+              results = {}
+              for symbol in symbols:
+                  results[symbol] = api_client.get_price(symbol)
+              return results
+        language: "python"
+
+      - path: "test_daily_report.py"
+        content: |
+          """Test daily_report using @patch and side_effect."""
+          import pytest
+          from unittest.mock import patch, MagicMock
+          from datetime import datetime
+          from daily_report import generate_report, read_config, fetch_prices
+
+
+          @patch('daily_report.datetime')
+          def test_report_uses_todays_date(mock_dt):
+              """Patch datetime.now() to return a fixed date."""
+              # TODO:
+              # 1. Set mock_dt.now.return_value = datetime(2024, 6, 15)
+              # 2. Call generate_report()
+              # 3. Assert the result contains "2024-06-15"
+              pytest.fail("TODO: implement this test")
+
+
+          @patch('builtins.open', side_effect=FileNotFoundError("no such file"))
+          def test_config_file_not_found(mock_open):
+              """Verify graceful handling when config file is missing."""
+              # TODO:
+              # 1. Call read_config("missing.txt")
+              # 2. Assert the result is "default-config"
+              pytest.fail("TODO: implement this test")
+
+
+          def test_prices_with_side_effect():
+              """Use side_effect to return different prices for different symbols."""
+              # TODO:
+              # 1. Create mock_api = MagicMock()
+              # 2. Set mock_api.get_price.side_effect = [150.0, 280.0]
+              # 3. Call fetch_prices(mock_api, ["AAPL", "MSFT"])
+              # 4. Assert result == {"AAPL": 150.0, "MSFT": 280.0}
+              pytest.fail("TODO: implement this test")
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_daily_report.py"
+
+    tests:
+      - description: "test_report_uses_todays_date passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_daily_report.py::test_report_uses_todays_date', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_report_uses_todays_date failed:\n{output}"
+      - description: "test_config_file_not_found passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_daily_report.py::test_config_file_not_found', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_config_file_not_found failed:\n{output}"
+      - description: "test_prices_with_side_effect passes"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_daily_report.py::test_prices_with_side_effect', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"test_prices_with_side_effect failed:\n{output}"
+
+    quiz:
+      title: "@patch — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A module `report.py` contains `from datetime import datetime`. To patch `datetime.now()` in a test, which `@patch` target is correct?
+          type: single
+          options:
+            - "`@patch('datetime.datetime.now')`"
+            - "`@patch('report.datetime')`"
+            - "`@patch('datetime.now')`"
+            - "`@patch('report.now')`"
+          correct_index: 1
+          explanation: |
+            **Patch where it's looked up, not where it's defined.**
+            `from datetime import datetime` copies the name `datetime` into `report`'s namespace.
+            You must patch `report.datetime`, not `datetime.datetime`.
+
+        - question: |
+            What does `mock.get_price.side_effect = [100, 200, 300]` do?
+          type: single
+          options:
+            - "It calls `get_price()` three times with values 100, 200, 300"
+            - "Each successive call to `get_price()` returns the next value in the list: first call → 100, second → 200, third → 300"
+            - "It sets the return value to the list `[100, 200, 300]`"
+            - "It raises an exception containing the values 100, 200, 300"
+          correct_index: 1
+          explanation: |
+            `side_effect` with a list makes the mock return a different value on each call.
+            This is useful for testing functions that call a dependency multiple times
+            (like fetching prices for multiple symbols). After the list is exhausted,
+            further calls raise `StopIteration`.
+
+        - question: |
+            **Arrange** the lines to use `@patch` and `side_effect` to test error handling when an API call fails.
+          type: parsons
+          lines:
+            - "@patch('my_module.requests.get')"
+            - "def test_handles_api_error(mock_get):"
+            - "    mock_get.side_effect = ConnectionError('timeout')"
+            - "    result = fetch_data('http://api.example.com')"
+            - "    assert result == 'fallback-value'"
+          distractors:
+            - "    mock_get.return_value = ConnectionError('timeout')"
+          explanation: |
+            `side_effect` RAISES the exception when the mock is called.
+            The distractor uses `return_value`, which would RETURN the exception object
+            as a value instead of raising it — a subtle but critical difference.
+            `@patch` goes first (decorator), then the test function receives the mock as a parameter.
+
+        - question: |
+            **(Spaced review — Step 4)** A test uses a mock pre-programmed with expected calls. During execution, the SUT calls a method the mock didn't expect. What happens?
+          type: single
+          options:
+            - "The mock silently records the unexpected call for later inspection"
+            - "The mock raises an error immediately — this is Expected Behavior Specification"
+            - "The mock ignores unexpected calls and only checks expected ones"
+            - "The test passes because mocks only verify at the end"
+          correct_index: 1
+          explanation: |
+            A true mock uses **Expected Behavior Specification** — it fails immediately
+            on unexpected interactions. This is stricter than a spy, which records
+            everything and lets the test decide what to assert on.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — When NOT to Mock: The Over-Mocking Trap
+  # Pedagogy:
+  #   Fixer Upper          — diagnose over-mocked tests.
+  #   Anti-pattern Gallery  — examples of bad mocking.
+  #   Bloom's level        — Evaluate / Analyze (quiz).
+  # --------------------------------------------------------------------------
+  - title: "When NOT to Mock — The Over-Mocking Trap"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **evaluate** whether a test is over-mocked and **apply** the Mock Skeptic's Checklist.
+
+      ## The #1 Test Doubles Mistake
+
+      Spadini et al. (2017) studied mocking in real-world projects and found: *"The use of mocking introduces a strong coupling between test code and production code."*
+
+      The mistake is not using mocks — it is **over-mocking**: replacing so many dependencies with mocks that your test verifies the mock configuration, not the actual code.
+
+      ### The Mock Skeptic's Checklist
+
+      Before creating a test double, ask yourself:
+
+      | Question | If YES... |
+      |----------|----------|
+      | Can I test this WITHOUT a mock? | Use real objects — simpler and less brittle |
+      | Am I verifying call order or specific argument formats? | You're testing implementation, not behavior |
+      | Does my mock setup mirror my implementation? | You're duplicating code, not testing it |
+      | Would a pure refactoring break this test? | The test is over-mocked |
+
+      ### The Assumption Trap (Tiwari et al., 2024)
+
+      Every test double encodes an **assumption** about how the real dependency behaves. If that assumption diverges from reality, your tests pass but your system is broken. For example:
+
+      ```python
+      # Your test assumes the API returns {"status": 200, "data": [...]}
+      mock_api.get.return_value = {"status": 200, "data": [{"name": "repo-a"}]}
+      # But the real API now returns {"code": 200, "results": [...]}
+      # Your tests pass. Your production code crashes.
+      ```
+
+      This is why **`spec=True` matters** — it constrains the mock to the real interface. And it is why integration tests (which use real dependencies) remain important even when unit tests use doubles.
+
+      ### Unnecessary Stubs (Fazzini et al., 2022)
+
+      An empirical study of 2,365 test doubles found that **unnecessary stubs** — stubs whose return values are never used by the test — are a common problem. They indicate "superfluous, dead, or outdated code in the tests." If you create a stub and the test passes even without it, remove it.
+
+      ### What TO Mock (Boundaries)
+
+      Mock things that cross **system boundaries**:
+      - HTTP APIs (slow, unreliable, costs money)
+      - Databases (slow, requires setup, non-deterministic)
+      - File system (side effects, permissions)
+      - Time/randomness (non-deterministic)
+      - Email/SMS services (side effects, costs money)
+
+      ### What NOT to Mock (Internals)
+
+      Do NOT mock your own code's internals:
+      - Value objects and data classes
+      - Pure functions and simple helpers
+      - Internal methods of the class under test
+      - Anything that is fast, deterministic, and has no side effects
+
+      ### Example: Over-Mocked vs. Appropriate
+
+      ```python
+      # ✗ OVER-MOCKED — tests mock configuration, not behavior
+      def test_calculate_total_overmocked():
+          mock_tax = MagicMock()
+          mock_tax.return_value = 8.0       # Duplicates the tax logic!
+          mock_discount = MagicMock()
+          mock_discount.return_value = 10.0  # Duplicates the discount logic!
+          result = calculate_total(100, tax_fn=mock_tax, discount_fn=mock_discount)
+          assert result == 98.0
+          mock_tax.assert_called_once_with(100)
+          mock_discount.assert_called_once_with(100)
+          # This test passes even if calculate_total() is completely wrong!
+          # The mocks pre-determined all the intermediate values.
+
+      # ✓ APPROPRIATE — tests with real objects, mocks only at boundary
+      def test_calculate_total_real():
+          result = calculate_total(100, tax_rate=0.08, discount=10)
+          assert result == 98.0
+          # No mocks needed! tax_rate and discount are simple values.
+      ```
+
+      ### Task: Fixer Upper
+
+      Open `test_invoice_audit.py`. It contains 6 tests for an `InvoiceProcessor`:
+      - 3 tests are **appropriately mocked** (they mock real external boundaries)
+      - 3 tests are **over-mocked** (they mock internals unnecessarily)
+
+      Your job:
+      1. Add a `# VERDICT:` comment to each test: "appropriate" or "over-mocked"
+      2. For over-mocked tests, explain WHY in the comment
+      3. Rewrite the 3 over-mocked tests to use real objects instead
+
+    files:
+      - path: "invoice_processor.py"
+        content: |
+          """InvoiceProcessor with a mix of internal helpers and external deps."""
+
+          class InvoiceProcessor:
+              def __init__(self, payment_gateway, email_sender):
+                  self.gateway = payment_gateway
+                  self.email = email_sender
+
+              def _calculate_tax(self, amount, rate=0.08):
+                  """Internal pure function — no side effects."""
+                  return round(amount * rate, 2)
+
+              def _format_currency(self, amount):
+                  """Internal pure function — no side effects."""
+                  return f"${amount:.2f}"
+
+              def process_invoice(self, customer_email, amount):
+                  """Process an invoice: calculate tax, charge, and email receipt."""
+                  tax = self._calculate_tax(amount)
+                  total = amount + tax
+
+                  # External boundary: charge the payment
+                  charge_result = self.gateway.charge(customer_email, total)
+                  if not charge_result["success"]:
+                      return {"status": "failed", "reason": charge_result["error"]}
+
+                  # External boundary: send receipt email
+                  self.email.send(
+                      to=customer_email,
+                      subject="Invoice Receipt",
+                      body=f"Charged: {self._format_currency(total)}"
+                  )
+
+                  return {"status": "paid", "total": total}
+        language: "python"
+
+      - path: "test_invoice_audit.py"
+        content: |
+          """Audit these tests: which are over-mocked?"""
+          import pytest
+          from unittest.mock import MagicMock, patch
+          from invoice_processor import InvoiceProcessor
+
+
+          # --- Test 1 ---
+          def test_successful_payment():
+              """Mocks the payment gateway (external boundary)."""
+              mock_gateway = MagicMock()
+              mock_gateway.charge.return_value = {"success": True}
+              mock_email = MagicMock()
+              processor = InvoiceProcessor(mock_gateway, mock_email)
+              result = processor.process_invoice("alice@test.com", 100.00)
+              assert result["status"] == "paid"
+              assert result["total"] == 108.0
+              # VERDICT: ???
+
+
+          # --- Test 2 ---
+          def test_tax_calculation():
+              """Mocks the internal _calculate_tax method."""
+              mock_gateway = MagicMock()
+              mock_gateway.charge.return_value = {"success": True}
+              mock_email = MagicMock()
+              processor = InvoiceProcessor(mock_gateway, mock_email)
+              with patch.object(processor, '_calculate_tax', return_value=8.0):
+                  result = processor.process_invoice("bob@test.com", 100.00)
+              assert result["total"] == 108.0
+              # VERDICT: ???
+
+
+          # --- Test 3 ---
+          def test_sends_receipt_email():
+              """Mocks the email sender (external boundary) and checks it was called."""
+              mock_gateway = MagicMock()
+              mock_gateway.charge.return_value = {"success": True}
+              mock_email = MagicMock()
+              processor = InvoiceProcessor(mock_gateway, mock_email)
+              processor.process_invoice("charlie@test.com", 50.00)
+              mock_email.send.assert_called_once()
+              assert mock_email.send.call_args[1]["to"] == "charlie@test.com"
+              # VERDICT: ???
+
+
+          # --- Test 4 ---
+          def test_format_currency():
+              """Mocks the internal _format_currency method."""
+              mock_gateway = MagicMock()
+              mock_gateway.charge.return_value = {"success": True}
+              mock_email = MagicMock()
+              processor = InvoiceProcessor(mock_gateway, mock_email)
+              with patch.object(processor, '_format_currency', return_value="$100.00"):
+                  processor.process_invoice("dave@test.com", 100.00)
+              # VERDICT: ???
+
+
+          # --- Test 5 ---
+          def test_payment_failure():
+              """Mocks the gateway to simulate failure (external boundary)."""
+              mock_gateway = MagicMock()
+              mock_gateway.charge.return_value = {"success": False, "error": "declined"}
+              mock_email = MagicMock()
+              processor = InvoiceProcessor(mock_gateway, mock_email)
+              result = processor.process_invoice("eve@test.com", 200.00)
+              assert result["status"] == "failed"
+              assert result["reason"] == "declined"
+              mock_email.send.assert_not_called()  # No receipt on failure
+              # VERDICT: ???
+
+
+          # --- Test 6 ---
+          def test_verifies_exact_charge_call_order():
+              """Mocks gateway and asserts exact method call sequence."""
+              mock_gateway = MagicMock()
+              mock_gateway.charge.return_value = {"success": True}
+              mock_email = MagicMock()
+              processor = InvoiceProcessor(mock_gateway, mock_email)
+              processor.process_invoice("frank@test.com", 75.00)
+              # Verifies charge was called BEFORE email — tests implementation order
+              expected_calls = [
+                  ('charge', ('frank@test.com', 81.0)),
+              ]
+              actual = [(c[0], c[1]) for c in mock_gateway.method_calls]
+              assert actual == expected_calls
+              # VERDICT: ???
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_invoice_audit.py"
+
+    tests:
+      - description: "All VERDICT comments are filled in"
+        command: |
+          source = open('/tutorial/test_invoice_audit.py').read()
+          assert source.count('???') == 0, \
+              "Replace all '???' VERDICT placeholders with your analysis"
+      - description: "Over-mocked tests identified (at least 2 marked)"
+        command: |
+          source = open('/tutorial/test_invoice_audit.py').read().lower()
+          assert source.count('over-mock') >= 2 or source.count('overmock') >= 2, \
+              "Identify at least 2 tests as over-mocked"
+      - description: "Tests still pass after audit"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_invoice_audit.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"Tests failed after your edits:\n{output}"
+
+    quiz:
+      title: "Over-Mocking — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A test mocks `_calculate_tax()` (an internal pure function) and asserts that it was called with `(100, 0.08)`. Is this appropriate?
+          type: single
+          options:
+            - "Yes — every dependency should be mocked for true unit isolation"
+            - "No — `_calculate_tax()` is an internal pure function with no side effects. Mock it and you're testing your mock configuration, not the actual tax calculation. Test the real function instead"
+            - "Yes — mocking internal functions makes the test faster"
+            - "No — but only because the function name starts with an underscore"
+          correct_index: 1
+          explanation: |
+            The Mock Skeptic's Checklist, question 1: "Can I test this WITHOUT a mock?"
+            Yes — `_calculate_tax()` is pure, fast, and deterministic. Using the real function
+            gives you a meaningful test. Mocking it means your test only verifies that
+            `process_invoice` calls `_calculate_tax` — not that the calculation is correct.
+
+        - question: |
+            Which of the following dependencies should be replaced with test doubles? (Select all that apply)
+          type: multiple
+          options:
+            - "An HTTP client that calls a third-party payment API"
+            - "A `datetime.now()` call that returns the current timestamp"
+            - "A helper function `def calculate_tax(amount): return amount * 0.08`"
+            - "An SMTP email sender that sends real emails to customers"
+          correct_indices: [0, 1, 3]
+          explanation: |
+            Mock at **system boundaries**: the payment API (slow, unreliable), `datetime.now()`
+            (non-deterministic), and the email sender (irreversible side effect). The `calculate_tax`
+            helper is a fast, deterministic pure function — use it as-is.
+
+        - question: |
+            **Arrange** the lines to write a well-structured test for `InvoiceProcessor` that mocks ONLY the external boundaries and uses real internal logic.
+          type: parsons
+          lines:
+            - "mock_gateway = MagicMock()"
+            - "mock_gateway.charge.return_value = {'success': True}"
+            - "mock_email = MagicMock()"
+            - "processor = InvoiceProcessor(mock_gateway, mock_email)"
+            - "result = processor.process_invoice('alice@test.com', 100.00)"
+            - "assert result['total'] == 108.0"
+          distractors:
+            - "with patch.object(processor, '_calculate_tax', return_value=8.0):"
+            - "mock_gateway.charge.assert_called_once()"
+          explanation: |
+            The correct test mocks only the external boundaries (payment gateway, email sender)
+            and lets the real `_calculate_tax()` run — verifying the actual total is 108.0.
+            The first distractor patches the internal `_calculate_tax` — over-mocking! The second
+            distractor verifies call details — testing implementation, not behavior. The `assert`
+            on the return value is sufficient.
+
+        - question: |
+            **(Spaced review — Step 5)** What does `MagicMock(spec=PaymentGateway)` do that `MagicMock()` does not?
+          type: single
+          options:
+            - "It makes the mock return realistic payment data"
+            - "It constrains the mock to only accept attributes that `PaymentGateway` actually has — catching typos and API mismatches"
+            - "It automatically stubs all methods with sensible defaults"
+            - "It requires the `PaymentGateway` class to be importable at test time"
+          correct_index: 1
+          explanation: |
+            `spec=PaymentGateway` mirrors the real class's interface. If you write
+            `mock.chrage(...)` (typo), it raises `AttributeError`. Without `spec`,
+            `MagicMock` silently accepts any attribute — hiding bugs.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — Capstone: Test a REST Client
+  # Pedagogy:
+  #   Full scaffolding removal — requirements only.
+  #   Integration              — combines ALL skills from Steps 1-7.
+  #   Interleaving             — student must choose which technique.
+  #   Bloom's level            — Create / Evaluate (quiz).
+  # --------------------------------------------------------------------------
+  - title: "Capstone: Test a REST Client"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **design** a test doubles strategy and **implement** a complete test suite for a multi-dependency system.
+
+      ## Putting It All Together
+
+      You now have all the component skills:
+      - **Stubs** to control indirect inputs (Step 2)
+      - **Spies** to observe indirect outputs (Step 3)
+      - **Mocks** for expected behavior specification (Step 4)
+      - **`MagicMock`** and **`@patch`** for framework-based doubles (Steps 5-6)
+      - **The Mock Skeptic's Checklist** to avoid over-mocking (Step 7)
+
+      This capstone integrates them into a real-world testing scenario — with **no scaffolding**.
+
+      ### Task
+
+      `github_client.py` contains a `GitHubClient` class that interacts with a (simulated) GitHub-like API. It has four methods:
+      1. `list_repos(username)` — fetches repos via HTTP GET (indirect input)
+      2. `create_issue(repo, title, body)` — creates an issue via HTTP POST (indirect output)
+      3. `fetch_with_retry(url, max_retries)` — retries on failure (needs `side_effect`)
+      4. All methods log their actions via `self.logger` (indirect output)
+
+      Write a complete test suite in `test_github.py`:
+
+      **Required tests:**
+      1. `test_list_repos` — stub the API response, verify the returned repo names
+      2. `test_create_issue` — verify the correct HTTP POST was made (spy/mock behavior)
+      3. `test_retry_on_failure` — use `side_effect` to simulate failure then success
+      4. `test_logs_api_calls` — verify that API calls are logged
+      5. `test_api_error_handling` — use `side_effect` to raise an exception, verify graceful handling
+
+      **Requirements:**
+      - Use `MagicMock(spec=...)` for the HTTP client
+      - Use `MagicMock()` for the logger
+      - Add a `# STRATEGY:` comment at the top explaining your test doubles strategy
+      - Apply the Mock Skeptic's Checklist: only mock external boundaries
+
+    files:
+      - path: "github_client.py"
+        content: |
+          """GitHubClient — a REST client with multiple dependencies."""
+
+          class GitHubClient:
+              def __init__(self, http_client, logger):
+                  self.http = http_client
+                  self.logger = logger
+
+              def list_repos(self, username):
+                  """Fetch a user's repositories."""
+                  self.logger.log(f"Fetching repos for {username}")
+                  response = self.http.get(f"/users/{username}/repos")
+                  if response["status"] != 200:
+                      raise ConnectionError(f"API error: {response['status']}")
+                  return [repo["name"] for repo in response["data"]]
+
+              def create_issue(self, repo, title, body):
+                  """Create an issue in a repository."""
+                  self.logger.log(f"Creating issue in {repo}: {title}")
+                  response = self.http.post(
+                      f"/repos/{repo}/issues",
+                      data={"title": title, "body": body}
+                  )
+                  if response["status"] != 201:
+                      raise ConnectionError(f"Failed to create issue: {response['status']}")
+                  return response["data"]
+
+              def fetch_with_retry(self, url, max_retries=3):
+                  """Fetch a URL with retries on failure."""
+                  for attempt in range(max_retries):
+                      self.logger.log(f"Attempt {attempt + 1}: {url}")
+                      try:
+                          response = self.http.get(url)
+                          if response["status"] == 200:
+                              return response["data"]
+                      except Exception:
+                          if attempt == max_retries - 1:
+                              raise
+                  raise ConnectionError(f"Failed after {max_retries} retries")
+        language: "python"
+
+      - path: "test_github.py"
+        content: |
+          """Capstone: Test the GitHubClient.
+          No scaffolding — design your own test doubles strategy."""
+          import pytest
+          from unittest.mock import MagicMock
+          from github_client import GitHubClient
+
+
+          # STRATEGY: ???
+          # Explain: What do you mock? What do you leave real? Why?
+
+
+          # TODO: Write at least 5 test functions:
+          # 1. test_list_repos
+          # 2. test_create_issue
+          # 3. test_retry_on_failure
+          # 4. test_logs_api_calls
+          # 5. test_api_error_handling
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_github.py"
+
+    tests:
+      - description: "Contains at least 5 test functions"
+        command: |
+          source = open('/tutorial/test_github.py').read()
+          test_count = source.count('def test_')
+          assert test_count >= 5, \
+              f"Write at least 5 test functions (found {test_count})"
+      - description: "Strategy comment is filled in"
+        command: |
+          source = open('/tutorial/test_github.py').read()
+          assert '???' not in source, "Fill in your STRATEGY comment"
+      - description: "Uses MagicMock"
+        command: |
+          source = open('/tutorial/test_github.py').read()
+          assert 'MagicMock' in source, "Use MagicMock from unittest.mock"
+      - description: "All tests pass"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_github.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue()
+          assert code == 0, f"Tests failed:\n{output}"
+      - description: "Includes a side_effect test"
+        command: |
+          source = open('/tutorial/test_github.py').read()
+          assert 'side_effect' in source, \
+              "Include at least one test using side_effect (for retry or error handling)"
+
+    quiz:
+      title: "Capstone — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            You are testing a `GitHubClient.create_issue()` method that makes an HTTP POST. Which test double type is MOST appropriate for the HTTP client dependency?
+          type: single
+          options:
+            - "A stub — just return canned data; don't verify the POST"
+            - "A spy or mock — you need to verify the correct endpoint and data were sent (indirect output), not just the return value"
+            - "No test double — use the real GitHub API for accurate testing"
+            - "A fake — implement a full in-memory GitHub API server"
+          correct_index: 1
+          explanation: |
+            `create_issue()` performs an **indirect output** — it sends data to the API.
+            You need to verify that the correct endpoint, title, and body were sent.
+            This is observation/verification territory — a spy or mock, not just a stub.
+            Using the real API would be slow, flaky, and would create real GitHub issues!
+
+        - question: |
+            A student's test for `fetch_with_retry()` uses `side_effect = [ConnectionError(), ConnectionError(), {"status": 200, "data": "ok"}]`. What does this simulate?
+          type: single
+          options:
+            - "Three successful responses followed by a failure"
+            - "Two failures followed by a success on the third attempt — testing the retry logic"
+            - "A single response containing all three values"
+            - "An error because `side_effect` cannot mix exceptions and return values"
+          correct_index: 1
+          explanation: |
+            `side_effect` with a list returns each item in order. Exceptions in the list
+            are raised (not returned). So: first call → raises `ConnectionError`,
+            second call → raises `ConnectionError`, third call → returns the dict.
+            This perfectly simulates "two failures then a success" for retry testing.
+
+        - question: |
+            **Arrange** the lines to write a retry test using `side_effect` that simulates two failures followed by a success.
+          type: parsons
+          lines:
+            - "mock_http = MagicMock()"
+            - "mock_http.get.side_effect = [Exception('fail'), Exception('fail'), {'status': 200, 'data': 'ok'}]"
+            - "mock_logger = MagicMock()"
+            - "client = GitHubClient(mock_http, mock_logger)"
+            - "result = client.fetch_with_retry('/test', max_retries=3)"
+            - "assert result == 'ok'"
+          distractors:
+            - "mock_http.get.return_value = [Exception('fail'), {'status': 200}]"
+          explanation: |
+            `side_effect` with a list returns each element in order — exceptions are RAISED,
+            not returned. The distractor uses `return_value`, which would return the LIST itself
+            as a single value on the first call, never raising any exception.
+            The test verifies that the retry logic recovers after two failures.
+
+        - question: |
+            **(Spaced review — Step 7)** A teammate's test mocks the `logger` dependency and asserts that `logger.log` was called exactly 3 times with specific messages in a specific order. Apply the Mock Skeptic's Checklist. Is this appropriate?
+          type: single
+          options:
+            - "Yes — logging is an external boundary that should always be mocked and fully verified"
+            - "Partially — mocking the logger is fine (it's a boundary), but asserting exact message text and call order tests implementation details. Verify that logging happened, but don't over-specify the format"
+            - "No — loggers should never be mocked under any circumstances"
+            - "Yes — verifying exact log messages ensures the code produces the correct audit trail"
+          correct_index: 1
+          explanation: |
+            Mocking the logger is appropriate (it's a boundary dependency).
+            But asserting exact message text and call ORDER couples the test to
+            implementation details. If someone rephrases a log message or reorders
+            two independent operations, the test breaks. Verify that logging *happened*
+            for key events, but don't over-specify the exact strings or sequence.
