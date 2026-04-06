@@ -229,7 +229,8 @@ test.describe('Personal Gym - Workout', () => {
 
   test('workout renders quiz card with quiz UI', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
-    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    // Use a quiz with no parsons questions so max-cards=1 always yields a standard quiz card
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
     await page.goto(GYM_URL);
 
     // Set max cards to 1 so we only get one card
