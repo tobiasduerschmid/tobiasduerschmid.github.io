@@ -56,8 +56,7 @@ steps:
 
       ### Task 1: Initialize a repository
 
-      Your Git identity has already been configured for you (as Steven
-      Strange). You can verify this anytime with `git config user.name`.
+      Your Git identity has already been configured for you. You can verify this anytime with `git config user.name`.
 
       Now create a new Git repository:
 
@@ -209,9 +208,6 @@ steps:
         language: "python"
 
     open_file: "myproject/calculator.py"
-
-    setup_commands:
-      - " cp /tutorial/myproject/calculator.py /tutorial/myproject/calculator.py 2>/dev/null; true"
 
     watch_files:
       - "myproject/calculator.py"

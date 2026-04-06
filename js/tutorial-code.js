@@ -1912,7 +1912,16 @@
 
     if (step.setup_commands) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
-        step.setup_commands.forEach(function (cmd) { self.sendCommand(cmd); });
+        step.setup_commands.forEach(function (cmd) {
+          // Commands starting with a space are housekeeping (hidden from
+          // history via HISTCONTROL=ignoreboth).  On v86, also run them
+          // silently so the user never sees the echo in the terminal.
+          if (self.config.backend === 'v86' && cmd.charAt(0) === ' ') {
+            self._runSilent(cmd.trim());
+          } else {
+            self.sendCommand(cmd);
+          }
+        });
         if (this.config.backend === 'v86') {
           setTimeout(function () { self._pollWatchedFiles(); }, 1500);
         }
