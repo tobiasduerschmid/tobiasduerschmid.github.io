@@ -1608,10 +1608,10 @@
     var self = this;
     var needsChmod = self._executableFiles.has(filename);
 
-    this.emulator.create_file('/tutorial/' + filename, bytes)
+    this.emulator.create_file('/' + filename, bytes)
       .then(function () {
         if (needsChmod) {
-          var res = self.emulator.fs9p.SearchPath('/tutorial/' + filename);
+          var res = self.emulator.fs9p.SearchPath('/' + filename);
           if (res && res.id !== -1) self.emulator.fs9p.inodes[res.id].mode = 0x81ED;
         }
       }).catch(function (err) {
@@ -2861,9 +2861,9 @@
     if (files.length === 0) return;
     this._reverseSyncBusy = true;
     var promises = files.map(function (filename) {
-      return self.emulator.read_file('/tutorial/' + filename)
+      return self.emulator.read_file('/' + filename)
         .then(function (buf) {
-          var res = self.emulator.fs9p.SearchPath('/tutorial/' + filename);
+          var res = self.emulator.fs9p.SearchPath('/' + filename);
           if (res && res.id !== -1) {
             var inode = self.emulator.fs9p.inodes[res.id];
             if (inode.mode & 0x49) self._executableFiles.add(filename);
@@ -2881,7 +2881,8 @@
           }
         }).catch(function () {});
     });
-    Promise.all(promises).then(function () { self._reverseSyncBusy = false; });
+    Promise.all(promises).then(function () { self._reverseSyncBusy = false; })
+      .catch(function () { self._reverseSyncBusy = false; });
   };
 
   TutorialCode.prototype.refreshOpenFiles = function () { this._pollWatchedFiles(); };
