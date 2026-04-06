@@ -41,11 +41,26 @@ print("Hello, World!")
 
 ### The Mental Model of Memory: Dynamic Typing
 
-This is the largest paradigm shift you will make. 
+This is the largest paradigm shift you will make.
 
 In C++ (Statically Typed), a variable is a **box in memory**. When you declare `int x = 5;`, the compiler reserves 4 bytes of memory, labels that specific memory address `x`, and restricts it to only hold integers.
 
-In Python (Dynamically Typed), a variable is a **name tag** attached to an object. The *object* has a type, but the *variable name* does not. 
+In Python (Dynamically Typed), a variable is a **name tag** attached to an object. The *object* has a type, but the *variable name* does not.
+
+You can inspect the type of any object at runtime using the built-in `type()` function:
+
+```python
+x = 42
+print(type(x))        # <class 'int'>
+
+x = "hello"
+print(type(x))        # <class 'str'>
+
+x = 3.14
+print(type(x))        # <class 'float'>
+```
+
+This is useful for debugging, but note that checking types explicitly is often un-Pythonic — prefer Duck Typing (see below) for production code.
 
 
 
@@ -65,7 +80,7 @@ Because variables are just name tags (references) pointing to objects, you don't
 
 In C++, scope is defined by curly braces `{}` and statements are terminated by semicolons `;`. 
 
-Python uses **indentation** to define scope, and **newlines** to terminate statements. This enforces highly readable code by design.
+Python uses **indentation** to define scope, and **newlines** to terminate statements. This enforces highly readable code by design. The PEP 8 standard mandates **4 spaces** per level — never mix tabs and spaces, as this causes an `IndentationError` at runtime that can be hard to diagnose (tabs and spaces look identical in many editors).
 
 **C++:**
 ```cpp
@@ -82,7 +97,10 @@ for i in range(5):
     if i % 2 == 0:
         print(f"{i} is even") # Notice the 'f' string, Python's modern way to format strings
 ```
-*Note: `range(5)` generates a sequence of numbers from 0 up to (but not including) 5.*
+The `range()` function generates a sequence of integers and has three forms:
+* `range(stop)` — from 0 up to (but not including) `stop`: `range(5)` → 0, 1, 2, 3, 4
+* `range(start, stop)` — from `start` up to (not including) `stop`: `range(2, 6)` → 2, 3, 4, 5
+* `range(start, stop, step)` — with a custom stride: `range(0, 10, 2)` → 0, 2, 4, 6, 8; `range(5, 0, -1)` → 5, 4, 3, 2, 1
 
 ### ⚠️ Scoping: The LEGB Rule (A "False Friend" from C++)
 
@@ -121,6 +139,54 @@ print(x)            # "global" — G level
 ```
 
 **Key difference from C++:** If you want to *modify* a variable from an enclosing scope, you must use the `nonlocal` (for enclosing functions) or `global` keyword. Without it, Python creates a new local variable instead of modifying the outer one.
+
+### Defining Functions with `def`
+
+Python functions are defined with the `def` keyword. Unlike C++, there is no return type declaration — the function just returns whatever the `return` statement provides, or `None` implicitly if there is no `return`.
+
+```python
+# Basic function — no type declarations needed
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("Alice"))   # Hello, Alice!
+```
+
+**Default Parameters**: Parameters can have default values, making them optional at the call site:
+
+```python
+def greet(name, greeting="Hello"):
+    return f"{greeting}, {name}!"
+
+print(greet("Alice"))            # Hello, Alice!
+print(greet("Bob", "Hi"))        # Hi, Bob!
+```
+
+**Implicit `None` Return**: A function with no `return` statement (or a bare `return`) returns `None`, Python's equivalent of `void`:
+
+```python
+def log_message(msg):
+    print(msg)
+    # No return — implicitly returns None
+
+result = log_message("test")
+print(result)   # None
+```
+
+**Docstrings**: The Python convention for documenting functions is a triple-quoted string immediately after the `def` line. Tools and IDEs display this as help text:
+
+```python
+def calculate_area(width, height):
+    """Return the area of a rectangle given its width and height."""
+    return width * height
+```
+
+**Type Hints** *(optional)*: Python 3.5+ supports optional type annotations. They are not enforced at runtime but improve readability and enable static analysis tools:
+
+```python
+def add(x: int, y: int) -> int:
+    return x + y
+```
 
 ### Passing Arguments: "Pass-by-Object-Reference"
 
@@ -198,6 +264,43 @@ In C++ you would need to escape: `"It\'s easy"` or `"<div class=\"box\">"`. Pyth
 
 > **Convention:** PEP 8 accepts either style but recommends picking one and being consistent throughout a project. Both are equally common in the wild.
 
+### Common String Methods
+
+Python strings come with a rich set of built-in methods (no `#include` required). Unlike C++ where `std::string` methods are relatively few, Python strings behave more like a full text-processing library:
+
+```python
+text = "  Hello, World!  "
+
+# Case conversion
+print(text.upper())        # "  HELLO, WORLD!  "
+print(text.lower())        # "  hello, world!  "
+
+# Whitespace removal
+print(text.strip())        # "Hello, World!"  (both ends)
+print(text.lstrip())       # "Hello, World!  " (left end only)
+print(text.rstrip())       # "  Hello, World!" (right end only)
+
+# Splitting — returns a list of substrings
+csv_line = "Alice,90,B+"
+fields = csv_line.split(",")      # ['Alice', '90', 'B+']
+
+log = "error: disk full\nwarning: low memory\n"
+lines = log.splitlines()          # ['error: disk full', 'warning: low memory']
+
+# Splitting on whitespace (default) collapses multiple spaces:
+words = "  hello   world  ".split()   # ['hello', 'world']
+
+# Checking content
+print("hello".startswith("he"))   # True
+print("hello".endswith("lo"))     # True
+print("ell" in "hello")           # True
+
+# Replacement
+print("foo bar foo".replace("foo", "baz"))  # "baz bar baz"
+```
+
+`strip()` is especially important when reading files — lines from a file end with `\n`, so stripping removes the trailing newline before processing.
+
 ### Core Collections: Lists, Sets, and Dictionaries
 
 Because Python does not enforce static typing, its built-in collections are highly flexible. You do not need to `#include` external libraries to use them; they are native to the language syntax. 
@@ -220,7 +323,7 @@ print(len(my_list))        # len() gets the size of any collection (Output: 0)
 ```
 
 #### Sets (C++ Equivalent: `std::unordered_set`)
-A Set is an unordered collection of unique elements. It is implemented using a hash table, making membership testing (`in`) exceptionally fast—$O(1)$ on average. Sets are defined using curly braces `{}`.
+A Set is an unordered collection of unique elements. It is implemented using a hash table, making membership testing (`in`) exceptionally fast—$O(1)$ on average. Sets are defined using curly braces `{}`, or by passing any iterable to the `set()` constructor.
 
 ```python
 unique_numbers = {1, 2, 2, 3, 4, 4}
@@ -229,6 +332,14 @@ print(unique_numbers) # Output: {1, 2, 3, 4} - duplicates are automatically remo
 # Fast membership testing
 if 3 in unique_numbers:
     print("3 is present!")
+
+# Deduplication idiom — convert a list to a set and back:
+words = ["apple", "banana", "apple", "cherry", "banana"]
+unique_words = list(set(words))  # removes duplicates (order not preserved)
+
+# Count unique items:
+ip_list = ["10.0.0.1", "10.0.0.2", "10.0.0.1"]
+print(len(set(ip_list)))  # 2 — number of distinct IP addresses
 ```
 
 #### Dictionaries (C++ Equivalent: `std::unordered_map`)
@@ -460,6 +571,22 @@ value = my_dict.get("key", "default")
 
 EAFP is idiomatic Python because exceptions are cheap in Python (unlike C++, where they are expensive). Using `try/except` for expected cases like missing dictionary keys or file-not-found is standard practice, not an anti-pattern.
 
+#### Common Built-in Exception Types
+
+Knowing the standard exception types makes it easier to write targeted `except` clauses and understand error messages:
+
+| Exception | When it occurs |
+|---|---|
+| `SyntaxError` | Code that cannot be parsed — caught before execution |
+| `IndentationError` | Inconsistent indentation (e.g., mixed tabs and spaces) |
+| `TypeError` | Operation on incompatible types (e.g., `"5" + 3`) |
+| `ValueError` | Right type but inappropriate value (e.g., `int("hello")`) |
+| `IndexError` | Sequence index out of range (e.g., `my_list[99]` on a short list) |
+| `KeyError` | Dictionary key does not exist (e.g., `d["missing"]`) |
+| `FileNotFoundError` | `open()` called on a path that does not exist |
+| `ZeroDivisionError` | Division or modulo by zero |
+| `AttributeError` | Accessing a non-existent attribute on an object |
+
 ### Robust Command-Line Arguments (`argparse`)
 In C++, you typically handle command-line inputs by parsing `int argc` and `char* argv[]` directly in `main()`. While Python *does* have a direct equivalent (`sys.argv`), the course materials emphasize using the built-in `argparse` module. It automatically generates help/usage messages, enforces types, and parses flags, saving you from writing boilerplate C++ parsing code.
 
@@ -553,6 +680,23 @@ with open("data.txt") as f:
     for line in f:
         print(line.strip())   # .strip() removes the trailing newline
 ```
+
+There are several ways to read a file's content depending on your needs:
+
+```python
+with open("data.txt") as f:
+    content = f.read()              # Entire file as one string
+    lines = content.splitlines()    # Split into a list of lines (no trailing \n)
+
+with open("data.txt") as f:
+    lines = f.readlines()           # List of lines, each ending with \n
+
+with open("data.txt") as f:
+    for line in f:                  # Memory-efficient: one line at a time
+        process(line.strip())
+```
+
+Prefer iterating line-by-line for large files — `f.read()` loads the entire file into memory at once, which can be problematic for gigabyte-scale logs.
 
 The `with` statement is Python's **context manager** idiom — just like RAII in C++, the file is guaranteed to be closed when the block exits. This also works with database connections, locks, and other resources.
 
