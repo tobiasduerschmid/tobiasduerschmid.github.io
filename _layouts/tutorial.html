@@ -18,8 +18,7 @@
         </span>
       </div>
       <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
-        {% if site.tutorial_autosave %}
-        <label id="autoSaveLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
+        <label id="autoSaveLabel" style="display:none; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
                title="Automatically save step and code so you can resume later">
           <i class="fa-solid fa-floppy-disk"></i> Auto-save
           <span class="tvm-dark-toggle-wrap">
@@ -30,11 +29,10 @@
           </span>
         </label>
         <a id="resetStepBtn" href="#"
-           style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:5px;"
+           style="color:#fff; font-size:14px; font-weight:600; text-decoration:none; display:none; align-items:center; gap:5px;"
            title="Reset current step to original code">
           <i class="fa fa-undo"></i> Reset Current Step
         </a>
-        {% endif %}
         <a id="solutionBtn" href="#"
            style="display:none; color:#fff; font-size:14px; font-weight:600; text-decoration:none; align-items:center; gap:5px;"
            title="Apply solution for current step">
@@ -168,7 +166,13 @@
         }
       });
 
-      var instructorMode = new URLSearchParams(window.location.search).get('instructor-mode') === 'true';
+      var params = new URLSearchParams(window.location.search);
+      var instructorMode = params.get('instructor-mode') === 'true';
+
+      // Resolve autosave: URL ?autosave=true overrides site/tutorial config
+      var configAutosave = {{ tutorial_allow_autosave }};
+      var urlAutosave = params.get('autosave');
+      var effectiveAutosave = urlAutosave !== null ? urlAutosave === 'true' : configAutosave;
 
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',
@@ -176,7 +180,7 @@
         steps:        config.steps,
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
-        allowAutosave: {{ tutorial_allow_autosave }},
+        allowAutosave: effectiveAutosave,
         instructorMode: instructorMode,
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
@@ -188,34 +192,33 @@
       });
       tutorial.start();
 
-      {% if site.tutorial_autosave %}
       // Wire Auto-save toggle + Reset Step button
       var autoSaveToggle = document.getElementById('autoSaveToggle');
       var autoSaveLabel = document.getElementById('autoSaveLabel');
-      if (!tutorial.allowAutosave) {
-        // Tutorial disables autosave entirely — hide toggle
-        if (autoSaveLabel) autoSaveLabel.style.display = 'none';
-        tutorial.autoSaveEnabled = false;
-      } else if (autoSaveToggle) {
-        // Restore persisted preference (default: on)
-        var savedPref = localStorage.getItem('tutorial-autosave');
-        var autoSaveOn = savedPref !== 'false';
-        autoSaveToggle.checked = autoSaveOn;
-        tutorial.autoSaveEnabled = autoSaveOn;
-        autoSaveToggle.addEventListener('change', function () {
-          tutorial.autoSaveEnabled = this.checked;
-          localStorage.setItem('tutorial-autosave', this.checked);
-          if (this.checked) tutorial.saveProgress();
-        });
-      }
       var resetBtn = document.getElementById('resetStepBtn');
-      if (resetBtn) {
-        resetBtn.addEventListener('click', function (e) {
-          e.preventDefault();
-          tutorial.resetStep();
-        });
+      if (tutorial.allowAutosave) {
+        // Show auto-save UI
+        if (autoSaveLabel) autoSaveLabel.style.display = 'flex';
+        if (resetBtn) resetBtn.style.display = 'flex';
+        if (autoSaveToggle) {
+          // Restore persisted preference (default: on)
+          var savedPref = localStorage.getItem('tutorial-autosave');
+          var autoSaveOn = savedPref !== 'false';
+          autoSaveToggle.checked = autoSaveOn;
+          tutorial.autoSaveEnabled = autoSaveOn;
+          autoSaveToggle.addEventListener('change', function () {
+            tutorial.autoSaveEnabled = this.checked;
+            localStorage.setItem('tutorial-autosave', this.checked);
+            if (this.checked) tutorial.saveProgress();
+          });
+        }
+        if (resetBtn) {
+          resetBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            tutorial.resetStep();
+          });
+        }
       }
-      {% endif %}
 
       // Instructor mode: show and wire Solution button + update Print link
       if (instructorMode) {
