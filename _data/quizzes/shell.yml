@@ -188,3 +188,46 @@ questions:
       - "tail -5"
       - "wc -l"
     explanation: "The `grep -oE` extracts all IPv4 addresses (one per line). `sort` groups identical IPs together (required for `uniq`). `uniq -c` counts each group. `sort -rn` sorts by count in descending numeric order. `head -5` takes the top 5. `tail -5` would give the *least* frequent, and `wc -l` would just count total lines."
+
+  - id: 18
+    question: |
+      **Arrange** the fragments to redirect both stdout and stderr of a deployment script into a single log file.
+    type: parsons
+    display: inline
+    lines:
+      - "./deploy.sh"
+      - ">"
+      - "output.log"
+      - "2>&1"
+    distractors:
+      - "1>&2"
+      - "2> output.log"
+    explanation: "`> output.log` redirects stdout to the file first, then `2>&1` redirects stderr to wherever stdout currently points (the file). Order matters: `2>&1 > output.log` would send stderr to the *original* stdout (terminal) and only stdout to the file. The distractor `1>&2` goes the wrong direction — it sends stdout to stderr. Using `2> output.log` alone still lets stdout reach the terminal."
+
+  - id: 19
+    question: |
+      **Arrange** the pipeline to count how many files under `src/` contain the word `TODO`.
+    type: parsons
+    display: inline
+    lines:
+      - "grep -rl 'TODO' src/"
+      - "|"
+      - "wc -l"
+    distractors:
+      - "grep -r 'TODO' src/"
+      - "sort"
+    explanation: "`grep -rl` (recursive, files-with-matches) prints one matching filename per line — each file counted once regardless of how many matches it contains. `wc -l` then counts those filenames. The distractor `grep -r` (without `-l`) prints every matching *line*, so `wc -l` would count occurrences, not files. `sort` is unnecessary here since we only need a count."
+
+  - id: 20
+    question: |
+      **Arrange** the pipeline to run a build and simultaneously write its output to `build.log` while still printing it to the terminal.
+    type: parsons
+    display: inline
+    lines:
+      - "make build"
+      - "|"
+      - "tee build.log"
+    distractors:
+      - ">>"
+      - "2>&1"
+    explanation: "`tee` reads from stdin and writes to *both* stdout (the terminal) and the named file — perfect for keeping a log without losing live output. Using `> build.log` or `>>` would capture output silently with nothing visible in the terminal. `2>&1` redirects stderr but doesn't duplicate the stream the way `tee` does."

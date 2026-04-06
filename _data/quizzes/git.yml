@@ -202,3 +202,44 @@ questions:
       - "git reset --hard <bad-commit-hash>"
       - "git push -f"
     explanation: "`git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
+
+  - question: |
+      **Arrange** the commands to initialize a new repository and record an initial commit.
+    type: parsons
+    display: inline
+    lines:
+      - "git init"
+      - "&&"
+      - "git add ."
+      - "&&"
+      - "git commit -m 'Initial commit'"
+    distractors:
+      - "git clone ."
+      - "git push"
+    explanation: "`git init` creates the repository, `git add .` stages every file in the working directory, and `git commit` records the first snapshot. `git clone` copies an *existing* remote repo — it doesn't create one from scratch. `git push` requires a remote to already exist."
+
+  - question: |
+      **Arrange** the commands to register a remote called `origin` and push the `main` branch to it for the first time.
+    type: parsons
+    display: inline
+    lines:
+      - "git remote add origin <url>"
+      - "&&"
+      - "git push -u origin main"
+    distractors:
+      - "git fetch origin"
+      - "git pull origin main"
+    explanation: "`git remote add origin <url>` registers the remote address under the alias `origin`. `git push -u origin main` uploads the branch and sets the upstream tracking reference so future `git push`/`git pull` calls need no extra arguments. `git fetch` and `git pull` *download* data — they don't publish your local branch."
+
+  - question: |
+      **Arrange** the commands to stage a forgotten file and fold it into the last commit without changing the commit message.
+    type: parsons
+    display: inline
+    lines:
+      - "git add forgotten.py"
+      - "&&"
+      - "git commit --amend --no-edit"
+    distractors:
+      - "git reset --hard HEAD~1"
+      - "git commit -m 'Add forgotten file'"
+    explanation: "`git add forgotten.py` stages the missing file, and `git commit --amend --no-edit` rewrites the previous commit to include it while keeping the original message. `git reset --hard HEAD~1` would *destroy* the previous commit entirely. Creating a brand-new commit (`-m 'Add forgotten file'`) is valid but pollutes history with a fixup commit — amend is cleaner when the previous commit hasn't been pushed."

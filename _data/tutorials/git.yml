@@ -2228,8 +2228,61 @@ steps:
       revert commit. The debug line is gone from the file, but the full
       history of what happened is preserved — exactly as it should be.
 
+      ### Task 4: The snapshot lives on — predict the outcome
+
+      Git commits the **staged** version of a file, not what happens to be
+      on disk at the moment you type `git commit`. Let's prove this with a
+      predict-before-run experiment.
+
+      Create a new file and stage it:
+
+      ```bash
+      echo "Study notes for the exam" > notes.txt
+      git add notes.txt
+      ```
+
+      Now delete the file from the filesystem **before committing**:
+
+      ```bash
+      rm notes.txt
+      ```
+
+      Run `git status`. You'll see `notes.txt` listed as deleted in the
+      working directory — but Git still has the staged version in its index.
+
+      Now commit:
+
+      ```bash
+      git commit -m "Add notes file"
+      ```
+
+      Verify the file is missing from disk:
+
+      ```bash
+      ls
+      ```
+
+      `notes.txt` is not there. The commit succeeded (Git used the staged
+      snapshot), but the working directory is out of sync with HEAD.
+
+      > **Before you run:** `git reset --hard HEAD` resets your working
+      > directory to **exactly match the latest commit**. HEAD is the commit
+      > you just made — which **includes** `notes.txt`. Will the file
+      > appear, disappear, or stay gone? Form your prediction, then run:
+
+      ```bash
+      git reset --hard HEAD
+      ls
+      ```
+
+      The file is back. Git's staging area captured a real snapshot of the
+      file at `git add` time. The commit preserved it. And `git reset --hard
+      HEAD` restored the working directory to match — proving that once
+      something is committed, Git can always bring it back.
+
     watch_files:
       - "myproject/calculator.py"
+      - "myproject/notes.txt"
 
     solution:
       commands:
@@ -2240,10 +2293,20 @@ steps:
         - "git revert HEAD --no-edit"
         - "git log --oneline"
         - "cat calculator.py"
+        - "echo \"Study notes for the exam\" > notes.txt"
+        - "git add notes.txt"
+        - "rm notes.txt"
+        - "git status"
+        - "git commit -m \"Add notes file\""
+        - "ls"
+        - "git reset --hard HEAD"
+        - "ls"
       explanation: |
         - **Test 1:** `git log --oneline | grep -qi 'revert'` — a revert commit must exist in the log (Git's default message is "Revert '...'").
         - **Test 2:** `! grep -q 'debug: this should not be here' calculator.py` — the debug line must be gone from the file.
         - **Test 3:** `[ $(git log --oneline | wc -l) -ge 8 ]` — the repository must have at least 8 commits by now.
+        - **Test 4:** `[ -f notes.txt ]` — `notes.txt` must exist (restored by `git reset --hard HEAD`).
+        - **Task 4 mechanics:** `git add` copies a snapshot of the file into the index. Deleting the file from disk afterward only affects the working directory — the index retains its copy. `git commit` reads from the index, so the commit includes `notes.txt` even though it was deleted before the commit ran. `git reset --hard HEAD` then reconciles the working directory with HEAD, restoring any files that HEAD has but the working directory doesn't.
         - **`git revert HEAD --no-edit`:** Creates a new commit that applies the exact inverse of `HEAD`. `--no-edit` accepts the default message without opening a text editor.
         - **Why NOT `git reset --hard`:** `reset --hard` destroys commits by moving the branch pointer backward — rewriting history. On a shared branch where teammates have already pulled, this would cause severe conflicts and require a force-push. `git revert` is always safe because it only adds new commits and never changes existing history.
 
@@ -2254,6 +2317,8 @@ steps:
         command: "cd /tutorial/myproject && ! grep -q 'debug: this should not be here' calculator.py"
       - description: "Repository has at least 8 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 8 ]"
+      - description: "notes.txt exists (restored by git reset --hard HEAD)"
+        command: "cd /tutorial/myproject && [ -f notes.txt ]"
 
     quiz:
       title: "Safe Undo with git revert — Knowledge Check"
@@ -2317,6 +2382,83 @@ steps:
             - "The force-push would have been rejected by Git's safety mechanisms"
           correct_index: 1
           explanation: "Force-pushing rewrites remote history. Every teammate who already pulled those commits now has a diverged local copy. Recovery is possible if someone still has the commits (via `git reflog` or their local branch), but it requires coordination. This is why `git revert` is always preferred on shared branches — it never rewrites history."
+
+        - question: "**[Revisit Task 4]** In Task 4 you ran `git add notes.txt` then `rm notes.txt`, leaving the file staged but deleted from disk. Which commands, if run **before** `git commit`, would have ensured the **deletion** was what got committed — so the file stays gone after `git reset --hard HEAD`? (Select all that apply)"
+          type: multiple
+          options:
+            - "`git add notes.txt` — run again after `rm`, this stages the deletion by updating the index to match the working tree (no file present)"
+            - "`git rm --cached notes.txt` — removes the file from the index only, staging the deletion without touching the working tree"
+            - "`git restore --staged notes.txt` — copies the HEAD version (which has no `notes.txt`) back into the index, removing the file from staging"
+            - "`git restore notes.txt` — restores `notes.txt` from the index back to disk, recreating the file locally and setting up a commit that **adds** it rather than deleting it"
+          correct_indices:
+            - 0
+            - 1
+            - 2
+          explanation: "All three correct options converge on the same goal: make the **index** (staging area) reflect the absence of `notes.txt` before committing. `git add <deleted-file>` tells Git 'stage what the working tree shows — nothing'; `git rm --cached` removes directly from the index; `git restore --staged` resets the index entry to HEAD's state (no file). The distractor, `git restore notes.txt` (without `--staged`), does the opposite: it copies the staged version *back to disk*, recreating the file — which would cause the commit to add the file, not delete it."
+
+        - question: |
+            **Construct** the command that moves `notes.txt` **out of the staging area** while leaving your working-directory edits untouched.
+          type: parsons
+          display: inline
+          lines:
+            - "git"
+            - "restore"
+            - "--staged"
+            - "notes.txt"
+          distractors:
+            - "rm"
+            - "--cached"
+            - "add"
+            - "reset"
+          explanation: "`git restore --staged <file>` copies the version of the file from the last commit back into the index, effectively removing it from staging. Your working-directory edits are completely untouched. Without `--staged`, `git restore` would discard your working-directory edits instead."
+
+        - question: |
+            **Construct** the command that removes `notes.txt` from the **index only** (staging the deletion) without deleting anything from the filesystem.
+          type: parsons
+          display: inline
+          lines:
+            - "git"
+            - "rm"
+            - "--cached"
+            - "notes.txt"
+          distractors:
+            - "restore"
+            - "--staged"
+            - "add"
+            - "-f"
+          explanation: "`git rm --cached <file>` removes a file from the index (staging area) while leaving the file on disk. The next commit will record the file as deleted. This is the complement of `git restore --staged`: both manipulate the index without touching the working tree, but in opposite directions."
+
+        - question: |
+            **Construct** the command that resets your working directory to **exactly match the latest commit**, restoring any files that were deleted from disk.
+          type: parsons
+          display: inline
+          lines:
+            - "git"
+            - "reset"
+            - "--hard"
+            - "HEAD"
+          distractors:
+            - "restore"
+            - "--soft"
+            - "HEAD~1"
+            - "revert"
+          explanation: "`git reset --hard HEAD` synchronises both the index and the working directory with the tip of the current branch. Any files present in HEAD but missing from disk (like `notes.txt` after `rm`) are restored. **Never** use this on uncommitted work you want to keep — `--hard` discards all unstaged and staged changes permanently."
+
+        - question: |
+            **Construct** the command that **safely undoes** the last commit on a shared branch by creating a new inverse commit, without opening an editor.
+          type: parsons
+          display: inline
+          lines:
+            - "git"
+            - "revert"
+            - "HEAD"
+            - "--no-edit"
+          distractors:
+            - "reset"
+            - "--hard"
+            - "HEAD~1"
+            - "restore"
+          explanation: "`git revert HEAD --no-edit` creates a new commit that exactly inverts the changes in `HEAD`, preserving the full history. `--no-edit` accepts Git's default revert message without opening a text editor. The distractors (`reset --hard HEAD~1`) represent the dangerous alternative: it destroys commits rather than adding a safe inverse."
 
   # --------------------------------------------------------------------------
   # STEP 14: Review and best practices (was Step 13)
