@@ -1673,7 +1673,12 @@
     // 3. Run solution commands (backend-specific dispatch)
     if (solution.commands && solution.commands.length > 0) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
-        solution.commands.forEach(function (cmd) { self.sendCommand(cmd); });
+        // Suppress git pager for solution commands: all commands are scripted and sent
+        // back-to-back via serial; without this, pagers (less) consume characters from
+        // the next command (e.g. "git " gets eaten, leaving "add calculator.py" to fail).
+        solution.commands.forEach(function (cmd) {
+          self.sendCommand(cmd.replace(/^git /, 'git --no-pager '));
+        });
       } else if (this.config.backend === 'pyodide') {
         this._postWorker({
           type: 'runCode',
@@ -1895,8 +1900,8 @@
         }
       });
       self._suppressAutoSave = false;
-      if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
     }
+    if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
 
     if (step.setup_commands) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {

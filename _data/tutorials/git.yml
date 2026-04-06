@@ -405,8 +405,6 @@ steps:
                 return a * b
           language: "python"
       commands:
-        - "git status"
-        - "git diff"
         - "git add calculator.py"
         - "git commit -m \"Add multiply function to calculator\""
         - "git log"
@@ -681,6 +679,8 @@ steps:
       | `git restore --staged <file>` | Unstage (move off loading dock, keep edits) |
       | `git restore <file>` | Discard working directory changes (permanent!) |
       | `git reset --hard` | Discard ALL uncommitted changes (nuclear option) |
+
+    open_file: "myproject/calculator.py"
 
     watch_files:
       - "myproject/calculator.py"
