@@ -276,21 +276,21 @@ steps:
           correct_index: 2
           explanation: "An **untracked** file is one Git has never been told to follow. It shows up in red under 'Untracked files'. Once you run `git add`, it moves to the staging area and Git begins tracking it."
 
-        - question: "**[Interleaved: Revisit Step 1]** What is the very first command you ran to turn your folder into a Git repository?"
+        - question: "**[Interleaved: Revisit Step 1]** You run `git add calculator.py` in a freshly created directory and get: `fatal: not a git repository (or any of the parent directories): .git`. What is the root cause, and what is the fix?"
           options:
-            - "`git commit`"
-            - "`git add`"
-            - "`git init`"
-            - "`git config`"
-          correct_index: 2
-          explanation: "`git init` creates the hidden `.git` folder and initializes the metadata structures that allow Git to start tracking your project."
+            - "The file `calculator.py` doesn't exist yet — create it first, then re-run `git add`"
+            - "The `.git` directory is missing — the folder was never initialized as a repository; run `git init` first"
+            - "The file is in a subdirectory — navigate to the project root before staging"
+            - "`git add` requires network access — check your connection"
+          correct_index: 1
+          explanation: "The error `not a git repository` means Git cannot find a `.git` directory in the current folder or any parent. As Step 1 showed, `git init` creates that directory. Without it, no Git commands work — `git add`, `git commit`, and `git log` all require an initialized repository."
 
         - question: "Which sequence of commands correctly stages and commits a new file called `app.py`?"
           options:
             - "`git commit app.py` then `git add app.py`"
             - "`git add app.py` then `git commit -m 'Add app module'`"
-            - "`git stage app.py` then `git save 'Add app module'`"
-            - "`git track app.py` then `git commit`"
+            - "`git add app.py` then `git push 'Add app module'`"
+            - "`git commit -m 'Add app module'` then `git add app.py`"
           correct_index: 1
           explanation: "The correct two-step flow is **add** (move to staging area) then **commit** (save the snapshot). `git commit` only commits what's in the staging area, so you must `git add` first."
 
@@ -486,6 +486,12 @@ steps:
 
       ### Task 1: Stage files selectively
 
+      > **Before you run:** The project now has four new files: `README.md`,
+      > `test_calc.py`, `test_utils.py`, and `notes.txt`. You are about to
+      > stage **only** `README.md`. After `git add README.md` and `git status`,
+      > predict: which file(s) will appear **green** (staged), and which will
+      > remain **red** (unstaged)?
+
       Stage just one specific file and check the result:
 
       ```bash
@@ -583,14 +589,14 @@ steps:
           correct_index: 1
           explanation: "As we practiced in Step 3, `git diff` compares your **working directory** to the **staging area**. Since nothing new is staged, the staging area still matches the last commit — so you see all your unstaged modifications."
 
-        - question: "**[Interleaved: Revisit Step 2]** What color does `git status` use for a file that is **modified but not yet staged**?"
+        - question: "**[Interleaved: Revisit Step 2]** A teammate always runs `git add .` before every commit, saying 'it's simpler.' What is the most significant hidden risk of this habit?"
           options:
-            - "Green"
-            - "Red"
-            - "Yellow"
-            - "Blue"
+            - "No risk — `git add .` is exactly equivalent to staging files by name"
+            - "It can accidentally stage debug files, secrets, or half-finished work alongside your real changes — and once committed, those changes are permanently in history"
+            - "It is slower than staging by name because Git scans more files"
+            - "It stages files in alphabetical order, which changes the commit hash"
           correct_index: 1
-          explanation: "In `git status`, red indicates untracked or modified files (not in the staging area), while green indicates staged files. This was the core change loop introduced in Step 2."
+          explanation: "The staging area exists precisely to give you fine-grained control. `git add .` bypasses that control: it stages everything in the working directory, including generated files, half-finished changes, or (critically) secrets. As Step 2 showed, the two-step add/commit flow gives you a deliberate checkpoint to review exactly what enters each commit."
 
         - question: "What is the key advantage of Git's staging area over a simple 'save everything' commit model?"
           options:
@@ -799,6 +805,11 @@ steps:
       *.log
       ```
 
+      > **Before you run:** You have just saved `.gitignore` with the four
+      > patterns above. After running `git status`, predict: which of the
+      > files you created in Task 1 (`__pycache__/`, `.env`, `debug.log`)
+      > will **disappear** from the output, and which will remain visible?
+
       Save the file, then check the status:
 
       ```bash
@@ -888,14 +899,14 @@ steps:
           correct_index: 1
           explanation: "`.gitignore` tells Git to **pretend matching files don't exist** for tracking purposes. The files remain on disk — they simply won't appear in `git status` as untracked, and `git add .` won't stage them."
 
-        - question: "**[Interleaved: Revisit Step 4]** You've modified `app.py`, `style.css`, and `test_app.py`, but only want the test file in your next commit. Which staging command is best?"
+        - question: "**[Interleaved: Revisit Steps 4–5]** You ran `git add .` and accidentally staged `app.py`, `style.css`, AND `secrets.env`. You only want `app.py` in this commit. What is the correct recovery sequence?"
           options:
-            - "`git add .`"
-            - "`git add --all`"
-            - "`git add test_app.py`"
-            - "`git add *.py`"
-          correct_index: 2
-          explanation: "Staging by exact filename gives you precise control over what enters the next commit — the core lesson from Step 4. Both `git add .` and `git add --all` would stage everything. `git add *.py` would also stage `app.py`, which you want to exclude."
+            - "`git restore secrets.env` then `git restore style.css` — removes both files from staging and discards their edits"
+            - "`git restore --staged secrets.env` then `git restore --staged style.css` — unstages both files while keeping their working-directory edits intact"
+            - "`git reset --hard` — resets everything and you start the staging over cleanly"
+            - "`git add app.py` again — Git deduplicates and only stages `app.py`"
+          correct_index: 1
+          explanation: "`git restore --staged <file>` is the surgical undo for `git add`: it moves a file off the staging area without touching your working-directory edits. After running it for both unwanted files, only `app.py` remains staged — ready for a clean, focused commit. `git restore` (without `--staged`) would permanently discard the edits, which is not what you want here."
 
         - question: "**[Interleaved: Revisit Step 1]** Is a Git commit better described as a 'backup diff' or a 'permanent snapshot'?"
           options:
@@ -1429,6 +1440,15 @@ steps:
           correct_index: 1
           explanation: "This is a common misconception. A branch is just a tiny pointer file, not a copy. You can create hundreds of branches with negligible disk cost. Understanding this changes how you think about branching strategy — branches should be cheap and frequent, not rare and expensive."
 
+        - question: "**[Interleaved: Revisit Step 5]** Before running `git switch feature-divide`, you notice you have unstaged edits to `calculator.py`. What is the safest approach?"
+          options:
+            - "Run `git switch` anyway — Git auto-saves all unstaged changes to the current branch"
+            - "Run `git restore calculator.py` to discard the edits, then switch freely"
+            - "Commit or stash your changes first so you start the switch with a clean working directory"
+            - "Rename `calculator.py` before switching so Git does not detect the modification"
+          correct_index: 2
+          explanation: "As Step 5 established, the cleanest workflow is to leave your working directory in a known state before switching contexts. **Committing** gives you a named, recoverable checkpoint. Running `git switch` with uncommitted changes may carry them across branches — or fail with a conflict warning — depending on whether those files differ between the two branches. When in doubt, commit first."
+
   # --------------------------------------------------------------------------
   # STEP 9: Branch Internals & Detached HEAD
   # --------------------------------------------------------------------------
@@ -1474,13 +1494,21 @@ steps:
       Now `HEAD` contains a raw SHA hash instead of a branch ref — this is
       **detached HEAD state**. You can look around freely, but:
 
-      > If "detached HEAD" sounds alarming — you're not alone. The name is
-      > genuinely confusing, but the concept is simple: you're looking at a
-      > specific commit without any branch "bookmark" tracking your position.
+      > Think of it like visiting a museum archive. You can pull out any
+      > document and read it freely. But if you jot experimental notes and
+      > then wander off to a different exhibit without labelling your desk,
+      > the archive staff can't tell which room to keep your notes in.
+      > `git switch -c <name>` is the label you must leave before walking
+      > away.
 
       **Warning:** Any commits you make here are not anchored to any branch.
       If you switch away without creating a new branch first, those commits
       become orphaned and will eventually be garbage-collected by Git.
+
+      If you accidentally switch away and lose track of the SHA, `git reflog`
+      records every position HEAD has been at — including orphaned commits.
+      Run `git reflog`, find the lost hash, then `git switch -c recovery <hash>`
+      to rescue the work.
 
       Always return to a branch before doing real work:
 
@@ -1532,14 +1560,23 @@ steps:
             - 3
           explanation: "In detached HEAD, `HEAD` contains a raw SHA instead of a branch ref. Commits here are orphaned — no branch pointer tracks them. Git will eventually garbage-collect them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work."
 
-        - question: "**[Interleaved: Revisit Step 2]** Which command actually saves your staged changes permanently into the current branch history?"
+        - question: "**[Interleaved: Revisit Step 9]** You are in detached HEAD state after running `git switch --detach HEAD~3`. You make 3 experimental commits you want to keep. What must you do **before** running `git switch main`?"
           options:
-            - "`git add`"
-            - "`git commit`"
-            - "`git push`"
-            - "`git save`"
+            - "Nothing — Git automatically anchors detached HEAD commits to the nearest branch when you switch away"
+            - "Run `git commit --save` to anchor the commits permanently"
+            - "Run `git switch -c experiment` to create a branch pointing to your latest commit before you leave this state"
+            - "Run `git stash` to save the commits temporarily"
+          correct_index: 2
+          explanation: "Commits in detached HEAD are not reachable from any branch. `git switch main` leaves them orphaned — eventually garbage-collected. The fix is `git switch -c <new-branch-name>`, which creates a branch pointer at your current (latest) detached commit **before** you leave, making those 3 commits permanently reachable. If you forgot and already switched away, `git reflog` can find the lost SHA."
+
+        - question: "**[Evaluate]** You entered detached HEAD state to inspect an old commit, made 2 experimental commits, then ran `git switch main` without creating a branch first. A week later those commits are gone. What happened and why?"
+          options:
+            - "Git deleted them automatically after 24 hours to save disk space"
+            - "The commits were orphaned — with no branch pointing to them they became unreachable, and `git gc` eventually pruned them"
+            - "The commits were automatically archived in `.git/stash`"
+            - "`git switch main` automatically rebased the commits onto `main`"
           correct_index: 1
-          explanation: "`git commit` takes everything currently in the staging area and wraps it into a permanent snapshot with a message and author info."
+          explanation: "A commit only survives long-term if it is **reachable** from a named reference (branch, tag, or HEAD). Orphaned commits have no such reference and are eventually removed by `git gc`, usually after 30 days. If you catch the mistake quickly, `git reflog` can find the lost SHA and `git switch -c recovery <sha>` rescues the work. The lesson from this step: always run `git switch -c <name>` **before** committing in detached HEAD state."
 
   # --------------------------------------------------------------------------
   # STEP 10: Merging — fast-forward and three-way merge (was Step 9)
@@ -1704,14 +1741,14 @@ steps:
           correct_index: 1
           explanation: "Git finds the **common ancestor** (the commit where the two branches diverged), then compares both branch tips against it. This three-point comparison lets Git automatically combine non-overlapping changes and flag conflicts only where the same lines were changed."
 
-        - question: "Before merging a feature branch, which command shows exactly what changes exist on the feature branch that aren't yet on `main`?"
+        - question: "After merging `feature-divide`, you run `git branch -d feature-divide`. The command succeeds. What does the `-d` flag's success **guarantee**?"
           options:
-            - "`git diff main..feature-branch`"
-            - "`git status`"
-            - "`git show`"
-            - "`git log`"
-          correct_index: 0
-          explanation: "The `..` syntax in `git diff main..feature-branch` shows all changes in the feature branch that are not yet in `main`. This is essential 'reconnaissance' before any merge."
+            - "The branch has been deleted from the remote repository as well"
+            - "All commits from that branch are already reachable from the current branch — `-d` refuses to delete unmerged work"
+            - "The branch contained no merge conflicts when it was created"
+            - "The branch pointer file will be recreated automatically on the next `git push`"
+          correct_index: 1
+          explanation: "`-d` (lowercase) is a **safety flag**: Git only deletes the branch if its commits are already reachable from the current branch — meaning the branch is fully merged. If you try `git branch -d` on a branch with unmerged commits, Git refuses with a warning. `-D` (uppercase) force-deletes regardless. This is why `git branch -d` after a confirmed merge is safe cleanup — it cannot accidentally discard unmerged work."
 
         - question: "Which statements about merging are correct? (Select all that apply)"
           type: multiple
@@ -1745,6 +1782,12 @@ steps:
       A **merge conflict** happens when two branches modify the **same
       lines** of the same file. Git doesn't just pick one and hope for the
       best — it asks *you* to decide.
+
+      Think of it like two teammates editing the same paragraph of a shared
+      Google Doc simultaneously. If you each change different sentences, Docs
+      merges them silently. If you both rewrite the *same sentence* in
+      different ways, Docs can't guess which version to keep — it highlights
+      both and asks a human. Git works the same way.
 
       This is **not** an error or a sign you did something wrong. Even
       senior devs deal with merge conflicts regularly. Let's create one
@@ -1854,14 +1897,14 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
-        - question: "**[Interleaved: Revisit Step 8]** Which command is the fastest way to create a new branch and switch to it immediately?"
+        - question: "**[Interleaved: Revisit Step 9]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-add-function` immediately. What should you do **first**, and why does the order matter?"
           options:
-            - "`git branch -n`"
-            - "`git switch -c`"
-            - "`git checkout -b`"
-            - "`git merge -n`"
+            - "Run `git switch -c update-add-function` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
+            - "Stage and commit your current work first (or stash it), then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
+            - "Discard your modifications with `git restore .` to get a clean slate before branching"
+            - "Order doesn't matter — Git branch creation never interacts with working-directory state"
           correct_index: 1
-          explanation: "`git switch -c <name>` (introduced in Step 8) handles creating and switching in one go. You'll use this often before starting new work to keep branches clean."
+          explanation: "You *can* branch with uncommitted changes (Git will carry them), but this creates ambiguity: those unrelated changes now appear to belong to the new feature branch. The professional habit is to start every branch from a known committed state. This is exactly the pattern Step 9 established — commit (or stash) before switching contexts."
 
         - question: "You are setting up a merge conflict scenario. You made changes on `update-add-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
@@ -1913,8 +1956,9 @@ steps:
           return a + b
       ```
 
-      Save, then stage and commit. Use the message
-      `"Add logging to add function"`.
+      Save, then stage and commit. The test checks for 'logging', 'log', or 'add'
+      in the commit message — write something descriptive. You've done this
+      workflow many times; no command list provided.
 
       ### Task 2: Attempt the merge
 
@@ -1978,12 +2022,9 @@ steps:
 
       ### Task 5: Complete the merge
 
-      After editing, mark the conflict as resolved and commit:
-
-      ```bash
-      git add calculator.py
-      git commit -m "Merge update-add-function: combine type checking and logging"
-      ```
+      After editing, mark the conflict as resolved and create the merge commit.
+      Recall: you resolved a conflict in `calculator.py` — which command tells
+      Git a conflict is resolved? Then commit. You've done both of these before.
 
       You just resolved a merge conflict! That's genuinely a flex — this
       is a skill that trips up even experienced developers.
@@ -2157,11 +2198,9 @@ steps:
       echo "print('debug: this should not be here')" >> calculator.py
       ```
 
-      Now stage and commit the file with the message
-      `"Accidentally add debug print"`, then run `git log --oneline` to
-      confirm the bad commit is at the top.
-
-      You can see the bad commit at the top of the log.
+      Now stage and commit using the workflow you know — no command list
+      provided. Then run `git log --oneline` to confirm the bad commit is at
+      the top.
 
       ### Task 2: Revert it
 
@@ -2239,14 +2278,14 @@ steps:
           correct_index: 1
           explanation: "`git revert` creates an **anti-commit** — a new commit that exactly undoes the target commit's changes. The original bad commit remains in history. This is safe because it never rewrites history."
 
-        - question: "**[Interleaved: Revisit Step 7]** Which `git log` flag shows each commit as a single line with just the hash and message?"
+        - question: "**[Interleaved: Revisit Step 7]** Before running `git revert HEAD --no-edit` you have 4 commits in your log. After the command finishes, how many commits are in the log, and what does the new entry look like?"
           options:
-            - "`--pretty`"
-            - "`--oneline`"
-            - "`--short`"
-            - "`--compact`"
+            - "Still 4 — `git revert` replaces the bad commit in-place with the corrected version"
+            - "5 — a new 'Revert \"...\"' commit is appended at the top; the original bad commit remains in history"
+            - "3 — Git removes the bad commit and its parent to keep history clean"
+            - "4 — the bad commit is updated with the reverted content but keeps its original hash"
           correct_index: 1
-          explanation: "As we saw in Step 7, `--oneline` is essential for getting a high-level view of your project timeline without details overwhelming you."
+          explanation: "`git revert` **never removes** commits — it appends a new one whose message starts with 'Revert \"...\"'. You now have 5 commits: the original 3, the bad commit (still visible), and the new anti-commit. The full audit trail — including the mistake and its fix — is preserved. This is what makes `git revert` safe on shared branches: no history is rewritten."
 
         - question: "Why is `git revert` safer than `git reset --hard` when working on a shared branch?"
           options:
@@ -2339,6 +2378,25 @@ steps:
       4. **Switch** back to `main`
       5. **Merge** `feature-power` into `main`
       6. **Verify** by running `git log --oneline --graph --all`
+
+      <details>
+      <summary>Hint 1 — creating a branch and switching to it</summary>
+      Revisit Step 9: there is a single `git switch` flag that creates a
+      branch and immediately switches to it in one command.
+      </details>
+
+      <details>
+      <summary>Hint 2 — staging and committing the change</summary>
+      Revisit Steps 2–4: the two-step workflow is `git add <file>` then
+      `git commit -m "message"`. Use a descriptive message.
+      </details>
+
+      <details>
+      <summary>Hint 3 — merging back into main</summary>
+      Revisit Step 11: switch to the branch you want to merge *into*
+      before running `git merge`. Preview changes first with
+      `git diff main..feature-power`.
+      </details>
 
       This exercises branching, committing, merging, and log inspection
       — all without scaffolding. If you can do this independently,
@@ -2440,14 +2498,14 @@ steps:
             - 3
           explanation: "`git revert` is the tool for safely undoing **committed, shared history**. `git restore --staged` handles accidentally staged files. `git restore <file>` discards uncommitted working-directory edits. `git reset --hard` on a shared branch rewrites history and would break teammates who already pulled."
 
-        - question: "**[Interleaved: Revisit Step 6]** Which file should you use to prevent temporary files or secrets from being tracked by Git?"
+        - question: "**[Interleaved: Revisit Step 6]** A teammate says: 'I'll add `.gitignore` later — for now I'll just manually remember not to stage `.env`.' What is the hidden risk?"
           options:
-            - "`.gitconfig`"
-            - "`.gitignore`"
-            - "`.env`"
-            - "`.notes`"
+            - "No risk — Git never tracks files without an explicit `git add`"
+            - "Risky — one accidental `git add .` by anyone on the team permanently commits the secret with no retroactive fix"
+            - "No risk — Git automatically detects files containing API keys and refuses to stage them"
+            - "Risky — but only if the remote repository is public"
           correct_index: 1
-          explanation: "A `.gitignore` file (from Step 6) tells Git to ignore specific patterns. This keeps your repository clean and secure."
+          explanation: "As Step 6 showed, `.gitignore` **cannot retroactively remove** files already committed. One careless `git add .` — by any developer, on any machine — permanently exposes a secret in history. Even deleting the file in a later commit doesn't help: the secret lives in every prior commit, accessible to anyone who clones. This is why `.gitignore` must exist **before** the first `git add`."
 
         - question: "Which statements about Git's snapshot model are true? (Select all that apply)"
           type: multiple
@@ -2489,7 +2547,7 @@ steps:
           correct_index: 1
           explanation: "Staging files by name is the most direct way to control what enters each commit — the core lesson from Step 4. While `git add .` followed by `git restore --staged` would also work, naming files explicitly is simpler and less error-prone."
 
-        - question: "**[Interleaved: Revisit Step 12]** You resolved the conflict in `app.py` and ran `git add app.py`. `git status` then shows a second file, `config.py`, also marked 'both modified'. Can you run `git commit` now?"
+        - question: "**[Interleaved: Revisit Step 13]** You resolved the conflict in `app.py` and ran `git add app.py`. `git status` then shows a second file, `config.py`, also marked 'both modified'. Can you run `git commit` now?"
           options:
             - "Yes — `git commit` will finish the merge and ignore the unresolved file"
             - "No — every conflicting file must be resolved and `git add`-ed before `git commit` will succeed"
@@ -2532,7 +2590,7 @@ steps:
             - "`git log`"
             - "`git cat-file`"
           correct_index: 2
-          explanation: "`git log` is the 'history book' of your project."
+          explanation: "`git log` prints the full chain of snapshots — each entry shows the unique commit hash, author, timestamp, and message. Add `--oneline` to compress to one line per commit, `--graph` to draw ASCII branch structure, and `--all` to include every branch. You used this in Step 7 to inspect commits and in Steps 12–13 to verify merges and track history."
 
         - question: "**[Phase 6: Branching]** Creating a branch takes ~41 bytes and is nearly instant, even in a 10-year-old repository with thousands of files. What explains this?"
           options:
@@ -2550,7 +2608,7 @@ steps:
             - "A rebase commit"
             - "A duplicate commit"
           correct_index: 1
-          explanation: "A three-way merge creates a new merge commit that 'joins' the two histories together."
+          explanation: "When two branches have diverged (each has unique commits since the split), Git finds their **common ancestor** commit, then compares both tips against it. Changes that don't overlap are combined automatically; lines changed differently by both branches become a conflict. The result is a **merge commit with two parents** — visible as a join point in `git log --oneline --graph`. You set this up and experienced it in Steps 12–13."
 
         - question: "**[Phase 8: Conflicts]** A teammate asks: 'Can I use `git merge --abort` to cancel the whole merge after I've already fixed half the conflicts?' What do you tell them?"
           options:
@@ -2568,7 +2626,7 @@ steps:
             - "`git checkout <hash>`"
             - "`git clean -fd`"
           correct_index: 1
-          explanation: "`git revert` creates a new 'undo' commit, which preserves history and is safe for shared branches."
+          explanation: "`git revert` is the safe undo for committed, shared work: it creates a new commit that applies the **exact inverse** of the target commit, leaving all existing history untouched. `git reset --hard`, by contrast, destroys commits by moving the branch pointer backward and requires a force-push on shared branches — breaking every teammate who already pulled. You practiced this distinction directly in Step 14."
 
         - question: "**[Synthesis]** Six months ago, `.env` containing database credentials was accidentally committed to `main`. You've since added `.env` to `.gitignore` and committed. Is the secret safe from someone who clones the repository today?"
           options:
@@ -2640,6 +2698,37 @@ steps:
             - 1
             - 3
           explanation: "The local workflow is **edit → stage → commit**. `git push` uploads to a remote and is a separate step that happens *after* committing. A commit is permanent in the local repository regardless of whether you ever push."
+
+        - question: "**[Evaluate]** A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
+          options:
+            - "Nothing — committing to `main` is standard for solo projects and small teams"
+            - "Isolation — changes land on the shared branch immediately with no review window; broken work-in-progress blocks teammates and rollback becomes harder"
+            - "Only a naming convention — branches must follow the `feature-*` pattern"
+            - "The commit frequency rule — all commits must happen at least daily"
+          correct_index: 1
+          explanation: "Feature branches provide **isolation**: your in-progress work never touches the stable shared branch until it is ready and reviewed. Without branching, one broken commit immediately affects every teammate. Branches also enable pull-request code review and make reverting a logical unit of work trivial — as you practiced throughout Steps 9–14."
+
+        - question: "**[Evaluate]** After completing the capstone, `git log --oneline` shows: `a1b2 wip`, `b2c3 fix`, `c3d4 more fix`, `d4e5 finally works`. What problem does this log represent?"
+          options:
+            - "No problem — commit messages are personal preference with no team impact"
+            - "The messages make history useless for understanding intent; debugging with `git bisect` and reviewing changes become much harder"
+            - "Git will automatically squash these into one commit after 7 days"
+            - "The short hashes are invalid — Git requires full 40-character SHAs in log output"
+          correct_index: 1
+          explanation: "Commit history is **project documentation**. Vague messages like 'wip' and 'fix' tell you nothing about what changed or why. When a regression appears months later and you need `git bisect` to find the culprit, or when a colleague reviews the log, clean and descriptive messages are essential. Best practice: each commit represents one logical, described change."
+
+        - question: "Which of the following are **best practices** for professional Git usage covered in this tutorial? (Select all that apply)"
+          type: multiple
+          options:
+            - "Write commit messages that describe what changed and why"
+            - "Create `.gitignore` before the first commit to prevent accidental secret exposure"
+            - "Use `git push -f` regularly to keep the remote history clean"
+            - "Use `git revert` instead of `git reset --hard` to undo mistakes on shared branches"
+          correct_indices:
+            - 0
+            - 1
+            - 3
+          explanation: "`git push -f` rewrites shared history and breaks every teammate who already pulled — the opposite of a best practice on shared branches. The other three were explicitly taught throughout this tutorial: descriptive messages (Step 2), `.gitignore` first (Step 6), and safe undo with `git revert` (Step 14)."
 
   # --------------------------------------------------------------------------
   # BONUS STEP: Remote workflow (conceptual)
@@ -2793,7 +2882,7 @@ steps:
           correct_index: 0
           explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
 
-        - question: "**[Interleaved: Revisit Step 13]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
+        - question: "**[Interleaved: Revisit Step 14]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
           options:
             - "`git reset --hard HEAD~1` then `git push -f`"
             - "`git revert HEAD`"
