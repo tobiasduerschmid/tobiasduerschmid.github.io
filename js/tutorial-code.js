@@ -866,16 +866,28 @@
   TutorialCode.prototype._runSilent = function (cmd) {
     var self = this;
     if (this.config.backend !== 'v86') return;
-    // Use a unique end-marker instead of generic prompt detection so that
-    // output from concurrent setup_commands can never prematurely unmute.
-    var marker = '__SILENT_' + Math.random().toString(36).substr(2, 8) + '__';
+    // Append a unique marker as a shell comment so it appears in the command
+    // echo but produces NO visible output.  After detecting the marker we
+    // wait for the next shell prompt, replay it, and unmute.
+    var marker = '__SIL_' + Math.random().toString(36).substr(2, 8);
     self._muted = true; self._mutedBuffer = '';
     function onByte(byte) {
       self._mutedBuffer += String.fromCharCode(byte);
-      if (self._mutedBuffer.includes(marker)) {
-        self._muted = false; self._mutedBuffer = '';
-        self.emulator.remove_listener('serial0-output-byte', onByte);
-        clearTimeout(timer);
+      // Once the marker has been echoed as part of the command line, look
+      // for the shell prompt that follows command completion.
+      var mi = self._mutedBuffer.indexOf(marker);
+      if (mi !== -1) {
+        var tail = self._mutedBuffer.substring(mi + marker.length);
+        var pi = Math.max(tail.lastIndexOf('# '), tail.lastIndexOf('$ '));
+        if (pi !== -1) {
+          // Extract and replay the prompt line so the user sees it.
+          var lineStart = tail.lastIndexOf('\n', pi);
+          var prompt = tail.substring(lineStart + 1);
+          self._muted = false; self._mutedBuffer = '';
+          self.emulator.remove_listener('serial0-output-byte', onByte);
+          clearTimeout(timer);
+          self.term.write('\r\n' + prompt);
+        }
       }
     }
     self.emulator.add_listener('serial0-output-byte', onByte);
@@ -883,7 +895,7 @@
       self._muted = false; self._mutedBuffer = '';
       self.emulator.remove_listener('serial0-output-byte', onByte);
     }, 10000);
-    self.sendCommand(' ' + cmd + '; echo ' + marker);
+    self.sendCommand(' ' + cmd + ' #' + marker);
   };
 
   // ---- Pyodide backend -------------------------------------------------------
@@ -1582,11 +1594,6 @@
     var self = this;
     var needsChmod = self._executableFiles.has(filename);
 
-    // Ensure parent directories exist in the 9P filesystem so that
-    // create_file succeeds even when a setup_command hasn't created
-    // the directory yet (avoids the visible base64 terminal fallback).
-    this._ensureV86ParentDirs('/tutorial/' + filename);
-
     this.emulator.create_file('/tutorial/' + filename, bytes)
       .then(function () {
         if (needsChmod) {
@@ -1602,39 +1609,6 @@
         self._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
           (needsChmod ? ' && chmod +x /tutorial/' + filename : ''));
       });
-  };
-
-  /**
-   * Walk the path and create any missing parent directories directly in the
-   * v86 9P filesystem.  This avoids the terminal-based base64 fallback that
-   * can leak visible text when racing with setup_commands.
-   */
-  TutorialCode.prototype._ensureV86ParentDirs = function (fullPath) {
-    var fs9p = this.emulator && this.emulator.fs9p;
-    if (!fs9p) return;
-    var parts = fullPath.split('/').filter(Boolean);
-    parts.pop(); // drop filename — we only need directories
-    var builtPath = '';
-    for (var i = 0; i < parts.length; i++) {
-      builtPath += '/' + parts[i];
-      var res = fs9p.SearchPath(builtPath);
-      if (res && res.id !== -1) continue; // directory exists
-      // Parent must exist (we just ensured all previous parts)
-      var parentPath = '/' + parts.slice(0, i).join('/');
-      if (i === 0) parentPath = '/';
-      var parent = fs9p.SearchPath(parentPath);
-      if (!parent || parent.id === -1) break;
-      try {
-        if (typeof fs9p.CreateDirectory === 'function') {
-          fs9p.CreateDirectory(parts[i], parent.id);
-        } else {
-          break; // v86 version without CreateDirectory — fall through to terminal fallback
-        }
-      } catch (e) {
-        console.warn('_ensureV86ParentDirs: could not create', builtPath, e);
-        break;
-      }
-    }
   };
 
   // ---------------------------------------------------------------------------
