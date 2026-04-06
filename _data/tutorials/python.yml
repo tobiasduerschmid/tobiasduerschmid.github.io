@@ -36,6 +36,10 @@ steps:
       | Strength | Speed, systems code | Glue commands together | **Rapid prototyping, data, automation** |
 
       Python is the language of choice when you need to **get something done fast** — process a CSV, call an API, write a test harness, or prototype an algorithm before porting it to C++.
+      Very large systems or systems with high performance requirements are often better implemented in statically typed, compiled languages like C++ or Rust to detect bugs earlier and to improve performance.
+      However, Python has significantly grown in popularity in recent years and is now one of the **top 5 most widely used programming languages** in the world. 
+      In some surveys it even ranks number 1.
+      So learning Python is a great investment of your time!
 
       ### A Note About Errors
 
