@@ -29,15 +29,17 @@ steps:
       - **Undo mistakes** — roll back to any previous version
       - **Work in parallel** — multiple people can edit without overwriting each other
 
+      Imagine you and a teammate are both editing `calculator.py`. You add a
+      `multiply` function while they rewrite the `add` function. Without version
+      control, whoever saves last silently overwrites the other's work. Git
+      solves this — it lets both changes coexist on separate **branches** and
+      helps you combine them safely. We'll see exactly how later in this tutorial.
+
       Git is the most widely used version control system in the world. Let's
       learn it by building a small Python project.
 
-      Before we start, understand Git's core architecture. Unlike other version
-      control systems that track "Deltas" (changes between versions), **Git
-      takes Snapshots**. Every commit is a full picture of what all your
-      files looked like at that moment.
-
-      Every file lives in one of **three states**:
+      Before we start, understand Git's core architecture — every file
+      lives in one of **three states**:
 
       ```
       ┌──────────────┐     git add     ┌──────────────┐   git commit  ┌──────────────┐
@@ -68,12 +70,6 @@ steps:
       `git init` creates a hidden `.git` folder that stores all version
       history. You now have an empty repository!
 
-      ### Plumbing vs. Porcelain
-      Git commands are often divided into two categories:
-      - **Porcelain**: User-friendly commands you use every day (`git commit`, `git add`).
-      - **Plumbing**: Low-level "under the hood" commands (`git hash-object`, `git update-index`) that the porcelain commands use.
-      You'll mostly use porcelain, but knowing the plumbing exists helps you understand Git's power.
-
       ### Task 2: Explore what was created
 
       Run this command to see the hidden `.git` directory:
@@ -93,7 +89,7 @@ steps:
       explanation: |
         - **`git init myproject`:** Creates a new directory `myproject/` and initializes a `.git/` folder inside it. The `.git/` folder is the entire repository — it stores all history, branches, and configuration. Without it, the directory is just a regular folder.
         - The tests check: (1) `git config user.name` returns a non-empty value (already configured by the tutorial setup), (2) `git config user.email` returns a value, and (3) `/tutorial/myproject/.git` exists as a directory.
-        - **Plumbing vs. porcelain:** `git init` is a porcelain command. Internally it creates low-level object store directories (`objects/`, `refs/`) — the plumbing that all other commands build on.
+        - Internally, `git init` creates low-level object store directories (`objects/`, `refs/`) that all other commands build on.
 
     tests:
       - description: "Git user name is configured"
@@ -146,12 +142,17 @@ steps:
     instructions: |
       ### Creating and tracking files
 
+      Unlike other version control systems that track "Deltas" (changes
+      between versions), **Git takes Snapshots**. Every commit is a full
+      picture of what all your files looked like at that moment. You'll see
+      this in action when you make your first commit below.
+
       Now let's create our first Python file. A file in your working
       directory starts as **untracked** — Git doesn't know about it yet.
 
-      > **Before you run:** You've saved `calculator.py` to disk but haven't
+      > **Before you run:** We've saved `calculator.py` to disk but haven't
       > told Git about it yet. Will `git status` show it as *tracked* or
-      > *untracked*? What color do you expect? Form your answer, then run:
+      > *untracked*? What color do you expect? Form your answer, then continue:
 
       ### Task 1: Create a file and check status
 
@@ -164,6 +165,27 @@ steps:
 
       You should see `calculator.py` listed as an **untracked file** in red.
       Git sees the file but isn't tracking it yet.
+
+      ### Reading `git status` output
+
+      `git status` is the command you'll run most often. Learn to read its
+      three sections:
+
+      | Section heading | Color | Meaning |
+      |---|---|---|
+      | **Changes to be committed** | Green | Staged — will be in the next commit |
+      | **Changes not staged for commit** | Red | Modified tracked files — not yet staged |
+      | **Untracked files** | Red | Brand new files Git has never seen |
+
+      Right now you should see the third section: `calculator.py` as an
+      untracked file. After staging, it will move to the first section.
+
+      > If the staging area feels confusing — you're not alone. Even Git's
+      > own designers have acknowledged that some of its concepts could be
+      > clearer (Perez De Rosso & Jackson, 2016). The two-step add/commit
+      > flow exists because it gives you fine-grained control over *exactly*
+      > what goes into each snapshot. That power is worth the initial
+      > learning curve.
 
       ### Task 2: Stage the file
 
@@ -190,6 +212,11 @@ steps:
 
       Run `git status` one more time — it should say "nothing to commit,
       working tree clean". Your file is safely stored!
+
+      > **Self-check:** In your own words, explain the difference between
+      > the Working Directory, the Staging Area, and the Repository. If you
+      > can describe the shipping analogy from Step 1 without looking back,
+      > you've got it.
 
     files:
       - path: "myproject/calculator.py"
@@ -348,6 +375,11 @@ steps:
       Each commit shows: a unique hash (ID), the author, date, and your
       message. Press `q` to exit the log viewer.
 
+      > **Self-check:** You just ran `git diff` and saw lines marked with
+      > `+`. Without looking back, explain to yourself: what two things did
+      > `git diff` compare to produce that output? If you're unsure, re-read
+      > the explanation above — this distinction matters in every future step.
+
     watch_files:
       - "myproject/calculator.py"
 
@@ -454,21 +486,12 @@ steps:
       ### Controlling what goes into a commit
 
       The staging area lets you carefully choose *exactly* which changes
-      become part of each commit. This is powerful — you can make multiple
-      changes to your working directory but commit them in logical groups.
+      become part of each commit. Several new files have been added to your
+      project — run `git status` to see them.
 
-      ### Task 1: Explore the new files
+      ### Task 1: Stage files selectively
 
-      Several files have been added to your project — explore them using
-      the editor tabs above. Then run `git status` to see them all:
-
-      ```bash
-      git status
-      ```
-
-      ### Task 2: Stage files one at a time
-
-      Stage just one specific file:
+      Stage just one specific file and check the result:
 
       ```bash
       git add README.md
@@ -476,41 +499,27 @@ steps:
       ```
 
       Notice: `README.md` is green (staged), while the others are still
-      red (untracked). You have precise control!
+      red (untracked). You have precise control! You can also stage by
+      pattern — try `git add test_*.py` to stage both test files at once.
 
-      ### Task 3: Stage by wildcard pattern
+      ### Task 2: Stage everything and commit
 
-      Stage all Python test files at once using a glob pattern:
-
-      ```bash
-      git add test_*.py
-      git status
-      ```
-
-      Both `test_calc.py` and `test_utils.py` should now be staged.
-
-      ### Task 4: Stage everything remaining
-
-      To add all untracked and modified files at once, use:
+      Stage all remaining files and commit:
 
       ```bash
       git add .
-      ```
-
-      The `.` means "current directory and everything in it". This stages
-      `notes.txt` too. Run `git status` to confirm everything is green.
-
-      ### Task 5: Commit all staged files
-
-      ```bash
       git commit -m "Add test files, README, and project notes"
       ```
 
-      Now you've seen four ways to stage:
-      1. **Individual file:** `git add README.md`
-      2. **Wildcard pattern:** `git add test_*.py`
-      3. **Current directory:** `git add .`
-      4. **All tracked + untracked:** `git add --all` (or `-A`)
+      The `.` means "current directory and everything in it".
+
+      ### Staging reference
+
+      You now know several ways to stage:
+      - **Individual file:** `git add README.md`
+      - **Wildcard pattern:** `git add test_*.py`
+      - **Current directory:** `git add .`
+      - **All tracked + untracked:** `git add --all` (or `-A`)
 
     files:
       - path: "myproject/test_calc.py"
@@ -537,17 +546,14 @@ steps:
       commands:
         - "git status"
         - "git add README.md"
-        - "git status"
         - "git add test_*.py"
-        - "git status"
         - "git add ."
-        - "git status"
         - "git commit -m \"Add test files, README, and project notes\""
       explanation: |
-        - **`git add README.md`:** Stages only `README.md`. The test verifies `git log --all --oneline -- README.md | grep -q '.'`.
-        - **`git add test_*.py`:** The shell glob expands to `test_calc.py test_utils.py`. Both are staged. Tests verify both files appear in history.
-        - **`git add .`:** Stages everything in the current directory and subdirectories — including `notes.txt`. The test verifies `notes.txt` is in history.
-        - **Four staging strategies:** Individual file (`git add README.md`), wildcard (`git add test_*.py`), current directory (`git add .`), all tracked+untracked (`git add --all`). All achieve the same end result here but give different levels of control.
+        - **`git add README.md`:** Stages only `README.md`.
+        - **`git add test_*.py`:** The shell glob expands to `test_calc.py test_utils.py`. Both are staged.
+        - **`git add .`:** Stages everything in the current directory and subdirectories — including `notes.txt`.
+        - **Four staging strategies:** Individual file, wildcard, current directory (`git add .`), all tracked+untracked (`git add --all`). All achieve the same end result here but give different levels of control.
 
     tests:
       - description: "README.md has been committed"
@@ -622,6 +628,13 @@ steps:
 
       What if you stage a file by accident? Or make changes you want to
       throw away? Git has tools for both.
+
+      > **Challenge — try before you learn:** You're about to stage a
+      > broken change by accident. Before reading ahead, think: if you
+      > needed to *unstage* a file (move it back from green to red in
+      > `git status`), what command might you try? What about *discarding*
+      > changes entirely? Take a guess — even a wrong guess makes the
+      > answer stick better when you see it.
 
       ### Task 1: Make a change and stage it
 
@@ -749,6 +762,11 @@ steps:
   - title: "Ignoring Files with .gitignore"
     instructions: |
       ### Not everything belongs in version control
+
+      > **Real-world note:** In professional projects, you'd create
+      > `.gitignore` *before* your very first commit — so secrets and
+      > generated files are never tracked, even accidentally. We deferred
+      > it here to focus on the core workflow first.
 
       Some files should **never** be committed:
       - **Compiled files** (`.pyc`, `__pycache__/`) — generated from source
@@ -967,6 +985,19 @@ steps:
       git diff --staged     → Staging Area vs. Last Commit
       ```
 
+      ### Visualizing your history
+
+      Try this command to see an ASCII art graph of your commit history:
+
+      ```bash
+      git log --oneline --graph --all
+      ```
+
+      This visual representation becomes essential once you start
+      branching. As you work through the rest of this tutorial, consider
+      running this command after each `git commit` or `git merge` to watch
+      the history graph grow.
+
     solution:
       commands:
         - "git log"
@@ -1136,51 +1167,6 @@ steps:
 
       The function is back. Each branch is a separate timeline.
 
-      ### Task 5: See the branch pointer yourself
-
-      A branch is not a copy of your project — it's a 41-byte text file
-      containing a single commit hash. Prove it:
-
-      ```bash
-      cat .git/refs/heads/main
-      cat .git/refs/heads/feature-divide
-      ```
-
-      Each file contains the SHA of the commit that branch currently points to.
-      Now inspect `HEAD` itself:
-
-      ```bash
-      cat .git/HEAD
-      ```
-
-      You'll see `ref: refs/heads/feature-divide` — HEAD is a *symbolic
-      reference* that points to a branch pointer, not directly to a commit.
-      When you make a commit, Git moves the branch pointer forward and HEAD
-      follows automatically.
-
-      ### Task 6: Inspecting individual commits (Detached HEAD)
-
-      Sometimes you need to inspect an old commit without being on any branch.
-      Use `--detach` with a commit hash or relative reference:
-
-      ```bash
-      git switch --detach HEAD~1
-      cat .git/HEAD
-      ```
-
-      Now `HEAD` contains a raw SHA hash instead of a branch ref — this is
-      **detached HEAD state**. You can look around freely, but:
-
-      **Warning:** Any commits you make here are not anchored to any branch.
-      If you switch away without creating a new branch first, those commits
-      become orphaned and will eventually be garbage-collected by Git.
-
-      Always return to a branch before doing real work:
-
-      ```bash
-      git switch feature-divide
-      ```
-
     watch_files:
       - "myproject/calculator.py"
 
@@ -1222,17 +1208,11 @@ steps:
         - "cat calculator.py"
         - "git switch feature-divide"
         - "cat calculator.py"
-        - "cat .git/refs/heads/main"
-        - "cat .git/refs/heads/feature-divide"
-        - "cat .git/HEAD"
-        - "git switch --detach HEAD~1"
-        - "git switch feature-divide"
       explanation: |
         - **Test 1:** `git branch | grep -q 'feature-divide'` — the branch must exist.
         - **Test 2:** `git show feature-divide:calculator.py | grep -q 'def divide'` — the divide function must exist on the feature branch.
         - **Test 3:** `git log feature-divide --oneline | grep -qi 'divide'` — the commit message must reference "divide".
-        - **Test 4:** `git branch --show-current | grep -q 'feature-divide'` — you must finish on the `feature-divide` branch (after returning from detached HEAD).
-        - **`git switch -c feature-divide`:** `-c` creates and switches in one command. A branch is just a 41-byte file in `.git/refs/heads/` containing the current commit's SHA.
+        - **`git switch -c feature-divide`:** `-c` creates and switches in one command.
         - **Disappearing divide function:** When you `git switch main`, Git updates your working directory to match the snapshot that `main` points to — the `divide` function was never committed to `main`, so it vanishes. This is the power of branches as separate timelines.
 
     tests:
@@ -1242,7 +1222,7 @@ steps:
         command: "cd /tutorial/myproject && git show feature-divide:calculator.py | grep -q 'def divide'"
       - description: "The divide function has been committed on feature-divide"
         command: "cd /tutorial/myproject && git log feature-divide --oneline | grep -qi 'divide'"
-      - description: "Currently on feature-divide branch (not in detached HEAD)"
+      - description: "Currently on feature-divide branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
 
     quiz:
@@ -1259,24 +1239,6 @@ steps:
           correct_index: 1
           explanation: "The staging area is **not per-branch** — it's a shared workspace. `git switch` carries staged changes to the target branch if no conflict arises with files that must change during the switch. If there is a conflict, Git refuses and asks you to commit or stash. This reinforces the three-state model from Step 1."
 
-        - question: "**[Interleaved: Revisit Step 2]** Which command actually saves your staged changes permanently into the current branch history?"
-          options:
-            - "`git add`"
-            - "`git commit`"
-            - "`git push`"
-            - "`git save`"
-          correct_index: 1
-          explanation: "`git commit` takes everything currently in the staging area and wraps it into a permanent snapshot with a message and author info."
-
-        - question: "What is a Git branch, physically speaking?"
-          options:
-            - "A full copy of all project files stored separately"
-            - "A lightweight pointer (a 41-byte text file) containing a commit hash"
-            - "A separate network connection to a remote server"
-            - "A compressed archive of your working directory"
-          correct_index: 1
-          explanation: "A branch is just a tiny file in `.git/refs/heads/` containing a 40-character SHA hash. Creating a branch is nearly instantaneous and uses almost no storage — it's not a copy of your files."
-
         - question: "You are on `feature-x` and run `git switch main`. What happens to the files in your working directory?"
           options:
             - "Your working directory is untouched — branches share the same files"
@@ -1285,6 +1247,105 @@ steps:
             - "Git merges `feature-x` changes into `main`"
           correct_index: 1
           explanation: "When you switch branches, Git **updates your working directory** to match the commit that the target branch points to. Files unique to `feature-x` disappear; files in `main` (but not `feature-x`) reappear. This is why branches feel like separate timelines."
+
+        - question: "**[Evaluate]** Your teammate says: 'Branches are just copies of the project, so creating too many wastes disk space.' Is this correct? Why or why not?"
+          options:
+            - "Correct — each branch duplicates the entire project directory"
+            - "Incorrect — a branch is a lightweight pointer to a commit, not a copy; creating one uses ~41 bytes"
+            - "Partially correct — branches copy only modified files, so they use some disk space"
+            - "Correct — Git uses compression, but each branch still requires a full snapshot copy"
+          correct_index: 1
+          explanation: "This is a common misconception. A branch is just a tiny pointer file, not a copy. You can create hundreds of branches with negligible disk cost. Understanding this changes how you think about branching strategy — branches should be cheap and frequent, not rare and expensive."
+
+  # --------------------------------------------------------------------------
+  # STEP 9: Branch Internals & Detached HEAD
+  # --------------------------------------------------------------------------
+  - title: "Branch Internals and Detached HEAD"
+    instructions: |
+      ### What is a branch, really?
+
+      In the last step you saw branches behave like separate timelines.
+      Now let's look under the hood to understand *why*.
+
+      A branch is not a copy of your project — it's a **41-byte text file**
+      containing a single commit hash. Prove it:
+
+      ### Task 1: See the branch pointers
+
+      ```bash
+      cat .git/refs/heads/main
+      cat .git/refs/heads/feature-divide
+      ```
+
+      Each file contains the SHA of the commit that branch currently points to.
+      Now inspect `HEAD` itself:
+
+      ```bash
+      cat .git/HEAD
+      ```
+
+      You'll see `ref: refs/heads/feature-divide` — HEAD is a *symbolic
+      reference* that points to a branch pointer, not directly to a commit.
+      When you make a commit, Git moves the branch pointer forward and HEAD
+      follows automatically.
+
+      ### Task 2: Inspecting individual commits (Detached HEAD)
+
+      Sometimes you need to inspect an old commit without being on any branch.
+      Use `--detach` with a commit hash or relative reference:
+
+      ```bash
+      git switch --detach HEAD~1
+      cat .git/HEAD
+      ```
+
+      Now `HEAD` contains a raw SHA hash instead of a branch ref — this is
+      **detached HEAD state**. You can look around freely, but:
+
+      > If "detached HEAD" sounds alarming — you're not alone. The name is
+      > genuinely confusing, but the concept is simple: you're looking at a
+      > specific commit without any branch "bookmark" tracking your position.
+
+      **Warning:** Any commits you make here are not anchored to any branch.
+      If you switch away without creating a new branch first, those commits
+      become orphaned and will eventually be garbage-collected by Git.
+
+      Always return to a branch before doing real work:
+
+      ```bash
+      git switch feature-divide
+      ```
+
+    solution:
+      commands:
+        - "cat .git/refs/heads/main"
+        - "cat .git/refs/heads/feature-divide"
+        - "cat .git/HEAD"
+        - "git switch --detach HEAD~1"
+        - "cat .git/HEAD"
+        - "git switch feature-divide"
+      explanation: |
+        - **Branch pointers:** A branch is just a 41-byte file in `.git/refs/heads/` containing the current commit's SHA. Creating a branch is nearly instantaneous.
+        - **HEAD:** A symbolic reference that normally contains `ref: refs/heads/<branch>`. It tells Git which branch you're on.
+        - **Detached HEAD:** When HEAD contains a raw SHA hash instead of a branch ref. Commits made here are orphaned — no branch pointer tracks them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work.
+
+    tests:
+      - description: "Currently on feature-divide branch (not in detached HEAD)"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
+
+    quiz:
+      title: "Branch Internals — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What is a Git branch, physically speaking?"
+          options:
+            - "A full copy of all project files stored separately"
+            - "A lightweight pointer (a 41-byte text file) containing a commit hash"
+            - "A separate network connection to a remote server"
+            - "A compressed archive of your working directory"
+          correct_index: 1
+          explanation: "A branch is just a tiny file in `.git/refs/heads/` containing a 40-character SHA hash. Creating a branch is nearly instantaneous and uses almost no storage — it's not a copy of your files."
 
         - question: "Which statements about **Detached HEAD** state are true? (Select all that apply)"
           type: multiple
@@ -1299,8 +1360,17 @@ steps:
             - 3
           explanation: "In detached HEAD, `HEAD` contains a raw SHA instead of a branch ref. Commits here are orphaned — no branch pointer tracks them. Git will eventually garbage-collect them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work."
 
+        - question: "**[Interleaved: Revisit Step 2]** Which command actually saves your staged changes permanently into the current branch history?"
+          options:
+            - "`git add`"
+            - "`git commit`"
+            - "`git push`"
+            - "`git save`"
+          correct_index: 1
+          explanation: "`git commit` takes everything currently in the staging area and wraps it into a permanent snapshot with a message and author info."
+
   # --------------------------------------------------------------------------
-  # STEP 9: Merging — fast-forward and three-way merge
+  # STEP 10: Merging — fast-forward and three-way merge (was Step 9)
   # --------------------------------------------------------------------------
   - title: "Merging Branches"
     instructions: |
@@ -1343,7 +1413,7 @@ steps:
         feature:                          [C4] ─────────┘
       ```
 
-      This is exactly what happened in Steps 10–11: both `main` and
+      This is exactly what happened in Steps 11–12: both `main` and
       `update-add-function` had diverging changes, so Git created a merge
       commit. Understanding the difference matters later when you learn
       `git rebase`, which replays commits to produce a clean linear history
@@ -1351,6 +1421,11 @@ steps:
 
       The merge in this step will be a **fast-forward** since `main` has no
       new commits since we branched off.
+
+      > **Before you run:** Will this merge create a new merge commit, or
+      > will Git just slide the `main` pointer forward? Look at the diagrams
+      > above and think about whether `main` has diverged from
+      > `feature-divide`. Form your prediction, then try it.
 
       ### Task 1: Switch to main and merge
 
@@ -1469,8 +1544,17 @@ steps:
             - 3
           explanation: "You always merge *into* your current branch, so switch first. Fast-forwards keep history linear; three-way merges create a merge commit with two parents. Deleting the feature branch after merging is optional (tidy but not required)."
 
+        - question: "**[Evaluate]** Your team lead says: 'We should always use `git merge --no-ff` (no fast-forward) even when a fast-forward is possible, so every feature leaves a merge commit in the log.' What is the trade-off?"
+          options:
+            - "There is no trade-off — `--no-ff` is strictly better and should always be used"
+            - "It preserves branch history (you can see where features started/ended) but adds extra merge commits that make the log busier"
+            - "It prevents merge conflicts from ever occurring"
+            - "It makes merging slower because Git has to create extra objects"
+          correct_index: 1
+          explanation: "This is a real professional debate. `--no-ff` forces a merge commit even when Git could fast-forward, preserving the fact that work happened on a branch. The trade-off is a busier log. Many teams prefer this for feature branches but not for trivial changes. There is no single correct answer — it depends on team workflow."
+
   # --------------------------------------------------------------------------
-  # STEP 10: Create a branch for merge conflict setup (student makes changes)
+  # STEP 11: Create a branch for merge conflict setup (was Step 10)
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
     instructions: |
@@ -1623,7 +1707,7 @@ steps:
           explanation: "Conflicts happen when the **same lines** are changed differently on two branches. Adding different content at the same location (both adding to end of file) can also conflict if they overlap. Adding different files or editing completely separate files never conflicts."
 
   # --------------------------------------------------------------------------
-  # STEP 11: Resolving a merge conflict
+  # STEP 12: Resolving a merge conflict (was Step 11)
   # --------------------------------------------------------------------------
   - title: "Resolving a Merge Conflict"
     instructions: |
@@ -1660,6 +1744,10 @@ steps:
 
       ### Task 2: Attempt the merge
 
+      > **Before you run:** Both branches changed the `add` function.
+      > What do you think will happen when you try to merge? Will Git
+      > combine them automatically, or will it need your help? Why?
+
       Now try to merge the other branch:
 
       ```bash
@@ -1693,6 +1781,12 @@ steps:
       - `>>>>>>> update-add-function` — the incoming branch's version
 
       ### Task 4: Resolve the conflict
+
+      > **Challenge — try before reading the solution:** Look at the two
+      > versions above. Can you figure out how to combine them into one
+      > function that has *both* the type checking AND the logging? Try
+      > writing the merged version yourself before looking at the example
+      > below.
 
       Edit `calculator.py` to combine both changes. Remove ALL conflict
       markers (`<<<<<<<`, `=======`, `>>>>>>>`) and write the merged
@@ -1836,8 +1930,17 @@ steps:
           correct_index: 1
           explanation: "Just like any other change, a resolved conflict must be **staged** with `git add` before it can be committed as part of the merge."
 
+        - question: "**[Evaluate]** Your team frequently has merge conflicts. A teammate suggests: 'Let's all work on one branch to avoid conflicts.' Evaluate this suggestion."
+          options:
+            - "Good idea — one branch eliminates conflicts entirely"
+            - "Bad idea — it eliminates branching benefits (isolation, parallel work) and introduces a worse problem: developers directly overwriting each other's uncommitted work"
+            - "Good idea — but only if the team has fewer than 5 people"
+            - "Bad idea — Git doesn't allow multiple people to push to the same branch"
+          correct_index: 1
+          explanation: "Merge conflicts are a feature, not a bug — they prevent silent data loss. Working on one branch means no isolation: any commit immediately affects everyone, broken code blocks the whole team, and parallel feature development becomes impossible. The real fix is to merge *more often* (keep branches short-lived) and communicate about who's editing which files."
+
   # --------------------------------------------------------------------------
-  # STEP 12: Safe undo with git revert
+  # STEP 13: Safe undo with git revert (was Step 12)
   # --------------------------------------------------------------------------
   - title: "Safe Undo with git revert"
     instructions: |
@@ -1886,6 +1989,10 @@ steps:
       You can see the bad commit at the top of the log.
 
       ### Task 2: Revert it
+
+      > **Before you run:** Will `git revert HEAD` *remove* the bad commit
+      > from history, or will it *add* something new? Think about the
+      > accountant's ledger analogy above, then check your answer.
 
       Undo the last commit safely:
 
@@ -1988,8 +2095,17 @@ steps:
             - 3
           explanation: "`git revert` always adds an anti-commit, leaving the full history intact. You can revert any commit by hash — not just HEAD. The bad commit remains in the log, which is actually useful for auditing. This makes it the standard safe-undo tool for shared branches."
 
+        - question: "**[Evaluate]** A colleague used `git reset --hard HEAD~3` on the shared `main` branch and force-pushed. Three commits are gone from the remote. What is the impact and how would you recover?"
+          options:
+            - "No impact — the commits are still on everyone's local machines permanently"
+            - "Severe: every teammate's local copy now conflicts with the remote; recovery requires someone who still has the commits locally to force-push them back or use `git reflog` to find the lost commits"
+            - "Minor: Git automatically detects the discrepancy and re-pushes the missing commits"
+            - "The force-push would have been rejected by Git's safety mechanisms"
+          correct_index: 1
+          explanation: "Force-pushing rewrites remote history. Every teammate who already pulled those commits now has a diverged local copy. Recovery is possible if someone still has the commits (via `git reflog` or their local branch), but it requires coordination. This is why `git revert` is always preferred on shared branches — it never rewrites history."
+
   # --------------------------------------------------------------------------
-  # STEP 13: Review and best practices
+  # STEP 14: Review and best practices (was Step 13)
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
     instructions: |
@@ -2031,33 +2147,50 @@ steps:
       5. **Pull frequently** — fetch remote changes early to avoid big
          conflicts
 
-      ### Final task: Review your project history
+      ### Capstone challenge: Put it all together
 
-      Take a look at everything you've built:
+      Time to prove your skills! Complete this mini-project using
+      everything you've learned — **without step-by-step instructions**.
+      Refer back to earlier steps if you get stuck.
 
-      ```bash
-      git log --oneline --graph --all
-      ```
+      1. **Create** a new branch called `feature-power`
+      2. **Add** a `power` function to `calculator.py`:
+         ```python
+         def power(a, b):
+             """Return a raised to the power of b."""
+             return a ** b
+         ```
+      3. **Commit** your change with a meaningful message
+      4. **Switch** back to `main`
+      5. **Merge** `feature-power` into `main`
+      6. **Verify** by running `git log --oneline --graph --all`
 
-      The `--graph` flag draws an ASCII art representation of your branch
-      structure. The `--all` flag shows all branches, not just the current
-      one.
+      This exercises branching, committing, merging, and log inspection
+      — all without scaffolding. If you can do this independently,
+      you're ready for real-world Git usage.
 
       ```bash
       cat calculator.py
       ```
 
       From an empty folder to a version-controlled Python project with
-      branching and merge conflict resolution — well done!
+      branching, merge conflict resolution, and independent feature
+      work — well done!
 
     solution:
       commands:
+        - "git switch -c feature-power"
+        - "git add calculator.py"
+        - "git commit -m \"Add power function\""
+        - "git switch main"
+        - "git merge feature-power"
         - "git log --oneline --graph --all"
         - "cat calculator.py"
       explanation: |
         - **Test 1:** `[ $(git log --oneline | wc -l) -ge 10 ]` — at least 10 commits in total.
-        - **Test 2:** `grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py` — all four functions must be present in the final `calculator.py`.
+        - **Test 2:** All five functions must be present in the final `calculator.py`.
         - **Test 3:** `.gitignore` must be in the commit history.
+        - **Capstone test:** The `power` function must exist and be committed on `main`.
 
         **The final `calculator.py`:**
 
@@ -2108,10 +2241,12 @@ steps:
     tests:
       - description: "Repository has at least 10 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 10 ]"
-      - description: "calculator.py has add, subtract, multiply, and divide functions"
-        command: "cd /tutorial/myproject && grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py"
+      - description: "calculator.py has add, subtract, multiply, divide, and power functions"
+        command: "cd /tutorial/myproject && grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py && grep -q 'def power' calculator.py"
       - description: ".gitignore exists and is committed"
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
+      - description: "power function is committed on main"
+        command: "cd /tutorial/myproject && git show main:calculator.py | grep -q 'def power'"
 
     quiz:
       title: "Git Mastery — Final Review"
@@ -2162,7 +2297,7 @@ steps:
           explanation: "`--graph` draws ASCII art showing branch structure and merge points. `--all` includes all branches, not just the current one. `--oneline` keeps it readable. Together they give the most complete overview of your repository's entire history."
 
   # --------------------------------------------------------------------------
-  # STEP 13: Capstone Review — Synthesizing the Git workflow
+  # STEP 15: Capstone Review — Synthesizing the Git workflow (was Step 14)
   # --------------------------------------------------------------------------
   - title: "Git Mastery Review"
     instructions: |
@@ -2203,7 +2338,7 @@ steps:
           correct_index: 1
           explanation: "Patch mode (`-p`) is the professional way to create clean, focused commits when you've done multiple unrelated edits."
 
-        - question: "**[Interleaved: Revisit Step 11]** After resolving a merge conflict in a file, what is the **final step** to finish the merge?"
+        - question: "**[Interleaved: Revisit Step 12]** After resolving a merge conflict in a file, what is the **final step** to finish the merge?"
           options:
             - "`git merge --finish`"
             - "`git commit`"
@@ -2301,3 +2436,171 @@ steps:
             - "Because you have a virus"
           correct_index: 1
           explanation: "Git's 'Time Machine' capability replaces your files with the versions from the target snapshot."
+
+  # --------------------------------------------------------------------------
+  # BONUS STEP: Remote workflow (conceptual)
+  # --------------------------------------------------------------------------
+  - title: "Bonus: Working with Remotes"
+    instructions: |
+      ### Beyond your local machine
+
+      Everything you've learned so far works on your local repository.
+      In the real world, teams share code through **remote repositories**
+      hosted on platforms like GitHub, GitLab, or Bitbucket.
+
+      The remote workflow adds three key commands to what you already know:
+
+      ### The remote workflow
+
+      ```
+      ┌──────────┐    git push    ┌──────────┐    git push    ┌──────────┐
+      │  Working  │ ──────────▶  │  Local   │ ──────────▶  │  Remote  │
+      │ Directory │ ◀──────────  │   Repo   │ ◀──────────  │   Repo   │
+      └──────────┘    git pull    └──────────┘    git pull    └──────────┘
+                                  (your machine)              (e.g. GitHub)
+      ```
+
+      - **`git clone <url>`** — Download a full copy of a remote repository
+        (including its entire history) to your machine
+      - **`git push`** — Upload your local commits to the remote repository
+      - **`git pull`** — Download and merge new commits from the remote into
+        your local branch
+
+      ### Task 1: Simulate a remote with a bare repository
+
+      We can simulate a remote repository right here using a "bare" repo
+      (a repository with no working directory — just the `.git` data):
+
+      ```bash
+      cd /tutorial
+      git init --bare remote-repo.git
+      ```
+
+      ### Task 2: Connect your project to the remote
+
+      ```bash
+      cd /tutorial/myproject
+      git remote add origin /tutorial/remote-repo.git
+      ```
+
+      `origin` is the conventional name for your primary remote.
+
+      ### Task 3: Push your work
+
+      > **Before you run:** Think about what `git push` will do. Will it
+      > send only the latest commit, or the entire branch history?
+
+      ```bash
+      git push -u origin main
+      ```
+
+      The `-u` flag sets `origin/main` as the upstream tracking branch,
+      so future pushes only need `git push`.
+
+      ### Task 4: Simulate a colleague's change
+
+      Clone the remote into a separate directory (like a teammate would):
+
+      ```bash
+      cd /tutorial
+      git clone remote-repo.git colleague-copy
+      cd colleague-copy
+      ```
+
+      Make a change as your "colleague":
+
+      ```bash
+      echo "# Contributing Guide" > CONTRIBUTING.md
+      git add CONTRIBUTING.md
+      git commit -m "Add contributing guide"
+      git push
+      ```
+
+      ### Task 5: Pull your colleague's changes
+
+      Switch back to your original project and pull:
+
+      ```bash
+      cd /tutorial/myproject
+      git pull
+      ```
+
+      Check that the new file arrived:
+
+      ```bash
+      ls CONTRIBUTING.md
+      git log --oneline -3
+      ```
+
+      You now have your colleague's work in your local repository.
+      This is the complete Git collaboration cycle:
+      **branch → commit → push → pull → merge**.
+
+    solution:
+      commands:
+        - "cd /tutorial && git init --bare remote-repo.git"
+        - "cd /tutorial/myproject && git remote add origin /tutorial/remote-repo.git"
+        - "git push -u origin main"
+        - "cd /tutorial && git clone remote-repo.git colleague-copy"
+        - "cd /tutorial/colleague-copy"
+        - "echo '# Contributing Guide' > CONTRIBUTING.md"
+        - "git add CONTRIBUTING.md"
+        - "git commit -m 'Add contributing guide'"
+        - "git push"
+        - "cd /tutorial/myproject && git pull"
+        - "ls CONTRIBUTING.md"
+      explanation: |
+        - **`git init --bare`:** Creates a repository without a working directory — exactly what servers like GitHub host. It only stores the `.git` data.
+        - **`git remote add origin`:** Registers a remote repository under the name `origin`. You can have multiple remotes (e.g., `upstream` for a fork's parent).
+        - **`git push -u origin main`:** Uploads all commits on `main` to the remote. `-u` sets the upstream, so future `git push` and `git pull` know which remote branch to sync with.
+        - **`git clone`:** Creates a full copy of the remote repository, including its complete history. Your "colleague" gets everything.
+        - **`git pull`:** Fetches new commits from the remote and merges them into your current branch. It's equivalent to `git fetch` + `git merge`.
+
+    tests:
+      - description: "Remote 'origin' is configured"
+        command: "cd /tutorial/myproject && git remote | grep -q 'origin'"
+      - description: "main branch has been pushed to origin"
+        command: "cd /tutorial/myproject && git log origin/main --oneline | grep -q '.'"
+      - description: "CONTRIBUTING.md exists after pull"
+        command: "cd /tutorial/myproject && [ -f CONTRIBUTING.md ]"
+
+    quiz:
+      title: "Working with Remotes — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `git clone` do?"
+          options:
+            - "Creates an empty repository on the remote server"
+            - "Downloads a full copy of a remote repository including its entire commit history"
+            - "Copies only the latest version of the files without any history"
+            - "Creates a symbolic link to the remote repository"
+          correct_index: 1
+          explanation: "`git clone` creates a complete, independent copy of the repository — including every commit, branch, and tag. You get the full history, not just the latest snapshot."
+
+        - question: "What is the difference between `git push` and `git pull`?"
+          options:
+            - "`push` uploads your local commits to the remote; `pull` downloads and merges remote commits into your local branch"
+            - "`push` creates a new branch on the remote; `pull` deletes a branch from the remote"
+            - "`push` sends files to your teammates directly; `pull` requests their files"
+            - "They are synonyms — both sync your repository with the remote"
+          correct_index: 0
+          explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
+
+        - question: "**[Interleaved: Revisit Step 13]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
+          options:
+            - "`git reset --hard HEAD~1` then `git push -f`"
+            - "`git revert HEAD`"
+            - "`git restore HEAD`"
+            - "`git checkout HEAD~1`"
+          correct_index: 1
+          explanation: "`git revert` creates a safe anti-commit. On shared branches, never use `git reset --hard` + force-push — it rewrites history and breaks every teammate's local copy."
+
+        - question: "**[Evaluate]** Your team has a choice: everyone pushes directly to `main`, or everyone works on feature branches and merges via pull requests. What are the trade-offs?"
+          options:
+            - "Direct push is always better — pull requests add unnecessary overhead"
+            - "Feature branches add overhead but provide isolation, code review opportunities, and protect `main` from broken code"
+            - "Pull requests are only needed for open-source projects, not internal teams"
+            - "There is no difference — both approaches produce identical results"
+          correct_index: 1
+          explanation: "Feature branches + pull requests are the industry standard because they provide isolation (broken code doesn't affect `main`), enable code review before merging, and create a clear history of what was reviewed and approved. The trade-off is process overhead, which is worth it for most teams."
