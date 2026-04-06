@@ -465,18 +465,14 @@ steps:
           correct_index: 1
           explanation: "In diff output, lines starting with `+` are **additions** and lines starting with `-` are **deletions**. Unchanged context lines have no prefix symbol."
 
-        - question: "Which `git diff` variants compare which areas? (Select all correct pairs)"
-          type: multiple
+        - question: "After committing `calculator.py`, you add a new function and run `git diff` — you see your new lines marked with `+`. You then run `git add calculator.py`. What will `git diff` (no arguments) show now?"
           options:
-            - "`git diff` → working directory vs. staging area"
-            - "`git diff --staged` → staging area vs. last commit"
-            - "`git diff HEAD` → staging area vs. second-to-last commit"
-            - "`git diff HEAD~1 HEAD` → previous commit vs. latest commit"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "`git diff` compares working dir to staging; `git diff --staged` compares staging to last commit; `git diff HEAD~1 HEAD` compares two commits. `git diff HEAD` actually compares working directory (including unstaged changes) to the last commit — not the staging area to an older commit."
+            - "The same output as before — `git diff` always shows all uncommitted changes"
+            - "Nothing — the working directory and staging area now match, so there is no difference to show"
+            - "An error, because you can only run `git diff` before staging"
+            - "The difference between the staged version and the last commit"
+          correct_index: 1
+          explanation: "`git diff` compares the **working directory** to the **staging area**. Once you stage your changes with `git add`, both areas match — so `git diff` reports nothing. The changes still exist in the staging area waiting to be committed; they're just no longer *different* from the working directory."
 
   # --------------------------------------------------------------------------
   # STEP 4: Staging strategies — individual, wildcard, directory, all
@@ -579,14 +575,14 @@ steps:
           correct_index: 1
           explanation: "Naming the file explicitly (`git add test_main.py`) stages only that file. `git add .` and `git add --all` would stage everything, making it impossible to create a focused commit."
 
-        - question: "**[Interleaved: Revisit Step 3]** Which command shows you the differences that are **already staged** for the next commit?"
+        - question: "**[Interleaved: Revisit Step 3]** You edited a tracked file but have NOT staged it yet. What does `git diff` (with no arguments) compare?"
           options:
-            - "`git diff`"
-            - "`git diff --staged`"
-            - "`git status`"
-            - "`git show`"
+            - "Your working directory to the remote repository"
+            - "Your working directory to the staging area"
+            - "The staging area to the last commit"
+            - "The last two commits against each other"
           correct_index: 1
-          explanation: "`git diff --staged` (or `--cached`) shows what would be in the next commit if you ran `git commit` right now."
+          explanation: "As we practiced in Step 3, `git diff` compares your **working directory** to the **staging area**. Since nothing new is staged, the staging area still matches the last commit — so you see all your unstaged modifications."
 
         - question: "**[Interleaved: Revisit Step 2]** What color does `git status` use for a file that is **modified but not yet staged**?"
           options:
@@ -748,13 +744,12 @@ steps:
           options:
             - "It discards ALL uncommitted changes in the working directory and staging area"
             - "It is safe to use on a shared branch because it creates a new revert commit"
-            - "It moves the branch pointer backward, rewriting history"
-            - "It should be used with caution because it permanently destroys committed work that others may depend on"
+            - "It is the 'nuclear option' because any uncommitted work is permanently lost with no way to recover"
+            - "It only affects the staging area, leaving the working directory untouched"
           correct_indices:
             - 0
             - 2
-            - 3
-          explanation: "`git reset --hard` is powerful but destructive: it discards all uncommitted changes and rewrites branch history by moving the pointer. It does **not** create a safe revert commit — that's what `git revert` is for."
+          explanation: "`git reset --hard` discards all uncommitted changes in both the working directory and staging area. It is the 'nuclear option' — any work that was never committed is permanently lost. It does **not** create a revert commit (that's a different tool you'll learn later), and it affects **both** the staging area and the working directory."
 
   # --------------------------------------------------------------------------
   # STEP 6: .gitignore
@@ -890,14 +885,14 @@ steps:
           correct_index: 1
           explanation: "`.gitignore` tells Git to **pretend matching files don't exist** for tracking purposes. The files remain on disk — they simply won't appear in `git status` as untracked, and `git add .` won't stage them."
 
-        - question: "**[Interleaved: Revisit Step 4]** If you want to ignore most `.log` files but stage **one specific** log file, what should you do?"
+        - question: "**[Interleaved: Revisit Step 4]** You've modified `app.py`, `style.css`, and `test_app.py`, but only want the test file in your next commit. Which staging command is best?"
           options:
-            - "Delete the other log files first"
-            - "Use `git add -f <file>` or stage it specifically by name before running `git add .`"
-            - "Remove `.log` from `.gitignore` temporarily"
-            - "It's impossible to stage an ignored file"
-          correct_index: 1
-          explanation: "Explicitly naming a file in `git add` overrides the ignore rule. Alternatively, you can Hunk-stage (`git add -p`) to be very selective."
+            - "`git add .`"
+            - "`git add --all`"
+            - "`git add test_app.py`"
+            - "`git add *.py`"
+          correct_index: 2
+          explanation: "Staging by exact filename gives you precise control over what enters the next commit — the core lesson from Step 4. Both `git add .` and `git add --all` would stage everything. `git add *.py` would also stage `app.py`, which you want to exclude."
 
         - question: "**[Interleaved: Revisit Step 1]** Is a Git commit better described as a 'backup diff' or a 'permanent snapshot'?"
           options:
@@ -1158,6 +1153,13 @@ steps:
       `feature-divide` branch. Your `main` branch is untouched. This is
       the power of branching.
 
+      > **What about uncommitted changes?** In this exercise you committed
+      > before switching — which is the recommended workflow. If you had
+      > staged or modified files *without* committing, `git switch` would
+      > carry those changes to the new branch, as long as they don't
+      > conflict with files that differ between branches. When in doubt,
+      > always commit before switching.
+
       Switch back to see it again:
 
       ```bash
@@ -1413,11 +1415,11 @@ steps:
         feature:                          [C4] ─────────┘
       ```
 
-      This is exactly what happened in Steps 11–12: both `main` and
-      `update-add-function` had diverging changes, so Git created a merge
-      commit. Understanding the difference matters later when you learn
-      `git rebase`, which replays commits to produce a clean linear history
-      instead of a merge commit.
+      You'll see a three-way merge in action in the next few steps, where
+      we'll intentionally create diverging changes on two branches.
+      Understanding the difference matters when you learn `git rebase`,
+      which replays commits to produce a clean linear history instead of
+      a merge commit.
 
       The merge in this step will be a **fast-forward** since `main` has no
       new commits since we branched off.
@@ -1434,6 +1436,15 @@ steps:
       ```bash
       git switch main
       ```
+
+      Before merging, preview what the incoming branch will introduce:
+
+      ```bash
+      git diff main..feature-divide
+      ```
+
+      The `..` syntax shows all changes in `feature-divide` that aren't
+      in `main` yet — useful reconnaissance before any merge.
 
       Now merge the feature branch:
 
@@ -1471,6 +1482,7 @@ steps:
     solution:
       commands:
         - "git switch main"
+        - "git diff main..feature-divide"
         - "git merge feature-divide"
         - "cat calculator.py"
         - "git log --oneline"
@@ -1522,14 +1534,14 @@ steps:
           correct_index: 1
           explanation: "Git finds the **common ancestor** (the commit where the two branches diverged), then compares both branch tips against it. This three-point comparison lets Git automatically combine non-overlapping changes and flag conflicts only where the same lines were changed."
 
-        - question: "**[Interleaved: Revisit Step 3]** Before merging, which command should you run to verify exactly what changes exist on the feature branch that aren't on `main`?"
+        - question: "Before merging a feature branch, which command shows exactly what changes exist on the feature branch that aren't yet on `main`?"
           options:
             - "`git diff main..feature-branch`"
             - "`git status`"
             - "`git show`"
             - "`git log`"
           correct_index: 0
-          explanation: "`git diff` with branch names lets you see the delta between two timelines. This is essential 'reconnaissance' before a merge."
+          explanation: "The `..` syntax in `git diff main..feature-branch` shows all changes in the feature branch that are not yet in `main`. This is essential 'reconnaissance' before any merge."
 
         - question: "Which statements about merging are correct? (Select all that apply)"
           type: multiple
@@ -2329,14 +2341,14 @@ steps:
           correct_index: 0
           explanation: "`git init` is the starting point for every local project. It sets up the 'brain' of your repository."
 
-        - question: "**[Phase 2: Staging]** Which command allows you to selectively stage **individual hunks** of a file, rather than the entire file at once?"
+        - question: "**[Phase 2: Staging]** You've modified 5 files but only want 2 of them in your next commit. Which staging approach gives you the most precise control?"
           options:
-            - "`git add .`"
-            - "`git add -p`"
-            - "`git stage --all`"
-            - "`git commit -a`"
+            - "`git add .` — stage everything, then unstage the ones you don't want"
+            - "`git add file1.py file2.py` — stage only the specific files by name"
+            - "`git commit -a` — commit all modifications at once"
+            - "`git add --all` — stage everything including untracked files"
           correct_index: 1
-          explanation: "Patch mode (`-p`) is the professional way to create clean, focused commits when you've done multiple unrelated edits."
+          explanation: "Staging files by name is the most direct way to control what enters each commit — the core lesson from Step 4. While `git add .` followed by `git restore --staged` would also work, naming files explicitly is simpler and less error-prone."
 
         - question: "**[Interleaved: Revisit Step 12]** After resolving a merge conflict in a file, what is the **final step** to finish the merge?"
           options:
