@@ -115,42 +115,59 @@ test.describe.serial('Makefile Tutorial', () => {
   });
 });
 
-// Makefile v86: use _runSilent to write files and run commands in serial order,
-// avoiding the race between applySolution()'s async file writes and sendCommand().
+// Makefile v86: write ALL files (initial step files + solution files) and run
+// commands exclusively through _runSilent to avoid 9p FS cache inconsistencies
+// with create_file(), and to handle the case where loadStep runs before VM boot.
 async function passCurrentStepTestsV86(page, timeout = 30_000) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
+  await page.waitForFunction(() => window._tutorial && window._tutorial.booted,
+    { timeout: 60_000 });
   await page.evaluate(function () {
-    return new Promise(function (resolve) {
-      var tut = window._tutorial;
-      var step = tut.steps[tut.currentStep];
-      if (!step || !step.solution) { resolve(); return; }
-      var solution = step.solution;
-      // Update editor tabs (UI only, no backend sync)
-      tut._suppressAutoSave = true;
-      (solution.files || []).forEach(function (f) { tut.openFile(f.path, f.content, f.language); });
-      tut._suppressAutoSave = false;
-      var files = solution.files || [];
-      var target = step.open_file || (files.length > 0 ? files[files.length - 1].path : null);
-      if (target) { tut._setActiveFile(target); tut._renderTabs(); }
-      // Write files then run commands, all via _runSilent (serialised)
-      var chain = Promise.resolve();
-      files.forEach(function (f) {
-        chain = chain.then(function () {
-          var b64 = btoa(unescape(encodeURIComponent(f.content || '')));
-          var dirname = f.path.indexOf('/') !== -1 ? f.path.substring(0, f.path.lastIndexOf('/')) : '';
-          var mkdirCmd = dirname ? 'mkdir -p /tutorial/' + dirname + ' && ' : '';
-          return tut._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + f.path);
-        });
+    var tut = window._tutorial;
+    var step = tut.steps[tut.currentStep];
+    if (!step) return Promise.resolve();
+    var solution = step.solution || {};
+    // Helper: write file content via _runSilent (shell-side, avoids 9p cache)
+    function writeFile(chain, path, content) {
+      return chain.then(function () {
+        var b64 = btoa(unescape(encodeURIComponent(content || '')));
+        var dir = path.indexOf('/') !== -1 ? path.substring(0, path.lastIndexOf('/')) : '';
+        var mk = dir ? 'mkdir -p /tutorial/' + dir + ' && ' : '';
+        return tut._runSilent(mk + 'printf "' + b64 + '" | base64 -d > /tutorial/' + path);
       });
-      (solution.commands || []).forEach(function (cmd) {
-        chain = chain.then(function () {
-          return tut._runSilent(cmd.replace(/^git /, 'git --no-pager '));
-        });
-      });
-      chain.then(resolve).catch(resolve);
+    }
+    var chain = Promise.resolve();
+    // 1. Write initial step files (may have been skipped if VM wasn't booted during loadStep)
+    (step.files || []).forEach(function (f) {
+      chain = writeFile(chain, f.path, f.content);
     });
+    // 2. Write solution files (overrides initial files where applicable)
+    if (solution.files) {
+      tut._suppressAutoSave = true;
+      solution.files.forEach(function (f) {
+        tut.openFile(f.path, f.content, f.language);
+      });
+      tut._suppressAutoSave = false;
+      var target = step.open_file || (solution.files.length > 0 ? solution.files[solution.files.length - 1].path : null);
+      if (target) { tut._setActiveFile(target); tut._renderTabs(); }
+      solution.files.forEach(function (f) {
+        chain = writeFile(chain, f.path, f.content);
+      });
+    }
+    // 3. Run solution commands
+    (solution.commands || []).forEach(function (cmd) {
+      chain = chain.then(function () {
+        return tut._runSilent(cmd.replace(/^git /, 'git --no-pager '));
+      });
+    });
+    return chain;
   });
+  // Widen the terminal to prevent command+marker wrapping past 80 columns
+  await page.evaluate(function () {
+    return window._tutorial._runSilent('stty columns 200');
+  });
+  await page.evaluate(function () { return window._tutorial.applySolution(); });
   await page.locator('.tvm-btn-test').click();
   await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
 }

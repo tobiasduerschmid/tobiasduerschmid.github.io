@@ -47,7 +47,17 @@ async function saveAndWaitForPreview(page) {
 async function passCurrentStepTests(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
-  await page.evaluate(() => window._tutorial.applySolution());
+  // applySolution() triggers an iframe preview rebuild which can briefly
+  // destroy the execution context — catch and continue since the solution
+  // still applies successfully.
+  try {
+    await page.evaluate(() => window._tutorial.applySolution());
+  } catch (e) {
+    if (!e.message.includes('context') && !e.message.includes('destroyed') && !e.message.includes('navigation')) {
+      throw e;
+    }
+    await page.waitForTimeout(2_000);
+  }
   await saveAndWaitForPreview(page);
   await page.waitForTimeout(2_000);
   await page.locator('.tvm-btn-test').click();

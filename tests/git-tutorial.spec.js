@@ -110,9 +110,34 @@ test.describe.serial('Git Tutorial', () => {
   });
 });
 
-// Git v86: use _runSilent to write files and run commands in serial order,
-// avoiding the race between applySolution()'s async file writes and sendCommand().
-
+// Git v86: loadStep runs before the VM boots, so initial files may not be synced
+// to the VM filesystem.  After ensuring the VM is booted, re-sync all step files,
+// drain any pending _runSilent commands, then apply the solution.
+async function passCurrentStepTestsV86(page, timeout = 120_000) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+    { timeout: 15_000 });
+  await page.waitForFunction(() => window._tutorial && window._tutorial.booted,
+    { timeout: 60_000 });
+  // Re-sync initial step files now that VM is booted
+  await page.evaluate(function () {
+    var tut = window._tutorial;
+    var step = tut.steps[tut.currentStep];
+    if (!step || !step.files) return Promise.resolve();
+    var p = Promise.resolve();
+    step.files.forEach(function (f) {
+      p = p.then(function () { return tut._syncFileToBackend(f.path); });
+    });
+    return p;
+  });
+  // Drain any pending _runSilent commands then widen terminal to prevent
+  // command+marker wrapping past 80 columns (which corrupts serial input)
+  await page.evaluate(function () {
+    return window._tutorial._runSilent('stty columns 200');
+  });
+  await page.evaluate(function () { return window._tutorial.applySolution(); });
+  await page.locator('.tvm-btn-test').click();
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+}
 
 // =============================================================================
 // Block 2 – YAML-driven step-by-step tests (one shared page, one VM boot)
@@ -140,7 +165,7 @@ test.describe.serial('Git Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+        await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
         expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
       });
     }
