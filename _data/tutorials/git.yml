@@ -5,8 +5,8 @@ require_tests: true
 allow_autosave: false
 
 setup_commands:
-  - "git config --global user.email 'student@cs.ucla.edu'"
-  - "git config --global user.name 'Diligent Student'"
+  - "git config --global user.email 'diligent-student@cs.ucla.edu'"
+  - "git config --global user.name 'Soon-to-be Git Hero'"
   - "git config --global init.defaultBranch main"
 
 steps:
@@ -15,14 +15,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Your First Repository"
     instructions: |
-      Welcome to the **Git Tutorial**! On the right you have a code editor
-      (top) and a real Linux terminal (bottom). Files you edit are
-      automatically synced to the VM.
+      Welcome to the **Git Tutorial**! You've got a code editor
+      (top) and a real Linux terminal (bottom) on the right. Files you
+      edit are automatically synced to the VM. Let's get into it.
 
       ### Why version control?
 
-      Imagine working on a project and saving files like
-      `report_final_v2_REALLY_final.txt`. Version control solves this chaos.
+      We've all been there — saving files like
+      `report_final_v2_REALLY_final.txt` and praying we remember which
+      one is actually final. Version control ends that chaos for good.
       It lets you:
 
       - **Track every change** — see exactly what changed, when, and by whom
@@ -51,10 +52,10 @@ steps:
                                       the next snapshot                  snapshot
       ```
 
-      Think of it like packing a shipping box:
-      - **Working Directory** = the warehouse floor (your messy workspace)
-      - **Staging Area** = the loading dock (you arrange items to ship)
-      - **Commit** = the truck drives away (a permanent snapshot is saved)
+      Think of it like posting on social media:
+      - **Working Directory** = your camera roll (messy, full of drafts)
+      - **Staging Area** = the post editor (you pick and arrange what to share)
+      - **Commit** = hitting "Post" (it's published — a permanent snapshot)
 
       ### Task 1: Initialize a repository
 
@@ -111,7 +112,7 @@ steps:
             - "Where you write and save your source code files"
             - "A remote server where you back up your work"
           correct_index: 1
-          explanation: "The Staging Area (loading dock) is Git's way of letting you precisely control what goes into each commit. You can stage some changes but not others, creating clean, focused snapshots."
+          explanation: "The Staging Area (post editor) is Git's way of letting you precisely control what goes into each commit. You can stage some changes but not others, creating clean, focused snapshots."
 
         - question: "What does `git init` create inside your project directory?"
           options:
@@ -196,7 +197,7 @@ steps:
       ```
 
       Now run `git status` again. The file should appear in green under
-      "Changes to be committed". It's on the loading dock, ready to ship!
+      "Changes to be committed". It's in the post editor, ready to publish!
 
       ### Task 3: Commit the snapshot
 
@@ -618,10 +619,10 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Unstaging and Undoing Changes"
     instructions: |
-      ### Everyone makes mistakes
+      ### Ctrl+Z for Git (kind of)
 
-      What if you stage a file by accident? Or make changes you want to
-      throw away? Git has tools for both.
+      Accidentally staged the wrong file? Made changes you want to yeet
+      into oblivion? Don't panic — Git has your back.
 
       > **Challenge — try before you learn:** You're about to stage a
       > broken change by accident. Before reading ahead, think: if you
@@ -655,8 +656,8 @@ steps:
       ```
 
       The file is now **modified but unstaged** (red again). Your edit is
-      still in the working directory — `git restore --staged` only moves it
-      off the loading dock; it doesn't delete anything.
+      still in the working directory — `git restore --staged` just pulls it
+      out of the post editor; it doesn't delete anything.
 
       ### Task 3: Discard working directory changes
 
@@ -678,7 +679,7 @@ steps:
 
       | Command | Effect |
       |---|---|
-      | `git restore --staged <file>` | Unstage (move off loading dock, keep edits) |
+      | `git restore --staged <file>` | Unstage (remove from post editor, keep edits) |
       | `git restore <file>` | Discard working directory changes (permanent!) |
       | `git reset --hard` | Discard ALL uncommitted changes (nuclear option) |
 
@@ -719,9 +720,9 @@ steps:
             - "`git restore config.py`"
             - "`git restore --staged config.py`"
             - "`git reset --hard`"
-            - "`git restore config.py`"
+            - "`git rm --cached config.py`"
           correct_index: 1
-          explanation: "`git restore --staged <file>` unstages the file — it moves it off the loading dock back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
+          explanation: "`git restore --staged <file>` unstages the file — it moves it off the post editor back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
 
         - question: "**[Interleaved: Revisit Step 2]** You edited `main.py`, `test_main.py`, and `debug.log` in one sitting. Your next commit should contain only the test file. Which Git feature makes this possible without reverting the other edits?"
           options:
@@ -1055,7 +1056,7 @@ steps:
             - "`git reset --hard` — resets both files to the last commit"
             - "`git commit --exclude config.py` — commits only app.py"
           correct_index: 1
-          explanation: "`git restore --staged <file>` is the surgical 'undo' for `git add`: it moves the file off the loading dock without touching the working directory. `app.py` stays staged; your `config.py` edits are preserved but excluded from the next commit."
+          explanation: "`git restore --staged <file>` is the surgical 'undo' for `git add`: it moves the file off the post editor without touching the working directory. `app.py` stays staged; your `config.py` edits are preserved but excluded from the next commit."
 
         - question: "You want to see the full diff of what changed **in** the latest commit (not comparing to working directory). Which command is correct?"
           options:
@@ -1093,17 +1094,16 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Mini-Capstone: Clean Up a Messy Repository"
     instructions: |
-      ### Apply everything — without step-by-step instructions
+      ### Boss level: no hand-holding
 
-      You've now learned the core Git workflow: initialising repositories,
-      staging, committing, undoing mistakes, ignoring files, and inspecting
-      history. This step gives you a broken repository to diagnose and fix
-      entirely on your own.
+      You've learned the core Git workflow: init, stage, commit, undo,
+      ignore, and inspect. Now it's time to prove you actually get it.
+      Here's a broken repository — fix it on your own.
 
-      > **No commands are provided.** Refer to earlier steps if you need a
-      > reminder. The tests tell you what the end state must look like, not
-      > how to get there. This is deliberate — real Git work is always
-      > goal-oriented, not recipe-following.
+      > **No commands are provided.** Go back to earlier steps if you
+      > need a refresher. The tests tell you what the end state must look
+      > like, not how to get there. This is how real Git work goes —
+      > you figure out the "how" yourself.
 
       ### The scenario
 
@@ -1151,6 +1151,13 @@ steps:
           # EXPERIMENTAL — do not commit
           x = [i**2 for i in range(100)]
         language: "python"
+      - path: "myproject/broken.py"
+        content: |
+          """A module that needs fixing."""
+
+          def broken_function():
+              return 42
+        language: "python"
       - path: "myproject/debug.log"
         content: |
           2024-01-01 ERROR: something went wrong
@@ -1168,7 +1175,7 @@ steps:
       - "myproject/broken.py"
 
     setup_commands:
-      - "cd /tutorial/myproject && echo 'DEBUG = True' >> broken.py && git add scratch.py; true"
+      - "cd /tutorial/myproject && git add broken.py && git commit -m 'Add broken module' && echo 'DEBUG = True' >> broken.py && git add scratch.py; true"
 
     solution:
       commands:
@@ -1236,11 +1243,14 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Branching"
     instructions: |
-      ### Parallel development
+      ### Parallel universes for your code
 
-      Branches let you develop features in isolation without affecting the
-      main codebase. A branch is just a lightweight **pointer** to a commit
-      — creating one is nearly instant and costs almost nothing.
+      Branches let you work on new features without touching the main
+      codebase. Think of them like alternate timelines — you can
+      experiment freely, and if things go wrong, the main timeline is
+      completely unaffected. A branch is just a lightweight **pointer**
+      to a commit — creating one is nearly instant and costs almost
+      nothing.
 
       ```
       Before branching:
@@ -1730,15 +1740,15 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
     instructions: |
-      ### When merges go wrong (and that's OK!)
+      ### Merge conflicts: scary name, totally normal
 
       A **merge conflict** happens when two branches modify the **same
-      lines** of the same file. Git can't decide which version to keep, so
-      it asks you — the human — to resolve it.
+      lines** of the same file. Git doesn't just pick one and hope for the
+      best — it asks *you* to decide.
 
-      This is **not** an error. It's Git being careful and asking for help.
-      Let's create this situation intentionally so you know exactly how to
-      handle it.
+      This is **not** an error or a sign you did something wrong. Even
+      senior devs deal with merge conflicts regularly. Let's create one
+      on purpose so when it happens for real, you'll handle it like a pro.
 
       ### Task 1: Create a new branch and modify calculator.py
 
@@ -1975,8 +1985,8 @@ steps:
       git commit -m "Merge update-add-function: combine type checking and logging"
       ```
 
-      Congratulations — you've resolved a merge conflict! This is a skill
-      that even experienced developers practice regularly.
+      You just resolved a merge conflict! That's genuinely a flex — this
+      is a skill that trips up even experienced developers.
 
     watch_files:
       - "myproject/calculator.py"
@@ -2116,9 +2126,9 @@ steps:
 
       `git revert` creates a **new commit** that applies the exact inverse of
       a previous commit, neutralising its changes while keeping the full
-      history intact. Think of it like an accountant's ledger: instead of
-      erasing the wrong entry (forbidden), you write a new correcting entry
-      that cancels it out.
+      history intact. Think of it like replying to your own message with
+      "ignore that last one" — the original is still there, but everyone
+      knows it's been corrected.
 
       ```
       Before revert:
@@ -2274,10 +2284,10 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
     instructions: |
-      ### Congratulations!
+      ### You made it!
 
-      You've learned the fundamental Git workflow. Let's review everything
-      you've mastered:
+      Seriously, nice work. You've gone from zero to a solid Git workflow.
+      Let's review everything you've picked up:
 
       ### Commands you now know
 
@@ -2340,7 +2350,7 @@ steps:
 
       From an empty folder to a version-controlled Python project with
       branching, merge conflict resolution, and independent feature
-      work — well done!
+      work — that's a whole journey. You should feel good about this.
 
     solution:
       commands:
@@ -2392,8 +2402,8 @@ steps:
 
         ```
         git init          → create repository
-        git add           → stage changes (loading dock)
-        git commit        → save snapshot (truck drives away)
+        git add           → stage changes (post editor)
+        git commit        → save snapshot (hit "Post")
         git status        → check current state
         git log           → view history
         git diff          → see what changed
@@ -2414,7 +2424,7 @@ steps:
         command: "cd /tutorial/myproject && git show main:calculator.py | grep -q 'def power'"
 
     quiz:
-      title: "Git Mastery — Final Review"
+      title: "Git Mastery — Final Comprehensive Review"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2461,138 +2471,6 @@ steps:
           correct_index: 1
           explanation: "`--graph` draws ASCII art showing branch structure and merge points. `--all` includes all branches, not just the current one. `--oneline` keeps it readable. Together they give the most complete overview of your repository's entire history."
 
-  # --------------------------------------------------------------------------
-  # BONUS STEP: Remote workflow (conceptual)
-  # --------------------------------------------------------------------------
-  - title: "Bonus: Working with Remotes"
-    instructions: |
-      ### Beyond your local machine
-
-      Everything you've learned so far works on your local repository.
-      In the real world, teams share code through **remote repositories**
-      hosted on platforms like GitHub, GitLab, or Bitbucket.
-
-      The remote workflow adds three key commands to what you already know:
-
-      ### The remote workflow
-
-      ```
-      ┌──────────────┐  git add/commit  ┌──────────────┐    git push    ┌──────────────┐
-      │   Working    │ ───────────────▶ │    Local     │ ─────────────▶ │    Remote    │
-      │  Directory   │ ◀─────────────── │     Repo     │ ◀───────────── │     Repo     │
-      └──────────────┘   git restore    └──────────────┘    git pull    └──────────────┘
-                                          (your machine)                  (e.g. GitHub)
-      ```
-
-      - **`git clone <url>`** — Download a full copy of a remote repository
-        (including its entire history) to your machine
-      - **`git push`** — Upload your local commits to the remote repository
-      - **`git pull`** — Download and merge new commits from the remote into
-        your local branch
-
-      ### Task 1: Simulate a remote with a bare repository
-
-      We can simulate a remote repository right here using a "bare" repo
-      (a repository with no working directory — just the `.git` data):
-
-      ```bash
-      cd /tutorial
-      git init --bare remote-repo.git
-      ```
-
-      ### Task 2: Connect your project to the remote
-
-      ```bash
-      cd /tutorial/myproject
-      git remote add origin /tutorial/remote-repo.git
-      ```
-
-      `origin` is the conventional name for your primary remote.
-
-      ### Task 3: Push your work
-
-      > **Before you run:** Think about what `git push` will do. Will it
-      > send only the latest commit, or the entire branch history?
-
-      ```bash
-      git push -u origin main
-      ```
-
-      The `-u` flag sets `origin/main` as the upstream tracking branch,
-      so future pushes only need `git push`.
-
-      ### Task 4: Simulate a colleague's change
-
-      Clone the remote into a separate directory (like a teammate would):
-
-      ```bash
-      cd /tutorial
-      git clone remote-repo.git colleague-copy
-      cd colleague-copy
-      ```
-
-      Make a change as your "colleague":
-
-      ```bash
-      echo "# Contributing Guide" > CONTRIBUTING.md
-      git add CONTRIBUTING.md
-      git commit -m "Add contributing guide"
-      git push
-      ```
-
-      ### Task 5: Pull your colleague's changes
-
-      Switch back to your original project and pull:
-
-      ```bash
-      cd /tutorial/myproject
-      git pull
-      ```
-
-      Check that the new file arrived:
-
-      ```bash
-      ls CONTRIBUTING.md
-      git log --oneline -3
-      ```
-
-      You now have your colleague's work in your local repository.
-      This is the complete Git collaboration cycle:
-      **branch → commit → push → pull → merge**.
-
-    solution:
-      commands:
-        - "cd /tutorial && git init --bare remote-repo.git"
-        - "cd /tutorial/myproject && git remote add origin /tutorial/remote-repo.git"
-        - "git push -u origin main"
-        - "cd /tutorial && git clone remote-repo.git colleague-copy"
-        - "cd /tutorial/colleague-copy"
-        - "echo '# Contributing Guide' > CONTRIBUTING.md"
-        - "git add CONTRIBUTING.md"
-        - "git commit -m 'Add contributing guide'"
-        - "git push"
-        - "cd /tutorial/myproject && git pull"
-        - "ls CONTRIBUTING.md"
-      explanation: |
-        - **`git init --bare`:** Creates a repository without a working directory — exactly what servers like GitHub host. It only stores the `.git` data.
-        - **`git remote add origin`:** Registers a remote repository under the name `origin`. You can have multiple remotes (e.g., `upstream` for a fork's parent).
-        - **`git push -u origin main`:** Uploads all commits on `main` to the remote. `-u` sets the upstream, so future `git push` and `git pull` know which remote branch to sync with.
-        - **`git clone`:** Creates a full copy of the remote repository, including its complete history. Your "colleague" gets everything.
-        - **`git pull`:** Fetches new commits from the remote and merges them into your current branch. It's equivalent to `git fetch` + `git merge`.
-
-    tests:
-      - description: "Remote 'origin' is configured"
-        command: "cd /tutorial/myproject && git remote | grep -q 'origin'"
-      - description: "main branch has been pushed to origin"
-        command: "cd /tutorial/myproject && git log origin/main --oneline | grep -q '.'"
-      - description: "CONTRIBUTING.md exists after pull"
-        command: "cd /tutorial/myproject && [ -f CONTRIBUTING.md ]"
-
-    quiz:
-      title: "Git Mastery — Final Comprehensive Review"
-      min_score: 0.8
-      shuffle: true
-      questions:
         - question: "**[Phase 1: Setup]** A colleague shares a project folder via USB — it has source files but no `.git` directory. `git status` reports 'not a git repository'. What is the single command needed before you can start tracking changes?"
           options:
             - "`git init` — creates the hidden `.git` directory that turns the folder into a repository"
@@ -2627,7 +2505,7 @@ steps:
             - "`git reset --hard` — resets all staged and unstaged changes"
             - "`git rm secrets.env` — deletes the file from the repository"
           correct_index: 1
-          explanation: "`git restore --staged <file>` is surgical: it moves one file off the loading dock while leaving the rest of your staged changes untouched. Without `--staged`, `git restore` would also discard the working-directory edits — a destructive difference."
+          explanation: "`git restore --staged <file>` is surgical: it moves one file off the post editor while leaving the rest of your staged changes untouched. Without `--staged`, `git restore` would also discard the working-directory edits — a destructive difference."
 
         - question: "**[Phase 3: Committing]** Without a staging area, `git commit` would have to snapshot every modified file at once. What capability would you lose?"
           options:
@@ -2763,6 +2641,140 @@ steps:
             - 3
           explanation: "The local workflow is **edit → stage → commit**. `git push` uploads to a remote and is a separate step that happens *after* committing. A commit is permanent in the local repository regardless of whether you ever push."
 
+  # --------------------------------------------------------------------------
+  # BONUS STEP: Remote workflow (conceptual)
+  # --------------------------------------------------------------------------
+  - title: "Bonus: Working with Remotes"
+    instructions: |
+      ### Time to go online
+
+      Everything so far has been local — just you and your machine.
+      But in the real world, code lives on **remote repositories**
+      like GitHub, GitLab, or Bitbucket. This is where collaboration
+      happens: pull requests, code reviews, and shipping to production.
+
+      The remote workflow adds three key commands to what you already know:
+
+      ### The remote workflow
+
+      ```
+      ┌──────────────┐  git add/commit  ┌──────────────┐    git push    ┌──────────────┐
+      │   Working    │ ───────────────▶ │    Local     │ ─────────────▶ │    Remote    │
+      │  Directory   │ ◀─────────────── │     Repo     │ ◀───────────── │     Repo     │
+      └──────────────┘   git restore    └──────────────┘    git pull    └──────────────┘
+                                          (your machine)                  (e.g. GitHub)
+      ```
+
+      - **`git clone <url>`** — Download a full copy of a remote repository
+        (including its entire history) to your machine
+      - **`git push`** — Upload your local commits to the remote repository
+      - **`git pull`** — Download and merge new commits from the remote into
+        your local branch
+
+      ### Task 1: Simulate a remote with a bare repository
+
+      We can simulate a remote repository right here using a "bare" repo
+      (a repository with no working directory — just the `.git` data):
+
+      ```bash
+      cd /tutorial
+      git init --bare remote-repo.git
+      ```
+
+      ### Task 2: Connect your project to the remote
+
+      ```bash
+      cd /tutorial/myproject
+      git remote add origin /tutorial/remote-repo.git
+      ```
+
+      `origin` is the conventional name for your primary remote.
+
+      ### Task 3: Push your work
+
+      > **Before you run:** Think about what `git push` will do. Will it
+      > send only the latest commit, or the entire branch history?
+
+      ```bash
+      git push -u origin main
+      ```
+
+      The `-u` flag sets `origin/main` as the upstream tracking branch,
+      so future pushes only need `git push`.
+
+      ### Task 4: Simulate a colleague's change
+
+      Clone the remote into a separate directory (like a teammate would):
+
+      ```bash
+      cd /tutorial
+      git clone remote-repo.git colleague-copy
+      cd colleague-copy
+      ```
+
+      Make a change as your "colleague":
+
+      ```bash
+      echo "# Contributing Guide" > CONTRIBUTING.md
+      git add CONTRIBUTING.md
+      git commit -m "Add contributing guide"
+      git push
+      ```
+
+      ### Task 5: Pull your colleague's changes
+
+      Switch back to your original project and pull:
+
+      ```bash
+      cd /tutorial/myproject
+      git pull
+      ```
+
+      Check that the new file arrived:
+
+      ```bash
+      ls CONTRIBUTING.md
+      git log --oneline -3
+      ```
+
+      You now have your colleague's work in your local repository.
+      That's the complete Git collaboration cycle:
+      **branch → commit → push → pull → merge**. This is literally
+      how teams at every tech company ship code every day.
+
+    solution:
+      commands:
+        - "cd /tutorial && git init --bare remote-repo.git"
+        - "cd /tutorial/myproject && git remote add origin /tutorial/remote-repo.git"
+        - "git push -u origin main"
+        - "cd /tutorial && git clone remote-repo.git colleague-copy"
+        - "cd /tutorial/colleague-copy"
+        - "echo '# Contributing Guide' > CONTRIBUTING.md"
+        - "git add CONTRIBUTING.md"
+        - "git commit -m 'Add contributing guide'"
+        - "git push"
+        - "cd /tutorial/myproject && git pull"
+        - "ls CONTRIBUTING.md"
+      explanation: |
+        - **`git init --bare`:** Creates a repository without a working directory — exactly what servers like GitHub host. It only stores the `.git` data.
+        - **`git remote add origin`:** Registers a remote repository under the name `origin`. You can have multiple remotes (e.g., `upstream` for a fork's parent).
+        - **`git push -u origin main`:** Uploads all commits on `main` to the remote. `-u` sets the upstream, so future `git push` and `git pull` know which remote branch to sync with.
+        - **`git clone`:** Creates a full copy of the remote repository, including its complete history. Your "colleague" gets everything.
+        - **`git pull`:** Fetches new commits from the remote and merges them into your current branch. It's equivalent to `git fetch` + `git merge`.
+
+    tests:
+      - description: "Remote 'origin' is configured"
+        command: "cd /tutorial/myproject && git remote | grep -q 'origin'"
+      - description: "main branch has been pushed to origin"
+        command: "cd /tutorial/myproject && git log origin/main --oneline | grep -q '.'"
+      - description: "CONTRIBUTING.md exists after pull"
+        command: "cd /tutorial/myproject && [ -f CONTRIBUTING.md ]"
+
+    quiz:
+      title: "Working with Remotes — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
         - question: "What does `git clone` do?"
           options:
             - "Creates an empty repository on the remote server"
