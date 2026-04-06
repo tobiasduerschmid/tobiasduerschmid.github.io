@@ -2464,6 +2464,14 @@
     var step = this.steps[this.currentStep];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
+
+    // Disable the test button while a run is in-flight.  Without this,
+    // rapid clicks each do _muteCount++ but only the last run's callbacks
+    // survive (the rest are overwritten), so _muteCount never returns to
+    // 0 and the terminal stays permanently muted.
+    var testBtn = this.stepControlsEl && this.stepControlsEl.querySelector('.tvm-btn-test');
+    if (testBtn) testBtn.disabled = true;
+
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var parts = [];
     tests.forEach(function (t, i) {
@@ -2477,11 +2485,13 @@
     this._testCallbacks = [
       function () { self._muteCount--; },
       function () { self._renderTestResults(tests, self._testResults); },
+      function () { if (testBtn) testBtn.disabled = false; },
     ];
     var safetyTimer = setTimeout(function () {
       if (self._testListening) {
         self._testListening = false; self._testBuffer = ''; self._muteCount--;
         self._renderTestResults(tests, self._testResults);
+        if (testBtn) testBtn.disabled = false;
       }
     }, 15000);
     this._testCallbacks.push(function () { clearTimeout(safetyTimer); });

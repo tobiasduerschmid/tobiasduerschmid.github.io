@@ -833,6 +833,11 @@ html:not(.dark-mode) .tvm-refresh-btn:hover { background: rgba(0,120,212,0.08); 
   color: #fff;
 }
 .tvm-btn-test:hover { background: #22a04e; }
+.tvm-btn-test:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: .65;
+}
 
 .tvm-test-panel {
   margin-top: 20px;
