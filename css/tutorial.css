@@ -12,7 +12,7 @@
    color:#fff on these links prevents the text from turning black.
    Force black text/icons so they remain legible on the yellow highlight.
 ─────────────────────────────────────────── */
-html:not(.dark-mode) #saveProgressBtn:hover, html:not(.dark-mode) #saveProgressBtn:focus,
+html:not(.dark-mode) #autoSaveLabel:hover, html:not(.dark-mode) #autoSaveLabel:focus,
 html:not(.dark-mode) #resetStepBtn:hover,    html:not(.dark-mode) #resetStepBtn:focus,
 html:not(.dark-mode) #solutionBtn:hover,     html:not(.dark-mode) #solutionBtn:focus,
 html:not(.dark-mode) #printBtn:hover,        html:not(.dark-mode) #printBtn:focus {

@@ -110,10 +110,11 @@
 
     // v86 state
     this.emulator      = null;
-    this._muted        = false;
-    this._mutedBuffer  = '';
+    this._muteCount    = 0;           // >0 ⇒ suppress serial→xterm output
     this._executableFiles = new Set();
     this._inputLine    = '';
+    this._silentQueue  = [];          // queued _runSilent Promises
+    this._silentRunning = false;      // true while a silent cmd is in-flight
 
     // xterm state
     this.term          = null;
@@ -816,10 +817,10 @@
           } else { self._inputLine += data; }
         });
 
-        self._muted = false;
+        self._muteCount = 0;
         self.emulator.add_listener('serial0-output-byte', function (byte) {
           var ch = String.fromCharCode(byte);
-          if (!self._muted) self.term.write(ch);
+          if (self._muteCount === 0) self.term.write(ch);
           if (self._testListening) { self._testBuffer += ch; self._parseTestOutput(); }
         });
 
@@ -863,34 +864,52 @@
     // pyodide: no interactive shell command
   };
 
+  /**
+   * Run a command in the v86 terminal without any visible output.
+   * Returns a Promise that resolves when the command completes.
+   * Calls are serialized via a queue so overlapping invocations
+   * never race on the mute state.
+   */
   TutorialCode.prototype._runSilent = function (cmd) {
     var self = this;
-    if (this.config.backend !== 'v86') return;
-    // Append a unique marker as a shell comment so it appears in the command
-    // echo but produces NO visible output.  After detecting the marker we
-    // wait for the next shell prompt and unmute.  Since all serial output
-    // (including the command echo) is suppressed, the terminal cursor never
-    // moves — the original prompt is still visible, so no replay is needed.
+    if (this.config.backend !== 'v86') return Promise.resolve();
+    return new Promise(function (resolve) {
+      self._silentQueue.push({ cmd: cmd, resolve: resolve });
+      if (!self._silentRunning) self._drainSilentQueue();
+    });
+  };
+
+  TutorialCode.prototype._drainSilentQueue = function () {
+    if (this._silentQueue.length === 0) { this._silentRunning = false; return; }
+    this._silentRunning = true;
+    var self = this;
+    var entry = this._silentQueue.shift();
     var marker = '__SIL_' + Math.random().toString(36).substr(2, 8);
-    self._muted = true; self._mutedBuffer = '';
+    var buf = '';
+
+    self._muteCount++;
     function onByte(byte) {
-      self._mutedBuffer += String.fromCharCode(byte);
-      var mi = self._mutedBuffer.indexOf(marker);
+      buf += String.fromCharCode(byte);
+      var mi = buf.indexOf(marker);
       if (mi !== -1) {
-        var tail = self._mutedBuffer.substring(mi + marker.length);
+        var tail = buf.substring(mi + marker.length);
         if (tail.includes('# ') || tail.includes('$ ')) {
-          self._muted = false; self._mutedBuffer = '';
           self.emulator.remove_listener('serial0-output-byte', onByte);
           clearTimeout(timer);
+          self._muteCount--;
+          entry.resolve();
+          self._drainSilentQueue();
         }
       }
     }
     self.emulator.add_listener('serial0-output-byte', onByte);
     var timer = setTimeout(function () {
-      self._muted = false; self._mutedBuffer = '';
       self.emulator.remove_listener('serial0-output-byte', onByte);
+      self._muteCount--;
+      entry.resolve();
+      self._drainSilentQueue();
     }, 10000);
-    self.sendCommand(' ' + cmd + ' #' + marker);
+    self.sendCommand(' ' + entry.cmd + ' #' + marker);
   };
 
   // ---- Pyodide backend -------------------------------------------------------
@@ -2454,14 +2473,14 @@
     this._testResults = new Array(tests.length).fill(null);
     this._testBuffer = '';
     this._testListening = true;
-    this._muted = true;
+    this._muteCount++;
     this._testCallbacks = [
-      function () { self._muted = false; },
+      function () { self._muteCount--; },
       function () { self._renderTestResults(tests, self._testResults); },
     ];
     var safetyTimer = setTimeout(function () {
       if (self._testListening) {
-        self._testListening = false; self._testBuffer = ''; self._muted = false;
+        self._testListening = false; self._testBuffer = ''; self._muteCount--;
         self._renderTestResults(tests, self._testResults);
       }
     }, 15000);
@@ -2481,7 +2500,7 @@
 
     // Stay muted until the shell prompt that follows __TDONE__ has been
     // consumed, then unmute.  This prevents the prompt from leaking an
-    // extra line into the terminal (same approach as _runSilent).
+    // extra line into the terminal.
     var self = this;
     var promptBuf = '';
     function waitForPrompt(byte) {
