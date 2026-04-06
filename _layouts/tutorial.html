@@ -18,6 +18,7 @@
         </span>
       </div>
       <div class="navbar-right" style="display:flex; align-items:center; height:45px; padding-right:16px; gap:14px;">
+        {% if site.tutorial_autosave %}
         <label id="autoSaveLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;"
                title="Automatically save step and code so you can resume later">
           <i class="fa-solid fa-floppy-disk"></i> Auto-save
@@ -33,6 +34,7 @@
            title="Reset current step to original code">
           <i class="fa fa-undo"></i> Reset Current Step
         </a>
+        {% endif %}
         <a id="solutionBtn" href="#"
            style="display:none; color:#fff; font-size:14px; font-weight:600; text-decoration:none; align-items:center; gap:5px;"
            title="Apply solution for current step">
@@ -123,7 +125,11 @@
 
   {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
   {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
-  {% assign tutorial_allow_autosave = tutorial_data.allow_autosave | default: true %}
+  {% if site.tutorial_autosave and tutorial_data.allow_autosave != false %}
+    {% assign tutorial_allow_autosave = true %}
+  {% else %}
+    {% assign tutorial_allow_autosave = false %}
+  {% endif %}
 
   {% if tutorial_backend == 'webcontainer' %}
   <!-- Register Cross-Origin Isolation service worker required by WebContainers -->
@@ -182,6 +188,7 @@
       });
       tutorial.start();
 
+      {% if site.tutorial_autosave %}
       // Wire Auto-save toggle + Reset Step button
       var autoSaveToggle = document.getElementById('autoSaveToggle');
       var autoSaveLabel = document.getElementById('autoSaveLabel');
@@ -208,6 +215,7 @@
           tutorial.resetStep();
         });
       }
+      {% endif %}
 
       // Instructor mode: show and wire Solution button + update Print link
       if (instructorMode) {

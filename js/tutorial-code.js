@@ -1578,10 +1578,10 @@
     }
     var self = this;
     var needsChmod = self._executableFiles.has(filename);
-    this.emulator.create_file('/' + filename, bytes)
+    this.emulator.create_file('/tutorial/' + filename, bytes)
       .then(function () {
         if (needsChmod) {
-          var res = self.emulator.fs9p.SearchPath('/' + filename);
+          var res = self.emulator.fs9p.SearchPath('/tutorial/' + filename);
           if (res && res.id !== -1) self.emulator.fs9p.inodes[res.id].mode = 0x81ED;
         }
       }).catch(function (err) {
@@ -1835,13 +1835,6 @@
     this.currentStep = index;
     var step = this.steps[index];
 
-    // Auto-unlock next step if this step has no test gate.
-    // Quizzes are interstitials shown on Next click, not navigation locks.
-    var hasTestGate = this.requireTests && step.tests && step.tests.length > 0;
-    if (!hasTestGate && index + 1 < this.steps.length) {
-      this._stepsUnlocked.add(index + 1);
-    }
-
     if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
     if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
 
@@ -1984,8 +1977,15 @@
     if (next) next.addEventListener('click', function () {
       if (next.disabled) return;
       var hasQuiz = step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
-      if (hasQuiz && !self._quizPassed.has(index)) self._showStepQuiz(index);
-      else self.loadStep(index + 1);
+      if (hasQuiz && !self._quizPassed.has(index)) {
+        self._showStepQuiz(index);
+      } else {
+        // Unlock the next step now (for non-test-gated steps; test-gated steps
+        // unlock on passing, quiz-gated steps unlock in the quiz continue handler).
+        self._stepsUnlocked.add(index + 1);
+        if (self.autoSaveEnabled) self._autoSaveProgress();
+        self.loadStep(index + 1);
+      }
     });
     if (test) test.addEventListener('click', function () { self._runTests(); });
   };
@@ -2790,9 +2790,9 @@
     if (files.length === 0) return;
     this._reverseSyncBusy = true;
     var promises = files.map(function (filename) {
-      return self.emulator.read_file('/' + filename)
+      return self.emulator.read_file('/tutorial/' + filename)
         .then(function (buf) {
-          var res = self.emulator.fs9p.SearchPath('/' + filename);
+          var res = self.emulator.fs9p.SearchPath('/tutorial/' + filename);
           if (res && res.id !== -1) {
             var inode = self.emulator.fs9p.inodes[res.id];
             if (inode.mode & 0x49) self._executableFiles.add(filename);
