@@ -2002,7 +2002,7 @@
   TutorialCode.prototype._renderStepControls = function (index) {
     var self = this;
     var step = this.steps[index];
-    var nextStepUnlocked = this.instructorMode || this._stepsUnlocked.has(index + 1);
+    var nextStepUnlocked = !this.requireTests || this.instructorMode || this._stepsUnlocked.has(index + 1);
     var nextLocked = !nextStepUnlocked;
 
     var html = '';
