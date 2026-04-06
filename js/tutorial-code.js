@@ -868,25 +868,20 @@
     if (this.config.backend !== 'v86') return;
     // Append a unique marker as a shell comment so it appears in the command
     // echo but produces NO visible output.  After detecting the marker we
-    // wait for the next shell prompt, replay it, and unmute.
+    // wait for the next shell prompt and unmute.  Since all serial output
+    // (including the command echo) is suppressed, the terminal cursor never
+    // moves — the original prompt is still visible, so no replay is needed.
     var marker = '__SIL_' + Math.random().toString(36).substr(2, 8);
     self._muted = true; self._mutedBuffer = '';
     function onByte(byte) {
       self._mutedBuffer += String.fromCharCode(byte);
-      // Once the marker has been echoed as part of the command line, look
-      // for the shell prompt that follows command completion.
       var mi = self._mutedBuffer.indexOf(marker);
       if (mi !== -1) {
         var tail = self._mutedBuffer.substring(mi + marker.length);
-        var pi = Math.max(tail.lastIndexOf('# '), tail.lastIndexOf('$ '));
-        if (pi !== -1) {
-          // Extract and replay the prompt line so the user sees it.
-          var lineStart = tail.lastIndexOf('\n', pi);
-          var prompt = tail.substring(lineStart + 1);
+        if (tail.includes('# ') || tail.includes('$ ')) {
           self._muted = false; self._mutedBuffer = '';
           self.emulator.remove_listener('serial0-output-byte', onByte);
           clearTimeout(timer);
-          self.term.write('\r\n' + prompt);
         }
       }
     }
@@ -2483,7 +2478,25 @@
     }
     this._testListening = false; this._testBuffer = '';
     var cbs = this._testCallbacks.splice(0);
-    cbs.forEach(function (cb) { cb(); });
+
+    // Stay muted until the shell prompt that follows __TDONE__ has been
+    // consumed, then unmute.  This prevents the prompt from leaking an
+    // extra line into the terminal (same approach as _runSilent).
+    var self = this;
+    var promptBuf = '';
+    function waitForPrompt(byte) {
+      promptBuf += String.fromCharCode(byte);
+      if (promptBuf.includes('# ') || promptBuf.includes('$ ')) {
+        self.emulator.remove_listener('serial0-output-byte', waitForPrompt);
+        clearTimeout(promptTimer);
+        cbs.forEach(function (cb) { cb(); });
+      }
+    }
+    self.emulator.add_listener('serial0-output-byte', waitForPrompt);
+    var promptTimer = setTimeout(function () {
+      self.emulator.remove_listener('serial0-output-byte', waitForPrompt);
+      cbs.forEach(function (cb) { cb(); });
+    }, 3000);
   };
 
   // SQL — each test.command is a JS snippet with __run_query / assert helpers
