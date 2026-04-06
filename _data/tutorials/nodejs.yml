@@ -704,7 +704,7 @@ steps:
 
         **`.reduce()`:** `students.reduce((acc, s) => acc + s.grade, 0)` sums all grades. The `0` initial value is critical — without it, `.reduce()` throws on empty arrays. Dividing by `students.length` gives the average: (95+42+78+55+88)/5 = 71.6.
 
-        **`.toFixed(1)`:** Formats the number `71.6` to one decimal place. The test checks `output.includes('71.6')` and `source.includes('.toFixed(')`.
+        **`.toFixed(1)`:** Formats the number `71.6` to one decimal place. `${classAverage.toFixed(1)}` is executable code inside a template expression — not a string — so `code.includes('.toFixed(')` correctly finds it.
 
     tests:
       - description: "Used .map() to transform the data"

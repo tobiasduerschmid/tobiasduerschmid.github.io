@@ -220,14 +220,14 @@ questions:
 
   - id: 20
     question: |
-      **Arrange** the pipeline to run a build and simultaneously write its output to `build.log` while still printing it to the terminal.
+      **Arrange** the fragments to grant execute permission on a script and immediately run it.
     type: parsons
     display: inline
     lines:
-      - "make build"
-      - "|"
-      - "tee build.log"
+      - "chmod +x script.sh"
+      - "&&"
+      - "./script.sh"
     distractors:
-      - ">>"
-      - "2>&1"
-    explanation: "`tee` reads from stdin and writes to *both* stdout (the terminal) and the named file — perfect for keeping a log without losing live output. Using `> build.log` or `>>` would capture output silently with nothing visible in the terminal. `2>&1` redirects stderr but doesn't duplicate the stream the way `tee` does."
+      - "||"
+      - "sh script.sh"
+    explanation: "`chmod +x script.sh` adds the execute bit, making the file runnable as a program. `&&` ensures the script only runs if `chmod` succeeded. `./script.sh` executes it using the shebang to select the interpreter. Using `||` instead of `&&` would run the script only when `chmod` *fails* — the opposite of the intent. `sh script.sh` works but bypasses the shebang, hardcoding the interpreter to `sh` regardless of what the script specifies."

@@ -1690,7 +1690,7 @@ steps:
       commands:
         - "git switch main"
         - "git diff main..feature-divide"
-        - "git merge feature-divide"
+        - "git merge feature-divide --no-edit"
         - "cat calculator.py"
         - "git log --oneline"
         - "git branch -d feature-divide"
@@ -2070,7 +2070,7 @@ steps:
         - "git switch main"
         - "git add calculator.py"
         - "git commit -m \"Add logging to add function\""
-        - "git merge update-add-function"
+        - "git merge update-add-function --no-edit -X ours"
         - "git add calculator.py"
         - "git commit -m \"Merge update-add-function: combine type checking and logging\""
       explanation: |

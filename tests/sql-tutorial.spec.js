@@ -2,62 +2,78 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
+  passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
 } = require('./tutorial-helpers');
 
 /**
- * Tests: React Essentials Interactive Tutorial (React/Babel backend)
+ * Tests: SQL Essentials Tutorial (SQLite WebWorker backend)
  *
  * Two serial describe blocks share one page each — the tutorial boots only
  * twice per run (instead of once per test).
  *
- * The React backend transpiles JSX in-browser via Babel and renders into a
- * sandboxed iframe. After applying a solution, the preview must be rebuilt
- * via Ctrl+S before clicking Run Tests — hence the local passCurrentStepTests
- * override that adds saveAndWaitForPreview().
+ * The SQL backend runs SQLite entirely in the browser via a Web Worker.
+ * Query results are rendered as tables inside .tvm-sql-table-wrapper.
  *
- * Block 1 – Structure, navigation, preview, editor.
+ * Block 1 – Structure, navigation, run/clear, editor.
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/react-tutorial';
+const TUTORIAL_URL     = '/SEBook/tools/sql-tutorial';
 const BOOT_TIMEOUT     = 30_000;
 const TEST_RUN_TIMEOUT = 20_000;
 
-const config = loadTutorialConfig('react');
+const config = loadTutorialConfig('sql');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
-  await page.waitForSelector('.tvm-preview-frame', { timeout: BOOT_TIMEOUT });
-  await page.waitForSelector('.tvm-step-btn',      { timeout: 10_000 });
+  await page.waitForSelector('.tvm-output-panel', { timeout: BOOT_TIMEOUT });
+  await page.waitForSelector('.tvm-step-btn',     { timeout: 10_000 });
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
 }
 
-async function saveAndWaitForPreview(page) {
-  await page.locator('.tvm-editor-container').click();
-  await page.keyboard.press('Control+s');
-  await page.waitForTimeout(1_200);
+async function clickRun(page) {
+  const runBtn = page.locator('.tvm-run-btn');
+  await expect(runBtn).toBeVisible({ timeout: 5_000 });
+  await runBtn.click();
+  await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
 }
 
 /**
- * React backend needs a preview rebuild after applying the solution.
+ * SQL backend: applySolution writes files to the worker's file map but does NOT
+ * execute them.  Tests check the live DB state, so each solution file must be
+ * run (executed as SQL) before the test assertions can pass.
  */
-async function passCurrentStepTests(page, timeout = TEST_RUN_TIMEOUT) {
+async function passCurrentStepTestsSQL(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
-  await page.evaluate(() => window._tutorial.applySolution());
-  await saveAndWaitForPreview(page);
-  await page.waitForTimeout(2_000);
+  await page.evaluate(function () {
+    return new Promise(function (resolve) {
+      var tut = window._tutorial;
+      tut.applySolution();
+      var step = tut.steps[tut.currentStep];
+      var files = (step && step.solution && step.solution.files) ? step.solution.files : [];
+      var i = 0;
+      function runNext() {
+        if (i >= files.length) { resolve(); return; }
+        var path = '/tutorial/' + files[i].path;
+        i++;
+        tut._postWorker({ type: 'run', path: path }, runNext);
+      }
+      // Give the write messages from applySolution() time to be processed first
+      setTimeout(runNext, 1000);
+    });
+  });
   await page.locator('.tvm-btn-test').click();
   await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
 }
 
 // =============================================================================
-// Block 1 – Structure, navigation, preview, editor
+// Block 1 – Structure, navigation, run/clear, editor
 // =============================================================================
-test.describe.serial('React Tutorial', () => {
+test.describe.serial('SQL Tutorial', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -81,13 +97,14 @@ test.describe.serial('React Tutorial', () => {
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('live preview panel is present — no terminal', async () => {
-    await expect(page.locator('.tvm-preview-frame')).toBeVisible();
+  test('output panel is present — no terminal for SQL backend', async () => {
+    await expect(page.locator('.tvm-output-panel')).toBeVisible();
     await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
   });
 
-  test('refresh button is present in the preview header', async () => {
-    await expect(page.locator('.tvm-refresh-btn')).toBeVisible();
+  test('run and clear buttons are present', async () => {
+    await expect(page.locator('.tvm-run-btn')).toBeVisible();
+    await expect(page.locator('.tvm-clear-btn')).toBeVisible();
   });
 
   test('editor shows a file tab on the first step', async () => {
@@ -97,36 +114,39 @@ test.describe.serial('React Tutorial', () => {
     await expect(page.locator('.tvm-editor-container')).toBeVisible();
   });
 
-  test('preview frame renders HTML content', async () => {
-    await page.waitForFunction(
-      () => (document.querySelector('.tvm-preview-frame')?.getAttribute('srcdoc') ?? '').length > 100,
-      { timeout: 10_000 });
-    const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
-  });
+  // --- Run / clear ---
 
-  // --- Preview / editor ---
-
-  test('preview updates after saving editor content', async () => {
+  test('executing a SELECT query renders a result table', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    const before = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    await setEditorContent(page, [
-      'function App() { return <h1>Changed</h1>; }',
-      'const root = ReactDOM.createRoot(document.getElementById("root"));',
-      'root.render(<App />);',
-    ].join('\n'));
-    await saveAndWaitForPreview(page);
-    const after = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(after).not.toBe(before);
+    await setEditorContent(page, "SELECT 'hello' AS msg;");
+    await page.locator('.tvm-editor-container').click();
+    await page.keyboard.press('Control+s');
+    await page.waitForTimeout(300);
+    await clickRun(page);
+    await expect(page.locator('.tvm-sql-table-wrapper')).toBeVisible({ timeout: TEST_RUN_TIMEOUT });
   });
 
-  test('refresh button rebuilds the preview', async () => {
-    await page.locator('.tvm-refresh-btn').click();
-    await page.waitForTimeout(1_500);
-    const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
+  test('clear button empties the output panel', async () => {
+    await page.locator('.tvm-clear-btn').click();
+    expect(await page.locator('.tvm-sql-table-wrapper').count()).toBe(0);
+    const text = await page.locator('.tvm-output-pre').textContent();
+    expect(text?.trim() ?? '').toBe('');
   });
+
+  test('invalid SQL shows an error in the output panel', async () => {
+    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+      { timeout: 15_000 });
+    await setEditorContent(page, 'SELEC * FORM students;');
+    await page.locator('.tvm-editor-container').click();
+    await page.keyboard.press('Control+s');
+    await page.waitForTimeout(300);
+    await clickRun(page);
+    await expect(page.locator('.tvm-output-pre'))
+      .toContainText(/error|Error|syntax|✗/i, { timeout: TEST_RUN_TIMEOUT });
+  });
+
+  // --- Editor ---
 
   test('editor content can be modified', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
@@ -134,10 +154,10 @@ test.describe.serial('React Tutorial', () => {
     const before = await page.evaluate(() =>
       window.monaco.editor.getEditors()[0].getModel().getValue());
     expect(before).toBeTruthy();
-    await setEditorContent(page, before + '\n// added comment');
+    await setEditorContent(page, before + '\n-- added comment');
     const after = await page.evaluate(() =>
       window.monaco.editor.getEditors()[0].getModel().getValue());
-    expect(after).toContain('// added comment');
+    expect(after).toContain('-- added comment');
   });
 
   // --- Quiz flow (also unlocks step 2 for the navigation test) ---
@@ -168,7 +188,7 @@ test.describe.serial('React Tutorial', () => {
 // =============================================================================
 // Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
 // =============================================================================
-test.describe.serial('React Tutorial — step-by-step', () => {
+test.describe.serial('SQL Tutorial — step-by-step', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -191,7 +211,7 @@ test.describe.serial('React Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+        await passCurrentStepTestsSQL(page, TEST_RUN_TIMEOUT);
         expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
       });
     }

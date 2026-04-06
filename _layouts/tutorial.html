@@ -190,6 +190,7 @@
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
       });
+      window._tutorial = tutorial;
       tutorial.start();
 
       // Wire Auto-save toggle + Reset Step button

@@ -143,7 +143,7 @@ function runCode(id, code, silent) {
         if (!cond) throw new Error(msg || 'Assertion failed');
       },
       function __read_file(path) {
-        return files[path] || '';
+        return files[path] || files['/tutorial/' + path] || '';
       }
     ).then(function() {
       self.postMessage({ type: 'run_done', id: id, exitCode: 0 });

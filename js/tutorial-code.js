@@ -908,7 +908,7 @@
       self._muteCount--;
       entry.resolve();
       self._drainSilentQueue();
-    }, 10000);
+    }, 30000);
     self.sendCommand(' ' + entry.cmd + ' #' + marker);
   };
 
@@ -1539,64 +1539,51 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._syncFileToBackend = function (filename, callback) {
     var entry = this.editorModels[filename];
-    if (!entry) { if (callback) callback(); return; }
+    if (!entry) { if (callback) callback(); return Promise.resolve(); }
     var content = entry.model.getValue();
     entry.lastSyncContent = content;
+    var self = this;
 
-    if (this.config.backend === 'v86') {
-      this._syncFileToV86(filename, content);
-      if (callback) callback();
+    return new Promise(function (resolve) {
+      var done = function () { if (callback) callback(); resolve(); };
 
-    } else if (this.config.backend === 'pyodide') {
-      this._postWorker(
-        { type: 'write', path: '/tutorial/' + filename, content: content },
-        function () { if (callback) callback(); }
-      );
+      if (self.config.backend === 'v86') {
+        self._syncFileToV86(filename, content).then(done).catch(done);
 
-    } else if (this.config.backend === 'webcontainer' && this._webcontainer) {
-      var wcPath = 'tutorial/' + filename;
-      var wcDir  = wcPath.substring(0, wcPath.lastIndexOf('/'));
-      var wc = this._webcontainer;
-      var doWrite = function () {
-        wc.fs.writeFile(wcPath, content)
-          .then(function () { if (callback) callback(); })
-          .catch(function (err) { console.warn('WC write failed:', err); if (callback) callback(); });
-      };
-      if (wcDir && wcDir !== 'tutorial') {
-        wc.fs.mkdir(wcDir, { recursive: true }).then(doWrite).catch(doWrite);
+      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog') {
+        self._postWorker(
+          { type: 'write', path: '/tutorial/' + filename, content: content },
+          done
+        );
+
+      } else if (self.config.backend === 'webcontainer' && self._webcontainer) {
+        var wcPath = 'tutorial/' + filename;
+        var wcDir  = wcPath.substring(0, wcPath.lastIndexOf('/'));
+        var wc = self._webcontainer;
+        var doWrite = function () {
+          wc.fs.writeFile(wcPath, content).then(done).catch(done);
+        };
+        if (wcDir && wcDir !== 'tutorial') {
+          wc.fs.mkdir(wcDir, { recursive: true }).then(doWrite).catch(doWrite);
+        } else {
+          doWrite();
+        }
+
+      } else if (self.config.backend === 'react') {
+        clearTimeout(self._reactRebuildTimer);
+        self._reactRebuildTimer = setTimeout(function () {
+          self._rebuildReactPreview();
+          done();
+        }, 400);
+
       } else {
-        doWrite();
+        done();
       }
-
-    } else if (this.config.backend === 'react') {
-      // Content stays in editor models; debounce-rebuild the live preview
-      var self = this;
-      clearTimeout(this._reactRebuildTimer);
-      this._reactRebuildTimer = setTimeout(function () {
-        self._rebuildReactPreview();
-        if (callback) callback();
-      }, 400);
-
-    } else if (this.config.backend === 'browser') {
-      // Content stays in editor models; nothing to sync to a filesystem
-      if (callback) callback();
-
-    } else if (this.config.backend === 'sql') {
-      this._postWorker(
-        { type: 'write', path: '/tutorial/' + filename, content: content },
-        function () { if (callback) callback(); }
-      );
-
-    } else if (this.config.backend === 'prolog') {
-      this._postWorker(
-        { type: 'write', path: '/tutorial/' + filename, content: content },
-        function () { if (callback) callback(); }
-      );
-    }
+    });
   };
 
   TutorialCode.prototype._syncFileToV86 = function (filename, content) {
-    if (!this.emulator || !this.booted) return;
+    if (!this.emulator || !this.booted) return Promise.resolve();
     var bytes;
     if (typeof TextEncoder !== 'undefined') {
       bytes = new TextEncoder().encode(content);
@@ -1608,7 +1595,7 @@
     var self = this;
     var needsChmod = self._executableFiles.has(filename);
 
-    this.emulator.create_file('/' + filename, bytes)
+    return this.emulator.create_file('/' + filename, bytes)
       .then(function () {
         if (needsChmod) {
           var res = self.emulator.fs9p.SearchPath('/' + filename);
@@ -1620,7 +1607,7 @@
           : '';
         var mkdirCmd = dirname ? 'mkdir -p /tutorial/' + dirname + ' && ' : '';
         var b64 = btoa(unescape(encodeURIComponent(content)));
-        self._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
+        return self._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
           (needsChmod ? ' && chmod +x /tutorial/' + filename : ''));
       });
   };
@@ -1655,19 +1642,22 @@
       });
     }
 
+    var p = Promise.resolve();
     // 2. Apply file overrides — reuse existing openFile + _syncFileToBackend
     if (solution.files) {
       self._suppressAutoSave = true;
       solution.files.forEach(function (f) {
         self.openFile(f.path, f.content, f.language);
-        self._syncFileToBackend(f.path);
+        p = p.then(function () { return self._syncFileToBackend(f.path); });
       });
       self._suppressAutoSave = false;
       // Activate the step's open_file (the main file the student works on),
       // not the first solution file (which may be a dependency).
-      var target = step.open_file || solution.files[solution.files.length - 1].path;
-      self._setActiveFile(target);
-      self._renderTabs();
+      var target = step.open_file || (solution.files.length > 0 ? solution.files[solution.files.length - 1].path : null);
+      if (target) {
+        self._setActiveFile(target);
+        self._renderTabs();
+      }
     }
 
     // 3. Run solution commands (backend-specific dispatch)
@@ -1677,22 +1667,33 @@
         // back-to-back via serial; without this, pagers (less) consume characters from
         // the next command (e.g. "git " gets eaten, leaving "add calculator.py" to fail).
         solution.commands.forEach(function (cmd) {
-          self.sendCommand(cmd.replace(/^git /, 'git --no-pager '));
+          p = p.then(function () {
+            return self._runSilent(cmd.replace(/^git /, 'git --no-pager '));
+          });
         });
       } else if (this.config.backend === 'pyodide') {
-        this._postWorker({
-          type: 'runCode',
-          code: solution.commands.join('\n'),
-          silent: true
+        p = p.then(function () {
+          return new Promise(function (resolve) {
+            self._postWorker({
+              type: 'runCode',
+              code: solution.commands.join('\n'),
+              silent: true
+            }, resolve);
+          });
         });
-      } else if (this.config.backend === 'prolog') {
-        this._postWorker({
-          type: 'runProlog',
-          code: solution.commands.join('\n'),
-          silent: true
+      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql') {
+        p = p.then(function () {
+          return new Promise(function (resolve) {
+            self._postWorker({
+              type: 'runCode',
+              code: solution.commands.join('\n'),
+              silent: true
+            }, resolve);
+          });
         });
       }
     }
+    return p;
 
     // 4. React: rebuild live preview after file changes
     if (this.config.backend === 'react') {
@@ -2617,15 +2618,15 @@
       clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results); return; }
 
-      // 15 seconds per-test timeout for spotting infinite loops
+      // 30 seconds per-test timeout for spotting infinite loops
       testTimeout = setTimeout(function () {
         console.warn('Pyodide test execution timed out. Infinite loop suspected.');
         if (self.term) {
-          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (15s).\x1b[0m\n\r');
+          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (30s).\x1b[0m\n\r');
           self.term.write('\x1b[33mIf you wrote an infinite loop (e.g. `while True:`), your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
         }
         self._renderTestResults(tests, new Array(tests.length).fill(null));
-      }, 15000);
+      }, 30000);
 
       self._postWorker(
         { type: 'runCode', code: tests[i].command, silent: true },
@@ -2781,7 +2782,7 @@
 
   // Shared helper: strips JS/JSX string literals and comments so keyword
   // searches in test assertions cannot false-match on string *contents*.
-  // Handles: "...", '...', `...` (simplified — no nested ${}), // and /* */
+  // Handles: "...", '...', `...` (with ${} expressions preserved), // and /* */
   TutorialCode.prototype._stripCode = function (src) {
     var out = '';
     var i = 0;
@@ -2803,13 +2804,25 @@
           i++;
         }
         out += q; i++;                // closing quote, content blanked
-      } else if (c === '`') {         // template literal (simplified)
+      } else if (c === '`') {         // template literal — strip string parts, keep ${} code
         out += '`'; i++;
         while (i < n && src[i] !== '`') {
           if (src[i] === '\\') { i += 2; continue; }
-          i++;
+          if (src[i] === '$' && i + 1 < n && src[i + 1] === '{') {
+            // ${...} is executable code — pass it through verbatim
+            out += '${'; i += 2;
+            var depth = 1;
+            while (i < n && depth > 0) {
+              if (src[i] === '{') depth++;
+              else if (src[i] === '}') { depth--; if (depth === 0) break; }
+              out += src[i]; i++;
+            }
+            out += '}'; i++; // closing }
+          } else {
+            i++; // string content — skip (blank it out)
+          }
         }
-        out += '`'; i++;              // closing backtick, content blanked
+        out += '`'; i++;              // closing backtick
       } else {
         out += c; i++;
       }

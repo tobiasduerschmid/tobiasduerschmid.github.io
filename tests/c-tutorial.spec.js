@@ -2,62 +2,38 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
+  passCurrentStepTests,
   answerQuizCorrectly,
   setEditorContent,
 } = require('./tutorial-helpers');
 
 /**
- * Tests: React Essentials Interactive Tutorial (React/Babel backend)
+ * Tests: C for C++ Programmers Tutorial (v86 backend)
  *
- * Two serial describe blocks share one page each — the tutorial boots only
+ * Two serial describe blocks share one page each — the v86 VM boots only
  * twice per run (instead of once per test).
  *
- * The React backend transpiles JSX in-browser via Babel and renders into a
- * sandboxed iframe. After applying a solution, the preview must be rebuilt
- * via Ctrl+S before clicking Run Tests — hence the local passCurrentStepTests
- * override that adds saveAndWaitForPreview().
- *
- * Block 1 – Structure, navigation, preview, editor.
+ * Block 1 – Structure, navigation, terminal, editor.
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/react-tutorial';
-const BOOT_TIMEOUT     = 30_000;
-const TEST_RUN_TIMEOUT = 20_000;
+const TUTORIAL_URL     = '/SEBook/tools/c-tutorial';
+const VM_BOOT_TIMEOUT  = 60_000;
+const TEST_RUN_TIMEOUT = 30_000;
 
-const config = loadTutorialConfig('react');
+const config = loadTutorialConfig('c');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
-  await page.waitForSelector('.tvm-preview-frame', { timeout: BOOT_TIMEOUT });
-  await page.waitForSelector('.tvm-step-btn',      { timeout: 10_000 });
-  await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
-}
-
-async function saveAndWaitForPreview(page) {
-  await page.locator('.tvm-editor-container').click();
-  await page.keyboard.press('Control+s');
-  await page.waitForTimeout(1_200);
-}
-
-/**
- * React backend needs a preview rebuild after applying the solution.
- */
-async function passCurrentStepTests(page, timeout = TEST_RUN_TIMEOUT) {
-  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-    { timeout: 15_000 });
-  await page.evaluate(() => window._tutorial.applySolution());
-  await saveAndWaitForPreview(page);
-  await page.waitForTimeout(2_000);
-  await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+  await page.waitForSelector('.tvm-container', { timeout: VM_BOOT_TIMEOUT });
+  await page.waitForSelector('.tvm-step-btn',  { timeout: 10_000 });
 }
 
 // =============================================================================
-// Block 1 – Structure, navigation, preview, editor
+// Block 1 – Structure, navigation, terminal, editor
 // =============================================================================
-test.describe.serial('React Tutorial', () => {
+test.describe.serial('C Tutorial', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -81,15 +57,6 @@ test.describe.serial('React Tutorial', () => {
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('live preview panel is present — no terminal', async () => {
-    await expect(page.locator('.tvm-preview-frame')).toBeVisible();
-    await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
-  });
-
-  test('refresh button is present in the preview header', async () => {
-    await expect(page.locator('.tvm-refresh-btn')).toBeVisible();
-  });
-
   test('editor shows a file tab on the first step', async () => {
     const tabs = page.locator('.tvm-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
@@ -97,35 +64,15 @@ test.describe.serial('React Tutorial', () => {
     await expect(page.locator('.tvm-editor-container')).toBeVisible();
   });
 
-  test('preview frame renders HTML content', async () => {
-    await page.waitForFunction(
-      () => (document.querySelector('.tvm-preview-frame')?.getAttribute('srcdoc') ?? '').length > 100,
-      { timeout: 10_000 });
-    const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
+  test('terminal panel is present', async () => {
+    await expect(page.locator('.tvm-terminal-container')).toBeVisible();
+    await expect(page.locator('.tvm-terminal-container .xterm')).toBeVisible();
   });
 
-  // --- Preview / editor ---
-
-  test('preview updates after saving editor content', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    const before = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    await setEditorContent(page, [
-      'function App() { return <h1>Changed</h1>; }',
-      'const root = ReactDOM.createRoot(document.getElementById("root"));',
-      'root.render(<App />);',
-    ].join('\n'));
-    await saveAndWaitForPreview(page);
-    const after = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(after).not.toBe(before);
-  });
-
-  test('refresh button rebuilds the preview', async () => {
-    await page.locator('.tvm-refresh-btn').click();
-    await page.waitForTimeout(1_500);
-    const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
+  test('test button triggers execution and shows test items', async () => {
+    await page.locator('.tvm-btn-test').click();
+    await page.waitForSelector('.tvm-test-summary', { timeout: TEST_RUN_TIMEOUT });
+    expect(await page.locator('.tvm-test-item').count()).toBeGreaterThan(0);
   });
 
   test('editor content can be modified', async () => {
@@ -166,9 +113,9 @@ test.describe.serial('React Tutorial', () => {
 });
 
 // =============================================================================
-// Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
+// Block 2 – YAML-driven step-by-step tests (one shared page, one VM boot)
 // =============================================================================
-test.describe.serial('React Tutorial — step-by-step', () => {
+test.describe.serial('C Tutorial — step-by-step', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
