@@ -8,7 +8,7 @@ const {
 } = require('./tutorial-helpers');
 
 /**
- * Tests: Python Essentials Interactive Tutorial (Pyodide backend)
+ * Tests: TDD & Testing with pytest Tutorial (Pyodide backend)
  *
  * Two serial describe blocks share one page each — Pyodide loads only twice
  * per run (instead of once per test).
@@ -16,13 +16,16 @@ const {
  * Block 1 – Structure, navigation, run/clear, editor.
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
+ *
+ * Note: Step 7 ("The Big Picture") has no tests — it is a reflection step
+ * with no automated verification. No YAML-driven test is generated for it.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/python-tutorial';
+const TUTORIAL_URL     = '/SEBook/tools/tdd-tutorial';
 const BOOT_TIMEOUT     = 60_000;
-const TEST_RUN_TIMEOUT = 30_000;
+const TEST_RUN_TIMEOUT = 90_000;
 
-const config = loadTutorialConfig('python');
+const config = loadTutorialConfig('tdd');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
@@ -38,10 +41,29 @@ async function clickRun(page) {
   await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
 }
 
+/**
+ * Pyodide: running the active file before clicking Test triggers
+ * loadPackagesFromImports() on the file content, which loads pytest (and any
+ * other needed packages) into the Pyodide runtime.  Without this, test commands
+ * that use __run_capture() → exec() → import pytest fail with ModuleNotFoundError
+ * because exec() bypasses Pyodide's package-loading mechanism.
+ */
+async function passCurrentStepTestsTDD(page, timeout = TEST_RUN_TIMEOUT) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+    { timeout: 15_000 });
+  await page.evaluate(() => window._tutorial.applySolution());
+  await page.waitForTimeout(1_000);
+  // Run the active file to trigger loadPackagesFromImports (loads pytest etc.)
+  await clickRun(page);
+  await page.waitForTimeout(500);
+  await page.locator('.tvm-btn-test').click();
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+}
+
 // =============================================================================
 // Block 1 – Structure, navigation, run/clear, editor
 // =============================================================================
-test.describe.serial('Python Tutorial', () => {
+test.describe.serial('TDD Tutorial', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -84,16 +106,16 @@ test.describe.serial('Python Tutorial', () => {
 
   // --- Run / clear ---
 
-  test('clicking run executes code and shows output', async () => {
+  test('clicking run executes Python and shows output', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    await setEditorContent(page, 'print("Hello, CS 35L!")');
+    await setEditorContent(page, 'print("Hello TDD!")');
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
     await page.waitForTimeout(500);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
-      .toContainText('Hello, CS 35L!', { timeout: TEST_RUN_TIMEOUT });
+      .toContainText('Hello TDD!', { timeout: TEST_RUN_TIMEOUT });
   });
 
   test('clear button empties the output panel', async () => {
@@ -156,8 +178,8 @@ test.describe.serial('Python Tutorial', () => {
 // =============================================================================
 // Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
 // =============================================================================
-test.describe.serial('Python Tutorial — step-by-step', () => {
-  test.setTimeout(120_000);
+test.describe.serial('TDD Tutorial — step-by-step', () => {
+  test.setTimeout(200_000);
 
   /** @type {import('@playwright/test').Page} */
   let page;
@@ -179,7 +201,7 @@ test.describe.serial('Python Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+        await passCurrentStepTestsTDD(page, TEST_RUN_TIMEOUT);
         expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
       });
     }

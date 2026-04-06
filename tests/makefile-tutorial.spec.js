@@ -8,40 +8,35 @@ const {
 } = require('./tutorial-helpers');
 
 /**
- * Tests: Python Essentials Interactive Tutorial (Pyodide backend)
+ * Tests: Makefiles Tutorial (v86 backend)
  *
- * Two serial describe blocks share one page each — Pyodide loads only twice
- * per run (instead of once per test).
+ * Two serial describe blocks share one page each — the v86 VM boots only
+ * twice per run (instead of once per test).
  *
- * Block 1 – Structure, navigation, run/clear, editor.
+ * Note: The last step (step 7) has no tests or quiz — it is a "big picture"
+ * reflection step. No YAML-driven test is generated for it.
+ *
+ * Block 1 – Structure, navigation, terminal, editor.
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/python-tutorial';
-const BOOT_TIMEOUT     = 60_000;
+const TUTORIAL_URL     = '/SEBook/tools/makefile-tutorial';
+const VM_BOOT_TIMEOUT  = 60_000;
 const TEST_RUN_TIMEOUT = 30_000;
 
-const config = loadTutorialConfig('python');
+const config = loadTutorialConfig('makefile');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
-  await page.waitForSelector('.tvm-output-panel', { timeout: BOOT_TIMEOUT });
-  await page.waitForSelector('.tvm-step-btn',     { timeout: 10_000 });
-  await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
-}
-
-async function clickRun(page) {
-  const runBtn = page.locator('.tvm-run-btn');
-  await expect(runBtn).toBeVisible({ timeout: 5_000 });
-  await runBtn.click();
-  await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+  await page.waitForSelector('.tvm-container', { timeout: VM_BOOT_TIMEOUT });
+  await page.waitForSelector('.tvm-step-btn',  { timeout: 10_000 });
 }
 
 // =============================================================================
-// Block 1 – Structure, navigation, run/clear, editor
+// Block 1 – Structure, navigation, terminal, editor
 // =============================================================================
-test.describe.serial('Python Tutorial', () => {
+test.describe.serial('Makefile Tutorial', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -65,16 +60,6 @@ test.describe.serial('Python Tutorial', () => {
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('output panel is present — no terminal for Pyodide backend', async () => {
-    await expect(page.locator('.tvm-output-panel')).toBeVisible();
-    await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
-  });
-
-  test('run and clear buttons are present', async () => {
-    await expect(page.locator('.tvm-run-btn')).toBeVisible();
-    await expect(page.locator('.tvm-clear-btn')).toBeVisible();
-  });
-
   test('editor shows a file tab on the first step', async () => {
     const tabs = page.locator('.tvm-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
@@ -82,39 +67,16 @@ test.describe.serial('Python Tutorial', () => {
     await expect(page.locator('.tvm-editor-container')).toBeVisible();
   });
 
-  // --- Run / clear ---
-
-  test('clicking run executes code and shows output', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    await setEditorContent(page, 'print("Hello, CS 35L!")');
-    await page.locator('.tvm-editor-container').click();
-    await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
-    await clickRun(page);
-    await expect(page.locator('.tvm-output-pre'))
-      .toContainText('Hello, CS 35L!', { timeout: TEST_RUN_TIMEOUT });
+  test('terminal panel is present', async () => {
+    await expect(page.locator('.tvm-terminal-container')).toBeVisible();
+    await expect(page.locator('.tvm-terminal-container .xterm')).toBeVisible();
   });
 
-  test('clear button empties the output panel', async () => {
-    await page.locator('.tvm-clear-btn').click();
-    const text = await page.locator('.tvm-output-pre').textContent();
-    expect(text?.trim() ?? '').toBe('');
+  test('test button triggers execution and shows test items', async () => {
+    await page.locator('.tvm-btn-test').click();
+    await page.waitForSelector('.tvm-test-summary', { timeout: TEST_RUN_TIMEOUT });
+    expect(await page.locator('.tvm-test-item').count()).toBeGreaterThan(0);
   });
-
-  test('syntax errors appear in output', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    await setEditorContent(page, 'def broken(:');
-    await page.locator('.tvm-editor-container').click();
-    await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
-    await clickRun(page);
-    await expect(page.locator('.tvm-output-pre'))
-      .toContainText(/Error|error|SyntaxError/i, { timeout: TEST_RUN_TIMEOUT });
-  });
-
-  // --- Editor ---
 
   test('editor content can be modified', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
@@ -131,7 +93,7 @@ test.describe.serial('Python Tutorial', () => {
   // --- Quiz flow (also unlocks step 2 for the navigation test) ---
 
   test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
-    await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+    await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
@@ -153,10 +115,67 @@ test.describe.serial('Python Tutorial', () => {
   });
 });
 
+// Makefile v86: write ALL files (initial step files + solution files) and run
+// commands exclusively through _runSilent to avoid 9p FS cache inconsistencies
+// with create_file(), and to handle the case where loadStep runs before VM boot.
+async function passCurrentStepTestsV86(page, timeout = 30_000) {
+  await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
+    { timeout: 15_000 });
+  await page.waitForFunction(() => window._tutorial && window._tutorial.booted,
+    { timeout: 60_000 });
+  await page.evaluate(function () {
+    var tut = window._tutorial;
+    var step = tut.steps[tut.currentStep];
+    if (!step) return Promise.resolve();
+    var solution = step.solution || {};
+    // Helper: write file content via _runSilent (shell-side, avoids 9p cache)
+    function writeFile(chain, path, content) {
+      return chain.then(function () {
+        var b64 = btoa(unescape(encodeURIComponent(content || '')));
+        var dir = path.indexOf('/') !== -1 ? path.substring(0, path.lastIndexOf('/')) : '';
+        var mk = dir ? 'mkdir -p /tutorial/' + dir + ' && ' : '';
+        return tut._runSilent(mk + 'printf "' + b64 + '" | base64 -d > /tutorial/' + path);
+      });
+    }
+    var chain = Promise.resolve();
+    // 1. Write initial step files (may have been skipped if VM wasn't booted during loadStep)
+    (step.files || []).forEach(function (f) {
+      chain = writeFile(chain, f.path, f.content);
+    });
+    // 2. Write solution files (overrides initial files where applicable)
+    if (solution.files) {
+      tut._suppressAutoSave = true;
+      solution.files.forEach(function (f) {
+        tut.openFile(f.path, f.content, f.language);
+      });
+      tut._suppressAutoSave = false;
+      var target = step.open_file || (solution.files.length > 0 ? solution.files[solution.files.length - 1].path : null);
+      if (target) { tut._setActiveFile(target); tut._renderTabs(); }
+      solution.files.forEach(function (f) {
+        chain = writeFile(chain, f.path, f.content);
+      });
+    }
+    // 3. Run solution commands
+    (solution.commands || []).forEach(function (cmd) {
+      chain = chain.then(function () {
+        return tut._runSilent(cmd.replace(/^git /, 'git --no-pager '));
+      });
+    });
+    return chain;
+  });
+  // Widen the terminal to prevent command+marker wrapping past 80 columns
+  await page.evaluate(function () {
+    return window._tutorial._runSilent('stty columns 200');
+  });
+  await page.evaluate(function () { return window._tutorial.applySolution(); });
+  await page.locator('.tvm-btn-test').click();
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
+}
+
 // =============================================================================
-// Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
+// Block 2 – YAML-driven step-by-step tests (one shared page, one VM boot)
 // =============================================================================
-test.describe.serial('Python Tutorial — step-by-step', () => {
+test.describe.serial('Makefile Tutorial — step-by-step', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -179,7 +198,7 @@ test.describe.serial('Python Tutorial — step-by-step', () => {
         if (!step.solution) {
           throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
         }
-        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+        await passCurrentStepTestsV86(page, TEST_RUN_TIMEOUT);
         expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
       });
     }

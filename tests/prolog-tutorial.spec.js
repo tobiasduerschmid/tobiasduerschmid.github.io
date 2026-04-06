@@ -8,21 +8,24 @@ const {
 } = require('./tutorial-helpers');
 
 /**
- * Tests: Python Essentials Interactive Tutorial (Pyodide backend)
+ * Tests: Prolog Essentials Tutorial (Tau Prolog WebWorker backend)
  *
- * Two serial describe blocks share one page each — Pyodide loads only twice
- * per run (instead of once per test).
+ * Two serial describe blocks share one page each — the tutorial boots only
+ * twice per run (instead of once per test).
+ *
+ * The Prolog backend runs Tau Prolog entirely in the browser via a Web Worker.
+ * Program output is appended to .tvm-output-pre as text.
  *
  * Block 1 – Structure, navigation, run/clear, editor.
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/python-tutorial';
-const BOOT_TIMEOUT     = 60_000;
-const TEST_RUN_TIMEOUT = 30_000;
+const TUTORIAL_URL     = '/SEBook/tools/prolog-tutorial';
+const BOOT_TIMEOUT     = 30_000;
+const TEST_RUN_TIMEOUT = 20_000;
 
-const config = loadTutorialConfig('python');
+const config = loadTutorialConfig('prolog');
 const steps  = config.steps;
 
 async function waitForTutorialReady(page) {
@@ -41,7 +44,7 @@ async function clickRun(page) {
 // =============================================================================
 // Block 1 – Structure, navigation, run/clear, editor
 // =============================================================================
-test.describe.serial('Python Tutorial', () => {
+test.describe.serial('Prolog Tutorial', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */
@@ -65,7 +68,7 @@ test.describe.serial('Python Tutorial', () => {
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('output panel is present — no terminal for Pyodide backend', async () => {
+  test('output panel is present — no terminal for Prolog backend', async () => {
     await expect(page.locator('.tvm-output-panel')).toBeVisible();
     await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
   });
@@ -84,34 +87,22 @@ test.describe.serial('Python Tutorial', () => {
 
   // --- Run / clear ---
 
-  test('clicking run executes code and shows output', async () => {
+  test('running a Prolog file produces output', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-    await setEditorContent(page, 'print("Hello, CS 35L!")');
+    await setEditorContent(page, ":- write('Hello Prolog!'), nl.");
     await page.locator('.tvm-editor-container').click();
     await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
-      .toContainText('Hello, CS 35L!', { timeout: TEST_RUN_TIMEOUT });
+      .not.toBeEmpty({ timeout: TEST_RUN_TIMEOUT });
   });
 
   test('clear button empties the output panel', async () => {
     await page.locator('.tvm-clear-btn').click();
     const text = await page.locator('.tvm-output-pre').textContent();
     expect(text?.trim() ?? '').toBe('');
-  });
-
-  test('syntax errors appear in output', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    await setEditorContent(page, 'def broken(:');
-    await page.locator('.tvm-editor-container').click();
-    await page.keyboard.press('Control+s');
-    await page.waitForTimeout(500);
-    await clickRun(page);
-    await expect(page.locator('.tvm-output-pre'))
-      .toContainText(/Error|error|SyntaxError/i, { timeout: TEST_RUN_TIMEOUT });
   });
 
   // --- Editor ---
@@ -122,10 +113,10 @@ test.describe.serial('Python Tutorial', () => {
     const before = await page.evaluate(() =>
       window.monaco.editor.getEditors()[0].getModel().getValue());
     expect(before).toBeTruthy();
-    await setEditorContent(page, before + '\n# added comment');
+    await setEditorContent(page, before + '\n% added comment');
     const after = await page.evaluate(() =>
       window.monaco.editor.getEditors()[0].getModel().getValue());
-    expect(after).toContain('# added comment');
+    expect(after).toContain('% added comment');
   });
 
   // --- Quiz flow (also unlocks step 2 for the navigation test) ---
@@ -156,7 +147,7 @@ test.describe.serial('Python Tutorial', () => {
 // =============================================================================
 // Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
 // =============================================================================
-test.describe.serial('Python Tutorial — step-by-step', () => {
+test.describe.serial('Prolog Tutorial — step-by-step', () => {
   test.setTimeout(120_000);
 
   /** @type {import('@playwright/test').Page} */

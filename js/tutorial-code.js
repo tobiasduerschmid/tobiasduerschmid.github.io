@@ -115,6 +115,8 @@
     this._inputLine    = '';
     this._silentQueue  = [];          // queued _runSilent Promises
     this._silentRunning = false;      // true while a silent cmd is in-flight
+    this._visFilterMarker = null;     // string to suppress from xterm output
+    this._visFilterBuf    = '';       // partial-match buffer for _visFilterMarker
 
     // xterm state
     this.term          = null;
@@ -820,7 +822,24 @@
         self._muteCount = 0;
         self.emulator.add_listener('serial0-output-byte', function (byte) {
           var ch = String.fromCharCode(byte);
-          if (self._muteCount === 0) self.term.write(ch);
+          if (self._muteCount === 0) {
+            if (self._visFilterMarker) {
+              // Buffer all bytes until the marker appears somewhere in the stream.
+              // Using indexOf lets us find the marker regardless of where it sits
+              // in the line (e.g. "git init myproject #__VIS_xxx").
+              self._visFilterBuf += ch;
+              var mi = self._visFilterBuf.indexOf(self._visFilterMarker);
+              if (mi !== -1) {
+                // Write everything before the marker, suppress the marker itself
+                if (mi > 0) self.term.write(self._visFilterBuf.slice(0, mi));
+                self._visFilterBuf = '';
+                self._visFilterMarker = null;
+              }
+              // else: keep buffering
+            } else {
+              self.term.write(ch);
+            }
+          }
           if (self._testListening) { self._testBuffer += ch; self._parseTestOutput(); }
         });
 
@@ -908,8 +927,53 @@
       self._muteCount--;
       entry.resolve();
       self._drainSilentQueue();
-    }, 10000);
+    }, 30000);
     self.sendCommand(' ' + entry.cmd + ' #' + marker);
+  };
+
+  /**
+   * Run a command in the v86/webcontainer terminal with full visible output.
+   * Returns a Promise that resolves when the shell prompt returns.
+   * Uses the same marker-after-command technique as _runSilent, but without
+   * muting, so the command and its output appear in the terminal.
+   */
+  TutorialCode.prototype._runVisible = function (cmd) {
+    var self = this;
+    if (this.config.backend === 'v86') {
+      return new Promise(function (resolve) {
+        var marker = '__VIS_' + Math.random().toString(36).substr(2, 8);
+        var buf = '';
+        function onByte(byte) {
+          buf += String.fromCharCode(byte);
+          var mi = buf.indexOf(marker);
+          if (mi !== -1) {
+            var tail = buf.substring(mi + marker.length);
+            if (tail.includes('# ') || tail.includes('$ ')) {
+              self.emulator.remove_listener('serial0-output-byte', onByte);
+              clearTimeout(timer);
+              resolve();
+            }
+          }
+        }
+        self.emulator.add_listener('serial0-output-byte', onByte);
+        var timer = setTimeout(function () {
+          self.emulator.remove_listener('serial0-output-byte', onByte);
+          // Flush any partially-buffered filter content on timeout
+          if (self._visFilterBuf) { self.term.write(self._visFilterBuf); }
+          self._visFilterMarker = null;
+          self._visFilterBuf = '';
+          resolve();
+        }, 30000);
+        // Arm the filter before sending so the echo is suppressed immediately
+        self._visFilterMarker = ' #' + marker;
+        self._visFilterBuf = '';
+        self.sendCommand(' ' + cmd + ' #' + marker);
+      });
+    } else if (this.config.backend === 'webcontainer') {
+      self.sendCommand(cmd);
+      return delay(800);
+    }
+    return Promise.resolve();
   };
 
   // ---- Pyodide backend -------------------------------------------------------
@@ -1539,64 +1603,51 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._syncFileToBackend = function (filename, callback) {
     var entry = this.editorModels[filename];
-    if (!entry) { if (callback) callback(); return; }
+    if (!entry) { if (callback) callback(); return Promise.resolve(); }
     var content = entry.model.getValue();
     entry.lastSyncContent = content;
+    var self = this;
 
-    if (this.config.backend === 'v86') {
-      this._syncFileToV86(filename, content);
-      if (callback) callback();
+    return new Promise(function (resolve) {
+      var done = function () { if (callback) callback(); resolve(); };
 
-    } else if (this.config.backend === 'pyodide') {
-      this._postWorker(
-        { type: 'write', path: '/tutorial/' + filename, content: content },
-        function () { if (callback) callback(); }
-      );
+      if (self.config.backend === 'v86') {
+        self._syncFileToV86(filename, content).then(done).catch(done);
 
-    } else if (this.config.backend === 'webcontainer' && this._webcontainer) {
-      var wcPath = 'tutorial/' + filename;
-      var wcDir  = wcPath.substring(0, wcPath.lastIndexOf('/'));
-      var wc = this._webcontainer;
-      var doWrite = function () {
-        wc.fs.writeFile(wcPath, content)
-          .then(function () { if (callback) callback(); })
-          .catch(function (err) { console.warn('WC write failed:', err); if (callback) callback(); });
-      };
-      if (wcDir && wcDir !== 'tutorial') {
-        wc.fs.mkdir(wcDir, { recursive: true }).then(doWrite).catch(doWrite);
+      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog') {
+        self._postWorker(
+          { type: 'write', path: '/tutorial/' + filename, content: content },
+          done
+        );
+
+      } else if (self.config.backend === 'webcontainer' && self._webcontainer) {
+        var wcPath = 'tutorial/' + filename;
+        var wcDir  = wcPath.substring(0, wcPath.lastIndexOf('/'));
+        var wc = self._webcontainer;
+        var doWrite = function () {
+          wc.fs.writeFile(wcPath, content).then(done).catch(done);
+        };
+        if (wcDir && wcDir !== 'tutorial') {
+          wc.fs.mkdir(wcDir, { recursive: true }).then(doWrite).catch(doWrite);
+        } else {
+          doWrite();
+        }
+
+      } else if (self.config.backend === 'react') {
+        clearTimeout(self._reactRebuildTimer);
+        self._reactRebuildTimer = setTimeout(function () {
+          self._rebuildReactPreview();
+          done();
+        }, 400);
+
       } else {
-        doWrite();
+        done();
       }
-
-    } else if (this.config.backend === 'react') {
-      // Content stays in editor models; debounce-rebuild the live preview
-      var self = this;
-      clearTimeout(this._reactRebuildTimer);
-      this._reactRebuildTimer = setTimeout(function () {
-        self._rebuildReactPreview();
-        if (callback) callback();
-      }, 400);
-
-    } else if (this.config.backend === 'browser') {
-      // Content stays in editor models; nothing to sync to a filesystem
-      if (callback) callback();
-
-    } else if (this.config.backend === 'sql') {
-      this._postWorker(
-        { type: 'write', path: '/tutorial/' + filename, content: content },
-        function () { if (callback) callback(); }
-      );
-
-    } else if (this.config.backend === 'prolog') {
-      this._postWorker(
-        { type: 'write', path: '/tutorial/' + filename, content: content },
-        function () { if (callback) callback(); }
-      );
-    }
+    });
   };
 
   TutorialCode.prototype._syncFileToV86 = function (filename, content) {
-    if (!this.emulator || !this.booted) return;
+    if (!this.emulator || !this.booted) return Promise.resolve();
     var bytes;
     if (typeof TextEncoder !== 'undefined') {
       bytes = new TextEncoder().encode(content);
@@ -1608,7 +1659,7 @@
     var self = this;
     var needsChmod = self._executableFiles.has(filename);
 
-    this.emulator.create_file('/' + filename, bytes)
+    return this.emulator.create_file('/' + filename, bytes)
       .then(function () {
         if (needsChmod) {
           var res = self.emulator.fs9p.SearchPath('/' + filename);
@@ -1620,7 +1671,7 @@
           : '';
         var mkdirCmd = dirname ? 'mkdir -p /tutorial/' + dirname + ' && ' : '';
         var b64 = btoa(unescape(encodeURIComponent(content)));
-        self._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
+        return self._runSilent(mkdirCmd + 'printf "' + b64 + '" | base64 -d > /tutorial/' + filename +
           (needsChmod ? ' && chmod +x /tutorial/' + filename : ''));
       });
   };
@@ -1655,59 +1706,79 @@
       });
     }
 
+    var p = Promise.resolve();
     // 2. Apply file overrides — reuse existing openFile + _syncFileToBackend
     if (solution.files) {
       self._suppressAutoSave = true;
       solution.files.forEach(function (f) {
         self.openFile(f.path, f.content, f.language);
-        self._syncFileToBackend(f.path);
+        p = p.then(function () { return self._syncFileToBackend(f.path); });
       });
       self._suppressAutoSave = false;
       // Activate the step's open_file (the main file the student works on),
       // not the first solution file (which may be a dependency).
-      var target = step.open_file || solution.files[solution.files.length - 1].path;
-      self._setActiveFile(target);
-      self._renderTabs();
+      var target = step.open_file || (solution.files.length > 0 ? solution.files[solution.files.length - 1].path : null);
+      if (target) {
+        self._setActiveFile(target);
+        self._renderTabs();
+      }
     }
 
     // 3. Run solution commands (backend-specific dispatch)
     if (solution.commands && solution.commands.length > 0) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
-        // Suppress git pager for solution commands: all commands are scripted and sent
-        // back-to-back via serial; without this, pagers (less) consume characters from
-        // the next command (e.g. "git " gets eaten, leaving "add calculator.py" to fail).
+        // Use --no-pager for git commands so interactive pagers don't stall
+        // the serial stream between sequenced solution commands.
         solution.commands.forEach(function (cmd) {
-          self.sendCommand(cmd.replace(/^git /, 'git --no-pager '));
+          p = p.then(function () {
+            return self._runVisible(cmd.replace(/^git /, 'git --no-pager '));
+          });
         });
       } else if (this.config.backend === 'pyodide') {
-        this._postWorker({
-          type: 'runCode',
-          code: solution.commands.join('\n'),
-          silent: true
+        p = p.then(function () {
+          return new Promise(function (resolve) {
+            self._postWorker({
+              type: 'runCode',
+              code: solution.commands.join('\n'),
+              silent: true
+            }, resolve);
+          });
         });
-      } else if (this.config.backend === 'prolog') {
-        this._postWorker({
-          type: 'runProlog',
-          code: solution.commands.join('\n'),
-          silent: true
+      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql') {
+        p = p.then(function () {
+          return new Promise(function (resolve) {
+            self._postWorker({
+              type: 'runCode',
+              code: solution.commands.join('\n'),
+              silent: true
+            }, resolve);
+          });
         });
       }
     }
 
     // 4. React: rebuild live preview after file changes
     if (this.config.backend === 'react') {
-      setTimeout(function () { self._rebuildReactPreview(); }, 400);
+      p = p.then(function () {
+        setTimeout(function () { self._rebuildReactPreview(); }, 400);
+      });
     }
 
     // 5. v86: re-sync watched files after a short delay
     if (this.config.backend === 'v86') {
-      setTimeout(function () { self._pollWatchedFiles(); }, 1500);
+      p = p.then(function () {
+        setTimeout(function () { self._pollWatchedFiles(); }, 1500);
+      });
     }
 
     // 6. Show explanation if present
-    if (solution.explanationHTML) {
-      self._showSolutionExplanation(solution.explanationHTML);
-    }
+    p = p.then(function () {
+      if (solution.explanationHTML) {
+        self._showSolutionExplanation(solution.explanationHTML);
+      }
+    });
+
+    return p;
   };
 
   /**
@@ -2617,15 +2688,15 @@
       clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results); return; }
 
-      // 15 seconds per-test timeout for spotting infinite loops
+      // 30 seconds per-test timeout for spotting infinite loops
       testTimeout = setTimeout(function () {
         console.warn('Pyodide test execution timed out. Infinite loop suspected.');
         if (self.term) {
-          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (15s).\x1b[0m\n\r');
+          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (30s).\x1b[0m\n\r');
           self.term.write('\x1b[33mIf you wrote an infinite loop (e.g. `while True:`), your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
         }
         self._renderTestResults(tests, new Array(tests.length).fill(null));
-      }, 15000);
+      }, 30000);
 
       self._postWorker(
         { type: 'runCode', code: tests[i].command, silent: true },
@@ -2781,7 +2852,7 @@
 
   // Shared helper: strips JS/JSX string literals and comments so keyword
   // searches in test assertions cannot false-match on string *contents*.
-  // Handles: "...", '...', `...` (simplified — no nested ${}), // and /* */
+  // Handles: "...", '...', `...` (with ${} expressions preserved), // and /* */
   TutorialCode.prototype._stripCode = function (src) {
     var out = '';
     var i = 0;
@@ -2803,13 +2874,25 @@
           i++;
         }
         out += q; i++;                // closing quote, content blanked
-      } else if (c === '`') {         // template literal (simplified)
+      } else if (c === '`') {         // template literal — strip string parts, keep ${} code
         out += '`'; i++;
         while (i < n && src[i] !== '`') {
           if (src[i] === '\\') { i += 2; continue; }
-          i++;
+          if (src[i] === '$' && i + 1 < n && src[i + 1] === '{') {
+            // ${...} is executable code — pass it through verbatim
+            out += '${'; i += 2;
+            var depth = 1;
+            while (i < n && depth > 0) {
+              if (src[i] === '{') depth++;
+              else if (src[i] === '}') { depth--; if (depth === 0) break; }
+              out += src[i]; i++;
+            }
+            out += '}'; i++; // closing }
+          } else {
+            i++; // string content — skip (blank it out)
+          }
         }
-        out += '`'; i++;              // closing backtick, content blanked
+        out += '`'; i++;              // closing backtick
       } else {
         out += c; i++;
       }

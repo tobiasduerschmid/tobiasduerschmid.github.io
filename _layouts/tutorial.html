@@ -190,16 +190,24 @@
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
       });
+      window._tutorial = tutorial;
       tutorial.start();
 
       // Wire Auto-save toggle + Reset Step button
       var autoSaveToggle = document.getElementById('autoSaveToggle');
       var autoSaveLabel = document.getElementById('autoSaveLabel');
       var resetBtn = document.getElementById('resetStepBtn');
+      // Reset Step button is always shown, independent of autosave
+      if (resetBtn) {
+        resetBtn.style.display = 'flex';
+        resetBtn.addEventListener('click', function (e) {
+          e.preventDefault();
+          tutorial.resetStep();
+        });
+      }
       if (tutorial.allowAutosave) {
         // Show auto-save UI
         if (autoSaveLabel) autoSaveLabel.style.display = 'flex';
-        if (resetBtn) resetBtn.style.display = 'flex';
         if (autoSaveToggle) {
           // Restore persisted preference (default: on)
           var savedPref = localStorage.getItem('tutorial-autosave');
@@ -210,12 +218,6 @@
             tutorial.autoSaveEnabled = this.checked;
             localStorage.setItem('tutorial-autosave', this.checked);
             if (this.checked) tutorial.saveProgress();
-          });
-        }
-        if (resetBtn) {
-          resetBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            tutorial.resetStep();
           });
         }
       }

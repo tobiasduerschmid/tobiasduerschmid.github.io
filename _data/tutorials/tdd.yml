@@ -11,13 +11,16 @@ setup_commands:
   - "import sys; sys.path.insert(0, '/tutorial')"
   - |
     import pytest as _pytest, sys as _sys
-    _orig_main = _pytest.main
-    def _patched_main(*a, **kw):
-        for m in list(_sys.modules):
-            if m.startswith('test_') or m in ('password','fizzbuzz','word_counter','temperature','grades','shopping_cart'):
-                del _sys.modules[m]
-        return _orig_main(*a, **kw)
-    _pytest.main = _patched_main
+    def _make_pytest_patch():
+        _orig = _pytest.main
+        _sysmod = _sys
+        def _patched(*a, **kw):
+            for m in list(_sysmod.modules):
+                if m.startswith('test_') or m in ('password','fizzbuzz','word_counter','temperature','grades','shopping_cart'):
+                    del _sysmod.modules[m]
+            return _orig(*a, **kw)
+        return _patched
+    _pytest.main = _make_pytest_patch()
 
 steps:
 
@@ -102,6 +105,37 @@ steps:
         language: "python"
 
     open_file: "grades.py"
+
+    solution:
+      files:
+        - path: "grades.py"
+          content: |
+            def calculate_grade(score):
+                """Convert a numeric score (0-100) to a letter grade."""
+                if score > 90:
+                    return "A"
+                if score >= 80:
+                    return "B"
+                if score >= 70:
+                    return "C"
+                if score >= 60:
+                    return "D"
+                return "F"
+
+
+            # Try it out — predict the output before running!
+            print("grade(95) =", calculate_grade(95))
+            print("grade(85) =", calculate_grade(85))
+            print("grade(90) =", calculate_grade(90))
+            print("grade(45) =", calculate_grade(45))
+
+            assert calculate_grade(95) == "A"
+            assert calculate_grade(85) == "B"
+            assert calculate_grade(72) == "C"
+          language: "python"
+      explanation: |
+        Add three assert statements to verify calculate_grade works correctly.
+        The asserts check that 95 → "A", 85 → "B", and 72 → "C".
 
     tests:
       - description: "Script runs without errors"
@@ -291,6 +325,34 @@ steps:
         language: "python"
 
     open_file: "test_temperature.py"
+
+    solution:
+      files:
+        - path: "test_temperature.py"
+          content: |
+            """Tests for the temperature module."""
+            import pytest
+            from temperature import celsius_to_fahrenheit, fahrenheit_to_celsius
+
+
+            def test_freezing_point():
+                assert celsius_to_fahrenheit(0) == 32.0
+
+
+            def test_boiling_point():
+                assert celsius_to_fahrenheit(100) == 212.0
+
+
+            def test_negative_forty():
+                assert celsius_to_fahrenheit(-40) == -40.0
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+      explanation: |
+        Replace each `pass` with a real assertion, then add test_negative_forty.
+        -40°C equals -40°F — the one temperature where both scales agree.
 
     tests:
       - description: "test_temperature.py runs without errors"
@@ -531,6 +593,54 @@ steps:
 
     open_file: "test_word_counter.py"
 
+    solution:
+      files:
+        - path: "word_counter.py"
+          content: |
+            class WordCounter:
+                def count(self, text):
+                    if not text.strip():
+                        return {}
+                    words = text.lower().split()
+                    result = {}
+                    for word in words:
+                        result[word] = result.get(word, 0) + 1
+                    return result
+          language: "python"
+        - path: "test_word_counter.py"
+          content: |
+            """TDD for WordCounter — practice the Red-Green-Refactor rhythm."""
+            import pytest
+            from word_counter import WordCounter
+
+
+            def test_count_words_simple():
+                """A simple sentence with no repeated words."""
+                counter = WordCounter()
+                result = counter.count("hello world")
+                assert result == {"hello": 1, "world": 1}
+
+
+            def test_count_repeated_words():
+                """A sentence with repeated words should count each occurrence."""
+                counter = WordCounter()
+                result = counter.count("the cat sat on the mat")
+                assert result["the"] == 2 and result["cat"] == 1
+
+
+            def test_count_empty_string():
+                """An empty string should return an empty dict."""
+                counter = WordCounter()
+                assert counter.count("") == {}
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+      explanation: |
+        Implement WordCounter.count() using a dict to accumulate word frequencies.
+        Complete the assertion in test_count_repeated_words and add test_count_empty_string.
+
     tests:
       - description: "WordCounter class exists and is importable"
         command: |
@@ -745,6 +855,58 @@ steps:
         language: "python"
 
     open_file: "test_fizzbuzz.py"
+
+    solution:
+      files:
+        - path: "fizzbuzz.py"
+          content: |
+            def fizzbuzz(number):
+                """Return FizzBuzz result for the given number."""
+                if number % 15 == 0:
+                    return "FizzBuzz"
+                if number % 3 == 0:
+                    return "Fizz"
+                if number % 5 == 0:
+                    return "Buzz"
+                return str(number)
+          language: "python"
+        - path: "test_fizzbuzz.py"
+          content: |
+            """TDD Kata: FizzBuzz — practice the rhythm with fading scaffolding."""
+            import pytest
+            from fizzbuzz import fizzbuzz
+
+
+            def test_returns_number_as_string():
+                assert fizzbuzz(1) == "1"
+                assert fizzbuzz(2) == "2"
+                assert fizzbuzz(4) == "4"
+
+
+            def test_fizz_for_multiples_of_3():
+                assert fizzbuzz(3) == "Fizz"
+                assert fizzbuzz(6) == "Fizz"
+                assert fizzbuzz(9) == "Fizz"
+
+
+            def test_buzz_for_multiples_of_5():
+                assert fizzbuzz(5) == "Buzz"
+                assert fizzbuzz(10) == "Buzz"
+                assert fizzbuzz(20) == "Buzz"
+
+
+            def test_fizzbuzz_for_multiples_of_15():
+                assert fizzbuzz(15) == "FizzBuzz"
+                assert fizzbuzz(30) == "FizzBuzz"
+                assert fizzbuzz(45) == "FizzBuzz"
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+      explanation: |
+        Check divisibility by 15 first, then 3, then 5. Complete cycles 3 and 4
+        by adding real assertions and the test_fizzbuzz_for_multiples_of_15 function.
 
     tests:
       - description: "Cycle 1 passes — regular numbers return as strings"
@@ -994,6 +1156,55 @@ steps:
 
     open_file: "test_brittle_audit.py"
 
+    solution:
+      files:
+        - path: "test_brittle_audit.py"
+          content: |
+            """AUDIT: Fixed brittle tests — behavior not implementation."""
+            import pytest
+            from shopping_cart import ShoppingCart
+
+
+            def test_add_item_updates_count():
+                cart = ShoppingCart()
+                cart.add("Apple", 1.50)
+                assert cart.item_count() == 1
+
+
+            def test_add_item_via_public_api():
+                cart = ShoppingCart()
+                cart.add("Apple", 1.50)
+                assert "Apple" in cart.items()
+
+
+            def test_total_sums_prices():
+                cart = ShoppingCart()
+                cart.add("Apple", 1.50)
+                cart.add("Bread", 2.00)
+                assert cart.total() == 3.50
+
+
+            def test_item_count_via_public_api():
+                cart = ShoppingCart()
+                cart.add("Apple", 1.50)
+                cart.add("Bread", 2.00)
+                assert cart.item_count() == 2
+          language: "python"
+        - path: "fizzbuzz.py"
+          content: |
+            def fizzbuzz(number):
+                """Return FizzBuzz result — refactored using string concatenation."""
+                result = ""
+                if number % 3 == 0:
+                    result += "Fizz"
+                if number % 5 == 0:
+                    result += "Buzz"
+                return result if result else str(number)
+          language: "python"
+      explanation: |
+        Replace direct `._items` access with public API calls (items(), item_count()).
+        Refactor fizzbuzz.py to use string concatenation — all existing tests still pass.
+
     tests:
       - description: "Brittle tests have been fixed (no private attribute access)"
         command: |
@@ -1175,6 +1386,60 @@ steps:
         language: "python"
 
     open_file: "test_password.py"
+
+    solution:
+      files:
+        - path: "password.py"
+          content: |
+            def validate_password(password):
+                """Validate a password against security rules.
+
+                Returns:
+                    (True, "Valid") if all rules pass.
+                    (False, "reason") if a rule is violated.
+                """
+                if len(password) < 8:
+                    return (False, "Too short")
+                if not any(c.isupper() for c in password):
+                    return (False, "Missing uppercase letter")
+                if not any(c.isdigit() for c in password):
+                    return (False, "Missing digit")
+                return (True, "Valid")
+          language: "python"
+        - path: "test_password.py"
+          content: |
+            """TDD Kata: Password Validator — tests written first."""
+            import pytest
+            from password import validate_password
+
+
+            def test_valid_password():
+                is_valid, message = validate_password("SecureP1")
+                assert is_valid is True
+                assert message == "Valid"
+
+
+            def test_rejects_short_password():
+                is_valid, message = validate_password("Short1")
+                assert is_valid is False
+
+
+            def test_rejects_missing_uppercase():
+                is_valid, message = validate_password("password1")
+                assert is_valid is False
+
+
+            def test_rejects_missing_digit():
+                is_valid, message = validate_password("Password")
+                assert is_valid is False
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+      explanation: |
+        Implement each validation rule in sequence: length ≥ 8, at least one uppercase,
+        at least one digit. Write the 3 additional test functions before implementing.
 
     tests:
       - description: "test_password.py contains at least 4 test functions"

@@ -5,7 +5,7 @@ module.exports = defineConfig({
 
   webServer: {
     // The command to start your local server
-    command: 'make run',
+    command: 'make run JEKYLL_PORT=4000',
 
     // The URL Playwright will ping to check if the server is ready.
     // It waits for a 200 OK response before starting tests.

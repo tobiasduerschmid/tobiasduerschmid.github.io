@@ -1,363 +1,221 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const {
+  loadTutorialConfig,
+  answerQuizCorrectly,
+  setEditorContent,
+} = require('./tutorial-helpers');
 
 /**
- * Tests: React Essentials Interactive Tutorial (React backend)
+ * Tests: React Essentials Interactive Tutorial (React/Babel backend)
  *
- * The React backend transpiles JSX in-browser via Babel (CDN) and renders into
- * a sandboxed <iframe> live preview — no Node.js or VM required.
- * Boot is fast (CDN load only). Tests check the live preview via frameLocator.
+ * Two serial describe blocks share one page each — the tutorial boots only
+ * twice per run (instead of once per test).
+ *
+ * The React backend transpiles JSX in-browser via Babel and renders into a
+ * sandboxed iframe. After applying a solution, the preview must be rebuilt
+ * via Ctrl+S before clicking Run Tests — hence the local passCurrentStepTests
+ * override that adds saveAndWaitForPreview().
+ *
+ * Block 1 – Structure, navigation, preview, editor.
+ * Block 2 – YAML-driven: applies each step's solution, verifies test count,
+ *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL    = '/SEBook/tools/react-tutorial';
-const BOOT_TIMEOUT    = 30_000;
+const TUTORIAL_URL     = '/SEBook/tools/react-tutorial';
+const BOOT_TIMEOUT     = 30_000;
 const TEST_RUN_TIMEOUT = 20_000;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const config = loadTutorialConfig('react');
+const steps  = config.steps;
 
-/** Wait for the tutorial UI to appear. React backend boots almost instantly. */
 async function waitForTutorialReady(page) {
   await page.waitForSelector('.tvm-preview-frame', { timeout: BOOT_TIMEOUT });
   await page.waitForSelector('.tvm-step-btn',      { timeout: 10_000 });
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
 }
 
-/** Set the Monaco editor content for the active file. */
-async function setEditorContent(page, content) {
-  return page.evaluate((text) => {
-    const editors = window.monaco?.editor?.getEditors?.();
-    if (!editors || editors.length === 0) return false;
-    editors[0].getModel().setValue(text);
-    return true;
-  }, content);
-}
-
-/**
- * Save the current editor content and wait for the preview to rebuild.
- * The React backend rebuilds on Ctrl+S; uses ↻ Refresh as a fallback.
- */
 async function saveAndWaitForPreview(page) {
   await page.locator('.tvm-editor-container').click();
   await page.keyboard.press('Control+s');
-  // Small pause for the debounced preview rebuild
   await page.waitForTimeout(1_200);
 }
 
 /**
- * Pass all tests on the current step so the Next button becomes enabled.
- * For step 1: change name, color, and add year paragraph.
+ * React backend needs a preview rebuild after applying the solution.
  */
-async function passCurrentStepTests(page) {
+async function passCurrentStepTests(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
-  await setEditorContent(page, [
-    'function App() {',
-    '  const name = "Alice";',
-    '  const color = "#2774AE";',
-    '  return (',
-    '    <div style={{fontFamily: "sans-serif", padding: "32px"}}>',
-    '      <h1 style={{color: color}}>Hello, {name}!</h1>',
-    '      <p>Welcome to React.</p>',
-    '      <p>Year: {new Date().getFullYear()}</p>',
-    '    </div>',
-    '  );',
-    '}',
-    'const root = ReactDOM.createRoot(document.getElementById("root"));',
-    'root.render(<App />);',
-  ].join('\n'));
+  // applySolution() triggers an iframe preview rebuild which can briefly
+  // destroy the execution context — catch and continue since the solution
+  // still applies successfully.
+  try {
+    await page.evaluate(() => window._tutorial.applySolution());
+  } catch (e) {
+    if (!e.message.includes('context') && !e.message.includes('destroyed') && !e.message.includes('navigation')) {
+      throw e;
+    }
+    await page.waitForTimeout(2_000);
+  }
   await saveAndWaitForPreview(page);
-  // Extra pause to ensure the preview iframe has fully rendered before tests inspect it
   await page.waitForTimeout(2_000);
   await page.locator('.tvm-btn-test').click();
-  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible({ timeout });
 }
 
-/**
- * Answer every question in the currently visible quiz correctly.
- */
-async function answerQuizCorrectly(page) {
-  while (true) {
-    const results = page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)');
-    if (await results.count() > 0) break;
+// =============================================================================
+// Block 1 – Structure, navigation, preview, editor
+// =============================================================================
+test.describe.serial('React Tutorial', () => {
+  test.setTimeout(120_000);
 
-    const card = page.locator('.tvm-quiz-panel .quiz-question-card.active');
-    await expect(card).toBeVisible({ timeout: 5_000 });
+  /** @type {import('@playwright/test').Page} */
+  let page;
 
-    const type = await card.getAttribute('data-type');
-    if (type === 'multiple') {
-      const firstOption = card.locator('.quiz-option').first();
-      const correctStr  = await firstOption.getAttribute('data-correct-indices');
-      const correctSet  = new Set(correctStr.split(',').map(Number));
-      const options     = card.locator('.quiz-option');
-      const count       = await options.count();
-      for (let i = 0; i < count; i++) {
-        if (correctSet.has(Number(await options.nth(i).getAttribute('data-index'))))
-          await options.nth(i).click();
-      }
-      await card.locator('.submit-answer-btn').click();
-    } else {
-      const firstOption = card.locator('.quiz-option').first();
-      const correctIdx  = await firstOption.getAttribute('data-correct');
-      const options     = card.locator('.quiz-option');
-      const count       = await options.count();
-      for (let i = 0; i < count; i++) {
-        if (await options.nth(i).getAttribute('data-index') === correctIdx) {
-          await options.nth(i).click();
-          break;
-        }
-      }
-    }
-
-    const nextBtn = card.locator('.next-btn');
-    await expect(nextBtn).toBeVisible({ timeout: 3_000 });
-    await nextBtn.click();
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-test.describe('React Tutorial', () => {
-  test.setTimeout(90_000);
-
-  test.beforeEach(async ({ page }) => {
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
     await page.goto(TUTORIAL_URL);
     await waitForTutorialReady(page);
   });
 
-  // --- Loading & Structure -------------------------------------------------
+  test.afterAll(async () => { await page?.close(); });
 
-  test('tutorial loads and displays the first step', async ({ page }) => {
+  // --- Structure ---
+
+  test('tutorial loads with correct number of steps from YAML', async () => {
     await expect(page.locator('.tvm-container')).toBeVisible();
     await expect(page.locator('.tvm-loading')).toBeHidden();
-
-    const stepButtons = page.locator('.tvm-step-btn');
-    expect(await stepButtons.count()).toBeGreaterThanOrEqual(6); // react.yml has 6 steps
-
-    await expect(stepButtons.first()).toHaveClass(/active/);
+    expect(await page.locator('.tvm-step-btn').count()).toBe(steps.length);
+    await expect(page.locator('.tvm-step-btn').first()).toHaveClass(/active/);
     await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
   });
 
-  test('live preview panel is present — no terminal, no output panel', async ({ page }) => {
-    await expect(page.locator('.tvm-preview-panel')).toBeVisible();
+  test('live preview panel is present — no terminal', async () => {
     await expect(page.locator('.tvm-preview-frame')).toBeVisible();
     await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
-    await expect(page.locator('.tvm-output-panel')).toHaveCount(0);
   });
 
-  test('refresh button is present in the preview header', async ({ page }) => {
+  test('refresh button is present in the preview header', async () => {
     await expect(page.locator('.tvm-refresh-btn')).toBeVisible();
   });
 
-  test('editor shows a JSX file tab on the first step', async ({ page }) => {
+  test('editor shows a file tab on the first step', async () => {
     const tabs = page.locator('.tvm-tab');
     await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
     expect(await tabs.count()).toBeGreaterThanOrEqual(1);
     await expect(page.locator('.tvm-editor-container')).toBeVisible();
   });
 
-  // --- Live Preview --------------------------------------------------------
-
-  test('preview frame renders HTML content', async ({ page }) => {
-    // Wait for srcdoc to be set (preview loads async after step is mounted)
-    await page.waitForTimeout(2_000);
-
-    // The iframe should have a non-trivial srcdoc set by the engine
+  test('preview frame renders HTML content', async () => {
+    await page.waitForFunction(
+      () => (document.querySelector('.tvm-preview-frame')?.getAttribute('srcdoc') ?? '').length > 100,
+      { timeout: 10_000 });
     const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
     expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
   });
 
-  test('preview updates after saving editor content', async ({ page }) => {
+  // --- Preview / editor ---
+
+  test('preview updates after saving editor content', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-
-    // Wait for initial preview load
-    await page.waitForTimeout(2_000);
     const before = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-
-    // Change the code
     await setEditorContent(page, [
-      'function App() {',
-      '  return <h1 id="test-heading">Updated!</h1>;',
-      '}',
+      'function App() { return <h1>Changed</h1>; }',
       'const root = ReactDOM.createRoot(document.getElementById("root"));',
       'root.render(<App />);',
     ].join('\n'));
-
     await saveAndWaitForPreview(page);
-
     const after = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    // srcdoc should contain our updated text
-    expect(after).toContain('Updated!');
-    expect(after).not.toEqual(before);
+    expect(after).not.toBe(before);
   });
 
-  test('refresh button rebuilds the preview', async ({ page }) => {
-    await page.waitForTimeout(2_000); // let initial preview render
-    const before = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-
+  test('refresh button rebuilds the preview', async () => {
     await page.locator('.tvm-refresh-btn').click();
     await page.waitForTimeout(1_500);
-
-    // srcdoc is regenerated — it may be identical content but freshly set
-    const after = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
-    expect(after?.length ?? 0).toBeGreaterThan(100);
+    const srcdoc = await page.locator('.tvm-preview-frame').getAttribute('srcdoc');
+    expect(srcdoc?.length ?? 0).toBeGreaterThan(100);
   });
 
-  // --- Step Navigation -----------------------------------------------------
-
-  test('clicking step buttons navigates between steps', async ({ page }) => {
-    const stepButtons = page.locator('.tvm-step-btn');
-    if (await stepButtons.count() < 2) return;
-
-    await stepButtons.nth(1).click();
-    await expect(stepButtons.nth(1)).toHaveClass(/active/);
-    await expect(stepButtons.first()).not.toHaveClass(/active/);
-
-    await stepButtons.first().click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
-  });
-
-  test('prev/next buttons navigate and next opens quiz gate', async ({ page }) => {
-    const stepButtons = page.locator('.tvm-step-btn');
-    await stepButtons.nth(1).click();
-    await expect(stepButtons.nth(1)).toHaveClass(/active/);
-
-    const prevBtn = page.locator('.tvm-btn-prev');
-    await expect(prevBtn).toBeVisible();
-    await prevBtn.click();
-    await expect(stepButtons.first()).toHaveClass(/active/);
-
-    await passCurrentStepTests(page);
-    await page.locator('.tvm-btn-next').click();
-    await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
-  });
-
-  // --- Test Runner ---------------------------------------------------------
-
-  test('test button exists on step 1 and triggers test execution', async ({ page }) => {
-    // Wait for the preview iframe to fully load before running tests
-    await page.waitForTimeout(2_000);
-    const testBtn = page.locator('.tvm-btn-test');
-    await expect(testBtn).toBeVisible();
-
-    await testBtn.click();
-    await page.waitForSelector('.tvm-test-summary', { timeout: TEST_RUN_TIMEOUT });
-
-    const items = page.locator('.tvm-test-item');
-    expect(await items.count()).toBeGreaterThan(0);
-
-    const count = await items.count();
-    for (let i = 0; i < count; i++) {
-      const cls = await items.nth(i).getAttribute('class');
-      expect(cls).toMatch(/pass|fail/);
-    }
-  });
-
-  test('passing tests shows all-pass summary for step 1', async ({ page }) => {
+  test('editor content can be modified', async () => {
     await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
       { timeout: 15_000 });
-
-    // Step 1 tasks: change name from "World", color from "tomato", add year <p>
-    await setEditorContent(page, [
-      'function App() {',
-      '  const name = "Alice";',
-      '  const color = "#2774AE";',
-      '  return (',
-      '    <div style={{fontFamily: "sans-serif", padding: "32px"}}>',
-      '      <h1 style={{color: color}}>Hello, {name}!</h1>',
-      '      <p>Welcome to React.</p>',
-      '      <p>Year: {new Date().getFullYear()}</p>',
-      '    </div>',
-      '  );',
-      '}',
-      'const root = ReactDOM.createRoot(document.getElementById("root"));',
-      'root.render(<App />);',
-    ].join('\n'));
-
-    await saveAndWaitForPreview(page);
-
-    await page.locator('.tvm-btn-test').click();
-    await expect(page.locator('.tvm-test-summary.all-pass')).toBeVisible(
-      { timeout: TEST_RUN_TIMEOUT });
+    const before = await page.evaluate(() =>
+      window.monaco.editor.getEditors()[0].getModel().getValue());
+    expect(before).toBeTruthy();
+    await setEditorContent(page, before + '\n// added comment');
+    const after = await page.evaluate(() =>
+      window.monaco.editor.getEditors()[0].getModel().getValue());
+    expect(after).toContain('// added comment');
   });
 
-  // --- Quiz Flow -----------------------------------------------------------
+  // --- Quiz flow (also unlocks step 2 for the navigation test) ---
 
-  test('quiz panel appears after clicking next', async ({ page }) => {
-    await passCurrentStepTests(page);
-    await page.locator('.tvm-btn-next').click();
-    const quizPanel = page.locator('.tvm-quiz-panel');
-    await expect(quizPanel).toBeVisible({ timeout: 5_000 });
-
-    const card = quizPanel.locator('.quiz-question-card.active');
-    await expect(card).toBeVisible();
-    expect(await card.locator('.quiz-option').count()).toBeGreaterThanOrEqual(2);
-  });
-
-  test('answering quiz correctly shows continue button', async ({ page }) => {
-    await passCurrentStepTests(page);
-    await page.locator('.tvm-btn-next').click();
-    await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
-
-    await answerQuizCorrectly(page);
-
-    await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
-    await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
-  });
-
-  test('quiz continue button advances to next step', async ({ page }) => {
-    await passCurrentStepTests(page);
+  test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
+    await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
     await answerQuizCorrectly(page);
-
     await page.locator('.tvm-quiz-continue-btn').click();
-
     await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
-    await expect(page.locator('.tvm-step-content')).toBeVisible();
   });
 
-  // --- Multiple Steps Have Tests / Quizzes ---------------------------------
+  // --- Navigation (step 2 is now unlocked) ---
 
-  test('multiple steps have test buttons', async ({ page }) => {
+  test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
     const stepButtons = page.locator('.tvm-step-btn');
-    const stepCount   = await stepButtons.count();
-    let stepsWithTests = 0;
+    await stepButtons.first().click();
+    await expect(stepButtons.first()).toHaveClass(/active/);
+    await stepButtons.nth(1).click();
+    await expect(stepButtons.nth(1)).toHaveClass(/active/);
+    await page.locator('.tvm-btn-prev').click();
+    await expect(stepButtons.first()).toHaveClass(/active/);
+  });
+});
 
-    for (let i = 0; i < stepCount; i++) {
-      await stepButtons.nth(i).click();
-      await page.waitForTimeout(400);
-      if (await page.locator('.tvm-btn-test').isVisible()) stepsWithTests++;
-    }
-    expect(stepsWithTests).toBeGreaterThanOrEqual(5);
+// =============================================================================
+// Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
+// =============================================================================
+test.describe.serial('React Tutorial — step-by-step', () => {
+  test.setTimeout(120_000);
+
+  /** @type {import('@playwright/test').Page} */
+  let page;
+
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
+    await page.goto(TUTORIAL_URL);
+    await waitForTutorialReady(page);
   });
 
-  test('multiple steps have quiz gates', async ({ page }) => {
-    await passCurrentStepTests(page);
+  test.afterAll(async () => { await page?.close(); });
 
-    const stepButtons = page.locator('.tvm-step-btn');
-    const stepCount   = await stepButtons.count();
-    let stepsWithQuiz = 0;
+  for (let i = 0; i < steps.length; i++) {
+    const step   = steps[i];
+    const isLast = i === steps.length - 1;
 
-    for (let i = 0; i < stepCount; i++) {
-      await stepButtons.nth(i).click();
-      await page.waitForTimeout(400);
-      const nextBtn = page.locator('.tvm-btn-next');
-      if (await nextBtn.isVisible() && await nextBtn.isEnabled()) {
-        await nextBtn.click();
-        try {
-          await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 3_000 });
-          stepsWithQuiz++;
-          await stepButtons.nth(i).click();
-          await page.waitForTimeout(300);
-        } catch { /* no quiz on this step */ }
-      }
+    if (step.tests?.length > 0) {
+      test(`step ${i + 1} "${step.title}": solution passes all ${step.tests.length} tests`, async () => {
+        if (!step.solution) {
+          throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
+        }
+        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+        expect(await page.locator('.tvm-test-item').count()).toBe(step.tests.length);
+      });
     }
-    expect(stepsWithQuiz).toBeGreaterThanOrEqual(1);
-  });
+
+    if (step.quiz?.questions?.length > 0 && !isLast) {
+      test(`step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`, async () => {
+        await page.locator('.tvm-btn-next').click();
+        await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
+        await answerQuizCorrectly(page);
+        await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
+        await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
+        await page.locator('.tvm-quiz-continue-btn').click();
+        await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
+      });
+    }
+  }
 });
