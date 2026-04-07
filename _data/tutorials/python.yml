@@ -39,7 +39,7 @@ steps:
       Very large systems or systems with high performance requirements are often better implemented in statically typed, compiled languages like C++ or Rust to detect bugs earlier and to improve performance.
       However, Python has significantly grown in popularity in recent years and is now one of the **top 5 most widely used programming languages** in the world. 
       In some surveys it even ranks number 1.
-      So learning Python is a great investment of your time!
+      So **learning Python is a great investment of your time!**
 
       ### A Note About Errors
 
@@ -126,14 +126,14 @@ steps:
             Semicolons are optional in Python and almost never used.
 
         - question: |
-            Which of the following statements about Python is **false**?
-          type: single
+            Which of the following statements about Python are **correct**?
+          type: multiple
           options:
-            - "Python is garbage-collected, so you never call `delete` or `free()`"
-            - "Python is dynamically typed — you do not declare variable types"
-            - "Python must be compiled before running, just like C++"
-            - "Python is strong at rapid prototyping, automation, and data processing"
-          correct_index: 2
+            - "Python is **garbage-collected**, so you never call `delete` or `free()`"
+            - "Python is **dynamically typed** — you do not declare variable types"
+            - "Python must be **compiled** before running, just like C++"
+            - "Python is strong at **rapid prototyping**, **automation**, and **data processing**"
+          correct_index: [0,1,3]
           explanation: |
             Python is an **interpreted** language — you run it directly with `python3 script.py` with no separate compile step.
             Behind the scenes CPython does compile to bytecode (`.pyc`), but this is invisible to the programmer.
