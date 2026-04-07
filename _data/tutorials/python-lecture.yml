@@ -250,7 +250,6 @@ steps:
       - path: "sequences.py"
         content: |
           # 1. Create a list of even numbers 0, 2, 4, 6, 8 using a list comprehension
-          #    Hint: [2*x for x in range(?)]   Expected: [0, 2, 4, 6, 8]
           evens = []  # TODO: replace with a list comprehension
 
           print(evens)
