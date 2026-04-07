@@ -2111,6 +2111,8 @@
     // Block navigation to locked steps (unless instructor mode)
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return;
 
+    if (window.TutorChat) { window.TutorChat.onStepChange(); }
+
     var firstVisit = !this._stepsVisited.has(index);
     this._stepsVisited.add(index);
     this.currentStep = index;
@@ -3088,6 +3090,7 @@
 
   TutorialCode.prototype._renderTestResults = function (tests, results) {
     var self = this;
+    this._testResults = results; // store for hint engine
     var passed = results.filter(function (r) { return r === true; }).length;
     var total = tests.length, allPass = passed === total;
     var html = '<div class="tvm-test-results">';
@@ -3103,6 +3106,8 @@
     });
     html += '</ul></div>';
     this._showTestPanel(html);
+    if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
+    if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
     if (allPass && this.requireTests) {
       this._stepsPassed.add(this.currentStep);
       this._stepsUnlocked.add(this.currentStep + 1);
