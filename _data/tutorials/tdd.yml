@@ -4,6 +4,7 @@ description: "Learn Test-Driven Development hands-on: write failing tests first,
 backend: pyodide
 
 require_tests: true
+autosave_type: commands-and-files
 
 # Global setup: install pytest, add /tutorial to sys.path, patch module cache
 setup_commands:

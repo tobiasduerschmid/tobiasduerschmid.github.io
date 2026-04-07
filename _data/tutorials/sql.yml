@@ -4,6 +4,7 @@ description: "A hands-on introduction to SQL using SQLite, running entirely in y
 backend: sql
 
 require_tests: true
+autosave_type: commands-and-files
 
 # Pre-populate a students table that query steps read from.
 # Safe to re-run: DROP TABLE IF EXISTS handles re-loads.

@@ -4,6 +4,7 @@ description: "A hands-on introduction to Node.js for students who already know P
 backend: browser
 
 require_tests: true
+autosave_type: commands-and-files
 
 steps:
   # --------------------------------------------------------------------------

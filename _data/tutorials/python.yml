@@ -4,6 +4,7 @@ description: "A hands-on introduction to Python for students who already know C+
 backend: pyodide
 
 require_tests: true
+autosave_type: commands-and-files
 
 # Global setup: add /tutorial to sys.path so imports work across steps
 setup_commands:

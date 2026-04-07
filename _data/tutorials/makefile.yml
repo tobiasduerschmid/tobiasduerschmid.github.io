@@ -2,6 +2,7 @@ title: "Makefiles: From Pain to Power (C Edition)"
 description: "Learn how to write Makefiles, understand dependency graphs, and automate your C builds through hands-on practice in an interactive terminal."
 
 require_tests: true
+autosave_type: commands-and-files
 
 setup_commands:
   - 'mkdir -p /tutorial/make_project'

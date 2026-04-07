@@ -2,6 +2,7 @@ title: "C for C++ Programmers: Origin Story"
 description: "Every systems programmer has an origin story. Yours starts here. Shed the safety net of C++, master raw memory, and emerge with powers most programmers never unlock — all through hands-on practice in an interactive Linux terminal."
 
 require_tests: true
+autosave_type: commands-and-files
 
 setup_commands:
   - "mkdir -p /tutorial/c_project"
