@@ -133,7 +133,7 @@ steps:
             - "Python is **dynamically typed** — you do not declare variable types"
             - "Python must be **compiled** before running, just like C++"
             - "Python is strong at **rapid prototyping**, **automation**, and **data processing**"
-          correct_index: [0,1,3]
+          correct_indices: [0,1,3]
           explanation: |
             Python is an **interpreted** language — you run it directly with `python3 script.py` with no separate compile step.
             Behind the scenes CPython does compile to bytecode (`.pyc`), but this is invisible to the programmer.
