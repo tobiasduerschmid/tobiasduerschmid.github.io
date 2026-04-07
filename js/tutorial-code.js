@@ -23,12 +23,12 @@
   // CDN URLs
   // ---------------------------------------------------------------------------
   var CDN = {
-    XTERM_JS:     'https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.min.js',
-    XTERM_CSS:    'https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css',
-    XTERM_FIT:    'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js',
-    MONACO_LOADER:'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js',
-    MONACO_VS:    'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
-    MARKED:       'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
+    XTERM_JS: 'https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.min.js',
+    XTERM_CSS: 'https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css',
+    XTERM_FIT: 'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js',
+    MONACO_LOADER: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js',
+    MONACO_VS: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
+    MARKED: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
     WEBCONTAINER: 'https://cdn.jsdelivr.net/npm/@webcontainer/api@1.5.5/dist/index.js',
   };
 
@@ -80,84 +80,84 @@
     var backend = options.backend || 'v86';
 
     this.config = {
-      backend:    backend,
-      v86Path:    options.v86Path  || '/assets/v86',
-      vmPath:     options.vmPath   || '/vm/dist',
-      memoryMB:   options.memoryMB || 256,
-      fontSize:   options.fontSize || 14,
-      workerPath:    options.workerPath    || '/js/pyodide-worker.js',
+      backend: backend,
+      v86Path: options.v86Path || '/assets/v86',
+      vmPath: options.vmPath || '/vm/dist',
+      memoryMB: options.memoryMB || 256,
+      fontSize: options.fontSize || 14,
+      workerPath: options.workerPath || '/js/pyodide-worker.js',
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
-      usePreview:  (backend === 'react'),    // live iframe preview for React tutorials
+      usePreview: (backend === 'react'),    // live iframe preview for React tutorials
     };
 
-    this.steps         = options.steps        || [];
+    this.steps = options.steps || [];
     this.setupCommands = options.setupCommands || [];
-    this.requireTests  = options.requireTests  || false;
+    this.requireTests = options.requireTests || false;
     this.instructorMode = options.instructorMode || false;
-    this.tutorialId    = options.tutorialId   || 'default';
-    this._stepsPassed  = new Set();
-    this._quizPassed   = new Set();
+    this.tutorialId = options.tutorialId || 'default';
+    this._stepsPassed = new Set();
+    this._quizPassed = new Set();
     this._stepsUnlocked = new Set([0]);   // step 0 is always unlocked
-    this._stepsVisited  = new Set();      // tracks first-time entry
-    this.currentStep   = -1;
+    this._stepsVisited = new Set();      // tracks first-time entry
+    this.currentStep = -1;
     // autosaveType: falsy = disabled, "files" = save/restore files only (default),
     //              "commands-and-files" = replay solution commands on restore
-    this.autosaveType    = options.autosaveType || null;   // tutorial-level mode
-    this.allowAutosave   = !!this.autosaveType;            // computed convenience flag
+    this.autosaveType = options.autosaveType || null;   // tutorial-level mode
+    this.allowAutosave = !!this.autosaveType;            // computed convenience flag
     this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
     this._originalContent = {};           // tracks original file content for dirty detection
-    this.booted        = false;
+    this.booted = false;
 
     // v86 state
-    this.emulator      = null;
-    this._muteCount    = 0;           // >0 ⇒ suppress serial→xterm output
+    this.emulator = null;
+    this._muteCount = 0;           // >0 ⇒ suppress serial→xterm output
     this._executableFiles = new Set();
-    this._inputLine    = '';
-    this._silentQueue  = [];          // queued _runSilent Promises
+    this._inputLine = '';
+    this._silentQueue = [];          // queued _runSilent Promises
     this._silentRunning = false;      // true while a silent cmd is in-flight
     this._visFilterMarker = null;     // string to suppress from xterm output
-    this._visFilterBuf    = '';       // partial-match buffer for _visFilterMarker
+    this._visFilterBuf = '';       // partial-match buffer for _visFilterMarker
 
     // xterm state
-    this.term          = null;
-    this.fitAddon      = null;
+    this.term = null;
+    this.fitAddon = null;
 
     // Monaco state
-    this.editor        = null;
-    this.editorModels  = {};
+    this.editor = null;
+    this.editorModels = {};
     this.activeFileName = null;
     this._suppressAutoSave = false;
 
     // Reverse sync (v86 / webcontainer)
     this._reverseSyncTimer = null;
-    this._reverseSyncBusy  = false;
+    this._reverseSyncBusy = false;
 
     // Test runner
-    this._testListening  = false;
-    this._testBuffer     = '';
-    this._testResults    = [];
-    this._testCallbacks  = [];
+    this._testListening = false;
+    this._testBuffer = '';
+    this._testResults = [];
+    this._testCallbacks = [];
 
     // Pyodide worker state
-    this._worker         = null;
-    this._workerMsgId    = 0;
+    this._worker = null;
+    this._workerMsgId = 0;
     this._workerCallbacks = {};
 
     // WebContainers state
-    this._webcontainer   = null;
-    this._shellProcess   = null;
-    this._shellWriter    = null;
+    this._webcontainer = null;
+    this._shellProcess = null;
+    this._shellWriter = null;
 
     // React preview state
-    this._previewFrame      = null;
+    this._previewFrame = null;
     this._reactRebuildTimer = null;
 
     // Browser JS runner state
-    this._jsRunnerFrame  = null;
-    this._jsRunnerMsgId  = 0;
+    this._jsRunnerFrame = null;
+    this._jsRunnerMsgId = 0;
   }
 
   // ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@
           // Respect the user's navbar toggle preference (persisted as 'tutorial-autosave').
           // Default is on; only skip restore when the user has explicitly set it to 'false'.
           var userAutosavePref = localStorage.getItem('tutorial-autosave');
-          var userAutosaveOn   = userAutosavePref !== 'false';
+          var userAutosaveOn = userAutosavePref !== 'false';
           if (!userAutosaveOn) self.autoSaveEnabled = false; // keep in sync before navbar wires up
           var saved = (self.allowAutosave && userAutosaveOn) ? self._loadSavedProgress() : null;
           if (saved) {
@@ -309,14 +309,14 @@
       '</div>' +
       '</div>';
 
-    this.loadingEl       = this.root.querySelector('.tvm-loading');
-    this.containerEl     = this.root.querySelector('.tvm-container');
-    this.stepNavEl       = this.root.querySelector('.tvm-step-nav');
-    this.stepContentEl   = this.root.querySelector('.tvm-step-content');
+    this.loadingEl = this.root.querySelector('.tvm-loading');
+    this.containerEl = this.root.querySelector('.tvm-container');
+    this.stepNavEl = this.root.querySelector('.tvm-step-nav');
+    this.stepContentEl = this.root.querySelector('.tvm-step-content');
     this.stepContentWrapEl = this.root.querySelector('.tvm-step-content-wrap');
-    this.quizPanelEl     = this.root.querySelector('.tvm-quiz-panel');
-    this.stepControlsEl  = this.root.querySelector('.tvm-step-controls');
-    this.editorTabsEl    = this.root.querySelector('.tvm-editor-tabs');
+    this.quizPanelEl = this.root.querySelector('.tvm-quiz-panel');
+    this.stepControlsEl = this.root.querySelector('.tvm-step-controls');
+    this.editorTabsEl = this.root.querySelector('.tvm-editor-tabs');
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
 
     var self = this;
@@ -327,13 +327,13 @@
       var refreshBtn = this.root.querySelector('.tvm-refresh-btn');
       if (refreshBtn) refreshBtn.addEventListener('click', function () { self._rebuildReactPreview(); });
     } else {
-      this.outputPre     = this.root.querySelector('.tvm-output-pre');
-      this.outputPanel   = this.root.querySelector('.tvm-output-panel');
-      var runBtn  = this.root.querySelector('.tvm-run-btn');
+      this.outputPre = this.root.querySelector('.tvm-output-pre');
+      this.outputPanel = this.root.querySelector('.tvm-output-panel');
+      var runBtn = this.root.querySelector('.tvm-run-btn');
       var clearBtn = this.root.querySelector('.tvm-clear-btn');
-      if (runBtn)   runBtn.addEventListener('click',  function () { self._runCurrentFile(); });
+      if (runBtn) runBtn.addEventListener('click', function () { self._runCurrentFile(); });
       if (clearBtn) clearBtn.addEventListener('click', function () { self._clearOutput(); });
-      
+
       var filterSel = this.root.querySelector('.tvm-stream-filter');
       if (filterSel) {
         filterSel.addEventListener('change', function () {
@@ -363,8 +363,8 @@
     if (this.loadingEl) this.loadingEl.style.display = 'none';
     if (this.containerEl) this.containerEl.style.display = '';
     requestAnimationFrame(function () {
-      if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) {} }
-      if (self.editor)   self.editor.layout();
+      if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) { } }
+      if (self.editor) self.editor.layout();
     });
   };
 
@@ -378,16 +378,16 @@
   // Splitters
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._initSplitters = function () {
-    var hsplitter    = this.root.querySelector('.tvm-hsplitter');
+    var hsplitter = this.root.querySelector('.tvm-hsplitter');
     var instructions = this.root.querySelector('.tvm-instructions-panel');
-    var workspace    = this.root.querySelector('.tvm-workspace');
+    var workspace = this.root.querySelector('.tvm-workspace');
     this._makeDraggable(hsplitter, 'vertical', instructions, workspace);
 
-    var vsplitter    = this.root.querySelector('.tvm-vsplitter');
-    var editorPanel  = this.root.querySelector('.tvm-editor-panel');
-    var bottomPanel  = this.root.querySelector(
+    var vsplitter = this.root.querySelector('.tvm-vsplitter');
+    var editorPanel = this.root.querySelector('.tvm-editor-panel');
+    var bottomPanel = this.root.querySelector(
       this.config.useTerminal ? '.tvm-terminal-panel' :
-      this.config.usePreview  ? '.tvm-preview-panel'  : '.tvm-output-panel');
+        this.config.usePreview ? '.tvm-preview-panel' : '.tvm-output-panel');
     this._makeDraggable(vsplitter, 'horizontal', editorPanel, bottomPanel);
   };
 
@@ -410,9 +410,9 @@
       var cur = direction === 'vertical' ? e.clientX : e.clientY;
       var sz = Math.max(80, startSizeBefore + (cur - startPos));
       beforeEl.style.flex = '0 0 ' + sz + 'px';
-      afterEl.style.flex  = '1 1 0';
+      afterEl.style.flex = '1 1 0';
       if (self.fitAddon) self.fitAddon.fit();
-      if (self.editor)   self.editor.layout();
+      if (self.editor) self.editor.layout();
     }
     function onMouseUp() {
       document.removeEventListener('mousemove', onMouseMove);
@@ -466,22 +466,22 @@
     // Custom shell language (same as tutorial-vm.js)
     monaco.languages.register({ id: 'shell-sebook' });
     monaco.languages.setLanguageConfiguration('shell-sebook', {
-      brackets: [['{','}'],['[',']']],
-      autoClosingPairs: [{open:'{',close:'}'},{open:'[',close:']'},
-        {open:'(',close:')'},{open:'"',close:'"'},{open:"'",close:"'"}],
-      surroundingPairs: [{open:'{',close:'}'},{open:'[',close:']'},{open:'(',close:')'}],
+      brackets: [['{', '}'], ['[', ']']],
+      autoClosingPairs: [{ open: '{', close: '}' }, { open: '[', close: ']' },
+      { open: '(', close: ')' }, { open: '"', close: '"' }, { open: "'", close: "'" }],
+      surroundingPairs: [{ open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' }],
     });
     monaco.languages.setMonarchTokensProvider('shell-sebook', {
-      keywords: ['if','then','else','elif','fi','for','in','do','done','case','esac','while','until','function'],
-      builtins: ['echo','set','cd','pwd','export','local','read','return','exit','grep','wc',
-                 'head','sort','uniq','cut','cat','mkdir','touch','rm','cp','mv','whoami','date','sleep','which'],
+      keywords: ['if', 'then', 'else', 'elif', 'fi', 'for', 'in', 'do', 'done', 'case', 'esac', 'while', 'until', 'function'],
+      builtins: ['echo', 'set', 'cd', 'pwd', 'export', 'local', 'read', 'return', 'exit', 'grep', 'wc',
+        'head', 'sort', 'uniq', 'cut', 'cat', 'mkdir', 'touch', 'rm', 'cp', 'mv', 'whoami', 'date', 'sleep', 'which'],
       tokenizer: {
         root: [
           [/^#!.*$/, 'comment.shell-sebook'],
           [/\b(if|then|else|elif|fi|for|in|do|done|case|esac|while|until|function)\b/, 'keyword.shell-sebook'],
           [/[\[\]]/, 'keyword.shell-sebook'],
           [/[a-zA-Z_][\w]*(?==)/, 'variable.shell-sebook'],
-          [/[a-zA-Z_][\w]*/, { cases: { '@builtins': 'command.shell-sebook', '@default': 'command.shell-sebook' }}],
+          [/[a-zA-Z_][\w]*/, { cases: { '@builtins': 'command.shell-sebook', '@default': 'command.shell-sebook' } }],
           [/\$([#?@$!*0-9]|\{?[\w]+\}?)/, 'variable.shell-sebook'],
           [/\$\(/, { token: 'variable.shell-sebook', next: '@interpolation' }],
           [/#.*$/, 'comment.shell-sebook'],
@@ -518,26 +518,26 @@
     monaco.languages.register({ id: 'prolog' });
     monaco.languages.setLanguageConfiguration('prolog', {
       comments: { lineComment: '%', blockComment: ['/*', '*/'] },
-      brackets: [['(',')'],['{','}'],['[',']']],
+      brackets: [['(', ')'], ['{', '}'], ['[', ']']],
       autoClosingPairs: [
-        {open:'(',close:')'},{open:'[',close:']'},{open:'{',close:'}'},
-        {open:'"',close:'"'},{open:"'",close:"'"}
+        { open: '(', close: ')' }, { open: '[', close: ']' }, { open: '{', close: '}' },
+        { open: '"', close: '"' }, { open: "'", close: "'" }
       ],
       surroundingPairs: [
-        {open:'(',close:')'},{open:'[',close:']'},{open:'{',close:'}'}
+        { open: '(', close: ')' }, { open: '[', close: ']' }, { open: '{', close: '}' }
       ],
     });
     monaco.languages.setMonarchTokensProvider('prolog', {
-      keywords: ['is','not','true','fail','halt','assert','retract','asserta','assertz',
-                 'retractall','findall','bagof','setof','forall','between','succ','plus',
-                 'length','append','member','last','reverse','msort','sort','nth0','nth1',
-                 'write','writeln','nl','read','atom','number','var','nonvar','integer','float',
-                 'atom_string','atom_chars','atom_length','number_chars','number_codes',
-                 'char_code','sub_atom','atom_concat','copy_term','functor','arg',
-                 'ground','compound','callable','throw','catch'],
-      operators: [':-','?-','-->','->',';','\\+','=','\\=','==','\\==','=:=','=\\=',
-                  '<','>','>=','=<','@<','@>','@>=','@=<','+','-','*','/','//','mod',
-                  'rem','**','is','=..','\\'],
+      keywords: ['is', 'not', 'true', 'fail', 'halt', 'assert', 'retract', 'asserta', 'assertz',
+        'retractall', 'findall', 'bagof', 'setof', 'forall', 'between', 'succ', 'plus',
+        'length', 'append', 'member', 'last', 'reverse', 'msort', 'sort', 'nth0', 'nth1',
+        'write', 'writeln', 'nl', 'read', 'atom', 'number', 'var', 'nonvar', 'integer', 'float',
+        'atom_string', 'atom_chars', 'atom_length', 'number_chars', 'number_codes',
+        'char_code', 'sub_atom', 'atom_concat', 'copy_term', 'functor', 'arg',
+        'ground', 'compound', 'callable', 'throw', 'catch'],
+      operators: [':-', '?-', '-->', '->', ';', '\\+', '=', '\\=', '==', '\\==', '=:=', '=\\=',
+        '<', '>', '>=', '=<', '@<', '@>', '@>=', '@=<', '+', '-', '*', '/', '//', 'mod',
+        'rem', '**', 'is', '=..', '\\'],
       tokenizer: {
         root: [
           [/%.*$/, 'comment'],
@@ -554,10 +554,12 @@
           [/0[oO][0-7]+/, 'number'],
           [/0[bB][01]+/, 'number'],
           [/0'[^\s]/, 'number'],      // character code 0'a
-          [/[a-z][A-Za-z0-9_]*/, { cases: {
-            '@keywords': 'keyword',
-            '@default': 'atom'
-          }}],
+          [/[a-z][A-Za-z0-9_]*/, {
+            cases: {
+              '@keywords': 'keyword',
+              '@default': 'atom'
+            }
+          }],
           [/[+\-*/\\^<>=~:.?@#$&]+/, 'operator'],
           [/[\[\](){}|,;.]/, 'delimiter'],
           [/\s+/, 'white'],
@@ -684,10 +686,10 @@
         ],
 
         // Regular string body states
-        str_dq:  [
+        str_dq: [
           [/"/, { token: 'string', next: '@pop' }], [/\\./, 'string.escape'], [/[^"\\]+/, 'string'],
         ],
-        str_sq:  [
+        str_sq: [
           [/'/, { token: 'string', next: '@pop' }], [/\\./, 'string.escape'], [/[^'\\]+/, 'string'],
         ],
         str_tdq: [
@@ -704,32 +706,32 @@
     monaco.editor.defineTheme('sebook-light', {
       base: 'vs', inherit: true,
       rules: [
-        { token: 'keyword.shell-sebook',        foreground: '0000ff' },
-        { token: 'command.shell-sebook',         foreground: '267f99' },
-        { token: 'variable.shell-sebook',        foreground: '001080' },
-        { token: 'attribute.name.shell-sebook',  foreground: 'a31515' },
-        { token: 'string.shell-sebook',          foreground: 'a31515' },
-        { token: 'comment.shell-sebook',         foreground: '008000' },
+        { token: 'keyword.shell-sebook', foreground: '0000ff' },
+        { token: 'command.shell-sebook', foreground: '267f99' },
+        { token: 'variable.shell-sebook', foreground: '001080' },
+        { token: 'attribute.name.shell-sebook', foreground: 'a31515' },
+        { token: 'string.shell-sebook', foreground: 'a31515' },
+        { token: 'comment.shell-sebook', foreground: '008000' },
         // f-string interpolation delimiters — blue to signal "code zone"
-        { token: 'string.fstring.delimiter',     foreground: '0451a5' },
+        { token: 'string.fstring.delimiter', foreground: '0451a5' },
         // Prolog tokens
-        { token: 'atom',                         foreground: 'a31515' },
+        { token: 'atom', foreground: 'a31515' },
       ],
       colors: {},
     });
     monaco.editor.defineTheme('sebook-dark', {
       base: 'vs-dark', inherit: true,
       rules: [
-        { token: 'keyword.shell-sebook',        foreground: '569cd6' },
-        { token: 'command.shell-sebook',         foreground: '4ec9b0' },
-        { token: 'variable.shell-sebook',        foreground: '9cdcfe' },
-        { token: 'attribute.name.shell-sebook',  foreground: 'f44747' },
-        { token: 'string.shell-sebook',          foreground: 'ce9178' },
-        { token: 'comment.shell-sebook',         foreground: '6a9955' },
+        { token: 'keyword.shell-sebook', foreground: '569cd6' },
+        { token: 'command.shell-sebook', foreground: '4ec9b0' },
+        { token: 'variable.shell-sebook', foreground: '9cdcfe' },
+        { token: 'attribute.name.shell-sebook', foreground: 'f44747' },
+        { token: 'string.shell-sebook', foreground: 'ce9178' },
+        { token: 'comment.shell-sebook', foreground: '6a9955' },
         // f-string interpolation delimiters — light blue to signal "code zone"
-        { token: 'string.fstring.delimiter',     foreground: '569cd6' },
+        { token: 'string.fstring.delimiter', foreground: '569cd6' },
         // Prolog tokens
-        { token: 'atom',                         foreground: 'ce9178' },
+        { token: 'atom', foreground: 'ce9178' },
       ],
       colors: { 'editor.background': '#1e1e1e' },
     });
@@ -739,15 +741,21 @@
   // Terminal (xterm.js) — v86 + webcontainer only
   // ---------------------------------------------------------------------------
   var THEMES = {
-    dark:  { monaco: 'sebook-dark',
-      xterm: { background:'#1e1e1e', foreground:'#d4d4d4', cursor:'#d4d4d4', selectionBackground:'#264f78' } },
-    light: { monaco: 'sebook-light',
-      xterm: { background:'#ffffff', foreground:'#383a42', cursor:'#383a42', selectionBackground:'#add6ff',
-               black:'#383a42', red:'#e45649', green:'#50a14f', yellow:'#986801', blue:'#4078f2',
-               magenta:'#a626a4', cyan:'#0184bc', white:'#fafafa',
-               brightBlack:'#4f525e', brightRed:'#e06c75', brightGreen:'#98c379',
-               brightYellow:'#e5c07b', brightBlue:'#61afef', brightMagenta:'#c678dd',
-               brightCyan:'#56b6c2', brightWhite:'#ffffff' } },
+    dark: {
+      monaco: 'sebook-dark',
+      xterm: { background: '#1e1e1e', foreground: '#d4d4d4', cursor: '#d4d4d4', selectionBackground: '#264f78' }
+    },
+    light: {
+      monaco: 'sebook-light',
+      xterm: {
+        background: '#ffffff', foreground: '#383a42', cursor: '#383a42', selectionBackground: '#add6ff',
+        black: '#383a42', red: '#e45649', green: '#50a14f', yellow: '#986801', blue: '#4078f2',
+        magenta: '#a626a4', cyan: '#0184bc', white: '#fafafa',
+        brightBlack: '#4f525e', brightRed: '#e06c75', brightGreen: '#98c379',
+        brightYellow: '#e5c07b', brightBlue: '#61afef', brightMagenta: '#c678dd',
+        brightCyan: '#56b6c2', brightWhite: '#ffffff'
+      }
+    },
   };
 
   TutorialCode.prototype._isDarkMode = function () {
@@ -769,11 +777,11 @@
     var TermClass = window.Terminal;
     this.term = new TermClass({
       cursorBlink: true,
-      fontSize:    this.config.fontSize,
-      fontFamily:  "'Fira Code', 'Cascadia Code', Menlo, monospace",
-      theme:       isDark ? THEMES.dark.xterm : THEMES.light.xterm,
-      scrollback:  5000,
-      convertEol:  true,
+      fontSize: this.config.fontSize,
+      fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
+      theme: isDark ? THEMES.dark.xterm : THEMES.light.xterm,
+      scrollback: 5000,
+      convertEol: true,
     });
     var FitAddonClass = (window.FitAddon && window.FitAddon.FitAddon)
       ? window.FitAddon.FitAddon : window.FitAddon;
@@ -789,7 +797,7 @@
     if (window.ResizeObserver) {
       var t; var ro = new ResizeObserver(function () {
         clearTimeout(t); t = setTimeout(function () {
-          if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) {} }
+          if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) { } }
         }, 50);
       });
       ro.observe(this.terminalContainerEl);
@@ -811,7 +819,7 @@
       }
     } else if (backend === 'webcontainer') {
       if (this._shellProcess && typeof this._shellProcess.resize === 'function') {
-        try { this._shellProcess.resize({ cols: cols, rows: rows }); } catch (e) {}
+        try { this._shellProcess.resize({ cols: cols, rows: rows }); } catch (e) { }
       }
     }
   };
@@ -821,13 +829,13 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._initBackend = function () {
     var backend = this.config.backend;
-    if (backend === 'v86')          return this._initV86();
-    if (backend === 'pyodide')      return this._initPyodide();
+    if (backend === 'v86') return this._initV86();
+    if (backend === 'pyodide') return this._initPyodide();
     if (backend === 'webcontainer') return this._initWebContainer();
-    if (backend === 'react')        return this._initReactBackend();
-    if (backend === 'browser')      return this._initBrowserBackend();
-    if (backend === 'sql')          return this._initSQL();
-    if (backend === 'prolog')       return this._initProlog();
+    if (backend === 'react') return this._initReactBackend();
+    if (backend === 'browser') return this._initBrowserBackend();
+    if (backend === 'sql') return this._initSQL();
+    if (backend === 'prolog') return this._initProlog();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -838,13 +846,13 @@
     return new Promise(function (resolve, reject) {
       try {
         self.emulator = new V86({
-          wasm_path:       self.config.v86Path + '/v86.wasm',
-          memory_size:     self.config.memoryMB * 1024 * 1024,
+          wasm_path: self.config.v86Path + '/v86.wasm',
+          memory_size: self.config.memoryMB * 1024 * 1024,
           vga_memory_size: 2 * 1024 * 1024,
-          bios:    { url: self.config.v86Path + '/seabios.bin' },
-          vga_bios:{ url: self.config.v86Path + '/vgabios.bin' },
-          bzimage: { url: self.config.vmPath  + '/bzImage' },
-          initrd:  { url: self.config.vmPath  + '/rootfs.cpio.gz' },
+          bios: { url: self.config.v86Path + '/seabios.bin' },
+          vga_bios: { url: self.config.v86Path + '/vgabios.bin' },
+          bzimage: { url: self.config.vmPath + '/bzImage' },
+          initrd: { url: self.config.vmPath + '/rootfs.cpio.gz' },
           cmdline: 'console=ttyS0 rw quiet',
           autostart: true, disable_keyboard: true,
           disable_mouse: true, disable_speaker: true, screen_dummy: true,
@@ -1102,8 +1110,8 @@
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'table')  { self._appendTable(msg.columns, msg.rows); return; }
-        if (msg.type === 'error')  { reject(new Error(msg.message)); return; }
+        if (msg.type === 'table') { self._appendTable(msg.columns, msg.rows); return; }
+        if (msg.type === 'error') { reject(new Error(msg.message)); return; }
         if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
           var cb = self._workerCallbacks[msg.id];
           delete self._workerCallbacks[msg.id];
@@ -1142,7 +1150,7 @@
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'error')  { reject(new Error(msg.message)); return; }
+        if (msg.type === 'error') { reject(new Error(msg.message)); return; }
         if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
           var cb = self._workerCallbacks[msg.id];
           delete self._workerCallbacks[msg.id];
@@ -1308,7 +1316,7 @@
       var argsInp = self.root.querySelector('.tvm-args-input');
       if (argsInp && argsInp.style.display !== 'none' && argsInp.value.trim() !== '') {
         var matches = argsInp.value.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
-        args = matches.map(function(s) { return s.replace(/^"|"$/g, ''); });
+        args = matches.map(function (s) { return s.replace(/^"|"$/g, ''); });
       }
 
       self._postWorker({ type: 'run', path: path, args: args }, function (msg) {
@@ -1367,7 +1375,7 @@
           if (result.done) return;
           self.term.write(result.value);
           readLoop();
-        }).catch(function () {});
+        }).catch(function () { });
       })();
 
       // Change to /tutorial dir
@@ -1396,7 +1404,7 @@
   TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone) {
     // Tear down any previous runner
     if (this._jsRunnerFrame) {
-      try { document.body.removeChild(this._jsRunnerFrame); } catch (e) {}
+      try { document.body.removeChild(this._jsRunnerFrame); } catch (e) { }
       this._jsRunnerFrame = null;
     }
 
@@ -1407,7 +1415,7 @@
     this._jsRunnerFrame = frame;
 
     var runId = ++this._jsRunnerMsgId;
-    var done  = false;
+    var done = false;
 
     function finish() {
       if (done) return;
@@ -1487,7 +1495,7 @@
     // Give the App component a step-unique name so it never collides across
     // steps when Babel compiles all <script type="text/babel"> tags into the
     // same global scope.  e.g. step 0 → App_s0, step 2 → App_s2.
-    var stepIdx  = this.currentStep >= 0 ? this.currentStep : 0;
+    var stepIdx = this.currentStep >= 0 ? this.currentStep : 0;
     var appAlias = 'App_s' + stepIdx;
 
     var userCss = [];
@@ -1516,9 +1524,9 @@
     var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
 
     var isDark = this._isDarkMode();
-    var bodyBg    = isDark ? '#1e1e1e' : '#fff';
+    var bodyBg = isDark ? '#1e1e1e' : '#fff';
     var bodyColor = isDark ? '#d4d4d4' : '#333';
-    var bsTheme   = isDark ? 'dark'    : 'light';
+    var bsTheme = isDark ? 'dark' : 'light';
 
     return '<!DOCTYPE html>\n<html lang="en" data-bs-theme="' + bsTheme + '">\n<head>\n' +
       '<meta charset="UTF-8">\n' +
@@ -1554,11 +1562,11 @@
     var self = this;
     this.editor = monaco.editor.create(this.editorContainerEl, {
       value: '// Follow the tutorial steps on the left.\n',
-      language: this.config.backend === 'pyodide'  ? 'python'      :
-                this.config.backend === 'react'    ? 'javascript'  :
-                this.config.backend === 'browser'  ? 'javascript'  :
-                this.config.backend === 'prolog'   ? 'prolog'      : 'shell-sebook',
-      theme:    this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
+      language: this.config.backend === 'pyodide' ? 'python' :
+        this.config.backend === 'react' ? 'javascript' :
+          this.config.backend === 'browser' ? 'javascript' :
+            this.config.backend === 'prolog' ? 'prolog' : 'shell-sebook',
+      theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
       minimap: { enabled: false },
@@ -1672,7 +1680,7 @@
 
       } else if (self.config.backend === 'webcontainer' && self._webcontainer) {
         var wcPath = 'tutorial/' + filename;
-        var wcDir  = wcPath.substring(0, wcPath.lastIndexOf('/'));
+        var wcDir = wcPath.substring(0, wcPath.lastIndexOf('/'));
         var wc = self._webcontainer;
         var doWrite = function () {
           wc.fs.writeFile(wcPath, content).then(done).catch(done);
@@ -2325,9 +2333,11 @@
         var correctOrder = allLines.slice(); // preserve correct order
         var shuffled = allLines.concat(distractors).slice();
         self._shuffleArray(shuffled);
-        return { question: q.question || '', type: 'parsons', explanation: q.explanation || '',
-                 shuffledLines: shuffled, correctOrder: correctOrder, distractors: distractors,
-                 options: [], correctOriginals: [], correctLabels: [] };
+        return {
+          question: q.question || '', type: 'parsons', explanation: q.explanation || '',
+          shuffledLines: shuffled, correctOrder: correctOrder, distractors: distractors,
+          options: [], correctOriginals: [], correctLabels: []
+        };
       }
       var opts = (q.options || []).map(function (text, oi) { return { text: text, originalIndex: oi }; });
       if (doShuffle) self._shuffleArray(opts);
@@ -2337,8 +2347,10 @@
       opts.forEach(function (opt, oi) {
         if (correctOriginals.indexOf(String(opt.originalIndex)) !== -1) correctLabels.push(alphabet[oi]);
       });
-      return { question: q.question || '', type: q.type || 'single', explanation: q.explanation || '',
-               options: opts, correctOriginals: correctOriginals, correctLabels: correctLabels };
+      return {
+        question: q.question || '', type: q.type || 'single', explanation: q.explanation || '',
+        options: opts, correctOriginals: correctOriginals, correctLabels: correctLabels
+      };
     });
     if (doShuffle) self._shuffleArray(questions);
 
@@ -2440,8 +2452,8 @@
     function validateSingle(opt, card) {
       var opts = card.querySelectorAll('.quiz-option');
       var exp = card.querySelector('.quiz-explanation');
-      var ca  = card.querySelector('.quiz-correct-answers');
-      var ok  = opt.dataset.correct === opt.dataset.index;
+      var ca = card.querySelector('.quiz-correct-answers');
+      var ok = opt.dataset.correct === opt.dataset.index;
       opts.forEach(function (o) { o.setAttribute('disabled', 'true'); });
       if (ok) { opt.classList.add('correct'); score++; }
       else {
@@ -2466,9 +2478,9 @@
     function handleSubmit(e) {
       var card = e.currentTarget.closest('.quiz-question-card');
       var opts = card.querySelectorAll('.quiz-option');
-      var sel  = card.querySelectorAll('.quiz-option.selected');
-      var exp  = card.querySelector('.quiz-explanation');
-      var ca   = card.querySelector('.quiz-correct-answers');
+      var sel = card.querySelectorAll('.quiz-option.selected');
+      var exp = card.querySelector('.quiz-explanation');
+      var ca = card.querySelector('.quiz-correct-answers');
       var selI = Array.prototype.map.call(sel, function (o) { return o.dataset.index; }).sort().join(',');
       var corI = card.querySelector('.quiz-option').dataset.correctIndices.split(',').sort().join(',');
       opts.forEach(function (o) { o.setAttribute('disabled', 'true'); });
@@ -2517,11 +2529,11 @@
         var opts = card.querySelectorAll('.quiz-option');
         var exp = card.querySelector('.quiz-explanation');
         var sub = card.querySelector('.submit-answer-btn');
-        var ca  = card.querySelector('.quiz-correct-answers');
-        opts.forEach(function (o) { o.classList.remove('correct','incorrect','selected'); o.removeAttribute('disabled'); });
+        var ca = card.querySelector('.quiz-correct-answers');
+        opts.forEach(function (o) { o.classList.remove('correct', 'incorrect', 'selected'); o.removeAttribute('disabled'); });
         if (exp) exp.classList.add('hidden');
         if (sub) { sub.classList.remove('hidden'); sub.disabled = true; }
-        if (ca)  ca.style.display = '';
+        if (ca) ca.style.display = '';
         // Reset Parsons problems
         var bank = card.querySelector('.parsons-bank');
         var target = card.querySelector('.parsons-target');
@@ -2688,13 +2700,13 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._runTests = function () {
     var backend = this.config.backend;
-    if (backend === 'v86')               this._runTestsV86();
-    else if (backend === 'pyodide')      this._runTestsPyodide();
+    if (backend === 'v86') this._runTestsV86();
+    else if (backend === 'pyodide') this._runTestsPyodide();
     else if (backend === 'webcontainer') this._runTestsWebContainer();
-    else if (backend === 'react')        this._runTestsReact();
-    else if (backend === 'browser')      this._runTestsBrowser();
-    else if (backend === 'sql')          this._runTestsSQL();
-    else if (backend === 'prolog')       this._runTestsProlog();
+    else if (backend === 'react') this._runTestsReact();
+    else if (backend === 'browser') this._runTestsBrowser();
+    else if (backend === 'sql') this._runTestsSQL();
+    else if (backend === 'prolog') this._runTestsProlog();
   };
 
   // v86 — same marker approach as original tutorial-vm.js
@@ -2888,10 +2900,10 @@
         var reader = proc.output.getReader();
         var cleanup = function () {
           clearTimeout(testTimeout);
-          try { reader.cancel(); } catch (e) {}
-          try { proc.kill(); } catch (e) {}
+          try { reader.cancel(); } catch (e) { }
+          try { proc.kill(); } catch (e) { }
         };
-        
+
         testTimeout = setTimeout(function () {
           console.warn('WebContainer test timeout exceeded (15s). Force canceling.');
           cleanup();
@@ -2932,7 +2944,7 @@
     this._rebuildReactPreview(function () {
       var frame = self._previewFrame;
       var results = [];
-      var AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      var AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
       var testTimeout;
 
       function runNext(i) {
@@ -2950,7 +2962,7 @@
 
         try {
           var scripts = frame.contentDocument.querySelectorAll('[type="text/babel"]');
-          var source = Array.from(scripts).map(function(s) { return s.textContent; }).join('\n');
+          var source = Array.from(scripts).map(function (s) { return s.textContent; }).join('\n');
           var code = self._stripCode(source);
           /* jshint evil:true */
           var fn = new AsyncFunction('frame', 'code', 'assert', tests[i].command);
@@ -3130,7 +3142,7 @@
               self._suppressAutoSave = false;
             }
           }
-        }).catch(function () {});
+        }).catch(function () { });
     });
     Promise.all(promises).then(function () { self._reverseSyncBusy = false; })
       .catch(function () { self._reverseSyncBusy = false; });
