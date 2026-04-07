@@ -25,6 +25,8 @@
   var _voice = null;
   var _speaking = false;
   var _paused = false;
+  var _restarting = false;   // true while cancel+setTimeout is in flight
+  var _startTimer = null;    // pending setTimeout handle
   var _onUpdate = null;
   var _onEnd = null;
   var _voicesReadyCbs = [];
@@ -138,11 +140,15 @@
       if (e.name === 'word') _offset = offset + e.charIndex;
     };
     utt.onstart = function () {
+      _restarting = false;
       _speaking = true;
       _paused = false;
       if (_onUpdate) _onUpdate();
     };
     utt.onend = function () {
+      // Ignore onend that fires because we called cancel() for a restart —
+      // Chrome fires onend (not onerror) when cancel() stops an utterance.
+      if (_restarting) return;
       _speaking = false;
       _paused = false;
       _offset = 0;
@@ -150,6 +156,7 @@
       if (_onEnd) _onEnd();
     };
     utt.onerror = function (e) {
+      if (_restarting) return;
       if (e.error === 'interrupted' || e.error === 'canceled') return;
       _speaking = false;
       _paused = false;
@@ -157,9 +164,14 @@
     };
 
     // Chrome bug: cancel() followed immediately by speak() can silently fail.
-    // cancel() first, then speak() inside a timeout so the event loop clears.
+    // Use a flag + clearTimeout so rapid calls collapse into one speak().
+    _restarting = true;
+    if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
     synth.cancel();
-    setTimeout(function () { synth.speak(utt); }, 50);
+    _startTimer = setTimeout(function () {
+      _startTimer = null;
+      synth.speak(utt);
+    }, 50);
   }
 
   /* ── Text extraction ──────────────────────────────────────── */
@@ -223,6 +235,8 @@
     },
 
     stop: function () {
+      if (_startTimer) { clearTimeout(_startTimer); _startTimer = null; }
+      _restarting = false;
       if (synth) synth.cancel();
       _speaking = false;
       _paused   = false;
