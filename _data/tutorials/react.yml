@@ -4,7 +4,7 @@ description: "A hands-on introduction to React for students who already know C++
 backend: react
 
 require_tests: true
-autosave_type: commands-and-files
+autosave_type: files
 
 steps:
 
