@@ -4,7 +4,7 @@ layout: sebook
 ---
 
 # Welcome 
-This is a collection of topics for students in software engineering courses ([CS35L](/SEBook/CS35L_bookmarks.html) and [CS130](/SEBook/CS130_bookmarks.html)).
+This is a collection of topics for students in software engineering courses ([CS 35L](/SEBook/CS35L_bookmarks.html) and [CS 130](/SEBook/CS130_bookmarks.html)).
 
 
 # Work-in-Progress Note 
