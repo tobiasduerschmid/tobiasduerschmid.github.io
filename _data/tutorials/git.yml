@@ -1354,24 +1354,44 @@ steps:
       Branches let you work on new features without touching the main
       codebase. Think of them like alternate timelines — you can
       experiment freely, and if things go wrong, the main timeline is
-      completely unaffected. A branch is just a lightweight **pointer**
-      to a commit — creating one is nearly instant and costs almost
-      nothing.
+      completely unaffected.
+
+      ### The Post-it note mental model
+
+      A branch is nothing more than a **Post-it note stuck to a commit**.
+      The note has a name written on it (like `main` or `feature-divide`),
+      and it sits on top of one specific commit. That's it — the entire
+      branch is that Post-it note.
+
+      Creating a branch? You're writing a name on a new Post-it and
+      sticking it to the current commit. Committing on a branch? Git
+      peels the Post-it off the old commit and moves it to the new one.
+      Deleting a branch? You toss the Post-it in the bin — the commits
+      it pointed to are still there.
+
+      Because Post-it notes are tiny, creating a branch is nearly instant
+      and costs almost nothing (~41 bytes on disk). You can have hundreds
+      of branches without any performance impact.
 
       ```
       Before branching:
 
         main:  [C1] ← [C2] ← [C3]  ← HEAD
+                                ↑
+                           Post-it: "main"
 
       After creating feature branch:
 
         main:  [C1] ← [C2] ← [C3]
                                 ↑
-        feature:             (points here too)  ← HEAD
+                          Post-it: "main"
+                          Post-it: "feature-divide"  ← HEAD
       ```
 
-      The branch is just a sticky note (pointer) on a commit — not a copy
-      of your entire project!
+      Two Post-it notes on the same commit — not a copy of your entire
+      project! When you make a new commit on `feature-divide`, Git peels
+      that Post-it off C3 and sticks it on the new commit C4, while
+      `main` stays put on C3.
 
       ### Task 1: See your current branch
 
@@ -2123,17 +2143,21 @@ steps:
                 return a / b
           language: "python"
       commands:
-        - "git switch main"
+        - "git merge --abort 2>/dev/null; true"
+        - "git switch main 2>/dev/null; true"
         - "git add calculator.py"
-        - "git commit -m \"Add logging to add function\""
-        - "git merge update-add-function"
+        - "git commit -m \"Add logging to add function\" 2>/dev/null; true"
+        - "git merge update-add-function -X theirs --no-edit"
+        - "sed -i 's/integers only/with type checking and logging/' calculator.py"
+        - "sed -i '/^    return a + b$/i\\    print(f\"Adding {a} + {b}\")' calculator.py"
         - "git add calculator.py"
-        - "git commit -m \"Merge update-add-function: combine type checking and logging\""
+        - "git commit -m \"Add print logging to merged add function\" 2>/dev/null; true"
       explanation: |
         - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' calculator.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
         - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
         - **Test 3:** `grep -q 'isinstance' calculator.py` — the type-checking code from `update-add-function` must be present.
         - **Test 4:** `grep -q 'print' calculator.py` — the logging code from `main` must be present.
+        - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the type-checking code), then uses `sed` to add the logging `print` line and update the docstring. A follow-up commit captures the combined result.
         - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
         - **`git add` after resolution:** Signals to Git that the conflict is resolved AND stages the content. Without it, `git commit` refuses with "unmerged paths". This is the same `git add` as always — it just takes on this extra role during a merge.
 
@@ -2239,14 +2263,25 @@ steps:
                               (bad)   (anti-commit: undoes C3)
       ```
 
-      Compare this to `git reset --hard`, which *destroys* commits by
-      moving the branch pointer backward — a sledgehammer approach that
-      is dangerous on any shared branch:
+      ### Scalpel vs. Sledgehammer
 
-      | Command | Effect | Safe on shared branches? |
-      |---|---|---|
-      | `git revert <hash>` | New commit that undoes the target | **Yes** |
-      | `git reset --hard <hash>` | Destroys commits, rewrites history | Never |
+      Git gives you two tools for undoing committed work — think of them
+      as the **scalpel** and the **sledgehammer**:
+
+      - **`git revert` (scalpel)** — makes a precise cut: creates a new
+        commit that surgically reverses a specific change. History is
+        preserved. Everyone stays in sync. Safe for shared branches.
+
+      - **`git reset --hard` (sledgehammer)** — smashes commits by
+        moving the branch pointer backward, destroying everything in its
+        path. History is rewritten. Teammates who already pulled the
+        deleted commits are left with broken repositories. Never use
+        this on shared branches.
+
+      | Tool | Command | Effect | Safe on shared branches? |
+      |---|---|---|---|
+      | Scalpel | `git revert <hash>` | New commit that undoes the target | **Yes** |
+      | Sledgehammer | `git reset --hard <hash>` | Destroys commits, rewrites history | **Never** |
 
       ### Your safety net: `git reflog`
 
@@ -2931,6 +2966,31 @@ steps:
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
       - description: "power function is committed on main"
         command: "cd /tutorial/myproject && git show main:calculator.py | grep -q 'def power'"
+
+  # --------------------------------------------------------------------------
+  # STEP 15: Celebration — final quiz
+  # --------------------------------------------------------------------------
+  - title: "Git Mastery — Final Review"
+    instructions: |
+      ### Congratulations — you've completed the Git tutorial!
+
+      From an empty folder to a version-controlled Python project with
+      branching, merge conflict resolution, remote collaboration, and
+      independent feature work — that's a serious achievement.
+
+      Take a moment to appreciate what you can now do:
+
+      - Initialize repositories and configure your identity
+      - Stage, commit, and inspect changes with precision
+      - Branch, merge, and resolve conflicts like a professional
+      - Undo mistakes safely on shared branches
+      - Collaborate through remotes with push and pull
+
+      Before you go, let's do one final knowledge check to cement
+      everything. This quiz covers the entire tutorial — all 14 steps.
+      Good luck!
+
+    tests: []
 
     quiz:
       title: "Git Mastery — Final Comprehensive Review"
