@@ -129,10 +129,14 @@
 
   {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
   {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
-  {% if site.tutorial_autosave and tutorial_data.allow_autosave != false %}
-    {% assign tutorial_allow_autosave = true %}
+  {% if site.tutorial_autosave and tutorial_data.autosave_type != false %}
+    {% if tutorial_data.autosave_type %}
+      {% assign tutorial_autosave_type = tutorial_data.autosave_type %}
+    {% else %}
+      {% assign tutorial_autosave_type = 'files' %}
+    {% endif %}
   {% else %}
-    {% assign tutorial_allow_autosave = false %}
+    {% assign tutorial_autosave_type = false %}
   {% endif %}
 
   {% if tutorial_backend == 'webcontainer' %}
@@ -176,9 +180,12 @@
       var instructorMode = params.get('instructor-mode') === 'true';
 
       // Resolve autosave: URL ?autosave=true overrides site/tutorial config
-      var configAutosave = {{ tutorial_allow_autosave }};
+      var configAutosaveType = {{ tutorial_autosave_type | jsonify }};
       var urlAutosave = params.get('autosave');
-      var effectiveAutosave = urlAutosave !== null ? urlAutosave === 'true' : configAutosave;
+      // ?autosave=true → use 'files', ?autosave=false → disable
+      var effectiveAutosaveType = urlAutosave !== null
+        ? (urlAutosave === 'true' ? (configAutosaveType || 'files') : null)
+        : configAutosaveType;
 
       var tutorial = new TutorialCode('#tutorial-container', {
         backend:      '{{ tutorial_backend }}',
@@ -186,7 +193,7 @@
         steps:        config.steps,
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
-        allowAutosave: effectiveAutosave,
+        autosaveType: effectiveAutosaveType,
         instructorMode: instructorMode,
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',

@@ -2,7 +2,7 @@ title: "Version Control with Git"
 description: "Learn Git through hands-on practice — from your first commit to resolving merge conflicts, all inside an interactive Linux environment"
 
 require_tests: true
-allow_autosave: false
+autosave_type: commands-and-files
 
 setup_commands:
   - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"

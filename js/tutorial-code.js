@@ -103,7 +103,10 @@
     this._stepsUnlocked = new Set([0]);   // step 0 is always unlocked
     this._stepsVisited  = new Set();      // tracks first-time entry
     this.currentStep   = -1;
-    this.allowAutosave   = options.allowAutosave !== false; // tutorial-level kill switch
+    // autosaveType: falsy = disabled, "files" = save/restore files only (default),
+    //              "commands-and-files" = replay solution commands on restore
+    this.autosaveType    = options.autosaveType || null;   // tutorial-level mode
+    this.allowAutosave   = !!this.autosaveType;            // computed convenience flag
     this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
     this._originalContent = {};           // tracks original file content for dirty detection
     this.booted        = false;
@@ -200,7 +203,11 @@
             // Mark saved step as already visited so loadStep won't override files
             self._stepsVisited.add(saved.step);
             self.loadStep(saved.step);
-            self._applySavedFiles(saved.files, saved.activeFile);
+            if (self.autosaveType === 'commands-and-files') {
+              self._restoreCommandsAndFiles(saved);
+            } else {
+              self._applySavedFiles(saved.files, saved.activeFile);
+            }
           } else {
             self.loadStep(0);
           }
@@ -1845,7 +1852,7 @@
    * Full save: persists step, unlock state, and only files changed from original.
    */
   TutorialCode.prototype.saveProgress = function () {
-    if (!this.allowAutosave) return;
+    if (!this.autosaveType) return;
     var files = {};
     var self = this;
     for (var name in this.editorModels) {
@@ -1881,7 +1888,7 @@
    * Used by auto-save on Ctrl+S to avoid re-serializing everything.
    */
   TutorialCode.prototype._saveFile = function (filename) {
-    if (!this.allowAutosave) return;
+    if (!this.autosaveType) return;
     var entry = this.editorModels[filename];
     if (!entry) return;
     var current = entry.model.getValue();
@@ -1960,6 +1967,111 @@
   TutorialCode.prototype._autoSaveProgress = function () {
     if (this.currentStep < 0) return;
     this.saveProgress();
+  };
+
+  /**
+   * Restore mode "commands-and-files": replay each step's files + solution
+   * commands sequentially until the saved step, then apply the autosave
+   * file overrides on top.
+   *
+   * Order for step i (0 … savedStep-1):
+   *   1. step[i].files          → write to editor + backend
+   *   2. step[i].solution.files → write to editor + backend
+   *   3. step[i].solution.commands → run visibly in terminal
+   * Then:
+   *   4. step[savedStep].files  → write (starting state for current step)
+   *   5. saved.files overrides  → apply autosaved student edits
+   */
+  TutorialCode.prototype._restoreCommandsAndFiles = function (saved) {
+    var self = this;
+    var targetStep = saved.step;
+    var totalSteps = targetStep; // number of steps to replay
+
+    // Show full-screen loading overlay for the entire replay so neither
+    // the terminal commands nor intermediate file writes are visible.
+    self._showLoading(
+      totalSteps > 0
+        ? 'Restoring your progress\u2026 (replaying ' + totalSteps + ' step' + (totalSteps === 1 ? '' : 's') + ')'
+        : 'Restoring your progress\u2026'
+    );
+
+    var p = Promise.resolve();
+
+    for (var i = 0; i < targetStep; i++) {
+      (function (stepIdx) {
+        var step = self.steps[stepIdx];
+        if (!step) return;
+
+        // Update loading message with live step counter
+        p = p.then(function () {
+          self._showLoading('Restoring your progress\u2026 (step ' + (stepIdx + 1) + ' of ' + totalSteps + ')');
+        });
+
+        // 1. Apply step starter files
+        if (step.files) {
+          p = p.then(function () {
+            self._suppressAutoSave = true;
+            var syncs = [];
+            step.files.forEach(function (f) {
+              self.openFile(f.path, f.content, f.language);
+              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+              self._originalContent[f.path] = f.content || '';
+            });
+            self._suppressAutoSave = false;
+            return Promise.all(syncs);
+          });
+        }
+
+        // 2. Apply solution files
+        if (step.solution && step.solution.files) {
+          p = p.then(function () {
+            self._suppressAutoSave = true;
+            var syncs = [];
+            step.solution.files.forEach(function (f) {
+              self.openFile(f.path, f.content, f.language);
+              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+            });
+            self._suppressAutoSave = false;
+            return Promise.all(syncs);
+          });
+        }
+
+        // 3. Run solution commands silently (no terminal output during restore)
+        if (step.solution && step.solution.commands && step.solution.commands.length > 0) {
+          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+            step.solution.commands.forEach(function (cmd) {
+              p = p.then(function () {
+                return self._runSilent(cmd.replace(/^git /, 'git --no-pager '));
+              });
+            });
+          }
+        }
+      })(i);
+    }
+
+    // 4. Apply the saved step's starter files
+    var savedStepObj = self.steps[targetStep];
+    if (savedStepObj && savedStepObj.files) {
+      p = p.then(function () {
+        self._suppressAutoSave = true;
+        var syncs = [];
+        savedStepObj.files.forEach(function (f) {
+          self.openFile(f.path, f.content, f.language);
+          syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+          self._originalContent[f.path] = f.content || '';
+        });
+        self._suppressAutoSave = false;
+        return Promise.all(syncs);
+      });
+    }
+
+    // 5. Apply autosaved student file overrides, then reveal the tutorial
+    p = p.then(function () {
+      self._applySavedFiles(saved.files, saved.activeFile);
+      self._hideLoading();
+    });
+
+    return p;
   };
 
   // ---------------------------------------------------------------------------

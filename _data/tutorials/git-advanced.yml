@@ -4,7 +4,7 @@ description: "Go deeper into Git internals — understand how HEAD and branch po
 backend: v86
 
 require_tests: true
-allow_autosave: false
+autosave_type: commands-and-files
 
 setup_commands:
   - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
