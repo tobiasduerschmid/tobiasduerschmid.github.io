@@ -2224,7 +2224,7 @@ steps:
       `git revert` creates a **new commit** that applies the exact inverse of
       a previous commit, neutralising its changes while keeping the full
       history intact. Think of it like replying to your own message with
-      "ignore that last one" — the original is still there, but everyone
+      "ignore that last message" — the original is still there, but everyone
       knows it's been corrected.
 
       ```
@@ -2296,7 +2296,7 @@ steps:
 
       > **Before you run:** Will `git revert HEAD` *remove* the bad commit
       > from history, or will it *add* something new? Think about the
-      > "ignore that last one" analogy above, then check your answer.
+      > "ignore that last message" analogy above, then check your answer.
 
       Undo the last commit safely:
 
