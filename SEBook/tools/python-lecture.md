@@ -2,5 +2,5 @@
 layout: tutorial
 title: "Python Lecture"
 tutorial: python-lecture
-permalink: /SEBook/tools/python-lecture-tutorial
+permalink: /SEBook/tools/python-lecture
 ---

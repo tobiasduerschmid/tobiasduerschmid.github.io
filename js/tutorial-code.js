@@ -97,6 +97,7 @@
     this.setupCommands = options.setupCommands || [];
     this.requireTests = options.requireTests || false;
     this.instructorMode = options.instructorMode || false;
+    this.disableQuiz = options.disableQuiz || false;
     this.tutorialId = options.tutorialId || 'default';
     this._stepsPassed = new Set();
     this._quizPassed = new Set();
@@ -2268,7 +2269,7 @@
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
     if (next) next.addEventListener('click', function () {
       if (next.disabled) return;
-      var hasQuiz = step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
+      var hasQuiz = !self.disableQuiz && step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
       if (hasQuiz && !self._quizPassed.has(index)) {
         self._showStepQuiz(index);
       } else {

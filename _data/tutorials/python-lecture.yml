@@ -2,6 +2,7 @@ title: "Python Lecture"
 description: "Interactive exercises accompanying the Python lecture. Practise the key concepts — print() keyword arguments, list comprehensions and unpacking, classes and __str__, and regex with named capture groups."
 
 instructor_mode: true
+disable_quiz: false
 
 backend: pyodide
 
