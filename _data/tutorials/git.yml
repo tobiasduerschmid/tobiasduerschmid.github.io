@@ -30,7 +30,7 @@ steps:
 
       - **Track every change** — see exactly what changed, when, and by whom.
       - **Undo mistakes** — roll back to any previous version.
-      - **Work in parallel** — multiple people can edit without overwriting each other,.
+      - **Work in parallel** — multiple people can edit without overwriting each other.
 
       Imagine you and a teammate are both editing `calculator.py`. You add a
       `multiply` function while they rewrite the `add` function. Without version
@@ -218,7 +218,7 @@ steps:
 
       > **Self-check:** In your own words, explain the difference between
       > the Working Directory, the Staging Area, and the Repository. If you
-      > can describe the shipping analogy from Step 1 without looking back,
+      > can describe the social media analogy from Step 1 without looking back,
       > you've got it.
 
     files:
@@ -334,7 +334,6 @@ steps:
       Save the file (**Ctrl+S**), then run in the terminal:
 
       ```bash
-      
       git status
       ```
 
@@ -524,6 +523,52 @@ steps:
       - **Current directory:** `git add .`
       - **All tracked + untracked:** `git add --all` (or `-A`)
 
+      ### The `-am` shortcut — and its hidden catch
+
+      Once files are tracked, there is a popular shortcut that collapses
+      `git add` and `git commit` into one command:
+
+      ```bash
+      git commit -am "Your message here"
+      ```
+
+      The two flags combined:
+
+      | Flag | What it does |
+      |---|---|
+      | `-a` | Automatically stages every **already-tracked** modified file |
+      | `-m` | Attaches the commit message inline |
+
+      **`-a` has one strict rule: it only works on tracked files.** Any
+      brand-new file that has never been through `git add` is completely
+      invisible to it.
+
+      Let's prove this. After your commit above, modify the tracked
+      `notes.txt` and create a brand-new untracked file at the same time:
+
+      ```bash
+      echo "TODO: add division" >> notes.txt
+      echo "customer feedback output" > feedback.log
+      git status
+      ```
+
+      You will see `notes.txt` as *modified* (red, tracked) and `feedback.log`
+      as *untracked* (red, new). Now try the shortcut:
+
+      ```bash
+      git commit -am "Update notes and add feedback log"
+      ```
+
+      Run `git status` one more time. `feedback.log` is **still untracked** —
+      `-a` staged and committed `notes.txt` automatically but silently
+      ignored the new file, even though the commit message implied it was
+      included.
+
+      To bring `feedback.log` into a commit you must `git add feedback.log`
+      explicitly first. This is why the full two-step flow
+      (`git add` → `git commit`) remains the safest default whenever new
+      files are involved.
+
     files:
       - path: "myproject/test_calc.py"
         content: |
@@ -552,11 +597,17 @@ steps:
         - "git add test_*.py"
         - "git add ."
         - "git commit -m \"Add test files, README, and project notes\""
+        - "echo 'TODO: add division' >> notes.txt"
+        - "echo 'customer feedback output' > feedback.log"
+        - "git status"
+        - "git commit -am \"Update notes and add feedback log\""
+        - "git status"
       explanation: |
         - **`git add README.md`:** Stages only `README.md`.
         - **`git add test_*.py`:** The shell glob expands to `test_calc.py test_utils.py`. Both are staged.
         - **`git add .`:** Stages everything in the current directory and subdirectories — including `notes.txt`.
         - **Four staging strategies:** Individual file, wildcard, current directory (`git add .`), all tracked+untracked (`git add --all`). All achieve the same end result here but give different levels of control.
+        - **`git commit -am "..."`:** The `-a` flag auto-stages all already-tracked modified files (`notes.txt`) and commits them. `feedback.log` is a brand-new untracked file — `-a` never sees it. After this commit, `git status` still shows `feedback.log` as untracked, proving the limitation.
 
     tests:
       - description: "README.md has been committed"
@@ -565,8 +616,10 @@ steps:
         command: "cd /tutorial/myproject && git log --all --oneline -- test_calc.py | grep -q '.'"
       - description: "test_utils.py has been committed"
         command: "cd /tutorial/myproject && git log --all --oneline -- test_utils.py | grep -q '.'"
-      - description: "notes.txt has been committed"
-        command: "cd /tutorial/myproject && git log --all --oneline -- notes.txt | grep -q '.'"
+      - description: "notes.txt has been committed at least twice (once per task)"
+        command: "cd /tutorial/myproject && [ $(git log --all --oneline -- notes.txt | wc -l) -ge 2 ]"
+      - description: "feedback.log exists on disk"
+        command: "cd /tutorial/myproject && [ -f feedback.log ]"
 
     quiz:
       title: "Staging Strategies — Knowledge Check"
@@ -959,7 +1012,7 @@ steps:
           correct_index: 1
           explanation: "Git stores **snapshots**, not just deltas. If a file hasn't changed, Git simply links to the version it already has. This makes operations like branching and switching extremely fast."
 
-        - question: "**[Evaluate]** A colleague says: 'I'll add `.gitignore` after I get the project working — setup files just slow me down right now.' Evaluate this approach."
+        - question: "A colleague says: 'I'll add `.gitignore` after I get the project working — setup files just slow me down right now.' Evaluate this approach."
           options:
             - "Fine — `.gitignore` can be added at any point with no consequences"
             - "Risky — any secrets or generated files committed before `.gitignore` exists remain permanently in history, even after you add ignore rules later"
@@ -1022,8 +1075,10 @@ steps:
       git show HEAD
       ```
 
-      `HEAD` always refers to the latest commit. `git show` displays the
-      full diff of what changed in that commit.
+      `HEAD` is a pointer to your **current branch**, which in turn points
+      to that branch's latest commit. So `HEAD` always resolves to the
+      most recent commit on whatever branch you have checked out.
+      `git show` displays the full diff of what changed in that commit.
 
       ### Task 4: Compare commits
 
@@ -1271,7 +1326,7 @@ steps:
           correct_index: 1
           explanation: "`git status` is the 'dashboard' command — it shows staged changes, unstaged modifications, and untracked files at a glance. It should be your first command whenever you're unsure about the repository state."
 
-        - question: "**[Evaluate]** After completing the capstone, a classmate says: 'I just ran `git reset --hard` to clean everything up in one shot — same result, simpler.' Evaluate their approach compared to the targeted steps you used."
+        - question: "After completing the capstone, a classmate says: 'I just ran `git reset --hard` to clean everything up in one shot — same result, simpler.' Evaluate their approach compared to the targeted steps you used."
           options:
             - "Correct — `git reset --hard` is always the simplest fix for a messy working directory"
             - "Problematic — `git reset --hard` would have discarded ALL uncommitted changes (including the `.gitignore` edits you wanted to keep) and cannot be undone"
@@ -1473,7 +1528,7 @@ steps:
           correct_index: 1
           explanation: "When you switch branches, Git **updates your working directory** to match the commit that the target branch points to. Files unique to `feature-x` disappear; files in `main` (but not `feature-x`) reappear. This is why branches feel like separate timelines."
 
-        - question: "**[Evaluate]** Your teammate says: 'Branches are just copies of the project, so creating too many wastes disk space.' Is this correct? Why or why not?"
+        - question: "Your teammate says: 'Branches are just copies of the project, so creating too many wastes disk space.' Is this correct? Why or why not?"
           options:
             - "Correct — each branch duplicates the entire project directory"
             - "Incorrect — a branch is a lightweight pointer to a commit, not a copy; creating one uses ~41 bytes"
@@ -1713,7 +1768,7 @@ steps:
             - 3
           explanation: "You always merge *into* your current branch, so switch first. Fast-forwards keep history linear; three-way merges create a merge commit with two parents. Deleting the feature branch after merging is optional (tidy but not required)."
 
-        - question: "**[Evaluate]** Your team lead says: 'We should always use `git merge --no-ff` (no fast-forward) even when a fast-forward is possible, so every feature leaves a merge commit in the log.' What is the trade-off?"
+        - question: "Your team lead says: 'We should always use `git merge --no-ff` (no fast-forward) even when a fast-forward is possible, so every feature leaves a merge commit in the log.' What is the trade-off?"
           options:
             - "There is no trade-off — `--no-ff` is strictly better and should always be used"
             - "It preserves branch history (you can see where features started/ended) but adds extra merge commits that make the log busier"
@@ -1997,6 +2052,31 @@ steps:
       > finish the merge, the merge is complete and cannot be aborted —
       > you would use `git revert` instead.
 
+      ### Auto-resolving conflicts: `-X ours` and `-X theirs`
+
+      Sometimes you know in advance that one side should always win. Git
+      lets you express this with the `-X` (strategy option) flag:
+
+      ```bash
+      git merge feature -X ours    # always keep current branch's version on conflict
+      git merge feature -X theirs  # always keep incoming branch's version on conflict
+      ```
+
+      | Flag | Which version wins on conflict |
+      |---|---|
+      | `-X ours` | The current branch (the one you're on) |
+      | `-X theirs` | The incoming branch (the one being merged in) |
+
+      **Important:** These flags only affect lines that actually conflict —
+      non-conflicting changes from both branches are still combined normally.
+      They are a convenience for cases where you've already decided one side
+      is authoritative, so you don't have to resolve each conflict marker
+      by hand.
+
+      For this step, resolve the conflict manually — it's the skill you
+      need most often in practice. But keep `-X ours` and `-X theirs` in
+      your toolbox for large merges where one side clearly takes priority.
+
       ### Task 5: Complete the merge
 
       After editing, mark the conflict as resolved (using `git add`) and create the merge commit.
@@ -2046,7 +2126,7 @@ steps:
         - "git switch main"
         - "git add calculator.py"
         - "git commit -m \"Add logging to add function\""
-        - "git merge update-add-function --no-edit -X ours"
+        - "git merge update-add-function"
         - "git add calculator.py"
         - "git commit -m \"Merge update-add-function: combine type checking and logging\""
       explanation: |
@@ -2121,7 +2201,7 @@ steps:
           correct_index: 1
           explanation: "`git add` has the **same meaning** here as in Step 2: move content into the staging area. During a merge it also clears Git's 'unresolved conflict' flag for that file. It is not a special merge command — just the familiar loading-dock action wearing an extra hat."
 
-        - question: "**[Evaluate]** Your team frequently has merge conflicts. A teammate suggests: 'Let's all work on one branch to avoid conflicts.' Evaluate this suggestion."
+        - question: "Your team frequently has merge conflicts. A teammate suggests: 'Let's all work on one branch to avoid conflicts.' Evaluate this suggestion."
           options:
             - "Good idea — one branch eliminates conflicts entirely"
             - "Bad idea — it eliminates branching benefits (isolation, parallel work) and introduces a worse problem: developers directly overwriting each other's uncommitted work"
@@ -2193,7 +2273,7 @@ steps:
       ```bash
       git reset --hard <sha>   # jump your branch back to that commit
       # or
-      git checkout <sha>       # inspect that commit in detached HEAD state
+      git checkout <sha>       # inspect that commit (changes to "detached HEAD state")
       ```
 
       Two important limitations to keep in mind:
@@ -2216,7 +2296,7 @@ steps:
 
       > **Before you run:** Will `git revert HEAD` *remove* the bad commit
       > from history, or will it *add* something new? Think about the
-      > accountant's ledger analogy above, then check your answer.
+      > "ignore that last one" analogy above, then check your answer.
 
       Undo the last commit safely:
 
@@ -2346,7 +2426,7 @@ steps:
             - "`git restore HEAD~3` — restores files to that state but creates no commit"
             - "`git reset --hard a1b2c3` — moves the branch pointer back, removing 3 commits"
             - "`git revert a1b2c3` — creates a new commit that undoes that specific commit"
-            - "`git restore --source=a1b2c3 .` then `git commit`"
+            - "`git restore calculator.py` — discards uncommitted changes to the buggy file"
           correct_index: 2
           explanation: "On a **shared branch**, only `git revert` is safe — it adds a new anti-commit without touching existing history. `git reset --hard` rewrites history and would require a force-push, breaking everyone who already pulled. `git restore` without committing is also incomplete. This contrasts directly with the uncommitted-change scenario in Step 5 where `git restore` was the right tool."
 
@@ -2390,7 +2470,7 @@ steps:
             - 3
           explanation: "`git revert` always adds an anti-commit, leaving the full history intact. You can revert any commit by hash — not just HEAD. The bad commit remains in the log, which is actually useful for auditing. This makes it the standard safe-undo tool for shared branches."
 
-        - question: "**[Evaluate]** A colleague used `git reset --hard HEAD~3` on the shared `main` branch and force-pushed. Three commits are gone from the remote. What is the impact and how would you recover?"
+        - question: "A colleague used `git reset --hard HEAD~3` on the shared `main` branch and force-pushed. Three commits are gone from the remote. What is the impact and how would you recover?"
           options:
             - "No impact — the commits are still on everyone's local machines permanently"
             - "Severe: every teammate's local copy now conflicts with the remote; recovery requires someone who still has the commits locally to force-push them back or use `git reflog` to find the lost commits"
@@ -2399,7 +2479,7 @@ steps:
           correct_index: 1
           explanation: "Force-pushing rewrites remote history. Every teammate who already pulled those commits now has a diverged local copy. Recovery is possible if someone still has the commits (via `git reflog` or their local branch), but it requires coordination. This is why `git revert` is always preferred on shared branches — it never rewrites history."
 
-        - question: "**[Revisit Task 4]** In Task 4 you ran `git add notes.txt` then `rm notes.txt`, leaving the file staged but deleted from disk. Which commands, if run **before** `git commit`, would have ensured the **deletion** was what got committed — so the file stays gone after `git reset --hard HEAD`? (Select all that apply)"
+        - question: "In Task 4 you ran `git add notes.txt` then `rm notes.txt`, leaving the file staged but deleted from disk. Which commands, if run **before** `git commit`, would have ensured the **deletion** was what got committed — so the file stays gone after `git reset --hard HEAD`? (Select all that apply)"
           type: multiple
           options:
             - "`git add notes.txt` — run again after `rm`, this stages the deletion by updating the index to match the working tree (no file present)"
@@ -2477,7 +2557,186 @@ steps:
           explanation: "`git revert HEAD --no-edit` creates a new commit that exactly inverts the changes in `HEAD`, preserving the full history. `--no-edit` accepts Git's default revert message without opening a text editor. The distractors (`reset --hard HEAD~1`) represent the dangerous alternative: it destroys commits rather than adding a safe inverse."
 
   # --------------------------------------------------------------------------
-  # STEP 13: Review and best practices
+  # STEP 13: Working with Remotes
+  # --------------------------------------------------------------------------
+  - title: "Working with Remotes"
+    instructions: |
+      ### Time to go online
+
+      Everything so far has been local — just you and your machine.
+      But in the real world, code lives on **remote repositories**
+      like GitHub, GitLab, or Bitbucket. This is where collaboration
+      happens: pull requests, code reviews, and shipping to production.
+
+      The remote workflow adds three key commands to what you already know:
+
+      ### The remote workflow
+
+      ```
+      ┌──────────────┐  git add/commit  ┌──────────────┐    git push    ┌──────────────┐
+      │   Working    │ ───────────────▶ │    Local     │ ─────────────▶ │    Remote    │
+      │  Directory   │ ◀─────────────── │     Repo     │ ◀───────────── │     Repo     │
+      └──────────────┘   git restore    └──────────────┘    git pull    └──────────────┘
+                                          (your machine)                  (e.g. GitHub)
+      ```
+
+      - **`git clone <url>`** — Download a full copy of a remote repository
+        (including its entire history) to your machine
+      - **`git push`** — Upload your local commits to the remote repository
+      - **`git pull`** — Download and merge new commits from the remote into
+        your local branch
+
+      ### Task 1: Simulate a remote with a bare repository
+
+      We can simulate a remote repository right here using a "bare" repo
+      (a repository with no working directory — just the `.git` data):
+
+      ```bash
+      cd /tutorial
+      git init --bare remote-repo.git
+      ```
+
+      ### Task 2: Connect your project to the remote
+
+      ```bash
+      cd /tutorial/myproject
+      git remote add origin /tutorial/remote-repo.git
+      ```
+
+      `origin` is the conventional name for your primary remote.
+
+      ### Task 3: Push your work
+
+      > **Before you run:** Think about what `git push` will do. Will it
+      > send only the latest commit, or the entire branch history?
+
+      ```bash
+      git push -u origin main
+      ```
+
+      The `-u` flag sets `origin/main` as the upstream tracking branch,
+      so future pushes only need `git push`.
+
+      ### Task 4: Simulate a colleague's change
+
+      Clone the remote into a separate directory (like a teammate would):
+
+      ```bash
+      cd /tutorial
+      git clone remote-repo.git colleague-copy
+      cd colleague-copy
+      ```
+
+      Make a change as your "colleague":
+
+      ```bash
+      echo "# Contributing Guide" > CONTRIBUTING.md
+      git add CONTRIBUTING.md
+      git commit -m "Add contributing guide"
+      git push
+      ```
+
+      ### Task 5: Pull your colleague's changes
+
+      Switch back to your original project and pull:
+
+      ```bash
+      cd /tutorial/myproject
+      git pull
+      ```
+
+      Check that the new file arrived:
+
+      ```bash
+      ls CONTRIBUTING.md
+      git log --oneline -3
+      ```
+
+      You now have your colleague's work in your local repository.
+      That's the complete Git collaboration cycle:
+      **branch → commit → push → pull → merge**. This is literally
+      how teams at every tech company ship code every day.
+
+    solution:
+      commands:
+        - "cd /tutorial && git init --bare remote-repo.git"
+        - "cd /tutorial/myproject && git remote add origin /tutorial/remote-repo.git"
+        - "git push -u origin main"
+        - "cd /tutorial && git clone remote-repo.git colleague-copy"
+        - "cd /tutorial/colleague-copy"
+        - "echo '# Contributing Guide' > CONTRIBUTING.md"
+        - "git add CONTRIBUTING.md"
+        - "git commit -m 'Add contributing guide'"
+        - "git push"
+        - "cd /tutorial/myproject && git pull"
+        - "ls CONTRIBUTING.md"
+      explanation: |
+        - **`git init --bare`:** Creates a repository without a working directory — exactly what servers like GitHub host. It only stores the `.git` data.
+        - **`git remote add origin`:** Registers a remote repository under the name `origin`. You can have multiple remotes (e.g., `upstream` for a fork's parent).
+        - **`git push -u origin main`:** Uploads all commits on `main` to the remote. `-u` sets the upstream, so future `git push` and `git pull` know which remote branch to sync with.
+        - **`git clone`:** Creates a full copy of the remote repository, including its complete history. Your "colleague" gets everything.
+        - **`git pull`:** Fetches new commits from the remote and merges them into your current branch. It's equivalent to `git fetch` + `git merge`.
+
+    tests:
+      - description: "Remote 'origin' is configured"
+        command: "cd /tutorial/myproject && git remote | grep -q 'origin'"
+      - description: "main branch has been pushed to origin"
+        command: "cd /tutorial/myproject && git log origin/main --oneline | grep -q '.'"
+      - description: "CONTRIBUTING.md exists after pull"
+        command: "cd /tutorial/myproject && [ -f CONTRIBUTING.md ]"
+
+    quiz:
+      title: "Working with Remotes — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What does `git clone` do?"
+          options:
+            - "Creates an empty repository on the remote server"
+            - "Downloads a full copy of a remote repository including its entire commit history"
+            - "Copies only the latest version of the files without any history"
+            - "Creates a symbolic link to the remote repository"
+          correct_index: 1
+          explanation: "`git clone` creates a complete, independent copy of the repository — including every commit, branch, and tag. You get the full history, not just the latest snapshot."
+
+        - question: "What is the difference between `git push` and `git pull`?"
+          options:
+            - "`push` uploads your local commits to the remote; `pull` downloads and merges remote commits into your local branch"
+            - "`push` creates a new branch on the remote; `pull` deletes a branch from the remote"
+            - "`push` sends files to your teammates directly; `pull` requests their files"
+            - "They are synonyms — both sync your repository with the remote"
+          correct_index: 0
+          explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
+
+        - question: "**[Interleaved: Revisit Step 12]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
+          options:
+            - "`git reset --hard HEAD~1` then `git push -f`"
+            - "`git revert HEAD`"
+            - "`git restore HEAD`"
+            - "`git checkout HEAD~1`"
+          correct_index: 1
+          explanation: "`git revert` creates a safe anti-commit. On shared branches, never use `git reset --hard` + force-push — it rewrites history and breaks every teammate's local copy."
+
+        - question: "Your team has a choice: everyone pushes directly to `main`, or everyone works on feature branches and merges via pull requests. What are the trade-offs?"
+          options:
+            - "Direct push is always better — pull requests add unnecessary overhead"
+            - "Feature branches add overhead but provide isolation, code review opportunities, and protect `main` from broken code"
+            - "Pull requests are only needed for open-source projects, not internal teams"
+            - "There is no difference — both approaches produce identical results"
+          correct_index: 1
+          explanation: "Feature branches + pull requests are the industry standard because they provide isolation (broken code doesn't affect `main`), enable code review before merging, and create a clear history of what was reviewed and approved. The trade-off is process overhead, which is worth it for most teams."
+
+        - question: "During a large merge, you know that **all** conflicting lines should be resolved in favour of the incoming feature branch. Which command avoids manual conflict resolution while still combining non-conflicting changes normally?"
+          options:
+            - "`git merge feature -X ours` — keeps your current branch's version on every conflict"
+            - "`git merge feature -X theirs` — keeps the incoming branch's version on every conflict"
+            - "`git merge --abort` — cancels the merge so you can resolve conflicts later"
+            - "`git merge feature --no-ff` — forces a merge commit but does not auto-resolve conflicts"
+          correct_index: 1
+          explanation: "`-X theirs` tells Git to automatically resolve every conflict by keeping the incoming branch's version. Non-conflicting changes from both branches are still combined normally. `-X ours` does the opposite — keeps the current branch's version. These flags are useful when one side is clearly authoritative, saving you from resolving each conflict marker by hand."
+
+  # --------------------------------------------------------------------------
+  # STEP 14: Review and best practices
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
     instructions: |
@@ -2504,7 +2763,6 @@ steps:
       | `git branch` | List branches |
       | `git switch <branch>` | Switch to an existing branch |
       | `git switch -c <branch>` | Create and switch to a new branch |
-      | `git switch --detach <ref>` | Inspect a commit in detached HEAD state |
       | `git merge` | Combine branch histories |
       | `git revert <hash>` | Safely undo a commit (adds anti-commit) |
 
@@ -2709,7 +2967,7 @@ steps:
           correct_index: 1
           explanation: "`--graph` draws ASCII art showing branch structure and merge points. `--all` includes all branches, not just the current one. `--oneline` keeps it readable. Together they give the most complete overview of your repository's entire history."
 
-        - question: "**[Phase 1: Setup]** A colleague shares a project folder via USB — it has source files but no `.git` directory. `git status` reports 'not a git repository'. What is the single command needed before you can start tracking changes?"
+        - question: "A colleague shares a project folder via USB — it has source files but no `.git` directory. `git status` reports 'not a git repository'. What is the single command needed before you can start tracking changes?"
           options:
             - "`git init` — creates the hidden `.git` directory that turns the folder into a repository"
             - "`git config --global` — registers the folder with Git's global settings"
@@ -2718,7 +2976,7 @@ steps:
           correct_index: 0
           explanation: "Without `.git/`, the folder is not a repository — `git init` creates it. `git clone` only works with a remote URL. `git add` requires a repository to already exist. The error 'not a git repository' always means `git init` (or `git clone`) needs to run first."
 
-        - question: "**[Phase 2: Staging]** You've modified 5 files but only want 2 of them in your next commit. Which staging approach gives you the most precise control?"
+        - question: "You've modified 5 files but only want 2 of them in your next commit. Which staging approach gives you the most precise control?"
           options:
             - "`git add .` — stage everything, then unstage the ones you don't want"
             - "`git add file1.py file2.py` — stage only the specific files by name"
@@ -2736,7 +2994,7 @@ steps:
           correct_index: 1
           explanation: "Git requires **all** conflicting files to be resolved and staged before the merge commit can be created. Running `git commit` with any 'unmerged paths' remaining will fail with an error. Fix each conflict, `git add` each file, then commit once."
 
-        - question: "**[Phase 2: Staging]** You ran `git add .` and accidentally staged `secrets.env` alongside your real changes. You need to unstage **only** that file while keeping everything else staged and your edits intact. What do you run?"
+        - question: "You ran `git add .` and accidentally staged `secrets.env` alongside your real changes. You need to unstage **only** that file while keeping everything else staged and your edits intact. What do you run?"
           options:
             - "`git restore secrets.env` — unstages and discards the file's edits"
             - "`git restore --staged secrets.env` — moves only that file off the staging area, preserving edits"
@@ -2745,7 +3003,7 @@ steps:
           correct_index: 1
           explanation: "`git restore --staged <file>` is surgical: it moves one file off the post editor while leaving the rest of your staged changes untouched. Without `--staged`, `git restore` would also discard the working-directory edits — a destructive difference."
 
-        - question: "**[Phase 3: Committing]** Without a staging area, `git commit` would have to snapshot every modified file at once. What capability would you lose?"
+        - question: "Without a staging area, `git commit` would have to snapshot every modified file at once. What capability would you lose?"
           options:
             - "The ability to push to a remote repository"
             - "The ability to create focused, logical commits from a messy working directory with many in-progress edits"
@@ -2754,7 +3012,7 @@ steps:
           correct_index: 1
           explanation: "The staging area is the mechanism that decouples 'what you're working on' from 'what you're ready to commit'. Without it, every commit would be an all-or-nothing snapshot, making it impossible to create clean, single-purpose history entries from a working directory in flux."
 
-        - question: "**[Phase 4: Inspection]** You want to see the **line-by-line** differences of what you've modified but **not yet staged**. Which command do you use?"
+        - question: "You want to see the **line-by-line** differences of what you've modified but **not yet staged**. Which command do you use?"
           options:
             - "`git status`"
             - "`git log`"
@@ -2763,7 +3021,7 @@ steps:
           correct_index: 2
           explanation: "`git diff` compares the working directory to the staging area."
 
-        - question: "**[Phase 5: History]** Which command shows a chronological list of all commits, their authors, and their unique SHA-1 hashes?"
+        - question: "Which command shows a chronological list of all commits, their authors, and their unique SHA-1 hashes?"
           options:
             - "`git status`"
             - "`git diff --history`"
@@ -2772,7 +3030,7 @@ steps:
           correct_index: 2
           explanation: "`git log` prints the full chain of snapshots — each entry shows the unique commit hash, author, timestamp, and message. Add `--oneline` to compress to one line per commit, `--graph` to draw ASCII branch structure, and `--all` to include every branch. You used this in Step 7 to inspect commits and in Steps 10–11 to verify merges and track history."
 
-        - question: "**[Phase 6: Branching]** Creating a branch takes ~41 bytes and is nearly instant, even in a 10-year-old repository with thousands of files. What explains this?"
+        - question: "Creating a branch takes ~41 bytes and is nearly instant, even in a 10-year-old repository with thousands of files. What explains this?"
           options:
             - "Git copies only recently modified files, so large old repositories are fast"
             - "A branch is just a tiny file containing one commit hash — creating it involves no copying at all"
@@ -2781,7 +3039,7 @@ steps:
           correct_index: 1
           explanation: "A branch is a 41-byte text file in `.git/refs/heads/` that holds a single SHA hash. 'Creating a branch' means writing that one file — regardless of how many commits or files exist. This is why Git can have hundreds of branches at virtually no cost."
 
-        - question: "**[Phase 7: Merging]** When you merge two branches that have **diverged** (both have unique commits), what kind of commit does Git create to combine them?"
+        - question: "When you merge two branches that have **diverged** (both have unique commits), what kind of commit does Git create to combine them?"
           options:
             - "A fast-forward commit"
             - "A merge commit (with two parents)"
@@ -2790,7 +3048,7 @@ steps:
           correct_index: 1
           explanation: "When two branches have diverged (each has unique commits since the split), Git finds their **common ancestor** commit, then compares both tips against it. Changes that don't overlap are combined automatically; lines changed differently by both branches become a conflict. The result is a **merge commit with two parents** — visible as a join point in `git log --oneline --graph`. You set this up and experienced it in Steps 10–11."
 
-        - question: "**[Phase 8: Conflicts]** A teammate asks: 'Can I use `git merge --abort` to cancel the whole merge after I've already fixed half the conflicts?' What do you tell them?"
+        - question: "A teammate asks: 'Can I use `git merge --abort` to cancel the whole merge after I've already fixed half the conflicts?' What do you tell them?"
           options:
             - "No — once you start resolving, you must finish; abort is disabled"
             - "Yes — `git merge --abort` can be run at any point to cancel the merge and restore both branches to their pre-merge state"
@@ -2799,7 +3057,7 @@ steps:
           correct_index: 1
           explanation: "`git merge --abort` cancels an in-progress merge at any point — even mid-resolution — restoring your working directory and staging area to the state before `git merge` was run. It is the safe escape hatch if you decide the merge strategy needs rethinking."
 
-        - question: "**[Phase 9: Undoing]** Which command is the **safest** way to undo a mistake that has already been committed and potentially shared with a team?"
+        - question: "Which command is the **safest** way to undo a mistake that has already been committed and potentially shared with a team?"
           options:
             - "`git reset --hard`"
             - "`git revert <hash>`"
@@ -2808,7 +3066,7 @@ steps:
           correct_index: 1
           explanation: "`git revert` is the safe undo for committed, shared work: it creates a new commit that applies the **exact inverse** of the target commit, leaving all existing history untouched. `git reset --hard`, by contrast, destroys commits by moving the branch pointer backward and requires a force-push on shared branches — breaking every teammate who already pulled. You practiced this distinction directly in Step 12."
 
-        - question: "**[Synthesis]** Six months ago, `.env` containing database credentials was accidentally committed to `main`. You've since added `.env` to `.gitignore` and committed. Is the secret safe from someone who clones the repository today?"
+        - question: "Six months ago, `.env` containing database credentials was accidentally committed to `main`. You've since added `.env` to `.gitignore` and committed. Is the secret safe from someone who clones the repository today?"
           options:
             - "Yes — `.gitignore` retroactively scrubs the file from all past commits"
             - "Yes — Git encrypts committed secrets when `.gitignore` is added"
@@ -2817,7 +3075,7 @@ steps:
           correct_index: 2
           explanation: "`.gitignore` only affects future `git add` and `git status` behaviour — it never rewrites history. A cloned repository receives the full commit history including the commit that added `.env`. This is why Step 6 emphasised creating `.gitignore` **before** your first commit."
 
-        - question: "**[Synthesis]** Why does `git switch` sometimes change the files you see in your file explorer?"
+        - question: "Why does `git switch` sometimes change the files you see in your file explorer?"
           options:
             - "Because Git is downloading them from a server"
             - "Because Git updates your working directory to match the snapshot the branch points to"
@@ -2826,7 +3084,7 @@ steps:
           correct_index: 1
           explanation: "Git's 'Time Machine' capability replaces your files with the versions from the target snapshot."
 
-        - question: "**[Phase 4: Inspection]** You staged `app.py` with `git add`. Which command shows you exactly what will be in the **next commit** — before you actually commit?"
+        - question: "You staged `app.py` with `git add`. Which command shows you exactly what will be in the **next commit** — before you actually commit?"
           options:
             - "`git diff`"
             - "`git diff --staged`"
@@ -2835,7 +3093,7 @@ steps:
           correct_index: 1
           explanation: "`git diff --staged` compares the staging area to the last commit — showing precisely what `git commit` would snapshot. `git diff` without flags shows only unstaged changes (which would be nothing here). `git show HEAD` inspects what was already committed."
 
-        - question: "**[Synthesis]** You are about to run `git merge feature` from `main`. Name the **three** things you should check first. (Select all that apply)"
+        - question: "You are about to run `git merge feature` from `main`. Name the **three** things you should check first. (Select all that apply)"
           type: multiple
           options:
             - "Confirm you are on the correct target branch (`git branch --show-current`)"
@@ -2848,7 +3106,7 @@ steps:
             - 2
           explanation: "Before merging: (1) be on the right branch, (2) preview the incoming changes, (3) start from a clean working directory so you don't mix in-progress work with conflict resolution. Pushing first is unrelated to the merge — you push *after* the merge is complete."
 
-        - question: "**[Synthesis]** Which sequence correctly describes the full local Git workflow from editing a file to having it permanently saved in history?"
+        - question: "Which sequence correctly describes the full local Git workflow from editing a file to having it permanently saved in history?"
           type: multiple
           options:
             - "Edit file in working directory"
@@ -2861,7 +3119,7 @@ steps:
             - 3
           explanation: "The local workflow is **edit → stage → commit**. `git push` uploads to a remote and is a separate step that happens *after* committing. A commit is permanent in the local repository regardless of whether you ever push."
 
-        - question: "**[Evaluate]** A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
+        - question: "A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
           options:
             - "Nothing — committing to `main` is standard for solo projects and small teams"
             - "Isolation — changes land on the shared branch immediately with no review window; broken work-in-progress blocks teammates and rollback becomes harder"
@@ -2883,172 +3141,11 @@ steps:
             - 3
           explanation: "`git push -f` rewrites shared history and breaks every teammate who already pulled — the opposite of a best practice on shared branches. The other three were explicitly taught throughout this tutorial: descriptive messages (Step 2), `.gitignore` first (Step 6), and safe undo with `git revert` (Step 12)."
 
-  # --------------------------------------------------------------------------
-  # BONUS STEP: Remote workflow (conceptual)
-  # --------------------------------------------------------------------------
-  - title: "Bonus: Working with Remotes"
-    instructions: |
-      ### Time to go online
-
-      Everything so far has been local — just you and your machine.
-      But in the real world, code lives on **remote repositories**
-      like GitHub, GitLab, or Bitbucket. This is where collaboration
-      happens: pull requests, code reviews, and shipping to production.
-
-      The remote workflow adds three key commands to what you already know:
-
-      ### The remote workflow
-
-      ```
-      ┌──────────────┐  git add/commit  ┌──────────────┐    git push    ┌──────────────┐
-      │   Working    │ ───────────────▶ │    Local     │ ─────────────▶ │    Remote    │
-      │  Directory   │ ◀─────────────── │     Repo     │ ◀───────────── │     Repo     │
-      └──────────────┘   git restore    └──────────────┘    git pull    └──────────────┘
-                                          (your machine)                  (e.g. GitHub)
-      ```
-
-      - **`git clone <url>`** — Download a full copy of a remote repository
-        (including its entire history) to your machine
-      - **`git push`** — Upload your local commits to the remote repository
-      - **`git pull`** — Download and merge new commits from the remote into
-        your local branch
-
-      ### Task 1: Simulate a remote with a bare repository
-
-      We can simulate a remote repository right here using a "bare" repo
-      (a repository with no working directory — just the `.git` data):
-
-      ```bash
-      cd /tutorial
-      git init --bare remote-repo.git
-      ```
-
-      ### Task 2: Connect your project to the remote
-
-      ```bash
-      cd /tutorial/myproject
-      git remote add origin /tutorial/remote-repo.git
-      ```
-
-      `origin` is the conventional name for your primary remote.
-
-      ### Task 3: Push your work
-
-      > **Before you run:** Think about what `git push` will do. Will it
-      > send only the latest commit, or the entire branch history?
-
-      ```bash
-      git push -u origin main
-      ```
-
-      The `-u` flag sets `origin/main` as the upstream tracking branch,
-      so future pushes only need `git push`.
-
-      ### Task 4: Simulate a colleague's change
-
-      Clone the remote into a separate directory (like a teammate would):
-
-      ```bash
-      cd /tutorial
-      git clone remote-repo.git colleague-copy
-      cd colleague-copy
-      ```
-
-      Make a change as your "colleague":
-
-      ```bash
-      echo "# Contributing Guide" > CONTRIBUTING.md
-      git add CONTRIBUTING.md
-      git commit -m "Add contributing guide"
-      git push
-      ```
-
-      ### Task 5: Pull your colleague's changes
-
-      Switch back to your original project and pull:
-
-      ```bash
-      cd /tutorial/myproject
-      git pull
-      ```
-
-      Check that the new file arrived:
-
-      ```bash
-      ls CONTRIBUTING.md
-      git log --oneline -3
-      ```
-
-      You now have your colleague's work in your local repository.
-      That's the complete Git collaboration cycle:
-      **branch → commit → push → pull → merge**. This is literally
-      how teams at every tech company ship code every day.
-
-    solution:
-      commands:
-        - "cd /tutorial && git init --bare remote-repo.git"
-        - "cd /tutorial/myproject && git remote add origin /tutorial/remote-repo.git"
-        - "git push -u origin main"
-        - "cd /tutorial && git clone remote-repo.git colleague-copy"
-        - "cd /tutorial/colleague-copy"
-        - "echo '# Contributing Guide' > CONTRIBUTING.md"
-        - "git add CONTRIBUTING.md"
-        - "git commit -m 'Add contributing guide'"
-        - "git push"
-        - "cd /tutorial/myproject && git pull"
-        - "ls CONTRIBUTING.md"
-      explanation: |
-        - **`git init --bare`:** Creates a repository without a working directory — exactly what servers like GitHub host. It only stores the `.git` data.
-        - **`git remote add origin`:** Registers a remote repository under the name `origin`. You can have multiple remotes (e.g., `upstream` for a fork's parent).
-        - **`git push -u origin main`:** Uploads all commits on `main` to the remote. `-u` sets the upstream, so future `git push` and `git pull` know which remote branch to sync with.
-        - **`git clone`:** Creates a full copy of the remote repository, including its complete history. Your "colleague" gets everything.
-        - **`git pull`:** Fetches new commits from the remote and merges them into your current branch. It's equivalent to `git fetch` + `git merge`.
-
-    tests:
-      - description: "Remote 'origin' is configured"
-        command: "cd /tutorial/myproject && git remote | grep -q 'origin'"
-      - description: "main branch has been pushed to origin"
-        command: "cd /tutorial/myproject && git log origin/main --oneline | grep -q '.'"
-      - description: "CONTRIBUTING.md exists after pull"
-        command: "cd /tutorial/myproject && [ -f CONTRIBUTING.md ]"
-
-    quiz:
-      title: "Working with Remotes — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "What does `git clone` do?"
+        - question: "After running `git push -u origin main`, a teammate clones the repository and makes two commits. You run `git pull`. What does `git pull` actually do under the hood?"
           options:
-            - "Creates an empty repository on the remote server"
-            - "Downloads a full copy of a remote repository including its entire commit history"
-            - "Copies only the latest version of the files without any history"
-            - "Creates a symbolic link to the remote repository"
+            - "It downloads the remote repository and replaces your local files"
+            - "It runs `git fetch` (download new commits) followed by `git merge` (integrate them into your current branch)"
+            - "It creates a new branch with the remote's changes and switches to it"
+            - "It only updates `git log` to show the remote commits — your files are unchanged until you run `git merge`"
           correct_index: 1
-          explanation: "`git clone` creates a complete, independent copy of the repository — including every commit, branch, and tag. You get the full history, not just the latest snapshot."
-
-        - question: "What is the difference between `git push` and `git pull`?"
-          options:
-            - "`push` uploads your local commits to the remote; `pull` downloads and merges remote commits into your local branch"
-            - "`push` creates a new branch on the remote; `pull` deletes a branch from the remote"
-            - "`push` sends files to your teammates directly; `pull` requests their files"
-            - "They are synonyms — both sync your repository with the remote"
-          correct_index: 0
-          explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
-
-        - question: "**[Interleaved: Revisit Step 13]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
-          options:
-            - "`git reset --hard HEAD~1` then `git push -f`"
-            - "`git revert HEAD`"
-            - "`git restore HEAD`"
-            - "`git checkout HEAD~1`"
-          correct_index: 1
-          explanation: "`git revert` creates a safe anti-commit. On shared branches, never use `git reset --hard` + force-push — it rewrites history and breaks every teammate's local copy."
-
-        - question: "**[Evaluate]** Your team has a choice: everyone pushes directly to `main`, or everyone works on feature branches and merges via pull requests. What are the trade-offs?"
-          options:
-            - "Direct push is always better — pull requests add unnecessary overhead"
-            - "Feature branches add overhead but provide isolation, code review opportunities, and protect `main` from broken code"
-            - "Pull requests are only needed for open-source projects, not internal teams"
-            - "There is no difference — both approaches produce identical results"
-          correct_index: 1
-          explanation: "Feature branches + pull requests are the industry standard because they provide isolation (broken code doesn't affect `main`), enable code review before merging, and create a clear history of what was reviewed and approved. The trade-off is process overhead, which is worth it for most teams."
+          explanation: "`git pull` is shorthand for two operations: `git fetch` downloads new commits from the remote without touching your working directory, then `git merge` integrates those commits into your current branch. Understanding this two-step process helps when you need finer control — for example, running `git fetch` first to inspect incoming changes before merging."
