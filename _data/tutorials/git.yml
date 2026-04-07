@@ -5,6 +5,8 @@ require_tests: true
 allow_autosave: false
 
 setup_commands:
+  - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
+  - "echo 'export LESSCHARSET=utf-8' >> ~/.bashrc && export LESSCHARSET=utf-8"
   - "git config --global user.email 'diligent-student@cs.ucla.edu'"
   - "git config --global user.name 'Soon-to-be Git Hero'"
   - "git config --global init.defaultBranch main"
@@ -742,7 +744,7 @@ steps:
         - question: "You run `git restore calculator.py` (without `--staged`). What happens to your unsaved edits?"
           options:
             - "They are moved to the staging area for review"
-            - "They are saved to a temporary stash automatically"
+            - "They are saved to a temporary location automatically"
             - "They are permanently discarded — there is no undo"
             - "They are committed as a 'WIP' commit"
           correct_index: 2
@@ -1351,6 +1353,8 @@ steps:
     watch_files:
       - "myproject/calculator.py"
 
+    open_file: "myproject/calculator.py"
+
     solution:
       files:
         - path: "myproject/calculator.py"
@@ -1418,7 +1422,7 @@ steps:
             - "Git always refuses to switch branches when there are staged changes"
             - "All staged changes are permanently discarded when switching branches"
           correct_index: 1
-          explanation: "The staging area is **not per-branch** — it's a shared workspace. `git switch` carries staged changes to the target branch if no conflict arises with files that must change during the switch. If there is a conflict, Git refuses and asks you to commit or stash. This reinforces the three-state model from Step 1."
+          explanation: "The staging area is **not per-branch** — it's a shared workspace. `git switch` carries staged changes to the target branch if no conflict arises with files that must change during the switch. If there is a conflict, Git refuses and asks you to save your work first. This reinforces the three-state model from Step 1."
 
         - question: "You are on `feature-x` and run `git switch main`. What happens to the files in your working directory?"
           options:
@@ -1442,142 +1446,13 @@ steps:
           options:
             - "Run `git switch` anyway — Git auto-saves all unstaged changes to the current branch"
             - "Run `git restore calculator.py` to discard the edits, then switch freely"
-            - "Commit or stash your changes first so you start the switch with a clean working directory"
+            - "Commit your changes first so you start the switch with a clean working directory"
             - "Rename `calculator.py` before switching so Git does not detect the modification"
           correct_index: 2
           explanation: "As Step 5 established, the cleanest workflow is to leave your working directory in a known state before switching contexts. **Committing** gives you a named, recoverable checkpoint. Running `git switch` with uncommitted changes may carry them across branches — or fail with a conflict warning — depending on whether those files differ between the two branches. When in doubt, commit first."
 
   # --------------------------------------------------------------------------
-  # STEP 9: Branch Internals & Detached HEAD
-  # --------------------------------------------------------------------------
-  - title: "Branch Internals and Detached HEAD"
-    instructions: |
-      ### What is a branch, really?
-
-      In the last step you saw branches behave like separate timelines.
-      Now let's look under the hood to understand *why*.
-
-      A branch is not a copy of your project — it's a **41-byte text file**
-      containing a single commit hash. Prove it:
-
-      ### Task 1: See the branch pointers
-
-      ```bash
-      cat .git/refs/heads/main
-      cat .git/refs/heads/feature-divide
-      ```
-
-      Each file contains the SHA of the commit that branch currently points to.
-      Now inspect `HEAD` itself:
-
-      ```bash
-      cat .git/HEAD
-      ```
-
-      You'll see `ref: refs/heads/feature-divide` — HEAD is a *symbolic
-      reference* that points to a branch pointer, not directly to a commit.
-      When you make a commit, Git moves the branch pointer forward and HEAD
-      follows automatically.
-
-      ### Task 2: Inspecting individual commits (Detached HEAD)
-
-      Sometimes you need to inspect an old commit without being on any branch.
-      Use `--detach` with a commit hash or relative reference:
-
-      ```bash
-      git switch --detach HEAD~1
-      cat .git/HEAD
-      ```
-
-      Now `HEAD` contains a raw SHA hash instead of a branch ref — this is
-      **detached HEAD state**. You can look around freely, but:
-
-      > Think of it like visiting a museum archive. You can pull out any
-      > document and read it freely. But if you jot experimental notes and
-      > then wander off to a different exhibit without labelling your desk,
-      > the archive staff can't tell which room to keep your notes in.
-      > `git switch -c <name>` is the label you must leave before walking
-      > away.
-
-      **Warning:** Any commits you make here are not anchored to any branch.
-      If you switch away without creating a new branch first, those commits
-      become orphaned and will eventually be garbage-collected by Git.
-
-      If you accidentally switch away and lose track of the SHA, `git reflog`
-      records every position HEAD has been at — including orphaned commits.
-      Run `git reflog`, find the lost hash, then `git switch -c recovery <hash>`
-      to rescue the work.
-
-      Always return to a branch before doing real work:
-
-      ```bash
-      git switch feature-divide
-      ```
-
-    solution:
-      commands:
-        - "cat .git/refs/heads/main"
-        - "cat .git/refs/heads/feature-divide"
-        - "cat .git/HEAD"
-        - "git switch --detach HEAD~1"
-        - "cat .git/HEAD"
-        - "git switch feature-divide"
-      explanation: |
-        - **Branch pointers:** A branch is just a 41-byte file in `.git/refs/heads/` containing the current commit's SHA. Creating a branch is nearly instantaneous.
-        - **HEAD:** A symbolic reference that normally contains `ref: refs/heads/<branch>`. It tells Git which branch you're on.
-        - **Detached HEAD:** When HEAD contains a raw SHA hash instead of a branch ref. Commits made here are orphaned — no branch pointer tracks them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work.
-
-    tests:
-      - description: "Currently on feature-divide branch (not in detached HEAD)"
-        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
-
-    quiz:
-      title: "Branch Internals — Knowledge Check"
-      min_score: 0.8
-      shuffle: true
-      questions:
-        - question: "What is a Git branch, physically speaking?"
-          options:
-            - "A full copy of all project files stored separately"
-            - "A lightweight pointer (a 41-byte text file) containing a commit hash"
-            - "A separate network connection to a remote server"
-            - "A compressed archive of your working directory"
-          correct_index: 1
-          explanation: "A branch is just a tiny file in `.git/refs/heads/` containing a 40-character SHA hash. Creating a branch is nearly instantaneous and uses almost no storage — it's not a copy of your files."
-
-        - question: "Which statements about **Detached HEAD** state are true? (Select all that apply)"
-          type: multiple
-          options:
-            - "HEAD points directly to a commit hash instead of a branch name"
-            - "You can safely make new commits here — they are automatically saved to the nearest branch"
-            - "Any commits made in detached HEAD state are not anchored to a branch and may be garbage-collected"
-            - "You should create a new branch before making commits if you want to keep the work"
-          correct_indices:
-            - 0
-            - 2
-            - 3
-          explanation: "In detached HEAD, `HEAD` contains a raw SHA instead of a branch ref. Commits here are orphaned — no branch pointer tracks them. Git will eventually garbage-collect them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work."
-
-        - question: "**[Interleaved: Revisit Step 9]** You are in detached HEAD state after running `git switch --detach HEAD~3`. You make 3 experimental commits you want to keep. What must you do **before** running `git switch main`?"
-          options:
-            - "Nothing — Git automatically anchors detached HEAD commits to the nearest branch when you switch away"
-            - "Run `git commit --save` to anchor the commits permanently"
-            - "Run `git switch -c experiment` to create a branch pointing to your latest commit before you leave this state"
-            - "Run `git stash` to save the commits temporarily"
-          correct_index: 2
-          explanation: "Commits in detached HEAD are not reachable from any branch. `git switch main` leaves them orphaned — eventually garbage-collected. The fix is `git switch -c <new-branch-name>`, which creates a branch pointer at your current (latest) detached commit **before** you leave, making those 3 commits permanently reachable. If you forgot and already switched away, `git reflog` can find the lost SHA."
-
-        - question: "**[Evaluate]** You entered detached HEAD state to inspect an old commit, made 2 experimental commits, then ran `git switch main` without creating a branch first. A week later those commits are gone. What happened and why?"
-          options:
-            - "Git deleted them automatically after 24 hours to save disk space"
-            - "The commits were orphaned — with no branch pointing to them they became unreachable, and `git gc` eventually pruned them"
-            - "The commits were automatically archived in `.git/stash`"
-            - "`git switch main` automatically rebased the commits onto `main`"
-          correct_index: 1
-          explanation: "A commit only survives long-term if it is **reachable** from a named reference (branch, tag, or HEAD). Orphaned commits have no such reference and are eventually removed by `git gc`, usually after 30 days. If you catch the mistake quickly, `git reflog` can find the lost SHA and `git switch -c recovery <sha>` rescues the work. The lesson from this step: always run `git switch -c <name>` **before** committing in detached HEAD state."
-
-  # --------------------------------------------------------------------------
-  # STEP 10: Merging — fast-forward and three-way merge (was Step 9)
+  # STEP 9: Merging — fast-forward and three-way merge
   # --------------------------------------------------------------------------
   - title: "Merging Branches"
     instructions: |
@@ -1771,7 +1646,7 @@ steps:
           explanation: "This is a real professional debate. `--no-ff` forces a merge commit even when Git could fast-forward, preserving the fact that work happened on a branch. The trade-off is a busier log. Many teams prefer this for feature branches but not for trivial changes. There is no single correct answer — it depends on team workflow."
 
   # --------------------------------------------------------------------------
-  # STEP 11: Create a branch for merge conflict setup (was Step 10)
+  # STEP 10: Create a branch for merge conflict setup
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
     instructions: |
@@ -1895,14 +1770,14 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
-        - question: "**[Interleaved: Revisit Step 9]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-add-function` immediately. What should you do **first**, and why does the order matter?"
+        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-add-function` immediately. What should you do **first**, and why does the order matter?"
           options:
             - "Run `git switch -c update-add-function` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
-            - "Stage and commit your current work first (or stash it), then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
+            - "Stage and commit your current work first, then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
             - "Discard your modifications with `git restore .` to get a clean slate before branching"
             - "Order doesn't matter — Git branch creation never interacts with working-directory state"
           correct_index: 1
-          explanation: "You *can* branch with uncommitted changes (Git will carry them), but this creates ambiguity: those unrelated changes now appear to belong to the new feature branch. The professional habit is to start every branch from a known committed state. This is exactly the pattern Step 9 established — commit (or stash) before switching contexts."
+          explanation: "You *can* branch with uncommitted changes (Git will carry them), but this creates ambiguity: those unrelated changes now appear to belong to the new feature branch. The professional habit is to start every branch from a known committed state. This is exactly the pattern Step 8 established — always commit your work before switching contexts."
 
         - question: "You are setting up a merge conflict scenario. You made changes on `update-add-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
@@ -1926,7 +1801,7 @@ steps:
           explanation: "Conflicts happen when the **same lines** are changed differently on two branches. Adding different content at the same location (both adding to end of file) can also conflict if they overlap. Adding different files or editing completely separate files never conflicts."
 
   # --------------------------------------------------------------------------
-  # STEP 12: Resolving a merge conflict (was Step 11)
+  # STEP 11: Resolving a merge conflict
   # --------------------------------------------------------------------------
   - title: "Resolving a Merge Conflict"
     instructions: |
@@ -2020,9 +1895,8 @@ steps:
 
       ### Task 5: Complete the merge
 
-      After editing, mark the conflict as resolved and create the merge commit.
-      Recall: you resolved a conflict in `calculator.py` — which command tells
-      Git a conflict is resolved? Then commit. You've done both of these before.
+      After editing, mark the conflict as resolved (using `git add`) and create the merge commit.
+      You've done both of these before.
 
       You just resolved a merge conflict! That's genuinely a flex — this
       is a skill that trips up even experienced developers.
@@ -2153,7 +2027,7 @@ steps:
           explanation: "Merge conflicts are a feature, not a bug — they prevent silent data loss. Working on one branch means no isolation: any commit immediately affects everyone, broken code blocks the whole team, and parallel feature development becomes impossible. The real fix is to merge *more often* (keep branches short-lived) and communicate about who's editing which files."
 
   # --------------------------------------------------------------------------
-  # STEP 13: Safe undo with git revert (was Step 12)
+  # STEP 12: Safe undo with git revert
   # --------------------------------------------------------------------------
   - title: "Safe Undo with git revert"
     instructions: |
@@ -2459,7 +2333,7 @@ steps:
           explanation: "`git revert HEAD --no-edit` creates a new commit that exactly inverts the changes in `HEAD`, preserving the full history. `--no-edit` accepts Git's default revert message without opening a text editor. The distractors (`reset --hard HEAD~1`) represent the dangerous alternative: it destroys commits rather than adding a safe inverse."
 
   # --------------------------------------------------------------------------
-  # STEP 14: Review and best practices (was Step 13)
+  # STEP 13: Review and best practices
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
     instructions: |
@@ -2521,7 +2395,7 @@ steps:
 
       <details>
       <summary>Hint 1 — creating a branch and switching to it</summary>
-      Revisit Step 9: there is a single <code>git switch</code> flag that creates a
+      Revisit Step 8: there is a single <code>git switch</code> flag that creates a
       branch and immediately switches to it in one command.
       </details>
 
@@ -2533,7 +2407,7 @@ steps:
 
       <details>
       <summary>Hint 3 — merging back into main</summary>
-      Revisit Step 11: switch to the branch you want to merge <em>into</em>
+      Revisit Step 9: switch to the branch you want to merge <em>into</em>
       before running <code>git merge</code>. Preview changes first with
       <code>git diff main..feature-power</code>.
       </details>
@@ -2722,7 +2596,7 @@ steps:
           correct_index: 1
           explanation: "Staging files by name is the most direct way to control what enters each commit — the core lesson from Step 4. While `git add .` followed by `git restore --staged` would also work, naming files explicitly is simpler and less error-prone."
 
-        - question: "**[Interleaved: Revisit Step 13]** You resolved the conflict in `app.py` and ran `git add app.py`. `git status` then shows a second file, `config.py`, also marked 'both modified'. Can you run `git commit` now?"
+        - question: "**[Interleaved: Revisit Step 11]** You resolved the conflict in `app.py` and ran `git add app.py`. `git status` then shows a second file, `config.py`, also marked 'both modified'. Can you run `git commit` now?"
           options:
             - "Yes — `git commit` will finish the merge and ignore the unresolved file"
             - "No — every conflicting file must be resolved and `git add`-ed before `git commit` will succeed"
@@ -2765,7 +2639,7 @@ steps:
             - "`git log`"
             - "`git cat-file`"
           correct_index: 2
-          explanation: "`git log` prints the full chain of snapshots — each entry shows the unique commit hash, author, timestamp, and message. Add `--oneline` to compress to one line per commit, `--graph` to draw ASCII branch structure, and `--all` to include every branch. You used this in Step 7 to inspect commits and in Steps 12–13 to verify merges and track history."
+          explanation: "`git log` prints the full chain of snapshots — each entry shows the unique commit hash, author, timestamp, and message. Add `--oneline` to compress to one line per commit, `--graph` to draw ASCII branch structure, and `--all` to include every branch. You used this in Step 7 to inspect commits and in Steps 10–11 to verify merges and track history."
 
         - question: "**[Phase 6: Branching]** Creating a branch takes ~41 bytes and is nearly instant, even in a 10-year-old repository with thousands of files. What explains this?"
           options:
@@ -2783,7 +2657,7 @@ steps:
             - "A rebase commit"
             - "A duplicate commit"
           correct_index: 1
-          explanation: "When two branches have diverged (each has unique commits since the split), Git finds their **common ancestor** commit, then compares both tips against it. Changes that don't overlap are combined automatically; lines changed differently by both branches become a conflict. The result is a **merge commit with two parents** — visible as a join point in `git log --oneline --graph`. You set this up and experienced it in Steps 12–13."
+          explanation: "When two branches have diverged (each has unique commits since the split), Git finds their **common ancestor** commit, then compares both tips against it. Changes that don't overlap are combined automatically; lines changed differently by both branches become a conflict. The result is a **merge commit with two parents** — visible as a join point in `git log --oneline --graph`. You set this up and experienced it in Steps 10–11."
 
         - question: "**[Phase 8: Conflicts]** A teammate asks: 'Can I use `git merge --abort` to cancel the whole merge after I've already fixed half the conflicts?' What do you tell them?"
           options:
@@ -2801,7 +2675,7 @@ steps:
             - "`git checkout <hash>`"
             - "`git clean -fd`"
           correct_index: 1
-          explanation: "`git revert` is the safe undo for committed, shared work: it creates a new commit that applies the **exact inverse** of the target commit, leaving all existing history untouched. `git reset --hard`, by contrast, destroys commits by moving the branch pointer backward and requires a force-push on shared branches — breaking every teammate who already pulled. You practiced this distinction directly in Step 14."
+          explanation: "`git revert` is the safe undo for committed, shared work: it creates a new commit that applies the **exact inverse** of the target commit, leaving all existing history untouched. `git reset --hard`, by contrast, destroys commits by moving the branch pointer backward and requires a force-push on shared branches — breaking every teammate who already pulled. You practiced this distinction directly in Step 12."
 
         - question: "**[Synthesis]** Six months ago, `.env` containing database credentials was accidentally committed to `main`. You've since added `.env` to `.gitignore` and committed. Is the secret safe from someone who clones the repository today?"
           options:
@@ -2881,7 +2755,7 @@ steps:
             - "Only a naming convention — branches must follow the `feature-*` pattern"
             - "The commit frequency rule — all commits must happen at least daily"
           correct_index: 1
-          explanation: "Feature branches provide **isolation**: your in-progress work never touches the stable shared branch until it is ready and reviewed. Without branching, one broken commit immediately affects every teammate. Branches also enable pull-request code review and make reverting a logical unit of work trivial — as you practiced throughout Steps 9–14."
+          explanation: "Feature branches provide **isolation**: your in-progress work never touches the stable shared branch until it is ready and reviewed. Without branching, one broken commit immediately affects every teammate. Branches also enable pull-request code review and make reverting a logical unit of work trivial — as you practiced throughout Steps 8–13."
 
         - question: "**[Evaluate]** After completing the capstone, `git log --oneline` shows: `a1b2 wip`, `b2c3 fix`, `c3d4 more fix`, `d4e5 finally works`. What problem does this log represent?"
           options:
@@ -2903,7 +2777,7 @@ steps:
             - 0
             - 1
             - 3
-          explanation: "`git push -f` rewrites shared history and breaks every teammate who already pulled — the opposite of a best practice on shared branches. The other three were explicitly taught throughout this tutorial: descriptive messages (Step 2), `.gitignore` first (Step 6), and safe undo with `git revert` (Step 14)."
+          explanation: "`git push -f` rewrites shared history and breaks every teammate who already pulled — the opposite of a best practice on shared branches. The other three were explicitly taught throughout this tutorial: descriptive messages (Step 2), `.gitignore` first (Step 6), and safe undo with `git revert` (Step 12)."
 
   # --------------------------------------------------------------------------
   # BONUS STEP: Remote workflow (conceptual)
@@ -3057,7 +2931,7 @@ steps:
           correct_index: 0
           explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
 
-        - question: "**[Interleaved: Revisit Step 14]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
+        - question: "**[Interleaved: Revisit Step 13]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
           options:
             - "`git reset --hard HEAD~1` then `git push -f`"
             - "`git revert HEAD`"

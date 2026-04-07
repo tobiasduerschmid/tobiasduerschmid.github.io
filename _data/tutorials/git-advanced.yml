@@ -1,0 +1,519 @@
+title: "Advanced Git: HEAD, Detached HEAD, and Stashing"
+description: "Go deeper into Git internals — understand how HEAD and branch pointers work under the hood, master detached HEAD state, and learn to use git stash to context-switch without losing work"
+
+backend: v86
+
+require_tests: true
+allow_autosave: false
+
+setup_commands:
+  - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
+  - "echo 'export LESSCHARSET=utf-8' >> ~/.bashrc && export LESSCHARSET=utf-8"
+  - "git config --global user.email 'diligent-student@cs.ucla.edu'"
+  - "git config --global user.name 'Soon-to-be Git Hero'"
+  - "git config --global init.defaultBranch main"
+
+steps:
+  # --------------------------------------------------------------------------
+  # STEP 1: Branch Internals & Detached HEAD
+  # --------------------------------------------------------------------------
+  - title: "Branch Internals and Detached HEAD"
+    instructions: |
+      ### What is a branch, really?
+
+      You have seen branches behave like separate timelines.
+      Now let's look under the hood to understand *why*.
+
+      A branch is not a copy of your project — it's a **41-byte text file**
+      containing a single commit hash. Prove it:
+
+      ### Setup: Create a repository with some history
+
+      This tutorial assumes you already know the basics of Git (init, add,
+      commit, branch, switch). Let's set up a small project to explore with:
+
+      ```bash
+      git init myproject
+      cd myproject
+      echo '"""A simple calculator module."""' > calculator.py
+      git add calculator.py
+      git commit -m "Initial commit"
+      echo 'def add(a, b): return a + b' >> calculator.py
+      git add calculator.py
+      git commit -m "Add add function"
+      git switch -c feature-divide
+      echo 'def divide(a, b): return a / b' >> calculator.py
+      git add calculator.py
+      git commit -m "Add divide function"
+      git switch main
+      ```
+
+      ### Task 1: See the branch pointers
+
+      ```bash
+      cat .git/refs/heads/main
+      cat .git/refs/heads/feature-divide
+      ```
+
+      Each file contains the SHA of the commit that branch currently points to.
+      Now inspect `HEAD` itself:
+
+      ```bash
+      cat .git/HEAD
+      ```
+
+      You'll see `ref: refs/heads/main` — HEAD is a *symbolic
+      reference* that points to a branch pointer, not directly to a commit.
+      When you make a commit, Git moves the branch pointer forward and HEAD
+      follows automatically.
+
+      ```
+      HEAD → refs/heads/main → <commit SHA>
+      ```
+
+      This indirection is why branching is so cheap: HEAD never needs to
+      change when you commit — only the branch pointer file does.
+
+      ### Task 2: Inspecting individual commits (Detached HEAD)
+
+      Sometimes you need to inspect an old commit without being on any branch.
+      Use `--detach` with a commit hash or relative reference:
+
+      ```bash
+      git switch --detach HEAD~1
+      cat .git/HEAD
+      ```
+
+      Now `HEAD` contains a raw SHA hash instead of a branch ref — this is
+      **detached HEAD state**. You can look around freely, but:
+
+      > Think of it like visiting a museum archive. You can pull out any
+      > document and read it freely. But if you jot experimental notes and
+      > then wander off to a different exhibit without labelling your desk,
+      > the archive staff can't tell which room to keep your notes in.
+      > `git switch -c <name>` is the label you must leave before walking
+      > away.
+
+      **Warning:** Any commits you make in detached HEAD state are not anchored to any branch.
+      If you switch away without creating a new branch first, those commits
+      become orphaned and will eventually be garbage-collected by Git.
+
+      If you accidentally switch away and lose track of the SHA, `git reflog`
+      records every position HEAD has been at — including orphaned commits.
+      Run `git reflog`, find the lost hash, then `git switch -c recovery <hash>`
+      to rescue the work.
+
+      Always return to a branch before doing real work:
+
+      ```bash
+      git switch main
+      ```
+
+    solution:
+      commands:
+        - "git init myproject"
+        - "cd myproject"
+        - "echo '\"\"\"A simple calculator module.\"\"\"' > calculator.py"
+        - "git add calculator.py"
+        - "git commit -m 'Initial commit'"
+        - "echo 'def add(a, b): return a + b' >> calculator.py"
+        - "git add calculator.py"
+        - "git commit -m 'Add add function'"
+        - "git switch -c feature-divide"
+        - "echo 'def divide(a, b): return a / b' >> calculator.py"
+        - "git add calculator.py"
+        - "git commit -m 'Add divide function'"
+        - "git switch main"
+        - "cat .git/refs/heads/main"
+        - "cat .git/refs/heads/feature-divide"
+        - "cat .git/HEAD"
+        - "git switch --detach HEAD~1"
+        - "cat .git/HEAD"
+        - "git switch main"
+      explanation: |
+        - **Branch pointers:** A branch is just a 41-byte file in `.git/refs/heads/` containing the current commit's SHA. Creating a branch is nearly instantaneous.
+        - **HEAD:** A symbolic reference that normally contains `ref: refs/heads/<branch>`. It tells Git which branch you're on.
+        - **Detached HEAD:** When HEAD contains a raw SHA hash instead of a branch ref. Commits made here are orphaned — no branch pointer tracks them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work.
+
+    tests:
+      - description: "myproject directory exists and is a Git repository"
+        command: "[ -d /tutorial/myproject/.git ]"
+      - description: "Currently on main branch (not in detached HEAD)"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
+      - description: "feature-divide branch exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'feature-divide'"
+
+    quiz:
+      title: "Branch Internals — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "What is a Git branch, physically speaking?"
+          options:
+            - "A full copy of all project files stored separately"
+            - "A lightweight pointer (a 41-byte text file) containing a commit hash"
+            - "A separate network connection to a remote server"
+            - "A compressed archive of your working directory"
+          correct_index: 1
+          explanation: "A branch is just a tiny file in `.git/refs/heads/` containing a 40-character SHA hash. Creating a branch is nearly instantaneous and uses almost no storage — it's not a copy of your files."
+
+        - question: "Which statements about **Detached HEAD** state are true? (Select all that apply)"
+          type: multiple
+          options:
+            - "HEAD points directly to a commit hash instead of a branch name"
+            - "You can safely make new commits here — they are automatically saved to the nearest branch"
+            - "Any commits made in detached HEAD state are not anchored to a branch and may be garbage-collected"
+            - "You should create a new branch before making commits if you want to keep the work"
+          correct_indices:
+            - 0
+            - 2
+            - 3
+          explanation: "In detached HEAD, `HEAD` contains a raw SHA instead of a branch ref. Commits here are orphaned — no branch pointer tracks them. Git will eventually garbage-collect them. Always create a branch (`git switch -c new-branch`) before committing if you want to keep the work."
+
+        - question: "You are in detached HEAD state after running `git switch --detach HEAD~3`. You make 3 experimental commits you want to keep. What must you do **before** running `git switch main`?"
+          options:
+            - "Nothing — Git automatically anchors detached HEAD commits to the nearest branch when you switch away"
+            - "Run `git commit --save` to anchor the commits permanently"
+            - "Run `git switch -c experiment` to create a branch pointing to your latest commit before you leave this state"
+            - "Save the commits to a safe location temporarily using a non-Git mechanism"
+          correct_index: 2
+          explanation: "Commits in detached HEAD are not reachable from any branch. `git switch main` leaves them orphaned — eventually garbage-collected. The fix is `git switch -c <new-branch-name>`, which creates a branch pointer at your current (latest) detached commit **before** you leave, making those 3 commits permanently reachable. If you forgot and already switched away, `git reflog` can find the lost SHA."
+
+        - question: "**[Evaluate]** You entered detached HEAD state to inspect an old commit, made 2 experimental commits, then ran `git switch main` without creating a branch first. A week later those commits are gone. What happened and why?"
+          options:
+            - "Git deleted them automatically after 24 hours to save disk space"
+            - "The commits were orphaned — with no branch pointing to them they became unreachable, and `git gc` eventually pruned them"
+            - "The commits were automatically archived in a recovery folder"
+            - "`git switch main` automatically rebased the commits onto `main`"
+          correct_index: 1
+          explanation: "A commit only survives long-term if it is **reachable** from a named reference (branch, tag, or HEAD). Orphaned commits have no such reference and are eventually removed by `git gc`, usually after 30 days. If you catch the mistake quickly, `git reflog` can find the lost SHA and `git switch -c recovery <sha>` rescues the work. The lesson from this step: always run `git switch -c <name>` **before** committing in detached HEAD state."
+
+        - question: "What does `git reflog` help you recover from?"
+          options:
+            - "Merge conflicts that were resolved incorrectly"
+            - "Commits that became orphaned because you switched away from detached HEAD without creating a branch"
+            - "Files that were deleted from the filesystem using `rm`"
+            - "Remote branches that were deleted by a teammate"
+          correct_index: 1
+          explanation: "`git reflog` records every position HEAD has been at, including detached HEAD commits that are no longer reachable from any branch. By finding the orphaned commit's SHA in `git reflog`, you can run `git switch -c recovery <sha>` to create a branch pointing to it — rescuing work that would otherwise be garbage-collected."
+
+  # --------------------------------------------------------------------------
+  # STEP 2: git stash and git stash pop
+  # --------------------------------------------------------------------------
+  - title: "Saving Work Temporarily with git stash"
+    instructions: |
+      ### The context-switch problem
+
+      Real-world development rarely lets you finish one task before another
+      demands your attention. Imagine you are halfway through adding a new
+      feature when your team lead says: "Drop everything — there's a
+      critical bug on `main` that needs a hotfix *now*."
+
+      Your options without `git stash`:
+      - **Commit half-finished work** — pollutes history with incomplete changes
+      - **Discard changes with `git restore`** — permanent loss of your work
+      - **Stay on your branch** — the hotfix can't be isolated on `main`
+
+      `git stash` gives you a fourth, clean option: **temporarily set aside
+      your work-in-progress** so your working directory is clean, switch
+      context, do the urgent task, then **restore your work** exactly where
+      you left off.
+
+      ```
+      Working Directory                       Stash
+      (half-finished feature)   git stash   ┌──────────────────────┐
+                             ────────────▶  │  WIP: add feature X  │
+      Clean working tree                    └──────────────────────┘
+             │
+             │ (do hotfix work, commit it)
+             ▼
+      git stash pop
+      ┌──────────────────────┐
+      │  WIP: add feature X  │  ────────▶  Working Directory restored
+      └──────────────────────┘
+      ```
+
+      ### Task 1: Create work-in-progress
+
+      Let's set up a scenario where you have changes you're not ready to commit.
+      Make sure you're in your project:
+
+      ```bash
+      cd /tutorial/myproject
+      git switch main
+      ```
+
+      Now start adding a new `power` function — but only get partway through:
+
+      ```bash
+      cat >> calculator.py << 'EOF'
+
+      def power(a, b):
+          # TODO: add input validation
+          return a ** b
+      EOF
+      ```
+
+      Check your working directory state:
+
+      ```bash
+      git status
+      git diff
+      ```
+
+      You have modifications in the working directory. You are *not* ready
+      to commit — the function is missing validation. But you need to switch
+      context urgently.
+
+      ### Task 2: Stash your work
+
+      Save your work-in-progress to the stash:
+
+      ```bash
+      git stash
+      ```
+
+      Now check the status:
+
+      ```bash
+      git status
+      git diff
+      ```
+
+      The working directory is **clean**. Your half-finished `power` function
+      is safely stored in the stash — not committed, not lost.
+
+      Verify the stash exists:
+
+      ```bash
+      git stash list
+      ```
+
+      You'll see an entry like `stash@{0}: WIP on main: <hash> <message>`.
+      Git stashes are stored as a special commit in `.git/refs/stash`.
+
+      ### Task 3: Do the urgent hotfix
+
+      With a clean working directory, you can safely switch to a hotfix branch
+      and do the urgent work:
+
+      ```bash
+      git switch -c hotfix-divide-zero
+      ```
+
+      Simulate fixing a divide-by-zero bug:
+
+      ```bash
+      cat >> calculator.py << 'EOF'
+
+      def safe_divide(a, b):
+          """Divide a by b, raising ValueError on zero denominator."""
+          if b == 0:
+              raise ValueError("Cannot divide by zero")
+          return a / b
+      EOF
+      git add calculator.py
+      git commit -m "Hotfix: add safe_divide to prevent zero-division errors"
+      ```
+
+      Merge the hotfix back to main and clean up:
+
+      ```bash
+      git switch main
+      git merge hotfix-divide-zero --no-edit
+      git branch -d hotfix-divide-zero
+      ```
+
+      ### Task 4: Restore your stashed work
+
+      The hotfix is done. Now recover your interrupted feature work:
+
+      ```bash
+      git stash pop
+      ```
+
+      Check the result:
+
+      ```bash
+      git status
+      git diff
+      ```
+
+      Your `power` function work-in-progress is back in the working directory
+      exactly as you left it. The stash entry has been removed automatically
+      by `git stash pop`.
+
+      Confirm the stash is now empty:
+
+      ```bash
+      git stash list
+      ```
+
+      ### Stash reference
+
+      | Command | Effect |
+      |---|---|
+      | `git stash` | Save all tracked modifications and staged changes; clean the working directory |
+      | `git stash list` | Show all stash entries |
+      | `git stash pop` | Restore the most recent stash entry and remove it from the stash |
+      | `git stash apply` | Restore the most recent stash entry but **keep** it in the stash |
+      | `git stash drop` | Delete the most recent stash entry without applying it |
+      | `git stash push -m "msg"` | Save stash with a descriptive message |
+
+      > **Important:** `git stash` only stores modifications to **tracked** files
+      > and staged changes. Untracked files (new files never `git add`-ed) are
+      > NOT stashed by default. Use `git stash -u` to include untracked files.
+
+      ### Task 5: Complete the work and commit
+
+      Now finish the power function properly and commit it:
+
+      Open `calculator.py` in the editor, update the `power` function to add
+      input validation, then stage and commit with a meaningful message.
+      The test checks for "power" in the commit message.
+
+      ```python
+      def power(a, b):
+          """Return a raised to the power of b."""
+          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+              raise TypeError("Arguments must be numbers")
+          return a ** b
+      ```
+
+    watch_files:
+      - "myproject/calculator.py"
+
+    open_file: "myproject/calculator.py"
+
+    setup_commands:
+      - "cd /tutorial/myproject && git switch main 2>/dev/null; true"
+
+    solution:
+      files:
+        - path: "myproject/calculator.py"
+          content: |
+            """A simple calculator module."""
+            def add(a, b): return a + b
+
+            def divide(a, b): return a / b
+
+            def safe_divide(a, b):
+                """Divide a by b, raising ValueError on zero denominator."""
+                if b == 0:
+                    raise ValueError("Cannot divide by zero")
+                return a / b
+
+            def power(a, b):
+                """Return a raised to the power of b."""
+                if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+                    raise TypeError("Arguments must be numbers")
+                return a ** b
+          language: "python"
+      commands:
+        - "cd /tutorial/myproject && git switch main"
+        - "cat >> calculator.py << 'EOF'\n\ndef power(a, b):\n    # TODO: add input validation\n    return a ** b\nEOF"
+        - "git status"
+        - "git stash"
+        - "git status"
+        - "git stash list"
+        - "git switch -c hotfix-divide-zero"
+        - "cat >> calculator.py << 'EOF'\n\ndef safe_divide(a, b):\n    if b == 0:\n        raise ValueError('Cannot divide by zero')\n    return a / b\nEOF"
+        - "git add calculator.py"
+        - "git commit -m 'Hotfix: add safe_divide to prevent zero-division errors'"
+        - "git switch main"
+        - "git merge hotfix-divide-zero --no-edit"
+        - "git branch -d hotfix-divide-zero"
+        - "git stash pop"
+        - "git status"
+        - "git stash list"
+        - "git add calculator.py"
+        - "git commit -m 'Add power function with input validation'"
+      explanation: |
+        - **Test 1:** `git stash list | wc -l | grep -q '^0$'` — the stash must be empty after `git stash pop`. `pop` restores the changes AND removes the stash entry.
+        - **Test 2:** `grep -q 'def safe_divide' calculator.py` — the hotfix `safe_divide` function must be present in the file, confirming the hotfix was merged.
+        - **Test 3:** `git log --oneline | grep -qi 'power'` — the power function must have been committed with "power" in the message.
+        - **`git stash`:** Takes a snapshot of your tracked modifications and staged changes, stores them in a special commit in `.git/refs/stash`, and resets the working directory to match HEAD. Untracked files are NOT included unless you use `git stash -u`.
+        - **`git stash pop`:** Applies the most recent stash entry to your working directory and removes it from the stash list. If there is a conflict between the stash and the current state of your files, Git will show conflict markers — just like a merge conflict.
+        - **Why not just commit?** Committing half-finished work pollutes history with incomplete snapshots. `git stash` is designed precisely for this: a private, temporary holding area that keeps the repository clean.
+
+    tests:
+      - description: "Stash is empty (work was popped)"
+        command: "cd /tutorial/myproject && [ $(git stash list | wc -l) -eq 0 ]"
+      - description: "calculator.py contains the safe_divide hotfix"
+        command: "cd /tutorial/myproject && grep -q 'def safe_divide' calculator.py"
+      - description: "power function has been committed"
+        command: "cd /tutorial/myproject && git log --oneline | grep -qi 'power'"
+      - description: "Working tree is clean"
+        command: "cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet"
+
+    quiz:
+      title: "git stash — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - question: "You are in the middle of editing `app.py` when your lead asks for an urgent hotfix on `main`. You have NOT staged your changes yet. Which approach keeps your working directory clean for the hotfix **without** losing your in-progress work?"
+          options:
+            - "`git restore app.py` — discards the edits so the working directory is clean"
+            - "`git commit -m 'WIP'` — commits the half-finished changes to preserve them"
+            - "`git stash` — saves the modifications to a temporary holding area and cleans the working directory"
+            - "`git reset --hard` — resets all changes and lets you restart cleanly later"
+          correct_index: 2
+          explanation: "`git stash` is designed exactly for this scenario. It saves your tracked modifications (and any staged changes) to a private stash, resets your working directory to match the last commit, and lets you switch context cleanly. Your work is fully preserved and recoverable with `git stash pop`."
+
+        - question: "After running `git stash`, what does `git status` report?"
+          options:
+            - "Your modified files appear as staged (green) and ready to commit"
+            - "Your modified files appear as untracked — Git has forgotten about them"
+            - "Nothing to commit, working tree clean — the stash has set the working directory back to the last commit"
+            - "An error, because `git status` cannot be run after stashing"
+          correct_index: 2
+          explanation: "`git stash` takes a snapshot of your modifications and stores it, then resets the working directory to match HEAD. The result is a clean working tree — exactly as if you had never made those changes. They are safe in the stash, accessible via `git stash list`."
+
+        - question: "What is the difference between `git stash pop` and `git stash apply`?"
+          options:
+            - "`pop` applies the stash and removes it from the list; `apply` applies the stash but keeps it in the list"
+            - "`pop` only works on the oldest stash entry; `apply` works on any entry"
+            - "`apply` creates a new commit from the stash; `pop` just restores files"
+            - "They are identical — both remove the stash entry after applying"
+          correct_index: 0
+          explanation: "`git stash pop` is the most common workflow: restore and remove. `git stash apply` is useful when you want to apply the same stash to multiple branches — you keep it in the list and manually `git stash drop` it when you are done."
+
+        - question: "You run `git stash` but your new untracked file `feature.py` (never `git add`-ed) is still visible after stashing. Why?"
+          options:
+            - "The file is too large to stash — only files under 1 MB are stashed"
+            - "By default, `git stash` only stores changes to **tracked** files; untracked files are excluded unless you use `git stash -u`"
+            - "`git stash` requires a commit message for untracked files; use `git stash push -m` instead"
+            - "The file has a name starting with `.` so Git ignores it automatically"
+          correct_index: 1
+          explanation: "`git stash` only captures changes that Git is already tracking (modified tracked files and staged changes). New files that have never been `git add`-ed are invisible to the stash by default. Use `git stash -u` (or `--include-untracked`) to include them."
+
+        - question: "Which statements about `git stash` are true? (Select all that apply)"
+          type: multiple
+          options:
+            - "`git stash` cleans the working directory by saving modifications to a temporary holding area"
+            - "A stash can be applied to a different branch than the one it was created on"
+            - "`git stash pop` removes the stash entry after applying it"
+            - "`git stash` permanently deletes your changes if you forget to `pop` within 24 hours"
+          correct_indices:
+            - 0
+            - 1
+            - 2
+          explanation: "The stash is a stack of saved snapshots — entries persist until you explicitly remove them with `pop` or `drop`. They never expire. You can apply a stash to a different branch (useful for moving work-in-progress between branches), though conflicts may arise."
+
+        - question: "**[Revisit Step 1]** You ran `git stash` on `main`, switched to `feature-divide` to check some code (entering detached HEAD accidentally), and now want to recover your stash. Which sequence is correct?"
+          options:
+            - "Run `git stash pop` immediately — stash works in any HEAD state"
+            - "First run `git switch main` to return to a named branch, then `git stash pop` — applying a stash in detached HEAD is possible but risky"
+            - "The stash is lost — it was tied to `main` and cannot be accessed from another branch"
+            - "Run `git stash apply feature-divide` to redirect the stash to the current branch"
+          correct_index: 1
+          explanation: "While `git stash pop` technically works in detached HEAD, it's risky — if the pop triggers a conflict, Git has nowhere to create a branch-anchored merge commit. The safe pattern is always: return to a named branch first (`git switch main`), then pop. This connects back to the detached HEAD lesson from Step 1: do real work only on named branches."
+
+        - question: "**[Evaluate]** A teammate says: 'I never use `git stash` — I just commit with `WIP` in the message and squash later.' Evaluate this habit compared to using `git stash`."
+          options:
+            - "The `WIP` approach is strictly better — stash entries can be accidentally dropped"
+            - "Both approaches are equivalent — the choice is purely personal preference"
+            - "The `WIP` approach works but has trade-offs: it pollutes shared history if pushed, requires a disciplined squash workflow, and is visible to teammates; `git stash` keeps the noise off the commit graph entirely"
+            - "The `WIP` approach is wrong — Git rejects commits with 'WIP' in the message"
+          correct_index: 2
+          explanation: "Both approaches preserve work-in-progress. The difference is visibility and cleanliness. `WIP` commits enter the commit graph and, if pushed, become part of shared history. `git stash` is purely local and private — no history pollution, no risk of sharing incomplete work. On the other hand, `git stash` entries are easy to forget (unlike a `WIP` commit in your log). Mature teams often have conventions for both patterns."
