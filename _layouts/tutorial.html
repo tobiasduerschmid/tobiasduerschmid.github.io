@@ -103,7 +103,7 @@
       // Intercept print (Ctrl/Cmd+P and File > Print) — open the
       // dedicated print view instead of printing the live tutorial UI.
       var PRINT_URL = '{{ page.url | replace: ".html", "" | relative_url }}/print?autoprint=1'
-        + (window.location.search.indexOf('instructor-mode=true') !== -1 ? '&instructor-mode=true' : '');
+        + (window.location.search.indexOf('instructor-mode=true') !== -1 || {{ tutorial_data.instructor_mode | default: false | jsonify }} ? '&instructor-mode=true' : '');
       document.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
           e.preventDefault();
@@ -206,7 +206,7 @@
       });
 
       var params = new URLSearchParams(window.location.search);
-      var instructorMode = params.get('instructor-mode') === 'true';
+      var instructorMode = params.get('instructor-mode') === 'true' || {{ tutorial_data.instructor_mode | default: false | jsonify }};
 
       // Resolve autosave: URL ?autosave=true overrides site/tutorial config
       var configAutosaveType = {{ tutorial_autosave_type | jsonify }};
@@ -224,6 +224,7 @@
         requireTests: config.require_tests || false,
         autosaveType: effectiveAutosaveType,
         instructorMode: instructorMode,
+        disableQuiz: {{ tutorial_data.disable_quiz | default: false | jsonify }},
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
         memoryMB: {{ page.memory_mb  | default: 256 }},

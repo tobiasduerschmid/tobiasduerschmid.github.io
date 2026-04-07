@@ -1,5 +1,5 @@
 title: "Python Lecture"
-description: "Interactive exercises accompanying the Python lecture. Practise the key concepts — print() keyword arguments, classes and __str__, and regex with named capture groups."
+description: "Interactive exercises accompanying the Python lecture. Practise the key concepts — print() keyword arguments, list comprehensions and unpacking, classes and __str__, and regex with named capture groups."
 
 instructor_mode: true
 
@@ -18,7 +18,7 @@ steps:
   # --------------------------------------------------------------------------
   - title: "print() with keyword arguments"
     instructions: |
-      > **Learning objective:** After this step you will be able to **use** `print()`'s `sep` and `end` keyword arguments and **predict** the output when a list is passed as a single argument.
+      > **Learning objective:** After this step you will be able to **use** `print()`'s `sep` and `end` keyword arguments and **unpack** a list into separate arguments with `*`.
 
       ## The `print()` signature
 
@@ -31,7 +31,7 @@ steps:
       | `sep` | `' '` | String inserted **between** multiple positional arguments |
       | `end` | `'\n'` | String appended **after** the last argument |
 
-      ### Important: `sep` acts between arguments, not list elements
+      ### `sep` acts between arguments — use `*` to unpack a list
 
       When you pass multiple separate values, `sep` appears between them:
 
@@ -39,25 +39,35 @@ steps:
       print("Hello", "World", sep='_')    # Hello_World
       ```
 
-      When you pass a **single list**, it is one argument — `sep` has nothing to separate,
-      and Python prints the list's string representation as a unit:
+      To use `sep` with a list, prefix it with `*` to **unpack** it into separate arguments:
+
+      ```python
+      print(*["Hello", "World"], sep='_')  # Hello_World
+      ```
+
+      Without `*` the list is treated as a **single** argument, so `sep` has nothing to
+      separate and Python prints the list's string representation instead:
 
       ```python
       print(["Hello", "World"], sep='_')  # ['Hello', 'World']
       ```
 
-      ### Predict before you code
+      ### Task
 
-      Before running the starter code, predict the exact output of:
-      ```python
-      print(["Hello", "World", "Students"], sep='_', end='!\n')
+      Write one `print()` call that unpacks `["Hello", "World", "Students"]` with `*`,
+      uses `sep='_'` and `end='!\n'`.
+
+      Expected output:
+      ```
+      Hello_World_Students!
       ```
 
     files:
       - path: "hello.py"
         content: |
-          # Write one print() call that passes the list
-          # ["Hello", "World", "Students"] with sep='_' and end='!\n'
+          # Write one print() call that unpacks the list with *
+          # and uses sep='_' and end='!\n'
+          # Expected output: Hello_World_Students!
         language: "python"
 
     open_file: "hello.py"
@@ -69,15 +79,15 @@ steps:
       files:
         - path: "hello.py"
           content: |
-            print(["Hello", "World", "Students"], sep='_', end='!\n')
+            print(*["Hello", "World", "Students"], sep='_', end='!\n')
           language: "python"
       explanation: |
         **Why this is correct:**
 
-        - **Single argument:** `["Hello", "World", "Students"]` is one positional argument — a list. `sep='_'` has nothing to separate (only one argument), so it has no visible effect.
-        - **List representation:** `print()` calls `str()` on the list, producing `['Hello', 'World', 'Students']`.
+        - **`*["Hello", "World", "Students"]`:** The `*` unpacks the list into three separate positional arguments: `"Hello"`, `"World"`, `"Students"`. Without `*`, the whole list would be one argument and `sep` would have nothing to separate.
+        - **`sep='_'`:** Inserted between each pair of arguments, giving `Hello_World_Students`.
         - **`end='!\n'`:** Replaces the default `'\n'` with `'!\n'`, appending `!` before the newline.
-        - **Output:** `['Hello', 'World', 'Students']!`
+        - **Output:** `Hello_World_Students!`
 
     tests:
       - description: "Script runs without errors"
@@ -91,15 +101,15 @@ steps:
           assert '"Hello"' in source or "'Hello'" in source, \
               "Pass the list [\"Hello\", \"World\", \"Students\"] to print()."
         hints:
-          - text: "Write `print([\"Hello\", \"World\", \"Students\"], sep='_', end='!\\n')` — pass the list as the first argument, then the two keyword arguments."
-      - description: "Output is ['Hello', 'World', 'Students']!"
+          - text: "Write `print(*[\"Hello\", \"World\", \"Students\"], sep='_', end='!\\n')` — the `*` unpacks the list into separate arguments so that `sep` is inserted between them."
+      - description: "Output is Hello_World_Students!"
         command: |
           import os; os.chdir('/tutorial')
           output = __run_capture('/tutorial/hello.py')
-          assert "['Hello', 'World', 'Students']!" in output, \
-              f"Expected \"['Hello', 'World', 'Students']!\" in output, got: {repr(output)}"
+          assert "Hello_World_Students!" in output, \
+              f"Expected \"Hello_World_Students!\" in output, got: {repr(output)}"
         hints:
-          - text: "The list is a single argument to `print()`, so Python prints its string representation: `['Hello', 'World', 'Students']`. The `end='!\\n'` appends `!` at the end. Your output should contain `['Hello', 'World', 'Students']!`"
+          - text: "Use `*` before the list to unpack it: `print(*[\"Hello\", \"World\", \"Students\"], sep='_', end='!\\n')`. Without `*`, the list is one argument and `sep` has nothing to separate."
 
     quiz:
       title: "print() — Knowledge Check"
@@ -156,7 +166,226 @@ steps:
             arguments, `end` comes *after* the last one.
 
   # --------------------------------------------------------------------------
-  # STEP 2 — Classes and __str__
+  # STEP 2 — Sequences, List Comprehension & Unpacking
+  # --------------------------------------------------------------------------
+  - title: "Sequences, List Comprehension & Unpacking"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **write** list comprehensions using `range()`, **apply** `min()`, `max()`, and `sum()` to lists, and **unpack** and **swap** variables with a single assignment.
+
+      ## List comprehensions
+
+      A list comprehension creates a new list by applying an expression to every element of a sequence:
+
+      ```python
+      [expr(x) for x in sequence]
+      ```
+
+      | Example | Result |
+      |---|---|
+      | `[x for x in range(1, 10)]` | `[1, 2, 3, 4, 5, 6, 7, 8, 9]` |
+      | `[2*x for x in range(4)]` | `[0, 2, 4, 6]` |
+
+      ## `range(start, end)` — integer sequences
+
+      `range(start, end)` generates integers from `start` up to **`end - 1`** (the upper bound is exclusive).
+      The default for `start` is `0`, so `range(4)` is the same as `range(0, 4)`.
+
+      ## Built-in aggregation: `min`, `max`, `sum`
+
+      These are built-in functions — no `import` needed:
+
+      ```python
+      nums = [3, 1, 4, 1, 5]
+      print(min(nums))   # 1
+      print(max(nums))   # 5
+      print(sum(nums))   # 14
+      ```
+
+      ## Unpacking and swapping
+
+      Python lets you **unpack** a list directly into named variables:
+
+      ```python
+      [a, b] = [1, 2]
+      print(a)   # 1
+      print(b)   # 2
+      ```
+
+      And you can **swap** two variables in one line — no temporary variable needed:
+
+      ```python
+      a, b = b, a
+      print(a)   # 2
+      print(b)   # 1
+      ```
+
+      Python evaluates the entire right-hand side first, then performs all assignments simultaneously.
+
+      > *"Syntactic sugar"* refers to language features that make code easier to write without adding new capabilities.
+
+      ### Task
+
+      Complete the four TODOs in the starter code:
+
+      1. Replace `evens = []` with a list comprehension using `2*x` that produces `[0, 2, 4, 6, 8]`.
+      2. Print `min`, `max`, and `sum` of `evens`.
+      3. Unpack the first two elements of `evens` into `a` and `b`.
+      4. Swap `a` and `b` in one line.
+
+      Expected output:
+      ```
+      [0, 2, 4, 6, 8]
+      0
+      8
+      20
+      Before swap: a=0, b=2
+      After swap:  a=2, b=0
+      ```
+
+    files:
+      - path: "sequences.py"
+        content: |
+          # 1. Create a list of even numbers 0, 2, 4, 6, 8 using a list comprehension
+          #    Hint: [2*x for x in range(?)]   Expected: [0, 2, 4, 6, 8]
+          evens = []  # TODO: replace with a list comprehension
+
+          print(evens)
+
+          # 2. TODO: print min(evens), max(evens), and sum(evens) — one call per line
+
+          # 3. Unpack the first two elements of evens into a and b
+          a = 0  # TODO: replace these two lines with  [a, b] = [evens[0], evens[1]]
+          b = 0
+          print(f"Before swap: a={a}, b={b}")
+
+          # 4. Swap a and b in one line, then print again
+          # TODO: replace this comment with  a, b = b, a
+          print(f"After swap:  a={a}, b={b}")
+        language: "python"
+
+    open_file: "sequences.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "sequences.py"
+          content: |
+            # 1. List comprehension: even numbers 0..8
+            evens = [2*x for x in range(5)]
+            print(evens)
+
+            # 2. Aggregation functions
+            print(min(evens))
+            print(max(evens))
+            print(sum(evens))
+
+            # 3. Unpack first two elements
+            [a, b] = [evens[0], evens[1]]
+            print(f"Before swap: a={a}, b={b}")
+
+            # 4. Swap in one line
+            a, b = b, a
+            print(f"After swap:  a={a}, b={b}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`[2*x for x in range(5)]`:** `range(5)` is `range(0, 5)`, generating 0, 1, 2, 3, 4 (default start is 0). `2*x` doubles each value, giving `[0, 2, 4, 6, 8]`.
+        - **`min`, `max`, `sum`:** Built-in aggregation functions — no import required. `min=0`, `max=8`, `sum=20`.
+        - **`[a, b] = [evens[0], evens[1]]`:** Python unpacks the right-hand list, binding `a=0` and `b=2`.
+        - **`a, b = b, a`:** Python evaluates the right-hand side first (`b=2`, `a=0`), packs them into a temporary tuple `(2, 0)`, then assigns `a=2` and `b=0` simultaneously — no explicit temporary variable needed.
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/sequences.py')
+      - description: "List comprehension produces [0, 2, 4, 6, 8]"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/sequences.py')
+          assert '[0, 2, 4, 6, 8]' in output, \
+              f"Expected '[0, 2, 4, 6, 8]' in output, got: {repr(output)}"
+        hints:
+          - text: "Use `evens = [2*x for x in range(5)]`. `range(5)` gives 0, 1, 2, 3, 4 — doubling each gives 0, 2, 4, 6, 8."
+      - description: "min is 0, max is 8, sum is 20"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/sequences.py')
+          lines = output.strip().splitlines()
+          assert '0' in lines, f"Expected min output '0' on its own line, got: {repr(output)}"
+          assert '8' in lines, f"Expected max output '8' on its own line, got: {repr(output)}"
+          assert '20' in lines, f"Expected sum output '20' on its own line, got: {repr(output)}"
+        hints:
+          - text: "Call `print(min(evens))`, `print(max(evens))`, and `print(sum(evens))` — three separate `print()` calls, no import needed."
+      - description: "Swap produces 'After swap:  a=2, b=0'"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/sequences.py')
+          assert 'Before swap: a=0, b=2' in output, \
+              f"Expected 'Before swap: a=0, b=2' in output, got: {repr(output)}"
+          assert 'After swap:  a=2, b=0' in output, \
+              f"Expected 'After swap:  a=2, b=0' in output, got: {repr(output)}"
+        hints:
+          - text: "Unpack with `[a, b] = [evens[0], evens[1]]` to get `a=0, b=2`. Then swap with `a, b = b, a`. Python evaluates the right side before assigning, so both values are captured before either is overwritten."
+
+    quiz:
+      title: "Sequences — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            How many elements does `range(1, 10)` contain, and what is the last value?
+          type: single
+          options:
+            - "10 elements — last value is 10"
+            - "9 elements — last value is 9"
+            - "10 elements — last value is 9"
+            - "9 elements — last value is 10"
+          correct_index: 1
+          explanation: |
+            `range(start, end)` generates integers from `start` up to **`end - 1`**.
+            `range(1, 10)` → 1, 2, 3, …, 9 — that is 9 elements, and the last value is 9.
+            The upper bound is always **exclusive** — the same convention Python uses for slice notation.
+
+        - question: |
+            What does `[2*x for x in range(4)]` evaluate to?
+          type: single
+          options:
+            - "`[2, 4, 6, 8]`"
+            - "`[0, 2, 4, 6]`"
+            - "`[1, 2, 3, 4]`"
+            - "`[0, 2, 4, 6, 8]`"
+          correct_index: 1
+          explanation: |
+            `range(4)` is short for `range(0, 4)`, generating 0, 1, 2, 3 (default start is 0).
+            The expression `2*x` doubles each value: 0→0, 1→2, 2→4, 3→6.
+            Result: `[0, 2, 4, 6]`.
+
+        - question: |
+            After the following two lines, what are the values of `a` and `b`?
+            ```python
+            [a, b] = [10, 20]
+            a, b = b, a
+            ```
+          type: single
+          options:
+            - "`a = 10, b = 20` — the swap has no effect without a temporary variable"
+            - "`a = 20, b = 10` — Python evaluates the right-hand side before assigning"
+            - "`a = 20, b = 20` — both variables receive the larger value"
+            - "A `SyntaxError` — multiple assignment on one line is not allowed"
+          correct_index: 1
+          explanation: |
+            Python evaluates the entire right-hand side of `a, b = b, a` **first**, capturing
+            `(b, a)` = `(20, 10)` as a temporary tuple, then assigns `a=20` and `b=10`
+            simultaneously. No explicit temporary variable is needed — this is one of Python's
+            most convenient syntactic-sugar features.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Classes and __str__
   # --------------------------------------------------------------------------
   - title: "Classes and __str__"
     instructions: |
@@ -373,7 +602,7 @@ steps:
             mistake — the f-string looks complete, but without `return` it produces nothing.
 
   # --------------------------------------------------------------------------
-  # STEP 3 — Named Groups: Regex on a Requirements Document
+  # STEP 4 — Named Groups: Regex on a Requirements Document
   # --------------------------------------------------------------------------
   - title: "Named Groups: Regex on a Requirements Document"
     instructions: |
