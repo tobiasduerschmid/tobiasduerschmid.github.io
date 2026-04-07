@@ -1140,20 +1140,18 @@ steps:
 
       <details>
       <summary>Hint 1 — unstaging a file</summary>
-      Revisit Step 5: there is a `git restore` variant that targets the
+      Run <code>git restore --help</code> to find the command variant that targets the
       staging area without touching the working directory.
       </details>
 
       <details>
       <summary>Hint 2 — discarding a working-directory change</summary>
-      Revisit Step 5: there is a `git restore` variant (without `--staged`)
-      that discards uncommitted edits to a file.
+      Run <code>git restore --help</code> to find the command variant that discards uncommitted edits to a file.
       </details>
 
       <details>
       <summary>Hint 3 — .gitignore patterns</summary>
-      Revisit Step 6: wildcard patterns like `*.log` match by extension;
-      exact filenames like `scratch.py` match that file specifically.
+      Run <code>git help gitignore</code> To find the rules for writing ignore patterns.
       </details>
 
     files:
@@ -2523,21 +2521,21 @@ steps:
 
       <details>
       <summary>Hint 1 — creating a branch and switching to it</summary>
-      Revisit Step 9: there is a single `git switch` flag that creates a
+      Revisit Step 9: there is a single <code>git switch</code> flag that creates a
       branch and immediately switches to it in one command.
       </details>
 
       <details>
       <summary>Hint 2 — staging and committing the change</summary>
-      Revisit Steps 2–4: the two-step workflow is `git add <file>` then
-      `git commit -m "message"`. Use a descriptive message.
+      Revisit Steps 2–4: the two-step workflow is <code>git add &lt;file&gt;</code> then
+      <code>git commit -m "message"</code>. Use a descriptive message.
       </details>
 
       <details>
       <summary>Hint 3 — merging back into main</summary>
-      Revisit Step 11: switch to the branch you want to merge *into*
-      before running `git merge`. Preview changes first with
-      `git diff main..feature-power`.
+      Revisit Step 11: switch to the branch you want to merge <em>into</em>
+      before running <code>git merge</code>. Preview changes first with
+      <code>git diff main..feature-power</code>.
       </details>
 
       This exercises branching, committing, merging, and log inspection
