@@ -43,8 +43,8 @@
           <i class="fa fa-print"></i> Print
         </a>
         <button id="tts-read-btn" title="Read current step aloud"
-          style="background:none; border:1px solid rgba(255,255,255,0.5); color:#fff;
-                 border-radius:6px; padding:3px 11px; cursor:pointer;
+          style="background:none; border:none; color:#fff;
+                 padding:3px 11px; cursor:pointer;
                  font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px;">
           <i class="fa fa-volume-up"></i> Read Aloud
         </button>
@@ -382,7 +382,8 @@
           if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
           if (!speaking && !paused) {
             readBtn.innerHTML = '<i class="fa fa-volume-up"></i> Read Aloud';
-            readBtn.style.borderColor = 'rgba(255,255,255,0.5)';
+            readBtn.style.background = 'none';
+            readBtn.style.color = '';
           }
         }
 
@@ -399,7 +400,8 @@
           if (!text) return;
 
           readBtn.innerHTML = '<i class="fa fa-stop"></i> Stop';
-          readBtn.style.borderColor = '#f99';
+          readBtn.style.background = 'rgba(200,50,50,0.3)';
+          readBtn.style.color = '#f99';
           TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });
           updateBar();
         });
