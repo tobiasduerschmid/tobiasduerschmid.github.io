@@ -517,3 +517,30 @@ steps:
             - "The `WIP` approach is wrong — Git rejects commits with 'WIP' in the message"
           correct_index: 2
           explanation: "Both approaches preserve work-in-progress. The difference is visibility and cleanliness. `WIP` commits enter the commit graph and, if pushed, become part of shared history. `git stash` is purely local and private — no history pollution, no risk of sharing incomplete work. On the other hand, `git stash` entries are easy to forget (unlike a `WIP` commit in your log). Mature teams often have conventions for both patterns."
+
+        - question: "**[Evaluate]** A teammate proposes: 'Instead of writing good commit messages, let's just commit everything as `WIP` and clean up history with interactive rebase before merging.' What is the main risk of this workflow?"
+          options:
+            - "No risk — commit messages are only cosmetic and don't affect the repository"
+            - "The `WIP` commits still work locally, but if a teammate pulls your branch, they see meaningless history and `git bisect` becomes useless for finding bugs"
+            - "Git will reject commits with the message `WIP` as invalid"
+            - "Interactive rebase only works on branches with fewer than 10 commits"
+          correct_index: 1
+          explanation: "Commit messages serve two audiences: your future self and your teammates. `WIP` commits shared on a remote branch make `git log`, `git bisect`, and code review far harder. Interactive rebase helps, but it only works well locally — once pushed, rewriting messages requires force-push and disrupts collaborators."
+
+        - question: "**[Evaluate]** Your repository has a 200-commit history. A bug was introduced somewhere in the last 50 commits. What is the most efficient Git tool for finding the exact commit that introduced it, and why?"
+          options:
+            - "`git log --all` — scroll through all 200 commit messages looking for 'fix' or 'bug'"
+            - "`git bisect` — it performs a binary search, testing roughly 6 commits instead of up to 50"
+            - "`git blame` — it shows who last modified every line, immediately revealing the bug author"
+            - "`git revert HEAD~50` — revert the last 50 commits and re-add them one by one"
+          correct_index: 1
+          explanation: "`git bisect` bisects the range in half at each step. To search 50 commits, it needs only log₂(50) ≈ 6 tests. `git blame` shows the last modifier of each line but doesn't help if the bug is in logic rather than a specific modified line. Scrolling log messages is unreliable and slow."
+
+        - question: "**[Evaluate]** After completing a feature, `git log --oneline` shows: `a1b2 wip`, `b2c3 fix`, `c3d4 more fix`, `d4e5 finally works`. What problem does this log represent?"
+          options:
+            - "No problem — commit messages are personal preference with no team impact"
+            - "The messages make history useless for understanding intent; debugging with `git bisect` and reviewing changes become much harder"
+            - "Git will automatically squash these into one commit after 7 days"
+            - "The short hashes are invalid — Git requires full 40-character SHAs in log output"
+          correct_index: 1
+          explanation: "Commit history is **project documentation**. Vague messages like 'wip' and 'fix' tell you nothing about what changed or why. When a regression appears months later and you need `git bisect` to find the culprit, or when a colleague reviews the log, clean and descriptive messages are essential. Best practice: each commit represents one logical, described change."

@@ -28,9 +28,9 @@ steps:
       one is actually final. Version control ends that chaos for good.
       It lets you:
 
-      - **Track every change** — see exactly what changed, when, and by whom
-      - **Undo mistakes** — roll back to any previous version
-      - **Work in parallel** — multiple people can edit without overwriting each other
+      - **Track every change** — see exactly what changed, when, and by whom.
+      - **Undo mistakes** — roll back to any previous version.
+      - **Work in parallel** — multiple people can edit without overwriting each other,.
 
       Imagine you and a teammate are both editing `calculator.py`. You add a
       `multiply` function while they rewrite the `add` function. Without version
@@ -55,9 +55,9 @@ steps:
       ```
 
       Think of it like posting on social media:
-      - **Working Directory** = your camera roll (messy, full of drafts)
-      - **Staging Area** = the post editor (you pick and arrange what to share)
-      - **Commit** = hitting "Post" (it's published — a permanent snapshot)
+      - **Working Directory** = your camera roll (messy, full of drafts).
+      - **Staging Area** = the post editor (you pick and arrange what to share).
+      - **Commit** = hitting "Post" (it's published — a permanent snapshot).
 
       ### Task 1: Initialize a repository
 
@@ -821,6 +821,46 @@ steps:
       The ignored files have vanished from the status output! Only
       `.gitignore` itself appears as a new untracked file.
 
+      ### Important: `.gitignore` has no retroactive effect on tracked files
+
+      There's a catch worth knowing: if a file was **already committed** (i.e.,
+      Git is already tracking it), adding it to `.gitignore` does **not** stop
+      Git from tracking future changes to it. The ignore rules only apply to
+      files that Git has never seen before.
+
+      For example, imagine you committed `secrets.env` by accident in a
+      previous commit, and now you add `.env` to `.gitignore`. Git will still
+      notice and stage any future changes to `secrets.env` — because it is
+      already tracked.
+
+      The fix is `git rm --cached`:
+
+      ```bash
+      git rm --cached secrets.env
+      ```
+
+      `git rm --cached <file>` removes the file from Git's index (the staging
+      area / tracking list) **without deleting it from your filesystem**. After
+      running this command and committing the removal, Git will treat the file
+      as untracked — and your `.gitignore` pattern will correctly prevent it
+      from being staged again.
+
+      **Concrete example:**
+
+      ```bash
+      # File is already tracked — .gitignore alone won't help
+      git rm --cached secrets.env
+      git commit -m "Stop tracking secrets.env"
+      # secrets.env still exists on disk, but Git ignores future changes to it
+      ```
+
+      **Important warning:** `git rm --cached` only stops Git from tracking the
+      file going forward. The file still exists in all previous commits — anyone
+      who clones the repository can see the version that was committed. To truly
+      scrub a secret from history, you need tools like `git filter-repo` or
+      BFG Repo Cleaner. `.gitignore` + `git rm --cached` only prevents **future**
+      tracking — it is not a substitute for rotating compromised credentials.
+
       ### Task 3: Commit the .gitignore
 
       The `.gitignore` file itself *should* be committed — it's a project
@@ -1501,6 +1541,43 @@ steps:
       which replays commits to produce a clean linear history instead of
       a merge commit.
 
+      ### Controlling merge behaviour: `git merge --no-ff`
+
+      By default, Git uses a fast-forward whenever it can — the branch pointer
+      simply slides forward and no merge commit is created, keeping history
+      linear.
+
+      The `--no-ff` flag ("no fast-forward") forces Git to **always create a
+      merge commit**, even when a fast-forward would have been possible:
+
+      ```bash
+      git merge --no-ff <branch>
+      ```
+
+      This leaves an explicit join point in the history, so you can always
+      see that a feature branch existed and when it was integrated:
+
+      ```
+      With default fast-forward:
+
+        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
+                                     (feature commit, no trace of the branch)
+
+      With --no-ff:
+
+        main:  [C1] ← [C2] ← [C3] ← [M]  ← HEAD
+                                 \   /
+        feature:                 [C4]
+      ```
+
+      **Trade-off:** `--no-ff` preserves explicit branch history — you and
+      your team can always tell that a piece of work lived on a feature branch.
+      The cost is a busier log with extra merge commits. The default
+      fast-forward gives a cleaner, more linear history but loses the
+      "this was a feature branch" context. Many teams use `--no-ff` for
+      feature branches but not for trivial one-liner fixes — pick whatever
+      convention your team agrees on.
+
       The merge in this step will be a **fast-forward** since `main` has no
       new commits since we branched off.
 
@@ -1893,6 +1970,33 @@ steps:
           return a + b
       ```
 
+      ### Escape hatch: `git merge --abort`
+
+      Sometimes you start a merge and quickly realise it's more complex than
+      expected — maybe there are dozens of conflicts, or you merged the wrong
+      branch, or you just want a moment to think before committing. Git gives
+      you a clean escape hatch:
+
+      ```bash
+      git merge --abort
+      ```
+
+      `git merge --abort` cancels the in-progress merge at **any point** —
+      even after you have already partially resolved some conflicts — and
+      restores both your working directory and the staging area to the exact
+      state they were in **before** you ran `git merge`. It's as if the merge
+      never started.
+
+      **When to use it:** When you realise mid-merge that you need to step back,
+      consult a teammate, or approach the integration differently. There is no
+      shame in aborting — it's far better than committing a half-resolved mess.
+
+      > **Note:** `git merge --abort` only works while a merge is still in
+      > progress (i.e., Git has left conflict markers in your files and is
+      > waiting for you to resolve them). Once you have run `git commit` to
+      > finish the merge, the merge is complete and cannot be aborted —
+      > you would use `git revert` instead.
+
       ### Task 5: Complete the merge
 
       After editing, mark the conflict as resolved (using `git add`) and create the merge commit.
@@ -2064,6 +2168,40 @@ steps:
       | `git revert <hash>` | New commit that undoes the target | **Yes** |
       | `git reset --hard <hash>` | Destroys commits, rewrites history | Never |
 
+      ### Your safety net: `git reflog`
+
+      `git reflog` records **every movement of HEAD** — commits, resets,
+      checkouts, and rebases — as a local-only log. It's the ultimate safety
+      net for recovering commits that appear "lost" after a destructive
+      operation like `git reset --hard`.
+
+      ```bash
+      git reflog
+      ```
+
+      The output lists recent HEAD positions with short hashes and descriptions,
+      newest first. A typical entry looks like:
+
+      ```
+      a1b2c3d HEAD@{0}: reset: moving to HEAD~1
+      e4f5g6h HEAD@{1}: commit: Add multiply function
+      ```
+
+      **Recovery workflow:** if you accidentally reset away some commits, run
+      `git reflog` to find the SHA of the lost commit, then restore it:
+
+      ```bash
+      git reset --hard <sha>   # jump your branch back to that commit
+      # or
+      git checkout <sha>       # inspect that commit in detached HEAD state
+      ```
+
+      Two important limitations to keep in mind:
+      - Reflog entries **expire after ~90 days** by default (configured by
+        `gc.reflogExpire`).
+      - The reflog is **local only** — it is never pushed to remotes, so it
+        can only help you recover your own lost work.
+
       ### Task 1: Introduce a bug commit
 
       ```bash
@@ -2088,6 +2226,12 @@ steps:
 
       `--no-edit` accepts the default commit message without opening an
       editor. Git creates a new commit that reverses the debug line.
+
+      `git revert` is not limited to `HEAD` — you can target **any commit
+      by its hash**. Find the hash with `git log --oneline`, then run
+      `git revert <hash>`. Git will create a new commit that is the exact
+      inverse of the targeted commit, undoing its specific changes regardless
+      of how far back in history it is.
 
       ### Task 3: Verify the result
 
@@ -2556,19 +2700,6 @@ steps:
           correct_index: 1
           explanation: "As Step 6 showed, `.gitignore` **cannot retroactively remove** files already committed. One careless `git add .` — by any developer, on any machine — permanently exposes a secret in history. Even deleting the file in a later commit doesn't help: the secret lives in every prior commit, accessible to anyone who clones. This is why `.gitignore` must exist **before** the first `git add`."
 
-        - question: "Which statements about Git's snapshot model are true? (Select all that apply)"
-          type: multiple
-          options:
-            - "Each commit stores a complete picture of all tracked files at that moment"
-            - "Git computes and stores file deltas (differences) for every commit to save disk space"
-            - "Two commits referencing identical file content share the same stored blob object, saving space"
-            - "`git switch` works by replacing your working directory with the snapshot at the target branch"
-          correct_indices:
-            - 0
-            - 2
-            - 3
-          explanation: "Git stores full **snapshots**, not deltas. Identical content is deduplicated via content-addressable storage (same SHA = stored once). Switching branches literally replaces working directory files with the target snapshot — this is why files appear and disappear when you run `git switch`."
-
         - question: "You want to see the full history graph including all branches in one compact view. Which command is correct?"
           options:
             - "`git log --oneline`"
@@ -2704,15 +2835,6 @@ steps:
           correct_index: 1
           explanation: "`git diff --staged` compares the staging area to the last commit — showing precisely what `git commit` would snapshot. `git diff` without flags shows only unstaged changes (which would be nothing here). `git show HEAD` inspects what was already committed."
 
-        - question: "**[Evaluate]** A teammate proposes: 'Instead of writing good commit messages, let's just commit everything as `WIP` and clean up history with interactive rebase before merging.' What is the main risk of this workflow?"
-          options:
-            - "No risk — commit messages are only cosmetic and don't affect the repository"
-            - "The `WIP` commits still work locally, but if a teammate pulls your branch, they see meaningless history and `git bisect` becomes useless for finding bugs"
-            - "Git will reject commits with the message `WIP` as invalid"
-            - "Interactive rebase only works on branches with fewer than 10 commits"
-          correct_index: 1
-          explanation: "Commit messages serve two audiences: your future self and your teammates. `WIP` commits shared on a remote branch make `git log`, `git bisect`, and code review far harder. Interactive rebase helps, but it only works well locally — once pushed, rewriting messages requires force-push and disrupts collaborators."
-
         - question: "**[Synthesis]** You are about to run `git merge feature` from `main`. Name the **three** things you should check first. (Select all that apply)"
           type: multiple
           options:
@@ -2725,15 +2847,6 @@ steps:
             - 1
             - 2
           explanation: "Before merging: (1) be on the right branch, (2) preview the incoming changes, (3) start from a clean working directory so you don't mix in-progress work with conflict resolution. Pushing first is unrelated to the merge — you push *after* the merge is complete."
-
-        - question: "**[Evaluate]** Your repository has a 200-commit history. A bug was introduced somewhere in the last 50 commits. What is the most efficient Git tool for finding the exact commit that introduced it, and why?"
-          options:
-            - "`git log --all` — scroll through all 200 commit messages looking for 'fix' or 'bug'"
-            - "`git bisect` — it performs a binary search, testing roughly 6 commits instead of up to 50"
-            - "`git blame` — it shows who last modified every line, immediately revealing the bug author"
-            - "`git revert HEAD~50` — revert the last 50 commits and re-add them one by one"
-          correct_index: 1
-          explanation: "`git bisect` bisects the range in half at each step. To search 50 commits, it needs only log₂(50) ≈ 6 tests. `git blame` shows the last modifier of each line but doesn't help if the bug is in logic rather than a specific modified line. Scrolling log messages is unreliable and slow."
 
         - question: "**[Synthesis]** Which sequence correctly describes the full local Git workflow from editing a file to having it permanently saved in history?"
           type: multiple
@@ -2756,15 +2869,6 @@ steps:
             - "The commit frequency rule — all commits must happen at least daily"
           correct_index: 1
           explanation: "Feature branches provide **isolation**: your in-progress work never touches the stable shared branch until it is ready and reviewed. Without branching, one broken commit immediately affects every teammate. Branches also enable pull-request code review and make reverting a logical unit of work trivial — as you practiced throughout Steps 8–13."
-
-        - question: "**[Evaluate]** After completing the capstone, `git log --oneline` shows: `a1b2 wip`, `b2c3 fix`, `c3d4 more fix`, `d4e5 finally works`. What problem does this log represent?"
-          options:
-            - "No problem — commit messages are personal preference with no team impact"
-            - "The messages make history useless for understanding intent; debugging with `git bisect` and reviewing changes become much harder"
-            - "Git will automatically squash these into one commit after 7 days"
-            - "The short hashes are invalid — Git requires full 40-character SHAs in log output"
-          correct_index: 1
-          explanation: "Commit history is **project documentation**. Vague messages like 'wip' and 'fix' tell you nothing about what changed or why. When a regression appears months later and you need `git bisect` to find the culprit, or when a colleague reviews the log, clean and descriptive messages are essential. Best practice: each commit represents one logical, described change."
 
         - question: "Which of the following are **best practices** for professional Git usage covered in this tutorial? (Select all that apply)"
           type: multiple
