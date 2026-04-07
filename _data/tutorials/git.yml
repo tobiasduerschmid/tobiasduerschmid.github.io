@@ -3046,7 +3046,7 @@ steps:
             - "`git cat-file`"
           correct_index: 2
           explanation: "`git log` prints the full chain of snapshots — each entry shows the unique commit hash, author, timestamp, and message. Add `--oneline` to compress to one line per commit, `--graph` to draw ASCII branch structure, and `--all` to include every branch. You used this in Step 7 to inspect commits and in Steps 10–11 to verify merges and track history."
-          
+
         - question: "When you merge two branches that have **diverged** (both have unique commits), what kind of commit does Git create to combine them?"
           options:
             - "A fast-forward commit"
@@ -3176,8 +3176,17 @@ steps:
       - Undo mistakes safely on shared branches
       - Collaborate through remotes with push and pull
 
-      Before you go, let's do one final knowledge check to cement
-      everything. This quiz covers the entire tutorial — all 14 steps.
-      Good luck!
+      > **Note — first-time Git setup on a new machine:**
+      > Before you can make commits on your own computer, you must tell
+      > Git who you are. Run these two commands once (replacing with your
+      > real name and email):
+      >
+      > ```
+      > git config --global user.name "Your Name"
+      > git config --global user.email "you@example.com"
+      > ```
+      >
+      > This tutorial's VM had these pre-configured, but on a fresh
+      > machine Git will refuse to commit until they are set.
 
     tests: []
