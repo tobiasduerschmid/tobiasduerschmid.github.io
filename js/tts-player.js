@@ -181,7 +181,6 @@
     var clone = el.cloneNode(true);
     var selectors = skipSel || [
       'script', 'noscript', 'style', 'nav', 'button', 'input', 'select', 'textarea',
-      'pre', 'code',
       '.cap', '.highlight-toggle-container', '.navbar', '#sidebar',
       '#tts-bar', '.tts-bar', '.se-gym-container', '.alert'
     ];
