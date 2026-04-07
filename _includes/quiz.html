@@ -438,6 +438,19 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .parsons-container.parsons-inline .parsons-line { padding: 4px 10px; }
   .parsons-container.parsons-inline .parsons-line code { white-space: nowrap; }
   .parsons-container.parsons-inline .parsons-target { min-height: 40px; }
+  /* Dark mode overrides for Parsons */
+  html.dark-mode .parsons-label { color: #8888a0; }
+  html.dark-mode .parsons-bank { background: #1a1a28; border-color: #444; }
+  html.dark-mode .parsons-target { background: #1c2a1c; border-color: #3a6e3a; }
+  html.dark-mode .parsons-separator { color: #5a5a7a; }
+  html.dark-mode .parsons-line { background: #2a2a3e; border-color: #444; }
+  html.dark-mode .parsons-line:hover { border-color: #0078d4; background: #2a2a50; }
+  html.dark-mode .parsons-line code { color: #e0e0f0; }
+  html.dark-mode .parsons-grip { color: #555; }
+  html.dark-mode .parsons-line.parsons-correct { border-color: #3a8a3a; background: rgba(58,138,58,0.15); }
+  html.dark-mode .parsons-line.parsons-incorrect { border-color: #cc4444; background: rgba(204,68,68,0.12); }
+  html.dark-mode .parsons-reset-btn { background: #333; color: #ccc; }
+  html.dark-mode .parsons-reset-btn:hover:not(:disabled) { background: #444; }
   /* Correct-answer display for parsons */
   .quiz-correct-answers code {
     font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.88em;
