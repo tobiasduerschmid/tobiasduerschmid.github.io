@@ -66,6 +66,9 @@ steps:
     files:
       - path: "hello.py"
         content: |
+          # What do you expect from this point? Predict the outcome then run the command
+          print(["Hello", "World"], sep='_')  
+
           # Write one print() call that unpacks the list with *
           # and uses sep='_' and end='!\n'
           # Expected output: Hello_World_Students!
@@ -680,19 +683,15 @@ steps:
       `match_regex` to find:
 
       1. **User stories** — lines starting with `As a/an …, I want to … so that …`
-         Pattern: `r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)'`
          Print: `User stories: <count>` then each `user` group on its own indented line
 
       2. **Headings** — all `<h1>…</h1>` tags
-         Pattern: `r'<h1>(?P<heading>.+)</h1>'`
          Print: `Headings: <count>` then each heading text on its own indented line
 
       3. **Acceptance criteria** — three-line Given/When/Then blocks
-         Pattern: `r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'`
          Print: `Acceptance criteria: <count>` then for each: `Given:`, `When:`, `Then:` lines
 
       4. **File references** — things like `.pdf file`, `.zip file`
-         Pattern: `r'(?P<ext>\.\w+) file'`
          Print: `File references: <count>` then each extension on its own indented line
 
     files:
