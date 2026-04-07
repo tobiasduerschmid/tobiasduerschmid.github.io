@@ -761,6 +761,10 @@
     this.term.loadAddon(this.fitAddon);
     this.term.open(this.terminalContainerEl);
     this.term.focus();
+    // Sync terminal size to the backend whenever xterm reports a resize
+    this.term.onResize(function (size) {
+      self._syncTerminalSize(size.cols, size.rows);
+    });
     setTimeout(function () { self.fitAddon.fit(); }, 100);
     if (window.ResizeObserver) {
       var t; var ro = new ResizeObserver(function () {
@@ -769,6 +773,26 @@
         }, 50);
       });
       ro.observe(this.terminalContainerEl);
+    }
+  };
+
+  // Send terminal dimensions to the active backend so readline/bash wrap correctly.
+  TutorialCode.prototype._syncTerminalSize = function (cols, rows) {
+    // Skip if dimensions haven't changed
+    if (this._lastStty && this._lastStty.cols === cols && this._lastStty.rows === rows) return;
+    this._lastStty = { cols: cols, rows: rows };
+    var backend = this.config.backend;
+    if (backend === 'v86') {
+      if (this.emulator && this.booted) {
+        this._runSilent('stty cols ' + cols + ' rows ' + rows);
+      } else {
+        // Store so _setupFilesystem can apply it after boot
+        this._pendingStty = { cols: cols, rows: rows };
+      }
+    } else if (backend === 'webcontainer') {
+      if (this._shellProcess && typeof this._shellProcess.resize === 'function') {
+        try { this._shellProcess.resize({ cols: cols, rows: rows }); } catch (e) {}
+      }
     }
   };
 
@@ -869,6 +893,12 @@
     var self = this;
     this.sendCommand('cd /tutorial');
     this.sendCommand('export HISTCONTROL=ignoreboth');
+    // Sync terminal dimensions so bash/readline wraps at the correct column
+    var cols = (this._pendingStty && this._pendingStty.cols) || (this.term && this.term.cols) || 80;
+    var rows = (this._pendingStty && this._pendingStty.rows) || (this.term && this.term.rows) || 24;
+    this._pendingStty = null;
+    this._lastStty = { cols: cols, rows: rows };
+    this._runSilent('stty cols ' + cols + ' rows ' + rows);
     this.setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
     this.sendCommand('clear');
     return delay(100);
