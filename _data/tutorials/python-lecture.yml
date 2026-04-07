@@ -1,0 +1,766 @@
+title: "Python Lecture"
+description: "Interactive exercises accompanying the Python lecture. Practise the key concepts — print() keyword arguments, classes and __str__, and regex with named capture groups."
+
+instructor_mode: true
+
+backend: pyodide
+
+require_tests: true
+autosave_type: files
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — print() with keyword arguments
+  # --------------------------------------------------------------------------
+  - title: "print() with keyword arguments"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **use** `print()`'s `sep` and `end` keyword arguments and **predict** the output when a list is passed as a single argument.
+
+      ## The `print()` signature
+
+      ```
+      print(*args, sep=' ', end='\n', file=None, flush=False)
+      ```
+
+      | Argument | Default | Effect |
+      |---|---|---|
+      | `sep` | `' '` | String inserted **between** multiple positional arguments |
+      | `end` | `'\n'` | String appended **after** the last argument |
+
+      ### Important: `sep` acts between arguments, not list elements
+
+      When you pass multiple separate values, `sep` appears between them:
+
+      ```python
+      print("Hello", "World", sep='_')    # Hello_World
+      ```
+
+      When you pass a **single list**, it is one argument — `sep` has nothing to separate,
+      and Python prints the list's string representation as a unit:
+
+      ```python
+      print(["Hello", "World"], sep='_')  # ['Hello', 'World']
+      ```
+
+      ### Predict before you code
+
+      Before running the starter code, predict the exact output of:
+      ```python
+      print(["Hello", "World", "Students"], sep='_', end='!\n')
+      ```
+
+    files:
+      - path: "hello.py"
+        content: |
+          # Write one print() call that passes the list
+          # ["Hello", "World", "Students"] with sep='_' and end='!\n'
+        language: "python"
+
+    open_file: "hello.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "hello.py"
+          content: |
+            print(["Hello", "World", "Students"], sep='_', end='!\n')
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **Single argument:** `["Hello", "World", "Students"]` is one positional argument — a list. `sep='_'` has nothing to separate (only one argument), so it has no visible effect.
+        - **List representation:** `print()` calls `str()` on the list, producing `['Hello', 'World', 'Students']`.
+        - **`end='!\n'`:** Replaces the default `'\n'` with `'!\n'`, appending `!` before the newline.
+        - **Output:** `['Hello', 'World', 'Students']!`
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/hello.py')
+      - description: "Used print() with the list"
+        command: |
+          source = open('/tutorial/hello.py').read()
+          assert 'print' in source, "Write a print() call."
+          assert '"Hello"' in source or "'Hello'" in source, \
+              "Pass the list [\"Hello\", \"World\", \"Students\"] to print()."
+        hints:
+          - text: "Write `print([\"Hello\", \"World\", \"Students\"], sep='_', end='!\\n')` — pass the list as the first argument, then the two keyword arguments."
+      - description: "Output is ['Hello', 'World', 'Students']!"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/hello.py')
+          assert "['Hello', 'World', 'Students']!" in output, \
+              f"Expected \"['Hello', 'World', 'Students']!\" in output, got: {repr(output)}"
+        hints:
+          - text: "The list is a single argument to `print()`, so Python prints its string representation: `['Hello', 'World', 'Students']`. The `end='!\\n'` appends `!` at the end. Your output should contain `['Hello', 'World', 'Students']!`"
+
+    quiz:
+      title: "print() — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            What is the output of this statement?
+            ```python
+            print("A", "B", "C", sep='-', end='.')
+            ```
+          type: single
+          options:
+            - "`A B C.`"
+            - "`A-B-C.`"
+            - "`['A', 'B', 'C'].`"
+            - "`A-B-C`  (with a newline at the end)"
+          correct_index: 1
+          explanation: |
+            Three separate string arguments are passed, so `sep='-'` is inserted between them:
+            `A-B-C`. The `end='.'` replaces the default newline with `.`, giving `A-B-C.`
+            (no trailing newline). When multiple arguments are passed, `sep` clearly separates them.
+
+        - question: |
+            Why does `print(["A", "B", "C"], sep='-')` output `['A', 'B', 'C']` rather than `A-B-C`?
+          type: single
+          options:
+            - "Lists are not supported by `print()` — you must convert to a string first"
+            - "The list is one positional argument, so `sep` has nothing to separate. Python prints the list's string representation as a single unit."
+            - "`sep='-'` only works with string arguments, not with lists"
+            - "You need `sep='-'` before the list argument for it to apply to list elements"
+          correct_index: 1
+          explanation: |
+            `sep` is placed **between** multiple positional arguments. One argument (the list)
+            means there is no gap for `sep` to fill. Python calls `str()` on the list, producing
+            `['A', 'B', 'C']`. To print list elements with a separator, unpack the list:
+            `print(*["A", "B", "C"], sep='-')` → `A-B-C`.
+
+        - question: |
+            What does `end='\n'` do by default, and why would you change it?
+          type: single
+          options:
+            - "`end='\\n'` prints a blank line after the output; change it to `end=''` to suppress blank lines"
+            - "`end='\\n'` appends a newline after the last value; change it (e.g. to `end='!'`) to append a different string, or use `end=''` to suppress the newline entirely"
+            - "`end='\\n'` is only used when printing to a file; for console output it has no effect"
+            - "`end='\\n'` inserts a newline between arguments; `sep` appends a string at the end"
+          correct_index: 1
+          explanation: |
+            By default, `print()` ends every call with a newline so the next output starts on a
+            new line. You can override `end` to append any string — `end='!'` adds `!` before the
+            newline, `end=''` produces no newline at all (useful when building output incrementally
+            across multiple `print()` calls). `sep` and `end` are independent: `sep` goes *between*
+            arguments, `end` comes *after* the last one.
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — Classes and __str__
+  # --------------------------------------------------------------------------
+  - title: "Classes and __str__"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **define** a Python class with `__init__` and `__str__`, and **explain** how `print()`, `str()`, and f-strings all invoke `__str__` automatically.
+
+      ## Python classes
+
+      ```python
+      class Point:
+          def __init__(self, x, y):  # constructor
+              self.x = x    # instance attribute
+              self.y = y
+
+          def __str__(self):        # string representation
+              return f'Point({self.x}, {self.y})'
+
+      p = Point(3, 4)
+      print(p)            # Point(3, 4)
+      print(str(p))       # Point(3, 4)
+      print(f"At: {p}")   # At: Point(3, 4)
+      ```
+
+      | Dunder method | Called automatically by |
+      |---|---|
+      | `__init__` | `Point(3, 4)` — object construction |
+      | `__str__` | `print(obj)`, `str(obj)`, and f-strings `f"{obj}"` |
+
+      All instance methods receive `self` as the first parameter — Python passes the object
+      automatically when you call a method on an instance.
+
+      ### Task
+
+      The starter code gives you the `Book` class with `__init__` already complete.
+
+      1. **Add a `__str__` method** inside the class that returns the book as a formatted string:
+         ```
+         "<title>" by <author> (<year>)
+         ```
+         Use an f-string. Note the literal double-quotes around the title.
+
+      2. **Create an instance** below the class:
+         ```python
+         my_book = Book("Pride and Prejudice", "Jane Austen", 1813)
+         ```
+
+      3. **Print it three ways** and observe that all three invoke `__str__` automatically:
+         ```python
+         print(my_book)                        # 1. via print()
+         print(str(my_book))                   # 2. via str()
+         print(f"The book is: {my_book}")      # 3. via f-string
+         ```
+
+      Expected output:
+      ```
+      "Pride and Prejudice" by Jane Austen (1813)
+      "Pride and Prejudice" by Jane Austen (1813)
+      The book is: "Pride and Prejudice" by Jane Austen (1813)
+      ```
+
+    files:
+      - path: "book.py"
+        content: |
+          class Book:
+              """Represents a book with a title and an author."""
+
+              def __init__(self, title, author, year):
+                  self.title = title
+                  self.author = author
+                  self.year = year
+
+              # Add your __str__ method here
+
+          # Create an instance of the class
+          my_book = Book("Pride and Prejudice", "Jane Austen", 1813)
+
+          # Print my_book three ways below
+        language: "python"
+
+    open_file: "book.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "book.py"
+          content: |
+            class Book:
+                """Represents a book with a title and an author."""
+
+                def __init__(self, title, author, year):
+                    self.title = title
+                    self.author = author
+                    self.year = year
+
+                def __str__(self):
+                    """
+                    Implements the str() operator (the user-friendly string representation).
+                    This is what print() calls.
+                    """
+                    return f'"{self.title}" by {self.author} ({self.year})'
+
+            # Create an instance of the class
+            my_book = Book("Pride and Prejudice", "Jane Austen", 1813)
+
+            # 1. Using print()
+            print(my_book)
+
+            # 2. Using the str() function explicitly
+            print(str(my_book))
+
+            # 3. Using in an f-string
+            print(f"The book is: {my_book}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`__str__(self)`:** Must be defined inside the class at the same indentation level as `__init__`. It takes only `self` and must `return` a string. Python calls it automatically whenever the object needs to be converted to a string.
+        - **`return f'"{self.title}" by {self.author} ({self.year})'`:** The outer single quotes delimit the f-string; the `\"` inside produce literal double-quote characters around the title. `self.title`, `self.author`, and `self.year` are the instance attributes set in `__init__`.
+        - **`__init__(self, title, author, year)`:** Called automatically when you write `Book("Pride and Prejudice", "Jane Austen", 1813)`. Stores the three values as instance attributes on `self`.
+        - **All three print calls produce the same line** (modulo the `The book is:` prefix) because all three trigger `__str__`: `print(my_book)` implicitly, `str(my_book)` explicitly, and `f"{my_book}"` as part of f-string interpolation.
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/book.py')
+        hints:
+          - text: "Make sure `__str__` is defined inside the class (indented at the same level as `__init__`) and that it `return`s a string."
+      - description: "Defined a __str__ method"
+        command: |
+          source = open('/tutorial/book.py').read()
+          assert 'def __str__' in source, "Add a `__str__` method inside the Book class."
+        hints:
+          - text: "Add `def __str__(self):` inside the `Book` class, at the same indent level as `def __init__`. It should return the formatted string using an f-string."
+      - description: "print(my_book) produces the correct string"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/book.py')
+          expected = '"Pride and Prejudice" by Jane Austen (1813)'
+          assert output.count(expected) >= 3, \
+              f"Expected '{expected}' to appear at least 3 times in output, got: {repr(output)}"
+        hints:
+          - text: "Check the `__str__` return value: it should be `f'\"{self.title}\" by {self.author} ({self.year})'`. Make sure all three print statements use `my_book`."
+      - description: "f-string output contains 'The book is:'"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/book.py')
+          assert 'The book is:' in output, \
+              f"Expected 'The book is:' in output, got: {repr(output)}"
+        hints:
+          - text: "The third print should be `print(f\"The book is: {my_book}\")`. When an object appears in `{}` in an f-string, Python calls `str()` on it, which calls `__str__`."
+
+    quiz:
+      title: "Classes — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            Without a `__str__` method, what does `print(my_book)` display?
+          type: single
+          options:
+            - "Nothing — `print()` skips objects that have no string representation"
+            - "A memory address like `<__main__.Book object at 0x10b3c2f50>`"
+            - "The `__init__` parameter names: `title, author, year`"
+            - "A `TypeError` because `print()` cannot handle class instances"
+          correct_index: 1
+          explanation: |
+            Without `__str__`, Python falls back to the default object representation:
+            `<__main__.Book object at 0x...>`. Defining `__str__` replaces this with a
+            human-readable string. `print()` always calls `str(obj)` on its arguments — it
+            never raises `TypeError` for an object that lacks `__str__`.
+
+        - question: |
+            All three calls below produce `"Pride and Prejudice" by Jane Austen (1813)`.
+            What do they have in common?
+            ```python
+            print(my_book)
+            print(str(my_book))
+            print(f"The book is: {my_book}")  # ignoring prefix
+            ```
+          type: single
+          options:
+            - "They all call `repr(my_book)` to get the string"
+            - "They all ultimately invoke `my_book.__str__()` to convert the object to a string"
+            - "They all call `my_book.__init__()` to re-read the stored values"
+            - "They produce identical output only when `__repr__` equals `__str__`"
+          correct_index: 1
+          explanation: |
+            All three routes lead to `__str__`: `print(obj)` → `str(obj)` → `obj.__str__()`;
+            `str(obj)` is the same path; and f-strings call `str()` on each interpolated value
+            automatically. Defining `__str__` once gives you consistent, readable output
+            across every Python construct that converts an object to a string.
+
+        - question: |
+            A student writes `__str__` like this:
+            ```python
+            def __str__(self):
+                f'"{self.title}" by {self.author} ({self.year})'
+            ```
+            `print(my_book)` outputs `None`. What is the bug?
+          type: single
+          options:
+            - "The f-string uses single quotes — it must use double quotes"
+            - "The method has no `return` statement, so Python implicitly returns `None`; `print(None)` prints `None`"
+            - "`__str__` cannot use f-strings — it must use `.format()` or `%` formatting"
+            - "`self.title` is not accessible inside `__str__` — only `__init__` can read instance attributes"
+          correct_index: 1
+          explanation: |
+            A function with no `return` statement always returns `None`. The f-string expression
+            `f'...'` is evaluated but its value is thrown away. Adding `return` fixes it:
+            `return f'"{self.title}" by {self.author} ({self.year})'`. This is a very common
+            mistake — the f-string looks complete, but without `return` it produces nothing.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Named Groups: Regex on a Requirements Document
+  # --------------------------------------------------------------------------
+  - title: "Named Groups: Regex on a Requirements Document"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **apply** named capture groups, `re.compile()`, and `re.finditer()` to extract structured data from an HTML requirements document.
+
+      ## Named capture groups
+
+      So far you have used patterns that match a region of text and return the entire match.
+      **Named groups** let you label sub-parts of a match and retrieve them by name:
+
+      ```python
+      import re
+
+      text = "Error 404: page not found"
+
+      m = re.search(r'Error (?P<code>\d+)', text)
+      if m:
+          print(m.group('code'))   # '404'
+      ```
+
+      The syntax `(?P<name>...)` is identical to a regular group `(...)` but each captured
+      sub-string can be retrieved by name with `m.group('name')`.
+
+      ## `re.compile()` + `re.finditer()`
+
+      `re.compile(pattern, flags)` pre-compiles a pattern into a reusable object.
+      Its `.finditer()` method returns an iterator of **match objects** so you can
+      access named groups from each result:
+
+      ```python
+      text = "apple costs $1.20, banana costs $0.45"
+
+      pattern = re.compile(r'(?P<fruit>\w+) costs \$(?P<price>[\d.]+)')
+      for m in pattern.finditer(text):
+          print(m.group('fruit'), '→', m.group('price'))
+      # apple → 1.20
+      # banana → 0.45
+      ```
+
+      ## New flag: `re.MULTILINE`
+
+      By default, `^` matches only the very start of the whole string. Pass `re.MULTILINE`
+      to `re.compile()` to make `^` match the start of **every line**:
+
+      ```python
+      text = "line one\nAs a user, I want X so that Y\nline three"
+
+      # Without re.MULTILINE — ^ only anchors to the start of the string — no match
+      pattern = re.compile(r'^As an? (?P<user>.+), I want to .+ so that .+')
+      print(list(pattern.finditer(text)))   # []
+
+      # With re.MULTILINE — ^ anchors to the start of each line
+      pattern = re.compile(r'^As an? (?P<user>.+), I want to .+ so that .+', re.MULTILINE)
+      for m in pattern.finditer(text):
+          print(m.group('user'))   # user
+      ```
+
+      ## Matching across lines with `\n`
+
+      A plain `.` does **not** match a newline. To span multiple lines, include `\n` explicitly:
+
+      ```python
+      text = "Given X is true\n    When Y happens\n    Then Z occurs"
+
+      pattern = re.compile(r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)', re.MULTILINE)
+      for m in pattern.finditer(text):
+          print(m.group('given'), '/', m.group('when'), '/', m.group('then'))
+      ```
+
+      ### Task
+
+      The starter file reads `requirements.html` into `content` and provides a `match_regex`
+      helper that applies `re.MULTILINE` automatically. Define the four patterns and call
+      `match_regex` to find:
+
+      1. **User stories** — lines starting with `As a/an …, I want to … so that …`
+         Pattern: `r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)'`
+         Print: `User stories: <count>` then each `user` group on its own indented line
+
+      2. **Headings** — all `<h1>…</h1>` tags
+         Pattern: `r'<h1>(?P<heading>.+)</h1>'`
+         Print: `Headings: <count>` then each heading text on its own indented line
+
+      3. **Acceptance criteria** — three-line Given/When/Then blocks
+         Pattern: `r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'`
+         Print: `Acceptance criteria: <count>` then for each: `Given:`, `When:`, `Then:` lines
+
+      4. **File references** — things like `.pdf file`, `.zip file`
+         Pattern: `r'(?P<ext>\.\w+) file'`
+         Print: `File references: <count>` then each extension on its own indented line
+
+    files:
+      - path: "html_parser.py"
+        content: |
+          import re
+
+          def match_regex(pattern):
+              # re.MULTILINE makes ^ match the start of each line
+              compiled_pattern = re.compile(pattern, re.MULTILINE)
+              return list(compiled_pattern.finditer(content))
+
+          with open('requirements.html', 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          # 1. User stories
+          # Pattern: r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)'
+
+          # 2. Headings
+          # Pattern: r'<h1>(?P<heading>.+)</h1>'
+
+          # 3. Acceptance criteria
+          # Pattern: r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'
+
+          # 4. File references
+          # Pattern: r'(?P<ext>\.\w+) file'
+        language: "python"
+
+      - path: "requirements.html"
+        content: |
+          <h1>Bulk Download for Reviewers</h1>
+
+          As a reviewer (or administrator), I want to be able to download all submitted files for a specific application in a single compressed folder (ZIP) so that I can review the materials efficiently offline.
+
+              Given I am logged in as a registered reviewer any many submissions have been created already,
+              When I navigate to the submission page of a valid submission
+              Then I see a "Download All Submission Files" button,
+
+              Given I am logged in as a registered reviewer and viewing the details of a specific, valid submission,
+              When I click the "Download All Submission Files" button,
+              Then The system should generate and prompt me to download a single .zip file containing every file uploaded by the applicant for that submission.
+
+              Given I am logged in as an applicant who created a valid submission before,
+              When I navigate to the submission page of my own own submission,
+              Then I do not see a "Download All Submission Files" button,
+
+          <h1>Applicant Registration</h1>
+
+          As an applicant, I want to be able to register and create a profile so that I can easily track my submissions and receive official communications.
+
+              Given I am a first-time user and I am on the system's registration page,
+              When I fill in all required fields and click the "Register" button,
+              Then My account should be created, and I should receive an email confirmation with a link to my new profile dashboard.
+
+          <h1>Multi-File Upload</h1>
+
+          As an applicant, I want to be able to upload multiple files (e.g., a PDF of my paper and a separate image file) so that I can provide all the required materials for my submission in one place.
+
+              Given I am creating a new submission with a pdf and a image, and both files are under the maximum size limit,
+              When I select both a .pdf file and a .jpg file using the upload tool,
+              Then Both files should be successfully attached to my submission and displayed in the confirmation summary.
+
+          <h1>Submission Confirmation</h1>
+
+          As an applicant, I want to receive an immediate email confirmation after successfully submitting my materials so that I have proof that my submission was received by the system.
+
+              Given I have completed all required fields and files for my application,
+              When I click the final "Submit Application" button,
+              Then The system should display a success message and immediately send an automated email containing a unique Submission ID and a summary of my provided data.
+
+          <h1>Administrative Filtering and Search</h1>
+
+          As an administrator, I want to be able to search and filter submissions based on criteria like submission status (e.g., "Pending," "Accepted," "Rejected") and applicant name so that I can quickly manage and process the application pool.
+
+              Given I am logged in as an administrator and viewing the main submissions list and there are many submissions in the system, some of which were submitted by user "Smith" and some of these have been accepted,
+              When I apply the filter for "Status: Accepted" and search for "Smith"
+              Then The list should only display submissions that have an Accepted status and contain "Smith" in the applicant's name field.
+        language: "plaintext"
+
+    open_file: "html_parser.py"
+
+    setup_commands:
+      - "import os; os.chdir('/tutorial')"
+
+    solution:
+      files:
+        - path: "html_parser.py"
+          content: |
+            import re
+
+            USER_REGEX     = r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)'
+            HEADING_REGEX  = r'<h1>(?P<heading>.+)</h1>'
+            CRITERIA_REGEX = r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'
+            FILE_REGEX     = r'(?P<ext>\.\w+) file'
+
+            def match_regex(pattern):
+                # re.MULTILINE makes ^ match the start of each line
+                compiled_pattern = re.compile(pattern, re.MULTILINE)
+                return list(compiled_pattern.finditer(content))
+
+            with open('requirements.html', 'r', encoding='utf-8') as f:
+                content = f.read()
+
+            # 1. User stories
+            user_matches = match_regex(USER_REGEX)
+            print(f"User stories: {len(user_matches)}")
+            for m in user_matches:
+                print(f"  {m.group('user')}")
+
+            # 2. Headings
+            heading_matches = match_regex(HEADING_REGEX)
+            print(f"Headings: {len(heading_matches)}")
+            for m in heading_matches:
+                print(f"  {m.group('heading')}")
+
+            # 3. Acceptance criteria
+            criteria_matches = match_regex(CRITERIA_REGEX)
+            print(f"Acceptance criteria: {len(criteria_matches)}")
+            for m in criteria_matches:
+                print(f"  Given: {m.group('given')}")
+                print(f"  When:  {m.group('when')}")
+                print(f"  Then:  {m.group('then')}")
+
+            # 4. File references
+            file_matches = match_regex(FILE_REGEX)
+            print(f"File references: {len(file_matches)}")
+            for m in file_matches:
+                print(f"  {m.group('ext')}")
+          language: "python"
+      explanation: |
+        **Why this is correct:**
+
+        - **`re.compile(pattern, re.MULTILINE)` in `match_regex`:** Pre-compiling the pattern with `re.compile()` produces a reusable compiled object. Passing `re.MULTILINE` makes `^` anchor to the start of every line, not just the start of the whole string — essential for the user-story pattern. For patterns without `^` the flag is harmless.
+        - **`USER_REGEX` — `r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)'`:** `an?` matches `a` or `an`. Three named groups capture the role (`user`), the desired capability (`action`), and the business rationale (`reason`). There are 5 matching lines.
+        - **`HEADING_REGEX` — `r'<h1>(?P<heading>.+)</h1>'`:** `.+` matches one or more characters between the tags. Because `.` doesn't match newlines, the pattern correctly stops at the end of each single-line heading. There are 5 `<h1>` elements.
+        - **`CRITERIA_REGEX` — `r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'`:** Explicit `\n` crosses line boundaries. `.*` before `When` and `Then` absorbs any leading whitespace (the 4-space indent). `\n*` between the `When` and `Then` clauses tolerates any number of blank lines between them. There are 7 Given/When/Then blocks.
+        - **`FILE_REGEX` — `r'(?P<ext>\.\w+) file'`:** `\.` matches a literal dot (unescaped `.` would match any character). `\w+` matches the extension. The named group `ext` captures `.zip`, `.pdf`, `.jpg`. There are 3 file references.
+        - **`re.finditer()` vs `re.findall()`:** `re.finditer()` yields match objects, giving access to named groups via `m.group('name')`. `re.findall()` with groups returns tuples of raw strings in group order, discarding the names.
+
+    tests:
+      - description: "Script runs without errors"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/html_parser.py')
+      - description: "Used the re module"
+        command: |
+          import ast
+          source = open('/tutorial/html_parser.py').read()
+          tree = ast.parse(source)
+          calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, 'value', None) and getattr(n.func.value, 'id', None) == 're']
+          assert len(calls) > 0, "You must use the `re` module (e.g. re.compile / re.finditer) to extract data from the HTML."
+        hints:
+          - text: "Import `re` and use `re.compile()` with the patterns shown in the step instructions, then call `.finditer()` on the compiled pattern."
+            condition: "code_missing: import re"
+      - description: "Used named groups"
+        command: |
+          source = open('/tutorial/html_parser.py').read()
+          assert '?P<' in source, "Use named groups (?P<name>...) in your regex patterns."
+        hints:
+          - text: "Named groups use the syntax `(?P<name>...)` inside your pattern — for example `(?P<user>.+)` captures the matched text under the key `user`, accessible via `m.group('user')`."
+            condition: "code_missing: ?P<"
+      - description: "Found 5 user stories"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/html_parser.py')
+          assert 'User stories: 5' in output, \
+              f"Expected 'User stories: 5' in output, got: {repr(output)}"
+        hints:
+          - text: "User stories start at the beginning of lines with 'As a/an'. The `match_regex` helper already applies `re.MULTILINE` — check that your pattern starts with `^As an?` and ends with `so that (?P<reason>.+)` to capture all three parts."
+            condition: "code_missing: so that"
+          - text: "You have `so that` in the pattern — good. Make sure you have three named groups: `(?P<user>.+)`, `(?P<action>.+)`, and `(?P<reason>.+)` separated by `, I want to` and ` so that `."
+            condition: "code_contains: so that"
+      - description: "Found 5 headings"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/html_parser.py')
+          assert 'Headings: 5' in output, \
+              f"Expected 'Headings: 5' in output, got: {repr(output)}"
+        hints:
+          - text: "HTML headings are wrapped in `<h1>` and `</h1>` tags on a single line. Write a pattern with a named group `(?P<heading>.+)` that captures the text between the tags."
+      - description: "Found 7 acceptance criteria"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/html_parser.py')
+          assert 'Acceptance criteria: 7' in output, \
+              f"Expected 'Acceptance criteria: 7' in output, got: {repr(output)}"
+        hints:
+          - text: "Each acceptance criterion spans three lines: Given..., When..., Then... Use explicit `\\n` in the pattern to cross line boundaries, and `.*` to absorb the leading whitespace before `When` and `Then`."
+            condition: "code_missing: \\n"
+          - text: "You have `\\n` in the pattern — good. Make sure you have three named groups: `(?P<given>.+)`, `(?P<when>.+)`, and `(?P<then>.+)`. Count the blocks in the HTML — there should be 7."
+            condition: "code_contains: \\n"
+      - description: "Found 3 file references"
+        command: |
+          import os; os.chdir('/tutorial')
+          output = __run_capture('/tutorial/html_parser.py')
+          assert 'File references: 3' in output, \
+              f"Expected 'File references: 3' in output, got: {repr(output)}"
+        hints:
+          - text: "File references look like '.zip file' or '.pdf file'. Start the pattern with `\\.` (escaped dot for a literal dot), then `\\w+` for the extension, then a space and 'file'. Wrap the extension in a named group `(?P<ext>...)`."
+
+    quiz:
+      title: "Named Groups — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            What does `m.group('user')` return after this match?
+            ```python
+            import re
+            text = "As a tester, I want to automate checks so that regressions are caught early"
+            pattern = re.compile(r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)', re.MULTILINE)
+            m = pattern.search(text)
+            ```
+          type: single
+          options:
+            - "`'As a tester'`"
+            - "`'tester'`"
+            - "`'tester, I want to automate checks'`"
+            - "`('tester', 'automate checks', 'regressions are caught early')` — a tuple of all groups"
+          correct_index: 1
+          explanation: |
+            The named group `(?P<user>.+)` captures everything between `As a ` and `, I want to`.
+            That is `'tester'`. The other two groups are accessible as `m.group('action')` →
+            `'automate checks'` and `m.group('reason')` → `'regressions are caught early'`.
+            Named groups always return plain strings, not tuples — tuples are only produced by
+            `re.findall()` when the pattern has multiple groups.
+
+        - question: |
+            How does `re.finditer()` differ from `re.findall()` when the pattern contains named groups?
+          type: single
+          options:
+            - "`re.finditer()` returns a list of strings like `re.findall()`, but filters out empty matches"
+            - "`re.finditer()` yields match objects so you can access each named group by name; `re.findall()` with groups returns a list of tuples of group strings, losing the name association"
+            - "`re.finditer()` only works with named groups; `re.findall()` works with any pattern"
+            - "They are identical — `re.finditer()` is just a lazy alias for `re.findall()`"
+          correct_index: 1
+          explanation: |
+            `re.finditer()` yields **match objects**. Each object lets you call `m.group('name')`
+            to retrieve a specific named group by its label. `re.findall()` with groups returns a
+            list of tuples of raw strings in group order, discarding the names — you have to
+            remember which index corresponds to which group. `re.finditer()` is therefore clearer
+            when patterns have multiple named groups.
+
+        - question: |
+            A pattern `r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'` uses
+            explicit `\n` rather than `re.DOTALL`. Why?
+          type: single
+          options:
+            - "`re.DOTALL` is slower, so explicit `\\n` is used for performance"
+            - "With `re.DOTALL`, `.+` would greedily consume newlines and potentially merge two separate Given/When/Then blocks into a single match"
+            - "`re.DOTALL` prevents named groups from working correctly"
+            - "Explicit `\\n` is required when the pattern has more than two named groups"
+          correct_index: 1
+          explanation: |
+            With `re.DOTALL`, `.` matches **any** character including `\n`, making `.+` very
+            greedy. It could swallow the newlines between two separate Given/When/Then blocks,
+            merging them into one large match. Using explicit `\n` keeps the pattern precise:
+            it crosses only the exact line boundaries that separate the three clauses.
+
+        - question: |
+            *(Spaced review — Step 1: print())*
+
+            What is the output of `print(["Given", "When", "Then"], sep='\n')`?
+          type: single
+          options:
+            - "`['Given', 'When', 'Then']`"
+            - |
+              ```
+              Given
+              When
+              Then
+              ```
+            - "`Given\nWhen\nThen`  (the literal string with backslash-n)"
+            - "`GivenWhenThen`  (elements joined without separator)"
+          correct_index: 0
+          explanation: |
+            The list is a **single** argument to `print()`, so `sep='\n'` has nothing to separate —
+            there is only one argument. Python prints the list's string representation as one unit:
+            `['Given', 'When', 'Then']`. To print each element on its own line, unpack the list:
+            `print(*["Given", "When", "Then"], sep='\n')`.
+
+        - question: |
+            *(Spaced review — Step 2: Classes)*
+
+            After fixing the `IndentationError` in `Book.__init__`, which attribute would be
+            `None` if you accidentally wrote `self.author = None` instead of
+            `self.author = author`?
+          type: single
+          options:
+            - "`self.title` — the first attribute assigned in `__init__`"
+            - "`self.author` — the line that was incorrectly indented and is now storing `None`"
+            - "`self.year` — the last attribute assigned always shadows the others"
+            - "All attributes would be `None` because `__init__` restarts when one line is wrong"
+          correct_index: 1
+          explanation: |
+            Each `self.x = value` line stores independently. If `self.author = None` is written,
+            only `my_book.author` would be `None`; `my_book.title` and `my_book.year` would still
+            hold their correct values. The `__str__` method would then produce
+            `'"Pride and Prejudice" by None (1813)'`. This shows why reading the indentation of
+            each assignment carefully matters — Python executes only what you write.
