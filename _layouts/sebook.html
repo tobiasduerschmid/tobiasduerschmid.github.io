@@ -183,11 +183,17 @@
             </label>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="toggle-label">Read Aloud</span>
+            <span class="toggle-label">Audio Clips</span>
             <label class="switch">
-              <input type="checkbox" id="readAloudToggle" checked aria-label="Toggle read aloud">
+              <input type="checkbox" id="readAloudToggle" checked aria-label="Toggle audio clips">
               <span class="slider round"></span>
             </label>
+          </div>
+          <div style="display: flex; align-items: center;">
+            <button id="tts-read-btn" aria-label="Read page aloud using text-to-speech"
+              style="background:none; border:1px solid #2774AE; color:#2774AE; border-radius:6px; padding:4px 12px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">
+              <i class="fa fa-volume-up" style="margin-right:5px;"></i>Read Aloud
+            </button>
           </div>
           {% if site.bookmarks %}
           <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none; align-items:center;">
@@ -306,7 +312,7 @@
           highlightToggle.parentElement.parentElement.style.display = 'none';
         }
 
-        // Read Aloud only if players exist
+        // Audio Clips toggle — only shown when .cap players exist on this page
         if (readAloudToggle && audioPlayers.length === 0) {
           readAloudToggle.parentElement.parentElement.style.display = 'none';
         }
@@ -477,6 +483,193 @@
       This site does not sell, share, or disclose any user data to third parties.
     </p>
   </div>
+
+  <!-- TTS control bar (shown while reading aloud) -->
+  <div id="tts-bar" role="region" aria-label="Text-to-speech controls"
+    style="display:none; position:fixed; bottom:0; left:0; right:0; z-index:1050;
+           background:#1c1c2e; color:#fff; padding:8px 20px;
+           align-items:center; gap:12px; flex-wrap:wrap;
+           box-shadow:0 -2px 10px rgba(0,0,0,0.45);">
+    <span style="font-size:13px; font-weight:600; color:#8bb8e8; margin-right:4px;">
+      <i class="fa fa-volume-up"></i> Reading aloud
+    </span>
+    <button id="tts-playpause" title="Pause / Resume"
+      style="background:transparent; border:2px solid #2774AE; color:#fff;
+             border-radius:50%; width:34px; height:34px; cursor:pointer;
+             display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;">
+      <i class="fa fa-pause"></i>
+    </button>
+    <button id="tts-slower" title="Slower"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#ccc; border-radius:6px; padding:4px 11px; cursor:pointer;
+             font-size:12px; font-weight:700;">
+      &#8722; Slower
+    </button>
+    <span id="tts-rate"
+      style="font-size:13px; font-weight:700; color:#8bb8e8;
+             min-width:36px; text-align:center;">1.0x</span>
+    <button id="tts-faster" title="Faster"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#ccc; border-radius:6px; padding:4px 11px; cursor:pointer;
+             font-size:12px; font-weight:700;">
+      + Faster
+    </button>
+    <select id="tts-voice-select" title="Select voice"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+             color:#fff; border-radius:6px; padding:4px 8px; cursor:pointer;
+             font-size:12px; max-width:170px; margin-left:4px;">
+      <option value="">Default voice</option>
+    </select>
+    <button id="tts-stop" title="Stop reading"
+      style="background:rgba(200,50,50,0.18); border:1px solid rgba(220,80,80,0.45);
+             color:#f99; border-radius:6px; padding:4px 12px; cursor:pointer;
+             font-size:12px; font-weight:700; margin-left:auto;">
+      <i class="fa fa-stop"></i> Stop
+    </button>
+  </div>
+
+  <script src="{{ '/js/tts-player.js' | relative_url }}"></script>
+  <script>
+    (function () {
+      var VOICE_KEY = 'tts-voice-name';
+
+      function initTTS() {
+        if (!window.TTSPlayer || !TTSPlayer.isSupported()) {
+          var btn = document.getElementById('tts-read-btn');
+          if (btn) btn.style.display = 'none';
+          return;
+        }
+
+        var readBtn      = document.getElementById('tts-read-btn');
+        var bar          = document.getElementById('tts-bar');
+        var playPauseBtn = document.getElementById('tts-playpause');
+        var slowerBtn    = document.getElementById('tts-slower');
+        var fasterBtn    = document.getElementById('tts-faster');
+        var stopBtn      = document.getElementById('tts-stop');
+        var rateDisplay  = document.getElementById('tts-rate');
+        var voiceSel     = document.getElementById('tts-voice-select');
+
+        if (!readBtn || !bar) return;
+
+        // Populate voice selector once voices are available
+        TTSPlayer.onVoicesReady(function () {
+          var voices = TTSPlayer.getVoices();
+          if (!voices.length || !voiceSel) return;
+
+          // Group by locale (voices already sorted best-first within each locale)
+          var locales = {};
+          voices.forEach(function (item) {
+            var loc = item.lang;
+            if (!locales[loc]) locales[loc] = [];
+            locales[loc].push(item);
+          });
+
+          voiceSel.innerHTML = '<option value="">Default voice</option>';
+          Object.keys(locales).sort(function (a, b) {
+            if (/^en-US/i.test(a)) return -1;
+            if (/^en-US/i.test(b)) return  1;
+            return a.localeCompare(b);
+          }).forEach(function (loc) {
+            var grp = document.createElement('optgroup');
+            grp.label = loc;
+            locales[loc].forEach(function (item) {
+              var opt = document.createElement('option');
+              opt.value = item.voice.name;
+              opt.textContent = item.label;
+              grp.appendChild(opt);
+            });
+            voiceSel.appendChild(grp);
+          });
+
+          // Restore saved voice, or auto-select the best-sounding one
+          var saved = localStorage.getItem(VOICE_KEY);
+          var activeVoice = null;
+          if (saved) {
+            var match = voices.find(function (v) { return v.voice.name === saved; });
+            if (match) { activeVoice = match; voiceSel.value = saved; }
+          }
+          if (!activeVoice) {
+            var best = TTSPlayer.bestVoice();
+            if (best) {
+              activeVoice = best;
+              voiceSel.value = best.voice.name;
+              localStorage.setItem(VOICE_KEY, best.voice.name);
+            }
+          }
+          if (activeVoice) TTSPlayer.setVoice(activeVoice.voice);
+
+          voiceSel.addEventListener('change', function () {
+            var name = this.value;
+            localStorage.setItem(VOICE_KEY, name);
+            if (!name) { TTSPlayer.setVoice(null); return; }
+            var found = voices.find(function (v) { return v.voice.name === name; });
+            if (found) TTSPlayer.setVoice(found.voice);
+          });
+        });
+
+        function updateBar() {
+          var speaking = TTSPlayer.isSpeaking();
+          var paused   = TTSPlayer.isPaused();
+          bar.style.display = (speaking || paused) ? 'flex' : 'none';
+          if (playPauseBtn) {
+            playPauseBtn.innerHTML = paused
+              ? '<i class="fa fa-play"></i>'
+              : '<i class="fa fa-pause"></i>';
+            playPauseBtn.title = paused ? 'Resume' : 'Pause';
+          }
+          if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
+          if (!speaking && !paused) {
+            readBtn.innerHTML = '<i class="fa fa-volume-up" style="margin-right:5px;"></i>Read Aloud';
+            readBtn.style.color = '#2774AE';
+            readBtn.style.borderColor = '#2774AE';
+          }
+        }
+
+        readBtn.addEventListener('click', function () {
+          if (TTSPlayer.isSpeaking() || TTSPlayer.isPaused()) {
+            TTSPlayer.stop();
+            return;
+          }
+          var content = document.getElementById('main-content');
+          var text = TTSPlayer.extractText(content);
+          if (!text) return;
+
+          readBtn.innerHTML = '<i class="fa fa-stop" style="margin-right:5px;"></i>Stop Reading';
+          readBtn.style.color = '#c0392b';
+          readBtn.style.borderColor = '#c0392b';
+          TTSPlayer.speak(text, { onUpdate: updateBar, onEnd: updateBar });
+          updateBar();
+        });
+
+        if (playPauseBtn) {
+          playPauseBtn.addEventListener('click', function () {
+            TTSPlayer.isPaused() ? TTSPlayer.resume() : TTSPlayer.pause();
+          });
+        }
+        if (slowerBtn) {
+          slowerBtn.addEventListener('click', function () {
+            TTSPlayer.setRate(TTSPlayer.getRate() - 0.1);
+            if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
+          });
+        }
+        if (fasterBtn) {
+          fasterBtn.addEventListener('click', function () {
+            TTSPlayer.setRate(TTSPlayer.getRate() + 0.1);
+            if (rateDisplay) rateDisplay.textContent = TTSPlayer.rateLabel();
+          });
+        }
+        if (stopBtn) {
+          stopBtn.addEventListener('click', function () { TTSPlayer.stop(); });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTTS);
+      } else {
+        initTTS();
+      }
+    })();
+  </script>
 
   {% include scripts.html %}
 
