@@ -709,16 +709,16 @@ steps:
               content = f.read()
 
           # 1. User stories
-          # Pattern: r'^As an? (?P<user>.+), I want to (?P<action>.+) so that (?P<reason>.+)'
+          # e.g., As a reviewer, I want to be able to download all submitted files so that I can review them efficiently offline.
 
           # 2. Headings
-          # Pattern: r'<h1>(?P<heading>.+)</h1>'
+          # e.g. <h1>Heading Text</h1>'
 
           # 3. Acceptance criteria
-          # Pattern: r'Given (?P<given>.+)\n.* When (?P<when>.+)\n*.* Then (?P<then>.+)'
+          # e.g., 'Given the user is logged in and submitted papers\n When they go to my paper\n Then they see their papers.'
 
           # 4. File references
-          # Pattern: r'(?P<ext>\.\w+) file'
+          # e.g: .pdf file
         language: "python"
 
       - path: "requirements.html"
