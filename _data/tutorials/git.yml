@@ -2967,31 +2967,6 @@ steps:
       - description: "power function is committed on main"
         command: "cd /tutorial/myproject && git show main:calculator.py | grep -q 'def power'"
 
-  # --------------------------------------------------------------------------
-  # STEP 15: Celebration — final quiz
-  # --------------------------------------------------------------------------
-  - title: "Git Mastery — Final Review"
-    instructions: |
-      ### Congratulations — you've completed the Git tutorial!
-
-      From an empty folder to a version-controlled Python project with
-      branching, merge conflict resolution, remote collaboration, and
-      independent feature work — that's a serious achievement.
-
-      Take a moment to appreciate what you can now do:
-
-      - Initialize repositories and configure your identity
-      - Stage, commit, and inspect changes with precision
-      - Branch, merge, and resolve conflicts like a professional
-      - Undo mistakes safely on shared branches
-      - Collaborate through remotes with push and pull
-
-      Before you go, let's do one final knowledge check to cement
-      everything. This quiz covers the entire tutorial — all 14 steps.
-      Good luck!
-
-    tests: []
-
     quiz:
       title: "Git Mastery — Final Comprehensive Review"
       min_score: 0.8
@@ -3008,15 +2983,6 @@ steps:
             - 1
             - 3
           explanation: "`git revert` is the tool for safely undoing **committed, shared history**. `git restore --staged` handles accidentally staged files. `git restore <file>` discards uncommitted working-directory edits. `git reset --hard` on a shared branch rewrites history and would break teammates who already pulled."
-
-        - question: "**[Interleaved: Revisit Step 6]** A teammate says: 'I'll add `.gitignore` later — for now I'll just manually remember not to stage `.env`.' What is the hidden risk?"
-          options:
-            - "No risk — Git never tracks files without an explicit `git add`"
-            - "Risky — one accidental `git add .` by anyone on the team permanently commits the secret with no retroactive fix"
-            - "No risk — Git automatically detects files containing API keys and refuses to stage them"
-            - "Risky — but only if the remote repository is public"
-          correct_index: 1
-          explanation: "As Step 6 showed, `.gitignore` **cannot retroactively remove** files already committed. One careless `git add .` — by any developer, on any machine — permanently exposes a secret in history. Even deleting the file in a later commit doesn't help: the secret lives in every prior commit, accessible to anyone who clones. This is why `.gitignore` must exist **before** the first `git add`."
 
         - question: "You want to see the full history graph including all branches in one compact view. Which command is correct?"
           options:
@@ -3044,15 +3010,6 @@ steps:
             - "`git add --all` — stage everything including untracked files"
           correct_index: 1
           explanation: "Staging files by name is the most direct way to control what enters each commit — the core lesson from Step 4. While `git add .` followed by `git restore --staged` would also work, naming files explicitly is simpler and less error-prone."
-
-        - question: "**[Interleaved: Revisit Step 11]** You resolved the conflict in `app.py` and ran `git add app.py`. `git status` then shows a second file, `config.py`, also marked 'both modified'. Can you run `git commit` now?"
-          options:
-            - "Yes — `git commit` will finish the merge and ignore the unresolved file"
-            - "No — every conflicting file must be resolved and `git add`-ed before `git commit` will succeed"
-            - "Yes — Git auto-resolves remaining conflicts when you commit"
-            - "No — you must run `git merge --abort` and start over"
-          correct_index: 1
-          explanation: "Git requires **all** conflicting files to be resolved and staged before the merge commit can be created. Running `git commit` with any 'unmerged paths' remaining will fail with an error. Fix each conflict, `git add` each file, then commit once."
 
         - question: "You ran `git add .` and accidentally staged `secrets.env` alongside your real changes. You need to unstage **only** that file while keeping everything else staged and your edits intact. What do you run?"
           options:
@@ -3089,16 +3046,7 @@ steps:
             - "`git cat-file`"
           correct_index: 2
           explanation: "`git log` prints the full chain of snapshots — each entry shows the unique commit hash, author, timestamp, and message. Add `--oneline` to compress to one line per commit, `--graph` to draw ASCII branch structure, and `--all` to include every branch. You used this in Step 7 to inspect commits and in Steps 10–11 to verify merges and track history."
-
-        - question: "Creating a branch takes ~41 bytes and is nearly instant, even in a 10-year-old repository with thousands of files. What explains this?"
-          options:
-            - "Git copies only recently modified files, so large old repositories are fast"
-            - "A branch is just a tiny file containing one commit hash — creating it involves no copying at all"
-            - "Git uses aggressive network compression when creating branches"
-            - "Branches store a diff from `main`, not full file copies"
-          correct_index: 1
-          explanation: "A branch is a 41-byte text file in `.git/refs/heads/` that holds a single SHA hash. 'Creating a branch' means writing that one file — regardless of how many commits or files exist. This is why Git can have hundreds of branches at virtually no cost."
-
+          
         - question: "When you merge two branches that have **diverged** (both have unique commits), what kind of commit does Git create to combine them?"
           options:
             - "A fast-forward commit"
@@ -3153,31 +3101,30 @@ steps:
           correct_index: 1
           explanation: "`git diff --staged` compares the staging area to the last commit — showing precisely what `git commit` would snapshot. `git diff` without flags shows only unstaged changes (which would be nothing here). `git show HEAD` inspects what was already committed."
 
-        - question: "You are about to run `git merge feature` from `main`. Name the **three** things you should check first. (Select all that apply)"
+        - question: "You are about to run `git merge feature` from `main`. Select the things you should check first. (Select all that apply)"
           type: multiple
           options:
-            - "Confirm you are on the correct target branch (`git branch --show-current`)"
+            - "Delete the feature branch first to prevent merge conflicts"
             - "Preview what the merge will introduce (`git diff main..feature`)"
             - "Ensure your working directory is clean — no uncommitted changes that could complicate a conflict (`git status`)"
             - "Run `git push` first to sync with the remote"
           correct_indices:
-            - 0
             - 1
             - 2
           explanation: "Before merging: (1) be on the right branch, (2) preview the incoming changes, (3) start from a clean working directory so you don't mix in-progress work with conflict resolution. Pushing first is unrelated to the merge — you push *after* the merge is complete."
 
-        - question: "Which sequence correctly describes the full local Git workflow from editing a file to having it permanently saved in history?"
-          type: multiple
-          options:
+        - question: |
+            **Arrange** the steps of the local Git workflow in the correct order, from editing a file to having it permanently saved in history.
+          type: parsons
+          display: block
+          lines:
             - "Edit file in working directory"
-            - "`git add <file>` — move to staging area"
-            - "`git push` — upload to remote"
-            - "`git commit -m 'message'` — create permanent snapshot"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "The local workflow is **edit → stage → commit**. `git push` uploads to a remote and is a separate step that happens *after* committing. A commit is permanent in the local repository regardless of whether you ever push."
+            - "git add <file>"
+            - "git commit -m 'message'"
+          distractors:
+            - "git push"
+            - "git pull"
+          explanation: "The local workflow is **edit → stage → commit**. `git push` uploads to a remote and is a separate step that happens *after* committing. `git pull` downloads remote changes — it is not part of the local save workflow. A commit is permanent in the local repository regardless of whether you ever push."
 
         - question: "A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
           options:
@@ -3194,7 +3141,7 @@ steps:
             - "Write commit messages that describe what changed and why"
             - "Create `.gitignore` before the first commit to prevent accidental secret exposure"
             - "Use `git push -f` regularly to keep the remote history clean"
-            - "Use `git revert` instead of `git reset --hard` to undo mistakes on shared branches"
+            - "Use `git revert` instead of changing the commit history to undo mistakes on shared branches"
           correct_indices:
             - 0
             - 1
@@ -3209,3 +3156,28 @@ steps:
             - "It only updates `git log` to show the remote commits — your files are unchanged until you run `git merge`"
           correct_index: 1
           explanation: "`git pull` is shorthand for two operations: `git fetch` downloads new commits from the remote without touching your working directory, then `git merge` integrates those commits into your current branch. Understanding this two-step process helps when you need finer control — for example, running `git fetch` first to inspect incoming changes before merging."
+
+  # --------------------------------------------------------------------------
+  # STEP 15: Celebration — final quiz
+  # --------------------------------------------------------------------------
+  - title: "Git Mastery — Final Review"
+    instructions: |
+      ### Congratulations — you've completed the Git tutorial!
+
+      From an empty folder to a version-controlled Python project with
+      branching, merge conflict resolution, remote collaboration, and
+      independent feature work — that's a serious achievement.
+
+      Take a moment to appreciate what you can now do:
+
+      - Initialize repositories and configure your identity
+      - Stage, commit, and inspect changes with precision
+      - Branch, merge, and resolve conflicts like a professional
+      - Undo mistakes safely on shared branches
+      - Collaborate through remotes with push and pull
+
+      Before you go, let's do one final knowledge check to cement
+      everything. This quiz covers the entire tutorial — all 14 steps.
+      Good luck!
+
+    tests: []
