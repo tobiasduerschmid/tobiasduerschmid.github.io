@@ -8,7 +8,7 @@ env: production
 # Feature flags
 personal_gym: true
 bookmarks: true
-tutorial_autosave: false
+tutorial_autosave: true
 
 # SE Gym milestone thresholds (cumulative questions answered)
 gym_milestone_bronze: 20

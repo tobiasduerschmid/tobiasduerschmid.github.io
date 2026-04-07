@@ -107,7 +107,7 @@ steps:
         hints:
           - text: "Python has a built-in function for displaying text to the screen. What function did the step instructions mention?"
             condition: "code_missing: print("
-          - text: "Good — you're using `print()`. The test checks for an exact string match. Look carefully at the expected output — does every character (capitalization, punctuation, spacing) match yours?"
+          - text: "You still have `print()` — good. The test checks for an exact string match. Look carefully at the expected output — does every character (capitalization, punctuation, spacing) match yours?"
             condition: "code_contains: print("
 
     quiz:
@@ -517,7 +517,7 @@ steps:
         hints:
           - text: "Think about what range of scores earns an A. What Python construct lets you check multiple conditions in sequence?"
             condition: "code_missing: elif"
-          - text: "You have `if`/`elif` — good. Python evaluates conditions top-to-bottom and stops at the first match. Does the order of your conditions matter? What happens if you check `>= 70` before `>= 90`?"
+          - text: "You still have `elif` — good. Python evaluates conditions top-to-bottom and stops at the first match. Does the order of your conditions matter? What happens if you check `>= 70` before `>= 90`?"
             condition: "code_contains: elif"
       - description: "Score 83 is graded 'B'"
         command: |
@@ -776,7 +776,7 @@ steps:
         hints:
           - text: "This call passes *two* arguments. How does Python let a function accept an optional second argument with a default value?"
             condition: "code_missing: threshold"
-          - text: "Your function has a threshold parameter — good. Is your comparison using the parameter, or is the default value hardcoded somewhere in the function body?"
+          - text: "The function signature still has the threshold parameter — good. Is your comparison using the parameter, or is the default value hardcoded somewhere in the function body?"
             condition: "code_contains: threshold"
 
     quiz:
@@ -1600,7 +1600,7 @@ steps:
         hints:
           - text: "You need to open a file, process it line by line, and count something. What Python built-in function opens a file for reading?"
             condition: "code_missing: open("
-          - text: "You're opening the file — good. How do you split a line of text into individual words? What string method breaks text on whitespace?"
+          - text: "You still have the `open()` call — good. How do you split a line of text into individual words? What string method breaks text on whitespace?"
             condition: "code_contains: open("
 
     quiz:
@@ -1858,7 +1858,7 @@ steps:
         hints:
           - text: "This test checks that you used Python's pattern-matching module, not hardcoded answers. Which module was introduced in the step instructions for finding patterns in text?"
             condition: "code_missing: import re"
-          - text: "You imported `re` — good. The test checks for actual function calls on the text. Are you using `re.findall()` or `re.sub()` on the file contents?"
+          - text: "You still have `import re` — good. The test checks for actual function calls on the text. Are you using `re.findall()` or `re.sub()` on the file contents?"
             condition: "code_contains: import re"
       - description: "Found all 6 timestamps"
         command: |
