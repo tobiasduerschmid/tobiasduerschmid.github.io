@@ -191,7 +191,12 @@
         }
         self._hideLoading();
         if (self.steps.length > 0) {
-          var saved = self.allowAutosave ? self._loadSavedProgress() : null;
+          // Respect the user's navbar toggle preference (persisted as 'tutorial-autosave').
+          // Default is on; only skip restore when the user has explicitly set it to 'false'.
+          var userAutosavePref = localStorage.getItem('tutorial-autosave');
+          var userAutosaveOn   = userAutosavePref !== 'false';
+          if (!userAutosaveOn) self.autoSaveEnabled = false; // keep in sync before navbar wires up
+          var saved = (self.allowAutosave && userAutosaveOn) ? self._loadSavedProgress() : null;
           if (saved) {
             if (saved.stepsUnlocked) self._stepsUnlocked = new Set(saved.stepsUnlocked);
             // Always ensure all steps up to the saved step are unlocked
