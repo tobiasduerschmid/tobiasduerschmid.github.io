@@ -107,7 +107,6 @@
 
   function _startFrom(offset) {
     if (!synth) return;
-    synth.cancel();
 
     var text = _text.slice(offset).trim();
     if (!text) {
@@ -118,11 +117,19 @@
       return;
     }
 
+    // Re-resolve voice by name at speak-time so the reference is never stale
+    // (Chrome rebuilds its voice list internally; stored object refs can go dead)
+    var activeVoice = null;
+    if (_voice) {
+      var fresh = synth.getVoices().filter(function (v) { return v.name === _voice.name; });
+      activeVoice = fresh[0] || null;
+    }
+
     var utt = new SpeechSynthesisUtterance(text);
     utt.rate = _rate;
-    if (_voice) {
-      utt.voice = _voice;
-      utt.lang  = _voice.lang;
+    if (activeVoice) {
+      utt.voice = activeVoice;
+      utt.lang  = activeVoice.lang;
     } else {
       utt.lang = 'en-US';
     }
@@ -149,7 +156,10 @@
       if (_onUpdate) _onUpdate();
     };
 
-    synth.speak(utt);
+    // Chrome bug: cancel() followed immediately by speak() can silently fail.
+    // cancel() first, then speak() inside a timeout so the event loop clears.
+    synth.cancel();
+    setTimeout(function () { synth.speak(utt); }, 50);
   }
 
   /* ── Text extraction ──────────────────────────────────────── */
@@ -170,7 +180,9 @@
         if (n.parentNode) n.parentNode.removeChild(n);
       }
     });
-    return ((clone.innerText || clone.textContent || '')).replace(/\s+/g, ' ').trim();
+    // Use textContent (not innerText) — cloned nodes are detached from the
+    // document so innerText returns "" in Chrome (it requires layout).
+    return (clone.textContent || '').replace(/\s+/g, ' ').trim();
   }
 
   /* ── Public API ───────────────────────────────────────────── */
