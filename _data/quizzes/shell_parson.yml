@@ -1,0 +1,87 @@
+title: "Shell Script  Parsons Problems"
+description: "Arrange the code fragments to build correct Python expressions and class definitions."
+questions:
+
+  - id: 3
+    question: |
+      **Arrange** the fragments to find which lines appear most often in `access.log` — showing the top 5 repeated entries with their counts.
+    type: parsons
+    display: inline
+    lines:
+      - "sort access.log"
+      - "|"
+      - "uniq -c"
+      - "|"
+      - "sort -rn"
+      - "|"
+      - "head -5"
+    distractors:
+      - "tail -5"
+      - "cat access.log"
+    explanation: "`sort` groups identical lines together so `uniq` can process them. `uniq -c` prefixes each unique line with its occurrence count. The second `sort -rn` reorders by that count, highest first. `head -5` takes the top 5. Using `cat` before `sort` is redundant — `sort` reads the file directly. `tail -5` would show the *least* repeated lines instead."
+
+  - id: 4
+    question: |
+      **Arrange** the fragments to count how many *unique* lines containing `"error"` (case-insensitive) exist in `app.log`.
+    type: parsons
+    display: inline
+    lines:
+      - "grep -i 'error' app.log"
+      - "|"
+      - "sort"
+      - "|"
+      - "uniq"
+      - "|"
+      - "wc -l"
+    distractors:
+      - "grep 'error' app.log"
+      - "head"
+    explanation: "`grep -i` filters lines matching `error` in any case. `sort` groups identical lines together — `uniq` only removes *adjacent* duplicates, so sorting first is required. `uniq` collapses the duplicates. `wc -l` counts the remaining unique lines. Dropping `-i` would miss `ERROR` or `Error`. Using `head` instead of `wc -l` would print lines rather than count them."
+
+  - id: 5
+    question: |
+      **Arrange** the fragments to combine two log files and display every unique line in sorted order.
+    type: parsons
+    display: inline
+    lines:
+      - "cat server.log error.log"
+      - "|"
+      - "sort"
+      - "|"
+      - "uniq"
+    distractors:
+      - "grep server.log"
+      - "wc -l"
+    explanation: "`cat server.log error.log` concatenates both files into a single stream. `sort` groups identical lines adjacent to each other — required because `uniq` only collapses *adjacent* duplicates. `uniq` then removes the duplicates. Using `grep` with a filename instead of `cat` would filter rather than merge. `wc -l` would count lines instead of printing them."
+
+  - id: 6
+    question: |
+      **Arrange** the fragments to display only the non-comment, non-blank lines from `config.txt`, sorted alphabetically.
+    type: parsons
+    display: inline
+    lines:
+      - "grep -v '^#' config.txt"
+      - "|"
+      - "grep -v '^$'"
+      - "|"
+      - "sort"
+    distractors:
+      - "grep '^#' config.txt"
+      - "wc -l"
+    explanation: "`grep -v '^#'` removes lines that start with `#` (comments). `grep -v '^$'` removes blank lines (lines matching the empty-string anchor). `sort` alphabetically orders the remaining entries. The distractor `grep '^#'` would keep *only* comment lines — the opposite of the goal. `wc -l` would count rather than display the lines."
+
+  - id: 7
+    question: |
+      **Arrange** the fragments to count how many `.txt` files are in the current directory.
+    type: parsons
+    display: inline
+    lines:
+      - "ls"
+      - "|"
+      - "grep '\\.txt$'"
+      - "|"
+      - "wc -l"
+    distractors:
+      - "grep '\\.py$'"
+      - "sort"
+    explanation: "`ls` lists all entries in the current directory. `grep '\\.txt$'` filters for names ending in `.txt` (the `$` anchors to end-of-line; the `\\.` matches a literal dot). `wc -l` counts the matching lines. Using `grep '\\.py$'` would count Python files instead. `sort` would order the names but not count them."
