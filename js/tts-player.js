@@ -193,7 +193,12 @@
     });
     // Use textContent (not innerText) — cloned nodes are detached from the
     // document so innerText returns "" in Chrome (it requires layout).
-    return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+    // Replace < and > with spaces so Chrome's TTS engine doesn't interpret
+    // code like <iostream> or <T> as SSML tags and halt mid-sentence.
+    return (clone.textContent || '')
+      .replace(/[<>]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   /* ── Public API ───────────────────────────────────────────── */
