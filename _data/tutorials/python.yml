@@ -104,6 +104,11 @@ steps:
           output = __run_capture('/tutorial/hello.py')
           assert 'Hello, CS 35L!' in output, \
               f"Expected 'Hello, CS 35L!' in output but got: {repr(output)}"
+        hints:
+          - text: "Python has a built-in function for displaying text to the screen. What function did the step instructions mention?"
+            condition: "code_missing: print("
+          - text: "Good — you're using `print()`. The test checks for an exact string match. Look carefully at the expected output — does every character (capitalization, punctuation, spacing) match yours?"
+            condition: "code_contains: print("
 
     quiz:
       title: "Hello, Python! — Knowledge Check"
@@ -305,16 +310,28 @@ steps:
           output = __run_capture('/tutorial/profile.py')
           assert 'Student: Alice' in output, \
               f"Expected 'Student: Alice' in output, got: {repr(output)}"
+        hints:
+          - text: "The test expects your output to contain specific text. How can you build a string that includes variable values? Re-read the section on f-strings above."
+            condition: "code_missing: f\""
+          - text: "You're using an f-string — good! Now check that the text around your variables matches the expected format exactly. What should come before the name?"
+            condition: "code_contains: f\""
       - description: "Output contains 'Year: 2' and 'Major: Computer Science'"
         command: |
           output = __run_capture('/tutorial/profile.py')
           assert 'Year: 2' in output and 'Major: Computer Science' in output, \
               f"Expected 'Year: 2' and 'Major: Computer Science' in output, got: {repr(output)}"
+        hints:
+          - text: "The test checks for two pieces of information in your output. Which variables hold the year and major? How do you embed them in an f-string?"
       - description: "GPA is formatted to 2 decimal places (3.82)"
         command: |
           output = __run_capture('/tutorial/profile.py')
           assert '3.82' in output, \
               f"Expected GPA '3.82' in output, got: {repr(output)}"
+        hints:
+          - text: "The test expects `3.82` but the variable holds `3.819`. F-strings have a way to control how many decimal places a number displays — check the step instructions for the formatting syntax."
+            condition: "output_missing: 3.82"
+          - text: "Your output contains `3.82` — the formatting looks right. Is the rest of the output line in the exact expected format?"
+            condition: "output_contains: 3.82"
       - description: "f-string uses variables, not hard-coded literals"
         command: |
           source = open('/tutorial/profile.py').read()
@@ -322,16 +339,21 @@ steps:
           tree = ast.parse(source)
           fstrings = [n for n in ast.walk(tree) if isinstance(n, ast.JoinedStr)]
           assert fstrings, "Use an f-string (f\"...\") — a plain string literal was found instead"
-          
+
           # Collect all variable names referenced inside f-string braces
           used_vars = set()
           for fstr in fstrings:
               used_vars.update(n.id for n in ast.walk(fstr) if isinstance(n, ast.Name))
-          
+
           # All four variables must appear in the f-string braces
           for var in ('name', 'year', 'major', 'gpa'):
               assert var in used_vars, \
                   f"f-string must reference the variable '{var}' inside braces"
+        hints:
+          - text: "This test checks *how* your code is written, not just the output. The task says to use variables inside the string rather than typing the values directly. What prefix turns a regular string into one that can embed variables?"
+            condition: "code_missing: f\""
+          - text: "You have an f-string — good! The test checks that all four variables appear inside `{}` braces. Are any of the values still typed out as literal text instead of referencing the variable?"
+            condition: "code_contains: f\""
 
     quiz:
       title: "Variables & Types — Knowledge Check"
@@ -492,14 +514,23 @@ steps:
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 95: A' in output, f"Expected 'Score 95: A', got: {repr(output)}"
+        hints:
+          - text: "Think about what range of scores earns an A. What Python construct lets you check multiple conditions in sequence?"
+            condition: "code_missing: elif"
+          - text: "You have `if`/`elif` — good. Python evaluates conditions top-to-bottom and stops at the first match. Does the order of your conditions matter? What happens if you check `>= 70` before `>= 90`?"
+            condition: "code_contains: elif"
       - description: "Score 83 is graded 'B'"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 83: B' in output, f"Expected 'Score 83: B', got: {repr(output)}"
+        hints:
+          - text: "Which range does 83 fall into? Do you have a branch that catches that range?"
       - description: "Score 71 is graded 'C'"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 71: C' in output, f"Expected 'Score 71: C', got: {repr(output)}"
+        hints:
+          - text: "Which range does 71 fall into? Count your `elif` branches — do you have enough to cover all the grade letters?"
 
     quiz:
       title: "The Indentation Trap — Knowledge Check"
@@ -697,35 +728,56 @@ steps:
           pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
           assert len(pass_nodes) == 0, \
               f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in functions.py"
+        hints:
+          - text: "The `pass` keyword is a placeholder that does nothing. Replace it with the actual logic the function needs."
       - description: "mean([4, 8, 15, 16, 23, 42]) == 18.0"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           result = g['mean']([4, 8, 15, 16, 23, 42])
           assert result == 18.0, f"Expected 18.0, got {result}"
+        hints:
+          - text: "What is the mathematical definition of a mean? Python has built-in functions that can help with the numerator and denominator."
+            condition: "code_missing: return"
+          - text: "You have a return statement — good. Is your function returning the calculated value, or could it be returning `None` in some cases? Try calling it mentally with the test input."
+            condition: "code_contains: return"
       - description: "mean of a single-element list equals that element"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           assert g['mean']([7]) == 7, "mean([7]) should be 7"
+        hints:
+          - text: "Does your formula work when the list has only one element? Trace through it with `[7]` as input."
       - description: "label_score(75) returns 'pass' (default threshold)"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           result = g['label_score'](75)
           assert result == 'pass', f"Expected 'pass', got {repr(result)}"
+        hints:
+          - text: "This function needs to compare a score against a threshold and return a string. What should the function do when the score is high enough? Are you returning the result or just printing it?"
+            condition: "code_missing: return"
+          - text: "The function is called with one argument (75), so the threshold should use its default value. What is the default? Is 75 above or below it?"
+            condition: "code_contains: return"
       - description: "label_score(30) returns 'fail'"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           result = g['label_score'](30)
           assert result == 'fail', f"Expected 'fail', got {repr(result)}"
+        hints:
+          - text: "What should happen when the score is *below* the threshold? Make sure both branches of your logic return a value."
       - description: "label_score(75, 80) returns 'fail' (custom threshold)"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           result = g['label_score'](75, 80)
           assert result == 'fail', f"Expected 'fail' with threshold=80, got {repr(result)}"
+        hints:
+          - text: "This call passes *two* arguments. How does Python let a function accept an optional second argument with a default value?"
+            condition: "code_missing: threshold"
+          - text: "Your function has a threshold parameter — good. Is your comparison using the parameter, or is the default value hardcoded somewhere in the function body?"
+            condition: "code_contains: threshold"
 
     quiz:
       title: "Functions — Knowledge Check"
@@ -1011,18 +1063,27 @@ steps:
           pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
           assert len(pass_nodes) == 0, \
               f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in loops.py"
+        hints:
+          - text: "The `pass` keyword is a placeholder. Replace it with the logic described in the task."
       - description: "running_total([1, 2, 3]) == [1, 3, 6]"
         command: |
           g = {}
           exec(open('/tutorial/loops.py').read(), g)
           result = g['running_total']([1, 2, 3])
           assert result == [1, 3, 6], f"Expected [1, 3, 6], got {result}"
+        hints:
+          - text: "A running total means each output element is the sum of all input elements *up to that point*. What do you need to track across iterations?"
+            condition: "code_missing: append"
+          - text: "You're building a result list — good. Trace through your loop with `[1, 2, 3]`: after each iteration, what value gets appended? The expected output is `[1, 3, 6]`."
+            condition: "code_contains: append"
       - description: "running_total([10, 20]) == [10, 30]"
         command: |
           g = {}
           exec(open('/tutorial/loops.py').read(), g)
           result = g['running_total']([10, 20])
           assert result == [10, 30], f"Expected [10, 30], got {result}"
+        hints:
+          - text: "Does your function handle lists of any length? Trace through it with `[10, 20]` — what should each element of the output be?"
 
     quiz:
       title: "Loops — Knowledge Check"
@@ -1266,6 +1327,8 @@ steps:
           pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
           assert len(pass_nodes) == 0, \
               f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in listcomp.py"
+        hints:
+          - text: "The `pass` keyword is a placeholder. Replace it with the logic described in the task."
       - description: "above_average returns numbers > mean (not >=)"
         command: |
           g = {}
@@ -1273,6 +1336,11 @@ steps:
           result = g['above_average']([4, 8, 15, 16, 23, 42])
           expected = [23, 42]
           assert result == expected, f"Expected {expected}, got {result}"
+        hints:
+          - text: "You need to filter a list based on a computed threshold. What value should you compare each number against?"
+            condition: "code_missing: for"
+          - text: "You have a loop — good. The test description says **strictly greater than** (`>`). If you're getting an extra element, check whether you're using `>` or `>=`."
+            condition: "code_contains: for"
       - description: "above_average uses a list comprehension (not a manual loop)"
         command: |
           import ast
@@ -1285,12 +1353,19 @@ steps:
                   has_comp = any(isinstance(n, ast.ListComp) for n in ast.walk(node))
                   assert has_comp, "above_average should use a list comprehension [x for x in ...]"
           assert found, "Function 'above_average' not found"
+        hints:
+          - text: "This test checks your code *structure*, not just the output. Python has a compact one-line syntax for building filtered lists — it was introduced in the step instructions."
       - description: "squares_up_to(5) == [1, 4, 9, 16, 25]"
         command: |
           g = {}
           exec(open('/tutorial/listcomp.py').read(), g)
           result = g['squares_up_to'](5)
           assert result == [1, 4, 9, 16, 25], f"Expected [1, 4, 9, 16, 25], got {result}"
+        hints:
+          - text: "You need to generate a sequence of numbers from 1 to n. What Python built-in produces a sequence of integers? Remember, its stop value is *exclusive*."
+            condition: "code_missing: range"
+          - text: "You're using `range` — good. Check the start and stop values: does your range include `n` itself? The first output element should be 1² = 1, not 0² = 0."
+            condition: "code_contains: range"
       - description: "squares_up_to uses range() and ** operator"
         command: |
           import ast
@@ -1304,6 +1379,8 @@ steps:
                                 for n in ast.walk(node))
                   assert has_pow, "squares_up_to should use ** (exponentiation operator)"
           assert found, "Function 'squares_up_to' not found"
+        hints:
+          - text: "This test checks which operator you used for squaring. In Python, the exponentiation operator is *not* the same as in C++ or math notation. What does `^` actually do in Python?"
 
     quiz:
       title: "List Comprehensions — Knowledge Check"
@@ -1507,6 +1584,8 @@ steps:
           pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
           assert len(pass_nodes) == 0, \
               f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in word_count.py"
+        hints:
+          - text: "The `pass` keyword is a placeholder. Replace it with the logic described in the task."
       - description: "Script runs without errors"
         command: |
           import os; os.chdir('/tutorial')
@@ -1518,6 +1597,11 @@ steps:
           # 9 + 9 + 6 = 24 words across the three lines
           assert 'Total words: 24' in output, \
               f"Expected 'Total words: 24', got: {repr(output)}"
+        hints:
+          - text: "You need to open a file, process it line by line, and count something. What Python built-in function opens a file for reading?"
+            condition: "code_missing: open("
+          - text: "You're opening the file — good. How do you split a line of text into individual words? What string method breaks text on whitespace?"
+            condition: "code_contains: open("
 
     quiz:
       title: "Reading Files — Knowledge Check"
@@ -1771,18 +1855,30 @@ steps:
           tree = ast.parse(source)
           calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, 'value', None) and getattr(n.func.value, 'id', None) == 're']
           assert len(calls) > 0, "You must use the `re` module (e.g. re.findall or re.sub) to parse the log, rather than just printing the expected answers."
+        hints:
+          - text: "This test checks that you used Python's pattern-matching module, not hardcoded answers. Which module was introduced in the step instructions for finding patterns in text?"
+            condition: "code_missing: import re"
+          - text: "You imported `re` — good. The test checks for actual function calls on the text. Are you using `re.findall()` or `re.sub()` on the file contents?"
+            condition: "code_contains: import re"
       - description: "Found all 6 timestamps"
         command: |
           import os; os.chdir('/tutorial')
           output = __run_capture('/tutorial/log_parser.py')
           assert 'Timestamps found: 6' in output, \
               f"Expected 'Timestamps found: 6' in output, got: {repr(output)}"
+        hints:
+          - text: "Timestamps have a repeating pattern: two digits, a colon, two digits, a colon, two digits. Which `re` function finds *all* occurrences of a pattern?"
+            condition: "code_missing: findall"
+          - text: "You're using `findall` — good. Check your pattern: does it match exactly the `HH:MM:SS` format? Remember that `\\d` matches a single digit."
+            condition: "code_contains: findall"
       - description: "Counted 2 ERROR lines"
         command: |
           import os; os.chdir('/tutorial')
           output = __run_capture('/tutorial/log_parser.py')
           assert 'Errors: 2' in output, \
               f"Expected 'Errors: 2' in output, got: {repr(output)}"
+        hints:
+          - text: "How can you count occurrences of a specific word in text? You already used a function to find all pattern matches — the same approach works here."
       - description: "Redacted IP addresses with re.sub()"
         command: |
           import os; os.chdir('/tutorial')
@@ -1791,6 +1887,11 @@ steps:
               f"Expected 'x.x.x.x' in redacted output, got: {repr(output)}"
           assert '192.168.1.42' not in output, \
               "IP address 192.168.1.42 should have been redacted"
+        hints:
+          - text: "You need to *replace* text that matches a pattern, not just find it. Which `re` function substitutes matches with a replacement string?"
+            condition: "code_missing: re.sub"
+          - text: "You're using `re.sub` — good. An IPv4 address is four groups of digits separated by dots. In regex, a plain `.` matches *any* character — how do you match a literal dot?"
+            condition: "code_contains: re.sub"
 
     quiz:
       title: "Regular Expressions in Python — Knowledge Check"
@@ -2023,6 +2124,11 @@ steps:
               sys.argv = old_argv
           assert 'Reading: data.txt' in buf.getvalue(), \
               f"Expected 'Reading: data.txt' in stderr, got: {repr(buf.getvalue())}"
+        hints:
+          - text: "Status messages should go to a different output stream than normal output. Which stream is for diagnostic messages? How does `print()` let you choose the destination?"
+            condition: "code_missing: sys.stderr"
+          - text: "You're printing to stderr — good. Is the message using the actual filename from the command-line argument, or is it hardcoded?"
+            condition: "code_contains: sys.stderr"
       - description: "Counts words correctly (Total words: 24)"
         command: |
           import sys, os; os.chdir('/tutorial')
@@ -2034,6 +2140,8 @@ steps:
               sys.argv = old_argv
           assert 'Total words: 24' in output, \
               f"Expected 'Total words: 24', got: {repr(output)}"
+        hints:
+          - text: "The word-counting logic is the same as Step 7 — but which file should you open? Where does the filename come from in this version?"
       - description: "Exits with code 1 and prints error to stderr when no argument given"
         command: |
           import sys, io, os; os.chdir('/tutorial')
@@ -2053,6 +2161,11 @@ steps:
           assert exited, "Script should call sys.exit(1) when no argument is given"
           assert 'Error: no filename given' in buf.getvalue(), \
               "Expected 'Error: no filename given' in stderr"
+        hints:
+          - text: "What happens if the user runs your script without providing a filename? You need to detect this case early and exit gracefully. How can you check how many arguments were provided?"
+            condition: "code_missing: sys.exit"
+          - text: "You have an exit call — good. Does the check happen *before* you try to access the filename? And does the error message go to the right output stream?"
+            condition: "code_contains: sys.exit"
 
     quiz:
       title: "sys.argv & stderr — Knowledge Check"
@@ -2333,6 +2446,8 @@ steps:
               sys.argv = old_argv
           assert 'Reading: server.log' in buf.getvalue(), \
               f"Expected 'Reading: server.log' in stderr, got: {repr(buf.getvalue())}"
+        hints:
+          - text: "This follows the same pattern as Step 9. Where should diagnostic messages go? How did you handle this in the previous step?"
       - description: "Reports 6 total lines"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2344,6 +2459,8 @@ steps:
               sys.argv = old_argv
           assert re.search(r'[Tt]otal.*6', output), \
               f"Expected total lines '6' in output, got: {repr(output)}"
+        hints:
+          - text: "How do you count the lines in a string? Python strings have a method that splits on newlines. Be careful about trailing empty lines."
       - description: "Reports 2 unique IPs"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2355,6 +2472,8 @@ steps:
               sys.argv = old_argv
           assert re.search(r'[Uu]nique.*IP.*2', output), \
               f"Expected unique IPs '2' in output, got: {repr(output)}"
+        hints:
+          - text: "You already wrote a regex for IP addresses in Step 8. How do you find all matches and then count only the *unique* ones? What Python data structure eliminates duplicates?"
       - description: "Reports 2 errors"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2366,6 +2485,8 @@ steps:
               sys.argv = old_argv
           assert re.search(r'[Ee]rror.*2', output), \
               f"Expected error count '2' in output, got: {repr(output)}"
+        hints:
+          - text: "You counted errors in Step 8. The same approach works here — find all occurrences of the error keyword and count them."
       - description: "Reports 1 warning"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2377,6 +2498,8 @@ steps:
               sys.argv = old_argv
           assert re.search(r'[Ww]arning.*1', output), \
               f"Expected warning count '1' in output, got: {repr(output)}"
+        hints:
+          - text: "Same approach as counting errors — just a different keyword to search for."
       - description: "Exits with code 1 when no argument given"
         command: |
           import sys, io, os; os.chdir('/tutorial')

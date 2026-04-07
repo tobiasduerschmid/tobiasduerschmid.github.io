@@ -97,10 +97,16 @@ steps:
     tests:
       - description: "Git user name is configured"
         command: "git config user.name | grep -q '.'"
+        hints:
+          - text: "Your Git identity was pre-configured by the tutorial setup. Run `git config user.name` to verify — you should see a name printed."
       - description: "Git user email is configured"
         command: "git config user.email | grep -q '.'"
+        hints:
+          - text: "Similarly, run `git config user.email` to check your email. Both were set automatically at the start."
       - description: "myproject directory exists and is a Git repository"
         command: "[ -d /tutorial/myproject/.git ]"
+        hints:
+          - text: "You need to create a new repository. Which command from the instructions above creates a new Git project in a folder called `myproject`? Make sure you also `cd` into it afterward."
 
     quiz:
       title: "Your First Repository — Knowledge Check"
@@ -259,10 +265,16 @@ steps:
     tests:
       - description: "calculator.py exists in the repository"
         command: "[ -f /tutorial/myproject/calculator.py ]"
+        hints:
+          - text: "The editor shows `calculator.py` — it has already been saved to disk for you. If this test fails, make sure you are in the `/tutorial/myproject` directory (run `cd /tutorial/myproject`)."
       - description: "calculator.py is tracked by Git (has been committed)"
         command: "cd /tutorial/myproject && git log --oneline -- calculator.py | grep -q '.'"
+        hints:
+          - text: "A common misconception: saving a file does **not** mean Git is tracking it. You need two separate commands — one to **stage** the file (move it to the staging area) and one to **commit** it (save the snapshot). Which two commands from the instructions do this?"
       - description: "Commit message mentions 'calculator' or 'add'"
         command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'calc\\|add'"
+        hints:
+          - text: "The test checks that your commit message describes what you added. What did you create in this step? Write a message that says so — it must contain the word 'calculator' or 'add'."
 
     quiz:
       title: "Your First Commit — Knowledge Check"
@@ -419,10 +431,19 @@ steps:
     tests:
       - description: "calculator.py contains a multiply function"
         command: "cd /tutorial/myproject && grep -q 'def multiply' calculator.py"
+        hints:
+          - text: "Open `calculator.py` in the editor and add the `multiply` function at the bottom of the file. Make sure you define it with `def multiply(a, b):` — Python is case-sensitive."
+            condition: "code_missing: def multiply"
+          - text: "Good — the multiply function is in the editor. Make sure you've saved the file (Ctrl+S) so the change is written to disk."
+            condition: "code_contains: def multiply"
       - description: "The multiply function has been committed"
         command: "cd /tutorial/myproject && git log --oneline | grep -qi 'multiply'"
+        hints:
+          - text: "The function is in the file, but Git doesn't know about the change yet. What stage-and-commit workflow moves a change from the working directory into a permanent snapshot? Your message must mention 'multiply'."
       - description: "Repository has at least 2 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 2 ]"
+        hints:
+          - text: "You need at least 2 commits total — one from Step 2 and one from this step. Run `git log --oneline` to see how many you have."
 
     quiz:
       title: "Edit-Stage-Commit Cycle — Knowledge Check"
@@ -612,14 +633,24 @@ steps:
     tests:
       - description: "README.md has been committed"
         command: "cd /tutorial/myproject && git log --all --oneline -- README.md | grep -q '.'"
+        hints:
+          - text: "How do you stage a single specific file? The instructions above list several approaches — which gives you the most control over what enters the commit?"
       - description: "test_calc.py has been committed"
         command: "cd /tutorial/myproject && git log --all --oneline -- test_calc.py | grep -q '.'"
+        hints:
+          - text: "The instructions mention a way to stage multiple files matching a naming pattern. What shell syntax could match both test files at once?"
       - description: "test_utils.py has been committed"
         command: "cd /tutorial/myproject && git log --all --oneline -- test_utils.py | grep -q '.'"
+        hints:
+          - text: "Both test files need to be staged. Re-read the wildcard staging example in the instructions above."
       - description: "notes.txt has been committed at least twice (once per task)"
         command: "cd /tutorial/myproject && [ $(git log --all --oneline -- notes.txt | wc -l) -ge 2 ]"
+        hints:
+          - text: "This test requires `notes.txt` in **two** commits. The first commit includes it with the other files. The second uses `git commit -am` after modifying it. Remember: `-am` only works on **already-tracked** files — it silently ignores brand-new untracked files like `feedback.log`."
       - description: "feedback.log exists on disk"
         command: "cd /tutorial/myproject && [ -f feedback.log ]"
+        hints:
+          - text: "The instructions show terminal commands to create this file. Look at the section demonstrating the `-am` shortcut's limitation — that's where you'll find the commands to run."
 
     quiz:
       title: "Staging Strategies — Knowledge Check"
@@ -768,8 +799,15 @@ steps:
     tests:
       - description: "calculator.py does NOT contain 'BROKEN CODE'"
         command: "cd /tutorial/myproject && ! grep -q 'BROKEN CODE' calculator.py"
+        hints:
+          - text: "The 'BROKEN CODE' line is still in `calculator.py`. You need to discard the working-directory change. Think carefully: `git restore --staged` only **unstages** (moves from green back to red). To actually **throw away** the edit, you need `git restore` **without** `--staged`. These are two different operations — confusing them is one of the most common Git mistakes."
+            condition: "code_contains: BROKEN CODE"
+          - text: "The file looks clean in the editor. If the test still fails, the working directory on the VM may be out of sync. The instructions describe a command that restores a file to its last committed state — what is it?"
+            condition: "code_missing: BROKEN CODE"
       - description: "Working tree is clean (no uncommitted changes)"
         command: "cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet"
+        hints:
+          - text: "Run `git status` to see what's still pending. Are the remaining changes staged (green) or unstaged (red)? The summary table in the instructions maps each state to the right undo command."
 
     quiz:
       title: "Unstaging and Undoing — Knowledge Check"
@@ -960,16 +998,31 @@ steps:
     tests:
       - description: ".gitignore file exists"
         command: "[ -f /tutorial/myproject/.gitignore ]"
+        hints:
+          - text: "Open the `.gitignore` file in the editor — it was created empty for you. Add the ignore patterns listed in the instructions, then save."
       - description: ".gitignore excludes __pycache__/"
         command: "cd /tutorial/myproject && grep -q '__pycache__' .gitignore"
+        hints:
+          - text: "The instructions list four patterns. Which one tells Git to ignore the `__pycache__` directory? What does a trailing `/` signify in a `.gitignore` pattern?"
+            condition: "code_missing: __pycache__"
       - description: ".gitignore excludes .env"
         command: "cd /tutorial/myproject && grep -q '.env' .gitignore"
+        hints:
+          - text: "Which filename from the instructions contains secrets that should never be tracked? Add it as a pattern — but remember, `.gitignore` only works for files that aren't already tracked."
+            condition: "code_missing: .env"
       - description: ".gitignore excludes *.pyc"
         command: "cd /tutorial/myproject && grep -q '\\*.pyc' .gitignore"
+        hints:
+          - text: "The instructions include a wildcard pattern for compiled Python bytecode files. What file extension do those files use?"
+            condition: "code_missing: *.pyc"
       - description: ".gitignore has been committed"
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
+        hints:
+          - text: "You wrote the patterns, but did you commit `.gitignore` itself? It needs to go through the same two-step workflow as any other file. What are those two steps?"
       - description: ".env is not tracked by Git"
         command: "cd /tutorial/myproject && ! git ls-files --cached | grep -q '.env'"
+        hints:
+          - text: "The `.env` file must **not** be tracked by Git. If you accidentally staged it before creating `.gitignore`, the file is now tracked — and `.gitignore` cannot retroactively fix that. Re-read the 'Important' section above about retroactive effects for the fix."
 
     quiz:
       title: "Ignoring Files — Knowledge Check"
@@ -1133,6 +1186,8 @@ steps:
     tests:
       - description: "Repository has at least 3 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 3 ]"
+        hints:
+          - text: "Run `git log --oneline` to count your commits. You should have at least 3 by now from previous steps. If not, you may have skipped a commit earlier — go back and check."
 
     quiz:
       title: "Inspecting History — Knowledge Check"
@@ -1301,16 +1356,30 @@ steps:
     tests:
       - description: "scratch.py is NOT staged"
         command: "cd /tutorial/myproject && ! git diff --cached --name-only | grep -q 'scratch.py'"
+        hints:
+          - text: "You learned two variants of the restore command — one targets the staging area, the other targets the working directory. Which do you need to **unstage** a file?"
       - description: "broken.py does not contain DEBUG = True"
         command: "cd /tutorial/myproject && ! grep -q 'DEBUG = True' broken.py"
+        hints:
+          - text: "Git has two kinds of undo for uncommitted changes. One unstages; the other discards working-directory edits. Which do you need here?"
       - description: ".gitignore excludes *.log"
         command: "cd /tutorial/myproject && grep -q '\\*.log' .gitignore"
+        hints:
+          - text: "Review the `.gitignore` pattern syntax. What wildcard pattern matches all files ending in `.log`?"
+            condition: "code_missing: *.log"
       - description: ".gitignore excludes scratch.py"
         command: "cd /tutorial/myproject && grep -q 'scratch.py' .gitignore"
+        hints:
+          - text: "You can ignore a specific file by adding its exact name to `.gitignore`."
+            condition: "code_missing: scratch.py"
       - description: ".gitignore has been committed"
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | wc -l | grep -q '^[2-9]'"
+        hints:
+          - text: "Don't forget to stage and commit your updated `.gitignore`. The two-step workflow still applies."
       - description: "Working tree is clean"
         command: "cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet"
+        hints:
+          - text: "Run `git status` — everything should say 'nothing to commit, working tree clean'. If not, check which files still need attention."
 
     quiz:
       title: "Mini-Capstone — Knowledge Check"
@@ -1518,12 +1587,23 @@ steps:
     tests:
       - description: "Branch 'feature-divide' exists"
         command: "cd /tutorial/myproject && git branch | grep -q 'feature-divide'"
+        hints:
+          - text: "The instructions describe a single command that creates a branch and switches to it. What flag triggers the 'create' behavior? Remember: a branch is just a lightweight pointer — it doesn't copy your project."
       - description: "calculator.py has a divide function on feature-divide"
         command: "cd /tutorial/myproject && git show feature-divide:calculator.py | grep -q 'def divide'"
+        hints:
+          - text: "Make sure you are on the `feature-divide` branch (check with `git branch`) before editing. Add the `divide` function to `calculator.py`, then stage and commit."
+            condition: "code_missing: def divide"
+          - text: "The `divide` function is in the editor — good. Now stage and commit it while on the `feature-divide` branch. The commit must happen on that branch for the function to be part of its history."
+            condition: "code_contains: def divide"
       - description: "The divide function has been committed on feature-divide"
         command: "cd /tutorial/myproject && git log feature-divide --oneline | grep -qi 'divide'"
+        hints:
+          - text: "The function is in the file, but editing alone doesn't save it in Git. What stage-and-commit workflow creates a permanent snapshot? Your message must mention 'divide'."
       - description: "Currently on feature-divide branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
+        hints:
+          - text: "The final task asks you to be back on the feature branch. How do you switch between branches?"
 
     quiz:
       title: "Branching — Knowledge Check"
@@ -1729,10 +1809,16 @@ steps:
     tests:
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
+        hints:
+          - text: "You must be on the branch you want to merge *into*. Which branch is that for this task? A common mistake is running merge from the wrong branch."
       - description: "calculator.py on main has the divide function"
         command: "cd /tutorial/myproject && git switch main 2>/dev/null; grep -q 'def divide' calculator.py"
+        hints:
+          - text: "Now that you're on the correct branch, what command integrates another branch's work into yours? If the function is still missing after merging, check that you committed it on `feature-divide` in the previous step."
       - description: "Merge commit or fast-forward is in the log"
         command: "cd /tutorial/myproject && git log main --oneline | grep -qi 'divide'"
+        hints:
+          - text: "Run `git log --oneline` on main to verify the merge. You should see the divide commit in main's history after merging."
 
     quiz:
       title: "Merging Branches — Knowledge Check"
@@ -1903,10 +1989,19 @@ steps:
     tests:
       - description: "Branch 'update-add-function' exists"
         command: "cd /tutorial/myproject && git branch | grep -q 'update-add-function'"
+        hints:
+          - text: "You've created branches before — same approach, different name. What command creates and switches to a new branch in one step?"
       - description: "update-add-function branch has the type checking commit"
         command: "cd /tutorial/myproject && git log update-add-function --oneline | grep -qi 'type\\|check\\|add'"
+        hints:
+          - text: "Edit the `add` function on the `update-add-function` branch to include the type check, then stage and commit. Your message should mention 'type', 'check', or 'add'."
+            condition: "code_missing: isinstance"
+          - text: "The type check is in the file — now stage and commit it with a descriptive message mentioning 'type check' or 'add'."
+            condition: "code_contains: isinstance"
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
+        hints:
+          - text: "After committing on the feature branch, you need to return to `main`. Stay there — you'll make a competing change in the next step."
 
     quiz:
       title: "Preparing for a Merge Conflict — Knowledge Check"
@@ -2164,12 +2259,25 @@ steps:
     tests:
       - description: "calculator.py has no conflict markers"
         command: "cd /tutorial/myproject && ! grep -q '<<<<<<<\\|=======\\|>>>>>>>' calculator.py"
+        hints:
+          - text: "Conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) are still in your file. This is the most common merge mistake — you must remove **all three** marker types. Edit `calculator.py` to keep only the code you want, with no markers remaining."
+            condition: "source_contains: <<<<<<<"
+          - text: "Good — no `<<<<<<<` markers visible in the editor. Make sure `=======` and `>>>>>>>` are also gone. Save the file when done."
+            condition: "source_missing: <<<<<<<"
       - description: "The merge has been completed (no unmerged paths)"
         command: "cd /tutorial/myproject && ! git status | grep -q 'Unmerged\\|both modified'"
+        hints:
+          - text: "After editing out the conflict markers, you need to signal to Git that the conflict is resolved. What familiar staging command does double duty here — staging the content AND clearing the 'unmerged' flag? Then what command finishes the merge?"
       - description: "calculator.py contains type checking (isinstance)"
         command: "cd /tutorial/myproject && grep -q 'isinstance' calculator.py"
+        hints:
+          - text: "Your resolved version should keep the `isinstance` type-checking code from the `update-add-function` branch. Don't discard it when resolving — combine both changes."
+            condition: "code_missing: isinstance"
       - description: "calculator.py contains logging (print)"
         command: "cd /tutorial/myproject && grep -q 'print' calculator.py"
+        hints:
+          - text: "Your resolved version should also keep the logging behavior from main's version. Look at the section between `<<<<<<< HEAD` and `=======` in the conflict markers — that code needs to be in your final version too."
+            condition: "code_missing: print"
 
     quiz:
       title: "Resolving a Merge Conflict — Knowledge Check"
@@ -2444,12 +2552,20 @@ steps:
     tests:
       - description: "A revert commit exists in the log"
         command: "cd /tutorial/myproject && git log --oneline | grep -qi 'revert'"
+        hints:
+          - text: "First commit the debug line (using the two-step workflow), then use the 'anti-commit' command from the instructions. What flag accepts the default message without opening an editor? Remember: this creates a **new** commit — it does not delete the original."
       - description: "calculator.py does not contain the debug print"
         command: "cd /tutorial/myproject && ! grep -q 'debug: this should not be here' calculator.py"
+        hints:
+          - text: "If the debug line persists, check that you committed it first, then used the undo command. Remember: this tool only works on *committed* changes — it creates a new inverse commit rather than erasing history."
       - description: "Repository has at least 8 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 8 ]"
+        hints:
+          - text: "Run `git log --oneline` to count. You need at least 8 commits from all previous steps. If you're short, you may have skipped a commit earlier."
       - description: "notes.txt exists (restored by git reset --hard HEAD)"
         command: "cd /tutorial/myproject && [ -f notes.txt ]"
+        hints:
+          - text: "Follow Task 4 step by step. The final command synchronizes your working directory to match the latest commit — what command does that? The file should reappear because Git committed the staged snapshot."
 
     quiz:
       title: "Safe Undo with git revert — Knowledge Check"
@@ -2715,10 +2831,16 @@ steps:
     tests:
       - description: "Remote 'origin' is configured"
         command: "cd /tutorial/myproject && git remote | grep -q 'origin'"
+        hints:
+          - text: "Follow the instructions in order. First create a bare repository (a special repo with no working directory), then register it as a remote from your project directory. The instructions show both commands."
       - description: "main branch has been pushed to origin"
         command: "cd /tutorial/myproject && git log origin/main --oneline | grep -q '.'"
+        hints:
+          - text: "The instructions show a push command with a flag that sets up tracking for future pushes. What flag is that?"
       - description: "CONTRIBUTING.md exists after pull"
         command: "cd /tutorial/myproject && [ -f CONTRIBUTING.md ]"
+        hints:
+          - text: "This task involves three directories. Follow the instructions carefully, paying close attention to each `cd` command — being in the wrong directory is the most common source of errors in this step."
 
     quiz:
       title: "Working with Remotes — Knowledge Check"
@@ -2960,12 +3082,19 @@ steps:
     tests:
       - description: "Repository has at least 10 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 10 ]"
+        hints:
+          - text: "Run `git log --oneline | wc -l` to check your count. You need commits from all previous steps plus the capstone."
       - description: "calculator.py has add, subtract, multiply, divide, and power functions"
         command: "cd /tutorial/myproject && grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py && grep -q 'def power' calculator.py"
+        hints:
+          - text: "All five functions must be present in `calculator.py`. Add the `power` function using the pattern from earlier steps."
+            condition: "code_missing: def power"
       - description: ".gitignore exists and is committed"
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
       - description: "power function is committed on main"
         command: "cd /tutorial/myproject && git show main:calculator.py | grep -q 'def power'"
+        hints:
+          - text: "The `power` function must reach `main` through the branch-and-merge workflow. What are the key steps: create a branch, commit, switch, and then what?"
 
     quiz:
       title: "Git Mastery — Final Comprehensive Review"
