@@ -202,11 +202,19 @@
             if (saved.quizPassed) self._quizPassed = new Set(saved.quizPassed);
             // Mark saved step as already visited so loadStep won't override files
             self._stepsVisited.add(saved.step);
+            // Suppress autosave for the entire restore sequence so loadStep's
+            // end-of-step _autoSaveProgress cannot clobber localStorage with
+            // starter-file content before the saved files have been applied.
+            self._suppressAutoSave = true;
             self.loadStep(saved.step);
             if (self.autosaveType === 'commands-and-files') {
+              // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
               self._restoreCommandsAndFiles(saved);
             } else {
               self._applySavedFiles(saved.files, saved.activeFile);
+              self._suppressAutoSave = false;
+              // Persist the correctly-restored state immediately
+              self._autoSaveProgress();
             }
           } else {
             self.loadStep(0);
@@ -1963,9 +1971,13 @@
 
   /**
    * Silently auto-save progress to localStorage (no toast).
+   * Bails out when _suppressAutoSave is set so that restore sequences
+   * (which call loadStep before the saved files have been applied)
+   * cannot overwrite the student's saved content with starter-file content.
    */
   TutorialCode.prototype._autoSaveProgress = function () {
     if (this.currentStep < 0) return;
+    if (this._suppressAutoSave) return;   // never clobber during file-load sequences
     this.saveProgress();
   };
 
@@ -2068,6 +2080,10 @@
     // 5. Apply autosaved student file overrides, then reveal the tutorial
     p = p.then(function () {
       self._applySavedFiles(saved.files, saved.activeFile);
+      self._suppressAutoSave = false;
+      // Persist the correctly-restored state immediately so a crash/reload
+      // right after restore doesn't revert to starter-file content.
+      self._autoSaveProgress();
       self._hideLoading();
     });
 

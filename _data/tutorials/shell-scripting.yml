@@ -1,6 +1,8 @@
 title: "Shell Scripting"
 description: "Master shell scripting through hands-on exercises in an interactive Linux environment — from your first script to building real automation tools"
 
+autosave_type: commands-and-files
+
 steps:
   - title: "Hello, Shell!"
     instructions: |
