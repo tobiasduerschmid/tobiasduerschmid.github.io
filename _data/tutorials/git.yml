@@ -32,14 +32,14 @@ steps:
       - **Undo mistakes** — roll back to any previous version.
       - **Work in parallel** — multiple people can edit without overwriting each other.
 
-      Imagine you and a teammate are both editing `calculator.py`. You add a
-      `multiply` function while they rewrite the `add` function. Without version
+      Imagine you and a teammate are both editing the same file `hero_registry.py`. You add a
+      `power_up` ability while they rewrite the `recruit` function. Without version
       control, whoever saves last silently overwrites the other's work. Git
       solves this — it lets both changes coexist on separate **branches** and
       helps you combine them safely. We'll see exactly how later in this tutorial.
 
       Git is the most widely used version control system in the world. Let's
-      learn it by building a small Python project.
+      learn it by building a small Python hero registry project.
 
       Before we start, understand Git's core architecture — every file
       lives in one of **three states**:
@@ -159,20 +159,20 @@ steps:
       Now let's create our first Python file. A file in your working
       directory starts as **untracked** — Git doesn't know about it yet.
 
-      > **Before you run:** We've saved `calculator.py` to disk but haven't
+      > **Before you run:** We've saved `hero_registry.py` to disk but haven't
       > told Git about it yet. Will `git status` show it as *tracked* or
       > *untracked*? What color do you expect? Form your answer, then continue:
 
       ### Task 1: Create a file and check status
 
-      The editor shows `calculator.py` — a simple calculator module.
+      The editor shows `hero_registry.py` — a module to track your superhero squad.
       It has already been saved to the VM. Now run:
 
       ```bash
       git status
       ```
 
-      You should see `calculator.py` listed as an **untracked file** in red.
+      You should see `hero_registry.py` listed as an **untracked file** in red.
       Git sees the file but isn't tracking it yet.
 
       ### Reading `git status` output
@@ -186,7 +186,7 @@ steps:
       | **Changes not staged for commit** | Red | Modified tracked files — not yet staged |
       | **Untracked files** | Red | Brand new files Git has never seen |
 
-      Right now you should see the third section: `calculator.py` as an
+      Right now you should see the third section: `hero_registry.py` as an
       untracked file. After staging, it will move to the first section.
 
       > If the staging area feels confusing — you're not alone. Even Git's
@@ -201,7 +201,7 @@ steps:
       Move the file from the Working Directory to the Staging Area:
 
       ```bash
-      git add calculator.py
+      git add hero_registry.py
       ```
 
       Now run `git status` again. The file should appear in green under
@@ -212,7 +212,7 @@ steps:
       Save this snapshot permanently to the repository:
 
       ```bash
-      git commit -m "Add calculator module with add and subtract"
+      git commit -m "Add hero registry with recruit and retire"
       ```
 
       The `-m` flag lets you write a message describing *what* and *why*.
@@ -228,53 +228,54 @@ steps:
       > you've got it.
 
     files:
-      - path: "myproject/calculator.py"
+      - path: "myproject/hero_registry.py"
         content: |
-          """A simple calculator module."""
+          """Hero Registry — track your superhero squad."""
 
 
-          def add(a, b):
-              """Return the sum of a and b."""
-              return a + b
+          def recruit(name, power):
+              """Add a new hero to the squad."""
+              return {"name": name, "power": power, "status": "active"}
 
 
-          def subtract(a, b):
-              """Return the difference of a and b."""
-              return a - b
+          def retire(hero):
+              """Retire a hero from active duty."""
+              hero["status"] = "retired"
+              return hero
         language: "python"
 
-    open_file: "myproject/calculator.py"
+    open_file: "myproject/hero_registry.py"
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
     solution:
       commands:
         - "cd /tutorial/myproject"
         - "git status"
-        - "git add calculator.py"
+        - "git add hero_registry.py"
         - "git status"
-        - "git commit -m \"Add calculator module with add and subtract\""
+        - "git commit -m \"Add hero registry with recruit and retire\""
         - "git status"
       explanation: |
-        - **`git add calculator.py`:** Moves the file from the Working Directory to the Staging Area. Before `git add`, the file is "untracked" — Git sees it but doesn't track it. After, it's "staged" (green in `git status`).
-        - **`git commit -m "Add calculator module with add and subtract"`:** Creates a permanent snapshot. The test checks `git log --oneline | head -1 | grep -qi 'calc\|add'` — so the commit message must contain "calc" or "add" (case-insensitive).
-        - The test also verifies `git log --oneline -- calculator.py | grep -q '.'` — `calculator.py` must appear in at least one commit's history.
+        - **`git add hero_registry.py`:** Moves the file from the Working Directory to the Staging Area. Before `git add`, the file is "untracked" — Git sees it but doesn't track it. After, it's "staged" (green in `git status`).
+        - **`git commit -m "Add hero registry with recruit and retire"`:** Creates a permanent snapshot. The test checks `git log --oneline | head -1 | grep -qi 'hero\|recruit'` — so the commit message must contain "hero" or "recruit" (case-insensitive).
+        - The test also verifies `git log --oneline -- hero_registry.py | grep -q '.'` — `hero_registry.py` must appear in at least one commit's history.
         - **Why the two-step add/commit?** The Staging Area lets you precisely control what goes into each commit. You can edit 10 files but commit only 3 as one logical change.
 
     tests:
-      - description: "calculator.py exists in the repository"
-        command: "[ -f /tutorial/myproject/calculator.py ]"
+      - description: "hero_registry.py exists in the repository"
+        command: "[ -f /tutorial/myproject/hero_registry.py ]"
         hints:
-          - text: "The editor shows `calculator.py` — it has already been saved to disk for you. If this test fails, make sure you are in the `/tutorial/myproject` directory (run `cd /tutorial/myproject`)."
-      - description: "calculator.py is tracked by Git (has been committed)"
-        command: "cd /tutorial/myproject && git log --oneline -- calculator.py | grep -q '.'"
+          - text: "The editor shows `hero_registry.py` — it has already been saved to disk for you. If this test fails, make sure you are in the `/tutorial/myproject` directory (run `cd /tutorial/myproject`)."
+      - description: "hero_registry.py is tracked by Git (has been committed)"
+        command: "cd /tutorial/myproject && git log --oneline -- hero_registry.py | grep -q '.'"
         hints:
           - text: "A common misconception: saving a file does **not** mean Git is tracking it. You need two separate commands — one to **stage** the file (move it to the staging area) and one to **commit** it (save the snapshot). Which two commands from the instructions do this?"
-      - description: "Commit message mentions 'calculator' or 'add'"
-        command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'calc\\|add'"
+      - description: "Commit message mentions 'hero' or 'recruit'"
+        command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'hero\\|recruit'"
         hints:
-          - text: "The test checks that your commit message describes what you added. What did you create in this step? Write a message that says so — it must contain the word 'calculator' or 'add'."
+          - text: "The test checks that your commit message describes what you added. What did you create in this step? Write a message that says so — it must contain the word 'hero' or 'recruit'."
 
     quiz:
       title: "Your First Commit — Knowledge Check"
@@ -290,9 +291,9 @@ steps:
           correct_index: 2
           explanation: "An **untracked** file is one Git has never been told to follow. It shows up in red under 'Untracked files'. Once you run `git add`, it moves to the staging area and Git begins tracking it."
 
-        - question: "**[Interleaved: Revisit Step 1]** You run `git add calculator.py` in a freshly created directory and get: `fatal: not a git repository (or any of the parent directories): .git`. What is the root cause, and what is the fix?"
+        - question: "**[Interleaved: Revisit Step 1]** You run `git add hero_registry.py` in a freshly created directory and get: `fatal: not a git repository (or any of the parent directories): .git`. What is the root cause, and what is the fix?"
           options:
-            - "The file `calculator.py` doesn't exist yet — create it first, then re-run `git add`"
+            - "The file `hero_registry.py` doesn't exist yet — create it first, then re-run `git add`"
             - "The `.git` directory is missing — the folder was never initialized as a repository; run `git init` first"
             - "The file is in a subdirectory — navigate to the project root before staging"
             - "`git add` requires network access — check your connection"
@@ -328,19 +329,19 @@ steps:
     instructions: |
       ### Modifying tracked files
 
-      Git now tracks `calculator.py`. When you edit a tracked file, Git
+      Git now tracks `hero_registry.py`. When you edit a tracked file, Git
       notices the difference between what's in your working directory and
       what was last committed.
 
-      ### Task 1: Add a multiply function
+      ### Task 1: Add a power_up function
 
-      Open `calculator.py` in the editor and add this function at the
+      Open `hero_registry.py` in the editor and add this function at the
       bottom of the file:
 
       ```python
-      def multiply(a, b):
-          """Return the product of a and b."""
-          return a * b
+      def power_up(hero, multiplier):
+          """Boost a hero's power level."""
+          return f"{hero['name']} is now {multiplier}x stronger!"
       ```
 
       Save the file (**Ctrl+S**), then run in the terminal:
@@ -349,15 +350,15 @@ steps:
       git status
       ```
 
-      You'll see `calculator.py` is now listed as **modified** (in red).
+      You'll see `hero_registry.py` is now listed as **modified** (in red).
       The file is tracked, but your new changes haven't been staged yet.
 
       ### Task 2: See exactly what changed
 
       > **Before you run:** `git diff` compares two areas. You've modified
-      > `calculator.py` but haven't staged it yet. Which two areas will it
+      > `hero_registry.py` but haven't staged it yet. Which two areas will it
       > compare — working directory vs. staging area, or staging area vs. last
-      > commit? Will your new `multiply` function appear with a `+` or `-`?
+      > commit? Will your new `power_up` function appear with a `+` or `-`?
 
       Before staging, review your changes:
 
@@ -374,8 +375,8 @@ steps:
       Now complete the cycle:
 
       ```bash
-      git add calculator.py
-      git commit -m "Add multiply function to calculator"
+      git add hero_registry.py
+      git commit -m "Add power_up function to hero registry"
       ```
 
       ### Task 4: Review your history
@@ -395,51 +396,52 @@ steps:
       > the explanation above — this distinction matters in every future step.
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
     solution:
       files:
-        - path: "myproject/calculator.py"
+        - path: "myproject/hero_registry.py"
           content: |
-            """A simple calculator module."""
+            """Hero Registry — track your superhero squad."""
 
 
-            def add(a, b):
-                """Return the sum of a and b."""
-                return a + b
+            def recruit(name, power):
+                """Add a new hero to the squad."""
+                return {"name": name, "power": power, "status": "active"}
 
 
-            def subtract(a, b):
-                """Return the difference of a and b."""
-                return a - b
+            def retire(hero):
+                """Retire a hero from active duty."""
+                hero["status"] = "retired"
+                return hero
 
 
-            def multiply(a, b):
-                """Return the product of a and b."""
-                return a * b
+            def power_up(hero, multiplier):
+                """Boost a hero's power level."""
+                return f"{hero['name']} is now {multiplier}x stronger!"
           language: "python"
       commands:
-        - "git add calculator.py"
-        - "git commit -m \"Add multiply function to calculator\""
+        - "git add hero_registry.py"
+        - "git commit -m \"Add power_up function to hero registry\""
         - "git log"
       explanation: |
-        - **Test 1:** `grep -q 'def multiply' calculator.py` — the `multiply` function must exist in the file.
-        - **Test 2:** `git log --oneline | grep -qi 'multiply'` — the commit message must contain "multiply" (case-insensitive). The sample message `"Add multiply function to calculator"` satisfies this.
+        - **Test 1:** `grep -q 'def power_up' hero_registry.py` — the `power_up` function must exist in the file.
+        - **Test 2:** `git log --oneline | grep -qi 'power_up\|power'` — the commit message must contain "power_up" or "power" (case-insensitive). The sample message `"Add power_up function to hero registry"` satisfies this.
         - **Test 3:** `[ $(git log --oneline | wc -l) -ge 2 ]` — the repository must have at least 2 commits total.
-        - **`git diff` before staging:** Compares the Working Directory to the Staging Area. Since nothing is staged yet, the staging area still matches the last commit — so `git diff` shows your `multiply` function as new lines with `+`.
+        - **`git diff` before staging:** Compares the Working Directory to the Staging Area. Since nothing is staged yet, the staging area still matches the last commit — so `git diff` shows your `power_up` function as new lines with `+`.
 
     tests:
-      - description: "calculator.py contains a multiply function"
-        command: "cd /tutorial/myproject && grep -q 'def multiply' calculator.py"
+      - description: "hero_registry.py contains a power_up function"
+        command: "cd /tutorial/myproject && grep -q 'def power_up' hero_registry.py"
         hints:
-          - text: "Open `calculator.py` in the editor and add the `multiply` function at the bottom of the file. Make sure you define it with `def multiply(a, b):` — Python is case-sensitive."
-            condition: "code_missing: def multiply"
-          - text: "Good — the multiply function is in the editor. Make sure you've saved the file (Ctrl+S) so the change is written to disk."
-            condition: "code_contains: def multiply"
-      - description: "The multiply function has been committed"
-        command: "cd /tutorial/myproject && git log --oneline | grep -qi 'multiply'"
+          - text: "Open `hero_registry.py` in the editor and add the `power_up` function at the bottom of the file. Make sure you define it with `def power_up(hero, multiplier):` — Python is case-sensitive."
+            condition: "code_missing: def power_up"
+          - text: "Good — the power_up function is in the editor. Make sure you've saved the file (Ctrl+S) so the change is written to disk."
+            condition: "code_contains: def power_up"
+      - description: "The power_up function has been committed"
+        command: "cd /tutorial/myproject && git log --oneline | grep -qi 'power_up\\|power'"
         hints:
-          - text: "The function is in the file, but Git doesn't know about the change yet. What stage-and-commit workflow moves a change from the working directory into a permanent snapshot? Your message must mention 'multiply'."
+          - text: "The function is in the file, but Git doesn't know about the change yet. What stage-and-commit workflow moves a change from the working directory into a permanent snapshot? Your message must mention 'power_up' or 'power'."
       - description: "Repository has at least 2 commits"
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 2 ]"
         hints:
@@ -450,7 +452,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "You modified `calculator.py` but have NOT yet run `git add`. What does `git diff` compare?"
+        - question: "You modified `hero_registry.py` but have NOT yet run `git add`. What does `git diff` compare?"
           options:
             - "Staging area vs. last commit"
             - "Working directory vs. last commit"
@@ -486,7 +488,7 @@ steps:
           correct_index: 1
           explanation: "In diff output, lines starting with `+` are **additions** and lines starting with `-` are **deletions**. Unchanged context lines have no prefix symbol."
 
-        - question: "After committing `calculator.py`, you add a new function and run `git diff` — you see your new lines marked with `+`. You then run `git add calculator.py`. What will `git diff` (no arguments) show now?"
+        - question: "After committing `hero_registry.py`, you add a new function and run `git diff` — you see your new lines marked with `+`. You then run `git add hero_registry.py`. What will `git diff` (no arguments) show now?"
           options:
             - "The same output as before — `git diff` always shows all uncommitted changes"
             - "Nothing — the working directory and staging area now match, so there is no difference to show"
@@ -509,7 +511,7 @@ steps:
       ### Task 1: Stage files selectively
 
       > **Before you run:** The project now has four new files: `README.md`,
-      > `test_calc.py`, `test_utils.py`, and `notes.txt`. You are about to
+      > `test_heroes.py`, `test_registry.py`, and `notes.txt`. You are about to
       > stage **only** `README.md`. After `git add README.md` and `git status`,
       > predict: which file(s) will appear **green** (staged), and which will
       > remain **red** (unstaged)?
@@ -568,7 +570,7 @@ steps:
       `notes.txt` and create a brand-new untracked file at the same time:
 
       ```bash
-      echo "TODO: add division" >> notes.txt
+      echo "TODO: add team_up" >> notes.txt
       echo "customer feedback output" > feedback.log
       git status
       ```
@@ -591,23 +593,23 @@ steps:
       files are involved.
 
     files:
-      - path: "myproject/test_calc.py"
+      - path: "myproject/test_heroes.py"
         content: |
-          """Tests for calculator."""
+          """Tests for heroes."""
         language: "python"
-      - path: "myproject/test_utils.py"
+      - path: "myproject/test_registry.py"
         content: |
-          """Tests for utilities."""
+          """Tests for registry."""
         language: "python"
       - path: "myproject/README.md"
         content: |
-          # My Calculator Project
-          A simple calculator
+          # Hero Registry
+          Track your superhero squad
         language: "markdown"
       - path: "myproject/notes.txt"
         content: |
-          TODO: add division
-          DONE: add multiply
+          TODO: add team_up
+          DONE: add power_up
 
     open_file: "myproject/notes.txt"
 
@@ -618,14 +620,14 @@ steps:
         - "git add test_*.py"
         - "git add ."
         - "git commit -m \"Add test files, README, and project notes\""
-        - "echo 'TODO: add division' >> notes.txt"
+        - "echo 'TODO: add team_up' >> notes.txt"
         - "echo 'customer feedback output' > feedback.log"
         - "git status"
         - "git commit -am \"Update notes and add feedback log\""
         - "git status"
       explanation: |
         - **`git add README.md`:** Stages only `README.md`.
-        - **`git add test_*.py`:** The shell glob expands to `test_calc.py test_utils.py`. Both are staged.
+        - **`git add test_*.py`:** The shell glob expands to `test_heroes.py test_registry.py`. Both are staged.
         - **`git add .`:** Stages everything in the current directory and subdirectories — including `notes.txt`.
         - **Four staging strategies:** Individual file, wildcard, current directory (`git add .`), all tracked+untracked (`git add --all`). All achieve the same end result here but give different levels of control.
         - **`git commit -am "..."`:** The `-a` flag auto-stages all already-tracked modified files (`notes.txt`) and commits them. `feedback.log` is a brand-new untracked file — `-a` never sees it. After this commit, `git status` still shows `feedback.log` as untracked, proving the limitation.
@@ -635,12 +637,12 @@ steps:
         command: "cd /tutorial/myproject && git log --all --oneline -- README.md | grep -q '.'"
         hints:
           - text: "How do you stage a single specific file? The instructions above list several approaches — which gives you the most control over what enters the commit?"
-      - description: "test_calc.py has been committed"
-        command: "cd /tutorial/myproject && git log --all --oneline -- test_calc.py | grep -q '.'"
+      - description: "test_heroes.py has been committed"
+        command: "cd /tutorial/myproject && git log --all --oneline -- test_heroes.py | grep -q '.'"
         hints:
           - text: "The instructions mention a way to stage multiple files matching a naming pattern. What shell syntax could match both test files at once?"
-      - description: "test_utils.py has been committed"
-        command: "cd /tutorial/myproject && git log --all --oneline -- test_utils.py | grep -q '.'"
+      - description: "test_registry.py has been committed"
+        command: "cd /tutorial/myproject && git log --all --oneline -- test_registry.py | grep -q '.'"
         hints:
           - text: "Both test files need to be staged. Re-read the wildcard staging example in the instructions above."
       - description: "notes.txt has been committed at least twice (once per task)"
@@ -728,14 +730,14 @@ steps:
       Let's edit a file and then undo our staging:
 
       ```bash
-      echo "BROKEN CODE" >> calculator.py
+      echo "BROKEN CODE" >> hero_registry.py
       ```
 
       Now stage the file and confirm it is staged — use the two-step
-      workflow you've practised since Step 2. You should see `calculator.py`
+      workflow you've practised since Step 2. You should see `hero_registry.py`
       listed in green before moving on.
 
-      You'll see `calculator.py` is staged (green). But wait — we don't
+      You'll see `hero_registry.py` is staged (green). But wait — we don't
       actually want to commit "BROKEN CODE"!
 
       ### Task 2: Unstage the file
@@ -743,7 +745,7 @@ steps:
       Remove the file from the staging area **without** losing your edits:
 
       ```bash
-      git restore --staged calculator.py
+      git restore --staged hero_registry.py
       git status
       ```
 
@@ -757,7 +759,7 @@ steps:
       last committed version:
 
       ```bash
-      git restore calculator.py
+      git restore hero_registry.py
       git status
       ```
 
@@ -775,32 +777,32 @@ steps:
       | `git restore <file>` | Discard working directory changes (permanent!) |
       | `git reset --hard` | Discard ALL uncommitted changes (nuclear option) |
 
-    open_file: "myproject/calculator.py"
+    open_file: "myproject/hero_registry.py"
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
     solution:
       commands:
-        - "echo \"BROKEN CODE\" >> calculator.py"
-        - "git add calculator.py"
+        - "echo \"BROKEN CODE\" >> hero_registry.py"
+        - "git add hero_registry.py"
         - "git status"
-        - "git restore --staged calculator.py"
+        - "git restore --staged hero_registry.py"
         - "git status"
-        - "git restore calculator.py"
+        - "git restore hero_registry.py"
         - "git status"
       explanation: |
-        - **Test 1:** `! grep -q 'BROKEN CODE' calculator.py` — the "BROKEN CODE" line must NOT be in the file. `git restore calculator.py` restores it to the last committed version.
+        - **Test 1:** `! grep -q 'BROKEN CODE' hero_registry.py` — the "BROKEN CODE" line must NOT be in the file. `git restore hero_registry.py` restores it to the last committed version.
         - **Test 2:** `git diff --quiet && git diff --cached --quiet` — both the working directory and the staging area must be clean (no uncommitted changes).
         - **`git restore --staged`:** Moves the file from staged → modified-but-unstaged. Edits are preserved — they stay in the working directory.
         - **`git restore` (without `--staged`):** Discards working directory changes permanently. There is no undo — the file was never committed, so Git has no record of the "BROKEN CODE" version.
         - **Warning:** `git reset --hard` would discard ALL uncommitted changes across all files — the nuclear option. Use it only when you're sure.
 
     tests:
-      - description: "calculator.py does NOT contain 'BROKEN CODE'"
-        command: "cd /tutorial/myproject && ! grep -q 'BROKEN CODE' calculator.py"
+      - description: "hero_registry.py does NOT contain 'BROKEN CODE'"
+        command: "cd /tutorial/myproject && ! grep -q 'BROKEN CODE' hero_registry.py"
         hints:
-          - text: "The 'BROKEN CODE' line is still in `calculator.py`. You need to discard the working-directory change. Think carefully: `git restore --staged` only **unstages** (moves from green back to red). To actually **throw away** the edit, you need `git restore` **without** `--staged`. These are two different operations — confusing them is one of the most common Git mistakes."
+          - text: "The 'BROKEN CODE' line is still in `hero_registry.py`. You need to discard the working-directory change. Think carefully: `git restore --staged` only **unstages** (moves from green back to red). To actually **throw away** the edit, you need `git restore` **without** `--staged`. These are two different operations — confusing them is one of the most common Git mistakes."
             condition: "code_contains: BROKEN CODE"
           - text: "The file looks clean in the editor. If the test still fails, the working directory on the VM may be out of sync. The instructions describe a command that restores a file to its last committed state — what is it?"
             condition: "code_missing: BROKEN CODE"
@@ -832,7 +834,7 @@ steps:
           correct_index: 1
           explanation: "The staging area lets you **cherry-pick** which edits form the next commit while keeping other in-progress work safe in the working directory — the defining advantage of the two-step add/commit flow."
 
-        - question: "You run `git restore calculator.py` (without `--staged`). What happens to your unsaved edits?"
+        - question: "You run `git restore hero_registry.py` (without `--staged`). What happens to your unsaved edits?"
           options:
             - "They are moved to the staging area for review"
             - "They are saved to a temporary location automatically"
@@ -877,7 +879,7 @@ steps:
 
       ```bash
       mkdir -p __pycache__
-      echo "bytecode" > __pycache__/calculator.cpython-311.pyc
+      echo "bytecode" > __pycache__/hero_registry.cpython-311.pyc
       echo "SECRET_KEY=abc123" > .env
       echo "debug log" > debug.log
       git status
@@ -981,7 +983,7 @@ steps:
             *.log
       commands:
         - "mkdir -p __pycache__"
-        - "echo \"bytecode\" > __pycache__/calculator.cpython-311.pyc"
+        - "echo \"bytecode\" > __pycache__/hero_registry.cpython-311.pyc"
         - "echo \"SECRET_KEY=abc123\" > .env"
         - "echo \"debug log\" > debug.log"
         - "git status"
@@ -1230,7 +1232,7 @@ steps:
           correct_index: 2
           explanation: "`git show HEAD` displays the commit metadata plus the complete diff of that commit. `git diff HEAD` compares your working directory to the last commit — it would show your *uncommitted* changes, not the committed diff."
 
-        - question: "You ran `git add calculator.py`. Which command shows you the exact lines that will be in your **next commit** — without touching the working directory?"
+        - question: "You ran `git add hero_registry.py`. Which command shows you the exact lines that will be in your **next commit** — without touching the working directory?"
           options:
             - "`git diff`"
             - "`git diff --staged`"
@@ -1428,7 +1430,7 @@ steps:
       ### The Post-it note mental model
 
       A branch is nothing more than a **Post-it note stuck to a commit**.
-      The note has a name written on it (like `main` or `feature-divide`),
+      The note has a name written on it (like `main` or `feature-team-up`),
       and it sits on top of one specific commit. That's it — the entire
       branch is that Post-it note.
 
@@ -1454,11 +1456,11 @@ steps:
         main:  [C1] ← [C2] ← [C3]
                                 ↑
                           Post-it: "main"
-                          Post-it: "feature-divide"  ← HEAD
+                          Post-it: "feature-team-up"  ← HEAD
       ```
 
       Two Post-it notes on the same commit — not a copy of your entire
-      project! When you make a new commit on `feature-divide`, Git peels
+      project! When you make a new commit on `feature-team-up`, Git peels
       that Post-it off C3 and sticks it on the new commit C4, while
       `main` stays put on C3.
 
@@ -1474,48 +1476,48 @@ steps:
       ### Task 2: Create and switch to a new branch
 
       ```bash
-      git switch -c feature-divide
+      git switch -c feature-team-up
       ```
 
-      This creates a new branch called `feature-divide` and switches to it.
+      This creates a new branch called `feature-team-up` and switches to it.
       (`-c` means "create the branch"). Run `git branch` to confirm you're
       on the new branch.
 
       ### Task 3: Make changes on the feature branch
 
-      Add a `divide` function to `calculator.py`. Open it in the editor and
+      Add a `team_up` function to `hero_registry.py`. Open it in the editor and
       add at the bottom:
 
       ```python
-      def divide(a, b):
-          """Return the quotient of a and b."""
-          if b == 0:
-              raise ValueError("Cannot divide by zero")
-          return a / b
+      def team_up(hero1, hero2):
+          """Combine two heroes for a mission."""
+          if hero1 is None or hero2 is None:
+              raise ValueError("Cannot team up with an absent hero")
+          return f"{hero1['name']} and {hero2['name']} unite!"
       ```
 
       Save, then stage and commit using the workflow from Steps 2–4.
-      Use the message `"Add divide function with zero-division check"`
-      (the test checks for "divide" in the commit message).
+      Use the message `"Add team_up function with absent-hero check"`
+      (the test checks for "team" in the commit message).
 
       ### Task 4: Switch back to main
 
-      > **Before you run:** When you switch back to `main`, will the `divide`
-      > function still be visible in `calculator.py`? Why or why not? Think
+      > **Before you run:** When you switch back to `main`, will the `team_up`
+      > function still be visible in `hero_registry.py`? Why or why not? Think
       > about what a branch pointer actually represents, then check your answer.
 
       ```bash
       git switch main
       ```
 
-      Now look at `calculator.py` in the terminal:
+      Now look at `hero_registry.py` in the terminal:
 
       ```bash
-      cat calculator.py
+      cat hero_registry.py
       ```
 
-      The `divide` function is **gone**! It only exists on the
-      `feature-divide` branch. Your `main` branch is untouched. This is
+      The `team_up` function is **gone**! It only exists on the
+      `feature-team-up` branch. Your `main` branch is untouched. This is
       the power of branching.
 
       > **What about uncommitted changes?** In this exercise you committed
@@ -1528,80 +1530,81 @@ steps:
       Switch back to see it again:
 
       ```bash
-      git switch feature-divide
-      cat calculator.py
+      git switch feature-team-up
+      cat hero_registry.py
       ```
 
       The function is back. Each branch is a separate timeline.
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
-    open_file: "myproject/calculator.py"
+    open_file: "myproject/hero_registry.py"
 
     solution:
       files:
-        - path: "myproject/calculator.py"
+        - path: "myproject/hero_registry.py"
           content: |
-            """A simple calculator module."""
+            """Hero Registry — track your superhero squad."""
 
 
-            def add(a, b):
-                """Return the sum of a and b."""
-                return a + b
+            def recruit(name, power):
+                """Add a new hero to the squad."""
+                return {"name": name, "power": power, "status": "active"}
 
 
-            def subtract(a, b):
-                """Return the difference of a and b."""
-                return a - b
+            def retire(hero):
+                """Retire a hero from active duty."""
+                hero["status"] = "retired"
+                return hero
 
 
-            def multiply(a, b):
-                """Return the product of a and b."""
-                return a * b
+            def power_up(hero, multiplier):
+                """Boost a hero's power level."""
+                return f"{hero['name']} is now {multiplier}x stronger!"
 
 
-            def divide(a, b):
-                """Return the quotient of a and b."""
-                if b == 0:
-                    raise ValueError("Cannot divide by zero")
-                return a / b
+            def team_up(hero1, hero2):
+                """Combine two heroes for a mission."""
+                if hero1 is None or hero2 is None:
+                    raise ValueError("Cannot team up with an absent hero")
+                return f"{hero1['name']} and {hero2['name']} unite!"
           language: "python"
       commands:
         - "git branch"
-        - "git switch -c feature-divide"
+        - "git switch -c feature-team-up"
         - "git branch"
-        - "git add calculator.py"
-        - "git commit -m \"Add divide function with zero-division check\""
+        - "git add hero_registry.py"
+        - "git commit -m \"Add team_up function with absent-hero check\""
         - "git switch main"
-        - "cat calculator.py"
-        - "git switch feature-divide"
-        - "cat calculator.py"
+        - "cat hero_registry.py"
+        - "git switch feature-team-up"
+        - "cat hero_registry.py"
       explanation: |
-        - **Test 1:** `git branch | grep -q 'feature-divide'` — the branch must exist.
-        - **Test 2:** `git show feature-divide:calculator.py | grep -q 'def divide'` — the divide function must exist on the feature branch.
-        - **Test 3:** `git log feature-divide --oneline | grep -qi 'divide'` — the commit message must reference "divide".
-        - **`git switch -c feature-divide`:** `-c` creates and switches in one command.
-        - **Disappearing divide function:** When you `git switch main`, Git updates your working directory to match the snapshot that `main` points to — the `divide` function was never committed to `main`, so it vanishes. This is the power of branches as separate timelines.
+        - **Test 1:** `git branch | grep -q 'feature-team-up'` — the branch must exist.
+        - **Test 2:** `git show feature-team-up:hero_registry.py | grep -q 'def team_up'` — the team_up function must exist on the feature branch.
+        - **Test 3:** `git log feature-team-up --oneline | grep -qi 'team'` — the commit message must reference "team".
+        - **`git switch -c feature-team-up`:** `-c` creates and switches in one command.
+        - **Disappearing team_up function:** When you `git switch main`, Git updates your working directory to match the snapshot that `main` points to — the `team_up` function was never committed to `main`, so it vanishes. This is the power of branches as separate timelines.
 
     tests:
-      - description: "Branch 'feature-divide' exists"
-        command: "cd /tutorial/myproject && git branch | grep -q 'feature-divide'"
+      - description: "Branch 'feature-team-up' exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'feature-team-up'"
         hints:
           - text: "The instructions describe a single command that creates a branch and switches to it. What flag triggers the 'create' behavior? Remember: a branch is just a lightweight pointer — it doesn't copy your project."
-      - description: "calculator.py has a divide function on feature-divide"
-        command: "cd /tutorial/myproject && git show feature-divide:calculator.py | grep -q 'def divide'"
+      - description: "hero_registry.py has a team_up function on feature-team-up"
+        command: "cd /tutorial/myproject && git show feature-team-up:hero_registry.py | grep -q 'def team_up'"
         hints:
-          - text: "Make sure you are on the `feature-divide` branch (check with `git branch`) before editing. Add the `divide` function to `calculator.py`, then stage and commit."
-            condition: "code_missing: def divide"
-          - text: "The `divide` function is in the editor — good. Now stage and commit it while on the `feature-divide` branch. The commit must happen on that branch for the function to be part of its history."
-            condition: "code_contains: def divide"
-      - description: "The divide function has been committed on feature-divide"
-        command: "cd /tutorial/myproject && git log feature-divide --oneline | grep -qi 'divide'"
+          - text: "Make sure you are on the `feature-team-up` branch (check with `git branch`) before editing. Add the `team_up` function to `hero_registry.py`, then stage and commit."
+            condition: "code_missing: def team_up"
+          - text: "The `team_up` function is in the editor — good. Now stage and commit it while on the `feature-team-up` branch. The commit must happen on that branch for the function to be part of its history."
+            condition: "code_contains: def team_up"
+      - description: "The team_up function has been committed on feature-team-up"
+        command: "cd /tutorial/myproject && git log feature-team-up --oneline | grep -qi 'team'"
         hints:
-          - text: "The function is in the file, but editing alone doesn't save it in Git. What stage-and-commit workflow creates a permanent snapshot? Your message must mention 'divide'."
-      - description: "Currently on feature-divide branch"
-        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-divide'"
+          - text: "The function is in the file, but editing alone doesn't save it in Git. What stage-and-commit workflow creates a permanent snapshot? Your message must mention 'team'."
+      - description: "Currently on feature-team-up branch"
+        command: "cd /tutorial/myproject && git branch --show-current | grep -q 'feature-team-up'"
         hints:
           - text: "The final task asks you to be back on the feature branch. How do you switch between branches?"
 
@@ -1637,12 +1640,12 @@ steps:
           correct_index: 1
           explanation: "This is a common misconception. A branch is just a tiny pointer file, not a copy. You can create hundreds of branches with negligible disk cost. Understanding this changes how you think about branching strategy — branches should be cheap and frequent, not rare and expensive."
 
-        - question: "**[Interleaved: Revisit Step 5]** Before running `git switch feature-divide`, you notice you have unstaged edits to `calculator.py`. What is the safest approach?"
+        - question: "**[Interleaved: Revisit Step 5]** Before running `git switch feature-team-up`, you notice you have unstaged edits to `hero_registry.py`. What is the safest approach?"
           options:
             - "Run `git switch` anyway — Git auto-saves all unstaged changes to the current branch"
-            - "Run `git restore calculator.py` to discard the edits, then switch freely"
+            - "Run `git restore hero_registry.py` to discard the edits, then switch freely"
             - "Commit your changes first so you start the switch with a clean working directory"
-            - "Rename `calculator.py` before switching so Git does not detect the modification"
+            - "Rename `hero_registry.py` before switching so Git does not detect the modification"
           correct_index: 2
           explanation: "As Step 5 established, the cleanest workflow is to leave your working directory in a known state before switching contexts. **Committing** gives you a named, recoverable checkpoint. Running `git switch` with uncommitted changes may carry them across branches — or fail with a conflict warning — depending on whether those files differ between the two branches. When in doubt, commit first."
 
@@ -1665,11 +1668,11 @@ steps:
 
         main:  [C1] ← [C2] ← [C3]
                                 ↑ main
-                                └── feature-divide: [C4]
+                                └── feature-team-up: [C4]
 
       After fast-forward merge:
 
-        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD (main, feature-divide)
+        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD (main, feature-team-up)
       ```
 
       **Three-way merge** — when both branches have diverged (each has new
@@ -1739,7 +1742,7 @@ steps:
       > **Before you run:** Will this merge create a new merge commit, or
       > will Git just slide the `main` pointer forward? Look at the diagrams
       > above and think about whether `main` has diverged from
-      > `feature-divide`. Form your prediction, then try it.
+      > `feature-team-up`. Form your prediction, then try it.
 
       ### Task 1: Switch to main and merge
 
@@ -1752,29 +1755,29 @@ steps:
       Before merging, preview what the incoming branch will introduce:
 
       ```bash
-      git diff main..feature-divide
+      git diff main..feature-team-up
       ```
 
-      The `..` syntax shows all changes in `feature-divide` that aren't
+      The `..` syntax shows all changes in `feature-team-up` that aren't
       in `main` yet — useful reconnaissance before any merge.
 
       Now merge the feature branch:
 
       ```bash
-      git merge feature-divide
+      git merge feature-team-up
       ```
 
       ### Task 2: Verify the merge
 
-      Check that the divide function is now on main:
+      Check that the team_up function is now on main:
 
       ```bash
-      cat calculator.py
+      cat hero_registry.py
       git log --oneline
       ```
 
-      You should see the divide function in the file and the commit from
-      `feature-divide` in your log. The feature has been integrated!
+      You should see the team_up function in the file and the commit from
+      `feature-team-up` in your log. The feature has been integrated!
 
       ### Task 3: Clean up
 
@@ -1782,43 +1785,43 @@ steps:
       work is now part of main:
 
       ```bash
-      git branch -d feature-divide
+      git branch -d feature-team-up
       ```
 
       The `-d` flag safely deletes a branch only if it's been fully merged.
       This keeps your branch list tidy.
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
     solution:
       commands:
         - "git switch main"
-        - "git diff main..feature-divide"
-        - "git merge feature-divide --no-edit"
-        - "cat calculator.py"
+        - "git diff main..feature-team-up"
+        - "git merge feature-team-up --no-edit"
+        - "cat hero_registry.py"
         - "git log --oneline"
-        - "git branch -d feature-divide"
+        - "git branch -d feature-team-up"
       explanation: |
         - **Test 1:** `git branch --show-current | grep -q 'main'` — you must be on main.
-        - **Test 2:** `grep -q 'def divide' calculator.py` — the divide function must be in the working file on main after the merge.
-        - **Test 3:** `git log main --oneline | grep -qi 'divide'` — the divide commit must be in main's history.
-        - **Fast-forward merge:** Because `main` had no new commits since `feature-divide` was created, Git simply slides the `main` pointer forward to the same commit as `feature-divide`. No merge commit is created; the history stays perfectly linear.
-        - **`git branch -d feature-divide`:** The `-d` flag safely deletes only if the branch is fully merged. Its work is now part of `main`, so this is tidy cleanup.
+        - **Test 2:** `grep -q 'def team_up' hero_registry.py` — the team_up function must be in the working file on main after the merge.
+        - **Test 3:** `git log main --oneline | grep -qi 'team'` — the team_up commit must be in main's history.
+        - **Fast-forward merge:** Because `main` had no new commits since `feature-team-up` was created, Git simply slides the `main` pointer forward to the same commit as `feature-team-up`. No merge commit is created; the history stays perfectly linear.
+        - **`git branch -d feature-team-up`:** The `-d` flag safely deletes only if the branch is fully merged. Its work is now part of `main`, so this is tidy cleanup.
 
     tests:
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
         hints:
           - text: "You must be on the branch you want to merge *into*. Which branch is that for this task? A common mistake is running merge from the wrong branch."
-      - description: "calculator.py on main has the divide function"
-        command: "cd /tutorial/myproject && git switch main 2>/dev/null; grep -q 'def divide' calculator.py"
+      - description: "hero_registry.py on main has the team_up function"
+        command: "cd /tutorial/myproject && git switch main 2>/dev/null; grep -q 'def team_up' hero_registry.py"
         hints:
-          - text: "Now that you're on the correct branch, what command integrates another branch's work into yours? If the function is still missing after merging, check that you committed it on `feature-divide` in the previous step."
+          - text: "Now that you're on the correct branch, what command integrates another branch's work into yours? If the function is still missing after merging, check that you committed it on `feature-team-up` in the previous step."
       - description: "Merge commit or fast-forward is in the log"
-        command: "cd /tutorial/myproject && git log main --oneline | grep -qi 'divide'"
+        command: "cd /tutorial/myproject && git log main --oneline | grep -qi 'team'"
         hints:
-          - text: "Run `git log --oneline` on main to verify the merge. You should see the divide commit in main's history after merging."
+          - text: "Run `git log --oneline` on main to verify the merge. You should see the team_up commit in main's history after merging."
 
     quiz:
       title: "Merging Branches — Knowledge Check"
@@ -1852,7 +1855,7 @@ steps:
           correct_index: 1
           explanation: "Git finds the **common ancestor** (the commit where the two branches diverged), then compares both branch tips against it. This three-point comparison lets Git automatically combine non-overlapping changes and flag conflicts only where the same lines were changed."
 
-        - question: "After merging `feature-divide`, you run `git branch -d feature-divide`. The command succeeds. What does the `-d` flag's success **guarantee**?"
+        - question: "After merging `feature-team-up`, you run `git branch -d feature-team-up`. The command succeeds. What does the `-d` flag's success **guarantee**?"
           options:
             - "The branch has been deleted from the remote repository as well"
             - "All commits from that branch are already reachable from the current branch — `-d` refuses to delete unmerged work"
@@ -1904,25 +1907,25 @@ steps:
       senior devs deal with merge conflicts regularly. Let's create one
       on purpose so when it happens for real, you'll handle it like a pro.
 
-      ### Task 1: Create a new branch and modify calculator.py
+      ### Task 1: Create a new branch and modify hero_registry.py
 
       ```bash
-      git switch -c update-add-function
+      git switch -c update-recruit-function
       ```
 
-      Now open `calculator.py` in the editor and **change the `add`
+      Now open `hero_registry.py` in the editor and **change the `recruit`
       function** to include a type check:
 
       ```python
-      def add(a, b):
-          """Return the sum of a and b (integers only)."""
-          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-              raise TypeError("Arguments must be numbers")
-          return a + b
+      def recruit(name, power):
+          """Add a new hero to the squad (name must be a string)."""
+          if not isinstance(name, str):
+              raise TypeError("Hero name must be a string")
+          return {"name": name, "power": power, "status": "active"}
       ```
 
       Save, then stage and commit. The test checks for "type", "check",
-      or "add" in the commit message — write something descriptive.
+      or "recruit" in the commit message — write something descriptive.
 
       ### Task 2: Switch back to main
 
@@ -1930,78 +1933,80 @@ steps:
       git switch main
       ```
 
-      Verify that main still has the **original** `add` function
+      Verify that main still has the **original** `recruit` function
       (without type checking):
 
       ```bash
-      head -8 calculator.py
+      head -8 hero_registry.py
       ```
 
       **Important:** Stay on `main` and proceed to the next step. In the
-      next step, we'll make a *different* change to the same `add` function
+      next step, we'll make a *different* change to the same `recruit` function
       on main, setting up a conflict!
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
     solution:
       files:
-        - path: "myproject/calculator.py"
+        - path: "myproject/hero_registry.py"
           content: |
-            """A simple calculator module."""
+            """Hero Registry — track your superhero squad."""
 
 
-            def add(a, b):
-                """Return the sum of a and b (integers only)."""
-                if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-                    raise TypeError("Arguments must be numbers")
-                return a + b
+            def recruit(name, power):
+                """Add a new hero to the squad (name must be a string)."""
+                if not isinstance(name, str):
+                    raise TypeError("Hero name must be a string")
+                return {"name": name, "power": power, "status": "active"}
 
 
-            def subtract(a, b):
-                """Return the difference of a and b."""
-                return a - b
+            def retire(hero):
+                """Retire a hero from active duty."""
+                hero["status"] = "retired"
+                return hero
 
 
-            def multiply(a, b):
-                """Return the product of a and b."""
-                return a * b
+            def power_up(hero, multiplier):
+                """Boost a hero's power level."""
+                return f"{hero['name']} is now {multiplier}x stronger!"
 
 
-            def divide(a, b):
-                """Return the quotient of a and b."""
-                if b == 0:
-                    raise ValueError("Cannot divide by zero")
-                return a / b
+            def team_up(hero1, hero2):
+                """Combine two heroes for a mission."""
+                if hero1 is None or hero2 is None:
+                    raise ValueError("Cannot team up with an absent hero")
+                return f"{hero1['name']} and {hero2['name']} unite!"
           language: "python"
       commands:
-        - "git switch -c update-add-function"
-        - "git add calculator.py"
-        - "git commit -m \"Add type checking to add function\""
+        - "git switch -c update-recruit-function"
+        - "git add hero_registry.py"
+        - "git commit -m \"Add type checking to recruit function\""
         - "git switch main"
-        - "head -8 calculator.py"
+        - "head -8 hero_registry.py"
       explanation: |
-        - **Test 1:** `git branch | grep -q 'update-add-function'` — the branch must exist.
-        - **Test 2:** `git log update-add-function --oneline | grep -qi 'type\|check\|add'` — the commit message must reference "type", "check", or "add".
+        - **Test 1:** `git branch | grep -q 'update-recruit-function'` — the branch must exist.
+        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'type\|check\|recruit'` — the commit message must reference "type", "check", or "recruit".
         - **Test 3:** `git branch --show-current | grep -q 'main'` — you must end on `main`.
-        - **Why this creates a conflict:** The `update-add-function` branch changed the `add` function. In the next step, you'll make a *different* change to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
+        - **Why this creates a conflict:** The `update-recruit-function` branch changed the `recruit` function. In the next step, you'll make a *different* change to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
 
     tests:
-      - description: "Branch 'update-add-function' exists"
-        command: "cd /tutorial/myproject && git branch | grep -q 'update-add-function'"
+      - description: "Branch 'update-recruit-function' exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'update-recruit-function'"
         hints:
           - text: "You've created branches before — same approach, different name. What command creates and switches to a new branch in one step?"
-      - description: "update-add-function branch has the type checking commit"
-        command: "cd /tutorial/myproject && git log update-add-function --oneline | grep -qi 'type\\|check\\|add'"
+      - description: "update-recruit-function branch has the type checking commit"
+        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'type\\|check\\|recruit'"
         hints:
-          - text: "Edit the `add` function on the `update-add-function` branch to include the type check, then stage and commit. Your message should mention 'type', 'check', or 'add'."
+          - text: "Edit the `recruit` function on the `update-recruit-function` branch to include the type check, then stage and commit. Your message should mention 'type', 'check', or 'recruit'."
             condition: "code_missing: isinstance"
-          - text: "The type check is in the file — now stage and commit it with a descriptive message mentioning 'type check' or 'add'."
+          - text: "The type check is in the file — now stage and commit it with a descriptive message mentioning 'type check' or 'recruit'."
             condition: "code_contains: isinstance"
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
         hints:
           - text: "After committing on the feature branch, you need to return to `main`. Stay there — you'll make a competing change in the next step."
+
 
     quiz:
       title: "Preparing for a Merge Conflict — Knowledge Check"
@@ -2017,21 +2022,21 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
-        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-add-function` immediately. What should you do **first**, and why does the order matter?"
+        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit-function` immediately. What should you do **first**, and why does the order matter?"
           options:
-            - "Run `git switch -c update-add-function` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
+            - "Run `git switch -c update-recruit-function` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
             - "Stage and commit your current work first, then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
             - "Discard your modifications with `git restore .` to get a clean slate before branching"
             - "Order doesn't matter — Git branch creation never interacts with working-directory state"
           correct_index: 1
           explanation: "You *can* branch with uncommitted changes (Git will carry them), but this creates ambiguity: those unrelated changes now appear to belong to the new feature branch. The professional habit is to start every branch from a known committed state. This is exactly the pattern Step 8 established — always commit your work before switching contexts."
 
-        - question: "You are setting up a merge conflict scenario. You made changes on `update-add-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
+        - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
-            - "Run `git merge update-add-function` immediately"
+            - "Run `git merge update-recruit-function` immediately"
             - "Make a **different** change to the same lines on `main`, commit it, then merge"
-            - "Delete the `update-add-function` branch and start over"
-            - "Run `git conflict update-add-function` to preview conflicts"
+            - "Delete the `update-recruit-function` branch and start over"
+            - "Run `git conflict update-recruit-function` to preview conflicts"
           correct_index: 1
           explanation: "To create a conflict, both branches must have **diverging changes** to the same lines. If you merge without making a competing change on main, Git will just fast-forward. Making a different edit to the same lines on main sets up a true three-way conflict."
 
@@ -2054,11 +2059,11 @@ steps:
     instructions: |
       ### The conflict
 
-      In the previous step, you changed the `add` function on the
-      `update-add-function` branch. Now we'll make a *different* change to
+      In the previous step, you changed the `recruit` function on the
+      `update-recruit-function` branch. Now we'll make a *different* change to
       the same function on `main`, creating a conflict.
 
-      ### Task 1: Modify add on main
+      ### Task 1: Modify recruit on main
 
       Make sure you're on main:
 
@@ -2066,57 +2071,57 @@ steps:
       git switch main
       ```
 
-      Open `calculator.py` in the editor and change the `add` function to
+      Open `hero_registry.py` in the editor and change the `recruit` function to
       log its inputs:
 
       ```python
-      def add(a, b):
-          """Return the sum of a and b (with logging)."""
-          print(f"Adding {a} + {b}")
-          return a + b
+      def recruit(name, power):
+          """Add a new hero to the squad (with logging)."""
+          print(f"Recruiting {name} with power: {power}")
+          return {"name": name, "power": power, "status": "active"}
       ```
 
-      Save, then stage and commit. The test checks for 'logging', 'log', or 'add'
+      Save, then stage and commit. The test checks for 'logging', 'log', or 'recruit'
       in the commit message — write something descriptive. You've done this
       workflow many times; no command list provided.
 
       ### Task 2: Attempt the merge
 
-      > **Before you run:** Both branches changed the `add` function.
+      > **Before you run:** Both branches changed the `recruit` function.
       > What do you think will happen when you try to merge? Will Git
       > combine them automatically, or will it need your help? Why?
 
       Now try to merge the other branch:
 
       ```bash
-      git merge update-add-function
+      git merge update-recruit-function
       ```
 
       Git will report a **CONFLICT**! It found that both branches changed
-      the same lines in `calculator.py` and can't automatically combine
+      the same lines in `hero_registry.py` and can't automatically combine
       them.
 
       ### Task 3: Read the conflict markers
 
-      Open `calculator.py` in the editor (or run `cat calculator.py`).
+      Open `hero_registry.py` in the editor (or run `cat hero_registry.py`).
       You'll see something like:
 
       ```
       <<<<<<< HEAD
-          """Return the sum of a and b (with logging)."""
-          print(f"Adding {a} + {b}")
-          return a + b
+          """Add a new hero to the squad (with logging)."""
+          print(f"Recruiting {name} with power: {power}")
+          return {"name": name, "power": power, "status": "active"}
       =======
-          """Return the sum of a and b (integers only)."""
-          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-              raise TypeError("Arguments must be numbers")
-          return a + b
-      >>>>>>> update-add-function
+          """Add a new hero to the squad (name must be a string)."""
+          if not isinstance(name, str):
+              raise TypeError("Hero name must be a string")
+          return {"name": name, "power": power, "status": "active"}
+      >>>>>>> update-recruit-function
       ```
 
       - `<<<<<<< HEAD` — your current branch's version (main)
       - `=======` — separator
-      - `>>>>>>> update-add-function` — the incoming branch's version
+      - `>>>>>>> update-recruit-function` — the incoming branch's version
 
       ### Task 4: Resolve the conflict
 
@@ -2126,18 +2131,18 @@ steps:
       > writing the merged version yourself before looking at the example
       > below.
 
-      Edit `calculator.py` to combine both changes. Remove ALL conflict
+      Edit `hero_registry.py` to combine both changes. Remove ALL conflict
       markers (`<<<<<<<`, `=======`, `>>>>>>>`) and write the merged
       version you want to keep. For example, keep both the logging and the
       type check:
 
       ```python
-      def add(a, b):
-          """Return the sum of a and b (with type checking and logging)."""
-          if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-              raise TypeError("Arguments must be numbers")
-          print(f"Adding {a} + {b}")
-          return a + b
+      def recruit(name, power):
+          """Add a new hero to the squad (with type checking and logging)."""
+          if not isinstance(name, str):
+              raise TypeError("Hero name must be a string")
+          print(f"Recruiting {name} with power: {power}")
+          return {"name": name, "power": power, "status": "active"}
       ```
 
       ### Escape hatch: `git merge --abort`
@@ -2201,66 +2206,67 @@ steps:
       is a skill that trips up even experienced developers.
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
 
     setup_commands:
       - " cd /tutorial/myproject && git switch main 2>/dev/null; true"
 
     solution:
       files:
-        - path: "myproject/calculator.py"
+        - path: "myproject/hero_registry.py"
           content: |
-            """A simple calculator module."""
+            """Hero Registry — track your superhero squad."""
 
 
-            def add(a, b):
-                """Return the sum of a and b (with type checking and logging)."""
-                if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-                    raise TypeError("Arguments must be numbers")
-                print(f"Adding {a} + {b}")
-                return a + b
+            def recruit(name, power):
+                """Add a new hero to the squad (with type checking and logging)."""
+                if not isinstance(name, str):
+                    raise TypeError("Hero name must be a string")
+                print(f"Recruiting {name} with power: {power}")
+                return {"name": name, "power": power, "status": "active"}
 
 
-            def subtract(a, b):
-                """Return the difference of a and b."""
-                return a - b
+            def retire(hero):
+                """Retire a hero from active duty."""
+                hero["status"] = "retired"
+                return hero
 
 
-            def multiply(a, b):
-                """Return the product of a and b."""
-                return a * b
+            def power_up(hero, multiplier):
+                """Boost a hero's power level."""
+                return f"{hero['name']} is now {multiplier}x stronger!"
 
 
-            def divide(a, b):
-                """Return the quotient of a and b."""
-                if b == 0:
-                    raise ValueError("Cannot divide by zero")
-                return a / b
+            def team_up(hero1, hero2):
+                """Combine two heroes for a mission."""
+                if hero1 is None or hero2 is None:
+                    raise ValueError("Cannot team up with an absent hero")
+                return f"{hero1['name']} and {hero2['name']} unite!"
           language: "python"
       commands:
         - "git merge --abort 2>/dev/null; true"
         - "git switch main 2>/dev/null; true"
-        - "git add calculator.py"
-        - "git commit -m \"Add logging to add function\" 2>/dev/null; true"
-        - "git merge update-add-function -X theirs --no-edit"
-        - "sed -i 's/integers only/with type checking and logging/' calculator.py"
-        - "sed -i '/^    return a + b$/i\\    print(f\"Adding {a} + {b}\")' calculator.py"
-        - "git add calculator.py"
-        - "git commit -m \"Add print logging to merged add function\" 2>/dev/null; true"
+        - "git add hero_registry.py"
+        - "git commit -m \"Add logging to recruit function\" 2>/dev/null; true"
+        - "git merge update-recruit-function -X theirs --no-edit"
+        - "sed -i 's/name must be a string/with type checking and logging/' hero_registry.py"
+        - "sed -i '/^    return {\"name\": name/i\\    print(f\"Recruiting {name} with power: {power}\")' hero_registry.py"
+        - "git add hero_registry.py"
+        - "git commit -m \"Add print logging to merged recruit function\" 2>/dev/null; true"
       explanation: |
-        - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' calculator.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
+        - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' hero_registry.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
         - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
-        - **Test 3:** `grep -q 'isinstance' calculator.py` — the type-checking code from `update-add-function` must be present.
-        - **Test 4:** `grep -q 'print' calculator.py` — the logging code from `main` must be present.
+        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the type-checking code from `update-recruit-function` must be present.
+        - **Test 4:** `grep -q 'print' hero_registry.py` — the logging code from `main` must be present.
         - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the type-checking code), then uses `sed` to add the logging `print` line and update the docstring. A follow-up commit captures the combined result.
         - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
         - **`git add` after resolution:** Signals to Git that the conflict is resolved AND stages the content. Without it, `git commit` refuses with "unmerged paths". This is the same `git add` as always — it just takes on this extra role during a merge.
 
     tests:
-      - description: "calculator.py has no conflict markers"
-        command: "cd /tutorial/myproject && ! grep -q '<<<<<<<\\|=======\\|>>>>>>>' calculator.py"
+      - description: "hero_registry.py has no conflict markers"
+        command: "cd /tutorial/myproject && ! grep -q '<<<<<<<\\|=======\\|>>>>>>>' hero_registry.py"
         hints:
-          - text: "Conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) are still in your file. This is the most common merge mistake — you must remove **all three** marker types. Edit `calculator.py` to keep only the code you want, with no markers remaining."
+          - text: "Conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`) are still in your file. This is the most common merge mistake — you must remove **all three** marker types. Edit `hero_registry.py` to keep only the code you want, with no markers remaining."
             condition: "source_contains: <<<<<<<"
           - text: "Good — no `<<<<<<<` markers visible in the editor. Make sure `=======` and `>>>>>>>` are also gone. Save the file when done."
             condition: "source_missing: <<<<<<<"
@@ -2268,13 +2274,13 @@ steps:
         command: "cd /tutorial/myproject && ! git status | grep -q 'Unmerged\\|both modified'"
         hints:
           - text: "After editing out the conflict markers, you need to signal to Git that the conflict is resolved. What familiar staging command does double duty here — staging the content AND clearing the 'unmerged' flag? Then what command finishes the merge?"
-      - description: "calculator.py contains type checking (isinstance)"
-        command: "cd /tutorial/myproject && grep -q 'isinstance' calculator.py"
+      - description: "hero_registry.py contains type checking (isinstance)"
+        command: "cd /tutorial/myproject && grep -q 'isinstance' hero_registry.py"
         hints:
-          - text: "Your resolved version should keep the `isinstance` type-checking code from the `update-add-function` branch. Don't discard it when resolving — combine both changes."
+          - text: "Your resolved version should keep the `isinstance` type-checking code from the `update-recruit-function` branch. Don't discard it when resolving — combine both changes."
             condition: "code_missing: isinstance"
-      - description: "calculator.py contains logging (print)"
-        command: "cd /tutorial/myproject && grep -q 'print' calculator.py"
+      - description: "hero_registry.py contains logging (print)"
+        command: "cd /tutorial/myproject && grep -q 'print' hero_registry.py"
         hints:
           - text: "Your resolved version should also keep the logging behavior from main's version. Look at the section between `<<<<<<< HEAD` and `=======` in the conflict markers — that code needs to be in your final version too."
             condition: "code_missing: print"
@@ -2284,7 +2290,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "After editing `calculator.py` to remove all conflict markers, why do you run `git add calculator.py` BEFORE `git commit`?"
+        - question: "After editing `hero_registry.py` to remove all conflict markers, why do you run `git add hero_registry.py` BEFORE `git commit`?"
           options:
             - "It's redundant — `git commit` automatically detects resolved conflicts"
             - "`git add` signals to Git that the conflict is resolved AND stages the content; without it, Git still marks the file as 'unresolved'"
@@ -2324,7 +2330,7 @@ steps:
             - 3
           explanation: "Conflicts are **not errors** — they are Git's deliberate safety mechanism asking for human judgment. You must remove all markers (leaving them in is a bug). The resolution can be either version, a combination, or even entirely new code."
 
-        - question: "**[Interleaved: Revisit Step 2]** During a merge, `git status` shows `calculator.py` as 'both modified'. After you edit the file and remove all conflict markers, what does `git add calculator.py` signal to Git — and why is this the same command you used in Step 2?"
+        - question: "**[Interleaved: Revisit Step 2]** During a merge, `git status` shows `hero_registry.py` as 'both modified'. After you edit the file and remove all conflict markers, what does `git add hero_registry.py` signal to Git — and why is this the same command you used in Step 2?"
           options:
             - "It signals that you want to discard the incoming branch's changes"
             - "It signals that the conflict is resolved AND stages the content — the same dual role `git add` always plays: move content to the staging area"
@@ -2428,7 +2434,7 @@ steps:
       ### Task 1: Introduce a bug commit
 
       ```bash
-      echo "print('debug: this should not be here')" >> calculator.py
+      echo "print('debug: this should not be here')" >> hero_registry.py
       ```
 
       Now stage and commit using the workflow you know — no command list
@@ -2460,7 +2466,7 @@ steps:
 
       ```bash
       git log --oneline
-      cat calculator.py
+      cat hero_registry.py
       ```
 
       You'll see **two new commits** in the log: the bad commit and the
@@ -2520,18 +2526,18 @@ steps:
       something is committed, Git can always bring it back.
 
     watch_files:
-      - "myproject/calculator.py"
+      - "myproject/hero_registry.py"
       - "myproject/notes.txt"
 
     solution:
       commands:
-        - "echo \"print('debug: this should not be here')\" >> calculator.py"
-        - "git add calculator.py"
+        - "echo \"print('debug: this should not be here')\" >> hero_registry.py"
+        - "git add hero_registry.py"
         - "git commit -m \"Accidentally add debug print\""
         - "git log --oneline"
         - "git revert HEAD --no-edit"
         - "git log --oneline"
-        - "cat calculator.py"
+        - "cat hero_registry.py"
         - "echo \"Study notes for the exam\" > notes.txt"
         - "git add notes.txt"
         - "rm notes.txt"
@@ -2542,7 +2548,7 @@ steps:
         - "ls"
       explanation: |
         - **Test 1:** `git log --oneline | grep -qi 'revert'` — a revert commit must exist in the log (Git's default message is "Revert '...'").
-        - **Test 2:** `! grep -q 'debug: this should not be here' calculator.py` — the debug line must be gone from the file.
+        - **Test 2:** `! grep -q 'debug: this should not be here' hero_registry.py` — the debug line must be gone from the file.
         - **Test 3:** `[ $(git log --oneline | wc -l) -ge 8 ]` — the repository must have at least 8 commits by now.
         - **Test 4:** `[ -f notes.txt ]` — `notes.txt` must exist (restored by `git reset --hard HEAD`).
         - **Task 4 mechanics:** `git add` copies a snapshot of the file into the index. Deleting the file from disk afterward only affects the working directory — the index retains its copy. `git commit` reads from the index, so the commit includes `notes.txt` even though it was deleted before the commit ran. `git reset --hard HEAD` then reconciles the working directory with HEAD, restoring any files that HEAD has but the working directory doesn't.
@@ -2554,8 +2560,8 @@ steps:
         command: "cd /tutorial/myproject && git log --oneline | grep -qi 'revert'"
         hints:
           - text: "First commit the debug line (using the two-step workflow), then use the 'anti-commit' command from the instructions. What flag accepts the default message without opening an editor? Remember: this creates a **new** commit — it does not delete the original."
-      - description: "calculator.py does not contain the debug print"
-        command: "cd /tutorial/myproject && ! grep -q 'debug: this should not be here' calculator.py"
+      - description: "hero_registry.py does not contain the debug print"
+        command: "cd /tutorial/myproject && ! grep -q 'debug: this should not be here' hero_registry.py"
         hints:
           - text: "If the debug line persists, check that you committed it first, then used the undo command. Remember: this tool only works on *committed* changes — it creates a new inverse commit rather than erasing history."
       - description: "Repository has at least 8 commits"
@@ -2577,7 +2583,7 @@ steps:
             - "`git restore HEAD~3` — restores files to that state but creates no commit"
             - "`git reset --hard a1b2c3` — moves the branch pointer back, removing 3 commits"
             - "`git revert a1b2c3` — creates a new commit that undoes that specific commit"
-            - "`git restore calculator.py` — discards uncommitted changes to the buggy file"
+            - "`git restore hero_registry.py` — discards uncommitted changes to the buggy file"
           correct_index: 2
           explanation: "On a **shared branch**, only `git revert` is safe — it adds a new anti-commit without touching existing history. `git reset --hard` rewrites history and would require a force-push, breaking everyone who already pulled. `git restore` without committing is also incomplete. This contrasts directly with the uncommitted-change scenario in Step 5 where `git restore` was the right tool."
 
@@ -2940,16 +2946,16 @@ steps:
       everything you've learned — **without step-by-step instructions**.
       Refer back to earlier steps if you get stuck.
 
-      1. **Create** a new branch called `feature-power`
-      2. **Add** a `power` function to `calculator.py`:
+      1. **Create** a new branch called `feature-power-surge`
+      2. **Add** a `power_surge` function to `hero_registry.py`:
          ```python
-         def power(a, b):
-             """Return a raised to the power of b."""
-             return a ** b
+         def power_surge(hero, boost):
+             """Apply a power surge to a hero."""
+             return f"{hero['name']} surges with {boost} extra power!"
          ```
       3. **Commit** your change with a meaningful message
       4. **Switch** back to `main`
-      5. **Merge** `feature-power` into `main`
+      5. **Merge** `feature-power-surge` into `main`
       6. **Verify** by running `git log --oneline --graph --all`
 
       <details>
@@ -2968,7 +2974,7 @@ steps:
       <summary>Hint 3 — merging back into main</summary>
       Revisit Step 9: switch to the branch you want to merge <em>into</em>
       before running <code>git merge</code>. Preview changes first with
-      <code>git diff main..feature-power</code>.
+      <code>git diff main..feature-power-surge</code>.
       </details>
 
       This exercises branching, committing, merging, and log inspection
@@ -2976,92 +2982,94 @@ steps:
       you're ready for real-world Git usage.
 
       ```bash
-      cat calculator.py
+      cat hero_registry.py
       ```
 
-      From an empty folder to a version-controlled Python project with
+      From an empty folder to a version-controlled Python hero registry with
       branching, merge conflict resolution, and independent feature
       work — that's a whole journey. You should feel good about this.
 
     solution:
       files:
-        - path: "myproject/calculator.py"
+        - path: "myproject/hero_registry.py"
           content: |
-            """A simple calculator module."""
+            """Hero Registry — track your superhero squad."""
 
 
-            def add(a, b):
-                """Return the sum of a and b (with type checking and logging)."""
-                if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-                    raise TypeError("Arguments must be numbers")
-                print(f"Adding {a} + {b}")
-                return a + b
+            def recruit(name, power):
+                """Add a new hero to the squad (with type checking and logging)."""
+                if not isinstance(name, str):
+                    raise TypeError("Hero name must be a string")
+                print(f"Recruiting {name} with power: {power}")
+                return {"name": name, "power": power, "status": "active"}
 
 
-            def subtract(a, b):
-                """Return the difference of a and b."""
-                return a - b
+            def retire(hero):
+                """Retire a hero from active duty."""
+                hero["status"] = "retired"
+                return hero
 
 
-            def multiply(a, b):
-                """Return the product of a and b."""
-                return a * b
+            def power_up(hero, multiplier):
+                """Boost a hero's power level."""
+                return f"{hero['name']} is now {multiplier}x stronger!"
 
 
-            def divide(a, b):
-                """Return the quotient of a and b."""
-                if b == 0:
-                    raise ValueError("Cannot divide by zero")
-                return a / b
+            def team_up(hero1, hero2):
+                """Combine two heroes for a mission."""
+                if hero1 is None or hero2 is None:
+                    raise ValueError("Cannot team up with an absent hero")
+                return f"{hero1['name']} and {hero2['name']} unite!"
 
 
-            def power(a, b):
-                """Return a raised to the power of b."""
-                return a ** b
+            def power_surge(hero, boost):
+                """Apply a power surge to a hero."""
+                return f"{hero['name']} surges with {boost} extra power!"
           language: "python"
       commands:
-        - "git switch -c feature-power"
-        - "git add calculator.py"
-        - "git commit -m \"Add power function\""
+        - "git switch -c feature-power-surge"
+        - "git add hero_registry.py"
+        - "git commit -m \"Add power_surge function\""
         - "git switch main"
-        - "git merge feature-power"
+        - "git merge feature-power-surge"
         - "git log --oneline --graph --all"
-        - "cat calculator.py"
+        - "cat hero_registry.py"
       explanation: |
         - **Test 1:** `[ $(git log --oneline | wc -l) -ge 10 ]` — at least 10 commits in total.
-        - **Test 2:** All five functions must be present in the final `calculator.py`.
+        - **Test 2:** All five functions must be present in the final `hero_registry.py`.
         - **Test 3:** `.gitignore` must be in the commit history.
-        - **Capstone test:** The `power` function must exist and be committed on `main`.
+        - **Capstone test:** The `power_surge` function must exist and be committed on `main`.
 
-        **The final `calculator.py`:**
+        **The final `hero_registry.py`:**
 
         ```python
-        """A simple calculator module."""
+        """Hero Registry — track your superhero squad."""
 
 
-        def add(a, b):
-            """Return the sum of a and b (with type checking and logging)."""
-            if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
-                raise TypeError("Arguments must be numbers")
-            print(f"Adding {a} + {b}")
-            return a + b
+        def recruit(name, power):
+            """Add a new hero to the squad (with type checking and logging)."""
+            if not isinstance(name, str):
+                raise TypeError("Hero name must be a string")
+            print(f"Recruiting {name} with power: {power}")
+            return {"name": name, "power": power, "status": "active"}
 
 
-        def subtract(a, b):
-            """Return the difference of a and b."""
-            return a - b
+        def retire(hero):
+            """Retire a hero from active duty."""
+            hero["status"] = "retired"
+            return hero
 
 
-        def multiply(a, b):
-            """Return the product of a and b."""
-            return a * b
+        def power_up(hero, multiplier):
+            """Boost a hero's power level."""
+            return f"{hero['name']} is now {multiplier}x stronger!"
 
 
-        def divide(a, b):
-            """Return the quotient of a and b."""
-            if b == 0:
-                raise ValueError("Cannot divide by zero")
-            return a / b
+        def team_up(hero1, hero2):
+            """Combine two heroes for a mission."""
+            if hero1 is None or hero2 is None:
+                raise ValueError("Cannot team up with an absent hero")
+            return f"{hero1['name']} and {hero2['name']} unite!"
         ```
 
         **Git workflow summary:** The complete workflow practiced in this tutorial:
@@ -3084,17 +3092,17 @@ steps:
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 10 ]"
         hints:
           - text: "Run `git log --oneline | wc -l` to check your count. You need commits from all previous steps plus the capstone."
-      - description: "calculator.py has add, subtract, multiply, divide, and power functions"
-        command: "cd /tutorial/myproject && grep -q 'def add' calculator.py && grep -q 'def subtract' calculator.py && grep -q 'def multiply' calculator.py && grep -q 'def divide' calculator.py && grep -q 'def power' calculator.py"
+      - description: "hero_registry.py has recruit, retire, power_up, team_up, and power_surge functions"
+        command: "cd /tutorial/myproject && grep -q 'def recruit' hero_registry.py && grep -q 'def retire' hero_registry.py && grep -q 'def power_up' hero_registry.py && grep -q 'def team_up' hero_registry.py && grep -q 'def power_surge' hero_registry.py"
         hints:
-          - text: "All five functions must be present in `calculator.py`. Add the `power` function using the pattern from earlier steps."
-            condition: "code_missing: def power"
+          - text: "All five functions must be present in `hero_registry.py`. Add the `power_surge` function using the pattern from earlier steps."
+            condition: "code_missing: def power_surge"
       - description: ".gitignore exists and is committed"
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
-      - description: "power function is committed on main"
-        command: "cd /tutorial/myproject && git show main:calculator.py | grep -q 'def power'"
+      - description: "power_surge function is committed on main"
+        command: "cd /tutorial/myproject && git show main:hero_registry.py | grep -q 'def power_surge'"
         hints:
-          - text: "The `power` function must reach `main` through the branch-and-merge workflow. What are the key steps: create a branch, commit, switch, and then what?"
+          - text: "The `power_surge` function must reach `main` through the branch-and-merge workflow. What are the key steps: create a branch, commit, switch, and then what?"
 
     quiz:
       title: "Git Mastery — Final Comprehensive Review"
