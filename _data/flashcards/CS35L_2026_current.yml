@@ -7,3 +7,5 @@ decks:
   - shell_commands_reference
   - shell_pipes
   - regex_basics
+  - python_syntax_explain
+  - python_syntax_generate

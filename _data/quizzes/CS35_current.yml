@@ -6,3 +6,4 @@ decks:
   - shell
   - regex
   - shell_parson
+  - python
