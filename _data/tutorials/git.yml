@@ -217,7 +217,9 @@ steps:
 
       The `-m` flag lets you write a message describing *what* and *why*.
       Good commit messages help your future self (and teammates) understand
-      the history.
+      the history. Your latest commit is now what Git calls **HEAD** — a
+      pointer to the most recent commit on your current branch. You'll use
+      HEAD extensively starting in Step 7.
 
       Run `git status` one more time — it should say "nothing to commit,
       working tree clean". Your file is safely stored!
@@ -570,7 +572,7 @@ steps:
       `notes.txt` and create a brand-new untracked file at the same time:
 
       ```bash
-      echo "TODO: add team_up" >> notes.txt
+      echo "IDEA: add power_surge ability" >> notes.txt
       echo "customer feedback output" > feedback.log
       git status
       ```
@@ -615,12 +617,13 @@ steps:
 
     solution:
       commands:
+        - "cd /tutorial/myproject"
         - "git status"
         - "git add README.md"
         - "git add test_*.py"
         - "git add ."
         - "git commit -m \"Add test files, README, and project notes\""
-        - "echo 'TODO: add team_up' >> notes.txt"
+        - "echo 'IDEA: add power_surge ability' >> notes.txt"
         - "echo 'customer feedback output' > feedback.log"
         - "git status"
         - "git commit -am \"Update notes and add feedback log\""
@@ -784,6 +787,7 @@ steps:
 
     solution:
       commands:
+        - "cd /tutorial/myproject"
         - "echo \"BROKEN CODE\" >> hero_registry.py"
         - "git add hero_registry.py"
         - "git status"
@@ -1008,7 +1012,7 @@ steps:
           - text: "The instructions list four patterns. Which one tells Git to ignore the `__pycache__` directory? What does a trailing `/` signify in a `.gitignore` pattern?"
             condition: "code_missing: __pycache__"
       - description: ".gitignore excludes .env"
-        command: "cd /tutorial/myproject && grep -q '.env' .gitignore"
+        command: "cd /tutorial/myproject && grep -qF '.env' .gitignore"
         hints:
           - text: "Which filename from the instructions contains secrets that should never be tracked? Add it as a pattern — but remember, `.gitignore` only works for files that aren't already tracked."
             condition: "code_missing: .env"
@@ -1175,7 +1179,7 @@ steps:
         - "git show HEAD"
         - "git diff HEAD~1 HEAD"
       explanation: |
-        - **Test:** `[ $(git log --oneline | wc -l) -ge 3 ]` — the repository must have at least 3 commits. By this step, you have: initial commit (Step 2), multiply commit (Step 3), and gitignore commit (Step 6).
+        - **Test:** `[ $(git log --oneline | wc -l) -ge 3 ]` — the repository must have at least 3 commits. By this step, you have: initial commit (Step 2), power_up commit (Step 3), and gitignore commit (Step 6).
         - **`git log`:** Shows hash, author, date, and message for each commit. The hash is a 40-character SHA-1 identifier for each snapshot.
         - **`git show HEAD`:** Displays the metadata plus the complete diff of the most recent commit. `HEAD` is a symbolic reference that always points to the currently checked-out commit.
         - **`HEAD~1`:** Relative syntax for "one commit before HEAD". `HEAD~2` is two commits back, etc.
@@ -1359,29 +1363,29 @@ steps:
       - description: "scratch.py is NOT staged"
         command: "cd /tutorial/myproject && ! git diff --cached --name-only | grep -q 'scratch.py'"
         hints:
-          - text: "You learned two variants of the restore command — one targets the staging area, the other targets the working directory. Which do you need to **unstage** a file?"
+          - text: "Revisit the summary table at the end of Step 5 — it lists three undo commands. Which one targets the staging area without touching the working directory?"
       - description: "broken.py does not contain DEBUG = True"
         command: "cd /tutorial/myproject && ! grep -q 'DEBUG = True' broken.py"
         hints:
-          - text: "Git has two kinds of undo for uncommitted changes. One unstages; the other discards working-directory edits. Which do you need here?"
+          - text: "Revisit the summary table at the end of Step 5 — it lists three undo commands. Which one permanently discards working-directory changes?"
       - description: ".gitignore excludes *.log"
         command: "cd /tutorial/myproject && grep -q '\\*.log' .gitignore"
         hints:
-          - text: "Review the `.gitignore` pattern syntax. What wildcard pattern matches all files ending in `.log`?"
+          - text: "Revisit Step 6 for the pattern syntax. What did you use there to match all `.pyc` files?"
             condition: "code_missing: *.log"
       - description: ".gitignore excludes scratch.py"
         command: "cd /tutorial/myproject && grep -q 'scratch.py' .gitignore"
         hints:
-          - text: "You can ignore a specific file by adding its exact name to `.gitignore`."
+          - text: "Revisit Step 6 — you can ignore a specific file by name. How did you handle `.env`?"
             condition: "code_missing: scratch.py"
-      - description: ".gitignore has been committed"
-        command: "cd /tutorial/myproject && git log --oneline -- .gitignore | wc -l | grep -q '^[2-9]'"
+      - description: ".gitignore has been committed (updated in this step)"
+        command: "cd /tutorial/myproject && [ $(git log --oneline -- .gitignore | wc -l) -ge 2 ]"
         hints:
-          - text: "Don't forget to stage and commit your updated `.gitignore`. The two-step workflow still applies."
+          - text: "The file is saved, but is it in Git's history? Revisit the two-step workflow from Steps 2–4."
       - description: "Working tree is clean"
         command: "cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet"
         hints:
-          - text: "Run `git status` — everything should say 'nothing to commit, working tree clean'. If not, check which files still need attention."
+          - text: "Something is still pending. Run `git status` to see what needs attention, then revisit the relevant earlier step."
 
     quiz:
       title: "Mini-Capstone — Knowledge Check"
@@ -1525,7 +1529,9 @@ steps:
       > staged or modified files *without* committing, `git switch` would
       > carry those changes to the new branch, as long as they don't
       > conflict with files that differ between branches. When in doubt,
-      > always commit before switching.
+      > always commit before switching. (There's also `git stash` for
+      > temporarily shelving changes, but committing is the safer habit
+      > to start with.)
 
       Switch back to see it again:
 
@@ -1815,7 +1821,7 @@ steps:
         hints:
           - text: "You must be on the branch you want to merge *into*. Which branch is that for this task? A common mistake is running merge from the wrong branch."
       - description: "hero_registry.py on main has the team_up function"
-        command: "cd /tutorial/myproject && git switch main 2>/dev/null; grep -q 'def team_up' hero_registry.py"
+        command: "cd /tutorial/myproject && git show main:hero_registry.py | grep -q 'def team_up'"
         hints:
           - text: "Now that you're on the correct branch, what command integrates another branch's work into yours? If the function is still missing after merging, check that you committed it on `feature-team-up` in the previous step."
       - description: "Merge commit or fast-forward is in the log"
@@ -1914,18 +1920,19 @@ steps:
       ```
 
       Now open `hero_registry.py` in the editor and **change the `recruit`
-      function** to include a type check:
+      function** to add safety protocols — verify the hero's name is valid
+      before registering them:
 
       ```python
       def recruit(name, power):
-          """Add a new hero to the squad (name must be a string)."""
+          """Add a new hero to the squad (with safety protocols)."""
           if not isinstance(name, str):
               raise TypeError("Hero name must be a string")
           return {"name": name, "power": power, "status": "active"}
       ```
 
-      Save, then stage and commit. The test checks for "type", "check",
-      or "recruit" in the commit message — write something descriptive.
+      Save, then stage and commit. The test checks for "safety",
+      "protocol", or "recruit" in the commit message — write something descriptive.
 
       ### Task 2: Switch back to main
 
@@ -1934,14 +1941,14 @@ steps:
       ```
 
       Verify that main still has the **original** `recruit` function
-      (without type checking):
+      (without safety protocols):
 
       ```bash
       head -8 hero_registry.py
       ```
 
       **Important:** Stay on `main` and proceed to the next step. In the
-      next step, we'll make a *different* change to the same `recruit` function
+      next step, we'll add *mission logging* to the same `recruit` function
       on main, setting up a conflict!
 
     watch_files:
@@ -1955,7 +1962,7 @@ steps:
 
 
             def recruit(name, power):
-                """Add a new hero to the squad (name must be a string)."""
+                """Add a new hero to the squad (with safety protocols)."""
                 if not isinstance(name, str):
                     raise TypeError("Hero name must be a string")
                 return {"name": name, "power": power, "status": "active"}
@@ -1981,26 +1988,26 @@ steps:
       commands:
         - "git switch -c update-recruit-function"
         - "git add hero_registry.py"
-        - "git commit -m \"Add type checking to recruit function\""
+        - "git commit -m \"Add safety protocols to recruit function\""
         - "git switch main"
         - "head -8 hero_registry.py"
       explanation: |
         - **Test 1:** `git branch | grep -q 'update-recruit-function'` — the branch must exist.
-        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'type\|check\|recruit'` — the commit message must reference "type", "check", or "recruit".
+        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'safety\|protocol\|check\|recruit'` — the commit message must reference "safety", "protocol", "check", or "recruit".
         - **Test 3:** `git branch --show-current | grep -q 'main'` — you must end on `main`.
-        - **Why this creates a conflict:** The `update-recruit-function` branch changed the `recruit` function. In the next step, you'll make a *different* change to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
+        - **Why this creates a conflict:** The `update-recruit-function` branch added safety protocols to the `recruit` function. In the next step, you'll add *mission logging* to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
 
     tests:
       - description: "Branch 'update-recruit-function' exists"
         command: "cd /tutorial/myproject && git branch | grep -q 'update-recruit-function'"
         hints:
           - text: "You've created branches before — same approach, different name. What command creates and switches to a new branch in one step?"
-      - description: "update-recruit-function branch has the type checking commit"
-        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'type\\|check\\|recruit'"
+      - description: "update-recruit-function branch has the safety protocols commit"
+        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'safety\\|protocol\\|check\\|recruit'"
         hints:
-          - text: "Edit the `recruit` function on the `update-recruit-function` branch to include the type check, then stage and commit. Your message should mention 'type', 'check', or 'recruit'."
+          - text: "Edit the `recruit` function on the `update-recruit-function` branch to add safety protocols, then stage and commit. Your message should mention 'safety', 'protocol', or 'recruit'."
             condition: "code_missing: isinstance"
-          - text: "The type check is in the file — now stage and commit it with a descriptive message mentioning 'type check' or 'recruit'."
+          - text: "The safety protocol is in the file — now stage and commit it with a descriptive message mentioning 'safety protocols' or 'recruit'."
             condition: "code_contains: isinstance"
       - description: "Currently on main branch"
         command: "cd /tutorial/myproject && git branch --show-current | grep -q 'main'"
@@ -2059,11 +2066,11 @@ steps:
     instructions: |
       ### The conflict
 
-      In the previous step, you changed the `recruit` function on the
-      `update-recruit-function` branch. Now we'll make a *different* change to
+      In the previous step, you added safety protocols to the `recruit` function on the
+      `update-recruit-function` branch. Now we'll add *mission logging* to
       the same function on `main`, creating a conflict.
 
-      ### Task 1: Modify recruit on main
+      ### Task 1: Add mission logging to recruit on main
 
       Make sure you're on main:
 
@@ -2072,11 +2079,11 @@ steps:
       ```
 
       Open `hero_registry.py` in the editor and change the `recruit` function to
-      log its inputs:
+      add mission logging — track every recruitment for the squad's records:
 
       ```python
       def recruit(name, power):
-          """Add a new hero to the squad (with logging)."""
+          """Add a new hero to the squad (with mission logging)."""
           print(f"Recruiting {name} with power: {power}")
           return {"name": name, "power": power, "status": "active"}
       ```
@@ -2087,9 +2094,10 @@ steps:
 
       ### Task 2: Attempt the merge
 
-      > **Before you run:** Both branches changed the `recruit` function.
-      > What do you think will happen when you try to merge? Will Git
-      > combine them automatically, or will it need your help? Why?
+      > **Before you run:** One branch added safety protocols; the other added
+      > mission logging — both to the same `recruit` function. What do you
+      > think will happen when you try to merge? Will Git combine them
+      > automatically, or will it need your help? Why?
 
       Now try to merge the other branch:
 
@@ -2108,11 +2116,11 @@ steps:
 
       ```
       <<<<<<< HEAD
-          """Add a new hero to the squad (with logging)."""
+          """Add a new hero to the squad (with mission logging)."""
           print(f"Recruiting {name} with power: {power}")
           return {"name": name, "power": power, "status": "active"}
       =======
-          """Add a new hero to the squad (name must be a string)."""
+          """Add a new hero to the squad (with safety protocols)."""
           if not isinstance(name, str):
               raise TypeError("Hero name must be a string")
           return {"name": name, "power": power, "status": "active"}
@@ -2127,34 +2135,33 @@ steps:
 
       > **Challenge — try before reading the solution:** Look at the two
       > versions above. Can you figure out how to combine them into one
-      > function that has *both* the type checking AND the logging? Try
-      > writing the merged version yourself before looking at the example
+      > function that has *both* the safety protocols AND the mission logging?
+      > Try writing the merged version yourself before looking at the example
       > below.
 
       Edit `hero_registry.py` to combine both changes. Remove ALL conflict
       markers (`<<<<<<<`, `=======`, `>>>>>>>`) and write the merged
-      version you want to keep. For example, keep both the logging and the
-      type check:
+      version you want to keep. For example, keep both the safety protocols
+      and the mission logging:
 
       ```python
       def recruit(name, power):
-          """Add a new hero to the squad (with type checking and logging)."""
+          """Add a new hero to the squad (with safety protocols and mission logging)."""
           if not isinstance(name, str):
               raise TypeError("Hero name must be a string")
           print(f"Recruiting {name} with power: {power}")
           return {"name": name, "power": power, "status": "active"}
       ```
 
-      ### Escape hatch: `git merge --abort`
+      <details>
+      <summary><strong>Sidebar:</strong> Escape hatch — <code>git merge --abort</code></summary>
 
       Sometimes you start a merge and quickly realise it's more complex than
       expected — maybe there are dozens of conflicts, or you merged the wrong
       branch, or you just want a moment to think before committing. Git gives
       you a clean escape hatch:
 
-      ```bash
-      git merge --abort
-      ```
+      <pre><code>git merge --abort</code></pre>
 
       `git merge --abort` cancels the in-progress merge at **any point** —
       even after you have already partially resolved some conflicts — and
@@ -2166,21 +2173,21 @@ steps:
       consult a teammate, or approach the integration differently. There is no
       shame in aborting — it's far better than committing a half-resolved mess.
 
-      > **Note:** `git merge --abort` only works while a merge is still in
-      > progress (i.e., Git has left conflict markers in your files and is
-      > waiting for you to resolve them). Once you have run `git commit` to
-      > finish the merge, the merge is complete and cannot be aborted —
-      > you would use `git revert` instead.
+      **Note:** `git merge --abort` only works while a merge is still in
+      progress (i.e., Git has left conflict markers in your files and is
+      waiting for you to resolve them). Once you have run `git commit` to
+      finish the merge, the merge is complete and cannot be aborted —
+      you would use `git revert` instead.
+      </details>
 
-      ### Auto-resolving conflicts: `-X ours` and `-X theirs`
+      <details>
+      <summary><strong>Sidebar:</strong> Auto-resolving conflicts — <code>-X ours</code> and <code>-X theirs</code></summary>
 
       Sometimes you know in advance that one side should always win. Git
       lets you express this with the `-X` (strategy option) flag:
 
-      ```bash
-      git merge feature -X ours    # always keep current branch's version on conflict
-      git merge feature -X theirs  # always keep incoming branch's version on conflict
-      ```
+      <pre><code>git merge feature -X ours    # always keep current branch's version on conflict
+      git merge feature -X theirs  # always keep incoming branch's version on conflict</code></pre>
 
       | Flag | Which version wins on conflict |
       |---|---|
@@ -2192,10 +2199,10 @@ steps:
       They are a convenience for cases where you've already decided one side
       is authoritative, so you don't have to resolve each conflict marker
       by hand.
+      </details>
 
       For this step, resolve the conflict manually — it's the skill you
-      need most often in practice. But keep `-X ours` and `-X theirs` in
-      your toolbox for large merges where one side clearly takes priority.
+      need most often in practice.
 
       ### Task 5: Complete the merge
 
@@ -2219,7 +2226,7 @@ steps:
 
 
             def recruit(name, power):
-                """Add a new hero to the squad (with type checking and logging)."""
+                """Add a new hero to the squad (with safety protocols and mission logging)."""
                 if not isinstance(name, str):
                     raise TypeError("Hero name must be a string")
                 print(f"Recruiting {name} with power: {power}")
@@ -2247,18 +2254,18 @@ steps:
         - "git merge --abort 2>/dev/null; true"
         - "git switch main 2>/dev/null; true"
         - "git add hero_registry.py"
-        - "git commit -m \"Add logging to recruit function\" 2>/dev/null; true"
+        - "git commit -m \"Add mission logging to recruit function\" 2>/dev/null; true"
         - "git merge update-recruit-function -X theirs --no-edit"
-        - "sed -i 's/name must be a string/with type checking and logging/' hero_registry.py"
+        - "sed -i 's/with safety protocols/with safety protocols and mission logging/' hero_registry.py"
         - "sed -i '/^    return {\"name\": name/i\\    print(f\"Recruiting {name} with power: {power}\")' hero_registry.py"
         - "git add hero_registry.py"
-        - "git commit -m \"Add print logging to merged recruit function\" 2>/dev/null; true"
+        - "git commit -m \"Add mission logging to merged recruit function\" 2>/dev/null; true"
       explanation: |
         - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' hero_registry.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
         - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
-        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the type-checking code from `update-recruit-function` must be present.
-        - **Test 4:** `grep -q 'print' hero_registry.py` — the logging code from `main` must be present.
-        - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the type-checking code), then uses `sed` to add the logging `print` line and update the docstring. A follow-up commit captures the combined result.
+        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the safety-protocol code from `update-recruit-function` must be present.
+        - **Test 4:** `grep -q 'print' hero_registry.py` — the mission-logging code from `main` must be present.
+        - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the safety-protocol code), then uses `sed` to add the mission-logging `print` line and update the docstring. A follow-up commit captures the combined result.
         - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
         - **`git add` after resolution:** Signals to Git that the conflict is resolved AND stages the content. Without it, `git commit` refuses with "unmerged paths". This is the same `git add` as always — it just takes on this extra role during a merge.
 
@@ -2274,15 +2281,15 @@ steps:
         command: "cd /tutorial/myproject && ! git status | grep -q 'Unmerged\\|both modified'"
         hints:
           - text: "After editing out the conflict markers, you need to signal to Git that the conflict is resolved. What familiar staging command does double duty here — staging the content AND clearing the 'unmerged' flag? Then what command finishes the merge?"
-      - description: "hero_registry.py contains type checking (isinstance)"
+      - description: "hero_registry.py contains safety protocols (isinstance)"
         command: "cd /tutorial/myproject && grep -q 'isinstance' hero_registry.py"
         hints:
-          - text: "Your resolved version should keep the `isinstance` type-checking code from the `update-recruit-function` branch. Don't discard it when resolving — combine both changes."
+          - text: "Your resolved version should keep the `isinstance` safety-protocol code from the `update-recruit-function` branch. Don't discard it when resolving — combine both changes."
             condition: "code_missing: isinstance"
-      - description: "hero_registry.py contains logging (print)"
+      - description: "hero_registry.py contains mission logging (print)"
         command: "cd /tutorial/myproject && grep -q 'print' hero_registry.py"
         hints:
-          - text: "Your resolved version should also keep the logging behavior from main's version. Look at the section between `<<<<<<< HEAD` and `=======` in the conflict markers — that code needs to be in your final version too."
+          - text: "Your resolved version should also keep the mission-logging behavior from main's version. Look at the section between `<<<<<<< HEAD` and `=======` in the conflict markers — that code needs to be in your final version too."
             condition: "code_missing: print"
 
     quiz:
@@ -2413,7 +2420,7 @@ steps:
 
       ```
       a1b2c3d HEAD@{0}: reset: moving to HEAD~1
-      e4f5g6h HEAD@{1}: commit: Add multiply function
+      e4f5g6h HEAD@{1}: commit: Add power_up function
       ```
 
       **Recovery workflow:** if you accidentally reset away some commits, run
@@ -2482,23 +2489,23 @@ steps:
       Create a new file and stage it:
 
       ```bash
-      echo "Study notes for the exam" > notes.txt
-      git add notes.txt
+      echo "Study notes for the exam" > study_notes.txt
+      git add study_notes.txt
       ```
 
       Now delete the file from the filesystem **before committing**:
 
       ```bash
-      rm notes.txt
+      rm study_notes.txt
       ```
 
-      Run `git status`. You'll see `notes.txt` listed as deleted in the
+      Run `git status`. You'll see `study_notes.txt` listed as deleted in the
       working directory — but Git still has the staged version in its index.
 
       Now commit:
 
       ```bash
-      git commit -m "Add notes file"
+      git commit -m "Add study notes file"
       ```
 
       Verify the file is missing from disk:
@@ -2507,12 +2514,12 @@ steps:
       ls
       ```
 
-      `notes.txt` is not there. The commit succeeded (Git used the staged
+      `study_notes.txt` is not there. The commit succeeded (Git used the staged
       snapshot), but the working directory is out of sync with HEAD.
 
       > **Before you run:** `git reset --hard HEAD` resets your working
       > directory to **exactly match the latest commit**. HEAD is the commit
-      > you just made — which **includes** `notes.txt`. Will the file
+      > you just made — which **includes** `study_notes.txt`. Will the file
       > appear, disappear, or stay gone? Form your prediction, then run:
 
       ```bash
@@ -2527,7 +2534,7 @@ steps:
 
     watch_files:
       - "myproject/hero_registry.py"
-      - "myproject/notes.txt"
+      - "myproject/study_notes.txt"
 
     solution:
       commands:
@@ -2538,11 +2545,11 @@ steps:
         - "git revert HEAD --no-edit"
         - "git log --oneline"
         - "cat hero_registry.py"
-        - "echo \"Study notes for the exam\" > notes.txt"
-        - "git add notes.txt"
-        - "rm notes.txt"
+        - "echo \"Study notes for the exam\" > study_notes.txt"
+        - "git add study_notes.txt"
+        - "rm study_notes.txt"
         - "git status"
-        - "git commit -m \"Add notes file\""
+        - "git commit -m \"Add study notes file\""
         - "ls"
         - "git reset --hard HEAD"
         - "ls"
@@ -2550,8 +2557,8 @@ steps:
         - **Test 1:** `git log --oneline | grep -qi 'revert'` — a revert commit must exist in the log (Git's default message is "Revert '...'").
         - **Test 2:** `! grep -q 'debug: this should not be here' hero_registry.py` — the debug line must be gone from the file.
         - **Test 3:** `[ $(git log --oneline | wc -l) -ge 8 ]` — the repository must have at least 8 commits by now.
-        - **Test 4:** `[ -f notes.txt ]` — `notes.txt` must exist (restored by `git reset --hard HEAD`).
-        - **Task 4 mechanics:** `git add` copies a snapshot of the file into the index. Deleting the file from disk afterward only affects the working directory — the index retains its copy. `git commit` reads from the index, so the commit includes `notes.txt` even though it was deleted before the commit ran. `git reset --hard HEAD` then reconciles the working directory with HEAD, restoring any files that HEAD has but the working directory doesn't.
+        - **Test 4:** `[ -f study_notes.txt ]` — `study_notes.txt` must exist (restored by `git reset --hard HEAD`).
+        - **Task 4 mechanics:** `git add` copies a snapshot of the file into the index. Deleting the file from disk afterward only affects the working directory — the index retains its copy. `git commit` reads from the index, so the commit includes `study_notes.txt` even though it was deleted before the commit ran. `git reset --hard HEAD` then reconciles the working directory with HEAD, restoring any files that HEAD has but the working directory doesn't.
         - **`git revert HEAD --no-edit`:** Creates a new commit that applies the exact inverse of `HEAD`. `--no-edit` accepts the default message without opening a text editor.
         - **Why NOT `git reset --hard`:** `reset --hard` destroys commits by moving the branch pointer backward — rewriting history. On a shared branch where teammates have already pulled, this would cause severe conflicts and require a force-push. `git revert` is always safe because it only adds new commits and never changes existing history.
 
@@ -2568,8 +2575,8 @@ steps:
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 8 ]"
         hints:
           - text: "Run `git log --oneline` to count. You need at least 8 commits from all previous steps. If you're short, you may have skipped a commit earlier."
-      - description: "notes.txt exists (restored by git reset --hard HEAD)"
-        command: "cd /tutorial/myproject && [ -f notes.txt ]"
+      - description: "study_notes.txt exists (restored by git reset --hard HEAD)"
+        command: "cd /tutorial/myproject && [ -f study_notes.txt ]"
         hints:
           - text: "Follow Task 4 step by step. The final command synchronizes your working directory to match the latest commit — what command does that? The file should reappear because Git committed the staged snapshot."
 
@@ -2636,18 +2643,18 @@ steps:
           correct_index: 1
           explanation: "Force-pushing rewrites remote history. Every teammate who already pulled those commits now has a diverged local copy. Recovery is possible if someone still has the commits (via `git reflog` or their local branch), but it requires coordination. This is why `git revert` is always preferred on shared branches — it never rewrites history."
 
-        - question: "In Task 4 you ran `git add notes.txt` then `rm notes.txt`, leaving the file staged but deleted from disk. Which commands, if run **before** `git commit`, would have ensured the **deletion** was what got committed — so the file stays gone after `git reset --hard HEAD`? (Select all that apply)"
+        - question: "In Task 4 you ran `git add study_notes.txt` then `rm study_notes.txt`, leaving the file staged but deleted from disk. Which commands, if run **before** `git commit`, would have ensured the **deletion** was what got committed — so the file stays gone after `git reset --hard HEAD`? (Select all that apply)"
           type: multiple
           options:
-            - "`git add notes.txt` — run again after `rm`, this stages the deletion by updating the index to match the working tree (no file present)"
-            - "`git rm --cached notes.txt` — removes the file from the index only, staging the deletion without touching the working tree"
-            - "`git restore --staged notes.txt` — copies the HEAD version (which has no `notes.txt`) back into the index, removing the file from staging"
-            - "`git restore notes.txt` — restores `notes.txt` from the index back to disk, recreating the file locally and setting up a commit that **adds** it rather than deleting it"
+            - "`git add study_notes.txt` — run again after `rm`, this stages the deletion by updating the index to match the working tree (no file present)"
+            - "`git rm --cached study_notes.txt` — removes the file from the index only, staging the deletion without touching the working tree"
+            - "`git restore --staged study_notes.txt` — copies the HEAD version (which has no `study_notes.txt`) back into the index, removing the file from staging"
+            - "`git restore study_notes.txt` — restores `study_notes.txt` from the index back to disk, recreating the file locally and setting up a commit that **adds** it rather than deleting it"
           correct_indices:
             - 0
             - 1
             - 2
-          explanation: "All three correct options converge on the same goal: make the **index** (staging area) reflect the absence of `notes.txt` before committing. `git add <deleted-file>` tells Git 'stage what the working tree shows — nothing'; `git rm --cached` removes directly from the index; `git restore --staged` resets the index entry to HEAD's state (no file). The distractor, `git restore notes.txt` (without `--staged`), does the opposite: it copies the staged version *back to disk*, recreating the file — which would cause the commit to add the file, not delete it."
+          explanation: "All three correct options converge on the same goal: make the **index** (staging area) reflect the absence of `study_notes.txt` before committing. `git add <deleted-file>` tells Git 'stage what the working tree shows — nothing'; `git rm --cached` removes directly from the index; `git restore --staged` resets the index entry to HEAD's state (no file). The distractor, `git restore study_notes.txt` (without `--staged`), does the opposite: it copies the staged version *back to disk*, recreating the file — which would cause the commit to add the file, not delete it."
 
         - question: |
             **Construct** the command that moves `notes.txt` **out of the staging area** while leaving your working-directory edits untouched.
@@ -2801,6 +2808,12 @@ steps:
       cd /tutorial/myproject
       git pull
       ```
+
+      `git pull` is actually shorthand for two operations: `git fetch`
+      (download new commits from the remote) followed by `git merge`
+      (integrate them into your current branch). Understanding this
+      two-step process helps when you need finer control — for example,
+      running `git fetch` first to inspect incoming changes before merging.
 
       Check that the new file arrived:
 
@@ -2997,7 +3010,7 @@ steps:
 
 
             def recruit(name, power):
-                """Add a new hero to the squad (with type checking and logging)."""
+                """Add a new hero to the squad (with safety protocols and mission logging)."""
                 if not isinstance(name, str):
                     raise TypeError("Hero name must be a string")
                 print(f"Recruiting {name} with power: {power}")
@@ -3047,7 +3060,7 @@ steps:
 
 
         def recruit(name, power):
-            """Add a new hero to the squad (with type checking and logging)."""
+            """Add a new hero to the squad (with safety protocols and mission logging)."""
             if not isinstance(name, str):
                 raise TypeError("Hero name must be a string")
             print(f"Recruiting {name} with power: {power}")
@@ -3070,6 +3083,11 @@ steps:
             if hero1 is None or hero2 is None:
                 raise ValueError("Cannot team up with an absent hero")
             return f"{hero1['name']} and {hero2['name']} unite!"
+
+
+        def power_surge(hero, boost):
+            """Apply a power surge to a hero."""
+            return f"{hero['name']} surges with {boost} extra power!"
         ```
 
         **Git workflow summary:** The complete workflow practiced in this tutorial:
