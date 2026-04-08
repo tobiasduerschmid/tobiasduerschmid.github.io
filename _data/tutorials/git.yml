@@ -212,7 +212,7 @@ steps:
       Save this snapshot permanently to the repository:
 
       ```bash
-      git commit -m "Add hero registry with recruit and retire"
+      git commit -m "Add hero registry module"
       ```
 
       The `-m` flag lets you write a message describing *what* and *why*.
@@ -257,11 +257,11 @@ steps:
         - "git status"
         - "git add hero_registry.py"
         - "git status"
-        - "git commit -m \"Add hero registry with recruit and retire\""
+        - "git commit -m \"Add hero registry module\""
         - "git status"
       explanation: |
         - **`git add hero_registry.py`:** Moves the file from the Working Directory to the Staging Area. Before `git add`, the file is "untracked" — Git sees it but doesn't track it. After, it's "staged" (green in `git status`).
-        - **`git commit -m "Add hero registry with recruit and retire"`:** Creates a permanent snapshot. The test checks `git log --oneline | head -1 | grep -qi 'hero\|recruit'` — so the commit message must contain "hero" or "recruit" (case-insensitive).
+        - **`git commit -m "Add hero registry module"`:** Creates a permanent snapshot. The test checks `git log --oneline | head -1 | grep -qi 'hero\|registry'` — so the commit message must contain "hero" or "registry" (case-insensitive).
         - The test also verifies `git log --oneline -- hero_registry.py | grep -q '.'` — `hero_registry.py` must appear in at least one commit's history.
         - **Why the two-step add/commit?** The Staging Area lets you precisely control what goes into each commit. You can edit 10 files but commit only 3 as one logical change.
 
@@ -274,10 +274,10 @@ steps:
         command: "cd /tutorial/myproject && git log --oneline -- hero_registry.py | grep -q '.'"
         hints:
           - text: "A common misconception: saving a file does **not** mean Git is tracking it. You need two separate commands — one to **stage** the file (move it to the staging area) and one to **commit** it (save the snapshot). Which two commands from the instructions do this?"
-      - description: "Commit message mentions 'hero' or 'recruit'"
-        command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'hero\\|recruit'"
+      - description: "Commit message mentions 'hero' or 'registry'"
+        command: "cd /tutorial/myproject && git log --oneline | head -1 | grep -qi 'hero\\|registry'"
         hints:
-          - text: "The test checks that your commit message describes what you added. What did you create in this step? Write a message that says so — it must contain the word 'hero' or 'recruit'."
+          - text: "The test checks that your commit message describes what you added. What did you create in this step? Write a message that says so — it must contain the word 'hero' or 'registry'."
 
     quiz:
       title: "Your First Commit — Knowledge Check"
@@ -342,8 +342,9 @@ steps:
 
       ```python
       def power_up(hero, multiplier):
-          """Boost a hero's power level."""
-          return f"{hero['name']} is now {multiplier}x stronger!"
+          """Boost a hero's power level permanently."""
+          hero["power"] = hero["power"] * multiplier
+          return hero
       ```
 
       Save the file (**Ctrl+S**), then run in the terminal:
@@ -419,8 +420,9 @@ steps:
 
 
             def power_up(hero, multiplier):
-                """Boost a hero's power level."""
-                return f"{hero['name']} is now {multiplier}x stronger!"
+                """Boost a hero's power level permanently."""
+                hero["power"] = hero["power"] * multiplier
+                return hero
           language: "python"
       commands:
         - "git add hero_registry.py"
@@ -1026,7 +1028,7 @@ steps:
         hints:
           - text: "You wrote the patterns, but did you commit `.gitignore` itself? It needs to go through the same two-step workflow as any other file. What are those two steps?"
       - description: ".env is not tracked by Git"
-        command: "cd /tutorial/myproject && ! git ls-files --cached | grep -q '.env'"
+        command: "cd /tutorial/myproject && ! git ls-files --cached | grep -qF '.env'"
         hints:
           - text: "The `.env` file must **not** be tracked by Git. If you accidentally staged it before creating `.gitignore`, the file is now tracked — and `.gitignore` cannot retroactively fix that. Re-read the 'Important' section above about retroactive effects for the fix."
 
@@ -1179,7 +1181,7 @@ steps:
         - "git show HEAD"
         - "git diff HEAD~1 HEAD"
       explanation: |
-        - **Test:** `[ $(git log --oneline | wc -l) -ge 3 ]` — the repository must have at least 3 commits. By this step, you have: initial commit (Step 2), power_up commit (Step 3), and gitignore commit (Step 6).
+        - **Test:** `[ $(git log --oneline | wc -l) -ge 3 ]` — the repository must have at least 3 commits. By this step, you should have 5+ commits from Steps 2–6.
         - **`git log`:** Shows hash, author, date, and message for each commit. The hash is a 40-character SHA-1 identifier for each snapshot.
         - **`git show HEAD`:** Displays the metadata plus the complete diff of the most recent commit. `HEAD` is a symbolic reference that always points to the currently checked-out commit.
         - **`HEAD~1`:** Relative syntax for "one commit before HEAD". `HEAD~2` is two commits back, etc.
@@ -1309,7 +1311,7 @@ steps:
 
       <details>
       <summary>Hint 3 — .gitignore patterns</summary>
-      Run <code>git help gitignore</code> To find the rules for writing ignore patterns.
+      Run <code>git help gitignore</code> to find the rules for writing ignore patterns.
       </details>
 
     files:
@@ -1566,8 +1568,9 @@ steps:
 
 
             def power_up(hero, multiplier):
-                """Boost a hero's power level."""
-                return f"{hero['name']} is now {multiplier}x stronger!"
+                """Boost a hero's power level permanently."""
+                hero["power"] = hero["power"] * multiplier
+                return hero
 
 
             def team_up(hero1, hero2):
@@ -1975,8 +1978,9 @@ steps:
 
 
             def power_up(hero, multiplier):
-                """Boost a hero's power level."""
-                return f"{hero['name']} is now {multiplier}x stronger!"
+                """Boost a hero's power level permanently."""
+                hero["power"] = hero["power"] * multiplier
+                return hero
 
 
             def team_up(hero1, hero2):
@@ -1993,7 +1997,7 @@ steps:
         - "head -8 hero_registry.py"
       explanation: |
         - **Test 1:** `git branch | grep -q 'update-recruit-function'` — the branch must exist.
-        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'safety\|protocol\|check\|recruit'` — the commit message must reference "safety", "protocol", "check", or "recruit".
+        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'safety\|protocol\|recruit'` — a commit message on the branch must reference "safety", "protocol", or "recruit".
         - **Test 3:** `git branch --show-current | grep -q 'main'` — you must end on `main`.
         - **Why this creates a conflict:** The `update-recruit-function` branch added safety protocols to the `recruit` function. In the next step, you'll add *mission logging* to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
 
@@ -2003,7 +2007,7 @@ steps:
         hints:
           - text: "You've created branches before — same approach, different name. What command creates and switches to a new branch in one step?"
       - description: "update-recruit-function branch has the safety protocols commit"
-        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'safety\\|protocol\\|check\\|recruit'"
+        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'safety\\|protocol\\|recruit'"
         hints:
           - text: "Edit the `recruit` function on the `update-recruit-function` branch to add safety protocols, then stage and commit. Your message should mention 'safety', 'protocol', or 'recruit'."
             condition: "code_missing: isinstance"
@@ -2240,8 +2244,9 @@ steps:
 
 
             def power_up(hero, multiplier):
-                """Boost a hero's power level."""
-                return f"{hero['name']} is now {multiplier}x stronger!"
+                """Boost a hero's power level permanently."""
+                hero["power"] = hero["power"] * multiplier
+                return hero
 
 
             def team_up(hero1, hero2):
@@ -2941,6 +2946,10 @@ steps:
       | `git switch -c <branch>` | Create and switch to a new branch |
       | `git merge` | Combine branch histories |
       | `git revert <hash>` | Safely undo a commit (adds anti-commit) |
+      | `git remote add` | Register a remote repository |
+      | `git push` | Upload local commits to a remote |
+      | `git pull` | Download and merge remote commits |
+      | `git clone <url>` | Download a full copy of a remote repository |
 
       ### Best practices for professional use
 
@@ -3024,8 +3033,9 @@ steps:
 
 
             def power_up(hero, multiplier):
-                """Boost a hero's power level."""
-                return f"{hero['name']} is now {multiplier}x stronger!"
+                """Boost a hero's power level permanently."""
+                hero["power"] = hero["power"] * multiplier
+                return hero
 
 
             def team_up(hero1, hero2):
@@ -3074,8 +3084,9 @@ steps:
 
 
         def power_up(hero, multiplier):
-            """Boost a hero's power level."""
-            return f"{hero['name']} is now {multiplier}x stronger!"
+            """Boost a hero's power level permanently."""
+            hero["power"] = hero["power"] * multiplier
+            return hero
 
 
         def team_up(hero1, hero2):
