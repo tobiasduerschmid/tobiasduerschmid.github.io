@@ -155,7 +155,7 @@ questions:
 
   - id: 16
     question: |
-      **Arrange** the lines to write a shell script that validates a command-line argument, prints an error to stderr if missing, and exits with a non-zero code.
+      **Arrange** the lines to write a shell script that validates a command-line argument, prints an error to stderr if missing, and exits with a non-zero code. Otherwise it prints a logging message.
     type: parsons
     lines:
       - "#!/bin/bash"
