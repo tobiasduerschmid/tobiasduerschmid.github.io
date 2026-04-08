@@ -550,18 +550,31 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const distractorRaw = correctDataEl.dataset.distractors;
       const distractors = (distractorRaw && distractorRaw !== '') ? JSON.parse(distractorRaw) : [];
       const display = correctDataEl.dataset.display || 'block';
-      const allLines = correctLines.concat(distractors);
-      if (!noShuffle) shuffleArray(allLines);
-      const bank = card.querySelector('.parsons-bank');
-      allLines.forEach(line => {
+      // Build elements with correct-position metadata to avoid string comparison issues
+      const correctEls = correctLines.map((line, i) => {
         const el = document.createElement('div');
         el.className = 'parsons-line';
         el.draggable = true;
         el.dataset.line = line;
-        el.dataset.distractor = String(distractors.indexOf(line) !== -1);
+        el.dataset.correctPos = String(i);
+        el.dataset.distractor = 'false';
         el.innerHTML = '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
-        bank.appendChild(el);
+        return el;
       });
+      const distractorEls = distractors.map(line => {
+        const el = document.createElement('div');
+        el.className = 'parsons-line';
+        el.draggable = true;
+        el.dataset.line = line;
+        el.dataset.correctPos = '-1';
+        el.dataset.distractor = 'true';
+        el.innerHTML = '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
+        return el;
+      });
+      const allEls = correctEls.concat(distractorEls);
+      if (!noShuffle) shuffleArray(allEls);
+      const bank = card.querySelector('.parsons-bank');
+      allEls.forEach(el => bank.appendChild(el));
       if (display === 'inline') {
         card.querySelector('.parsons-container').classList.add('parsons-inline');
       }
@@ -887,16 +900,15 @@ Data source: _data/quizzes/{{ include.id }}.yml
         const correctDataEl = card.querySelector('.parsons-correct-data');
         if (!target || !correctDataEl) return;
         const correct = JSON.parse(correctDataEl.dataset.correct);
-        const distractorRaw = correctDataEl.dataset.distractors;
-        const distractors = (distractorRaw && distractorRaw !== '') ? JSON.parse(distractorRaw) : [];
-        const placed = Array.from(target.querySelectorAll('.parsons-line')).map(el => el.dataset.line);
-        const isCorrect = placed.length === correct.length &&
-          placed.every((line, i) => line === correct[i]);
+        const placedEls = Array.from(target.querySelectorAll('.parsons-line'));
+        // Use numeric correctPos to avoid string comparison issues with special chars
+        const isCorrect = placedEls.length === correct.length &&
+          placedEls.every((el, i) => el.dataset.correctPos === String(i) || el.dataset.line === correct[i]);
 
         // Mark lines in target
-        target.querySelectorAll('.parsons-line').forEach((el, i) => {
+        placedEls.forEach((el, i) => {
           el.classList.remove('parsons-correct', 'parsons-incorrect');
-          if (i < correct.length && el.dataset.line === correct[i]) el.classList.add('parsons-correct');
+          if (i < correct.length && (el.dataset.correctPos === String(i) || el.dataset.line === correct[i])) el.classList.add('parsons-correct');
           else el.classList.add('parsons-incorrect');
         });
         // Mark distractors left in bank as correct (they belong there)
