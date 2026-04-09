@@ -1924,7 +1924,7 @@ steps:
       ### Task 1: Create a new branch and modify hero_registry.py
 
       ```bash
-      git switch -c update-recruit-function
+      git switch -c update-recruit
       ```
 
       Now open `hero_registry.py` in the editor and **change the `recruit`
@@ -1991,26 +1991,26 @@ steps:
                 return f"{hero1['name']} and {hero2['name']} unite!"
           language: "python"
       commands:
-        - "git switch -c update-recruit-function"
+        - "git switch -c update-recruit"
         - "git add hero_registry.py"
         - "git commit -m \"Add safety protocols to recruit function\""
         - "git switch main"
         - "head -8 hero_registry.py"
       explanation: |
-        - **Test 1:** `git branch | grep -q 'update-recruit-function'` — the branch must exist.
-        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'safety\|protocol\|recruit'` — a commit message on the branch must reference "safety", "protocol", or "recruit".
+        - **Test 1:** `git branch | grep -q 'update-recruit'` — the branch must exist.
+        - **Test 2:** `git log update-recruit --oneline | grep -qi 'safety\|protocol\|recruit'` — a commit message on the branch must reference "safety", "protocol", or "recruit".
         - **Test 3:** `git branch --show-current | grep -q 'main'` — you must end on `main`.
-        - **Why this creates a conflict:** The `update-recruit-function` branch added safety protocols to the `recruit` function. In the next step, you'll add *mission logging* to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
+        - **Why this creates a conflict:** The `update-recruit` branch added safety protocols to the `recruit` function. In the next step, you'll add *mission logging* to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
 
     tests:
-      - description: "Branch 'update-recruit-function' exists"
-        command: "cd /tutorial/myproject && git branch | grep -q 'update-recruit-function'"
+      - description: "Branch 'update-recruit' exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'update-recruit'"
         hints:
           - text: "You've created branches before — same approach, different name. What command creates and switches to a new branch in one step?"
-      - description: "update-recruit-function branch has the safety protocols commit"
-        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'safety\\|protocol\\|recruit'"
+      - description: "update-recruit branch has the safety protocols commit"
+        command: "cd /tutorial/myproject && git log update-recruit --oneline | grep -qi 'safety\\|protocol\\|recruit'"
         hints:
-          - text: "Edit the `recruit` function on the `update-recruit-function` branch to add safety protocols, then stage and commit. Your message should mention 'safety', 'protocol', or 'recruit'."
+          - text: "Edit the `recruit` function on the `update-recruit` branch to add safety protocols, then stage and commit. Your message should mention 'safety', 'protocol', or 'recruit'."
             condition: "code_missing: isinstance"
           - text: "The safety protocol is in the file — now stage and commit it with a descriptive message mentioning 'safety protocols' or 'recruit'."
             condition: "code_contains: isinstance"
@@ -2034,21 +2034,21 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
-        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit-function` immediately. What should you do **first**, and why does the order matter?"
+        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit` immediately. What should you do **first**, and why does the order matter?"
           options:
-            - "Run `git switch -c update-recruit-function` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
+            - "Run `git switch -c update-recruit` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
             - "Stage and commit your current work first, then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
             - "Discard your modifications with `git restore .` to get a clean slate before branching"
             - "Order doesn't matter — Git branch creation never interacts with working-directory state"
           correct_index: 1
           explanation: "You *can* branch with uncommitted changes (Git will carry them), but this creates ambiguity: those unrelated changes now appear to belong to the new feature branch. The professional habit is to start every branch from a known committed state. This is exactly the pattern Step 8 established — always commit your work before switching contexts."
 
-        - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
+        - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
-            - "Run `git merge update-recruit-function` immediately"
+            - "Run `git merge update-recruit` immediately"
             - "Make a **different** change to the same lines on `main`, commit it, then merge"
-            - "Delete the `update-recruit-function` branch and start over"
-            - "Run `git conflict update-recruit-function` to preview conflicts"
+            - "Delete the `update-recruit` branch and start over"
+            - "Run `git conflict update-recruit` to preview conflicts"
           correct_index: 1
           explanation: "To create a conflict, both branches must have **diverging changes** to the same lines. If you merge without making a competing change on main, Git will just fast-forward. Making a different edit to the same lines on main sets up a true three-way conflict."
 
@@ -2073,7 +2073,7 @@ steps:
       ### The conflict
 
       In the previous step, you added safety protocols to the `recruit` function on the
-      `update-recruit-function` branch. Now we'll add *mission logging* to
+      `update-recruit` branch. Now we'll add *mission logging* to
       the same function on `main`, creating a conflict.
 
       ### Task 1: Add mission logging to recruit on main
@@ -2113,7 +2113,7 @@ steps:
       Now try to merge the other branch:
 
       ```bash
-      git merge update-recruit-function
+      git merge update-recruit
       ```
 
       Git will report a **CONFLICT**! It found that both branches changed
@@ -2121,7 +2121,7 @@ steps:
       them.
 
       > 🔀 **Check the Git Graph:** Click **Git Graph** now. You'll see
-      > `update-recruit-function` and `main` as two separate branches diverging
+      > `update-recruit` and `main` as two separate branches diverging
       > from a common ancestor — exactly the situation that caused the conflict.
       > This is what a "not yet merged" state looks like in the graph.
       > Switch back to **Editor** to resolve the conflict.
@@ -2141,12 +2141,12 @@ steps:
           if not isinstance(name, str):
               raise TypeError("Hero name must be a string")
           return {"name": name, "power": power, "status": "active"}
-      >>>>>>> update-recruit-function
+      >>>>>>> update-recruit
       ```
 
       - `<<<<<<< HEAD` — your current branch's version (main)
       - `=======` — separator
-      - `>>>>>>> update-recruit-function` — the incoming branch's version
+      - `>>>>>>> update-recruit` — the incoming branch's version
 
       ### Task 4: Resolve the conflict
 
@@ -2231,7 +2231,7 @@ steps:
 
       > 🔀 **Check the Git Graph:** Click **Git Graph** one last time. You'll
       > now see a **merge commit** at the top of `main` with two parent edges
-      > — one coming from `main` and one from `update-recruit-function`.
+      > — one coming from `main` and one from `update-recruit`.
       > That diamond shape is the visual signature of a successful merge:
       > two diverging histories reunited into one.
 
@@ -2275,7 +2275,7 @@ steps:
         - "git switch main 2>/dev/null; true"
         - "git add hero_registry.py"
         - "git commit -m \"Add mission logging to recruit function\" 2>/dev/null; true"
-        - "git merge update-recruit-function -X theirs --no-edit"
+        - "git merge update-recruit -X theirs --no-edit"
         - "sed -i 's/with safety protocols/with safety protocols and mission logging/' hero_registry.py"
         - "sed -i '/^    return {\"name\": name/i\\    print(f\"Recruiting {name} with power: {power}\")' hero_registry.py"
         - "git add hero_registry.py"
@@ -2283,7 +2283,7 @@ steps:
       explanation: |
         - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' hero_registry.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
         - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
-        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the safety-protocol code from `update-recruit-function` must be present.
+        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the safety-protocol code from `update-recruit` must be present.
         - **Test 4:** `grep -q 'print' hero_registry.py` — the mission-logging code from `main` must be present.
         - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the safety-protocol code), then uses `sed` to add the mission-logging `print` line and update the docstring. A follow-up commit captures the combined result.
         - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
@@ -2304,7 +2304,7 @@ steps:
       - description: "hero_registry.py contains safety protocols (isinstance)"
         command: "cd /tutorial/myproject && grep -q 'isinstance' hero_registry.py"
         hints:
-          - text: "Your resolved version should keep the `isinstance` safety-protocol code from the `update-recruit-function` branch. Don't discard it when resolving — combine both changes."
+          - text: "Your resolved version should keep the `isinstance` safety-protocol code from the `update-recruit` branch. Don't discard it when resolving — combine both changes."
             condition: "code_missing: isinstance"
       - description: "hero_registry.py contains mission logging (print)"
         command: "cd /tutorial/myproject && grep -q 'print' hero_registry.py"
