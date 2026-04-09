@@ -720,7 +720,7 @@ steps:
   # STEP 5: Unstaging and undoing changes
   # --------------------------------------------------------------------------
   - title: "Unstaging and Undoing Changes"
-    view: git_graph
+    view: editor
     instructions: |
       ### Ctrl+Z for Git (kind of)
 
@@ -1432,7 +1432,7 @@ steps:
   # STEP 8: Branching — git branch, git switch
   # --------------------------------------------------------------------------
   - title: "Branching"
-    view: git_graph
+    view: editor
     instructions: |
       ### Parallel universes for your code
 
@@ -1908,7 +1908,7 @@ steps:
   # STEP 10: Create a branch for merge conflict setup
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
-    view: git_graph
+    view: editor
     instructions: |
       ### Merge conflicts: scary name, totally normal
 
