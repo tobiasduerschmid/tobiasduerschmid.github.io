@@ -152,6 +152,15 @@
     this._shellProcess = null;
     this._shellWriter = null;
 
+    // Git graph state
+    this.gitGraphPath = options.gitGraphPath || null;
+    this._gitGraph = null;
+    this._currentView = 'editor';
+    this._gitGraphAutoRefreshTimer = null;
+    this._gitGraphRefreshing = false;
+    this._gitGraphHookInstalled = false;
+    this._promptDetectBuf = '';
+
     // React preview state
     this._previewFrame = null;
     this._reactRebuildTimer = null;
@@ -215,15 +224,19 @@
             self.loadStep(saved.step);
             if (self.autosaveType === 'commands-and-files') {
               // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
-              self._restoreCommandsAndFiles(saved);
+              self._restoreCommandsAndFiles(saved).then(function () {
+                self._refreshPrompt();
+              });
             } else {
               self._applySavedFiles(saved.files, saved.activeFile);
               self._suppressAutoSave = false;
               // Persist the correctly-restored state immediately
               self._autoSaveProgress();
+              self._refreshPrompt();
             }
           } else {
             self.loadStep(0);
+            self._refreshPrompt();
           }
         }
       })
@@ -301,10 +314,36 @@
       '</div>' +
       '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
       '<div class="tvm-workspace">' +
+      (this.gitGraphPath
+        ? '<div class="tvm-view-toggle">' +
+          '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
+          ' Editor</button>' +
+          '<button class="tvm-view-btn tvm-view-btn-graph" data-view="git_graph">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<line x1="4" y1="3" x2="4" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+          '<path d="M4 6 Q4 9.5 11 9.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+          '<circle cx="4" cy="3" r="2" fill="currentColor"/>' +
+          '<circle cx="4" cy="10" r="2" fill="currentColor"/>' +
+          '<circle cx="4" cy="13" r="2" fill="currentColor" opacity="0.5"/>' +
+          '<circle cx="11" cy="9.5" r="2" fill="currentColor"/>' +
+          '</svg>' +
+          ' Git Graph</button>' +
+          '</div>'
+        : '') +
       '<div class="tvm-editor-panel">' +
       '<div class="tvm-editor-tabs"></div>' +
       '<div class="tvm-editor-container"></div>' +
       '</div>' +
+      (this.gitGraphPath
+        ? '<div class="tvm-git-graph-panel" style="display:none">' +
+          '<div class="tvm-git-graph-header">' +
+          '<span>Git Graph</span>' +
+          '<button class="tvm-git-graph-refresh" title="Refresh graph">&#x21bb; Refresh</button>' +
+          '</div>' +
+          '<div class="tvm-git-graph-container"></div>' +
+          '</div>'
+        : '') +
       '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
       terminalHtml +
       '</div>' +
@@ -319,8 +358,25 @@
     this.stepControlsEl = this.root.querySelector('.tvm-step-controls');
     this.editorTabsEl = this.root.querySelector('.tvm-editor-tabs');
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
+    this.gitGraphPanelEl = this.root.querySelector('.tvm-git-graph-panel');
+    this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
 
     var self = this;
+
+    // Git graph toggle buttons
+    var viewBtns = this.root.querySelectorAll('.tvm-view-btn');
+    for (var vi = 0; vi < viewBtns.length; vi++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          self._setView(btn.getAttribute('data-view'));
+        });
+      })(viewBtns[vi]);
+    }
+
+    // Git graph refresh button
+    var gitRefreshBtn = this.root.querySelector('.tvm-git-graph-refresh');
+    if (gitRefreshBtn) gitRefreshBtn.addEventListener('click', function () { self._refreshGitGraph(); });
+
     if (this.config.useTerminal) {
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
     } else if (this.config.usePreview) {
@@ -872,7 +928,7 @@
           } else { self._inputLine += data; }
         });
 
-        self._muteCount = 0;
+        self._muteCount = 1;  // mute all output until _setupFilesystem clears and unmutes
         self.emulator.add_listener('serial0-output-byte', function (byte) {
           var ch = String.fromCharCode(byte);
           if (self._muteCount === 0) {
@@ -894,6 +950,20 @@
             }
           }
           if (self._testListening) { self._testBuffer += ch; self._parseTestOutput(); }
+          // On every shell prompt: refresh open editor files and (if visible) the git graph.
+          if (self._muteCount === 0) {
+            self._promptDetectBuf = (self._promptDetectBuf || '') + ch;
+            if (self._promptDetectBuf.length > 40) {
+              self._promptDetectBuf = self._promptDetectBuf.slice(-40);
+            }
+            if (/[#$] $/.test(self._promptDetectBuf)) {
+              self._promptDetectBuf = '';
+              self._pollWatchedFiles();
+              if (self._currentView === 'git_graph' && !self._gitGraphRefreshing) {
+                self._maybeAutoRefreshGitGraph();
+              }
+            }
+          }
         });
 
         var bootOutput = '', promptDetected = false;
@@ -920,17 +990,31 @@
 
   TutorialCode.prototype._setupFilesystem = function () {
     var self = this;
-    this.sendCommand('cd /tutorial');
-    this.sendCommand('export HISTCONTROL=ignoreboth');
     // Sync terminal dimensions so bash/readline wraps at the correct column
     var cols = (this._pendingStty && this._pendingStty.cols) || (this.term && this.term.cols) || 80;
     var rows = (this._pendingStty && this._pendingStty.rows) || (this.term && this.term.rows) || 24;
     this._pendingStty = null;
     this._lastStty = { cols: cols, rows: rows };
-    this._runSilent('stty cols ' + cols + ' rows ' + rows);
-    this.setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
-    this.sendCommand('clear');
-    return delay(100);
+    // Batch all init commands into a single _runSilent call so there is only
+    // one marker/prompt detection cycle regardless of how many setup commands
+    // there are.  Once the shell confirms they have all completed, clear the
+    // terminal immediately via xterm so the user always starts with a clean slate.
+    var initScript = ['cd /tutorial', 'export HISTCONTROL=ignoreboth',
+                      'stty cols ' + cols + ' rows ' + rows]
+                     .concat(self.setupCommands)
+                     .join('; ');
+    return self._runSilent(initScript).then(function () {
+      if (self.term) self.term.clear();
+      self._muteCount--;  // unmute now that the terminal is clean
+      return delay(100);
+    });
+  };
+
+  // Send a bare newline so bash redraws its prompt after the terminal has been
+  // cleared and all restore commands have finished running.
+  TutorialCode.prototype._refreshPrompt = function () {
+    if (this.config.backend === 'v86' && this.emulator) this.emulator.serial0_send('\n');
+    if (this.config.backend === 'webcontainer' && this._shellWriter) this._shellWriter.write('\n');
   };
 
   TutorialCode.prototype.sendCommand = function (cmd) {
@@ -1634,6 +1718,10 @@
       tab.appendChild(x);
       self.editorTabsEl.appendChild(tab);
     });
+    // Ensure the active tab is always visible — scroll it into view horizontally
+    // without affecting page-level vertical scroll (block: 'nearest').
+    var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
+    if (activeTab) activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
   TutorialCode.prototype._closeFile = function (filename) {
@@ -1823,14 +1911,7 @@
       });
     }
 
-    // 5. v86: re-sync watched files after a short delay
-    if (this.config.backend === 'v86') {
-      p = p.then(function () {
-        setTimeout(function () { self._pollWatchedFiles(); }, 1500);
-      });
-    }
-
-    // 6. Show explanation if present
+    // 5. Show explanation if present
     p = p.then(function () {
       if (solution.explanationHTML) {
         self._showSolutionExplanation(solution.explanationHTML);
@@ -2160,9 +2241,6 @@
             self.sendCommand(cmd);
           }
         });
-        if (this.config.backend === 'v86') {
-          setTimeout(function () { self._pollWatchedFiles(); }, 1500);
-        }
       } else if (this.config.backend === 'pyodide') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       } else if (this.config.backend === 'prolog') {
@@ -2218,6 +2296,13 @@
     if (this.config.backend === 'react') {
       var stepSelf = this;
       setTimeout(function () { stepSelf._rebuildReactPreview(); }, 400);
+    }
+
+    // Switch view between editor and git graph based on step config.
+    // If the step explicitly sets `view:`, auto-switch + update toggle.
+    // If not, keep whichever view the user was on (manual toggle persists).
+    if (step.view) {
+      this._setView(step.view);
     }
 
     // Auto-save progress when navigating to a new step
@@ -3166,6 +3251,174 @@
 
   TutorialCode.prototype._stopFileWatch = function () {
     if (this._reverseSyncTimer) { clearInterval(this._reverseSyncTimer); this._reverseSyncTimer = null; }
+  };
+
+  // ---------------------------------------------------------------------------
+  // Git Graph Integration
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Switch the top-right panel between editor and git graph.
+   * @param {string} view - 'editor' or 'git_graph'
+   */
+  TutorialCode.prototype._setView = function (view) {
+    var editorPanel = this.root.querySelector('.tvm-editor-panel');
+    var graphPanel = this.gitGraphPanelEl;
+    if (!editorPanel) return;
+
+    if (view === 'git_graph' && graphPanel) {
+      editorPanel.style.display = 'none';
+      graphPanel.style.display = 'flex';
+      // Immediately show the last cached graph (avoids "No commits yet" flash)
+      this._lightRefreshGitGraph();
+      // Then schedule a full dump+read for fresh data
+      var self2 = this;
+      setTimeout(function () {
+        self2._refreshGitGraph();
+        setTimeout(function () { self2._refreshGitGraph(); }, 1500);
+      }, 800);
+    } else {
+      editorPanel.style.display = '';
+      if (graphPanel) graphPanel.style.display = 'none';
+      // Re-layout Monaco after showing
+      if (this.editor) {
+        var self = this;
+        requestAnimationFrame(function () { self.editor.layout(); });
+      }
+    }
+    this._currentView = view;
+
+    // Sync toggle button active state
+    var btns = this.root.querySelectorAll('.tvm-view-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === view);
+    }
+  };
+
+  /**
+   * Install a PROMPT_COMMAND hook in the VM's bash shell that
+   * automatically dumps git state to a file every time a prompt is
+   * displayed (i.e. after every command completes).  This is the
+   * notification mechanism — the file on the 9p mount is always
+   * fresh, so _refreshGitGraph() just reads it without any serial
+   * interaction.
+   */
+  TutorialCode.prototype._installGitGraphPromptHook = function () {
+    if (this._gitGraphHookInstalled) return;
+    this._gitGraphHookInstalled = true;
+    var p = this.gitGraphPath || '/tutorial';
+    // The hook: a small function appended to PROMPT_COMMAND.
+    // It only runs git commands when inside a git repo.
+    var hookCmd =
+      '__gg_dump() { ' +
+      'cd ' + p + ' 2>/dev/null && [ -d .git ] && ' +
+      '{ echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
+      'echo "===BRANCH==="; git branch 2>/dev/null; ' +
+      'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
+      '} > ' + p + '/.git/gitgraph_state 2>/dev/null; }; ' +
+      'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
+    this._runSilent(hookCmd);
+  };
+
+  /**
+   * Run git state commands silently, writing output to a known file
+   * on the 9p-mounted filesystem so we can read it via read_file().
+   * Used only for the initial dump (before PROMPT_COMMAND kicks in)
+   * and explicit Refresh button clicks.
+   */
+  TutorialCode.prototype._dumpGitState = function () {
+    var p = this.gitGraphPath || '/tutorial';
+    return this._runSilent(
+      'cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.git/gitgraph_state 2>/dev/null'
+    );
+  };
+
+  /**
+   * Parse the .gitgraph_state file content and render the SVG graph.
+   */
+  TutorialCode.prototype._renderGitGraphFromText = function (text) {
+    var logOutput = '';
+    var branchOutput = '';
+    var headRef = '';
+    var sections = text.split(/^===(\w+)===$\n?/m);
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i] === 'LOG') logOutput = (sections[i + 1] || '').trim();
+      if (sections[i] === 'BRANCH') branchOutput = (sections[i + 1] || '').trim();
+      if (sections[i] === 'HEAD') headRef = (sections[i + 1] || '').trim();
+    }
+    var data = GitGraph.parseGitState(logOutput, branchOutput, headRef);
+    if (!this._gitGraph) {
+      this._gitGraph = new GitGraph(this.gitGraphContainerEl);
+    }
+    this._gitGraph.render(data);
+  };
+
+  /**
+   * FULL refresh: runs _dumpGitState (uses serial) then reads the file.
+   * Used for: Refresh button clicks, initial _setView, step loads.
+   */
+  TutorialCode.prototype._refreshGitGraph = function () {
+    if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
+    if (this._gitGraphRefreshing) return;
+    this._gitGraphRefreshing = true;
+    var self = this;
+
+    var safetyTimer = setTimeout(function () { self._gitGraphRefreshing = false; }, 10000);
+
+    // Also ensure the PROMPT_COMMAND hook is installed
+    this._installGitGraphPromptHook();
+
+    var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
+
+    this._dumpGitState()
+      .then(function () {
+        return new Promise(function (resolve) { setTimeout(resolve, 150); });
+      })
+      .then(function () {
+        return self.emulator.read_file(stateReadPath);
+      })
+      .then(function (buf) {
+        clearTimeout(safetyTimer);
+        self._gitGraphRefreshing = false;
+        self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
+      })
+      .catch(function () {
+        clearTimeout(safetyTimer);
+        self._gitGraphRefreshing = false;
+      });
+  };
+
+  /**
+   * LIGHT refresh: only reads the .gitgraph_state file via 9p.
+   * Zero serial interaction — safe to call at any time.
+   * The PROMPT_COMMAND hook keeps the file fresh after every command,
+   * so this always returns up-to-date data.
+   */
+  TutorialCode.prototype._lightRefreshGitGraph = function () {
+    if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
+    var self = this;
+    var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
+    this.emulator.read_file(stateReadPath)
+      .then(function (buf) {
+        self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
+      })
+      .catch(function () { /* file doesn't exist yet — ignore */ });
+  };
+
+  /**
+   * Auto-refresh: called from the serial output listener when a shell
+   * prompt is detected.  Just reads the file that PROMPT_COMMAND
+   * already updated — instant, no serial interaction.
+   */
+  TutorialCode.prototype._maybeAutoRefreshGitGraph = function () {
+    if (this._currentView === 'git_graph' && this.booted) {
+      var self = this;
+      clearTimeout(this._gitGraphAutoRefreshTimer);
+      // Short delay to let the 9p write from PROMPT_COMMAND propagate
+      this._gitGraphAutoRefreshTimer = setTimeout(function () {
+        self._lightRefreshGitGraph();
+      }, 300);
+    }
   };
 
   // ---------------------------------------------------------------------------

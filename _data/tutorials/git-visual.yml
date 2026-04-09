@@ -1,0 +1,318 @@
+title: "Visual Git Tutorial"
+description: "Learn Git with a live visual commit graph — see branches and commits update in real time"
+
+require_tests: true
+autosave_type: commands-and-files
+git_graph: /tutorial
+
+setup_commands:
+  - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
+  - "echo 'export LESSCHARSET=utf-8' >> ~/.bashrc && export LESSCHARSET=utf-8"
+  - "git config --global user.email 'student@university.edu'"
+  - "git config --global user.name 'Git Student'"
+  - "git config --global init.defaultBranch main"
+
+steps:
+  # --------------------------------------------------------------------------
+  # STEP 1: Init a repo and first commit (editor view — create a file)
+  # --------------------------------------------------------------------------
+  - title: "Create Your First Commit"
+    instructions: |
+      ## Getting Started
+
+      In this tutorial, you'll see a **live visual Git graph** that updates
+      as you run Git commands. But first, let's set up a repository.
+
+      ### Task
+
+      1. Initialize a repo and create a file:
+
+      ```bash
+      git init /tutorial
+      cd /tutorial
+      ```
+
+      2. The file `hello.txt` is already in the editor. Save it to the VM
+         by pressing **Ctrl+S**, then stage and commit:
+
+      ```bash
+      git add hello.txt
+      git commit -m "Initial commit"
+      ```
+
+      3. Click **Test My Work** to proceed.
+
+    files:
+      - path: "hello.txt"
+        content: |
+          Hello, World!
+          This is my first file in a Git repository.
+        language: "plaintext"
+
+    open_file: "hello.txt"
+
+    solution:
+      commands:
+        - "git init /tutorial"
+        - "cd /tutorial"
+        - "git add hello.txt"
+        - 'git commit -m "Initial commit"'
+      explanation: |
+        `git init` creates a `.git` directory that stores all version history.
+        `git add` stages the file, and `git commit` creates a snapshot.
+
+    tests:
+      - description: "Repository has been initialized"
+        command: "test -d /tutorial/.git"
+      - description: "At least one commit exists"
+        command: "cd /tutorial && git log --oneline | head -1 | grep -q '.'"
+
+  # --------------------------------------------------------------------------
+  # STEP 2: See the graph (git_graph view)
+  # --------------------------------------------------------------------------
+  - title: "See Your Commit Graph"
+    view: git_graph
+    instructions: |
+      ## Your First Graph
+
+      Look at the **Git Graph** panel on the right! You can see your first
+      commit as a node, with the `main` branch label pointing to it.
+
+      The graph shows:
+      - **Colored circles** = commits (with abbreviated SHA hash)
+      - **Labels** = branch names pointing to commits
+      - **HEAD** = which branch you're currently on
+
+      ### Task
+
+      Make two more commits so you can see the graph grow:
+
+      ```bash
+      cd /tutorial
+      echo "Second line" >> hello.txt
+      git add hello.txt
+      git commit -m "Add second line"
+      ```
+
+      ```bash
+      echo "Third line" >> hello.txt
+      git add hello.txt
+      git commit -m "Add third line"
+      ```
+
+      Watch the graph update after each commit! Click **Refresh** if needed.
+
+    tests:
+      - description: "At least 3 commits exist"
+        command: "cd /tutorial && test $(git log --oneline | wc -l) -ge 3"
+
+    solution:
+      commands:
+        - "cd /tutorial"
+        - 'echo "Second line" >> hello.txt'
+        - "git add hello.txt"
+        - 'git commit -m "Add second line"'
+        - 'echo "Third line" >> hello.txt'
+        - "git add hello.txt"
+        - 'git commit -m "Add third line"'
+      explanation: |
+        Each `git commit` creates a new snapshot node on the graph.
+        The `main` branch pointer moves forward with each commit.
+
+  # --------------------------------------------------------------------------
+  # STEP 3: Create a branch (git_graph view)
+  # --------------------------------------------------------------------------
+  - title: "Branching"
+    view: git_graph
+    instructions: |
+      ## Branches Are Just Pointers
+
+      A branch in Git is simply a lightweight pointer (a label) to a commit.
+      Creating a branch doesn't copy any files — it just adds a new label.
+
+      ### Task
+
+      Create a new branch and make a commit on it:
+
+      ```bash
+      cd /tutorial
+      git branch feature
+      git checkout feature
+      ```
+
+      Now make a change on the feature branch:
+
+      ```bash
+      echo "Feature work" > feature.txt
+      git add feature.txt
+      git commit -m "Add feature"
+      ```
+
+      Watch the graph — you'll see two branches diverging from the same
+      point, then the `feature` branch moving forward.
+
+    tests:
+      - description: "Branch 'feature' exists"
+        command: "cd /tutorial && git branch | grep -q feature"
+      - description: "Feature branch has a commit ahead of main"
+        command: "cd /tutorial && git log feature --oneline | head -1 | grep -qi feature"
+
+    solution:
+      commands:
+        - "cd /tutorial"
+        - "git branch feature"
+        - "git checkout feature"
+        - 'echo "Feature work" > feature.txt'
+        - "git add feature.txt"
+        - 'git commit -m "Add feature"'
+      explanation: |
+        `git branch feature` creates a new pointer at the current commit.
+        `git checkout feature` moves HEAD to point to the new branch.
+
+  # --------------------------------------------------------------------------
+  # STEP 4: Edit a file on feature branch (editor view)
+  # --------------------------------------------------------------------------
+  - title: "Edit Files on a Branch"
+    instructions: |
+      ## Working on Your Branch
+
+      You're currently on the `feature` branch. Let's edit the feature file
+      using the code editor.
+
+      ### Task
+
+      1. Edit `feature.txt` in the editor to contain a more detailed feature
+         description.
+      2. Stage and commit your changes:
+
+      ```bash
+      cd /tutorial
+      git add feature.txt
+      git commit -m "Improve feature description"
+      ```
+
+    files:
+      - path: "feature.txt"
+        content: |
+          Feature: User Authentication
+          - Login with email and password
+          - Session management
+          - Password reset flow
+        language: "plaintext"
+
+    open_file: "feature.txt"
+
+    tests:
+      - description: "feature.txt has been modified and committed"
+        command: "cd /tutorial && git log --oneline feature | wc -l | grep -q '[2-9]'"
+
+    solution:
+      commands:
+        - "cd /tutorial"
+        - "git add feature.txt"
+        - 'git commit -m "Improve feature description"'
+      explanation: |
+        Changes on the `feature` branch don't affect `main` at all.
+        Each branch has its own independent line of development.
+
+  # --------------------------------------------------------------------------
+  # STEP 5: Merging (git_graph view)
+  # --------------------------------------------------------------------------
+  - title: "Merging Branches"
+    view: git_graph
+    instructions: |
+      ## Merging
+
+      Now let's bring the feature work back into `main`. A merge creates
+      a new **merge commit** that has two parents — one from each branch.
+
+      ### Task
+
+      Switch back to main and merge the feature branch:
+
+      ```bash
+      cd /tutorial
+      git checkout main
+      git merge feature -m "Merge feature into main"
+      ```
+
+      Watch the graph — you'll see a new commit with lines going back
+      to both `main` and `feature`, visually showing the merge.
+
+    tests:
+      - description: "Currently on main branch"
+        command: "cd /tutorial && git branch | grep '* main'"
+      - description: "Feature has been merged into main"
+        command: "cd /tutorial && git log --oneline main | grep -qi merge"
+
+    solution:
+      commands:
+        - "cd /tutorial"
+        - "git checkout main"
+        - 'git merge feature -m "Merge feature into main"'
+      explanation: |
+        The merge commit connects both branches in the graph.
+        Both parent commits are preserved in the history.
+
+  # --------------------------------------------------------------------------
+  # STEP 6: Multiple branches (git_graph view)
+  # --------------------------------------------------------------------------
+  - title: "Multiple Branches"
+    view: git_graph
+    instructions: |
+      ## Parallel Development
+
+      Let's create multiple branches to see how Git handles parallel work.
+
+      ### Task
+
+      Create two branches from main and make commits on each:
+
+      ```bash
+      cd /tutorial
+      git checkout main
+      git branch bugfix
+      git branch docs
+      ```
+
+      Work on the bugfix branch:
+      ```bash
+      git checkout bugfix
+      echo "Bug fixed!" > bugfix.txt
+      git add bugfix.txt
+      git commit -m "Fix critical bug"
+      ```
+
+      Work on the docs branch:
+      ```bash
+      git checkout docs
+      echo "# Documentation" > README.md
+      git add README.md
+      git commit -m "Add documentation"
+      ```
+
+      Now look at the graph — three branches diverging from main!
+
+    tests:
+      - description: "Branch 'bugfix' exists with commits"
+        command: "cd /tutorial && git log bugfix --oneline | grep -qi bug"
+      - description: "Branch 'docs' exists with commits"
+        command: "cd /tutorial && git log docs --oneline | grep -qi doc"
+
+    solution:
+      commands:
+        - "cd /tutorial"
+        - "git checkout main"
+        - "git branch bugfix"
+        - "git branch docs"
+        - "git checkout bugfix"
+        - 'echo "Bug fixed!" > bugfix.txt'
+        - "git add bugfix.txt"
+        - 'git commit -m "Fix critical bug"'
+        - "git checkout docs"
+        - 'echo "# Documentation" > README.md'
+        - "git add README.md"
+        - 'git commit -m "Add documentation"'
+      explanation: |
+        Each branch is an independent line of development.
+        The graph shows how they all diverge from the same base commit.

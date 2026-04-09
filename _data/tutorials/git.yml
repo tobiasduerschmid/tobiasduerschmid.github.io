@@ -3,6 +3,7 @@ description: "Learn Git through hands-on practice — from your first commit to 
 
 require_tests: true
 autosave_type: commands-and-files
+git_graph: /tutorial/myproject
 
 setup_commands:
   - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
@@ -91,7 +92,7 @@ steps:
         - "ls -la"
       explanation: |
         - **`git init myproject`:** Creates a new directory `myproject/` and initializes a `.git/` folder inside it. The `.git/` folder is the entire repository — it stores all history, branches, and configuration. Without it, the directory is just a regular folder.
-        - The tests check: (1) `git config user.name` returns a non-empty value (already configured by the tutorial setup), (2) `git config user.email` returns a value, and (3) `/tutorial/myproject/.git` exists as a directory.
+        - The tests check: (1) `git config user.name` returns a non-empty value (already configured by the tutorial setup), (2) `git config user.email` returns a value, (3) `/tutorial/myproject/.git` exists as a directory, and (4) the current working directory is `myproject`.
         - Internally, `git init` creates low-level object store directories (`objects/`, `refs/`) that all other commands build on.
 
     tests:
@@ -107,6 +108,10 @@ steps:
         command: "[ -d /tutorial/myproject/.git ]"
         hints:
           - text: "You need to create a new repository. Which command from the instructions above creates a new Git project in a folder called `myproject`? Make sure you also `cd` into it afterward."
+      - description: "Current directory is myproject"
+        command: "[ \"$(pwd)\" = \"/tutorial/myproject\" ]"
+        hints:
+          - text: "After running `git init myproject`, navigate into the new folder with `cd myproject`. Your terminal prompt should show you're inside the project directory."
 
     quiz:
       title: "Your First Repository — Knowledge Check"
@@ -234,11 +239,9 @@ steps:
         content: |
           """Hero Registry — track your superhero squad."""
 
-
           def recruit(name, power):
               """Add a new hero to the squad."""
               return {"name": name, "power": power, "status": "active"}
-
 
           def retire(hero):
               """Retire a hero from active duty."""
@@ -328,6 +331,7 @@ steps:
   # STEP 3: Making changes — edit, diff, add, commit cycle
   # --------------------------------------------------------------------------
   - title: "The Edit-Stage-Commit Cycle"
+    view: editor
     instructions: |
       ### Modifying tracked files
 
@@ -407,17 +411,14 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad."""
                 return {"name": name, "power": power, "status": "active"}
-
 
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
-
 
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
@@ -505,6 +506,7 @@ steps:
   # STEP 4: Staging strategies — individual, wildcard, directory, all
   # --------------------------------------------------------------------------
   - title: "Staging Strategies"
+    view: git_graph
     instructions: |
       ### Controlling what goes into a commit
 
@@ -717,6 +719,7 @@ steps:
   # STEP 5: Unstaging and undoing changes
   # --------------------------------------------------------------------------
   - title: "Unstaging and Undoing Changes"
+    view: editor
     instructions: |
       ### Ctrl+Z for Git (kind of)
 
@@ -865,6 +868,7 @@ steps:
   # STEP 6: .gitignore
   # --------------------------------------------------------------------------
   - title: "Ignoring Files with .gitignore"
+    view: editor
     instructions: |
       ### Not everything belongs in version control
 
@@ -1099,6 +1103,7 @@ steps:
   # STEP 7: Inspecting history — git log, git diff HEAD, git show
   # --------------------------------------------------------------------------
   - title: "Inspecting History"
+    view: git_graph
     instructions: |
       ### Reading the story of your project
 
@@ -1264,6 +1269,7 @@ steps:
   # STEP 7.5: Mid-tutorial mini-capstone — unguided consolidation
   # --------------------------------------------------------------------------
   - title: "Mini-Capstone: Clean Up a Messy Repository"
+    view: editor
     instructions: |
       ### Boss level: no hand-holding
 
@@ -1425,6 +1431,7 @@ steps:
   # STEP 8: Branching — git branch, git switch
   # --------------------------------------------------------------------------
   - title: "Branching"
+    view: editor
     instructions: |
       ### Parallel universes for your code
 
@@ -1555,23 +1562,19 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad."""
                 return {"name": name, "power": power, "status": "active"}
-
 
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
 
-
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
-
 
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
@@ -1662,6 +1665,7 @@ steps:
   # STEP 9: Merging — fast-forward and three-way merge
   # --------------------------------------------------------------------------
   - title: "Merging Branches"
+    view: git_graph
     instructions: |
       ### Integrating your work
 
@@ -1899,6 +1903,7 @@ steps:
   # STEP 10: Create a branch for merge conflict setup
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
+    view: editor
     instructions: |
       ### Merge conflicts: scary name, totally normal
 
@@ -1919,7 +1924,7 @@ steps:
       ### Task 1: Create a new branch and modify hero_registry.py
 
       ```bash
-      git switch -c update-recruit-function
+      git switch -c update-recruit
       ```
 
       Now open `hero_registry.py` in the editor and **change the `recruit`
@@ -1963,25 +1968,21 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad (with safety protocols)."""
                 if not isinstance(name, str):
                     raise TypeError("Hero name must be a string")
                 return {"name": name, "power": power, "status": "active"}
 
-
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
 
-
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
-
 
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
@@ -1990,26 +1991,26 @@ steps:
                 return f"{hero1['name']} and {hero2['name']} unite!"
           language: "python"
       commands:
-        - "git switch -c update-recruit-function"
+        - "git switch -c update-recruit"
         - "git add hero_registry.py"
         - "git commit -m \"Add safety protocols to recruit function\""
         - "git switch main"
         - "head -8 hero_registry.py"
       explanation: |
-        - **Test 1:** `git branch | grep -q 'update-recruit-function'` — the branch must exist.
-        - **Test 2:** `git log update-recruit-function --oneline | grep -qi 'safety\|protocol\|recruit'` — a commit message on the branch must reference "safety", "protocol", or "recruit".
+        - **Test 1:** `git branch | grep -q 'update-recruit'` — the branch must exist.
+        - **Test 2:** `git log update-recruit --oneline | grep -qi 'safety\|protocol\|recruit'` — a commit message on the branch must reference "safety", "protocol", or "recruit".
         - **Test 3:** `git branch --show-current | grep -q 'main'` — you must end on `main`.
-        - **Why this creates a conflict:** The `update-recruit-function` branch added safety protocols to the `recruit` function. In the next step, you'll add *mission logging* to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
+        - **Why this creates a conflict:** The `update-recruit` branch added safety protocols to the `recruit` function. In the next step, you'll add *mission logging* to the same function on `main`. When you then merge, both branches have diverging changes to the same lines — triggering a conflict.
 
     tests:
-      - description: "Branch 'update-recruit-function' exists"
-        command: "cd /tutorial/myproject && git branch | grep -q 'update-recruit-function'"
+      - description: "Branch 'update-recruit' exists"
+        command: "cd /tutorial/myproject && git branch | grep -q 'update-recruit'"
         hints:
           - text: "You've created branches before — same approach, different name. What command creates and switches to a new branch in one step?"
-      - description: "update-recruit-function branch has the safety protocols commit"
-        command: "cd /tutorial/myproject && git log update-recruit-function --oneline | grep -qi 'safety\\|protocol\\|recruit'"
+      - description: "update-recruit branch has the safety protocols commit"
+        command: "cd /tutorial/myproject && git log update-recruit --oneline | grep -qi 'safety\\|protocol\\|recruit'"
         hints:
-          - text: "Edit the `recruit` function on the `update-recruit-function` branch to add safety protocols, then stage and commit. Your message should mention 'safety', 'protocol', or 'recruit'."
+          - text: "Edit the `recruit` function on the `update-recruit` branch to add safety protocols, then stage and commit. Your message should mention 'safety', 'protocol', or 'recruit'."
             condition: "code_missing: isinstance"
           - text: "The safety protocol is in the file — now stage and commit it with a descriptive message mentioning 'safety protocols' or 'recruit'."
             condition: "code_contains: isinstance"
@@ -2033,21 +2034,21 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
-        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit-function` immediately. What should you do **first**, and why does the order matter?"
+        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit` immediately. What should you do **first**, and why does the order matter?"
           options:
-            - "Run `git switch -c update-recruit-function` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
+            - "Run `git switch -c update-recruit` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
             - "Stage and commit your current work first, then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
             - "Discard your modifications with `git restore .` to get a clean slate before branching"
             - "Order doesn't matter — Git branch creation never interacts with working-directory state"
           correct_index: 1
           explanation: "You *can* branch with uncommitted changes (Git will carry them), but this creates ambiguity: those unrelated changes now appear to belong to the new feature branch. The professional habit is to start every branch from a known committed state. This is exactly the pattern Step 8 established — always commit your work before switching contexts."
 
-        - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit-function` and are now on `main`. What is the correct **next step** to trigger the conflict?"
+        - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
-            - "Run `git merge update-recruit-function` immediately"
+            - "Run `git merge update-recruit` immediately"
             - "Make a **different** change to the same lines on `main`, commit it, then merge"
-            - "Delete the `update-recruit-function` branch and start over"
-            - "Run `git conflict update-recruit-function` to preview conflicts"
+            - "Delete the `update-recruit` branch and start over"
+            - "Run `git conflict update-recruit` to preview conflicts"
           correct_index: 1
           explanation: "To create a conflict, both branches must have **diverging changes** to the same lines. If you merge without making a competing change on main, Git will just fast-forward. Making a different edit to the same lines on main sets up a true three-way conflict."
 
@@ -2067,11 +2068,12 @@ steps:
   # STEP 11: Resolving a merge conflict
   # --------------------------------------------------------------------------
   - title: "Resolving a Merge Conflict"
+    view: editor
     instructions: |
       ### The conflict
 
       In the previous step, you added safety protocols to the `recruit` function on the
-      `update-recruit-function` branch. Now we'll add *mission logging* to
+      `update-recruit` branch. Now we'll add *mission logging* to
       the same function on `main`, creating a conflict.
 
       ### Task 1: Add mission logging to recruit on main
@@ -2096,6 +2098,11 @@ steps:
       in the commit message — write something descriptive. You've done this
       workflow many times; no command list provided.
 
+      > 🔀 **Check the Git Graph:** After your commit, click **Git Graph** in the
+      > toggle above the editor. You'll see a new commit appear at the top of
+      > `main` — a visual record that your mission-logging change now lives on
+      > the branch. Switch back to **Editor** when you're ready to continue.
+
       ### Task 2: Attempt the merge
 
       > **Before you run:** One branch added safety protocols; the other added
@@ -2106,12 +2113,18 @@ steps:
       Now try to merge the other branch:
 
       ```bash
-      git merge update-recruit-function
+      git merge update-recruit
       ```
 
       Git will report a **CONFLICT**! It found that both branches changed
       the same lines in `hero_registry.py` and can't automatically combine
       them.
+
+      > 🔀 **Check the Git Graph:** Click **Git Graph** now. You'll see
+      > `update-recruit` and `main` as two separate branches diverging
+      > from a common ancestor — exactly the situation that caused the conflict.
+      > This is what a "not yet merged" state looks like in the graph.
+      > Switch back to **Editor** to resolve the conflict.
 
       ### Task 3: Read the conflict markers
 
@@ -2128,12 +2141,12 @@ steps:
           if not isinstance(name, str):
               raise TypeError("Hero name must be a string")
           return {"name": name, "power": power, "status": "active"}
-      >>>>>>> update-recruit-function
+      >>>>>>> update-recruit
       ```
 
       - `<<<<<<< HEAD` — your current branch's version (main)
       - `=======` — separator
-      - `>>>>>>> update-recruit-function` — the incoming branch's version
+      - `>>>>>>> update-recruit` — the incoming branch's version
 
       ### Task 4: Resolve the conflict
 
@@ -2216,6 +2229,12 @@ steps:
       You just resolved a merge conflict! That's genuinely a flex — this
       is a skill that trips up even experienced developers.
 
+      > 🔀 **Check the Git Graph:** Click **Git Graph** one last time. You'll
+      > now see a **merge commit** at the top of `main` with two parent edges
+      > — one coming from `main` and one from `update-recruit`.
+      > That diamond shape is the visual signature of a successful merge:
+      > two diverging histories reunited into one.
+
     watch_files:
       - "myproject/hero_registry.py"
 
@@ -2228,7 +2247,6 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad (with safety protocols and mission logging)."""
                 if not isinstance(name, str):
@@ -2236,18 +2254,15 @@ steps:
                 print(f"Recruiting {name} with power: {power}")
                 return {"name": name, "power": power, "status": "active"}
 
-
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
 
-
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
-
 
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
@@ -2260,7 +2275,7 @@ steps:
         - "git switch main 2>/dev/null; true"
         - "git add hero_registry.py"
         - "git commit -m \"Add mission logging to recruit function\" 2>/dev/null; true"
-        - "git merge update-recruit-function -X theirs --no-edit"
+        - "git merge update-recruit -X theirs --no-edit"
         - "sed -i 's/with safety protocols/with safety protocols and mission logging/' hero_registry.py"
         - "sed -i '/^    return {\"name\": name/i\\    print(f\"Recruiting {name} with power: {power}\")' hero_registry.py"
         - "git add hero_registry.py"
@@ -2268,7 +2283,7 @@ steps:
       explanation: |
         - **Test 1:** `! grep -q '<<<<<<<\|=======\|>>>>>>>' hero_registry.py` — all conflict markers must be removed. Leaving even one marker in the file is a bug.
         - **Test 2:** `! git status | grep -q 'Unmerged\|both modified'` — no unmerged paths remain.
-        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the safety-protocol code from `update-recruit-function` must be present.
+        - **Test 3:** `grep -q 'isinstance' hero_registry.py` — the safety-protocol code from `update-recruit` must be present.
         - **Test 4:** `grep -q 'print' hero_registry.py` — the mission-logging code from `main` must be present.
         - **How the solution works:** The solution uses `git merge -X theirs` to auto-resolve in favour of the incoming branch (getting the safety-protocol code), then uses `sed` to add the mission-logging `print` line and update the docstring. A follow-up commit captures the combined result.
         - **Conflict markers explained:** `<<<<<<< HEAD` is your current branch's version; `=======` is the separator; `>>>>>>> branch-name` is the incoming version. You must edit the file to the version you want and remove all three marker types.
@@ -2289,7 +2304,7 @@ steps:
       - description: "hero_registry.py contains safety protocols (isinstance)"
         command: "cd /tutorial/myproject && grep -q 'isinstance' hero_registry.py"
         hints:
-          - text: "Your resolved version should keep the `isinstance` safety-protocol code from the `update-recruit-function` branch. Don't discard it when resolving — combine both changes."
+          - text: "Your resolved version should keep the `isinstance` safety-protocol code from the `update-recruit` branch. Don't discard it when resolving — combine both changes."
             condition: "code_missing: isinstance"
       - description: "hero_registry.py contains mission logging (print)"
         command: "cd /tutorial/myproject && grep -q 'print' hero_registry.py"
@@ -2364,6 +2379,7 @@ steps:
   # STEP 12: Safe undo with git revert
   # --------------------------------------------------------------------------
   - title: "Safe Undo with git revert"
+    view: git_graph
     instructions: |
       ### Undoing committed mistakes safely
 
@@ -2729,6 +2745,7 @@ steps:
   # STEP 13: Working with Remotes
   # --------------------------------------------------------------------------
   - title: "Working with Remotes"
+    view: git_graph
     instructions: |
       ### Time to go online
 
@@ -2920,6 +2937,7 @@ steps:
   # STEP 14: Review and best practices
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
+    view: git_graph
     instructions: |
       ### You made it!
 
@@ -3017,7 +3035,6 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad (with safety protocols and mission logging)."""
                 if not isinstance(name, str):
@@ -3025,25 +3042,21 @@ steps:
                 print(f"Recruiting {name} with power: {power}")
                 return {"name": name, "power": power, "status": "active"}
 
-
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
-
 
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
 
-
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
                 if hero1 is None or hero2 is None:
                     raise ValueError("Cannot team up with an absent hero")
                 return f"{hero1['name']} and {hero2['name']} unite!"
-
 
             def power_surge(hero, boost):
                 """Apply a power surge to a hero."""
@@ -3068,7 +3081,6 @@ steps:
         ```python
         """Hero Registry — track your superhero squad."""
 
-
         def recruit(name, power):
             """Add a new hero to the squad (with safety protocols and mission logging)."""
             if not isinstance(name, str):
@@ -3076,25 +3088,21 @@ steps:
             print(f"Recruiting {name} with power: {power}")
             return {"name": name, "power": power, "status": "active"}
 
-
         def retire(hero):
             """Retire a hero from active duty."""
             hero["status"] = "retired"
             return hero
-
 
         def power_up(hero, multiplier):
             """Boost a hero's power level permanently."""
             hero["power"] = hero["power"] * multiplier
             return hero
 
-
         def team_up(hero1, hero2):
             """Combine two heroes for a mission."""
             if hero1 is None or hero2 is None:
                 raise ValueError("Cannot team up with an absent hero")
             return f"{hero1['name']} and {hero2['name']} unite!"
-
 
         def power_surge(hero, boost):
             """Apply a power surge to a hero."""
@@ -3327,6 +3335,7 @@ steps:
   # STEP 15: Celebration — final quiz
   # --------------------------------------------------------------------------
   - title: "Git Mastery — Final Review"
+    view: git_graph
     instructions: |
       ### Congratulations — you've completed the Git tutorial!
 
