@@ -92,7 +92,7 @@ steps:
         - "ls -la"
       explanation: |
         - **`git init myproject`:** Creates a new directory `myproject/` and initializes a `.git/` folder inside it. The `.git/` folder is the entire repository — it stores all history, branches, and configuration. Without it, the directory is just a regular folder.
-        - The tests check: (1) `git config user.name` returns a non-empty value (already configured by the tutorial setup), (2) `git config user.email` returns a value, and (3) `/tutorial/myproject/.git` exists as a directory.
+        - The tests check: (1) `git config user.name` returns a non-empty value (already configured by the tutorial setup), (2) `git config user.email` returns a value, (3) `/tutorial/myproject/.git` exists as a directory, and (4) the current working directory is `myproject`.
         - Internally, `git init` creates low-level object store directories (`objects/`, `refs/`) that all other commands build on.
 
     tests:
@@ -108,6 +108,10 @@ steps:
         command: "[ -d /tutorial/myproject/.git ]"
         hints:
           - text: "You need to create a new repository. Which command from the instructions above creates a new Git project in a folder called `myproject`? Make sure you also `cd` into it afterward."
+      - description: "Current directory is myproject"
+        command: "[ \"$(basename $(pwd))\" = \"myproject\" ]"
+        hints:
+          - text: "After running `git init myproject`, navigate into the new folder with `cd myproject`. Your terminal prompt should show you're inside the project directory."
 
     quiz:
       title: "Your First Repository — Knowledge Check"
