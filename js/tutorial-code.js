@@ -946,17 +946,18 @@
             }
           }
           if (self._testListening) { self._testBuffer += ch; self._parseTestOutput(); }
-          // Auto-refresh git graph: use file-based approach that reads
-          // .git internals directly via the 9p filesystem, avoiding any
-          // serial/terminal interference with user typing.
-          if (self._currentView === 'git_graph' && self._muteCount === 0 && !self._gitGraphRefreshing) {
+          // On every shell prompt: refresh open editor files and (if visible) the git graph.
+          if (self._muteCount === 0) {
             self._promptDetectBuf = (self._promptDetectBuf || '') + ch;
             if (self._promptDetectBuf.length > 40) {
               self._promptDetectBuf = self._promptDetectBuf.slice(-40);
             }
             if (/[#$] $/.test(self._promptDetectBuf)) {
               self._promptDetectBuf = '';
-              self._maybeAutoRefreshGitGraph();
+              self._pollWatchedFiles();
+              if (self._currentView === 'git_graph' && !self._gitGraphRefreshing) {
+                self._maybeAutoRefreshGitGraph();
+              }
             }
           }
         });
@@ -985,17 +986,23 @@
 
   TutorialCode.prototype._setupFilesystem = function () {
     var self = this;
-    this.sendCommand('cd /tutorial');
-    this.sendCommand('export HISTCONTROL=ignoreboth');
     // Sync terminal dimensions so bash/readline wraps at the correct column
     var cols = (this._pendingStty && this._pendingStty.cols) || (this.term && this.term.cols) || 80;
     var rows = (this._pendingStty && this._pendingStty.rows) || (this.term && this.term.rows) || 24;
     this._pendingStty = null;
     this._lastStty = { cols: cols, rows: rows };
-    this._runSilent('stty cols ' + cols + ' rows ' + rows);
-    this.setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
-    this.sendCommand('clear');
-    return delay(100);
+    // Batch all init commands into a single _runSilent call so there is only
+    // one marker/prompt detection cycle regardless of how many setup commands
+    // there are.  Once the shell confirms they have all completed, clear the
+    // terminal immediately via xterm so the user always starts with a clean slate.
+    var initScript = ['cd /tutorial', 'export HISTCONTROL=ignoreboth',
+                      'stty cols ' + cols + ' rows ' + rows]
+                     .concat(self.setupCommands)
+                     .join('; ');
+    return self._runSilent(initScript).then(function () {
+      if (self.term) self.term.clear();
+      return delay(100);
+    });
   };
 
   TutorialCode.prototype.sendCommand = function (cmd) {
@@ -1892,14 +1899,7 @@
       });
     }
 
-    // 5. v86: re-sync watched files after a short delay
-    if (this.config.backend === 'v86') {
-      p = p.then(function () {
-        setTimeout(function () { self._pollWatchedFiles(); }, 1500);
-      });
-    }
-
-    // 6. Show explanation if present
+    // 5. Show explanation if present
     p = p.then(function () {
       if (solution.explanationHTML) {
         self._showSolutionExplanation(solution.explanationHTML);
@@ -2229,9 +2229,6 @@
             self.sendCommand(cmd);
           }
         });
-        if (this.config.backend === 'v86') {
-          setTimeout(function () { self._pollWatchedFiles(); }, 1500);
-        }
       } else if (this.config.backend === 'pyodide') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       } else if (this.config.backend === 'prolog') {
