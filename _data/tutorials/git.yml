@@ -3135,6 +3135,10 @@ steps:
             def power_surge(hero, boost):
                 """Apply a power surge to a hero."""
                 return f"{hero['name']} surges with {boost} extra power!"
+
+            def status_report(hero):
+                """Generate a status report for a hero."""
+                return hero["name"] + " is currently " + hero["status"]
           language: "python"
       commands:
         - "cd /tutorial/myproject"
@@ -3147,13 +3151,10 @@ steps:
         - "git merge feature-power-surge --no-edit"
         - "git log --oneline --graph --all"
         - "git push 2>/dev/null; true"
-        - "git pull -X ours --no-edit"
-        - "echo '' >> hero_registry.py"
-        - "echo 'def status_report(hero):' >> hero_registry.py"
-        - "echo '    \"\"\"Generate a status report for a hero.\"\"\"' >> hero_registry.py"
-        - "echo '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' >> hero_registry.py"
+        - "git pull --no-edit 2>/dev/null; true"
+        - "printf '%s\\n' '\"\"\"Hero Registry — track your superhero squad.\"\"\"' '' 'def recruit(name, power):' '    \"\"\"Add a new hero to the squad (with safety protocols and mission logging).\"\"\"' '    if not isinstance(name, str):' '        raise TypeError(\"Hero name must be a string\")' '    print(f\"Recruiting {name} with power: {power}\")' '    return {\"name\": name, \"power\": power, \"status\": \"active\"}' '' 'def retire(hero):' '    \"\"\"Retire a hero from active duty.\"\"\"' '    hero[\"status\"] = \"retired\"' '    return hero' '' 'def power_up(hero, multiplier):' '    \"\"\"Boost a hero\\x27s power level permanently.\"\"\"' '    hero[\"power\"] = hero[\"power\"] * multiplier' '    return hero' '' 'def team_up(hero1, hero2):' '    \"\"\"Combine two heroes for a mission.\"\"\"' '    if hero1 is None or hero2 is None:' '        raise ValueError(\"Cannot team up with an absent hero\")' '    return f\"{hero1[\\x27name\\x27]} and {hero2[\\x27name\\x27]} unite!\"' '' 'def power_surge(hero, boost):' '    \"\"\"Apply a power surge to a hero.\"\"\"' '    return f\"{hero[\\x27name\\x27]} surges with {boost} extra power!\"' '' 'def status_report(hero):' '    \"\"\"Generate a status report for a hero.\"\"\"' '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' > hero_registry.py"
         - "git add hero_registry.py"
-        - "git commit -m \"Include colleague status_report function\" 2>/dev/null; true"
+        - "git commit -m \"Include colleague status_report function\" --no-edit 2>/dev/null; true"
         - "git push"
         - "cat hero_registry.py"
       explanation: |
