@@ -2976,7 +2976,7 @@ steps:
     setup_commands:
       - "cd /tutorial/colleague-copy && git pull && grep -q 'def status_report' hero_registry.py || (echo '' >> hero_registry.py && echo 'def status_report(hero):' >> hero_registry.py && echo '    \"\"\"Generate a status report for a hero.\"\"\"' >> hero_registry.py && echo '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' >> hero_registry.py && git add hero_registry.py && git commit -m 'Add status report function' && git push); true && cd /tutorial/myproject/ && git config pull.rebase false"
     instructions: |
-      ### You made it!
+      ### You made it to the Final Boss!
 
       Seriously, nice work. You've gone from zero to a solid Git workflow.
       Let's review everything you've picked up:
@@ -3149,7 +3149,7 @@ steps:
         - "git merge feature-power-surge --no-edit"
         - "git log --oneline --graph --all"
         - "git config pull.rebase false"
-        - "git pull --no-edit 2>/dev/null; true"
+        - "git pull --no-commit --no-edit 2>/dev/null; true"
         - "printf '%s\\n' '\"\"\"Hero Registry — track your superhero squad.\"\"\"' '' 'def recruit(name, power):' '    \"\"\"Add a new hero to the squad (with safety protocols and mission logging).\"\"\"' '    if not isinstance(name, str):' '        raise TypeError(\"Hero name must be a string\")' '    print(f\"Recruiting {name} with power: {power}\")' '    return {\"name\": name, \"power\": power, \"status\": \"active\"}' '' 'def retire(hero):' '    \"\"\"Retire a hero from active duty.\"\"\"' '    hero[\"status\"] = \"retired\"' '    return hero' '' 'def power_up(hero, multiplier):' '    \"\"\"Boost a hero\\x27s power level permanently.\"\"\"' '    hero[\"power\"] = hero[\"power\"] * multiplier' '    return hero' '' 'def team_up(hero1, hero2):' '    \"\"\"Combine two heroes for a mission.\"\"\"' '    if hero1 is None or hero2 is None:' '        raise ValueError(\"Cannot team up with an absent hero\")' '    return f\"{hero1[\\x27name\\x27]} and {hero2[\\x27name\\x27]} unite!\"' '' 'def power_surge(hero, boost):' '    \"\"\"Apply a power surge to a hero.\"\"\"' '    return f\"{hero[\\x27name\\x27]} surges with {boost} extra power!\"' '' 'def status_report(hero):' '    \"\"\"Generate a status report for a hero.\"\"\"' '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' > hero_registry.py"
         - "git add hero_registry.py"
         - "git commit -m \"Merge: keep both power_surge and status_report\" --no-edit 2>/dev/null; true"
