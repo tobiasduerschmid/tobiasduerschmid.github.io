@@ -1003,18 +1003,21 @@
                       'stty cols ' + cols + ' rows ' + rows]
                      .concat(self.setupCommands)
                      .join('; ');
-    return self._runSilent(initScript).then(function () {
-      if (self.term) self.term.clear();
-      self._muteCount--;  // unmute now that the terminal is clean
-      return delay(100);
-    });
+    // Stay muted after setup — _refreshPrompt will clear and unmute once
+    // the full restore sequence (files + commands) has finished.
+    return self._runSilent(initScript);
   };
 
-  // Send a bare newline so bash redraws its prompt after the terminal has been
-  // cleared and all restore commands have finished running.
+  // Clear the terminal, unmute output, then redraw the bash prompt.
+  // Called once the full init + restore sequence is done.
   TutorialCode.prototype._refreshPrompt = function () {
-    if (this.config.backend === 'v86' && this.emulator) this.emulator.serial0_send('\n');
-    if (this.config.backend === 'webcontainer' && this._shellWriter) this._shellWriter.write('\n');
+    if (this.config.backend === 'v86') {
+      if (this.term) this.term.clear();
+      this._muteCount--;  // drop from 1 → 0; everything after this is visible
+      if (this.emulator) this.emulator.serial0_send('\n');
+    } else if (this.config.backend === 'webcontainer') {
+      if (this._shellWriter) this._shellWriter.write('\n');
+    }
   };
 
   TutorialCode.prototype.sendCommand = function (cmd) {
@@ -2143,14 +2146,14 @@
           });
         }
 
-        // 3. Run solution commands silently (no terminal output during restore)
+        // 3. Run solution commands silently — batch into one _runSilent call
+        //    per step so we only pay one round-trip instead of one per command.
         if (step.solution && step.solution.commands && step.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            step.solution.commands.forEach(function (cmd) {
-              p = p.then(function () {
-                return self._runSilent(cmd.replace(/^git /, 'git --no-pager '));
-              });
-            });
+            var batch = step.solution.commands
+              .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+              .join('; ');
+            p = p.then(function () { return self._runSilent(batch); });
           }
         }
       })(i);
@@ -3311,11 +3314,11 @@
     // It only runs git commands when inside a git repo.
     var hookCmd =
       '__gg_dump() { ' +
-      'cd ' + p + ' 2>/dev/null && [ -d .git ] && ' +
+      '( cd ' + p + ' 2>/dev/null && [ -d .git ] && ' +
       '{ echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
       'echo "===BRANCH==="; git branch 2>/dev/null; ' +
       'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
-      '} > ' + p + '/.git/gitgraph_state 2>/dev/null; }; ' +
+      '} > ' + p + '/.git/gitgraph_state 2>/dev/null ); }; ' +
       'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
     this._runSilent(hookCmd);
   };
@@ -3329,7 +3332,7 @@
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
     return this._runSilent(
-      'cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.git/gitgraph_state 2>/dev/null'
+      '( cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.git/gitgraph_state 2>/dev/null )'
     );
   };
 

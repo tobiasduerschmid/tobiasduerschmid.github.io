@@ -3,6 +3,7 @@ description: "Learn Git through hands-on practice — from your first commit to 
 
 require_tests: true
 autosave_type: commands-and-files
+reset_type: commands
 git_graph: /tutorial/myproject
 
 setup_commands:
@@ -11,6 +12,7 @@ setup_commands:
   - "git config --global user.email 'diligent-student@cs.ucla.edu'"
   - "git config --global user.name 'Soon-to-be Git Hero'"
   - "git config --global init.defaultBranch main"
+  - "git config pull.rebase false"
 
 steps:
   # --------------------------------------------------------------------------
@@ -1488,6 +1490,11 @@ steps:
 
       ### Task 2: Create and switch to a new branch
 
+      > 📊 **Check the Git Graph** — click the **Git Graph** tab (top right).
+      > We will now create a new branch and watch the graph update in real time. 
+      > What do you you expect to see when we create the new branch? 
+      > Make a prediction, then watch it happen.
+
       ```bash
       git switch -c feature-team-up
       ```
@@ -1495,6 +1502,11 @@ steps:
       This creates a new branch called `feature-team-up` and switches to it.
       (`-c` means "create the branch"). Run `git branch` to confirm you're
       on the new branch.
+
+
+      > 📊 **Git Graph** — Was this what you expected?
+      > It does not look like a branch, does it? That's because both `main` and `feature-team-up` are pointing to the same commit. They are two Post-it notes on the same commit.
+      > HEAD is now pointing to `feature-team-up` meaning that every new commit will be added to this branch.
 
       ### Task 3: Make changes on the feature branch
 
@@ -1508,20 +1520,31 @@ steps:
               raise ValueError("Cannot team up with an absent hero")
           return f"{hero1['name']} and {hero2['name']} unite!"
       ```
+      > 📊 **Check the Git Graph** — We will now commit our changes. What do you expect will happen?
+      > Make a prediction, then watch it happen.
 
       Save, then stage and commit using the workflow from Steps 2–4.
       Use the message `"Add team_up function with absent-hero check"`
       (the test checks for "team" in the commit message).
 
-      ### Task 4: Switch back to main
+      > 📊 **Git Graph** — Was this what you expected?
+      > Now we see the changes diverge. `main` is still on the old commit, while `feature-team-up` has moved to the new commit with the team_up function. The two branches are now on different commits, showing that they have diverged timelines.
 
-      > **Before you run:** When you switch back to `main`, will the `team_up`
-      > function still be visible in `hero_registry.py`? Why or why not? Think
-      > about what a branch pointer actually represents, then check your answer.
+      ### Task 4: Switch back to main 
+
+      > **Before you run:** When you switch back to `main`, what will happen to your Git graph? Think
+      > about what a branch pointer actually represents, predict your answer, then check it by running this command:
 
       ```bash
       git switch main
       ```
+
+      > 📊 **Check the Git Graph** — HEAD has jumped back to `main`. The two
+      > branch labels now sit on different commits, showing the diverged
+      > timelines.
+
+      > **Before you continue:** Now after switching back to `main`, will the `team_up`
+      > function still be visible in `hero_registry.py`? Why or why not? Check your answer by running this command:
 
       Now look at `hero_registry.py` in the terminal:
 
@@ -1550,6 +1573,11 @@ steps:
       ```
 
       The function is back. Each branch is a separate timeline.
+
+      > 📊 **Check the Git Graph** one last time — HEAD is back on
+      > `feature-team-up`. You've now seen all four graph states: shared
+      > commit → new label → diverged timelines → HEAD switching sides.
+
 
     watch_files:
       - "myproject/hero_registry.py"
@@ -2225,6 +2253,13 @@ steps:
 
       After editing, mark the conflict as resolved (using `git add`) and create the merge commit.
       You've done both of these before.
+
+      > **Heads up — VI/VIM editor:** Unlike your previous commits, this time
+      > you'll run `git commit` without `-m "..."`. Git will open the VI/VIM
+      > text editor with a pre-filled merge commit message. You don't need to
+      > change anything — just save and exit by typing **`:wq`** and pressing
+      > Enter. If you accidentally enter insert mode (text starts appearing),
+      > press **Escape** first, then type `:wq`.
 
       You just resolved a merge conflict! That's genuinely a flex — this
       is a skill that trips up even experienced developers.
@@ -2938,6 +2973,8 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
     view: git_graph
+    setup_commands:
+      - "cd /tutorial/colleague-copy && git pull && grep -q 'def status_report' hero_registry.py || (echo '' >> hero_registry.py && echo 'def status_report(hero):' >> hero_registry.py && echo '    \"\"\"Generate a status report for a hero.\"\"\"' >> hero_registry.py && echo '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' >> hero_registry.py && git add hero_registry.py && git commit -m 'Add status report function' && git push); true && cd /tutorial/myproject/"
     instructions: |
       ### You made it!
 
@@ -2996,7 +3033,21 @@ steps:
       3. **Commit** your change with a meaningful message
       4. **Switch** back to `main`
       5. **Merge** `feature-power-surge` into `main`
-      6. **Verify** by running `git log --oneline --graph --all`
+      6. **Verify** by running checking the **Git Graph**
+      7. **Push** your merged work to the remote: `git push`
+
+         Wait — that didn't work. Read the error message carefully.
+
+         While you were working on your feature branch, your colleague
+         pushed their own change to the remote. Git rejected your push
+         to protect their work. This is the most common collaboration
+         hiccup in professional development — and you already know how
+         to handle it.
+
+      8. **Fix it** — pull the remote changes, resolve any conflicts
+         (keep *both* your function and your colleague's function), and
+         complete the merge
+      9. **Push** again — it should succeed this time
 
       <details>
       <summary>Hint 1 — creating a branch and switching to it</summary>
@@ -3017,17 +3068,40 @@ steps:
       <code>git diff main..feature-power-surge</code>.
       </details>
 
-      This exercises branching, committing, merging, and log inspection
-      — all without scaffolding. If you can do this independently,
-      you're ready for real-world Git usage.
+      <details>
+      <summary>Hint 4 — push rejected?</summary>
+      The remote has commits you don't have locally. Run
+      <code>git pull</code> to download and merge them. If both sides
+      changed the same part of a file, you'll get a merge conflict —
+      just like Step 12.
+      </details>
+
+      <details>
+      <summary>Hint 5 — resolving the remote conflict</summary>
+      Open the conflicted file, remove the conflict markers
+      (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>,
+      <code>=======</code>,
+      <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>), and keep
+      <strong>both</strong> functions. Then <code>git add</code> the
+      file and <code>git commit</code> to complete the merge. After
+      that, <code>git push</code> should work.
+      </details>
+
+      This exercises branching, committing, merging, remote push/pull,
+      and conflict resolution — all without scaffolding. If you can do
+      this independently, you're ready for real-world Git usage.
 
       ```bash
       cat hero_registry.py
       ```
 
       From an empty folder to a version-controlled Python hero registry with
-      branching, merge conflict resolution, and independent feature
-      work — that's a whole journey. You should feel good about this.
+      branching, merge conflict resolution, remote collaboration, and
+      independent feature work — that's a whole journey. You should
+      feel good about this.
+
+    watch_files:
+      - "myproject/hero_registry.py"
 
     solution:
       files:
@@ -3061,20 +3135,37 @@ steps:
             def power_surge(hero, boost):
                 """Apply a power surge to a hero."""
                 return f"{hero['name']} surges with {boost} extra power!"
+
+            def status_report(hero):
+                """Generate a status report for a hero."""
+                return hero["name"] + " is currently " + hero["status"]
           language: "python"
       commands:
-        - "git switch -c feature-power-surge"
+        - "cd /tutorial/myproject"
+        - "git merge --abort 2>/dev/null; true"
+        - "git switch main 2>/dev/null; true"
+        - "git switch -c feature-power-surge 2>/dev/null; git switch feature-power-surge 2>/dev/null; true"
         - "git add hero_registry.py"
-        - "git commit -m \"Add power_surge function\""
+        - "git commit -m \"Add power_surge function\" 2>/dev/null; true"
         - "git switch main"
-        - "git merge feature-power-surge"
+        - "git merge feature-power-surge --no-edit"
         - "git log --oneline --graph --all"
+        - "git push 2>/dev/null; true"
+        - "git pull --no-edit 2>/dev/null; true"
+        - "printf '%s\\n' '\"\"\"Hero Registry — track your superhero squad.\"\"\"' '' 'def recruit(name, power):' '    \"\"\"Add a new hero to the squad (with safety protocols and mission logging).\"\"\"' '    if not isinstance(name, str):' '        raise TypeError(\"Hero name must be a string\")' '    print(f\"Recruiting {name} with power: {power}\")' '    return {\"name\": name, \"power\": power, \"status\": \"active\"}' '' 'def retire(hero):' '    \"\"\"Retire a hero from active duty.\"\"\"' '    hero[\"status\"] = \"retired\"' '    return hero' '' 'def power_up(hero, multiplier):' '    \"\"\"Boost a hero\\x27s power level permanently.\"\"\"' '    hero[\"power\"] = hero[\"power\"] * multiplier' '    return hero' '' 'def team_up(hero1, hero2):' '    \"\"\"Combine two heroes for a mission.\"\"\"' '    if hero1 is None or hero2 is None:' '        raise ValueError(\"Cannot team up with an absent hero\")' '    return f\"{hero1[\\x27name\\x27]} and {hero2[\\x27name\\x27]} unite!\"' '' 'def power_surge(hero, boost):' '    \"\"\"Apply a power surge to a hero.\"\"\"' '    return f\"{hero[\\x27name\\x27]} surges with {boost} extra power!\"' '' 'def status_report(hero):' '    \"\"\"Generate a status report for a hero.\"\"\"' '    return hero[\"name\"] + \" is currently \" + hero[\"status\"]' > hero_registry.py"
+        - "git add hero_registry.py"
+        - "git commit -m \"Include colleague status_report function\" --no-edit 2>/dev/null; true"
+        - "git push"
         - "cat hero_registry.py"
       explanation: |
         - **Test 1:** `[ $(git log --oneline | wc -l) -ge 10 ]` — at least 10 commits in total.
-        - **Test 2:** All five functions must be present in the final `hero_registry.py`.
+        - **Test 2:** All six functions must be present in the final `hero_registry.py` — including your colleague's `status_report`.
         - **Test 3:** `.gitignore` must be in the commit history.
-        - **Capstone test:** The `power_surge` function must exist and be committed on `main`.
+        - **Capstone test:** `power_surge` must be committed on `main` and pushed to the remote.
+        - **Why the push was rejected:** The remote had a commit (your colleague's `status_report` function) that your local branch didn't have. Git refuses to push because it would overwrite the colleague's work. This is a safety feature, not an error.
+        - **`git pull` = `git fetch` + `git merge`:** When you pull, Git downloads the colleague's commit and tries to merge it with yours. Since both sides added a new function at the end of the same file, Git can't auto-merge and reports a conflict.
+        - **Conflict resolution:** Same process as Step 12 — remove the `<<<<<<<`, `=======`, and `>>>>>>>` markers and keep both functions.
+        - **After resolving:** `git add` + `git commit` completes the merge, then `git push` succeeds because your local branch now includes both your work and your colleague's.
 
         **The final `hero_registry.py`:**
 
@@ -3107,6 +3198,10 @@ steps:
         def power_surge(hero, boost):
             """Apply a power surge to a hero."""
             return f"{hero['name']} surges with {boost} extra power!"
+
+        def status_report(hero):
+            """Generate a status report for a hero."""
+            return hero["name"] + " is currently " + hero["status"]
         ```
 
         **Git workflow summary:** The complete workflow practiced in this tutorial:
@@ -3122,6 +3217,8 @@ steps:
         git merge         → combine branches
         git restore       → discard uncommitted changes
         git revert        → safely undo a committed change
+        git push          → upload commits to a remote
+        git pull          → download and merge remote commits
         ```
 
     tests:
@@ -3129,17 +3226,28 @@ steps:
         command: "cd /tutorial/myproject && [ $(git log --oneline | wc -l) -ge 10 ]"
         hints:
           - text: "Run `git log --oneline | wc -l` to check your count. You need commits from all previous steps plus the capstone."
-      - description: "hero_registry.py has recruit, retire, power_up, team_up, and power_surge functions"
-        command: "cd /tutorial/myproject && grep -q 'def recruit' hero_registry.py && grep -q 'def retire' hero_registry.py && grep -q 'def power_up' hero_registry.py && grep -q 'def team_up' hero_registry.py && grep -q 'def power_surge' hero_registry.py"
+      - description: "hero_registry.py has all six functions (including colleague's status_report)"
+        command: "cd /tutorial/myproject && grep -q 'def recruit' hero_registry.py && grep -q 'def retire' hero_registry.py && grep -q 'def power_up' hero_registry.py && grep -q 'def team_up' hero_registry.py && grep -q 'def power_surge' hero_registry.py && grep -q 'def status_report' hero_registry.py"
         hints:
-          - text: "All five functions must be present in `hero_registry.py`. Add the `power_surge` function using the pattern from earlier steps."
+          - text: "All six functions must be present. After resolving the merge conflict, keep both your `power_surge` and your colleague's `status_report`."
+            condition: "code_missing: def status_report"
+          - text: "Add the `power_surge` function using the pattern from earlier steps."
             condition: "code_missing: def power_surge"
+      - description: "hero_registry.py has no conflict markers"
+        command: "cd /tutorial/myproject && ! grep -q '<<<<<<<\\|=======\\|>>>>>>>' hero_registry.py"
+        hints:
+          - text: "Conflict markers are still in your file. Remove all `<<<<<<<`, `=======`, and `>>>>>>>` markers — keep both functions, just like in Step 12."
+            condition: "source_contains: <<<<<<<"
       - description: ".gitignore exists and is committed"
         command: "cd /tutorial/myproject && git log --oneline -- .gitignore | grep -q '.'"
       - description: "power_surge function is committed on main"
         command: "cd /tutorial/myproject && git show main:hero_registry.py | grep -q 'def power_surge'"
         hints:
-          - text: "The `power_surge` function must reach `main` through the branch-and-merge workflow. What are the key steps: create a branch, commit, switch, and then what?"
+          - text: "The `power_surge` function must reach `main` through the branch-and-merge workflow."
+      - description: "Changes have been pushed to the remote"
+        command: "cd /tutorial/myproject && [ \"$(git rev-parse HEAD)\" = \"$(git rev-parse origin/main)\" ]"
+        hints:
+          - text: "After resolving the conflict and committing the merge, push your result to the remote with `git push`."
 
     quiz:
       title: "Git Mastery — Final Comprehensive Review"
@@ -3330,6 +3438,40 @@ steps:
             - "It only updates `git log` to show the remote commits — your files are unchanged until you run `git merge`"
           correct_index: 1
           explanation: "`git pull` is shorthand for two operations: `git fetch` downloads new commits from the remote without touching your working directory, then `git merge` integrates those commits into your current branch. Understanding this two-step process helps when you need finer control — for example, running `git fetch` first to inspect incoming changes before merging."
+
+        - question: "You run `git push` and get `! [rejected] ... (fetch first)`. What does this mean and what should you do?"
+          options:
+            - "Your commit has a bug — fix the code and try again"
+            - "The remote has commits you don't have locally — run `git pull` first, resolve any conflicts, then `git push` again"
+            - "Your SSH key has expired — re-authenticate and try again"
+            - "The remote branch was deleted — create it with `git push -u origin main`"
+          correct_index: 1
+          explanation: "A rejected push means the remote is *ahead* of your local branch — someone pushed while you were working. Git refuses your push to prevent you from overwriting their work. The fix: `git pull` (download and merge), resolve conflicts if any, then `git push`. Never use `--force` on shared branches."
+
+        - question: "A colleague suggests using `git push --force` whenever a regular push is rejected. Why is this dangerous on a shared branch?"
+          options:
+            - "It's not dangerous — `--force` just retries the push more aggressively"
+            - "It overwrites the remote history with yours, deleting your colleague's commits and breaking everyone else's local copies"
+            - "It only works if you have admin permissions on the repository"
+            - "It creates duplicate commits on the remote"
+          correct_index: 1
+          explanation: "`git push --force` replaces the remote's history with yours, permanently deleting any commits that only existed on the remote. Every teammate who already pulled those commits now has a diverged local copy. This is why the safe workflow is always **pull → resolve → push**."
+
+        - question: |
+            **Arrange** the correct workflow when `git push` is rejected because the remote has new commits.
+          type: parsons
+          display: block
+          lines:
+            - "git pull"
+            - "Resolve any merge conflicts in the editor"
+            - "git add <resolved-file>"
+            - "git commit"
+            - "git push"
+          distractors:
+            - "git push --force"
+            - "git reset --hard origin/main"
+            - "git clone"
+          explanation: "When a push is rejected: (1) `git pull` downloads and attempts to merge the remote commits, (2) if there are conflicts, resolve them manually, (3) `git add` marks them resolved, (4) `git commit` completes the merge, (5) `git push` now succeeds because your branch includes both your work and the remote's. The distractors are all dangerous or unnecessary — `--force` overwrites the remote, `reset --hard` destroys your local work, and `clone` starts over entirely."
 
   # --------------------------------------------------------------------------
   # STEP 15: Celebration — final quiz
