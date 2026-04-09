@@ -157,10 +157,8 @@
     this._gitGraph = null;
     this._currentView = 'editor';
     this._gitGraphAutoRefreshTimer = null;
-    this._gitGraphIdleDumpTimer = null;
-    this._gitGraphEnterDumpTimer = null;
     this._gitGraphRefreshing = false;
-    this._lastTerminalKeypressAt = 0;
+    this._gitGraphHookInstalled = false;
     this._promptDetectBuf = '';
 
     // React preview state
@@ -909,21 +907,10 @@
 
         // xterm ↔ serial
         self.term.onData(function (data) {
-          self._lastTerminalKeypressAt = Date.now();
           self.emulator.serial0_send(data);
           if (data === '\r' || data === '\n') {
             var m = self._inputLine.match(/chmod\s+\+x\s+(\S+)/);
             if (m) self._executableFiles.add(m[1].replace(/^\.\//, '').replace(/^\/tutorial\//, ''));
-            // Schedule a git graph dump shortly after Enter — the command
-            // will likely have finished by then, giving us fresh data.
-            if (self._currentView === 'git_graph' && self.gitGraphPath && self._inputLine.length > 0) {
-              clearTimeout(self._gitGraphEnterDumpTimer);
-              self._gitGraphEnterDumpTimer = setTimeout(function () {
-                if (!self._gitGraphRefreshing && self._muteCount === 0) {
-                  self._refreshGitGraph();
-                }
-              }, 1500);
-            }
             self._inputLine = '';
           } else if (data === '\x7f' || data === '\b') {
             self._inputLine = self._inputLine.slice(0, -1);
@@ -3289,17 +3276,35 @@
   };
 
   /**
-   * Query the live git repo state from the v86 VM and render the graph.
-   * Runs three git commands silently to collect commit log, branches, and HEAD.
+   * Install a PROMPT_COMMAND hook in the VM's bash shell that
+   * automatically dumps git state to a file every time a prompt is
+   * displayed (i.e. after every command completes).  This is the
+   * notification mechanism — the file on the 9p mount is always
+   * fresh, so _refreshGitGraph() just reads it without any serial
+   * interaction.
    */
-  /**
-   * Install a background daemon in the VM that watches the git repo
-   * and writes its state to /tmp/.gitgraph_state whenever it changes.
-   * This avoids any serial terminal interference with user typing.
-   */
+  TutorialCode.prototype._installGitGraphPromptHook = function () {
+    if (this._gitGraphHookInstalled) return;
+    this._gitGraphHookInstalled = true;
+    var p = this.gitGraphPath || '/tutorial';
+    // The hook: a small function appended to PROMPT_COMMAND.
+    // It only runs git commands when inside a git repo.
+    var hookCmd =
+      '__gg_dump() { ' +
+      'cd ' + p + ' 2>/dev/null && [ -d .git ] && ' +
+      '{ echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
+      'echo "===BRANCH==="; git branch 2>/dev/null; ' +
+      'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
+      '} > ' + p + '/.gitgraph_state 2>/dev/null; }; ' +
+      'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
+    this._runSilent(hookCmd);
+  };
+
   /**
    * Run git state commands silently, writing output to a known file
    * on the 9p-mounted filesystem so we can read it via read_file().
+   * Used only for the initial dump (before PROMPT_COMMAND kicks in)
+   * and explicit Refresh button clicks.
    */
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
@@ -3310,7 +3315,6 @@
 
   /**
    * Parse the .gitgraph_state file content and render the SVG graph.
-   * Pure JS — no VM interaction.
    */
   TutorialCode.prototype._renderGitGraphFromText = function (text) {
     var logOutput = '';
@@ -3330,9 +3334,8 @@
   };
 
   /**
-   * FULL refresh: runs _dumpGitState (uses serial!) then reads the file.
-   * Only called from: Refresh button clicks, step loads, _setView.
-   * NEVER called from auto-refresh to avoid corrupting user terminal input.
+   * FULL refresh: runs _dumpGitState (uses serial) then reads the file.
+   * Used for: Refresh button clicks, initial _setView, step loads.
    */
   TutorialCode.prototype._refreshGitGraph = function () {
     if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
@@ -3341,6 +3344,9 @@
     var self = this;
 
     var safetyTimer = setTimeout(function () { self._gitGraphRefreshing = false; }, 10000);
+
+    // Also ensure the PROMPT_COMMAND hook is installed
+    this._installGitGraphPromptHook();
 
     this._dumpGitState()
       .then(function () {
@@ -3361,44 +3367,34 @@
   };
 
   /**
-   * LIGHT refresh: only reads the existing .gitgraph_state file via 9p.
-   * Zero serial interaction — completely safe to call while user types.
-   * Shows the state from the last full dump.  Then schedules a full dump
-   * after 3 s of terminal idle time to pick up the latest git state.
+   * LIGHT refresh: only reads the .gitgraph_state file via 9p.
+   * Zero serial interaction — safe to call at any time.
+   * The PROMPT_COMMAND hook keeps the file fresh after every command,
+   * so this always returns up-to-date data.
    */
   TutorialCode.prototype._lightRefreshGitGraph = function () {
     if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
     var self = this;
-
     this.emulator.read_file('/.gitgraph_state')
       .then(function (buf) {
         self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
       })
       .catch(function () { /* file doesn't exist yet — ignore */ });
-
-    // Schedule a full dump after 2 s of idle (no keypresses).
-    // The dump uses the serial, so we must ensure the user is not typing.
-    clearTimeout(this._gitGraphIdleDumpTimer);
-    this._gitGraphIdleDumpTimer = setTimeout(function () {
-      var idleMs = Date.now() - (self._lastTerminalKeypressAt || 0);
-      if (idleMs >= 1000 && self._muteCount === 0 && !self._gitGraphRefreshing) {
-        self._refreshGitGraph();
-      }
-    }, 2000);
   };
 
   /**
    * Auto-refresh: called from the serial output listener when a shell
-   * prompt is detected.  Uses the light (read-only) path to avoid
-   * injecting commands into the terminal while the user types.
+   * prompt is detected.  Just reads the file that PROMPT_COMMAND
+   * already updated — instant, no serial interaction.
    */
   TutorialCode.prototype._maybeAutoRefreshGitGraph = function () {
     if (this._currentView === 'git_graph' && this.booted) {
       var self = this;
       clearTimeout(this._gitGraphAutoRefreshTimer);
+      // Short delay to let the 9p write from PROMPT_COMMAND propagate
       this._gitGraphAutoRefreshTimer = setTimeout(function () {
         self._lightRefreshGitGraph();
-      }, 400);
+      }, 300);
     }
   };
 
