@@ -108,6 +108,9 @@
     //              "commands-and-files" = replay solution commands on restore
     this.autosaveType = options.autosaveType || null;   // tutorial-level mode
     this.allowAutosave = !!this.autosaveType;            // computed convenience flag
+    // resetType: "files" = reset only starter files (default),
+    //            "commands" = replay all prior solutions + setup_commands (like autosave restore)
+    this.resetType = options.resetType || 'files';
     this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
     this._originalContent = {};           // tracks original file content for dirty detection
     this.booted = false;
@@ -1005,11 +1008,37 @@
                      .join('; ');
     // Stay muted after setup — _refreshPrompt will clear and unmute once
     // the full restore sequence (files + commands) has finished.
-    return self._runSilent(initScript);
+    return self._runSilent(initScript).then(function () {
+      // Snapshot the VM right after boot + setup commands so "commands" resets
+      // can restore to a clean filesystem before replaying solutions.
+      if (self.resetType === 'commands' && self.emulator && self.emulator.save_state) {
+        return self.emulator.save_state().then(function (state) {
+          self._initialVMState = state;
+        });
+      }
+    });
   };
 
   // Clear the terminal, unmute output, then redraw the bash prompt.
   // Called once the full init + restore sequence is done.
+  /**
+   * Reset all JS-side serial/queue state after a VM restore_state().
+   * The VM is back to its post-boot snapshot, so any in-flight _runSilent
+   * listeners will never fire.  We must clear the queue, reset mute count,
+   * and mark shell-level hooks (like the git-graph PROMPT_COMMAND) as
+   * uninstalled since the shell no longer has them.
+   */
+  TutorialCode.prototype._resetSerialState = function () {
+    // Set to 1 (not 0) because _refreshPrompt will do the final decrement
+    // to 0 after the restore sequence finishes.  Setting 0 here would cause
+    // _refreshPrompt's _muteCount-- to underflow to -1, permanently muting
+    // all terminal output.
+    this._muteCount = 1;
+    this._silentQueue = [];
+    this._silentRunning = false;
+    this._gitGraphHookInstalled = false;
+  };
+
   TutorialCode.prototype._refreshPrompt = function () {
     if (this.config.backend === 'v86') {
       if (this.term) this.term.clear();
@@ -2051,11 +2080,20 @@
 
   /**
    * Reset the current step to its original starter-code files.
+   * When resetType is "commands", replays all prior solutions + setup_commands
+   * (like the autosave restore) before applying the current step's starter files.
    */
   TutorialCode.prototype.resetStep = function () {
     var step = this.steps[this.currentStep];
-    if (!step || !step.files) return;
+    if (!step) return;
     var self = this;
+
+    if (self.resetType === 'commands' && self.currentStep > 0) {
+      return self._resetStepWithCommands();
+    }
+
+    // Default "files" reset: just reload starter files
+    if (!step.files) return;
     self._suppressAutoSave = true;
     step.files.forEach(function (f) {
       self.openFile(f.path, f.content, f.language);
@@ -2065,6 +2103,127 @@
     self._suppressAutoSave = false;
     if (step.open_file) { self._setActiveFile(step.open_file); }
     self._renderTabs();
+  };
+
+  /**
+   * "commands" reset: replay all solution files/commands for steps before the
+   * current one, then apply the current step's starter files and run its
+   * setup_commands.  Shows the same loading overlay used by autosave restore.
+   */
+  TutorialCode.prototype._resetStepWithCommands = function () {
+    var self = this;
+    var targetStep = self.currentStep;
+    var totalSteps = targetStep;
+
+    self._showLoading(
+      totalSteps > 0
+        ? 'Resetting step\u2026 (replaying ' + totalSteps + ' step' + (totalSteps === 1 ? '' : 's') + ')'
+        : 'Resetting step\u2026'
+    );
+
+    var p = Promise.resolve();
+
+    // Restore VM to its post-boot state so replayed commands run on a clean filesystem
+    if (self._initialVMState && self.emulator && self.emulator.restore_state) {
+      p = p.then(function () {
+        return self.emulator.restore_state(self._initialVMState).then(function () {
+          self._resetSerialState();
+        });
+      });
+    }
+
+    // Replay steps 0 … currentStep-1: starter files → solution files → solution commands
+    for (var i = 0; i < targetStep; i++) {
+      (function (stepIdx) {
+        var st = self.steps[stepIdx];
+        if (!st) return;
+
+        p = p.then(function () {
+          self._showLoading('Resetting step\u2026 (step ' + (stepIdx + 1) + ' of ' + totalSteps + ')');
+        });
+
+        // 1. Apply step starter files
+        if (st.files) {
+          p = p.then(function () {
+            self._suppressAutoSave = true;
+            var syncs = [];
+            st.files.forEach(function (f) {
+              self.openFile(f.path, f.content, f.language);
+              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+              self._originalContent[f.path] = f.content || '';
+            });
+            self._suppressAutoSave = false;
+            return Promise.all(syncs);
+          });
+        }
+
+        // 2. Apply solution files
+        if (st.solution && st.solution.files) {
+          p = p.then(function () {
+            self._suppressAutoSave = true;
+            var syncs = [];
+            st.solution.files.forEach(function (f) {
+              self.openFile(f.path, f.content, f.language);
+              syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+            });
+            self._suppressAutoSave = false;
+            return Promise.all(syncs);
+          });
+        }
+
+        // 3. Run solution commands
+        if (st.solution && st.solution.commands && st.solution.commands.length > 0) {
+          if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+            var batch = st.solution.commands
+              .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+              .join('; ');
+            p = p.then(function () { return self._runSilent(batch); });
+          }
+        }
+      })(i);
+    }
+
+    // Apply current step's starter files
+    var curStep = self.steps[targetStep];
+    if (curStep && curStep.files) {
+      p = p.then(function () {
+        self._suppressAutoSave = true;
+        var syncs = [];
+        curStep.files.forEach(function (f) {
+          self.openFile(f.path, f.content, f.language);
+          syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+          self._originalContent[f.path] = f.content || '';
+        });
+        self._suppressAutoSave = false;
+        return Promise.all(syncs);
+      });
+    }
+
+    // Run current step's setup_commands
+    if (curStep && curStep.setup_commands && curStep.setup_commands.length > 0) {
+      if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
+        var setupBatch = curStep.setup_commands
+          .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+          .join('; ');
+        p = p.then(function () { return self._runSilent(setupBatch); });
+      }
+    }
+
+    // Reveal the tutorial
+    p = p.then(function () {
+      self._suppressAutoSave = false;
+      if (curStep && curStep.open_file) { self._setActiveFile(curStep.open_file); }
+      self._renderTabs();
+      self._autoSaveProgress();
+      // Clear terminal, unmute, and show a fresh prompt after the silent replay
+      if (self.term) self.term.clear();
+      self._muteCount = 0;
+      if (self.emulator) self.emulator.serial0_send('\n');
+      self._hideLoading();
+      self._refreshGitGraph();
+    });
+
+    return p;
   };
 
   /**
@@ -2106,6 +2265,15 @@
     );
 
     var p = Promise.resolve();
+
+    // Restore VM to its post-boot state so replayed commands run on a clean filesystem
+    if (self._initialVMState && self.emulator && self.emulator.restore_state) {
+      p = p.then(function () {
+        return self.emulator.restore_state(self._initialVMState).then(function () {
+          self._resetSerialState();
+        });
+      });
+    }
 
     for (var i = 0; i < targetStep; i++) {
       (function (stepIdx) {

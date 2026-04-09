@@ -169,6 +169,8 @@
     {% assign tutorial_autosave_type = false %}
   {% endif %}
 
+  {% assign tutorial_reset_type = tutorial_data.reset_type | default: 'files' %}
+
   {% if tutorial_backend == 'webcontainer' %}
   <!-- Register Cross-Origin Isolation service worker required by WebContainers -->
   <script>
@@ -224,6 +226,7 @@
         setupCommands: config.setup_commands || [],
         requireTests: config.require_tests || false,
         autosaveType: effectiveAutosaveType,
+        resetType: '{{ tutorial_reset_type }}',
         instructorMode: instructorMode,
         disableQuiz: {{ tutorial_data.disable_quiz | default: false | jsonify }},
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
