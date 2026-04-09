@@ -188,63 +188,118 @@
     if (branchColors['main']) branchColors['main'] = BRANCH_COLORS[1];
     if (branchColors['master']) branchColors['master'] = BRANCH_COLORS[1];
 
-    // Assign each commit to a branch (for coloring)
+    // -------------------------------------------------------------------------
+    // Lane-based column assignment (prevents crossing lines)
+    //
+    // lanes[i] = hash of the commit we expect to see next in lane i
+    //            (null = lane is free / available)
+    //
+    // Algorithm (processes commits in topo order, newest first):
+    //   1. If a commit is already scheduled in a lane → use that lane.
+    //   2. Otherwise pick the first free lane (or open a new one).
+    //   3. After placing the commit, clear its lane entry.
+    //   4. Schedule its first parent into the same lane (straight continuation).
+    //      If the first parent is already scheduled elsewhere, the lane is freed.
+    //   5. Each additional parent (merge) is scheduled into a new free lane,
+    //      unless it is already scheduled.
+    // -------------------------------------------------------------------------
+    var lanes = [];
+
+    for (var r = 0; r < commits.length; r++) {
+      var cm = commits[r];
+
+      // 1. Find whether this commit is already expected in some lane.
+      var myLane = -1;
+      for (var l = 0; l < lanes.length; l++) {
+        if (lanes[l] === cm.hash) { myLane = l; break; }
+      }
+
+      // 2. No lane waiting → pick first free slot (or grow the array).
+      if (myLane === -1) {
+        for (var l2 = 0; l2 < lanes.length; l2++) {
+          if (lanes[l2] === null) { myLane = l2; break; }
+        }
+        if (myLane === -1) { myLane = lanes.length; lanes.push(null); }
+      }
+
+      cm.col = myLane;
+      cm.row = r;
+
+      // 3. Remove ALL occurrences of this commit from the lanes array
+      //    (handles the case where multiple children pointed to it).
+      for (var l3 = 0; l3 < lanes.length; l3++) {
+        if (lanes[l3] === cm.hash) lanes[l3] = null;
+      }
+
+      // 4. Schedule the first parent into myLane (straight continuation).
+      if (cm.parents.length >= 1) {
+        var fp = cm.parents[0];
+        var fpLane = -1;
+        for (var l4 = 0; l4 < lanes.length; l4++) {
+          if (lanes[l4] === fp) { fpLane = l4; break; }
+        }
+        if (fpLane === -1) {
+          // Parent not yet scheduled — claim myLane for it.
+          lanes[myLane] = fp;
+        }
+        // else: parent already scheduled in another lane; myLane stays free.
+      }
+
+      // 5. Schedule additional parents (merge commits) into free lanes.
+      for (var pi = 1; pi < cm.parents.length; pi++) {
+        var mp = cm.parents[pi];
+        var mpAlready = false;
+        for (var l5 = 0; l5 < lanes.length; l5++) {
+          if (lanes[l5] === mp) { mpAlready = true; break; }
+        }
+        if (!mpAlready) {
+          var freeLane = -1;
+          for (var l6 = 0; l6 < lanes.length; l6++) {
+            if (lanes[l6] === null) { freeLane = l6; break; }
+          }
+          if (freeLane === -1) { freeLane = lanes.length; lanes.push(null); }
+          lanes[freeLane] = mp;
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Assign branch colors to each commit via first-parent chain propagation
+    // -------------------------------------------------------------------------
     var commitBranch = {};
-    // First pass: commits that are branch tips
+    // Seed: branch tips
     for (var bt = 0; bt < branches.length; bt++) {
       commitBranch[branches[bt].hash] = branches[bt].name;
     }
-    // Walk backwards to assign branch membership via first-parent chain
+    // Propagate: a commit inherits the branch of its first child that knows its branch
     for (var ci = 0; ci < commits.length; ci++) {
-      var cm = commits[ci];
-      if (!commitBranch[cm.hash] && cm.parents.length > 0) {
-        // Check if any child already has a branch assigned
-        for (var ch = 0; ch < cm.children.length; ch++) {
-          if (commitBranch[cm.children[ch]]) {
-            // If this commit is the first parent of that child, inherit branch
-            var childCommit = commitMap[cm.children[ch]];
-            if (childCommit && childCommit.parents[0] === cm.hash) {
-              commitBranch[cm.hash] = commitBranch[cm.children[ch]];
+      var cm2 = commits[ci];
+      if (!commitBranch[cm2.hash]) {
+        for (var ch = 0; ch < cm2.children.length; ch++) {
+          if (commitBranch[cm2.children[ch]]) {
+            var childCm = commitMap[cm2.children[ch]];
+            if (childCm && childCm.parents[0] === cm2.hash) {
+              commitBranch[cm2.hash] = commitBranch[cm2.children[ch]];
               break;
             }
           }
         }
       }
-      // Default to 'main' or 'master' or first branch
-      if (!commitBranch[cm.hash]) {
-        commitBranch[cm.hash] = branches.length > 0 ? branches[0].name : 'main';
+      if (!commitBranch[cm2.hash]) {
+        commitBranch[cm2.hash] = branches.length > 0 ? branches[0].name : 'main';
       }
+      cm2.branchColor = branchColors[commitBranch[cm2.hash]] || BRANCH_COLORS[0];
+      cm2.branchName  = commitBranch[cm2.hash];
     }
 
-    // Assign columns by branch — each unique branch gets its own column
-    var branchCols = {};
+    // Total column count
     var colCount = 0;
-    // main/master always in column 0
-    var mainBranch = branchColors['main'] ? 'main' : (branchColors['master'] ? 'master' : null);
-    if (mainBranch) {
-      branchCols[mainBranch] = 0;
-      colCount = 1;
-    }
-    for (var bc = 0; bc < branches.length; bc++) {
-      var bn = branches[bc].name;
-      if (branchCols[bn] === undefined) {
-        branchCols[bn] = colCount++;
-      }
-    }
-
-    // Commits are in topo order (newest first) — assign rows top-to-bottom
-    for (var r = 0; r < commits.length; r++) {
-      var commit = commits[r];
-      var branch = commitBranch[commit.hash];
-      commit.col = branchCols[branch] !== undefined ? branchCols[branch] : 0;
-      commit.row = r;
-      commit.branchColor = branchColors[branch] || BRANCH_COLORS[0];
-      commit.branchName = branch;
+    for (var fc = 0; fc < commits.length; fc++) {
+      if (commits[fc].col >= colCount) colCount = commits[fc].col + 1;
     }
 
     this._branchColors = branchColors;
     this._commitBranch = commitBranch;
-    this._branchCols = branchCols;
     this._colCount = colCount;
   };
 

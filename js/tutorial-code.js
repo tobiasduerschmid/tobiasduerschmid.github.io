@@ -316,7 +316,14 @@
           '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
           ' Editor</button>' +
           '<button class="tvm-view-btn tvm-view-btn-graph" data-view="git_graph">' +
-          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a2 2 0 11-1 3.87v2.26A2 2 0 105 11.87V9.13a2 2 0 10-1-3.73V9.13 M11 3a2 2 0 110 4 2 2 0 010-4z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="3" r="1.5"/><circle cx="4.5" cy="13" r="1.5"/><circle cx="11.5" cy="5" r="1.5"/><line x1="4.5" y1="4.5" x2="4.5" y2="11.5" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 4.5 C4.5 7 8 7 11.5 6.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<line x1="4" y1="3" x2="4" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+          '<path d="M4 6 Q4 9.5 11 9.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+          '<circle cx="4" cy="3" r="2" fill="currentColor"/>' +
+          '<circle cx="4" cy="10" r="2" fill="currentColor"/>' +
+          '<circle cx="4" cy="13" r="2" fill="currentColor" opacity="0.5"/>' +
+          '<circle cx="11" cy="9.5" r="2" fill="currentColor"/>' +
+          '</svg>' +
           ' Git Graph</button>' +
           '</div>'
         : '') +
@@ -3348,12 +3355,14 @@
     // Also ensure the PROMPT_COMMAND hook is installed
     this._installGitGraphPromptHook();
 
+    var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.gitgraph_state';
+
     this._dumpGitState()
       .then(function () {
         return new Promise(function (resolve) { setTimeout(resolve, 150); });
       })
       .then(function () {
-        return self.emulator.read_file('/.gitgraph_state');
+        return self.emulator.read_file(stateReadPath);
       })
       .then(function (buf) {
         clearTimeout(safetyTimer);
@@ -3375,7 +3384,8 @@
   TutorialCode.prototype._lightRefreshGitGraph = function () {
     if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
     var self = this;
-    this.emulator.read_file('/.gitgraph_state')
+    var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.gitgraph_state';
+    this.emulator.read_file(stateReadPath)
       .then(function (buf) {
         self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
       })
