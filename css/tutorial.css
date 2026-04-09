@@ -409,7 +409,42 @@ html, body {
   min-height: 0;
 }
 
-/* Git Graph Panel (replaces editor when step.view === 'git_graph') */
+/* View Toggle Bar (Editor ↔ Git Graph switch) */
+.tvm-view-toggle {
+  display: flex;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 3px 6px;
+}
+
+.tvm-view-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 14px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #777;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+.tvm-view-btn:hover {
+  background: #2a2a36;
+  color: #bbb;
+}
+.tvm-view-btn.active {
+  background: #2a2a3a;
+  color: #e0e0f0;
+}
+.tvm-view-btn svg { flex-shrink: 0; }
+
+/* Git Graph Panel */
 .tvm-git-graph-panel {
   flex: 0 0 60%;
   display: flex;
@@ -456,6 +491,23 @@ html, body {
   padding: 10px;
 }
 
+/* Empty state */
+.git-graph-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+.git-graph-empty code {
+  background: #2a2a3a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 /* SVG styling */
 .git-graph-svg {
   display: block;
@@ -476,12 +528,29 @@ html, body {
   --git-graph-text: #ccc;
 }
 
-/* Light mode overrides for git graph */
+/* ── Light mode overrides for git graph ── */
+html:not(.dark-mode) .tvm-view-toggle {
+  background: #f0f1f3;
+  border-bottom-color: #d4d4d4;
+}
+html:not(.dark-mode) .tvm-view-btn {
+  color: #666;
+}
+html:not(.dark-mode) .tvm-view-btn:hover {
+  background: #e0e1e5;
+  color: #333;
+}
+html:not(.dark-mode) .tvm-view-btn.active {
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
 html:not(.dark-mode) .tvm-git-graph-panel {
-  background: #f5f7fa;
+  background: #fafbfc;
 }
 html:not(.dark-mode) .tvm-git-graph-header {
-  background: #e8eaed;
+  background: #f0f1f3;
   border-bottom-color: #d4d4d4;
   color: #444;
 }
@@ -490,14 +559,24 @@ html:not(.dark-mode) .tvm-git-graph-refresh {
   color: #555;
 }
 html:not(.dark-mode) .tvm-git-graph-refresh:hover {
-  background: #ddd;
+  background: #e0e1e5;
   color: #222;
 }
 html:not(.dark-mode) .tvm-git-graph-container {
   background: #fafbfc;
 }
+html:not(.dark-mode) .git-graph-empty {
+  color: #666;
+}
+html:not(.dark-mode) .git-graph-empty code {
+  background: #e8eaed;
+  color: #333;
+}
+html:not(.dark-mode) .git-graph-svg .git-graph-node {
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));
+}
 html:not(.dark-mode) {
-  --git-graph-text: #444;
+  --git-graph-text: #333;
 }
 
 /* Vertical splitter (between editor and terminal) */

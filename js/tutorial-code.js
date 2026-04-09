@@ -153,10 +153,13 @@
     this._shellWriter = null;
 
     // Git graph state
+    this.gitGraphPath = options.gitGraphPath || null;
     this._gitGraph = null;
     this._currentView = 'editor';
     this._gitGraphAutoRefreshTimer = null;
+    this._gitGraphIdleDumpTimer = null;
     this._gitGraphRefreshing = false;
+    this._lastTerminalKeypressAt = 0;
     this._promptDetectBuf = '';
 
     // React preview state
@@ -308,17 +311,29 @@
       '</div>' +
       '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
       '<div class="tvm-workspace">' +
+      (this.gitGraphPath
+        ? '<div class="tvm-view-toggle">' +
+          '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
+          ' Editor</button>' +
+          '<button class="tvm-view-btn tvm-view-btn-graph" data-view="git_graph">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M5 3a2 2 0 11-1 3.87v2.26A2 2 0 105 11.87V9.13a2 2 0 10-1-3.73V9.13 M11 3a2 2 0 110 4 2 2 0 010-4z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="3" r="1.5"/><circle cx="4.5" cy="13" r="1.5"/><circle cx="11.5" cy="5" r="1.5"/><line x1="4.5" y1="4.5" x2="4.5" y2="11.5" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 4.5 C4.5 7 8 7 11.5 6.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>' +
+          ' Git Graph</button>' +
+          '</div>'
+        : '') +
       '<div class="tvm-editor-panel">' +
       '<div class="tvm-editor-tabs"></div>' +
       '<div class="tvm-editor-container"></div>' +
       '</div>' +
-      '<div class="tvm-git-graph-panel" style="display:none">' +
-      '<div class="tvm-git-graph-header">' +
-      '<span>Git Graph</span>' +
-      '<button class="tvm-git-graph-refresh" title="Refresh graph">&#x21bb; Refresh</button>' +
-      '</div>' +
-      '<div class="tvm-git-graph-container"></div>' +
-      '</div>' +
+      (this.gitGraphPath
+        ? '<div class="tvm-git-graph-panel" style="display:none">' +
+          '<div class="tvm-git-graph-header">' +
+          '<span>Git Graph</span>' +
+          '<button class="tvm-git-graph-refresh" title="Refresh graph">&#x21bb; Refresh</button>' +
+          '</div>' +
+          '<div class="tvm-git-graph-container"></div>' +
+          '</div>'
+        : '') +
       '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
       terminalHtml +
       '</div>' +
@@ -337,6 +352,16 @@
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
 
     var self = this;
+
+    // Git graph toggle buttons
+    var viewBtns = this.root.querySelectorAll('.tvm-view-btn');
+    for (var vi = 0; vi < viewBtns.length; vi++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          self._setView(btn.getAttribute('data-view'));
+        });
+      })(viewBtns[vi]);
+    }
 
     // Git graph refresh button
     var gitRefreshBtn = this.root.querySelector('.tvm-git-graph-refresh');
@@ -883,6 +908,7 @@
 
         // xterm ↔ serial
         self.term.onData(function (data) {
+          self._lastTerminalKeypressAt = Date.now();
           self.emulator.serial0_send(data);
           if (data === '\r' || data === '\n') {
             var m = self._inputLine.match(/chmod\s+\+x\s+(\S+)/);
@@ -2254,9 +2280,12 @@
       setTimeout(function () { stepSelf._rebuildReactPreview(); }, 400);
     }
 
-    // Switch view between editor and git graph based on step config
-    var stepView = step.view || 'editor';
-    this._setView(stepView);
+    // Switch view between editor and git graph based on step config.
+    // If the step explicitly sets `view:`, auto-switch + update toggle.
+    // If not, keep whichever view the user was on (manual toggle persists).
+    if (step.view) {
+      this._setView(step.view);
+    }
 
     // Auto-save progress when navigating to a new step
     if (this.autoSaveEnabled) this._autoSaveProgress();
@@ -3217,14 +3246,14 @@
   TutorialCode.prototype._setView = function (view) {
     var editorPanel = this.root.querySelector('.tvm-editor-panel');
     var graphPanel = this.gitGraphPanelEl;
-    if (!editorPanel || !graphPanel) return;
+    if (!editorPanel) return;
 
-    if (view === 'git_graph') {
+    if (view === 'git_graph' && graphPanel) {
       editorPanel.style.display = 'none';
       graphPanel.style.display = 'flex';
-      // Short delay to let pending _runSilent commands (setup, file sync) drain,
-      // then refresh.  A second attempt catches the rare case where the 9p
-      // file wasn't readable on the first try.
+      // Immediately show the last cached graph (avoids "No commits yet" flash)
+      this._lightRefreshGitGraph();
+      // Then schedule a full dump+read for fresh data
       var self2 = this;
       setTimeout(function () {
         self2._refreshGitGraph();
@@ -3232,7 +3261,7 @@
       }, 800);
     } else {
       editorPanel.style.display = '';
-      graphPanel.style.display = 'none';
+      if (graphPanel) graphPanel.style.display = 'none';
       // Re-layout Monaco after showing
       if (this.editor) {
         var self = this;
@@ -3240,6 +3269,12 @@
       }
     }
     this._currentView = view;
+
+    // Sync toggle button active state
+    var btns = this.root.querySelectorAll('.tvm-view-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-view') === view);
+    }
   };
 
   /**
@@ -3256,80 +3291,104 @@
    * on the 9p-mounted filesystem so we can read it via read_file().
    */
   TutorialCode.prototype._dumpGitState = function () {
+    var p = this.gitGraphPath || '/tutorial';
     return this._runSilent(
-      'cd /tutorial && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > /tutorial/.gitgraph_state 2>/dev/null'
+      'cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.gitgraph_state 2>/dev/null'
     );
   };
 
   /**
-   * Read the git state from the daemon's output file and render the graph.
-   * This uses the 9p filesystem read — no serial commands needed.
+   * Parse the .gitgraph_state file content and render the SVG graph.
+   * Pure JS — no VM interaction.
+   */
+  TutorialCode.prototype._renderGitGraphFromText = function (text) {
+    var logOutput = '';
+    var branchOutput = '';
+    var headRef = '';
+    var sections = text.split(/^===(\w+)===$\n?/m);
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i] === 'LOG') logOutput = (sections[i + 1] || '').trim();
+      if (sections[i] === 'BRANCH') branchOutput = (sections[i + 1] || '').trim();
+      if (sections[i] === 'HEAD') headRef = (sections[i + 1] || '').trim();
+    }
+    var data = GitGraph.parseGitState(logOutput, branchOutput, headRef);
+    if (!this._gitGraph) {
+      this._gitGraph = new GitGraph(this.gitGraphContainerEl);
+    }
+    this._gitGraph.render(data);
+  };
+
+  /**
+   * FULL refresh: runs _dumpGitState (uses serial!) then reads the file.
+   * Only called from: Refresh button clicks, step loads, _setView.
+   * NEVER called from auto-refresh to avoid corrupting user terminal input.
    */
   TutorialCode.prototype._refreshGitGraph = function () {
-    if (!this.booted || this.config.backend !== 'v86') return;
-    if (!window.GitGraph) {
-      console.warn('GitGraph not loaded');
-      return;
-    }
+    if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
     if (this._gitGraphRefreshing) return;
     this._gitGraphRefreshing = true;
     var self = this;
 
-    // Safety: reset flag after 10s in case something gets stuck
     var safetyTimer = setTimeout(function () { self._gitGraphRefreshing = false; }, 10000);
 
-    // Step 1: silently dump git state to a file on the 9p filesystem
     this._dumpGitState()
       .then(function () {
-        // Tiny delay for the 9p filesystem to sync after the shell write
         return new Promise(function (resolve) { setTimeout(resolve, 150); });
       })
       .then(function () {
-        // Step 2: read the file via the 9p API (no serial interaction)
         return self.emulator.read_file('/.gitgraph_state');
       })
       .then(function (buf) {
         clearTimeout(safetyTimer);
         self._gitGraphRefreshing = false;
-        var text = new TextDecoder('utf-8').decode(buf);
-
-        // Parse sections separated by ===LOG===, ===BRANCH===, ===HEAD===
-        var logOutput = '';
-        var branchOutput = '';
-        var headRef = '';
-        var sections = text.split(/^===(\w+)===$\n?/m);
-        for (var i = 0; i < sections.length; i++) {
-          if (sections[i] === 'LOG') logOutput = (sections[i + 1] || '').trim();
-          if (sections[i] === 'BRANCH') branchOutput = (sections[i + 1] || '').trim();
-          if (sections[i] === 'HEAD') headRef = (sections[i + 1] || '').trim();
-        }
-
-        var data = GitGraph.parseGitState(logOutput, branchOutput, headRef);
-        if (!self._gitGraph) {
-          self._gitGraph = new GitGraph(self.gitGraphContainerEl);
-        }
-        self._gitGraph.render(data);
+        self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
       })
-      .catch(function (err) {
+      .catch(function () {
         clearTimeout(safetyTimer);
         self._gitGraphRefreshing = false;
-        console.log('Git graph refresh failed:', err);
       });
   };
 
   /**
-   * Auto-refresh the git graph after the user runs a command in the terminal.
-   * Called from the serial output listener when a shell prompt is detected
-   * and the current view is git_graph.
+   * LIGHT refresh: only reads the existing .gitgraph_state file via 9p.
+   * Zero serial interaction — completely safe to call while user types.
+   * Shows the state from the last full dump.  Then schedules a full dump
+   * after 3 s of terminal idle time to pick up the latest git state.
+   */
+  TutorialCode.prototype._lightRefreshGitGraph = function () {
+    if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
+    var self = this;
+
+    this.emulator.read_file('/.gitgraph_state')
+      .then(function (buf) {
+        self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
+      })
+      .catch(function () { /* file doesn't exist yet — ignore */ });
+
+    // Schedule a full dump after 3 s of idle (no keypresses).
+    // The dump uses the serial, so we must ensure the user is not typing.
+    clearTimeout(this._gitGraphIdleDumpTimer);
+    this._gitGraphIdleDumpTimer = setTimeout(function () {
+      // Check idle: no keypress in the last 2 seconds
+      var idleMs = Date.now() - (self._lastTerminalKeypressAt || 0);
+      if (idleMs >= 2000 && self._muteCount === 0 && !self._gitGraphRefreshing) {
+        self._refreshGitGraph();
+      }
+    }, 3000);
+  };
+
+  /**
+   * Auto-refresh: called from the serial output listener when a shell
+   * prompt is detected.  Uses the light (read-only) path to avoid
+   * injecting commands into the terminal while the user types.
    */
   TutorialCode.prototype._maybeAutoRefreshGitGraph = function () {
     if (this._currentView === 'git_graph' && this.booted) {
       var self = this;
-      // Debounce: wait a bit for the command to fully complete
       clearTimeout(this._gitGraphAutoRefreshTimer);
       this._gitGraphAutoRefreshTimer = setTimeout(function () {
-        self._refreshGitGraph();
-      }, 600);
+        self._lightRefreshGitGraph();
+      }, 400);
     }
   };
 

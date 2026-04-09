@@ -3,6 +3,7 @@ description: "Learn Git with a live visual commit graph — see branches and com
 
 require_tests: true
 autosave_type: commands-and-files
+git_graph: /tutorial
 
 setup_commands:
   - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"

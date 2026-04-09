@@ -263,13 +263,16 @@
   GitGraph.prototype.render = function (data) {
     this._data = data;
     if (!data || data.commits.length === 0) {
-      this.container.innerHTML =
-        '<div style="display:flex;align-items:center;justify-content:center;height:100%;' +
-        'color:#888;font-family:system-ui;font-size:14px;">' +
-        '<div style="text-align:center">' +
-        '<div style="font-size:48px;margin-bottom:12px;">&#x1f333;</div>' +
-        '<div>No commits yet.<br>Run <code style="background:#2a2a3a;padding:2px 6px;border-radius:4px;">git commit</code> to see the graph.</div>' +
-        '</div></div>';
+      // Only show the empty placeholder if the container has no prior graph.
+      // This avoids flashing "No commits yet" when a full refresh is pending.
+      if (!this.container.querySelector('.git-graph-svg')) {
+        this.container.innerHTML =
+          '<div class="git-graph-empty">' +
+          '<div style="text-align:center">' +
+          '<div style="font-size:48px;margin-bottom:12px;">&#x1f333;</div>' +
+          '<div>No commits yet.<br>Run <code>git commit</code> to see the graph.</div>' +
+          '</div></div>';
+      }
       return;
     }
 

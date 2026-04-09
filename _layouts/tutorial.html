@@ -233,6 +233,7 @@
         workerPath:    '{{ "/js/pyodide-worker.js" | relative_url }}',
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
+        gitGraphPath: config.git_graph || null,
       });
       window._tutorial = tutorial;
       tutorial.start();
