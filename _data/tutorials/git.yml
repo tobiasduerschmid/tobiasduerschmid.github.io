@@ -329,7 +329,7 @@ steps:
   # STEP 3: Making changes — edit, diff, add, commit cycle
   # --------------------------------------------------------------------------
   - title: "The Edit-Stage-Commit Cycle"
-    view: git_graph
+    view: editor
     instructions: |
       ### Modifying tracked files
 
@@ -507,7 +507,7 @@ steps:
   # STEP 4: Staging strategies — individual, wildcard, directory, all
   # --------------------------------------------------------------------------
   - title: "Staging Strategies"
-    view: editor
+    view: git_graph
     instructions: |
       ### Controlling what goes into a commit
 

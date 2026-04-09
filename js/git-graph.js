@@ -32,7 +32,7 @@
   var ROW_HEIGHT = 80;
   var COL_WIDTH = 80;
   var PADDING_TOP = 50;
-  var PADDING_LEFT = 200;  // extra space for branch labels on the left
+  var PADDING_LEFT = 250;  // extra space for branch labels + HEAD pointer on the left
   var PADDING_BOTTOM = 40;
   var LABEL_OFFSET_X = 34;
   var LABEL_HEIGHT = 24;
@@ -301,6 +301,24 @@
     this._branchColors = branchColors;
     this._commitBranch = commitBranch;
     this._colCount = colCount;
+  };
+
+  /**
+   * Returns an SVG path string for a left-flush rectangle with a right-pointing
+   * triangular tip ("pointer" / "tag" shape).
+   * x,y = top-left of bounding box; w,h = total width and height.
+   * The triangle depth equals h/2 so the tip is a sharp point.
+   */
+  GitGraph.prototype._pointerPath = function (x, y, w, h) {
+    var d = h / 2;  // depth of the triangular tip
+    return [
+      'M', x, y,
+      'L', x + w - d, y,
+      'L', x + w,     y + d,
+      'L', x + w - d, y + h,
+      'L', x,         y + h,
+      'Z'
+    ].join(' ');
   };
 
   GitGraph.prototype._hashString = function (str) {
