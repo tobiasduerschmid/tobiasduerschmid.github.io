@@ -109,7 +109,7 @@ steps:
         hints:
           - text: "You need to create a new repository. Which command from the instructions above creates a new Git project in a folder called `myproject`? Make sure you also `cd` into it afterward."
       - description: "Current directory is myproject"
-        command: "[ \"$(basename $(pwd))\" = \"myproject\" ]"
+        command: "[ \"$(pwd)\" = \"/tutorial/myproject\" ]"
         hints:
           - text: "After running `git init myproject`, navigate into the new folder with `cd myproject`. Your terminal prompt should show you're inside the project directory."
 
@@ -239,11 +239,9 @@ steps:
         content: |
           """Hero Registry — track your superhero squad."""
 
-
           def recruit(name, power):
               """Add a new hero to the squad."""
               return {"name": name, "power": power, "status": "active"}
-
 
           def retire(hero):
               """Retire a hero from active duty."""
@@ -413,17 +411,14 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad."""
                 return {"name": name, "power": power, "status": "active"}
-
 
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
-
 
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
@@ -1567,23 +1562,19 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad."""
                 return {"name": name, "power": power, "status": "active"}
-
 
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
 
-
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
-
 
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
@@ -1977,25 +1968,21 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad (with safety protocols)."""
                 if not isinstance(name, str):
                     raise TypeError("Hero name must be a string")
                 return {"name": name, "power": power, "status": "active"}
 
-
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
 
-
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
-
 
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
@@ -2260,7 +2247,6 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad (with safety protocols and mission logging)."""
                 if not isinstance(name, str):
@@ -2268,18 +2254,15 @@ steps:
                 print(f"Recruiting {name} with power: {power}")
                 return {"name": name, "power": power, "status": "active"}
 
-
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
 
-
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
-
 
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
@@ -3052,7 +3035,6 @@ steps:
           content: |
             """Hero Registry — track your superhero squad."""
 
-
             def recruit(name, power):
                 """Add a new hero to the squad (with safety protocols and mission logging)."""
                 if not isinstance(name, str):
@@ -3060,25 +3042,21 @@ steps:
                 print(f"Recruiting {name} with power: {power}")
                 return {"name": name, "power": power, "status": "active"}
 
-
             def retire(hero):
                 """Retire a hero from active duty."""
                 hero["status"] = "retired"
                 return hero
-
 
             def power_up(hero, multiplier):
                 """Boost a hero's power level permanently."""
                 hero["power"] = hero["power"] * multiplier
                 return hero
 
-
             def team_up(hero1, hero2):
                 """Combine two heroes for a mission."""
                 if hero1 is None or hero2 is None:
                     raise ValueError("Cannot team up with an absent hero")
                 return f"{hero1['name']} and {hero2['name']} unite!"
-
 
             def power_surge(hero, boost):
                 """Apply a power surge to a hero."""
@@ -3103,7 +3081,6 @@ steps:
         ```python
         """Hero Registry — track your superhero squad."""
 
-
         def recruit(name, power):
             """Add a new hero to the squad (with safety protocols and mission logging)."""
             if not isinstance(name, str):
@@ -3111,25 +3088,21 @@ steps:
             print(f"Recruiting {name} with power: {power}")
             return {"name": name, "power": power, "status": "active"}
 
-
         def retire(hero):
             """Retire a hero from active duty."""
             hero["status"] = "retired"
             return hero
-
 
         def power_up(hero, multiplier):
             """Boost a hero's power level permanently."""
             hero["power"] = hero["power"] * multiplier
             return hero
 
-
         def team_up(hero1, hero2):
             """Combine two heroes for a mission."""
             if hero1 is None or hero2 is None:
                 raise ValueError("Cannot team up with an absent hero")
             return f"{hero1['name']} and {hero2['name']} unite!"
-
 
         def power_surge(hero, boost):
             """Apply a power surge to a hero."""
