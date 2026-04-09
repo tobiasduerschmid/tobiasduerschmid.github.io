@@ -2400,7 +2400,7 @@
     }
     if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
 
-    if (step.setup_commands) {
+    if (firstVisit && step.setup_commands) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
         step.setup_commands.forEach(function (cmd) {
           // Commands starting with a space are housekeeping (hidden from
