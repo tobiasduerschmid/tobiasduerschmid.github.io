@@ -409,6 +409,97 @@ html, body {
   min-height: 0;
 }
 
+/* Git Graph Panel (replaces editor when step.view === 'git_graph') */
+.tvm-git-graph-panel {
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #1a1a2e;
+}
+
+.tvm-git-graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: #161618;
+  border-bottom: 1px solid #2a2a2e;
+  min-height: 36px;
+  flex-shrink: 0;
+  color: #b0b0c0;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.tvm-git-graph-refresh {
+  background: transparent;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tvm-git-graph-refresh:hover {
+  background: #333;
+  color: #eee;
+}
+
+.tvm-git-graph-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
+}
+
+/* SVG styling */
+.git-graph-svg {
+  display: block;
+}
+.git-graph-svg .git-graph-node {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.git-graph-svg .git-graph-head-glow {
+  animation: git-graph-pulse 2s ease-in-out infinite;
+}
+@keyframes git-graph-pulse {
+  0%, 100% { stroke-opacity: 0.3; }
+  50% { stroke-opacity: 0.7; }
+}
+
+/* CSS custom property for text color (respects dark/light mode) */
+:root {
+  --git-graph-text: #ccc;
+}
+
+/* Light mode overrides for git graph */
+html:not(.dark-mode) .tvm-git-graph-panel {
+  background: #f5f7fa;
+}
+html:not(.dark-mode) .tvm-git-graph-header {
+  background: #e8eaed;
+  border-bottom-color: #d4d4d4;
+  color: #444;
+}
+html:not(.dark-mode) .tvm-git-graph-refresh {
+  border-color: #bbb;
+  color: #555;
+}
+html:not(.dark-mode) .tvm-git-graph-refresh:hover {
+  background: #ddd;
+  color: #222;
+}
+html:not(.dark-mode) .tvm-git-graph-container {
+  background: #fafbfc;
+}
+html:not(.dark-mode) {
+  --git-graph-text: #444;
+}
+
 /* Vertical splitter (between editor and terminal) */
 .tvm-vsplitter {
   flex: 0 0 4px;
