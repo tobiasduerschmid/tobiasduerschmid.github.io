@@ -178,7 +178,8 @@ Branching allows for parallel development, such as working on a new feature with
 These commands facilitate collaboration by syncing your local work with a remote server (like GitHub).
 * **`git clone`**: Creates a local copy of an existing remote repository.
 * **`git remote`**: Lists remote connections. `git remote add origin <url>` registers a remote named `origin` (the conventional primary remote name).
-* **`git pull`**: Fetches changes from a remote repository and immediately merges them into your current local branch.
+* **`git fetch`**: Downloads new commits and branches from a remote repository into your local copy *without* modifying your working directory or current branch. Useful for reviewing what changed on the remote before deciding how to integrate.
+* **`git pull`**: Shorthand for `git fetch` followed by `git merge` — fetches changes from a remote repository and immediately merges them into your current local branch.
 * **`git push`**: Uploads your local commits to a remote repository. **Note**: Never use `git push -f` (force-push) on shared branches, as it can overwrite and destroy work pushed by other team members.
     * `git push -u origin <branch>`: Pushes the branch and sets up **upstream tracking**, so future `git push` and `git pull` calls on this branch no longer need to specify the remote and branch name.
 * **Bare Repositories**: A bare repository (created with `git init --bare`) contains only the Git metadata with no working directory — it stores history but you cannot edit files in it directly. Remote servers (GitHub, GitLab, self-hosted) use bare repositories as the central point that all developers push to and pull from.
