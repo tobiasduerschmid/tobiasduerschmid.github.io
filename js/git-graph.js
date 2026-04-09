@@ -15,15 +15,15 @@
 (function () {
   'use strict';
 
-  // Branch color palette — consistent hashing by branch name
+  // Branch color palette — UCLA colors first, then general palette for variety
   var BRANCH_COLORS = [
+    '#2774AE', // UCLA Blue
+    '#FFB81C', // UCLA Darkest Gold
     '#e74c3c', // red
     '#2ecc71', // green
-    '#3498db', // blue
-    '#f39c12', // orange
     '#9b59b6', // purple
     '#1abc9c', // teal
-    '#e67e22', // dark orange
+    '#e67e22', // orange
     '#e84393', // pink
   ];
 
@@ -184,9 +184,9 @@
       var colorIdx = this._hashString(bname) % BRANCH_COLORS.length;
       branchColors[bname] = BRANCH_COLORS[colorIdx];
     }
-    // Ensure 'main' and 'master' get green
-    if (branchColors['main']) branchColors['main'] = BRANCH_COLORS[1];
-    if (branchColors['master']) branchColors['master'] = BRANCH_COLORS[1];
+    // Ensure 'main' and 'master' get UCLA Blue
+    if (branchColors['main']) branchColors['main'] = BRANCH_COLORS[0];
+    if (branchColors['master']) branchColors['master'] = BRANCH_COLORS[0];
 
     // -------------------------------------------------------------------------
     // Lane-based column assignment (prevents crossing lines)

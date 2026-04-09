@@ -224,15 +224,19 @@
             self.loadStep(saved.step);
             if (self.autosaveType === 'commands-and-files') {
               // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
-              self._restoreCommandsAndFiles(saved);
+              self._restoreCommandsAndFiles(saved).then(function () {
+                self._refreshPrompt();
+              });
             } else {
               self._applySavedFiles(saved.files, saved.activeFile);
               self._suppressAutoSave = false;
               // Persist the correctly-restored state immediately
               self._autoSaveProgress();
+              self._refreshPrompt();
             }
           } else {
             self.loadStep(0);
+            self._refreshPrompt();
           }
         }
       })
@@ -1004,6 +1008,13 @@
       self._muteCount--;  // unmute now that the terminal is clean
       return delay(100);
     });
+  };
+
+  // Send a bare newline so bash redraws its prompt after the terminal has been
+  // cleared and all restore commands have finished running.
+  TutorialCode.prototype._refreshPrompt = function () {
+    if (this.config.backend === 'v86' && this.emulator) this.emulator.serial0_send('\n');
+    if (this.config.backend === 'webcontainer' && this._shellWriter) this._shellWriter.write('\n');
   };
 
   TutorialCode.prototype.sendCommand = function (cmd) {
