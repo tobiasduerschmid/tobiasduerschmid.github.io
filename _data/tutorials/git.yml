@@ -2254,6 +2254,13 @@ steps:
       After editing, mark the conflict as resolved (using `git add`) and create the merge commit.
       You've done both of these before.
 
+      > **Heads up — VI/VIM editor:** Unlike your previous commits, this time
+      > you'll run `git commit` without `-m "..."`. Git will open the VI/VIM
+      > text editor with a pre-filled merge commit message. You don't need to
+      > change anything — just save and exit by typing **`:wq`** and pressing
+      > Enter. If you accidentally enter insert mode (text starts appearing),
+      > press **Escape** first, then type `:wq`.
+
       You just resolved a merge conflict! That's genuinely a flex — this
       is a skill that trips up even experienced developers.
 
