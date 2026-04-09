@@ -924,7 +924,7 @@
           } else { self._inputLine += data; }
         });
 
-        self._muteCount = 0;
+        self._muteCount = 1;  // mute all output until _setupFilesystem clears and unmutes
         self.emulator.add_listener('serial0-output-byte', function (byte) {
           var ch = String.fromCharCode(byte);
           if (self._muteCount === 0) {
@@ -1001,6 +1001,7 @@
                      .join('; ');
     return self._runSilent(initScript).then(function () {
       if (self.term) self.term.clear();
+      self._muteCount--;  // unmute now that the terminal is clean
       return delay(100);
     });
   };

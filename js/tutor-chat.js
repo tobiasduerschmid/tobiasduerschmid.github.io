@@ -74,17 +74,6 @@
 
     // --- Hint generators (order = display order, generic first) ---
 
-    // 1. Code is empty or just comments
-    var stripped = studentCode.replace(/^\s*#.*$/gm, '').replace(/^\s*\/\/.*$/gm, '').trim();
-    if (!stripped || stripped.length < 10) {
-      hints.push({
-        icon: '\u270F\uFE0F',
-        title: 'Your code is mostly empty',
-        body: 'Read the task instructions above and start writing your solution. The comments in the editor describe what you need to do.'
-      });
-      return hints;
-    }
-
     // 2. Syntax/runtime error detection (any test matching "runs without errors")
     var hasRunError = failingTests.some(function (t) {
       return /runs? without errors|no errors|script runs/i.test(t.description);
