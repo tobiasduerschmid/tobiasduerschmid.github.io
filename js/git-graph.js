@@ -79,7 +79,7 @@
 
       var commit = {
         hash: hash,
-        shortHash: hash.substring(0, 5),
+        shortHash: hash.substring(0, 4) + '\u2026',
         parents: parents,
         message: message,
         decorations: decorations,
