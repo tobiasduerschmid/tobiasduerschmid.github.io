@@ -1488,6 +1488,11 @@ steps:
 
       ### Task 2: Create and switch to a new branch
 
+      > 📊 **Check the Git Graph** — click the **Git Graph** tab (top right).
+      > We will now create a new branch and watch the graph update in real time. 
+      > What do you you expect to see when we create the new branch? 
+      > Make a prediction, then watch it happen.
+
       ```bash
       git switch -c feature-team-up
       ```
@@ -1495,6 +1500,11 @@ steps:
       This creates a new branch called `feature-team-up` and switches to it.
       (`-c` means "create the branch"). Run `git branch` to confirm you're
       on the new branch.
+
+
+      > 📊 **Git Graph** — Was this what you expected?
+      > It does not look like a branch, does it? That's because both `main` and `feature-team-up` are pointing to the same commit. They are two Post-it notes on the same commit.
+      > HEAD is now pointing to `feature-team-up` meaning that every new commit will be added to this branch.
 
       ### Task 3: Make changes on the feature branch
 
@@ -1508,20 +1518,31 @@ steps:
               raise ValueError("Cannot team up with an absent hero")
           return f"{hero1['name']} and {hero2['name']} unite!"
       ```
+      > 📊 **Check the Git Graph** — We will now commit our changes. What do you expect will happen?
+      > Make a prediction, then watch it happen.
 
       Save, then stage and commit using the workflow from Steps 2–4.
       Use the message `"Add team_up function with absent-hero check"`
       (the test checks for "team" in the commit message).
 
-      ### Task 4: Switch back to main
+      > 📊 **Git Graph** — Was this what you expected?
+      > Now we see the changes diverge. `main` is still on the old commit, while `feature-team-up` has moved to the new commit with the team_up function. The two branches are now on different commits, showing that they have diverged timelines.
 
-      > **Before you run:** When you switch back to `main`, will the `team_up`
-      > function still be visible in `hero_registry.py`? Why or why not? Think
-      > about what a branch pointer actually represents, then check your answer.
+      ### Task 4: Switch back to main 
+
+      > **Before you run:** When you switch back to `main`, what will happen to your Git graph? Think
+      > about what a branch pointer actually represents, predict your answer, then check it by running this command:
 
       ```bash
       git switch main
       ```
+
+      > 📊 **Check the Git Graph** — HEAD has jumped back to `main`. The two
+      > branch labels now sit on different commits, showing the diverged
+      > timelines.
+
+      > **Before you continue:** Now after switching back to `main`, will the `team_up`
+      > function still be visible in `hero_registry.py`? Why or why not? Check your answer by running this command:
 
       Now look at `hero_registry.py` in the terminal:
 
@@ -1550,6 +1571,11 @@ steps:
       ```
 
       The function is back. Each branch is a separate timeline.
+
+      > 📊 **Check the Git Graph** one last time — HEAD is back on
+      > `feature-team-up`. You've now seen all four graph states: shared
+      > commit → new label → diverged timelines → HEAD switching sides.
+
 
     watch_files:
       - "myproject/hero_registry.py"
