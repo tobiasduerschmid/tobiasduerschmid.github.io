@@ -20,15 +20,19 @@ html:not(.dark-mode) #tts-read-btn:hover,   html:not(.dark-mode) #tts-read-btn:f
   color: #000 !important;
 }
 
-/* <button> doesn't inherit the global a:hover styles — match them explicitly */
+/* <button> and <label> don't inherit the global a:hover styles — match them explicitly */
 html:not(.dark-mode) #tts-read-btn:hover,
-html:not(.dark-mode) #tts-read-btn:focus {
+html:not(.dark-mode) #tts-read-btn:focus,
+html:not(.dark-mode) #autoSaveLabel:hover,
+html:not(.dark-mode) #autoSaveLabel:focus {
   background-color: #FFD100 !important;
   border-radius: 4px !important;
 }
 
 html.dark-mode #tts-read-btn:hover,
-html.dark-mode #tts-read-btn:focus {
+html.dark-mode #tts-read-btn:focus,
+html.dark-mode #autoSaveLabel:hover,
+html.dark-mode #autoSaveLabel:focus {
   background-color: #005587 !important;
   color: #fff !important;
   border-radius: 4px !important;

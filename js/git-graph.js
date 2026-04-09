@@ -301,6 +301,29 @@
     this._branchColors = branchColors;
     this._commitBranch = commitBranch;
     this._colCount = colCount;
+
+    // Compute extra right-side space needed for labels that flip to the right
+    // (any branch whose tip commit sits on col > 0).
+    // We measure only the ADDITIONAL pixels beyond the last column's x — not the
+    // full label width — so we don't over-inflate the message area.
+    var rightLabelSpace = 0;
+    var lastColX = PADDING_LEFT + colCount * COL_WIDTH;
+    var PTR_D    = LABEL_HEIGHT / 2;   // 12
+    var HEAD_W   = (4 * 7.5 + 16) + PTR_D; // "HEAD" label full width
+    for (var rb = 0; rb < branches.length; rb++) {
+      var rbName   = branches[rb].name;
+      var rbCommit = commitMap[branches[rb].hash];
+      if (!rbCommit || rbCommit.col === 0) continue;
+      var brTipX  = PADDING_LEFT + rbCommit.col * COL_WIDTH + NODE_RADIUS + 10; // TIP_TO_NODE=10
+      var brW     = rbName.length * 7.5 + 16 + PTR_D;
+      var rEdge   = brTipX + brW;
+      // Add HEAD label width only when this branch actually carries HEAD
+      if (!data.head.detached && data.head.ref === rbName) {
+        rEdge += 4 + HEAD_W;  // HEAD_GAP=4
+      }
+      rightLabelSpace = Math.max(rightLabelSpace, rEdge - lastColX);
+    }
+    this._rightLabelSpace = Math.max(0, rightLabelSpace);
   };
 
   /**
@@ -309,10 +332,27 @@
    * x,y = top-left of bounding box; w,h = total width and height.
    * The triangle depth equals h/2 so the tip is a sharp point.
    */
-  GitGraph.prototype._pointerPath = function (x, y, w, h) {
+  /**
+   * Pointer/chevron path.
+   * direction 'right' (default): tip on the right  ▶
+   * direction 'left':            tip on the left   ◀
+   */
+  GitGraph.prototype._pointerPath = function (x, y, w, h, direction) {
     var d = h / 2;  // depth of the triangular tip
+    if (direction === 'left') {
+      // Left-pointing: tip at (x, y+d), rectangle spans x+d → x+w
+      return [
+        'M', x,         y + d,
+        'L', x + d,     y,
+        'L', x + w,     y,
+        'L', x + w,     y + h,
+        'L', x + d,     y + h,
+        'Z'
+      ].join(' ');
+    }
+    // Right-pointing (default): tip at (x+w, y+d)
     return [
-      'M', x, y,
+      'M', x,         y,
       'L', x + w - d, y,
       'L', x + w,     y + d,
       'L', x + w - d, y + h,
@@ -355,7 +395,7 @@
     var branches = data.branches;
     var head = data.head;
 
-    var width = PADDING_LEFT + (this._colCount) * COL_WIDTH + 200; // extra for labels
+    var width = PADDING_LEFT + (this._colCount) * COL_WIDTH + (this._rightLabelSpace || 0) + 480; // 480px ≈ 50 chars × 8px + buffer for commit messages
     var height = PADDING_TOP + commits.length * ROW_HEIGHT + PADDING_BOTTOM;
 
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" ' +
@@ -437,8 +477,8 @@
         'fill="#fff" font-size="10" font-weight="600" class="git-graph-hash">' +
         cm.shortHash + '</text>';
 
-      // Commit message to the right of the rightmost column
-      var msgX = this._cx(this._colCount) + 20;
+      // Commit message — pushed right to clear any right-side branch labels
+      var msgX = this._cx(this._colCount) + (this._rightLabelSpace || 0) + 20;
       svg += '<text x="' + msgX + '" y="' + (cy + 4) + '" ' +
         'fill="var(--git-graph-text, #ccc)" font-size="12" class="git-graph-message">' +
         this._escapeXml(this._truncate(cm.message, 50)) + '</text>';
@@ -447,8 +487,17 @@
   };
 
   GitGraph.prototype._renderBranchLabels = function (branches, commitMap, head) {
+    var self = this;
     var svg = '';
-    // Group labels by commit hash to stack them
+
+    // Geometry constants
+    var PTR_DEPTH           = LABEL_HEIGHT / 2;   // 12 px — triangular tip depth
+    var TIP_TO_NODE         = 10;                 // gap: pointer tip → node circle edge
+    var HEAD_GAP            = 4;                  // gap between HEAD label and branch label
+    var HEAD_COLOR          = '#ffffff';
+    var HEAD_DETACHED_COLOR = '#f39c12';
+
+    // Group labels by commit hash
     var labelsByCommit = {};
     for (var i = 0; i < branches.length; i++) {
       var br = branches[i];
@@ -458,6 +507,21 @@
       labelsByCommit[br.hash].push(br);
     }
 
+    // Dashed L-connector.
+    // LEFT side  (horizFirst=true):  horizontal → vertical  (left label → right node)
+    // RIGHT side (horizFirst=false): vertical → horizontal  (left node  → right label)
+    function lConnector(x1, y1, x2, y2, color, horizFirst) {
+      if (Math.abs(y1 - y2) < 1) {
+        return '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' +
+          'stroke="' + color + '" stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="3,2"/>';
+      }
+      var pts = horizFirst
+        ? (x1 + ',' + y1 + ' ' + x2 + ',' + y1 + ' ' + x2 + ',' + y2)   // horiz first
+        : (x1 + ',' + y1 + ' ' + x1 + ',' + y2 + ' ' + x2 + ',' + y2);  // vert first
+      return '<polyline points="' + pts + '" fill="none" stroke="' + color + '" ' +
+        'stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="3,2"/>';
+    }
+
     for (var hash in labelsByCommit) {
       if (!labelsByCommit.hasOwnProperty(hash)) continue;
       var labels = labelsByCommit[hash];
@@ -465,63 +529,111 @@
       var cx = this._cx(commit.col);
       var cy = this._cy(commit.row);
 
+      // Commits on col > 0 would have their left-side label cross the edges of
+      // the columns to their left — flip those labels to the right side instead.
+      var flipRight = (commit.col > 0);
+
       for (var l = 0; l < labels.length; l++) {
-        var br = labels[l];
-        var isHead = (head.ref === br.name);
-        var color = this._branchColors[br.name] || BRANCH_COLORS[0];
-        var labelX = cx - LABEL_OFFSET_X - 4;
-        var labelY = cy - LABEL_HEIGHT / 2 - (labels.length - 1 - l) * (LABEL_HEIGHT + LABEL_GAP);
+        var br          = labels[l];
+        var isHeadBr    = (!head.detached && head.ref === br.name);
+        var color       = this._branchColors[br.name] || BRANCH_COLORS[0];
+        var labelY      = cy - LABEL_HEIGHT / 2 - (labels.length - 1 - l) * (LABEL_HEIGHT + LABEL_GAP);
+        var labelMidY   = labelY + LABEL_HEIGHT / 2;
+        var textW       = br.name.length * 7.5 + 16;
+        var brW         = textW + PTR_DEPTH;
 
-        var textLen = br.name.length * 8 + 20;
-        if (isHead) textLen += 50; // extra space for "HEAD→ " prefix
+        if (flipRight) {
+          // ── RIGHT side: left-pointing pointer ◀, label extends rightward ──
+          var tipX  = cx + NODE_RADIUS + TIP_TO_NODE;   // tip touches node right side
+          var brX   = tipX;                              // left bounding edge = tip
 
-        // Label pill (to the left of the node)
-        var pillX = labelX - textLen;
-        svg += '<rect x="' + pillX + '" y="' + labelY + '" ' +
-          'width="' + textLen + '" height="' + LABEL_HEIGHT + '" rx="4" ry="4" ' +
-          'fill="' + color + '" fill-opacity="0.2" stroke="' + color + '" stroke-width="1.5"/>';
+          svg += '<path d="' + this._pointerPath(brX, labelY, brW, LABEL_HEIGHT, 'left') + '" ' +
+            'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
+          svg += '<text x="' + (brX + PTR_DEPTH + textW / 2) + '" y="' + (labelMidY + 4) + '" ' +
+            'text-anchor="middle" fill="' + color + '" font-size="11" font-weight="700" ' +
+            'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
 
-        // Branch name text
-        var textX = pillX + 8;
-        svg += '<text x="' + textX + '" y="' + (labelY + LABEL_HEIGHT / 2 + 4) + '" ' +
-          'fill="' + color + '" font-size="11" font-weight="700" class="git-graph-branch-label">';
-        if (isHead) {
-          svg += 'HEAD\u2192 ';
+          // Connector: vert from node centre to label row, then horiz to tip
+          svg += lConnector(cx + NODE_RADIUS + 2, cy, tipX, labelMidY, color, false);
+
+          if (isHeadBr) {
+            var headTextW = 4 * 7.5 + 16;
+            var headW     = headTextW + PTR_DEPTH;
+            var headX     = brX + brW + HEAD_GAP;   // HEAD sits to the right of branch label
+
+            svg += '<path d="' + this._pointerPath(headX, labelY, headW, LABEL_HEIGHT, 'left') + '" ' +
+              'fill="' + HEAD_COLOR + '" fill-opacity="0.95" stroke="' + color + '" stroke-width="1.5"/>';
+            svg += '<text x="' + (headX + PTR_DEPTH + headTextW / 2) + '" y="' + (labelMidY + 4) + '" ' +
+              'text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="700">HEAD</text>';
+            // Short solid connector: branch right edge → HEAD tip
+            svg += '<line x1="' + (brX + brW) + '" y1="' + labelMidY + '" ' +
+              'x2="' + headX + '" y2="' + labelMidY + '" stroke="' + color + '" stroke-width="1.5"/>';
+          }
+
+        } else {
+          // ── LEFT side: right-pointing pointer ▶, label extends leftward ──
+          var tipX  = cx - NODE_RADIUS - TIP_TO_NODE;
+          var brX   = tipX - brW;
+
+          svg += '<path d="' + this._pointerPath(brX, labelY, brW, LABEL_HEIGHT) + '" ' +
+            'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
+          svg += '<text x="' + (brX + textW / 2) + '" y="' + (labelMidY + 4) + '" ' +
+            'text-anchor="middle" fill="' + color + '" font-size="11" font-weight="700" ' +
+            'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
+
+          // Connector: horiz from tip then vert to node centre
+          svg += lConnector(tipX, labelMidY, cx - NODE_RADIUS - 2, cy, color, true);
+
+          if (isHeadBr) {
+            var headTextW = 4 * 7.5 + 16;
+            var headW     = headTextW + PTR_DEPTH;
+            var headTipX  = brX - HEAD_GAP;
+            var headX     = headTipX - headW;
+
+            svg += '<path d="' + this._pointerPath(headX, labelY, headW, LABEL_HEIGHT) + '" ' +
+              'fill="' + HEAD_COLOR + '" fill-opacity="0.95" stroke="' + color + '" stroke-width="1.5"/>';
+            svg += '<text x="' + (headX + headTextW / 2) + '" y="' + (labelMidY + 4) + '" ' +
+              'text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="700">HEAD</text>';
+            svg += '<line x1="' + headTipX + '" y1="' + labelMidY + '" ' +
+              'x2="' + brX + '" y2="' + labelMidY + '" stroke="' + color + '" stroke-width="1.5"/>';
+          }
         }
-        svg += this._escapeXml(br.name);
-        svg += '</text>';
-
-        // Arrow from pill to node
-        svg += '<line x1="' + labelX + '" y1="' + (labelY + LABEL_HEIGHT / 2) + '" ' +
-          'x2="' + (cx - NODE_RADIUS - 2) + '" y2="' + cy + '" ' +
-          'stroke="' + color + '" stroke-width="1.5" stroke-opacity="0.5" ' +
-          'stroke-dasharray="3,2"/>';
       }
     }
 
-    // Render detached HEAD label if needed
+    // ── Detached HEAD ─────────────────────────────────────────────────────────
     if (head.detached && head.hash && commitMap[head.hash]) {
-      var hCommit = commitMap[head.hash];
-      var hcx = this._cx(hCommit.col);
-      var hcy = this._cy(hCommit.row);
-      var hlabelX = hcx - LABEL_OFFSET_X - 4;
-      var htextLen = 130;
-      var hpillX = hlabelX - htextLen;
-      var hlabelY = hcy - LABEL_HEIGHT / 2;
+      var hCommit    = commitMap[head.hash];
+      var hcx        = this._cx(hCommit.col);
+      var hcy        = this._cy(hCommit.row);
+      var DC         = HEAD_DETACHED_COLOR;
+      var hFlip      = (hCommit.col > 0);
+      var htextW     = 4 * 7.5 + 16;
+      var hW         = htextW + PTR_DEPTH;
+      var hlabelY    = hcy - LABEL_HEIGHT / 2;
+      var hlabelMidY = hcy;
 
-      // Check if there are already branch labels on this commit — offset below
       if (labelsByCommit[head.hash]) {
-        hlabelY += (labelsByCommit[head.hash].length) * (LABEL_HEIGHT + LABEL_GAP);
+        hlabelY    += labelsByCommit[head.hash].length * (LABEL_HEIGHT + LABEL_GAP);
+        hlabelMidY  = hlabelY + LABEL_HEIGHT / 2;
       }
 
-      svg += '<rect x="' + hpillX + '" y="' + hlabelY + '" ' +
-        'width="' + htextLen + '" height="' + LABEL_HEIGHT + '" rx="4" ry="4" ' +
-        'fill="#f39c12" fill-opacity="0.2" stroke="#f39c12" stroke-width="1.5"/>';
-      svg += '<text x="' + (hpillX + 8) + '" y="' + (hlabelY + LABEL_HEIGHT / 2 + 4) + '" ' +
-        'fill="#f39c12" font-size="11" font-weight="700">HEAD (detached)</text>';
-      svg += '<line x1="' + hlabelX + '" y1="' + (hlabelY + LABEL_HEIGHT / 2) + '" ' +
-        'x2="' + (hcx - NODE_RADIUS - 2) + '" y2="' + hcy + '" ' +
-        'stroke="#f39c12" stroke-width="1.5" stroke-opacity="0.5" stroke-dasharray="3,2"/>';
+      if (hFlip) {
+        var htipX = hcx + NODE_RADIUS + TIP_TO_NODE;
+        svg += '<path d="' + this._pointerPath(htipX, hlabelY, hW, LABEL_HEIGHT, 'left') + '" ' +
+          'fill="' + DC + '" fill-opacity="0.25" stroke="' + DC + '" stroke-width="1.5"/>';
+        svg += '<text x="' + (htipX + PTR_DEPTH + htextW / 2) + '" y="' + (hlabelMidY + 4) + '" ' +
+          'text-anchor="middle" fill="' + DC + '" font-size="11" font-weight="700">HEAD</text>';
+        svg += lConnector(hcx + NODE_RADIUS + 2, hcy, htipX, hlabelMidY, DC, false);
+      } else {
+        var htipX = hcx - NODE_RADIUS - TIP_TO_NODE;
+        var hX    = htipX - hW;
+        svg += '<path d="' + this._pointerPath(hX, hlabelY, hW, LABEL_HEIGHT) + '" ' +
+          'fill="' + DC + '" fill-opacity="0.25" stroke="' + DC + '" stroke-width="1.5"/>';
+        svg += '<text x="' + (hX + htextW / 2) + '" y="' + (hlabelMidY + 4) + '" ' +
+          'text-anchor="middle" fill="' + DC + '" font-size="11" font-weight="700">HEAD</text>';
+        svg += lConnector(htipX, hlabelMidY, hcx - NODE_RADIUS - 2, hcy, DC, true);
+      }
     }
 
     return svg;

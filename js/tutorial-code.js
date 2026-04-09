@@ -1699,6 +1699,10 @@
       tab.appendChild(x);
       self.editorTabsEl.appendChild(tab);
     });
+    // Ensure the active tab is always visible — scroll it into view horizontally
+    // without affecting page-level vertical scroll (block: 'nearest').
+    var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
+    if (activeTab) activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
   TutorialCode.prototype._closeFile = function (filename) {
@@ -3302,7 +3306,7 @@
       '{ echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
       'echo "===BRANCH==="; git branch 2>/dev/null; ' +
       'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
-      '} > ' + p + '/.gitgraph_state 2>/dev/null; }; ' +
+      '} > ' + p + '/.git/gitgraph_state 2>/dev/null; }; ' +
       'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
     this._runSilent(hookCmd);
   };
@@ -3316,7 +3320,7 @@
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
     return this._runSilent(
-      'cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.gitgraph_state 2>/dev/null'
+      'cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.git/gitgraph_state 2>/dev/null'
     );
   };
 
@@ -3355,7 +3359,7 @@
     // Also ensure the PROMPT_COMMAND hook is installed
     this._installGitGraphPromptHook();
 
-    var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.gitgraph_state';
+    var stateReadPath = (self.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
 
     this._dumpGitState()
       .then(function () {
@@ -3384,7 +3388,7 @@
   TutorialCode.prototype._lightRefreshGitGraph = function () {
     if (!this.booted || this.config.backend !== 'v86' || !window.GitGraph) return;
     var self = this;
-    var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.gitgraph_state';
+    var stateReadPath = (this.gitGraphPath || '/tutorial').replace(/^\/tutorial/, '') + '/.git/gitgraph_state';
     this.emulator.read_file(stateReadPath)
       .then(function (buf) {
         self._renderGitGraphFromText(new TextDecoder('utf-8').decode(buf));
