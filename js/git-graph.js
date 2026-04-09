@@ -28,14 +28,14 @@
   ];
 
   // Layout constants
-  var NODE_RADIUS = 16;
-  var ROW_HEIGHT = 70;
-  var COL_WIDTH = 70;
+  var NODE_RADIUS = 22;
+  var ROW_HEIGHT = 80;
+  var COL_WIDTH = 80;
   var PADDING_TOP = 50;
-  var PADDING_LEFT = 180;  // extra space for branch labels on the left
+  var PADDING_LEFT = 200;  // extra space for branch labels on the left
   var PADDING_BOTTOM = 40;
-  var LABEL_OFFSET_X = 28;
-  var LABEL_HEIGHT = 22;
+  var LABEL_OFFSET_X = 34;
+  var LABEL_HEIGHT = 24;
   var LABEL_GAP = 4;
 
   // ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@
 
       var commit = {
         hash: hash,
-        shortHash: hash.substring(0, 7),
+        shortHash: hash.substring(0, 5),
         parents: parents,
         message: message,
         decorations: decorations,
@@ -361,7 +361,7 @@
 
       // Short hash text inside node
       svg += '<text x="' + cx + '" y="' + (cy + 4) + '" text-anchor="middle" ' +
-        'fill="#fff" font-size="9" font-weight="600" class="git-graph-hash">' +
+        'fill="#fff" font-size="10" font-weight="600" class="git-graph-hash">' +
         cm.shortHash + '</text>';
 
       // Commit message to the right of the rightmost column
@@ -399,8 +399,8 @@
         var labelX = cx - LABEL_OFFSET_X - 4;
         var labelY = cy - LABEL_HEIGHT / 2 - (labels.length - 1 - l) * (LABEL_HEIGHT + LABEL_GAP);
 
-        var textLen = br.name.length * 7.5 + 16;
-        if (isHead) textLen += 28; // extra space for HEAD prefix
+        var textLen = br.name.length * 8 + 20;
+        if (isHead) textLen += 50; // extra space for "HEAD→ " prefix
 
         // Label pill (to the left of the node)
         var pillX = labelX - textLen;
@@ -432,7 +432,7 @@
       var hcx = this._cx(hCommit.col);
       var hcy = this._cy(hCommit.row);
       var hlabelX = hcx - LABEL_OFFSET_X - 4;
-      var htextLen = 100;
+      var htextLen = 130;
       var hpillX = hlabelX - htextLen;
       var hlabelY = hcy - LABEL_HEIGHT / 2;
 
