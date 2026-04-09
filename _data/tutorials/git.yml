@@ -3,6 +3,7 @@ description: "Learn Git through hands-on practice — from your first commit to 
 
 require_tests: true
 autosave_type: commands-and-files
+git_graph: /tutorial/myproject
 
 setup_commands:
   - "echo 'export LANG=C.UTF-8' >> ~/.bashrc && export LANG=C.UTF-8"
@@ -328,6 +329,7 @@ steps:
   # STEP 3: Making changes — edit, diff, add, commit cycle
   # --------------------------------------------------------------------------
   - title: "The Edit-Stage-Commit Cycle"
+    view: git_graph
     instructions: |
       ### Modifying tracked files
 
@@ -505,6 +507,7 @@ steps:
   # STEP 4: Staging strategies — individual, wildcard, directory, all
   # --------------------------------------------------------------------------
   - title: "Staging Strategies"
+    view: editor
     instructions: |
       ### Controlling what goes into a commit
 
@@ -717,6 +720,7 @@ steps:
   # STEP 5: Unstaging and undoing changes
   # --------------------------------------------------------------------------
   - title: "Unstaging and Undoing Changes"
+    view: git_graph
     instructions: |
       ### Ctrl+Z for Git (kind of)
 
@@ -865,6 +869,7 @@ steps:
   # STEP 6: .gitignore
   # --------------------------------------------------------------------------
   - title: "Ignoring Files with .gitignore"
+    view: editor
     instructions: |
       ### Not everything belongs in version control
 
@@ -1099,6 +1104,7 @@ steps:
   # STEP 7: Inspecting history — git log, git diff HEAD, git show
   # --------------------------------------------------------------------------
   - title: "Inspecting History"
+    view: git_graph
     instructions: |
       ### Reading the story of your project
 
@@ -1264,6 +1270,7 @@ steps:
   # STEP 7.5: Mid-tutorial mini-capstone — unguided consolidation
   # --------------------------------------------------------------------------
   - title: "Mini-Capstone: Clean Up a Messy Repository"
+    view: editor
     instructions: |
       ### Boss level: no hand-holding
 
@@ -1425,6 +1432,7 @@ steps:
   # STEP 8: Branching — git branch, git switch
   # --------------------------------------------------------------------------
   - title: "Branching"
+    view: git_graph
     instructions: |
       ### Parallel universes for your code
 
@@ -1662,6 +1670,7 @@ steps:
   # STEP 9: Merging — fast-forward and three-way merge
   # --------------------------------------------------------------------------
   - title: "Merging Branches"
+    view: git_graph
     instructions: |
       ### Integrating your work
 
@@ -1899,6 +1908,7 @@ steps:
   # STEP 10: Create a branch for merge conflict setup
   # --------------------------------------------------------------------------
   - title: "Preparing for a Merge Conflict"
+    view: git_graph
     instructions: |
       ### Merge conflicts: scary name, totally normal
 
@@ -2067,6 +2077,7 @@ steps:
   # STEP 11: Resolving a merge conflict
   # --------------------------------------------------------------------------
   - title: "Resolving a Merge Conflict"
+    view: editor
     instructions: |
       ### The conflict
 
@@ -2364,6 +2375,7 @@ steps:
   # STEP 12: Safe undo with git revert
   # --------------------------------------------------------------------------
   - title: "Safe Undo with git revert"
+    view: git_graph
     instructions: |
       ### Undoing committed mistakes safely
 
@@ -2729,6 +2741,7 @@ steps:
   # STEP 13: Working with Remotes
   # --------------------------------------------------------------------------
   - title: "Working with Remotes"
+    view: git_graph
     instructions: |
       ### Time to go online
 
@@ -2920,6 +2933,7 @@ steps:
   # STEP 14: Review and best practices
   # --------------------------------------------------------------------------
   - title: "Review and Best Practices"
+    view: git_graph
     instructions: |
       ### You made it!
 
@@ -3327,6 +3341,7 @@ steps:
   # STEP 15: Celebration — final quiz
   # --------------------------------------------------------------------------
   - title: "Git Mastery — Final Review"
+    view: git_graph
     instructions: |
       ### Congratulations — you've completed the Git tutorial!
 

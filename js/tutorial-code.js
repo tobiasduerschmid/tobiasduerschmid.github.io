@@ -158,6 +158,7 @@
     this._currentView = 'editor';
     this._gitGraphAutoRefreshTimer = null;
     this._gitGraphIdleDumpTimer = null;
+    this._gitGraphEnterDumpTimer = null;
     this._gitGraphRefreshing = false;
     this._lastTerminalKeypressAt = 0;
     this._promptDetectBuf = '';
@@ -913,6 +914,16 @@
           if (data === '\r' || data === '\n') {
             var m = self._inputLine.match(/chmod\s+\+x\s+(\S+)/);
             if (m) self._executableFiles.add(m[1].replace(/^\.\//, '').replace(/^\/tutorial\//, ''));
+            // Schedule a git graph dump shortly after Enter — the command
+            // will likely have finished by then, giving us fresh data.
+            if (self._currentView === 'git_graph' && self.gitGraphPath && self._inputLine.length > 0) {
+              clearTimeout(self._gitGraphEnterDumpTimer);
+              self._gitGraphEnterDumpTimer = setTimeout(function () {
+                if (!self._gitGraphRefreshing && self._muteCount === 0) {
+                  self._refreshGitGraph();
+                }
+              }, 1500);
+            }
             self._inputLine = '';
           } else if (data === '\x7f' || data === '\b') {
             self._inputLine = self._inputLine.slice(0, -1);
@@ -3365,16 +3376,15 @@
       })
       .catch(function () { /* file doesn't exist yet — ignore */ });
 
-    // Schedule a full dump after 3 s of idle (no keypresses).
+    // Schedule a full dump after 2 s of idle (no keypresses).
     // The dump uses the serial, so we must ensure the user is not typing.
     clearTimeout(this._gitGraphIdleDumpTimer);
     this._gitGraphIdleDumpTimer = setTimeout(function () {
-      // Check idle: no keypress in the last 2 seconds
       var idleMs = Date.now() - (self._lastTerminalKeypressAt || 0);
-      if (idleMs >= 2000 && self._muteCount === 0 && !self._gitGraphRefreshing) {
+      if (idleMs >= 1000 && self._muteCount === 0 && !self._gitGraphRefreshing) {
         self._refreshGitGraph();
       }
-    }, 3000);
+    }, 2000);
   };
 
   /**
