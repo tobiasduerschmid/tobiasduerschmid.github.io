@@ -3161,9 +3161,9 @@ steps:
         - **Test 3:** `.gitignore` must be in the commit history.
         - **Capstone test:** `power_surge` must be committed on `main` and pushed to the remote.
         - **Why the push was rejected:** The remote had a commit (your colleague's `status_report` function) that your local branch didn't have. Git refuses to push because it would overwrite the colleague's work. This is a safety feature, not an error.
-        - **`git pull` = `git fetch` + `git merge`:** When you pull, Git downloads the colleague's commit and tries to merge it with yours. Since both sides added a new function at the end of the same file, Git can't auto-merge and reports a conflict.
-        - **Conflict resolution:** Same process as Step 12 — remove the `<<<<<<<`, `=======`, and `>>>>>>>` markers and keep both functions.
-        - **After resolving:** `git add` + `git commit` completes the merge, then `git push` succeeds because your local branch now includes both your work and your colleague's.
+        - **`git pull` = `git fetch` + `git merge`:** When you pull, Git downloads the colleague's commit and tries to merge it with yours. Since both sides added a new function at the end of the same file, Git can't auto-merge and reports a conflict. The solution uses `--no-commit` so Git pauses after fetching and detecting the conflict, leaving you in a MERGING state without auto-committing.
+        - **Conflict resolution:** Same process as Step 12 — remove the `<<<<<<<`, `=======`, and `>>>>>>>` markers and keep both functions. The solution overwrites `hero_registry.py` with the resolved version containing all six functions.
+        - **After resolving:** `git add` stages the resolved file, then `git commit` completes the merge — Git sees the MERGE_HEAD and creates a proper two-parent merge commit. After that, `git push` succeeds because your local branch now includes both your work and your colleague's.
 
 
     tests:
