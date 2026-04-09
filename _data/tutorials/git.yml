@@ -2107,6 +2107,11 @@ steps:
       in the commit message — write something descriptive. You've done this
       workflow many times; no command list provided.
 
+      > 🔀 **Check the Git Graph:** After your commit, click **Git Graph** in the
+      > toggle above the editor. You'll see a new commit appear at the top of
+      > `main` — a visual record that your mission-logging change now lives on
+      > the branch. Switch back to **Editor** when you're ready to continue.
+
       ### Task 2: Attempt the merge
 
       > **Before you run:** One branch added safety protocols; the other added
@@ -2123,6 +2128,12 @@ steps:
       Git will report a **CONFLICT**! It found that both branches changed
       the same lines in `hero_registry.py` and can't automatically combine
       them.
+
+      > 🔀 **Check the Git Graph:** Click **Git Graph** now. You'll see
+      > `update-recruit-function` and `main` as two separate branches diverging
+      > from a common ancestor — exactly the situation that caused the conflict.
+      > This is what a "not yet merged" state looks like in the graph.
+      > Switch back to **Editor** to resolve the conflict.
 
       ### Task 3: Read the conflict markers
 
@@ -2226,6 +2237,12 @@ steps:
 
       You just resolved a merge conflict! That's genuinely a flex — this
       is a skill that trips up even experienced developers.
+
+      > 🔀 **Check the Git Graph:** Click **Git Graph** one last time. You'll
+      > now see a **merge commit** at the top of `main` with two parent edges
+      > — one coming from `main` and one from `update-recruit-function`.
+      > That diamond shape is the visual signature of a successful merge:
+      > two diverging histories reunited into one.
 
     watch_files:
       - "myproject/hero_registry.py"
