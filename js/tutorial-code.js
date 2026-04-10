@@ -164,6 +164,18 @@
     this._gitGraphHookInstalled = false;
     this._promptDetectBuf = '';
 
+    // UML diagram state
+    this._umlDiagramEnabled = options.uml_diagram || false;
+    this._umlContainer = null;
+    this._umlContentEl = null;
+    this._umlRefreshTimer = null;
+    this._umlAnalyzerCode = null;       // Cached Python analyzer source
+    this._umlActiveType = 'class';      // 'class' or 'sequence'
+    this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
+    this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
+    this._umlViewActive = false;        // true when UML tab is selected
+    this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
+
     // React preview state
     this._previewFrame = null;
     this._reactRebuildTimer = null;
@@ -337,6 +349,14 @@
       '<div class="tvm-editor-panel">' +
       '<div class="tvm-editor-tabs"></div>' +
       '<div class="tvm-editor-container"></div>' +
+      '<div class="tvm-diagram-container" style="display:none">' +
+      '<div class="tvm-diagram-toolbar">' +
+      '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
+      '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+      '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+      '</div>' +
+      '<div class="tvm-diagram-content"></div>' +
+      '</div>' +
       '</div>' +
       (this.gitGraphPath
         ? '<div class="tvm-git-graph-panel" style="display:none">' +
@@ -363,8 +383,28 @@
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
     this.gitGraphPanelEl = this.root.querySelector('.tvm-git-graph-panel');
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
+    this._umlContainer = this.root.querySelector('.tvm-diagram-container');
+    this._umlContentEl = this.root.querySelector('.tvm-diagram-content');
 
     var self = this;
+
+    // UML diagram toolbar events
+    if (this._umlContainer) {
+      var typeBtns = this._umlContainer.querySelectorAll('.tvm-diagram-type-btn');
+      for (var ti = 0; ti < typeBtns.length; ti++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            self._umlActiveType = btn.getAttribute('data-type');
+            for (var j = 0; j < typeBtns.length; j++) {
+              typeBtns[j].classList.toggle('active', typeBtns[j] === btn);
+            }
+            self._renderCurrentUMLDiagram();
+          });
+        })(typeBtns[ti]);
+      }
+      var refreshBtn = this._umlContainer.querySelector('.tvm-diagram-refresh-btn');
+      if (refreshBtn) refreshBtn.addEventListener('click', function () { self._refreshUMLDiagram(); });
+    }
 
     // Git graph toggle buttons
     var viewBtns = this.root.querySelectorAll('.tvm-view-btn');
@@ -1723,6 +1763,10 @@
         if (self._suppressAutoSave) return;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () { self._syncFileToBackend(filename); }, 800);
+        // Trigger UML refresh if this file is in the watched list
+        if (self._umlWatchedFiles.indexOf(filename) !== -1) {
+          self._scheduleUMLRefresh();
+        }
       });
     } else if (content !== undefined) {
       this.editorModels[filename].model.setValue(content);
@@ -1741,15 +1785,35 @@
     this.editorTabsEl.innerHTML = '';
     Object.keys(this.editorModels).forEach(function (filename) {
       var tab = document.createElement('div');
-      tab.className = 'tvm-tab' + (filename === self.activeFileName ? ' active' : '');
+      tab.className = 'tvm-tab' + (filename === self.activeFileName && !self._umlViewActive ? ' active' : '');
       tab.textContent = filename;
-      tab.addEventListener('click', function () { self._setActiveFile(filename); self._renderTabs(); });
+      tab.addEventListener('click', function () {
+        self._umlViewActive = false;
+        self._showEditorHideDiagram();
+        self._setActiveFile(filename);
+        self._renderTabs();
+      });
       var x = document.createElement('span');
       x.className = 'tvm-tab-close'; x.textContent = '\u00d7';
       x.addEventListener('click', function (e) { e.stopPropagation(); self._closeFile(filename); });
       tab.appendChild(x);
       self.editorTabsEl.appendChild(tab);
     });
+
+    // Append pinned UML Diagram tab if enabled for this tutorial
+    if (this._umlDiagramEnabled && this._umlWatchedFiles.length > 0) {
+      var umlTab = document.createElement('div');
+      umlTab.className = 'tvm-tab tvm-tab-diagram' + (this._umlViewActive ? ' active' : '');
+      umlTab.textContent = '\u2b22 UML Diagram';  // hexagon icon
+      umlTab.addEventListener('click', function () {
+        self._umlViewActive = true;
+        self._showDiagramHideEditor();
+        self._refreshUMLDiagram();
+        self._renderTabs();
+      });
+      this.editorTabsEl.appendChild(umlTab);
+    }
+
     // Ensure the active tab is always visible — scroll it into view horizontally
     // without affecting page-level vertical scroll (block: 'nearest').
     var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
@@ -1775,6 +1839,195 @@
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
     if (this.autoSaveEnabled) this._saveFile(this.activeFileName);
+  };
+
+  // ---------------------------------------------------------------------------
+  // UML Diagram Methods
+  // ---------------------------------------------------------------------------
+
+  /** Show diagram container, hide Monaco editor */
+  TutorialCode.prototype._showDiagramHideEditor = function () {
+    if (this.editorContainerEl) this.editorContainerEl.style.display = 'none';
+    if (this._umlContainer) this._umlContainer.style.display = 'flex';
+  };
+
+  /** Show Monaco editor, hide diagram container */
+  TutorialCode.prototype._showEditorHideDiagram = function () {
+    if (this._umlContainer) this._umlContainer.style.display = 'none';
+    if (this.editorContainerEl) this.editorContainerEl.style.display = '';
+    if (this.editor) {
+      var self = this;
+      requestAnimationFrame(function () { self.editor.layout(); });
+    }
+  };
+
+  /** Lazily load the Python UML analyzer source code */
+  TutorialCode.prototype._loadUMLAnalyzer = function (callback) {
+    if (this._umlAnalyzerCode) { callback(this._umlAnalyzerCode); return; }
+    var self = this;
+    var path = this.config.umlAnalyzerPath || '/js/uml-analyzer.py';
+    fetch(path)
+      .then(function (r) { return r.text(); })
+      .then(function (code) {
+        self._umlAnalyzerCode = code;
+        callback(code);
+      })
+      .catch(function (err) {
+        console.error('Failed to load UML analyzer:', err);
+        self._showUMLError('Failed to load UML analyzer script.');
+      });
+  };
+
+  /**
+   * Collect watched file sources, send to Pyodide, parse result.
+   * Only analyzes files listed in _umlWatchedFiles for the current step.
+   */
+  TutorialCode.prototype._refreshUMLDiagram = function () {
+    if (!this._umlDiagramEnabled || !this._worker) return;
+    var self = this;
+
+    // Collect sources from watched files
+    var sources = {};
+    var pending = this._umlWatchedFiles.length;
+    if (pending === 0) {
+      this._showUMLEmpty('No Python files to analyze for this step.');
+      return;
+    }
+
+    // Read each watched file's current editor content (or from backend)
+    this._umlWatchedFiles.forEach(function (filename) {
+      var entry = self.editorModels[filename];
+      if (entry) {
+        sources[filename] = entry.model.getValue();
+        pending--;
+        if (pending === 0) self._runUMLAnalysis(sources);
+      } else {
+        // File not open in editor — try reading from Pyodide FS
+        self._postWorker({ type: 'read', path: '/tutorial/' + filename }, function (msg) {
+          if (msg.type === 'read_ok') {
+            sources[filename] = msg.content;
+          }
+          pending--;
+          if (pending === 0) self._runUMLAnalysis(sources);
+        });
+      }
+    });
+  };
+
+  /** Run the analyzer in Pyodide with the collected sources */
+  TutorialCode.prototype._runUMLAnalysis = function (sources) {
+    var self = this;
+    this._loadUMLAnalyzer(function (analyzerCode) {
+      // Build Python code: set __uml_sources global, run analyzer,
+      // write JSON result to a temp file (avoids stdout interception issues).
+      var sourcesJson = JSON.stringify(sources);
+      var code =
+        '__uml_sources = ' + sourcesJson + '\n' +
+        analyzerCode + '\n' +
+        'import json as _json\n' +
+        'with open("/tmp/__uml_result.json", "w") as _f:\n' +
+        '    _f.write(_json.dumps(result) if "result" in dir() else "{}")\n';
+
+      // Run silently so nothing leaks to the output panel
+      self._postWorker({ type: 'runCode', code: code, silent: true }, function (msg) {
+        if (msg.exitCode !== 0) {
+          self._showUMLError('Python analysis failed (syntax error in source?).');
+          return;
+        }
+        // Read the result file back
+        self._postWorker({ type: 'read', path: '/tmp/__uml_result.json' }, function (readMsg) {
+          if (readMsg.type !== 'read_ok') {
+            self._showUMLError('Could not read analysis results.');
+            return;
+          }
+          try {
+            var result = JSON.parse(readMsg.content);
+            self._umlLastDiagrams = result;
+            self._renderCurrentUMLDiagram();
+          } catch (err) {
+            console.error('UML JSON parse error:', err);
+            self._showUMLError('Analysis returned invalid JSON.');
+          }
+        });
+      });
+    });
+  };
+
+  /** Render whichever diagram type is currently selected */
+  TutorialCode.prototype._renderCurrentUMLDiagram = function () {
+    if (!this._umlLastDiagrams) {
+      this._showUMLEmpty('Click Refresh or edit a Python file to generate diagrams.');
+      return;
+    }
+    var syntax = this._umlActiveType === 'sequence'
+      ? this._umlLastDiagrams.sequenceDiagram
+      : this._umlLastDiagrams.classDiagram;
+
+    if (!syntax) {
+      var msg = this._umlActiveType === 'sequence'
+        ? 'No method calls detected between classes.'
+        : 'No classes found in the watched files.';
+      this._showUMLEmpty(msg);
+      return;
+    }
+
+    this._renderMermaidDiagram(syntax);
+  };
+
+  /** Render Mermaid syntax into SVG in the diagram content area */
+  TutorialCode.prototype._renderMermaidDiagram = function (syntax) {
+    if (!this._umlContentEl || !window.mermaid) {
+      this._showUMLError('Mermaid.js not loaded.');
+      return;
+    }
+    var self = this;
+    var id = 'uml-mermaid-' + (++this._umlMermaidCounter);
+
+    // Detect dark mode for Mermaid theme
+    var isDark = document.documentElement.classList.contains('dark-mode');
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? 'dark' : 'default',
+      sequence: { mirrorActors: false }
+    });
+
+    mermaid.render(id, syntax)
+      .then(function (result) {
+        self._umlContentEl.innerHTML = result.svg;
+      })
+      .catch(function (err) {
+        console.error('Mermaid render error:', err);
+        self._umlContentEl.innerHTML =
+          '<div class="tvm-diagram-empty">Diagram rendering error.<br>' +
+          '<small style="opacity:0.7">' + (err.message || err) + '</small></div>';
+      });
+  };
+
+  /** Show an empty-state message in the diagram area */
+  TutorialCode.prototype._showUMLEmpty = function (msg) {
+    if (this._umlContentEl) {
+      this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty">' + msg + '</div>';
+    }
+  };
+
+  /** Show an error message in the diagram area */
+  TutorialCode.prototype._showUMLError = function (msg) {
+    if (this._umlContentEl) {
+      this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty" style="color:#e55;">' + msg + '</div>';
+    }
+  };
+
+  /**
+   * Schedule a debounced UML refresh when a watched file changes.
+   * Called from the editor onDidChangeContent handler.
+   */
+  TutorialCode.prototype._scheduleUMLRefresh = function () {
+    if (!this._umlDiagramEnabled || !this._umlViewActive) return;
+    var self = this;
+    clearTimeout(this._umlRefreshTimer);
+    this._umlRefreshTimer = setTimeout(function () {
+      self._refreshUMLDiagram();
+    }, 1500);
   };
 
   // ---------------------------------------------------------------------------
@@ -2469,11 +2722,37 @@
       setTimeout(function () { stepSelf._rebuildReactPreview(); }, 400);
     }
 
-    // Switch view between editor and git graph based on step config.
+    // Update UML watched files for this step
+    if (this._umlDiagramEnabled) {
+      if (step.uml_files && step.uml_files.length > 0) {
+        this._umlWatchedFiles = step.uml_files.slice();
+      } else if (step.files) {
+        // Fallback: derive from step's .py files
+        this._umlWatchedFiles = step.files
+          .filter(function (f) { return f.path && f.path.endsWith('.py'); })
+          .map(function (f) { return f.path; });
+      } else {
+        this._umlWatchedFiles = [];
+      }
+      this._umlLastDiagrams = null;
+      this._renderTabs();  // Update tab bar to show/hide UML tab
+    }
+
+    // Switch view between editor, git graph, or UML diagram based on step config.
     // If the step explicitly sets `view:`, auto-switch + update toggle.
     // If not, keep whichever view the user was on (manual toggle persists).
-    if (step.view) {
+    if (step.view === 'uml_diagram' && this._umlDiagramEnabled) {
+      this._umlViewActive = true;
+      this._showDiagramHideEditor();
+      this._refreshUMLDiagram();
+      this._renderTabs();
+    } else if (step.view) {
+      this._umlViewActive = false;
+      this._showEditorHideDiagram();
       this._setView(step.view);
+    } else if (this._umlViewActive && this._umlDiagramEnabled) {
+      // UML view persists across steps — refresh with new watched files
+      this._refreshUMLDiagram();
     }
 
     // Auto-save progress when navigating to a new step

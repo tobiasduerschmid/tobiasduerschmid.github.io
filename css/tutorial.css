@@ -583,6 +583,120 @@ html:not(.dark-mode) {
   --git-graph-text: #333;
 }
 
+/* ── UML Diagram panel ── */
+.tvm-diagram-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e2e;
+  color: #ccc;
+}
+.tvm-diagram-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #252535;
+  border-bottom: 1px solid #3a3a4a;
+  flex-shrink: 0;
+}
+.tvm-diagram-type-btn {
+  padding: 4px 14px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: transparent;
+  color: #aaa;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tvm-diagram-type-btn:hover {
+  background: #333345;
+  color: #ddd;
+}
+.tvm-diagram-type-btn.active {
+  background: #2774AE;
+  border-color: #2774AE;
+  color: #fff;
+}
+.tvm-diagram-refresh-btn {
+  margin-left: auto;
+  padding: 4px 12px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: transparent;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tvm-diagram-refresh-btn:hover {
+  background: #333345;
+  color: #ddd;
+}
+.tvm-diagram-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.tvm-diagram-content svg {
+  max-width: 100%;
+  height: auto;
+}
+.tvm-diagram-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+.tvm-tab-diagram {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+/* UML diagram light mode */
+html:not(.dark-mode) .tvm-diagram-container {
+  background: #fafbfc;
+  color: #333;
+}
+html:not(.dark-mode) .tvm-diagram-toolbar {
+  background: #f0f1f3;
+  border-bottom-color: #d4d4d4;
+}
+html:not(.dark-mode) .tvm-diagram-type-btn {
+  border-color: #bbb;
+  color: #555;
+}
+html:not(.dark-mode) .tvm-diagram-type-btn:hover {
+  background: #e0e1e5;
+  color: #222;
+}
+html:not(.dark-mode) .tvm-diagram-type-btn.active {
+  background: #2774AE;
+  border-color: #2774AE;
+  color: #fff;
+}
+html:not(.dark-mode) .tvm-diagram-refresh-btn {
+  border-color: #bbb;
+  color: #555;
+}
+html:not(.dark-mode) .tvm-diagram-refresh-btn:hover {
+  background: #e0e1e5;
+  color: #222;
+}
+html:not(.dark-mode) .tvm-diagram-empty {
+  color: #666;
+}
+
 /* Vertical splitter (between editor and terminal) */
 .tvm-vsplitter {
   flex: 0 0 4px;

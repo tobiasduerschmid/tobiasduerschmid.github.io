@@ -176,6 +176,35 @@ questions:
     explanation: "Option A mutates the existing object — React detects changes by reference, so passing the same object reference means no re-render. Option B replaces the whole object, dropping `age`. Option D mutates `prev` in-place and returns the same reference — same problem as A. Option C spreads the existing object into a *new* object (new reference), then overrides only `name`. React sees a new reference, re-renders, and `age` is preserved."
 
   - question: |
+      *(Discrimination — Which concept applies?)*
+
+      A student has four bugs in different components. Match each bug to the React concept that fixes it:
+      **(a)** Product names don't update when different data is passed in
+      **(b)** A like counter always shows 0
+      **(c)** Deleting the 2nd item in a list causes the 3rd item's checkbox to jump to the 2nd position
+      **(d)** A `<div class="header">` renders but has no CSS styling
+    options:
+      - "(a) state, (b) props, (c) keys, (d) JSX rules"
+      - "(a) props, (b) state (useState), (c) stable keys, (d) JSX rules (className)"
+      - "(a) keys, (b) JSX rules, (c) state, (d) props"
+      - "(a) JSX rules, (b) keys, (c) props, (d) state"
+    correct_index: 1
+    explanation: "(a) Data passed in not rendering = **props** issue. (b) Counter stuck at 0 = **state** issue (using `let` not `useState`). (c) State jumping after delete = **keys** issue (index keys instead of stable IDs). (d) `class` without effect = **JSX** issue (`class` → `className`). This tests your ability to diagnose which concept applies to each symptom."
+
+  - question: |
+      **Arrange** the lines to add an item to a shopping cart stored in React state, using immutable updates.
+    type: parsons
+    lines:
+      - "const [cart, setCart] = React.useState([]);"
+      - "const addToCart = (product) => {"
+      - "    setCart(prev => [...prev, product]);"
+      - "};"
+    distractors:
+      - "    cart.push(product);"
+      - "    setCart(cart);"
+    explanation: "The functional update `setCart(prev => [...prev, product])` creates a **new array** with all previous items plus the new one. The distractor `cart.push(product)` mutates in-place (React won't detect the change), and `setCart(cart)` passes the same reference (React skips re-render). Both distractors represent the most common state mutation bugs from C++ instincts."
+
+  - question: |
       **Arrange** the lines to build a counter component that safely increments using the functional update pattern.
     type: parsons
     lines:

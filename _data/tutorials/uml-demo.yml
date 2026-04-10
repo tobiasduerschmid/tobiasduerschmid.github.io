@@ -1,0 +1,148 @@
+title: "UML Diagram Demo"
+description: "Demonstrates the live UML class diagram and sequence diagram feature."
+
+backend: pyodide
+uml_diagram: true
+require_tests: false
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+
+  - title: "Class Hierarchy"
+    view: uml_diagram
+    instructions: |
+      ## Live UML Diagrams
+
+      This tutorial demonstrates the **UML Diagram** tab. Look at the tab bar above
+      the editor — you should see a **UML Diagram** tab.
+
+      The code on the right defines a simple class hierarchy: `Animal` is the base
+      class, with `Dog` and `Cat` as subclasses.
+
+      **Try it:**
+      1. Click the **UML Diagram** tab to see the class diagram.
+      2. Edit the code — add a new method or attribute — and watch the diagram update.
+      3. Switch between **Class Diagram** and **Sequence Diagram** using the toolbar buttons.
+
+    uml_files:
+      - animals.py
+
+    files:
+      - path: animals.py
+        content: |
+          class Animal:
+              def __init__(self, name: str):
+                  self.name: str = name
+
+              def speak(self) -> str:
+                  return "..."
+
+          class Dog(Animal):
+              def __init__(self, name: str, breed: str):
+                  super().__init__(name)
+                  self.breed: str = breed
+
+              def speak(self) -> str:
+                  return "Woof!"
+
+              def fetch(self, item: str) -> str:
+                  return f"{self.name} fetches {item}"
+
+          class Cat(Animal):
+              def __init__(self, name: str, indoor: bool):
+                  super().__init__(name)
+                  self.indoor: bool = indoor
+
+              def speak(self) -> str:
+                  return "Meow!"
+
+          if __name__ == "__main__":
+              dog = Dog("Rex", "Labrador")
+              cat = Cat("Whiskers", True)
+              print(dog.speak())
+              print(cat.speak())
+        language: python
+
+    open_file: animals.py
+
+  - title: "Composition & Sequence"
+    instructions: |
+      ## Composition Relationships
+
+      Now we have a `Zoo` class that *contains* animals — this is a **composition**
+      relationship, shown as a filled diamond arrow in the class diagram.
+
+      The sequence diagram shows the call flow: `Zoo.add_animal()` and
+      `Zoo.roll_call()` calling `speak()` on each animal.
+
+      **Try it:**
+      1. Switch to the **UML Diagram** tab.
+      2. Toggle between Class Diagram and Sequence Diagram.
+      3. Add a new method to `Zoo` and watch both diagrams update.
+
+    uml_files:
+      - animals.py
+      - zoo.py
+
+    files:
+      - path: animals.py
+        content: |
+          class Animal:
+              def __init__(self, name: str):
+                  self.name: str = name
+
+              def speak(self) -> str:
+                  return "..."
+
+          class Dog(Animal):
+              def __init__(self, name: str, breed: str):
+                  super().__init__(name)
+                  self.breed: str = breed
+
+              def speak(self) -> str:
+                  return "Woof!"
+
+              def fetch(self, item: str) -> str:
+                  return f"{self.name} fetches {item}"
+
+          class Cat(Animal):
+              def __init__(self, name: str, indoor: bool):
+                  super().__init__(name)
+                  self.indoor: bool = indoor
+
+              def speak(self) -> str:
+                  return "Meow!"
+
+          if __name__ == "__main__":
+              dog = Dog("Rex", "Labrador")
+              cat = Cat("Whiskers", True)
+              print(dog.speak())
+              print(cat.speak())
+        language: python
+
+      - path: zoo.py
+        content: |
+          from animals import Animal, Dog, Cat
+
+          class Zoo:
+              def __init__(self, name: str):
+                  self.name: str = name
+                  self.animals: list = []
+
+              def add_animal(self, animal: Animal):
+                  self.animals.append(animal)
+
+              def roll_call(self):
+                  for animal in self.animals:
+                      print(f"{animal.name}: {animal.speak()}")
+
+          if __name__ == "__main__":
+              zoo = Zoo("City Zoo")
+              zoo.add_animal(Dog("Rex", "Lab"))
+              zoo.add_animal(Cat("Whiskers", True))
+              zoo.roll_call()
+        language: python
+
+    open_file: zoo.py
