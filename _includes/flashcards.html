@@ -478,7 +478,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+      if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
         PersonalGym.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
       }
 

@@ -648,7 +648,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+      if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
         PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
       }
 
@@ -692,7 +692,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       // Track performance
-      if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+      if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
         PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
       }
 
@@ -926,7 +926,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
         else incorrectIndices.push(isReviewMode ? reviewQueue[reviewStep] : currentStep);
 
         // Track performance
-        if (window.PersonalGym && PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance()) {
+        if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
           PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
         }
 
