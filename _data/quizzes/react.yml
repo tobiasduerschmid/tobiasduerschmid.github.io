@@ -1,5 +1,5 @@
 title: "React Concepts Quiz"
-description: "Test your deeper understanding of React's design philosophy, state management, and component architecture. Questions 1–7 cover tutorial material. Questions 8–9 test advanced concepts from the reference page (controlled inputs, useEffect)."
+description: "Test your deeper understanding of React's design philosophy, state management, and component architecture. Questions 1–7 cover tutorial material. Questions 8–10 test advanced concepts from the reference page. Questions 11–15 cover event handlers, useEffect, and state immutability."
 questions:
   - question: |
       A C++ developer writes this React component and is confused why clicking the button does nothing:
@@ -130,3 +130,89 @@ questions:
       - "{count"
       - "||"
     explanation: "Using `count > 0` ensures the left operand is a boolean (`true`/`false`), not a number. If `count` is `0`, `count > 0` evaluates to `false`, and React renders nothing. The distractor `{count` would render the number `0` as text when count is 0 — a common React bug. `||` would render Badge when count is falsy, which is the opposite of what's intended."
+
+  - question: |
+      **Analyze** this code. What happens when the component first renders?
+      ```jsx
+      function App() {
+        const [count, setCount] = useState(0);
+        return <button onClick={setCount(count + 1)}>{count}</button>;
+      }
+      ```
+    options:
+      - "The button renders and increments `count` once per click — this is correct"
+      - "A React error is thrown because `setCount` cannot be used as a prop value"
+      - "`setCount(count + 1)` executes immediately during render (not on click). This updates state, which triggers another render, which calls `setCount` again — an infinite loop. Fix: `onClick={() => setCount(count + 1)}` or extract `handleClick` as a named function"
+      - "The component renders fine but clicking does nothing because the handler returns `undefined`"
+    correct_index: 2
+    explanation: "onClick expects a *function reference*, not a function call result. `setCount(count + 1)` calls the function right away and passes its return value (`undefined`) to onClick. Since `setCount` triggers a re-render, and it fires on every render, the component loops infinitely. This is one of the most common React bugs for beginners — always pass the function, never call it: `onClick={fn}` not `onClick={fn()}`."
+
+  - question: |
+      A component fetches user data based on a `userId` prop:
+      ```jsx
+      useEffect(() => {
+        fetch(`/api/users/${userId}`)
+          .then(res => res.json())
+          .then(data => setUser(data));
+      }, []);
+      ```
+      The parent changes `userId` from `1` to `2`, but the screen still shows user `1`. **Diagnose** the bug.
+    options:
+      - "`fetch` is asynchronous and cannot be used inside `useEffect`"
+      - "The dependency array `[]` means the effect runs only once — on mount. Because `userId` is not listed, React never re-runs the effect when it changes. Fix: `[userId]`"
+      - "`useEffect` cannot read props — `userId` is undefined inside the callback"
+      - "The `.then()` chain should be replaced with `async/await`"
+    correct_index: 1
+    explanation: "The dependency array controls *when* an effect re-runs. `[]` = run once on mount and never again. `[userId]` = run on mount, then re-run whenever `userId` changes. Omitting `userId` from the array creates a stale closure — the callback captures the `userId` value from the first render and never updates. React's linting rule `react-hooks/exhaustive-deps` catches exactly this mistake."
+
+  - question: |
+      A component tracks a user object: `const [user, setUser] = useState({ name: 'Alice', age: 25 })`. How should you update **only** the `name` to `'Bob'` while keeping `age` intact?
+    options:
+      - "`user.name = 'Bob'; setUser(user);`"
+      - "`setUser({ name: 'Bob' });`"
+      - "`setUser({ ...user, name: 'Bob' });`"
+      - "`setUser(prev => { prev.name = 'Bob'; return prev; });`"
+    correct_index: 2
+    explanation: "Option A mutates the existing object — React detects changes by reference, so passing the same object reference means no re-render. Option B replaces the whole object, dropping `age`. Option D mutates `prev` in-place and returns the same reference — same problem as A. Option C spreads the existing object into a *new* object (new reference), then overrides only `name`. React sees a new reference, re-renders, and `age` is preserved."
+
+  - question: |
+      **Arrange** the lines to build a counter component that safely increments using the functional update pattern.
+    type: parsons
+    lines:
+      - "function Counter() {"
+      - "  const [count, setCount] = useState(0);"
+      - "  function handleClick() {"
+      - "    setCount(prev => prev + 1);"
+      - "  }"
+      - "  return ("
+      - "    <div>"
+      - "      <p>Count: {count}</p>"
+      - "      <button onClick={handleClick}>+</button>"
+      - "    </div>"
+      - "  );"
+      - "}"
+    distractors:
+      - "    count = count + 1;"
+      - "      <button onClick={handleClick()}>+</button>"
+    explanation: "`setCount(prev => prev + 1)` uses the functional update form — React guarantees `prev` is the *latest* state value, preventing stale closure bugs if multiple updates are batched. The distractor `count = count + 1` mutates a local variable and triggers no re-render. The distractor `onClick={handleClick()}` calls the function during render instead of registering it as a click handler — causing an infinite update loop."
+
+  - question: |
+      **Arrange** the lines to build a component that fetches user data when it mounts or when `userId` changes, and shows a loading message while waiting.
+    type: parsons
+    lines:
+      - "function UserProfile({ userId }) {"
+      - "  const [user, setUser] = useState(null);"
+      - "  useEffect(() => {"
+      - "    fetch(`/api/users/${userId}`)"
+      - "      .then(res => res.json())"
+      - "      .then(data => setUser(data));"
+      - "  }, [userId]);"
+      - "  if (user === null) {"
+      - "    return <p>Loading...</p>;"
+      - "  }"
+      - "  return <h2>{user.name}</h2>;"
+      - "}"
+    distractors:
+      - "  }, []);"
+      - "    .then(data => setUser(fetch(data)));"
+    explanation: "`useEffect` with `[userId]` re-runs the fetch whenever `userId` changes — critical for keeping the UI in sync with the prop. The `user === null` guard shows a loading state until the async response arrives. Distractor `[]` would fetch only on mount, showing stale data when `userId` changes. Distractor `setUser(fetch(data))` stores a Promise object in state instead of the resolved JSON data."

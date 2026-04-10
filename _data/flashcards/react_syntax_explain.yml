@@ -83,3 +83,54 @@ cards:
       }
       ```
     answer: "A **reusable component** that renders a colored badge. It destructures `label` and `color` from props. The `style` prop takes a JS object with camelCase properties (`borderRadius`, not `border-radius`)."
+
+  - id: 13
+    question: |
+      ```jsx
+      useEffect(() => {
+        document.title = 'Hello!';
+      }, []);
+      ```
+    answer: "Runs a **side effect** once after the component first mounts. The empty array `[]` is the *dependency array* — it tells React 'don't re-run this when anything changes'. Common uses: fetching initial data, setting up subscriptions, updating `document.title`."
+
+  - id: 14
+    question: |
+      ```jsx
+      useEffect(() => {
+        fetch(`/api/users/${userId}`)
+          .then(res => res.json())
+          .then(data => setUser(data));
+      }, [userId]);
+      ```
+    answer: "Fetches user data on mount **and re-fetches whenever `userId` changes**. `userId` in the dependency array tells React: re-run this effect when `userId` takes a new value. Without listing `userId`, the effect would keep showing the first user's data even after the prop changes — a stale closure bug."
+
+  - id: 15
+    question: |
+      ```jsx
+      setCount(prev => prev + 1);
+      ```
+    answer: "The **functional update** form of `setState`. Instead of passing the next value directly, you pass a function. React calls that function with the *guaranteed latest* state value as `prev`. Use this whenever new state depends on old state — it prevents stale closure bugs where a batch of rapid updates could all read the same outdated value."
+
+  - id: 16
+    question: |
+      ```jsx
+      setItems(items.filter(item => item.id !== targetId));
+      ```
+    answer: "Removes the item with `id === targetId` from the `items` state array. `.filter()` returns a **new array** (never mutates the original), which is required — React detects changes by reference. All items where the condition is true are kept; the one matching `targetId` is excluded."
+
+  - id: 17
+    question: |
+      ```jsx
+      setUser({ ...user, name: 'Bob' });
+      ```
+    answer: "Updates the `name` field of the `user` state object while preserving all other fields. The spread `...user` copies every existing key into a new object, then `name: 'Bob'` overrides just that one key. **Never mutate the object directly** (`user.name = 'Bob'`) — that changes the same reference React already has, so it won't detect the change and won't re-render."
+
+  - id: 18
+    question: |
+      ```jsx
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+      />
+      ```
+    answer: "A **controlled input** — React owns the input's value by binding it to the `query` state variable. Every keystroke fires `onChange`, which calls `setQuery`, which updates state, which causes React to re-render the input with the new value. This makes React the single source of truth for the field's content, so you can read or validate the value at any time from `query`."

@@ -1,5 +1,5 @@
 title: "Node.js Concepts Quiz"
-description: "Test your deeper understanding of JavaScript's async model, type system, and paradigm differences from C++ and Python."
+description: "Test your deeper understanding of JavaScript's async model, type system, and paradigm differences from C++ and Python. Includes Parsons problems, technique-selection questions, and spaced interleaving across all concepts."
 questions:
   - question: "A C++ developer argues: 'Single-threaded means Node.js can only handle one request at a time, so it's useless for servers.' What is the flaw in this reasoning?"
     options:
@@ -142,3 +142,126 @@ questions:
       - ".finally(data => process(data))"
       - ".then(res => res.text)"
     explanation: "`fetch(url)` returns a Promise that resolves to a Response object. `.then(res => res.json())` parses the body as JSON (also returns a Promise). `.then(data => ...)` receives the parsed data. `.catch()` handles any error in the chain — network failure, JSON parse error, etc. The `finally` distractor takes no argument (it doesn't receive data). `res.text` without `()` is just a property reference, not a method call."
+
+  - question: |
+      **[Technique Selection]** You are building a TikTok-style feed. Match each task to the best array method:
+      - Task A: Remove videos the user has already seen
+      - Task B: Convert each video object into a `<VideoCard>` component
+      - Task C: Calculate the total watch time across all videos
+    options:
+      - "A: `.map()`, B: `.filter()`, C: `.reduce()`"
+      - "A: `.filter()`, B: `.map()`, C: `.reduce()`"
+      - "A: `.reduce()`, B: `.map()`, C: `.filter()`"
+      - "A: `.filter()`, B: `.reduce()`, C: `.map()`"
+    correct_index: 1
+    explanation: "`.filter()` selects elements matching a condition (unseen videos). `.map()` transforms each element into something new (video → component). `.reduce()` combines all elements into a single value (total time). Knowing *which* method to reach for — not just how each works — is the critical skill."
+
+  - question: |
+      **[Interleaving: Async + Types]** A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
+    options:
+      - "Only one problem: `==` should be `===`"
+      - "Two problems: (1) `==` coerces the string to a number, hiding a type mismatch — use `===`. (2) The comparison will silently 'work' with `==` but break if the badge threshold changes to `0` (since `'' == 0` is `true`)"
+      - "No problems — `==` correctly handles string-to-number comparison"
+      - "The only problem is that the API should return a number, not a string"
+    correct_index: 1
+    explanation: "This question interleaves async concepts (API fetch) with the `===` trap from earlier. The `==` coercion makes the check work *accidentally*, but it hides a fragile assumption. Using `===` with explicit `Number(count) === 42` makes the type conversion intentional and visible."
+
+  - question: |
+      **Arrange** the lines to process an array of Spotify tracks: filter explicit songs, extract just the titles, and join them into a comma-separated string.
+    type: parsons
+    display: inline
+    lines:
+      - "const playlist = tracks"
+      - "    .filter(t => !t.explicit)"
+      - "    .map(t => t.title)"
+      - "    .join(', ');"
+    distractors:
+      - "    .reduce(t => !t.explicit)"
+      - "    .map(t => t.title())"
+    explanation: "`.filter()` removes explicit tracks (the `!` negates — keep non-explicit). `.map()` extracts just the title string from each object. `.join()` concatenates array elements into a single string. The `.reduce()` distractor is wrong because filtering is selection, not accumulation. `t.title()` with parentheses would call `title` as a function — it's a property, not a method."
+
+  - question: "What does calling an `async` function **always** return, even if the function body just returns a plain number like `return 42`?"
+    options:
+      - "The plain value (`42`) — `async` is only meaningful when the function contains an `await`"
+      - "A **Promise** — every `async` function wraps its return value in `Promise.resolve()`. To get `42` out, you must `await` the call or use `.then()`"
+      - "An `AsyncIterator` object that must be consumed with `for await...of`"
+      - "`undefined` — async functions cannot return values directly"
+    correct_index: 1
+    explanation: "Every `async` function returns a Promise — always. `async function answer() { return 42; }` is equivalent to `function answer() { return Promise.resolve(42); }`. This is why `const result = someAsyncFunction()` without `await` gives you a Promise object, not the value. Forgetting this is one of the most common async bugs."
+
+  - question: |
+      A developer needs a `delay(ms)` utility that returns a Promise resolving after `ms` milliseconds. Which implementation is correct?
+    options:
+      - |
+        ```javascript
+        function delay(ms) {
+            return setTimeout(() => {}, ms);
+        }
+        ```
+      - |
+        ```javascript
+        async function delay(ms) {
+            await ms;
+        }
+        ```
+      - |
+        ```javascript
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        ```
+      - |
+        ```javascript
+        function delay(ms) {
+            Promise.resolve(setTimeout(() => {}, ms));
+        }
+        ```
+    correct_index: 2
+    explanation: "`new Promise(resolve => ...)` creates a Promise that resolves when `resolve` is called. Passing `resolve` directly to `setTimeout` means: 'call `resolve` after `ms` milliseconds.' Option A returns a numeric timer ID, not a Promise. Option B `await`s the number `ms` directly — awaiting a non-Promise resolves immediately, so there is no delay. Option D calls `Promise.resolve` with a timer ID and doesn't `return` the Promise."
+
+  - question: |
+      **Arrange** the lines to filter passing students (grade ≥ 60) and extract just their names.
+    type: parsons
+    display: inline
+    lines:
+      - "const passingNames = students"
+      - "    .filter(s => s.grade >= 60)"
+      - "    .map(s => s.name);"
+    distractors:
+      - "    .map(s => s.grade >= 60)"
+      - "    .filter(s => s.name)"
+      - "    .reduce((acc, s) => acc + s.name, '')"
+    explanation: "`.filter()` comes first — select elements, then `.map()` transforms the surviving elements. Reversing them would fail because `.map(s => s.grade >= 60)` produces booleans, not objects with a `grade` property to filter on. `.filter(s => s.name)` would keep students who have a name — which is all of them, so nothing is filtered. `.reduce` accumulates into a single value, not an array."
+
+  - question: |
+      **Arrange** the lines of a corrected `processAll` function. The original bug: `"All done!"` printed before items finished processing because `.forEach()` ignores the `await` inside its callback.
+    type: parsons
+    lines:
+      - "async function processAll(items) {"
+      - "    for (const item of items) {"
+      - "        await processItem(item);"
+      - "    }"
+      - "    console.log(\"All done!\");"
+      - "}"
+    distractors:
+      - "    items.forEach(async (item) => {"
+      - "    await items;"
+    explanation: "`for...of` is the idiomatic fix for sequential async iteration — `await` inside a `for...of` loop correctly pauses the loop body before moving to the next item. The distractor `items.forEach(async (item) => {` is the original bug: `.forEach()` does not await async callbacks, so all callbacks fire immediately and `\"All done!\"` prints before any of them finish. `await items` makes no sense — `items` is an array, not a Promise."
+
+  - question: |
+      A student writes this code for a multiplayer game server and wonders why player moves are "laggy":
+      ```javascript
+      app.post('/move', (req, res) => {
+          // Compute best AI response (CPU-intensive, ~2 seconds)
+          const aiMove = computeAIResponse(req.body.board);
+          res.json({ move: aiMove });
+      });
+      ```
+      What is wrong, and what would you suggest?
+    options:
+      - "The `app.post` callback should use `async/await` to make `computeAIResponse` non-blocking"
+      - "`computeAIResponse` is synchronous and CPU-intensive — it blocks the Chef for ~2 seconds, freezing ALL other players. Offload to a Worker Thread or compute asynchronously"
+      - "The problem is that `res.json()` is slow — use `res.send()` instead for faster responses"
+      - "Nothing is wrong — 2 seconds is an acceptable response time for game servers"
+    correct_index: 1
+    explanation: "This connects the Event Loop (Restaurant metaphor) to a real scenario. The Chef is stuck computing AI moves for 2 seconds — during which EVERY other player's request sits in the queue. `async/await` alone won't help because the computation is CPU-bound, not I/O-bound. Worker Threads move the heavy computation off the main thread."

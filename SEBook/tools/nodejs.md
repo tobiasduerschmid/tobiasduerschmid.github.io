@@ -8,7 +8,7 @@ This is a **reference page** for JavaScript and Node.js, designed to be kept ope
 > **New to Node.js?** Start with the [interactive tutorial](/SEBook/tools/nodejs-tutorial) first — it teaches these concepts through practice with immediate feedback. This page is a reference, not a teaching resource.
 
 ### The Syntax and Semantics: A Familiar Hybrid
-If Python and C++ had a child that was raised on the internet, it would be JavaScript. 
+If Python and C++ had a child that was raised on the internet, it would be JavaScript. It powers Discord, Spotify's web player, Netflix's backend, and most of the interactive web you use daily.
 
 * **From C++, JS inherits its syntax:** You will feel right at home with curly braces `{}`, semicolons `;`, `if/else` statements, `for` and `while` loops, and `switch` statements. 
 * **From Python, JS inherits its dynamic nature:** Like Python, JS is dynamically typed and interpreted (specifically, Just-In-Time compiled). You don't need to declare whether a variable is an `int` or a `string`. You don't have to manage memory explicitly with `malloc` or `new/delete`; there are no pointers, and a garbage collector handles memory for you.
@@ -26,6 +26,28 @@ const name = "UCLA"; // A constant that cannot be reassigned
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
 
 **Node.js is a runtime environment that takes JavaScript out of the browser and lets it run directly on your computer's operating system.** It embeds Google's **V8 engine** to execute code, but also includes a powerful C library called **libuv** to handle the asynchronous event loop and system-level tasks like file I/O and networking. This means you can use JavaScript to write backend servers just like you would with Python or C++.
+
+Here is how JavaScript (via Node.js) fits into your mental model from C++ and Python:
+
+| | C++ | Python | JavaScript (Node.js) |
+|---|---|---|---|
+| Typing | Static | Dynamic | Dynamic |
+| Memory | Manual (`new`/`delete`) | GC (reference counting) | GC (V8 engine) |
+| Run with | Compile → `./app` | `python script.py` | `node script.js` |
+| I/O model | Synchronous (blocks) | Synchronous (blocks) | **Asynchronous** (non-blocking) |
+
+**Running a script:** Like Python, there is no compilation step. You run a JavaScript file directly:
+```bash
+node script.js
+```
+And like Python, there is no required `main()` function — Node.js executes scripts top-to-bottom. V8 JIT-compiles the code at runtime.
+
+**Printing output:** JavaScript's equivalent of Python's `print()` and C++'s `printf()` is `console.log()`. It writes to stdout with a trailing newline:
+```javascript
+// Python equivalent: print("Hello from Node.js!")
+// C++ equivalent:    printf("Hello from Node.js!\n");
+console.log("Hello from Node.js!");
+```
 
 
 
@@ -188,6 +210,18 @@ In the earlier example, we mentioned that Node.js uses "callbacks" to handle eve
 To manage cognitive load and make asynchronous code easier to reason about, modern JavaScript introduced **Promises** (conceptually similar to `std::future` in C++) and the `async/await` syntax.
 
 A Promise is exactly what it sounds like: an object representing the eventual completion (or failure) of an asynchronous operation. Using `async/await` allows you to write asynchronous code that *looks* and *reads* like traditional, synchronous C++ or Python code.
+
+**Creating a Promise:** The `new Promise(...)` constructor takes a function with two callback arguments — `resolve` (call when the work succeeds) and `reject` (call when it fails):
+```javascript
+// Under the hood, this is how async operations are built:
+const promise = new Promise((resolve, reject) => {
+    setTimeout(() => resolve("data ready!"), 100);
+});
+
+// Consuming it with .then():
+promise.then(data => console.log(data));   // "data ready!" after 100ms
+```
+In practice you rarely *create* Promises from scratch — you mostly *consume* them using `await` or `.then()`. Libraries like `fs.promises` and `fetch` return Promises for you.
 
 Node.js async syntax evolved through three generations. You need to recognize all three — and write the third:
 

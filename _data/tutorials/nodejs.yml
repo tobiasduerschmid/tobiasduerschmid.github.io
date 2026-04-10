@@ -19,7 +19,7 @@ steps:
 
       > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser and **write** a basic Node.js script.
 
-      You already know two languages. Here is how JavaScript (via Node.js) fits into your mental model:
+      You already know two languages. JavaScript powers everything from Discord and Spotify's web player to Netflix's backend. Here is how it fits into your mental model:
 
       | | C++ | Python | JavaScript (Node.js) |
       |---|---|---|---|
@@ -78,8 +78,16 @@ steps:
     tests:
       - description: "hello.js contains a console.log statement"
         command: "assert(code.includes('console.log('), 'Add a console.log() call to hello.js')"
+        hints:
+          - text: "JavaScript's built-in function for printing is NOT `print()` like Python or `printf()` like C++. Look at the code comment in the instructions — what object and method does JavaScript use to write to stdout?"
+            condition: "code_missing: console.log("
+          - text: "Good — you have the right function. Make sure your file isn't empty and the syntax is complete (parentheses, quotes, semicolon)."
+            condition: "code_contains: console.log("
       - description: "Output includes 'Hello from Node.js!'"
         command: "assert(output.includes('Hello from Node.js'), 'Your console.log should print \"Hello from Node.js!\"')"
+        hints:
+          - text: "Your code runs but the output doesn't match. The test checks for an exact string — compare your message character-by-character with the expected output in the instructions."
+            condition: "code_contains: console.log("
 
     quiz:
       title: "Hello, Node.js! — Knowledge Check"
@@ -259,12 +267,25 @@ steps:
     tests:
       - description: "Fixed both == comparisons to === (no [BUG] messages in output)"
         command: "assert(!output.includes('[BUG]'), 'Fix both == comparisons to === — the [BUG] messages should disappear')"
+        hints:
+          - text: "The [BUG] messages appear because JavaScript's `==` silently converts types before comparing. What operator checks both value AND type? Look at the '=== Trap' section in the instructions."
+            condition: "code_missing: ==="
+          - text: "You've fixed at least one comparison — but there are TWO `==` bugs in the file. Search for every `==` and check if it should be `===`."
+            condition: "code_contains: ==="
       - description: "MAX_STUDENTS is now declared with const"
         command: "assert(code.includes('const MAX_STUDENTS'), 'Change \"let MAX_STUDENTS\" to \"const MAX_STUDENTS\"')"
+        hints:
+          - text: "One of the bugs involves a variable declaration keyword. Is `MAX_STUDENTS` ever reassigned anywhere in the code? If not, which keyword signals 'this value is fixed'?"
+            condition: "code_missing: const MAX_STUDENTS"
       - description: "Used a template literal (backtick with ${}) for the message"
         command: "assert(code.includes('${'), 'Replace the + concatenation with a template literal using backticks and ${}')"
+        hints:
+          - text: "The messy string concatenation with `+` can be replaced with JavaScript's equivalent of Python's f-strings. What kind of quotes (not single, not double) enable `${}` interpolation?"
+            condition: "code_missing: ${"
       - description: "Code runs without errors"
         command: "assert(!output.toLowerCase().includes('error'), 'The code should run without any errors')"
+        hints:
+          - text: "Your code has a syntax error. Check for mismatched backticks, missing semicolons, or unclosed braces. The error message in the output may tell you the line number."
 
     quiz:
       title: "Variables, Types & The === Trap — Knowledge Check"
@@ -371,7 +392,7 @@ steps:
 
       ### Callbacks in the Browser: Event Handlers
 
-      The same callback pattern drives all user interaction in the browser. When a user clicks a button, the browser calls your function:
+      The same callback pattern drives all user interaction in the browser. Every "like" button on Instagram, every message send on Discord, every play button on Spotify — they all work because a callback fires when you interact:
 
       ```javascript
       // Vanilla JS — attaching a click handler:
@@ -468,12 +489,26 @@ steps:
     tests:
       - description: "Converted getLetterGrade to an arrow function (no longer a function declaration)"
         command: "assert(!code.includes('function getLetterGrade'), 'Convert getLetterGrade from a function declaration to an arrow function assigned to const')"
+        hints:
+          - text: "You still have a `function` declaration. Arrow function syntax replaces `function name(params) {` with `const name = (params) => {`. The body stays the same — only the declaration style changes."
+            condition: "code_contains: function getLetterGrade"
       - description: "Used an arrow function (=> syntax)"
         command: "assert(code.includes('=>'), 'Use arrow function syntax (=>) in your solution')"
+        hints:
+          - text: "Arrow functions use the `=>` operator (sometimes called 'fat arrow'). Review the syntax examples in the instructions — how does `const add = (a, b) => a + b` differ from `function add(a, b) { return a + b; }`?"
+            condition: "code_missing: =>"
       - description: "Used .filter() to select students"
         command: "assert(code.includes('.filter('), 'Use .filter() with an arrow function to select passing students')"
+        hints:
+          - text: "To select only certain elements from an array, you need a higher-order array method that takes a callback returning true/false. Which method from the instructions does this?"
+            condition: "code_missing: .filter("
+          - text: "Good — you're using `.filter()`. Now make sure your callback tests the right property. Each student object has a `grade` property — your condition should check whether it meets the passing threshold."
+            condition: "code_contains: .filter("
       - description: "Output excludes Bob (grade 42) — he should fail the filter"
         command: "assert(!output.includes('Bob') && output.includes('Alice'), 'Bob (grade 42) should be filtered out — only students with grade >= 60 should appear')"
+        hints:
+          - text: "Bob (42) and Dave (55) should not appear in the output. Check your filter condition — are you comparing to the right threshold? Passing means grade >= 60."
+            condition: "code_contains: .filter("
 
     quiz:
       title: "Arrow Functions & Callbacks — Knowledge Check"
@@ -515,6 +550,20 @@ steps:
             - "`3` (the count of elements that pass)"
           correct_index: 1
           explanation: "`.filter()` returns a **new array** containing only the elements where the callback returns `true`. Here, only `4` and `5` satisfy `n > 3`. The original array is unchanged. Note: `.filter()` always returns an array, never a count or boolean array."
+
+        - question: |
+            **Arrange** the lines to write a function that takes an array of numbers and returns only the ones divisible by 3, doubled.
+          type: parsons
+          lines:
+            - "const doubleDivisibleBy3 = (nums) => {"
+            - "    return nums"
+            - "        .filter(n => n % 3 === 0)"
+            - "        .map(n => n * 2);"
+            - "};"
+          distractors:
+            - "        .reduce(n => n % 3 === 0)"
+            - "        .filter(n => n / 3 === 0)"
+          explanation: "First `.filter()` selects elements divisible by 3 (remainder `=== 0`), then `.map()` doubles each survivor. The distractor `.reduce()` is for accumulating a single value, not filtering. `n / 3 === 0` would check if the result of division is zero, which is wrong — `%` (modulo) gives the remainder."
 
   # --------------------------------------------------------------------------
   # STEP 4: Array Transformation & Destructuring
@@ -710,14 +759,33 @@ steps:
     tests:
       - description: "Used .map() to transform the data"
         command: "assert(code.includes('.map('), 'Use .map() with an arrow function to format each student')"
+        hints:
+          - text: "`.filter()` selects elements (Step 3). To *transform* each element into a formatted string, you need a different array method. Which one creates a new array by applying a function to every element?"
+            condition: "code_missing: .map("
+          - text: "Good — you're using `.map()`. Remember to use destructuring `({ name, grade })` in the callback parameter to directly extract the properties."
+            condition: "code_contains: .map("
       - description: "Used .reduce() to compute a value"
         command: "assert(code.includes('.reduce('), 'Use .reduce() to compute the sum of all grades')"
+        hints:
+          - text: "To combine all array elements into a single value (like a sum), you need the array method that 'accumulates' a result. It takes a callback with two parameters (accumulator, current) and an initial value."
+            condition: "code_missing: .reduce("
+          - text: "You have `.reduce()` — make sure you provide an initial value as the second argument (e.g., `0` for a sum). Without it, `.reduce()` can throw on empty arrays."
+            condition: "code_contains: .reduce("
       - description: "Output includes formatted student lines"
         command: "assert(output.includes('Alice') && output.includes('95'), 'Your .map() should format each student with their name and grade')"
+        hints:
+          - text: "Your `.map()` callback should return a formatted string for each student. Use a template literal with `${name.padEnd(7)}` and include the grade. Check the expected output format in the instructions."
+            condition: "code_contains: .map("
       - description: "Output includes correct class average (71.6)"
         command: "assert(output.includes('71.6'), 'The class average should be 71.6 — use .reduce() to sum grades, divide by student count, and format with .toFixed(1)')"
+        hints:
+          - text: "The average is sum divided by count. After `.reduce()` gives you the total, divide by `students.length`. The expected result is (95+42+78+55+88)/5. Does your math match?"
+            condition: "code_contains: .reduce("
       - description: "Used .toFixed() for decimal formatting"
         command: "assert(code.includes('.toFixed('), 'Format the class average to 1 decimal place using .toFixed(1)')"
+        hints:
+          - text: "The average needs to display exactly one decimal place. JavaScript numbers have a method for this — check the 'Formatting Output' section. It takes the number of decimal places as an argument."
+            condition: "code_missing: .toFixed("
 
     quiz:
       title: "Array Transformation & Destructuring — Knowledge Check"
@@ -750,6 +818,20 @@ steps:
             - "There is no difference — they are aliases for the same operation"
           correct_index: 0
           explanation: "`.map()` applies a transformation to every element: `[1,2,3].map(n => n*2)` → `[2,4,6]` (same length). `.filter()` tests each element and keeps only those that pass: `[1,2,3].filter(n => n>1)` → `[2,3]` (shorter). Neither mutates the original array."
+
+        - question: |
+            **Arrange** the lines to compute the average grade from an array of student objects using destructuring, `.map()`, and `.reduce()`.
+          type: parsons
+          lines:
+            - "const students = [{ name: 'A', grade: 80 }, { name: 'B', grade: 90 }];"
+            - "const grades = students.map(({ grade }) => grade);"
+            - "const sum = grades.reduce((acc, g) => acc + g, 0);"
+            - "const avg = sum / grades.length;"
+            - "console.log(avg.toFixed(1));"
+          distractors:
+            - "const grades = students.filter(({ grade }) => grade);"
+            - "const sum = grades.reduce((acc, g) => acc + g);"
+          explanation: "`.map()` with destructuring extracts just the grades. `.reduce()` sums them — the `0` initial value is critical (the distractor without it throws on empty arrays). `.filter()` selects elements, not transforms — wrong method for extracting grades."
 
         - question: "**[Spaced Practice: Revisit Step 3]** A student writes `numbers.filter(isEven)` where `isEven` is a function. Why does this work without calling `isEven()` with parentheses?"
           options:
@@ -786,7 +868,7 @@ steps:
 
       > **Before you begin:** Rate your confidence: *"I understand how code execution order works"* — 1 (not sure) to 5 (very confident). Revisit this rating after completing the step.
 
-      **JavaScript is single-threaded.** There is only one "chef" in the kitchen.
+      **JavaScript is single-threaded.** There is only one "chef" in the kitchen. This is how Discord handles millions of messages, how Spotify streams audio, and how Netflix serves content — all on a single thread per process.
 
       ### The Restaurant Metaphor
 
@@ -899,8 +981,14 @@ steps:
     tests:
       - description: "Added a second setTimeout call"
         command: "assert((code.match(/setTimeout/g)||[]).length >= 2, 'Add a second setTimeout call at the end of the file')"
+        hints:
+          - text: "Look at the existing `setTimeout` call at the top of the file. You need to add another one with the same structure at the bottom. What three things does `setTimeout` need: a callback function, and a delay in milliseconds?"
+            condition: "code_missing: setTimeout"
       - description: "Second setTimeout logs 'Event loop is free again!'"
         command: "assert(output.includes('free again'), 'The second setTimeout should log \"Event loop is free again!\"')"
+        hints:
+          - text: "Your second `setTimeout` exists but its callback needs to print the exact message. Check the spelling — the test looks for 'free again' in the output."
+            condition: "code_contains: setTimeout"
 
     quiz:
       title: "The Event Loop — Knowledge Check"
@@ -933,6 +1021,20 @@ steps:
             - "Decide which variables (ingredients) the Chef is allowed to access"
           correct_index: 1
           explanation: "The Event Loop has exactly one job: check if the Call Stack is empty, and if so, dequeue the next callback from the Task Queue and push it onto the stack. It never interrupts mid-execution — run-to-completion is guaranteed in JavaScript. This is why a blocked call stack prevents ALL other work."
+
+        - question: |
+            **[Technique Selection — Interleaving]** You are building a Discord bot. For each of these tasks, which array method is the best fit?
+            - Task A: Get only the messages from a specific channel
+            - Task B: Convert each message object into a display string
+            - Task C: Count the total character length of all messages
+          type: single
+          options:
+            - "A: `.map()`, B: `.filter()`, C: `.reduce()`"
+            - "A: `.filter()`, B: `.map()`, C: `.reduce()`"
+            - "A: `.reduce()`, B: `.filter()`, C: `.map()`"
+            - "A: `.filter()`, B: `.reduce()`, C: `.map()`"
+          correct_index: 1
+          explanation: "`.filter()` selects elements matching a condition (messages from a channel). `.map()` transforms each element (message → display string). `.reduce()` accumulates a single value (total character count). This discrimination — knowing *which* method to apply — is the key skill that interleaving builds."
 
         - question: "Why is it harmful to run a slow synchronous computation on Node.js's main thread?"
           options:
@@ -972,9 +1074,11 @@ steps:
     instructions: |
       ## What is a Promise?
 
+      > You just conquered the Event Loop — the single hardest concept in Node.js. If it clicked, you are ahead of most JavaScript beginners. If it's still fuzzy, that is completely normal — revisit the Restaurant Metaphor whenever async code surprises you. It will keep making more sense with practice.
+
       > **Learning objective:** After this step you will be able to **refactor** callback-based code to use `async`/`await`, **explain** what a Promise represents, and **use** `try`/`catch` for async error handling.
 
-      Before the generations, you need to know what a **Promise** is: an object representing a value that does not exist yet.
+      Before the generations, you need to know what a **Promise** is: an object representing a value that does not exist yet. Think of it like ordering food on a delivery app — you get a tracking number (the Promise) immediately, but the food (the value) arrives later.
 
       ```javascript
       // CREATING a Promise — this is how async operations are built under the hood:
@@ -1160,12 +1264,26 @@ steps:
     tests:
       - description: "Function uses the 'async' keyword"
         command: "assert(code.includes('async'), 'Declare your function with the async keyword')"
+        hints:
+          - text: "To use `await` inside a function, that function must be declared with a special keyword before `function`. Check the Generation 3 example in the instructions — how does the function declaration start?"
+            condition: "code_missing: async"
       - description: "Function uses 'await' to handle the Promise"
         command: "assert(code.includes('await'), 'Use await to wait for the fetchStudents() Promise')"
+        hints:
+          - text: "Inside your async function, you need to 'pause' until `fetchStudents()` resolves. Which keyword suspends the function without blocking the Event Loop? (Hint: it rhymes with 'a weight'.)"
+            condition: "code_missing: await"
       - description: "Uses try/catch for error handling"
         command: "assert(code.includes('try') && code.includes('catch'), 'Wrap your await call in a try/catch block for error handling')"
+        hints:
+          - text: "If the Promise rejects (e.g., database down), your code needs to handle the error gracefully. JavaScript uses the same error-handling structure as C++ and Python — what block structure catches exceptions?"
+            condition: "code_missing: try"
+          - text: "You have `try` but are missing the companion block that handles the error. Every `try` needs its partner."
+            condition: "code_contains: try"
       - description: "Output includes student names from the data"
         command: "assert(output.includes('Alice'), 'Your output should include student names — make sure you call your async function')"
+        hints:
+          - text: "Your async function exists but produces no output. Did you remember to *call* the function at the bottom of the file? Defining a function doesn't execute it — you need `yourFunctionName();` on a separate line."
+            condition: "code_contains: async"
 
     quiz:
       title: "async/await — Knowledge Check"
@@ -1189,6 +1307,23 @@ steps:
             - "Option A — `Promise.all` adds overhead that makes it slower for only two Promises"
           correct_index: 2
           explanation: "Option A awaits fetchA first (100ms), then starts fetchB (another 100ms) — total ~200ms. Option B starts both immediately and waits for the slower one — total ~100ms. When operations are independent, always use `Promise.all()`. This is one of the most common async/await performance mistakes."
+
+        - question: |
+            **Arrange** the lines to write an async function that fetches two independent APIs in parallel and logs both results.
+          type: parsons
+          lines:
+            - "async function loadDashboard() {"
+            - "    try {"
+            - "        const [users, posts] = await Promise.all([fetchUsers(), fetchPosts()]);"
+            - "        console.log(users, posts);"
+            - "    } catch (err) {"
+            - "        console.error('Failed:', err.message);"
+            - "    }"
+            - "}"
+          distractors:
+            - "        const users = await fetchUsers();"
+            - "        const posts = await fetchPosts();"
+          explanation: "`Promise.all` fires both requests concurrently — total time is max(A, B). The distractors show sequential `await` calls, which would work but take time(A) + time(B). Array destructuring `[users, posts]` unpacks both results in one line."
 
         - question: "What happens if the Promise passed to `await` rejects and there is no `try`/`catch` block?"
           options:
@@ -1240,8 +1375,9 @@ steps:
 
       ## Putting It All Together
 
-      You now have all the component skills. This capstone integrates them into a single
-      program — with **no scaffolding**. You decide how to structure the code.
+      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, the Event Loop, `async`/`await`, and `Promise.all`. This capstone integrates them into one program — with **no scaffolding**. You decide how to structure the code.
+
+      This is the kind of real async data-merging problem that powers apps like Spotify (merging user profiles with listening history) or Discord (merging server members with their roles and messages).
 
       ### The Scenario
 
@@ -1404,20 +1540,44 @@ steps:
     tests:
       - description: "Uses async/await"
         command: "assert(code.includes('async') && code.includes('await'), 'Your solution should use async/await')"
+        hints:
+          - text: "This capstone requires the async pattern from Step 6. Your function needs to be declared as `async` and use `await` to wait for Promises."
+            condition: "code_missing: async"
       - description: "Uses Promise.all for concurrent fetching"
         command: "assert(code.includes('Promise.all'), 'Fetch both data sources concurrently with Promise.all')"
+        hints:
+          - text: "The two data sources are independent — neither needs the other's result. What technique from Step 6 lets you fire both requests simultaneously instead of waiting for one before starting the other?"
+            condition: "code_missing: Promise.all"
       - description: "Uses try/catch for error handling"
         command: "assert(code.includes('try') && code.includes('catch'), 'Wrap your code in try/catch for error handling')"
+        hints:
+          - text: "Production code must handle errors. Wrap your `await` calls in the same error-handling structure you used in Step 6."
+            condition: "code_missing: try"
       - description: "Output includes the dashboard header"
         command: "assert(output.includes('Grade Dashboard'), 'Print the === Grade Dashboard === header')"
+        hints:
+          - text: "The first line of output should be the dashboard header. Check the exact format in the requirements — use `console.log` with the header string."
+            condition: "code_contains: async"
       - description: "Output includes Alice with a passing average"
         command: "assert(output.includes('Alice') && output.includes('87.7') && output.includes('PASS'), 'Alice should have Avg: 87.7 and PASS')"
+        hints:
+          - text: "For each student in the roster, you need to: (1) find their grades using `.filter()` with `===` on the ID, (2) compute the average with `.reduce()`, (3) format with `.padEnd()` and `.toFixed()`. Which of these steps might be wrong?"
+            condition: "code_contains: Promise.all"
       - description: "Output includes Bob with a failing average"
         command: "assert(output.includes('Bob') && output.includes('54.3') && output.includes('FAIL'), 'Bob should have Avg: 54.3 and FAIL')"
+        hints:
+          - text: "Bob's average is (45+61+57)/3 = 54.3. If your number doesn't match, check: are you dividing by the student's grade count (3) or by the total grades array length? Also ensure PASS/FAIL threshold is average >= 60."
+            condition: "code_contains: .reduce("
       - description: "Output includes Clara with a passing average"
         command: "assert(output.includes('Clara') && output.includes('91.0') && output.includes('PASS'), 'Clara should have Avg: 91.0 and PASS')"
+        hints:
+          - text: "Clara's average is exactly 91.0. If `.toFixed(1)` isn't showing, remember it returns a string — make sure you're calling it on the average number, not on a string."
+            condition: "code_contains: .toFixed("
       - description: "Output includes passing summary"
         command: "assert(output.includes('Passing: 2/3'), 'End with a summary line: Passing: 2/3 students')"
+        hints:
+          - text: "After printing each student, add a summary line. You need to count how many students passed (average >= 60) and display it as 'Passing: X/Y students'. How will you track the count?"
+            condition: "code_contains: async"
 
     quiz:
       title: "Capstone — Knowledge Check"
@@ -1463,6 +1623,17 @@ steps:
             - "It depends on how fast the CPU is"
           correct_index: 1
           explanation: "When you `await` sequentially, the second call does not execute until the first Promise resolves. The first timer fires after ~50ms, then the second starts and fires after another ~50ms — total ~100ms. This is why `Promise.all` matters: it starts both timers at the same time."
+
+        - question: |
+            **[Technique Selection — Interleaving]** A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist, fetch its tracks, (3) display all track names. Which combination of array methods and async patterns is most appropriate?
+          type: single
+          options:
+            - "`.filter()` to select playlists, then `await` each track fetch sequentially"
+            - "`.map()` to transform playlists into fetch Promises, then `Promise.all()` to fetch all track lists concurrently, then `.flat()` to merge results"
+            - "`.reduce()` to accumulate all tracks into one array, with `await` inside the reducer callback"
+            - "A `for` loop with `setTimeout` to space out the requests"
+          correct_index: 1
+          explanation: "`.map()` transforms each playlist into a Promise (the fetch call). `Promise.all()` fires all fetches concurrently — much faster than sequential `await`. `.flat()` merges the nested arrays of tracks into one list. This combines Step 4 (`.map()`), Step 6 (`Promise.all`), and Step 5 (Event Loop concurrency)."
 
         - question: "**[Spaced Practice: Revisit Step 6]** A `try`/`catch` block wraps an `await` call, but the developer forgot to add `async` to the function declaration. What happens?"
           options:
