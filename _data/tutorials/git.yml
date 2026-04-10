@@ -1442,42 +1442,40 @@ steps:
       experiment freely, and if things go wrong, the main timeline is
       completely unaffected.
 
-      ### The Post-it note mental model
+      ### What is a branch?
 
-      A branch is nothing more than a **Post-it note stuck to a commit**.
-      The note has a name written on it (like `main` or `feature-team-up`),
-      and it sits on top of one specific commit. That's it — the entire
-      branch is that Post-it note.
+      A branch is nothing more than a **pointer to a commit**. It has a
+      name (like `main` or `feature-team-up`) and it points to one
+      specific commit. That's it — the entire branch is just that pointer.
 
-      Creating a branch? You're writing a name on a new Post-it and
-      sticking it to the current commit. Committing on a branch? Git
-      peels the Post-it off the old commit and moves it to the new one.
-      Deleting a branch? You toss the Post-it in the bin — the commits
-      it pointed to are still there.
+      Creating a branch? Git writes a new pointer to the current commit.
+      Committing on a branch? Git moves the pointer from the old commit
+      to the new one. Deleting a branch? Git removes the pointer — the
+      commits it pointed to are still there.
 
-      Because Post-it notes are tiny, creating a branch is nearly instant
-      and costs almost nothing (~41 bytes on disk). You can have hundreds
-      of branches without any performance impact.
+      Because a pointer is tiny (~41 bytes on disk), creating a branch
+      is nearly instant. You can have hundreds of branches without any
+      performance impact.
 
       ```
       Before branching:
 
         main:  [C1] ← [C2] ← [C3]  ← HEAD
                                 ↑
-                           Post-it: "main"
+                           pointer: "main"
 
       After creating feature branch:
 
         main:  [C1] ← [C2] ← [C3]
                                 ↑
-                          Post-it: "main"
-                          Post-it: "feature-team-up"  ← HEAD
+                          pointer: "main"
+                          pointer: "feature-team-up"  ← HEAD
       ```
 
-      Two Post-it notes on the same commit — not a copy of your entire
-      project! When you make a new commit on `feature-team-up`, Git peels
-      that Post-it off C3 and sticks it on the new commit C4, while
-      `main` stays put on C3.
+      Two pointers to the same commit — not a copy of your entire
+      project! When you make a new commit on `feature-team-up`, Git
+      moves that pointer from C3 to the new commit C4, while `main`
+      stays on C3.
 
       ### Task 1: See your current branch
 
@@ -1505,7 +1503,7 @@ steps:
 
 
       > 📊 **Git Graph** — Was this what you expected?
-      > It does not look like a branch, does it? That's because both `main` and `feature-team-up` are pointing to the same commit. They are two Post-it notes on the same commit.
+      > It does not look like a branch, does it? That's because both `main` and `feature-team-up` are pointing to the same commit. They are two pointers to the same commit.
       > HEAD is now pointing to `feature-team-up` meaning that every new commit will be added to this branch.
 
       ### Task 3: Make changes on the feature branch
