@@ -197,6 +197,12 @@ Git includes powerful utilities for handling complex scenarios and tracking down
 
 # Quiz
 
-{% include flashcards.html id="git" %}
+## Basic Git
+{% include flashcards.html id="git_basic" %}
 
-{% include quiz.html id="git" %}
+{% include quiz.html id="git_basic" %}
+
+## Advanced Git
+{% include flashcards.html id="git_advanced" %}
+
+{% include quiz.html id="git_advanced" %}

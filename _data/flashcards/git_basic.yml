@@ -1,0 +1,83 @@
+title: "Basic Git Flashcards"
+description: "Which Git command would you use for the following scenarios?"
+cards:
+  - id: 1
+    question: "You want to safely 'undo' a previous commit that introduced an error, but you don't want to rewrite history or force-push. How do you create a new commit with the exact inverse changes?"
+    answer: "`git revert`"
+    explanation: "`git revert` is the safest way to undo changes on a shared branch because it adds a new commit that nullifies the targeted commit, rather than deleting history."
+  - id: 2
+    question: "You want to see exactly what has changed in your working directory compared to your last saved snapshot (the most recent commit)."
+    answer: "`git diff HEAD`"
+    explanation: "Using `git diff HEAD` compares your current modified tracked files on disk with the most recent commit. Note that it does not show completely untracked files."
+  - id: 3
+    question: "You are starting a brand new project in an empty folder on your computer and want Git to start tracking changes in this directory."
+    answer: "`git init`"
+    explanation: "This command initializes a new, empty Git repository in the current directory via `git init`, creating the hidden `.git` folder that manages all version control data."
+  - id: 4
+    question: "You have just installed Git on a new computer and need to set up your username and email address so that your commits are properly attributed to you."
+    answer: "`git config`"
+    explanation: "Using `git config --global user.name` and `user.email` establishes your default identity, which can be overridden for specific projects using `git config --local`."
+  - id: 5
+    question: "You've made changes to three different files, but you only want two of them to be included in your next snapshot. How do you move those specific files to the staging area?"
+    answer: "`git add <filename>`"
+    explanation: "The `git add` command moves file modifications from the working directory into the staging area (index) to prepare them for the next commit."
+  - id: 6
+    question: "You've lost track of what you've been doing. You want a quick overview of which files are modified, which are staged, and which are completely untracked by Git."
+    answer: "`git status`"
+    explanation: "This command `git status` provides a high-level summary of the working tree and staging area statuses, making it one of the most frequently used Git commands."
+  - id: 7
+    question: "You have staged all the files for a completed feature and are ready to permanently save this snapshot to your local repository's history with a descriptive message."
+    answer: "`git commit -m 'message'`"
+    explanation: "Committing takes everything in the staging area and records it as a permanent new version in your local Git history via `git commit`."
+  - id: 8
+    question: "You want to review the chronological history of all past commits on your current branch, including their author, date, and commit message."
+    answer: "`git log`"
+    explanation: "This command `git log` prints out the commit history. You can also add flags like `-p` to see the exact patch/diff introduced in each commit."
+  - id: 9
+    question: "You've made edits to a file but haven't staged it yet. You want to see the exact lines of code you added or removed compared to what is currently in the staging area."
+    answer: "`git diff`"
+    explanation: "Running `git diff` without any arguments compares your current working directory against the staging area."
+  - id: 10
+    question: "You want to start working on a completely new feature in isolation without affecting the main codebase."
+    answer: "`git branch <branch-name>`"
+    explanation: "This command `git branch` creates a new branch pointer at your current commit, allowing you to diverge from the main line of development."
+  - id: 11
+    question: "You are currently on your feature branch and need to switch your working directory back to the 'main' branch."
+    answer: "`git switch main`"
+    explanation: "The modern `git switch` command navigates between branches, updating your working directory and moving HEAD. The legacy equivalent `git checkout main` still works and is widely seen in older documentation and scripts."
+  - id: 12
+    question: "Your feature branch is complete, and you want to integrate its entire commit history into your current 'main' branch."
+    answer: "`git merge <branch-name>`"
+    explanation: "Merging with `git merge` takes the divergent histories of two branches and combines them, often resulting in a new 'merge commit' with two parents."
+  - id: 13
+    question: "You want to start working on an open-source project hosted on GitHub. How do you download a full local copy of that repository to your machine?"
+    answer: "`git clone <url>`"
+    explanation: "Cloning with `git clone` downloads the entire repository, including its full history and all branches, from a remote server to your local disk."
+  - id: 14
+    question: "Your team members have uploaded new commits to the shared remote repository. You want to fetch those changes and immediately integrate them into your current local branch."
+    answer: "`git pull`"
+    explanation: "The `git pull` command is effectively a combination of `git fetch` and `git merge` (the default) or `git rebase` (if configured), integrating remote changes into your local branch."
+  - id: 15
+    question: "You have finished making several commits locally and want to upload them to the remote GitHub repository so your team can see them."
+    answer: "`git push`"
+    explanation: "`git push` transmits your local commits to the remote server, updating the remote branch to match your local branch."
+  - id: 16
+    question: "You have a specific commit hash and want to see detailed information about it, including the commit message, author, and the exact code diff it introduced."
+    answer: "`git show <commit-hash>`"
+    explanation: "`git show` displays the details of a specific Git object, most commonly used to inspect exactly what changed in a single commit."
+  - id: 17
+    question: "You want to start working on a new feature in isolation. How do you create a new branch called 'feature-auth' and immediately switch to it in a single command?"
+    answer: "`git switch -c feature-auth`"
+    explanation: "`git switch -c` creates a new branch and switches to it in one step. The `-c` flag stands for 'create'. The legacy equivalent is `git checkout -b feature-auth`, which you will still encounter in older scripts and documentation."
+  - id: 18
+    question: "You accidentally staged a file you didn't intend to include in your next commit. How do you move it back to the working directory without losing your modifications?"
+    answer: "`git restore --staged <filename>`"
+    explanation: "`git restore --staged` unstages a file by copying the version from the last commit back into the staging area, leaving your working directory modifications completely untouched. It is the modern equivalent of the older `git reset HEAD <file>`."
+  - id: 19
+    question: "You made some experimental changes to a file but want to discard them entirely and revert to the version from your last commit."
+    answer: "`git restore <filename>`"
+    explanation: "`git restore <file>` discards unstaged changes in the working directory, reverting it to the staged version (or the last commit if nothing is staged). To explicitly revert to the last commit, use `git restore --source=HEAD <file>`."
+  - id: 20
+    question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"
+    answer: "A **fast-forward merge** — occurs when 'main' has no new commits since the feature branch was created."
+    explanation: "A fast-forward merge happens when the target branch hasn't diverged. Git can simply advance its pointer in a straight line to the tip of the incoming branch, keeping the commit history perfectly linear. If both branches have diverged, Git performs a three-way merge and creates a merge commit instead."

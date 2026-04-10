@@ -1,0 +1,35 @@
+title: "Advanced Git Flashcards"
+description: "Which Git command would you use for the following advanced scenarios?"
+cards:
+  - id: 1
+    question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. How do you temporarily save your current work without making a messy commit?"
+    answer: "`git stash`"
+    explanation: "`git stash` temporarily shelves your staged and unstaged changes for tracked files. To include brand new, untracked files in the stash, you must use `git stash -u`."
+  - id: 2
+    question: "You know a bug was introduced recently, but you aren't sure which commit caused it. How do you perform a binary search through your commit history to find the exact commit that broke the code?"
+    answer: "`git bisect`"
+    explanation: "`git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, making it highly efficient for tracking down regressions."
+  - id: 3
+    question: "You are looking at a file and want to know exactly who last modified a specific line of code, and in which commit they did it."
+    answer: "`git blame`"
+    explanation: "`git blame` annotates each line of a file with the author and the commit hash of the last modification, which is very useful for figuring out who to ask about a piece of code."
+  - id: 4
+    question: "You have a feature branch with several experimental commits, but you only want to move one specific, completed commit over to your main branch."
+    answer: "`git cherry-pick`"
+    explanation: "`git cherry-pick` allows you to selectively grab a specific commit from one branch and apply it onto your current branch, without merging the entire branch history."
+  - id: 5
+    question: "You want to integrate a feature branch into main, but instead of bringing over all 15 tiny incremental commits, you want them combined into one clean commit on the main branch."
+    answer: "`git merge --squash`"
+    explanation: "Squashing combines all the patches from the feature branch into a single set of changes, allowing you to make one clean commit on the target branch and keep the history tidy with `git merge --squash`."
+  - id: 6
+    question: "You are building a massive project and want to include an entirely separate external Git repository as a subdirectory within your project, while keeping its history independent."
+    answer: "`git submodule`"
+    explanation: "`git submodule` allows you to nest an independent repository inside your main project. It essentially creates a pointer to a specific commit of that external library."
+  - id: 7
+    question: "Instead of creating a merge commit, you want to take the commits from your feature branch and re-apply them directly on top of the latest 'main' branch to create a clean, linear history."
+    answer: "`git rebase main`"
+    explanation: "Rebasing with `git rebase` rewrites history by moving the base of your current branch to the tip of another, which creates a cleaner history but should be avoided on public/shared branches."
+  - id: 8
+    question: "You want to safely inspect the codebase at a specific older commit without modifying any branch. How do you do this?"
+    answer: "`git switch --detach <commit-hash>`"
+    explanation: "`git switch --detach` places you in 'detached HEAD' state, where HEAD points directly to a specific commit rather than a branch. You can look around freely, but any commits made here are not anchored to a branch and can be lost when switching away. Use `git switch -c <name>` to anchor them to a new branch if needed."
