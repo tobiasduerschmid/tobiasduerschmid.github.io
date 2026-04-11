@@ -706,6 +706,13 @@
             midX = (dir1 === 'right') ? Math.max(ext1X, ext2X) : Math.min(ext1X, ext2X);
           }
           midX += (ci % 5) * 12 - 24; // Jitter to prevent identical overlaps
+          // Clamp to corridor so the vertical segment stays between the two components
+          // and doesn't get pushed back inside the source or target obstacle zone.
+          if (dir1 === 'right' && dir2 === 'left' && ext1X <= ext2X) {
+            midX = Math.min(Math.max(midX, ext1X), ext2X);
+          } else if (dir1 === 'left' && dir2 === 'right' && ext2X <= ext1X) {
+            midX = Math.min(Math.max(midX, ext2X), ext1X);
+          }
           midX = findClearX(Math.min(y1, y2), Math.max(y1, y2), midX, obstacles, skipN);
           points = [
             { x: x1, y: y1 }, { x: midX, y: y1 },
