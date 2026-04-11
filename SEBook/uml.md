@@ -7,34 +7,83 @@ More Notes (WIP):
 * [State Machine Diagrams](/SEBook/uml_state_diagram.html)
 * [Class Diagrams](/SEBook/uml_class_diagram.html)
 
-![UML Sequence Diagram](/img/sequence_diagram_1.svg)
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: Client
+participant server: LibraryServer
+participant db: Database
+client -> server: GET /book/42
+activate server
+server -> db: queryBook(42)
+db --> server: bookData
+alt [book found]
+  server --> client: 200 OK, book
+else [not found]
+  server --> client: 404 Not Found
+end
+deactivate server
+@enduml'></div>
 
-![UML State Diagram](/img/state_machine_1.svg)
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Created : Order Placed by Customer
+Created --> Paid : payment_received
+Paid --> Shipped : item_dispatched
+Shipped --> Delivered : delivery_confirmed
+Created --> Cancelled : customer_cancels / payment_timeout
+Paid --> Refunded : return_initiated
+Delivered --> [*]
+Cancelled --> [*]
+Refunded --> [*]
+@enduml'></div>
 
-![UML Class Diagram](/img/class_diagram_1.svg)
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface Billable {
+  + processPayment(): bool
+}
+class Customer {
+  - id: int
+  - name: String
+  + placeOrder(): void
+}
+class VIP
+class Guest
+class Order {
+  - date: Date
+  - status: String
+  + calcTotal(): float
+}
+class LineItem {
+  - quantity: int
+}
+class Product {
+  - price: float
+  - name: String
+}
+VIP --|> Customer
+Guest --|> Customer
+Order ..|> Billable
+Customer "1" -- "0..*" Order
+Order *-- "1..*" LineItem
+LineItem "0..*" -- "1" Product
+@enduml'></div>
 
 ## 1. Classes, Interfaces, and Modifiers
 
 This snippet demonstrates how to define an interface, a class, and use visibility modifiers (`+`, `-`, `#`, `~`).
 
-```plantuml
-@startuml
-interface "Drivable" <<interface>> {
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface Drivable {
   + startEngine(): void
   + stopEngine(): void
 }
-
-class "Car" {
+class Car {
   - make: String
   - model: String
   # year: int
   ~ packageLevelAttribute: String
-  
   + startEngine(): void
   + getMake(): String
 }
-@enduml
-```
+@enduml'></div>
 
 ---
 
@@ -43,113 +92,89 @@ class "Car" {
 PlantUML uses different arrow styles to represent the various relationships. The direction of the arrow generally goes from the "child" or "part" to the "parent" or "whole."
 
 ### Generalization (Inheritance)
-Use `<|--` to draw a solid line with an empty, closed arrowhead.
+Use `--|>` <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> to draw a solid line with an empty, closed arrowhead.
 
-```plantuml
-@startuml
-class "Vehicle" {
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Vehicle {
   + move(): void
 }
-class "Car"
-class "Motorcycle"
-
-Vehicle <|-- Car
-Vehicle <|-- Motorcycle
-@enduml
-```
+class Car
+class Motorcycle
+Car --|> Vehicle
+Motorcycle --|> Vehicle
+@enduml'></div>
 
 ### Interface Realization (Implementation)
-Use `<|..` to draw a dashed line with an empty, closed arrowhead.
+Use `..|>` <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> to draw a dashed line with an empty, closed arrowhead.
 
-```plantuml
-@startuml
-interface "Drivable"
-class "Car"
-
-Drivable <|.. Car
-@enduml
-```
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface Drivable
+class Car
+Car ..|> Drivable
+@enduml'></div>
 
 ### Association and Multiplicities
-Use `--` for a standard solid line. You can add quotes around numbers at either end to define the multiplicities, and a colon followed by text to label the association.
+Use `--` <span class="uml-sym" data-diagram="class" data-sym="--"></span> for a standard solid line. You can add quotes around numbers at either end to define the multiplicities, and a colon followed by text to label the association.
 
-```plantuml
-@startuml
-class "Teacher"
-class "Course"
-class "Student"
-
-Teacher "1" -- "0..*" Course : teaches >
-Course "1..*" -- "0..*" Student : enrolled in >
-@enduml
-```
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Teacher
+class Course
+class Student
+Teacher "1" -- "0..*" Course : teaches
+Course "1..*" -- "0..*" Student : enrolled in
+@enduml'></div>
 
 ### Aggregation
-Use `o--` to draw a solid line with an empty diamond pointing to the "whole" class.
+Use `o--` <span class="uml-sym" data-diagram="class" data-sym="o--"></span> to draw a solid line with an empty diamond pointing to the "whole" class.
 
-```plantuml
-@startuml
-class "Department"
-class "Professor"
-
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Department
+class Professor
 Department o-- Professor
-@enduml
-```
+@enduml'></div>
 
 ### Composition
-Use `*--` to draw a solid line with a filled (black) diamond pointing to the "whole" class.
+Use `*--` <span class="uml-sym" data-diagram="class" data-sym="*--"></span> to draw a solid line with a filled (black) diamond pointing to the "whole" class.
 
-```plantuml
-@startuml
-class "House"
-class "Room"
-
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class House
+class Room
 House *-- "1..*" Room : contains
-@enduml
-```
+@enduml'></div>
 
 ---
 
 ## 3. Putting It All Together: A Mini E-commerce Example
 
-Here is a consolidated PlantUML diagram showing how these concepts interact in a simple system design.
+Here is a consolidated diagram showing how these concepts interact in a simple system design.
 
-```plantuml
-@startuml
-interface "PaymentMethod" <<interface>> {
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface PaymentMethod {
   + pay(amount: double): boolean
 }
-
-class "CreditCard" {
+class CreditCard {
   - cardNumber: String
   - expirationDate: String
   + pay(amount: double): boolean
 }
-
-class "Customer" {
+class Customer {
   - name: String
   - email: String
   + placeOrder(): void
 }
-
-class "Order" {
+class Order {
   - orderId: int
   - totalAmount: double
 }
-
-class "OrderItem" {
+class OrderItem {
   - productId: int
   - quantity: int
 }
-
-' Relationships
-PaymentMethod <|.. CreditCard : realizes
-Customer "1" -- "0..*" Order : places >
-Order *-- "1..*" OrderItem : is composed of >
-Customer "1" -- "0..*" PaymentMethod : uses >
-
-@enduml
-```
+CreditCard ..|> PaymentMethod : realizes
+Customer "1" -- "0..*" Order : places
+Order *-- "1..*" OrderItem : is composed of
+Customer "1" -- "0..*" PaymentMethod : uses
+@enduml'></div>
 
 ---
 
@@ -203,8 +228,8 @@ It is a modeling choice to decide whether you want to include concrete values (e
 
 # State Machine Diagrams 
 
-State machines model the transitions between different states. States are modeled either as oval, rectangles with rounded corners, or circles. 
+State machines model the transitions between different states. States are modeled as rectangles with rounded corners. The initial pseudo-state is a solid black circle, and the final state is a bullseye (solid circle inside a hollow circle). 
 
-Transitions follow the pattern `[condition] trigger / action`. 
+Transitions follow the pattern `trigger [guard] / effect`. 
 
 State machines always need an initial state but don't always need a final state. 

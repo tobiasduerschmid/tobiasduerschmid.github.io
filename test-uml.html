@@ -1,0 +1,592 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>UML Renderer Test</title>
+  <link rel="stylesheet" href="/css/uml-diagram.css">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 40px auto; padding: 0 20px; }
+    h2 { margin-top: 50px; border-bottom: 2px solid #2774AE; padding-bottom: 8px; }
+    h1 { border-bottom: 3px solid #2774AE; padding-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <h1>UML Class Diagram Tests</h1>
+
+  <h2>1. Shared-Target Inheritance</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Animal {
+  +name: str
+  +speak()
+}
+class Dog {
+  +breed: str
+  +fetch(item: str)
+}
+class Cat {
+  +indoor: bool
+  +purr()
+}
+Dog --|> Animal
+Cat --|> Animal
+@enduml
+  </code></pre>
+
+  <h2>2. Interface Realization (Dashed Arrows)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+interface Drawable {
+  +draw()
+}
+class Circle {
+  -radius: double
+  +draw()
+}
+class Rectangle {
+  -width: double
+  -height: double
+  +draw()
+}
+Circle ..|> Drawable
+Rectangle ..|> Drawable
+@enduml
+  </code></pre>
+
+  <h2>3. All Relationship Types</h2>
+  <pre><code class="language-uml-class">
+@startuml
+abstract class Shape {
+  -color: int
+  +{abstract} area(): double
+  +setColor(r: int, g: int, b: int)
+}
+class Rectangle {
+  -width: int
+  -length: int
+  +setWidth(width: int)
+  +setHeight(height: int)
+}
+class Color {
+  -r: int
+  -g: int
+  -b: int
+}
+class Canvas {
+  +render()
+}
+class Logger {
+  +log(msg: str)
+}
+Rectangle --|> Shape
+Shape *-- Color
+Shape o-- Canvas
+Canvas ..> Logger : uses
+@enduml
+  </code></pre>
+
+  <h2>4. Multiplicities and Labels</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class University {
+  +name: str
+}
+class Professor {
+  +name: str
+  +department: str
+}
+class Student {
+  +name: str
+  +id: int
+}
+University "1" -- "*" Professor : employs
+Professor "1" -- "*" Student : advises
+@enduml
+  </code></pre>
+
+  <h2>5. Observer Design Pattern</h2>
+  <pre><code class="language-uml-class">
+@startuml
+interface Observer {
+  +update(data: Object)
+}
+abstract class Subject {
+  -observers: List
+  +attach(o: Observer)
+  +detach(o: Observer)
+  +notify()
+}
+class ConcreteSubject {
+  -state: int
+  +getState(): int
+  +setState(s: int)
+}
+class ConcreteObserverA {
+  +update(data: Object)
+}
+class ConcreteObserverB {
+  +update(data: Object)
+}
+ConcreteSubject --|> Subject
+Subject --> Observer : notifies
+ConcreteObserverA ..|> Observer
+ConcreteObserverB ..|> Observer
+@enduml
+  </code></pre>
+
+  <h2>6. Train System (from Lecture)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Train {
+  -lastStop: char
+  -nextStop: char
+  -velocity: double
+  -doorsOpen: boolean
+  +startTrain(velocity: double): void
+  +stopTrain(): void
+  +openDoors(): void
+}
+class Station {
+  +name: str
+}
+class Button {
+  +pressed: boolean
+  +press()
+}
+class RequestButton {
+  +press()
+}
+class EmergencyButton {
+  +press()
+}
+RequestButton --|> Button
+EmergencyButton --|> Button
+Station "1" -- "1" Button
+Train "1" -- "2" Button
+@enduml
+  </code></pre>
+
+  <h2>7. Dependency</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Train {
+  +addStop(stop: event): void
+}
+class ButtonPressedEvent {
+  +station: str
+  +timestamp: int
+}
+Train ..> ButtonPressedEvent
+@enduml
+  </code></pre>
+
+  <h2>8. Abstract Class with Stereotype</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Singleton &lt;&lt;singleton&gt;&gt; {
+  -{static} instance: Singleton
+  -data: str
+  +{static} getInstance(): Singleton
+  +getData(): str
+}
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Sequence Diagram Tests</h1>
+
+  <h2>9. Basic Synchronous Call & Response</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client_1: Client
+participant server: LibraryServer
+
+client_1 -> server: GET /book/id
+server --> client_1: responseCode=200, book
+@enduml
+  </code></pre>
+
+  <h2>10. Alt Fragment</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client_1: Client
+participant server: LibraryServer
+
+client_1 -> server: GET /book/id
+alt [book found]
+  server --> client_1: responseCode=200, book
+else [else]
+  server --> client_1: responseCode=404
+end
+@enduml
+  </code></pre>
+
+  <h2>11. Multiple Participants (Login Flow)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant user: User
+participant browser: WebBrowser
+participant login: LoginController
+participant auth: AuthService
+participant db: UserDB
+
+user -> browser: enter credentials
+browser -> login: POST /login
+login -> auth: authenticate(user, pass)
+auth -> db: findUser(user)
+db --> auth: userRecord
+auth --> login: authResult
+login --> browser: 200 OK + token
+browser --> user: show dashboard
+@enduml
+  </code></pre>
+
+  <h2>12. Loop Fragment</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant s: Server
+participant db: Database
+
+c -> s: getItems(page)
+loop [for each item in page]
+  s -> db: fetchItem(id)
+  db --> s: itemData
+end
+s --> c: itemList
+@enduml
+  </code></pre>
+
+  <h2>13. Opt Fragment (Optional)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant user: User
+participant app: App
+participant notif: NotificationService
+
+user -> app: submitOrder()
+app --> user: orderConfirmation
+opt [user has notifications enabled]
+  app -> notif: sendEmail(user, order)
+  notif --> app: sent
+end
+@enduml
+  </code></pre>
+
+  <h2>14. Train System Sequence (from Lecture)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant p: Passenger
+participant btn: StationButton
+participant sys: TrainSystem
+participant train: Train
+participant doors: Doors
+
+p -> btn: press()
+btn -> sys: requestStop(stationA)
+sys -> train: stopTrain()
+train --> sys: stopped
+sys -> doors: openDoors()
+doors --> sys: doorsOpen
+p -> train: board
+p -> train: pressRequestButton(stationB)
+train -> sys: requestStop(stationB)
+sys -> doors: closeDoors()
+doors --> sys: doorsClosed
+sys -> train: startTrain(velocity)
+@enduml
+  </code></pre>
+
+  <h2>15. Execution Specifications (Auto Activation)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client_1: Client
+participant server: LibraryServer
+participant db: Database
+
+client_1 -> server: GET /book/id
+server -> db: SELECT * FROM books
+db --> server: resultSet
+server --> client_1: responseCode=200, book
+@enduml
+  </code></pre>
+
+  <h2>16. Nested Activations</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant user: User
+participant app: Application
+participant auth: AuthService
+participant db: UserDB
+
+user -> app: login(credentials)
+app -> auth: authenticate(user, pass)
+auth -> db: findUser(user)
+db --> auth: userRecord
+auth --> app: token
+app --> user: loginSuccess
+@enduml
+  </code></pre>
+
+  <h2>17. Self-Message</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client: Client
+participant server: Server
+
+client -> server: request()
+server -> server: validate()
+server -> server: process()
+server --> client: response
+@enduml
+  </code></pre>
+
+  <h2>18. Stacked Execution Specifications</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant ui: UI
+participant ctrl: Controller
+participant svc: Service
+participant repo: Repository
+
+ui -> ctrl: handleClick()
+ctrl -> svc: processOrder()
+svc -> repo: save(order)
+repo --> svc: saved
+svc -> svc: sendNotification()
+svc --> ctrl: result
+ctrl --> ui: updateView()
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML State Machine Diagram Tests</h1>
+
+  <h2>19. Exosuit State Machine (from SEBook)</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Idle : powerOn()
+
+Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
+CombatMode --> Idle : threatNeutralized / retractWeapons()
+CombatMode --> EmergencyPower : powerLevel < 5% / rerouteToLifeSupport()
+EmergencyPower --> [*] : manualOverride()
+
+state Idle {
+  entry / initSensors()
+  exit / logStateChange()
+}
+@enduml
+  </code></pre>
+
+  <h2>20. Order Lifecycle</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Created : Order Placed
+
+Created --> Paid : payment_received
+Paid --> Shipped : ship_order
+Shipped --> Delivered : delivery_confirmed
+Delivered --> [*]
+
+Created --> Cancelled : cancel_order [within 24hrs]
+Paid --> Refunded : refund_requested / processRefund()
+Cancelled --> [*]
+Refunded --> [*]
+@enduml
+  </code></pre>
+
+  <h2>21. Simple Turnstile</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Locked
+
+Locked --> Unlocked : insertCoin
+Unlocked --> Locked : push
+@enduml
+  </code></pre>
+
+  <h2>22. Vending Machine with Internal Actions</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Idle
+
+Idle --> AcceptingMoney : selectProduct
+AcceptingMoney --> Dispensing : [sufficientFunds] / startDispense()
+AcceptingMoney --> Idle : cancel / returnMoney()
+Dispensing --> Idle : complete / resetMachine()
+
+state AcceptingMoney {
+  entry / displayPrice()
+  do / countInsertedCoins()
+}
+
+state Dispensing {
+  entry / activateMotor()
+  exit / stopMotor()
+}
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Component Diagram Tests</h1>
+
+  <h2>23. Client-Server (from Lecture)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Client
+component LibraryServer
+
+Client --> LibraryServer : GET Book
+Client --> LibraryServer : POST Book
+@enduml
+  </code></pre>
+
+  <h2>24. Three-Tier Architecture</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component WebUI
+component AppServer
+component Database
+
+WebUI --> AppServer : HTTP Requests
+AppServer --> Database : SQL Queries
+AppServer ..> Logger : uses
+@enduml
+  </code></pre>
+
+  <h2>25. Microservices</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component APIGateway
+component UserService
+component OrderService
+component PaymentService
+component NotificationService
+
+APIGateway --> UserService : /api/users
+APIGateway --> OrderService : /api/orders
+OrderService --> PaymentService : processPayment
+OrderService ..> NotificationService : sendConfirmation
+PaymentService ..> NotificationService : sendReceipt
+@enduml
+  </code></pre>
+
+  <h2>26. Frontend-Backend-Database (directional ports)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Frontend {
+  portout "httpOut" as f_out
+}
+component Backend {
+  portin "httpIn" as b_in
+  portout "dbOut" as b_dbout
+  portout "eventOut" as b_eventout
+}
+component Database {
+  portin "dbIn" as db_in
+}
+component EventBus {
+  portin "eventIn" as eb_in
+}
+f_out --> b_in : REST / JSON
+b_dbout --> db_in : SQL
+b_eventout --> eb_in : publish
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Deployment Diagram Tests</h1>
+
+  <h2>26. Web Application Deployment</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node WebServer {
+  component Nginx
+  component AppServer
+}
+node DatabaseServer {
+  component PostgreSQL
+}
+node ClientDevice {
+  component WebBrowser
+}
+
+ClientDevice --> WebServer : HTTPS
+WebServer --> DatabaseServer : TCP/IP
+@enduml
+  </code></pre>
+
+  <h2>27. Ticket System (from UML Reference)</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node TicketServer {
+  component TicketSeller
+  component CreditCardCharges
+  component TicketDB
+}
+node Kiosk {
+  component CustomerInterface
+}
+node SalesTerminal {
+  component ClerkInterface
+}
+
+Kiosk --> TicketServer : network
+SalesTerminal --> TicketServer : network
+@enduml
+  </code></pre>
+
+  <h2>28. Microservices Deployment</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node LoadBalancer {
+  component Nginx
+}
+node AppNode1 {
+  component UserService
+  component OrderService
+}
+node AppNode2 {
+  component PaymentService
+  component NotificationService
+}
+node DataNode {
+  component MongoDB
+  component Redis
+}
+
+LoadBalancer --> AppNode1 : HTTP
+LoadBalancer --> AppNode2 : HTTP
+AppNode1 --> DataNode : TCP
+AppNode2 --> DataNode : TCP
+AppNode1 ..> AppNode2 : gRPC
+@enduml
+  </code></pre>
+
+  <h2>29. Node Instance Notation (name:Type underlined, per UML spec Fig 9-3)</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node server:BankServer {
+  component Transactions
+  component AccountMgmt
+}
+node client:ATMKiosk {
+  component ATMSoftware
+}
+
+client:ATMKiosk --> server:BankServer : network
+@enduml
+  </code></pre>
+
+  <script src="/js/uml-shared.js"></script>
+  <script src="/js/uml-class-renderer.js"></script>
+  <script src="/js/uml-sequence-renderer.js"></script>
+  <script src="/js/uml-state-renderer.js"></script>
+  <script src="/js/uml-component-renderer.js"></script>
+  <script src="/js/uml-deployment-renderer.js"></script>
+</body>
+</html>

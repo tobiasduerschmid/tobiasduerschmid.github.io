@@ -1,0 +1,35 @@
+/* ── UML Diagram Theming ── */
+
+.uml-class-diagram-container {
+  --uml-stroke: #4060a0;
+  --uml-text: #222;
+  --uml-fill: #fff;
+  --uml-header-fill: #d0ddef;
+  --uml-line: #444;
+  --uml-bg: transparent;
+  overflow-x: auto;
+  padding: 12px 0;
+}
+
+/* Dark mode — yellow scheme */
+html.dark-mode .uml-class-diagram-container,
+body.dark-mode .uml-class-diagram-container,
+[data-theme="dark"] .uml-class-diagram-container {
+  --uml-stroke: #f5c518;
+  --uml-text: #f5f5f5;
+  --uml-fill: #1a1800;
+  --uml-header-fill: #2e2c00;
+  --uml-line: #f5c518;
+  --uml-bg: transparent;
+}
+
+.uml-class-diagram-container svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* ── Inline notation symbols ── */
+.uml-sym {
+  display: inline-block;
+  vertical-align: middle;
+}

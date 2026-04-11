@@ -3,7 +3,18 @@ title: UML
 layout: sebook
 ---
 
-![UML State Diagram](/img/state_machine_1.svg)
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Created : Order Placed by Customer
+Created --> Paid : payment_received
+Paid --> Shipped : item_dispatched
+Shipped --> Delivered : delivery_confirmed
+Created --> Cancelled : customer_cancels / payment_timeout
+Paid --> Refunded : return_initiated
+Delivered --> [*]
+Cancelled --> [*]
+Refunded --> [*]
+@enduml'></div>
+
 # UML State Machine Diagrams
 
 ## 🎯 Learning Objectives
@@ -61,43 +72,13 @@ To see how these pieces fit together, let's model the core power and combat syst
 
 When the suit is powered on, it enters an *Idle* state. If its sensors detect a threat, it shifts into *Combat Mode*, deploying repulsors. However, if the suit's arc reactor drops below 5% power, it must immediately override all systems and enter *Emergency Power* mode to preserve life support, regardless of whether a threat is present.
 
-### The ASCII State Machine Diagram
-
-```text
-               (Initial Node)
-                     O
-                     |
-                     | powerOn()
-                     V
-           +--------------------+
-           |                    |
-           |       Idle         |
-           |                    |
-           +--------------------+
-              |              ^
-threatDetected|              | threatNeutralized
- [sysCheckOK] |              | / retractWeapons()
-/ deployUI()  V              |
-           +--------------------+
-           |                    |
-           |    Combat Mode     |
-           |                    |
-           +--------------------+
-              |
-              | powerLevel < 5%
-              | / rerouteToLifeSupport()
-              V
-           +--------------------+
-           |                    |
-           |  Emergency Power   |
-           |                    |
-           +--------------------+
-                     |
-                     | manualOverride()
-                     V
-                    (O)
-               (Final Node)
-```
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Idle : powerOn()
+Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
+CombatMode --> Idle : threatNeutralized / retractWeapons()
+CombatMode --> EmergencyPower : powerLevel &lt; 5% / rerouteToLifeSupport()
+EmergencyPower --> [*] : manualOverride()
+@enduml'></div>
 
 ### Deconstructing the Model
 

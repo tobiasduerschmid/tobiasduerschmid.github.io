@@ -33,28 +33,23 @@ A lifeline represents an individual participant in the interaction. It is drawn 
 
 Messages are the communications between lifelines. They are drawn as horizontal arrows.
 
-  * **Synchronous Message (Solid arrowhead):** The sender waits for a response before doing anything else (like calling someone on the phone and waiting for them to answer).
-  * **Asynchronous Message (Open/stick arrowhead):** The sender sends the message and immediately moves on to other tasks (like sending a text message).
-  * **Return Message (Dashed line with open arrow):** The response to a previous message.
+  * **Synchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->"></span> The sender waits for a response before doing anything else (like calling someone on the phone and waiting for them to answer).
+  * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> The sender sends the message and immediately moves on to other tasks (like sending a text message).
+  * **Return Message** <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span> The response to a previous message.
 
 ### Visualizing the Basics: A Simple ATM Login
 
-Let's look at an ASCII representation of a user inserting a card into an ATM.
+Let's look at the sequence of a user inserting a card into an ATM.
 
-```text
-  Customer                     ATM                       Bank Server
-     |                          |                             |
-     |-----(1) insertCard()---->|                             |
-     |                          |                             |
-     |                          |------(2) verifyCard()------>|
-     |                          |                             |
-     |                          |<-----(3) cardValid()--------|
-     |                          |                             |
-     |<----(4) promptPIN()------|                             |
-     |                          |                             |
-     V                          V                             V
-   Time                       Time                          Time
-```
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant customer: Customer
+participant atm: ATM
+participant bank: Bank Server
+customer -> atm: (1) insertCard()
+atm -> bank: (2) verifyCard()
+bank --> atm: (3) cardValid()
+atm --> customer: (4) promptPIN()
+@enduml'></div>
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
@@ -79,22 +74,16 @@ The `opt` fragment is equivalent to an `if` statement without an `else`. The mes
 
 **Scenario:** A customer is buying an item. *If* they have a loyalty account, they receive a discount.
 
-```text
- Checkout System                 Pricing Engine
-       |                               |
-       |------- calculateTotal() ----->|
-       |                               |
-  ===========================================
-  | opt [hasLoyaltyAccount == true]         |
-  |    |                               |    |
-  |    |------ applyDiscount() ------->|    |
-  |    |                               |    |
-  |    |<----- discountApplied() ------|    |
-  ===========================================
-       |                               |
-       |<------ return finalTotal() ---|
-       |                               |
-```
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant checkout: Checkout System
+participant pricing: Pricing Engine
+checkout -> pricing: calculateTotal()
+opt [hasLoyaltyAccount == true]
+  checkout -> pricing: applyDiscount()
+  pricing --> checkout: discountApplied()
+end
+pricing --> checkout: finalTotal()
+@enduml'></div>
 
 *Notice the `[hasLoyaltyAccount == true]` text. This is the **guard condition**. If it evaluates to false, the sequence skips the entire box.*
 
@@ -104,23 +93,16 @@ The `alt` fragment is equivalent to an `if-else` or `switch` statement. The box 
 
 **Scenario:** Verifying a user's password.
 
-```text
-   System                     Database
-     |                            |
-     |------ checkPassword() ---->|
-     |                            |
- ===========================================
- | alt [password is correct]               |
- |   |                            |        |
- |   |<----- loginSuccess() ------|        |
- |   |                            |        |
- |-----------------------------------------|
- |   [password is incorrect]               |
- |   |                            |        |
- |   |<----- loginFailed() -------|        |
- ===========================================
-     |                            |
-```
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant system: System
+participant db: Database
+system -> db: checkPassword()
+alt [password is correct]
+  db --> system: loginSuccess()
+else [password is incorrect]
+  db --> system: loginFailed()
+end
+@enduml'></div>
 
 ### 3\. The LOOP Fragment (Repetitive Behavior)
 
@@ -128,18 +110,14 @@ The `loop` fragment represents a `for` or `while` loop. The messages inside the 
 
 **Scenario:** Pinging a server until it wakes up (maximum 3 times).
 
-```text
-   App                        Server
-    |                            |
-=======================================
-| loop [up to 3 times]                |
-|   |                            |    |
-|   |-------- ping() ----------->|    |
-|   |                            |    |
-|   |<------- ack() -------------|    |
-=======================================
-    |                            |
-```
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant app: App
+participant server: Server
+loop [up to 3 times]
+  app -> server: ping()
+  server --> app: ack()
+end
+@enduml'></div>
 
 -----
 
@@ -155,37 +133,25 @@ To truly understand how these elements work, we must view them interacting in a 
 4.  *If* a window is open (ALT), it warns the user. *Else*, it locks it.
 5.  *Optionally* (OPT), if the user has SMS alerts on, it texts them.
 
-<!-- end list -->
-
-```text
-  User              Alarm Hub               Window Sensors          SMS API
-   |                   |                          |                    |
-   |-- armSystem() --->|                          |                    |
-   |                   |                          |                    |
-   |           =============================================================
-   |           | loop [for each window]           |                    |   |
-   |           |       |                          |                    |   |
-   |           |       |----- getStatus() ------->|                    |   |
-   |           |       |<---- statusData() -------|                    |   |
-   |           |       |                          |                    |   |
-   |           |   ========================================            |   |
-   |           |   | alt [status == "Open"]       |       |            |   |
-   |           |   |   |                          |       |            |   |
-   |<-- warn() --------|                          |       |            |   |
-   |           |   |--------------------------------------|            |   |
-   |           |   |     [status == "Closed"]     |       |            |   |
-   |           |   |   |                          |       |            |   |
-   |           |   |   |-------- lock() --------->|       |            |   |
-   |           |   ========================================            |   |
-   |           =============================================================
-   |                   |                          |                    |
-   |           =============================================================
-   |           | opt [smsEnabled == true]                              |   |
-   |           |       |                                               |   |
-   |           |       |---------------- sendText("Armed") ----------->|   |
-   |           =============================================================
-   |                   |                          |                    |
-```
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant user: User
+participant hub: Alarm Hub
+participant sensors: Window Sensors
+participant sms: SMS API
+user -> hub: armSystem()
+loop [for each window]
+  hub -> sensors: getStatus()
+  sensors --> hub: statusData()
+  alt [status == "Open"]
+    hub --> user: warn()
+  else [status == "Closed"]
+    hub -> sensors: lock()
+  end
+end
+opt [smsEnabled == true]
+  hub -> sms: sendText("Armed")
+end
+@enduml'></div>
 
 -----
 

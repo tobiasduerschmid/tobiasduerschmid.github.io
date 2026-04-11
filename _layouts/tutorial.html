@@ -152,6 +152,19 @@
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutor-chat.css' | relative_url }}">
 
+  <!-- Mermaid.js for UML sequence diagram rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'default' });</script>
+
+  <!-- Custom UML diagram renderers -->
+  <script src="{{ '/js/uml-shared.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-class-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-sequence-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-state-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-component-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-deployment-renderer.js' | relative_url }}"></script>
+  <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->
   <script src="{{ '/js/git-graph.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
@@ -237,6 +250,8 @@
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
         gitGraphPath: config.git_graph || null,
+        uml_diagram: config.uml_diagram || false,
+        umlAnalyzerPath: '{{ "/js/uml-analyzer.py" | relative_url }}',
       });
       window._tutorial = tutorial;
       tutorial.start();
