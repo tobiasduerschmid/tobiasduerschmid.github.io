@@ -475,6 +475,29 @@ PaymentService ..> NotificationService : sendReceipt
 @enduml
   </code></pre>
 
+  <h2>26. Frontend-Backend-Database (directional ports)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Frontend {
+  portout "httpOut" as f_out
+}
+component Backend {
+  portin "httpIn" as b_in
+  portout "dbOut" as b_dbout
+  portout "eventOut" as b_eventout
+}
+component Database {
+  portin "dbIn" as db_in
+}
+component EventBus {
+  portin "eventIn" as eb_in
+}
+f_out --> b_in : REST / JSON
+b_dbout --> db_in : SQL
+b_eventout --> eb_in : publish
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Deployment Diagram Tests</h1>
 

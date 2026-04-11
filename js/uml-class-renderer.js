@@ -30,10 +30,10 @@
 
   var CFG = {
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    fontSize: 13,
-    fontSizeBold: 14,
-    fontSizeStereotype: 11,
-    lineHeight: 20,
+    fontSize: 14,
+    fontSizeBold: 15,
+    fontSizeStereotype: 12,
+    lineHeight: 22,
     padX: 14,
     padY: 6,
     gapX: 60,
@@ -325,15 +325,13 @@
     for (var a = 0; a < cls.attributes.length; a++) {
       attrMaxW = Math.max(attrMaxW, UMLShared.textWidth(cls.attributes[a].text, false));
     }
-    var attrH = CFG.padY * 2 + Math.max(cls.attributes.length, 0) * CFG.lineHeight;
-    if (attrH < CFG.padY * 2 + 4) attrH = CFG.padY * 2 + 4;
+    var attrH = cls.attributes.length > 0 ? CFG.padY * 2 + cls.attributes.length * CFG.lineHeight : 0;
 
     var methMaxW = 0;
     for (var m = 0; m < cls.methods.length; m++) {
       methMaxW = Math.max(methMaxW, UMLShared.textWidth(cls.methods[m].text, false));
     }
-    var methH = CFG.padY * 2 + Math.max(cls.methods.length, 0) * CFG.lineHeight;
-    if (methH < CFG.padY * 2 + 4) methH = CFG.padY * 2 + 4;
+    var methH = cls.methods.length > 0 ? CFG.padY * 2 + cls.methods.length * CFG.lineHeight : 0;
 
     var width = Math.max(CFG.minBoxWidth, nameW + CFG.padX * 2, attrMaxW + CFG.padX * 2, methMaxW + CFG.padX * 2);
     // Round up to even number for crisp centering
@@ -976,6 +974,7 @@
         }
         svg.push('<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" ' +
           'font-style="italic">' + UMLShared.escapeXml(orel.label) + '</text>');
       }
 
@@ -992,7 +991,8 @@
           fmy = p0.y + startDy * 14;
         }
         svg.push('<text x="' + fmx + '" y="' + fmy + '" ' +
-          'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '">' +
+          'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.fromMult) + '</text>');
       }
       if (orel.toMult) {
@@ -1009,7 +1009,8 @@
           tmAnchor = 'start';
         }
         svg.push('<text x="' + tmx + '" y="' + tmy + '" text-anchor="' + (tmAnchor || 'start') + '" ' +
-          'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '">' +
+          'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.toMult) + '</text>');
       }
     }
@@ -1028,23 +1029,31 @@
       svg.push('<rect x="' + x + '" y="' + y + '" width="' + box.width + '" height="' + box.nameH +
         '" fill="' + colors.headerFill + '" stroke="none"/>');
 
-      // Attribute compartment
-      svg.push('<rect x="' + x + '" y="' + (y + box.nameH) + '" width="' + box.width + '" height="' + box.attrH +
-        '" fill="' + colors.fill + '" stroke="none"/>');
+      // Attribute compartment (if non-empty)
+      if (box.attrH > 0) {
+        svg.push('<rect x="' + x + '" y="' + (y + box.nameH) + '" width="' + box.width + '" height="' + box.attrH +
+          '" fill="' + colors.fill + '" stroke="none"/>');
+      }
 
-      // Method compartment
-      svg.push('<rect x="' + x + '" y="' + (y + box.nameH + box.attrH) + '" width="' + box.width + '" height="' + box.methH +
-        '" fill="' + colors.fill + '" stroke="none"/>');
+      // Method compartment (if non-empty)
+      if (box.methH > 0) {
+        svg.push('<rect x="' + x + '" y="' + (y + box.nameH + box.attrH) + '" width="' + box.width + '" height="' + box.methH +
+          '" fill="' + colors.fill + '" stroke="none"/>');
+      }
 
       // Overall border
       svg.push('<rect x="' + x + '" y="' + y + '" width="' + box.width + '" height="' + box.height +
         '" fill="none" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"' + boxDash + '/>');
 
-      // Compartment dividers
-      svg.push('<line x1="' + x + '" y1="' + (y + box.nameH) + '" x2="' + (x + box.width) + '" y2="' + (y + box.nameH) +
-        '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"' + boxDash + '/>');
-      svg.push('<line x1="' + x + '" y1="' + (y + box.nameH + box.attrH) + '" x2="' + (x + box.width) + '" y2="' + (y + box.nameH + box.attrH) +
-        '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"' + boxDash + '/>');
+      // Compartment dividers (only between non-empty sections)
+      if (box.attrH > 0 || box.methH > 0) {
+        svg.push('<line x1="' + x + '" y1="' + (y + box.nameH) + '" x2="' + (x + box.width) + '" y2="' + (y + box.nameH) +
+          '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"' + boxDash + '/>');
+      }
+      if (box.attrH > 0 && box.methH > 0) {
+        svg.push('<line x1="' + x + '" y1="' + (y + box.nameH + box.attrH) + '" x2="' + (x + box.width) + '" y2="' + (y + box.nameH + box.attrH) +
+          '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"' + boxDash + '/>');
+      }
 
       // Stereotype text
       var textCx = x + box.width / 2;

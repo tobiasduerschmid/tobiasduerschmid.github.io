@@ -23,10 +23,10 @@
 
   var CFG = {
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    fontSize: 13,
-    fontSizeBold: 14,
-    fontSizeAction: 11,
-    lineHeight: 20,
+    fontSize: 14,
+    fontSizeBold: 15,
+    fontSizeAction: 12,
+    lineHeight: 22,
     padX: 20,
     padY: 10,
     stateMinW: 120,
@@ -370,14 +370,6 @@
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var transitions = parsed.transitions;
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
-
-    var svg = [];
-    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
-
     // Pre-compute distributed exit points to avoid overlapping lines from same source
     var customExits = {};  // ti -> {x, y}
 
@@ -417,6 +409,35 @@
       }
     }
 
+    // Compute extra space needed for back-edge routes, self-loops, and labels
+    var extraRight = 0;
+    for (var pt = 0; pt < transitions.length; pt++) {
+      var ptr = transitions[pt];
+      var pfe = entries[ptr.from], pte = entries[ptr.to];
+      if (!pfe || !pte) continue;
+      if (ptr.from === ptr.to) {
+        var slRight = pfe.x + pfe.box.width + CFG.selfLoopW;
+        if (ptr.label) slRight += 4 + UMLShared.textWidth(ptr.label, false, CFG.fontSize);
+        extraRight = Math.max(extraRight, slRight - maxBoundsX);
+      } else {
+        var pfcy = pfe.y + pfe.box.height / 2;
+        var ptcy = pte.y + pte.box.height / 2;
+        if (ptcy < pfcy - 10) {
+          var beRight = routeMarginX;
+          if (ptr.label) beRight += 8 + UMLShared.textWidth(ptr.label, false, CFG.fontSize) + CFG.labelBgPad * 2;
+          extraRight = Math.max(extraRight, beRight - maxBoundsX);
+        }
+      }
+    }
+
+    var ox = layout.offsetX + CFG.svgPad;
+    var oy = layout.offsetY + CFG.svgPad;
+    var svgW = layout.width + extraRight + CFG.svgPad * 2;
+    var svgH = layout.height + CFG.svgPad * 2;
+
+    var svg = [];
+    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
+
     // ── Draw transitions (behind states) ──
     for (var ti = 0; ti < transitions.length; ti++) {
       var tr = transitions[ti];
@@ -436,7 +457,8 @@
         drawArrow(svg, sx, sy + 20, -1, 0, colors.line);
         if (tr.label) {
           svg.push('<text x="' + (sx + lw + 4) + '" y="' + (sy + 10) +
-            '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' + UMLShared.escapeXml(tr.label) + '</text>');
+            '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' + UMLShared.escapeXml(tr.label) + '</text>');
         }
         continue;
       }
@@ -546,14 +568,9 @@
           ly = (lp0.y + lp1.y) / 2;
           if (Math.abs(lp1.y - lp0.y) < 1) { ly -= 10; } else { lx += 10; lAnchor = 'start'; }
         }
-        var lw2 = UMLShared.textWidth(tr.label, false, CFG.fontSize);
-        var bgX2 = lAnchor === 'middle' ? lx - lw2 / 2 - CFG.labelBgPad : lx - CFG.labelBgPad;
-        // Background rect
-        svg.push('<rect x="' + bgX2 + '" y="' + (ly - 12) +
-          '" width="' + (lw2 + CFG.labelBgPad * 2) + '" height="' + 16 +
-          '" fill="' + colors.fill + '" stroke="none" opacity="0.9"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' +
+          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(tr.label) + '</text>');
       }
     }

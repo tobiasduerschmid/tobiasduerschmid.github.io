@@ -11,9 +11,9 @@
 
   var BASE_CFG = {
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    fontSize: 13,
-    fontSizeBold: 14,
-    lineHeight: 20,
+    fontSize: 14,
+    fontSizeBold: 15,
+    lineHeight: 22,
     arrowSize: 10,
     strokeWidth: 1.5,
     svgPad: 30,

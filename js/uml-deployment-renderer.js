@@ -31,10 +31,10 @@
 
   var CFG = {
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    fontSize: 13,
-    fontSizeBold: 14,
-    fontSizeComp: 12,
-    lineHeight: 20,
+    fontSize: 14,
+    fontSizeBold: 15,
+    fontSizeComp: 13,
+    lineHeight: 22,
     nodePadX: 20,
     nodePadY: 14,
     nodeMinW: 160,
@@ -226,9 +226,9 @@
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (var en in entries) {
       var e = entries[en];
-      minX = Math.min(minX, e.x); minY = Math.min(minY, e.y);
+      minX = Math.min(minX, e.x); minY = Math.min(minY, e.y - CFG.node3dDepth);
       maxX = Math.max(maxX, e.x + e.box.width + CFG.node3dDepth);
-      maxY = Math.max(maxY, e.y + e.box.height + CFG.node3dDepth);
+      maxY = Math.max(maxY, e.y + e.box.height);
     }
 
     return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
@@ -246,6 +246,44 @@
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
+    // ── Pre-compute distributed exit/entry points ──
+    var exitsByFrom = {}, entriesByTo = {};
+    for (var pli = 0; pli < links.length; pli++) {
+      var plk = links[pli];
+      if (!entries[plk.from] || !entries[plk.to]) continue;
+      if (!exitsByFrom[plk.from]) exitsByFrom[plk.from] = [];
+      exitsByFrom[plk.from].push(pli);
+      if (!entriesByTo[plk.to]) entriesByTo[plk.to] = [];
+      entriesByTo[plk.to].push(pli);
+    }
+    var distExitX = {}, distEntryX = {};
+    for (var efn in exitsByFrom) {
+      var efg = exitsByFrom[efn];
+      if (efg.length < 2) continue;
+      var efe = entries[efn];
+      efg.sort(function(a, b) {
+        var ta = entries[links[a].to], tb = entries[links[b].to];
+        if (!ta || !tb) return 0;
+        return (ta.x + ta.box.width / 2) - (tb.x + tb.box.width / 2);
+      });
+      for (var efi = 0; efi < efg.length; efi++) {
+        distExitX[efg[efi]] = efe.x + efe.box.width * (efi + 1) / (efg.length + 1);
+      }
+    }
+    for (var etn in entriesByTo) {
+      var etg = entriesByTo[etn];
+      if (etg.length < 2) continue;
+      var ete = entries[etn];
+      etg.sort(function(a, b) {
+        var fa = entries[links[a].from], fb = entries[links[b].from];
+        if (!fa || !fb) return 0;
+        return (fa.x + fa.box.width / 2) - (fb.x + fb.box.width / 2);
+      });
+      for (var eti = 0; eti < etg.length; eti++) {
+        distEntryX[etg[eti]] = ete.x + ete.box.width * (eti + 1) / (etg.length + 1);
+      }
+    }
+
     // ── Draw links ──
     for (var li = 0; li < links.length; li++) {
       var lk = links[li];
@@ -255,12 +293,16 @@
       var isDash = lk.type === 'dependency';
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
-      var fromCx = fromE.x + fromE.box.width / 2, fromCy = fromE.y + fromE.box.height / 2;
-      var toCx = toE.x + toE.box.width / 2, toCy = toE.y + toE.box.height / 2;
-      var dx = toCx - fromCx, dy = toCy - fromCy;
+      var origFromCx = fromE.x + fromE.box.width / 2;
+      var origToCx = toE.x + toE.box.width / 2;
+      var fromCy = fromE.y + fromE.box.height / 2;
+      var toCy = toE.y + toE.box.height / 2;
+      var dx = origToCx - origFromCx, dy = toCy - fromCy;
+      var fromCx = (distExitX[li] !== undefined) ? distExitX[li] : origFromCx;
+      var toCx = (distEntryX[li] !== undefined) ? distEntryX[li] : origToCx;
 
       var x1, y1, x2, y2;
-      if (Math.abs(dx) > Math.abs(dy) * 0.5) {
+      if (Math.abs(dx) > Math.abs(dy) * 1.5) {
         if (dx > 0) { x1 = fromE.x + fromE.box.width; y1 = fromCy; x2 = toE.x; y2 = toCy; }
         else { x1 = fromE.x; y1 = fromCy; x2 = toE.x + toE.box.width; y2 = toCy; }
       } else {
@@ -310,12 +352,11 @@
         var lp0 = points[bestIdx], lp1 = points[bestIdx + 1];
         var lx = (lp0.x + lp1.x) / 2, ly = (lp0.y + lp1.y) / 2;
         var isH = Math.abs(lp1.y - lp0.y) < 1;
-        if (isH) ly -= 8; else lx += 10;
-        var lw = UMLShared.textWidth(lk.label, false, CFG.fontSize);
-        svg.push('<rect x="' + (lx - lw / 2 - CFG.labelBgPad) + '" y="' + (ly - 12) +
-          '" width="' + (lw + CFG.labelBgPad * 2) + '" height="16" fill="' + colors.fill + '" opacity="0.85"/>');
+        var lAnchor = 'middle';
+        if (isH) { ly -= 8; } else { lx += 10; lAnchor = 'start'; }
         svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text + '" font-style="italic">' +
+          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
           UMLShared.escapeXml(lk.label) + '</text>');
       }
     }

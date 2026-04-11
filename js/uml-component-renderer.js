@@ -5,33 +5,34 @@
  *   @startuml
  *   component Client
  *   component Backend {
- *     port httpIn
- *     port dbOut
+ *     portin "httpIn" as b_in
+ *     portout "dbOut" as b_dbout
  *   }
  *
- *   Client --> Backend.httpIn : REST
- *   Backend.dbOut --> Database.dbIn : SQL
+ *   Client --> b_in : REST
+ *   b_dbout --> db_in : SQL
  *   Client ..> Logger : uses
  *   @enduml
  *
  * Notation:
- *   component Name          Component box (no ports)
- *   component Name {        Component with named ports
- *     port portName
+ *   component Name               Component box (no ports)
+ *   component Name {             Component with directional ports
+ *     portin "name" as alias     Incoming port placed on the left edge
+ *     portout "name" as alias    Outgoing port placed on the right edge
  *   }
- *   A --> B : label         Assembly connector (solid arrow)
- *   A.port --> B.port       Connector via named ports (squares on boundary)
- *   A ..> B : label         Dependency (dashed arrow)
- *   A -- B : label          Plain link
+ *   A --> B : label              Assembly connector (solid arrow)
+ *   alias --> alias : label      Connector via port aliases (squares on boundary)
+ *   A ..> B : label              Dependency (dashed arrow)
+ *   A -- B : label               Plain link
  */
 (function () {
   'use strict';
 
   var CFG = {
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    fontSize: 13,
-    fontSizeBold: 14,
-    lineHeight: 20,
+    fontSize: 14,
+    fontSizeBold: 15,
+    lineHeight: 22,
     padX: 24,
     padY: 14,
     compMinW: 130,
@@ -52,11 +53,23 @@
 
   // ─── Parser ───────────────────────────────────────────────────────
 
+  // Parse a single port line: (portin|portout|port) ["name"] [as alias]
+  // Returns { name, alias, direction } or null.
+  function parsePortLine(line) {
+    var m = line.match(/^(portin|portout|port)\s+"([^"]+)"(?:\s+as\s+(\S+))?/) ||
+            line.match(/^(portin|portout|port)\s+(\S+?)(?:\s+as\s+(\S+))?$/);
+    if (!m) return null;
+    var kw = m[1], displayName = m[2], alias = m[3] || displayName;
+    var direction = kw === 'portin' ? 'in' : (kw === 'portout' ? 'out' : null);
+    return { name: displayName, alias: alias, direction: direction };
+  }
+
   function parse(text) {
     var lines = text.split('\n');
     var components = [];
     var componentMap = {};
     var connectors = [];
+    var portAliasMap = {}; // alias → { comp: componentName, name: displayName }
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
@@ -66,17 +79,21 @@
       var compMatch = line.match(/^component\s+(\S+)(?:\s*\{)?/);
       if (compMatch) {
         var cName = compMatch[1];
-        var ports = [];
+        var ports = []; // { name, alias, direction }
 
         if (line.indexOf('{') !== -1) {
           if (line.indexOf('}') !== -1) {
-            // Inline: component Foo { port p1 port p2 }
+            // Inline: component Foo { portout "p1" as a1 portin "p2" as a2 }
             var inlineBody = line.match(/\{([^}]*)\}/);
             if (inlineBody) {
-              var portRe = /port\s+(\S+)/g;
+              var portRe = /(portin|portout|port)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
               var pm;
               while ((pm = portRe.exec(inlineBody[1])) !== null) {
-                ports.push(pm[1]);
+                var kw = pm[1], displayName = pm[2] || pm[3], alias = pm[4] || displayName;
+                var direction = kw === 'portin' ? 'in' : (kw === 'portout' ? 'out' : null);
+                var portEntry = { name: displayName, alias: alias, direction: direction };
+                ports.push(portEntry);
+                portAliasMap[alias] = { comp: cName, name: displayName };
               }
             }
           } else {
@@ -84,8 +101,11 @@
             for (i++; i < lines.length; i++) {
               var pline = lines[i].trim();
               if (pline === '}') break;
-              var portMatch = pline.match(/^port\s+(\S+)/);
-              if (portMatch) ports.push(portMatch[1]);
+              var portLine = parsePortLine(pline);
+              if (portLine) {
+                ports.push(portLine);
+                portAliasMap[portLine.alias] = { comp: cName, name: portLine.name };
+              }
             }
           }
         }
@@ -97,16 +117,33 @@
         continue;
       }
 
-      // Connector: supports "CompName.portName" on either end
+      // Connector: alias --> alias  or  Comp.port --> Comp.port  or  Comp --> Comp
       var connMatch = line.match(/^(\S+)\s+(-->|\.\.>|--)\s+(\S+)\s*(?::\s*(.*))?$/);
       if (connMatch) {
-        var fromFull = connMatch[1], arrow = connMatch[2], toFull = connMatch[3];
+        var fromToken = connMatch[1], arrow = connMatch[2], toToken = connMatch[3];
         var label = (connMatch[4] || '').trim();
 
-        var fromParts = fromFull.split('.');
-        var toParts = toFull.split('.');
-        var from = fromParts[0], fromPort = fromParts[1] || null;
-        var to = toParts[0], toPort = toParts[1] || null;
+        // Resolve from: alias map → dot notation → bare component
+        var from, fromPort = null;
+        if (portAliasMap.hasOwnProperty(fromToken)) {
+          from = portAliasMap[fromToken].comp;
+          fromPort = fromToken;
+        } else {
+          var fromParts = fromToken.split('.');
+          from = fromParts[0];
+          fromPort = fromParts[1] || null;
+        }
+
+        // Resolve to: alias map → dot notation → bare component
+        var to, toPort = null;
+        if (portAliasMap.hasOwnProperty(toToken)) {
+          to = portAliasMap[toToken].comp;
+          toPort = toToken;
+        } else {
+          var toParts = toToken.split('.');
+          to = toParts[0];
+          toPort = toParts[1] || null;
+        }
 
         if (!componentMap.hasOwnProperty(from)) {
           componentMap[from] = components.length;
@@ -136,7 +173,7 @@
     var connectors = parsed.connectors;
     if (components.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
-    // Determine port sides: fromPort → right (outgoing), toPort → left (incoming)
+    // Fallback port sides for `port` keyword (no explicit direction) — inferred from connection usage
     var portSides = {};
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
@@ -152,13 +189,20 @@
     for (var i = 0; i < components.length; i++) {
       var c = components[i];
 
-      // Assign ports to sides
+      // Assign ports to sides: portin → left, portout → right, port → infer from connections
       var leftPorts = [], rightPorts = [];
       for (var pi = 0; pi < c.ports.length; pi++) {
-        var pname = c.ports[pi];
-        var side = portSides[c.name + '.' + pname] || 'right';
-        if (side === 'left') leftPorts.push(pname);
-        else rightPorts.push(pname);
+        var port = c.ports[pi];
+        var alias = port.alias;
+        if (port.direction === 'in') {
+          leftPorts.push(alias);
+        } else if (port.direction === 'out') {
+          rightPorts.push(alias);
+        } else {
+          var side = portSides[c.name + '.' + alias] || 'right';
+          if (side === 'left') leftPorts.push(alias);
+          else rightPorts.push(alias);
+        }
       }
 
       // Component width only needs to fit name + icon; port labels render outside
@@ -320,6 +364,13 @@
       var e = entries[en];
       var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
 
+      // Build alias → display label map for this component's ports
+      var portLabelByAlias = {};
+      for (var pni = 0; pni < e.comp.ports.length; pni++) {
+        var p = e.comp.ports[pni];
+        portLabelByAlias[p.alias] = p.name;
+      }
+
       // Left ports: distributed evenly along left edge, straddling the boundary
       for (var lpi2 = 0; lpi2 < e.leftPorts.length; lpi2++) {
         var lpn = e.leftPorts[lpi2];
@@ -330,8 +381,9 @@
           // Center of the port square (on the boundary)
           cx: bx, cy: pcy,
           // Outer connector attachment point
-          connX: bx - CFG.portSize, connY: pcy,
+          connX: bx - portHalf, connY: pcy,
           side: 'left',
+          label: portLabelByAlias[lpn] !== undefined ? portLabelByAlias[lpn] : lpn,
         };
       }
 
@@ -342,8 +394,9 @@
         e.portPositions[rpn] = {
           x: bx + bw - portHalf, y: pcy2 - portHalf,
           cx: bx + bw, cy: pcy2,
-          connX: bx + bw + CFG.portSize, connY: pcy2,
+          connX: bx + bw + portHalf, connY: pcy2,
           side: 'right',
+          label: portLabelByAlias[rpn] !== undefined ? portLabelByAlias[rpn] : rpn,
         };
       }
     }
@@ -481,12 +534,9 @@
           ly = (points[0].y + points[1].y) / 2 - 12;
           lAnchor = 'middle';
         }
-        var lw = UMLShared.textWidth(conn.label, false, CFG.fontSize);
-        var bgX = lAnchor === 'middle' ? lx - lw / 2 - CFG.labelBgPad : lx - CFG.labelBgPad;
-        svg.push('<rect x="' + bgX + '" y="' + (ly - 12) +
-          '" width="' + (lw + CFG.labelBgPad * 2) + '" height="16" fill="' + colors.fill + '" opacity="0.9"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '" font-style="italic">' +
+          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
           UMLShared.escapeXml(conn.label) + '</text>');
       }
     }
@@ -529,7 +579,8 @@
         // Port label below the port square (connection labels go above)
         svg.push('<text x="' + pp.cx + '" y="' + (pp.cy + portHalf + (CFG.fontSize - 1) + 1) +
           '" text-anchor="middle" font-size="' + (CFG.fontSize - 1) + '"' +
-          ' font-style="italic" fill="' + colors.text + '">' + UMLShared.escapeXml(pname) + '</text>');
+          ' font-style="italic" fill="' + colors.text + '">' +
+          UMLShared.escapeXml(pp.label !== undefined ? pp.label : pname) + '</text>');
       }
     }
 
