@@ -5961,15 +5961,74 @@ steps:
         The trick question (Snippet 6) is the most important one here. Being able to recognize code that's already well-designed is just as valuable as spotting violations — otherwise you fall into the over-engineering trap of "fixing" code that doesn't need fixing.
 
     tests:
-      - description: "You added DIAGNOSIS comments to violations_gallery.py"
+      - description: "Snippet 1 (Logger) has a DIAGNOSIS comment"
         command: |
-          source: str = open('/tutorial/violations_gallery.py').read()
-          count: int = source.upper().count('DIAGNOSIS')
-          assert count >= 4, \
-              f"Expected at least 4 DIAGNOSIS comments (one per snippet), found {count}. " \
-              "Add a '# DIAGNOSIS: ...' comment at the top of each class."
+          source = open('/tutorial/violations_gallery.py').read()
+          # Find the Logger class section
+          idx = source.find('class Logger')
+          assert idx != -1, "Logger class not found in violations_gallery.py"
+          # Check for DIAGNOSIS in the ~200 chars before the class definition
+          preceding = source[max(0, idx - 200):idx]
+          assert 'DIAGNOSIS' in preceding.upper(), \
+              "Add a '# DIAGNOSIS: ...' comment above the Logger class (Snippet 1)."
         hints:
-          - text: "Add a comment like `# DIAGNOSIS: SRP violation — class handles both X and Y` above each class definition. For the well-designed class, write `# DIAGNOSIS: No violation — ...`."
+          - text: "Above `class Logger:`, add a comment like: `# DIAGNOSIS: SRP violation — class handles both formatting and file writing`"
+            condition: "default"
+      - description: "Snippet 2 (DiscountEngine) has a DIAGNOSIS comment"
+        command: |
+          source = open('/tutorial/violations_gallery.py').read()
+          idx = source.find('class DiscountEngine')
+          assert idx != -1, "DiscountEngine class not found in violations_gallery.py"
+          preceding = source[max(0, idx - 200):idx]
+          assert 'DIAGNOSIS' in preceding.upper(), \
+              "Add a '# DIAGNOSIS: ...' comment above the DiscountEngine class (Snippet 2)."
+        hints:
+          - text: "Above `class DiscountEngine:`, add a comment like: `# DIAGNOSIS: OCP violation — adding a new discount type requires modifying the if/elif chain`"
+            condition: "default"
+      - description: "Snippet 3 (PremiumUser) has a DIAGNOSIS comment"
+        command: |
+          source = open('/tutorial/violations_gallery.py').read()
+          idx = source.find('class PremiumUser')
+          assert idx != -1, "PremiumUser class not found in violations_gallery.py"
+          preceding = source[max(0, idx - 200):idx]
+          assert 'DIAGNOSIS' in preceding.upper(), \
+              "Add a '# DIAGNOSIS: ...' comment above the PremiumUser class (Snippet 3)."
+        hints:
+          - text: "Above `class PremiumUser(User):`, add a comment like: `# DIAGNOSIS: LSP violation — PremiumUser raises an exception where User returns a string`"
+            condition: "default"
+      - description: "Snippet 4 (DatabaseClient) has a DIAGNOSIS comment"
+        command: |
+          source = open('/tutorial/violations_gallery.py').read()
+          idx = source.find('class DatabaseClient')
+          assert idx != -1, "DatabaseClient class not found in violations_gallery.py"
+          preceding = source[max(0, idx - 200):idx]
+          assert 'DIAGNOSIS' in preceding.upper(), \
+              "Add a '# DIAGNOSIS: ...' comment above the DatabaseClient class (Snippet 4)."
+        hints:
+          - text: "Above `class DatabaseClient(ABC):`, add a comment like: `# DIAGNOSIS: ISP violation — simple clients forced to implement methods they don't use`"
+            condition: "default"
+      - description: "Snippet 5 (ReportGenerator) has a DIAGNOSIS comment"
+        command: |
+          source = open('/tutorial/violations_gallery.py').read()
+          idx = source.find('class ReportGenerator')
+          assert idx != -1, "ReportGenerator class not found in violations_gallery.py"
+          preceding = source[max(0, idx - 200):idx]
+          assert 'DIAGNOSIS' in preceding.upper(), \
+              "Add a '# DIAGNOSIS: ...' comment above the ReportGenerator class (Snippet 5)."
+        hints:
+          - text: "Above `class ReportGenerator:`, add a comment like: `# DIAGNOSIS: DIP violation — directly instantiates concrete low-level classes`"
+            condition: "default"
+      - description: "Snippet 6 (UserValidator) has a DIAGNOSIS comment"
+        command: |
+          source = open('/tutorial/violations_gallery.py').read()
+          idx = source.find('class UserValidator')
+          assert idx != -1, "UserValidator class not found in violations_gallery.py"
+          preceding = source[max(0, idx - 200):idx]
+          assert 'DIAGNOSIS' in preceding.upper(), \
+              "Add a '# DIAGNOSIS: ...' comment above the UserValidator class (Snippet 6). " \
+              "Hint: not every class has a violation — is this one well-designed?"
+        hints:
+          - text: "This is the trick question. UserValidator follows all SOLID principles. Write: `# DIAGNOSIS: No violation — open for extension via new ValidationRule subclasses`"
             condition: "default"
 
     quiz:
@@ -6771,42 +6830,62 @@ steps:
           - text: "Make sure your refactored code is syntactically valid Python. Run it to check for import errors or typos."
             condition: "default"
 
-      - description: "Physical books can be checked out and copies are decremented"
+      - description: "Physical book checkout returns the book title"
         command: |
           exec(open('/tutorial/library_system.py').read())
 
-          # Find classes — support both original and refactored
           has_book_repo: bool = 'BookRepository' in dir()
           has_checkout_svc: bool = 'CheckoutService' in dir()
 
           if has_book_repo and has_checkout_svc:
-              # Refactored version
               class _TestLogger(Logger):
                   def log(self, message: str) -> None:
                       pass
-
               repo = BookRepository()
               reg = MemberRegistry()
               svc = CheckoutService(repo, reg, _TestLogger())
-
               repo.add_book(PhysicalBook("Test Book", "Author", "ISBN-001", copies=2))
               reg.register(Member("M1", "Tester", "test@test.com"))
-
               result: str = svc.checkout("M1", "ISBN-001")
               assert "Test Book" in result, f"Expected book title in result, got: {result}"
-              book = repo.get_book("ISBN-001")
-              assert isinstance(book, PhysicalBook)
-              assert book.copies == 1, f"Expected 1 copy remaining, got {book.copies}"
           else:
-              # Original structure — just check checkout works
               lib = LibrarySystem()
               lib.add_book(Book("Test Book", "Author", "ISBN-001", "physical", copies=2))
               lib.register_member(Member("M1", "Tester", "test@test.com"))
               result = lib.checkout("M1", "ISBN-001")
               assert "Test Book" in result
-              assert lib.get_book("ISBN-001").copies == 1
         hints:
-          - text: "Create a `PhysicalBook` class with a `checkout()` method that decrements `self.copies`. Make sure `BookRepository.get_book()` returns the book so the test can verify the copy count."
+          - text: "Create a `PhysicalBook` class with a `checkout()` method that returns a string containing the book's title."
+            condition: "default"
+
+      - description: "Physical book copies are decremented after checkout"
+        command: |
+          exec(open('/tutorial/library_system.py').read())
+
+          has_book_repo: bool = 'BookRepository' in dir()
+          has_checkout_svc: bool = 'CheckoutService' in dir()
+
+          if has_book_repo and has_checkout_svc:
+              class _TestLoggerCopy(Logger):
+                  def log(self, message: str) -> None:
+                      pass
+              repo = BookRepository()
+              reg = MemberRegistry()
+              svc = CheckoutService(repo, reg, _TestLoggerCopy())
+              repo.add_book(PhysicalBook("Test Book", "Author", "ISBN-001", copies=2))
+              reg.register(Member("M1", "Tester", "test@test.com"))
+              svc.checkout("M1", "ISBN-001")
+              book = repo.get_book("ISBN-001")
+              assert book.copies == 1, f"Expected 1 copy remaining after checkout, got {book.copies}"
+          else:
+              lib = LibrarySystem()
+              lib.add_book(Book("Test Book", "Author", "ISBN-001", "physical", copies=2))
+              lib.register_member(Member("M1", "Tester", "test@test.com"))
+              lib.checkout("M1", "ISBN-001")
+              assert lib.get_book("ISBN-001").copies == 1, \
+                  "Expected 1 copy remaining after checkout"
+        hints:
+          - text: "PhysicalBook.checkout() should decrement self.copies. Make sure BookRepository.get_book() returns the book so the copy count can be verified."
             condition: "default"
 
       - description: "EBooks can be checked out with a download link"
@@ -6915,24 +6994,68 @@ steps:
           - text: "After a successful checkout, append the ISBN to `member.borrowed_isbns`."
             condition: "default"
 
-      - description: "Overdue notices can be sent"
+      - description: "Overdue notice includes the member's name"
         command: |
           exec(open('/tutorial/library_system.py').read())
 
           has_notifier: bool = 'NotificationService' in dir()
 
           if has_notifier:
-              class _TestLogger5(Logger):
+              class _TestLogger5a(Logger):
                   def log(self, message: str) -> None:
                       pass
-
-              notifier = NotificationService(_TestLogger5())
+              notifier = NotificationService(_TestLogger5a())
               member = Member("M1", "Alice", "alice@test.com")
               notice: str = notifier.send_overdue_notice(member, "Some Book")
               assert "Alice" in notice, \
-                  f"Expected member name in notice, got: {notice}"
+                  f"Expected member name 'Alice' in notice, got: {notice}"
+          else:
+              lib = LibrarySystem()
+              lib.register_member(Member("M1", "Alice", "alice@test.com"))
+              lib.add_book(Book("Some Book", "Author", "ISBN-X", "physical"))
+              lib.checkout("M1", "ISBN-X")
+              notice = lib.send_overdue_notice("M1", "ISBN-X")
+              assert "Alice" in notice
+        hints:
+          - text: "Create a `NotificationService` class with a `send_overdue_notice(member, book_title)` method that returns a notice string containing the member's name."
+            condition: "default"
+
+      - description: "Overdue notice includes the book title"
+        command: |
+          exec(open('/tutorial/library_system.py').read())
+
+          has_notifier: bool = 'NotificationService' in dir()
+
+          if has_notifier:
+              class _TestLogger5b(Logger):
+                  def log(self, message: str) -> None:
+                      pass
+              notifier = NotificationService(_TestLogger5b())
+              member = Member("M1", "Alice", "alice@test.com")
+              notice: str = notifier.send_overdue_notice(member, "Some Book")
               assert "Some Book" in notice, \
-                  f"Expected book title in notice, got: {notice}"
+                  f"Expected book title 'Some Book' in notice, got: {notice}"
+          else:
+              lib = LibrarySystem()
+              lib.register_member(Member("M1", "Alice", "alice@test.com"))
+              lib.add_book(Book("Some Book", "Author", "ISBN-X", "physical"))
+              lib.checkout("M1", "ISBN-X")
+              notice = lib.send_overdue_notice("M1", "ISBN-X")
+              assert "Some Book" in notice
+
+      - description: "Overdue notice contains the word 'overdue'"
+        command: |
+          exec(open('/tutorial/library_system.py').read())
+
+          has_notifier: bool = 'NotificationService' in dir()
+
+          if has_notifier:
+              class _TestLogger5c(Logger):
+                  def log(self, message: str) -> None:
+                      pass
+              notifier = NotificationService(_TestLogger5c())
+              member = Member("M1", "Alice", "alice@test.com")
+              notice: str = notifier.send_overdue_notice(member, "Some Book")
               assert "overdue" in notice.lower(), \
                   f"Expected 'overdue' in notice, got: {notice}"
           else:
@@ -6941,11 +7064,7 @@ steps:
               lib.add_book(Book("Some Book", "Author", "ISBN-X", "physical"))
               lib.checkout("M1", "ISBN-X")
               notice = lib.send_overdue_notice("M1", "ISBN-X")
-              assert "Alice" in notice
               assert "overdue" in notice.lower()
-        hints:
-          - text: "Create a `NotificationService` class with a `send_overdue_notice(member, book_title)` method that returns a notice string containing the member's name and the word 'overdue'."
-            condition: "default"
 
       - description: "Reports can be generated"
         command: |
