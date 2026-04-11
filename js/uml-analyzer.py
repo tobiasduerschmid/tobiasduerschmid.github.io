@@ -311,38 +311,71 @@ def _topo_sort_classes(all_classes):
     return order
 
 
-def generate_class_diagram(all_classes):
-    """Generate Mermaid classDiagram syntax with superclasses above subclasses."""
-    lines = ['classDiagram']
-    lines.append('  direction BT')  # Bottom-to-top: subclasses below, superclasses above
+def _is_abstract_class(cls):
+    """Check if a class is abstract (has ABC base or @abstractmethod decorators)."""
+    for base in cls.bases:
+        if base in ('ABC', 'ABCMeta'):
+            return True
+    # Check for abstract methods
+    for method_name, params, is_private in cls.methods:
+        # This is a heuristic; real detection would need AST decorator info
+        pass
+    return False
 
-    # Emit classes in topological order (superclasses first)
+
+def _is_interface(cls):
+    """Check if a class looks like an interface (only abstract methods, no attributes)."""
+    if not _is_abstract_class(cls):
+        return False
+    if cls.attributes:
+        return False
+    return True
+
+
+def generate_class_diagram(all_classes):
+    """Generate UML class diagram text in custom format for the SVG renderer."""
+    lines = ['@startuml']
+
     sorted_classes = _topo_sort_classes(all_classes)
 
     for cls in sorted_classes:
-        lines.append('  class ' + cls.name + ' {')
+        # Determine class type
+        if _is_interface(cls):
+            decl = 'interface ' + cls.name
+        elif _is_abstract_class(cls):
+            decl = 'abstract class ' + cls.name
+        else:
+            decl = 'class ' + cls.name
+
+        lines.append(decl + ' {')
+
         # Attributes
         for attr_name, type_hint in cls.attributes:
             prefix = '-' if attr_name.startswith('_') else '+'
             if type_hint:
-                lines.append('    ' + prefix + type_hint + ' ' + _escape_mermaid(attr_name))
+                lines.append('  ' + prefix + attr_name + ': ' + type_hint)
             else:
-                lines.append('    ' + prefix + _escape_mermaid(attr_name))
+                lines.append('  ' + prefix + attr_name)
+
         # Methods
         for method_name, params, is_private in cls.methods:
             prefix = '-' if is_private else '+'
-            param_str = ', '.join(_escape_mermaid(p) for p in params)
-            lines.append('    ' + prefix + _escape_mermaid(method_name) + '(' + param_str + ')')
-        lines.append('  }')
+            param_str = ', '.join(params)
+            lines.append('  ' + prefix + method_name + '(' + param_str + ')')
+
+        lines.append('}')
 
     # Relationships
     for cls in sorted_classes:
         for base in cls.bases:
+            if base in ('ABC', 'ABCMeta'):
+                continue  # Skip ABC as a base — it's a marker, not a real parent
             if any(c.name == base for c in all_classes):
-                lines.append('  ' + cls.name + ' --|> ' + base + ' : inherits')
+                lines.append(cls.name + ' --|> ' + base)
         for comp in cls.compositions:
-            lines.append('  ' + cls.name + ' *-- ' + comp + ' : has')
+            lines.append(cls.name + ' *-- ' + comp)
 
+    lines.append('@enduml')
     return '\n'.join(lines)
 
 

@@ -1,0 +1,38 @@
+/* ── UML Diagram Theming ── */
+
+.uml-class-diagram-container {
+  --uml-stroke: #4060a0;
+  --uml-text: #222;
+  --uml-fill: #fff;
+  --uml-header-fill: #d0ddef;
+  --uml-line: #444;
+  --uml-bg: transparent;
+  overflow-x: auto;
+  padding: 12px 0;
+}
+
+/* Dark mode — tutorial (html.dark-mode) */
+html.dark-mode .uml-class-diagram-container {
+  --uml-stroke: #5580aa;
+  --uml-text: #e0e0e0;
+  --uml-fill: #1e2c3e;
+  --uml-header-fill: #283848;
+  --uml-line: #7799bb;
+  --uml-bg: transparent;
+}
+
+/* Dark mode — SEBook (body.dark-mode or data attribute) */
+body.dark-mode .uml-class-diagram-container,
+[data-theme="dark"] .uml-class-diagram-container {
+  --uml-stroke: #5580aa;
+  --uml-text: #e0e0e0;
+  --uml-fill: #1e2c3e;
+  --uml-header-fill: #283848;
+  --uml-line: #7799bb;
+  --uml-bg: transparent;
+}
+
+.uml-class-diagram-container svg {
+  display: block;
+  margin: 0 auto;
+}

@@ -1959,19 +1959,46 @@
       this._showUMLEmpty('Click Refresh or edit a Python file to generate diagrams.');
       return;
     }
-    var syntax = this._umlActiveType === 'sequence'
-      ? this._umlLastDiagrams.sequenceDiagram
-      : this._umlLastDiagrams.classDiagram;
 
-    if (!syntax) {
-      var msg = this._umlActiveType === 'sequence'
-        ? 'No method calls detected between classes.'
-        : 'No classes found in the watched files.';
-      this._showUMLEmpty(msg);
+    if (this._umlActiveType === 'sequence') {
+      var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
+      if (!seqSyntax) {
+        this._showUMLEmpty('No method calls detected between classes.');
+        return;
+      }
+      if (window.UMLSequenceDiagram) {
+        this._renderSequenceDiagramSVG(seqSyntax);
+      } else {
+        this._renderMermaidDiagram(seqSyntax);
+      }
+    } else {
+      var classSyntax = this._umlLastDiagrams.classDiagram;
+      if (!classSyntax) {
+        this._showUMLEmpty('No classes found in the watched files.');
+        return;
+      }
+      this._renderClassDiagramSVG(classSyntax);
+    }
+  };
+
+  /** Render class diagram using the custom SVG renderer */
+  TutorialCode.prototype._renderClassDiagramSVG = function (syntax) {
+    if (!this._umlContentEl || !window.UMLClassDiagram) {
+      this._showUMLError('UML renderer not loaded.');
       return;
     }
+    this._umlContentEl.innerHTML = '';
+    UMLClassDiagram.render(this._umlContentEl, syntax);
+  };
 
-    this._renderMermaidDiagram(syntax);
+  /** Render sequence diagram using the custom SVG renderer */
+  TutorialCode.prototype._renderSequenceDiagramSVG = function (syntax) {
+    if (!this._umlContentEl || !window.UMLSequenceDiagram) {
+      this._showUMLError('UML sequence renderer not loaded.');
+      return;
+    }
+    this._umlContentEl.innerHTML = '';
+    UMLSequenceDiagram.render(this._umlContentEl, syntax);
   };
 
   /** Render Mermaid syntax into SVG in the diagram content area */
