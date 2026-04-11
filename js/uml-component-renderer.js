@@ -257,33 +257,83 @@
       maxLayer = Math.max(maxLayer, l);
     }
 
-    var curY = 0;
-    for (var ly = 0; ly <= maxLayer; ly++) {
-      var group = layerGroups[ly];
+    // ── Sugiyama barycenter crossing minimization ──────────────────────
+    // Sort nodes within each column by the average position of their
+    // neighbours in the adjacent column, alternating forward/backward.
+    var posInLayer = {};
+    for (var bpl = 0; bpl <= maxLayer; bpl++) {
+      var bpg = layerGroups[bpl]; if (!bpg) continue;
+      for (var bpi = 0; bpi < bpg.length; bpi++) posInLayer[bpg[bpi]] = bpi;
+    }
+    for (var bcPass = 0; bcPass < 4; bcPass++) {
+      if (bcPass % 2 === 0) {
+        // Forward: sort column l by avg position of predecessors in column l-1
+        for (var bcFl = 1; bcFl <= maxLayer; bcFl++) {
+          var bcFg = layerGroups[bcFl]; if (!bcFg || bcFg.length < 2) continue;
+          var bcF = {};
+          for (var bcFi = 0; bcFi < bcFg.length; bcFi++) {
+            var bcFn = bcFg[bcFi]; var bcSum = 0, bcCnt = 0;
+            for (var bcCi = 0; bcCi < connectors.length; bcCi++) {
+              var bcCn = connectors[bcCi];
+              if (bcCn.to === bcFn && layers[bcCn.from] === bcFl - 1) {
+                bcSum += posInLayer[bcCn.from]; bcCnt++;
+              }
+            }
+            bcF[bcFn] = bcCnt > 0 ? bcSum / bcCnt : posInLayer[bcFn];
+          }
+          bcFg.sort(function (a, b) { return bcF[a] - bcF[b]; });
+          for (var bcFi2 = 0; bcFi2 < bcFg.length; bcFi2++) posInLayer[bcFg[bcFi2]] = bcFi2;
+        }
+      } else {
+        // Backward: sort column l by avg position of successors in column l+1
+        for (var bcBl = maxLayer - 1; bcBl >= 0; bcBl--) {
+          var bcBg = layerGroups[bcBl]; if (!bcBg || bcBg.length < 2) continue;
+          var bcB = {};
+          for (var bcBi = 0; bcBi < bcBg.length; bcBi++) {
+            var bcBn = bcBg[bcBi]; var bcBSum = 0, bcBCnt = 0;
+            for (var bcBCi = 0; bcBCi < connectors.length; bcBCi++) {
+              var bcBCn = connectors[bcBCi];
+              if (bcBCn.from === bcBn && layers[bcBCn.to] === bcBl + 1) {
+                bcBSum += posInLayer[bcBCn.to]; bcBCnt++;
+              }
+            }
+            bcB[bcBn] = bcBCnt > 0 ? bcBSum / bcBCnt : posInLayer[bcBn];
+          }
+          bcBg.sort(function (a, b) { return bcB[a] - bcB[b]; });
+          for (var bcBi2 = 0; bcBi2 < bcBg.length; bcBi2++) posInLayer[bcBg[bcBi2]] = bcBi2;
+        }
+      }
+    }
+
+    // Horizontal layout: each layer is a column (left-to-right), items stack top-to-bottom within
+    var curX = 0;
+    for (var col = 0; col <= maxLayer; col++) {
+      var group = layerGroups[col];
       if (!group) continue;
-      var curX = 0;
+      var curY = 0;
       for (var gi = 0; gi < group.length; gi++) {
         entries[group[gi]].x = curX;
         entries[group[gi]].y = curY;
-        curX += entries[group[gi]].box.width + effectiveGapX;
+        curY += entries[group[gi]].box.height + CFG.gapY;
       }
-      var maxH = 0;
-      for (var gi2 = 0; gi2 < group.length; gi2++) maxH = Math.max(maxH, entries[group[gi2]].box.height);
-      curY += maxH + CFG.gapY;
+      var maxW = 0;
+      for (var gi2 = 0; gi2 < group.length; gi2++) maxW = Math.max(maxW, entries[group[gi2]].box.width);
+      curX += maxW + effectiveGapX;
     }
 
-    // Center layers horizontally
-    var maxLayerW = 0;
-    for (var ly2 = 0; ly2 <= maxLayer; ly2++) {
-      var g = layerGroups[ly2]; if (!g) continue;
+    // Center each column vertically relative to the tallest column
+    var maxColH = 0;
+    for (var col2 = 0; col2 <= maxLayer; col2++) {
+      var g = layerGroups[col2]; if (!g) continue;
       var lastE = entries[g[g.length - 1]];
-      maxLayerW = Math.max(maxLayerW, lastE.x + lastE.box.width);
+      maxColH = Math.max(maxColH, lastE.y + lastE.box.height);
     }
-    for (var ly3 = 0; ly3 <= maxLayer; ly3++) {
-      var g2 = layerGroups[ly3]; if (!g2) continue;
+    for (var col3 = 0; col3 <= maxLayer; col3++) {
+      var g2 = layerGroups[col3]; if (!g2) continue;
       var lastE2 = entries[g2[g2.length - 1]];
-      var off = (maxLayerW - (lastE2.x + lastE2.box.width)) / 2;
-      for (var gi3 = 0; gi3 < g2.length; gi3++) entries[g2[gi3]].x += off;
+      var colH = lastE2.y + lastE2.box.height;
+      var off = (maxColH - colH) / 2;
+      for (var gi3 = 0; gi3 < g2.length; gi3++) entries[g2[gi3]].y += off;
     }
 
     // Compute port positions (after x,y are finalized)
@@ -333,10 +383,17 @@
       for (var rbpi = 0; rbpi < e2.rightPorts.length; rbpi++) {
         maxRightLW2 = Math.max(maxRightLW2, textWidth(e2.rightPorts[rbpi], false, portLabelFs));
       }
-      minX = Math.min(minX, e2.x - (e2.leftPorts.length > 0 ? portHalf + maxLeftLW2 + 4 : 0));
+      // Port labels are now above the port, so extend bounds upward and
+      // still account for port squares protruding to the sides
+      var allPorts2 = e2.leftPorts.concat(e2.rightPorts);
+      var maxPortLW2 = 0;
+      for (var abpi = 0; abpi < allPorts2.length; abpi++) {
+        maxPortLW2 = Math.max(maxPortLW2, textWidth(allPorts2[abpi], false, portLabelFs));
+      }
+      minX = Math.min(minX, e2.x - (e2.leftPorts.length > 0 ? CFG.portSize : 0));
       minY = Math.min(minY, e2.y);
-      maxX = Math.max(maxX, e2.x + e2.box.width + (e2.rightPorts.length > 0 ? portHalf + maxRightLW2 + 4 : 0));
-      maxY = Math.max(maxY, e2.y + e2.box.height);
+      maxX = Math.max(maxX, e2.x + e2.box.width + (e2.rightPorts.length > 0 ? CFG.portSize : 0));
+      maxY = Math.max(maxY, e2.y + e2.box.height + (allPorts2.length > 0 ? portLabelFs + 8 : 0));
     }
 
     return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
@@ -419,13 +476,13 @@
         }
       }
 
-      // Orthogonal route
+      // Orthogonal route: horizontal Z-shape matches left-to-right layout
       var points;
       if (Math.abs(x1 - x2) < 2 || Math.abs(y1 - y2) < 2) {
         points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
       } else {
-        var midY = (y1 + y2) / 2;
-        points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        var midX = (x1 + x2) / 2;
+        points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
       }
 
       var pStr = '';
@@ -461,20 +518,27 @@
 
       // Connector label
       if (conn.label) {
-        var bestIdx = 0, bestLen = 0;
-        for (var si = 0; si < points.length - 1; si++) {
-          var segLen = Math.abs(points[si + 1].x - points[si].x) + Math.abs(points[si + 1].y - points[si].y);
-          if (segLen > bestLen) { bestLen = segLen; bestIdx = si; }
+        var lx, ly, lAnchor;
+        if (points.length === 4) {
+          // Z-route: label above the last horizontal segment (approaching the
+          // destination), well clear of both the vertical bend line and any
+          // port labels near the endpoints.
+          var hSeg0 = points[2], hSeg1 = points[3];
+          lx = (hSeg0.x + hSeg1.x) / 2;
+          ly = hSeg0.y - 10;
+          lAnchor = 'middle';
+        } else {
+          // Direct line: label above the midpoint with enough clearance
+          lx = (points[0].x + points[1].x) / 2;
+          ly = (points[0].y + points[1].y) / 2 - 12;
+          lAnchor = 'middle';
         }
-        var lp0 = points[bestIdx], lp1 = points[bestIdx + 1];
-        var lx = (lp0.x + lp1.x) / 2;
-        var ly = (lp0.y + lp1.y) / 2;
-        if (Math.abs(lp1.y - lp0.y) < 1) ly -= 8; else lx += 10;
         var lw = textWidth(conn.label, false, CFG.fontSize);
-        svg.push('<rect x="' + (lx - lw / 2 - CFG.labelBgPad) + '" y="' + (ly - 12) +
-          '" width="' + (lw + CFG.labelBgPad * 2) + '" height="16" fill="' + colors.fill + '" opacity="0.85"/>');
+        var bgX = lAnchor === 'middle' ? lx - lw / 2 - CFG.labelBgPad : lx - CFG.labelBgPad;
+        svg.push('<rect x="' + bgX + '" y="' + (ly - 12) +
+          '" width="' + (lw + CFG.labelBgPad * 2) + '" height="16" fill="' + colors.fill + '" opacity="0.9"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text + '" font-style="italic">' +
+          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '" font-style="italic">' +
           escapeXml(conn.label) + '</text>');
       }
     }
@@ -514,17 +578,9 @@
           '" fill="' + colors.fill + '" stroke="' + colors.stroke +
           '" stroke-width="' + CFG.strokeWidth + '"/>');
 
-        // Port label outside the component boundary, in italic
-        var labelX, labelAnchor;
-        if (pp.side === 'left') {
-          labelX = pp.x - 3;              // ends just left of the port square
-          labelAnchor = 'end';
-        } else {
-          labelX = pp.x + CFG.portSize + 3; // starts just right of the port square
-          labelAnchor = 'start';
-        }
-        svg.push('<text x="' + labelX + '" y="' + (pp.cy + (CFG.fontSize - 1) * 0.35) +
-          '" text-anchor="' + labelAnchor + '" font-size="' + (CFG.fontSize - 1) + '"' +
+        // Port label below the port square (connection labels go above)
+        svg.push('<text x="' + pp.cx + '" y="' + (pp.cy + portHalf + (CFG.fontSize - 1) + 1) +
+          '" text-anchor="middle" font-size="' + (CFG.fontSize - 1) + '"' +
           ' font-style="italic" fill="' + colors.text + '">' + escapeXml(pname) + '</text>');
       }
     }

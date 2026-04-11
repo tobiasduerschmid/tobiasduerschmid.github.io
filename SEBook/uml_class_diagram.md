@@ -3,7 +3,46 @@ title: UML
 layout: sebook
 ---
 
-![UML Class Diagram](/img/class_diagram_1.svg)
+<div id="uml-cd-intro" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+interface Billable {
+  + processPayment(): bool
+}
+class Customer {
+  - id: int
+  - name: String
+  + placeOrder(): void
+}
+class VIP
+class Guest
+class Order {
+  - date: Date
+  - status: String
+  + calcTotal(): float
+}
+class LineItem {
+  - quantity: int
+}
+class Product {
+  - price: float
+  - name: String
+}
+VIP --|> Customer
+Guest --|> Customer
+Order ..|> Billable
+Customer "1" -- "0..*" Order
+Order *-- "1..*" LineItem
+LineItem "0..*" -- "1" Product
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-intro');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 # Introduction
 
@@ -37,32 +76,44 @@ To enforce *encapsulation*, UML uses symbols to define who can access attributes
 * `#` **Protected**: Accessible within the class and its subclasses.
 * `~` **Package/Default**: Accessible by any class in the same package.
 
-**ASCII UML: A User Class**
-```text
-+-------------------------+
-|          User           |  <-- Class Name
-+-------------------------+
-| - username: String      |  <-- Private Attribute
-| - email: String         |
-| # id: int               |  <-- Protected Attribute
-+-------------------------+
-| + login(): boolean      |  <-- Public Operation
-| + resetPassword(): void |
-+-------------------------+
-```
+<div id="uml-cd-user" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+class User {
+  - username: String
+  - email: String
+  # id: int
+  + login(): boolean
+  + resetPassword(): void
+}
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-user');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 ### 2.3 Interfaces
 An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces typically only have method signatures, no attributes.
 
-**ASCII UML: A Payable Interface**
-```text
-+-------------------------+
-|      <<interface>>      |
-|        Payable          |
-+-------------------------+
-| + processPayment(): bool|
-+-------------------------+
-```
+<div id="uml-cd-payable" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+interface Payable {
+  + processPayment(): bool
+}
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-payable');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 > 🧠 **Concept Check 1 (Retrieval Practice)**
 > *Cover the screen above. What do the symbols `+`, `-`, and `#` stand for? Why does an interface lack an attributes compartment?*
@@ -84,33 +135,30 @@ Generalization connects a subclass to a superclass. It means the subclass inheri
 When a class agrees to implement the methods defined in an interface, it "realizes" the interface.
 * **UML Symbol:** A dashed line with a hollow, closed arrow pointing to the interface. `- - -|>`
 
-**ASCII UML: Generalization and Realization**
-```text
-   +-------------------------+
-   |      <<interface>>      |
-   |        Vehicle          |
-   +-------------------------+
-               ^
-               |  (Realization: Dashed line conceptually)
-               | - - - - - - - - - - - 
-   +-------------------------+       |
-   |           Car           |       |
-   +-------------------------+       |
-   | - make: String          |       |
-   +-------------------------+       |
-   | + startEngine(): void   |- - - -+
-   +-------------------------+
-               ^
-               |  (Generalization: Solid line)
-              / \
-             +---+
-               |
-      +--------+--------+
-      |                 |
-+------------+   +-------------+
-|  Sedan     |   |    SUV      |
-+------------+   +-------------+
-```
+<div id="uml-cd-inherit" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+interface Vehicle {
+  + startEngine(): void
+}
+class Car {
+  - make: String
+  + startEngine(): void
+}
+class Sedan
+class SUV
+Car ..|> Vehicle
+Sedan --|> Car
+SUV --|> Car
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-inherit');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 ### Category 2: "Has-A" / "Knows-A" Relationships
 
@@ -125,35 +173,61 @@ Along association lines, we use numbers to define *how many* objects are involve
 * `*` or `0..*` : Zero to many
 * `1..*` : One to many
 
-**ASCII UML: Association with Multiplicities**
-```text
-+---------+                 +---------+
-| Author  | 1          1..* |  Book   |
-+---------+-----------------+---------+
-(One Author can write One or Many Books)
-```
+<div id="uml-cd-assoc" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+class Author
+class Book
+Author "1" -- "1..*" Book : writes
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-assoc');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 **3. Aggregation (Weak "Has-A")**
 A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist.
 * **UML Symbol:** A solid line with an **empty diamond** at the "whole" end. `<>-------`
 
-**ASCII UML: Aggregation**
-```text
-+------------+          +------------+
-| University |<>--------| Professor  |
-+------------+          +------------+
-```
+<div id="uml-cd-aggr" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+class University
+class Professor
+University "1" o-- "0..*" Professor
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-aggr');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 **4. Composition (Strong "Has-A")**
 A strict relationship where the parts *cannot* exist without the whole. If you destroy a House, the Rooms inside it are also destroyed.
 * **UML Symbol:** A solid line with a **filled diamond** at the "whole" end. `<*>------` (Using `<*>` to represent a filled/black diamond).
 
-**ASCII UML: Composition**
-```text
-+------------+          +------------+
-|   House    |<*>-------|    Room    |
-+------------+          +------------+
-```
+<div id="uml-cd-comp" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+class House
+class Room
+House "1" *-- "1..*" Room
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-comp');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 > 🧠 **Concept Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
@@ -166,43 +240,46 @@ A strict relationship where the parts *cannot* exist without the whole. If you d
 
 Let's read the architectural blueprint for a simplified E-Commerce system.
 
-**ASCII UML: Full System Architecture**
-```text
-                         +-------------------+
-                         |   <<interface>>   |
-                         |     Billable      |
-                         +-------------------+
-                                   ^
-                                   | - - - - - - - - - - - - - +
-                                                               |
-+-----------------+ 1      0..* +-----------------+            |
-|    Customer     |-------------|      Order      | - - - - - -+
-+-----------------+             +-----------------+
-| - id: int       |             | - date: Date    |
-| - name: String  |             | - status: String|
-+-----------------+             +-----------------+
-| + placeOrder()  |             | + calcTotal()   |
-+-----------------+             +-----------------+
-        ^                               | <*>
-        |                               |  | (Composition)
-       / \                              |  |
-      +---+                             |  | 1..*
-        |                       +-----------------+
-  +-----+-----+                 |    LineItem     |
-  |           |                 +-----------------+
-+------+  +-------+             | - quantity: int |
-| VIP  |  | Guest |             +-----------------+
-+------+  +-------+                     |
-                                        | 1
-                                        |
-                                        | 1
-                                +-----------------+
-                                |     Product     |
-                                +-----------------+
-                                | - price: float  |
-                                | - name: String  |
-                                +-----------------+
-```
+<div id="uml-cd-system" class="uml-class-diagram-container"></div>
+<script>(function(){
+  var spec = `@startuml
+interface Billable {
+  + processPayment(): bool
+}
+class Customer {
+  - id: int
+  - name: String
+  + placeOrder(): void
+}
+class VIP
+class Guest
+class Order {
+  - date: Date
+  - status: String
+  + calcTotal(): float
+}
+class LineItem {
+  - quantity: int
+}
+class Product {
+  - price: float
+  - name: String
+}
+VIP --|> Customer
+Guest --|> Customer
+Order ..|> Billable
+Customer "1" -- "0..*" Order
+Order *-- "1..*" LineItem
+LineItem "0..*" -- "1" Product
+@enduml`;
+  function render() {
+    var el = document.getElementById('uml-cd-system');
+    if (!el) return;
+    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
+    setTimeout(render, 80);
+  }
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
+})();</script>
 
 ### System Walkthrough:
 1. **Generalization:** `VIP` and `Guest` are specific types of `Customer`.

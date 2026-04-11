@@ -103,12 +103,20 @@
         continue;
       }
 
-      // Transition: From --> To : label
-      var transMatch = line.match(/^(\S+)\s+-->\s+(\S+)\s*(?::\s*(.*))?$/);
-      if (transMatch) {
-        var from = transMatch[1];
-        var to = transMatch[2];
-        var label = (transMatch[3] || '').trim();
+      // Transition: From --> [guard?] To [/ action?] [: event]
+      // Also handles standard: From --> To : event [guard] / action
+      var transRe = line.match(/^(\S+)\s+-->\s+((?:\[[^\]]*\]\s*)?)(\S+)((?:\s*\/[^:]*)?)\s*(?::\s*(.*))?$/);
+      if (transRe) {
+        var from = transRe[1];
+        var preGuard = transRe[2] ? transRe[2].trim() : '';
+        var to = transRe[3];
+        var preAction = transRe[4] ? transRe[4].trim() : '';
+        var eventLabel = transRe[5] ? transRe[5].trim() : '';
+        var labelParts = [];
+        if (eventLabel) labelParts.push(eventLabel);
+        if (preGuard) labelParts.push(preGuard);
+        if (preAction) labelParts.push(preAction);
+        var label = labelParts.join(' ');
         ensureState(from);
         ensureState(to);
         transitions.push({ from: from, to: to, label: label });
@@ -256,6 +264,55 @@
       maxLayer = Math.max(maxLayer, l);
     }
 
+    // ── Sugiyama barycenter crossing minimization ──────────────────────
+    // Iteratively sort nodes within each layer by the average position of
+    // their neighbours in the adjacent layer, alternating forward/backward
+    // passes.  4 passes is typically sufficient for convergence.
+    var posInLayer = {};
+    for (var bpl = 0; bpl <= maxLayer; bpl++) {
+      var bpg = layerGroups[bpl]; if (!bpg) continue;
+      for (var bpi = 0; bpi < bpg.length; bpi++) posInLayer[bpg[bpi]] = bpi;
+    }
+    for (var bcPass = 0; bcPass < 4; bcPass++) {
+      if (bcPass % 2 === 0) {
+        // Forward: sort layer l by avg position of predecessors in layer l-1
+        for (var bcFl = 1; bcFl <= maxLayer; bcFl++) {
+          var bcFg = layerGroups[bcFl]; if (!bcFg || bcFg.length < 2) continue;
+          var bcF = {};
+          for (var bcFi = 0; bcFi < bcFg.length; bcFi++) {
+            var bcFn = bcFg[bcFi]; var bcSum = 0, bcCnt = 0;
+            for (var bcTi = 0; bcTi < transitions.length; bcTi++) {
+              var bcTr = transitions[bcTi];
+              if (bcTr.to === bcFn && layers[bcTr.from] === bcFl - 1) {
+                bcSum += posInLayer[bcTr.from]; bcCnt++;
+              }
+            }
+            bcF[bcFn] = bcCnt > 0 ? bcSum / bcCnt : posInLayer[bcFn];
+          }
+          bcFg.sort(function (a, b) { return bcF[a] - bcF[b]; });
+          for (var bcFi2 = 0; bcFi2 < bcFg.length; bcFi2++) posInLayer[bcFg[bcFi2]] = bcFi2;
+        }
+      } else {
+        // Backward: sort layer l by avg position of successors in layer l+1
+        for (var bcBl = maxLayer - 1; bcBl >= 0; bcBl--) {
+          var bcBg = layerGroups[bcBl]; if (!bcBg || bcBg.length < 2) continue;
+          var bcB = {};
+          for (var bcBi = 0; bcBi < bcBg.length; bcBi++) {
+            var bcBn = bcBg[bcBi]; var bcBSum = 0, bcBCnt = 0;
+            for (var bcBTi = 0; bcBTi < transitions.length; bcBTi++) {
+              var bcBTr = transitions[bcBTi];
+              if (bcBTr.from === bcBn && layers[bcBTr.to] === bcBl + 1) {
+                bcBSum += posInLayer[bcBTr.to]; bcBCnt++;
+              }
+            }
+            bcB[bcBn] = bcBCnt > 0 ? bcBSum / bcBCnt : posInLayer[bcBn];
+          }
+          bcBg.sort(function (a, b) { return bcB[a] - bcB[b]; });
+          for (var bcBi2 = 0; bcBi2 < bcBg.length; bcBi2++) posInLayer[bcBg[bcBi2]] = bcBi2;
+        }
+      }
+    }
+
     // Position: center each layer horizontally
     var curY = 0;
     for (var ly = 0; ly <= maxLayer; ly++) {
@@ -347,6 +404,45 @@
     svg.push('style="font-family: ' + CFG.fontFamily + '; max-width: none;">');
     svg.push('<g transform="translate(' + ox + ',' + oy + ')">');
 
+    // Pre-compute distributed exit points to avoid overlapping lines from same source
+    var customExits = {};  // ti -> {x, y}
+
+    // Compute max bounds for back-edge routing
+    var maxBoundsX = 0;
+    for (var en0 in entries) {
+      maxBoundsX = Math.max(maxBoundsX, entries[en0].x + entries[en0].box.width);
+    }
+    var routeMarginX = maxBoundsX + CFG.gapX * 0.4;
+
+    // Group downward transitions by source state
+    var downByFrom = {};
+    for (var ti0 = 0; ti0 < transitions.length; ti0++) {
+      var tr0 = transitions[ti0];
+      if (!entries[tr0.from] || !entries[tr0.to] || tr0.from === tr0.to) continue;
+      var fe0 = entries[tr0.from], te0 = entries[tr0.to];
+      if ((te0.y + te0.box.height / 2) > (fe0.y + fe0.box.height / 2)) {
+        if (!downByFrom[tr0.from]) downByFrom[tr0.from] = [];
+        downByFrom[tr0.from].push(ti0);
+      }
+    }
+    // Distribute exit X positions for groups with multiple downward transitions
+    for (var fname in downByFrom) {
+      var dgroup = downByFrom[fname];
+      if (dgroup.length < 2) continue;
+      var fe = entries[fname];
+      // Sort by destination center X
+      dgroup.sort(function(a, b) {
+        var ta = transitions[a], tb = transitions[b];
+        var cxa = entries[ta.to] ? entries[ta.to].x + entries[ta.to].box.width / 2 : 0;
+        var cxb = entries[tb.to] ? entries[tb.to].x + entries[tb.to].box.width / 2 : 0;
+        return cxa - cxb;
+      });
+      for (var dgi = 0; dgi < dgroup.length; dgi++) {
+        var exitX = fe.x + fe.box.width * (dgi + 1) / (dgroup.length + 1);
+        customExits[dgroup[dgi]] = { x: exitX, y: fe.y + fe.box.height };
+      }
+    }
+
     // ── Draw transitions (behind states) ──
     for (var ti = 0; ti < transitions.length; ti++) {
       var tr = transitions[ti];
@@ -380,7 +476,15 @@
       var x1, y1, x2, y2;
       var dx = toCx - fromCx, dy = toCy - fromCy;
 
-      if (Math.abs(dy) >= Math.abs(dx) * 0.5) {
+      // Use pre-computed distributed exit point if available
+      if (customExits[ti]) {
+        x1 = customExits[ti].x; y1 = customExits[ti].y;
+        x2 = toCx; y2 = toE.y;
+      } else if (dy < -10) {
+        // Back-edge going upward: route via right margin to avoid crossing
+        x1 = fromE.x + fromE.box.width; y1 = fromCy;
+        x2 = toE.x + toE.box.width; y2 = toCy;
+      } else if (Math.abs(dy) >= Math.abs(dx) * 0.5) {
         // Vertical connection
         if (dy > 0) {
           x1 = fromCx; y1 = fromE.y + fromE.box.height;
@@ -408,6 +512,14 @@
       } else if (Math.abs(y1 - y2) < 2) {
         // Straight horizontal
         points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      } else if (dy < -10 && !customExits[ti]) {
+        // Back-edge via right margin
+        points = [
+          { x: x1, y: y1 },
+          { x: routeMarginX, y: y1 },
+          { x: routeMarginX, y: y2 },
+          { x: x2, y: y2 }
+        ];
       } else {
         // Z-route
         var midY = (y1 + y2) / 2;
@@ -432,27 +544,37 @@
 
       // Transition label with background
       if (tr.label) {
-        var bestIdx = 0, bestLen = 0;
-        for (var si = 0; si < points.length - 1; si++) {
-          var segLen = Math.abs(points[si+1].x - points[si].x) + Math.abs(points[si+1].y - points[si].y);
-          if (segLen > bestLen) { bestLen = segLen; bestIdx = si; }
-        }
-        var lp0 = points[bestIdx], lp1 = points[bestIdx + 1];
-        var lx = (lp0.x + lp1.x) / 2;
-        var ly = (lp0.y + lp1.y) / 2;
-        var isHoriz = Math.abs(lp1.y - lp0.y) < 1;
-        var lw2 = textWidth(tr.label, false, CFG.fontSize);
-        if (isHoriz) {
-          ly -= 8;
+        var lx, ly, lAnchor = 'middle';
+        if (points.length === 4) {
+          // Z-routes: label on the middle segment, offset to avoid overlap with
+          // state box edges (vertical endpoints) or the right-margin line (back-edges)
+          var mSeg0 = points[1], mSeg1 = points[2];
+          var mIsHoriz = Math.abs(mSeg1.y - mSeg0.y) < 1;
+          if (mIsHoriz) {
+            // Forward Z-route: horizontal middle segment — place above it
+            lx = (mSeg0.x + mSeg1.x) / 2;
+            ly = mSeg0.y - 8;
+          } else {
+            // Back-edge: vertical middle segment — place to the right
+            lx = mSeg0.x + 8;
+            ly = (mSeg0.y + mSeg1.y) / 2;
+            lAnchor = 'start';
+          }
         } else {
-          lx += 10;
+          // Direct line
+          var lp0 = points[0], lp1 = points[1];
+          lx = (lp0.x + lp1.x) / 2;
+          ly = (lp0.y + lp1.y) / 2;
+          if (Math.abs(lp1.y - lp0.y) < 1) { ly -= 10; } else { lx += 10; lAnchor = 'start'; }
         }
+        var lw2 = textWidth(tr.label, false, CFG.fontSize);
+        var bgX2 = lAnchor === 'middle' ? lx - lw2 / 2 - CFG.labelBgPad : lx - CFG.labelBgPad;
         // Background rect
-        svg.push('<rect x="' + (lx - lw2 / 2 - CFG.labelBgPad) + '" y="' + (ly - 12) +
+        svg.push('<rect x="' + bgX2 + '" y="' + (ly - 12) +
           '" width="' + (lw2 + CFG.labelBgPad * 2) + '" height="' + 16 +
-          '" fill="' + colors.fill + '" stroke="none" opacity="0.85"/>');
+          '" fill="' + colors.fill + '" stroke="none" opacity="0.9"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' +
+          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' +
           escapeXml(tr.label) + '</text>');
       }
     }

@@ -529,6 +529,35 @@
       }
     }
 
+    // ── Barycenter sibling ordering ────────────────────────────────────
+    // For each parent node, sort its children by the original class-index
+    // centroid of the nodes they are connected to. This places children
+    // whose connections fan out to the left/right of the diagram in the
+    // appropriate order, reducing edge crossings between subtrees.
+    var classIndex = {};
+    for (var bci = 0; bci < classes.length; bci++) classIndex[classes[bci].name] = bci;
+    for (var bcParent in layoutChildren) {
+      var bcKids = layoutChildren[bcParent];
+      if (!bcKids || bcKids.length < 2) continue;
+      var bcBary = {};
+      for (var bcKi = 0; bcKi < bcKids.length; bcKi++) {
+        var bcKid = bcKids[bcKi];
+        var bcSum = 0, bcCnt = 0;
+        for (var bcRi = 0; bcRi < relationships.length; bcRi++) {
+          var bcRel = relationships[bcRi];
+          var bcOther = null;
+          if (bcRel.from === bcKid && entries[bcRel.to]) bcOther = bcRel.to;
+          else if (bcRel.to === bcKid && entries[bcRel.from]) bcOther = bcRel.from;
+          if (bcOther !== null && classIndex[bcOther] !== undefined) {
+            bcSum += classIndex[bcOther]; bcCnt++;
+          }
+        }
+        // Fall back to the kid's own original index
+        bcBary[bcKid] = bcCnt > 0 ? bcSum / bcCnt : (classIndex[bcKid] || 0);
+      }
+      bcKids.sort(function (a, b) { return bcBary[a] - bcBary[b]; });
+    }
+
     // Find connected components using adjacency (undirected)
     var adjAll = {};
     for (var cn in entries) adjAll[cn] = [];
