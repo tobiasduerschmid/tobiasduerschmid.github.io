@@ -228,8 +228,8 @@ It is a modeling choice to decide whether you want to include concrete values (e
 
 # State Machine Diagrams 
 
-State machines model the transitions between different states. States are modeled either as oval, rectangles with rounded corners, or circles. 
+State machines model the transitions between different states. States are modeled as rectangles with rounded corners. The initial pseudo-state is a solid black circle, and the final state is a bullseye (solid circle inside a hollow circle). 
 
-Transitions follow the pattern `[condition] trigger / action`. 
+Transitions follow the pattern `trigger [guard] / effect`. 
 
 State machines always need an initial state but don't always need a final state. 
