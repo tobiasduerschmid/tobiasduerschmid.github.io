@@ -33,17 +33,15 @@ A lifeline represents an individual participant in the interaction. It is drawn 
 
 Messages are the communications between lifelines. They are drawn as horizontal arrows.
 
-  * **Synchronous Message (Solid arrowhead):** The sender waits for a response before doing anything else (like calling someone on the phone and waiting for them to answer).
-  * **Asynchronous Message (Open/stick arrowhead):** The sender sends the message and immediately moves on to other tasks (like sending a text message).
-  * **Return Message (Dashed line with open arrow):** The response to a previous message.
+  * **Synchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->"></span> The sender waits for a response before doing anything else (like calling someone on the phone and waiting for them to answer).
+  * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> The sender sends the message and immediately moves on to other tasks (like sending a text message).
+  * **Return Message** <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span> The response to a previous message.
 
 ### Visualizing the Basics: A Simple ATM Login
 
 Let's look at the sequence of a user inserting a card into an ATM.
 
-<div id="uml-sd-atm" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant customer: Customer
 participant atm: ATM
 participant bank: Bank Server
@@ -51,15 +49,7 @@ customer -> atm: (1) insertCard()
 atm -> bank: (2) verifyCard()
 bank --> atm: (3) cardValid()
 atm --> customer: (4) promptPIN()
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-sd-atm');
-    if (!el) return;
-    if (window.UMLSequenceDiagram) { window.UMLSequenceDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
@@ -84,9 +74,7 @@ The `opt` fragment is equivalent to an `if` statement without an `else`. The mes
 
 **Scenario:** A customer is buying an item. *If* they have a loyalty account, they receive a discount.
 
-<div id="uml-sd-opt" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant checkout: Checkout System
 participant pricing: Pricing Engine
 checkout -> pricing: calculateTotal()
@@ -95,15 +83,7 @@ opt [hasLoyaltyAccount == true]
   pricing --> checkout: discountApplied()
 end
 pricing --> checkout: finalTotal()
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-sd-opt');
-    if (!el) return;
-    if (window.UMLSequenceDiagram) { window.UMLSequenceDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 *Notice the `[hasLoyaltyAccount == true]` text. This is the **guard condition**. If it evaluates to false, the sequence skips the entire box.*
 
@@ -113,9 +93,7 @@ The `alt` fragment is equivalent to an `if-else` or `switch` statement. The box 
 
 **Scenario:** Verifying a user's password.
 
-<div id="uml-sd-alt" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant system: System
 participant db: Database
 system -> db: checkPassword()
@@ -124,15 +102,7 @@ alt [password is correct]
 else [password is incorrect]
   db --> system: loginFailed()
 end
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-sd-alt');
-    if (!el) return;
-    if (window.UMLSequenceDiagram) { window.UMLSequenceDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### 3\. The LOOP Fragment (Repetitive Behavior)
 
@@ -140,24 +110,14 @@ The `loop` fragment represents a `for` or `while` loop. The messages inside the 
 
 **Scenario:** Pinging a server until it wakes up (maximum 3 times).
 
-<div id="uml-sd-loop" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant app: App
 participant server: Server
 loop [up to 3 times]
   app -> server: ping()
   server --> app: ack()
 end
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-sd-loop');
-    if (!el) return;
-    if (window.UMLSequenceDiagram) { window.UMLSequenceDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 -----
 
@@ -173,9 +133,7 @@ To truly understand how these elements work, we must view them interacting in a 
 4.  *If* a window is open (ALT), it warns the user. *Else*, it locks it.
 5.  *Optionally* (OPT), if the user has SMS alerts on, it texts them.
 
-<div id="uml-sd-alarm" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant user: User
 participant hub: Alarm Hub
 participant sensors: Window Sensors
@@ -193,15 +151,7 @@ end
 opt [smsEnabled == true]
   hub -> sms: sendText("Armed")
 end
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-sd-alarm');
-    if (!el) return;
-    if (window.UMLSequenceDiagram) { window.UMLSequenceDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 -----
 

@@ -3,9 +3,7 @@ title: UML
 layout: sebook
 ---
 
-<div id="uml-cd-intro" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -34,15 +32,7 @@ Order ..|> Billable
 Customer "1" -- "0..*" Order
 Order *-- "1..*" LineItem
 LineItem "0..*" -- "1" Product
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-intro');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 # Introduction
 
@@ -76,9 +66,7 @@ To enforce *encapsulation*, UML uses symbols to define who can access attributes
 * `#` **Protected**: Accessible within the class and its subclasses.
 * `~` **Package/Default**: Accessible by any class in the same package.
 
-<div id="uml-cd-user" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class User {
   - username: String
   - email: String
@@ -86,34 +74,16 @@ class User {
   + login(): boolean
   + resetPassword(): void
 }
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-user');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### 2.3 Interfaces
 An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces typically only have method signatures, no attributes.
 
-<div id="uml-cd-payable" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Payable {
   + processPayment(): bool
 }
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-payable');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 > 🧠 **Concept Check 1 (Retrieval Practice)**
 > *Cover the screen above. What do the symbols `+`, `-`, and `#` stand for? Why does an interface lack an attributes compartment?*
@@ -129,15 +99,13 @@ Software is never just one class working in isolation. Classes interact. We repr
 
 **1. Generalization (Inheritance)**
 Generalization connects a subclass to a superclass. It means the subclass inherits attributes and behaviors from the parent. 
-* **UML Symbol:** A solid line with a hollow, closed arrow pointing to the parent. `----|>`
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> A solid line with a hollow, closed arrow pointing to the parent.
 
 **2. Interface Realization**
 When a class agrees to implement the methods defined in an interface, it "realizes" the interface.
-* **UML Symbol:** A dashed line with a hollow, closed arrow pointing to the interface. `- - -|>`
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> A dashed line with a hollow, closed arrow pointing to the interface.
 
-<div id="uml-cd-inherit" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Vehicle {
   + startEngine(): void
 }
@@ -150,21 +118,13 @@ class SUV
 Car ..|> Vehicle
 Sedan --|> Car
 SUV --|> Car
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-inherit');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### Category 2: "Has-A" / "Knows-A" Relationships
 
 **1. Association**
 A basic structural relationship indicating that objects of one class are connected to objects of another (e.g., a "Teacher" knows about a "Student"). 
-* **UML Symbol:** A simple solid line. `---------`
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--"></span> A simple solid line.
 
 **2. Multiplicities**
 Along association lines, we use numbers to define *how many* objects are involved.
@@ -173,61 +133,31 @@ Along association lines, we use numbers to define *how many* objects are involve
 * `*` or `0..*` : Zero to many
 * `1..*` : One to many
 
-<div id="uml-cd-assoc" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Author
 class Book
 Author "1" -- "1..*" Book : writes
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-assoc');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 **3. Aggregation (Weak "Has-A")**
 A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist.
-* **UML Symbol:** A solid line with an **empty diamond** at the "whole" end. `<>-------`
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> A solid line with an **empty diamond** at the "whole" end.
 
-<div id="uml-cd-aggr" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class University
 class Professor
 University "1" o-- "0..*" Professor
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-aggr');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 **4. Composition (Strong "Has-A")**
 A strict relationship where the parts *cannot* exist without the whole. If you destroy a House, the Rooms inside it are also destroyed.
-* **UML Symbol:** A solid line with a **filled diamond** at the "whole" end. `<*>------` (Using `<*>` to represent a filled/black diamond).
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> A solid line with a **filled diamond** at the "whole" end.
 
-<div id="uml-cd-comp" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class House
 class Room
 House "1" *-- "1..*" Room
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-comp');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 > 🧠 **Concept Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
@@ -240,9 +170,7 @@ House "1" *-- "1..*" Room
 
 Let's read the architectural blueprint for a simplified E-Commerce system.
 
-<div id="uml-cd-system" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -271,15 +199,7 @@ Order ..|> Billable
 Customer "1" -- "0..*" Order
 Order *-- "1..*" LineItem
 LineItem "0..*" -- "1" Product
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-cd-system');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### System Walkthrough:
 1. **Generalization:** `VIP` and `Guest` are specific types of `Customer`.

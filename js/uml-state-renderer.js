@@ -159,19 +159,7 @@
     return { states: stateList, transitions: transitions };
   }
 
-  // ─── Text Measurement ─────────────────────────────────────────────
-
-  var _ctx = null;
-  function textWidth(text, bold, fontSize) {
-    if (!_ctx) _ctx = document.createElement('canvas').getContext('2d');
-    var fs = fontSize || CFG.fontSize;
-    _ctx.font = (bold ? 'bold ' : '') + fs + 'px ' + CFG.fontFamily;
-    return _ctx.measureText(text).width;
-  }
-
-  function escapeXml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
+  // ─── Text Measurement (delegated to UMLShared) ────────────────────
 
   // ─── Layout ───────────────────────────────────────────────────────
 
@@ -179,7 +167,7 @@
     if (s.type === 'initial') return { width: CFG.initialR * 2 + 4, height: CFG.initialR * 2 + 4 };
     if (s.type === 'final') return { width: CFG.finalRingR * 2 + 4, height: CFG.finalRingR * 2 + 4 };
 
-    var nameW = textWidth(s.name, true, CFG.fontSizeBold);
+    var nameW = UMLShared.textWidth(s.name, true, CFG.fontSizeBold);
     var hasActions = s.entryAction || s.exitAction || s.doActivity;
     var actionLines = 0;
     if (s.entryAction) actionLines++;
@@ -187,9 +175,9 @@
     if (s.doActivity) actionLines++;
 
     var actionMaxW = 0;
-    if (s.entryAction) actionMaxW = Math.max(actionMaxW, textWidth('entry / ' + s.entryAction, false, CFG.fontSizeAction));
-    if (s.exitAction) actionMaxW = Math.max(actionMaxW, textWidth('exit / ' + s.exitAction, false, CFG.fontSizeAction));
-    if (s.doActivity) actionMaxW = Math.max(actionMaxW, textWidth('do / ' + s.doActivity, false, CFG.fontSizeAction));
+    if (s.entryAction) actionMaxW = Math.max(actionMaxW, UMLShared.textWidth('entry / ' + s.entryAction, false, CFG.fontSizeAction));
+    if (s.exitAction) actionMaxW = Math.max(actionMaxW, UMLShared.textWidth('exit / ' + s.exitAction, false, CFG.fontSizeAction));
+    if (s.doActivity) actionMaxW = Math.max(actionMaxW, UMLShared.textWidth('do / ' + s.doActivity, false, CFG.fontSizeAction));
 
     var width = Math.max(CFG.stateMinW, nameW + CFG.padX * 2, actionMaxW + CFG.padX * 2);
     var height = CFG.padY * 2 + CFG.lineHeight;
@@ -378,17 +366,6 @@
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
 
-  function getThemeColors(container) {
-    var cs = window.getComputedStyle(container);
-    var get = function (prop, fb) { return cs.getPropertyValue(prop).trim() || fb; };
-    return {
-      stroke: get('--uml-stroke', '#4060a0'),
-      text: get('--uml-text', '#222'),
-      fill: get('--uml-fill', '#fff'),
-      headerFill: get('--uml-header-fill', '#d0ddef'),
-      line: get('--uml-line', '#444'),
-    };
-  }
 
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
@@ -399,10 +376,7 @@
     var svgH = layout.height + CFG.svgPad * 2;
 
     var svg = [];
-    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + svgW + '" height="' + svgH + '" ');
-    svg.push('viewBox="0 0 ' + svgW + ' ' + svgH + '" ');
-    svg.push('style="font-family: ' + CFG.fontFamily + '; max-width: none;">');
-    svg.push('<g transform="translate(' + ox + ',' + oy + ')">');
+    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // Pre-compute distributed exit points to avoid overlapping lines from same source
     var customExits = {};  // ti -> {x, y}
@@ -462,7 +436,7 @@
         drawArrow(svg, sx, sy + 20, -1, 0, colors.line);
         if (tr.label) {
           svg.push('<text x="' + (sx + lw + 4) + '" y="' + (sy + 10) +
-            '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' + escapeXml(tr.label) + '</text>');
+            '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' + UMLShared.escapeXml(tr.label) + '</text>');
         }
         continue;
       }
@@ -554,6 +528,11 @@
             // Forward Z-route: horizontal middle segment — place above it
             lx = (mSeg0.x + mSeg1.x) / 2;
             ly = mSeg0.y - 8;
+            // Stack labels from same source to avoid overlap
+            if (downByFrom[tr.from] && downByFrom[tr.from].length > 1) {
+              var dIdx = downByFrom[tr.from].indexOf(ti);
+              if (dIdx > 0) ly += dIdx * (CFG.fontSize + 4);
+            }
           } else {
             // Back-edge: vertical middle segment — place to the right
             lx = mSeg0.x + 8;
@@ -567,7 +546,7 @@
           ly = (lp0.y + lp1.y) / 2;
           if (Math.abs(lp1.y - lp0.y) < 1) { ly -= 10; } else { lx += 10; lAnchor = 'start'; }
         }
-        var lw2 = textWidth(tr.label, false, CFG.fontSize);
+        var lw2 = UMLShared.textWidth(tr.label, false, CFG.fontSize);
         var bgX2 = lAnchor === 'middle' ? lx - lw2 / 2 - CFG.labelBgPad : lx - CFG.labelBgPad;
         // Background rect
         svg.push('<rect x="' + bgX2 + '" y="' + (ly - 12) +
@@ -575,7 +554,7 @@
           '" fill="' + colors.fill + '" stroke="none" opacity="0.9"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' +
-          escapeXml(tr.label) + '</text>');
+          UMLShared.escapeXml(tr.label) + '</text>');
       }
     }
 
@@ -604,7 +583,7 @@
         var nameY = e.y + CFG.padY + CFG.lineHeight * 0.75;
         svg.push('<text x="' + cx + '" y="' + nameY +
           '" text-anchor="middle" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
-          escapeXml(s.name) + '</text>');
+          UMLShared.escapeXml(s.name) + '</text>');
 
         // Internal actions
         if (e.box.hasActions) {
@@ -616,26 +595,25 @@
           if (s.entryAction) {
             svg.push('<text x="' + (e.x + CFG.padX / 2) + '" y="' + actionY +
               '" font-size="' + CFG.fontSizeAction + '" fill="' + colors.text + '">entry / ' +
-              escapeXml(s.entryAction) + '</text>');
+              UMLShared.escapeXml(s.entryAction) + '</text>');
             actionY += 16;
           }
           if (s.exitAction) {
             svg.push('<text x="' + (e.x + CFG.padX / 2) + '" y="' + actionY +
               '" font-size="' + CFG.fontSizeAction + '" fill="' + colors.text + '">exit / ' +
-              escapeXml(s.exitAction) + '</text>');
+              UMLShared.escapeXml(s.exitAction) + '</text>');
             actionY += 16;
           }
           if (s.doActivity) {
             svg.push('<text x="' + (e.x + CFG.padX / 2) + '" y="' + actionY +
               '" font-size="' + CFG.fontSizeAction + '" fill="' + colors.text + '">do / ' +
-              escapeXml(s.doActivity) + '</text>');
+              UMLShared.escapeXml(s.doActivity) + '</text>');
           }
         }
       }
     }
 
-    svg.push('</g>');
-    svg.push('</svg>');
+    svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
 
@@ -661,44 +639,13 @@
     if (!container.classList.contains('uml-class-diagram-container')) {
       container.classList.add('uml-class-diagram-container');
     }
-    var colors = getThemeColors(container);
+    var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  var _diagrams = [];
-
-  function autoInit() {
-    var blocks = document.querySelectorAll('pre > code.language-uml-state');
-    for (var i = 0; i < blocks.length; i++) {
-      var pre = blocks[i].parentElement;
-      var text = blocks[i].textContent;
-      var container = document.createElement('div');
-      container.className = 'uml-class-diagram-container';
-      pre.parentElement.replaceChild(container, pre);
-      render(container, text);
-      _diagrams.push({ container: container, text: text });
-    }
-    var observer = new MutationObserver(function (mutations) {
-      for (var m = 0; m < mutations.length; m++) {
-        if (mutations[m].attributeName === 'class') {
-          setTimeout(function () {
-            for (var d = 0; d < _diagrams.length; d++) render(_diagrams[d].container, _diagrams[d].text);
-          }, 50);
-          break;
-        }
-      }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoInit);
-  } else {
-    autoInit();
-  }
-
+  UMLShared.createAutoInit('pre > code.language-uml-state', render);
   window.UMLStateDiagram = { render: render, parse: parse };
 })();

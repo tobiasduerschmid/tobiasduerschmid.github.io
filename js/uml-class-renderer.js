@@ -298,17 +298,7 @@
     return null;
   }
 
-  // ─── Text Measurement ─────────────────────────────────────────────
-
-  var _ctx = null;
-  function textWidth(text, bold, fontSize) {
-    if (!_ctx) {
-      _ctx = document.createElement('canvas').getContext('2d');
-    }
-    var fs = fontSize || CFG.fontSize;
-    _ctx.font = (bold ? 'bold ' : '') + fs + 'px ' + CFG.fontFamily;
-    return _ctx.measureText(text).width;
-  }
+  // ─── Text Measurement (uses UMLShared.textWidth) ──────────────────
 
   // ─── Layout ───────────────────────────────────────────────────────
 
@@ -326,21 +316,21 @@
     var stereotypeH = hasStereotype ? CFG.lineHeight : 0;
     var nameH = CFG.padY * 2 + CFG.lineHeight + stereotypeH;
 
-    var nameW = textWidth(cls.name, true, CFG.fontSizeBold);
+    var nameW = UMLShared.textWidth(cls.name, true, CFG.fontSizeBold);
     if (hasStereotype) {
-      nameW = Math.max(nameW, textWidth(stereotypeText, false, CFG.fontSizeStereotype));
+      nameW = Math.max(nameW, UMLShared.textWidth(stereotypeText, false, CFG.fontSizeStereotype));
     }
 
     var attrMaxW = 0;
     for (var a = 0; a < cls.attributes.length; a++) {
-      attrMaxW = Math.max(attrMaxW, textWidth(cls.attributes[a].text, false));
+      attrMaxW = Math.max(attrMaxW, UMLShared.textWidth(cls.attributes[a].text, false));
     }
     var attrH = CFG.padY * 2 + Math.max(cls.attributes.length, 0) * CFG.lineHeight;
     if (attrH < CFG.padY * 2 + 4) attrH = CFG.padY * 2 + 4;
 
     var methMaxW = 0;
     for (var m = 0; m < cls.methods.length; m++) {
-      methMaxW = Math.max(methMaxW, textWidth(cls.methods[m].text, false));
+      methMaxW = Math.max(methMaxW, UMLShared.textWidth(cls.methods[m].text, false));
     }
     var methH = CFG.padY * 2 + Math.max(cls.methods.length, 0) * CFG.lineHeight;
     if (methH < CFG.padY * 2 + 4) methH = CFG.padY * 2 + 4;
@@ -600,12 +590,12 @@
       var neededW = 0;
       // Label text centered in the gap needs full width + margins
       if (rgRel.label) {
-        neededW = Math.max(neededW, textWidth(rgRel.label, false, CFG.fontSizeStereotype) + 40);
+        neededW = Math.max(neededW, UMLShared.textWidth(rgRel.label, false, CFG.fontSizeStereotype) + 40);
       }
       // Multiplicities sit near endpoints — each needs space
       var multW = 0;
-      if (rgRel.fromMult) multW += textWidth(rgRel.fromMult, false, CFG.fontSizeStereotype) + 12;
-      if (rgRel.toMult) multW += textWidth(rgRel.toMult, false, CFG.fontSizeStereotype) + 12;
+      if (rgRel.fromMult) multW += UMLShared.textWidth(rgRel.fromMult, false, CFG.fontSizeStereotype) + 12;
+      if (rgRel.toMult) multW += UMLShared.textWidth(rgRel.toMult, false, CFG.fontSizeStereotype) + 12;
       neededW = Math.max(neededW, multW + 20);
       effectiveGapX = Math.max(effectiveGapX, neededW);
     }
@@ -791,29 +781,7 @@
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
 
-  function escapeXml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-  }
 
-  /**
-   * Read theme colors from CSS custom properties or use defaults.
-   */
-  function getThemeColors(container) {
-    var cs = window.getComputedStyle(container);
-    var get = function (prop, fallback) {
-      var v = cs.getPropertyValue(prop).trim();
-      return v || fallback;
-    };
-    return {
-      stroke: get('--uml-stroke', '#4060a0'),
-      text: get('--uml-text', '#222'),
-      fill: get('--uml-fill', '#fff'),
-      headerFill: get('--uml-header-fill', '#d0ddef'),
-      line: get('--uml-line', '#444'),
-      bg: get('--uml-bg', 'transparent'),
-    };
-  }
 
   /**
    * Generate full SVG string from layout and relationships.
@@ -827,10 +795,7 @@
     var svgH = layout.height + CFG.svgPad * 2;
 
     var svg = [];
-    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + svgW + '" height="' + svgH + '" ');
-    svg.push('viewBox="0 0 ' + svgW + ' ' + svgH + '" ');
-    svg.push('style="font-family: ' + CFG.fontFamily + '; max-width: none;">');
-    svg.push('<g transform="translate(' + ox + ',' + oy + ')">');
+    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw relationships ──
 
@@ -1011,7 +976,7 @@
         }
         svg.push('<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'font-style="italic">' + escapeXml(orel.label) + '</text>');
+          'font-style="italic">' + UMLShared.escapeXml(orel.label) + '</text>');
       }
 
       // Draw multiplicities near their respective endpoints, well clear of the box
@@ -1028,7 +993,7 @@
         }
         svg.push('<text x="' + fmx + '" y="' + fmy + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '">' +
-          escapeXml(orel.fromMult) + '</text>');
+          UMLShared.escapeXml(orel.fromMult) + '</text>');
       }
       if (orel.toMult) {
         var tmx, tmy;
@@ -1045,7 +1010,7 @@
         }
         svg.push('<text x="' + tmx + '" y="' + tmy + '" text-anchor="' + (tmAnchor || 'start') + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '">' +
-          escapeXml(orel.toMult) + '</text>');
+          UMLShared.escapeXml(orel.toMult) + '</text>');
       }
     }
 
@@ -1087,7 +1052,7 @@
         var stereoY = y + CFG.padY + CFG.lineHeight * 0.75;
         svg.push('<text x="' + textCx + '" y="' + stereoY + '" text-anchor="middle" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '">' +
-          escapeXml(box.stereotypeText) + '</text>');
+          UMLShared.escapeXml(box.stereotypeText) + '</text>');
       }
 
       // Class name
@@ -1096,7 +1061,7 @@
       svg.push('<text x="' + textCx + '" y="' + nameY + '" text-anchor="middle" ' +
         'font-weight="bold" font-size="' + CFG.fontSizeBold + '" ' +
         (isAbstract ? 'font-style="italic" ' : '') +
-        'fill="' + colors.text + '">' + escapeXml(cls.name) + '</text>');
+        'fill="' + colors.text + '">' + UMLShared.escapeXml(cls.name) + '</text>');
 
       // Attributes
       var attrBaseY = y + box.nameH + CFG.padY;
@@ -1109,7 +1074,7 @@
         svg.push('<text x="' + (x + CFG.padX) + '" y="' + attrY + '" ' +
           'font-size="' + CFG.fontSize + '" fill="' + colors.text + '"' +
           (attrStyle ? ' style="' + attrStyle + '"' : '') + '>' +
-          escapeXml(attr.text) + '</text>');
+          UMLShared.escapeXml(attr.text) + '</text>');
       }
 
       // Methods
@@ -1123,12 +1088,11 @@
         svg.push('<text x="' + (x + CFG.padX) + '" y="' + methY + '" ' +
           'font-size="' + CFG.fontSize + '" fill="' + colors.text + '"' +
           (methStyle ? ' style="' + methStyle + '"' : '') + '>' +
-          escapeXml(meth.text) + '</text>');
+          UMLShared.escapeXml(meth.text) + '</text>');
       }
     }
 
-    svg.push('</g>');
-    svg.push('</svg>');
+    svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
 
@@ -1365,7 +1329,8 @@
       container.classList.add('uml-class-diagram-container');
     }
 
-    var colors = getThemeColors(container);
+    var colors = UMLShared.getThemeColors(container);
+    colors.bg = window.getComputedStyle(container).getPropertyValue('--uml-bg').trim() || 'transparent';
     var layout = computeLayout(parsed);
     var svgStr = generateSVG(layout, parsed, colors);
     container.innerHTML = svgStr;
@@ -1390,42 +1355,7 @@
     return html;
   }
 
-  var _diagrams = [];
-
-  function autoInit() {
-    var blocks = document.querySelectorAll('pre > code.language-uml-class');
-    for (var i = 0; i < blocks.length; i++) {
-      var codeEl = blocks[i];
-      var pre = codeEl.parentElement;
-      var text = extractCodeText(codeEl);
-      var container = document.createElement('div');
-      container.className = 'uml-class-diagram-container';
-      pre.parentElement.replaceChild(container, pre);
-      render(container, text);
-      _diagrams.push({ container: container, text: text });
-    }
-
-    // Re-render on dark mode toggle
-    var observer = new MutationObserver(function (mutations) {
-      for (var m = 0; m < mutations.length; m++) {
-        if (mutations[m].attributeName === 'class') {
-          setTimeout(function () {
-            for (var d = 0; d < _diagrams.length; d++) {
-              render(_diagrams[d].container, _diagrams[d].text);
-            }
-          }, 50);
-          break;
-        }
-      }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoInit);
-  } else {
-    autoInit();
-  }
+  UMLShared.createAutoInit('pre > code.language-uml-class', render, { extractText: extractCodeText });
 
   // ─── Export ────────────────────────────────────────────────────────
 

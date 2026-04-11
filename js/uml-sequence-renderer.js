@@ -218,36 +218,7 @@
     }
   }
 
-  // ─── Text Measurement ─────────────────────────────────────────────
-
-  var _ctx = null;
-  function textWidth(text, bold, fontSize) {
-    if (!_ctx) _ctx = document.createElement('canvas').getContext('2d');
-    var fs = fontSize || CFG.fontSize;
-    _ctx.font = (bold ? 'bold ' : '') + fs + 'px ' + CFG.fontFamily;
-    return _ctx.measureText(text).width;
-  }
-
-  function escapeXml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
   // ─── Layout & Render ──────────────────────────────────────────────
-
-  function getThemeColors(container) {
-    var cs = window.getComputedStyle(container);
-    var get = function (prop, fallback) {
-      var v = cs.getPropertyValue(prop).trim();
-      return v || fallback;
-    };
-    return {
-      stroke: get('--uml-stroke', '#4060a0'),
-      text: get('--uml-text', '#222'),
-      fill: get('--uml-fill', '#fff'),
-      headerFill: get('--uml-header-fill', '#d0ddef'),
-      line: get('--uml-line', '#444'),
-    };
-  }
 
   function render(container, text, options) {
     var parsed = parse(text);
@@ -259,7 +230,7 @@
       container.classList.add('uml-class-diagram-container');
     }
 
-    var colors = getThemeColors(container);
+    var colors = UMLShared.getThemeColors(container);
     var svg = generateSequenceSVG(parsed, colors);
     container.innerHTML = svg;
   }
@@ -274,7 +245,7 @@
     for (var pi = 0; pi < participants.length; pi++) {
       var part = participants[pi];
       var displayText = (part.id !== part.label) ? (part.id + ': ' + part.label) : part.label;
-      var pw = textWidth(displayText, true, CFG.fontSizeBold) + CFG.participantPadX * 2;
+      var pw = UMLShared.textWidth(displayText, true, CFG.fontSizeBold) + CFG.participantPadX * 2;
       pw = Math.max(pw, CFG.participantMinW);
       partWidths.push(pw);
       partMaxW = Math.max(partMaxW, pw);
@@ -395,10 +366,7 @@
 
     // ── Build SVG ──
     var svg = [];
-    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + totalW + '" height="' + totalH + '" ');
-    svg.push('viewBox="0 0 ' + totalW + ' ' + totalH + '" ');
-    svg.push('style="font-family: ' + CFG.fontFamily + '; max-width: none;">');
-
+    svg.push(UMLShared.svgOpen(totalW, totalH, 0, 0, CFG.fontFamily));
     // ── Draw lifelines (dashed vertical lines) ──
     var lifelineTop = CFG.svgPad + partH;
     var lifelineBot = totalH - 10;
@@ -430,7 +398,7 @@
         '" fill="none" stroke="' + colors.line + '" stroke-width="1"/>');
 
       // Fragment label — pentagon/tab shape with folded corner
-      var labelW = textWidth(frag.fragType.toUpperCase(), true, CFG.fontSizeFragment) + 16;
+      var labelW = UMLShared.textWidth(frag.fragType.toUpperCase(), true, CFG.fontSizeFragment) + 16;
       var lh = CFG.fragmentLabelH;
       var foldSize = 6;
       var lx = fragL, ly = frag.startY;
@@ -444,13 +412,13 @@
         '" fill="' + colors.headerFill + '" stroke="' + colors.line + '" stroke-width="1"/>');
       svg.push('<text x="' + (lx + 8) + '" y="' + (ly + lh - 7) +
         '" font-size="' + CFG.fontSizeFragment + '" font-weight="bold" fill="' + colors.text + '">' +
-        escapeXml(frag.fragType.toUpperCase()) + '</text>');
+        UMLShared.escapeXml(frag.fragType.toUpperCase()) + '</text>');
 
       // Condition text — on the line below the label tab
       if (frag.condition) {
         svg.push('<text x="' + (fragL + 10) + '" y="' + (ly + lh + 14) +
           '" font-size="' + CFG.fontSizeFragment + '" fill="' + colors.text + '">[' +
-          escapeXml(frag.condition) + ']</text>');
+          UMLShared.escapeXml(frag.condition) + ']</text>');
       }
 
       // Else divider lines
@@ -461,7 +429,7 @@
         if (frag.elseYs[ei].condition) {
           svg.push('<text x="' + (fragL + 10) + '" y="' + (ey + 16) +
             '" font-size="' + CFG.fontSizeFragment + '" fill="' + colors.text + '">[' +
-            escapeXml(frag.elseYs[ei].condition) + ']</text>');
+            UMLShared.escapeXml(frag.elseYs[ei].condition) + ']</text>');
         }
       }
     }
@@ -503,12 +471,12 @@
             '"' + (m.isDashed ? ' stroke-dasharray="6,4"' : '') + '/>');
           drawMsgArrow(svg, selfX, my + 20, 1, m.msgType, colors);
           if (m.label) {
-            var selfLabelW = textWidth(m.label, false, CFG.fontSize);
+            var selfLabelW = UMLShared.textWidth(m.label, false, CFG.fontSize);
             svg.push('<rect x="' + (selfX + selfW + 4) + '" y="' + (my - 7) +
               '" width="' + (selfLabelW + 6) + '" height="' + 14 +
               '" fill="' + colors.fill + '" stroke="none" opacity="0.85"/>');
             svg.push('<text x="' + (selfX + selfW + 6) + '" y="' + (my + 4) +
-              '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' + escapeXml(m.label) + '</text>');
+              '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' + UMLShared.escapeXml(m.label) + '</text>');
           }
         } else {
           // Line
@@ -523,14 +491,14 @@
           // Label above the line with background
           if (m.label) {
             var labelX = (x1 + x2) / 2;
-            var labelW = textWidth(m.label, false, CFG.fontSize);
+            var labelW = UMLShared.textWidth(m.label, false, CFG.fontSize);
             var labelBgPad = 4;
             svg.push('<rect x="' + (labelX - labelW / 2 - labelBgPad) + '" y="' + (my - 16) +
               '" width="' + (labelW + labelBgPad * 2) + '" height="' + 14 +
               '" fill="' + colors.fill + '" stroke="none" opacity="0.85"/>');
             svg.push('<text x="' + labelX + '" y="' + (my - 6) +
               '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' +
-              escapeXml(m.label) + '</text>');
+              UMLShared.escapeXml(m.label) + '</text>');
           }
         }
       } else if (m.type === 'destroy') {
@@ -551,7 +519,7 @@
     // ── Draw participant boxes (top only) ──
     drawParticipantBoxes(svg, participants, partX, partWidths, partH, CFG.svgPad, colors);
 
-    svg.push('</svg>');
+    svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
 
@@ -574,7 +542,7 @@
       svg.push('<text x="' + partX[i] + '" y="' + textY +
         '" text-anchor="middle" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '"' +
         (isInstance ? ' text-decoration="underline"' : '') + '>' +
-        escapeXml(displayText) + '</text>');
+        UMLShared.escapeXml(displayText) + '</text>');
     }
   }
 
@@ -602,42 +570,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  var _seqDiagrams = [];
-
-  function autoInit() {
-    var blocks = document.querySelectorAll('pre > code.language-uml-sequence');
-    for (var i = 0; i < blocks.length; i++) {
-      var codeEl = blocks[i];
-      var pre = codeEl.parentElement;
-      var text = codeEl.textContent;
-      var container = document.createElement('div');
-      container.className = 'uml-class-diagram-container';
-      pre.parentElement.replaceChild(container, pre);
-      render(container, text);
-      _seqDiagrams.push({ container: container, text: text });
-    }
-
-    // Re-render on dark mode toggle
-    var observer = new MutationObserver(function (mutations) {
-      for (var m = 0; m < mutations.length; m++) {
-        if (mutations[m].attributeName === 'class') {
-          setTimeout(function () {
-            for (var d = 0; d < _seqDiagrams.length; d++) {
-              render(_seqDiagrams[d].container, _seqDiagrams[d].text);
-            }
-          }, 50);
-          break;
-        }
-      }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoInit);
-  } else {
-    autoInit();
-  }
+  UMLShared.createAutoInit('pre > code.language-uml-sequence', render);
 
   // ─── Export ────────────────────────────────────────────────────────
 

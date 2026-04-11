@@ -40,8 +40,8 @@
     iconH: 14,
     iconTabW: 8,
     iconTabH: 4,
-    gapX: 110,
-    gapY: 80,
+    gapX: 60,
+    gapY: 50,
     arrowSize: 10,
     strokeWidth: 1.5,
     svgPad: 30,
@@ -129,20 +129,6 @@
     return { components: components, connectors: connectors };
   }
 
-  // ─── Text Measurement ─────────────────────────────────────────────
-
-  var _ctx = null;
-  function textWidth(text, bold, fontSize) {
-    if (!_ctx) _ctx = document.createElement('canvas').getContext('2d');
-    var fs = fontSize || CFG.fontSize;
-    _ctx.font = (bold ? 'bold ' : '') + fs + 'px ' + CFG.fontFamily;
-    return _ctx.measureText(text).width;
-  }
-
-  function escapeXml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
   // ─── Layout ───────────────────────────────────────────────────────
 
   function computeLayout(parsed) {
@@ -176,7 +162,7 @@
       }
 
       // Component width only needs to fit name + icon; port labels render outside
-      var nameW = textWidth(c.name, true, CFG.fontSizeBold);
+      var nameW = UMLShared.textWidth(c.name, true, CFG.fontSizeBold);
       var w = Math.max(CFG.compMinW, nameW + CFG.padX * 2 + CFG.iconW);
 
       var maxSidePorts = Math.max(leftPorts.length, rightPorts.length);
@@ -231,22 +217,14 @@
     }
     for (var cn3 in entries) { if (layers[cn3] === undefined) layers[cn3] = 0; }
 
-    // Gap accounts for connector labels AND port labels on both sides
+    // Gap accounts for connector labels (port labels are below, not in the gap)
     var maxLabelW = 0;
     for (var ci3 = 0; ci3 < connectors.length; ci3++) {
       if (connectors[ci3].label) {
-        maxLabelW = Math.max(maxLabelW, textWidth(connectors[ci3].label, false, CFG.fontSize));
+        maxLabelW = Math.max(maxLabelW, UMLShared.textWidth(connectors[ci3].label, false, CFG.fontSize));
       }
     }
-    var maxPortLabelW = 0;
-    for (var en0 in entries) {
-      var e0 = entries[en0];
-      var allPorts0 = e0.leftPorts.concat(e0.rightPorts);
-      for (var pi0 = 0; pi0 < allPorts0.length; pi0++) {
-        maxPortLabelW = Math.max(maxPortLabelW, textWidth(allPorts0[pi0], false, CFG.fontSize - 1));
-      }
-    }
-    var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40, maxPortLabelW * 2 + 24);
+    var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 30);
 
     // Group by layer and position
     var layerGroups = {}, maxLayer = 0;
@@ -370,48 +348,22 @@
       }
     }
 
-    // Bounding box: include port squares and port label text outside component
+    // Bounding box: port squares protrude to the sides, labels extend below
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     var portLabelFs = CFG.fontSize - 1;
     for (var en2 in entries) {
       var e2 = entries[en2];
-      var maxLeftLW2 = 0;
-      for (var lbpi = 0; lbpi < e2.leftPorts.length; lbpi++) {
-        maxLeftLW2 = Math.max(maxLeftLW2, textWidth(e2.leftPorts[lbpi], false, portLabelFs));
-      }
-      var maxRightLW2 = 0;
-      for (var rbpi = 0; rbpi < e2.rightPorts.length; rbpi++) {
-        maxRightLW2 = Math.max(maxRightLW2, textWidth(e2.rightPorts[rbpi], false, portLabelFs));
-      }
-      // Port labels are now above the port, so extend bounds upward and
-      // still account for port squares protruding to the sides
-      var allPorts2 = e2.leftPorts.concat(e2.rightPorts);
-      var maxPortLW2 = 0;
-      for (var abpi = 0; abpi < allPorts2.length; abpi++) {
-        maxPortLW2 = Math.max(maxPortLW2, textWidth(allPorts2[abpi], false, portLabelFs));
-      }
+      var hasPorts = e2.leftPorts.length > 0 || e2.rightPorts.length > 0;
       minX = Math.min(minX, e2.x - (e2.leftPorts.length > 0 ? CFG.portSize : 0));
       minY = Math.min(minY, e2.y);
       maxX = Math.max(maxX, e2.x + e2.box.width + (e2.rightPorts.length > 0 ? CFG.portSize : 0));
-      maxY = Math.max(maxY, e2.y + e2.box.height + (allPorts2.length > 0 ? portLabelFs + 8 : 0));
+      maxY = Math.max(maxY, e2.y + e2.box.height + (hasPorts ? portLabelFs + 8 : 0));
     }
 
     return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
   }
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
-
-  function getThemeColors(container) {
-    var cs = window.getComputedStyle(container);
-    var get = function (prop, fb) { return cs.getPropertyValue(prop).trim() || fb; };
-    return {
-      stroke: get('--uml-stroke', '#4060a0'),
-      text: get('--uml-text', '#222'),
-      fill: get('--uml-fill', '#fff'),
-      headerFill: get('--uml-header-fill', '#d0ddef'),
-      line: get('--uml-line', '#444'),
-    };
-  }
 
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
@@ -422,11 +374,7 @@
     var svgH = layout.height + CFG.svgPad * 2;
 
     var svg = [];
-    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + svgW + '" height="' + svgH + '" ');
-    svg.push('viewBox="0 0 ' + svgW + ' ' + svgH + '" ');
-    svg.push('style="font-family: ' + CFG.fontFamily + '; max-width: none;">');
-    svg.push('<g transform="translate(' + ox + ',' + oy + ')">');
-
+    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
     // ── Draw connectors ──
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
@@ -533,13 +481,13 @@
           ly = (points[0].y + points[1].y) / 2 - 12;
           lAnchor = 'middle';
         }
-        var lw = textWidth(conn.label, false, CFG.fontSize);
+        var lw = UMLShared.textWidth(conn.label, false, CFG.fontSize);
         var bgX = lAnchor === 'middle' ? lx - lw / 2 - CFG.labelBgPad : lx - CFG.labelBgPad;
         svg.push('<rect x="' + bgX + '" y="' + (ly - 12) +
           '" width="' + (lw + CFG.labelBgPad * 2) + '" height="16" fill="' + colors.fill + '" opacity="0.9"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '" font-style="italic">' +
-          escapeXml(conn.label) + '</text>');
+          UMLShared.escapeXml(conn.label) + '</text>');
       }
     }
 
@@ -565,7 +513,7 @@
       // Component name (centered, left of icon)
       svg.push('<text x="' + (bx + (bw - CFG.iconW - 8) / 2) + '" y="' + (by + bh / 2 + CFG.fontSize * 0.35) +
         '" text-anchor="middle" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
-        escapeXml(e.comp.name) + '</text>');
+        UMLShared.escapeXml(e.comp.name) + '</text>');
 
       // ── Draw port squares and labels ──
       var portHalf = CFG.portSize / 2;
@@ -581,12 +529,11 @@
         // Port label below the port square (connection labels go above)
         svg.push('<text x="' + pp.cx + '" y="' + (pp.cy + portHalf + (CFG.fontSize - 1) + 1) +
           '" text-anchor="middle" font-size="' + (CFG.fontSize - 1) + '"' +
-          ' font-style="italic" fill="' + colors.text + '">' + escapeXml(pname) + '</text>');
+          ' font-style="italic" fill="' + colors.text + '">' + UMLShared.escapeXml(pname) + '</text>');
       }
     }
 
-    svg.push('</g>');
-    svg.push('</svg>');
+    svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
 
@@ -601,44 +548,14 @@
     if (!container.classList.contains('uml-class-diagram-container')) {
       container.classList.add('uml-class-diagram-container');
     }
-    var colors = getThemeColors(container);
+    var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  var _diagrams = [];
-
-  function autoInit() {
-    var blocks = document.querySelectorAll('pre > code.language-uml-component');
-    for (var i = 0; i < blocks.length; i++) {
-      var pre = blocks[i].parentElement;
-      var text = blocks[i].textContent;
-      var container = document.createElement('div');
-      container.className = 'uml-class-diagram-container';
-      pre.parentElement.replaceChild(container, pre);
-      render(container, text);
-      _diagrams.push({ container: container, text: text });
-    }
-    var observer = new MutationObserver(function (mutations) {
-      for (var m = 0; m < mutations.length; m++) {
-        if (mutations[m].attributeName === 'class') {
-          setTimeout(function () {
-            for (var d = 0; d < _diagrams.length; d++) render(_diagrams[d].container, _diagrams[d].text);
-          }, 50);
-          break;
-        }
-      }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoInit);
-  } else {
-    autoInit();
-  }
+  UMLShared.createAutoInit('pre > code.language-uml-component', render);
 
   window.UMLComponentDiagram = { render: render, parse: parse };
 })();

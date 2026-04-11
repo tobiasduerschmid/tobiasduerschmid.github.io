@@ -672,12 +672,62 @@
   </script>
 
   <!-- Custom UML diagram renderers -->
+  <script src="{{ '/js/uml-shared.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-class-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-sequence-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-state-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-component-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-deployment-renderer.js' | relative_url }}"></script>
-  <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <script src="{{ '/js/uml-notation.js' | relative_url }}"></script>
+
+  <!-- Global UML inline diagram init — renders data-uml-type/data-uml-spec containers
+       and re-renders on dark mode toggle -->
+  <script>
+  (function () {
+    'use strict';
+    var RENDERERS = {
+      class:      function () { return window.UMLClassDiagram; },
+      sequence:   function () { return window.UMLSequenceDiagram; },
+      state:      function () { return window.UMLStateDiagram; },
+      component:  function () { return window.UMLComponentDiagram; },
+      deployment: function () { return window.UMLDeploymentDiagram; },
+    };
+
+    function renderAll() {
+      var els = document.querySelectorAll('[data-uml-type]');
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        var type = el.getAttribute('data-uml-type');
+        var spec = el.getAttribute('data-uml-spec');
+        var getR = RENDERERS[type];
+        if (!getR || !spec) continue;
+        var R = getR();
+        if (R) R.render(el, spec);
+      }
+      if (window.UMLNotation) window.UMLNotation.renderAll();
+    }
+
+    function tryRender() {
+      if (window.UMLClassDiagram && window.UMLSequenceDiagram && window.UMLStateDiagram) {
+        renderAll();
+      } else {
+        setTimeout(tryRender, 80);
+      }
+    }
+
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        if (muts[i].attributeName === 'class') { setTimeout(renderAll, 50); return; }
+      }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryRender);
+    } else {
+      tryRender();
+    }
+  })();
+  </script>
 
   {% include scripts.html %}
 

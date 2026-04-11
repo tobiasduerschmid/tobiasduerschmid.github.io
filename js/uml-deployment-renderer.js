@@ -131,20 +131,6 @@
     return { nodes: nodes, links: links };
   }
 
-  // ─── Text Measurement ─────────────────────────────────────────────
-
-  var _ctx = null;
-  function textWidth(text, bold, fontSize) {
-    if (!_ctx) _ctx = document.createElement('canvas').getContext('2d');
-    var fs = fontSize || CFG.fontSize;
-    _ctx.font = (bold ? 'bold ' : '') + fs + 'px ' + CFG.fontFamily;
-    return _ctx.measureText(text).width;
-  }
-
-  function escapeXml(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
   // ─── Layout ───────────────────────────────────────────────────────
 
   function computeLayout(parsed) {
@@ -155,10 +141,10 @@
     var entries = {};
     for (var i = 0; i < nodes.length; i++) {
       var n = nodes[i];
-      var nameW = textWidth(n.name, true, CFG.fontSizeBold);
+      var nameW = UMLShared.textWidth(n.name, true, CFG.fontSizeBold);
       var compMaxW = 0;
       for (var c = 0; c < n.components.length; c++) {
-        compMaxW = Math.max(compMaxW, textWidth(n.components[c], false, CFG.fontSizeComp) + CFG.compIconW + CFG.compPadX * 2 + 8);
+        compMaxW = Math.max(compMaxW, UMLShared.textWidth(n.components[c], false, CFG.fontSizeComp) + CFG.compIconW + CFG.compPadX * 2 + 8);
       }
       var w = Math.max(CFG.nodeMinW, nameW + CFG.nodePadX * 2, compMaxW + CFG.nodePadX * 2);
       var h = CFG.nodePadY + CFG.lineHeight + 8; // name area
@@ -173,7 +159,7 @@
     // Compute link label widths for gap sizing
     var maxLabelW = 0;
     for (var li = 0; li < links.length; li++) {
-      if (links[li].label) maxLabelW = Math.max(maxLabelW, textWidth(links[li].label, false, CFG.fontSize));
+      if (links[li].label) maxLabelW = Math.max(maxLabelW, UMLShared.textWidth(links[li].label, false, CFG.fontSize));
     }
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40);
 
@@ -250,18 +236,6 @@
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
 
-  function getThemeColors(container) {
-    var cs = window.getComputedStyle(container);
-    var get = function (prop, fb) { return cs.getPropertyValue(prop).trim() || fb; };
-    return {
-      stroke: get('--uml-stroke', '#4060a0'),
-      text: get('--uml-text', '#222'),
-      fill: get('--uml-fill', '#fff'),
-      headerFill: get('--uml-header-fill', '#d0ddef'),
-      line: get('--uml-line', '#444'),
-    };
-  }
-
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var links = parsed.links;
@@ -271,10 +245,7 @@
     var svgH = layout.height + CFG.svgPad * 2;
 
     var svg = [];
-    svg.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + svgW + '" height="' + svgH + '" ');
-    svg.push('viewBox="0 0 ' + svgW + ' ' + svgH + '" style="font-family: ' + CFG.fontFamily + '; max-width: none;">');
-    svg.push('<g transform="translate(' + ox + ',' + oy + ')">');
-
+    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
     // ── Draw links ──
     for (var li = 0; li < links.length; li++) {
       var lk = links[li];
@@ -340,12 +311,12 @@
         var lx = (lp0.x + lp1.x) / 2, ly = (lp0.y + lp1.y) / 2;
         var isH = Math.abs(lp1.y - lp0.y) < 1;
         if (isH) ly -= 8; else lx += 10;
-        var lw = textWidth(lk.label, false, CFG.fontSize);
+        var lw = UMLShared.textWidth(lk.label, false, CFG.fontSize);
         svg.push('<rect x="' + (lx - lw / 2 - CFG.labelBgPad) + '" y="' + (ly - 12) +
           '" width="' + (lw + CFG.labelBgPad * 2) + '" height="16" fill="' + colors.fill + '" opacity="0.85"/>');
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text + '" font-style="italic">' +
-          escapeXml(lk.label) + '</text>');
+          UMLShared.escapeXml(lk.label) + '</text>');
       }
     }
 
@@ -384,7 +355,7 @@
         nameAttrs += ' font-weight="bold"';
       }
       svg.push('<text x="' + (bx + CFG.nodePadX) + '" y="' + (by + CFG.nodePadY + CFG.lineHeight * 0.75) + '"' +
-        nameAttrs + '>' + escapeXml(n.name) + '</text>');
+        nameAttrs + '>' + UMLShared.escapeXml(n.name) + '</text>');
 
       // Components inside the node
       var compY = by + CFG.nodePadY + CFG.lineHeight + 8;
@@ -412,14 +383,13 @@
         // Component name
         svg.push('<text x="' + (cx + CFG.compPadX) + '" y="' + (compY + CFG.compH / 2 + CFG.fontSizeComp * 0.35) +
           '" font-size="' + CFG.fontSizeComp + '" fill="' + colors.text + '">' +
-          escapeXml(compName) + '</text>');
+          UMLShared.escapeXml(compName) + '</text>');
 
         compY += CFG.compH + CFG.compGapY;
       }
     }
 
-    svg.push('</g>');
-    svg.push('</svg>');
+    svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
 
@@ -434,40 +404,14 @@
     if (!container.classList.contains('uml-class-diagram-container')) {
       container.classList.add('uml-class-diagram-container');
     }
-    var colors = getThemeColors(container);
+    var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  var _diagrams = [];
-  function autoInit() {
-    var blocks = document.querySelectorAll('pre > code.language-uml-deployment');
-    for (var i = 0; i < blocks.length; i++) {
-      var pre = blocks[i].parentElement;
-      var text = blocks[i].textContent;
-      var container = document.createElement('div');
-      container.className = 'uml-class-diagram-container';
-      pre.parentElement.replaceChild(container, pre);
-      render(container, text);
-      _diagrams.push({ container: container, text: text });
-    }
-    var observer = new MutationObserver(function (mutations) {
-      for (var m = 0; m < mutations.length; m++) {
-        if (mutations[m].attributeName === 'class') {
-          setTimeout(function () {
-            for (var d = 0; d < _diagrams.length; d++) render(_diagrams[d].container, _diagrams[d].text);
-          }, 50);
-          break;
-        }
-      }
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoInit);
-  else autoInit();
+  UMLShared.createAutoInit('pre > code.language-uml-deployment', render);
 
   window.UMLDeploymentDiagram = { render: render, parse: parse };
 })();

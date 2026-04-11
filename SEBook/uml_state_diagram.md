@@ -3,9 +3,7 @@ title: UML
 layout: sebook
 ---
 
-<div id="uml-stm-order" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Created : Order Placed by Customer
 Created --> Paid : payment_received
 Paid --> Shipped : item_dispatched
@@ -15,15 +13,7 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-stm-order');
-    if (!el) return;
-    if (window.UMLStateDiagram) { window.UMLStateDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 # UML State Machine Diagrams
 
@@ -82,23 +72,13 @@ To see how these pieces fit together, let's model the core power and combat syst
 
 When the suit is powered on, it enters an *Idle* state. If its sensors detect a threat, it shifts into *Combat Mode*, deploying repulsors. However, if the suit's arc reactor drops below 5% power, it must immediately override all systems and enter *Emergency Power* mode to preserve life support, regardless of whether a threat is present.
 
-<div id="uml-stm-exosuit" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Idle : powerOn()
 Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
-CombatMode --> EmergencyPower : powerLevel < 5% / rerouteToLifeSupport()
+CombatMode --> EmergencyPower : powerLevel &lt; 5% / rerouteToLifeSupport()
 EmergencyPower --> [*] : manualOverride()
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-stm-exosuit');
-    if (!el) return;
-    if (window.UMLStateDiagram) { window.UMLStateDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### Deconstructing the Model
 

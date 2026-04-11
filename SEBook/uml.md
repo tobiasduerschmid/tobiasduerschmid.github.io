@@ -7,9 +7,7 @@ More Notes (WIP):
 * [State Machine Diagrams](/SEBook/uml_state_diagram.html)
 * [Class Diagrams](/SEBook/uml_class_diagram.html)
 
-<div id="uml-overview-seq" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
 participant client: Client
 participant server: LibraryServer
 participant db: Database
@@ -23,19 +21,9 @@ else [not found]
   server --> client: 404 Not Found
 end
 deactivate server
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-overview-seq');
-    if (!el) return;
-    if (window.UMLSequenceDiagram) { window.UMLSequenceDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
-<div id="uml-overview-stm" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Created : Order Placed by Customer
 Created --> Paid : payment_received
 Paid --> Shipped : item_dispatched
@@ -45,19 +33,9 @@ Paid --> Refunded : return_initiated
 Delivered --> [*]
 Cancelled --> [*]
 Refunded --> [*]
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-overview-stm');
-    if (!el) return;
-    if (window.UMLStateDiagram) { window.UMLStateDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
-<div id="uml-overview-cd" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -86,23 +64,13 @@ Order ..|> Billable
 Customer "1" -- "0..*" Order
 Order *-- "1..*" LineItem
 LineItem "0..*" -- "1" Product
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-overview-cd');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ## 1. Classes, Interfaces, and Modifiers
 
 This snippet demonstrates how to define an interface, a class, and use visibility modifiers (`+`, `-`, `#`, `~`).
 
-<div id="uml-s1-class" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Drivable {
   + startEngine(): void
   + stopEngine(): void
@@ -115,15 +83,7 @@ class Car {
   + startEngine(): void
   + getMake(): String
 }
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s1-class');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ---
 
@@ -132,11 +92,9 @@ class Car {
 PlantUML uses different arrow styles to represent the various relationships. The direction of the arrow generally goes from the "child" or "part" to the "parent" or "whole."
 
 ### Generalization (Inheritance)
-Use `--|>` to draw a solid line with an empty, closed arrowhead.
+Use `--|>` <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> to draw a solid line with an empty, closed arrowhead.
 
-<div id="uml-s2-gen" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Vehicle {
   + move(): void
 }
@@ -144,93 +102,45 @@ class Car
 class Motorcycle
 Car --|> Vehicle
 Motorcycle --|> Vehicle
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s2-gen');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### Interface Realization (Implementation)
-Use `..|>` to draw a dashed line with an empty, closed arrowhead.
+Use `..|>` <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> to draw a dashed line with an empty, closed arrowhead.
 
-<div id="uml-s2-real" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Drivable
 class Car
 Car ..|> Drivable
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s2-real');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### Association and Multiplicities
-Use `--` for a standard solid line. You can add quotes around numbers at either end to define the multiplicities, and a colon followed by text to label the association.
+Use `--` <span class="uml-sym" data-diagram="class" data-sym="--"></span> for a standard solid line. You can add quotes around numbers at either end to define the multiplicities, and a colon followed by text to label the association.
 
-<div id="uml-s2-assoc" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Teacher
 class Course
 class Student
 Teacher "1" -- "0..*" Course : teaches
 Course "1..*" -- "0..*" Student : enrolled in
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s2-assoc');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### Aggregation
-Use `o--` to draw a solid line with an empty diamond pointing to the "whole" class.
+Use `o--` <span class="uml-sym" data-diagram="class" data-sym="o--"></span> to draw a solid line with an empty diamond pointing to the "whole" class.
 
-<div id="uml-s2-aggr" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Department
 class Professor
 Department o-- Professor
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s2-aggr');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ### Composition
-Use `*--` to draw a solid line with a filled (black) diamond pointing to the "whole" class.
+Use `*--` <span class="uml-sym" data-diagram="class" data-sym="*--"></span> to draw a solid line with a filled (black) diamond pointing to the "whole" class.
 
-<div id="uml-s2-comp" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class House
 class Room
 House *-- "1..*" Room : contains
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s2-comp');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ---
 
@@ -238,9 +148,7 @@ House *-- "1..*" Room : contains
 
 Here is a consolidated diagram showing how these concepts interact in a simple system design.
 
-<div id="uml-s3-ecom" class="uml-class-diagram-container"></div>
-<script>(function(){
-  var spec = `@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface PaymentMethod {
   + pay(amount: double): boolean
 }
@@ -266,15 +174,7 @@ CreditCard ..|> PaymentMethod : realizes
 Customer "1" -- "0..*" Order : places
 Order *-- "1..*" OrderItem : is composed of
 Customer "1" -- "0..*" PaymentMethod : uses
-@enduml`;
-  function render() {
-    var el = document.getElementById('uml-s3-ecom');
-    if (!el) return;
-    if (window.UMLClassDiagram) { window.UMLClassDiagram.render(el, spec); return; }
-    setTimeout(render, 80);
-  }
-  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', render) : render();
-})();</script>
+@enduml'></div>
 
 ---
 
