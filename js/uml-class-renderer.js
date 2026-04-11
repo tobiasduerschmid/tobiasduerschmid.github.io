@@ -349,248 +349,46 @@
     };
   }
 
-  /**
-   * Build a directed layout graph using ALL directed relationship types.
-   * Generalization/realization: child -> parent (child below parent)
-   * Composition/aggregation: owner above owned
-   * Dependency/navigable: source above target
-   */
-  function buildLayoutGraph(classes, relationships) {
-    var classNames = {};
-    for (var i = 0; i < classes.length; i++) classNames[classes[i].name] = true;
-
-    // Directed edges: from "upper" node to "lower" node
-    // parent -> [children] for layout purposes
-    var downEdges = {};   // upper -> [lower]
-    var upEdges = {};     // lower -> [upper]
-    for (var n in classNames) { downEdges[n] = []; upEdges[n] = []; }
-
-    for (var r = 0; r < relationships.length; r++) {
-      var rel = relationships[r];
-      if (!classNames[rel.from] || !classNames[rel.to]) continue;
-
-      var upper, lower;
-      if (rel.type === 'generalization' || rel.type === 'realization') {
-        upper = rel.to;   // parent above
-        lower = rel.from; // child below
-      } else if (rel.type === 'composition' || rel.type === 'aggregation') {
-        upper = rel.from; // owner above
-        lower = rel.to;   // owned below
-      } else if (rel.type === 'dependency' || rel.type === 'navigable') {
-        upper = rel.from; // source above
-        lower = rel.to;   // target below
-      } else {
-        continue; // plain association — no direction preference
-      }
-
-      if (upper === lower) continue;
-      // Avoid duplicate edges
-      if (downEdges[upper].indexOf(lower) === -1) {
-        downEdges[upper].push(lower);
-        upEdges[lower].push(upper);
-      }
-    }
-
-    return { downEdges: downEdges, upEdges: upEdges };
-  }
 
   /**
-   * Assign layers via longest-path from roots (Sugiyama-style).
-   * Handles cycles by skipping back-edges.
-   */
-  function assignLayers(classes, downEdges, upEdges) {
-    var classNames = {};
-    for (var i = 0; i < classes.length; i++) classNames[classes[i].name] = true;
-
-    // Find roots (no incoming layout edges)
-    var roots = [];
-    for (var n in classNames) {
-      if (upEdges[n].length === 0) roots.push(n);
-    }
-    if (roots.length === 0) {
-      // All nodes have incoming edges (cycle) — pick all as roots
-      roots = Object.keys(classNames);
-    }
-
-    // BFS layer assignment — longest path
-    var layers = {};
-    var visited = {};
-    var queue = [];
-    for (var ri = 0; ri < roots.length; ri++) {
-      if (visited[roots[ri]]) continue;
-      layers[roots[ri]] = 0;
-      visited[roots[ri]] = true;
-      queue.push(roots[ri]);
-    }
-    while (queue.length > 0) {
-      var node = queue.shift();
-      var kids = downEdges[node];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki];
-        var newLayer = (layers[node] || 0) + 1;
-        if (!visited[kid]) {
-          visited[kid] = true;
-          layers[kid] = newLayer;
-          queue.push(kid);
-        } else {
-          // Push deeper if needed (longest path)
-          if (newLayer > layers[kid]) {
-            layers[kid] = newLayer;
-            queue.push(kid); // re-process children
-          }
-        }
-      }
-    }
-
-    // Assign any remaining unvisited to layer 0
-    for (var n2 in classNames) {
-      if (layers[n2] === undefined) layers[n2] = 0;
-    }
-
-    return layers;
-  }
-
-  /**
-   * Compute layout positions for all class boxes.
-   * Uses all directed relationships for hierarchy and arranges
-   * disconnected components in a compact grid.
+   * Compute layout positions for all class boxes using AdvancedAlgorithmic framework.
    */
   function computeLayout(parsed) {
     var classes = parsed.classes;
     var relationships = parsed.relationships;
-    if (classes.length === 0) return { entries: {}, width: 0, height: 0 };
+    if (classes.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
-    // Measure all boxes
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
+    // Measure boxes & construct layout input
     for (var i = 0; i < classes.length; i++) {
       var cls = classes[i];
+      var box = measureBox(cls);
       entries[cls.name] = {
         cls: cls,
-        box: measureBox(cls),
+        box: box,
         x: 0,
-        y: 0,
+        y: 0
       };
+      layoutNodes.push({ id: cls.name, width: box.width, height: box.height, data: cls });
     }
 
-    var graph = buildLayoutGraph(classes, relationships);
-    var layers = assignLayers(classes, graph.downEdges, graph.upEdges);
-
-    // Build layout tree: assign each child to one parent for tree positioning
-    // Inheritance children are centered under parent; other children placed to the sides
-    var layoutChildren = {};
-    var inheritChildren = {}; // Track which children are via inheritance
-    var assigned = {};
-    for (var n in entries) { layoutChildren[n] = []; inheritChildren[n] = {}; }
-
-    // First pass: assign inheritance (generalization/realization) children
+    // Construct edge input
     for (var r = 0; r < relationships.length; r++) {
       var rel = relationships[r];
-      if (rel.type !== 'generalization' && rel.type !== 'realization') continue;
-      if (!entries[rel.from] || !entries[rel.to]) continue;
-      var upper = rel.to, lower = rel.from;
-      if (upper === lower) continue;
-      if (!assigned[lower]) {
-        layoutChildren[upper].push(lower);
-        inheritChildren[upper][lower] = true;
-        assigned[lower] = upper;
-      }
+      layoutEdges.push({ source: rel.from, target: rel.to, type: rel.type, data: rel });
     }
 
-    // Second pass: assign other directed children (composition, aggregation, etc.)
-    var otherPriority = ['composition', 'aggregation', 'navigable', 'dependency'];
-    for (var pi = 0; pi < otherPriority.length; pi++) {
-      for (var r2 = 0; r2 < relationships.length; r2++) {
-        var rel2 = relationships[r2];
-        if (rel2.type !== otherPriority[pi]) continue;
-        if (!entries[rel2.from] || !entries[rel2.to]) continue;
-        var upper2, lower2;
-        if (rel2.type === 'composition' || rel2.type === 'aggregation') {
-          upper2 = rel2.from; lower2 = rel2.to;
-        } else {
-          upper2 = rel2.from; lower2 = rel2.to;
-        }
-        if (upper2 === lower2) continue;
-        if (!assigned[lower2]) {
-          layoutChildren[upper2].push(lower2);
-          assigned[lower2] = upper2;
-        }
-      }
-    }
-
-    // ── Barycenter sibling ordering ────────────────────────────────────
-    // For each parent node, sort its children by the original class-index
-    // centroid of the nodes they are connected to. This places children
-    // whose connections fan out to the left/right of the diagram in the
-    // appropriate order, reducing edge crossings between subtrees.
-    var classIndex = {};
-    for (var bci = 0; bci < classes.length; bci++) classIndex[classes[bci].name] = bci;
-    for (var bcParent in layoutChildren) {
-      var bcKids = layoutChildren[bcParent];
-      if (!bcKids || bcKids.length < 2) continue;
-      var bcBary = {};
-      for (var bcKi = 0; bcKi < bcKids.length; bcKi++) {
-        var bcKid = bcKids[bcKi];
-        var bcSum = 0, bcCnt = 0;
-        for (var bcRi = 0; bcRi < relationships.length; bcRi++) {
-          var bcRel = relationships[bcRi];
-          var bcOther = null;
-          if (bcRel.from === bcKid && entries[bcRel.to]) bcOther = bcRel.to;
-          else if (bcRel.to === bcKid && entries[bcRel.from]) bcOther = bcRel.from;
-          if (bcOther !== null && classIndex[bcOther] !== undefined) {
-            bcSum += classIndex[bcOther]; bcCnt++;
-          }
-        }
-        // Fall back to the kid's own original index
-        bcBary[bcKid] = bcCnt > 0 ? bcSum / bcCnt : (classIndex[bcKid] || 0);
-      }
-      bcKids.sort(function (a, b) { return bcBary[a] - bcBary[b]; });
-    }
-
-    // Find connected components using adjacency (undirected)
-    var adjAll = {};
-    for (var cn in entries) adjAll[cn] = [];
-    for (var ri = 0; ri < relationships.length; ri++) {
-      var rr = relationships[ri];
-      if (entries[rr.from] && entries[rr.to]) {
-        if (adjAll[rr.from].indexOf(rr.to) === -1) adjAll[rr.from].push(rr.to);
-        if (adjAll[rr.to].indexOf(rr.from) === -1) adjAll[rr.to].push(rr.from);
-      }
-    }
-    var componentOf = {};
-    var components = []; // array of arrays of class names
-    var compVisited = {};
-    for (var ci = 0; ci < classes.length; ci++) {
-      var startName = classes[ci].name;
-      if (compVisited[startName]) continue;
-      var comp = [];
-      var bfsQ = [startName];
-      compVisited[startName] = true;
-      while (bfsQ.length > 0) {
-        var cur = bfsQ.shift();
-        comp.push(cur);
-        componentOf[cur] = components.length;
-        var neighbors = adjAll[cur];
-        for (var ni = 0; ni < neighbors.length; ni++) {
-          if (!compVisited[neighbors[ni]]) {
-            compVisited[neighbors[ni]] = true;
-            bfsQ.push(neighbors[ni]);
-          }
-        }
-      }
-      components.push(comp);
-    }
-
-    // Compute minimum gap based on relationship label/multiplicity widths.
-    // The gap must fit: [fromMult margin] [label text] [toMult margin]
+    // Use advanced constraints engine
     var effectiveGapX = CFG.gapX;
     for (var rg = 0; rg < relationships.length; rg++) {
       var rgRel = relationships[rg];
       var neededW = 0;
-      // Label text centered in the gap needs full width + margins
       if (rgRel.label) {
         neededW = Math.max(neededW, UMLShared.textWidth(rgRel.label, false, CFG.fontSizeStereotype) + 40);
       }
-      // Multiplicities sit near endpoints — each needs space
       var multW = 0;
       if (rgRel.fromMult) multW += UMLShared.textWidth(rgRel.fromMult, false, CFG.fontSizeStereotype) + 12;
       if (rgRel.toMult) multW += UMLShared.textWidth(rgRel.toMult, false, CFG.fontSizeStereotype) + 12;
@@ -598,174 +396,19 @@
       effectiveGapX = Math.max(effectiveGapX, neededW);
     }
 
-    // For each component, find its layout roots and compute tree layout
-    var subtreeW = {};
-    function computeSubtreeWidth(name) {
-      if (subtreeW[name] !== undefined) return subtreeW[name];
-      var kids = layoutChildren[name];
-      if (!kids || kids.length === 0) {
-        subtreeW[name] = entries[name].box.width;
-        return subtreeW[name];
-      }
-      // Compute total width of all children
-      var total = 0;
-      for (var k = 0; k < kids.length; k++) {
-        total += computeSubtreeWidth(kids[k]);
-        if (k < kids.length - 1) total += effectiveGapX;
-      }
-      // Ensure parent box width plus padding for centered inheritance
-      subtreeW[name] = Math.max(entries[name].box.width, total);
-      return subtreeW[name];
-    }
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY });
 
-    function positionNode(name, left, top) {
-      var entry = entries[name];
-      var sw = subtreeW[name];
-      entry.x = left + (sw - entry.box.width) / 2;
-      entry.y = top;
-
-      var kids = layoutChildren[name];
-      if (!kids || kids.length === 0) return;
-
-      // Separate inheritance children from other children
-      var inhKids = [];
-      var otherKids = [];
-      for (var k = 0; k < kids.length; k++) {
-        if (inheritChildren[name] && inheritChildren[name][kids[k]]) {
-          inhKids.push(kids[k]);
-        } else {
-          otherKids.push(kids[k]);
-        }
-      }
-
-      var childY = top + entry.box.height + CFG.gapY;
-      var parentCx = entry.x + entry.box.width / 2;
-
-      // Position inheritance children centered under parent
-      if (inhKids.length > 0) {
-        var inhTotalW = 0;
-        for (var ik = 0; ik < inhKids.length; ik++) {
-          inhTotalW += subtreeW[inhKids[ik]];
-          if (ik < inhKids.length - 1) inhTotalW += effectiveGapX;
-        }
-        var inhLeft = parentCx - inhTotalW / 2;
-        for (var ik2 = 0; ik2 < inhKids.length; ik2++) {
-          positionNode(inhKids[ik2], inhLeft, childY);
-          inhLeft += subtreeW[inhKids[ik2]] + effectiveGapX;
-        }
-      }
-
-      // Position other children (composition, etc.) to the right of inheritance children
-      if (otherKids.length > 0) {
-        // Find the rightmost edge of inheritance children
-        var otherStartX = parentCx + (inhKids.length > 0 ? subtreeW[inhKids[inhKids.length - 1]] / 2 : 0) + effectiveGapX;
-        // Or if inheritance children span far left, start after them
-        if (inhKids.length > 0) {
-          var inhRight = -Infinity;
-          for (var ir = 0; ir < inhKids.length; ir++) {
-            var irEntry = entries[inhKids[ir]];
-            inhRight = Math.max(inhRight, irEntry.x + irEntry.box.width + effectiveGapX);
-          }
-          otherStartX = Math.max(otherStartX, inhRight);
-        } else {
-          otherStartX = left;
-        }
-        for (var ok = 0; ok < otherKids.length; ok++) {
-          positionNode(otherKids[ok], otherStartX, childY);
-          otherStartX += subtreeW[otherKids[ok]] + effectiveGapX;
-        }
-      }
-    }
-
-    // Layout each component, then arrange components in a grid
-    var componentBounds = []; // { width, height } per component
-    for (var ci2 = 0; ci2 < components.length; ci2++) {
-      var comp = components[ci2];
-
-      // Find roots of this component (not assigned as child)
-      var compRoots = [];
-      for (var j = 0; j < comp.length; j++) {
-        if (!assigned[comp[j]]) compRoots.push(comp[j]);
-      }
-      if (compRoots.length === 0) compRoots = [comp[0]];
-
-      // Layout roots side by side within component
-      var compX = 0;
-      for (var cri = 0; cri < compRoots.length; cri++) {
-        computeSubtreeWidth(compRoots[cri]);
-        positionNode(compRoots[cri], compX, 0);
-        compX += subtreeW[compRoots[cri]] + effectiveGapX;
-      }
-
-      // Compute component bounds
-      var cMinX = Infinity, cMinY = Infinity, cMaxX = -Infinity, cMaxY = -Infinity;
-      for (var k = 0; k < comp.length; k++) {
-        var e = entries[comp[k]];
-        cMinX = Math.min(cMinX, e.x);
-        cMinY = Math.min(cMinY, e.y);
-        cMaxX = Math.max(cMaxX, e.x + e.box.width);
-        cMaxY = Math.max(cMaxY, e.y + e.box.height);
-      }
-      componentBounds.push({
-        width: cMaxX - cMinX,
-        height: cMaxY - cMinY,
-        offsetX: cMinX,
-        offsetY: cMinY,
-        members: comp,
-      });
-    }
-
-    // Arrange components: place larger components first, pack into rows
-    // Sort components by height (tallest first) for better packing
-    var compIndices = [];
-    for (var si = 0; si < components.length; si++) compIndices.push(si);
-    compIndices.sort(function (a, b) {
-      return componentBounds[b].height - componentBounds[a].height;
-    });
-
-    // Simple row-based packing
-    var maxRowWidth = 0;
-    for (var mi = 0; mi < componentBounds.length; mi++) {
-      maxRowWidth += componentBounds[mi].width + CFG.gapX;
-    }
-    // Target width: try to make it roughly square, but at least as wide as largest component
-    var targetWidth = Math.max(
-      Math.sqrt(maxRowWidth * (componentBounds.length > 0 ? componentBounds[0].height : 100)),
-      componentBounds.length > 0 ? componentBounds[compIndices[0]].width : 0
-    );
-
-    var rowX = 0, rowY = 0, rowMaxH = 0;
-    for (var pi2 = 0; pi2 < compIndices.length; pi2++) {
-      var cidx = compIndices[pi2];
-      var cb = componentBounds[cidx];
-
-      // Start new row if this component would exceed target width
-      if (rowX > 0 && rowX + cb.width > targetWidth) {
-        rowX = 0;
-        rowY += rowMaxH + CFG.gapY;
-        rowMaxH = 0;
-      }
-
-      // Offset all members of this component
-      var dx = rowX - cb.offsetX;
-      var dy = rowY - cb.offsetY;
-      for (var mi2 = 0; mi2 < cb.members.length; mi2++) {
-        entries[cb.members[mi2]].x += dx;
-        entries[cb.members[mi2]].y += dy;
-      }
-
-      rowX += cb.width + CFG.gapX;
-      rowMaxH = Math.max(rowMaxH, cb.height);
-    }
-
-    // Compute total bounds
+    // Read back positions
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (var en in entries) {
-      var e2 = entries[en];
-      minX = Math.min(minX, e2.x);
-      minY = Math.min(minY, e2.y);
-      maxX = Math.max(maxX, e2.x + e2.box.width);
-      maxY = Math.max(maxY, e2.y + e2.box.height);
+    for (var n in result.nodes) {
+      if (!entries[n]) continue;
+      entries[n].x = result.nodes[n].x;
+      entries[n].y = result.nodes[n].y;
+      
+      minX = Math.min(minX, entries[n].x);
+      minY = Math.min(minY, entries[n].y);
+      maxX = Math.max(maxX, entries[n].x + entries[n].box.width);
+      maxY = Math.max(maxY, entries[n].y + entries[n].box.height);
     }
 
     return {
@@ -774,6 +417,7 @@
       height: maxY - minY,
       offsetX: -minX,
       offsetY: -minY,
+      layoutResult: result // passthrough edge route if ever needed by generateSVG
     };
   }
 
@@ -820,6 +464,35 @@
       }
     }
 
+    // Pre-compute per-child offsets: when a child has multiple parent groups
+    // (e.g. generalization AND realization), offset connection points on the
+    // child's top edge so lines don't overlap.
+    var childParentCount = {};  // childName -> total number of parent groups
+    var childParentIdx = {};    // groupKey + ':' + childName -> index for this group
+    var groupKeys = [];
+    for (var gk0 in inheritGroups) groupKeys.push(gk0);
+    for (var gki = 0; gki < groupKeys.length; gki++) {
+      var grp = inheritGroups[groupKeys[gki]];
+      for (var gci = 0; gci < grp.children.length; gci++) {
+        var cname = grp.children[gci];
+        if (!childParentCount[cname]) childParentCount[cname] = 0;
+        childParentIdx[groupKeys[gki] + ':' + cname] = childParentCount[cname];
+        childParentCount[cname]++;
+      }
+    }
+
+    // Helper: get the X offset for a child's connection point to a specific group
+    var inheritPortSpacing = 20;
+    function childConnX(childEntry, childName, groupKey) {
+      var total = childParentCount[childName] || 1;
+      var idx = childParentIdx[groupKey + ':' + childName] || 0;
+      var cx = childEntry.x + childEntry.box.width / 2;
+      if (total <= 1) return cx;
+      // Spread connection points evenly around center
+      var span = (total - 1) * inheritPortSpacing;
+      return cx - span / 2 + idx * inheritPortSpacing;
+    }
+
     // Draw inheritance/realization with shared-target style
     for (var gk in inheritGroups) {
       var group = inheritGroups[gk];
@@ -840,19 +513,31 @@
         '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
 
       if (group.children.length === 1) {
-        // Single child: straight line (or angled if not aligned)
+        // Single child: orthogonal (90-degree) routing
         var child = entries[group.children[0]];
-        var childCx = child.x + child.box.width / 2;
+        var childCx = childConnX(child, group.children[0], gk);
         var childTop = child.y;
-        svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + childCx + '" y2="' + childTop +
-          '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        if (Math.abs(parentCx - childCx) < 1) {
+          // Aligned: single vertical line
+          svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + childCx + '" y2="' + childTop +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        } else {
+          // Not aligned: vertical from triangle, horizontal jog, vertical to child
+          var junctionY = (triBot + childTop) / 2;
+          svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + parentCx + '" y2="' + junctionY +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          svg.push('<line x1="' + parentCx + '" y1="' + junctionY + '" x2="' + childCx + '" y2="' + junctionY +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          svg.push('<line x1="' + childCx + '" y1="' + junctionY + '" x2="' + childCx + '" y2="' + childTop +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        }
       } else {
         // Multiple children: shared-target
         var childTops = [];
-        var childCenters = [];
+        var childCxArr = [];
         for (var ci = 0; ci < group.children.length; ci++) {
           var ch = entries[group.children[ci]];
-          childCenters.push(ch.x + ch.box.width / 2);
+          childCxArr.push(childConnX(ch, group.children[ci], gk));
           childTops.push(ch.y);
         }
         var minChildTop = Math.min.apply(null, childTops);
@@ -863,15 +548,15 @@
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
 
         // Horizontal bar at junction
-        var leftCx = Math.min.apply(null, childCenters);
-        var rightCx = Math.max.apply(null, childCenters);
+        var leftCx = Math.min.apply(null, childCxArr);
+        var rightCx = Math.max.apply(null, childCxArr);
         svg.push('<line x1="' + leftCx + '" y1="' + junctionY + '" x2="' + rightCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
 
         // Vertical stems from junction to each child
         for (var ci2 = 0; ci2 < group.children.length; ci2++) {
           var ch2 = entries[group.children[ci2]];
-          var cx = ch2.x + ch2.box.width / 2;
+          var cx = childCxArr[ci2];
           svg.push('<line x1="' + cx + '" y1="' + junctionY + '" x2="' + cx + '" y2="' + ch2.y +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
         }

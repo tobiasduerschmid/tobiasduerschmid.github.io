@@ -173,7 +173,6 @@
     var connectors = parsed.connectors;
     if (components.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
-    // Fallback port sides for `port` keyword (no explicit direction) — inferred from connection usage
     var portSides = {};
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
@@ -186,10 +185,11 @@
     }
 
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
     for (var i = 0; i < components.length; i++) {
       var c = components[i];
-
-      // Assign ports to sides: portin → left, portout → right, port → infer from connections
       var leftPorts = [], rightPorts = [];
       for (var pi = 0; pi < c.ports.length; pi++) {
         var port = c.ports[pi];
@@ -205,14 +205,10 @@
         }
       }
 
-      // Component width only needs to fit name + icon; port labels render outside
       var nameW = UMLShared.textWidth(c.name, true, CFG.fontSizeBold);
       var w = Math.max(CFG.compMinW, nameW + CFG.padX * 2 + CFG.iconW);
-
       var maxSidePorts = Math.max(leftPorts.length, rightPorts.length);
-      var h = maxSidePorts > 0
-        ? Math.max(CFG.compMinH, maxSidePorts * CFG.portPad + CFG.portPad)
-        : CFG.compMinH;
+      var h = maxSidePorts > 0 ? Math.max(CFG.compMinH, maxSidePorts * CFG.portPad + CFG.portPad) : CFG.compMinH;
 
       entries[c.name] = {
         comp: c,
@@ -222,46 +218,14 @@
         rightPorts: rightPorts,
         portPositions: {},
       };
+      layoutNodes.push({ id: c.name, width: Math.ceil(w), height: h, data: c });
     }
 
-    // Build directed graph for layering
-    var children = {}, parents = {};
-    for (var cn in entries) { children[cn] = []; parents[cn] = []; }
-    for (var ci2 = 0; ci2 < connectors.length; ci2++) {
-      var conn2 = connectors[ci2];
-      if (entries[conn2.from] && entries[conn2.to]) {
-        if (children[conn2.from].indexOf(conn2.to) === -1) {
-          children[conn2.from].push(conn2.to);
-          parents[conn2.to].push(conn2.from);
-        }
-      }
+    for (var ci = 0; ci < connectors.length; ci++) {
+      var conn = connectors[ci];
+      layoutEdges.push({ source: conn.from, target: conn.to, type: conn.type, data: conn });
     }
 
-    // Find roots (nodes with no incoming edges)
-    var roots = [];
-    for (var cn2 in entries) {
-      if (parents[cn2].length === 0) roots.push(cn2);
-    }
-    if (roots.length === 0) roots = [components[0].name];
-
-    // BFS layer assignment
-    var layers = {}, visited = {}, queue = [];
-    for (var ri = 0; ri < roots.length; ri++) {
-      layers[roots[ri]] = 0; visited[roots[ri]] = true; queue.push(roots[ri]);
-    }
-    while (queue.length > 0) {
-      var node = queue.shift();
-      var kids = children[node];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki];
-        var nl = (layers[node] || 0) + 1;
-        if (!visited[kid]) { visited[kid] = true; layers[kid] = nl; queue.push(kid); }
-        else if (nl > layers[kid]) { layers[kid] = nl; queue.push(kid); }
-      }
-    }
-    for (var cn3 in entries) { if (layers[cn3] === undefined) layers[cn3] = 0; }
-
-    // Gap accounts for connector labels (port labels are below, not in the gap)
     var maxLabelW = 0;
     for (var ci3 = 0; ci3 < connectors.length; ci3++) {
       if (connectors[ci3].label) {
@@ -270,92 +234,12 @@
     }
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 30);
 
-    // Group by layer and position
-    var layerGroups = {}, maxLayer = 0;
-    for (var cn4 in entries) {
-      var l = layers[cn4];
-      if (!layerGroups[l]) layerGroups[l] = [];
-      layerGroups[l].push(cn4);
-      maxLayer = Math.max(maxLayer, l);
-    }
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY });
 
-    // ── Sugiyama barycenter crossing minimization ──────────────────────
-    // Sort nodes within each column by the average position of their
-    // neighbours in the adjacent column, alternating forward/backward.
-    var posInLayer = {};
-    for (var bpl = 0; bpl <= maxLayer; bpl++) {
-      var bpg = layerGroups[bpl]; if (!bpg) continue;
-      for (var bpi = 0; bpi < bpg.length; bpi++) posInLayer[bpg[bpi]] = bpi;
-    }
-    for (var bcPass = 0; bcPass < 4; bcPass++) {
-      if (bcPass % 2 === 0) {
-        // Forward: sort column l by avg position of predecessors in column l-1
-        for (var bcFl = 1; bcFl <= maxLayer; bcFl++) {
-          var bcFg = layerGroups[bcFl]; if (!bcFg || bcFg.length < 2) continue;
-          var bcF = {};
-          for (var bcFi = 0; bcFi < bcFg.length; bcFi++) {
-            var bcFn = bcFg[bcFi]; var bcSum = 0, bcCnt = 0;
-            for (var bcCi = 0; bcCi < connectors.length; bcCi++) {
-              var bcCn = connectors[bcCi];
-              if (bcCn.to === bcFn && layers[bcCn.from] === bcFl - 1) {
-                bcSum += posInLayer[bcCn.from]; bcCnt++;
-              }
-            }
-            bcF[bcFn] = bcCnt > 0 ? bcSum / bcCnt : posInLayer[bcFn];
-          }
-          bcFg.sort(function (a, b) { return bcF[a] - bcF[b]; });
-          for (var bcFi2 = 0; bcFi2 < bcFg.length; bcFi2++) posInLayer[bcFg[bcFi2]] = bcFi2;
-        }
-      } else {
-        // Backward: sort column l by avg position of successors in column l+1
-        for (var bcBl = maxLayer - 1; bcBl >= 0; bcBl--) {
-          var bcBg = layerGroups[bcBl]; if (!bcBg || bcBg.length < 2) continue;
-          var bcB = {};
-          for (var bcBi = 0; bcBi < bcBg.length; bcBi++) {
-            var bcBn = bcBg[bcBi]; var bcBSum = 0, bcBCnt = 0;
-            for (var bcBCi = 0; bcBCi < connectors.length; bcBCi++) {
-              var bcBCn = connectors[bcBCi];
-              if (bcBCn.from === bcBn && layers[bcBCn.to] === bcBl + 1) {
-                bcBSum += posInLayer[bcBCn.to]; bcBCnt++;
-              }
-            }
-            bcB[bcBn] = bcBCnt > 0 ? bcBSum / bcBCnt : posInLayer[bcBn];
-          }
-          bcBg.sort(function (a, b) { return bcB[a] - bcB[b]; });
-          for (var bcBi2 = 0; bcBi2 < bcBg.length; bcBi2++) posInLayer[bcBg[bcBi2]] = bcBi2;
-        }
-      }
-    }
-
-    // Horizontal layout: each layer is a column (left-to-right), items stack top-to-bottom within
-    var curX = 0;
-    for (var col = 0; col <= maxLayer; col++) {
-      var group = layerGroups[col];
-      if (!group) continue;
-      var curY = 0;
-      for (var gi = 0; gi < group.length; gi++) {
-        entries[group[gi]].x = curX;
-        entries[group[gi]].y = curY;
-        curY += entries[group[gi]].box.height + CFG.gapY;
-      }
-      var maxW = 0;
-      for (var gi2 = 0; gi2 < group.length; gi2++) maxW = Math.max(maxW, entries[group[gi2]].box.width);
-      curX += maxW + effectiveGapX;
-    }
-
-    // Center each column vertically relative to the tallest column
-    var maxColH = 0;
-    for (var col2 = 0; col2 <= maxLayer; col2++) {
-      var g = layerGroups[col2]; if (!g) continue;
-      var lastE = entries[g[g.length - 1]];
-      maxColH = Math.max(maxColH, lastE.y + lastE.box.height);
-    }
-    for (var col3 = 0; col3 <= maxLayer; col3++) {
-      var g2 = layerGroups[col3]; if (!g2) continue;
-      var lastE2 = entries[g2[g2.length - 1]];
-      var colH = lastE2.y + lastE2.box.height;
-      var off = (maxColH - colH) / 2;
-      for (var gi3 = 0; gi3 < g2.length; gi3++) entries[g2[gi3]].y += off;
+    for (var n in result.nodes) {
+      if (!entries[n]) continue;
+      entries[n].x = result.nodes[n].x;
+      entries[n].y = result.nodes[n].y;
     }
 
     // Compute port positions (after x,y are finalized)
@@ -364,30 +248,24 @@
       var e = entries[en];
       var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
 
-      // Build alias → display label map for this component's ports
       var portLabelByAlias = {};
       for (var pni = 0; pni < e.comp.ports.length; pni++) {
         var p = e.comp.ports[pni];
         portLabelByAlias[p.alias] = p.name;
       }
 
-      // Left ports: distributed evenly along left edge, straddling the boundary
       for (var lpi2 = 0; lpi2 < e.leftPorts.length; lpi2++) {
         var lpn = e.leftPorts[lpi2];
         var pcy = by + bh * (lpi2 + 1) / (e.leftPorts.length + 1);
         e.portPositions[lpn] = {
-          // Square top-left corner (straddles boundary)
           x: bx - portHalf, y: pcy - portHalf,
-          // Center of the port square (on the boundary)
           cx: bx, cy: pcy,
-          // Outer connector attachment point
           connX: bx - portHalf, connY: pcy,
           side: 'left',
           label: portLabelByAlias[lpn] !== undefined ? portLabelByAlias[lpn] : lpn,
         };
       }
 
-      // Right ports: distributed evenly along right edge, straddling the boundary
       for (var rpi2 = 0; rpi2 < e.rightPorts.length; rpi2++) {
         var rpn = e.rightPorts[rpi2];
         var pcy2 = by + bh * (rpi2 + 1) / (e.rightPorts.length + 1);
@@ -401,7 +279,6 @@
       }
     }
 
-    // Bounding box: port squares protrude to the sides, labels extend below
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     var portLabelFs = CFG.fontSize - 1;
     for (var en2 in entries) {
@@ -413,7 +290,71 @@
       maxY = Math.max(maxY, e2.y + e2.box.height + (hasPorts ? portLabelFs + 8 : 0));
     }
 
-    return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
+    return { 
+      entries: entries, 
+      width: maxX - minX, 
+      height: maxY - minY, 
+      offsetX: -minX, 
+      offsetY: -minY,
+      layoutResult: result
+    };
+  }
+
+  // ─── Obstacle-aware orthogonal routing helpers ─────────────────────
+
+  // Check if vertical segment at x spanning [yMin,yMax] intersects any obstacle rect
+  function vSegHitsBox(x, yMin, yMax, obstacles) {
+    for (var i = 0; i < obstacles.length; i++) {
+      var ob = obstacles[i];
+      if (x > ob.x1 && x < ob.x2 && yMax > ob.y1 && yMin < ob.y2) return true;
+    }
+    return false;
+  }
+
+  // Check if horizontal segment at y spanning [xMin,xMax] intersects any obstacle rect
+  function hSegHitsBox(y, xMin, xMax, obstacles) {
+    for (var i = 0; i < obstacles.length; i++) {
+      var ob = obstacles[i];
+      if (y > ob.y1 && y < ob.y2 && xMax > ob.x1 && xMin < ob.x2) return true;
+    }
+    return false;
+  }
+
+  // Find nearest clear X for a vertical segment in [yMin,yMax]
+  function findClearX(yMin, yMax, preferX, obstacles) {
+    if (!vSegHitsBox(preferX, yMin, yMax, obstacles)) return preferX;
+    for (var d = 10; d < 600; d += 10) {
+      if (!vSegHitsBox(preferX + d, yMin, yMax, obstacles)) return preferX + d;
+      if (!vSegHitsBox(preferX - d, yMin, yMax, obstacles)) return preferX - d;
+    }
+    return preferX;
+  }
+
+  // Find nearest clear Y for a horizontal segment in [xMin,xMax]
+  function findClearY(xMin, xMax, preferY, obstacles) {
+    if (!hSegHitsBox(preferY, xMin, xMax, obstacles)) return preferY;
+    for (var d = 10; d < 600; d += 10) {
+      if (!hSegHitsBox(preferY + d, xMin, xMax, obstacles)) return preferY + d;
+      if (!hSegHitsBox(preferY - d, xMin, xMax, obstacles)) return preferY - d;
+    }
+    return preferY;
+  }
+
+  // Remove redundant collinear points from a route
+  function simplifyRoute(pts) {
+    if (pts.length <= 2) return pts;
+    var out = [pts[0]];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var prev = out[out.length - 1], cur = pts[i], next = pts[i + 1];
+      // Skip if collinear (same x or same y as both neighbours)
+      var sameX = Math.abs(prev.x - cur.x) < 1 && Math.abs(cur.x - next.x) < 1;
+      var sameY = Math.abs(prev.y - cur.y) < 1 && Math.abs(cur.y - next.y) < 1;
+      if (!sameX && !sameY) out.push(cur);
+      else if (!sameX && !sameY) out.push(cur);
+      else { /* skip collinear */ }
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
   }
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
@@ -428,6 +369,20 @@
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
+    // Collect all component bounding boxes as obstacles (with padding)
+    var obstaclePad = 8;
+    var obstacles = [];
+    for (var obn in entries) {
+      var obe = entries[obn];
+      obstacles.push({
+        x1: obe.x - obstaclePad,
+        y1: obe.y - obstaclePad,
+        x2: obe.x + obe.box.width + obstaclePad,
+        y2: obe.y + obe.box.height + obstaclePad,
+        name: obn
+      });
+    }
+
     // ── Draw connectors ──
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
@@ -438,11 +393,12 @@
       var isDash = conn.type === 'dependency';
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
-      // Start point: port outer attachment or component boundary
-      var x1, y1, x2, y2;
+      // Start point and exit direction
+      var x1, y1, dir1;
       if (conn.fromPort && fromE.portPositions[conn.fromPort]) {
         var fp = fromE.portPositions[conn.fromPort];
         x1 = fp.connX; y1 = fp.connY;
+        dir1 = fp.side; // 'left' or 'right'
       } else {
         var fcx = fromE.x + fromE.box.width / 2;
         var fcy = fromE.y + fromE.box.height / 2;
@@ -452,16 +408,20 @@
         if (Math.abs(dx) > Math.abs(dy) * 0.5) {
           x1 = dx > 0 ? fromE.x + fromE.box.width : fromE.x;
           y1 = fcy;
+          dir1 = dx > 0 ? 'right' : 'left';
         } else {
           x1 = fcx;
           y1 = dy > 0 ? fromE.y + fromE.box.height : fromE.y;
+          dir1 = dy > 0 ? 'bottom' : 'top';
         }
       }
 
-      // End point: port outer attachment or component boundary
+      // End point and entry direction
+      var x2, y2, dir2;
       if (conn.toPort && toE.portPositions[conn.toPort]) {
         var tp = toE.portPositions[conn.toPort];
         x2 = tp.connX; y2 = tp.connY;
+        dir2 = tp.side; // 'left' or 'right'
       } else {
         var fcx2 = fromE.x + fromE.box.width / 2;
         var fcy2 = fromE.y + fromE.box.height / 2;
@@ -471,20 +431,70 @@
         if (Math.abs(dx2) > Math.abs(dy2) * 0.5) {
           x2 = dx2 > 0 ? toE.x : toE.x + toE.box.width;
           y2 = tcy2;
+          dir2 = dx2 > 0 ? 'right' : 'left';
         } else {
           x2 = tcx2;
           y2 = dy2 > 0 ? toE.y : toE.y + toE.box.height;
+          dir2 = dy2 > 0 ? 'bottom' : 'top';
         }
       }
 
-      // Orthogonal route: horizontal Z-shape matches left-to-right layout
+      // Obstacle-aware orthogonal routing
+      var margin = 15;
+      var isHorz1 = (dir1 === 'left' || dir1 === 'right');
+      var isHorz2 = (dir2 === 'left' || dir2 === 'right');
+
+      // Extension points: move away from component boundary in the exit/entry direction
+      var ex1 = x1 + (dir1 === 'right' ? margin : dir1 === 'left' ? -margin : 0);
+      var ey1 = y1 + (dir1 === 'bottom' ? margin : dir1 === 'top' ? -margin : 0);
+      var ex2 = x2 + (dir2 === 'right' ? margin : dir2 === 'left' ? -margin : 0);
+      var ey2 = y2 + (dir2 === 'bottom' ? margin : dir2 === 'top' ? -margin : 0);
+
       var points;
-      if (Math.abs(x1 - x2) < 2 || Math.abs(y1 - y2) < 2) {
+      if (Math.abs(x1 - x2) < 2 && Math.abs(y1 - y2) < 2) {
         points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      } else if (Math.abs(x1 - x2) < 2 || Math.abs(y1 - y2) < 2) {
+        // Nearly aligned: direct line
+        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      } else if (isHorz1 && isHorz2) {
+        // Both horizontal exits (e.g. right port → left port)
+        var yMin = Math.min(ey1, ey2), yMax = Math.max(ey1, ey2);
+        var preferX = (ex1 + ex2) / 2;
+        var clearX = findClearX(yMin, yMax, preferX, obstacles);
+        points = [
+          { x: x1, y: y1 }, { x: ex1, y: y1 },
+          { x: clearX, y: y1 }, { x: clearX, y: y2 },
+          { x: ex2, y: y2 }, { x: x2, y: y2 }
+        ];
+      } else if (!isHorz1 && !isHorz2) {
+        // Both vertical exits (e.g. bottom → top)
+        var xMin = Math.min(ex1, ex2), xMax = Math.max(ex1, ex2);
+        var preferY = (ey1 + ey2) / 2;
+        var clearY = findClearY(xMin, xMax, preferY, obstacles);
+        points = [
+          { x: x1, y: y1 }, { x: x1, y: ey1 },
+          { x: x1, y: clearY }, { x: x2, y: clearY },
+          { x: x2, y: ey2 }, { x: x2, y: y2 }
+        ];
       } else {
-        var midX = (x1 + x2) / 2;
-        points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
+        // Mixed: one horizontal, one vertical — L-shape
+        if (isHorz1) {
+          // Horizontal exit, vertical entry: go horizontal then vertical
+          points = [
+            { x: x1, y: y1 }, { x: ex1, y: y1 },
+            { x: x2, y: y1 }, { x: x2, y: y2 }
+          ];
+        } else {
+          // Vertical exit, horizontal entry: go vertical then horizontal
+          points = [
+            { x: x1, y: y1 }, { x: x1, y: ey1 },
+            { x: x1, y: y2 }, { x: x2, y: y2 }
+          ];
+        }
       }
+
+      // Simplify collinear points
+      points = simplifyRoute(points);
 
       var pStr = '';
       for (var pi = 0; pi < points.length; pi++) {
@@ -521,10 +531,10 @@
       if (conn.label) {
         var lx, ly, lAnchor;
         if (points.length === 4) {
-          // Z-route: label above the last horizontal segment (approaching the
-          // destination), well clear of both the vertical bend line and any
-          // port labels near the endpoints.
-          var hSeg0 = points[2], hSeg1 = points[3];
+          // Z-route: label above the *first* horizontal segment (approaching from the
+          // source), well clear of both the vertical bend line and any
+          // destination port labels.
+          var hSeg0 = points[0], hSeg1 = points[1];
           lx = (hSeg0.x + hSeg1.x) / 2;
           ly = hSeg0.y - 10;
           lAnchor = 'middle';

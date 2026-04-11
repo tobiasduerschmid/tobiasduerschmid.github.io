@@ -136,9 +136,12 @@
   function computeLayout(parsed) {
     var nodes = parsed.nodes;
     var links = parsed.links;
-    if (nodes.length === 0) return { entries: {}, width: 0, height: 0 };
+    if (nodes.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
     for (var i = 0; i < nodes.length; i++) {
       var n = nodes[i];
       var nameW = UMLShared.textWidth(n.name, true, CFG.fontSizeBold);
@@ -154,6 +157,12 @@
         h = Math.max(h + CFG.nodePadY, CFG.nodeMinH);
       }
       entries[n.name] = { node: n, box: { width: Math.ceil(w), height: Math.ceil(h) }, x: 0, y: 0 };
+      layoutNodes.push({ id: n.name, width: Math.ceil(w), height: Math.ceil(h), data: n });
+    }
+
+    for (var li = 0; li < links.length; li++) {
+      var lk = links[li];
+      layoutEdges.push({ source: lk.from, target: lk.to, type: lk.type, data: lk });
     }
 
     // Compute link label widths for gap sizing
@@ -163,64 +172,12 @@
     }
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40);
 
-    // Build directed graph for layering
-    var children = {}, parents = {};
-    for (var cn in entries) { children[cn] = []; parents[cn] = []; }
-    for (var li2 = 0; li2 < links.length; li2++) {
-      var lk = links[li2];
-      if (entries[lk.from] && entries[lk.to]) {
-        if (children[lk.from].indexOf(lk.to) === -1) { children[lk.from].push(lk.to); parents[lk.to].push(lk.from); }
-      }
-    }
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY });
 
-    var roots = [];
-    for (var cn2 in entries) { if (parents[cn2].length === 0) roots.push(cn2); }
-    if (roots.length === 0) roots = [nodes[0].name];
-
-    // BFS layer assignment
-    var layers = {}, visited = {}, queue = [];
-    for (var ri = 0; ri < roots.length; ri++) { layers[roots[ri]] = 0; visited[roots[ri]] = true; queue.push(roots[ri]); }
-    while (queue.length > 0) {
-      var nd = queue.shift();
-      var kids = children[nd];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki], nl = (layers[nd] || 0) + 1;
-        if (!visited[kid]) { visited[kid] = true; layers[kid] = nl; queue.push(kid); }
-        else if (nl > layers[kid]) { layers[kid] = nl; queue.push(kid); }
-      }
-    }
-    for (var cn3 in entries) { if (layers[cn3] === undefined) layers[cn3] = 0; }
-
-    // Group and position by layer
-    var layerGroups = {}, maxLayer = 0;
-    for (var cn4 in entries) { var l = layers[cn4]; if (!layerGroups[l]) layerGroups[l] = []; layerGroups[l].push(cn4); maxLayer = Math.max(maxLayer, l); }
-
-    var curY = 0;
-    for (var ly = 0; ly <= maxLayer; ly++) {
-      var group = layerGroups[ly]; if (!group) continue;
-      var curX = 0;
-      for (var gi = 0; gi < group.length; gi++) {
-        entries[group[gi]].x = curX;
-        entries[group[gi]].y = curY;
-        curX += entries[group[gi]].box.width + effectiveGapX;
-      }
-      var maxH = 0;
-      for (var gi2 = 0; gi2 < group.length; gi2++) maxH = Math.max(maxH, entries[group[gi2]].box.height);
-      curY += maxH + CFG.gapY;
-    }
-
-    // Center layers
-    var maxLayerW = 0;
-    for (var ly2 = 0; ly2 <= maxLayer; ly2++) {
-      var g = layerGroups[ly2]; if (!g) continue;
-      var le = entries[g[g.length - 1]];
-      maxLayerW = Math.max(maxLayerW, le.x + le.box.width);
-    }
-    for (var ly3 = 0; ly3 <= maxLayer; ly3++) {
-      var g2 = layerGroups[ly3]; if (!g2) continue;
-      var le2 = entries[g2[g2.length - 1]];
-      var off = (maxLayerW - (le2.x + le2.box.width)) / 2;
-      for (var gi3 = 0; gi3 < g2.length; gi3++) entries[g2[gi3]].x += off;
+    for (var nm in result.nodes) {
+      if (!entries[nm]) continue;
+      entries[nm].x = result.nodes[nm].x;
+      entries[nm].y = result.nodes[nm].y;
     }
 
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -231,7 +188,14 @@
       maxY = Math.max(maxY, e.y + e.box.height);
     }
 
-    return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
+    return { 
+      entries: entries, 
+      width: maxX - minX, 
+      height: maxY - minY, 
+      offsetX: -minX, 
+      offsetY: -minY,
+      layoutResult: result 
+    };
   }
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
@@ -302,20 +266,30 @@
       var toCx = (distEntryX[li] !== undefined) ? distEntryX[li] : origToCx;
 
       var x1, y1, x2, y2;
+      var isHorizontal = false;
       if (Math.abs(dx) > Math.abs(dy) * 1.5) {
         if (dx > 0) { x1 = fromE.x + fromE.box.width; y1 = fromCy; x2 = toE.x; y2 = toCy; }
         else { x1 = fromE.x; y1 = fromCy; x2 = toE.x + toE.box.width; y2 = toCy; }
+        isHorizontal = true;
       } else {
         if (dy > 0) { x1 = fromCx; y1 = fromE.y + fromE.box.height; x2 = toCx; y2 = toE.y; }
         else { x1 = fromCx; y1 = fromE.y; x2 = toCx; y2 = toE.y + toE.box.height; }
+        isHorizontal = false;
       }
 
       var points;
-      if (Math.abs(x1 - x2) < 2 || Math.abs(y1 - y2) < 2) {
+      if (!isHorizontal && Math.abs(x1 - x2) < 2) {
+        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      } else if (isHorizontal && Math.abs(y1 - y2) < 2) {
         points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
       } else {
-        var midY = (y1 + y2) / 2;
-        points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        if (isHorizontal) {
+          var midX = (x1 + x2) / 2;
+          points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
+        } else {
+          var midY = (y1 + y2) / 2;
+          points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        }
       }
 
       var pStr = '';

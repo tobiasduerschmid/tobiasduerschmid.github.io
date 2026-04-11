@@ -189,170 +189,41 @@
   function computeLayout(parsed) {
     var stateList = parsed.states;
     var transitions = parsed.transitions;
-    if (stateList.length === 0) return { entries: {}, width: 0, height: 0 };
+    if (stateList.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
+    // Measure states
     for (var i = 0; i < stateList.length; i++) {
       var s = stateList[i];
-      entries[s.name] = { state: s, box: measureState(s), x: 0, y: 0 };
+      var box = measureState(s);
+      entries[s.name] = { state: s, box: box, x: 0, y: 0 };
+      layoutNodes.push({ id: s.name, width: box.width, height: box.height, data: s });
     }
 
-    // Build adjacency for BFS layer assignment
-    var children = {};
-    for (var sn in entries) children[sn] = [];
+    // Convert transitions to edges
     for (var t = 0; t < transitions.length; t++) {
-      if (entries[transitions[t].from] && entries[transitions[t].to]) {
-        if (children[transitions[t].from].indexOf(transitions[t].to) === -1) {
-          children[transitions[t].from].push(transitions[t].to);
-        }
-      }
+      var tr = transitions[t];
+      layoutEdges.push({ source: tr.from, target: tr.to, type: 'navigable', data: tr });
     }
 
-    // Find initial states as roots
-    var roots = [];
-    for (var sn2 in entries) {
-      if (entries[sn2].state.type === 'initial') roots.push(sn2);
-    }
-    if (roots.length === 0) roots = [stateList[0].name]; // fallback
+    // Call advanced layout
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: CFG.gapX, gapY: CFG.gapY });
 
-    // BFS layer assignment (handles cycles by only visiting each node once)
-    var layers = {};
-    var visited = {};
-    var queue = [];
-    for (var ri = 0; ri < roots.length; ri++) {
-      layers[roots[ri]] = 0;
-      visited[roots[ri]] = true;
-      queue.push(roots[ri]);
-    }
-    while (queue.length > 0) {
-      var node = queue.shift();
-      var kids = children[node];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki];
-        if (!visited[kid]) {
-          visited[kid] = true;
-          layers[kid] = (layers[node] || 0) + 1;
-          queue.push(kid);
-        }
-        // Skip already-visited nodes to avoid infinite loops in cycles
-      }
-    }
-    // Assign unvisited
-    for (var sn3 in entries) {
-      if (layers[sn3] === undefined) layers[sn3] = 0;
-    }
-
-    // Group by layer
-    var layerGroups = {};
-    var maxLayer = 0;
-    for (var sn4 in entries) {
-      var l = layers[sn4];
-      if (!layerGroups[l]) layerGroups[l] = [];
-      layerGroups[l].push(sn4);
-      maxLayer = Math.max(maxLayer, l);
-    }
-
-    // ── Sugiyama barycenter crossing minimization ──────────────────────
-    // Iteratively sort nodes within each layer by the average position of
-    // their neighbours in the adjacent layer, alternating forward/backward
-    // passes.  4 passes is typically sufficient for convergence.
-    var posInLayer = {};
-    for (var bpl = 0; bpl <= maxLayer; bpl++) {
-      var bpg = layerGroups[bpl]; if (!bpg) continue;
-      for (var bpi = 0; bpi < bpg.length; bpi++) posInLayer[bpg[bpi]] = bpi;
-    }
-    for (var bcPass = 0; bcPass < 4; bcPass++) {
-      if (bcPass % 2 === 0) {
-        // Forward: sort layer l by avg position of predecessors in layer l-1
-        for (var bcFl = 1; bcFl <= maxLayer; bcFl++) {
-          var bcFg = layerGroups[bcFl]; if (!bcFg || bcFg.length < 2) continue;
-          var bcF = {};
-          for (var bcFi = 0; bcFi < bcFg.length; bcFi++) {
-            var bcFn = bcFg[bcFi]; var bcSum = 0, bcCnt = 0;
-            for (var bcTi = 0; bcTi < transitions.length; bcTi++) {
-              var bcTr = transitions[bcTi];
-              if (bcTr.to === bcFn && layers[bcTr.from] === bcFl - 1) {
-                bcSum += posInLayer[bcTr.from]; bcCnt++;
-              }
-            }
-            bcF[bcFn] = bcCnt > 0 ? bcSum / bcCnt : posInLayer[bcFn];
-          }
-          bcFg.sort(function (a, b) { return bcF[a] - bcF[b]; });
-          for (var bcFi2 = 0; bcFi2 < bcFg.length; bcFi2++) posInLayer[bcFg[bcFi2]] = bcFi2;
-        }
-      } else {
-        // Backward: sort layer l by avg position of successors in layer l+1
-        for (var bcBl = maxLayer - 1; bcBl >= 0; bcBl--) {
-          var bcBg = layerGroups[bcBl]; if (!bcBg || bcBg.length < 2) continue;
-          var bcB = {};
-          for (var bcBi = 0; bcBi < bcBg.length; bcBi++) {
-            var bcBn = bcBg[bcBi]; var bcBSum = 0, bcBCnt = 0;
-            for (var bcBTi = 0; bcBTi < transitions.length; bcBTi++) {
-              var bcBTr = transitions[bcBTi];
-              if (bcBTr.from === bcBn && layers[bcBTr.to] === bcBl + 1) {
-                bcBSum += posInLayer[bcBTr.to]; bcBCnt++;
-              }
-            }
-            bcB[bcBn] = bcBCnt > 0 ? bcBSum / bcBCnt : posInLayer[bcBn];
-          }
-          bcBg.sort(function (a, b) { return bcB[a] - bcB[b]; });
-          for (var bcBi2 = 0; bcBi2 < bcBg.length; bcBi2++) posInLayer[bcBg[bcBi2]] = bcBi2;
-        }
-      }
-    }
-
-    // Position: center each layer horizontally
-    var curY = 0;
-    for (var ly = 0; ly <= maxLayer; ly++) {
-      var group = layerGroups[ly];
-      if (!group) continue;
-      var totalW = 0;
-      for (var gi = 0; gi < group.length; gi++) {
-        totalW += entries[group[gi]].box.width;
-        if (gi < group.length - 1) totalW += CFG.gapX;
-      }
-      var curX = 0;
-      // Center the whole layer
-      for (var gi2 = 0; gi2 < group.length; gi2++) {
-        var e = entries[group[gi2]];
-        e.x = curX;
-        e.y = curY;
-        curX += e.box.width + CFG.gapX;
-      }
-      // Find max height in this layer
-      var maxH = 0;
-      for (var gi3 = 0; gi3 < group.length; gi3++) {
-        maxH = Math.max(maxH, entries[group[gi3]].box.height);
-      }
-      curY += maxH + CFG.gapY;
-    }
-
-    // Center layers relative to widest
-    var maxLayerW = 0;
-    for (var ly2 = 0; ly2 <= maxLayer; ly2++) {
-      var g = layerGroups[ly2];
-      if (!g) continue;
-      var lastE = entries[g[g.length - 1]];
-      var layerW = lastE.x + lastE.box.width;
-      maxLayerW = Math.max(maxLayerW, layerW);
-    }
-    for (var ly3 = 0; ly3 <= maxLayer; ly3++) {
-      var g2 = layerGroups[ly3];
-      if (!g2) continue;
-      var lastE2 = entries[g2[g2.length - 1]];
-      var layerW2 = lastE2.x + lastE2.box.width;
-      var offsetX = (maxLayerW - layerW2) / 2;
-      for (var gi4 = 0; gi4 < g2.length; gi4++) {
-        entries[g2[gi4]].x += offsetX;
-      }
-    }
-
-    // Compute bounds
+    // Center layers relative to widest (post-processing if needed)
+    // Map coords back
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (var en in entries) {
-      var e2 = entries[en];
-      minX = Math.min(minX, e2.x); minY = Math.min(minY, e2.y);
-      maxX = Math.max(maxX, e2.x + e2.box.width); maxY = Math.max(maxY, e2.y + e2.box.height);
+    for (var sn in result.nodes) {
+      if (!entries[sn]) continue;
+      entries[sn].x = result.nodes[sn].x;
+      entries[sn].y = result.nodes[sn].y;
+      
+      minX = Math.min(minX, entries[sn].x);
+      minY = Math.min(minY, entries[sn].y);
+      maxX = Math.max(maxX, entries[sn].x + entries[sn].box.width);
+      maxY = Math.max(maxY, entries[sn].y + entries[sn].box.height);
     }
 
     return {
@@ -361,6 +232,7 @@
       height: maxY - minY,
       offsetX: -minX,
       offsetY: -minY,
+      layoutResult: result
     };
   }
 
@@ -471,6 +343,8 @@
       // Determine exit/entry points
       var x1, y1, x2, y2;
       var dx = toCx - fromCx, dy = toCy - fromCy;
+      var isBackEdge = false;
+      var isHorizontal = false;
 
       // Use pre-computed distributed exit point if available
       if (customExits[ti]) {
@@ -480,6 +354,7 @@
         // Back-edge going upward: route via right margin to avoid crossing
         x1 = fromE.x + fromE.box.width; y1 = fromCy;
         x2 = toE.x + toE.box.width; y2 = toCy;
+        isBackEdge = true;
       } else if (Math.abs(dy) >= Math.abs(dx) * 0.5) {
         // Vertical connection
         if (dy > 0) {
@@ -498,28 +373,36 @@
           x1 = fromE.x; y1 = fromCy;
           x2 = toE.x + toE.box.width; y2 = toCy;
         }
+        isHorizontal = true;
       }
 
-      // Draw orthogonal route
       var points;
-      if (Math.abs(x1 - x2) < 2) {
-        // Straight vertical
-        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-      } else if (Math.abs(y1 - y2) < 2) {
-        // Straight horizontal
-        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-      } else if (dy < -10 && !customExits[ti]) {
+      if (isBackEdge && !customExits[ti]) {
         // Back-edge via right margin
+        // Apply an offset based on transitioning index to avoid overlapping routes
+        var dynamicMargin = routeMarginX + (ti * 12);
         points = [
           { x: x1, y: y1 },
-          { x: routeMarginX, y: y1 },
-          { x: routeMarginX, y: y2 },
+          { x: dynamicMargin, y: y1 },
+          { x: dynamicMargin, y: y2 },
           { x: x2, y: y2 }
         ];
+      } else if (!isHorizontal && Math.abs(x1 - x2) < 2) {
+        // Straight vertical
+        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      } else if (isHorizontal && Math.abs(y1 - y2) < 2) {
+        // Straight horizontal
+        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
       } else {
-        // Z-route
-        var midY = (y1 + y2) / 2;
-        points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        if (isHorizontal) {
+          // Z-route along horizontal axis (enters sideways at 90 degrees)
+          var midX = (x1 + x2) / 2;
+          points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
+        } else {
+          // Z-route along vertical axis (enters top/bottom at 90 degrees)
+          var midY = (y1 + y2) / 2;
+          points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        }
       }
 
       var pStr = '';
@@ -542,21 +425,18 @@
       if (tr.label) {
         var lx, ly, lAnchor = 'middle';
         if (points.length === 4) {
-          // Z-routes: label on the middle segment, offset to avoid overlap with
-          // state box edges (vertical endpoints) or the right-margin line (back-edges)
+          // Z-routes: label on the middle segment
           var mSeg0 = points[1], mSeg1 = points[2];
           var mIsHoriz = Math.abs(mSeg1.y - mSeg0.y) < 1;
           if (mIsHoriz) {
-            // Forward Z-route: horizontal middle segment — place above it
             lx = (mSeg0.x + mSeg1.x) / 2;
             ly = mSeg0.y - 8;
-            // Stack labels from same source to avoid overlap
             if (downByFrom[tr.from] && downByFrom[tr.from].length > 1) {
               var dIdx = downByFrom[tr.from].indexOf(ti);
               if (dIdx > 0) ly += dIdx * (CFG.fontSize + 4);
             }
           } else {
-            // Back-edge: vertical middle segment — place to the right
+            // vertical middle segment — place to the right
             lx = mSeg0.x + 8;
             ly = (mSeg0.y + mSeg1.y) / 2;
             lAnchor = 'start';
@@ -566,7 +446,12 @@
           var lp0 = points[0], lp1 = points[1];
           lx = (lp0.x + lp1.x) / 2;
           ly = (lp0.y + lp1.y) / 2;
-          if (Math.abs(lp1.y - lp0.y) < 1) { ly -= 10; } else { lx += 10; lAnchor = 'start'; }
+          // Add a very small horizontal offset to text so it doesn't overlap exactly
+          if (Math.abs(lp1.y - lp0.y) < 1) { 
+             ly -= 10; 
+          } else { 
+             lx += 10; lAnchor = 'start'; 
+          }
         }
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
