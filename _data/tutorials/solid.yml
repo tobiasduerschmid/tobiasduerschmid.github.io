@@ -1,5 +1,5 @@
-title: "SOLID Design Principles: Writing Code That Welcomes Change"
-description: "Learn the SOLID principles by feeling the pain of rigid code first, then refactoring step by step. Each principle is motivated by a realistic scenario where a simple change request exposes a design flaw — and the principle shows you how to fix it."
+title: "SOLID Design Principles: Stop Writing Code That Falls Apart"
+description: "Learn the SOLID principles by suffering through rigid code first, then leveling up with refactoring. Each principle hits you with a realistic scenario where one tiny change request breaks everything — and then shows you how to fix it so your code actually survives contact with reality."
 
 backend: pyodide
 
@@ -27,22 +27,24 @@ steps:
 
       ### The Scenario
 
-      You have inherited a `CourseManager` class from a colleague who left the company. It handles *everything*: student enrollment, grade calculation, GPA formatting, HTML report generation, and email notifications. It works — for now.
+      You just inherited a `CourseManager` class from a colleague who left the company. Classic. This thing handles *everything*: student enrollment, grade calculation, GPA formatting, HTML report generation, and email notifications. It works — for now.
 
-      Your manager has two change requests:
+      Your manager drops two change requests on you:
 
       1. **Finance Team:** Switch the grading scale from letter grades (A/B/C/D/F) to a **4.0 numeric scale** (4.0/3.0/2.0/1.0/0.0).
       2. **Registrar's Office:** Change the report format from **HTML** to **JSON**.
 
+      Two small changes. Should be easy, right? ...Right?
+
       ### Your Task
 
-      Open `course_manager.py` and try to make **both changes**. You will discover a painful problem: the private helper `_format_grade()` is used by *both* `calculate_gpa()` *and* `generate_report()`. Changing it for one purpose breaks the other.
+      Open `course_manager.py` and try to make **both changes**. You'll quickly discover the nightmare: the private helper `_format_grade()` is used by *both* `calculate_gpa()` *and* `generate_report()`. Change it for one purpose and you break the other. It's like trying to update your profile pic on one app and it changes across all your accounts.
 
-      **This is the point of the exercise.** You are meant to feel the friction. Do your best to make both changes work — any modification counts. There is no single "correct" answer here.
+      **This is the point.** You're *supposed* to struggle here. Do your best to make both changes work — any approach counts. There's no single "correct" answer.
 
-      ### A Note About Errors
+      ### Errors Are the Lesson
 
-      You will almost certainly break things while making these changes. That is completely normal and expected — in fact, it is the whole lesson. Every professional developer has inherited code like this. The errors you encounter are not a sign that you are doing something wrong; they are evidence of a design problem in the original code. Read error messages carefully and keep experimenting.
+      You will almost certainly break things. That's not a bug in the exercise — it *is* the exercise. Every developer has inherited code like this. The errors you hit aren't you messing up; they're proof that the original design is the problem. Read the error messages, experiment, and embrace the chaos.
 
     files:
       - path: "course_manager.py"
@@ -169,22 +171,29 @@ steps:
     open_file: "course_manager.py"
 
     tests:
-      - description: "You modified the CourseManager code"
+      - description: "You changed the grading scale (numeric 4.0 scale instead of letter grades)"
         command: |
-          original_fragments = [
-              '"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0',
-              "<html><body><h1>Report for {name}</h1><table>",
-          ]
           source = open('/tutorial/course_manager.py').read()
-          changed = False
-          for frag in original_fragments:
-              if frag not in source:
-                  changed = True
-                  break
-          assert changed, \
-              "It looks like you haven't changed the code yet. Try modifying the grading scale or the report format — the goal is to experience the difficulty of changing tightly coupled code."
+          assert '"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0' not in source, \
+              "The grading scale still uses the original letter-grade mapping. " \
+              "Try switching to a 4.0 numeric scale (e.g., 4.0, 3.0, 2.0, 1.0, 0.0 as the grades themselves)."
         hints:
-          - text: "The task asks you to make two changes: (1) switch from letter grades to a 4.0 numeric scale, and (2) change the report from HTML to JSON. Start with whichever seems easier."
+          - text: "The Finance Team wants a numeric scale: instead of letter grades A/B/C/D/F, use 4.0/3.0/2.0/1.0/0.0 as the grade values. Modify the `_grade_weights` dictionary and the `add_grade()` method."
+            condition: "default"
+      - description: "You changed the report format (JSON instead of HTML)"
+        command: |
+          source = open('/tutorial/course_manager.py').read()
+          assert "<html><body><h1>Report for {name}</h1><table>" not in source, \
+              "The report still uses the original HTML format. " \
+              "Try switching generate_report() to produce JSON output instead."
+        hints:
+          - text: "The Registrar's Office wants JSON instead of HTML. Modify `generate_report()` to return a JSON string (e.g., using `json.dumps()`) instead of HTML tags."
+            condition: "default"
+      - description: "Your modified code still runs without errors"
+        command: |
+          exec(open('/tutorial/course_manager.py').read())
+        hints:
+          - text: "Your changes introduced a syntax or runtime error. Run the code and read the error message — it will tell you exactly what went wrong."
             condition: "default"
 
     quiz:
@@ -203,7 +212,7 @@ steps:
             - "The code was too short — longer code is always easier to modify"
           correct_index: 1
           explanation: |
-            The core problem is **coupling**: `_format_grade()` serves two different purposes (grade calculation display and report rendering), so it cannot be changed for one without affecting the other. This is exactly the kind of pain that design principles help you avoid.
+            The core problem is **coupling**: `_format_grade()` does double duty for both grade calculation display and report rendering. You can't change it for one without breaking the other. It's like having one remote control for your TV and your neighbor's TV — change the channel and you change theirs too.
 
         - question: |
             **Coupling** in software design means:
@@ -215,7 +224,7 @@ steps:
             - "Having too many classes in a project"
           correct_index: 1
           explanation: |
-            Coupling measures how much one module depends on the internals of another. High coupling means a change in one place ripples through many others. The `CourseManager` has high *internal* coupling because its methods share helpers and data structures in ways that make independent changes impossible.
+            Coupling measures how tangled your components are with each other's internals. High coupling = change one thing, break five others. The `CourseManager` is a coupling disaster — its methods share helpers and data in ways that make independent changes basically impossible.
 
         - question: |
             How many distinct **actors** (stakeholders with different reasons to request changes) does the `CourseManager` class serve?
@@ -227,7 +236,7 @@ steps:
             - "5 — one per method"
           correct_index: 2
           explanation: |
-            The class serves at least three distinct actors: (1) the **administration** cares about enrollment, (2) the **academic department** cares about grade calculation, and (3) the **registrar's office** cares about reports and transcripts. When one class serves multiple actors, changes requested by one actor risk breaking functionality needed by another. This is the core motivation for the Single Responsibility Principle, which you will learn next.
+            At least three different groups want different things from this class: (1) **administration** cares about enrollment, (2) the **academic department** cares about grade calculation, and (3) the **registrar** cares about reports and transcripts. When one class tries to make everyone happy, changes from one group break things for another. This is exactly why the Single Responsibility Principle exists — you'll learn it next.
 
 
   # --------------------------------------------------------------------------
@@ -249,11 +258,11 @@ steps:
       > *"A class should have only one reason to change."*
       > — Robert C. Martin
 
-      A "reason to change" comes from an **actor**: a person or team that requests modifications. If a class serves multiple actors, changes requested by one actor can break functionality used by another — exactly what happened with `CourseManager` in Step 1.
+      A "reason to change" comes from an **actor** — a person or team that asks for modifications. If a class serves multiple actors, one team's change request can break another team's stuff. That's exactly the mess you just dealt with in Step 1.
 
       ### The Scenario
 
-      Below is an `EmployeeManager` class used by three different teams at a company:
+      Here's an `EmployeeManager` class that three different teams depend on:
 
       | Actor | What they care about |
       |---|---|
@@ -261,21 +270,21 @@ steps:
       | **HR Team** | Pay stub formatting and employee records |
       | **Compliance Team** | CSV export for audit reports |
 
-      The Finance Team has requested an urgent change: **the 22% federal tax bracket must be updated to 24%** due to new tax legislation.
+      The Finance Team just pinged you: **the 22% federal tax bracket needs to become 24%** because of new tax legislation. Urgent, apparently.
 
       ### Your Task
 
-      Open `employee_manager.py` and update the tax calculation so that the 22% bracket becomes 24%. The tax brackets are:
+      Open `employee_manager.py` and update the tax calculation so that the 22% bracket becomes 24%. Here are the brackets:
 
       - Income up to $50,000: **10%**
       - Income from $50,001 to $100,000: **24%** (was 22%)
       - Income above $100,000: **32%**
 
-      After making the change, run the code. Notice what happens to the pay stub formatting — does `_format_currency()` still work correctly for all callers?
+      After making the change, run the code. Watch what happens to the pay stub — does `_format_currency()` still work correctly for everyone who calls it?
 
       ### What to Look For
 
-      Pay attention to how `_format_currency()` is used by both `calculate_payroll()` and `generate_pay_stub()`. Think about: if the HR Team later wants to change the currency format (e.g., adding thousands separators), would that change affect payroll calculations?
+      Notice how `_format_currency()` is shared between `calculate_payroll()` and `generate_pay_stub()`. Now think: if HR later wants to change the currency format (say, adding thousands separators), would that accidentally mess up the payroll calculations too?
 
     files:
       - path: "employee_manager.py"
@@ -522,14 +531,14 @@ steps:
                 print(mgr.export_to_csv())
           language: "python"
       explanation: |
-        **The fix is a one-line change:** `0.22` becomes `0.24` in the `calculate_payroll()` method.
+        **The fix is literally one line:** `0.22` becomes `0.24` in `calculate_payroll()`.
 
-        But notice what this small change affects:
-        - The **payroll calculation** now uses the correct 24% rate (Finance Team is happy).
-        - The **pay stub** automatically reflects the new rate because it calls `calculate_payroll()` — but the HR Team never requested this change and might not expect it.
-        - The **CSV export** also changes because it too depends on `calculate_payroll()`.
+        But look at the blast radius of that tiny change:
+        - **Payroll calculation** now uses the correct 24% rate — Finance is happy.
+        - **Pay stubs** automatically show the new rate because they call `calculate_payroll()` — but HR never asked for this and might not even notice until someone complains.
+        - **CSV export** also changes because it depends on `calculate_payroll()` too.
 
-        This is an SRP violation in action: a change requested by one actor (Finance) silently propagates to outputs owned by other actors (HR, Compliance). In Step 3, you will refactor this class to isolate each actor's concerns.
+        This is what an SRP violation looks like in the wild: one team's change silently messes with other teams' outputs. In Step 3, you'll refactor this class so each team's concerns are properly isolated.
 
     tests:
       - description: "Script runs without errors"
@@ -600,7 +609,7 @@ steps:
             - "The number of methods in the class"
           correct_index: 1
           explanation: |
-            Robert C. Martin defines "reason to change" in terms of **actors**: the people or teams who might request changes. A class that serves multiple actors will be pulled in different directions, leading to the kind of breakage you experienced.
+            Robert C. Martin defines "reason to change" in terms of **actors** — the people or teams who ask for changes. A class serving multiple actors gets pulled in different directions, and that's how you end up with the breakage you just experienced.
 
         - question: |
             A class has 10 methods. Does this automatically mean it violates the Single Responsibility Principle?
@@ -612,7 +621,7 @@ steps:
             - "No — SRP only applies to classes with inheritance"
           correct_index: 1
           explanation: |
-            SRP is not a method-counting rule. A class can have many methods and still satisfy SRP if they all serve the same actor and change for the same reason. Conversely, a class with only 3 methods can violate SRP if those methods serve different actors.
+            SRP is not about counting methods. A class with 10 methods can be totally fine if they all serve the same actor. Meanwhile, a class with just 3 methods can be an SRP disaster if those 3 methods serve 3 different teams. It's about *who* wants changes, not *how many* methods you have.
 
         - question: |
             In the `EmployeeManager` class, which actors are served by which responsibilities?
@@ -624,7 +633,7 @@ steps:
             - "All three teams share the same reasons for changing the code"
           correct_indices: [0, 1, 2]
           explanation: |
-            Each team has a distinct reason to request changes: Finance changes tax rules, HR changes display formats, and Compliance changes export structure. When one class serves all three, a change for one team (like the tax bracket update) can affect outputs owned by the others. Separating these concerns into different classes is exactly what SRP prescribes.
+            Each team wants different things: Finance changes tax rules, HR changes display formats, Compliance changes export structure. When one class tries to serve all three, a change for one team (like that tax bracket update) can ripple into the others' outputs. Splitting these into separate classes is exactly what SRP is about.
 
 
   # --------------------------------------------------------------------------
@@ -717,18 +726,18 @@ steps:
               return "\n".join(lines)
       ```
 
-      **Why this is better:** Now the Finance Team can change tax brackets in `PayrollCalculator` without touching pay stub formatting. The HR Team can change currency display in `PayStubFormatter` without affecting tax calculations. Each class has **one actor** and **one reason to change**.
+      **Why this is better:** Now Finance can change tax brackets in `PayrollCalculator` without touching pay stubs. HR can change currency display in `PayStubFormatter` without messing up tax calculations. Each class has **one actor** and **one reason to change**. No more surprise side effects.
 
       ### Your Task: Refactor EventPlanner
 
-      Open `event_planner.py`. It contains a monolithic `EventPlanner` class that handles four concerns:
+      Open `event_planner.py`. It's got a monolithic `EventPlanner` class that does way too much — four different concerns all crammed into one class:
 
       1. **Venue booking** (Venue Manager actor)
       2. **Guest list management** (Event Coordinator actor)
       3. **Budget tracking** (Finance actor)
       4. **Invitation sending** (Communications actor)
 
-      Refactor it into four classes. We have provided **class stubs** with some methods already filled in and others marked `TODO` for you to complete. Follow the pattern from the worked example above.
+      Your job: split it into four focused classes. We've given you **class stubs** with some methods filled in and others marked `TODO` for you to complete. Follow the pattern from the worked example above.
 
       The four classes to complete:
       - `VenueManager` — handles venue booking and availability
@@ -1204,33 +1213,67 @@ steps:
         **Key insight:** Each class can now change independently. The Finance actor can modify `BudgetTracker` without affecting guest management. The Communications actor can change invitation formatting without touching the budget. This is the Single Responsibility Principle in action.
 
     tests:
-      - description: "All four refactored classes exist"
+      - description: "VenueManager class exists"
         command: |
           exec(open('/tutorial/event_planner.py').read())
-          for cls_name in ["VenueManager", "GuestRegistry", "BudgetTracker", "InvitationSender"]:
-              assert cls_name in dir(), f"Class {cls_name} not found. Did you define it?"
-      - description: "VenueManager books a venue correctly"
+          assert 'VenueManager' in dir(), "Class VenueManager not found. Did you define it?"
+      - description: "GuestRegistry class exists"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          assert 'GuestRegistry' in dir(), "Class GuestRegistry not found. Did you define it?"
+        hints:
+          - text: "Define a `GuestRegistry` class that manages guest data. Move the guest-related methods from `EventPlanner` into this new class."
+            condition: "default"
+      - description: "BudgetTracker class exists"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          assert 'BudgetTracker' in dir(), "Class BudgetTracker not found. Did you define it?"
+        hints:
+          - text: "Define a `BudgetTracker` class that manages budget and expenses. Move the budget-related methods from `EventPlanner` into this new class."
+            condition: "default"
+      - description: "InvitationSender class exists"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          assert 'InvitationSender' in dir(), "Class InvitationSender not found. Did you define it?"
+        hints:
+          - text: "Define an `InvitationSender` class that handles sending invitations and tracking RSVPs. Move the invitation-related methods from `EventPlanner` into this new class."
+            condition: "default"
+      - description: "VenueManager stores the venue name after booking"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           vm = VenueManager()
           vm.book("Conference Hall", 5000)
           assert vm.get_venue() == "Conference Hall", \
               f"Expected venue 'Conference Hall', got {repr(vm.get_venue())}"
+      - description: "VenueManager stores the venue cost after booking"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          vm = VenueManager()
+          vm.book("Conference Hall", 5000)
           assert vm.get_cost() == 5000, \
               f"Expected cost 5000, got {vm.get_cost()}"
-      - description: "GuestRegistry adds and counts guests"
+      - description: "GuestRegistry counts guests correctly after adding"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           gr = GuestRegistry()
           gr.add("Alice", "alice@test.com", "vegetarian")
           gr.add("Bob", "bob@test.com")
           assert gr.count() == 2, f"Expected 2 guests, got {gr.count()}"
-          assert "Alice" in gr.list_names(), "Alice should be in the guest list"
-          assert "Bob" in gr.list_names(), "Bob should be in the guest list"
         hints:
           - text: "The `add()` method should store the guest in `self.guests` using the name as the key. Look at how `add_guest()` works in the original `EventPlanner` class for the pattern."
             condition: "default"
-      - description: "GuestRegistry removes guests and raises error for unknown guests"
+      - description: "GuestRegistry lists guest names"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          gr = GuestRegistry()
+          gr.add("Alice", "alice@test.com", "vegetarian")
+          gr.add("Bob", "bob@test.com")
+          assert "Alice" in gr.list_names(), "Alice should be in the guest list"
+          assert "Bob" in gr.list_names(), "Bob should be in the guest list"
+        hints:
+          - text: "`list_names()` should return the keys of `self.guests` (or a list of them)."
+            condition: "default"
+      - description: "GuestRegistry removes guests correctly"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           gr = GuestRegistry()
@@ -1238,15 +1281,23 @@ steps:
           gr.add("Bob", "bob@test.com")
           gr.remove("Alice")
           assert gr.count() == 1, f"Expected 1 guest after removal, got {gr.count()}"
+        hints:
+          - text: "The `remove()` method should use `del self.guests[name]` to remove the guest."
+            condition: "default"
+      - description: "GuestRegistry raises error for removing unknown guests"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          gr = GuestRegistry()
+          gr.add("Alice", "alice@test.com")
           try:
               gr.remove("Nobody")
               assert False, "remove() should raise ValueError for unknown guest"
           except ValueError:
               pass
         hints:
-          - text: "The `remove()` method should check if the name exists in `self.guests` first. If not, raise a ValueError. If so, use `del self.guests[name]`."
+          - text: "Before deleting, check if the name exists in `self.guests`. If not, raise a ValueError."
             condition: "default"
-      - description: "BudgetTracker tracks expenses and remaining budget"
+      - description: "BudgetTracker tracks remaining budget after expenses"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           bt = BudgetTracker(10000)
@@ -1254,12 +1305,24 @@ steps:
           bt.add_expense("Catering", 2000)
           assert bt.get_remaining() == 5000, \
               f"Expected remaining budget of 5000, got {bt.get_remaining()}"
-          summary = bt.get_summary()
-          assert summary["total_budget"] == 10000, "Total budget should be 10000"
-          assert summary["spent"] == 5000, "Spent should be 5000"
-          assert summary["remaining"] == 5000, "Remaining should be 5000"
         hints:
           - text: "`add_expense()` should add the amount to `self.spent`. `get_remaining()` should return `self.budget - self.spent`."
+            condition: "default"
+      - description: "BudgetTracker get_summary() returns correct totals"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          bt = BudgetTracker(10000)
+          bt.add_expense("Venue", 3000)
+          bt.add_expense("Catering", 2000)
+          summary = bt.get_summary()
+          assert summary["total_budget"] == 10000, \
+              f"Total budget should be 10000, got {summary.get('total_budget')}"
+          assert summary["spent"] == 5000, \
+              f"Spent should be 5000, got {summary.get('spent')}"
+          assert summary["remaining"] == 5000, \
+              f"Remaining should be 5000, got {summary.get('remaining')}"
+        hints:
+          - text: "`get_summary()` should return a dict with keys 'total_budget', 'spent', and 'remaining'."
             condition: "default"
       - description: "BudgetTracker rejects expenses exceeding the budget"
         command: |
@@ -1274,23 +1337,39 @@ steps:
         hints:
           - text: "Before adding the expense, check if `amount > (self.budget - self.spent)`. If so, raise a ValueError with a descriptive message."
             condition: "default"
-      - description: "InvitationSender records RSVPs correctly"
+      - description: "InvitationSender sends invitations"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           inv = InvitationSender("Test Event")
           inv.send("Alice", "alice@test.com")
           inv.send("Bob", "bob@test.com")
-          inv.send("Carol", "carol@test.com")
+          summary = inv.get_rsvp_summary()
+          assert summary["sent"] == 2, f"Expected 2 sent invitations, got {summary.get('sent')}"
+        hints:
+          - text: "`send()` should store the invitation in `self.invitations` with status 'sent'. For example: `self.invitations[guest_name] = {'email': email, 'status': 'sent'}`."
+            condition: "default"
+      - description: "InvitationSender tracks accepted RSVPs"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          inv = InvitationSender("Test Event")
+          inv.send("Alice", "alice@test.com")
+          inv.send("Bob", "bob@test.com")
           inv.record_rsvp("Alice", "accepted")
+          summary = inv.get_rsvp_summary()
+          assert summary["accepted"] == 1, f"Expected 1 accepted, got {summary.get('accepted')}"
+        hints:
+          - text: "`record_rsvp()` should update the invitation's status. `get_rsvp_summary()` should count invitations by status."
+            condition: "default"
+      - description: "InvitationSender tracks declined RSVPs"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          inv = InvitationSender("Test Event")
+          inv.send("Alice", "alice@test.com")
+          inv.send("Bob", "bob@test.com")
           inv.record_rsvp("Bob", "declined")
           summary = inv.get_rsvp_summary()
-          assert summary["accepted"] == 1, f"Expected 1 accepted, got {summary['accepted']}"
-          assert summary["declined"] == 1, f"Expected 1 declined, got {summary['declined']}"
-          assert summary["sent"] == 1, f"Expected 1 still sent, got {summary['sent']}"
-        hints:
-          - text: "For `record_rsvp()`: first check that `guest_name` is in `self.invitations`, then check that `status` is 'accepted' or 'declined'. For `get_rsvp_summary()`: loop through `self.invitations.values()` and count each status."
-            condition: "default"
-      - description: "InvitationSender rejects invalid RSVPs"
+          assert summary["declined"] == 1, f"Expected 1 declined, got {summary.get('declined')}"
+      - description: "InvitationSender rejects RSVP for uninvited guest"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           inv = InvitationSender("Test Event")
@@ -1300,11 +1379,22 @@ steps:
               assert False, "record_rsvp() should raise ValueError for uninvited guest"
           except ValueError:
               pass
+        hints:
+          - text: "Before updating, check that `guest_name` is in `self.invitations`. If not, raise a ValueError."
+            condition: "default"
+      - description: "InvitationSender rejects invalid RSVP status"
+        command: |
+          exec(open('/tutorial/event_planner.py').read())
+          inv = InvitationSender("Test Event")
+          inv.send("Alice", "alice@test.com")
           try:
               inv.record_rsvp("Alice", "maybe")
-              assert False, "record_rsvp() should raise ValueError for invalid status"
+              assert False, "record_rsvp() should raise ValueError for invalid status (only 'accepted' or 'declined' allowed)"
           except ValueError:
               pass
+        hints:
+          - text: "Check that `status` is either 'accepted' or 'declined'. If not, raise a ValueError."
+            condition: "default"
       - description: "The demo script runs without errors"
         command: |
           output = __run_capture('/tutorial/event_planner.py')
@@ -1327,7 +1417,7 @@ steps:
             - "`InvitationSender`"
           correct_index: 2
           explanation: |
-            With SRP applied, budget-related changes are isolated to `BudgetTracker`. The Finance actor modifies only this class, and no other class is affected. Before the refactoring, this change would have required modifying the monolithic `EventPlanner`, risking breakage in venue booking, guest management, or invitation logic.
+            With SRP, budget stuff lives in `BudgetTracker` and nowhere else. Finance changes only this class, and nothing else breaks. Before the refactoring, touching the monolithic `EventPlanner` for a budget change could've accidentally messed up venue booking, guest management, or invitation logic.
 
         - question: |
             A colleague says: *"SRP means every class should have exactly one method."* Is this correct?
@@ -1339,7 +1429,7 @@ steps:
             - "No — SRP only applies to abstract classes, not concrete ones"
           correct_index: 1
           explanation: |
-            SRP is about cohesion around a single actor, not about method count. `BudgetTracker` has three methods (`add_expense`, `get_remaining`, `get_summary`), but they all serve the Finance actor's needs. Having multiple methods that work together for one purpose is good design — it is splitting them across different classes that would be harmful.
+            SRP is about cohesion around one actor, not about counting methods. `BudgetTracker` has three methods (`add_expense`, `get_remaining`, `get_summary`), but they all serve Finance. Multiple methods working together for one purpose = good design. Splitting them across random classes would actually make things worse.
 
         - question: |
             Which of the following are benefits of the SRP refactoring you just performed?
@@ -1351,7 +1441,7 @@ steps:
             - "Each class can be reused in different contexts (e.g., `BudgetTracker` for other events)"
           correct_indices: [0, 1, 3]
           explanation: |
-            SRP often *increases* the total line count slightly (due to class definitions and boilerplate), but the trade-off is worth it: independent testability, isolated changes, and reusability. The refactored `BudgetTracker` could be used for any project that needs budget management, not just event planning. The code that serves different actors no longer risks breaking each other.
+            SRP often *increases* total line count slightly (more class definitions and boilerplate), but the payoff is massive: independent testability, isolated changes, and reusability. That `BudgetTracker` could be dropped into any project that needs budget management. And changes for one team can never accidentally break another team's code.
   # --------------------------------------------------------------------------
   # STEP 4 — OCP: Feel the Friction
   # Pedagogy:
@@ -1368,15 +1458,15 @@ steps:
 
       ### The Scenario
 
-      Your team runs an e-commerce platform. The `NotificationRouter` class is responsible for sending notifications to customers through different channels — email, SMS, and push notifications. Each channel has its own formatting rules, rate limits, and delivery mechanism.
+      Your team runs an e-commerce platform. The `NotificationRouter` class sends notifications to customers through different channels — email, SMS, and push. Each channel has its own formatting, rate limits, and delivery logic.
 
-      Open `notification_router.py` and read through the code. Notice how all three channels live inside a single method with an if/elif chain.
+      Open `notification_router.py` and read through the code. Notice how all three channels are stuffed into one method with an if/elif chain. It's basically a giant switch statement pretending to be architecture.
 
       ### Task 1: Add Slack Notifications
 
-      The product team says: **"We need Slack notifications for our enterprise customers."**
+      Product team just dropped this in your DMs: **"We need Slack notifications for enterprise customers."**
 
-      Slack notifications have these requirements:
+      Slack notifications need:
       - **Formatting:** Wrap the message in Slack markdown — bold the first line as a header using `*...*` and prefix the body with a clipboard emoji
       - **Rate limiting:** Maximum 200 messages per hour
       - **Delivery:** Print `"[SLACK] Delivering to {user}: {formatted_message}"`
@@ -1385,14 +1475,14 @@ steps:
 
       ### Task 2: Think Ahead
 
-      After you get Slack working, pause and imagine: the product team now wants **Discord**, **Microsoft Teams**, **WhatsApp**, **Telegram**, and **Carrier Pigeon** (okay, maybe not that last one). For each new channel, you would need to:
+      Now imagine product comes back and also wants **Discord**, **Microsoft Teams**, **WhatsApp**, **Telegram**, and **Carrier Pigeon** (okay, maybe not that last one). For each new channel you'd have to:
 
       1. Open `notification_router.py`
       2. Read through *all* existing branches to understand the pattern
-      3. Add another `elif` at the bottom
-      4. Hope you did not accidentally break email or SMS while editing
+      3. Slap another `elif` at the bottom
+      4. Pray you didn't accidentally break email or SMS while editing
 
-      This is the **friction** the Open/Closed Principle warns about. We will fix it properly in the next step.
+      This is the pain the Open/Closed Principle is trying to save you from. We'll fix it properly in the next step.
 
     files:
       - path: "notification_router.py"
@@ -1721,9 +1811,7 @@ steps:
             - "The class will run out of memory because Python limits elif chains to 20 branches"
           correct_indices: [0, 1, 2]
           explanation: |
-            Python does not limit elif chains (option 4 is false). But all three real problems stem from the same root cause: **all channel logic is crammed into one method**.
-            Reading hundreds of lines to add a feature is a maintenance burden. Editing shared code risks regressions.
-            And since every channel runs through the same method, you cannot unit-test one channel in isolation without loading all the others.
+            Python doesn't limit elif chains (option 4 is made up). But the other three problems are real and they all come from the same root cause: **all channel logic is stuffed into one method**. Reading hundreds of lines to add a feature is painful. Editing shared code risks breaking stuff. And you can't test one channel without loading all the others.
 
         - question: |
             The Open/Closed Principle says a module should be **"open for extension, closed for modification."**
@@ -1737,9 +1825,7 @@ steps:
             - "Classes should use private variables so external code cannot modify their internal state"
           correct_index: 1
           explanation: |
-            "Closed for modification" does not mean the file is literally locked. It means the **design** is structured so that adding new features (like a new notification channel) does not require editing the existing, tested code.
-            New behavior is added by writing *new* classes or modules that extend the system, not by modifying the core logic.
-            Bug fixes and genuine improvements to existing code are still allowed — the principle targets *feature additions*.
+            "Closed for modification" doesn't mean the file is literally locked. It means the **design** lets you add new features (like a new notification channel) without touching the existing, tested code. You write *new* classes that plug into the system instead of editing the core logic. Bug fixes are still fine — this principle is about *feature additions*.
 
         - question: |
             You just added Slack support by modifying `NotificationRouter.send_notification()`. While editing, you accidentally changed the SMS truncation from 160 to 60 characters. The SMS tests still pass because they use a short message.
@@ -1753,7 +1839,7 @@ steps:
             - "Type safety violations — Python cannot check that each branch returns the same type"
           correct_index: 1
           explanation: |
-            This is the classic **regression risk** of modifying working code. When all channels share one method, editing *any* part of it puts *every* channel at risk. The SMS truncation bug went undetected because the test messages were short enough to pass with the wrong limit. With an OCP-compliant design, adding Slack would not touch the SMS code at all, making this class of bug impossible.
+            Classic **regression risk**. When all channels share one method, editing *any* part puts *every* channel at risk. The SMS bug went undetected because test messages were short enough to pass with the wrong limit. With an OCP-compliant design, adding Slack wouldn't touch SMS code at all — this entire category of bug becomes impossible.
 
   # --------------------------------------------------------------------------
   # STEP 5 — OCP: Refactor & Practice
@@ -1773,11 +1859,11 @@ steps:
 
       ### Worked Example: Refactoring NotificationRouter
 
-      In Step 4 you felt the pain of modifying a monolithic if/elif chain. Now let us fix it properly using **polymorphism** and **abstract base classes**.
+      In Step 4 you felt the pain of that if/elif chain. Now let's fix it properly using **polymorphism** and **abstract base classes**.
 
-      The key insight: instead of one class that *knows about every channel*, we create a **family of channel classes** that each know how to handle themselves. The router just iterates over whatever channels it has — it never needs to change when a new channel is added.
+      The key insight: instead of one class that *knows about every channel*, we create a **family of channel classes** that each handle themselves. The router just iterates over whatever channels it has — it literally never needs to change when a new channel shows up. New channel? Just write a new class. Done.
 
-      Here is the refactored design. Read it carefully and notice the **sub-goal labels** in the comments:
+      Here's the refactored design. Read it carefully and check out the **sub-goal labels** in the comments:
 
       ```python
       from __future__ import annotations
@@ -1923,20 +2009,20 @@ steps:
       ])
       ```
 
-      **Notice:** the `NotificationRouter.send_notification()` method has **zero if/elif branches** for specific channels. Adding Discord, Teams, or WhatsApp means writing a new class and passing it to the router — the router code never changes.
+      **Notice:** `NotificationRouter.send_notification()` has **zero if/elif branches** for specific channels. Want to add Discord, Teams, or WhatsApp? Write a new class and pass it to the router. The router code itself never changes. That's the whole point.
 
-      ### Your Task: Apply the Pattern
+      ### Your Turn
 
-      Now it is your turn. Open `report_exporter.py` — it has the same if/elif problem, but for exporting reports in different formats (CSV, JSON, plain text).
+      Open `report_exporter.py` — same problem, different domain. It exports reports in different formats (CSV, JSON, plain text) using a gnarly if/elif chain.
 
-      **Refactor `report_exporter.py`** to follow the Open/Closed Principle:
+      **Refactor `report_exporter.py`** to follow OCP:
 
       1. Create an `ExportFormat` abstract base class with:
          - A `name` abstract property (returns the format name like `"csv"`)
          - A `format_report(title, headers, rows)` abstract method
       2. Create three concrete classes: `CsvFormat`, `JsonFormat`, `TextFormat`
       3. Refactor `ReportExporter` to accept a list of format objects and delegate to them — **no if/elif chain**
-      4. Verify that your design works by running the file
+      4. Run the file to verify it works
 
     files:
       - path: "report_exporter.py"
@@ -2218,29 +2304,57 @@ steps:
         hints:
           - text: "Inside your ExportFormat class, define `format_report` with the `@abstractmethod` decorator. It should accept `title`, `headers`, and `rows` parameters."
             condition: "code_missing: abstractmethod"
-      - description: "CsvFormat, JsonFormat, and TextFormat extend ExportFormat"
+      - description: "CsvFormat extends ExportFormat"
         command: |
           g = {}
           exec(open('/tutorial/report_exporter.py').read(), g)
-          EF = g['ExportFormat']
-          for cls_name in ['CsvFormat', 'JsonFormat', 'TextFormat']:
-              assert cls_name in g, \
-                  f"Define a {cls_name} class that extends ExportFormat"
-              assert issubclass(g[cls_name], EF), \
-                  f"{cls_name} should inherit from ExportFormat"
+          assert 'CsvFormat' in g, "Define a CsvFormat class that extends ExportFormat"
+          assert issubclass(g['CsvFormat'], g['ExportFormat']), \
+              "CsvFormat should inherit from ExportFormat"
         hints:
-          - text: "Create three classes — `CsvFormat`, `JsonFormat`, and `TextFormat` — each inheriting from `ExportFormat`. For example: `class CsvFormat(ExportFormat):`"
-      - description: "CSV export produces correct output"
+          - text: "Create a `CsvFormat` class inheriting from `ExportFormat`: `class CsvFormat(ExportFormat):`"
+            condition: "default"
+      - description: "JsonFormat extends ExportFormat"
+        command: |
+          g = {}
+          exec(open('/tutorial/report_exporter.py').read(), g)
+          assert 'JsonFormat' in g, "Define a JsonFormat class that extends ExportFormat"
+          assert issubclass(g['JsonFormat'], g['ExportFormat']), \
+              "JsonFormat should inherit from ExportFormat"
+        hints:
+          - text: "Create a `JsonFormat` class inheriting from `ExportFormat`: `class JsonFormat(ExportFormat):`"
+            condition: "default"
+      - description: "TextFormat extends ExportFormat"
+        command: |
+          g = {}
+          exec(open('/tutorial/report_exporter.py').read(), g)
+          assert 'TextFormat' in g, "Define a TextFormat class that extends ExportFormat"
+          assert issubclass(g['TextFormat'], g['ExportFormat']), \
+              "TextFormat should inherit from ExportFormat"
+        hints:
+          - text: "Create a `TextFormat` class inheriting from `ExportFormat`: `class TextFormat(ExportFormat):`"
+            condition: "default"
+      - description: "CSV export has comma-separated headers"
         command: |
           g = {}
           exec(open('/tutorial/report_exporter.py').read(), g)
           csv_fmt = g['CsvFormat']()
           result = csv_fmt.format_report("Test", ["A", "B"], [["1", "2"], ["3", "4"]])
           assert "A,B" in result, f"CSV should have comma-separated headers. Got: {repr(result)}"
+        hints:
+          - text: "Your CsvFormat.format_report() should join headers with commas: `','.join(headers)`."
+            condition: "default"
+      - description: "CSV export has comma-separated rows"
+        command: |
+          g = {}
+          exec(open('/tutorial/report_exporter.py').read(), g)
+          csv_fmt = g['CsvFormat']()
+          result = csv_fmt.format_report("Test", ["A", "B"], [["1", "2"], ["3", "4"]])
           assert "1,2" in result, f"CSV should have comma-separated rows. Got: {repr(result)}"
         hints:
-          - text: "Your CsvFormat.format_report() should join headers with commas and join each row's cells with commas, then join all lines with newlines."
-      - description: "JSON export produces valid JSON with records"
+          - text: "Join each row's cells with commas: `','.join(row)`, then join all lines with newlines."
+            condition: "default"
+      - description: "JSON export produces valid JSON with a 'records' key"
         command: |
           g = {}
           exec(open('/tutorial/report_exporter.py').read(), g)
@@ -2249,10 +2363,22 @@ steps:
           result = json_fmt.format_report("Test", ["Name", "Score"], [["Alice", "95"]])
           parsed = json.loads(result)
           assert "records" in parsed, f"JSON should contain a 'records' key. Got keys: {list(parsed.keys())}"
-          assert parsed["records"][0]["Name"] == "Alice", \
-              f"JSON records should map headers to values. Got: {parsed['records']}"
         hints:
-          - text: "Your JsonFormat.format_report() should build a list of dictionaries (one per row), mapping headers to cell values, then return `json.dumps(...)` of the result."
+          - text: "Your JsonFormat.format_report() should return `json.dumps(...)` with a 'records' key containing a list of dicts."
+            condition: "default"
+      - description: "JSON export maps headers to values correctly"
+        command: |
+          g = {}
+          exec(open('/tutorial/report_exporter.py').read(), g)
+          import json
+          json_fmt = g['JsonFormat']()
+          result = json_fmt.format_report("Test", ["Name", "Score"], [["Alice", "95"]])
+          parsed = json.loads(result)
+          assert parsed["records"][0]["Name"] == "Alice", \
+              f"JSON records should map headers to values. Got: {parsed.get('records')}"
+        hints:
+          - text: "Build a list of dicts, one per row: `dict(zip(headers, row))` for each row."
+            condition: "default"
       - description: "Text export includes the title"
         command: |
           g = {}
@@ -2355,11 +2481,10 @@ steps:
             - "    elif channel_name == \"sms\":"
             - "        self._channels.append(channel_name)"
           explanation: |
-            The correct order defines: (1) the ABC import, (2) the abstract `NotificationChannel` with a `deliver` method, (3) a concrete `EmailChannel` that implements `deliver`, and (4) a `NotificationRouter` that delegates to channel objects via a dictionary lookup.
-            The distractors use if/elif chains and list appends — these are the old OCP-violating patterns. The polymorphic design replaces if/elif with dictionary dispatch and method delegation.
+            The correct order builds: (1) ABC import, (2) abstract `NotificationChannel` with `deliver`, (3) concrete `EmailChannel` implementing it, (4) a `NotificationRouter` that delegates via dictionary lookup. The distractors use if/elif chains and list appends — the old broken patterns. Polymorphism replaces all of that with dictionary dispatch and method delegation.
 
         - question: |
-            In the refactored `ReportExporter`, you created separate classes for `CsvFormat`, `JsonFormat`, and `TextFormat`. **Thinking back to the Single Responsibility Principle (SRP):** does each format class have one reason to change?
+            In the refactored `ReportExporter`, you created separate classes for `CsvFormat`, `JsonFormat`, and `TextFormat`. **Thinking back to SRP:** does each format class have one reason to change?
           type: single
           options:
             - "No — each class handles both formatting and export coordination, which are two responsibilities"
@@ -2368,11 +2493,10 @@ steps:
             - "Yes — but only because they are small classes; SRP does not apply to classes with fewer than 50 lines"
           correct_index: 1
           explanation: |
-            Each concrete format class has exactly **one reason to change**: when the serialization rules for *that specific format* change. `CsvFormat` only changes if CSV formatting needs to change; `JsonFormat` only changes for JSON-related reasons. This is SRP in action.
-            Sharing an abstract base class does not violate SRP — the ABC defines a *contract*, and adding a new abstract method is rare and deliberate. SRP applies regardless of class size.
+            Each format class has exactly **one reason to change**: when its specific serialization rules change. `CsvFormat` only changes for CSV reasons; `JsonFormat` only for JSON reasons. That's SRP working as intended. Sharing an abstract base class doesn't violate SRP — the ABC is a contract, and SRP applies regardless of class size.
 
         - question: |
-            A teammate proposes adding a `MarkdownFormat` to the refactored `ReportExporter`. Which files or classes would they need to **modify**?
+            A teammate wants to add a `MarkdownFormat` to the refactored `ReportExporter`. What do they need to **modify**?
           type: single
           options:
             - "They must modify `ReportExporter.export()` to add a new elif branch for 'markdown'"
@@ -2381,8 +2505,7 @@ steps:
             - "They must modify all three existing format classes to ensure compatibility with the new format"
           correct_index: 2
           explanation: |
-            This is the payoff of OCP. Adding a new format means writing a **new** `MarkdownFormat(ExportFormat)` class and registering it. The `ReportExporter` class, the `ExportFormat` ABC, and all existing format classes remain untouched.
-            Compare this to Step 4, where adding Slack required editing the `NotificationRouter` class directly.
+            This is the whole payoff of OCP. Adding Markdown means writing a **new** `MarkdownFormat(ExportFormat)` class and registering it. `ReportExporter`, `ExportFormat`, and all existing format classes stay untouched. Compare that to Step 4, where adding Slack meant surgery on the `NotificationRouter` itself.
 
         - question: |
             Which of the following are **benefits** of the refactored polymorphic design over the original if/elif chain?
@@ -2394,8 +2517,7 @@ steps:
             - "The polymorphic design uses less memory because abstract classes are more efficient than if/elif chains"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are genuine benefits of the OCP-compliant design. Each format class is independently testable (benefit 1), new formats do not touch existing code (benefit 2), and the exporter is simpler because it delegates details to the format objects (benefit 3).
-            The fourth option is false — polymorphism does not inherently save memory, and in Python the difference is negligible. The benefits of OCP are about **maintainability and safety**, not performance.
+            The first three are legit benefits. Each format is independently testable, new formats can't break existing ones, and the exporter is cleaner because it just dispatches. The fourth is cap — polymorphism doesn't inherently save memory, and in Python the difference is negligible. OCP is about **maintainability and safety**, not performance.
   # --------------------------------------------------------------------------
   # STEP 6 — LSP: Broken Promises (Liskov Substitution Principle)
   # Pedagogy:
@@ -2413,20 +2535,20 @@ steps:
 
       ### The Principle
 
-      Barbara Liskov's rule (1987) boils down to one sentence:
+      Barbara Liskov dropped this rule back in 1987 and it still hits:
 
       > *If S is a subtype of T, then objects of type T may be replaced with objects of type S without altering any desirable property of the program.*
 
-      In everyday terms: **inheritance means preserving behavioral promises.** A subclass must:
+      In plain English: **inheritance means keeping your promises.** A subclass must:
 
       - **Accept AT LEAST what the parent accepts** (preconditions may be equal or *weaker*)
       - **Guarantee AT LEAST what the parent guarantees** (postconditions may be equal or *stronger*)
 
-      Violate either rule and code that depends on the parent's contract will break when it encounters the subclass.
+      Break either rule and code that trusts the parent's contract will blow up when it meets the subclass.
 
       ### The Payment Processing System
 
-      Open `payments.py`. You will find a working payment system:
+      Open `payments.py`. You'll find a working payment system:
 
       - `PaymentProcessor` (ABC) — defines two methods:
         - `process_payment(amount)` — accepts any positive amount, returns `{"success": True, "txn_id": ...}`
@@ -2435,7 +2557,7 @@ steps:
       - `DebitCardProcessor` — honors the full contract
       - `checkout(processors, amounts)` — iterates processors polymorphically: processes all payments, stores transaction IDs, then refunds them all (simulating a test/rollback scenario)
 
-      Run the tests now. They pass.
+      Run the tests now. They pass. Everything's chill.
 
       ### Predict Before You Code
 
@@ -2454,9 +2576,9 @@ steps:
 
       ### Why Is Returning `{"success": False}` a Violation?
 
-      A common reaction: *"But I am returning a dict with the right keys — I am just setting success to False."*
+      You might be thinking: *"But I'm returning a dict with the right keys — I'm just setting success to False."*
 
-      The postcondition of `refund()` is not merely "return a dict." It is **"successfully refund the transaction and return the refunded amount."** Callers depend on this guarantee. A function that silently fails while claiming to conform to the interface is *more dangerous* than one that raises an exception — because the caller has no reason to check for failure.
+      The postcondition of `refund()` isn't just "return a dict." It's **"actually refund the transaction and return the refunded amount."** Callers depend on that guarantee. A function that silently fails while wearing the same interface is *more dangerous* than one that crashes — because the caller has zero reason to suspect anything went wrong.
 
       ### The Fix: Split the Interface
 
@@ -3302,7 +3424,17 @@ steps:
             condition: "code_missing: class GiftCardProcessor"
           - text: "Your GiftCardProcessor exists. Make sure process_payment raises ValueError with a message containing 'balance' when amount exceeds the card balance."
             condition: "code_contains: class GiftCardProcessor"
-      - description: "GiftCardProcessor weakens postcondition (refund returns success=False)"
+      - description: "GiftCardProcessor has a refund() method"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('payments',):
+                  del sys.modules[m]
+          from payments import GiftCardProcessor
+          gc = GiftCardProcessor(balance=100.00)
+          assert hasattr(gc, 'refund') and callable(gc.refund), \
+              "GiftCardProcessor must have a refund() method for this demonstration"
+      - description: "GiftCardProcessor.refund() returns success=False (weakened postcondition)"
         command: |
           import sys
           for m in list(sys.modules):
@@ -3311,17 +3443,24 @@ steps:
           from payments import GiftCardProcessor
           gc = GiftCardProcessor(balance=100.00)
           result = gc.process_payment(50.00)
-          try:
-              refund_result = gc.refund(result["txn_id"])
-              assert refund_result["success"] is False, \
-                  "GiftCardProcessor.refund() should return success=False"
-              assert "error" in refund_result or "non-refundable" in str(refund_result).lower(), \
-                  "refund result should contain an error message about non-refundability"
-          except AttributeError:
-              assert False, "GiftCardProcessor must have a refund() method for this demonstration"
-          except NotImplementedError:
-              assert False, "refund() should return a dict with success=False, not raise NotImplementedError"
-      - description: "CreditCardProcessor still passes contract test"
+          refund_result = gc.refund(result["txn_id"])
+          assert isinstance(refund_result, dict), \
+              f"refund() should return a dict, got {type(refund_result)}"
+          assert refund_result["success"] is False, \
+              f"GiftCardProcessor.refund() should return success=False, got {refund_result.get('success')}"
+      - description: "GiftCardProcessor.refund() explains non-refundability"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('payments',):
+                  del sys.modules[m]
+          from payments import GiftCardProcessor
+          gc = GiftCardProcessor(balance=100.00)
+          result = gc.process_payment(50.00)
+          refund_result = gc.refund(result["txn_id"])
+          assert "error" in refund_result or "non-refundable" in str(refund_result).lower(), \
+              f"refund result should contain an error message about non-refundability. Got: {refund_result}"
+      - description: "CreditCardProcessor.process_payment() returns success with txn_id"
         command: |
           import sys
           for m in list(sys.modules):
@@ -3330,12 +3469,25 @@ steps:
           from payments import CreditCardProcessor
           cc = CreditCardProcessor()
           result = cc.process_payment(100.00)
-          assert result["success"] is True
-          assert "txn_id" in result
+          assert result["success"] is True, \
+              f"CreditCardProcessor.process_payment() should return success=True, got {result.get('success')}"
+          assert "txn_id" in result, \
+              f"CreditCardProcessor.process_payment() should return a txn_id. Got keys: {list(result.keys())}"
+      - description: "CreditCardProcessor.refund() returns success with correct amount"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('payments',):
+                  del sys.modules[m]
+          from payments import CreditCardProcessor
+          cc = CreditCardProcessor()
+          result = cc.process_payment(100.00)
           refund = cc.refund(result["txn_id"])
-          assert refund["success"] is True
-          assert refund["amount"] == 100.00
-      - description: "DebitCardProcessor still passes contract test"
+          assert refund["success"] is True, \
+              f"CreditCardProcessor.refund() should return success=True, got {refund.get('success')}"
+          assert refund["amount"] == 100.00, \
+              f"Refund amount should be 100.00, got {refund.get('amount')}"
+      - description: "DebitCardProcessor.process_payment() returns success"
         command: |
           import sys
           for m in list(sys.modules):
@@ -3344,11 +3496,23 @@ steps:
           from payments import DebitCardProcessor
           dc = DebitCardProcessor(account_balance=500.00)
           result = dc.process_payment(200.00)
-          assert result["success"] is True
+          assert result["success"] is True, \
+              f"DebitCardProcessor.process_payment() should return success=True, got {result.get('success')}"
+      - description: "DebitCardProcessor.refund() returns success with correct amount"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('payments',):
+                  del sys.modules[m]
+          from payments import DebitCardProcessor
+          dc = DebitCardProcessor(account_balance=500.00)
+          result = dc.process_payment(200.00)
           refund = dc.refund(result["txn_id"])
-          assert refund["success"] is True
-          assert refund["amount"] == 200.00
-      - description: "Media player hierarchy: LiveStreamPlayer does not raise NotImplementedError"
+          assert refund["success"] is True, \
+              f"DebitCardProcessor.refund() should return success=True, got {refund.get('success')}"
+          assert refund["amount"] == 200.00, \
+              f"Refund amount should be 200.00, got {refund.get('amount')}"
+      - description: "LiveStreamPlayer can play() and stop() without errors"
         command: |
           import sys
           for m in list(sys.modules):
@@ -3358,21 +3522,42 @@ steps:
           ls = LiveStreamPlayer("Test Stream")
           ls.play()
           ls.stop()
-          # Verify seek/get_duration are NOT on LiveStreamPlayer
+      - description: "LiveStreamPlayer.seek() does not raise NotImplementedError"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import LiveStreamPlayer
+          ls = LiveStreamPlayer("Test Stream")
           has_seek = hasattr(ls, 'seek') and callable(getattr(ls, 'seek', None))
-          has_duration = hasattr(ls, 'get_duration') and callable(getattr(ls, 'get_duration', None))
           if has_seek:
               try:
                   ls.seek(0)
-                  # If it doesn't raise, that is fine (maybe they kept it but made it work)
               except NotImplementedError:
-                  assert False, "LiveStreamPlayer should NOT have seek() that raises NotImplementedError. Remove it or split the hierarchy."
+                  assert False, \
+                      "LiveStreamPlayer should NOT have seek() that raises NotImplementedError. " \
+                      "Remove it or split the hierarchy so LiveStreamPlayer does not inherit seek()."
+        hints:
+          - text: "Split MediaPlayer into a base class (play/stop) and SeekablePlayer (adds seek/get_duration). LiveStreamPlayer should extend only the base class."
+            condition: "code_missing: class SeekablePlayer"
+      - description: "LiveStreamPlayer.get_duration() does not raise NotImplementedError"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import LiveStreamPlayer
+          ls = LiveStreamPlayer("Test Stream")
+          has_duration = hasattr(ls, 'get_duration') and callable(getattr(ls, 'get_duration', None))
           if has_duration:
               try:
                   ls.get_duration()
               except NotImplementedError:
-                  assert False, "LiveStreamPlayer should NOT have get_duration() that raises NotImplementedError. Split the hierarchy."
-      - description: "Media player: playlist_renderer handles all types without crashing"
+                  assert False, \
+                      "LiveStreamPlayer should NOT have get_duration() that raises NotImplementedError. " \
+                      "Split the hierarchy so LiveStreamPlayer does not inherit get_duration()."
+      - description: "playlist_renderer returns an entry for each player"
         command: |
           import sys
           for m in list(sys.modules):
@@ -3386,13 +3571,42 @@ steps:
           ]
           entries = playlist_renderer(players)
           assert len(entries) == 3, f"Expected 3 entries, got {len(entries)}"
-          assert entries[0]["has_progress_bar"] is True, "Audio file should have a progress bar"
-          assert entries[2]["has_progress_bar"] is False, "Live stream should NOT have a progress bar"
         hints:
           - text: "Split MediaPlayer into a base class (play/stop) and SeekablePlayer (adds seek/get_duration). LiveStreamPlayer should extend only the base class."
             condition: "code_missing: class SeekablePlayer"
-          - text: "Good, you have SeekablePlayer. Now update playlist_renderer to check isinstance(player, SeekablePlayer) before calling seek() or get_duration()."
+      - description: "playlist_renderer shows progress bar for seekable files"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
+          players = [
+              AudioFilePlayer("Song.mp3", duration=240),
+              VideoFilePlayer("Movie.mp4", duration=7200),
+              LiveStreamPlayer("CNN Live"),
+          ]
+          entries = playlist_renderer(players)
+          assert entries[0]["has_progress_bar"] is True, \
+              "Audio file should have a progress bar (it is seekable)"
+        hints:
+          - text: "Update playlist_renderer to check isinstance(player, SeekablePlayer) before calling seek() or get_duration(). Set has_progress_bar=True for seekable players."
             condition: "code_contains: class SeekablePlayer"
+      - description: "playlist_renderer hides progress bar for live streams"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
+          players = [
+              AudioFilePlayer("Song.mp3", duration=240),
+              VideoFilePlayer("Movie.mp4", duration=7200),
+              LiveStreamPlayer("CNN Live"),
+          ]
+          entries = playlist_renderer(players)
+          assert entries[2]["has_progress_bar"] is False, \
+              "Live stream should NOT have a progress bar (it is not seekable)"
 
     quiz:
       title: "Liskov Substitution Principle — Knowledge Check"
@@ -3410,7 +3624,7 @@ steps:
             - "Add new methods that the parent does not have"
           correct_indices: [0, 1]
           explanation: |
-            LSP is about **behavioral compatibility**. A subclass must not reject inputs the parent accepts (no strengthening preconditions) and must not weaken the guarantees the parent makes (no weakening postconditions). Overriding every method or adding new methods are unrelated to LSP.
+            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions) and can't break guarantees the parent makes (no weakening postconditions). Overriding every method or adding new methods are completely unrelated to LSP.
 
         - question: |
             A `PaymentProcessor` base class defines `refund(txn_id)` with the postcondition "returns `{"success": True, "amount": <float>}`." A `GiftCardProcessor` subclass returns `{"success": False, "error": "non-refundable"}` instead. A teammate argues: *"It still returns a dict with the right keys, so it follows the contract."*
@@ -3424,7 +3638,7 @@ steps:
             - "Because the base class should not have a refund method at all"
           correct_index: 1
           explanation: |
-            The postcondition is not just "return a dict" — it is "**successfully** refund and return the amount." Returning `success=False` silently breaks the contract. Callers that trust the postcondition will proceed as if the refund succeeded. This is actually *more* dangerous than raising an exception, because it fails silently.
+            The postcondition isn't just "return a dict" — it's "**actually refund** and return the amount." Returning `success=False` silently breaks that promise. Callers that trust the contract will keep going as if the refund worked. That's actually *worse* than crashing — at least a crash tells you something went wrong.
 
         - question: |
             Consider this code:
@@ -3449,7 +3663,7 @@ steps:
             - "This is fine — NotImplementedError is the standard way to indicate unsupported operations"
           correct_index: 1
           explanation: |
-            If `Bird` promises that `fly()` works, then `Penguin` violating that promise breaks any code that iterates over a list of `Bird` objects and calls `fly()`. The fix is the same pattern as our payment and media player examples: split into `Bird` (base) and `FlyingBird` (adds `fly()`). `NotImplementedError` in a concrete subclass is a strong code smell indicating an LSP violation.
+            If `Bird` promises `fly()` works, then `Penguin` breaking that promise will crash any code that loops over birds and calls `fly()`. The fix is the same pattern we've been using: split into `Bird` (base) and `FlyingBird` (adds `fly()`). Seeing `NotImplementedError` in a concrete subclass is basically a flashing neon sign saying "LSP violation here."
 
         - question: |
             A base class method `calculate_shipping(weight)` accepts any positive weight. A subclass overrides it to reject weights above 50 kg. This is an example of:
@@ -3461,7 +3675,7 @@ steps:
             - "Weakening a postcondition — an LSP violation"
           correct_index: 0
           explanation: |
-            The base class accepts *any* positive weight. The subclass rejects weights above 50 kg — it accepts a *smaller* set of inputs. This **strengthens** the precondition, which violates LSP. Code that passes 75 kg to a base-class reference will crash when it gets the subclass. The fix: declare the weight limit explicitly (e.g., a `max_weight` property) instead of silently restricting the input range.
+            The base class accepts *any* positive weight. The subclass rejects weights above 50 kg — it accepts a *smaller* set of inputs. That's **strengthening** the precondition, which violates LSP. Code that passes 75 kg expecting it to work will blow up when it gets the subclass. Fix: declare the weight limit explicitly (e.g., a `max_weight` property) instead of silently restricting inputs.
   # --------------------------------------------------------------------------
   # STEP 7 — "ISP — Lean Interfaces"
   # Pedagogy:
@@ -3474,22 +3688,22 @@ steps:
     instructions: |
       ## The Interface Segregation Principle
 
-      > **Learning objective:** After this step you will be able to **identify** fat interfaces that force clients to depend on methods they do not use, and **refactor** them into lean, role-based interfaces.
+      > **Learning objective:** After this step you will be able to **identify** fat interfaces that force clients to depend on methods they don't use, and **refactor** them into lean, role-based interfaces.
 
       ### The Principle
 
       > *"Clients should not be forced to depend on methods they do not use."*
       > — Robert C. Martin
 
-      When an interface grows too large, implementers that only need a subset of its methods are forced to provide stub implementations — methods that do nothing or raise errors. This wastes developer effort, confuses readers, and creates **latent bugs**: code that compiles and type-checks but crashes at runtime.
+      When an interface gets too thicc, implementers that only need a few of its methods are forced to write stub implementations — methods that do nothing or raise errors. This wastes effort, confuses anyone reading the code, and creates **latent bugs**: code that looks fine but crashes at runtime.
 
       ### Bridge from LSP
 
-      Remember the Liskov Substitution Principle from the previous step? ISP **prevents** LSP violations structurally. If `FreeStorage` does not inherit a `sync()` method, it can never break the sync contract. The problem is eliminated at the type level, not patched at the implementation level.
+      Remember LSP from the previous step? ISP **prevents** LSP violations at the structural level. If `FreeStorage` never inherits a `sync()` method, it can never break the sync contract. Problem eliminated before it starts.
 
       ### The Scenario
 
-      You are building a cloud storage service with two tiers: **Premium** and **Free**. Below is the current `CloudStorage` abstract base class. It defines six capabilities:
+      You're building a cloud storage service with two tiers: **Premium** and **Free**. Here's the current `CloudStorage` abstract base class with six capabilities:
 
       | Method | Premium | Free |
       |---|---|---|
@@ -3500,17 +3714,17 @@ steps:
       | `encrypt(file_id)` | Yes | **No** |
       | `get_version_history(file_id)` | Yes | **No** |
 
-      `PremiumStorage` implements all six methods. Your task is to create a `FreeStorage` class that also extends `CloudStorage`. But Free users can only upload and download — they cannot sync, share, encrypt, or view version history.
+      `PremiumStorage` implements all six. Your task is to create a `FreeStorage` class that extends `CloudStorage`. But Free users can only upload and download — no sync, share, encrypt, or version history.
 
       ### Your Task
 
-      Open `cloud_storage.py`. Implement the `FreeStorage` class so that it inherits from `CloudStorage` and:
+      Open `cloud_storage.py`. Implement `FreeStorage` so it inherits from `CloudStorage` and:
 
       1. Implements `upload()` to store the file and return `True`.
       2. Implements `download()` to return the stored file name.
       3. Implements `sync()`, `share()`, `encrypt()`, and `get_version_history()` to raise `NotImplementedError("Upgrade to Premium")`.
 
-      After you get the tests to pass, try calling `backup_service(FreeStorage())` in your head. What happens? The backup service **expects** any `CloudStorage` to support `sync()`, but `FreeStorage` explodes at runtime. This is the pain of a fat interface.
+      After the tests pass, think about what happens if someone calls `backup_service(FreeStorage())`. The backup service **expects** any `CloudStorage` to support `sync()`, but `FreeStorage` explodes at runtime. That's what a fat interface does to you.
 
       ### What ISP Would Look Like
 
@@ -4219,21 +4433,44 @@ steps:
               assert False, "backup_service(FreeStorage()) should crash — sync() is not supported"
           except NotImplementedError:
               pass  # This is the expected ISP pain point
-      - description: "SmartLight implements only Dimmable (not Lockable, Playable, etc.)"
+      - description: "Dimmable role interface exists as an ABC"
         command: |
           exec(open('/tutorial/smart_home.py').read())
-          import abc as _abc
-
-          # Verify role interfaces exist
-          for iface in ["Dimmable", "Playable", "TemperatureControllable", "Lockable"]:
-              assert iface in dir(), f"Role interface {iface} not found. Define it as an ABC."
-
-          # Verify SmartLight implements Dimmable
+          assert 'Dimmable' in dir(), "Role interface Dimmable not found. Define it as an ABC."
+        hints:
+          - text: "Define `class Dimmable(ABC):` with an abstract method `dim_lights(self, level)`."
+            condition: "default"
+      - description: "Playable role interface exists as an ABC"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          assert 'Playable' in dir(), "Role interface Playable not found. Define it as an ABC."
+        hints:
+          - text: "Define `class Playable(ABC):` with an abstract method `play_music(self, song)`."
+            condition: "default"
+      - description: "TemperatureControllable role interface exists as an ABC"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          assert 'TemperatureControllable' in dir(), "Role interface TemperatureControllable not found. Define it as an ABC."
+        hints:
+          - text: "Define `class TemperatureControllable(ABC):` with an abstract method `set_temperature(self, temp)`."
+            condition: "default"
+      - description: "Lockable role interface exists as an ABC"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          assert 'Lockable' in dir(), "Role interface Lockable not found. Define it as an ABC."
+        hints:
+          - text: "Define `class Lockable(ABC):` with an abstract method `lock_door(self)`."
+            condition: "default"
+      - description: "SmartLight implements Dimmable"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
           light = SmartLight("Living Room")
           assert isinstance(light, Dimmable), \
               "SmartLight should implement Dimmable"
-
-          # Verify SmartLight does NOT implement unrelated interfaces
+      - description: "SmartLight does NOT implement Playable, TemperatureControllable, or Lockable"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          light = SmartLight("Living Room")
           assert not isinstance(light, Playable), \
               "SmartLight should NOT implement Playable — it cannot play music"
           assert not isinstance(light, TemperatureControllable), \
@@ -4241,38 +4478,50 @@ steps:
           assert not isinstance(light, Lockable), \
               "SmartLight should NOT implement Lockable — it is not a lock"
         hints:
-          - text: "Define four ABCs: Dimmable (with dim_lights), Playable (with play_music), TemperatureControllable (with set_temperature), and Lockable (with lock_door). SmartLight should only inherit from Dimmable."
+          - text: "SmartLight should only inherit from Dimmable, not from the other role interfaces."
             condition: "default"
-      - description: "SmartSpeaker implements only Playable"
+      - description: "SmartSpeaker implements Playable"
         command: |
           exec(open('/tutorial/smart_home.py').read())
           speaker = SmartSpeaker("Kitchen")
           assert isinstance(speaker, Playable), \
               "SmartSpeaker should implement Playable"
+      - description: "SmartSpeaker does NOT implement Dimmable, TemperatureControllable, or Lockable"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          speaker = SmartSpeaker("Kitchen")
           assert not isinstance(speaker, Dimmable), \
               "SmartSpeaker should NOT implement Dimmable"
           assert not isinstance(speaker, TemperatureControllable), \
               "SmartSpeaker should NOT implement TemperatureControllable"
           assert not isinstance(speaker, Lockable), \
               "SmartSpeaker should NOT implement Lockable"
-      - description: "SmartThermostat implements only TemperatureControllable"
+      - description: "SmartThermostat implements TemperatureControllable"
         command: |
           exec(open('/tutorial/smart_home.py').read())
           thermo = SmartThermostat("Bedroom")
           assert isinstance(thermo, TemperatureControllable), \
               "SmartThermostat should implement TemperatureControllable"
+      - description: "SmartThermostat does NOT implement Dimmable, Playable, or Lockable"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          thermo = SmartThermostat("Bedroom")
           assert not isinstance(thermo, Dimmable), \
               "SmartThermostat should NOT implement Dimmable"
           assert not isinstance(thermo, Playable), \
               "SmartThermostat should NOT implement Playable"
           assert not isinstance(thermo, Lockable), \
               "SmartThermostat should NOT implement Lockable"
-      - description: "SmartLock implements only Lockable"
+      - description: "SmartLock implements Lockable"
         command: |
           exec(open('/tutorial/smart_home.py').read())
           lock = SmartLock("Front Door")
           assert isinstance(lock, Lockable), \
               "SmartLock should implement Lockable"
+      - description: "SmartLock does NOT implement Dimmable, Playable, or TemperatureControllable"
+        command: |
+          exec(open('/tutorial/smart_home.py').read())
+          lock = SmartLock("Front Door")
           assert not isinstance(lock, Dimmable), \
               "SmartLock should NOT implement Dimmable"
           assert not isinstance(lock, Playable), \
@@ -4296,7 +4545,7 @@ steps:
             - "ISP is a stricter version of SRP — every ISP-compliant class automatically satisfies SRP"
           correct_index: 1
           explanation: |
-            SRP and ISP address different concerns. **SRP** says a class should serve one actor (internal cohesion). **ISP** says an interface should not force clients to depend on methods they do not use (external contract). A class can satisfy SRP (single actor) while violating ISP (exposing too many methods to certain clients), and vice versa.
+            SRP and ISP tackle different things. **SRP** = a class should serve one actor (internal cohesion). **ISP** = an interface shouldn't force clients to depend on methods they don't use (external contract). You can satisfy SRP while violating ISP, and vice versa. They're complementary, not synonymous.
 
         - question: |
             How does ISP help prevent LSP violations?
@@ -4308,7 +4557,7 @@ steps:
             - "ISP and LSP are unrelated principles that solve different problems"
           correct_index: 1
           explanation: |
-            ISP prevents LSP violations **structurally**. In the exercise, `FreeStorage` was forced to inherit `sync()` from `CloudStorage` and could only raise `NotImplementedError` — a clear LSP violation. With segregated interfaces, `FreeStorage` would not inherit `Syncable`, so it would be **impossible** for it to break the sync contract. The violation is eliminated at the design level, not patched at runtime.
+            ISP prevents LSP violations **by design**. In the exercise, `FreeStorage` was forced to inherit `sync()` and could only raise `NotImplementedError` — textbook LSP violation. With segregated interfaces, `FreeStorage` wouldn't inherit `Syncable` at all, making it **impossible** to break the sync contract. Problem solved at the design level, not patched at runtime.
 
         - question: |
             A colleague proposes splitting a 6-method interface into 6 single-method interfaces — one per method. Is this always a good idea?
@@ -4320,7 +4569,7 @@ steps:
             - "No — ISP says you should never split interfaces at all"
           correct_index: 1
           explanation: |
-            ISP is about **role-based** segregation, not mechanical splitting. Splitting into one-method-per-interface creates interface explosion: classes need long inheritance lists, developers struggle to discover which interfaces exist, and related operations get separated unnecessarily. The goal is to group methods that **change together** and are **used together** by the same clients. For example, `Uploadable` might reasonably include both `upload()` and `get_upload_status()` if every client that uploads also checks status.
+            ISP is about **role-based** grouping, not splitting everything into atoms. One-method-per-interface creates an explosion of tiny interfaces that are a nightmare to discover and compose. The goal is to group methods that **change together** and are **used together** by the same clients. For example, `Uploadable` can reasonably include both `upload()` and `get_upload_status()` if every client that uploads also checks status.
 
 
   # --------------------------------------------------------------------------
@@ -4339,15 +4588,15 @@ steps:
 
       ### The Principle
 
-      > *"High-level modules should not depend on low-level modules. Both should depend on abstractions. Abstractions should not depend on details. Details should depend on abstractions."*
+      > *"High-level modules should not depend on low-level modules. Both should depend on abstractions."*
       > — Robert C. Martin
 
-      ### Key Insight: DIP is not Dependency Injection
+      ### DIP is NOT Dependency Injection
 
-      These two concepts are often confused, but they are different:
+      People mix these up constantly, but they're different things:
 
-      - **DIP** (Dependency Inversion Principle) = an **architectural decision** to depend on abstractions rather than concrete implementations. It dictates the direction of dependencies: high-level policy owns the interface, low-level details implement it.
-      - **DI** (Dependency Injection) = a **mechanism** for passing dependencies via constructor, method parameters, or a framework. DI is one way to *achieve* DIP, but you can have DI without DIP (injecting a concrete class) and DIP without DI (using a factory or service locator).
+      - **DIP** (Dependency Inversion Principle) = an **architectural decision** to depend on abstractions instead of concrete implementations. High-level policy owns the interface, low-level details implement it.
+      - **DI** (Dependency Injection) = a **mechanism** for passing dependencies via constructor, method parameters, or a framework. DI is one way to *achieve* DIP, but you can have DI without DIP (injecting a concrete class) and DIP without DI (using a factory).
 
       ### The Scenario
 
@@ -4359,14 +4608,14 @@ steps:
 
       ### Your Task
 
-      Open `order_service.py`. Try to write a unit test for `place_order()` that verifies the order total is calculated correctly (items cost $29.99 and $49.99, total should be $79.98). You will find that your test **triggers all three external services** — database writes, payment charges, and emails — because `OrderService` directly creates these dependencies. There is no way to swap them out.
+      Open `order_service.py`. Try to write a unit test for `place_order()` that checks the order total (items cost $29.99 and $49.99, total should be $79.98). You'll discover your test **triggers all three external services** — database writes, payment charges, emails — because `OrderService` hard-codes its dependencies. There's no way to swap them out.
 
-      Implement the `test_order_total_calculation()` function so that it:
+      Implement `test_order_total_calculation()` so it:
       1. Creates an `OrderService` instance.
       2. Calls `place_order()` with two items.
       3. Asserts the returned total equals the expected sum.
 
-      The test will "pass" in terms of the assertion, but notice all the `[POSTGRES]`, `[STRIPE]`, and `[SENDGRID]` print output — your "unit" test is hitting every external service.
+      The test will "pass" in terms of the assertion, but look at all the `[POSTGRES]`, `[STRIPE]`, and `[SENDGRID]` print spam — your "unit" test is hitting every external service. That's not a unit test, that's an integration test in disguise.
 
       ### Worked Example: Applying DIP
 
@@ -5103,30 +5352,60 @@ steps:
         hints:
           - text: "Create an OrderService, call place_order() with items costing $29.99 and $49.99, and assert that result['total'] is approximately 79.98."
             condition: "default"
-      - description: "WeatherProvider ABC exists with abstract methods"
+      - description: "WeatherProvider ABC exists and inherits from ABC"
         command: |
           exec(open('/tutorial/weather_dashboard.py').read())
           import abc as _abc
           assert 'WeatherProvider' in dir(), "WeatherProvider ABC not found"
-          wp = WeatherProvider
-          assert issubclass(wp, _abc.ABC), "WeatherProvider should be an ABC"
-          abstract_methods = getattr(wp, '__abstractmethods__', set())
+          assert issubclass(WeatherProvider, _abc.ABC), "WeatherProvider should be an ABC"
+        hints:
+          - text: "Define `class WeatherProvider(ABC):` with abstract methods for get_current() and get_forecast()."
+            condition: "default"
+      - description: "WeatherProvider has abstract method get_current()"
+        command: |
+          exec(open('/tutorial/weather_dashboard.py').read())
+          abstract_methods = getattr(WeatherProvider, '__abstractmethods__', set())
           assert 'get_current' in abstract_methods, \
               "WeatherProvider should have abstract method get_current()"
+        hints:
+          - text: "Add `@abstractmethod` decorator before `def get_current(self, city):` inside WeatherProvider."
+            condition: "default"
+      - description: "WeatherProvider has abstract method get_forecast()"
+        command: |
+          exec(open('/tutorial/weather_dashboard.py').read())
+          abstract_methods = getattr(WeatherProvider, '__abstractmethods__', set())
           assert 'get_forecast' in abstract_methods, \
               "WeatherProvider should have abstract method get_forecast()"
-      - description: "WeatherCache ABC exists with abstract methods"
+        hints:
+          - text: "Add `@abstractmethod` decorator before `def get_forecast(self, city, days):` inside WeatherProvider."
+            condition: "default"
+      - description: "WeatherCache ABC exists and inherits from ABC"
         command: |
           exec(open('/tutorial/weather_dashboard.py').read())
           import abc as _abc
           assert 'WeatherCache' in dir(), "WeatherCache ABC not found"
-          wc = WeatherCache
-          assert issubclass(wc, _abc.ABC), "WeatherCache should be an ABC"
-          abstract_methods = getattr(wc, '__abstractmethods__', set())
+          assert issubclass(WeatherCache, _abc.ABC), "WeatherCache should be an ABC"
+        hints:
+          - text: "Define `class WeatherCache(ABC):` with abstract methods for get() and set()."
+            condition: "default"
+      - description: "WeatherCache has abstract method get()"
+        command: |
+          exec(open('/tutorial/weather_dashboard.py').read())
+          abstract_methods = getattr(WeatherCache, '__abstractmethods__', set())
           assert 'get' in abstract_methods, \
               "WeatherCache should have abstract method get()"
+        hints:
+          - text: "Add `@abstractmethod` decorator before `def get(self, key):` inside WeatherCache."
+            condition: "default"
+      - description: "WeatherCache has abstract method set()"
+        command: |
+          exec(open('/tutorial/weather_dashboard.py').read())
+          abstract_methods = getattr(WeatherCache, '__abstractmethods__', set())
           assert 'set' in abstract_methods, \
               "WeatherCache should have abstract method set()"
+        hints:
+          - text: "Add `@abstractmethod` decorator before `def set(self, key, value):` inside WeatherCache."
+            condition: "default"
       - description: "OpenWeatherMapClient implements WeatherProvider"
         command: |
           exec(open('/tutorial/weather_dashboard.py').read())
@@ -5181,11 +5460,14 @@ steps:
         command: |
           exec(open('/tutorial/weather_dashboard.py').read())
           test_dashboard_uses_cache()
-      - description: "FakeWeatherProvider and FakeWeatherCache implement the correct ABCs"
+      - description: "FakeWeatherProvider implements WeatherProvider"
         command: |
           exec(open('/tutorial/weather_dashboard.py').read())
           assert issubclass(FakeWeatherProvider, WeatherProvider), \
               "FakeWeatherProvider should implement WeatherProvider"
+      - description: "FakeWeatherCache implements WeatherCache"
+        command: |
+          exec(open('/tutorial/weather_dashboard.py').read())
           assert issubclass(FakeWeatherCache, WeatherCache), \
               "FakeWeatherCache should implement WeatherCache"
 
@@ -5205,7 +5487,7 @@ steps:
             - "DIP only applies to databases and DI applies to all dependencies"
           correct_index: 1
           explanation: |
-            **DIP** is the architectural decision: high-level modules should depend on abstractions, not concrete low-level modules. **DI** is a technique for delivering those dependencies (constructor injection, method injection, framework-based injection). You can inject a concrete class (DI without DIP) or use a factory to create abstractions (DIP without DI). They are complementary but distinct concepts.
+            **DIP** = architectural decision (depend on abstractions, not concretions). **DI** = delivery mechanism (pass dependencies via constructor or parameters). You can inject a concrete class (DI without DIP) or use a factory to create abstractions (DIP without DI). Related but different concepts.
 
         - question: |
             In DIP, who "owns" the interface (abstraction)?
@@ -5217,7 +5499,7 @@ steps:
             - "The framework or dependency injection container"
           correct_index: 1
           explanation: |
-            This is the "inversion." In traditional layered architecture, high-level modules depend on low-level modules. With DIP, the high-level module defines the abstraction (`OrderRepository`, `PaymentGateway`) based on what **it** needs. The low-level module (`PostgresDatabase`, `StripePaymentGateway`) implements that abstraction. The dependency arrow is reversed: low-level depends on the abstraction defined by high-level.
+            This is where the "inversion" comes from. Traditionally, high-level depends on low-level. With DIP, the high-level module defines what it needs (`OrderRepository`, `PaymentGateway`), and the low-level module (`PostgresDatabase`, `StripePaymentGateway`) implements that interface. The dependency arrow flips — low-level now depends on the abstraction that high-level defined.
 
         - question: |
             A colleague refactors a class to accept its database connection as a constructor parameter instead of creating it internally: `__init__(self, db: PostgresDatabase)`. Does this satisfy DIP?
@@ -5229,7 +5511,7 @@ steps:
             - "No — DIP requires using a dependency injection framework"
           correct_index: 1
           explanation: |
-            This is a common misconception. Passing `PostgresDatabase` via constructor is **Dependency Injection** (the mechanism of providing dependencies externally), but not **Dependency Inversion** (the principle of depending on abstractions). To satisfy DIP, the parameter should be typed as an abstract interface (`OrderRepository`), not a concrete class. The class should not know or care whether it is talking to Postgres, MySQL, or an in-memory fake.
+            Classic misconception. Passing `PostgresDatabase` via constructor is **Dependency Injection** (delivering dependencies externally), but not **Dependency Inversion** (depending on abstractions). To actually satisfy DIP, the parameter should be an abstract interface (`OrderRepository`), not a concrete class. Your class shouldn't know or care whether it's talking to Postgres, MySQL, or an in-memory fake.
 
         - question: |
             Which of the following are benefits of applying DIP to the `WeatherDashboard`?
@@ -5241,7 +5523,7 @@ steps:
             - "You can use a Redis cache instead of MongoDB by implementing the WeatherCache interface"
           correct_indices: [0, 1, 3]
           explanation: |
-            DIP enables **testability** (use fakes instead of real services), **flexibility** (swap implementations without changing the high-level module), and **extensibility** (add new providers or caches by implementing the interface). It does **not** make code faster — abstractions add a tiny layer of indirection. The performance benefit comes from being able to test thoroughly and catch bugs early, not from runtime speed.
+            DIP gives you **testability** (use fakes instead of real services), **flexibility** (swap implementations without changing the high-level module), and **extensibility** (new providers or caches just implement the interface). It does **not** make code faster — abstractions add a tiny layer of indirection. The real win is being able to test properly and catch bugs early.
   # --------------------------------------------------------------------------
   # STEP 9 — "Integration — Which Principle?"
   # Pedagogy:
@@ -5254,19 +5536,19 @@ steps:
     instructions: |
       ## Can You Spot the Violation?
 
-      > **Learning objective:** After this step you will be able to **identify** which SOLID principle (if any) a given code snippet violates, and **justify** your diagnosis with a brief explanation.
+      > **Learning objective:** After this step you will be able to **identify** which SOLID principle (if any) a given code snippet violates, and **justify** your diagnosis.
 
       ### Why This Matters
 
-      In real code reviews, violations do not come labelled. You need to look at a class or function and *recognize the smell* from its structure alone. This exercise interleaves all five principles so you practice **discrimination** — the skill of telling similar-looking problems apart.
+      In real code reviews, violations don't come with labels. You have to look at a class and *recognize the smell* from its structure alone. This exercise mixes all five principles so you practice **discrimination** — telling similar-looking problems apart.
 
       ### Your Task
 
-      Open `violations_gallery.py`. It contains six numbered classes. For each one:
+      Open `violations_gallery.py`. It has six numbered classes. For each one:
 
       1. **Read** the class carefully.
-      2. **Decide** which SOLID principle it violates — or whether it is well-designed.
-      3. **Add a comment** at the top of each class stating your diagnosis in this format:
+      2. **Decide** which SOLID principle it violates — or whether it's actually well-designed.
+      3. **Add a comment** at the top of each class with your diagnosis:
 
       ```python
       # DIAGNOSIS: <principle> violation — <one-sentence reason>
@@ -5279,16 +5561,16 @@ steps:
       # DIAGNOSIS: No violation — <brief justification>
       ```
 
-      **Hint:** Exactly one of the six classes has no violation. Do not assume every class is broken.
+      **Hint:** Exactly one of the six classes has no violation. Don't assume everything is broken.
 
       ### Thinking Checklist
 
-      For each class, ask yourself:
-      - **SRP:** Does this class serve more than one actor / have more than one reason to change?
+      For each class, run through these:
+      - **SRP:** Does this class serve more than one actor?
       - **OCP:** Would I need to modify this class (not extend it) to add a new variant?
-      - **LSP:** Could a subclass be substituted for its parent without breaking expectations?
-      - **ISP:** Are implementers forced to depend on methods they do not use?
-      - **DIP:** Does a high-level module directly instantiate or depend on a concrete low-level module?
+      - **LSP:** Could a subclass be swapped in for its parent without breaking things?
+      - **ISP:** Are implementers forced to depend on methods they don't use?
+      - **DIP:** Does a high-level module directly depend on a concrete low-level module?
 
     files:
       - path: "violations_gallery.py"
@@ -5676,7 +5958,7 @@ steps:
         | 5 | `ReportGenerator` | **DIP** | Directly instantiates `PdfRenderer` and `SqlConnection` — high-level policy depends on low-level details instead of abstractions. |
         | 6 | `UserValidator` | **None** | Follows all five principles: single responsibility, open for extension via new `ValidationRule` subclasses, substitutable rules, minimal interface, and depends on the `ValidationRule` abstraction. |
 
-        The trick question (Snippet 6) is the most important learning moment. Recognizing well-designed code is just as valuable as spotting violations — it prevents the over-engineering trap of "fixing" code that is already correct.
+        The trick question (Snippet 6) is the most important one here. Being able to recognize code that's already well-designed is just as valuable as spotting violations — otherwise you fall into the over-engineering trap of "fixing" code that doesn't need fixing.
 
     tests:
       - description: "You added DIAGNOSIS comments to violations_gallery.py"
@@ -5706,7 +5988,7 @@ steps:
             - "Interface Segregation Principle — the interface is too wide"
           correct_index: 1
           explanation: |
-            The `Logger` class serves two actors: whoever decides the **formatting policy** (timestamps, uppercasing) and whoever decides the **persistence policy** (file path, writing strategy). A change to the format (e.g., switching to JSON) forces touching the same class as a change to the output (e.g., switching to a network socket). This is an SRP violation.
+            `Logger` serves two actors: whoever decides the **formatting policy** (timestamps, uppercasing) and whoever decides the **persistence policy** (file path, writing strategy). Changing the format (e.g., switching to JSON) means touching the same class as changing the output (e.g., switching to a network socket). Textbook SRP violation.
 
         - question: |
             **Snippet 2 — DiscountEngine:** This class uses an if/elif chain to select discount logic based on a string type. Which principle does it violate?
@@ -5718,7 +6000,7 @@ steps:
             - "Dependency Inversion Principle — it depends on concrete strings instead of abstractions"
           correct_index: 2
           explanation: |
-            Every time the business adds a new discount type (e.g., "holiday", "referral"), a developer must open `DiscountEngine` and add another `elif` branch. The class is **not closed for modification**. An OCP-compliant design would use a strategy pattern or discount registry so new types can be added without touching existing code.
+            Every time the business adds a new discount type (e.g., "holiday", "referral"), someone has to open `DiscountEngine` and slap on another `elif`. The class is **not closed for modification**. An OCP-compliant design would use a strategy pattern or discount registry so new types plug in without touching existing code.
 
         - question: |
             **Snippet 3 — PremiumUser(User):** `PremiumUser.free_trial_signup()` raises `RuntimeError` instead of returning a string. Which principle does it violate?
@@ -5730,7 +6012,7 @@ steps:
             - "Single Responsibility Principle — PremiumUser has more than one reason to change"
           correct_index: 2
           explanation: |
-            Code that accepts a `User` and calls `free_trial_signup()` expects a string back. `PremiumUser` violates that contract by raising an exception. This means `PremiumUser` **cannot be substituted** for `User` without breaking callers — a textbook LSP violation. The fix would be to restructure the hierarchy so that `free_trial_signup()` is not part of the shared interface, or to have `PremiumUser` return a meaningful response instead of raising.
+            Code that takes a `User` and calls `free_trial_signup()` expects a string back. `PremiumUser` throws an exception instead. It **cannot be substituted** for `User` without breaking callers — textbook LSP violation. Fix: either restructure the hierarchy so `free_trial_signup()` isn't in the shared interface, or have `PremiumUser` return something meaningful instead of exploding.
 
         - question: |
             **Snippet 4 — DatabaseClient ABC:** Simple clients must implement `cache_query()`, `replicate()`, and `shard()` even if they only need `connect()`, `query()`, and `disconnect()`. Which principle does it violate?
@@ -5742,7 +6024,7 @@ steps:
             - "Single Responsibility Principle — the interface has too many responsibilities"
           correct_index: 2
           explanation: |
-            The `DatabaseClient` ABC bundles six methods into one interface, but most clients only need the core three (`connect`, `query`, `disconnect`). Forcing simple clients to implement `cache_query()`, `replicate()`, and `shard()` pollutes their code with stub methods or `raise NotImplementedError`. The fix is to split into smaller interfaces: a base `DatabaseClient` and separate `Cacheable`, `Replicable`, and `Shardable` interfaces.
+            `DatabaseClient` bundles six methods into one interface, but most clients only need three (`connect`, `query`, `disconnect`). Forcing simple clients to implement `cache_query()`, `replicate()`, and `shard()` fills their code with useless stubs or `raise NotImplementedError`. Fix: split into a base `DatabaseClient` and separate `Cacheable`, `Replicable`, `Shardable` interfaces.
 
         - question: |
             **Snippet 5 — ReportGenerator:** This class directly instantiates `PdfRenderer()` and `SqlConnection()` in its constructor. Which principle does it violate?
@@ -5754,7 +6036,7 @@ steps:
             - "Open/Closed Principle — you cannot add new report types without modifying this class"
           correct_index: 0
           explanation: |
-            `ReportGenerator` is high-level policy (orchestrating report creation), but it directly creates `PdfRenderer` and `SqlConnection` — concrete low-level details. To switch to HTML rendering or a NoSQL database, you must modify `ReportGenerator` itself. The fix: define `Renderer` and `DataSource` abstractions (ABCs) and inject them via the constructor. Then `ReportGenerator` depends only on abstractions, not on concretions.
+            `ReportGenerator` is high-level policy (orchestrating report creation), but it hard-codes `PdfRenderer` and `SqlConnection` — concrete low-level details. Want HTML rendering or a NoSQL database? You'd have to modify `ReportGenerator` itself. Fix: define `Renderer` and `DataSource` abstractions and inject them via constructor. Then `ReportGenerator` depends only on abstractions.
 
         - question: |
             **Snippet 6 — UserValidator:** This class accepts a list of `ValidationRule` objects (an ABC) and runs each one. Does it violate any SOLID principle?
@@ -5773,7 +6055,7 @@ steps:
             - **ISP:** `ValidationRule` has exactly one method — a minimal interface.
             - **DIP:** `UserValidator` depends on the `ValidationRule` abstraction, not on `NotEmptyRule` or `MaxLengthRule` directly.
 
-            Recognizing well-designed code is essential — otherwise you risk "refactoring" things that are already correct.
+            Recognizing well-designed code is just as important as spotting violations — otherwise you'll "refactor" things that are already correct, which is just creating problems where there were none.
 
 
   # --------------------------------------------------------------------------
@@ -5787,20 +6069,20 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Capstone — The Real World"
     instructions: |
-      ## Putting It All Together: Library Management System
+      ## Final Boss: Library Management System
 
       > **Learning objective:** After this step you will be able to **identify** multiple simultaneous SOLID violations in a realistic system, **refactor** it to follow all five principles, and **recognize** when SOLID is being applied excessively.
 
       ### The Challenge
 
-      You are given `library_system.py` — a monolithic library management system with **multiple SOLID violations baked in**. Your job:
+      Here's `library_system.py` — a monolithic library management system with **multiple SOLID violations baked in**. Your mission:
 
       1. **Identify** every violation and label it with a comment (e.g., `# VIOLATION: OCP — ...`).
       2. **Refactor** the system into well-designed classes that follow SOLID.
 
       ### Violations to Find
 
-      The system contains at least four violations — one each of SRP, OCP, LSP, and DIP. Read every method carefully before you start refactoring.
+      There are at least four violations hiding in here — one each of SRP, OCP, LSP, and DIP. Read every method carefully before you start refactoring.
 
       ### Refactoring Guidelines
 
@@ -5815,14 +6097,14 @@ steps:
 
       ### How the Principles Connect
 
-      As you refactor, notice how the principles reinforce each other:
-      - **LSP enables OCP:** Because every `Book` subtype fulfills the same checkout contract, `CheckoutService` can handle new book types without modification.
-      - **DIP enables OCP:** Because `CheckoutService` depends on abstractions (logger, report writer), you can swap implementations without changing `CheckoutService`.
-      - **ISP reduces coupling:** By keeping interfaces small (one ABC per concern), each class depends only on what it actually uses.
+      As you refactor, notice how these principles back each other up:
+      - **LSP enables OCP:** Every `Book` subtype fulfills the same checkout contract, so `CheckoutService` handles new book types without modification.
+      - **DIP enables OCP:** `CheckoutService` depends on abstractions (logger, report writer), so you can swap implementations without touching it.
+      - **ISP reduces coupling:** Small interfaces (one ABC per concern) mean each class only depends on what it actually uses.
 
-      ### A Warning: Over-Engineering
+      ### Don't Over-Engineer
 
-      After refactoring, take a look at this cautionary example. This is what happens when SOLID is applied **without judgment:**
+      After refactoring, check out this cautionary example. This is what happens when SOLID is applied **without judgment** — when you treat principles as rules to maximize instead of tools to apply thoughtfully:
 
       ```python
       # over_engineered.py — DO NOT DO THIS
@@ -5870,13 +6152,13 @@ steps:
       result = engine.add(2, 3)
       ```
 
-      Four interfaces, a factory, and a result wrapper — all for basic arithmetic. The original code (`2 + 3`) was already perfectly clear. **SOLID is a tool, not a religion.** Apply it when the complexity of the domain justifies it.
+      Four interfaces, a factory, and a result wrapper — all for `2 + 3`. The original code was already perfectly clear. **SOLID is a tool, not a religion.** Apply it when the complexity of the domain justifies it. Don't be that person who architects a to-do app like it's a distributed system.
 
       ### When NOT to Apply SOLID
 
-      - **Simple scripts and one-off tasks:** If the code will never change, do not invest in extension points.
-      - **Prototypes and spikes:** Favor speed over structure — you will throw it away.
-      - **When there is only one variant:** Do not create an ABC with a single implementation. Wait until you actually have two variants, then extract the abstraction.
+      - **Simple scripts and one-off tasks:** If the code will never change, don't invest in extension points.
+      - **Prototypes and spikes:** Favor speed over structure — you're gonna throw it away anyway.
+      - **When there's only one variant:** Don't create an ABC with a single implementation. Wait until you actually have two variants, then extract the abstraction.
       - **When it obscures intent:** If a 5-line function becomes 50 lines across 4 classes, the cure is worse than the disease.
 
     files:
@@ -6777,7 +7059,7 @@ steps:
             - "It violates the Single Responsibility Principle because MathEngine does four things"
           correct_index: 2
           explanation: |
-            SOLID principles solve **real problems**: code that changes for multiple reasons, types that break substitutability, interfaces that force unnecessary dependencies. A basic calculator has none of these problems — it is stable, simple, and unlikely to change. The four interfaces, factory, and result wrapper add cognitive overhead and indirection with **zero benefit**. SOLID is a tool for managing complexity, not a checklist to apply blindly.
+            SOLID solves **real problems**: code that changes for multiple reasons, types that break substitutability, interfaces that force unnecessary dependencies. A basic calculator has none of these problems — it's stable, simple, and never going to change. The four interfaces, factory, and result wrapper add cognitive overhead for **zero benefit**. SOLID is a tool for managing complexity, not a checklist to apply to everything.
 
         - question: |
             Which of the following are signs that you are **over-engineering** with SOLID?
@@ -6789,7 +7071,7 @@ steps:
             - "You refactored a class with 8 methods serving 3 different actors into 3 focused classes"
           correct_indices: [0, 1, 2]
           explanation: |
-            Options A, B, and C are classic over-engineering smells. An ABC with one implementation is **premature abstraction** — wait for the second variant. Exploding a simple function across many classes **obscures intent**. A Factory for single-site construction is **unnecessary indirection**. Option D, however, is a **valid SRP refactoring** — 3 actors justify 3 classes.
+            A, B, and C are classic over-engineering red flags. An ABC with one implementation = **premature abstraction** (wait for the second variant). Exploding a simple function across classes = **obscured intent**. A Factory for single-site construction = **unnecessary indirection**. Option D, though, is a **valid SRP refactoring** — 3 actors justify 3 classes.
 
         - question: |
             In the refactored library system, `CheckoutService` calls `book.checkout()` without checking the book's type. This works because of a specific SOLID principle. Adding a new book format (e.g., `PodcastBook`) would require no changes to `CheckoutService`. Which principle relationship makes this possible?
@@ -6801,7 +7083,7 @@ steps:
             - "DIP — CheckoutService depends on an abstraction, so it does not know about concrete types"
           correct_index: 2
           explanation: |
-            This is a **principle interconnection**: LSP guarantees that every `Book` subtype behaves consistently (no surprises from `checkout()`), which is what allows `CheckoutService` to be **closed for modification** (OCP) when new book types are added. Without LSP (e.g., if `ReferenceBook` threw an exception in `checkout()`), `CheckoutService` would need type-checking `if/elif` to guard against broken subtypes — defeating OCP. The principles reinforce each other.
+            This is the principles working together: LSP guarantees every `Book` subtype behaves consistently (no surprises from `checkout()`), which lets `CheckoutService` be **closed for modification** (OCP) when new book types arrive. Without LSP (e.g., if `ReferenceBook` exploded in `checkout()`), `CheckoutService` would need type-checking `if/elif` to guard against broken subtypes — defeating OCP. The principles reinforce each other.
 
         - question: |
             In the original `LibrarySystem`, the constructor directly created `FileLogger()` and `CsvReportWriter()`. After refactoring, these are injected as `Logger` and `ReportWriter` abstractions. What does this enable?
@@ -6813,4 +7095,4 @@ steps:
             - "It satisfies ISP by splitting the logging interface into smaller pieces"
           correct_index: 1
           explanation: |
-            **DIP enables OCP:** By depending on `Logger` (an abstraction) instead of `FileLogger` (a concretion), `CheckoutService` is open for extension — you can inject a `DatabaseLogger`, a `TestLogger` (for unit tests), or any future implementation — without modifying `CheckoutService` itself. This is exactly the same mechanism that makes the book type hierarchy work: depend on abstractions, and you can extend the system by adding new implementations rather than changing existing code.
+            **DIP enables OCP:** By depending on `Logger` (abstraction) instead of `FileLogger` (concretion), `CheckoutService` is open for extension — inject a `DatabaseLogger`, `TestLogger`, or whatever future implementation you need — without touching `CheckoutService`. Same mechanism that makes the book hierarchy work: depend on abstractions, extend by adding new implementations, never modify existing code.
