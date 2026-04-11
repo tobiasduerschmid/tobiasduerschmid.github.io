@@ -1138,16 +1138,13 @@
       var entryY = toCy;
       var entryX = (toCx > fromCx) ? toL : toR;
 
-      // If target is below, enter from top
-      if (toCy > fromCy && !avoidToTop) {
-        entryX = toCx;
-        entryY = toT;
-        var midX = (exitX + entryX) / 2;
+      // If target is below and source center is above target top, enter from top with a
+      // vertical last segment (90-degree entry). Route: horizontal to toCx, then drop into toT.
+      if (toCy > fromCy && !avoidToTop && exitY < toT) {
         points = [
           { x: exitX, y: exitY },
-          { x: midX, y: exitY },
-          { x: midX, y: entryY },
-          { x: entryX, y: entryY }
+          { x: toCx, y: exitY },
+          { x: toCx, y: toT }
         ];
       } else {
         // Horizontal route with vertical bend
@@ -1347,6 +1344,23 @@
 
   // ─── Auto-init for SEBook pages ───────────────────────────────────
 
+  /**
+   * Extract raw diagram text from a <code> element.
+   * Uses innerHTML so that <<stereotype>> notation written in raw HTML
+   * (where the browser parses <stereotype> as an element) is recovered
+   * correctly instead of being silently dropped by textContent.
+   */
+  function extractCodeText(el) {
+    var html = el.innerHTML;
+    // Browser may parse <<Foo>> as: &lt; + <Foo> element + &gt; + …
+    // Restore element tag names as literal text, then decode entities.
+    html = html
+      .replace(/<\/[a-zA-Z][a-zA-Z0-9]*\s*>/g, '')                         // drop </tag>
+      .replace(/<([a-zA-Z][a-zA-Z0-9]*)(?:\s[^>]*)?>/g, '<$1>')            // <tag attrs> → <tag>
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'); // decode entities
+    return html;
+  }
+
   var _diagrams = [];
 
   function autoInit() {
@@ -1354,7 +1368,7 @@
     for (var i = 0; i < blocks.length; i++) {
       var codeEl = blocks[i];
       var pre = codeEl.parentElement;
-      var text = codeEl.textContent;
+      var text = extractCodeText(codeEl);
       var container = document.createElement('div');
       container.className = 'uml-class-diagram-container';
       pre.parentElement.replaceChild(container, pre);

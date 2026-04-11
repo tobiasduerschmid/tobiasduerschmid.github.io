@@ -186,7 +186,7 @@ Train ..> ButtonPressedEvent
   <h2>8. Abstract Class with Stereotype</h2>
   <pre><code class="language-uml-class">
 @startuml
-class Singleton <<singleton>> {
+class Singleton &lt;&lt;singleton&gt;&gt; {
   -{static} instance: Singleton
   -data: str
   +{static} getInstance(): Singleton
@@ -362,7 +362,207 @@ ctrl --> ui: updateView()
 @enduml
   </code></pre>
 
+  <hr style="margin-top: 60px;">
+  <h1>UML State Machine Diagram Tests</h1>
+
+  <h2>19. Exosuit State Machine (from SEBook)</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Idle : powerOn()
+
+Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
+CombatMode --> Idle : threatNeutralized / retractWeapons()
+CombatMode --> EmergencyPower : powerLevel < 5% / rerouteToLifeSupport()
+EmergencyPower --> [*] : manualOverride()
+
+state Idle {
+  entry / initSensors()
+  exit / logStateChange()
+}
+@enduml
+  </code></pre>
+
+  <h2>20. Order Lifecycle</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Created : Order Placed
+
+Created --> Paid : payment_received
+Paid --> Shipped : ship_order
+Shipped --> Delivered : delivery_confirmed
+Delivered --> [*]
+
+Created --> Cancelled : cancel_order [within 24hrs]
+Paid --> Refunded : refund_requested / processRefund()
+Cancelled --> [*]
+Refunded --> [*]
+@enduml
+  </code></pre>
+
+  <h2>21. Simple Turnstile</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Locked
+
+Locked --> Unlocked : insertCoin
+Unlocked --> Locked : push
+@enduml
+  </code></pre>
+
+  <h2>22. Vending Machine with Internal Actions</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Idle
+
+Idle --> AcceptingMoney : selectProduct
+AcceptingMoney --> Dispensing : [sufficientFunds] / startDispense()
+AcceptingMoney --> Idle : cancel / returnMoney()
+Dispensing --> Idle : complete / resetMachine()
+
+state AcceptingMoney {
+  entry / displayPrice()
+  do / countInsertedCoins()
+}
+
+state Dispensing {
+  entry / activateMotor()
+  exit / stopMotor()
+}
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Component Diagram Tests</h1>
+
+  <h2>23. Client-Server (from Lecture)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Client
+component LibraryServer
+
+Client --> LibraryServer : GET Book
+Client --> LibraryServer : POST Book
+@enduml
+  </code></pre>
+
+  <h2>24. Three-Tier Architecture</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component WebUI
+component AppServer
+component Database
+
+WebUI --> AppServer : HTTP Requests
+AppServer --> Database : SQL Queries
+AppServer ..> Logger : uses
+@enduml
+  </code></pre>
+
+  <h2>25. Microservices</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component APIGateway
+component UserService
+component OrderService
+component PaymentService
+component NotificationService
+
+APIGateway --> UserService : /api/users
+APIGateway --> OrderService : /api/orders
+OrderService --> PaymentService : processPayment
+OrderService ..> NotificationService : sendConfirmation
+PaymentService ..> NotificationService : sendReceipt
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Deployment Diagram Tests</h1>
+
+  <h2>26. Web Application Deployment</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node WebServer {
+  component Nginx
+  component AppServer
+}
+node DatabaseServer {
+  component PostgreSQL
+}
+node ClientDevice {
+  component WebBrowser
+}
+
+ClientDevice --> WebServer : HTTPS
+WebServer --> DatabaseServer : TCP/IP
+@enduml
+  </code></pre>
+
+  <h2>27. Ticket System (from UML Reference)</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node TicketServer {
+  component TicketSeller
+  component CreditCardCharges
+  component TicketDB
+}
+node Kiosk {
+  component CustomerInterface
+}
+node SalesTerminal {
+  component ClerkInterface
+}
+
+Kiosk --> TicketServer : network
+SalesTerminal --> TicketServer : network
+@enduml
+  </code></pre>
+
+  <h2>28. Microservices Deployment</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node LoadBalancer {
+  component Nginx
+}
+node AppNode1 {
+  component UserService
+  component OrderService
+}
+node AppNode2 {
+  component PaymentService
+  component NotificationService
+}
+node DataNode {
+  component MongoDB
+  component Redis
+}
+
+LoadBalancer --> AppNode1 : HTTP
+LoadBalancer --> AppNode2 : HTTP
+AppNode1 --> DataNode : TCP
+AppNode2 --> DataNode : TCP
+AppNode1 ..> AppNode2 : gRPC
+@enduml
+  </code></pre>
+
+  <h2>29. Node Instance Notation (name:Type underlined, per UML spec Fig 9-3)</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node server:BankServer {
+  component Transactions
+  component AccountMgmt
+}
+node client:ATMKiosk {
+  component ATMSoftware
+}
+
+client:ATMKiosk --> server:BankServer : network
+@enduml
+  </code></pre>
+
   <script src="/js/uml-class-renderer.js"></script>
   <script src="/js/uml-sequence-renderer.js"></script>
+  <script src="/js/uml-state-renderer.js"></script>
+  <script src="/js/uml-component-renderer.js"></script>
+  <script src="/js/uml-deployment-renderer.js"></script>
 </body>
 </html>

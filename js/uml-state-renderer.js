@@ -219,7 +219,7 @@
     }
     if (roots.length === 0) roots = [stateList[0].name]; // fallback
 
-    // BFS layer assignment
+    // BFS layer assignment (handles cycles by only visiting each node once)
     var layers = {};
     var visited = {};
     var queue = [];
@@ -233,15 +233,12 @@
       var kids = children[node];
       for (var ki = 0; ki < kids.length; ki++) {
         var kid = kids[ki];
-        var newLayer = (layers[node] || 0) + 1;
         if (!visited[kid]) {
           visited[kid] = true;
-          layers[kid] = newLayer;
-          queue.push(kid);
-        } else if (newLayer > layers[kid]) {
-          layers[kid] = newLayer;
+          layers[kid] = (layers[node] || 0) + 1;
           queue.push(kid);
         }
+        // Skip already-visited nodes to avoid infinite loops in cycles
       }
     }
     // Assign unvisited
