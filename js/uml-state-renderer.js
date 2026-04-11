@@ -52,6 +52,7 @@
     var transitions = [];
     var inState = null;
     var braceDepth = 0;
+    var direction = 'TB';
 
     // Ensure [*] pseudo-states exist
     function ensureState(name) {
@@ -65,6 +66,14 @@
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
+
+      // Layout directive
+      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
+      if (layoutMatch && inState === null) {
+        var val = layoutMatch[1].toLowerCase();
+        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+        continue;
+      }
 
       // Inside a state block
       if (inState !== null) {
@@ -156,7 +165,7 @@
     var stateList = [];
     for (var sn in states) stateList.push(states[sn]);
 
-    return { states: stateList, transitions: transitions };
+    return { states: stateList, transitions: transitions, direction: direction };
   }
 
   // ─── Text Measurement (delegated to UMLShared) ────────────────────
@@ -210,7 +219,7 @@
     }
 
     // Call advanced layout
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: CFG.gapX, gapY: CFG.gapY });
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: CFG.gapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
 
     // Center layers relative to widest (post-processing if needed)
     // Map coords back
@@ -302,6 +311,37 @@
       }
     }
 
+    // Group upward (back-edge) transitions by target state to stagger entry Y coordinates
+    var backEdgeByTo = {};
+    for (var bti = 0; bti < transitions.length; bti++) {
+      var btr = transitions[bti];
+      if (!entries[btr.from] || !entries[btr.to] || btr.from === btr.to) continue;
+      var bfe = entries[btr.from], bte = entries[btr.to];
+      if ((bte.y + bte.box.height / 2) < (bfe.y + bfe.box.height / 2) - 10) {
+        if (!backEdgeByTo[btr.to]) backEdgeByTo[btr.to] = [];
+        backEdgeByTo[btr.to].push(bti);
+      }
+    }
+    var customEntries = {}; // bti -> { x, y }
+    for (var bname in backEdgeByTo) {
+      var bgroup = backEdgeByTo[bname];
+      if (bgroup.length < 2) continue;
+      var btarget = entries[bname];
+      bgroup.sort(function(a, b) {
+        var fa = entries[transitions[a].from], fb = entries[transitions[b].from];
+        var cya = fa ? fa.y + fa.box.height / 2 : 0;
+        var cyb = fb ? fb.y + fb.box.height / 2 : 0;
+        return cya - cyb;
+      });
+      for (var bgi = 0; bgi < bgroup.length; bgi++) {
+        var bfrac = (bgi + 1) / (bgroup.length + 1);
+        customEntries[bgroup[bgi]] = {
+          x: btarget.x + btarget.box.width,
+          y: btarget.y + btarget.box.height * bfrac
+        };
+      }
+    }
+
     var ox = layout.offsetX + CFG.svgPad;
     var oy = layout.offsetY + CFG.svgPad;
     var svgW = layout.width + extraRight + CFG.svgPad * 2;
@@ -331,7 +371,7 @@
         if (tr.label) {
           labelSvg.push('<text x="' + (sx + lw + 4) + '" y="' + (sy + 10) +
             '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-            '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' + UMLShared.escapeXml(tr.label) + '</text>');
+            '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' + UMLShared.escapeXml(tr.label) + '</text>');
         }
         continue;
       }
@@ -354,7 +394,11 @@
       } else if (dy < -10) {
         // Back-edge going upward: route via right margin to avoid crossing
         x1 = fromE.x + fromE.box.width; y1 = fromCy;
-        x2 = toE.x + toE.box.width; y2 = toCy;
+        if (customEntries[ti]) {
+          x2 = customEntries[ti].x; y2 = customEntries[ti].y;
+        } else {
+          x2 = toE.x + toE.box.width; y2 = toCy;
+        }
         isBackEdge = true;
       } else if (Math.abs(dy) >= Math.abs(dx) * 0.5) {
         // Vertical connection
@@ -486,7 +530,7 @@
         }
         labelSvg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(tr.label) + '</text>');
       }
     }

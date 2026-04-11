@@ -531,7 +531,8 @@
       // Condition text — on the line below the label tab
       if (frag.condition) {
         svg.push('<text x="' + (fragL + 10) + '" y="' + (ly + lh + 14) +
-          '" font-size="' + CFG.fontSizeFragment + '" fill="' + colors.text + '">[' +
+          '" font-size="' + CFG.fontSizeFragment + '" fill="' + colors.text +
+          '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">[' +
           UMLShared.escapeXml(frag.condition) + ']</text>');
       }
 
@@ -542,7 +543,8 @@
           '" stroke="' + colors.line + '" stroke-width="1" stroke-dasharray="6,4"/>');
         if (frag.elseYs[ei].condition) {
           svg.push('<text x="' + (fragL + 10) + '" y="' + (ey + 16) +
-            '" font-size="' + CFG.fontSizeFragment + '" fill="' + colors.text + '">[' +
+            '" font-size="' + CFG.fontSizeFragment + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">[' +
             UMLShared.escapeXml(frag.elseYs[ei].condition) + ']</text>');
         }
       }
@@ -587,7 +589,7 @@
           if (m.label) {
             svg.push('<text x="' + (selfX + selfW + 6) + '" y="' + (my + 4) +
               '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-              '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' + UMLShared.escapeXml(m.label) + '</text>');
+              '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' + UMLShared.escapeXml(m.label) + '</text>');
           }
         } else {
           // Line
@@ -604,7 +606,7 @@
             var labelX = (x1 + x2) / 2;
             svg.push('<text x="' + labelX + '" y="' + (my - 6) +
               '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-              '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
+              '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' +
               UMLShared.escapeXml(m.label) + '</text>');
           }
         }
@@ -635,7 +637,7 @@
           var llabelX = (lx1 + lx2) / 2;
           svg.push('<text x="' + llabelX + '" y="' + (my - 6) +
             '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-            '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
+            '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' +
             UMLShared.escapeXml(m.label) + '</text>');
         }
       } else if (m.type === 'found') {
@@ -653,7 +655,7 @@
           var flabelX = (fx1 + fx2) / 2;
           svg.push('<text x="' + flabelX + '" y="' + (my - 6) +
             '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-            '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
+            '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' +
             UMLShared.escapeXml(m.label) + '</text>');
         }
       }

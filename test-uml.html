@@ -561,10 +561,46 @@ n_out2 --> u_p3 : POST
 @enduml
   </code></pre>
 
+  <h2>28. Joined Assembly Interfaces (Ball-and-Socket)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Order {
+  provide "OrderItems" as o_items
+  provide "CustomerInfo" as o_cust
+}
+component Warehouse {
+  require "OrderItems" as w_items
+}
+component CRM {
+  require "CustomerInfo" as crm_cust
+}
+o_items --> w_items
+o_cust --> crm_cust
+@enduml
+  </code></pre>
+
+  <h2>29. Disjoined Interfaces (Standalone Lollipop and Socket)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component WebApp {
+  provide "UserAPI" as wa_api
+  require "DataStore" as wa_ds
+}
+component Database {
+  provide "DataStore" as db_ds
+}
+component MobileApp {
+  require "UserAPI" as ma_api
+}
+wa_api ..> ma_api : REST
+db_ds ..> wa_ds : JDBC
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Deployment Diagram Tests</h1>
 
-  <h2>28. Web Application Deployment</h2>
+  <h2>30. Web Application Deployment</h2>
   <pre><code class="language-uml-deployment">
 @startuml
 node WebServer {
@@ -606,6 +642,54 @@ SalesTerminal --> TicketServer : network
   <h2>28. Microservices Deployment</h2>
   <pre><code class="language-uml-deployment">
 @startuml
+node LoadBalancer {
+  component Nginx
+}
+node AppNode1 {
+  component UserService
+  component OrderService
+}
+node AppNode2 {
+  component PaymentService
+  component NotificationService
+}
+node DataNode {
+  component MongoDB
+  component Redis
+}
+
+LoadBalancer --> AppNode1 : HTTP
+LoadBalancer --> AppNode2 : HTTP
+AppNode1 --> DataNode : TCP
+AppNode2 --> DataNode : TCP
+AppNode1 ..> AppNode2 : gRPC
+@enduml
+  </code></pre>
+
+  <h2>30. Web App Deployment — Horizontal Layout</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+layout horizontal
+node ClientDevice {
+  component WebBrowser
+}
+node WebServer {
+  component Nginx
+  component AppServer
+}
+node DatabaseServer {
+  component PostgreSQL
+}
+
+ClientDevice --> WebServer : HTTPS
+WebServer --> DatabaseServer : TCP/IP
+@enduml
+  </code></pre>
+
+  <h2>31. Microservices — Horizontal Layout</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+layout horizontal
 node LoadBalancer {
   component Nginx
 }

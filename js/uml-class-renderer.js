@@ -65,10 +65,19 @@
     var classMap = {};
     var inClass = null;
     var braceDepth = 0;
+    var direction = 'TB';
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
+
+      // Layout directive
+      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
+      if (layoutMatch && inClass === null) {
+        var val = layoutMatch[1].toLowerCase();
+        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+        continue;
+      }
 
       // If we're inside a class body
       if (inClass !== null) {
@@ -134,7 +143,7 @@
       }
     }
 
-    return { classes: classes, relationships: relationships };
+    return { classes: classes, relationships: relationships, direction: direction };
   }
 
   /**
@@ -396,7 +405,7 @@
       effectiveGapX = Math.max(effectiveGapX, neededW);
     }
 
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY });
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
 
     // Read back positions
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -659,7 +668,7 @@
         }
         svg.push('<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" ' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" ' +
           'font-style="italic">' + UMLShared.escapeXml(orel.label) + '</text>');
       }
 
@@ -677,7 +686,7 @@
         }
         svg.push('<text x="' + fmx + '" y="' + fmy + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.fromMult) + '</text>');
       }
       if (orel.toMult) {
@@ -695,7 +704,7 @@
         }
         svg.push('<text x="' + tmx + '" y="' + tmy + '" text-anchor="' + (tmAnchor || 'start') + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.toMult) + '</text>');
       }
     }

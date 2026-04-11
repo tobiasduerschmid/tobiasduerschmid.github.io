@@ -25,6 +25,8 @@
  *   component Name       Component inside a node
  *   A --> B : label      Communication link between nodes
  *   A ..> B : label      Dependency
+ *   layout horizontal    Left-to-right layout (also: left-to-right, LR)
+ *   layout vertical      Top-to-bottom layout (also: top-to-bottom, TB) [default]
  */
 (function () {
   'use strict';
@@ -64,10 +66,19 @@
     var links = [];
     var currentNode = null;
     var braceDepth = 0;
+    var direction = 'TB';
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
+
+      // Layout directive
+      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
+      if (layoutMatch && !currentNode) {
+        var val = layoutMatch[1].toLowerCase();
+        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+        continue;
+      }
 
       // Inside a node block
       if (currentNode !== null) {
@@ -128,7 +139,7 @@
       }
     }
 
-    return { nodes: nodes, links: links };
+    return { nodes: nodes, links: links, direction: direction };
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -172,7 +183,7 @@
     }
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40);
 
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY });
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
 
     for (var nm in result.nodes) {
       if (!entries[nm]) continue;
@@ -456,7 +467,7 @@
         }
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
           UMLShared.escapeXml(lk.label) + '</text>');
       }
     }
