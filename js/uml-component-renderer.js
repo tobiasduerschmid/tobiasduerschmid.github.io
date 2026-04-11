@@ -80,6 +80,7 @@
     var components = [];
     var componentMap = {};
     var connectors = [];
+    var notes = [];
     var portAliasMap = {}; // alias → { comp: componentName, name: displayName }
 
     var direction = 'LR'; // Component diagrams default to left-to-right
@@ -143,6 +144,10 @@
         continue;
       }
 
+      // Note
+      var noteIdx = UMLShared.parseNoteLine(line, lines, i, notes);
+      if (noteIdx >= 0) { i = noteIdx; continue; }
+
       // Connector: alias --> alias  or  Comp.port --> Comp.port  or  Comp --> Comp
       var connMatch = line.match(/^(\S+)\s+(-->|\.\.>|--)\s+(\S+)\s*(?::\s*(.*))?$/);
       if (connMatch) {
@@ -189,7 +194,7 @@
       }
     }
 
-    return { components: components, connectors: connectors, direction: direction };
+    return { components: components, connectors: connectors, notes: notes, direction: direction };
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -416,6 +421,20 @@
       maxY = Math.max(maxY, e2.y + e2.box.height);
     }
 
+    // Expand bounds to account for connector labels that may extend beyond components
+    var maxLabelH = 0, maxLabelWHalf = 0;
+    for (var cli = 0; cli < connectors.length; cli++) {
+      if (connectors[cli].label) {
+        var clW = UMLShared.textWidth(connectors[cli].label, false, CFG.fontSize);
+        maxLabelWHalf = Math.max(maxLabelWHalf, clW / 2 + 10);
+        maxLabelH = Math.max(maxLabelH, CFG.fontSize + 16);
+      }
+    }
+    minX -= maxLabelWHalf;
+    minY -= maxLabelH;
+    maxX += maxLabelWHalf;
+    maxY += maxLabelH;
+
     return {
       entries: entries,
       width: maxX - minX + 20,
@@ -520,10 +539,45 @@
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var connectors = parsed.connectors;
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
+
+    // Resolve note target — supports dotted paths to sub-elements
+    function resolveTarget(target) {
+      var parts = target.split('.');
+      var entry = entries[parts[0]];
+      if (!entry) return null;
+      return { x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height };
+    }
+
+    // Pre-compute note positions for SVG bounds expansion
+    var notePositions = [];
+    if (parsed.notes) {
+      var noteGap = UMLShared.NOTE_CFG.gap;
+      for (var npi = 0; npi < parsed.notes.length; npi++) {
+        var pn = parsed.notes[npi]; var tgt = resolveTarget(pn.target); if (!tgt) continue;
+        var ns = UMLShared.measureNote(pn.lines);
+        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
+        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
+        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
+        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
+        else { nx = tx; ny = ty + th + noteGap; }
+        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
+      }
+    }
+    var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var npb = notePositions[nbi];
+      if (npb.x < -layout.offsetX) noteExtraL = Math.max(noteExtraL, -layout.offsetX - npb.x + CFG.svgPad);
+      var nr = npb.x + npb.w - (layout.width - layout.offsetX);
+      if (nr > 0) noteExtraR = Math.max(noteExtraR, nr + CFG.svgPad);
+      if (npb.y < -layout.offsetY) noteExtraT = Math.max(noteExtraT, -layout.offsetY - npb.y + CFG.svgPad);
+      var nb = npb.y + npb.h - (layout.height - layout.offsetY);
+      if (nb > 0) noteExtraB = Math.max(noteExtraB, nb + CFG.svgPad);
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + noteExtraL;
+    var oy = layout.offsetY + CFG.svgPad + noteExtraT;
+    var svgW = layout.width + CFG.svgPad * 2 + noteExtraL + noteExtraR;
+    var svgH = layout.height + CFG.svgPad * 2 + noteExtraT + noteExtraB;
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
@@ -653,11 +707,11 @@
         if (Math.abs(dx2) > 5) {
           x2 = dx2 > 0 ? toE.x : toE.x + toE.box.width;
           y2 = tcy2;
-          dir2 = dx2 > 0 ? 'right' : 'left';
+          dir2 = dx2 > 0 ? 'left' : 'right'; // entry side: line approaches from the left when target is right
         } else {
           x2 = tcx2;
           y2 = dy2 > 0 ? toE.y : toE.y + toE.box.height;
-          dir2 = dy2 > 0 ? 'bottom' : 'top';
+          dir2 = dy2 > 0 ? 'top' : 'bottom'; // entry side: line approaches from top when target is below
         }
       }
 
@@ -694,9 +748,42 @@
 
       // All cases: build initial route, then always check for obstacles.
 
+      // Detect backward HH: exit direction opposes the direction to target
+      var isBackwardHH = isH1 && isH2 &&
+        ((dir1 === 'right' && x2 < x1) || (dir1 === 'left' && x2 > x1));
+
       if (isH1 && isH2) {
-        // Both horizontal exits — try direct line first
-        if (Math.abs(y1 - y2) < 2) {
+        if (isBackwardHH) {
+          // Backward connection: route via U-shape around ALL components
+          var globalMinY = Infinity, globalMaxY = -Infinity;
+          for (var gbi = 0; gbi < obstacles.length; gbi++) {
+            globalMinY = Math.min(globalMinY, obstacles[gbi].y1);
+            globalMaxY = Math.max(globalMaxY, obstacles[gbi].y2);
+          }
+          var spaceAbove = Math.min(y1, y2) - globalMinY;
+          var spaceBelow = globalMaxY - Math.max(y1, y2);
+          var backJitter = (ci % 5) * 12;
+          var backDetourY;
+          if (spaceAbove <= spaceBelow) {
+            // Route above all components
+            backDetourY = globalMinY - 20 - backJitter;
+          } else {
+            // Route below all components
+            backDetourY = globalMaxY + 20 + backJitter;
+          }
+          // Validate with empty skipNames — check ALL obstacles
+          backDetourY = findClearY(
+            Math.min(ext1X, ext2X), Math.max(ext1X, ext2X),
+            backDetourY, obstacles, {}
+          );
+          points = [
+            { x: x1, y: y1 }, { x: ext1X, y: y1 },
+            { x: ext1X, y: backDetourY },
+            { x: ext2X, y: backDetourY },
+            { x: ext2X, y: y2 }, { x: x2, y: y2 }
+          ];
+        } else if (Math.abs(y1 - y2) < 2) {
+          // Same-Y direct line (only for forward connections)
           points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
         } else {
           // S-shape: exit horizontal → vertical channel → enter horizontal
@@ -805,6 +892,57 @@
 
       // Simplify collinear points
       points = simplifyRoute(points);
+
+      // Post-routing validation: check intermediate segments against ALL obstacles.
+      // First/last segments necessarily touch source/target, so only check inner ones.
+      if (points.length >= 4) {
+        var intermediateHit = false;
+        for (var vi = 1; vi < points.length - 2; vi++) {
+          var vp0 = points[vi], vp1 = points[vi + 1];
+          var vIsH = Math.abs(vp0.y - vp1.y) < 2;
+          var vIsV = Math.abs(vp0.x - vp1.x) < 2;
+          for (var vj = 0; vj < obstacles.length; vj++) {
+            var vo = obstacles[vj];
+            if (vIsV && vp0.x > vo.x1 && vp0.x < vo.x2) {
+              var vyMin = Math.min(vp0.y, vp1.y), vyMax = Math.max(vp0.y, vp1.y);
+              if (vyMax > vo.y1 && vyMin < vo.y2) { intermediateHit = true; break; }
+            } else if (vIsH && vp0.y > vo.y1 && vp0.y < vo.y2) {
+              var vxMin = Math.min(vp0.x, vp1.x), vxMax = Math.max(vp0.x, vp1.x);
+              if (vxMax > vo.x1 && vxMin < vo.x2) { intermediateHit = true; break; }
+            }
+          }
+          if (intermediateHit) break;
+        }
+        if (intermediateHit) {
+          // Reroute via clear channel above or below ALL obstacles
+          var vGlobalMinY = Infinity, vGlobalMaxY = -Infinity;
+          for (var vgi = 0; vgi < obstacles.length; vgi++) {
+            vGlobalMinY = Math.min(vGlobalMinY, obstacles[vgi].y1);
+            vGlobalMaxY = Math.max(vGlobalMaxY, obstacles[vgi].y2);
+          }
+          var vSpanXMin = Math.min(x1, x2, ext1X, ext2X);
+          var vSpanXMax = Math.max(x1, x2, ext1X, ext2X);
+          var vDetourY = findClearY(vSpanXMin, vSpanXMax,
+            vGlobalMinY - 30 - (ci % 5) * 12, obstacles, {});
+          if (isH1) {
+            points = [
+              { x: x1, y: y1 }, { x: ext1X, y: y1 },
+              { x: ext1X, y: vDetourY },
+              { x: ext2X, y: vDetourY },
+              { x: ext2X, y: y2 }, { x: x2, y: y2 }
+            ];
+          } else {
+            points = [
+              { x: x1, y: y1 }, { x: x1, y: ext1Y },
+              { x: vSpanXMin - 30, y: ext1Y },
+              { x: vSpanXMin - 30, y: vDetourY },
+              { x: ext2X, y: vDetourY },
+              { x: ext2X, y: y2 }, { x: x2, y: y2 }
+            ];
+          }
+          points = simplifyRoute(points);
+        }
+      }
 
       if (isJoinedAssembly) {
         // ── Ball-and-socket: prefer the longest horizontal segment ──
@@ -1098,6 +1236,16 @@
             UMLShared.escapeXml(plText) + '</text>');
         }
       }
+    }
+
+    // ── Draw notes (using pre-computed positions) ──
+    for (var ni = 0; ni < notePositions.length; ni++) {
+      var np2 = notePositions[ni]; var cF, cT;
+      if (np2.note.position === 'right') { cF = { x: np2.x, y: np2.y + np2.h / 2 }; cT = { x: np2.tx + np2.tw, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'left') { cF = { x: np2.x + np2.w, y: np2.y + np2.h / 2 }; cT = { x: np2.tx, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'top') { cF = { x: np2.x + np2.w / 2, y: np2.y + np2.h }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty }; }
+      else { cF = { x: np2.x + np2.w / 2, y: np2.y }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty + np2.th }; }
+      UMLShared.drawNote(svg, np2.x, np2.y, np2.note.lines, colors, { fromX: cF.x, fromY: cF.y, toX: cT.x, toY: cT.y });
     }
 
     svg.push(UMLShared.svgClose());

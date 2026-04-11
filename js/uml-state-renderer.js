@@ -50,6 +50,7 @@
     var lines = text.split('\n');
     var states = {};       // name -> { name, type, entryAction, exitAction, doActivity }
     var transitions = [];
+    var notes = [];
     var inState = null;
     var braceDepth = 0;
     var direction = 'TB';
@@ -93,6 +94,31 @@
         if (exitMatch) { states[inState].exitAction = exitMatch[1].trim(); continue; }
         var doMatch = line.match(/^do\s*\/\s*(.+)$/i);
         if (doMatch) { states[inState].doActivity = doMatch[1].trim(); continue; }
+        // Sub-transitions inside composite state
+        var subTrans = line.match(/^(\S+)\s+-->\s+((?:\[[^\]]*\]\s*)?)(\S+)((?:\s*\/[^:]*)?)\s*(?::\s*(.*))?$/);
+        if (subTrans) {
+          var sf = subTrans[1], sg = subTrans[2] ? subTrans[2].trim() : '', st = subTrans[3];
+          var sa = subTrans[4] ? subTrans[4].trim() : '', se = subTrans[5] ? subTrans[5].trim() : '';
+          ensureState(sf); ensureState(st);
+          states[sf].parent = inState; states[st].parent = inState;
+          states[inState].isComposite = true;
+          var slp = []; if (se) slp.push(se); if (sg) slp.push(sg); if (sa) slp.push(sa);
+          transitions.push({ from: sf, to: st, label: slp.join(' '), parent: inState });
+          continue;
+        }
+        continue;
+      }
+
+      // Note
+      var noteIdx = UMLShared.parseNoteLine(line, lines, i, notes);
+      if (noteIdx >= 0) { i = noteIdx; continue; }
+
+      // Choice pseudostate: state Name <<choice>>
+      var choiceMatch = line.match(/^state\s+(\S+)\s+<<choice>>\s*$/);
+      if (choiceMatch) {
+        var cName = choiceMatch[1];
+        ensureState(cName);
+        states[cName].type = 'choice';
         continue;
       }
 
@@ -165,7 +191,7 @@
     var stateList = [];
     for (var sn in states) stateList.push(states[sn]);
 
-    return { states: stateList, transitions: transitions, direction: direction };
+    return { states: stateList, transitions: transitions, notes: notes, direction: direction };
   }
 
   // ─── Text Measurement (delegated to UMLShared) ────────────────────
@@ -173,8 +199,9 @@
   // ─── Layout ───────────────────────────────────────────────────────
 
   function measureState(s) {
-    if (s.type === 'initial') return { width: CFG.initialR * 2 + 4, height: CFG.initialR * 2 + 4 };
+    if (s.type === 'initial') return { width: CFG.initialR * 2, height: CFG.initialR * 2 };
     if (s.type === 'final') return { width: CFG.finalRingR * 2 + 4, height: CFG.finalRingR * 2 + 4 };
+    if (s.type === 'choice') return { width: 30, height: 30 };
 
     var nameW = UMLShared.textWidth(s.name, true, CFG.fontSizeBold);
     var hasActions = s.entryAction || s.exitAction || s.doActivity;
@@ -201,38 +228,103 @@
     if (stateList.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
     var entries = {};
-    var layoutNodes = [];
-    var layoutEdges = [];
 
-    // Measure states
+    // Identify composite states and their children
+    var childOf = {}; // stateName -> parentName
+    var compositeChildren = {}; // parentName -> [childName]
+    for (var ci = 0; ci < stateList.length; ci++) {
+      if (stateList[ci].parent) {
+        childOf[stateList[ci].name] = stateList[ci].parent;
+        if (!compositeChildren[stateList[ci].parent]) compositeChildren[stateList[ci].parent] = [];
+        compositeChildren[stateList[ci].parent].push(stateList[ci].name);
+      }
+    }
+
+    // Measure all states (children get measured individually)
     for (var i = 0; i < stateList.length; i++) {
       var s = stateList[i];
       var box = measureState(s);
       entries[s.name] = { state: s, box: box, x: 0, y: 0 };
-      layoutNodes.push({ id: s.name, width: box.width, height: box.height, data: s });
     }
 
-    // Convert transitions to edges
+    // For composite states, run sub-layout to compute their size
+    var compositeHeaderH = CFG.padY * 2 + CFG.lineHeight + 4; // header + divider
+    var compositePad = 20;
+    for (var pName in compositeChildren) {
+      var kids = compositeChildren[pName];
+      var subNodes = [], subEdges = [];
+      for (var ki = 0; ki < kids.length; ki++) {
+        var kEntry = entries[kids[ki]];
+        subNodes.push({ id: kids[ki], width: kEntry.box.width, height: kEntry.box.height });
+      }
+      for (var ti = 0; ti < transitions.length; ti++) {
+        if (transitions[ti].parent === pName) {
+          subEdges.push({ source: transitions[ti].from, target: transitions[ti].to, type: 'navigable' });
+        }
+      }
+      if (subNodes.length > 0) {
+        var subResult = window.UMLAdvancedLayout.compute(subNodes, subEdges, { gapX: CFG.gapX * 0.7, gapY: CFG.gapY * 0.7, direction: parsed.direction || 'TB' });
+        // Compute sub-bounding box
+        var sMinX = Infinity, sMinY = Infinity, sMaxX = -Infinity, sMaxY = -Infinity;
+        for (var sn in subResult.nodes) {
+          var snr = subResult.nodes[sn];
+          sMinX = Math.min(sMinX, snr.x); sMinY = Math.min(sMinY, snr.y);
+          sMaxX = Math.max(sMaxX, snr.x + entries[sn].box.width);
+          sMaxY = Math.max(sMaxY, snr.y + entries[sn].box.height);
+        }
+        var subW = sMaxX - sMinX + compositePad * 2;
+        var subH = sMaxY - sMinY + compositePad * 2;
+        var compositeW = Math.max(subW, UMLShared.textWidth(pName, true, CFG.fontSizeBold) + CFG.padX * 2);
+        var compositeH = compositeHeaderH + subH;
+        entries[pName].box = { width: Math.ceil(compositeW), height: Math.ceil(compositeH), hasActions: false, actionLines: 0 };
+        entries[pName].subLayout = subResult;
+        entries[pName].subOffset = { x: -sMinX + compositePad, y: compositeHeaderH - sMinY + compositePad };
+        entries[pName].subBounds = { w: subW, h: subH };
+      }
+    }
+
+    // Top-level layout: only non-child states
+    var layoutNodes = [];
+    var layoutEdges = [];
+    for (var li = 0; li < stateList.length; li++) {
+      if (childOf[stateList[li].name]) continue; // skip children
+      var le = entries[stateList[li].name];
+      layoutNodes.push({ id: stateList[li].name, width: le.box.width, height: le.box.height });
+    }
     for (var t = 0; t < transitions.length; t++) {
       var tr = transitions[t];
+      if (tr.parent) continue; // skip sub-transitions
       layoutEdges.push({ source: tr.from, target: tr.to, type: 'navigable', data: tr });
     }
 
-    // Call advanced layout
     var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: CFG.gapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
 
-    // Center layers relative to widest (post-processing if needed)
-    // Map coords back
+    // Map coords back for top-level states
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (var sn in result.nodes) {
-      if (!entries[sn]) continue;
-      entries[sn].x = result.nodes[sn].x;
-      entries[sn].y = result.nodes[sn].y;
-      
-      minX = Math.min(minX, entries[sn].x);
-      minY = Math.min(minY, entries[sn].y);
-      maxX = Math.max(maxX, entries[sn].x + entries[sn].box.width);
-      maxY = Math.max(maxY, entries[sn].y + entries[sn].box.height);
+    for (var sn2 in result.nodes) {
+      if (!entries[sn2]) continue;
+      entries[sn2].x = result.nodes[sn2].x;
+      entries[sn2].y = result.nodes[sn2].y;
+      minX = Math.min(minX, entries[sn2].x);
+      minY = Math.min(minY, entries[sn2].y);
+      maxX = Math.max(maxX, entries[sn2].x + entries[sn2].box.width);
+      maxY = Math.max(maxY, entries[sn2].y + entries[sn2].box.height);
+    }
+
+    // Position children inside their composite parents
+    for (var pn in compositeChildren) {
+      var pe = entries[pn];
+      if (!pe.subLayout) continue;
+      var off = pe.subOffset;
+      var ckids = compositeChildren[pn];
+      for (var cki = 0; cki < ckids.length; cki++) {
+        var ck = ckids[cki];
+        var sr = pe.subLayout.nodes[ck];
+        if (sr) {
+          entries[ck].x = pe.x + off.x + sr.x;
+          entries[ck].y = pe.y + off.y + sr.y;
+        }
+      }
     }
 
     return {
@@ -342,10 +434,58 @@
       }
     }
 
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + extraRight + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
+    // Resolve note target — supports StateName or StateName.entry/exit/do
+    function resolveTarget(target) {
+      var parts = target.split('.');
+      var entry = entries[parts[0]];
+      if (!entry) return null;
+      var box = entry.box;
+      if (parts.length < 2 || !box.hasActions) {
+        return { x: entry.x, y: entry.y, w: box.width, h: box.height };
+      }
+      var sub = parts[1].toLowerCase();
+      var headerH = CFG.padY * 2 + CFG.lineHeight;
+      var actionIdx = -1;
+      for (var ai = 0; ai < box.actionLines.length; ai++) {
+        if (box.actionLines[ai].toLowerCase().indexOf(sub) !== -1) { actionIdx = ai; break; }
+      }
+      if (actionIdx >= 0) {
+        var ay = entry.y + headerH + 4 + actionIdx * CFG.fontSizeAction * 1.6;
+        return { x: entry.x, y: ay, w: box.width, h: CFG.fontSizeAction * 1.6 };
+      }
+      return { x: entry.x, y: entry.y, w: box.width, h: box.height };
+    }
+
+    // Pre-compute note positions for SVG bounds expansion
+    var notePositions = [];
+    if (parsed.notes) {
+      var noteGap = UMLShared.NOTE_CFG.gap;
+      for (var npi = 0; npi < parsed.notes.length; npi++) {
+        var pn = parsed.notes[npi]; var tgt = resolveTarget(pn.target); if (!tgt) continue;
+        var ns = UMLShared.measureNote(pn.lines);
+        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
+        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
+        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
+        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
+        else { nx = tx; ny = ty + th + noteGap; }
+        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
+      }
+    }
+    var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var npb = notePositions[nbi];
+      if (npb.x < -layout.offsetX) noteExtraL = Math.max(noteExtraL, -layout.offsetX - npb.x + CFG.svgPad);
+      var nr = npb.x + npb.w - (layout.width - layout.offsetX);
+      if (nr > 0) noteExtraR = Math.max(noteExtraR, nr + CFG.svgPad);
+      if (npb.y < -layout.offsetY) noteExtraT = Math.max(noteExtraT, -layout.offsetY - npb.y + CFG.svgPad);
+      var nb = npb.y + npb.h - (layout.height - layout.offsetY);
+      if (nb > 0) noteExtraB = Math.max(noteExtraB, nb + CFG.svgPad);
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + noteExtraL;
+    var oy = layout.offsetY + CFG.svgPad + noteExtraT;
+    var svgW = layout.width + extraRight + CFG.svgPad * 2 + noteExtraL + noteExtraR;
+    var svgH = layout.height + CFG.svgPad * 2 + noteExtraT + noteExtraB;
 
     var svg = [];
     var labelSvg = []; // Transition labels rendered after states so they appear on top
@@ -535,10 +675,30 @@
       }
     }
 
-    // ── Draw states ──
+    // ── Draw composite state backgrounds first ──
+    for (var cen in entries) {
+      var ce = entries[cen];
+      if (!ce.state.isComposite) continue;
+      // Large rounded rectangle
+      svg.push('<rect x="' + ce.x + '" y="' + ce.y + '" width="' + ce.box.width + '" height="' + ce.box.height +
+        '" rx="' + CFG.stateRx + '" ry="' + CFG.stateRx +
+        '" fill="' + colors.fill + '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"/>');
+      // Header with name
+      var chY = ce.y + CFG.padY + CFG.lineHeight * 0.75;
+      svg.push('<text x="' + (ce.x + CFG.padX) + '" y="' + chY +
+        '" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
+        UMLShared.escapeXml(ce.state.name) + '</text>');
+      // Divider line
+      var cdY = ce.y + CFG.padY * 2 + CFG.lineHeight;
+      svg.push('<line x1="' + ce.x + '" y1="' + cdY + '" x2="' + (ce.x + ce.box.width) + '" y2="' + cdY +
+        '" stroke="' + colors.stroke + '" stroke-width="1"/>');
+    }
+
+    // ── Draw states (non-composite) ──
     for (var en in entries) {
       var e = entries[en];
       var s = e.state;
+      if (s.isComposite) continue; // already drawn above
       var cx = e.x + e.box.width / 2;
       var cy = e.y + e.box.height / 2;
 
@@ -550,6 +710,14 @@
           '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
         svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + CFG.finalR +
           '" fill="' + colors.line + '" stroke="none"/>');
+      } else if (s.type === 'choice') {
+        // Diamond (rotated square)
+        var dh = e.box.width / 2;
+        svg.push('<polygon points="' +
+          cx + ',' + (cy - dh) + ' ' + (cx + dh) + ',' + cy + ' ' +
+          cx + ',' + (cy + dh) + ' ' + (cx - dh) + ',' + cy +
+          '" fill="' + colors.headerFill + '" stroke="' + colors.stroke +
+          '" stroke-width="' + CFG.strokeWidth + '"/>');
       } else {
         // Regular state: rounded rectangle
         svg.push('<rect x="' + e.x + '" y="' + e.y + '" width="' + e.box.width + '" height="' + e.box.height +
@@ -593,6 +761,16 @@
     // ── Draw transition labels on top of everything ──
     for (var li = 0; li < labelSvg.length; li++) {
       svg.push(labelSvg[li]);
+    }
+
+    // ── Draw notes (using pre-computed positions) ──
+    for (var ni = 0; ni < notePositions.length; ni++) {
+      var np2 = notePositions[ni]; var cF, cT;
+      if (np2.note.position === 'right') { cF = { x: np2.x, y: np2.y + np2.h / 2 }; cT = { x: np2.tx + np2.tw, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'left') { cF = { x: np2.x + np2.w, y: np2.y + np2.h / 2 }; cT = { x: np2.tx, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'top') { cF = { x: np2.x + np2.w / 2, y: np2.y + np2.h }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty }; }
+      else { cF = { x: np2.x + np2.w / 2, y: np2.y }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty + np2.th }; }
+      UMLShared.drawNote(svg, np2.x, np2.y, np2.note.lines, colors, { fromX: cF.x, fromY: cF.y, toX: cT.x, toY: cT.y });
     }
 
     svg.push(UMLShared.svgClose());

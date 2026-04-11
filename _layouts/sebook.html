@@ -679,6 +679,8 @@
   <script src="{{ '/js/uml-state-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-component-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-deployment-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-usecase-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-activity-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-notation.js' | relative_url }}"></script>
 
   <!-- Global UML inline diagram init — renders data-uml-type/data-uml-spec containers
@@ -692,6 +694,8 @@
       state:      function () { return window.UMLStateDiagram; },
       component:  function () { return window.UMLComponentDiagram; },
       deployment: function () { return window.UMLDeploymentDiagram; },
+      usecase:    function () { return window.UMLUseCaseDiagram; },
+      activity:   function () { return window.UMLActivityDiagram; },
     };
 
     function renderAll() {

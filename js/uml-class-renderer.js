@@ -32,7 +32,7 @@
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
     fontSize: 14,
     fontSizeBold: 15,
-    fontSizeStereotype: 12,
+    fontSizeStereotype: 13,
     lineHeight: 22,
     padX: 14,
     padY: 6,
@@ -63,6 +63,7 @@
     var classes = [];
     var relationships = [];
     var classMap = {};
+    var notes = [];
     var inClass = null;
     var braceDepth = 0;
     var direction = 'TB';
@@ -102,6 +103,10 @@
         }
         continue;
       }
+
+      // Note
+      var noteIdx = UMLShared.parseNoteLine(line, lines, i, notes);
+      if (noteIdx >= 0) { i = noteIdx; continue; }
 
       // Try to parse class declaration
       var cls = parseClassDecl(line);
@@ -143,7 +148,7 @@
       }
     }
 
-    return { classes: classes, relationships: relationships, direction: direction };
+    return { classes: classes, relationships: relationships, notes: notes, direction: direction };
   }
 
   /**
@@ -172,6 +177,9 @@
     } else if (/^interface\s+/.test(cleanLine)) {
       classType = 'interface';
       name = cleanLine.replace(/^interface\s+/, '').trim();
+    } else if (/^enum\s+/.test(cleanLine)) {
+      classType = 'enum';
+      name = cleanLine.replace(/^enum\s+/, '').trim();
     } else if (/^class\s+/.test(cleanLine)) {
       classType = 'class';
       name = cleanLine.replace(/^class\s+/, '').trim();
@@ -321,6 +329,7 @@
     if (cls.stereotype) stereotypeText = '\u00AB' + cls.stereotype + '\u00BB';
     else if (cls.type === 'abstract') stereotypeText = '\u00ABabstract\u00BB';
     else if (cls.type === 'interface') stereotypeText = '\u00ABinterface\u00BB';
+    else if (cls.type === 'enum') stereotypeText = '\u00ABenumeration\u00BB';
 
     var stereotypeH = hasStereotype ? CFG.lineHeight : 0;
     var nameH = CFG.padY * 2 + CFG.lineHeight + stereotypeH;
@@ -440,15 +449,80 @@
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var relationships = parsed.relationships;
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
+
+    // Resolve note target — supports ClassName or ClassName.memberName
+    function resolveTarget(target) {
+      var parts = target.split('.');
+      var className = parts[0];
+      var memberName = parts.length > 1 ? parts.slice(1).join('.') : null;
+      var entry = entries[className];
+      if (!entry) return null;
+      var box = entry.box;
+      if (!memberName) {
+        return { x: entry.x, y: entry.y, w: box.width, h: box.height };
+      }
+      // Search attributes
+      var cls = entry.cls;
+      for (var ai = 0; ai < cls.attributes.length; ai++) {
+        if (cls.attributes[ai].text.indexOf(memberName) !== -1) {
+          var ay = entry.y + box.nameH + CFG.padY + ai * CFG.lineHeight;
+          return { x: entry.x, y: ay, w: box.width, h: CFG.lineHeight };
+        }
+      }
+      // Search methods
+      for (var mi = 0; mi < cls.methods.length; mi++) {
+        if (cls.methods[mi].text.indexOf(memberName) !== -1) {
+          var my = entry.y + box.nameH + box.attrH + CFG.padY + mi * CFG.lineHeight;
+          return { x: entry.x, y: my, w: box.width, h: CFG.lineHeight };
+        }
+      }
+      return { x: entry.x, y: entry.y, w: box.width, h: box.height };
+    }
+
+    // Pre-compute note positions so SVG bounds can be expanded
+    var notePositions = [];
+    if (parsed.notes) {
+      var noteGap = UMLShared.NOTE_CFG.gap;
+      for (var npi = 0; npi < parsed.notes.length; npi++) {
+        var pn = parsed.notes[npi];
+        var tgt = resolveTarget(pn.target);
+        if (!tgt) continue;
+        var ns = UMLShared.measureNote(pn.lines);
+        var nx, ny;
+        var tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
+        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
+        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
+        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
+        else { nx = tx; ny = ty + th + noteGap; }
+        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height,
+          tx: tx, ty: ty, tw: tw, th: th });
+      }
+    }
+
+    // Expand SVG bounds to fit notes
+    var extraLeft = 0, extraRight = 0, extraTop = 0, extraBottom = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var np = notePositions[nbi];
+      var minNX = np.x - CFG.svgPad;
+      var maxNX = np.x + np.w + CFG.svgPad;
+      var minNY = np.y - CFG.svgPad;
+      var maxNY = np.y + np.h + CFG.svgPad;
+      if (minNX < -layout.offsetX) extraLeft = Math.max(extraLeft, -layout.offsetX - minNX);
+      if (maxNX > layout.width - layout.offsetX) extraRight = Math.max(extraRight, maxNX - (layout.width - layout.offsetX));
+      if (minNY < -layout.offsetY) extraTop = Math.max(extraTop, -layout.offsetY - minNY);
+      if (maxNY > layout.height - layout.offsetY) extraBottom = Math.max(extraBottom, maxNY - (layout.height - layout.offsetY));
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + extraLeft;
+    var oy = layout.offsetY + CFG.svgPad + extraTop;
+    var svgW = layout.width + CFG.svgPad * 2 + extraLeft + extraRight;
+    var svgH = layout.height + CFG.svgPad * 2 + extraTop + extraBottom;
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw relationships ──
+    var decorSvg = []; // arrowhead decorations drawn after class boxes
 
     // Group generalization/realization by target for shared-target rendering
     var inheritGroups = {};  // target -> { type, children: [] }
@@ -512,10 +586,10 @@
       var parentCx = parentEntry.x + parentEntry.box.width / 2;
       var parentBot = parentEntry.y + parentEntry.box.height;
 
-      // Hollow triangle at parent bottom
+      // Hollow triangle at parent bottom (deferred to draw on top of class boxes)
       var triTop = parentBot;
       var triBot = parentBot + CFG.triangleH;
-      svg.push('<polygon points="' +
+      decorSvg.push('<polygon points="' +
         parentCx + ',' + triTop + ' ' +
         (parentCx - CFG.triangleW / 2) + ',' + triBot + ' ' +
         (parentCx + CFG.triangleW / 2) + ',' + triBot +
@@ -633,16 +707,16 @@
       var endLen = Math.sqrt(endDx * endDx + endDy * endDy);
       if (endLen > 0) { endDx /= endLen; endDy /= endLen; }
 
-      // Source decorations
+      // Source decorations (deferred to draw on top of class boxes)
       if (orel.type === 'composition') {
-        drawDiamond(svg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, true, colors.fill);
+        drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, true, colors.fill);
       } else if (orel.type === 'aggregation') {
-        drawDiamond(svg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, false, colors.fill);
+        drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, false, colors.fill);
       }
 
-      // Target decorations
+      // Target decorations (deferred to draw on top of class boxes)
       if (orel.type === 'navigable' || orel.type === 'dependency') {
-        drawOpenArrow(svg, pLast.x, pLast.y, -endDx, -endDy, endDy, -endDx, colors.line);
+        drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, endDy, -endDx, colors.line);
       }
 
       // Determine if the first/last segment is horizontal or vertical
@@ -793,6 +867,30 @@
           (methStyle ? ' style="' + methStyle + '"' : '') + '>' +
           UMLShared.escapeXml(meth.text) + '</text>');
       }
+    }
+
+    // ── Draw arrowhead decorations on top of class boxes ──
+    for (var di = 0; di < decorSvg.length; di++) svg.push(decorSvg[di]);
+
+    // ── Draw notes (using pre-computed positions) ──
+    for (var ni = 0; ni < notePositions.length; ni++) {
+      var np2 = notePositions[ni];
+      var connFrom, connTo;
+      if (np2.note.position === 'right') {
+        connFrom = { x: np2.x, y: np2.y + np2.h / 2 };
+        connTo = { x: np2.tx + np2.tw, y: np2.ty + np2.th / 2 };
+      } else if (np2.note.position === 'left') {
+        connFrom = { x: np2.x + np2.w, y: np2.y + np2.h / 2 };
+        connTo = { x: np2.tx, y: np2.ty + np2.th / 2 };
+      } else if (np2.note.position === 'top') {
+        connFrom = { x: np2.x + np2.w / 2, y: np2.y + np2.h };
+        connTo = { x: np2.tx + np2.tw / 2, y: np2.ty };
+      } else {
+        connFrom = { x: np2.x + np2.w / 2, y: np2.y };
+        connTo = { x: np2.tx + np2.tw / 2, y: np2.ty + np2.th };
+      }
+      UMLShared.drawNote(svg, np2.x, np2.y, np2.note.lines, colors,
+        { fromX: connFrom.x, fromY: connFrom.y, toX: connTo.x, toY: connTo.y });
     }
 
     svg.push(UMLShared.svgClose());

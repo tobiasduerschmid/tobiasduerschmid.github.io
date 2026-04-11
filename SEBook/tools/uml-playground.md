@@ -17,6 +17,8 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="state">State</option>
       <option value="component">Component</option>
       <option value="deployment">Deployment</option>
+      <option value="usecase">Use Case</option>
+      <option value="activity">Activity</option>
     </select>
     <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
     <span id="uml-pg-status"></span>
@@ -267,6 +269,48 @@ body.dark-mode #uml-pg-status {
       '@enduml'
     ].join('\n'),
 
+    usecase: [
+      '@startuml',
+      'actor User',
+      'actor Admin',
+      '',
+      'usecase "Login" as UC1',
+      'usecase "Register" as UC2',
+      'usecase "Reset Password" as UC3',
+      'usecase "Manage Users" as UC4',
+      '',
+      'rectangle "Auth System" {',
+      '  UC1',
+      '  UC2',
+      '  UC3',
+      '  UC4',
+      '}',
+      '',
+      'User -- UC1',
+      'User -- UC2',
+      'User -- UC3',
+      'Admin -- UC1',
+      'Admin -- UC4',
+      'UC1 ..> UC3 : <<extend>>',
+      'UC2 ..> UC1 : <<include>>',
+      '@enduml'
+    ].join('\n'),
+
+    activity: [
+      '@startuml',
+      '(*) --> "Receive Order"',
+      '"Receive Order" --> "Validate Payment"',
+      'if "Payment Valid?" then',
+      '  --> [yes] "Process Order"',
+      'else',
+      '  --> [no] "Reject Order"',
+      'endif',
+      '"Process Order" --> "Ship Order"',
+      '"Ship Order" --> (*)',
+      '"Reject Order" --> (*)',
+      '@enduml'
+    ].join('\n'),
+
     component: [
       '@startuml',
       'component Frontend {',
@@ -296,6 +340,8 @@ body.dark-mode #uml-pg-status {
     state: function (container, text) { window.UMLStateDiagram.render(container, text); },
     component: function (container, text) { window.UMLComponentDiagram.render(container, text); },
     deployment: function (container, text) { window.UMLDeploymentDiagram.render(container, text); },
+    usecase: function (container, text) { window.UMLUseCaseDiagram.render(container, text); },
+    activity: function (container, text) { window.UMLActivityDiagram.render(container, text); },
   };
 
   function init() {
@@ -418,7 +464,8 @@ body.dark-mode #uml-pg-status {
       var type = typeSelect.value;
       if (window.UMLClassDiagram && window.UMLSequenceDiagram &&
           window.UMLStateDiagram && window.UMLComponentDiagram &&
-          window.UMLDeploymentDiagram) {
+          window.UMLDeploymentDiagram && window.UMLUseCaseDiagram &&
+          window.UMLActivityDiagram) {
         renderDiagram();
       } else {
         setTimeout(tryRender, 100);
