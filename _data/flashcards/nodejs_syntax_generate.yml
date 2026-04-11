@@ -69,3 +69,21 @@ cards:
       }
       ```
     explanation: "Object destructuring in parameters is the standard pattern for React component props: `function Card({ title, color }) { ... }`."
+
+  - id: 14
+    question: "Write a `delay(ms)` function that returns a Promise which resolves after `ms` milliseconds."
+    answer: |
+      ```javascript
+      function delay(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+      }
+      ```
+    explanation: "`new Promise(resolve => ...)` creates a Promise. Passing `resolve` as the `setTimeout` callback means: 'resolve this Promise after `ms` ms.' Usage: `await delay(1000)` pauses for 1 second without blocking the Event Loop."
+
+  - id: 16
+    question: "Safely read `response.data.user.name` where any part of the chain might be `null` or `undefined`. Fall back to `'Anonymous'` if missing."
+    answer: |
+      ```javascript
+      const name = response?.data?.user?.name ?? 'Anonymous';
+      ```
+    explanation: "`?.` short-circuits to `undefined` if any link is null/undefined — no TypeError thrown. `??` uses the fallback only for `null`/`undefined`, so a real empty string `''` would be preserved. Using `||` instead of `??` would incorrectly replace an empty string with `'Anonymous'`."

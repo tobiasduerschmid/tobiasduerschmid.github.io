@@ -109,6 +109,24 @@ function LikeButton() {
 1. `likes`: The current value (like a standard variable).
 2. `setLikes`: A setter function. **Crucial rule:** You cannot just do `likes++` like you would in C++. You *must* use the setter function (`setLikes`). Calling the setter is what alerts React to re-render the UI with the new data.
 
+#### Functional updates — the `prev` pattern
+
+When new state depends on the old state, always pass a function to the setter instead of the current value. This avoids **stale closure** bugs, where a callback captures an outdated snapshot of the variable:
+
+```jsx
+// Risky — `likes` captured at render time; concurrent updates can drop clicks
+setLikes(likes + 1);
+
+// Safe — React passes the guaranteed latest value as `prev`
+setLikes(prev => prev + 1);
+```
+
+A **stale closure** occurs when an event handler closes over a value that was current when the component rendered but has since been superseded by newer state. The `prev =>` pattern sidesteps this because React resolves the function at the moment the update is applied, not at the moment the handler was created.
+
+#### State batching
+
+React batches multiple `setState` calls that happen in the same event handler into a single re-render. This is an optimisation — you will not see intermediate states. If you call `setA(1); setB(2);` in one click handler, the component re-renders once with both changes applied.
+
 
 
 ### Putting it Together: Connecting Frontend to Backend
@@ -215,6 +233,18 @@ return <ul>{taskList}</ul>;
 
 **Keys** tell React which items are stable across re-renders. Without stable keys, React compares by position — causing bugs when items are reordered or deleted. Never use array index as a key for dynamic lists; use a stable ID from your data.
 
+Beyond `.map()`, two other array methods appear constantly in React:
+
+```jsx
+// .filter() — keep only items that match a condition
+const doneTasks = tasks.filter(task => task.done);
+
+// .reduce() — fold a list into a single value (e.g., a cart total)
+const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+```
+
+These are plain JavaScript — React adds nothing special — but they are the idiomatic way to derive display data from state without storing redundant copies.
+
 **Conditional rendering** uses plain JavaScript inside JSX:
 
 ```jsx
@@ -250,6 +280,10 @@ function ProfileCard({ user }) {
 ```
 
 The `children` prop lets any content be nested inside a component, making it a composable container — analogous to C++ templates or Python's `*args`.
+
+#### Prop drilling
+
+When a value must pass through several intermediate components that don't use it themselves — only to reach a deeply nested child — the pattern is called **prop drilling**. It works, but it couples every layer in between to data it doesn't care about, making refactoring painful. For small trees, prop drilling is fine. When it becomes unwieldy, the typical solutions are lifting state to a closer ancestor or using a context/state-management library.
 
 
 ### Thinking in React
@@ -338,8 +372,10 @@ function App() {
 **9. Guard `&&` rendering against falsy numbers.**
 {% raw %}`{count && <Badge />}`{% endraw %} renders the literal `0` when `count` is `0`, because `0` is a valid React node. Use an explicit boolean: {% raw %}`{count > 0 && <Badge />}`{% endraw %}.
 
-**10. Never call hooks inside conditions or loops.**
-React tracks hooks by their *call order*. If a `useState` call is skipped on one render because it is inside an `if`, every hook after it shifts position — causing crashes or silent data corruption. Always call hooks at the top level of your component.
+**10. Follow the two Rules of Hooks.**
+React tracks hooks by their *call order*. Two rules are non-negotiable:
+1. **Only call hooks at the top level** — never inside `if`, loops, or nested functions. If a `useState` call is skipped on one render, every hook after it shifts position, causing crashes or silent data corruption.
+2. **Only call hooks inside React function components** (or custom hooks) — never in plain JavaScript utility functions, class methods, or event listeners outside of a component.
 
 
 ### Glossary
@@ -358,6 +394,10 @@ React tracks hooks by their *call order*. If a `useState` call is skipped on one
 | **Fragment** | A wrapper (`<>...</>`) that groups multiple JSX elements without adding an extra DOM node. |
 | **Derived state** | A value computed from existing state or props during render, rather than stored in its own `useState`. |
 | **Lifting state up** | Moving state to the lowest common ancestor of the components that need it, then passing it down as props. |
+| **Stale closure** | A bug where an event handler or callback captures an outdated state value from a previous render. Fixed by using the functional `setState(prev => ...)` pattern. |
+| **Functional update** | Passing a function to a state setter (`setState(prev => prev + 1)`) so React provides the latest state value at update time, avoiding stale closure bugs. |
+| **State batching** | React's optimisation of merging multiple `setState` calls in the same event handler into a single re-render. |
+| **Prop drilling** | Passing a prop through several intermediate components that don't use it, just to reach a deeply nested child that does. |
 
 
 ### Summary

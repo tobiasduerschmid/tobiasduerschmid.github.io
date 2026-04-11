@@ -82,3 +82,37 @@ cards:
       const doubled = [1, 2, 3].map(n => n * 2);
       ```
     answer: "Produces `[2, 4, 6]` — `.map()` transforms each element by calling the callback and returns a **new array** of results. The original array is unchanged."
+
+  - id: 13
+    question: |
+      ```javascript
+      console.log("Hello from Node.js!");
+      ```
+    answer: "`console.log()` is JavaScript's equivalent of Python's `print()` and C++'s `printf()`. It writes to stdout with a trailing newline. It can print any value — strings, numbers, objects, arrays."
+
+  - id: 14
+    question: |
+      ```javascript
+      const p = new Promise((resolve, reject) => {
+          setTimeout(() => resolve("done!"), 100);
+      });
+      ```
+    answer: "Creates a Promise manually. The constructor takes a function with two callbacks: `resolve(value)` — call when work succeeds, `reject(error)` — call when it fails. In practice you rarely create Promises from scratch; you mostly consume them with `await` or `.then()`."
+
+  - id: 15
+    question: |
+      ```javascript
+      async function getCount() {
+          return 42;
+      }
+      const result = getCount();
+      ```
+    answer: "`result` is a **Promise**, not `42`. Every `async` function always returns a Promise, even when the body just returns a plain value. To get `42`, you need `await getCount()` or `getCount().then(n => ...)`."
+
+  - id: 16
+    question: |
+      ```javascript
+      const city = user?.address?.city;
+      const port = config.port ?? 3000;
+      ```
+    answer: "**Optional chaining** `?.` safely accesses nested properties — returns `undefined` instead of throwing if any link is `null`/`undefined`. **Nullish coalescing** `??` provides a default only for `null`/`undefined` (unlike `||`, which also replaces `0`, `''`, and `false`)."

@@ -90,3 +90,67 @@ cards:
     question: "Use `className` (not `class`) to apply the CSS class `app-title` to an `<h1>` element in JSX."
     answer: '`<h1 className="app-title">My App</h1>`'
     explanation: "`class` is a reserved JavaScript keyword (for ES6 classes). JSX uses `className` instead, which maps to the DOM property `element.className`."
+
+  - id: 13
+    question: "Write a `useEffect` that calls `fetchPosts()` once when a component mounts, storing the result in a `posts` state variable. Assume `fetchPosts()` returns a Promise that resolves to an array."
+    answer: |
+      ```jsx
+      const [posts, setPosts] = useState([]);
+
+      useEffect(() => {
+        fetchPosts().then(data => setPosts(data));
+      }, []);
+      ```
+    explanation: "The empty dependency array `[]` means 'run once after the initial render, then never again' — exactly what 'on mount' means. `useState([])` initializes with an empty array so the list renders safely before data arrives."
+
+  - id: 14
+    question: "Write a counter that increments correctly even if the button is clicked many times rapidly. Use the functional update pattern."
+    answer: |
+      ```jsx
+      const [count, setCount] = useState(0);
+
+      function handleClick() {
+        setCount(prev => prev + 1);
+      }
+
+      return <button onClick={handleClick}>{count}</button>;
+      ```
+    explanation: "`prev => prev + 1` asks React for the guaranteed latest value at update time, preventing stale reads if multiple events are batched. Note `onClick={handleClick}` — passing the function reference, not calling it (`handleClick()` would trigger on every render)."
+
+  - id: 15
+    question: "Remove the item with `id === deletedId` from the `tasks` state array."
+    answer: "`setTasks(tasks.filter(task => task.id !== deletedId));`"
+    explanation: "`.filter()` returns a new array containing only items where the condition is true — the one with the matching `id` is excluded. Never use `.splice()` or index-based deletion on state arrays; they mutate in-place and React won't detect the change."
+
+  - id: 16
+    question: "Update the `score` field of the `player` state object to `newScore`, keeping all other fields unchanged."
+    answer: "`setPlayer({ ...player, score: newScore });`"
+    explanation: "Spread `...player` copies all existing fields into a new object, then `score: newScore` overrides just that one field. The result is a new object reference, which signals React to re-render. Mutating directly (`player.score = newScore`) would leave the same reference and be invisible to React."
+
+  - id: 17
+    question: "Render an `<h2>` and a `<p>` side by side as siblings without adding a wrapper `<div>` to the DOM."
+    answer: |
+      ```jsx
+      return (
+        <>
+          <h2>Title</h2>
+          <p>Subtitle</p>
+        </>
+      );
+      ```
+    explanation: "`<>...</>` is a React Fragment — a wrapper that exists only in JSX, not in the real DOM. Use it whenever a component must return multiple elements but you don't want an extra `<div>` cluttering the HTML structure or breaking CSS layouts like flexbox and grid."
+
+  - id: 18
+    question: "Write a controlled text input that is bound to a `username` state variable. Every keystroke should update the state."
+    answer: |
+      ```jsx
+      const [username, setUsername] = useState('');
+
+      return (
+        <input
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+        />
+      );
+      ```
+    explanation: "A controlled input has two parts: `value={username}` binds the displayed text to state, and `onChange` updates state on every keystroke via `e.target.value`. React becomes the single source of truth for the input — you can read or validate `username` at any time without touching the DOM."

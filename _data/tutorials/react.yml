@@ -89,7 +89,7 @@ steps:
 
       The `<h1>...</h1>` syntax inside JavaScript is called **JSX**. It looks like HTML, but it is *not* — Babel compiles it to `React.createElement(...)` calls that build a lightweight JavaScript object tree (the Virtual DOM). You will learn the details and rules of JSX in the next step.
 
-      ### Predict Before You Modify
+      ### Can You Beat the Renderer?
 
       Before changing anything, look at the `App` component. Predict: what does `{name}` inside the JSX evaluate to? What does `className="greeting"` connect to in `styles.css`? Write your predictions, then read on.
 
@@ -175,6 +175,9 @@ steps:
           assert(h1, 'No <h1> found in the preview');
           assert(h1.textContent.trim() !== 'Hello, World!',
             'Change the name variable from "World" to your own name');
+        hints:
+          - text: "Look for the line that says `const name = \"World\"`. What would happen if you changed the string on the right side of the `=`?"
+            condition: "code_contains: World"
       - description: "The heading color is not 'tomato'"
         command: |
           var h1 = frame.contentDocument.querySelector('h1');
@@ -182,6 +185,9 @@ steps:
           var color = getComputedStyle(h1).color;
           assert(color !== 'rgb(255, 99, 71)' && color !== 'tomato',
             'Change the color in styles.css to something other than "tomato"');
+        hints:
+          - text: "Switch to the **styles.css** file tab. Find the `.greeting` rule — what CSS property controls text color?"
+            condition: "code_contains: tomato"
 
     quiz:
       title: "Hello, React! — Knowledge Check"
@@ -267,7 +273,7 @@ steps:
       | Component names | `<card />` | `<Card />` (must be capitalized) |
       | Embed JS expressions | `<p>name</p>` | `<p>{name}</p>` (curly braces for expressions) |
 
-      ### Predict Before You Code
+      ### Can You Beat the Renderer?
 
       Before fixing the bugs below: look at the Badge component's `style` prop. It says `style="background: color;"`. Predict: what is wrong with this syntax? Write your prediction, then fix it.
 
@@ -359,17 +365,28 @@ steps:
         command: |
           var h1 = frame.contentDocument.querySelector('h1');
           assert(h1, 'Fix all JSX bugs so the component renders. No <h1> found yet.');
+        hints:
+          - text: "The component isn't rendering at all — that means there's a **syntax error** preventing React from building the component tree. Check: does the `App` function return a single root element?"
+            condition: "code_missing: <>"
+          - text: "You've added a Fragment — good. If it still doesn't render, check the **style** prop on the Badge component. JSX style requires a specific format."
+            condition: "code_contains: <>"
       - description: "Uses className instead of class"
         command: |
           var withoutClassName = code.replace(/className=/g, '');
           assert(!withoutClassName.includes(' class='),
             'Fix the <h1> tag: use className="..." instead of class="..." (class is a reserved JS keyword)');
+        hints:
+          - text: "One of the bugs involves a **CSS class attribute**. Look at the JSX rules table — what keyword does React use instead of the HTML `class` attribute?"
+            condition: "code_contains: class="
       - description: "Three or more Badge spans are rendered"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var spans = root.querySelectorAll('span');
           assert(spans.length >= 3,
             'Add a third <Badge> component. Currently found: ' + spans.length + ' span(s)');
+        hints:
+          - text: "You need to add one more `<Badge>` below the existing two. Look at how the first two are used — same component, different props."
+            condition: "code_missing: Badge"
       - description: "Badge spans have a background color applied (style is an object, not a string)"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -377,6 +394,11 @@ steps:
           var styled = spans.filter(function(s) { return s.style.background || s.style.backgroundColor; });
           assert(styled.length >= 2,
             'Fix the Badge style — use style={{background: color, ...}} (a JS object), not style="..." (a CSS string). Found ' + styled.length + ' styled span(s).');
+        hints:
+          - text: "The Badge's `style` prop is using an **HTML string** (`style=\"...\"`). In JSX, `style` takes a **JavaScript object**. What does the JSX rules table say about inline styles?"
+            condition: "code_contains: style=\""
+          - text: "You changed the style format — nice. Make sure `color` (the prop) is used as a **variable**, not as the literal string `\"color\"`. The outer `{}` is for JSX expressions, the inner `{}` is for the object literal."
+            condition: "code_missing: style=\""
 
     quiz:
       title: "Components & JSX — Knowledge Check"
@@ -519,7 +541,7 @@ steps:
 
       You will learn more conditional rendering patterns (ternary, early return) in Step 6.
 
-      ### Predict Before You Code
+      ### Can You Beat the Renderer?
 
       Before writing any code, predict: what will the `ProductCard` look like when `onSale` is `true` vs `false`? Now that you know the `&&` pattern, write the JSX in your head, then implement it.
 
@@ -534,7 +556,7 @@ steps:
 
       The `App` function already passes the right props — you only need to build the card.
 
-      **Challenge (optional):** After passing the tests, add a third `ProductCard` in `App` with your own product data and `onSale` value. Notice how the same component renders differently based on the data you pass — that is the power of props.
+      **Bonus round:** After passing the tests, add a third `ProductCard` in `App` with your own product data and `onSale` value. Notice how the same component renders differently based on the data you pass — that is the power of props.
 
     files:
       - path: "step3/App.jsx"
@@ -641,6 +663,9 @@ steps:
           var h3s = root.querySelectorAll('h3');
           assert(h3s.length >= 2,
             'Render at least one <h3> per card. Found: ' + h3s.length);
+        hints:
+          - text: "Inside the `<Card.Body>`, add an `<h3>` tag that displays the `name` prop. Remember: props are accessed like variables — use `{name}` inside JSX."
+            condition: "code_missing: <h3>"
       - description: "Product name appears in an <h3>"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -648,12 +673,20 @@ steps:
           var names = Array.from(h3s).map(function(el) { return el.textContent; });
           assert(names.some(function(n) { return n.includes('Keyboard'); }),
             '<h3> should display the product name. Got: ' + JSON.stringify(names));
+        hints:
+          - text: "You have an `<h3>` — good. But the product name isn't showing. Did you put `{name}` inside the `<h3>` tags? The curly braces tell JSX to evaluate a JavaScript expression."
+            condition: "code_contains: <h3>"
       - description: "Price is displayed and formatted to two decimal places"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var text = root ? root.textContent : '';
           assert(text.includes('129.99') || text.includes('$129.99'),
             'Display the price with .toFixed(2). Render it inside the card, e.g. <p>${price.toFixed(2)}</p>');
+        hints:
+          - text: "Add a `<p>` tag for the price. To format to 2 decimal places, call a **method** on the `price` variable — what Number method formats decimals?"
+            condition: "code_missing: toFixed"
+          - text: "You're using `toFixed` — good. Make sure you have `$` before the expression and that the whole thing is wrapped in `{}` for JSX: `${price.toFixed(2)}`."
+            condition: "code_contains: toFixed"
       - description: "'Sale!' badge appears for the keyboard (onSale=true) but not for the hub"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -663,6 +696,11 @@ steps:
             'Show a <Badge> with "Sale!" text when onSale is true. Found 0 badge elements. Use: {onSale && <Badge bg="danger">Sale!</Badge>}');
           assert(saleBadges.length < 2,
             'The "Sale!" badge should only appear for products where onSale is true (the Keyboard), not for all products. Found ' + saleBadges.length + ' badges.');
+        hints:
+          - text: "You need to **conditionally** render a Badge. Re-read the `&&` pattern in the **Conditional Rendering** section above — it shows how to render something only when a boolean is `true`."
+            condition: "code_missing: &&"
+          - text: "You're using `&&` — good. Make sure the left side is the `onSale` prop, and the right side is a `<Badge>` component with the text 'Sale!'."
+            condition: "code_contains: &&"
 
     quiz:
       title: "Props — Knowledge Check"
@@ -720,6 +758,20 @@ steps:
             In production, you would guard against this with a default value:
             `function ProductCard({ price = 0 }) { ... }` or `(price ?? 0).toFixed(2)`.
             React does not provide automatic fallbacks for missing props.
+
+        - question: |
+            **Arrange** the lines to build a `Greeting` component that accepts `name` and `emoji` props and renders them.
+          type: parsons
+          lines:
+            - "function Greeting({ name, emoji }) {"
+            - "    return ("
+            - "        <p>{emoji} Hello, {name}!</p>"
+            - "    );"
+            - "}"
+          distractors:
+            - "function Greeting(name, emoji) {"
+            - "    <p>emoji Hello, name!</p>"
+          explanation: "The correct signature uses **destructuring** `{ name, emoji }` to unpack props — the distractor omits the braces, which would receive the entire props object as `name` and `undefined` as `emoji`. Inside JSX, props must be wrapped in `{curly braces}` to be evaluated as expressions — without them, React renders the literal text 'emoji' and 'name'."
 
   # --------------------------------------------------------------------------
   # STEP 4: useState — State & Interactivity
@@ -860,7 +912,7 @@ steps:
       }
       ```
 
-      ### Predict Before You Fix
+      ### Can You Beat the Renderer?
 
       Look at the broken counter code. Predict: when you click the +1 button, does `count` actually change in memory? If so, why doesn't the display update? Write your hypothesis before reading the explanation above.
 
@@ -871,10 +923,12 @@ steps:
       1. It uses a regular `let` variable instead of `useState`
       2. It tries to mutate the variable directly — React won't re-render
 
-      **Task:**
-      1. Fix the counter so it actually updates the display when clicked
-      2. Add a **"Reset"** button that sets the count back to `0`
-      3. Add a **"−1"** button that decrements the count (don't let it go below 0)
+      ### Can you beat the renderer? Do these ONE AT A TIME — run tests after each:
+
+      1. **Fix the counter:** Replace `let count = 0` with `React.useState(0)` and use the setter in the click handler
+      2. **Verify:** Click +1 — does the number update? If not, check that you're calling the setter function, not doing `count = count + 1`
+      3. **Add a "Reset" button** that sets the count back to `0`
+      4. **Add a "−1" button** that decrements the count (don't let it go below 0)
 
       ### 🔍 Debugging Tip
 
@@ -958,12 +1012,20 @@ steps:
         command: |
           assert(code.includes('useState'),
             'Replace the let variable with React.useState()');
+        hints:
+          - text: "The first fix is replacing `let count = 0`. React provides `React.useState(initialValue)` which returns a pair: `[currentValue, setterFunction]`. Re-read the **useState** section above for the syntax."
+            condition: "code_missing: useState"
+          - text: "You've added `useState` — good. Now make sure the **click handler** calls the setter function (second item from the pair), not `count++` or `count = count + 1`."
+            condition: "code_contains: useState"
       - description: "The +1 button and a Reset button are both present"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var buttons = root.querySelectorAll('button');
           assert(buttons.length >= 2,
             'Add at least two buttons (+1 and Reset). Found: ' + buttons.length);
+        hints:
+          - text: "After fixing the counter, add a second `<Button>` component. Look at how the existing +1 button is structured — your Reset button follows the same pattern but calls the setter with `0`."
+            condition: "code_contains: useState"
       - description: "A button with 'Reset' text exists"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -972,12 +1034,18 @@ steps:
             return b.textContent.toLowerCase().includes('reset');
           });
           assert(hasReset, 'Add a Reset button that sets count back to 0');
+        hints:
+          - text: "Add a button with the text **Reset**. Its `onClick` should call the setter with the initial value — what value did you pass to `useState(...)` at the top?"
+            condition: "code_missing: Reset"
       - description: "A decrement (−1) button exists"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var buttons = Array.from(root.querySelectorAll('button'));
           assert(buttons.length >= 3,
             'Add a −1 button. Found only ' + buttons.length + ' button(s)');
+        hints:
+          - text: "Add a third button for decrementing. To prevent negative values, think about which **Math** function returns the larger of two numbers — you can use it to keep count at 0 or above."
+            condition: "code_contains: useState"
 
     quiz:
       title: "useState — Knowledge Check"
@@ -1030,6 +1098,26 @@ steps:
           correct_index: 1
           explanation: |
             Two problems: (1) React doesn't know about the global variable, so changing it doesn't trigger a re-render. (2) Global state is shared across ALL instances of the component — if you render two `<Counter />` components, they'd share the same counter. `useState` is per-instance and triggers re-renders. This is the same reason C++ classes use member variables, not global variables.
+
+        - question: |
+            *(Interleaving — Which concept applies?)*
+
+            For each scenario, identify the React concept needed:
+            **(a)** A greeting card that shows different names for different users
+            **(b)** A like counter that tracks clicks
+            **(c)** A heading that uses `class` instead of `className`
+          type: single
+          options:
+            - "(a) state, (b) props, (c) JSX rules"
+            - "(a) props, (b) state (useState), (c) JSX rules"
+            - "(a) JSX rules, (b) props, (c) state"
+            - "(a) state, (b) JSX rules, (c) props"
+          correct_index: 1
+          explanation: |
+            (a) Showing different data for different users = **props** — the parent passes `name` to the card.
+            (b) Tracking clicks that change over time = **state** (`useState`) — clicks are user-initiated changes.
+            (c) `class` vs `className` = **JSX rules** — JSX uses `className` because `class` is reserved in JS.
+            This question forces you to discriminate between the three concepts rather than recall one in isolation.
 
         - question: |
             *(Spaced review — Step 2: JSX)*
@@ -1105,7 +1193,7 @@ steps:
 
       > **Never use array index as a key for dynamic lists.** If items are reordered or removed, the index changes — defeating the purpose. Use a stable, unique ID.
 
-      ### Predict Before You Code
+      ### Can You Beat the Renderer?
 
       Before implementing: imagine a list of 3 checkboxes where each has its own `checked` state. You check the middle one, then delete it. With index-based keys, what happens to the third checkbox's state? Think it through, then read the key table above.
 
@@ -1117,7 +1205,7 @@ steps:
       2. Give each `<ListGroup.Item>` a `key` prop using `task.id` (not the index!)
       3. Show a ✓ or ✗ icon based on `task.done` using a ternary
 
-      **Challenge (optional):** After passing the tests, add a 7th task to the `tasks` array (e.g., `{ id: 7, text: 'Deploy to production', done: false }`). Does your `.map()` handle it automatically without any other code changes? That is the power of data-driven rendering.
+      **Bonus round:** After passing the tests, add a 7th task to the `tasks` array (e.g., `{ id: 7, text: 'Deploy to production', done: false }`). Does your `.map()` handle it automatically without any other code changes? That is the power of data-driven rendering.
 
     files:
       - path: "step5/App.jsx"
@@ -1208,12 +1296,20 @@ steps:
         command: |
           assert(code.includes('.map('),
             'Use .map() to render the tasks array into JSX elements');
+        hints:
+          - text: "Replace the placeholder `<ListGroup.Item>` with a `.map()` call on the `tasks` array. The pattern is: `{tasks.map(task => <ListGroup.Item>...</ListGroup.Item>)}`."
+            condition: "code_missing: .map("
+          - text: "You're using `.map()` — good. Make sure each `<ListGroup.Item>` has a `key` prop set to `task.id`, not the array index."
+            condition: "code_contains: .map("
       - description: "All 6 tasks are rendered as list items"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var items = root.querySelectorAll('.list-group-item');
           assert(items.length === 6,
             'Render all 6 tasks using .map(). Found ' + items.length + ' list items');
+        hints:
+          - text: "Not all 6 tasks are rendering. Check that your `.map()` is inside the `<ListGroup>` tags and that you haven't accidentally filtered the array."
+            condition: "code_contains: .map("
       - description: "Done/undone status is shown (✓ or ✗ or similar)"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1224,6 +1320,9 @@ steps:
                                   firstItemText.includes('[x]') || firstItemText.includes('[ ]');
           assert(hasDoneIndicator,
             'Show a done/undone indicator inside each list item (e.g. ✓ or ✗ using a ternary). First item text: ' + firstItemText.slice(0, 60));
+        hints:
+          - text: "Inside each `<ListGroup.Item>`, use a **ternary operator** to show different text based on `task.done`. The ternary pattern is: `{condition ? valueIfTrue : valueIfFalse}`."
+            condition: "code_missing: ?"
 
     quiz:
       title: "Lists & Keys — Knowledge Check"
@@ -1270,6 +1369,24 @@ steps:
             The correct pattern: the child calls a **callback prop** (`onToggle`), the parent updates
             state, and React re-renders with new props. This combines props (Step 3), state (Step 4),
             and one-way data flow into a single decision.
+
+        - question: |
+            **Arrange** the lines to render a playlist using `.map()` with stable keys.
+          type: parsons
+          lines:
+            - "function Playlist({ songs }) {"
+            - "    return ("
+            - "        <ul>"
+            - "            {songs.map(song =>"
+            - "                <li key={song.id}>{song.title}</li>"
+            - "            )}"
+            - "        </ul>"
+            - "    );"
+            - "}"
+          distractors:
+            - "                <li key={index}>{song.title}</li>"
+            - "            {songs.forEach(song =>"
+          explanation: "`.map()` transforms each element and returns a new array — `.forEach()` returns `undefined`, so React would render nothing. `key={song.id}` uses a stable identifier; `key={index}` breaks when items are reordered or deleted (the distractor). Each mapped element MUST have a unique key."
 
   # --------------------------------------------------------------------------
   # STEP 6: Conditional Rendering & Filtering
@@ -1346,7 +1463,7 @@ steps:
       }
       ```
 
-      ### Predict Before You Code
+      ### Can You Beat the Renderer?
 
       Before implementing, predict: if `filter` state is `'done'`, which tasks from the data array should be visible? How many items will the `.filter()` call return?
 
@@ -1481,6 +1598,11 @@ steps:
             'Add an "Active" filter button inside the ButtonGroup');
           assert(labels.some(function(l) { return l.includes('done') || l.includes('complet'); }),
             'Add a "Done" filter button inside the ButtonGroup');
+        hints:
+          - text: "Add three `<Button>` components inside the `<ButtonGroup>`. Each needs an `onClick` that calls `setFilter()` with the appropriate string — `'all'`, `'active'`, or `'done'`."
+            condition: "code_missing: setFilter"
+          - text: "You're calling `setFilter` — good. Make sure each button has visible text ('All', 'Active', 'Done') between its opening and closing tags."
+            condition: "code_contains: setFilter"
       - description: "Clicking 'Done' shows only completed tasks (3 of 6)"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1496,6 +1618,11 @@ steps:
               resolve();
             }, 100);
           });
+        hints:
+          - text: "The list isn't filtering. Did you replace `const visibleTasks = initialTasks;` with a `.filter()` call that uses the `filter` state variable? Check that clicking the button actually changes `filter` via `setFilter`."
+            condition: "code_missing: .filter("
+          - text: "You're using `.filter()` — good. Make sure your filter logic checks `task.done`: when `filter === 'done'`, return only tasks where `task.done` is `true`."
+            condition: "code_contains: .filter("
       - description: "Clicking 'Active' shows only incomplete tasks (3 of 6)"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1511,6 +1638,9 @@ steps:
               resolve();
             }, 100);
           });
+        hints:
+          - text: "The 'Active' filter should show tasks where `task.done` is `false`. In your filter logic, what condition means 'not done'? (Hint: the `!` operator)"
+            condition: "code_contains: .filter("
       - description: "Active filter button is visually highlighted (variant='primary')"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1528,6 +1658,9 @@ steps:
               resolve();
             }, 100);
           });
+        hints:
+          - text: "The button isn't changing color. Use a **ternary** in the `variant` prop to switch between `'primary'` and `'outline-secondary'` based on whether `filter` matches that button's value."
+            condition: "code_missing: ? 'primary'"
 
     quiz:
       title: "Conditional Rendering & Filtering — Knowledge Check"
@@ -1578,6 +1711,38 @@ steps:
             React's principle: store the **minimal** state and **derive** everything else. Storing both the
             full list AND a filtered copy creates a sync risk — if items change, you must remember to
             update both. With approach B, `visibleTasks` is always computed fresh from the source of truth.
+
+        - question: |
+            **Arrange** the fragments to write a filter button that highlights when active, using a ternary for the variant prop.
+          type: parsons
+          display: inline
+          lines:
+            - "<Button variant={filter === 'done'"
+            - "? 'primary'"
+            - ": 'outline-secondary'}"
+            - "onClick={() => setFilter('done')}>"
+            - "Done</Button>"
+          distractors:
+            - "onClick={setFilter('done')}>"
+          explanation: "The ternary `filter === 'done' ? 'primary' : 'outline-secondary'` switches the button's style based on the current filter state. The distractor `onClick={setFilter('done')}` calls `setFilter` immediately during render (because of the `()`) instead of creating a function that calls it on click — a classic React bug."
+
+        - question: |
+            *(Interleaving — Which concept applies?)*
+
+            A teammate's code has a bug: the filter buttons work correctly, but clicking 'Add to Cart' doesn't update the cart count. Which concept is MOST LIKELY the problem?
+          type: single
+          options:
+            - "Missing `key` props on the product list items"
+            - "Using a plain variable (`let cart = []`) instead of `useState` for the cart"
+            - "The filter logic uses `.filter()` instead of `.map()`"
+            - "The JSX uses `class` instead of `className`"
+          correct_index: 1
+          explanation: |
+            If filter buttons work, state and re-rendering are functional for the filter.
+            But if the cart count never updates, the cart data isn't triggering re-renders — the
+            most likely cause is using a plain variable instead of `useState`. This requires
+            discriminating between a state problem (Step 4), a key problem (Step 5), a method
+            problem, and a JSX syntax problem (Step 2) — interleaving across all prior concepts.
 
         - question: |
             *(Spaced review — Step 4: useState)*
@@ -1702,7 +1867,7 @@ steps:
 
       Prop drilling is not a bug, but it makes code harder to maintain. If you are drilling more than 2-3 levels, consider React's **Context API** (not covered in this tutorial) to share data without threading it through every layer.
 
-      ### Predict Before You Build
+      ### Can You Beat the Renderer?
 
       Before writing any code, look at the user data in `App`. Predict: how many components do you need? Which component should accept `children`? Which should receive individual props like `label` and `value`? Sketch a component tree on paper (or in your head), then compare with the specification below.
 
@@ -1718,9 +1883,9 @@ steps:
 
       > **Connection to `children`:** When you nest `Avatar` and `StatBadge` inside `<Card.Body>`, you are using `children` in action — Bootstrap's `Card.Body` renders whatever is placed between its tags. Your own components can do the same.
 
-      **Challenge 1 (optional):** After passing the tests, add a third user to the `users` array in `App`. Does your component hierarchy display the new card without any changes to `Avatar`, `StatBadge`, or `ProfileCard`? If yes, your composition is working — the same components render any number of users.
+      **Bonus round 1:** After passing the tests, add a third user to the `users` array in `App`. Does your component hierarchy display the new card without any changes to `Avatar`, `StatBadge`, or `ProfileCard`? If yes, your composition is working — the same components render any number of users.
 
-      **Challenge 2 (optional):** Extract a reusable `StatsRow` component that accepts `children` and wraps them in a flex container (`<div className="d-flex justify-content-around">`). Use it inside `ProfileCard` to wrap the three `StatBadge` components. This directly practices the `children` prop pattern from the Composition section above.
+      **Bonus round 2:** Extract a reusable `StatsRow` component that accepts `children` and wraps them in a flex container (`<div className="d-flex justify-content-around">`). Use it inside `ProfileCard` to wrap the three `StatBadge` components. This directly practices the `children` prop pattern from the Composition section above.
 
     files:
       - path: "step7/Avatar.jsx"
@@ -1920,6 +2085,11 @@ steps:
           var cards = root.querySelectorAll('img');
           assert(cards.length >= 4,
             'Render all user cards, each with an avatar image. Found: ' + cards.length + ' image(s)');
+        hints:
+          - text: "Each `ProfileCard` should contain an `Avatar`, which renders an `<img>`. Make sure `Avatar` is used inside `ProfileCard` and that `ProfileCard` is rendered for each user via `.map()`."
+            condition: "code_missing: Avatar"
+          - text: "You're using `Avatar` — good. Check that the `Avatar` component's JSX includes an `<img>` tag with the `src` prop set to `avatarUrl`."
+            condition: "code_contains: Avatar"
       - description: "Avatar images are circular (border-radius applied)"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1929,6 +2099,9 @@ steps:
             return style && style !== '0px';
           });
           assert(hasRound, 'Make the avatar images circular using border-radius: "50%"');
+        hints:
+          - text: "The images aren't circular. Bootstrap has a utility class that makes elements round — it starts with `rounded-`. Check Bootstrap's border-radius utilities."
+            condition: "code_missing: rounded-circle"
       - description: "Usernames are displayed"
         command: |
           var text = frame.contentDocument.getElementById('root').textContent;
@@ -1936,15 +2109,26 @@ steps:
             'Display the username in the Avatar component');
           assert(text.includes('fred-brooks') || text.includes('Fred Brooks'),
             'Display both usernames');
+        hints:
+          - text: "The `Avatar` component receives a `username` prop. Make sure you render it somewhere in the component's JSX — try a `<span>` below the image."
+            condition: "code_missing: username"
       - description: "Stats (repos, followers) are displayed"
         command: |
           var text = frame.contentDocument.getElementById('root').textContent;
           assert(text.includes('12') && text.includes('2048'),
             'Display repo and follower counts using StatBadge. Expected "12" and "2048" in the output.');
+        hints:
+          - text: "Use `StatBadge` inside `ProfileCard` to display stats. Pass `label` and `value` as props, e.g. `<StatBadge label=\"Repos\" value={user.repos} />`."
+            condition: "code_missing: StatBadge"
+          - text: "You're using `StatBadge` — good. Make sure the `StatBadge` component renders both the `label` and `value` props in its JSX. Check that `value` uses curly braces: `{value}`."
+            condition: "code_contains: StatBadge"
       - description: "StatBadge and Avatar components are both used inside ProfileCard"
         command: |
           assert(code.includes('Avatar') && code.includes('StatBadge'),
             'Use both the Avatar and StatBadge components inside ProfileCard');
+        hints:
+          - text: "The `ProfileCard` function should compose `Avatar` and `StatBadge` — use them as JSX tags inside `ProfileCard`'s return statement, just like you'd call helper functions."
+            condition: "code_missing: Avatar"
 
     quiz:
       title: "Composition — Knowledge Check"
@@ -2028,11 +2212,11 @@ steps:
     instructions: |
       > **Learning objective:** After this step you will be able to **design and implement** a complete React application that integrates components, props, state, lists, conditional rendering, and composition.
 
-      ## The Training Wheels Come Off
+      ## The Training Wheels Are Off
 
-      In Steps 1-7 you had scaffolding: pre-built component signatures, provided data structures, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. This is intentional — applying concepts independently is how they transfer from tutorial exercises to real projects.
+      In Steps 1-7 you had scaffolding: pre-built component signatures, provided data, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. No hints, no scaffolding — just you and everything you've learned.
 
-      If you feel uncertain, that is a sign the earlier steps did their job: you know enough to recognize the design space, but haven't yet internalized the patterns through unguided practice. Work through the "Thinking in React" methodology below — it will guide your decisions.
+      If you feel uncertain, that's actually a good sign: you know enough to see the design space, but haven't yet internalized the patterns through unguided practice. That's exactly what this step is for. Work through "Thinking in React" below — it'll guide your decisions.
 
       ### Requirements
 
@@ -2041,7 +2225,7 @@ steps:
       1. **Product list**: Display all products from the provided data using `.map()` with proper `key` props
       2. **Product card component**: Each product shows its name, price (formatted), category, and an "Add to Cart" button. Show a "Sale!" badge if `onSale` is true
       3. **Shopping cart**: Display the number of items in the cart. Use `useState` to track cart items
-      4. **Category filter**: Add buttons to filter products by category ("All", "Electronics", "Accessories"). Use `useState` for the active filter
+      4. **Category filter**: Add buttons to filter products by category ("All", "Tech", "Vibes", "Music"). Use `useState` for the active filter
       5. **Cart total**: Show the total price of items in the cart
       6. **Composition**: Use at least 3 separate components (e.g. `ProductCard`, `CartSummary`, `FilterBar`)
 
@@ -2083,12 +2267,12 @@ steps:
           const { Card, Button, Badge, ButtonGroup } = ReactBootstrap;
 
           const products = [
-            { id: 1, name: 'Wireless Mouse',       price: 29.99,  category: 'Electronics',  onSale: false },
-            { id: 2, name: 'Mechanical Keyboard',   price: 89.99,  category: 'Electronics',  onSale: true  },
-            { id: 3, name: 'USB-C Hub',             price: 45.99,  category: 'Electronics',  onSale: false },
-            { id: 4, name: 'Laptop Stand',          price: 34.99,  category: 'Accessories',  onSale: true  },
-            { id: 5, name: 'Desk Mat',              price: 19.99,  category: 'Accessories',  onSale: false },
-            { id: 6, name: 'Cable Management Kit',  price: 14.99,  category: 'Accessories',  onSale: false },
+            { id: 1, name: 'Lo-Fi Study Beats Vinyl', price: 29.99,  category: 'Music',  onSale: false },
+            { id: 2, name: 'Mechanical Keyboard',    price: 89.99,  category: 'Tech',   onSale: true  },
+            { id: 3, name: 'Desk LED Strip',         price: 19.99,  category: 'Tech',   onSale: false },
+            { id: 4, name: 'Anime Desk Mat',         price: 24.99,  category: 'Vibes',  onSale: true  },
+            { id: 5, name: 'Matcha Starter Kit',     price: 34.99,  category: 'Vibes',  onSale: false },
+            { id: 6, name: 'Cloud Earbuds',          price: 45.99,  category: 'Tech',   onSale: false },
           ];
 
           // Build your components and App here
@@ -2150,7 +2334,7 @@ steps:
             }
 
             function FilterBar({ filter, onFilter }) {
-              const categories = ['All', 'Electronics', 'Accessories'];
+              const categories = ['All', 'Tech', 'Vibes', 'Music'];
               return (
                 <ButtonGroup className="mb-3">
                   {categories.map(cat => (
@@ -2196,7 +2380,7 @@ steps:
             root.render(<App />);
           language: "jsx"
       explanation: |
-        - **All 6 products displayed:** The test checks that both `'Wireless Mouse'` and `'Cable Management Kit'` appear in the body text.
+        - **All 6 products displayed:** The test checks that both `'Lo-Fi Study Beats Vinyl'` and `'Cloud Earbuds'` appear in the body text.
         - **`.map()` with `key` props:** The test checks `src.textContent.includes('.map(')` and the presence of `key=`.
         - **react-bootstrap components:** `Card`, `Button`, `Badge`, `ButtonGroup` provide consistent styling. Students build their own `ProductCard`, `CartSummary`, and `FilterBar` components using these building blocks.
         - **`useState`:** Two pieces of state: `cart` (array) and `filter` (string).
@@ -2207,19 +2391,28 @@ steps:
       - description: "All 6 products are displayed"
         command: |
           var text = frame.contentDocument.getElementById('root').textContent;
-          assert(text.includes('Wireless Mouse') && text.includes('Cable Management Kit'),
+          assert(text.includes('Lo-Fi Study Beats Vinyl') && text.includes('Cloud Earbuds'),
             'Display all 6 products from the data array');
+        hints:
+          - text: "Use `.map()` on the `products` array to render each product. Make sure all 6 products from the data array are rendered — don't filter them out accidentally."
+            condition: "code_missing: .map("
       - description: "Products are rendered using .map() with keys"
         command: |
           assert(code.includes('.map('),
             'Use .map() to render the products');
           assert(code.includes('key=') || code.includes('key =' ),
             'Add key props to mapped elements');
+        hints:
+          - text: "Each mapped element needs a `key` prop. Use `product.id` — it's unique and stable. The pattern: `<ProductCard key={product.id} ... />`."
+            condition: "code_missing: key="
       - description: "Prices are displayed"
         command: |
           var text = frame.contentDocument.getElementById('root').textContent;
           assert(text.includes('29.99') || text.includes('$29.99'),
             'Display product prices');
+        hints:
+          - text: "Inside your product card component, render the price. Use `product.price.toFixed(2)` to format it to 2 decimal places."
+            condition: "code_missing: toFixed"
       - description: "'Add to Cart' buttons exist"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -2228,6 +2421,9 @@ steps:
             return b.textContent.toLowerCase().includes('add') || b.textContent.toLowerCase().includes('cart');
           });
           assert(hasAdd, 'Add an "Add to Cart" button to each product card');
+        hints:
+          - text: "Each product card needs a `<Button>` with text like 'Add to Cart'. Its `onClick` should call a function that adds the product to the cart state — think about which parent owns the cart."
+            condition: "code_missing: Add to Cart"
       - description: "Category filter buttons exist"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -2235,18 +2431,28 @@ steps:
           var labels = buttons.map(function(b) { return b.textContent.toLowerCase(); });
           assert(labels.some(function(l) { return l.includes('all'); }),
             'Add an "All" category filter button');
-          assert(labels.some(function(l) { return l.includes('electronics'); }) ||
-                 labels.some(function(l) { return l.includes('accessor'); }),
+          assert(labels.some(function(l) { return l.includes('tech'); }) ||
+                 labels.some(function(l) { return l.includes('vibes'); }) ||
+                 labels.some(function(l) { return l.includes('music'); }),
             'Add category filter buttons');
+        hints:
+          - text: "Add filter buttons for each category. Look at the product data — what are the unique `category` values? Use the same pattern as Step 6: `<Button onClick={() => setFilter('...')}>...</Button>`."
+            condition: "code_missing: setFilter"
       - description: "Uses useState for cart or filter state"
         command: |
           assert(code.includes('useState'),
             'Use React.useState for cart items and/or filter state');
+        hints:
+          - text: "You need `useState` for at least two things: the **cart** (an array of products) and the **filter** (a string like 'All'). Where should these state variables live? (Hint: which component needs both?)"
+            condition: "code_missing: useState"
       - description: "Uses at least 3 component functions"
         command: |
           var matches = code.match(/function\s+[A-Z]\w*\s*\(/g) || [];
           assert(matches.length >= 3,
             'Define at least 3 components (e.g. ProductCard, CartSummary, FilterBar). Found: ' + matches.length);
+        hints:
+          - text: "Apply **Thinking in React**: break your UI into components. Each concern gets its own function — one for displaying a product, one for the cart summary, one for the filter bar. Component names must be **Capitalized**."
+            condition: "code_contains: useState"
 
     quiz:
       title: "Integration — Knowledge Check"
@@ -2306,6 +2512,29 @@ steps:
             **Lifting state up**: the cart state belongs in the lowest common ancestor of all components
             that need it. `App` owns `[cart, setCart]`, passes `cart` to `CartSummary` and an
             `onAdd` callback to `ProductCard`. This is the same "Thinking in React" pattern from Step 7.
+
+        - question: |
+            **Predict** what renders after clicking the button:
+            ```jsx
+            function App() {
+              const [items, setItems] = React.useState(['A', 'B']);
+              const add = () => { items.push('C'); setItems(items); };
+              return <><button onClick={add}>Add</button><p>{items.join(', ')}</p></>;
+            }
+            ```
+          type: single
+          options:
+            - "'A, B, C' — push adds C and setItems triggers a re-render with the updated array"
+            - "'A, B' — `items.push` mutates in-place, but `setItems(items)` passes the **same reference**, so React sees no change and skips the re-render"
+            - "'C' — setItems replaces the array contents with just the pushed item"
+            - "Error — you cannot call push on a state variable"
+          correct_index: 1
+          explanation: |
+            React uses **reference equality** (`===`) to detect state changes. `items.push('C')` mutates the
+            existing array in-place — the reference stays the same. When you call `setItems(items)`, React
+            compares `oldRef === newRef` and sees no change, so it skips the re-render. The fix:
+            `setItems([...items, 'C'])` — the spread creates a NEW array with a different reference.
+            This combines the immutability principle (Step 4) with array operations (Step 5).
 
         - question: |
             *(Spaced review — Step 6: Conditional Rendering)*

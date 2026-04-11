@@ -1438,7 +1438,7 @@ title: "SE Gym"
       // ==================== LIBRARY VIEW ====================
 
       function refreshLibrary() {
-        // Show milestone banner based on total unique questions seen
+        // Show milestone banner based on total exercise attempts (all instances, not unique)
         var milestoneBanner = document.getElementById('milestone-banner');
         milestoneBanner.className = 'milestone-banner';
         if (PersonalGym.isAnalyzePerformance()) {
