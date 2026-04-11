@@ -308,6 +308,7 @@
     var svgH = layout.height + CFG.svgPad * 2;
 
     var svg = [];
+    var labelSvg = []; // Transition labels rendered after states so they appear on top
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw transitions (behind states) ──
@@ -328,7 +329,7 @@
         // Arrowhead
         drawArrow(svg, sx, sy + 20, -1, 0, colors.line);
         if (tr.label) {
-          svg.push('<text x="' + (sx + lw + 4) + '" y="' + (sy + 10) +
+          labelSvg.push('<text x="' + (sx + lw + 4) + '" y="' + (sy + 10) +
             '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
             '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' + UMLShared.escapeXml(tr.label) + '</text>');
         }
@@ -425,35 +426,65 @@
       if (tr.label) {
         var lx, ly, lAnchor = 'middle';
         if (points.length === 4) {
-          // Z-routes: label on the middle segment
-          var mSeg0 = points[1], mSeg1 = points[2];
-          var mIsHoriz = Math.abs(mSeg1.y - mSeg0.y) < 1;
-          if (mIsHoriz) {
-            lx = (mSeg0.x + mSeg1.x) / 2;
-            ly = mSeg0.y - 8;
+          // Z-routes: label on the longest segment for best readability
+          var seg1Len = Math.abs(points[1].x - points[0].x) + Math.abs(points[1].y - points[0].y);
+          var seg2Len = Math.abs(points[2].x - points[1].x) + Math.abs(points[2].y - points[1].y);
+          var seg3Len = Math.abs(points[3].x - points[2].x) + Math.abs(points[3].y - points[2].y);
+          var bestSeg, bestSegLen;
+          if (seg1Len >= seg2Len && seg1Len >= seg3Len) { bestSeg = 0; bestSegLen = seg1Len; }
+          else if (seg2Len >= seg3Len) { bestSeg = 1; bestSegLen = seg2Len; }
+          else { bestSeg = 2; bestSegLen = seg3Len; }
+          var lSeg0 = points[bestSeg], lSeg1 = points[bestSeg + 1];
+          var lSegIsH = Math.abs(lSeg1.y - lSeg0.y) < 1;
+
+          if (lSegIsH) {
+            lx = (lSeg0.x + lSeg1.x) / 2;
+            ly = lSeg0.y - 8;
             if (downByFrom[tr.from] && downByFrom[tr.from].length > 1) {
               var dIdx = downByFrom[tr.from].indexOf(ti);
               if (dIdx > 0) ly += dIdx * (CFG.fontSize + 4);
             }
           } else {
-            // vertical middle segment — place to the right
-            lx = mSeg0.x + 8;
-            ly = (mSeg0.y + mSeg1.y) / 2;
+            // Vertical segment — place label to the right, staggered by Y
+            // for back-edges routed on same side
+            lx = lSeg0.x + 8;
             lAnchor = 'start';
+            if (isBackEdge) {
+              // Place near the top of the vertical segment (close to exit)
+              ly = Math.min(lSeg0.y, lSeg1.y) + CFG.fontSize + 4;
+            } else {
+              ly = (lSeg0.y + lSeg1.y) / 2;
+            }
           }
         } else {
           // Direct line
           var lp0 = points[0], lp1 = points[1];
           lx = (lp0.x + lp1.x) / 2;
           ly = (lp0.y + lp1.y) / 2;
-          // Add a very small horizontal offset to text so it doesn't overlap exactly
-          if (Math.abs(lp1.y - lp0.y) < 1) { 
-             ly -= 10; 
-          } else { 
-             lx += 10; lAnchor = 'start'; 
+          if (Math.abs(lp1.y - lp0.y) < 1) {
+             ly -= 10;
+          } else {
+             lx += 10; lAnchor = 'start';
           }
         }
-        svg.push('<text x="' + lx + '" y="' + ly +
+        // Check if label would overlap any state box and shift if needed
+        var lblW = UMLShared.textWidth(tr.label, false, CFG.fontSize);
+        var lblL = (lAnchor === 'middle') ? lx - lblW / 2 : (lAnchor === 'start' ? lx : lx - lblW);
+        var lblR = lblL + lblW;
+        var lblT = ly - CFG.fontSize;
+        var lblB = ly + 4;
+        for (var lsi in entries) {
+          var lse = entries[lsi];
+          var seL = lse.x - 4, seR = lse.x + lse.box.width + 4;
+          var seT = lse.y - 4, seB = lse.y + lse.box.height + 4;
+          if (lblR > seL && lblL < seR && lblB > seT && lblT < seB) {
+            // Overlaps a state — shift right of the state
+            lx = seR + 8;
+            lAnchor = 'start';
+            break;
+          }
+        }
+        labelSvg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
           '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(tr.label) + '</text>');
@@ -513,6 +544,11 @@
           }
         }
       }
+    }
+
+    // ── Draw transition labels on top of everything ──
+    for (var li = 0; li < labelSvg.length; li++) {
+      svg.push(labelSvg[li]);
     }
 
     svg.push(UMLShared.svgClose());

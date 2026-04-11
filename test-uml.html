@@ -204,8 +204,10 @@ class Singleton &lt;&lt;singleton&gt;&gt; {
 participant client_1: Client
 participant server: LibraryServer
 
+activate client_1
 client_1 -> server: GET /book/id
 server --> client_1: responseCode=200, book
+deactivate client_1
 @enduml
   </code></pre>
 
@@ -344,7 +346,21 @@ server --> client: response
 @enduml
   </code></pre>
 
-  <h2>18. Stacked Execution Specifications</h2>
+  <h2>18. Lost and Found Messages</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client: Client
+participant server: Server
+
+o-> client: networkEvent
+client -> server: request()
+server ->o : timeout
+server --> client: response
+client ->o : logEntry
+@enduml
+  </code></pre>
+
+  <h2>19. Stacked Execution Specifications</h2>
   <pre><code class="language-uml-sequence">
 @startuml
 participant ui: UI
@@ -498,10 +514,57 @@ b_eventout --> eb_in : publish
 @enduml
   </code></pre>
 
+  <h2>27. Microservice API Gateway (Port-to-Port)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Gateway {
+  portout "out1" as g_out1
+  portout "out2" as g_out2
+}
+component Auth {
+  portin "in" as a_in
+  portout "out1" as a_out1
+  portout "out2" as a_out2
+}
+component Users {
+  portin "/users" as u_p1
+  portin "/users" as u_p2
+  portin "/users/unsubscribe/{userId}" as u_p3
+}
+component Clubs {
+  portin "/clubs" as c_p1
+  portin "/clubs/event-reference/{eventId}" as c_p2
+  portin "/clubs/roles/{clubId}/{userId}" as c_p3
+  portout "out1" as c_out1
+}
+component Events {
+  portin "/events" as e_p1
+  portin "/events/template-data/{templateId}" as e_p2
+  portout "out1" as e_out1
+  portout "out2" as e_out2
+}
+component Notifications {
+  portin "/notifications/event-update" as n_p1
+  portout "out1" as n_out1
+  portout "out2" as n_out2
+}
+
+g_out1 --> c_p1 : POST
+g_out2 --> u_p2 : POST
+a_out1 --> u_p1 : GET
+a_out2 --> c_p3 : GET
+c_out1 --> e_p1 : GET
+e_out1 --> c_p2 : GET
+e_out2 --> n_p1 : POST
+n_out1 --> e_p2 : GET
+n_out2 --> u_p3 : POST
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Deployment Diagram Tests</h1>
 
-  <h2>26. Web Application Deployment</h2>
+  <h2>28. Web Application Deployment</h2>
   <pre><code class="language-uml-deployment">
 @startuml
 node WebServer {

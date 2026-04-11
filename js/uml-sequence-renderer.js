@@ -23,6 +23,8 @@
  *   ->   Synchronous call (solid, filled arrowhead)
  *   -->  Response / return (dashed, open arrowhead)
  *   ->>  Asynchronous message (solid, open arrowhead)
+ *   ->o  Lost message (arrow to filled circle, no receiver)
+ *   o->  Found message (from filled circle, no sender)
  *   create -> Name  Create message
  *   destroy Name    Destroy (X mark)
  *
@@ -52,6 +54,8 @@
     svgPad: 20,
     strokeWidth: 1.5,
     destroySize: 12,
+    lostFoundRadius: 6,
+    lostFoundGap: 50,
   };
 
   // ─── Parser ───────────────────────────────────────────────────────
@@ -177,6 +181,26 @@
         continue;
       }
 
+      // Lost message: sender ->o : label
+      var lostMatch = line.match(/^(\S+)\s+->o\s*(?::\s*(.*))?$/);
+      if (lostMatch) {
+        var lostFrom = lostMatch[1];
+        var lostLabel = (lostMatch[2] || '').trim();
+        ensureParticipant(lostFrom, participants, participantMap, autoParticipants);
+        messages.push({ type: 'lost', from: lostFrom, label: lostLabel });
+        continue;
+      }
+
+      // Found message: o-> receiver : label
+      var foundMatch = line.match(/^o->\s+(\S+)\s*(?::\s*(.*))?$/);
+      if (foundMatch) {
+        var foundTo = foundMatch[1];
+        var foundLabel = (foundMatch[2] || '').trim();
+        ensureParticipant(foundTo, participants, participantMap, autoParticipants);
+        messages.push({ type: 'found', to: foundTo, label: foundLabel });
+        continue;
+      }
+
       // Message arrow: from ARROW to : label
       var msgMatch = line.match(/^(\S+)\s+(--?>|--?>>|<--?|<<--?|->\s*\*|->x)\s+(\S+)\s*(?::\s*(.*))?$/);
       if (msgMatch) {
@@ -268,14 +292,30 @@
     var fragmentStack = [];    // Stack of { startY, type, condition, elseYs }
     var fragments = [];        // Completed fragments for rendering
 
+    // Helper to find participant index by id
+    function findPIdxByName(id) {
+      for (var fp = 0; fp < participants.length; fp++) {
+        if (participants[fp].id === id) return fp;
+      }
+      return 0;
+    }
+
     for (var mi = 0; mi < messages.length; mi++) {
       var msg = messages[mi];
 
       if (msg.type === 'message') {
         msgYs.push(curY);
         curY += CFG.messageGapY;
+        // Track which participants are involved in each open fragment
+        if (fragmentStack.length > 0) {
+          var fpi1 = findPIdxByName(msg.from);
+          var fpi2 = findPIdxByName(msg.to);
+          var topFrag = fragmentStack[fragmentStack.length - 1];
+          topFrag.minPIdx = Math.min(topFrag.minPIdx, fpi1, fpi2);
+          topFrag.maxPIdx = Math.max(topFrag.maxPIdx, fpi1, fpi2);
+        }
       } else if (msg.type === 'fragment_start') {
-        fragmentStack.push({ startY: curY - 15, fragType: msg.fragType, condition: msg.condition, elseYs: [] });
+        fragmentStack.push({ startY: curY - 15, fragType: msg.fragType, condition: msg.condition, elseYs: [], minPIdx: Infinity, maxPIdx: -Infinity });
         curY += CFG.fragmentLabelH;
         // Extra space for condition text below the tab
         if (msg.condition) curY += 18;
@@ -290,11 +330,20 @@
       } else if (msg.type === 'fragment_end') {
         if (fragmentStack.length > 0) {
           var frag = fragmentStack.pop();
-          frag.endY = curY + 10;
+          frag.endY = curY + 15;
           fragments.push(frag);
         }
-        curY += 12;
+        curY += 20;
         msgYs.push(curY);
+      } else if (msg.type === 'lost' || msg.type === 'found') {
+        msgYs.push(curY);
+        curY += CFG.messageGapY;
+        if (fragmentStack.length > 0) {
+          var lfIdx = findPIdxByName(msg.from || msg.to);
+          var topFragLF = fragmentStack[fragmentStack.length - 1];
+          topFragLF.minPIdx = Math.min(topFragLF.minPIdx, lfIdx);
+          topFragLF.maxPIdx = Math.max(topFragLF.maxPIdx, lfIdx);
+        }
       } else if (msg.type === 'activate') {
         msgYs.push(curY);
       } else if (msg.type === 'deactivate') {
@@ -311,7 +360,57 @@
       }
     }
 
-    var totalH = curY + 20; // Bottom padding
+    // Ensure totalH accounts for all fragment endY values
+    var maxFragEnd = 0;
+    for (var fhi = 0; fhi < fragments.length; fhi++) {
+      if (fragments[fhi].endY > maxFragEnd) maxFragEnd = fragments[fhi].endY;
+    }
+    var totalH = Math.max(curY, maxFragEnd) + 30; // Bottom padding
+
+    // Add extra horizontal padding when fragments exist so their borders
+    // are not clipped at the SVG edge (fragments extend beyond participants)
+    if (fragments.length > 0) {
+      var extraPad = 25;
+      for (var si = 0; si < partX.length; si++) {
+        partX[si] += extraPad;
+      }
+      totalW += extraPad * 2;
+    }
+
+    // Expand SVG width if self-message labels extend beyond the right edge
+    var selfW = 40;
+    var halfAct = CFG.activationW / 2;
+    for (var smi = 0; smi < messages.length; smi++) {
+      var sm = messages[smi];
+      if (sm.type === 'message' && sm.from === sm.to && sm.label) {
+        var smIdx = findPIdxByName(sm.from);
+        var selfLabelW = UMLShared.textWidth(sm.label, false, CFG.fontSize);
+        var selfRightEdge = partX[smIdx] + halfAct + selfW + 6 + selfLabelW + CFG.svgPad;
+        if (selfRightEdge > totalW) {
+          totalW = selfRightEdge;
+        }
+      }
+    }
+
+    // Expand SVG for lost messages (extend right) and found messages (extend left)
+    var hasFoundMsg = false;
+    for (var lfmi = 0; lfmi < messages.length; lfmi++) {
+      var lfm = messages[lfmi];
+      if (lfm.type === 'lost') {
+        var lmIdx = findPIdxByName(lfm.from);
+        var lostRightEdge = partX[lmIdx] + halfAct + CFG.lostFoundGap + CFG.lostFoundRadius + CFG.svgPad;
+        if (lostRightEdge > totalW) totalW = lostRightEdge;
+      } else if (lfm.type === 'found') {
+        hasFoundMsg = true;
+      }
+    }
+    if (hasFoundMsg) {
+      var foundPad = CFG.lostFoundGap + CFG.lostFoundRadius + CFG.svgPad;
+      for (var fpi = 0; fpi < partX.length; fpi++) {
+        partX[fpi] += foundPad;
+      }
+      totalW += foundPad;
+    }
 
     // ── Compute activation bars ──
     // Supports both explicit (activate/deactivate) and implicit (sync call activates
@@ -387,9 +486,24 @@
     // ── Draw combined fragments ──
     for (var fi = 0; fi < fragments.length; fi++) {
       var frag = fragments[fi];
-      // Fragment spans the full width of all participants with generous padding
-      var fragL = CFG.svgPad - 5;
-      var fragR = totalW - CFG.svgPad + 5;
+      // Fragment spans only the involved participants (with padding)
+      var fragPadH = 20;
+      var fragL, fragR;
+      if (frag.minPIdx <= frag.maxPIdx) {
+        fragL = partX[frag.minPIdx] - partWidths[frag.minPIdx] / 2 - fragPadH;
+        fragR = partX[frag.maxPIdx] + partWidths[frag.maxPIdx] / 2 + fragPadH;
+      } else {
+        // No messages in fragment (empty), use full width as fallback
+        fragL = CFG.svgPad - 5;
+        fragR = totalW - CFG.svgPad + 5;
+      }
+      // Ensure fragment is wide enough for its label and condition text
+      var labelW0 = UMLShared.textWidth(frag.fragType.toUpperCase(), true, CFG.fontSizeFragment) + 16;
+      var condW0 = frag.condition ? UMLShared.textWidth('[' + frag.condition + ']', false, CFG.fontSizeFragment) + 20 : 0;
+      var minFragW = Math.max(labelW0, condW0) + 20;
+      if (fragR - fragL < minFragW) {
+        fragR = fragL + minFragW;
+      }
       var fragW = fragR - fragL;
 
       // Fragment border
@@ -471,12 +585,9 @@
             '"' + (m.isDashed ? ' stroke-dasharray="6,4"' : '') + '/>');
           drawMsgArrow(svg, selfX, my + 20, 1, m.msgType, colors);
           if (m.label) {
-            var selfLabelW = UMLShared.textWidth(m.label, false, CFG.fontSize);
-            svg.push('<rect x="' + (selfX + selfW + 4) + '" y="' + (my - 7) +
-              '" width="' + (selfLabelW + 6) + '" height="' + 14 +
-              '" fill="' + colors.fill + '" stroke="none" opacity="0.85"/>');
             svg.push('<text x="' + (selfX + selfW + 6) + '" y="' + (my + 4) +
-              '" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' + UMLShared.escapeXml(m.label) + '</text>');
+              '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+              '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' + UMLShared.escapeXml(m.label) + '</text>');
           }
         } else {
           // Line
@@ -488,16 +599,12 @@
           var arrowDir = isLeft ? 1 : -1;
           drawMsgArrow(svg, x2, my, arrowDir, m.msgType, colors);
 
-          // Label above the line with background
+          // Label above the line
           if (m.label) {
             var labelX = (x1 + x2) / 2;
-            var labelW = UMLShared.textWidth(m.label, false, CFG.fontSize);
-            var labelBgPad = 4;
-            svg.push('<rect x="' + (labelX - labelW / 2 - labelBgPad) + '" y="' + (my - 16) +
-              '" width="' + (labelW + labelBgPad * 2) + '" height="' + 14 +
-              '" fill="' + colors.fill + '" stroke="none" opacity="0.85"/>');
             svg.push('<text x="' + labelX + '" y="' + (my - 6) +
-              '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text + '">' +
+              '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+              '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
               UMLShared.escapeXml(m.label) + '</text>');
           }
         }
@@ -513,6 +620,42 @@
           '" stroke="' + colors.line + '" stroke-width="2"/>');
         svg.push('<line x1="' + (dx + ds) + '" y1="' + (my - ds) + '" x2="' + (dx - ds) + '" y2="' + (my + ds) +
           '" stroke="' + colors.line + '" stroke-width="2"/>');
+      } else if (m.type === 'lost') {
+        // Lost message: line from sender to a filled circle
+        var lIdx = findPIdx(m.from);
+        var lx1 = partX[lIdx] + CFG.activationW / 2;
+        var lx2 = lx1 + CFG.lostFoundGap;
+        var lr = CFG.lostFoundRadius;
+        svg.push('<line x1="' + lx1 + '" y1="' + my + '" x2="' + (lx2 - lr) + '" y2="' + my +
+          '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        drawMsgArrow(svg, lx2 - lr, my, -1, 'sync', colors);
+        svg.push('<circle cx="' + lx2 + '" cy="' + my + '" r="' + lr +
+          '" fill="' + colors.line + '" stroke="' + colors.line + '"/>');
+        if (m.label) {
+          var llabelX = (lx1 + lx2) / 2;
+          svg.push('<text x="' + llabelX + '" y="' + (my - 6) +
+            '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
+            UMLShared.escapeXml(m.label) + '</text>');
+        }
+      } else if (m.type === 'found') {
+        // Found message: filled circle to receiver
+        var fIdx = findPIdx(m.to);
+        var fx2 = partX[fIdx] - CFG.activationW / 2;
+        var fx1 = fx2 - CFG.lostFoundGap;
+        var fr = CFG.lostFoundRadius;
+        svg.push('<circle cx="' + fx1 + '" cy="' + my + '" r="' + fr +
+          '" fill="' + colors.line + '" stroke="' + colors.line + '"/>');
+        svg.push('<line x1="' + (fx1 + fr) + '" y1="' + my + '" x2="' + fx2 + '" y2="' + my +
+          '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        drawMsgArrow(svg, fx2, my, -1, 'sync', colors);
+        if (m.label) {
+          var flabelX = (fx1 + fx2) / 2;
+          svg.push('<text x="' + flabelX + '" y="' + (my - 6) +
+            '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
+            UMLShared.escapeXml(m.label) + '</text>');
+        }
       }
     }
 
