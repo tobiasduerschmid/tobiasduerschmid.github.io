@@ -37,6 +37,26 @@
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  function parseLayoutDirective(line) {
+    var layoutMatch = line.match(/^layout\s+(.+)$/i);
+    if (!layoutMatch) return null;
+
+    var value = layoutMatch[1].trim().toLowerCase();
+    if (value === 'horizontal' || value === 'left-to-right' || value === 'lr') {
+      return { direction: 'LR', layoutPreference: null };
+    }
+    if (value === 'vertical' || value === 'top-to-bottom' || value === 'tb') {
+      return { direction: 'TB', layoutPreference: null };
+    }
+    if (value === 'square' || value === 'landscape' || value === 'portrait' || value === 'auto' || value === 'default' || value === 'none') {
+      return {
+        direction: null,
+        layoutPreference: (value === 'default' || value === 'none') ? 'auto' : value
+      };
+    }
+    return null;
+  }
+
   // ─── Theme Colors ───────────────────────────────────────────────
 
   function getThemeColors(container) {
@@ -549,7 +569,7 @@
         } catch (te) { /* skip unmeasurable text */ }
       }
 
-      var p = pad || 15;
+      var p = pad || 24;
       var vx = Math.floor(minX - p);
       var vy = Math.floor(minY - p);
       var vw = Math.ceil((maxX - minX) + p * 2);
@@ -1069,6 +1089,7 @@
     NOTE_CFG: NOTE_CFG,
     textWidth: textWidth,
     escapeXml: escapeXml,
+    parseLayoutDirective: parseLayoutDirective,
     getThemeColors: getThemeColors,
     svgOpen: svgOpen,
     svgClose: svgClose,
@@ -1211,10 +1232,314 @@
    * @param {Object} options - { gapX, gapY, useOrthogonal }
    * @returns {Object} { nodes: { id: {x, y, width, height, data} }, edges: [ { points: [{x,y}], data } ] }
    */
-  LayoutEngine.compute = function(nodes, edges, options) {
-    var gapX = options.gapX || 60;
-    var gapY = options.gapY || 80;
-    var direction = options.direction || 'TB'; // 'TB' (top-to-bottom) or 'LR' (left-to-right)
+  function computeLayoutBounds(result) {
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    var hasNode = false;
+    for (var id in result.nodes) {
+      if (!result.nodes.hasOwnProperty(id)) continue;
+      var node = result.nodes[id];
+      hasNode = true;
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + node.width);
+      maxY = Math.max(maxY, node.y + node.height);
+    }
+    if (!hasNode) return { width: 0, height: 0, area: 0, aspect: 1 };
+
+    var width = Math.max(1, maxX - minX);
+    var height = Math.max(1, maxY - minY);
+    return {
+      width: width,
+      height: height,
+      area: width * height,
+      aspect: width / height
+    };
+  }
+
+  function buildLayoutCandidates(gapX, gapY, direction, layoutPreference) {
+    var candidates = [];
+    var seen = {};
+    var otherDirection = direction === 'LR' ? 'TB' : 'LR';
+
+    function addCandidate(candidateDirection, candidateGapX, candidateGapY) {
+      var gx = Math.max(24, Math.round(candidateGapX));
+      var gy = Math.max(24, Math.round(candidateGapY));
+      var key = candidateDirection + '|' + gx + '|' + gy;
+      if (seen[key]) return;
+      seen[key] = true;
+      candidates.push({ direction: candidateDirection, gapX: gx, gapY: gy });
+    }
+
+    if (!layoutPreference) {
+      addCandidate(direction, gapX, gapY);
+      return candidates;
+    }
+
+    if (layoutPreference === 'square') {
+      addCandidate(direction, gapX, gapY);
+      addCandidate('TB', gapX * 1.1, gapY * 0.9);
+      addCandidate('TB', gapX * 0.9, gapY * 1.1);
+      addCandidate('LR', gapX * 1.1, gapY * 0.9);
+      addCandidate('LR', gapX * 0.9, gapY * 1.1);
+      return candidates;
+    }
+
+    if (layoutPreference === 'landscape') {
+      addCandidate('LR', gapX, gapY);
+      addCandidate('LR', gapX * 1.15, gapY * 0.9);
+      addCandidate('LR', gapX * 1.3, gapY * 0.8);
+      addCandidate('TB', gapX * 1.25, gapY * 0.85);
+      addCandidate(direction, gapX, gapY);
+      return candidates;
+    }
+
+    if (layoutPreference === 'portrait') {
+      addCandidate('TB', gapX, gapY);
+      addCandidate('TB', gapX * 0.9, gapY * 1.15);
+      addCandidate('TB', gapX * 0.8, gapY * 1.3);
+      addCandidate('LR', gapX * 0.85, gapY * 1.25);
+      addCandidate(direction, gapX, gapY);
+      return candidates;
+    }
+
+    addCandidate(direction, gapX, gapY);
+    addCandidate(otherDirection, gapX, gapY);
+    addCandidate('TB', gapX * 0.95, gapY * 1.05);
+    addCandidate('LR', gapX * 1.05, gapY * 0.95);
+    return candidates;
+  }
+
+  function scoreLayoutCandidate(bounds, layoutPreference, candidate, fallbackDirection) {
+    var targetAspect = 1.2;
+    var aspectWeight = 55;
+
+    if (layoutPreference === 'square') {
+      targetAspect = 1;
+      aspectWeight = 120;
+    } else if (layoutPreference === 'landscape') {
+      targetAspect = 1.6;
+      aspectWeight = 120;
+    } else if (layoutPreference === 'portrait') {
+      targetAspect = 0.625;
+      aspectWeight = 120;
+    }
+
+    var score = Math.abs(Math.log(Math.max(bounds.aspect, 0.01) / targetAspect)) * aspectWeight;
+    score += Math.log(Math.max(bounds.area, 1)) * 2.5;
+    score += Math.log(Math.max(bounds.width, bounds.height) + 1) * 3;
+
+    if (layoutPreference === 'landscape' && candidate.direction !== 'LR') score += 35;
+    if (layoutPreference === 'portrait' && candidate.direction !== 'TB') score += 35;
+    if (layoutPreference === 'auto' && candidate.direction !== fallbackDirection) score += 4;
+
+    return score;
+  }
+
+  function targetAspectForPreference(layoutPreference, direction) {
+    if (layoutPreference === 'square') return 1;
+    if (layoutPreference === 'landscape') return 1.6;
+    if (layoutPreference === 'portrait') return 0.625;
+    return direction === 'LR' ? 1.6 : 0.8;
+  }
+
+  function findWeaklyConnectedComponents(nodes, edges) {
+    var nodeMap = {};
+    var neighbors = {};
+    nodes.forEach(function(n) {
+      nodeMap[n.id] = n;
+      neighbors[n.id] = [];
+    });
+
+    edges.forEach(function(e) {
+      if (!nodeMap[e.source] || !nodeMap[e.target] || e.source === e.target) return;
+      neighbors[e.source].push(e.target);
+      neighbors[e.target].push(e.source);
+    });
+
+    var visited = {};
+    var components = [];
+    nodes.forEach(function(node) {
+      if (visited[node.id]) return;
+
+      var stack = [node.id];
+      var componentIds = {};
+      var componentNodes = [];
+      visited[node.id] = true;
+
+      while (stack.length) {
+        var current = stack.pop();
+        componentIds[current] = true;
+        componentNodes.push(nodeMap[current]);
+
+        var currentNeighbors = neighbors[current] || [];
+        for (var i = 0; i < currentNeighbors.length; i++) {
+          var next = currentNeighbors[i];
+          if (visited[next]) continue;
+          visited[next] = true;
+          stack.push(next);
+        }
+      }
+
+      var componentEdges = edges.filter(function(edge) {
+        return componentIds[edge.source] && componentIds[edge.target];
+      });
+      components.push({ nodes: componentNodes, edges: componentEdges });
+    });
+
+    return components;
+  }
+
+  function normalizeLayoutResult(result) {
+    var minX = Infinity, minY = Infinity;
+    var maxX = -Infinity, maxY = -Infinity;
+    var hasNode = false;
+    var normalizedNodes = {};
+
+    for (var id in result.nodes) {
+      if (!Object.prototype.hasOwnProperty.call(result.nodes, id)) continue;
+      var node = result.nodes[id];
+      hasNode = true;
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + node.width);
+      maxY = Math.max(maxY, node.y + node.height);
+    }
+
+    if (!hasNode) {
+      return {
+        nodes: {},
+        edges: result.edges ? result.edges.slice() : [],
+        width: 0,
+        height: 0,
+        direction: result.direction || 'TB'
+      };
+    }
+
+    for (var nodeId in result.nodes) {
+      if (!Object.prototype.hasOwnProperty.call(result.nodes, nodeId)) continue;
+      var original = result.nodes[nodeId];
+      normalizedNodes[nodeId] = {
+        x: original.x - minX,
+        y: original.y - minY,
+        width: original.width,
+        height: original.height,
+        data: original.data
+      };
+    }
+
+    var normalizedEdges = (result.edges || []).map(function(edge) {
+      return {
+        source: edge.source,
+        target: edge.target,
+        data: edge.data,
+        points: (edge.points || []).map(function(point) {
+          return { x: point.x - minX, y: point.y - minY };
+        })
+      };
+    });
+
+    return {
+      nodes: normalizedNodes,
+      edges: normalizedEdges,
+      width: Math.max(0, maxX - minX),
+      height: Math.max(0, maxY - minY),
+      direction: result.direction || 'TB'
+    };
+  }
+
+  function packDisconnectedLayouts(layouts, gapX, gapY, direction, layoutPreference) {
+    if (!layouts.length) return { nodes: {}, edges: [], direction: direction };
+    if (layouts.length === 1) {
+      return {
+        nodes: layouts[0].nodes,
+        edges: layouts[0].edges,
+        direction: layouts[0].direction || direction
+      };
+    }
+
+    var targetAspect = targetAspectForPreference(layoutPreference, direction);
+    var paddedArea = 0;
+    var widestComponent = 0;
+    for (var i = 0; i < layouts.length; i++) {
+      paddedArea += (layouts[i].width + gapX) * (layouts[i].height + gapY);
+      widestComponent = Math.max(widestComponent, layouts[i].width);
+    }
+
+    var targetRowWidth = Math.max(widestComponent, Math.sqrt(Math.max(paddedArea, 1) * targetAspect));
+    var rows = [];
+    var currentRow = null;
+    function startRow() {
+      currentRow = { items: [], width: 0, height: 0 };
+      rows.push(currentRow);
+    }
+
+    for (var li = 0; li < layouts.length; li++) {
+      var layout = layouts[li];
+      if (!currentRow) startRow();
+
+      var proposedWidth = currentRow.items.length ? currentRow.width + gapX + layout.width : layout.width;
+      if (currentRow.items.length && proposedWidth > targetRowWidth) {
+        startRow();
+      }
+
+      currentRow.items.push(layout);
+      currentRow.width = currentRow.items.length === 1 ? layout.width : currentRow.width + gapX + layout.width;
+      currentRow.height = Math.max(currentRow.height, layout.height);
+    }
+
+    var packedNodes = {};
+    var packedEdges = [];
+    var currentY = 0;
+
+    for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      var row = rows[rowIndex];
+      var currentX = 0;
+      for (var itemIndex = 0; itemIndex < row.items.length; itemIndex++) {
+        var item = row.items[itemIndex];
+        var offsetY = currentY + Math.round((row.height - item.height) / 2);
+
+        for (var packedId in item.nodes) {
+          if (!Object.prototype.hasOwnProperty.call(item.nodes, packedId)) continue;
+          var packedNode = item.nodes[packedId];
+          packedNodes[packedId] = {
+            x: packedNode.x + currentX,
+            y: packedNode.y + offsetY,
+            width: packedNode.width,
+            height: packedNode.height,
+            data: packedNode.data
+          };
+        }
+
+        for (var edgeIndex = 0; edgeIndex < item.edges.length; edgeIndex++) {
+          var packedEdge = item.edges[edgeIndex];
+          packedEdges.push({
+            source: packedEdge.source,
+            target: packedEdge.target,
+            data: packedEdge.data,
+            points: (packedEdge.points || []).map(function(point) {
+              return { x: point.x + currentX, y: point.y + offsetY };
+            })
+          });
+        }
+
+        currentX += item.width + gapX;
+      }
+      currentY += row.height + gapY;
+    }
+
+    return { nodes: packedNodes, edges: packedEdges, direction: direction };
+  }
+
+  function computeDirectedLayout(nodes, edges, gapX, gapY, direction, layoutPreference) {
+    var components = findWeaklyConnectedComponents(nodes, edges);
+    if (components.length > 1) {
+      var componentLayouts = components.map(function(component) {
+        return normalizeLayoutResult(
+          computeDirectedLayout(component.nodes, component.edges, gapX, gapY, direction, layoutPreference)
+        );
+      });
+      return packDisconnectedLayouts(componentLayouts, gapX, gapY, direction, layoutPreference);
+    }
 
     // For LR layout, transpose the problem: swap width↔height and gaps,
     // compute as TB, then swap coordinates back.
@@ -1650,10 +1975,36 @@
           pts[lrp].y = tmpXY;
         }
       }
-      return { nodes: lrNodes, edges: resultEdges };
+      return { nodes: lrNodes, edges: resultEdges, direction: 'LR' };
     }
 
-    return { nodes: resultNodes, edges: resultEdges };
+    return { nodes: resultNodes, edges: resultEdges, direction: 'TB' };
+  }
+
+  LayoutEngine.compute = function(nodes, edges, options) {
+    options = options || {};
+    var gapX = options.gapX || 60;
+    var gapY = options.gapY || 80;
+    var direction = options.direction || 'TB';
+    var layoutPreference = options.layoutPreference || null;
+
+    if (!layoutPreference) {
+      return computeDirectedLayout(nodes, edges, gapX, gapY, direction, null);
+    }
+
+    var candidates = buildLayoutCandidates(gapX, gapY, direction, layoutPreference);
+    var best = null;
+    for (var ci = 0; ci < candidates.length; ci++) {
+      var candidate = candidates[ci];
+      var result = computeDirectedLayout(nodes, edges, candidate.gapX, candidate.gapY, candidate.direction, layoutPreference);
+      var bounds = computeLayoutBounds(result);
+      var score = scoreLayoutCandidate(bounds, layoutPreference, candidate, direction);
+      if (!best || score < best.score - 0.01 || (Math.abs(score - best.score) <= 0.01 && bounds.area < best.bounds.area)) {
+        best = { result: result, bounds: bounds, score: score };
+      }
+    }
+
+    return best ? best.result : computeDirectedLayout(nodes, edges, gapX, gapY, direction, layoutPreference);
   };
 
   window.UMLAdvancedLayout = LayoutEngine;
@@ -1727,16 +2078,21 @@
     var inClass = null;
     var braceDepth = 0;
     var direction = 'TB';
+    var layoutPreference = null;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
 
       // Layout directive
-      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
-      if (layoutMatch && inClass === null) {
-        var val = layoutMatch[1].toLowerCase();
-        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+      var layoutDirective = UMLShared.parseLayoutDirective(line);
+      if (layoutDirective && inClass === null) {
+        if (layoutDirective.direction) {
+          direction = layoutDirective.direction;
+          layoutPreference = null;
+        } else {
+          layoutPreference = layoutDirective.layoutPreference;
+        }
         continue;
       }
 
@@ -1821,7 +2177,7 @@
       }
     }
 
-    return { classes: classes, relationships: relationships, notes: notes, direction: direction };
+    return { classes: classes, relationships: relationships, notes: notes, direction: direction, layoutPreference: layoutPreference };
   }
 
   /**
@@ -2087,7 +2443,37 @@
       effectiveGapX = Math.max(effectiveGapX, neededW);
     }
 
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
+    var hasHierarchyEdges = relationships.some(function(rel) {
+      return rel.type === 'generalization' || rel.type === 'realization';
+    });
+
+    var layoutPreference = parsed.layoutPreference || null;
+    var effectiveDirection = parsed.direction || 'TB';
+    if (hasHierarchyEdges) {
+      // UML inheritance hierarchies should read top-to-bottom regardless of
+      // footprint preference, so keep the hierarchy vertical and use spacing
+      // changes rather than rotating the graph sideways.
+      effectiveDirection = 'TB';
+    }
+
+    var effectiveGapY = CFG.gapY;
+    if (hasHierarchyEdges && layoutPreference === 'landscape') {
+      effectiveGapX = Math.max(effectiveGapX, Math.round(effectiveGapX * 1.35));
+      effectiveGapY = Math.max(36, Math.round(CFG.gapY * 0.82));
+    } else if (hasHierarchyEdges && layoutPreference === 'portrait') {
+      effectiveGapX = Math.max(36, Math.round(effectiveGapX * 0.82));
+      effectiveGapY = Math.max(CFG.gapY, Math.round(CFG.gapY * 1.3));
+    } else if (hasHierarchyEdges && layoutPreference === 'square') {
+      effectiveGapX = Math.max(effectiveGapX, Math.round(effectiveGapX * 1.08));
+      effectiveGapY = Math.max(40, Math.round(CFG.gapY * 0.92));
+    }
+
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, {
+      gapX: effectiveGapX,
+      gapY: effectiveGapY,
+      direction: effectiveDirection,
+      layoutPreference: hasHierarchyEdges ? null : layoutPreference
+    });
 
     // Read back positions
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -2782,31 +3168,33 @@
         for (var obi = 0; obi < obstacles.length; obi++) {
           var ob2 = obstacles[obi];
           if (segmentIntersectsBox(p1, p2, ob2)) {
-            // Reroute around the obstacle: go around the closer side
-            var goRight = (p1.x + p2.x) / 2 >= (ob2.l + ob2.r) / 2;
-            var bypassX = goRight ? ob2.r : ob2.l;
+            var nextPoint = points[si + 2] || null;
+            var keepOriginalPoint = true;
             if (p1.x === p2.x) {
-              // Vertical segment hitting a box: jog horizontally around it
-              newPoints.push({ x: p1.x, y: Math.min(p1.y, ob2.t) });
-              newPoints.push({ x: bypassX, y: Math.min(p1.y, ob2.t) });
-              newPoints.push({ x: bypassX, y: Math.max(p2.y, ob2.b) });
-              newPoints.push({ x: p2.x, y: Math.max(p2.y, ob2.b) });
+              // Vertical segment hitting a box: jog left/right while preserving overall direction.
+              var goRight = nextPoint ? nextPoint.x >= p2.x : p1.x >= (ob2.l + ob2.r) / 2;
+              var bypassX = goRight ? ob2.r : ob2.l;
+              newPoints.push({ x: bypassX, y: p1.y });
+              newPoints.push({ x: bypassX, y: p2.y });
+              if (nextPoint && nextPoint.y === p2.y && p2.y > ob2.t && p2.y < ob2.b) {
+                keepOriginalPoint = false;
+              }
             } else {
-              // Horizontal segment hitting a box: jog vertically around it
-              var goDown = (p1.y + p2.y) / 2 >= (ob2.t + ob2.b) / 2;
+              // Horizontal segment hitting a box: jog above/below while preserving overall direction.
+              var goDown = nextPoint ? nextPoint.y >= p2.y : p1.y >= (ob2.t + ob2.b) / 2;
               var bypassY = goDown ? ob2.b : ob2.t;
-              newPoints.push({ x: Math.min(p1.x, ob2.l), y: p1.y });
-              newPoints.push({ x: Math.min(p1.x, ob2.l), y: bypassY });
-              newPoints.push({ x: Math.max(p2.x, ob2.r), y: bypassY });
-              newPoints.push({ x: Math.max(p2.x, ob2.r), y: p2.y });
+              newPoints.push({ x: p1.x, y: bypassY });
+              newPoints.push({ x: p2.x, y: bypassY });
+              if (nextPoint && nextPoint.x === p2.x && p2.x > ob2.l && p2.x < ob2.r) {
+                keepOriginalPoint = false;
+              }
             }
+            if (keepOriginalPoint || si === points.length - 2) newPoints.push(p2);
             rerouted = true;
             break;
           }
         }
         if (!rerouted) {
-          newPoints.push(p2);
-        } else {
           newPoints.push(p2);
         }
       }
@@ -3957,6 +4345,7 @@
     var inState = null;
     var braceDepth = 0;
     var direction = 'TB';
+    var layoutPreference = null;
 
     // Ensure [*] pseudo-states exist
     function ensureState(name) {
@@ -3972,10 +4361,14 @@
       if (!line || line === '@startuml' || line === '@enduml') continue;
 
       // Layout directive
-      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
-      if (layoutMatch && inState === null) {
-        var val = layoutMatch[1].toLowerCase();
-        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+      var layoutDirective = UMLShared.parseLayoutDirective(line);
+      if (layoutDirective && inState === null) {
+        if (layoutDirective.direction) {
+          direction = layoutDirective.direction;
+          layoutPreference = null;
+        } else {
+          layoutPreference = layoutDirective.layoutPreference;
+        }
         continue;
       }
 
@@ -4116,7 +4509,7 @@
     var stateList = [];
     for (var sn in states) stateList.push(states[sn]);
 
-    return { states: stateList, transitions: transitions, notes: notes, direction: direction };
+    return { states: stateList, transitions: transitions, notes: notes, direction: direction, layoutPreference: layoutPreference };
   }
 
   // ─── Text Measurement (delegated to UMLShared) ────────────────────
@@ -4188,7 +4581,12 @@
         }
       }
       if (subNodes.length > 0) {
-        var subResult = window.UMLAdvancedLayout.compute(subNodes, subEdges, { gapX: CFG.gapX * 0.7, gapY: CFG.gapY * 0.7, direction: parsed.direction || 'TB' });
+        var subResult = window.UMLAdvancedLayout.compute(subNodes, subEdges, {
+          gapX: CFG.gapX * 0.7,
+          gapY: CFG.gapY * 0.7,
+          direction: parsed.direction || 'TB',
+          layoutPreference: parsed.layoutPreference || null
+        });
         // Compute sub-bounding box
         var sMinX = Infinity, sMinY = Infinity, sMaxX = -Infinity, sMaxY = -Infinity;
         for (var sn in subResult.nodes) {
@@ -4222,7 +4620,12 @@
       layoutEdges.push({ source: tr.from, target: tr.to, type: 'navigable', data: tr });
     }
 
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: CFG.gapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, {
+      gapX: CFG.gapX,
+      gapY: CFG.gapY,
+      direction: parsed.direction || 'TB',
+      layoutPreference: parsed.layoutPreference || null
+    });
 
     // Map coords back for top-level states
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -4756,16 +5159,21 @@
     var portAliasMap = {}; // alias → { comp: componentName, name: displayName }
 
     var direction = 'LR'; // Component diagrams default to left-to-right
+    var layoutPreference = null;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
 
       // Layout directive
-      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
-      if (layoutMatch) {
-        var val = layoutMatch[1].toLowerCase();
-        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+      var layoutDirective = UMLShared.parseLayoutDirective(line);
+      if (layoutDirective) {
+        if (layoutDirective.direction) {
+          direction = layoutDirective.direction;
+          layoutPreference = null;
+        } else {
+          layoutPreference = layoutDirective.layoutPreference;
+        }
         continue;
       }
 
@@ -4866,7 +5274,7 @@
       }
     }
 
-    return { components: components, connectors: connectors, notes: notes, direction: direction };
+    return { components: components, connectors: connectors, notes: notes, direction: direction, layoutPreference: layoutPreference };
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -4979,7 +5387,13 @@
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40 + ifaceGapExtra);
     var effectiveGapY = CFG.gapY;
 
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: effectiveGapY, direction: parsed.direction || 'LR' });
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, {
+      gapX: effectiveGapX,
+      gapY: effectiveGapY,
+      direction: parsed.direction || 'LR',
+      layoutPreference: parsed.layoutPreference || null
+    });
+    var actualDirection = result.direction || parsed.direction || 'LR';
 
     for (var n in result.nodes) {
       if (!entries[n]) continue;
@@ -4987,7 +5401,7 @@
       entries[n].y = result.nodes[n].y;
     }
 
-    if ((parsed.direction || 'LR') === 'LR' && connectors.length > 0) {
+    if (actualDirection === 'LR' && connectors.length > 0) {
       var inCounts = {}, outCounts = {};
       for (var ec in entries) {
         inCounts[ec] = 0;
@@ -5143,6 +5557,8 @@
       return total / values.length;
     }
     function defaultPortSide(compName, portDef) {
+      if (portDef.kind === 'provide') return 'left';
+      if (portDef.kind === 'require') return 'right';
       if (portDef.direction === 'in') return 'left';
       if (portDef.direction === 'out') return 'right';
       return portSides[compName + '.' + portDef.alias] || 'right';
@@ -5506,20 +5922,32 @@
     }
 
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    var portLabelFs = CFG.fontSize - 1;
     for (var en2 in entries) {
       var e2 = entries[en2];
-      var leftOH = 0, rightOH = 0;
+      minX = Math.min(minX, e2.x);
+      minY = Math.min(minY, e2.y);
+      maxX = Math.max(maxX, e2.x + e2.box.width);
+      maxY = Math.max(maxY, e2.y + e2.box.height);
+
       for (var pn2 in e2.portPositions) {
         var pp2 = e2.portPositions[pn2];
-        var pext = (pp2.kind === 'provide') ? CFG.ifaceStick + CFG.ifaceRadius + 2 :
-                   (pp2.kind === 'require') ? CFG.ifaceStick + CFG.ifaceRadius + 2 : portHalf;
-        if (pp2.side === 'left') leftOH = Math.max(leftOH, pext);
-        else rightOH = Math.max(rightOH, pext);
+        if (pp2.kind === 'provide' || pp2.kind === 'require') {
+          var sideFactor = pp2.side === 'left' ? -1 : 1;
+          var ifaceCenterX = pp2.cx + sideFactor * (CFG.ifaceStick + CFG.ifaceRadius);
+          var ifaceRadius = CFG.ifaceRadius + 2;
+          var ifaceLabelHalf = UMLShared.textWidth(pp2.label || pn2, false, portLabelFs) / 2 + 4;
+          minX = Math.min(minX, ifaceCenterX - Math.max(ifaceRadius, ifaceLabelHalf));
+          maxX = Math.max(maxX, ifaceCenterX + Math.max(ifaceRadius, ifaceLabelHalf));
+          minY = Math.min(minY, pp2.cy - CFG.ifaceRadius - portLabelFs - 8);
+          maxY = Math.max(maxY, pp2.cy + CFG.ifaceRadius + 2);
+        } else {
+          minX = Math.min(minX, pp2.x);
+          minY = Math.min(minY, pp2.y);
+          maxX = Math.max(maxX, pp2.x + CFG.portSize);
+          maxY = Math.max(maxY, pp2.y + CFG.portSize);
+        }
       }
-      minX = Math.min(minX, e2.x - leftOH);
-      minY = Math.min(minY, e2.y);
-      maxX = Math.max(maxX, e2.x + e2.box.width + rightOH);
-      maxY = Math.max(maxY, e2.y + e2.box.height);
     }
 
     // Expand bounds to account for connector labels that may extend beyond components
@@ -6892,9 +7320,9 @@
             var ifCx, ifCy = pp.cy;
 
             if (pp.side === 'right') {
-              ifCx = pp.cx + ifS;
+              ifCx = pp.cx + ifS + ifR;
               // Stick line from component edge
-              svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + ifCx + '" y2="' + ifCy +
+              svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + (ifCx - ifR) + '" y2="' + ifCy +
                 '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               if (pp.kind === 'provide') {
                 // Lollipop: circle at end of stick
@@ -6907,8 +7335,8 @@
                   '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               }
             } else {
-              ifCx = pp.cx - ifS;
-              svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + ifCx + '" y2="' + ifCy +
+              ifCx = pp.cx - ifS - ifR;
+              svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + (ifCx + ifR) + '" y2="' + ifCy +
                 '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               if (pp.kind === 'provide') {
                 svg.push('<circle cx="' + ifCx + '" cy="' + ifCy + '" r="' + ifR +
@@ -6920,8 +7348,8 @@
                   '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               }
             }
-            // Label below the interface symbol
-            svg.push('<text x="' + ifCx + '" y="' + (ifCy + ifR + portLblFs2 + 2) +
+            // Interface labels read more clearly above the symbol and stay off connector lanes.
+            svg.push('<text x="' + ifCx + '" y="' + (ifCy - ifR - 4) +
               '" text-anchor="middle" font-size="' + portLblFs2 + '"' +
               ' font-style="italic" fill="' + colors.text +
               '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
@@ -7107,6 +7535,10 @@
  *   A ..> B : label      Dependency
  *   layout horizontal    Left-to-right layout (also: left-to-right, LR)
  *   layout vertical      Top-to-bottom layout (also: top-to-bottom, TB) [default]
+ *   layout square        Bias the layout toward a balanced footprint
+ *   layout landscape     Bias the layout toward a wider footprint
+ *   layout portrait      Bias the layout toward a taller footprint
+ *   layout auto          Let the layout engine choose the most compact fit
  */
 (function () {
   'use strict';
@@ -7148,16 +7580,21 @@
     var currentNode = null;
     var braceDepth = 0;
     var direction = 'TB';
+    var layoutPreference = null;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
 
       // Layout directive
-      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
-      if (layoutMatch && !currentNode) {
-        var val = layoutMatch[1].toLowerCase();
-        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+      var layoutDirective = UMLShared.parseLayoutDirective(line);
+      if (layoutDirective && !currentNode) {
+        if (layoutDirective.direction) {
+          direction = layoutDirective.direction;
+          layoutPreference = null;
+        } else {
+          layoutPreference = layoutDirective.layoutPreference;
+        }
         continue;
       }
 
@@ -7224,7 +7661,7 @@
       }
     }
 
-    return { nodes: nodes, links: links, notes: notes, direction: direction };
+    return { nodes: nodes, links: links, notes: notes, direction: direction, layoutPreference: layoutPreference };
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -7268,7 +7705,12 @@
     }
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40);
 
-    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, {
+      gapX: effectiveGapX,
+      gapY: CFG.gapY,
+      direction: parsed.direction || 'TB',
+      layoutPreference: parsed.layoutPreference || null
+    });
 
     for (var nm in result.nodes) {
       if (!entries[nm]) continue;
@@ -7699,6 +8141,10 @@
  *   A --|> B                  Generalization (solid, hollow triangle)
  *   layout horizontal         Left-to-right layout (also: left-to-right, LR)
  *   layout vertical           Top-to-bottom layout (also: top-to-bottom, TB)
+ *   layout square             Bias the layout toward a balanced footprint
+ *   layout landscape          Bias the layout toward a wider footprint
+ *   layout portrait           Bias the layout toward a taller footprint
+ *   layout auto               Let the layout engine choose the most compact fit
  */
 (function () {
   'use strict';
@@ -7736,6 +8182,7 @@
     var relationships = [];
     var notes = [];
     var direction = 'LR';
+    var layoutPreference = null;
 
     var inSystem = null;
     var braceDepth = 0;
@@ -7753,10 +8200,14 @@
       if (!line || line === '@startuml' || line === '@enduml') continue;
 
       // Layout directive
-      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
-      if (layoutMatch && inSystem === null) {
-        var val = layoutMatch[1].toLowerCase();
-        direction = (val === 'vertical' || val === 'top-to-bottom' || val === 'tb') ? 'TB' : 'LR';
+      var layoutDirective = UMLShared.parseLayoutDirective(line);
+      if (layoutDirective && inSystem === null) {
+        if (layoutDirective.direction) {
+          direction = layoutDirective.direction;
+          layoutPreference = null;
+        } else {
+          layoutPreference = layoutDirective.layoutPreference;
+        }
         continue;
       }
 
@@ -7914,6 +8365,7 @@
       relationships: relationships,
       notes: notes,
       direction: direction,
+      layoutPreference: layoutPreference,
       actorMap: actors,
       usecaseMap: usecases,
       aliasToId: aliasToId,
@@ -7934,6 +8386,165 @@
     var w = Math.max(CFG.ellipseMinW, textW + CFG.ellipsePadX * 2);
     var h = Math.max(CFG.ellipseMinH, CFG.fontSize + CFG.ellipsePadY * 2);
     return { width: Math.ceil(w), height: Math.ceil(h) };
+  }
+
+  function useCaseRelLabelKind(rel) {
+    var normalized = (rel.label || '').toLowerCase().replace(/\s+/g, '');
+    if (normalized === '<<include>>') return 'include';
+    if (normalized === '<<extend>>') return 'extend';
+    return rel.type;
+  }
+
+  function entryCenterX(entry) {
+    return entry.x + entry.box.width / 2;
+  }
+
+  function entryCenterY(entry) {
+    return entry.y + entry.box.height / 2;
+  }
+
+  function setEntryCenterX(entry, centerX) {
+    entry.x = centerX - entry.box.width / 2;
+  }
+
+  function setEntryCenterY(entry, centerY) {
+    entry.y = centerY - entry.box.height / 2;
+  }
+
+  function spreadEntriesVertically(entries, ids, gap) {
+    if (ids.length < 2) return;
+    ids.sort(function(a, b) {
+      return entryCenterY(entries[a]) - entryCenterY(entries[b]);
+    });
+    for (var i = 1; i < ids.length; i++) {
+      var prev = entries[ids[i - 1]];
+      var current = entries[ids[i]];
+      var minTop = prev.y + prev.box.height + gap;
+      if (current.y < minTop) current.y = minTop;
+    }
+  }
+
+  function applyUseCaseLayoutConventions(entries, parsed) {
+    var includeGroups = {};
+    var extendGroups = {};
+    var usecaseGeneralizations = {};
+    var actorGeneralizations = {};
+    var actorAssociations = {};
+
+    function pushUnique(map, key, value) {
+      if (!map[key]) map[key] = [];
+      if (map[key].indexOf(value) === -1) map[key].push(value);
+    }
+
+    for (var i = 0; i < parsed.relationships.length; i++) {
+      var rel = parsed.relationships[i];
+      var fromId = parsed.aliasToId[rel.from] || rel.from;
+      var toId = parsed.aliasToId[rel.to] || rel.to;
+      var fromEntry = entries[fromId];
+      var toEntry = entries[toId];
+      if (!fromEntry || !toEntry) continue;
+
+      var kind = useCaseRelLabelKind(rel);
+      if (kind === 'include' && fromEntry.type === 'usecase' && toEntry.type === 'usecase') {
+        pushUnique(includeGroups, toId, fromId);
+        continue;
+      }
+      if (kind === 'extend' && fromEntry.type === 'usecase' && toEntry.type === 'usecase') {
+        pushUnique(extendGroups, toId, fromId);
+        continue;
+      }
+      if (kind === 'generalization') {
+        if (fromEntry.type === 'usecase' && toEntry.type === 'usecase') {
+          pushUnique(usecaseGeneralizations, toId, fromId);
+        } else if (fromEntry.type === 'actor' && toEntry.type === 'actor') {
+          pushUnique(actorGeneralizations, toId, fromId);
+        }
+        continue;
+      }
+      if ((kind === 'association' || kind === 'directed') && fromEntry.type !== toEntry.type) {
+        if (fromEntry.type === 'actor' && toEntry.type === 'usecase') pushUnique(actorAssociations, fromId, toId);
+        if (toEntry.type === 'actor' && fromEntry.type === 'usecase') pushUnique(actorAssociations, toId, fromId);
+      }
+    }
+
+    for (var includeTarget in includeGroups) {
+      var includeSources = includeGroups[includeTarget];
+      var targetEntry = entries[includeTarget];
+      if (!targetEntry || !includeSources.length) continue;
+      var rightMost = -Infinity;
+      var sumCenterY = 0;
+      for (var si = 0; si < includeSources.length; si++) {
+        var sourceEntry = entries[includeSources[si]];
+        rightMost = Math.max(rightMost, sourceEntry.x + sourceEntry.box.width);
+        sumCenterY += entryCenterY(sourceEntry);
+      }
+      targetEntry.x = rightMost + CFG.gapX * 0.7;
+      setEntryCenterY(targetEntry, sumCenterY / includeSources.length);
+    }
+
+    for (var extendBase in extendGroups) {
+      var extenders = extendGroups[extendBase];
+      var baseEntry = entries[extendBase];
+      if (!baseEntry || !extenders.length) continue;
+      extenders.sort(function(a, b) {
+        return entryCenterY(entries[a]) - entryCenterY(entries[b]);
+      });
+      for (var ei = 0; ei < extenders.length; ei++) {
+        var extenderEntry = entries[extenders[ei]];
+        setEntryCenterX(extenderEntry, entryCenterX(baseEntry));
+        extenderEntry.y = baseEntry.y + baseEntry.box.height + CFG.gapY * 0.8 +
+          ei * (extenderEntry.box.height + CFG.gapY * 0.45);
+      }
+    }
+
+    for (var usecaseParent in usecaseGeneralizations) {
+      var usecaseChildren = usecaseGeneralizations[usecaseParent];
+      var parentEntry = entries[usecaseParent];
+      if (!parentEntry || !usecaseChildren.length) continue;
+      usecaseChildren.sort(function(a, b) {
+        return entryCenterY(entries[a]) - entryCenterY(entries[b]);
+      });
+      for (var ugi = 0; ugi < usecaseChildren.length; ugi++) {
+        var childEntry = entries[usecaseChildren[ugi]];
+        setEntryCenterX(childEntry, entryCenterX(parentEntry));
+        childEntry.y = parentEntry.y + parentEntry.box.height + CFG.gapY * 0.8 +
+          ugi * (childEntry.box.height + CFG.gapY * 0.45);
+      }
+    }
+
+    for (var actorParent in actorGeneralizations) {
+      var actorChildren = actorGeneralizations[actorParent];
+      var actorParentEntry = entries[actorParent];
+      if (!actorParentEntry || !actorChildren.length) continue;
+      actorChildren.sort(function(a, b) {
+        return entryCenterY(entries[a]) - entryCenterY(entries[b]);
+      });
+      for (var agi = 0; agi < actorChildren.length; agi++) {
+        var actorChildEntry = entries[actorChildren[agi]];
+        setEntryCenterX(actorChildEntry, entryCenterX(actorParentEntry));
+        actorChildEntry.y = actorParentEntry.y + actorParentEntry.box.height + CFG.gapY * 0.55 +
+          agi * (actorChildEntry.box.height + CFG.gapY * 0.3);
+      }
+    }
+
+    var actorIds = [];
+    for (var actorId in actorAssociations) {
+      var actorEntry = entries[actorId];
+      var associatedUsecases = actorAssociations[actorId];
+      if (!actorEntry || !associatedUsecases.length) continue;
+      var leftMost = Infinity;
+      var totalCenterY = 0;
+      for (var ai = 0; ai < associatedUsecases.length; ai++) {
+        var usecaseEntry = entries[associatedUsecases[ai]];
+        leftMost = Math.min(leftMost, usecaseEntry.x);
+        totalCenterY += entryCenterY(usecaseEntry);
+      }
+      actorEntry.x = leftMost - actorEntry.box.width - CFG.gapX * 0.7;
+      setEntryCenterY(actorEntry, totalCenterY / associatedUsecases.length);
+      actorIds.push(actorId);
+    }
+
+    spreadEntriesVertically(entries, actorIds, 18);
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -7982,6 +8593,7 @@
       gapX: CFG.gapX,
       gapY: CFG.gapY,
       direction: parsed.direction || 'LR',
+      layoutPreference: parsed.layoutPreference || null,
     });
 
     // Map positions back
@@ -7990,10 +8602,17 @@
       if (!entries[nid]) continue;
       entries[nid].x = result.nodes[nid].x;
       entries[nid].y = result.nodes[nid].y;
-      minX = Math.min(minX, entries[nid].x);
-      minY = Math.min(minY, entries[nid].y);
-      maxX = Math.max(maxX, entries[nid].x + entries[nid].box.width);
-      maxY = Math.max(maxY, entries[nid].y + entries[nid].box.height);
+    }
+
+    applyUseCaseLayoutConventions(entries, parsed);
+
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (var entryId in entries) {
+      var positionedEntry = entries[entryId];
+      minX = Math.min(minX, positionedEntry.x);
+      minY = Math.min(minY, positionedEntry.y);
+      maxX = Math.max(maxX, positionedEntry.x + positionedEntry.box.width);
+      maxY = Math.max(maxY, positionedEntry.y + positionedEntry.box.height);
     }
 
     return {
@@ -8160,10 +8779,18 @@
 
       // Label
       if (rel.label) {
+        var lineDx = p2.x - p1.x;
+        var lineDy = p2.y - p1.y;
+        var isMostlyVertical = Math.abs(lineDx) < Math.abs(lineDy);
         var lx = (p1.x + p2.x) / 2;
-        var ly = (p1.y + p2.y) / 2 - 8;
+        var ly = (p1.y + p2.y) / 2 - (isMostlyVertical ? 2 : 8);
+        var labelAnchor = 'middle';
+        if (isMostlyVertical) {
+          lx += 16;
+          labelAnchor = 'start';
+        }
         labelSvg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+          '" text-anchor="' + labelAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
           '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(rel.label) + '</text>');
       }
@@ -8397,6 +9024,7 @@
     var currentLane = null;
     var currentNode = null;
     var direction = 'TB';
+    var layoutPreference = null;
 
     var actionCount = 0;
     var decisionCount = 0;
@@ -8466,10 +9094,14 @@
       if (!line || line === '@startuml' || line === '@enduml') continue;
 
       // Layout directive
-      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
-      if (layoutMatch) {
-        var val = layoutMatch[1].toLowerCase();
-        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+      var layoutDirective = UMLShared.parseLayoutDirective(line);
+      if (layoutDirective) {
+        if (layoutDirective.direction) {
+          direction = layoutDirective.direction;
+          layoutPreference = null;
+        } else {
+          layoutPreference = layoutDirective.layoutPreference;
+        }
         continue;
       }
 
@@ -8704,7 +9336,7 @@
     var nodeList = [];
     for (var k in nodes) nodeList.push(nodes[k]);
 
-    return { nodes: nodeList, edges: edges, notes: notes, lanes: lanes, direction: direction };
+    return { nodes: nodeList, edges: edges, notes: notes, lanes: lanes, direction: direction, layoutPreference: layoutPreference };
   }
 
   function isFinalNode(id) {
@@ -8764,6 +9396,7 @@
       gapX: CFG.gapX,
       gapY: CFG.gapY,
       direction: parsed.direction || 'TB',
+      layoutPreference: parsed.layoutPreference || null,
     });
 
     // Map coords back (Y positions from Sugiyama, X will be overridden for swimlanes)

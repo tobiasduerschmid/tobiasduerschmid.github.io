@@ -247,6 +247,7 @@
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
         gitGraphPath: config.git_graph || null,
         uml_diagram: config.uml_diagram || false,
+        uml_class_layout: config.uml_class_layout || 'portrait',
         umlAnalyzerPath: '{{ "/js/uml-analyzer.py" | relative_url }}',
       });
       window._tutorial = tutorial;

@@ -90,7 +90,8 @@ class ClassVisitor(ast.NodeVisitor):
                 params.append(arg.arg + (': ' + hint if hint else ''))
 
         is_private = node.name.startswith('_') and not node.name.startswith('__')
-        self._current_class.methods.append((node.name, params, is_private))
+        is_abstract = self._has_decorator(node, 'abstractmethod')
+        self._current_class.methods.append((node.name, params, is_private, is_abstract))
 
         prev_method = self._current_method
         self._current_method = node.name
@@ -285,6 +286,21 @@ class ClassVisitor(ast.NodeVisitor):
         return (isinstance(node, ast.Attribute) and
                 isinstance(node.value, ast.Name) and
                 node.value.id == 'self')
+
+    @staticmethod
+    def _has_decorator(node, name):
+        """Check if a function/method has a decorator with the given name."""
+        for dec in getattr(node, 'decorator_list', []):
+            if isinstance(dec, ast.Name) and dec.id == name:
+                return True
+            if isinstance(dec, ast.Attribute) and dec.attr == name:
+                return True
+            if isinstance(dec, ast.Call):
+                if isinstance(dec.func, ast.Name) and dec.func.id == name:
+                    return True
+                if isinstance(dec.func, ast.Attribute) and dec.func.attr == name:
+                    return True
+        return False
 
     @staticmethod
     def _add_unique(lst, item):
@@ -1157,10 +1173,9 @@ def _is_abstract_class(cls):
     for base in cls.bases:
         if base in ('ABC', 'ABCMeta'):
             return True
-    # Check for abstract methods
-    for method_name, params, is_private in cls.methods:
-        # This is a heuristic; real detection would need AST decorator info
-        pass
+    for method_name, params, is_private, is_abstract in cls.methods:
+        if is_abstract:
+            return True
     return False
 
 
@@ -1209,8 +1224,9 @@ def generate_class_diagram(all_classes):
                 lines.append('  ' + prefix + attr_name)
 
         # Methods
-        for method_name, params, is_private in cls.methods:
-            prefix = '-' if is_private else '+'
+        for method_name, params, is_private, is_abstract in cls.methods:
+            prefix = '{abstract} ' if is_abstract else ''
+            prefix += '-' if is_private else '+'
             param_str = ', '.join(params)
             lines.append('  ' + prefix + method_name + '(' + param_str + ')')
 

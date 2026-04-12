@@ -173,6 +173,7 @@
     this._umlActiveType = 'class';      // 'class' or 'sequence'
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
     this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
+    this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
     this._umlViewActive = false;        // true when UML tab is selected
     this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
@@ -2210,6 +2211,25 @@
     }
   };
 
+  TutorialCode.prototype._applyTutorialClassLayout = function (syntax) {
+    var layoutPreference = this._umlClassLayoutPreference;
+    if (!layoutPreference || !syntax) return syntax;
+
+    var normalized = String(syntax).replace(/\r\n?/g, '\n');
+    var lines = normalized.split('\n');
+    var filtered = [];
+    for (var i = 0; i < lines.length; i++) {
+      if (/^\s*layout\s+.+$/i.test(lines[i].trim())) continue;
+      filtered.push(lines[i]);
+    }
+
+    var insertAt = 0;
+    while (insertAt < filtered.length && !filtered[insertAt].trim()) insertAt++;
+    if (insertAt < filtered.length && filtered[insertAt].trim() === '@startuml') insertAt++;
+    filtered.splice(insertAt, 0, 'layout ' + layoutPreference);
+    return filtered.join('\n');
+  };
+
   /** Render class diagram using the custom SVG renderer */
   TutorialCode.prototype._renderClassDiagramSVG = function (syntax) {
     if (!this._umlContentEl || !window.UMLClassDiagram) {
@@ -2217,7 +2237,7 @@
       return;
     }
     this._umlContentEl.innerHTML = '';
-    UMLClassDiagram.render(this._umlContentEl, syntax);
+    UMLClassDiagram.render(this._umlContentEl, this._applyTutorialClassLayout(syntax));
     var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
     this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
   };
@@ -2366,7 +2386,7 @@
       } else {
         var classSyntax = this._umlLastDiagrams.classDiagram;
         if (classSyntax && window.UMLClassDiagram) {
-          UMLClassDiagram.render(this._umlFsContentEl, classSyntax);
+          UMLClassDiagram.render(this._umlFsContentEl, this._applyTutorialClassLayout(classSyntax));
         } else {
           this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No class diagram available.</div>';
         }

@@ -37,6 +37,7 @@ html.dark-mode .uml-class-diagram-container svg {
 .uml-class-diagram-container svg {
   display: block;
   margin: 0 auto;
+  overflow: visible;
 }
 
 /* ── Inline notation symbols ── */
