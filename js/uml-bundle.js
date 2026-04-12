@@ -134,7 +134,7 @@
   function drawNoteBox(svg, x, y, w, h, colors) {
     var f = NOTE_CFG.foldSize;
     // Main body polygon (6 points: skip the top-right corner for the fold)
-    svg.push('<polygon points="' +
+    svg.push('<polygon class="uml-note-box" points="' +
       x + ',' + y + ' ' +
       (x + w - f) + ',' + y + ' ' +
       (x + w) + ',' + (y + f) + ' ' +
@@ -142,7 +142,7 @@
       x + ',' + (y + h) +
       '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="1"/>');
     // Fold triangle
-    svg.push('<polyline points="' +
+    svg.push('<polyline class="uml-note-fold" points="' +
       (x + w - f) + ',' + y + ' ' +
       (x + w - f) + ',' + (y + f) + ' ' +
       (x + w) + ',' + (y + f) +
@@ -153,9 +153,9 @@
    * Draw a dotted connector line with a small circle at the target attachment point.
    */
   function drawNoteConnector(svg, fromX, fromY, toX, toY, colors) {
-    svg.push('<line x1="' + fromX + '" y1="' + fromY + '" x2="' + toX + '" y2="' + toY +
+    svg.push('<line class="uml-note-connector" x1="' + fromX + '" y1="' + fromY + '" x2="' + toX + '" y2="' + toY +
       '" stroke="' + colors.line + '" stroke-width="1" stroke-linecap="round" stroke-dasharray="' + NOTE_CFG.connectorDash + '"/>');
-    svg.push('<circle cx="' + toX + '" cy="' + toY + '" r="' + NOTE_CFG.circleR +
+    svg.push('<circle class="uml-note-anchor" cx="' + toX + '" cy="' + toY + '" r="' + NOTE_CFG.circleR +
       '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="1"/>');
   }
 
@@ -532,6 +532,473 @@
     } catch (e) { /* getBBox can fail on hidden elements */ }
   }
 
+  function resolveNodeTarget(targetName, entries) {
+    if (!targetName) return null;
+    var cleanTarget = targetName.replace(/^"|"$/g, '').split('.')[0];
+    if (entries[cleanTarget]) {
+      var entry = entries[cleanTarget];
+      return { x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height };
+    }
+    for (var key in entries) {
+      var ent = entries[key];
+      if ((ent.node && ent.node.label === cleanTarget) ||
+          (ent.state && ent.state.name === cleanTarget) ||
+          (ent.comp && ent.comp.name === cleanTarget)) {
+        return { x: ent.x, y: ent.y, w: ent.box.width, h: ent.box.height };
+      }
+    }
+    return null;
+  }
+
+  function makeRect(x, y, w, h) {
+    return {
+      x: x,
+      y: y,
+      w: w,
+      h: h,
+      left: x,
+      right: x + w,
+      top: y,
+      bottom: y + h
+    };
+  }
+
+  function normalizeRect(rect) {
+    if (!rect) return null;
+    if (typeof rect.left === 'number' && typeof rect.right === 'number' &&
+        typeof rect.top === 'number' && typeof rect.bottom === 'number') {
+      return makeRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+    }
+    if (typeof rect.x === 'number' && typeof rect.y === 'number') {
+      var rw = typeof rect.w === 'number' ? rect.w : rect.width;
+      var rh = typeof rect.h === 'number' ? rect.h : rect.height;
+      if (typeof rw === 'number' && typeof rh === 'number') {
+        return makeRect(rect.x, rect.y, rw, rh);
+      }
+    }
+    return null;
+  }
+
+  function rectsOverlap(a, b, pad) {
+    var ra = normalizeRect(a);
+    var rb = normalizeRect(b);
+    var gap = pad || 0;
+    if (!ra || !rb) return false;
+    return ra.right + gap > rb.left && ra.left - gap < rb.right &&
+      ra.bottom + gap > rb.top && ra.top - gap < rb.bottom;
+  }
+
+  function rectOverlapArea(a, b, pad) {
+    var ra = normalizeRect(a);
+    var rb = normalizeRect(b);
+    var gap = pad || 0;
+    if (!ra || !rb) return 0;
+    var left = Math.max(ra.left - gap, rb.left);
+    var right = Math.min(ra.right + gap, rb.right);
+    var top = Math.max(ra.top - gap, rb.top);
+    var bottom = Math.min(ra.bottom + gap, rb.bottom);
+    if (right <= left || bottom <= top) return 0;
+    return (right - left) * (bottom - top);
+  }
+
+  function uniqueRounded(values) {
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < values.length; i++) {
+      var v = Math.round(values[i]);
+      if (!seen[v]) {
+        seen[v] = true;
+        out.push(values[i]);
+      }
+    }
+    return out;
+  }
+
+  function placeNoteRect(targetRect, noteSize, position, obstacles, placedRects, options) {
+    var target = normalizeRect(targetRect);
+    if (!target) return { x: 0, y: 0 };
+
+    var noteW = typeof noteSize.width === 'number' ? noteSize.width : noteSize.w;
+    var noteH = typeof noteSize.height === 'number' ? noteSize.height : noteSize.h;
+    var opts = options || {};
+    var gap = typeof opts.gap === 'number' ? opts.gap : NOTE_CFG.gap;
+    var slideStep = typeof opts.slideStep === 'number' ? opts.slideStep : 18;
+    var maxSlides = typeof opts.maxSlides === 'number' ? opts.maxSlides : 8;
+    var distanceStep = typeof opts.distanceStep === 'number' ? opts.distanceStep : 18;
+    var distanceLevels = typeof opts.distanceLevels === 'number' ? opts.distanceLevels : 4;
+    var overlapPad = typeof opts.overlapPad === 'number' ? opts.overlapPad : 6;
+    var allObstacles = obstacles || [];
+    var allPlaced = placedRects || [];
+
+    var slides = [0];
+    for (var si = 1; si <= maxSlides; si++) {
+      slides.push(-si * slideStep, si * slideStep);
+    }
+    var distances = [0];
+    for (var di = 1; di <= distanceLevels; di++) {
+      distances.push(di * distanceStep);
+    }
+
+    function candidateScore(rect, travelCost) {
+      var overlapCount = 0;
+      var overlapArea = 0;
+      for (var oi = 0; oi < allObstacles.length; oi++) {
+        if (rectsOverlap(rect, allObstacles[oi], overlapPad)) {
+          overlapCount++;
+          overlapArea += rectOverlapArea(rect, allObstacles[oi], overlapPad);
+        }
+      }
+      for (var pi = 0; pi < allPlaced.length; pi++) {
+        if (rectsOverlap(rect, allPlaced[pi], overlapPad + 2)) {
+          overlapCount++;
+          overlapArea += rectOverlapArea(rect, allPlaced[pi], overlapPad + 2);
+        }
+      }
+      return overlapCount * 100000000 + overlapArea + travelCost;
+    }
+
+    var best = null;
+
+    function consider(x, y, travelCost) {
+      var rect = makeRect(x, y, noteW, noteH);
+      var score = candidateScore(rect, travelCost);
+      if (!best || score < best.score) {
+        best = { x: x, y: y, score: score };
+      }
+    }
+
+    if (position === 'left' || position === 'right') {
+      var sideBases = uniqueRounded([
+        target.y,
+        target.y + target.h / 2 - noteH / 2,
+        target.y + target.h - noteH
+      ]);
+      for (var distIdx = 0; distIdx < distances.length; distIdx++) {
+        var dist = distances[distIdx];
+        var noteX = position === 'right'
+          ? target.x + target.w + gap + dist
+          : target.x - noteW - gap - dist;
+        for (var baseIdx = 0; baseIdx < sideBases.length; baseIdx++) {
+          for (var slideIdx = 0; slideIdx < slides.length; slideIdx++) {
+            consider(noteX, sideBases[baseIdx] + slides[slideIdx], dist * 6 + Math.abs(slides[slideIdx]) + baseIdx * 10);
+          }
+        }
+      }
+    } else if (position === 'top' || position === 'bottom') {
+      var topBases = uniqueRounded([
+        target.x,
+        target.x + target.w / 2 - noteW / 2,
+        target.x + target.w - noteW
+      ]);
+      for (var distIdx2 = 0; distIdx2 < distances.length; distIdx2++) {
+        var dist2 = distances[distIdx2];
+        var noteY = position === 'top'
+          ? target.y - noteH - gap - dist2
+          : target.y + target.h + gap + dist2;
+        for (var baseIdx2 = 0; baseIdx2 < topBases.length; baseIdx2++) {
+          for (var slideIdx2 = 0; slideIdx2 < slides.length; slideIdx2++) {
+            consider(topBases[baseIdx2] + slides[slideIdx2], noteY, dist2 * 6 + Math.abs(slides[slideIdx2]) + baseIdx2 * 10);
+          }
+        }
+      }
+    } else {
+      var baseX = target.x + target.w / 2 - noteW / 2;
+      var baseY = target.y;
+      var overOffsets = [
+        { dx: 0, dy: 0 },
+        { dx: 0, dy: -slideStep }, { dx: 0, dy: slideStep },
+        { dx: -slideStep, dy: 0 }, { dx: slideStep, dy: 0 },
+        { dx: 0, dy: -slideStep * 2 }, { dx: 0, dy: slideStep * 2 },
+        { dx: -slideStep * 2, dy: 0 }, { dx: slideStep * 2, dy: 0 },
+        { dx: -slideStep, dy: -slideStep }, { dx: slideStep, dy: -slideStep },
+        { dx: -slideStep, dy: slideStep }, { dx: slideStep, dy: slideStep },
+        { dx: 0, dy: -noteH - gap / 2 }, { dx: 0, dy: noteH + gap / 2 }
+      ];
+      for (var oi2 = 0; oi2 < overOffsets.length; oi2++) {
+        var off = overOffsets[oi2];
+        consider(baseX + off.dx, baseY + off.dy, Math.abs(off.dx) + Math.abs(off.dy));
+      }
+    }
+
+    return best ? { x: best.x, y: best.y } : { x: target.x, y: target.y };
+  }
+
+  function computeAnchoredNotes(notes, entries, extraObstacles, options) {
+    var notePositions = [];
+    if (!notes || !entries) return notePositions;
+
+    var entryObstacles = [];
+    for (var key in entries) {
+      var entry = entries[key];
+      if (entry && entry.box) {
+        entryObstacles.push({ x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height, name: key });
+      }
+    }
+    var staticObstacles = entryObstacles.slice();
+    if (extraObstacles && extraObstacles.length) {
+      for (var oi = 0; oi < extraObstacles.length; oi++) staticObstacles.push(extraObstacles[oi]);
+    }
+    var placedRects = [];
+
+    for (var ni = 0; ni < notes.length; ni++) {
+      var note = notes[ni];
+      var target = resolveNodeTarget(note.target, entries);
+      if (!target) continue;
+      var size = measureNote(note.lines);
+      var usableObstacles = [];
+      for (var si = 0; si < staticObstacles.length; si++) {
+        var obstacle = staticObstacles[si];
+        var sameAsTarget = typeof obstacle.x === 'number' && obstacle.x === target.x && obstacle.y === target.y &&
+          ((obstacle.w === target.w && obstacle.h === target.h) || (obstacle.width === target.w && obstacle.height === target.h));
+        if (!sameAsTarget) usableObstacles.push(obstacle);
+      }
+      var placed = placeNoteRect(target, size, note.position, usableObstacles, placedRects, options);
+      var rect = { x: placed.x, y: placed.y, w: size.width, h: size.height };
+      notePositions.push({
+        note: note,
+        x: placed.x,
+        y: placed.y,
+        w: size.width,
+        h: size.height,
+        tx: target.x,
+        ty: target.y,
+        tw: target.w,
+        th: target.h
+      });
+      placedRects.push(rect);
+    }
+    return notePositions;
+  }
+
+  function intervalGap(a1, a2, b1, b2) {
+    if (a2 < b1) return b1 - a2;
+    if (b2 < a1) return a1 - b2;
+    return 0;
+  }
+
+  function rectDistance(a, b) {
+    var ra = normalizeRect(a);
+    var rb = normalizeRect(b);
+    if (!ra || !rb) return Infinity;
+    var dx = intervalGap(ra.left, ra.right, rb.left, rb.right);
+    var dy = intervalGap(ra.top, ra.bottom, rb.top, rb.bottom);
+    if (dx === 0 && dy === 0) return 0;
+    if (dx === 0) return dy;
+    if (dy === 0) return dx;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function obstacleToRect(obstacle) {
+    if (!obstacle) return null;
+    if (typeof obstacle.x1 === 'number' && typeof obstacle.y1 === 'number' &&
+        typeof obstacle.x2 === 'number' && typeof obstacle.y2 === 'number') {
+      return makeRect(obstacle.x1, obstacle.y1, obstacle.x2 - obstacle.x1, obstacle.y2 - obstacle.y1);
+    }
+    return normalizeRect(obstacle);
+  }
+
+  function segmentDistanceToRect(segment, rect) {
+    var rr = normalizeRect(rect);
+    if (!rr) return Infinity;
+    var dx, dy;
+    if (segment.isH) {
+      dx = intervalGap(rr.left, rr.right, segment.x1, segment.x2);
+      dy = intervalGap(rr.top, rr.bottom, segment.y, segment.y);
+    } else {
+      dx = intervalGap(rr.left, rr.right, segment.x, segment.x);
+      dy = intervalGap(rr.top, rr.bottom, segment.y1, segment.y2);
+    }
+    if (dx === 0 && dy === 0) return 0;
+    if (dx === 0) return dy;
+    if (dy === 0) return dx;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function buildOrthogonalSegments(points) {
+    var segments = [];
+    if (!points || points.length < 2) return segments;
+    for (var si = 0; si < points.length - 1; si++) {
+      var p0 = points[si], p1 = points[si + 1];
+      var length = Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y);
+      if (length < 8) continue;
+      if (Math.abs(p1.y - p0.y) < 1) {
+        segments.push({
+          segmentIndex: si,
+          isH: true,
+          length: length,
+          x1: Math.min(p0.x, p1.x),
+          x2: Math.max(p0.x, p1.x),
+          y: p0.y
+        });
+      } else if (Math.abs(p1.x - p0.x) < 1) {
+        segments.push({
+          segmentIndex: si,
+          isH: false,
+          length: length,
+          x: p0.x,
+          y1: Math.min(p0.y, p1.y),
+          y2: Math.max(p0.y, p1.y)
+        });
+      }
+    }
+    return segments;
+  }
+
+  function makeLabelRect(x, y, labelW, labelH, anchor) {
+    var left = anchor === 'middle' ? x - labelW / 2 : (anchor === 'end' ? x - labelW : x);
+    return {
+      left: left,
+      right: left + labelW,
+      top: y - labelH,
+      bottom: y + 4
+    };
+  }
+
+  function labelRectHitsObstacles(rect, obstacles, pad) {
+    for (var i = 0; i < obstacles.length; i++) {
+      var obstacleRect = obstacleToRect(obstacles[i]);
+      if (obstacleRect && rectsOverlap(rect, obstacleRect, pad)) return true;
+    }
+    return false;
+  }
+
+  function labelRectHitsPlacedLabels(rect, placedLabels, pad) {
+    for (var i = 0; i < placedLabels.length; i++) {
+      if (rectsOverlap(rect, placedLabels[i], pad)) return true;
+    }
+    return false;
+  }
+
+  function labelRectHitsSegments(rect, segments, skipSegmentIndex, pad) {
+    var gap = pad || 0;
+    for (var i = 0; i < segments.length; i++) {
+      var segment = segments[i];
+      if (skipSegmentIndex === segment.segmentIndex) continue;
+      if (segment.isH) {
+        if (segment.y >= rect.top - gap && segment.y <= rect.bottom + gap &&
+            segment.x2 > rect.left - gap && segment.x1 < rect.right + gap) {
+          return true;
+        }
+      } else if (segment.x >= rect.left - gap && segment.x <= rect.right + gap &&
+                 segment.y2 > rect.top - gap && segment.y1 < rect.bottom + gap) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function minLabelClearance(rect, obstacles, placedLabels, ownSegments, skipSegmentIndex, otherSegments) {
+    var min = Infinity;
+    for (var i = 0; i < obstacles.length; i++) {
+      var obstacleRect = obstacleToRect(obstacles[i]);
+      if (obstacleRect) min = Math.min(min, rectDistance(rect, obstacleRect));
+    }
+    for (var j = 0; j < placedLabels.length; j++) {
+      min = Math.min(min, rectDistance(rect, placedLabels[j]));
+    }
+    for (var k = 0; k < ownSegments.length; k++) {
+      if (ownSegments[k].segmentIndex === skipSegmentIndex) continue;
+      min = Math.min(min, segmentDistanceToRect(ownSegments[k], rect));
+    }
+    for (var m = 0; m < otherSegments.length; m++) {
+      min = Math.min(min, segmentDistanceToRect(otherSegments[m], rect));
+    }
+    return isFinite(min) ? min : 120;
+  }
+
+  function placeOrthogonalLabel(label, points, obstacles, placedLabels, options) {
+    var opts = options || {};
+    var fontSize = opts.fontSize || 14;
+    var labelW = textWidth(label, false, fontSize);
+    var labelH = fontSize + 6;
+    var segments = buildOrthogonalSegments(points);
+    var fractions = opts.fractions || [0.5, 0.35, 0.65, 0.22, 0.78];
+    var otherSegments = opts.otherSegments || [];
+
+    if (!segments.length) return null;
+
+    segments.sort(function(a, b) {
+      if (a.isH !== b.isH) return a.isH ? -1 : 1;
+      if (b.length !== a.length) return b.length - a.length;
+      return a.segmentIndex - b.segmentIndex;
+    });
+
+    var best = null;
+    var bestSoft = null;
+
+    for (var gi = 0; gi < segments.length; gi++) {
+      var segment = segments[gi];
+      var placements = segment.isH
+        ? (opts.horizontalPlacements || [
+            { anchor: 'middle', dx: 0, dy: -10, penalty: 0 },
+            { anchor: 'middle', dx: 0, dy: labelH + 4, penalty: 8 }
+          ])
+        : (opts.verticalPlacements || [
+            { anchor: 'start', dx: 10, dy: 0, penalty: 2 },
+            { anchor: 'end', dx: -10, dy: 0, penalty: 6 }
+          ]);
+
+      for (var pi = 0; pi < placements.length; pi++) {
+        var placement = placements[pi];
+        for (var fi = 0; fi < fractions.length; fi++) {
+          var fraction = fractions[fi];
+          var lx, ly;
+          if (segment.isH) {
+            lx = segment.x1 + (segment.x2 - segment.x1) * fraction + placement.dx;
+            ly = segment.y + placement.dy;
+          } else {
+            lx = segment.x + placement.dx;
+            ly = segment.y1 + (segment.y2 - segment.y1) * fraction + placement.dy;
+          }
+
+          var rect = makeLabelRect(lx, ly, labelW, labelH, placement.anchor);
+          if (labelRectHitsObstacles(rect, obstacles, opts.obstaclePad || 6)) continue;
+          if (labelRectHitsPlacedLabels(rect, placedLabels, opts.labelPad || 8)) continue;
+
+          var hitsSegments = labelRectHitsSegments(rect, segments, segment.segmentIndex, opts.segmentPad || 3) ||
+            labelRectHitsSegments(rect, otherSegments, null, opts.segmentPad || 3);
+          var clearance = minLabelClearance(rect, obstacles, placedLabels, segments, segment.segmentIndex, otherSegments);
+          var score = segment.length * 2 + (segment.isH ? 24 : 0) + Math.min(clearance, 80) -
+            Math.abs(fraction - 0.5) * 30 - placement.penalty;
+
+          if (typeof opts.scoreCandidate === 'function') {
+            score += opts.scoreCandidate(segment, placement, fraction, rect) || 0;
+          }
+
+          var candidate = {
+            x: lx,
+            y: ly,
+            anchor: placement.anchor,
+            rect: rect,
+            score: score
+          };
+
+          if (hitsSegments) {
+            candidate.score -= 40;
+            if (!bestSoft || candidate.score > bestSoft.score) bestSoft = candidate;
+          } else if (!best || candidate.score > best.score) {
+            best = candidate;
+          }
+        }
+      }
+    }
+
+    if (best) return best;
+    if (bestSoft) return bestSoft;
+
+    var fallbackSeg = segments[0];
+    var fallbackAnchor = fallbackSeg.isH ? 'middle' : 'start';
+    var fallbackX = fallbackSeg.isH ? (fallbackSeg.x1 + fallbackSeg.x2) / 2 : fallbackSeg.x + 10;
+    var fallbackY = fallbackSeg.isH ? fallbackSeg.y - 10 : (fallbackSeg.y1 + fallbackSeg.y2) / 2;
+    return {
+      x: fallbackX,
+      y: fallbackY,
+      anchor: fallbackAnchor,
+      rect: makeLabelRect(fallbackX, fallbackY, labelW, labelH, fallbackAnchor),
+      score: -Infinity
+    };
+  }
+
   // ─── Actor Stick Figure ──────────────────────────────────────
 
   /**
@@ -585,6 +1052,8 @@
     drawActorStickFigure: drawActorStickFigure,
     ACTOR_H: ACTOR_H,
     autoFitSVG: autoFitSVG,
+    buildOrthogonalSegments: buildOrthogonalSegments,
+    placeOrthogonalLabel: placeOrthogonalLabel,
 
     // ─── Drawing Utilities ───────────────────────────────────────
     drawArrow: function(svg, x, y, ux, uy, color, size, sw) {
@@ -640,25 +1109,10 @@
         '" fill="' + (filled ? color : (bgColor || '#fff')) + '" stroke="' + color + '" stroke-width="' + strw + '"/>');
     },
 
-    resolveNodeTarget: function(targetName, entries) {
-      if (!targetName) return null;
-      var cleanTarget = targetName.replace(/^"|"$/g, '').split('.')[0];
-      // Search by ID
-      if (entries[cleanTarget]) {
-        var e = entries[cleanTarget];
-        return { x: e.x, y: e.y, w: e.box.width, h: e.box.height };
-      }
-      // Search by Label
-      for (var k in entries) {
-        var ent = entries[k];
-        if ((ent.node && ent.node.label === cleanTarget) ||
-            (ent.state && ent.state.name === cleanTarget) ||
-            (ent.comp && ent.comp.name === cleanTarget)) {
-          return { x: ent.x, y: ent.y, w: ent.box.width, h: ent.box.height };
-        }
-      }
-      return null;
-    },
+    resolveNodeTarget: resolveNodeTarget,
+    rectsOverlap: rectsOverlap,
+    placeNoteRect: placeNoteRect,
+    computeAnchoredNotes: computeAnchoredNotes,
 
     renderAll: function() {
       var RENDERERS = {
@@ -1530,24 +1984,7 @@
     // Resolve note target — supports ClassName or ClassName.memberName
 
     // Pre-compute note positions so SVG bounds can be expanded
-    var notePositions = [];
-    if (parsed.notes) {
-      var noteGap = UMLShared.NOTE_CFG.gap;
-      for (var npi = 0; npi < parsed.notes.length; npi++) {
-        var pn = parsed.notes[npi];
-        var tgt = UMLShared.resolveNodeTarget(pn.target, entries);
-        if (!tgt) continue;
-        var ns = UMLShared.measureNote(pn.lines);
-        var nx, ny;
-        var tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
-        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
-        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
-        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
-        else { nx = tx; ny = ty + th + noteGap; }
-        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height,
-          tx: tx, ty: ty, tw: tw, th: th });
-      }
-    }
+    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
 
     // Expand SVG bounds to fit notes
     var extraLeft = 0, extraRight = 0, extraTop = 0, extraBottom = 0;
@@ -1569,6 +2006,9 @@
     var svgH = layout.height + CFG.svgPad * 2 + extraTop + extraBottom;
 
     var svg = [];
+    var labelSvg = [];
+    var placedLabels = [];
+    var placedRouteSegments = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw relationships ──
@@ -2874,6 +3314,35 @@
       return (side === 'right') ? (abx + CFG.activationW) : abx;
     }
 
+    var sequenceNoteObstacles = [];
+    var deferredSequenceNotes = [];
+
+    function pushSequenceRectObstacle(x, y, w, h) {
+      sequenceNoteObstacles.push({ x: x, y: y, w: w, h: h });
+    }
+
+    function pushSequenceLabelObstacle(text, x, y, anchor) {
+      if (!text) return;
+      var labelW = UMLShared.textWidth(text, false, CFG.fontSize);
+      var labelH = CFG.fontSize + 8;
+      var left = anchor === 'middle' ? x - labelW / 2 : (anchor === 'end' ? x - labelW : x);
+      pushSequenceRectObstacle(left - 4, y - CFG.fontSize - 4, labelW + 8, labelH);
+    }
+
+    for (var pbi = 0; pbi < participants.length; pbi++) {
+      if (createYs && createYs.hasOwnProperty(participants[pbi].id)) continue;
+      pushSequenceRectObstacle(partX[pbi] - partWidths[pbi] / 2, CFG.svgPad, partWidths[pbi], partH);
+    }
+    for (var abo = 0; abo < activationBars.length; abo++) {
+      var obstacleBar = activationBars[abo];
+      pushSequenceRectObstacle(
+        partX[obstacleBar.pIdx] - CFG.activationW / 2 + (obstacleBar.depth || 0) * CFG.activationOffset,
+        obstacleBar.startY,
+        CFG.activationW,
+        obstacleBar.endY - obstacleBar.startY
+      );
+    }
+
     // ── Build SVG ──
     var svg = [];
     svg.push(UMLShared.svgOpen(totalW, totalH, 0, 0, CFG.fontFamily));
@@ -3002,9 +3471,12 @@
             '"' + (m.isDashed ? ' stroke-dasharray="6,4"' : '') + '/>');
           drawMsgArrow(svg, selfX, my + 20, 1, m.msgType, colors);
           if (m.label) {
-            svg.push('<text x="' + (selfX + selfW + 6) + '" y="' + (my + 4) +
+            var selfLabelX = selfX + selfW + 6;
+            var selfLabelY = my + 4;
+            svg.push('<text x="' + selfLabelX + '" y="' + selfLabelY +
               '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
               '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' + UMLShared.escapeXml(m.label) + '</text>');
+            pushSequenceLabelObstacle(m.label, selfLabelX, selfLabelY, 'start');
           }
         } else {
           // Line
@@ -3019,10 +3491,12 @@
           // Label above the line
           if (m.label) {
             var labelX = (x1 + x2) / 2;
-            svg.push('<text x="' + labelX + '" y="' + (my - 6) +
+            var labelY = my - 6;
+            svg.push('<text x="' + labelX + '" y="' + labelY +
               '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
               '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' +
               UMLShared.escapeXml(m.label) + '</text>');
+            pushSequenceLabelObstacle(m.label, labelX, labelY, 'middle');
           }
         }
       } else if (m.type === 'create') {
@@ -3032,6 +3506,7 @@
         var cpart = participants[cIdx];
         svg.push('<rect x="' + cpx + '" y="' + my + '" width="' + partWidths[cIdx] + '" height="' + partH +
           '" fill="' + colors.headerFill + '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        pushSequenceRectObstacle(cpx, my, partWidths[cIdx], partH);
         var cDispText = (cpart.id !== cpart.label) ? cpart.id + ': ' + cpart.label : cpart.label;
         var cTextY = my + partH / 2 + CFG.fontSize * 0.35;
         svg.push('<text x="' + partX[cIdx] + '" y="' + cTextY +
@@ -3075,10 +3550,12 @@
           '" fill="' + colors.line + '" stroke="' + colors.line + '"/>');
         if (m.label) {
           var llabelX = (lx1 + lx2) / 2;
-          svg.push('<text x="' + llabelX + '" y="' + (my - 6) +
+          var lostLabelY = my - 6;
+          svg.push('<text x="' + llabelX + '" y="' + lostLabelY +
             '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
             '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' +
             UMLShared.escapeXml(m.label) + '</text>');
+          pushSequenceLabelObstacle(m.label, llabelX, lostLabelY, 'middle');
         }
       } else if (m.type === 'found') {
         // Found message: filled circle to receiver
@@ -3095,38 +3572,81 @@
         drawMsgArrow(svg, fx2, my, -1, 'sync', colors);
         if (m.label) {
           var flabelX = (fx1 + fx2) / 2;
-          svg.push('<text x="' + flabelX + '" y="' + (my - 6) +
+          var foundLabelY = my - 6;
+          svg.push('<text x="' + flabelX + '" y="' + foundLabelY +
             '" text-anchor="middle" font-size="' + CFG.fontSize + '" fill="' + colors.text +
             '" stroke="' + colors.fill + '" stroke-width="3" stroke-opacity="0.85" paint-order="stroke">' +
             UMLShared.escapeXml(m.label) + '</text>');
+          pushSequenceLabelObstacle(m.label, flabelX, foundLabelY, 'middle');
         }
       } else if (m.type === 'note') {
-        // Draw note box near the target participant
         var noteLines = m.lines || [m.text || ''];
         var nIdx = findPIdx(m.target);
         var noteSize = UMLShared.measureNote(noteLines);
-        var noteX, noteY = my;
-        var connFromX, connToX;
+        var targetRect;
         if (m.position === 'left') {
-          noteX = getEdgeX(nIdx, my, 'left') - UMLShared.NOTE_CFG.gap - noteSize.width;
-          connFromX = noteX + noteSize.width;
-          connToX = getEdgeX(nIdx, my, 'left');
+          targetRect = { x: getEdgeX(nIdx, my, 'left') - 1, y: my - 6, w: 2, h: 12 };
         } else if (m.position === 'right') {
-          noteX = getEdgeX(nIdx, my, 'right') + UMLShared.NOTE_CFG.gap;
-          connFromX = noteX;
-          connToX = getEdgeX(nIdx, my, 'right');
-        } else { // over
-          noteX = partX[nIdx] - noteSize.width / 2;
-          connFromX = null; // no connector for 'over'
-          connToX = null;
+          targetRect = { x: getEdgeX(nIdx, my, 'right') - 1, y: my - 6, w: 2, h: 12 };
+        } else {
+          targetRect = { x: partX[nIdx] - partWidths[nIdx] / 2, y: my - 6, w: partWidths[nIdx], h: 12 };
         }
-        var connector = null;
-        if (connFromX !== null) {
-          connector = { fromX: connFromX, fromY: noteY + noteSize.height / 2,
-                        toX: connToX, toY: noteY + noteSize.height / 2 };
-        }
-        UMLShared.drawNote(svg, noteX, noteY, noteLines, colors, connector);
+        deferredSequenceNotes.push({
+          position: m.position,
+          targetIdx: nIdx,
+          targetY: my,
+          targetRect: targetRect,
+          lines: noteLines,
+          size: noteSize
+        });
       }
+    }
+
+    var placedSequenceNotes = [];
+    for (var sni = 0; sni < deferredSequenceNotes.length; sni++) {
+      var sequenceNote = deferredSequenceNotes[sni];
+      var notePlacement = UMLShared.placeNoteRect(
+        sequenceNote.targetRect,
+        sequenceNote.size,
+        sequenceNote.position,
+        sequenceNoteObstacles,
+        placedSequenceNotes,
+        { slideStep: 16, maxSlides: 10, distanceLevels: 6 }
+      );
+      var connector = null;
+      if (sequenceNote.position === 'left') {
+        connector = {
+          fromX: notePlacement.x + sequenceNote.size.width,
+          fromY: notePlacement.y + sequenceNote.size.height / 2,
+          toX: getEdgeX(sequenceNote.targetIdx, sequenceNote.targetY, 'left'),
+          toY: sequenceNote.targetY
+        };
+      } else if (sequenceNote.position === 'right') {
+        connector = {
+          fromX: notePlacement.x,
+          fromY: notePlacement.y + sequenceNote.size.height / 2,
+          toX: getEdgeX(sequenceNote.targetIdx, sequenceNote.targetY, 'right'),
+          toY: sequenceNote.targetY
+        };
+      } else if (sequenceNote.position === 'top') {
+        connector = {
+          fromX: notePlacement.x + sequenceNote.size.width / 2,
+          fromY: notePlacement.y + sequenceNote.size.height,
+          toX: partX[sequenceNote.targetIdx],
+          toY: sequenceNote.targetY
+        };
+      } else if (sequenceNote.position === 'bottom') {
+        connector = {
+          fromX: notePlacement.x + sequenceNote.size.width / 2,
+          fromY: notePlacement.y,
+          toX: partX[sequenceNote.targetIdx],
+          toY: sequenceNote.targetY
+        };
+      }
+      UMLShared.drawNote(svg, notePlacement.x, notePlacement.y, sequenceNote.lines, colors, connector);
+      var placedNoteRect = { x: notePlacement.x, y: notePlacement.y, w: sequenceNote.size.width, h: sequenceNote.size.height };
+      placedSequenceNotes.push(placedNoteRect);
+      sequenceNoteObstacles.push(placedNoteRect);
     }
 
     // ── Draw participant boxes (top, skip created participants) ──
@@ -3641,20 +4161,7 @@
 
 
     // Pre-compute note positions for SVG bounds expansion
-    var notePositions = [];
-    if (parsed.notes) {
-      var noteGap = UMLShared.NOTE_CFG.gap;
-      for (var npi = 0; npi < parsed.notes.length; npi++) {
-        var pn = parsed.notes[npi]; var tgt = UMLShared.resolveNodeTarget(pn.target, entries); if (!tgt) continue;
-        var ns = UMLShared.measureNote(pn.lines);
-        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
-        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
-        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
-        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
-        else { nx = tx; ny = ty + th + noteGap; }
-        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
-      }
-    }
+    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
     var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
     for (var nbi = 0; nbi < notePositions.length; nbi++) {
       var npb = notePositions[nbi];
@@ -3673,7 +4180,13 @@
 
     var svg = [];
     var labelSvg = []; // Transition labels rendered after states so they appear on top
-    var placedLabels = []; // { l, r, t, b } bounding boxes for collision avoidance
+    var placedLabels = [];
+    var placedRouteSegments = [];
+    var stateObstacles = [];
+    for (var sen in entries) {
+      var se0 = entries[sen];
+      stateObstacles.push({ x: se0.x, y: se0.y, w: se0.box.width, h: se0.box.height });
+    }
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw transitions (behind states) ──
@@ -3694,9 +4207,17 @@
         // Arrowhead
         UMLShared.drawArrow(svg, sx, sy + 20, -1, 0, colors.line);
         if (tr.label) {
-          labelSvg.push('<text x="' + (sx + lw + 4) + '" y="' + (sy + 10) +
+          var loopLabelX = sx + lw + 4;
+          var loopLabelY = sy + 10;
+          labelSvg.push('<text x="' + loopLabelX + '" y="' + loopLabelY +
             '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
             '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' + UMLShared.escapeXml(tr.label) + '</text>');
+          placedLabels.push({
+            left: loopLabelX,
+            right: loopLabelX + UMLShared.textWidth(tr.label, false, CFG.fontSize),
+            top: loopLabelY - CFG.fontSize - 2,
+            bottom: loopLabelY + 4
+          });
         }
         continue;
       }
@@ -3799,87 +4320,29 @@
       var alen = Math.sqrt(adx * adx + ady * ady);
       if (alen > 0) { adx /= alen; ady /= alen; }
       UMLShared.drawArrow(svg, pLast.x, pLast.y, -adx, -ady, colors.line);
+      var routeSegments = UMLShared.buildOrthogonalSegments(points);
 
       // Transition label with background
       if (tr.label) {
-        var lx, ly, lAnchor = 'middle';
-        if (points.length === 4) {
-          // Z-routes: label on the longest segment for best readability
-          var seg1Len = Math.abs(points[1].x - points[0].x) + Math.abs(points[1].y - points[0].y);
-          var seg2Len = Math.abs(points[2].x - points[1].x) + Math.abs(points[2].y - points[1].y);
-          var seg3Len = Math.abs(points[3].x - points[2].x) + Math.abs(points[3].y - points[2].y);
-          var bestSeg, bestSegLen;
-          if (seg1Len >= seg2Len && seg1Len >= seg3Len) { bestSeg = 0; bestSegLen = seg1Len; }
-          else if (seg2Len >= seg3Len) { bestSeg = 1; bestSegLen = seg2Len; }
-          else { bestSeg = 2; bestSegLen = seg3Len; }
-          var lSeg0 = points[bestSeg], lSeg1 = points[bestSeg + 1];
-          var lSegIsH = Math.abs(lSeg1.y - lSeg0.y) < 1;
-
-          if (lSegIsH) {
-            lx = (lSeg0.x + lSeg1.x) / 2;
-            ly = lSeg0.y - 8;
-            if (downByFrom[tr.from] && downByFrom[tr.from].length > 1) {
-              var dIdx = downByFrom[tr.from].indexOf(ti);
-              if (dIdx > 0) ly += dIdx * (CFG.fontSize + 4);
-            }
-          } else {
-            // Vertical segment — place label to the right, staggered by Y
-            // for back-edges routed on same side
-            lx = lSeg0.x + 8;
-            lAnchor = 'start';
-            if (isBackEdge) {
-              // Place near the top of the vertical segment (close to exit)
-              ly = Math.min(lSeg0.y, lSeg1.y) + CFG.fontSize + 4;
-            } else {
-              ly = (lSeg0.y + lSeg1.y) / 2;
-            }
+        var labelPlacement = UMLShared.placeOrthogonalLabel(tr.label, points, stateObstacles, placedLabels, {
+          fontSize: CFG.fontSize,
+          otherSegments: placedRouteSegments,
+          scoreCandidate: function(segment, placement) {
+            var bonus = segment.isH ? 8 : -4;
+            if (placement.anchor === 'middle') bonus += 2;
+            if (isBackEdge) bonus += segment.isH ? 18 : -12;
+            return bonus;
           }
-        } else {
-          // Direct line
-          var lp0 = points[0], lp1 = points[1];
-          lx = (lp0.x + lp1.x) / 2;
-          ly = (lp0.y + lp1.y) / 2;
-          if (Math.abs(lp1.y - lp0.y) < 1) {
-             ly -= 10;
-          } else {
-             lx += 10; lAnchor = 'start';
-          }
+        });
+        if (labelPlacement) {
+          placedLabels.push(labelPlacement.rect);
+          labelSvg.push('<text x="' + labelPlacement.x + '" y="' + labelPlacement.y +
+            '" text-anchor="' + labelPlacement.anchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
+            UMLShared.escapeXml(tr.label) + '</text>');
         }
-        // Check if label would overlap any state box and shift if needed
-        var lblW = UMLShared.textWidth(tr.label, false, CFG.fontSize);
-        var lblL = (lAnchor === 'middle') ? lx - lblW / 2 : (lAnchor === 'start' ? lx : lx - lblW);
-        var lblR = lblL + lblW;
-        var lblT = ly - CFG.fontSize;
-        var lblB = ly + 4;
-        for (var lsi in entries) {
-          var lse = entries[lsi];
-          var seL = lse.x - 4, seR = lse.x + lse.box.width + 4;
-          var seT = lse.y - 4, seB = lse.y + lse.box.height + 4;
-          if (lblR > seL && lblL < seR && lblB > seT && lblT < seB) {
-            // Overlaps a state — shift right of the state
-            lx = seR + 8;
-            lAnchor = 'start';
-            break;
-          }
-        }
-        // Check if label overlaps any previously placed label and nudge
-        lblW = UMLShared.textWidth(tr.label, false, CFG.fontSize);
-        lblL = (lAnchor === 'middle') ? lx - lblW / 2 : (lAnchor === 'start' ? lx : lx - lblW);
-        lblR = lblL + lblW; lblT = ly - CFG.fontSize; lblB = ly + 4;
-        for (var pli = 0; pli < placedLabels.length; pli++) {
-          var pl = placedLabels[pli];
-          if (lblR > pl.l && lblL < pl.r && lblB > pl.t && lblT < pl.b) {
-            ly = pl.b + CFG.fontSize + 2; // nudge below the colliding label
-            lblT = ly - CFG.fontSize; lblB = ly + 4;
-          }
-        }
-        placedLabels.push({ l: lblL, r: lblR, t: lblT, b: lblB });
-
-        labelSvg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
-          UMLShared.escapeXml(tr.label) + '</text>');
       }
+      placedRouteSegments = placedRouteSegments.concat(routeSegments);
     }
 
     // ── Draw composite state backgrounds first ──
@@ -4321,22 +4784,168 @@
       entries[n].y = result.nodes[n].y;
     }
 
+    if ((parsed.direction || 'LR') === 'LR' && connectors.length > 0) {
+      var inCounts = {}, outCounts = {};
+      for (var ec in entries) {
+        inCounts[ec] = 0;
+        outCounts[ec] = 0;
+      }
+      for (var cci = 0; cci < connectors.length; cci++) {
+        var cc = connectors[cci];
+        if (!entries[cc.from] || !entries[cc.to] || cc.from === cc.to) continue;
+        outCounts[cc.from] = (outCounts[cc.from] || 0) + 1;
+        inCounts[cc.to] = (inCounts[cc.to] || 0) + 1;
+      }
+
+      var columnItems = [];
+      for (var cn in entries) columnItems.push(cn);
+      columnItems.sort(function(a, b) {
+        if (Math.abs(entries[a].x - entries[b].x) > 1) return entries[a].x - entries[b].x;
+        return entries[a].y - entries[b].y;
+      });
+
+      var columnThreshold = Math.max(24, effectiveGapX * 0.3);
+      var columns = [];
+      for (var cni = 0; cni < columnItems.length; cni++) {
+        var name = columnItems[cni];
+        var entry = entries[name];
+        var lastColumn = columns.length ? columns[columns.length - 1] : null;
+        if (!lastColumn || Math.abs(entry.x - lastColumn.refX) > columnThreshold) {
+          columns.push({ refX: entry.x, names: [name] });
+        } else {
+          lastColumn.names.push(name);
+        }
+      }
+
+      function columnWidth(column) {
+        var width = 0;
+        for (var wi = 0; wi < column.names.length; wi++) {
+          width = Math.max(width, entries[column.names[wi]].box.width);
+        }
+        return width;
+      }
+
+      function scoreColumnOrder(order) {
+        var colIndex = {};
+        for (var oi = 0; oi < order.length; oi++) {
+          for (var oni = 0; oni < order[oi].names.length; oni++) {
+            colIndex[order[oi].names[oni]] = oi;
+          }
+        }
+
+        var score = 0;
+        for (var si = 0; si < connectors.length; si++) {
+          var conn = connectors[si];
+          var fromCol = colIndex[conn.from];
+          var toCol = colIndex[conn.to];
+          if (fromCol === undefined || toCol === undefined) continue;
+          var span = Math.abs(toCol - fromCol);
+          if (conn.from !== conn.to) score += span;
+          if (fromCol > toCol) score += 1.25;
+          if (fromCol === toCol && conn.from !== conn.to) score += 0.75;
+        }
+        return score;
+      }
+
+      var fixedPrefix = 0;
+      while (fixedPrefix < columns.length) {
+        var prefixColumn = columns[fixedPrefix];
+        var allSourceOnly = true;
+        for (var pfi = 0; pfi < prefixColumn.names.length; pfi++) {
+          if ((inCounts[prefixColumn.names[pfi]] || 0) > 0) {
+            allSourceOnly = false;
+            break;
+          }
+        }
+        if (!allSourceOnly) break;
+        fixedPrefix++;
+      }
+
+      if (columns.length > fixedPrefix + 1) {
+        var optimizedColumns = columns.slice();
+        var improved = true;
+        while (improved) {
+          improved = false;
+          var currentScore = scoreColumnOrder(optimizedColumns);
+          for (var swapIdx = fixedPrefix; swapIdx < optimizedColumns.length - 1; swapIdx++) {
+            var candidate = optimizedColumns.slice();
+            var tmp = candidate[swapIdx];
+            candidate[swapIdx] = candidate[swapIdx + 1];
+            candidate[swapIdx + 1] = tmp;
+            var candidateScore = scoreColumnOrder(candidate);
+            if (candidateScore + 0.01 < currentScore) {
+              optimizedColumns = candidate;
+              currentScore = candidateScore;
+              improved = true;
+            }
+          }
+        }
+
+        var cursorX = 0;
+        for (var oci = 0; oci < optimizedColumns.length; oci++) {
+          var column = optimizedColumns[oci];
+          var colW = columnWidth(column);
+          for (var oni2 = 0; oni2 < column.names.length; oni2++) {
+            var colEntry = entries[column.names[oni2]];
+            colEntry.x = cursorX + (colW - colEntry.box.width) / 2;
+          }
+          cursorX += colW + effectiveGapX;
+        }
+      }
+    }
+
     // ── Reorder ports to minimize crossing lines ──
     // Sort ports by the angle from this component to their connection partner.
     // Ports connecting to targets above-right get negative angles (sorted to top),
     // ports connecting below-right get positive angles (sorted to bottom).
     var portTargetPos = {};  // right-port alias → { x, y } of target center
     var portSourcePos = {};  // left-port alias → { x, y } of source center
+    var desiredPortY = {};   // component.port → [partner center Y values]
+    function pushDesiredPortY(compName, alias, y) {
+      var key = compName + '.' + alias;
+      if (!desiredPortY[key]) desiredPortY[key] = [];
+      desiredPortY[key].push(y);
+    }
+    function averagePortY(values) {
+      if (!values || !values.length) return null;
+      var total = 0;
+      for (var vi = 0; vi < values.length; vi++) total += values[vi];
+      return total / values.length;
+    }
     for (var ri = 0; ri < connectors.length; ri++) {
       var rc = connectors[ri];
       if (rc.fromPort && entries[rc.from] && entries[rc.to]) {
         var rte = entries[rc.to];
         portTargetPos[rc.fromPort] = { x: rte.x, y: rte.y + rte.box.height / 2 };
+        pushDesiredPortY(rc.from, rc.fromPort, rte.y + rte.box.height / 2);
       }
       if (rc.toPort && entries[rc.from] && entries[rc.to]) {
         var rse = entries[rc.from];
         portSourcePos[rc.toPort] = { x: rse.x + rse.box.width, y: rse.y + rse.box.height / 2 };
+        pushDesiredPortY(rc.to, rc.toPort, rse.y + rse.box.height / 2);
       }
+    }
+    for (var pn in entries) {
+      var pe = entries[pn];
+      var centerX = pe.x + pe.box.width / 2;
+      var newLeftPorts = [];
+      var newRightPorts = [];
+      for (var pidx = 0; pidx < pe.comp.ports.length; pidx++) {
+        var portDef = pe.comp.ports[pidx];
+        var alias = portDef.alias;
+        var side = portDef.direction === 'in'
+          ? 'left'
+          : (portDef.direction === 'out' ? 'right' : (portSides[pn + '.' + alias] || 'right'));
+        var partnerPos = portTargetPos[alias] || portSourcePos[alias];
+        if (partnerPos) {
+          if (partnerPos.x < centerX - 18) side = 'left';
+          else if (partnerPos.x > centerX + 18) side = 'right';
+        }
+        if (side === 'left') newLeftPorts.push(alias);
+        else newRightPorts.push(alias);
+      }
+      pe.leftPorts = newLeftPorts;
+      pe.rightPorts = newRightPorts;
     }
     for (var sn in entries) {
       var se = entries[sn];
@@ -4344,6 +4953,11 @@
       // Right ports: sort by angle to target
       var seRightX = se.x + se.box.width;
       se.rightPorts.sort(function(a, b) {
+        var desiredA = averagePortY(desiredPortY[sn + '.' + a]);
+        var desiredB = averagePortY(desiredPortY[sn + '.' + b]);
+        if (desiredA !== null && desiredB !== null && Math.abs(desiredA - desiredB) > 1) {
+          return desiredA - desiredB;
+        }
         var pa = portTargetPos[a], pb = portTargetPos[b];
         if (!pa && !pb) return 0;
         if (!pa) return 1;
@@ -4355,6 +4969,11 @@
       // Left ports: sort by angle from source
       var seLeftX = se.x;
       se.leftPorts.sort(function(a, b) {
+        var desiredA = averagePortY(desiredPortY[sn + '.' + a]);
+        var desiredB = averagePortY(desiredPortY[sn + '.' + b]);
+        if (desiredA !== null && desiredB !== null && Math.abs(desiredA - desiredB) > 1) {
+          return desiredA - desiredB;
+        }
         var pa = portSourcePos[a], pb = portSourcePos[b];
         if (!pa && !pb) return 0;
         if (!pa) return 1;
@@ -4368,6 +4987,41 @@
     // Compute port positions (after x,y are finalized and ports are reordered)
     var portHalf = CFG.portSize / 2;
     var nameAreaH = CFG.lineHeight + CFG.padY;
+    function computeOrderedPortCenters(entry, sidePorts, portTop, portAreaH) {
+      var centers = {};
+      if (!sidePorts.length) return centers;
+      var lower = portTop + portHalf + 4;
+      var upper = portTop + portAreaH - portHalf - 4;
+      if (sidePorts.length === 1) {
+        var onlyKey = entry.comp.name + '.' + sidePorts[0];
+        var onlyDesired = averagePortY(desiredPortY[onlyKey]);
+        centers[sidePorts[0]] = onlyDesired === null ? (lower + upper) / 2 : Math.max(lower, Math.min(upper, onlyDesired));
+        return centers;
+      }
+      var span = Math.max(0, upper - lower);
+      var desired = [];
+      for (var i2 = 0; i2 < sidePorts.length; i2++) {
+        var portKey = entry.comp.name + '.' + sidePorts[i2];
+        var fallback = lower + span * (i2 / (sidePorts.length - 1));
+        var sampleY = averagePortY(desiredPortY[portKey]);
+        desired.push(sampleY === null ? fallback : Math.max(lower, Math.min(upper, sampleY)));
+      }
+      var minGap = span / Math.max(1, sidePorts.length - 1);
+      minGap = Math.min(minGap, Math.max(CFG.portSize + 8, CFG.portPad * 0.72));
+      var actual = desired.slice();
+      for (var pass = 0; pass < 4; pass++) {
+        actual[0] = Math.max(lower, Math.min(actual[0], upper - minGap * (sidePorts.length - 1)));
+        for (var ai = 1; ai < actual.length; ai++) actual[ai] = Math.max(actual[ai], actual[ai - 1] + minGap);
+        actual[actual.length - 1] = Math.min(upper, actual[actual.length - 1]);
+        for (var bi = actual.length - 2; bi >= 0; bi--) actual[bi] = Math.min(actual[bi], actual[bi + 1] - minGap);
+      }
+      if (actual[0] < lower - 0.5 || actual[actual.length - 1] > upper + 0.5) {
+        actual = [];
+        for (var ei2 = 0; ei2 < sidePorts.length; ei2++) actual.push(lower + span * (ei2 / (sidePorts.length - 1)));
+      }
+      for (var ci2 = 0; ci2 < sidePorts.length; ci2++) centers[sidePorts[ci2]] = actual[ci2];
+      return centers;
+    }
     for (var en in entries) {
       var e = entries[en];
       var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
@@ -4383,10 +5037,12 @@
       // Port area starts below the name row (or uses full height if no ports flag)
       var portTop = e.hasPorts ? by + nameAreaH : by;
       var portAreaH = bh - (e.hasPorts ? nameAreaH : 0);
+      var leftCenters = computeOrderedPortCenters(e, e.leftPorts, portTop, portAreaH);
+      var rightCenters = computeOrderedPortCenters(e, e.rightPorts, portTop, portAreaH);
 
       for (var lpi2 = 0; lpi2 < e.leftPorts.length; lpi2++) {
         var lpn = e.leftPorts[lpi2];
-        var pcy = portTop + portAreaH * (lpi2 + 1) / (e.leftPorts.length + 1);
+        var pcy = leftCenters[lpn];
         var lpK = portKindByAlias[lpn] || null;
         e.portPositions[lpn] = {
           x: bx - portHalf, y: pcy - portHalf,
@@ -4400,7 +5056,7 @@
 
       for (var rpi2 = 0; rpi2 < e.rightPorts.length; rpi2++) {
         var rpn = e.rightPorts[rpi2];
-        var pcy2 = portTop + portAreaH * (rpi2 + 1) / (e.rightPorts.length + 1);
+        var pcy2 = rightCenters[rpn];
         var rpK = portKindByAlias[rpn] || null;
         e.portPositions[rpn] = {
           x: bx + bw - portHalf, y: pcy2 - portHalf,
@@ -4457,8 +5113,9 @@
   // ─── Obstacle-aware orthogonal routing helpers ─────────────────────
 
   var ROUTE_LANE_STEP = 14;
-  var ROUTE_LANE_CLEARANCE = 10;
+  var ROUTE_LANE_CLEARANCE = 6;
   var ROUTE_TRACK_MIN_LEN = 24;
+  var COMPONENT_SIDE_ANCHOR_PAD = 10;
 
   function rangesOverlap(a1, a2, b1, b2, minOverlap) {
     var overlap = Math.min(Math.max(a1, a2), Math.max(b1, b2)) -
@@ -4615,6 +5272,368 @@
     return adjusted;
   }
 
+  function getPreferredComponentSides(fromE, toE) {
+    var fromCx = fromE.x + fromE.box.width / 2;
+    var fromCy = fromE.y + fromE.box.height / 2;
+    var toCx = toE.x + toE.box.width / 2;
+    var toCy = toE.y + toE.box.height / 2;
+    var dx = toCx - fromCx;
+    var dy = toCy - fromCy;
+
+    if (Math.abs(dx) > 5) {
+      return {
+        fromSide: dx > 0 ? 'right' : 'left',
+        toSide: dx > 0 ? 'left' : 'right',
+        fromCx: fromCx,
+        fromCy: fromCy,
+        toCx: toCx,
+        toCy: toCy
+      };
+    }
+
+    return {
+      fromSide: dy > 0 ? 'bottom' : 'top',
+      toSide: dy > 0 ? 'top' : 'bottom',
+      fromCx: fromCx,
+      fromCy: fromCy,
+      toCx: toCx,
+      toCy: toCy
+    };
+  }
+
+  function buildComponentSideAnchors(connectors, entries) {
+    var exitGroups = {};
+    var entryGroups = {};
+
+    function pushGroup(groupMap, key, item) {
+      if (!groupMap[key]) groupMap[key] = [];
+      groupMap[key].push(item);
+    }
+
+    function sortGroup(items) {
+      items.sort(function(a, b) {
+        if (a.primary !== b.primary) return a.primary - b.primary;
+        if (a.secondary !== b.secondary) return a.secondary - b.secondary;
+        return a.index - b.index;
+      });
+    }
+
+    function assignAnchors(groupMap) {
+      var assigned = {};
+
+      for (var key in groupMap) {
+        var splitAt = key.lastIndexOf(':');
+        var compName = key.substring(0, splitAt);
+        var side = key.substring(splitAt + 1);
+        var compEntry = entries[compName];
+        if (!compEntry) continue;
+
+        var items = groupMap[key];
+        sortGroup(items);
+
+        var isVerticalSide = (side === 'left' || side === 'right');
+        var axisStart = isVerticalSide ? compEntry.y + COMPONENT_SIDE_ANCHOR_PAD : compEntry.x + COMPONENT_SIDE_ANCHOR_PAD;
+        var axisEnd = isVerticalSide ? compEntry.y + compEntry.box.height - COMPONENT_SIDE_ANCHOR_PAD : compEntry.x + compEntry.box.width - COMPONENT_SIDE_ANCHOR_PAD;
+
+        if (axisEnd < axisStart) {
+          var axisCenter = isVerticalSide ? compEntry.y + compEntry.box.height / 2 : compEntry.x + compEntry.box.width / 2;
+          axisStart = axisCenter;
+          axisEnd = axisCenter;
+        }
+
+        var span = axisEnd - axisStart;
+        for (var i = 0; i < items.length; i++) {
+          var pos;
+          if (items.length === 1 || span <= 0) {
+            pos = (axisStart + axisEnd) / 2;
+          } else {
+            pos = axisStart + span * (i / (items.length - 1));
+          }
+
+          assigned[items[i].index] = isVerticalSide
+            ? {
+                x: side === 'left' ? compEntry.x : compEntry.x + compEntry.box.width,
+                y: pos,
+                side: side
+              }
+            : {
+                x: pos,
+                y: side === 'top' ? compEntry.y : compEntry.y + compEntry.box.height,
+                side: side
+              };
+        }
+      }
+
+      return assigned;
+    }
+
+    for (var ci = 0; ci < connectors.length; ci++) {
+      var conn = connectors[ci];
+      if (conn.fromPort || conn.toPort) continue;
+
+      var fromE = entries[conn.from];
+      var toE = entries[conn.to];
+      if (!fromE || !toE) continue;
+
+      var pref = getPreferredComponentSides(fromE, toE);
+      var exitKey = conn.from + ':' + pref.fromSide;
+      var entryKey = conn.to + ':' + pref.toSide;
+      var exitPrimary = (pref.fromSide === 'left' || pref.fromSide === 'right') ? pref.toCy : pref.toCx;
+      var exitSecondary = (pref.fromSide === 'left' || pref.fromSide === 'right') ? pref.toCx : pref.toCy;
+      var entryPrimary = (pref.toSide === 'left' || pref.toSide === 'right') ? pref.fromCy : pref.fromCx;
+      var entrySecondary = (pref.toSide === 'left' || pref.toSide === 'right') ? pref.fromCx : pref.fromCy;
+
+      pushGroup(exitGroups, exitKey, { index: ci, primary: exitPrimary, secondary: exitSecondary });
+      pushGroup(entryGroups, entryKey, { index: ci, primary: entryPrimary, secondary: entrySecondary });
+    }
+
+    return {
+      exits: assignAnchors(exitGroups),
+      entries: assignAnchors(entryGroups)
+    };
+  }
+
+  function makeLabelRect(x, y, labelW, labelH, anchor) {
+    var left = anchor === 'middle' ? x - labelW / 2 : (anchor === 'end' ? x - labelW : x);
+    return {
+      left: left,
+      right: left + labelW,
+      top: y - labelH,
+      bottom: y + 4
+    };
+  }
+
+  function rectsOverlap(a, b, pad) {
+    var gap = pad || 0;
+    return a.right + gap > b.left && a.left - gap < b.right &&
+      a.bottom + gap > b.top && a.top - gap < b.bottom;
+  }
+
+  function obstacleToRect(obstacle) {
+    return {
+      left: obstacle.x1,
+      right: obstacle.x2,
+      top: obstacle.y1,
+      bottom: obstacle.y2
+    };
+  }
+
+  function intervalGap(a1, a2, b1, b2) {
+    if (a2 < b1) return b1 - a2;
+    if (b2 < a1) return a1 - b2;
+    return 0;
+  }
+
+  function rectDistance(a, b) {
+    var dx = intervalGap(a.left, a.right, b.left, b.right);
+    var dy = intervalGap(a.top, a.bottom, b.top, b.bottom);
+    if (dx === 0 && dy === 0) return 0;
+    if (dx === 0) return dy;
+    if (dy === 0) return dx;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function segmentDistanceToRect(segment, rect) {
+    var dx, dy;
+    if (segment.isH) {
+      dx = intervalGap(rect.left, rect.right, segment.x1, segment.x2);
+      dy = intervalGap(rect.top, rect.bottom, segment.y, segment.y);
+    } else {
+      dx = intervalGap(rect.left, rect.right, segment.x, segment.x);
+      dy = intervalGap(rect.top, rect.bottom, segment.y1, segment.y2);
+    }
+    if (dx === 0 && dy === 0) return 0;
+    if (dx === 0) return dy;
+    if (dy === 0) return dx;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function buildComponentRouteSegments(routes) {
+    var segments = [];
+    for (var ri = 0; ri < routes.length; ri++) {
+      var route = routes[ri];
+      for (var si = 0; si < route.points.length - 1; si++) {
+        var p0 = route.points[si], p1 = route.points[si + 1];
+        if (Math.abs(p0.y - p1.y) < 1) {
+          segments.push({
+            routeIndex: route.routeIndex,
+            segmentIndex: si,
+            isH: true,
+            x1: Math.min(p0.x, p1.x),
+            x2: Math.max(p0.x, p1.x),
+            y: p0.y
+          });
+        } else if (Math.abs(p0.x - p1.x) < 1) {
+          segments.push({
+            routeIndex: route.routeIndex,
+            segmentIndex: si,
+            isH: false,
+            x: p0.x,
+            y1: Math.min(p0.y, p1.y),
+            y2: Math.max(p0.y, p1.y)
+          });
+        }
+      }
+    }
+    return segments;
+  }
+
+  function labelRectHitsObstacles(rect, obstacles, pad) {
+    for (var i = 0; i < obstacles.length; i++) {
+      if (rectsOverlap(rect, obstacleToRect(obstacles[i]), pad)) return true;
+    }
+    return false;
+  }
+
+  function labelRectHitsPlacedLabels(rect, placedLabels, pad) {
+    for (var i = 0; i < placedLabels.length; i++) {
+      if (rectsOverlap(rect, placedLabels[i], pad)) return true;
+    }
+    return false;
+  }
+
+  function labelRectHitsSegments(rect, routeSegments, routeIndex, segmentIndex, pad) {
+    var gap = pad || 0;
+    for (var i = 0; i < routeSegments.length; i++) {
+      var segment = routeSegments[i];
+      if (segment.routeIndex === routeIndex && segment.segmentIndex === segmentIndex) continue;
+      if (segment.isH) {
+        if (segment.y >= rect.top - gap && segment.y <= rect.bottom + gap &&
+            segment.x2 > rect.left - gap && segment.x1 < rect.right + gap) {
+          return true;
+        }
+      } else if (segment.x >= rect.left - gap && segment.x <= rect.right + gap &&
+                 segment.y2 > rect.top - gap && segment.y1 < rect.bottom + gap) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function minLabelClearance(rect, obstacles, placedLabels, routeSegments, routeIndex, segmentIndex) {
+    var min = Infinity;
+    for (var i = 0; i < obstacles.length; i++) {
+      min = Math.min(min, rectDistance(rect, obstacleToRect(obstacles[i])));
+    }
+    for (var j = 0; j < placedLabels.length; j++) {
+      min = Math.min(min, rectDistance(rect, placedLabels[j]));
+    }
+    for (var k = 0; k < routeSegments.length; k++) {
+      var segment = routeSegments[k];
+      if (segment.routeIndex === routeIndex && segment.segmentIndex === segmentIndex) continue;
+      min = Math.min(min, segmentDistanceToRect(segment, rect));
+    }
+    return isFinite(min) ? min : 120;
+  }
+
+  function placeComponentConnectorLabel(label, points, routeIndex, obstacles, placedLabels, routeSegments, cfg) {
+    var labelW = UMLShared.textWidth(label, false, cfg.fontSize);
+    var labelH = cfg.fontSize + 6;
+    var segments = [];
+    for (var si = 0; si < points.length - 1; si++) {
+      var p0 = points[si], p1 = points[si + 1];
+      var length = Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y);
+      if (length < 8) continue;
+      segments.push({
+        segmentIndex: si,
+        isH: Math.abs(p1.y - p0.y) < 1,
+        length: length,
+        x1: Math.min(p0.x, p1.x),
+        x2: Math.max(p0.x, p1.x),
+        y1: Math.min(p0.y, p1.y),
+        y2: Math.max(p0.y, p1.y),
+        x: p0.x,
+        y: p0.y
+      });
+    }
+
+    segments.sort(function(a, b) {
+      if (a.isH !== b.isH) return a.isH ? -1 : 1;
+      if (b.length !== a.length) return b.length - a.length;
+      return a.segmentIndex - b.segmentIndex;
+    });
+
+    var fractions = [0.5, 0.35, 0.65, 0.22, 0.78];
+    var best = null;
+    var bestSoft = null;
+
+    for (var gi = 0; gi < segments.length; gi++) {
+      var segment = segments[gi];
+      var placements = segment.isH
+        ? [
+            { anchor: 'middle', dx: 0, dy: -10, penalty: 0 },
+            { anchor: 'middle', dx: 0, dy: labelH + 4, penalty: 8 }
+          ]
+        : [
+            { anchor: 'start', dx: 10, dy: 0, penalty: 2 },
+            { anchor: 'end', dx: -10, dy: 0, penalty: 6 }
+          ];
+
+      for (var pi = 0; pi < placements.length; pi++) {
+        var placement = placements[pi];
+        for (var fi = 0; fi < fractions.length; fi++) {
+          var fraction = fractions[fi];
+          var lx, ly;
+          if (segment.isH) {
+            lx = segment.x1 + (segment.x2 - segment.x1) * fraction + placement.dx;
+            ly = segment.y + placement.dy;
+          } else {
+            lx = segment.x + placement.dx;
+            ly = segment.y1 + (segment.y2 - segment.y1) * fraction + placement.dy;
+          }
+
+          var rect = makeLabelRect(lx, ly, labelW, labelH, placement.anchor);
+          if (labelRectHitsObstacles(rect, obstacles, 6)) continue;
+          if (labelRectHitsPlacedLabels(rect, placedLabels, 8)) continue;
+          var hitsSegments = labelRectHitsSegments(rect, routeSegments, routeIndex, segment.segmentIndex, 3);
+
+          var clearance = minLabelClearance(rect, obstacles, placedLabels, routeSegments, routeIndex, segment.segmentIndex);
+          var score = segment.length * 2 + (segment.isH ? 24 : 0) + Math.min(clearance, 80) -
+            Math.abs(fraction - 0.5) * 30 - placement.penalty;
+
+          var candidate = {
+            x: lx,
+            y: ly,
+            anchor: placement.anchor,
+            rect: rect,
+            score: score
+          };
+
+          if (hitsSegments) {
+            candidate.score -= 40;
+            if (!bestSoft || candidate.score > bestSoft.score) {
+              bestSoft = candidate;
+            }
+          } else if (!best || candidate.score > best.score) {
+            best = {
+              x: lx,
+              y: ly,
+              anchor: placement.anchor,
+              rect: rect,
+              score: score
+            };
+          }
+        }
+      }
+    }
+
+    if (best) return best;
+    if (bestSoft) return bestSoft;
+    if (!segments.length) return null;
+
+    var fallbackSeg = segments[0];
+    var fallbackAnchor = fallbackSeg.isH ? 'middle' : 'start';
+    var fallbackX = fallbackSeg.isH ? (fallbackSeg.x1 + fallbackSeg.x2) / 2 : fallbackSeg.x + 10;
+    var fallbackY = fallbackSeg.isH ? fallbackSeg.y - 10 : (fallbackSeg.y1 + fallbackSeg.y2) / 2;
+    return {
+      x: fallbackX,
+      y: fallbackY,
+      anchor: fallbackAnchor,
+      rect: makeLabelRect(fallbackX, fallbackY, labelW, labelH, fallbackAnchor),
+      score: -Infinity
+    };
+  }
+
   // Remove redundant collinear points from a route
   function simplifyRoute(pts) {
     if (pts.length <= 2) return pts;
@@ -4638,20 +5657,7 @@
     // Resolve note target — supports dotted paths to sub-elements
 
     // Pre-compute note positions for SVG bounds expansion
-    var notePositions = [];
-    if (parsed.notes) {
-      var noteGap = UMLShared.NOTE_CFG.gap;
-      for (var npi = 0; npi < parsed.notes.length; npi++) {
-        var pn = parsed.notes[npi]; var tgt = UMLShared.resolveNodeTarget(pn.target, entries); if (!tgt) continue;
-        var ns = UMLShared.measureNote(pn.lines);
-        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
-        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
-        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
-        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
-        else { nx = tx; ny = ty + th + noteGap; }
-        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
-      }
-    }
+    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
     var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
     for (var nbi = 0; nbi < notePositions.length; nbi++) {
       var npb = notePositions[nbi];
@@ -4669,6 +5675,9 @@
     var svgH = layout.height + CFG.svgPad * 2 + noteExtraT + noteExtraB;
 
     var svg = [];
+    var labelSvg = [];
+    var placedLabels = [];
+    var placedRouteSegments = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
     // Build port kind map for interface detection
     var portKindMap = {};
@@ -4717,9 +5726,11 @@
     }
 
     var occupiedSegments = { h: [], v: [] };
+    var componentSideAnchors = buildComponentSideAnchors(connectors, entries);
 
     // ── Draw connectors ──
-    var placedLabels = []; // Track placed label positions for overlap avoidance
+    var placedLabels = [];
+    var connectorRoutes = [];
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
       var fromE = entries[conn.from];
@@ -4756,20 +5767,27 @@
           x1 = fpPos.connX;
         }
       } else {
-        var fcx = fromE.x + fromE.box.width / 2;
-        var fcy = fromE.y + fromE.box.height / 2;
-        var tcx = toE.x + toE.box.width / 2;
-        var tcy = toE.y + toE.box.height / 2;
-        var dx = tcx - fcx, dy = tcy - fcy;
-        // Prefer horizontal: only use vertical if dx is near zero
-        if (Math.abs(dx) > 5) {
-          x1 = dx > 0 ? fromE.x + fromE.box.width : fromE.x;
-          y1 = fcy;
-          dir1 = dx > 0 ? 'right' : 'left';
+        var exitAnchor = componentSideAnchors.exits[ci];
+        if (exitAnchor) {
+          x1 = exitAnchor.x;
+          y1 = exitAnchor.y;
+          dir1 = exitAnchor.side;
         } else {
-          x1 = fcx;
-          y1 = dy > 0 ? fromE.y + fromE.box.height : fromE.y;
-          dir1 = dy > 0 ? 'bottom' : 'top';
+          var fcx = fromE.x + fromE.box.width / 2;
+          var fcy = fromE.y + fromE.box.height / 2;
+          var tcx = toE.x + toE.box.width / 2;
+          var tcy = toE.y + toE.box.height / 2;
+          var dx = tcx - fcx, dy = tcy - fcy;
+          // Prefer horizontal: only use vertical if dx is near zero
+          if (Math.abs(dx) > 5) {
+            x1 = dx > 0 ? fromE.x + fromE.box.width : fromE.x;
+            y1 = fcy;
+            dir1 = dx > 0 ? 'right' : 'left';
+          } else {
+            x1 = fcx;
+            y1 = dy > 0 ? fromE.y + fromE.box.height : fromE.y;
+            dir1 = dy > 0 ? 'bottom' : 'top';
+          }
         }
       }
 
@@ -4790,19 +5808,26 @@
           x2 = tpPos.connX;
         }
       } else {
-        var fcx2 = fromE.x + fromE.box.width / 2;
-        var fcy2 = fromE.y + fromE.box.height / 2;
-        var tcx2 = toE.x + toE.box.width / 2;
-        var tcy2 = toE.y + toE.box.height / 2;
-        var dx2 = tcx2 - fcx2, dy2 = tcy2 - fcy2;
-        if (Math.abs(dx2) > 5) {
-          x2 = dx2 > 0 ? toE.x : toE.x + toE.box.width;
-          y2 = tcy2;
-          dir2 = dx2 > 0 ? 'left' : 'right'; // entry side: line approaches from the left when target is right
+        var entryAnchor = componentSideAnchors.entries[ci];
+        if (entryAnchor) {
+          x2 = entryAnchor.x;
+          y2 = entryAnchor.y;
+          dir2 = entryAnchor.side;
         } else {
-          x2 = tcx2;
-          y2 = dy2 > 0 ? toE.y : toE.y + toE.box.height;
-          dir2 = dy2 > 0 ? 'top' : 'bottom'; // entry side: line approaches from top when target is below
+          var fcx2 = fromE.x + fromE.box.width / 2;
+          var fcy2 = fromE.y + fromE.box.height / 2;
+          var tcx2 = toE.x + toE.box.width / 2;
+          var tcy2 = toE.y + toE.box.height / 2;
+          var dx2 = tcx2 - fcx2, dy2 = tcy2 - fcy2;
+          if (Math.abs(dx2) > 5) {
+            x2 = dx2 > 0 ? toE.x : toE.x + toE.box.width;
+            y2 = tcy2;
+            dir2 = dx2 > 0 ? 'left' : 'right'; // entry side: line approaches from the left when target is right
+          } else {
+            x2 = tcx2;
+            y2 = dy2 > 0 ? toE.y : toE.y + toE.box.height;
+            dir2 = dy2 > 0 ? 'top' : 'bottom'; // entry side: line approaches from top when target is below
+          }
         }
       }
 
@@ -5178,59 +6203,28 @@
         }
       }
 
-      // Connector label — placed on the longest segment, with overlap avoidance
-      if (conn.label) {
-        var bestSi = 0, bestSLen = 0;
-        for (var lsi = 0; lsi < points.length - 1; lsi++) {
-          var sl = Math.abs(points[lsi+1].x - points[lsi].x) + Math.abs(points[lsi+1].y - points[lsi].y);
-          if (sl > bestSLen) { bestSLen = sl; bestSi = lsi; }
-        }
-        var lSeg0 = points[bestSi], lSeg1 = points[bestSi + 1];
-        var lSegIsH = Math.abs(lSeg1.y - lSeg0.y) < 1;
-        var lx = (lSeg0.x + lSeg1.x) / 2;
-        var ly = (lSeg0.y + lSeg1.y) / 2;
-        var lAnchor = 'middle';
-        if (lSegIsH) {
-          ly -= 10;
-        } else {
-          lx += 10; lAnchor = 'start';
-        }
-        // Nudge label until it doesn't overlap any previously placed label
-        var lblW = UMLShared.textWidth(conn.label, false, CFG.fontSize);
-        var lblH = CFG.fontSize + 6;
-        // Compute the actual bounding box edges based on anchor
-        // For "middle": center at lx; for "start": left edge at lx
-        var lblLeft = (lAnchor === 'middle') ? lx - lblW / 2 : lx;
-        var lblRight = lblLeft + lblW;
-        for (var nudge = 0; nudge < 8; nudge++) {
-          var hasOverlap = false;
-          for (var pli = 0; pli < placedLabels.length; pli++) {
-            var pl = placedLabels[pli];
-            // Check actual bounding box overlap
-            if (lblRight + 6 > pl.left && lblLeft - 6 < pl.right &&
-                ly + 2 > pl.top && ly - lblH - 2 < pl.bottom) {
-              hasOverlap = true;
-              break;
-            }
-          }
-          if (!hasOverlap) break;
-          // Shift away from the collision
-          if (lSegIsH) {
-            ly -= lblH;
-          } else {
-            ly += lblH;
-          }
-        }
-        placedLabels.push({
-          left: lblLeft, right: lblRight,
-          top: ly - lblH, bottom: ly + 2,
-          x: lx, y: ly
-        });
-        svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
-          UMLShared.escapeXml(conn.label) + '</text>');
-      }
+      connectorRoutes.push({ routeIndex: ci, conn: conn, points: points });
+    }
+
+    var componentRouteSegments = buildComponentRouteSegments(connectorRoutes);
+    for (var cri = 0; cri < connectorRoutes.length; cri++) {
+      var routeInfo = connectorRoutes[cri];
+      if (!routeInfo.conn.label) continue;
+      var labelPlacement = placeComponentConnectorLabel(
+        routeInfo.conn.label,
+        routeInfo.points,
+        routeInfo.routeIndex,
+        obstacles,
+        placedLabels,
+        componentRouteSegments,
+        CFG
+      );
+      if (!labelPlacement) continue;
+      placedLabels.push(labelPlacement.rect);
+      svg.push('<text x="' + labelPlacement.x + '" y="' + labelPlacement.y +
+        '" class="uml-component-connector-label" text-anchor="' + labelPlacement.anchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+        '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
+        UMLShared.escapeXml(routeInfo.conn.label) + '</text>');
     }
 
     // ── Draw component boxes ──
@@ -5240,7 +6234,7 @@
       var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
 
       // Main rectangle
-      svg.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh +
+      svg.push('<rect class="uml-component-box" x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh +
         '" fill="' + colors.headerFill + '" stroke="' + colors.stroke + '" stroke-width="' + CFG.strokeWidth + '"/>');
 
       // Component icon (top-right): small rectangle with two tabs
@@ -5373,6 +6367,79 @@
 
   // ─── Public API ───────────────────────────────────────────────────
 
+  function adjustRenderedComponentLabels(container) {
+    var svg = container.querySelector('svg');
+    if (!svg) return;
+
+    var labelEls = Array.prototype.slice.call(svg.querySelectorAll('text.uml-component-connector-label'));
+    if (!labelEls.length) return;
+
+    function plainBox(box) {
+      return {
+        left: box.x,
+        right: box.x + box.width,
+        top: box.y,
+        bottom: box.y + box.height
+      };
+    }
+
+    var componentBoxes = Array.prototype.slice.call(svg.querySelectorAll('rect.uml-component-box')).map(function(el) {
+      return plainBox(el.getBBox());
+    });
+    var settledLabels = [];
+
+    for (var li = 0; li < labelEls.length; li++) {
+      var labelEl = labelEls[li];
+      var baseX = parseFloat(labelEl.getAttribute('x') || '0');
+      var baseY = parseFloat(labelEl.getAttribute('y') || '0');
+      var offsets = [
+        { dx: 0, dy: 0 },
+        { dx: -12, dy: 0 }, { dx: 12, dy: 0 },
+        { dx: 0, dy: -10 }, { dx: 0, dy: 10 },
+        { dx: -24, dy: 0 }, { dx: 24, dy: 0 },
+        { dx: -36, dy: 0 }, { dx: 36, dy: 0 },
+        { dx: 0, dy: -20 }, { dx: 0, dy: 20 },
+        { dx: -24, dy: -10 }, { dx: 24, dy: -10 },
+        { dx: -24, dy: 10 }, { dx: 24, dy: 10 }
+      ];
+      var placed = null;
+
+      for (var oi = 0; oi < offsets.length; oi++) {
+        var offset = offsets[oi];
+        labelEl.setAttribute('x', baseX + offset.dx);
+        labelEl.setAttribute('y', baseY + offset.dy);
+        var bbox = plainBox(labelEl.getBBox());
+        var blocked = false;
+
+        for (var bi = 0; bi < componentBoxes.length; bi++) {
+          if (rectsOverlap(bbox, componentBoxes[bi], 2)) {
+            blocked = true;
+            break;
+          }
+        }
+        if (blocked) continue;
+
+        for (var si = 0; si < settledLabels.length; si++) {
+          if (rectsOverlap(bbox, settledLabels[si], 6)) {
+            blocked = true;
+            break;
+          }
+        }
+        if (blocked) continue;
+
+        placed = bbox;
+        break;
+      }
+
+      if (!placed) {
+        labelEl.setAttribute('x', baseX);
+        labelEl.setAttribute('y', baseY);
+        placed = plainBox(labelEl.getBBox());
+      }
+      settledLabels.push(placed);
+    }
+  }
+
   function render(container, text) {
     var parsed = parse(text);
     if (!parsed.components || parsed.components.length === 0) {
@@ -5385,6 +6452,7 @@
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
+    adjustRenderedComponentLabels(container);
     UMLShared.autoFitSVG(container);
   }
 
@@ -5633,20 +6701,7 @@
     // Resolve note target — supports dotted paths to sub-elements
 
     // Pre-compute note positions for SVG bounds expansion
-    var notePositions = [];
-    if (parsed.notes) {
-      var noteGap = UMLShared.NOTE_CFG.gap;
-      for (var npi = 0; npi < parsed.notes.length; npi++) {
-        var pn = parsed.notes[npi]; var tgt = UMLShared.resolveNodeTarget(pn.target, entries); if (!tgt) continue;
-        var ns = UMLShared.measureNote(pn.lines);
-        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
-        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
-        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
-        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
-        else { nx = tx; ny = ty + th + noteGap; }
-        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
-      }
-    }
+    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
     var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
     for (var nbi = 0; nbi < notePositions.length; nbi++) {
       var npb = notePositions[nbi];
@@ -5664,6 +6719,9 @@
     var svgH = layout.height + CFG.svgPad * 2 + noteExtraT + noteExtraB;
 
     var svg = [];
+    var labelSvg = [];
+    var placedLabels = [];
+    var placedRouteSegments = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
     // ── Pre-compute distributed exit/entry points ──
     var exitsByFrom = {}, entriesByTo = {};
@@ -5856,64 +6914,26 @@
           (pLast.x - adx * as - px * hw) + ',' + (pLast.y - ady * as - py * hw) +
           '" fill="' + colors.line + '"/>');
       }
+      var routeSegments = UMLShared.buildOrthogonalSegments(points);
 
-      // Label — placed on the longest segment, shifted to avoid overlapping nodes
+      // Label — obstacle-aware placement over orthogonal routes
       if (lk.label) {
-        var bestIdx = 0, bestLen = 0;
-        for (var si = 0; si < points.length - 1; si++) {
-          var segLen = Math.abs(points[si+1].x - points[si].x) + Math.abs(points[si+1].y - points[si].y);
-          if (segLen > bestLen) { bestLen = segLen; bestIdx = si; }
-        }
-        var lp0 = points[bestIdx], lp1 = points[bestIdx + 1];
-        var lx = (lp0.x + lp1.x) / 2, ly = (lp0.y + lp1.y) / 2;
-        var isH = Math.abs(lp1.y - lp0.y) < 1;
-        var lAnchor = 'middle';
-        var labelW = UMLShared.textWidth(lk.label, false, CFG.fontSize);
-        var labelH = CFG.fontSize;
-        if (isH) {
-          ly -= 8;
-        } else {
-          lx += 10; lAnchor = 'start';
-        }
-        // Check if label overlaps any node and shift if needed
-        var lblLeft = (lAnchor === 'middle') ? lx - labelW / 2 : lx;
-        var lblRight = lblLeft + labelW;
-        var lblTop = ly - labelH;
-        var lblBot = ly + 4;
-        var labelShifted = false;
-        for (var lni = 0; lni < obstacles.length; lni++) {
-          var lob = obstacles[lni];
-          if (lblRight > lob.x1 && lblLeft < lob.x2 && lblBot > lob.y1 && lblTop < lob.y2) {
-            // Label overlaps this node — try placing on opposite side of the line
-            if (!isH) {
-              // Vertical segment: try left side instead
-              lx = lp0.x - 10; lAnchor = 'end';
-              lblLeft = lx - labelW; lblRight = lx;
-              // Check again
-              var stillHits = false;
-              for (var lni2 = 0; lni2 < obstacles.length; lni2++) {
-                var lob2 = obstacles[lni2];
-                if (lblRight > lob2.x1 && lblLeft < lob2.x2 && lblBot > lob2.y1 && lblTop < lob2.y2) {
-                  stillHits = true; break;
-                }
-              }
-              if (stillHits) {
-                // Both sides blocked — place above/below the segment midpoint, offset further right
-                lx = lob.x2 + 10; lAnchor = 'start';
-              }
-            } else {
-              // Horizontal segment: try below instead of above
-              ly = lp0.y + labelH + 4;
-            }
-            labelShifted = true;
-            break;
+        var labelPlacement = UMLShared.placeOrthogonalLabel(lk.label, points, obstacles, placedLabels, {
+          fontSize: CFG.fontSize,
+          otherSegments: placedRouteSegments,
+          scoreCandidate: function(segment) {
+            return segment.isH ? 10 : -4;
           }
+        });
+        if (labelPlacement) {
+          placedLabels.push(labelPlacement.rect);
+          labelSvg.push('<text x="' + labelPlacement.x + '" y="' + labelPlacement.y +
+            '" text-anchor="' + labelPlacement.anchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
+            UMLShared.escapeXml(lk.label) + '</text>');
         }
-        svg.push('<text x="' + lx + '" y="' + ly +
-          '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
-          UMLShared.escapeXml(lk.label) + '</text>');
       }
+      placedRouteSegments = placedRouteSegments.concat(routeSegments);
     }
 
     // ── Draw nodes (3D cube style) ──
@@ -5983,6 +7003,11 @@
 
         compY += CFG.compH + CFG.compGapY;
       }
+    }
+
+    // ── Draw labels on top ──
+    for (var lli = 0; lli < labelSvg.length; lli++) {
+      svg.push(labelSvg[lli]);
     }
 
     // ── Draw notes (using pre-computed positions) ──
@@ -6415,20 +7440,29 @@
     // ── Pre-compute note positions ──
     var notePositions = [];
     if (parsed.notes) {
-      var noteGap = UMLShared.NOTE_CFG.gap;
+      var useCaseNoteObstacles = [];
+      for (var entryId in entries) {
+        var useCaseEntry = entries[entryId];
+        useCaseNoteObstacles.push({ x: useCaseEntry.x, y: useCaseEntry.y, w: useCaseEntry.box.width, h: useCaseEntry.box.height, name: entryId });
+      }
+      var placedUseCaseNotes = [];
       for (var npi = 0; npi < parsed.notes.length; npi++) {
         var pn = parsed.notes[npi];
         var tgtId = parsed.aliasToId[pn.target] || pn.target;
         var tgtE = entries[tgtId];
         if (!tgtE) continue;
         var ns = UMLShared.measureNote(pn.lines);
-        var nx, ny;
-        var tx = tgtE.x, ty = tgtE.y, tw = tgtE.box.width, th = tgtE.box.height;
-        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
-        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
-        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
-        else { nx = tx; ny = ty + th + noteGap; }
-        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
+        var useCaseTarget = { x: tgtE.x, y: tgtE.y, w: tgtE.box.width, h: tgtE.box.height };
+        var usableObstacles = [];
+        for (var uoi = 0; uoi < useCaseNoteObstacles.length; uoi++) {
+          var uob = useCaseNoteObstacles[uoi];
+          if (!(uob.x === useCaseTarget.x && uob.y === useCaseTarget.y && uob.w === useCaseTarget.w && uob.h === useCaseTarget.h)) {
+            usableObstacles.push(uob);
+          }
+        }
+        var placed = UMLShared.placeNoteRect(useCaseTarget, ns, pn.position, usableObstacles, placedUseCaseNotes);
+        notePositions.push({ note: pn, x: placed.x, y: placed.y, w: ns.width, h: ns.height, tx: useCaseTarget.x, ty: useCaseTarget.y, tw: useCaseTarget.w, th: useCaseTarget.h });
+        placedUseCaseNotes.push({ x: placed.x, y: placed.y, w: ns.width, h: ns.height });
       }
     }
     for (var nbi = 0; nbi < notePositions.length; nbi++) {
@@ -6448,6 +7482,13 @@
 
     var svg = [];
     var labelSvg = [];
+    var placedLabels = [];
+    var placedRouteSegments = [];
+    var activityObstacles = [];
+    for (var aen in entries) {
+      var ae0 = entries[aen];
+      activityObstacles.push({ x: ae0.x, y: ae0.y, w: ae0.box.width, h: ae0.box.height });
+    }
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw system boundaries (behind everything) ──
@@ -7194,22 +8235,7 @@
     }
 
     // ── Compute note positions ──
-    var notePositions = [];
-    if (parsed.notes) {
-      var noteGap = UMLShared.NOTE_CFG.gap;
-      for (var npi = 0; npi < parsed.notes.length; npi++) {
-        var pn = parsed.notes[npi];
-        var tgt = UMLShared.resolveNodeTarget(pn.target, entries);
-        if (!tgt) continue;
-        var ns = UMLShared.measureNote(pn.lines);
-        var nx, ny;
-        if (pn.position === 'right') { nx = tgt.x + tgt.w + noteGap; ny = tgt.y; }
-        else if (pn.position === 'left') { nx = tgt.x - ns.width - noteGap; ny = tgt.y; }
-        else if (pn.position === 'top') { nx = tgt.x; ny = tgt.y - ns.height - noteGap; }
-        else { nx = tgt.x; ny = tgt.y + tgt.h + noteGap; }
-        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tgt.x, ty: tgt.y, tw: tgt.w, th: tgt.h });
-      }
-    }
+    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
 
     // ── Compute extra space for notes ──
     var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
@@ -7242,6 +8268,13 @@
 
     var svg = [];
     var labelSvg = [];
+    var placedLabels = [];
+    var placedRouteSegments = [];
+    var activityObstacles = [];
+    for (var aen in entries) {
+      var ae0 = entries[aen];
+      activityObstacles.push({ x: ae0.x, y: ae0.y, w: ae0.box.width, h: ae0.box.height });
+    }
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw swimlanes (behind everything) ──
@@ -7275,11 +8308,17 @@
     var routeMarginX = maxBoundsX + CFG.gapX * 0.4;
 
     var downByFrom = {};
+    var decisionByFrom = {};
     for (var ti0 = 0; ti0 < edgeList.length; ti0++) {
       var tr0 = edgeList[ti0];
       if (!entries[tr0.from] || !entries[tr0.to] || tr0.from === tr0.to) continue;
       var fe0 = entries[tr0.from], te0 = entries[tr0.to];
       if ((te0.y + te0.box.height / 2) > (fe0.y + fe0.box.height / 2)) {
+        if (fe0.node.type === 'decision' || fe0.node.type === 'merge') {
+          if (!decisionByFrom[tr0.from]) decisionByFrom[tr0.from] = [];
+          decisionByFrom[tr0.from].push(ti0);
+          continue;
+        }
         if (!downByFrom[tr0.from]) downByFrom[tr0.from] = [];
         downByFrom[tr0.from].push(ti0);
       }
@@ -7297,6 +8336,38 @@
       for (var dgi = 0; dgi < dgroup.length; dgi++) {
         var exitX = fe.x + fe.box.width * (dgi + 1) / (dgroup.length + 1);
         customExits[dgroup[dgi]] = { x: exitX, y: fe.y + fe.box.height };
+      }
+    }
+    for (var dname in decisionByFrom) {
+      var diamondGroup = decisionByFrom[dname];
+      var de = entries[dname];
+      if (!de) continue;
+      diamondGroup.sort(function(a, b) {
+        var ta = edgeList[a], tb = edgeList[b];
+        var cxa = entries[ta.to] ? entries[ta.to].x + entries[ta.to].box.width / 2 : 0;
+        var cxb = entries[tb.to] ? entries[tb.to].x + entries[tb.to].box.width / 2 : 0;
+        return cxa - cxb;
+      });
+      var dcx = de.x + de.box.width / 2;
+      var dcy = de.y + de.box.height / 2;
+      for (var dgi2 = 0; dgi2 < diamondGroup.length; dgi2++) {
+        var edgeIdx = diamondGroup[dgi2];
+        var edge = edgeList[edgeIdx];
+        var target = entries[edge.to];
+        if (!target) continue;
+        var tcx = target.x + target.box.width / 2;
+        var tcy = target.y + target.box.height / 2;
+        var ddx = tcx - dcx;
+        var ddy = tcy - dcy;
+        if (Math.abs(ddx) > Math.abs(ddy) * 0.65) {
+          customExits[edgeIdx] = ddx >= 0
+            ? { x: de.x + de.box.width, y: dcy, side: 'right' }
+            : { x: de.x, y: dcy, side: 'left' };
+        } else {
+          customExits[edgeIdx] = ddy >= 0
+            ? { x: dcx, y: de.y + de.box.height, side: 'bottom' }
+            : { x: dcx, y: de.y, side: 'top' };
+        }
       }
     }
 
@@ -7319,7 +8390,13 @@
 
       if (customExits[ti]) {
         x1 = customExits[ti].x; y1 = customExits[ti].y;
-        x2 = toCx; y2 = toE.y;
+        if (customExits[ti].side === 'left' || customExits[ti].side === 'right') {
+          x2 = toCx;
+          y2 = Math.abs(dy) >= Math.abs(dx) * 0.5 ? (dy > 0 ? toE.y : toE.y + toE.box.height) : toCy;
+          isHorizontal = true;
+        } else {
+          x2 = toCx; y2 = toE.y;
+        }
       } else if (dy < -10) {
         // Back-edge going upward
         x1 = fromE.x + fromE.box.width; y1 = fromCy;
@@ -7347,7 +8424,13 @@
       }
 
       var points;
-      if (isBackEdge && !customExits[ti]) {
+      if (customExits[ti] && (customExits[ti].side === 'left' || customExits[ti].side === 'right') && Math.abs(y1 - y2) >= 2) {
+        points = [
+          { x: x1, y: y1 },
+          { x: x2, y: y1 },
+          { x: x2, y: y2 }
+        ];
+      } else if (isBackEdge && !customExits[ti]) {
         var dynamicMargin = routeMarginX + (ti * 12);
         points = [
           { x: x1, y: y1 },
@@ -7393,44 +8476,32 @@
       var alen = Math.sqrt(adx * adx + ady * ady);
       if (alen > 0) { adx /= alen; ady /= alen; }
       UMLShared.drawArrow(svg, pLast.x, pLast.y, -adx, -ady, colors.line);
+      var routeSegments = UMLShared.buildOrthogonalSegments(points);
 
       // Guard label
       if (tr.guard) {
-        var glx, gly, glAnchor = 'middle';
         var guardText = '[' + tr.guard + ']';
-        if (points.length === 4) {
-          var seg1Len = Math.abs(points[1].x - points[0].x) + Math.abs(points[1].y - points[0].y);
-          var seg2Len = Math.abs(points[2].x - points[1].x) + Math.abs(points[2].y - points[1].y);
-          var seg3Len = Math.abs(points[3].x - points[2].x) + Math.abs(points[3].y - points[2].y);
-          var bestSeg;
-          if (seg1Len >= seg2Len && seg1Len >= seg3Len) bestSeg = 0;
-          else if (seg2Len >= seg3Len) bestSeg = 1;
-          else bestSeg = 2;
-          var lSeg0 = points[bestSeg], lSeg1 = points[bestSeg + 1];
-          var lSegIsH = Math.abs(lSeg1.y - lSeg0.y) < 1;
-          if (lSegIsH) {
-            glx = (lSeg0.x + lSeg1.x) / 2;
-            gly = lSeg0.y - 8;
-          } else {
-            glx = lSeg0.x + 8;
-            gly = (lSeg0.y + lSeg1.y) / 2;
-            glAnchor = 'start';
+        var guardPlacement = UMLShared.placeOrthogonalLabel(guardText, points, activityObstacles, placedLabels, {
+          fontSize: CFG.fontSize,
+          otherSegments: placedRouteSegments,
+          fractions: [0.5, 0.38, 0.62],
+          scoreCandidate: function(segment) {
+            var bonus = segment.isH ? 12 : -6;
+            if (customExits[ti] && (customExits[ti].side === 'left' || customExits[ti].side === 'right') && segment.segmentIndex === 0) {
+              bonus += 22;
+            }
+            return bonus;
           }
-        } else {
-          var lp0 = points[0], lp1 = points[1];
-          glx = (lp0.x + lp1.x) / 2;
-          gly = (lp0.y + lp1.y) / 2;
-          if (Math.abs(lp1.y - lp0.y) < 1) {
-            gly -= 10;
-          } else {
-            glx += 10; glAnchor = 'start';
-          }
+        });
+        if (guardPlacement) {
+          placedLabels.push(guardPlacement.rect);
+          labelSvg.push('<text x="' + guardPlacement.x + '" y="' + guardPlacement.y +
+            '" text-anchor="' + guardPlacement.anchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
+            '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
+            UMLShared.escapeXml(guardText) + '</text>');
         }
-        labelSvg.push('<text x="' + glx + '" y="' + gly +
-          '" text-anchor="' + glAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
-          UMLShared.escapeXml(guardText) + '</text>');
       }
+      placedRouteSegments = placedRouteSegments.concat(routeSegments);
     }
 
     // ── Draw nodes ──
