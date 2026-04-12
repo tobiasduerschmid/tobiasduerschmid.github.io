@@ -4966,6 +4966,14 @@
         var fromPartnerY = toEntry.y + toEntry.box.height / 2;
         var toPartnerY = fromEntry.y + fromEntry.box.height / 2;
 
+        if (useActualPartnerPorts && rc.fromPort && rc.toPort &&
+            fromEntry.portPositions[rc.fromPort] && toEntry.portPositions[rc.toPort]) {
+          var sharedPairY = (fromEntry.portPositions[rc.fromPort].cy + toEntry.portPositions[rc.toPort].cy) / 2;
+          pushDesiredPortY(rc.from, rc.fromPort, sharedPairY);
+          pushDesiredPortY(rc.to, rc.toPort, sharedPairY);
+          continue;
+        }
+
         if (useActualPartnerPorts && rc.toPort && toEntry.portPositions[rc.toPort]) {
           fromPartnerY = toEntry.portPositions[rc.toPort].cy;
         }
@@ -5955,6 +5963,153 @@
 
     var occupiedSegments = { h: [], v: [] };
     var componentSideAnchors = buildComponentSideAnchors(connectors, entries);
+    var portUsageCount = {};
+    function componentPortUsageKey(compName, alias) {
+      return compName + '.' + alias;
+    }
+    for (var puci = 0; puci < connectors.length; puci++) {
+      var puc = connectors[puci];
+      if (puc.fromPort) portUsageCount[componentPortUsageKey(puc.from, puc.fromPort)] = (portUsageCount[componentPortUsageKey(puc.from, puc.fromPort)] || 0) + 1;
+      if (puc.toPort) portUsageCount[componentPortUsageKey(puc.to, puc.toPort)] = (portUsageCount[componentPortUsageKey(puc.to, puc.toPort)] || 0) + 1;
+    }
+
+    function snapshotPortPosition(pos) {
+      return pos ? { y: pos.y, cy: pos.cy, connY: pos.connY } : null;
+    }
+
+    function restorePortPosition(pos, snapshot) {
+      if (!pos || !snapshot) return;
+      pos.y = snapshot.y;
+      pos.cy = snapshot.cy;
+      pos.connY = snapshot.connY;
+    }
+
+    function movePortPositionToY(entry, alias, targetY) {
+      var pos = entry && entry.portPositions ? entry.portPositions[alias] : null;
+      if (!pos || (pos.side !== 'left' && pos.side !== 'right')) return null;
+      if ((portUsageCount[componentPortUsageKey(entry.comp.name, alias)] || 0) !== 1) return null;
+
+      var sidePorts = pos.side === 'left' ? entry.leftPorts : entry.rightPorts;
+      var portIdx = sidePorts.indexOf(alias);
+      if (portIdx < 0) return null;
+
+      var headerHeight = CFG.lineHeight + CFG.padY;
+      var portTop = entry.hasPorts ? entry.y + headerHeight : entry.y;
+      var portAreaH = entry.box.height - (entry.hasPorts ? headerHeight : 0);
+      var halfPort = CFG.portSize / 2;
+      var lower = portTop + halfPort + 4;
+      var upper = portTop + portAreaH - halfPort - 4;
+      var minGap = Math.max(CFG.portSize + 8, CFG.portPad * 0.72);
+
+      if (portIdx > 0) {
+        var prevAlias = sidePorts[portIdx - 1];
+        var prevPos = entry.portPositions[prevAlias];
+        if (prevPos) lower = Math.max(lower, prevPos.cy + minGap);
+      }
+      if (portIdx < sidePorts.length - 1) {
+        var nextAlias = sidePorts[portIdx + 1];
+        var nextPos = entry.portPositions[nextAlias];
+        if (nextPos) upper = Math.min(upper, nextPos.cy - minGap);
+      }
+      if (upper < lower) return null;
+
+      var newY = Math.max(lower, Math.min(upper, targetY));
+      if (Math.abs(newY - pos.cy) < 0.75) return null;
+
+      var snapshot = snapshotPortPosition(pos);
+      pos.cy = newY;
+      pos.connY = newY;
+      pos.y = newY - halfPort;
+      return snapshot;
+    }
+
+    function applySourceLaneSmoothing(points, newY) {
+      var updated = [];
+      for (var i = 0; i < points.length; i++) updated.push({ x: points[i].x, y: points[i].y });
+      updated[0].y = newY;
+      if (updated.length > 1) updated[1].y = newY;
+      return simplifyRoute(updated);
+    }
+
+    function applyTargetLaneSmoothing(points, newY) {
+      var updated = [];
+      for (var i = 0; i < points.length; i++) updated.push({ x: points[i].x, y: points[i].y });
+      updated[updated.length - 1].y = newY;
+      if (updated.length > 1) updated[updated.length - 2].y = newY;
+      return simplifyRoute(updated);
+    }
+
+    function refineRouteEndpoints(conn, points, fpPos, tpPos, skipNames) {
+      if (!points || points.length < 2) return points;
+
+      function tryCandidate(entry, alias, targetY, applyToPoints) {
+        if (!entry || !alias) return null;
+        var snapshot = movePortPositionToY(entry, alias, targetY);
+        if (!snapshot) return null;
+        var candidate = applyToPoints(points, entry.portPositions[alias].cy);
+        if (routeHitsObstacle(candidate, obstacles, skipNames, occupiedSegments)) {
+          restorePortPosition(entry.portPositions[alias], snapshot);
+          return null;
+        }
+        return candidate;
+      }
+
+      // Snap nearly horizontal direct links to the same Y when one endpoint can move slightly.
+      if (fpPos && tpPos && points.length === 2) {
+        var directDy = points[1].y - points[0].y;
+        if (Math.abs(directDy) > 0.5 && Math.abs(directDy) <= 6 && Math.abs(points[1].x - points[0].x) > 24) {
+          var bestDirect = null;
+          var directCandidates = [
+            { entry: entries[conn.from], alias: conn.fromPort, targetY: tpPos.cy, apply: applySourceLaneSmoothing, move: Math.abs(tpPos.cy - fpPos.cy) },
+            { entry: entries[conn.to], alias: conn.toPort, targetY: fpPos.cy, apply: applyTargetLaneSmoothing, move: Math.abs(fpPos.cy - tpPos.cy) }
+          ];
+          for (var dci = 0; dci < directCandidates.length; dci++) {
+            var directCandidate = directCandidates[dci];
+            var directPoints = tryCandidate(directCandidate.entry, directCandidate.alias, directCandidate.targetY, directCandidate.apply);
+            if (!directPoints) continue;
+            if (!bestDirect || directCandidate.move < bestDirect.move) {
+              bestDirect = { points: directPoints, move: directCandidate.move };
+            }
+          }
+          if (bestDirect) return bestDirect.points;
+        }
+      }
+
+      // Remove tiny H-V-H doglegs right next to a source port by moving the port onto the horizontal lane.
+      if (fpPos && points.length >= 4) {
+        var p0 = points[0], p1 = points[1], p2 = points[2], p3 = points[3];
+        var firstIsH = Math.abs(p1.y - p0.y) < 1;
+        var secondIsV = Math.abs(p2.x - p1.x) < 1;
+        var thirdIsH = Math.abs(p3.y - p2.y) < 1;
+        var firstLen = Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y);
+        var secondLen = Math.abs(p2.x - p1.x) + Math.abs(p2.y - p1.y);
+        var thirdLen = Math.abs(p3.x - p2.x) + Math.abs(p3.y - p2.y);
+        if (firstIsH && secondIsV && thirdIsH && firstLen <= 36 && secondLen <= 18 && thirdLen >= 80) {
+          var sourceSmoothed = tryCandidate(entries[conn.from], conn.fromPort, p2.y, applySourceLaneSmoothing);
+          if (sourceSmoothed) return sourceSmoothed;
+        }
+      }
+
+      // Remove tiny H-V-H doglegs right before a target port by moving the target port onto the horizontal lane.
+      if (tpPos && points.length >= 4) {
+        var t3 = points[points.length - 4];
+        var t2 = points[points.length - 3];
+        var t1 = points[points.length - 2];
+        var t0 = points[points.length - 1];
+        var tailFirstIsH = Math.abs(t2.y - t3.y) < 1;
+        var tailSecondIsV = Math.abs(t1.x - t2.x) < 1;
+        var tailThirdIsH = Math.abs(t0.y - t1.y) < 1;
+        var tailFirstLen = Math.abs(t2.x - t3.x) + Math.abs(t2.y - t3.y);
+        var tailSecondLen = Math.abs(t1.x - t2.x) + Math.abs(t1.y - t2.y);
+        var tailThirdLen = Math.abs(t0.x - t1.x) + Math.abs(t0.y - t1.y);
+        if (tailFirstIsH && tailSecondIsV && tailThirdIsH && tailThirdLen <= 36 && tailSecondLen <= 18 && tailFirstLen >= 80) {
+          var targetSmoothed = tryCandidate(entries[conn.to], conn.toPort, t2.y, applyTargetLaneSmoothing);
+          if (targetSmoothed) return targetSmoothed;
+        }
+      }
+
+      return points;
+    }
 
     // ── Draw connectors ──
     var placedLabels = [];
@@ -6313,6 +6468,8 @@
         points = spreadRouteToFreeLanes(points, obstacles, skipN, occupiedSegments);
         points = simplifyRoute(points);
       }
+
+      points = refineRouteEndpoints(conn, points, fpPos, tpPos, skipN);
 
       reserveRoute(points, occupiedSegments);
 
