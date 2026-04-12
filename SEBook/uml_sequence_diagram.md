@@ -99,9 +99,9 @@ Lifelines in sequence diagrams represent specific **object instances**, not clas
 
 `objectName : ClassName`
 
-- If the specific object name matters: `myCart : ShoppingCart`
-- If only the class matters: `: ShoppingCart` (anonymous instance)
-- Multiple instances of the same class get distinct names: `primary : Server`, `backup : Server`
+- If the specific object name matters: <span class="uml-sym" data-diagram="sequence" data-sym="head-named" data-label="myCart : ShoppingCart"></span>
+- If only the class matters: <span class="uml-sym" data-diagram="sequence" data-sym="head-anon" data-label=": ShoppingCart"></span> (anonymous instance)
+- Multiple instances of the same class get distinct names: <span class="uml-sym" data-diagram="sequence" data-sym="head-multi" data-label="server[i] : Server"></span>
 
 This is different from class diagrams, which show classes in general. Sequence diagrams show **one particular scenario** of interactions between concrete instances.
 
@@ -117,9 +117,19 @@ When you draw both a class diagram and a sequence diagram for the same system, t
 
 Real-world systems rarely follow a single, straight path. Things go wrong, conditions change, and actions repeat. UML uses **Combined Fragments** to enclose portions of the sequence diagram and apply logic to them.
 
-Fragments are drawn as large boxes surrounding the relevant messages, with a "tag" in the top-left corner declaring the type of logic (e.g., `opt`, `alt`, `loop`).
+Fragments are drawn as large boxes surrounding the relevant messages, with a tag in the top-left corner declaring the type of logic, such as <span class="uml-sym" data-diagram="sequence" data-sym="frag-opt"></span>, <span class="uml-sym" data-diagram="sequence" data-sym="frag-alt"></span>, <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span>, or <span class="uml-sym" data-diagram="sequence" data-sym="frag-ref"></span>.
 
-### 1\. The OPT Fragment (Optional Behavior)
+Common fragment syntax in sequence diagrams:
+
+- Optional behavior: <span class="uml-sym" data-diagram="sequence" data-sym="frag-opt"></span>
+- Alternatives with guarded branches: <span class="uml-sym" data-diagram="sequence" data-sym="frag-alt"></span>
+- Repetition: <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span>
+- Parallel branches: <span class="uml-sym" data-diagram="sequence" data-sym="frag-par"></span>
+- Early exit: <span class="uml-sym" data-diagram="sequence" data-sym="frag-break"></span>
+- Critical region: <span class="uml-sym" data-diagram="sequence" data-sym="frag-critical"></span>
+- Interaction reference: <span class="uml-sym" data-diagram="sequence" data-sym="frag-ref"></span>
+
+### 1\. The OPT Fragment (Optional Behavior) <span class="uml-sym" data-diagram="sequence" data-sym="frag-opt"></span>
 
 The `opt` fragment is equivalent to an `if` statement without an `else`. The messages inside the box only occur *if* a specific condition (called a guard) is true.
 
@@ -138,7 +148,7 @@ pricing --> checkout: finalTotal()
 
 *Notice the `[hasLoyaltyAccount == true]` text. This is the **guard condition**. If it evaluates to false, the sequence skips the entire box.*
 
-### 2\. The ALT Fragment (Alternative Behaviors)
+### 2\. The ALT Fragment (Alternative Behaviors) <span class="uml-sym" data-diagram="sequence" data-sym="frag-alt"></span>
 
 The `alt` fragment is equivalent to an `if-else` or `switch` statement. The box is divided by a dashed horizontal line. The sequence will execute *only one* of the divided sections based on which guard condition is true.
 
@@ -155,7 +165,7 @@ else [password is incorrect]
 end
 @enduml'></div>
 
-### 3\. The LOOP Fragment (Repetitive Behavior)
+### 3\. The LOOP Fragment (Repetitive Behavior) <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span>
 
 The `loop` fragment represents a `for` or `while` loop. The messages inside the box are repeated as long as the guard condition remains true, or for a specified number of times.
 
@@ -212,11 +222,11 @@ The three fragments above (opt, alt, loop) are the most common, but UML defines 
 
 | Fragment | Meaning | Code Equivalent |
 |----------|---------|-----------------|
-| **alt** | Alternative branches (mutual exclusion) | `if-else` / `switch` |
-| **opt** | Optional execution if guard is true | `if` (no else) |
-| **loop** | Repeat while guard is true | `while` / `for` loop |
-| **par** | Parallel execution of fragments | Concurrent threads |
-| **region** | Critical region (only one thread at a time) | `synchronized` block |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-alt"></span> **ALT** | Alternative branches (mutual exclusion) | `if-else` / `switch` |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-opt"></span> **OPT** | Optional execution if guard is true | `if` (no else) |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span> **LOOP** | Repeat while guard is true | `while` / `for` loop |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-par"></span> **PAR** | Parallel execution of fragments | Concurrent threads |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-critical"></span> **CRITICAL** | Critical region (only one thread at a time) | `synchronized` block |
 
 ---
 

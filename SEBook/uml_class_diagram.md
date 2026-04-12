@@ -54,7 +54,7 @@ Among UML diagrams, **Class Diagrams** are the most common ones, because they ar
 ## The Core Building Blocks
 
 ### 2.1 Classes
-A **Class** is a template for creating objects. In UML, a class is represented by a rectangle divided into three compartments:
+A **Class** <span class="uml-sym" data-diagram="class" data-sym="box" data-label="Customer"></span> is a template for creating objects. In UML, a class is represented by a rectangle divided into three compartments:
 1. **Top:** The Class Name.
 2. **Middle:** Attributes (variables/state).
 3. **Bottom:** Operations (methods/behavior).
@@ -67,6 +67,8 @@ To enforce *encapsulation*, UML uses symbols to define who can access attributes
 * `~` **Package/Default**: Accessible by any class in the same package.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class User {
   - username: String
   - email: String
@@ -80,6 +82,8 @@ class User {
 An **Interface** represents a contract. It tells us *what* a class must do, but not *how* it does it. It is denoted by the `<<interface>>` stereotype. Interfaces contain method signatures and usually do not declare attributes (the UML specification allows it, but I recommend not to use it)
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 interface Payable {
   + processPayment(): bool
 }
@@ -128,6 +132,8 @@ A basic structural relationship indicating that objects of one class are connect
 * You can also **name** associations and make them **directional** using an arrowhead to indicate navigability (which class holds a reference to the other).
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class Student {
   - name: String
 }
@@ -148,16 +154,79 @@ Along association lines, we use numbers to define *how many* objects are involve
 | `1..*` | One to many (at least one required) |
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class Author
 class Book
 Author "1" -- "1..*" Book : writes
 @enduml'></div>
 
-**3. Aggregation (Weak "Has-A")**
+**3. Navigability**
+
+By default, an association is **bidirectional**---both classes know about each other. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
+
+* **Navigable end** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> An **open arrowhead** pointing to the class that can be "reached." The left object has a reference to the right object.
+* **Non-Navigable end** <span class="uml-sym" data-diagram="class" data-sym="--x"></span> An **X** on the end that cannot be navigated. This explicitly states that the class at the X end does *not* hold a reference to the other.
+
+Here are the four navigability combinations, each with an example:
+
+**Unidirectional (one arrowhead):** Only one class holds a reference.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class Vote
+class Politician
+Vote --> Politician
+@enduml'></div>
+
+`Vote` holds a reference to `Politician`, but `Politician` does not know about individual `Vote` objects.
+
+**Bidirectional (arrowheads on both ends):** Both classes hold a reference to each other.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class Employee
+class Boss
+Employee <--> Boss
+@enduml'></div>
+
+`Employee` knows about their `Boss`, and `Boss` knows about their `Employee`. A plain line with no arrowheads is also acceptable for bidirectional associations.
+
+**Non-navigable on one end (X on one side):** One class is explicitly prevented from navigating.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class Voter
+class Vote
+Voter x-- Vote
+@enduml'></div>
+
+In the full UML notation, an X on the `Voter` end would mean: `Vote` knows about `Voter`, but `Voter` does *not* hold a reference to `Vote`. (Note: the X mark is a formal UML notation not commonly rendered in simplified tools---when you see a unidirectional arrow, the absence of an arrowhead on the other end implies non-navigability.)
+
+**Non-navigable on both ends (X on both sides):** Neither class holds a reference---the association is recorded only in the model, not in code.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class Account
+class ClearTextPassword
+Account x--x ClearTextPassword
+@enduml'></div>
+
+An X on both ends of `Account`<span class="uml-sym" data-diagram="class" data-sym="x--x"></span>`ClearTextPassword` means neither class should store a reference to the other. This is a deliberate design decision (e.g., for security: an `Account` should never hold a reference to a `ClearTextPassword`).
+
+**When to use navigability:** Navigability is a design-level detail. In analysis/domain models, plain associations (no arrowheads) are preferred because you haven't decided which class holds the reference yet. Once you move into detailed design, add navigability to show which class stores the reference---this maps directly to code (a field/attribute in the class at the arrow tail).
+
+**4. Aggregation (Weak "Has-A")**
 A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist. Think of aggregation as a long-term, whole-part association.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> A solid line with an **empty diamond** at the "whole" end.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class University
 class Professor
 University "1" o-- "0..*" Professor
@@ -169,6 +238,8 @@ A strict relationship where the parts *cannot* exist without the whole. If you d
 * Per the UML spec, the multiplicity on the composite end must be `1` or `0..1`.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class House
 class Room
 House "1" *-- "1..*" Room
@@ -186,6 +257,8 @@ A dependency indicates that one class *uses* another, but does not hold a perman
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> A **dashed line** with an open arrowhead.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class Train {
   # addStop(stop: ButtonPressedEvent): void
   + startTrain(velocity: double): void
@@ -258,6 +331,8 @@ In this example, `Shape` is abstract (it cannot be created directly) and declare
 **Static** (class-level) attributes and operations belong to the class itself rather than to individual instances. In UML, static members are shown **underlined**.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class MathUtils {
   {static} +PI: double
   {static} +abs(n: int): int
@@ -280,6 +355,8 @@ public class BaseSynchronizer {
 ```
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class BaseSynchronizer {
   + synchronizationStarted(): void
 }
@@ -301,6 +378,8 @@ public class Student {
 ```
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class Student {
   ~ roster: Roster
   + storeRoster(r: Roster): void
@@ -328,6 +407,8 @@ public class ChecksumValidator {
 ```
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class ChecksumValidator {
   + execute(): bool
   + validate(): void
@@ -349,6 +430,8 @@ public class MotherBoard {
 ```
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
 class MotherBoard {
   - primaryIDE: IDEBus
   - secondaryIDE: IDEBus
@@ -373,6 +456,8 @@ The inner class pattern in Java typically indicates composition---the `IDEBus` i
 > <summary><i>Reveal Answer</i></summary>
 >
 > <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+> layout horizontal
+> layout landscape
 > class Division {
 >   - division: List~Employee~
 >   - employees: Employee[]

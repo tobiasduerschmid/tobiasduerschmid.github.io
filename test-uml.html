@@ -107,6 +107,88 @@ Professor "1" -- "*" Student : advises
 @enduml
   </code></pre>
 
+  <h2>4b. Navigability Combinations (Association / Aggregation / Composition)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+layout portrait
+class AssocUnspecified
+class AssocNavigable
+class AssocBidirectional
+class AssocNonNavigable
+class AssocNonNavigableBoth
+class AssocTarget
+class AggUnspecified
+class AggNavigable
+class AggBidirectional
+class AggNonNavigable
+class AggTarget
+class CompUnspecified
+class CompNavigable
+class CompBidirectional
+class CompNonNavigable
+class CompTarget
+
+AssocUnspecified -- AssocTarget : association (unspecified)
+AssocNavigable --> AssocTarget : association (navigable)
+AssocBidirectional <--> AssocTarget : association (bidirectional)
+AssocNonNavigable --x AssocTarget : association (non-navigable)
+AssocNonNavigableBoth x--x AssocTarget : association (non-navigable both ends)
+
+AggUnspecified o-- AggTarget : aggregation (unspecified)
+AggNavigable o--> AggTarget : aggregation (navigable)
+AggBidirectional o<--> AggTarget : aggregation (bidirectional)
+AggNonNavigable o--x AggTarget : aggregation (non-navigable)
+
+CompUnspecified *-- CompTarget : composition (unspecified)
+CompNavigable *--> CompTarget : composition (navigable)
+CompBidirectional *<--> CompTarget : composition (bidirectional)
+CompNonNavigable *--x CompTarget : composition (non-navigable)
+@enduml
+  </code></pre>
+
+  <h2>4c. Reverse-Direction Navigability (Explicit)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+layout portrait
+class AssocL
+class AssocR
+class AssocL2
+class AssocR2
+
+class AggL
+class AggR
+class AggL2
+class AggR2
+
+class CompL
+class CompR
+class CompL2
+class CompR2
+
+AssocL <-- AssocR : association (navigable to left)
+AssocL2 x-- AssocR2 : association (non-navigable to left)
+
+AggL <--o AggR : aggregation (navigable to left)
+AggL2 x--o AggR2 : aggregation (non-navigable to left)
+
+CompL <--* CompR : composition (navigable to left)
+CompL2 x--* CompR2 : composition (non-navigable to left)
+@enduml
+  </code></pre>
+
+  <h2>4d. Tolerant Alias Forms</h2>
+  <pre><code class="language-uml-class">
+@startuml
+layout horizontal
+class Alias1
+class Alias2
+class Alias3
+
+Alias1 *<-->x Alias2 : alias for composition non-navigable
+Alias2 ox--> Alias3 : alias for aggregation non-navigable
+@enduml
+  </code></pre>
+
   <h2>5. Observer Design Pattern</h2>
   <pre><code class="language-uml-class">
 @startuml

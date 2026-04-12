@@ -176,3 +176,29 @@ questions:
       - "A class creates a local variable of another class type inside a method."
     correct_indices: [0, 2, 3]
     explanation: "A **dependency** is a temporary \"uses\" relationship — it occurs when one class references another only as a method parameter, local variable, return type, or exception. Storing a reference as an instance **field** creates a permanent structural link, making it an **association** (or aggregation/composition) rather than a dependency."
+
+  - id: 13
+    type: single
+    question: >
+      What does the **arrowhead** on this association mean?
+
+      <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>
+    options:
+      - "Employee inherits from Boss."
+      - "Employee holds a reference to Boss (navigable), but Boss does not necessarily know about Employee."
+      - "Boss holds a reference to Employee."
+      - "Employee depends on Boss temporarily (like a method parameter)."
+    correct_index: 1
+    explanation: "An open arrowhead on an association (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"-->\"></span>) indicates **navigability** — the class at the tail (Employee) can navigate to the class at the head (Boss). In code, this means Employee has a field or attribute referencing Boss. This is different from generalization (hollow triangle) and dependency (dashed arrow)."
+
+  - id: 14
+    type: single
+    question: >
+      When should you add **navigability arrowheads** to associations in a class diagram?
+    options:
+      - "Always — every association must show navigability."
+      - "Only in analysis/domain models, not in design models."
+      - "In design-level diagrams, to show which class stores the reference — this maps directly to a field in code."
+      - "Never — navigability is not part of UML."
+    correct_index: 2
+    explanation: "Navigability is a **design-level** detail. In early analysis or domain models, plain associations (no arrowheads) are preferred because you haven't decided which class holds the reference yet. Once you move to detailed design, adding navigability arrowheads shows exactly which class has a field referencing the other — this maps directly to code."

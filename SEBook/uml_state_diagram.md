@@ -50,9 +50,9 @@ To manage cognitive load, we will break down the state machine into its smallest
 
 ### 2.1 States
 A **State** represents a condition or situation during the life of an object during which it satisfies some condition, performs some activity, or waits for some event.
-* **Initial State:** The starting point of the machine, represented by a solid black circle.
-* **Regular State:** Represented by a rectangle with rounded corners.
-* **Final State:** The end of the machine's lifecycle, represented by a solid black circle surrounded by a hollow circle (a bullseye).
+* **Initial State** <span class="uml-sym" data-diagram="state" data-sym="[*]"></span>: The starting point of the machine, represented by a solid black circle.
+* **Regular State** <span class="uml-sym" data-diagram="state" data-sym="regular"></span>: Represented by a rectangle with rounded corners.
+* **Final State** <span class="uml-sym" data-diagram="state" data-sym="final"></span>: The end of the machine's lifecycle, represented by a solid black circle surrounded by a hollow circle (a bullseye).
 
 ### 2.2 Transitions
 A **Transition** is a directed relationship between two states. It signifies that an object in the first state will enter the second state when a specified event occurs and specified conditions are satisfied. 

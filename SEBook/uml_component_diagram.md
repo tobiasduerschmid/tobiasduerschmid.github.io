@@ -83,9 +83,9 @@ Examples of components in real systems:
 
 Components interact through **interfaces**. UML distinguishes two types:
 
-**Provided Interface (Lollipop):** An interface that the component **implements and offers** to other components. Drawn as a small circle (ball) connected to the component by a line. "I provide this service."
+**Provided Interface (Lollipop) <span class="uml-sym" data-diagram="component" data-sym="provide"></span>:** An interface that the component **implements and offers** to other components. Drawn as a small circle (ball) connected to the component by a line. "I provide this service."
 
-**Required Interface (Socket):** An interface that the component **needs from** another component to function. Drawn as a half-circle (socket/arc) connected to the component. "I need this service."
+**Required Interface (Socket) <span class="uml-sym" data-diagram="component" data-sym="require"></span>:** An interface that the component **needs from** another component to function. Drawn as a half-circle (socket/arc) connected to the component. "I need this service."
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component OrderService {
@@ -99,10 +99,10 @@ Reading this diagram: `OrderService` **provides** the `IOrderAPI` interface (oth
 
 ### 2.3 Ports
 
-A **port** is a named interaction point on a component's boundary. Ports organize a component's interfaces into logical groups. They are drawn as small squares on the component's border.
+A **port** is a named interaction point on a component's boundary. Ports organize a component's interfaces into logical groups. They are drawn as small squares on the component's border.  
 
-- **`portin`** --- An incoming port (receives requests), placed on the left edge.
-- **`portout`** --- An outgoing port (sends requests), placed on the right edge.
+- **<span class="uml-sym" data-diagram="component" data-sym="portin"></span>** An incoming port (receives requests), usually placed on the left edge.
+- **<span class="uml-sym" data-diagram="component" data-sym="portout"></span>** An outgoing port (sends requests), usually placed on the right edge.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component PaymentService {
@@ -117,9 +117,9 @@ Reading this diagram: `PaymentService` has an incoming port `processPayment` (wh
 
 **Connectors** are the lines between components (or between ports) that show communication pathways:
 
-- **Assembly Connector** (`-->`) --- A solid arrow linking one component to another (or a required interface to a provided interface). This is the most common connector.
-- **Dependency** (`..>`) --- A dashed arrow indicating a weaker "uses" or "depends on" relationship.
-- **Plain Link** (`--`) --- An undirected association between components.
+- **Assembly Connector** <span class="uml-sym" data-diagram="component" data-sym="-->"></span> A solid arrow linking one component to another (or a required interface to a provided interface). This is the most common connector.
+- **Dependency** <span class="uml-sym" data-diagram="component" data-sym="..>"></span> A dashed arrow indicating a weaker "uses" or "depends on" relationship.
+- **Plain Link** <span class="uml-sym" data-diagram="component" data-sym="--"></span> An undirected association between components.
 
 > **Concept Check (Retrieval Practice):** Without looking back, name the two types of interfaces in component diagrams and their visual symbols. What is the difference between a provided and required interface?
 >

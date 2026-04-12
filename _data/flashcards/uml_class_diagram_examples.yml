@@ -68,3 +68,11 @@ cards:
     answer: "Dependency < Association < Aggregation < Composition < Generalization/Realization"
     explanation: >
       **Dependency** (dashed arrow, temporary use) is weakest. **Association** (solid line, structural link) is stronger. **Aggregation** (hollow diamond, parts can exist alone) and **Composition** (filled diamond, parts die with whole) add ownership semantics. **Generalization** (hollow triangle, inheritance) and **Realization** (dashed hollow triangle, interface implementation) represent the strongest "is-a" relationships.
+
+  - id: 10
+    question: "What does a **navigable association** (<span class='uml-sym' data-diagram='class' data-sym='-->'></span>) indicate?"
+    answer: "The class at the **tail** holds a reference to the class at the **arrowhead**. Only one direction is navigable."
+    explanation: >
+      A plain association (<span class="uml-sym" data-diagram="class" data-sym="--"></span>) is bidirectional by default. Adding an arrowhead makes it **unidirectional**: the class at the tail can "reach" the class at the head, but not vice versa. In code, this means the tail class has a field of the head class's type. Navigability is a design-level detail — omit it in early domain models.
+
+      <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>

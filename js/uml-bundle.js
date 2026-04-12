@@ -1129,6 +1129,26 @@
         '" fill="none" stroke="' + color + '" stroke-width="' + strw + '"/>');
     },
 
+    drawCrossMarker: function(svg, x, y, ux, uy, color, size, sw) {
+      var cs = size || BASE_CFG.arrowSize;
+      var strw = sw || BASE_CFG.strokeWidth;
+      var half = cs * 0.44;
+      var offset = cs * 0.52;
+      var cx = x + ux * offset;
+      var cy = y + uy * offset;
+      var px = -uy, py = ux;
+      var d1x = ux + px, d1y = uy + py;
+      var d2x = ux - px, d2y = uy - py;
+      var d1len = Math.sqrt(d1x * d1x + d1y * d1y) || 1;
+      var d2len = Math.sqrt(d2x * d2x + d2y * d2y) || 1;
+      d1x /= d1len; d1y /= d1len;
+      d2x /= d2len; d2y /= d2len;
+      svg.push('<line x1="' + (cx - d1x * half) + '" y1="' + (cy - d1y * half) + '" x2="' + (cx + d1x * half) + '" y2="' + (cy + d1y * half) +
+        '" stroke="' + color + '" stroke-width="' + strw + '"/>');
+      svg.push('<line x1="' + (cx - d2x * half) + '" y1="' + (cy - d2y * half) + '" x2="' + (cx + d2x * half) + '" y2="' + (cy + d2y * half) +
+        '" stroke="' + color + '" stroke-width="' + strw + '"/>');
+    },
+
     drawHollowTriangle: function(svg, x, y, ux, uy, colors, size, sw) {
       var as = (size || BASE_CFG.arrowSize) * 1.2;
       var strw = sw || BASE_CFG.strokeWidth;
@@ -1256,7 +1276,7 @@
     };
   }
 
-  function buildLayoutCandidates(gapX, gapY, direction, layoutPreference) {
+  function buildLayoutCandidates(gapX, gapY, direction, layoutPreference, directionLocked) {
     var candidates = [];
     var seen = {};
     var otherDirection = direction === 'LR' ? 'TB' : 'LR';
@@ -1272,6 +1292,34 @@
 
     if (!layoutPreference) {
       addCandidate(direction, gapX, gapY);
+      return candidates;
+    }
+
+    if (directionLocked) {
+      if (layoutPreference === 'square') {
+        addCandidate(direction, gapX, gapY);
+        addCandidate(direction, gapX * 1.08, gapY * 0.92);
+        addCandidate(direction, gapX * 0.92, gapY * 1.08);
+        return candidates;
+      }
+
+      if (layoutPreference === 'landscape') {
+        addCandidate(direction, gapX, gapY);
+        addCandidate(direction, gapX * 1.15, gapY * 0.9);
+        addCandidate(direction, gapX * 1.3, gapY * 0.8);
+        return candidates;
+      }
+
+      if (layoutPreference === 'portrait') {
+        addCandidate(direction, gapX, gapY);
+        addCandidate(direction, gapX * 0.9, gapY * 1.15);
+        addCandidate(direction, gapX * 0.8, gapY * 1.3);
+        return candidates;
+      }
+
+      addCandidate(direction, gapX, gapY);
+      addCandidate(direction, gapX * 0.95, gapY * 1.05);
+      addCandidate(direction, gapX * 1.05, gapY * 0.95);
       return candidates;
     }
 
@@ -1987,12 +2035,13 @@
     var gapY = options.gapY || 80;
     var direction = options.direction || 'TB';
     var layoutPreference = options.layoutPreference || null;
+    var directionLocked = !!options.directionLocked;
 
     if (!layoutPreference) {
       return computeDirectedLayout(nodes, edges, gapX, gapY, direction, null);
     }
 
-    var candidates = buildLayoutCandidates(gapX, gapY, direction, layoutPreference);
+    var candidates = buildLayoutCandidates(gapX, gapY, direction, layoutPreference, directionLocked);
     var best = null;
     for (var ci = 0; ci < candidates.length; ci++) {
       var candidate = candidates[ci];
@@ -2030,8 +2079,17 @@
  *   ..|>  Realization (dashed, hollow triangle)
  *   --    Association (solid)
  *   -->   Navigable association (solid, open arrow)
+ *   <-->  Bidirectional navigable association (solid, two open arrows)
+ *   --x   Non-navigable association (solid, X marker)
+ *   x--x  Non-navigable association on both ends (solid, two X markers)
  *   *--   Composition (solid, filled diamond)
+ *   *-->  Composition with navigable target
+ *   *<--> Composition with bidirectional navigability
+ *   *--x  Composition with non-navigable target
  *   o--   Aggregation (solid, hollow diamond)
+ *   o-->  Aggregation with navigable target
+ *   o<--> Aggregation with bidirectional navigability
+ *   o--x  Aggregation with non-navigable target
  *   ..>   Dependency (dashed, open arrow)
  */
 (function () {
@@ -2079,6 +2137,7 @@
     var braceDepth = 0;
     var direction = 'TB';
     var layoutPreference = null;
+    var directionLocked = false;
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
@@ -2090,6 +2149,7 @@
         if (layoutDirective.direction) {
           direction = layoutDirective.direction;
           layoutPreference = null;
+          directionLocked = true;
         } else {
           layoutPreference = layoutDirective.layoutPreference;
         }
@@ -2177,7 +2237,14 @@
       }
     }
 
-    return { classes: classes, relationships: relationships, notes: notes, direction: direction, layoutPreference: layoutPreference };
+    return {
+      classes: classes,
+      relationships: relationships,
+      notes: notes,
+      direction: direction,
+      layoutPreference: layoutPreference,
+      directionLocked: directionLocked
+    };
   }
 
   /**
@@ -2270,11 +2337,40 @@
   var REL_PATTERNS = [
     { token: '--|>', type: 'generalization' },
     { token: '..|>', type: 'realization' },
-    { token: '*--', type: 'composition' },
-    { token: 'o--', type: 'aggregation' },
+
+    // Composition / Aggregation (diamond at source by default)
+    { token: '*<-->', type: 'composition', navigability: 'bidirectional' },
+    { token: '*-->', type: 'composition', navigability: 'navigable' },
+    { token: '*--x', type: 'composition', navigability: 'non-navigable' },
+    { token: '*--', type: 'composition', navigability: 'unspecified' },
+    { token: 'o<-->', type: 'aggregation', navigability: 'bidirectional' },
+    { token: 'o-->', type: 'aggregation', navigability: 'navigable' },
+    { token: 'o--x', type: 'aggregation', navigability: 'non-navigable' },
+    { token: 'o--', type: 'aggregation', navigability: 'unspecified' },
+
+    // Reverse aliases (diamond at target side)
+    { token: '<-->*', type: 'composition', navigability: 'bidirectional', reverse: true },
+    { token: '<--*', type: 'composition', navigability: 'navigable', reverse: true },
+    { token: 'x--*', type: 'composition', navigability: 'non-navigable', reverse: true },
+    { token: '--*', type: 'composition', navigability: 'unspecified', reverse: true },
+    { token: '<-->o', type: 'aggregation', navigability: 'bidirectional', reverse: true },
+    { token: '<--o', type: 'aggregation', navigability: 'navigable', reverse: true },
+    { token: 'x--o', type: 'aggregation', navigability: 'non-navigable', reverse: true },
+    { token: '--o', type: 'aggregation', navigability: 'unspecified', reverse: true },
+
+    // Tolerant aliases for mixed marker spelling seen in examples
+    { token: '*<-->x', type: 'composition', navigability: 'non-navigable' },
+    { token: 'ox-->', type: 'aggregation', navigability: 'non-navigable' },
+
+    // Association / Dependency
+    { token: '<-->', type: 'association', navigability: 'bidirectional' },
+    { token: 'x--x', type: 'association', navigability: 'non-navigable-both' },
     { token: '-->', type: 'navigable' },
+    { token: '<--', type: 'navigable', reverse: true },
+    { token: '--x', type: 'association', navigability: 'non-navigable' },
+    { token: 'x--', type: 'association', navigability: 'non-navigable', reverse: true },
     { token: '..>', type: 'dependency' },
-    { token: '--',  type: 'association' },
+    { token: '--',  type: 'association', navigability: 'unspecified' },
   ];
 
   /**
@@ -2332,10 +2428,22 @@
         }
       }
 
+      var fromName = leftPart;
+      var toName = rightPart;
+      if (pat.reverse) {
+        var tmpName = fromName;
+        fromName = toName;
+        toName = tmpName;
+        var tmpMult = fromMult;
+        fromMult = toMult;
+        toMult = tmpMult;
+      }
+
       return {
-        from: leftPart,
-        to: rightPart,
+        from: fromName,
+        to: toName,
         type: pat.type,
+        navigability: pat.navigability || (pat.type === 'navigable' ? 'navigable' : 'unspecified'),
         label: label,
         fromMult: fromMult,
         toMult: toMult,
@@ -2472,7 +2580,8 @@
       gapX: effectiveGapX,
       gapY: effectiveGapY,
       direction: effectiveDirection,
-      layoutPreference: hasHierarchyEdges ? null : layoutPreference
+      layoutPreference: hasHierarchyEdges ? null : layoutPreference,
+      directionLocked: !hasHierarchyEdges && !!parsed.directionLocked
     });
 
     // Read back positions
@@ -2537,6 +2646,17 @@
     var labelSvg = [];
     var placedLabels = [];
     var placedRouteSegments = [];
+    var classObstacles = [];
+    for (var obstacleName in entries) {
+      if (!Object.prototype.hasOwnProperty.call(entries, obstacleName)) continue;
+      var obstacleEntry = entries[obstacleName];
+      classObstacles.push({
+        x1: obstacleEntry.x,
+        y1: obstacleEntry.y,
+        x2: obstacleEntry.x + obstacleEntry.box.width,
+        y2: obstacleEntry.y + obstacleEntry.box.height
+      });
+    }
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw relationships ──
@@ -2669,21 +2789,35 @@
     var exitPortCounts = {}; // "className:side" -> count
     var exitPortIdx = {};    // edgeIndex -> portIndex
     var exitGroups = {};     // "className:side" -> [{idx, targetCx}]
+    var entryPortCounts = {}; // "className:side" -> count
+    var entryPortIdx = {};    // edgeIndex -> portIndex
+    var entryGroups = {};     // "className:side" -> [{idx, sourceCx}]
     for (var epi = 0; epi < otherRels.length; epi++) {
       var epRel = otherRels[epi];
       if (!entries[epRel.from] || !entries[epRel.to]) continue;
       var epFrom = entries[epRel.from];
       var epTo = entries[epRel.to];
       var epFromCx = epFrom.x + epFrom.box.width / 2;
+      var epFromCy = epFrom.y + epFrom.box.height / 2;
       var epToCx = epTo.x + epTo.box.width / 2;
+      var epToCy = epTo.y + epTo.box.height / 2;
       var epSide = (hasInheritAtBottom[epRel.from]) ? 'bottom' :
         (Math.abs(epToCx - epFromCx) >
-         Math.abs(epTo.y + epTo.box.height/2 - epFrom.y - epFrom.box.height/2) * 0.6) ?
+         Math.abs(epToCy - epFromCy) * 0.6) ?
         ((epToCx > epFromCx) ? 'right' : 'left') :
-        ((epTo.y > epFrom.y) ? 'bottom' : 'top');
+        ((epToCy > epFromCy) ? 'bottom' : 'top');
       var epKey = epRel.from + ':' + epSide;
       if (!exitGroups[epKey]) exitGroups[epKey] = [];
       exitGroups[epKey].push({ idx: epi, targetCx: epToCx });
+
+      var entrySide = (hasInheritAtTop[epRel.to]) ? 'top' :
+        (Math.abs(epToCx - epFromCx) >
+         Math.abs(epToCy - epFromCy) * 0.6) ?
+        ((epFromCx > epToCx) ? 'right' : 'left') :
+        ((epFromCy > epToCy) ? 'bottom' : 'top');
+      var entryKey = epRel.to + ':' + entrySide;
+      if (!entryGroups[entryKey]) entryGroups[entryKey] = [];
+      entryGroups[entryKey].push({ idx: epi, sourceCx: epFromCx, sourceCy: epFromCy });
     }
     // Sort each group by target X and assign port indices
     for (var gk in exitGroups) {
@@ -2692,6 +2826,19 @@
       exitPortCounts[gk] = grp.length;
       for (var gi = 0; gi < grp.length; gi++) {
         exitPortIdx[grp[gi].idx] = gi;
+      }
+    }
+    // Sort each target-entry group and assign entry port indices
+    for (var egk in entryGroups) {
+      var egrp = entryGroups[egk];
+      if (egk.indexOf(':left') !== -1 || egk.indexOf(':right') !== -1) {
+        egrp.sort(function(a, b) { return a.sourceCy - b.sourceCy; });
+      } else {
+        egrp.sort(function(a, b) { return a.sourceCx - b.sourceCx; });
+      }
+      entryPortCounts[egk] = egrp.length;
+      for (var egi = 0; egi < egrp.length; egi++) {
+        entryPortIdx[egrp[egi].idx] = egi;
       }
     }
 
@@ -2706,9 +2853,20 @@
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
       // Compute orthogonal route, with port offset for multiple edges from same side
-      var portOffset = exitPortIdx[oi] * 16;
-      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], portOffset, entries, orel.from, orel.to);
+      var srcKey = orel.from + ':' + routeSide(fromE, toE, hasInheritAtBottom[orel.from]);
+      var srcCount = exitPortCounts[srcKey] || 1;
+      var srcPortSpacing = srcCount > 1 ? 22 : 16;
+      var srcCentered = ((exitPortIdx[oi] || 0) - (srcCount - 1) / 2) * srcPortSpacing;
+
+      var tgtSide = routeEntrySide(fromE, toE, hasInheritAtTop[orel.to]);
+      var tgtKey = orel.to + ':' + tgtSide;
+      var tgtCount = entryPortCounts[tgtKey] || 1;
+      var tgtPortSpacing = tgtCount > 1 ? 24 : 14;
+      var tgtCentered = ((entryPortIdx[oi] || 0) - (tgtCount - 1) / 2) * tgtPortSpacing;
+
+      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], srcCentered, entries, orel.from, orel.to, tgtCentered, tgtSide);
       var pathPoints = route.points; // array of {x,y}
+  var routeSegments = UMLShared.buildOrthogonalSegments(pathPoints);
 
       // Build polyline points string
       var pointsStr = '';
@@ -2742,36 +2900,53 @@
         UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, colors.line, false, colors.fill);
       }
 
+      if (orel.navigability === 'bidirectional') {
+        var sourceArrowX = p0.x;
+        var sourceArrowY = p0.y;
+        if (orel.type === 'composition' || orel.type === 'aggregation') {
+          var markerOffset = 16;
+          sourceArrowX += startDx * markerOffset;
+          sourceArrowY += startDy * markerOffset;
+        }
+        UMLShared.drawOpenArrow(decorSvg, sourceArrowX, sourceArrowY, startDx, startDy, colors.line);
+      } else if (orel.navigability === 'non-navigable-both') {
+        UMLShared.drawCrossMarker(decorSvg, p0.x, p0.y, startDx, startDy, colors.line);
+      }
+
       // Target decorations (deferred to draw on top of class boxes)
-      if (orel.type === 'navigable' || orel.type === 'dependency') {
+      if (orel.type === 'dependency' || orel.type === 'navigable' || orel.navigability === 'navigable' || orel.navigability === 'bidirectional') {
         UMLShared.drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
+      } else if (orel.navigability === 'non-navigable' || orel.navigability === 'non-navigable-both') {
+        UMLShared.drawCrossMarker(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
       }
 
       // Determine if the first/last segment is horizontal or vertical
       var isFirstHoriz = (Math.abs(startDy) < 0.1);
       var isLastHoriz = (Math.abs(endDy) < 0.1);
+      var horizMultLane = Math.max(5, Math.round(CFG.labelOffset * 0.75));
 
-      // Draw label at midpoint of the longest segment
+      // Place relationship labels away from boxes and previously routed edges.
       if (orel.label) {
-        // Find the longest segment for label placement
-        var bestSegIdx = 0, bestSegLen = 0;
-        for (var si = 0; si < pathPoints.length - 1; si++) {
-          var segLen = Math.abs(pathPoints[si+1].x - pathPoints[si].x) + Math.abs(pathPoints[si+1].y - pathPoints[si].y);
-          if (segLen > bestSegLen) { bestSegLen = segLen; bestSegIdx = si; }
+        var labelPlacement = UMLShared.placeOrthogonalLabel(orel.label, pathPoints, classObstacles, placedLabels, {
+          fontSize: CFG.fontSizeStereotype,
+          otherSegments: placedRouteSegments,
+          scoreCandidate: function(segment, placement) {
+            var bonus = segment.isH ? 10 : -4;
+            if (placement.anchor === 'middle') bonus += 2;
+            if ((segment.segmentIndex === 0 && orel.fromMult) ||
+                (segment.segmentIndex === pathPoints.length - 2 && orel.toMult)) {
+              bonus -= 10;
+            }
+            return bonus;
+          }
+        });
+        if (labelPlacement) {
+          placedLabels.push(labelPlacement.rect);
+          labelSvg.push('<text x="' + labelPlacement.x + '" y="' + labelPlacement.y +
+            '" text-anchor="' + labelPlacement.anchor + '" font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
+            'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
+            UMLShared.escapeXml(orel.label) + '</text>');
         }
-        var seg0 = pathPoints[bestSegIdx], seg1 = pathPoints[bestSegIdx + 1];
-        var labelX = (seg0.x + seg1.x) / 2;
-        var labelY = (seg0.y + seg1.y) / 2;
-        var isMidHoriz = Math.abs(seg1.y - seg0.y) < 1;
-        if (isMidHoriz) {
-          labelY -= 8;
-        } else {
-          labelX -= 12;
-        }
-        svg.push('<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" ' +
-          'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" ' +
-          'font-style="italic">' + UMLShared.escapeXml(orel.label) + '</text>');
       }
 
       // Draw multiplicities near their respective endpoints, well clear of the box
@@ -2780,7 +2955,7 @@
         if (isFirstHoriz) {
           // Horizontal exit: place multiplicity above the line, near source box edge
           fmx = p0.x + startDx * 6;
-          fmy = p0.y - 8;
+          fmy = p0.y - horizMultLane;
           fmAnchor = (startDx < 0) ? 'end' : 'start';
         } else {
           // Vertical exit: place to the right of the lifeline
@@ -2789,7 +2964,8 @@
           var fromCx0 = fromE.x + fromE.box.width / 2;
           var fromSideBias = (p0.x < fromCx0 - 1) ? -1 : ((p0.x > fromCx0 + 1) ? 1 : 0);
           if (fromSideBias === 0) fromSideBias = (toE.x + toE.box.width / 2 >= fromCx0) ? 1 : -1;
-          fmx = p0.x + fromSideBias * 8;
+          var fromLabelOffset = srcCount > 1 ? (18 + Math.abs(srcCentered)) : 8;
+          fmx = p0.x + fromSideBias * fromLabelOffset;
           fmy = p0.y + startDy * 14 + fromInheritOffset;
           fmAnchor = (fromSideBias < 0) ? 'end' : 'start';
         }
@@ -2803,22 +2979,33 @@
         if (isLastHoriz) {
           // Horizontal entry: place multiplicity above the line, near target box edge
           tmx = pLast.x - endDx * 6;
-          tmy = pLast.y - 8;
+          tmy = pLast.y - horizMultLane;
           // Anchor toward the target box
           var tmAnchor = (endDx > 0) ? 'end' : 'start';
         } else {
-          var toCx0 = toE.x + toE.box.width / 2;
-          var toSideBias = (pLast.x < toCx0 - 1) ? -1 : ((pLast.x > toCx0 + 1) ? 1 : 0);
-          if (toSideBias === 0) toSideBias = (fromE.x + fromE.box.width / 2 <= toCx0) ? -1 : 1;
-          tmx = pLast.x + toSideBias * 8;
-          tmy = pLast.y - endDy * 14;
-          tmAnchor = (toSideBias < 0) ? 'end' : 'start';
+          var prevSegStart = pathPoints.length >= 3 ? pathPoints[pathPoints.length - 3] : null;
+          var prevSegIsHoriz = prevSegStart && Math.abs(prevSegStart.y - pPrev.y) < 1;
+          if (tgtCount > 1 && prevSegIsHoriz) {
+            tmx = (prevSegStart.x + pPrev.x) / 2;
+            tmy = pPrev.y - horizMultLane;
+            tmAnchor = 'middle';
+          } else {
+            var toCx0 = toE.x + toE.box.width / 2;
+            var toSideBias = (pLast.x < toCx0 - 1) ? -1 : ((pLast.x > toCx0 + 1) ? 1 : 0);
+            if (toSideBias === 0) toSideBias = (fromE.x + fromE.box.width / 2 <= toCx0) ? -1 : 1;
+            var toLabelOffset = tgtCount > 1 ? (18 + Math.abs(tgtCentered)) : 8;
+            tmx = pLast.x + toSideBias * toLabelOffset;
+            tmy = pLast.y - endDy * 14;
+            tmAnchor = (toSideBias < 0) ? 'end' : 'start';
+          }
         }
         svg.push('<text x="' + tmx + '" y="' + tmy + '" text-anchor="' + (tmAnchor || 'start') + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
           'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.toMult) + '</text>');
       }
+
+      placedRouteSegments = placedRouteSegments.concat(routeSegments);
     }
 
     // ── Draw class boxes (on top of lines) ──
@@ -2910,6 +3097,9 @@
     // ── Draw arrowhead decorations on top of class boxes ──
     for (var di = 0; di < decorSvg.length; di++) svg.push(decorSvg[di]);
 
+    // ── Draw relationship labels on top of lines and class boxes ──
+    for (var lsi = 0; lsi < labelSvg.length; lsi++) svg.push(labelSvg[lsi]);
+
     // ── Draw notes (using pre-computed positions) ──
     for (var ni = 0; ni < notePositions.length; ni++) {
       var np2 = notePositions[ni];
@@ -2941,8 +3131,9 @@
    * Uses right-angle bends only when necessary.
    * Returns { points: [{x,y}, ...] } with only horizontal/vertical segments.
    */
-  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId) {
+  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId, targetEntryOffset, targetEntrySide) {
     portOffset = portOffset || 0;
+    targetEntryOffset = targetEntryOffset || 0;
     var fromCx = fromE.x + fromE.box.width / 2;
     var fromCy = fromE.y + fromE.box.height / 2 + portOffset;
     var fromL = fromE.x, fromR = fromE.x + fromE.box.width;
@@ -2969,6 +3160,22 @@
       return clamp(toCx + offsetDir * offsetMag, toL + 10, toR - 10);
     }
 
+    function adjustedTargetTopX() {
+      return clamp(topEntryX() + targetEntryOffset, toL + 10, toR - 10);
+    }
+
+    function adjustedTargetBottomX() {
+      return clamp(toCx + targetEntryOffset, toL + 10, toR - 10);
+    }
+
+    function adjustedTargetLeftY() {
+      return clamp(toCy + targetEntryOffset, toT + 10, toB - 10);
+    }
+
+    function adjustedTargetRightY() {
+      return clamp(toCy + targetEntryOffset, toT + 10, toB - 10);
+    }
+
     var points;
 
     // If we must avoid bottom of source (inheritance triangle there),
@@ -2981,7 +3188,9 @@
       if (toCy > fromCy) {
         // Target is below: exit from bottom edge at triangle base, offset X to avoid triangle
         var exitBottomX;
-        var baseOffset = triW + 8 + portOffset * portGap / 16;
+        var inheritedCenterClearance = triW + CFG.diamondW + 6;
+        var sideAwareOffset = (toCx >= fromCx) ? Math.max(0, portOffset) : Math.max(0, -portOffset);
+        var baseOffset = inheritedCenterClearance + sideAwareOffset * portGap / 16;
         if (toCx >= fromCx) {
           exitBottomX = fromCx + baseOffset;
         } else {
@@ -2994,7 +3203,7 @@
         var routeStartY = exitBottomY + diamondLen; // route continues from diamond tip
         // Stagger horizontal runs by port index to prevent crossings
         var horizY = routeStartY + (portOffset / 16) * 12 + 4;
-        var targetTopX = topEntryX();
+        var targetTopX = adjustedTargetTopX();
         points = [
           { x: exitBottomX, y: exitBottomY },
           { x: exitBottomX, y: horizY },
@@ -3022,7 +3231,7 @@
       var connX = (overlapL + overlapR) / 2;
 
       if (fromCy < toCy) {
-        var entryX = topEntryX();
+        var entryX = adjustedTargetTopX();
         if (Math.abs(entryX - connX) < 1) {
           points = [{ x: connX, y: fromB }, { x: connX, y: toT }];
         } else {
@@ -3076,7 +3285,7 @@
         // Primarily vertical separation — exit from bottom/top, bend horizontally
         if (dy > 0) {
           var midY = (fromB + toT) / 2;
-          var topX = topEntryX();
+          var topX = adjustedTargetTopX();
           points = [
             { x: fromCx, y: fromB },
             { x: fromCx, y: midY },
@@ -3098,50 +3307,54 @@
         if (dx > 0) {
           if (dy > 10 && fromB < toT) {
             // Target is right and below: exit right, then enter from top
-            var topX2 = topEntryX();
+            var topX2 = adjustedTargetTopX();
             points = [
               { x: fromR, y: fromCy },
               { x: topX2, y: fromCy },
               { x: topX2, y: toT }
             ];
           } else if (dy < -10 && fromT > toB) {
+            var botX = adjustedTargetBottomX();
             // Target is right and above: exit right, then enter from bottom
             points = [
               { x: fromR, y: fromCy },
-              { x: toCx, y: fromCy },
-              { x: toCx, y: toB }
+              { x: botX, y: fromCy },
+              { x: botX, y: toB }
             ];
           } else {
             // Same vertical level: enter from left side
+            var targetLeftY = (targetEntrySide === 'left') ? adjustedTargetLeftY() : toCy;
             var midX = (fromR + toL) / 2;
             points = [
               { x: fromR, y: fromCy },
               { x: midX, y: fromCy },
-              { x: midX, y: toCy },
-              { x: toL, y: toCy }
+              { x: midX, y: targetLeftY },
+              { x: toL, y: targetLeftY }
             ];
           }
         } else {
           if (dy > 10 && fromB < toT) {
-            var topX3 = topEntryX();
+            var topX3 = adjustedTargetTopX();
             points = [
               { x: fromL, y: fromCy },
               { x: topX3, y: fromCy },
               { x: topX3, y: toT }
             ];
           } else if (dy < -10 && fromT > toB) {
+            var botX2 = adjustedTargetBottomX();
             points = [
               { x: fromL, y: fromCy },
-              { x: toCx, y: fromCy },
-              { x: toCx, y: toB }
+              { x: botX2, y: fromCy },
+              { x: botX2, y: toB }
             ];
           } else {
+            var targetRightY = (targetEntrySide === 'right') ? adjustedTargetRightY() : toCy;
             var midX2 = (fromL + toR) / 2;
             points = [
               { x: fromL, y: fromCy },
               { x: midX2, y: fromCy },
-              { x: midX2, y: toCy },
-              { x: toR, y: toCy }
+              { x: midX2, y: targetRightY },
+              { x: toR, y: targetRightY }
             ];
           }
         }
@@ -3205,6 +3418,30 @@
     points = orthogonalize(points);
 
     return { points: points };
+  }
+
+  function routeSide(fromE, toE, avoidFromBottom) {
+    if (avoidFromBottom) return 'bottom';
+    var fromCx = fromE.x + fromE.box.width / 2;
+    var fromCy = fromE.y + fromE.box.height / 2;
+    var toCx = toE.x + toE.box.width / 2;
+    var toCy = toE.y + toE.box.height / 2;
+    if (Math.abs(toCx - fromCx) > Math.abs(toCy - fromCy) * 0.6) {
+      return (toCx > fromCx) ? 'right' : 'left';
+    }
+    return (toCy > fromCy) ? 'bottom' : 'top';
+  }
+
+  function routeEntrySide(fromE, toE, avoidToTop) {
+    if (avoidToTop) return 'top';
+    var fromCx = fromE.x + fromE.box.width / 2;
+    var fromCy = fromE.y + fromE.box.height / 2;
+    var toCx = toE.x + toE.box.width / 2;
+    var toCy = toE.y + toE.box.height / 2;
+    if (Math.abs(toCx - fromCx) > Math.abs(toCy - fromCy) * 0.6) {
+      return (fromCx > toCx) ? 'right' : 'left';
+    }
+    return (fromCy > toCy) ? 'bottom' : 'top';
   }
 
   /**
@@ -5129,6 +5366,7 @@
     portPad: 40,    // min vertical pitch between ports (must fit port square + label text below)
     labelBgPad: 4,
     ifaceRadius: 9,   // radius of lollipop circle / socket arc
+    ifaceSocketRadius: 13,
     ifaceStick: 20,   // length of line from component edge to interface symbol center
   };
 
@@ -5934,8 +6172,9 @@
         var pp2 = e2.portPositions[pn2];
         if (pp2.kind === 'provide' || pp2.kind === 'require') {
           var sideFactor = pp2.side === 'left' ? -1 : 1;
-          var ifaceCenterX = pp2.cx + sideFactor * (CFG.ifaceStick + CFG.ifaceRadius);
-          var ifaceRadius = CFG.ifaceRadius + 2;
+          var symbolRadius = pp2.kind === 'require' ? CFG.ifaceSocketRadius : CFG.ifaceRadius;
+          var ifaceCenterX = pp2.cx + sideFactor * (CFG.ifaceStick + symbolRadius);
+          var ifaceRadius = symbolRadius + 2;
           var ifaceLabelHalf = UMLShared.textWidth(pp2.label || pn2, false, portLabelFs) / 2 + 4;
           minX = Math.min(minX, ifaceCenterX - Math.max(ifaceRadius, ifaceLabelHalf));
           maxX = Math.max(maxX, ifaceCenterX + Math.max(ifaceRadius, ifaceLabelHalf));
@@ -7124,38 +7363,41 @@
         var bsSeg0 = points[bsSi], bsSeg1 = points[bsSi + 1];
         var bsMx = (bsSeg0.x + bsSeg1.x) / 2;
         var bsMy = (bsSeg0.y + bsSeg1.y) / 2;
-        var bsR = CFG.ifaceRadius;
+        var ballR = CFG.ifaceRadius;
+        var socketR = CFG.ifaceSocketRadius;
         var bsIsH = Math.abs(bsSeg1.y - bsSeg0.y) < 1;
 
-        // Compute ball/socket positions and split points for the line gap
+        // Compute concentric ball/socket positions and split points for the line gap.
+        // The socket and lollipop must share the same center so the assembly reads
+        // as a single combined symbol rather than two nearby shapes.
         var ballCx, ballCy, socketCx, socketCy, gapStart, gapEnd;
         if (bsIsH) {
           var fromIsLeft = bsSeg0.x < bsSeg1.x;
           var ballOnLeft = (fromKind === 'provide') ? fromIsLeft : !fromIsLeft;
-          ballCx = ballOnLeft ? bsMx - bsR / 2 : bsMx + bsR / 2;
+          ballCx = bsMx;
           ballCy = bsMy;
-          socketCx = ballOnLeft ? bsMx + bsR / 2 : bsMx - bsR / 2;
+          socketCx = bsMx;
           socketCy = bsMy;
           if (ballOnLeft) {
-            gapStart = { x: ballCx - bsR, y: bsMy };
-            gapEnd = { x: socketCx + bsR, y: bsMy };
+            gapStart = { x: ballCx - ballR, y: bsMy };
+            gapEnd = { x: socketCx + socketR, y: bsMy };
           } else {
-            gapStart = { x: socketCx - bsR, y: bsMy };
-            gapEnd = { x: ballCx + bsR, y: bsMy };
+            gapStart = { x: socketCx - socketR, y: bsMy };
+            gapEnd = { x: ballCx + ballR, y: bsMy };
           }
         } else {
           var fromIsTop = bsSeg0.y < bsSeg1.y;
           var ballOnTop = (fromKind === 'provide') ? fromIsTop : !fromIsTop;
           ballCx = bsMx;
-          ballCy = ballOnTop ? bsMy - bsR / 2 : bsMy + bsR / 2;
+          ballCy = bsMy;
           socketCx = bsMx;
-          socketCy = ballOnTop ? bsMy + bsR / 2 : bsMy - bsR / 2;
+          socketCy = bsMy;
           if (ballOnTop) {
-            gapStart = { x: bsMx, y: ballCy - bsR };
-            gapEnd = { x: bsMx, y: socketCy + bsR };
+            gapStart = { x: bsMx, y: ballCy - ballR };
+            gapEnd = { x: bsMx, y: socketCy + socketR };
           } else {
-            gapStart = { x: bsMx, y: socketCy - bsR };
-            gapEnd = { x: bsMx, y: ballCy + bsR };
+            gapStart = { x: bsMx, y: socketCy - socketR };
+            gapEnd = { x: bsMx, y: ballCy + ballR };
           }
         }
 
@@ -7176,18 +7418,18 @@
           '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
 
         // Draw ball (filled circle)
-        svg.push('<circle cx="' + ballCx + '" cy="' + ballCy + '" r="' + bsR +
+        svg.push('<circle cx="' + ballCx + '" cy="' + ballCy + '" r="' + ballR +
           '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
         // Draw socket arc
         if (bsIsH) {
-          var socketSweep = (ballCx < socketCx) ? '1' : '0';
-          svg.push('<path d="M' + socketCx + ',' + (socketCy - bsR) + ' A' + bsR + ',' + bsR +
-            ' 0 0,' + socketSweep + ' ' + socketCx + ',' + (socketCy + bsR) +
+          var socketSweep = ballOnLeft ? '1' : '0';
+          svg.push('<path d="M' + socketCx + ',' + (socketCy - socketR) + ' A' + socketR + ',' + socketR +
+            ' 0 0,' + socketSweep + ' ' + socketCx + ',' + (socketCy + socketR) +
             '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
         } else {
-          var vSweep = (ballCy < socketCy) ? '1' : '0';
-          svg.push('<path d="M' + (socketCx - bsR) + ',' + socketCy + ' A' + bsR + ',' + bsR +
-            ' 0 0,' + vSweep + ' ' + (socketCx + bsR) + ',' + socketCy +
+          var vSweep = ballOnTop ? '1' : '0';
+          svg.push('<path d="M' + (socketCx - socketR) + ',' + socketCy + ' A' + socketR + ',' + socketR +
+            ' 0 0,' + vSweep + ' ' + (socketCx + socketR) + ',' + socketCy +
             '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
         }
       } else {
@@ -7315,9 +7557,10 @@
           // ── Interface port: lollipop (provide) or socket (require) ──
           if (!joinedPorts[pname]) {
             // Standalone interface — draw extending from component edge
-            var ifR = CFG.ifaceRadius;
+            var ifR = pp.kind === 'require' ? CFG.ifaceSocketRadius : CFG.ifaceRadius;
             var ifS = CFG.ifaceStick;
             var ifCx, ifCy = pp.cy;
+            var labelX, labelY, labelAnchor;
 
             if (pp.side === 'right') {
               ifCx = pp.cx + ifS + ifR;
@@ -7334,6 +7577,9 @@
                   ' 0 0,0 ' + ifCx + ',' + (ifCy + ifR) +
                   '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               }
+              labelX = ifCx + ifR + 6;
+              labelAnchor = 'start';
+              labelY = ifCy - ifR + 4;
             } else {
               ifCx = pp.cx - ifS - ifR;
               svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + (ifCx + ifR) + '" y2="' + ifCy +
@@ -7347,10 +7593,12 @@
                   ' 0 0,1 ' + ifCx + ',' + (ifCy + ifR) +
                   '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               }
+              labelX = ifCx - ifR - 6;
+              labelAnchor = 'end';
+              labelY = ifCy - ifR + 4;
             }
-            // Interface labels read more clearly above the symbol and stay off connector lanes.
-            svg.push('<text x="' + ifCx + '" y="' + (ifCy - ifR - 4) +
-              '" text-anchor="middle" font-size="' + portLblFs2 + '"' +
+            svg.push('<text x="' + labelX + '" y="' + labelY +
+              '" text-anchor="' + labelAnchor + '" font-size="' + portLblFs2 + '"' +
               ' font-style="italic" fill="' + colors.text +
               '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
               UMLShared.escapeXml(plText) + '</text>');
@@ -9922,18 +10170,49 @@
  *     <span class="uml-sym" data-diagram="class" data-sym="..|>"></span>   Realization
  *     <span class="uml-sym" data-diagram="class" data-sym="--"></span>     Association
  *     <span class="uml-sym" data-diagram="class" data-sym="-->"></span>    Navigable association
+ *     <span class="uml-sym" data-diagram="class" data-sym="<-->"></span>   Bidirectional navigable association
+ *     <span class="uml-sym" data-diagram="class" data-sym="--x"></span>    Non-navigable association
+ *     <span class="uml-sym" data-diagram="class" data-sym="x--x"></span>   Non-navigable association on both ends
  *     <span class="uml-sym" data-diagram="class" data-sym="*--"></span>    Composition
+ *     <span class="uml-sym" data-diagram="class" data-sym="*-->"></span>   Composition + navigable target
+ *     <span class="uml-sym" data-diagram="class" data-sym="*<-->"></span>  Composition + bidirectional navigability
+ *     <span class="uml-sym" data-diagram="class" data-sym="*--x"></span>   Composition + non-navigable target
  *     <span class="uml-sym" data-diagram="class" data-sym="o--"></span>    Aggregation
+ *     <span class="uml-sym" data-diagram="class" data-sym="o-->"></span>   Aggregation + navigable target
+ *     <span class="uml-sym" data-diagram="class" data-sym="o<-->"></span>  Aggregation + bidirectional navigability
+ *     <span class="uml-sym" data-diagram="class" data-sym="o--x"></span>   Aggregation + non-navigable target
  *     <span class="uml-sym" data-diagram="class" data-sym="..>"></span>    Dependency
+ *     <span class="uml-sym" data-diagram="class" data-sym="box" data-label="Customer"></span> Class box with custom label
  *
  *   Sequence diagram symbols (data-diagram="sequence"):
  *     <span class="uml-sym" data-diagram="sequence" data-sym="->"></span>   Synchronous call
  *     <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span>  Return / response
  *     <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span>  Asynchronous message
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="head-named"></span>  Named instance lifeline head
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="head-anon"></span>   Anonymous instance lifeline head
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="head-multi"></span>  Multi-object lifeline head
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-opt"></span>    opt fragment
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-alt"></span>    alt fragment
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span>   loop fragment
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-par"></span>    par fragment
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-break"></span>  break fragment
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-critical"></span> critical fragment
+ *     <span class="uml-sym" data-diagram="sequence" data-sym="frag-ref"></span>    ref fragment
  *
  *   State diagram symbols (data-diagram="state"):
  *     <span class="uml-sym" data-diagram="state" data-sym="-->"></span>    Transition
- *     <span class="uml-sym" data-diagram="state" data-sym="[*]"></span>    Initial / final pseudo-state
+ *     <span class="uml-sym" data-diagram="state" data-sym="[*]"></span>    Initial state
+ *     <span class="uml-sym" data-diagram="state" data-sym="regular"></span> Regular state
+ *     <span class="uml-sym" data-diagram="state" data-sym="final"></span>  Final state
+ *
+ *   Component diagram symbols (data-diagram="component"):
+ *     <span class="uml-sym" data-diagram="component" data-sym="portin"></span>   Incoming port
+ *     <span class="uml-sym" data-diagram="component" data-sym="portout"></span>  Outgoing port
+ *     <span class="uml-sym" data-diagram="component" data-sym="provide"></span>  Provided interface
+ *     <span class="uml-sym" data-diagram="component" data-sym="require"></span>  Required interface
+ *     <span class="uml-sym" data-diagram="component" data-sym="-->"></span>      Assembly connector
+ *     <span class="uml-sym" data-diagram="component" data-sym="..>"></span>      Dependency
+ *     <span class="uml-sym" data-diagram="component" data-sym="--"></span>       Plain link
  */
 (function () {
   'use strict';
@@ -9947,9 +10226,35 @@
       return v || fb;
     };
     return {
+      stroke: get('--uml-stroke', '#4060a0'),
       line: get('--uml-line', '#444'),
       fill: get('--uml-fill', '#fff'),
+      headerFill: get('--uml-header-fill', '#d0ddef'),
+      text: get('--uml-text', '#222'),
     };
+  }
+
+  function getTypography(el) {
+    var cs = window.getComputedStyle(el);
+    var size = parseFloat(cs.fontSize);
+    if (!isFinite(size) || size <= 0) size = 16;
+    return {
+      fontSize: size,
+      fontFamily: cs.fontFamily || 'Arial, sans-serif'
+    };
+  }
+
+  function escapeXml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function approxTextWidth(text, fontSize) {
+    return Math.max(fontSize * 2.2, String(text).length * fontSize * 0.62);
   }
 
   function ln(x1, x2, c, dash) {
@@ -9962,9 +10267,30 @@
       (ax - 10) + ',' + (CY + 6) + '" fill="none" stroke="' + c + '" stroke-width="1.5"/>';
   }
 
+  function openArrowLeft(ax, c) {
+    return '<polyline points="' + (ax + 10) + ',' + (CY - 6) + ' ' + ax + ',' + CY + ' ' +
+      (ax + 10) + ',' + (CY + 6) + '" fill="none" stroke="' + c + '" stroke-width="1.5"/>';
+  }
+
   function filledArrow(ax, c) {
     return '<polygon points="' + ax + ',' + CY + ' ' + (ax - 10) + ',' + (CY - 5) + ' ' +
       (ax - 10) + ',' + (CY + 5) + '" fill="' + c + '" stroke="none"/>';
+  }
+
+  function crossMarker(ax, c) {
+    var cx = ax - 6;
+    return '<line x1="' + (cx - 6) + '" y1="' + (CY - 6) + '" x2="' + (cx + 6) + '" y2="' + (CY + 6) +
+      '" stroke="' + c + '" stroke-width="1.5"/>' +
+      '<line x1="' + (cx - 6) + '" y1="' + (CY + 6) + '" x2="' + (cx + 6) + '" y2="' + (CY - 6) +
+      '" stroke="' + c + '" stroke-width="1.5"/>';
+  }
+
+  function crossMarkerLeft(ax, c) {
+    var cx = ax + 6;
+    return '<line x1="' + (cx - 6) + '" y1="' + (CY - 6) + '" x2="' + (cx + 6) + '" y2="' + (CY + 6) +
+      '" stroke="' + c + '" stroke-width="1.5"/>' +
+      '<line x1="' + (cx - 6) + '" y1="' + (CY + 6) + '" x2="' + (cx + 6) + '" y2="' + (CY - 6) +
+      '" stroke="' + c + '" stroke-width="1.5"/>';
   }
 
   function hollowTriangle(c, fill) {
@@ -9977,6 +10303,96 @@
     var dx = PAD, cx = dx + 7, ex = dx + 14;
     return '<polygon points="' + dx + ',' + CY + ' ' + cx + ',' + (CY - 6) + ' ' + ex + ',' + CY + ' ' + cx + ',' + (CY + 6) +
       '" fill="' + (filled ? c : fill) + '" stroke="' + c + '" stroke-width="1.5"/>';
+  }
+
+  function portBox(x, c, fill) {
+    return '<rect x="' + x + '" y="' + (CY - 5) + '" width="10" height="10" fill="' + fill + '" stroke="' + c + '" stroke-width="1.5"/>';
+  }
+
+  function componentEdge(x, c) {
+    return '<line x1="' + x + '" y1="' + (CY - 9) + '" x2="' + x + '" y2="' + (CY + 9) + '" stroke="' + c + '" stroke-width="1.5"/>';
+  }
+
+  function lollipop(x, lineColor, fill, radius, stickLen) {
+    var r = radius || 9;
+    var stick = stickLen || 20;
+    var cx = x + stick + r;
+    return '<line x1="' + x + '" y1="' + CY + '" x2="' + (cx - r) + '" y2="' + CY + '" stroke="' + lineColor + '" stroke-width="1.5"/>' +
+      '<circle cx="' + cx + '" cy="' + CY + '" r="' + r + '" fill="' + fill + '" stroke="' + lineColor + '" stroke-width="1.5"/>';
+  }
+
+  function socketLeft(x, lineColor, radius, stickLen) {
+    var r = radius || 13;
+    var stick = stickLen || 20;
+    var cx = x + stick + r;
+    return '<line x1="' + x + '" y1="' + CY + '" x2="' + (cx - r) + '" y2="' + CY + '" stroke="' + lineColor + '" stroke-width="1.5"/>' +
+      '<path d="M' + cx + ',' + (CY - r) + ' A' + r + ',' + r + ' 0 0,0 ' + cx + ',' + (CY + r) + '" fill="none" stroke="' + lineColor + '" stroke-width="1.5"/>';
+  }
+
+  function socketRight(x, lineColor, radius, stickLen) {
+    var r = radius || 13;
+    var stick = stickLen || 20;
+    var cx = x;
+    var edgeX = cx + r + stick;
+    return '<path d="M' + cx + ',' + (CY - r) + ' A' + r + ',' + r + ' 0 0,1 ' + cx + ',' + (CY + r) + '" fill="none" stroke="' + lineColor + '" stroke-width="1.5"/>' +
+      '<line x1="' + (cx + r) + '" y1="' + CY + '" x2="' + edgeX + '" y2="' + CY + '" stroke="' + lineColor + '" stroke-width="1.5"/>';
+  }
+
+  function objectHead(label, c, opts) {
+    var options = opts || {};
+    var fontSize = options.fontSize || 16;
+    var fontFamily = options.fontFamily || 'Arial, sans-serif';
+    var padX = Math.max(10, fontSize * 0.65);
+    var headH = Math.max(24, fontSize * 1.45);
+    var tailH = Math.max(10, fontSize * 0.7);
+    var x = 2;
+    var y = 1.5;
+    var w = Math.max(96, approxTextWidth(label, fontSize) + padX * 2);
+    var h = headH;
+    var totalH = y + h + tailH + 1.5;
+    var cx = x + w / 2;
+    var textY = y + h / 2 + fontSize * 0.33;
+    var svg = '';
+    if (options.multi) {
+      svg += '<rect x="' + (x + 6) + '" y="' + (y + 3) + '" width="' + w + '" height="' + h + '" fill="' + c.headerFill + '" stroke="' + c.stroke + '" stroke-width="1.2" opacity="0.7"/>';
+    }
+    svg += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c.headerFill + '" stroke="' + c.stroke + '" stroke-width="1.5"/>';
+    svg += '<text x="' + cx + '" y="' + textY + '" text-anchor="middle" font-weight="bold" font-size="' + fontSize + '" fill="' + c.text + '" font-family="' + fontFamily + '"' +
+      (options.underline ? ' text-decoration="underline"' : '') + '>' + escapeXml(label) + '</text>';
+    svg += '<line x1="' + cx + '" y1="' + (y + h) + '" x2="' + cx + '" y2="' + totalH + '" stroke="' + c.line + '" stroke-width="1.5" stroke-dasharray="4,3"/>';
+    return { inner: svg, width: w + (options.multi ? 8 : 2), height: totalH + 1 };
+  }
+
+  function classBox(label, c, opts) {
+    var options = opts || {};
+    var fontSize = options.fontSize || 16;
+    var fontFamily = options.fontFamily || 'Arial, sans-serif';
+    var padX = Math.max(12, fontSize * 0.75);
+    var nameH = Math.max(24, fontSize * 1.5);
+    var w = Math.max(100, approxTextWidth(label, fontSize) + padX * 2);
+    var h = nameH;
+    var textY = 1.5 + h / 2;
+    var svg = '<rect x="1.5" y="1.5" width="' + w + '" height="' + h + '" fill="' + c.headerFill + '" stroke="' + c.stroke + '" stroke-width="1.5"/>';
+    svg += '<text x="' + (w / 2 + 1.5) + '" y="' + textY + '" text-anchor="middle" dominant-baseline="middle" font-weight="bold" font-size="' + fontSize + '" fill="' + c.text + '" font-family="' + fontFamily + '">' + escapeXml(label) + '</text>';
+    return { inner: svg, width: w + 3, height: h + 3 };
+  }
+
+  function fragmentBox(label, c, opts) {
+    var options = opts || {};
+    var x = 4;
+    var y = 2;
+    var w = 72;
+    var h = 20;
+    var foldSize = 4;
+    var labelW = Math.max(34, Math.min(56, 18 + label.length * 7.6));
+    var labelH = 14;
+    var svg = '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="none" stroke="' + c.line + '" stroke-width="1"/>';
+    svg += '<polygon points="' + x + ',' + y + ' ' + (x + labelW) + ',' + y + ' ' + (x + labelW) + ',' + (y + labelH - foldSize) + ' ' + (x + labelW - foldSize) + ',' + (y + labelH) + ' ' + x + ',' + (y + labelH) + '" fill="' + c.headerFill + '" stroke="' + c.line + '" stroke-width="1"/>';
+    svg += '<text x="' + (x + 6) + '" y="' + (y + 10.8) + '" font-size="9.6" font-weight="bold" fill="' + c.text + '" font-family="Arial, sans-serif">' + label.toUpperCase() + '</text>';
+    if (options.divider) {
+      svg += '<line x1="' + x + '" y1="' + (y + 15) + '" x2="' + (x + w) + '" y2="' + (y + 15) + '" stroke="' + c.line + '" stroke-width="1" stroke-dasharray="4,3"/>';
+    }
+    return svg;
   }
 
   var SYMBOLS = {
@@ -9993,14 +10409,46 @@
       '-->': function (c) {
         return ln(PAD, W - PAD, c.line, false) + openArrow(W - PAD, c.line);
       },
+      '<-->': function (c) {
+        return ln(PAD, W - PAD, c.line, false) + openArrowLeft(PAD, c.line) + openArrow(W - PAD, c.line);
+      },
+      '--x': function (c) {
+        return ln(PAD, W - PAD, c.line, false) + crossMarker(W - PAD, c.line);
+      },
+      'x--x': function (c) {
+        return ln(PAD, W - PAD, c.line, false) + crossMarkerLeft(PAD, c.line) + crossMarker(W - PAD, c.line);
+      },
       '*--': function (c) {
         return diamond(true, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false);
+      },
+      '*-->': function (c) {
+        return diamond(true, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false) + openArrow(W - PAD, c.line);
+      },
+      '*<-->': function (c) {
+        return diamond(true, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false) + openArrowLeft(PAD + 16, c.line) + openArrow(W - PAD, c.line);
+      },
+      '*--x': function (c) {
+        return diamond(true, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false) + crossMarker(W - PAD, c.line);
       },
       'o--': function (c) {
         return diamond(false, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false);
       },
+      'o-->': function (c) {
+        return diamond(false, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false) + openArrow(W - PAD, c.line);
+      },
+      'o<-->': function (c) {
+        return diamond(false, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false) + openArrowLeft(PAD + 16, c.line) + openArrow(W - PAD, c.line);
+      },
+      'o--x': function (c) {
+        return diamond(false, c.line, c.fill) + ln(PAD + 14, W - PAD, c.line, false) + crossMarker(W - PAD, c.line);
+      },
       '..>': function (c) {
         return ln(PAD, W - PAD, c.line, true) + openArrow(W - PAD, c.line);
+      },
+      'box': function (c, el) {
+        var t = getTypography(el);
+        var label = el.getAttribute('data-label') || 'Customer';
+        return classBox(label, c, { fontSize: t.fontSize, fontFamily: t.fontFamily });
       },
     },
     sequence: {
@@ -10013,6 +10461,42 @@
       '->>': function (c) {
         return ln(PAD, W - PAD, c.line, false) + openArrow(W - PAD, c.line);
       },
+      'head-named': function (c, el) {
+        var t = getTypography(el);
+        var label = el.getAttribute('data-label') || 'objectName : ClassName';
+        return objectHead(label, c, { underline: true, fontSize: t.fontSize, fontFamily: t.fontFamily });
+      },
+      'head-anon': function (c, el) {
+        var t = getTypography(el);
+        var label = el.getAttribute('data-label') || ': ClassName';
+        return objectHead(label, c, { underline: true, fontSize: t.fontSize, fontFamily: t.fontFamily });
+      },
+      'head-multi': function (c, el) {
+        var t = getTypography(el);
+        var label = el.getAttribute('data-label') || 'primary : Server';
+        return objectHead(label, c, { underline: true, multi: true, fontSize: t.fontSize, fontFamily: t.fontFamily });
+      },
+      'frag-opt': function (c) {
+        return fragmentBox('opt', c);
+      },
+      'frag-alt': function (c) {
+        return fragmentBox('alt', c, { divider: true });
+      },
+      'frag-loop': function (c) {
+        return fragmentBox('loop', c);
+      },
+      'frag-par': function (c) {
+        return fragmentBox('par', c, { divider: true });
+      },
+      'frag-break': function (c) {
+        return fragmentBox('break', c);
+      },
+      'frag-critical': function (c) {
+        return fragmentBox('critical', c);
+      },
+      'frag-ref': function (c) {
+        return fragmentBox('ref', c);
+      },
     },
     state: {
       '-->': function (c) {
@@ -10021,9 +10505,51 @@
       '[*]': function (c) {
         return '<circle cx="' + (PAD + 8) + '" cy="' + CY + '" r="8" fill="' + c.line + '"/>';
       },
+      'regular': function (c) {
+        return '<rect x="' + (PAD + 4) + '" y="' + (CY - 7) + '" width="34" height="14" rx="6" ry="6" fill="' + c.headerFill + '" stroke="' + c.stroke + '" stroke-width="1.5"/>';
+      },
+      'final': function (c) {
+        return '<circle cx="' + (PAD + 10) + '" cy="' + CY + '" r="10" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.5"/>' +
+          '<circle cx="' + (PAD + 10) + '" cy="' + CY + '" r="5.5" fill="' + c.line + '"/>';
+      },
       '[*]-->': function (c) {
         return '<circle cx="' + (PAD + 8) + '" cy="' + CY + '" r="8" fill="' + c.line + '"/>' +
           ln(PAD + 16, W - PAD, c.line, false) + filledArrow(W - PAD, c.line);
+      },
+    },
+    component: {
+      'portin': function (c) {
+        var edgeX = W - PAD - 12;
+        var boxX = edgeX - 5;
+        var arrowTipX = boxX;
+        return componentEdge(edgeX, c.stroke) +
+          portBox(boxX, c.stroke, c.fill) +
+          '<line x1="' + PAD + '" y1="' + CY + '" x2="' + (arrowTipX - 8) + '" y2="' + CY + '" stroke="' + c.line + '" stroke-width="1.5"/>' +
+          filledArrow(arrowTipX, c.line);
+      },
+      'portout': function (c) {
+        var edgeX = PAD + 12;
+        var boxX = edgeX - 5;
+        var arrowTipX = W - PAD;
+        return componentEdge(edgeX, c.stroke) +
+          portBox(boxX, c.stroke, c.fill) +
+          '<line x1="' + (boxX + 10) + '" y1="' + CY + '" x2="' + (arrowTipX - 10) + '" y2="' + CY + '" stroke="' + c.line + '" stroke-width="1.5"/>' +
+          filledArrow(arrowTipX, c.line);
+      },
+      'provide': function (c) {
+        return lollipop(PAD + 6, c.line, c.fill, 9, 20);
+      },
+      'require': function (c) {
+        return socketRight(PAD + 8, c.line, 13, 20);
+      },
+      '--': function (c) {
+        return ln(PAD, W - PAD, c.line, false);
+      },
+      '-->': function (c) {
+        return ln(PAD, W - PAD, c.line, false) + openArrow(W - PAD, c.line);
+      },
+      '..>': function (c) {
+        return ln(PAD, W - PAD, c.line, true) + openArrow(W - PAD, c.line);
       },
     },
   };
@@ -10034,9 +10560,12 @@
     var diagSymbols = SYMBOLS[diagram];
     if (!diagSymbols || !diagSymbols[sym]) return;
     var colors = getColors(el);
-    var inner = diagSymbols[sym](colors);
-    el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H +
-      '" viewBox="0 0 ' + W + ' ' + H + '" style="vertical-align:middle;overflow:visible;">' +
+    var rendered = diagSymbols[sym](colors, el);
+    var inner = rendered && typeof rendered === 'object' ? rendered.inner : rendered;
+    var width = rendered && typeof rendered === 'object' && rendered.width ? rendered.width : W;
+    var height = rendered && typeof rendered === 'object' && rendered.height ? rendered.height : H;
+    el.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height +
+      '" viewBox="0 0 ' + width + ' ' + height + '" style="vertical-align:middle;overflow:visible;">' +
       inner + '</svg>';
   }
 
