@@ -1808,6 +1808,14 @@
       }
     }
 
+    // Auto-upgrade: generalization targeting an interface becomes realization
+    for (var ri2 = 0; ri2 < relationships.length; ri2++) {
+      var rel2 = relationships[ri2];
+      if (rel2.type === 'generalization' && classMap[rel2.to] && classMap[rel2.to].type === 'interface') {
+        rel2.type = 'realization';
+      }
+    }
+
     return { classes: classes, relationships: relationships, notes: notes, direction: direction };
   }
 
@@ -3629,7 +3637,9 @@
           }
         }
       } else if (m.type === 'create') {
-        // Draw the created participant box at this Y position
+        // Mark participant as created mid-diagram.
+        // The box is drawn inline; the following message provides the visual arrow.
+        // Per UML 2.0: create messages are dashed arrows to the lifeline head (G179).
         var cIdx = findPIdx(m.target);
         var cpx = partX[cIdx] - partWidths[cIdx] / 2;
         var cpart = participants[cIdx];
@@ -3641,17 +3651,6 @@
         svg.push('<text x="' + partX[cIdx] + '" y="' + cTextY +
           '" text-anchor="middle" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
           UMLShared.escapeXml(cDispText) + '</text>');
-        // Draw dashed arrow from previous sender to the created box
-        if (mi2 > 0 && messages[mi2 - 1].type === 'message') {
-          var prevMsg = messages[mi2 - 1];
-          var senderIdx = findPIdx(prevMsg.from);
-          var sx = getEdgeX(senderIdx, my + partH / 2, 'right');
-          var tx = partX[cIdx] - partWidths[cIdx] / 2;
-          var arrowY = my + partH / 2;
-          svg.push('<line x1="' + sx + '" y1="' + arrowY + '" x2="' + tx + '" y2="' + arrowY +
-            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '" stroke-dasharray="6,4"/>');
-          drawMsgArrow(svg, tx, arrowY, -1, 'sync', colors);
-        }
       } else if (m.type === 'destroy') {
         // Draw X mark on the participant
         var dIdx = 0;
