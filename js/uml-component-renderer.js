@@ -20,8 +20,12 @@
  *     portin "name" as alias     Incoming port placed on the left edge
  *     portout "name" as alias    Outgoing port placed on the right edge
  *   }
+ *     provide "name" as alias    Provided interface (lollipop ○)
+ *     require "name" as alias    Required interface (socket arc)
+ *   }
  *   A --> B : label              Assembly connector (solid arrow)
  *   alias --> alias : label      Connector via port aliases (squares on boundary)
+ *   provide --> require : label  Joined ball-and-socket assembly (○))
  *   A ..> B : label              Dependency (dashed arrow)
  *   A -- B : label               Plain link
  */
@@ -47,8 +51,10 @@
     strokeWidth: 1.5,
     svgPad: 30,
     portSize: 10,   // port square side length (straddles boundary, half in/half out)
-    portPad: 22,    // min vertical pitch between ports
+    portPad: 40,    // min vertical pitch between ports (must fit port square + label text below)
     labelBgPad: 4,
+    ifaceRadius: 9,   // radius of lollipop circle / socket arc
+    ifaceStick: 20,   // length of line from component edge to interface symbol center
   };
 
   // ─── Parser ───────────────────────────────────────────────────────
@@ -56,12 +62,17 @@
   // Parse a single port line: (portin|portout|port) ["name"] [as alias]
   // Returns { name, alias, direction } or null.
   function parsePortLine(line) {
-    var m = line.match(/^(portin|portout|port)\s+"([^"]+)"(?:\s+as\s+(\S+))?/) ||
-            line.match(/^(portin|portout|port)\s+(\S+?)(?:\s+as\s+(\S+))?$/);
+    var m = line.match(/^(portin|portout|port|provide|require)\s+"([^"]+)"(?:\s+as\s+(\S+))?/) ||
+            line.match(/^(portin|portout|port|provide|require)\s+(\S+?)(?:\s+as\s+(\S+))?$/);
     if (!m) return null;
     var kw = m[1], displayName = m[2], alias = m[3] || displayName;
-    var direction = kw === 'portin' ? 'in' : (kw === 'portout' ? 'out' : null);
-    return { name: displayName, alias: alias, direction: direction };
+    var direction, kind = null;
+    if (kw === 'portin') direction = 'in';
+    else if (kw === 'portout') direction = 'out';
+    else if (kw === 'provide') { direction = 'out'; kind = 'provide'; }
+    else if (kw === 'require') { direction = 'in'; kind = 'require'; }
+    else direction = null;
+    return { name: displayName, alias: alias, direction: direction, kind: kind };
   }
 
   function parse(text) {
@@ -69,11 +80,22 @@
     var components = [];
     var componentMap = {};
     var connectors = [];
+    var notes = [];
     var portAliasMap = {}; // alias → { comp: componentName, name: displayName }
+
+    var direction = 'LR'; // Component diagrams default to left-to-right
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
+
+      // Layout directive
+      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
+      if (layoutMatch) {
+        var val = layoutMatch[1].toLowerCase();
+        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+        continue;
+      }
 
       // Component declaration with optional port block
       var compMatch = line.match(/^component\s+(\S+)(?:\s*\{)?/);
@@ -86,14 +108,19 @@
             // Inline: component Foo { portout "p1" as a1 portin "p2" as a2 }
             var inlineBody = line.match(/\{([^}]*)\}/);
             if (inlineBody) {
-              var portRe = /(portin|portout|port)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
+              var portRe = /(portin|portout|port|provide|require)\s+(?:"([^"]+)"|(\w+))(?:\s+as\s+(\w+))?/g;
               var pm;
               while ((pm = portRe.exec(inlineBody[1])) !== null) {
                 var kw = pm[1], displayName = pm[2] || pm[3], alias = pm[4] || displayName;
-                var direction = kw === 'portin' ? 'in' : (kw === 'portout' ? 'out' : null);
-                var portEntry = { name: displayName, alias: alias, direction: direction };
+                var direction, kind2 = null;
+                if (kw === 'portin') direction = 'in';
+                else if (kw === 'portout') direction = 'out';
+                else if (kw === 'provide') { direction = 'out'; kind2 = 'provide'; }
+                else if (kw === 'require') { direction = 'in'; kind2 = 'require'; }
+                else direction = null;
+                var portEntry = { name: displayName, alias: alias, direction: direction, kind: kind2 };
                 ports.push(portEntry);
-                portAliasMap[alias] = { comp: cName, name: displayName };
+                portAliasMap[alias] = { comp: cName, name: displayName, kind: kind2 };
               }
             }
           } else {
@@ -104,7 +131,7 @@
               var portLine = parsePortLine(pline);
               if (portLine) {
                 ports.push(portLine);
-                portAliasMap[portLine.alias] = { comp: cName, name: portLine.name };
+                portAliasMap[portLine.alias] = { comp: cName, name: portLine.name, kind: portLine.kind || null };
               }
             }
           }
@@ -116,6 +143,10 @@
         }
         continue;
       }
+
+      // Note
+      var noteIdx = UMLShared.parseNoteLine(line, lines, i, notes);
+      if (noteIdx >= 0) { i = noteIdx; continue; }
 
       // Connector: alias --> alias  or  Comp.port --> Comp.port  or  Comp --> Comp
       var connMatch = line.match(/^(\S+)\s+(-->|\.\.>|--)\s+(\S+)\s*(?::\s*(.*))?$/);
@@ -163,7 +194,7 @@
       }
     }
 
-    return { components: components, connectors: connectors };
+    return { components: components, connectors: connectors, notes: notes, direction: direction };
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -173,7 +204,6 @@
     var connectors = parsed.connectors;
     if (components.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
-    // Fallback port sides for `port` keyword (no explicit direction) — inferred from connection usage
     var portSides = {};
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
@@ -186,10 +216,11 @@
     }
 
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
     for (var i = 0; i < components.length; i++) {
       var c = components[i];
-
-      // Assign ports to sides: portin → left, portout → right, port → infer from connections
       var leftPorts = [], rightPorts = [];
       for (var pi = 0; pi < c.ports.length; pi++) {
         var port = c.ports[pi];
@@ -205,14 +236,40 @@
         }
       }
 
-      // Component width only needs to fit name + icon; port labels render outside
       var nameW = UMLShared.textWidth(c.name, true, CFG.fontSizeBold);
-      var w = Math.max(CFG.compMinW, nameW + CFG.padX * 2 + CFG.iconW);
-
+      var hasPorts = leftPorts.length > 0 || rightPorts.length > 0;
       var maxSidePorts = Math.max(leftPorts.length, rightPorts.length);
-      var h = maxSidePorts > 0
-        ? Math.max(CFG.compMinH, maxSidePorts * CFG.portPad + CFG.portPad)
-        : CFG.compMinH;
+
+      // Measure port label widths for internal placement
+      var portLblFs = CFG.fontSize - 1;
+      var maxLeftLblW = 0, maxRightLblW = 0;
+      var portLabelByAlias0 = {};
+      for (var pli = 0; pli < c.ports.length; pli++) {
+        portLabelByAlias0[c.ports[pli].alias] = c.ports[pli].name;
+      }
+      for (var lli = 0; lli < leftPorts.length; lli++) {
+        var lbl = portLabelByAlias0[leftPorts[lli]] || leftPorts[lli];
+        maxLeftLblW = Math.max(maxLeftLblW, UMLShared.textWidth(lbl, false, portLblFs));
+      }
+      for (var rli = 0; rli < rightPorts.length; rli++) {
+        var rbl = portLabelByAlias0[rightPorts[rli]] || rightPorts[rli];
+        maxRightLblW = Math.max(maxRightLblW, UMLShared.textWidth(rbl, false, portLblFs));
+      }
+
+      var w, h;
+      if (hasPorts) {
+        // Width: must fit name+icon row OR left-labels + gap + right-labels row
+        var nameRowW = nameW + CFG.padX + CFG.iconW + 16;
+        var portRowW = maxLeftLblW + maxRightLblW + CFG.portSize * 2 + 50;
+        w = Math.max(CFG.compMinW, nameRowW, portRowW);
+        // Height: name area at top + port rows below
+        var nameAreaH = CFG.lineHeight + CFG.padY;
+        h = nameAreaH + maxSidePorts * CFG.portPad + CFG.padY;
+        h = Math.max(h, CFG.compMinH);
+      } else {
+        w = Math.max(CFG.compMinW, nameW + CFG.padX * 2 + CFG.iconW);
+        h = CFG.compMinH;
+      }
 
       entries[c.name] = {
         comp: c,
@@ -221,199 +278,260 @@
         leftPorts: leftPorts,
         rightPorts: rightPorts,
         portPositions: {},
+        hasPorts: hasPorts,
       };
+      layoutNodes.push({ id: c.name, width: Math.ceil(w), height: h, data: c });
     }
 
-    // Build directed graph for layering
-    var children = {}, parents = {};
-    for (var cn in entries) { children[cn] = []; parents[cn] = []; }
-    for (var ci2 = 0; ci2 < connectors.length; ci2++) {
-      var conn2 = connectors[ci2];
-      if (entries[conn2.from] && entries[conn2.to]) {
-        if (children[conn2.from].indexOf(conn2.to) === -1) {
-          children[conn2.from].push(conn2.to);
-          parents[conn2.to].push(conn2.from);
-        }
-      }
+    for (var ci = 0; ci < connectors.length; ci++) {
+      var conn = connectors[ci];
+      layoutEdges.push({ source: conn.from, target: conn.to, type: conn.type, data: conn });
     }
 
-    // Find roots (nodes with no incoming edges)
-    var roots = [];
-    for (var cn2 in entries) {
-      if (parents[cn2].length === 0) roots.push(cn2);
-    }
-    if (roots.length === 0) roots = [components[0].name];
-
-    // BFS layer assignment
-    var layers = {}, visited = {}, queue = [];
-    for (var ri = 0; ri < roots.length; ri++) {
-      layers[roots[ri]] = 0; visited[roots[ri]] = true; queue.push(roots[ri]);
-    }
-    while (queue.length > 0) {
-      var node = queue.shift();
-      var kids = children[node];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki];
-        var nl = (layers[node] || 0) + 1;
-        if (!visited[kid]) { visited[kid] = true; layers[kid] = nl; queue.push(kid); }
-        else if (nl > layers[kid]) { layers[kid] = nl; queue.push(kid); }
-      }
-    }
-    for (var cn3 in entries) { if (layers[cn3] === undefined) layers[cn3] = 0; }
-
-    // Gap accounts for connector labels (port labels are below, not in the gap)
+    // Port labels are inside the component box, so gaps only need to fit connector labels
     var maxLabelW = 0;
     for (var ci3 = 0; ci3 < connectors.length; ci3++) {
       if (connectors[ci3].label) {
         maxLabelW = Math.max(maxLabelW, UMLShared.textWidth(connectors[ci3].label, false, CFG.fontSize));
       }
     }
-    var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 30);
+    // Add extra gap when interface symbols (lollipop/socket) are present
+    var hasIface = false;
+    for (var ci_ig = 0; ci_ig < components.length && !hasIface; ci_ig++)
+      for (var pi_ig = 0; pi_ig < components[ci_ig].ports.length; pi_ig++)
+        if (components[ci_ig].ports[pi_ig].kind) { hasIface = true; break; }
+    var ifaceGapExtra = hasIface ? (CFG.ifaceStick + CFG.ifaceRadius) * 2 : 0;
+    var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40 + ifaceGapExtra);
+    var effectiveGapY = CFG.gapY;
 
-    // Group by layer and position
-    var layerGroups = {}, maxLayer = 0;
-    for (var cn4 in entries) {
-      var l = layers[cn4];
-      if (!layerGroups[l]) layerGroups[l] = [];
-      layerGroups[l].push(cn4);
-      maxLayer = Math.max(maxLayer, l);
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: effectiveGapY, direction: parsed.direction || 'LR' });
+
+    for (var n in result.nodes) {
+      if (!entries[n]) continue;
+      entries[n].x = result.nodes[n].x;
+      entries[n].y = result.nodes[n].y;
     }
 
-    // ── Sugiyama barycenter crossing minimization ──────────────────────
-    // Sort nodes within each column by the average position of their
-    // neighbours in the adjacent column, alternating forward/backward.
-    var posInLayer = {};
-    for (var bpl = 0; bpl <= maxLayer; bpl++) {
-      var bpg = layerGroups[bpl]; if (!bpg) continue;
-      for (var bpi = 0; bpi < bpg.length; bpi++) posInLayer[bpg[bpi]] = bpi;
-    }
-    for (var bcPass = 0; bcPass < 4; bcPass++) {
-      if (bcPass % 2 === 0) {
-        // Forward: sort column l by avg position of predecessors in column l-1
-        for (var bcFl = 1; bcFl <= maxLayer; bcFl++) {
-          var bcFg = layerGroups[bcFl]; if (!bcFg || bcFg.length < 2) continue;
-          var bcF = {};
-          for (var bcFi = 0; bcFi < bcFg.length; bcFi++) {
-            var bcFn = bcFg[bcFi]; var bcSum = 0, bcCnt = 0;
-            for (var bcCi = 0; bcCi < connectors.length; bcCi++) {
-              var bcCn = connectors[bcCi];
-              if (bcCn.to === bcFn && layers[bcCn.from] === bcFl - 1) {
-                bcSum += posInLayer[bcCn.from]; bcCnt++;
-              }
-            }
-            bcF[bcFn] = bcCnt > 0 ? bcSum / bcCnt : posInLayer[bcFn];
-          }
-          bcFg.sort(function (a, b) { return bcF[a] - bcF[b]; });
-          for (var bcFi2 = 0; bcFi2 < bcFg.length; bcFi2++) posInLayer[bcFg[bcFi2]] = bcFi2;
-        }
-      } else {
-        // Backward: sort column l by avg position of successors in column l+1
-        for (var bcBl = maxLayer - 1; bcBl >= 0; bcBl--) {
-          var bcBg = layerGroups[bcBl]; if (!bcBg || bcBg.length < 2) continue;
-          var bcB = {};
-          for (var bcBi = 0; bcBi < bcBg.length; bcBi++) {
-            var bcBn = bcBg[bcBi]; var bcBSum = 0, bcBCnt = 0;
-            for (var bcBCi = 0; bcBCi < connectors.length; bcBCi++) {
-              var bcBCn = connectors[bcBCi];
-              if (bcBCn.from === bcBn && layers[bcBCn.to] === bcBl + 1) {
-                bcBSum += posInLayer[bcBCn.to]; bcBCnt++;
-              }
-            }
-            bcB[bcBn] = bcBCnt > 0 ? bcBSum / bcBCnt : posInLayer[bcBn];
-          }
-          bcBg.sort(function (a, b) { return bcB[a] - bcB[b]; });
-          for (var bcBi2 = 0; bcBi2 < bcBg.length; bcBi2++) posInLayer[bcBg[bcBi2]] = bcBi2;
-        }
+    // ── Reorder ports to minimize crossing lines ──
+    // Sort ports by the angle from this component to their connection partner.
+    // Ports connecting to targets above-right get negative angles (sorted to top),
+    // ports connecting below-right get positive angles (sorted to bottom).
+    var portTargetPos = {};  // right-port alias → { x, y } of target center
+    var portSourcePos = {};  // left-port alias → { x, y } of source center
+    for (var ri = 0; ri < connectors.length; ri++) {
+      var rc = connectors[ri];
+      if (rc.fromPort && entries[rc.from] && entries[rc.to]) {
+        var rte = entries[rc.to];
+        portTargetPos[rc.fromPort] = { x: rte.x, y: rte.y + rte.box.height / 2 };
+      }
+      if (rc.toPort && entries[rc.from] && entries[rc.to]) {
+        var rse = entries[rc.from];
+        portSourcePos[rc.toPort] = { x: rse.x + rse.box.width, y: rse.y + rse.box.height / 2 };
       }
     }
-
-    // Horizontal layout: each layer is a column (left-to-right), items stack top-to-bottom within
-    var curX = 0;
-    for (var col = 0; col <= maxLayer; col++) {
-      var group = layerGroups[col];
-      if (!group) continue;
-      var curY = 0;
-      for (var gi = 0; gi < group.length; gi++) {
-        entries[group[gi]].x = curX;
-        entries[group[gi]].y = curY;
-        curY += entries[group[gi]].box.height + CFG.gapY;
-      }
-      var maxW = 0;
-      for (var gi2 = 0; gi2 < group.length; gi2++) maxW = Math.max(maxW, entries[group[gi2]].box.width);
-      curX += maxW + effectiveGapX;
+    for (var sn in entries) {
+      var se = entries[sn];
+      var seCY = se.y + se.box.height / 2;
+      // Right ports: sort by angle to target
+      var seRightX = se.x + se.box.width;
+      se.rightPorts.sort(function(a, b) {
+        var pa = portTargetPos[a], pb = portTargetPos[b];
+        if (!pa && !pb) return 0;
+        if (!pa) return 1;
+        if (!pb) return -1;
+        var angleA = Math.atan2(pa.y - seCY, Math.max(1, pa.x - seRightX));
+        var angleB = Math.atan2(pb.y - seCY, Math.max(1, pb.x - seRightX));
+        return angleA - angleB;
+      });
+      // Left ports: sort by angle from source
+      var seLeftX = se.x;
+      se.leftPorts.sort(function(a, b) {
+        var pa = portSourcePos[a], pb = portSourcePos[b];
+        if (!pa && !pb) return 0;
+        if (!pa) return 1;
+        if (!pb) return -1;
+        var angleA = Math.atan2(pa.y - seCY, Math.max(1, seLeftX - pa.x));
+        var angleB = Math.atan2(pb.y - seCY, Math.max(1, seLeftX - pb.x));
+        return angleA - angleB;
+      });
     }
 
-    // Center each column vertically relative to the tallest column
-    var maxColH = 0;
-    for (var col2 = 0; col2 <= maxLayer; col2++) {
-      var g = layerGroups[col2]; if (!g) continue;
-      var lastE = entries[g[g.length - 1]];
-      maxColH = Math.max(maxColH, lastE.y + lastE.box.height);
-    }
-    for (var col3 = 0; col3 <= maxLayer; col3++) {
-      var g2 = layerGroups[col3]; if (!g2) continue;
-      var lastE2 = entries[g2[g2.length - 1]];
-      var colH = lastE2.y + lastE2.box.height;
-      var off = (maxColH - colH) / 2;
-      for (var gi3 = 0; gi3 < g2.length; gi3++) entries[g2[gi3]].y += off;
-    }
-
-    // Compute port positions (after x,y are finalized)
+    // Compute port positions (after x,y are finalized and ports are reordered)
     var portHalf = CFG.portSize / 2;
+    var nameAreaH = CFG.lineHeight + CFG.padY;
     for (var en in entries) {
       var e = entries[en];
       var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
 
-      // Build alias → display label map for this component's ports
       var portLabelByAlias = {};
+      var portKindByAlias = {};
       for (var pni = 0; pni < e.comp.ports.length; pni++) {
         var p = e.comp.ports[pni];
         portLabelByAlias[p.alias] = p.name;
+        if (p.kind) portKindByAlias[p.alias] = p.kind;
       }
 
-      // Left ports: distributed evenly along left edge, straddling the boundary
+      // Port area starts below the name row (or uses full height if no ports flag)
+      var portTop = e.hasPorts ? by + nameAreaH : by;
+      var portAreaH = bh - (e.hasPorts ? nameAreaH : 0);
+
       for (var lpi2 = 0; lpi2 < e.leftPorts.length; lpi2++) {
         var lpn = e.leftPorts[lpi2];
-        var pcy = by + bh * (lpi2 + 1) / (e.leftPorts.length + 1);
+        var pcy = portTop + portAreaH * (lpi2 + 1) / (e.leftPorts.length + 1);
+        var lpK = portKindByAlias[lpn] || null;
         e.portPositions[lpn] = {
-          // Square top-left corner (straddles boundary)
           x: bx - portHalf, y: pcy - portHalf,
-          // Center of the port square (on the boundary)
           cx: bx, cy: pcy,
-          // Outer connector attachment point
           connX: bx - portHalf, connY: pcy,
           side: 'left',
+          kind: lpK,
           label: portLabelByAlias[lpn] !== undefined ? portLabelByAlias[lpn] : lpn,
         };
       }
 
-      // Right ports: distributed evenly along right edge, straddling the boundary
       for (var rpi2 = 0; rpi2 < e.rightPorts.length; rpi2++) {
         var rpn = e.rightPorts[rpi2];
-        var pcy2 = by + bh * (rpi2 + 1) / (e.rightPorts.length + 1);
+        var pcy2 = portTop + portAreaH * (rpi2 + 1) / (e.rightPorts.length + 1);
+        var rpK = portKindByAlias[rpn] || null;
         e.portPositions[rpn] = {
           x: bx + bw - portHalf, y: pcy2 - portHalf,
           cx: bx + bw, cy: pcy2,
           connX: bx + bw + portHalf, connY: pcy2,
           side: 'right',
+          kind: rpK,
           label: portLabelByAlias[rpn] !== undefined ? portLabelByAlias[rpn] : rpn,
         };
       }
     }
 
-    // Bounding box: port squares protrude to the sides, labels extend below
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    var portLabelFs = CFG.fontSize - 1;
     for (var en2 in entries) {
       var e2 = entries[en2];
-      var hasPorts = e2.leftPorts.length > 0 || e2.rightPorts.length > 0;
-      minX = Math.min(minX, e2.x - (e2.leftPorts.length > 0 ? CFG.portSize : 0));
+      var leftOH = 0, rightOH = 0;
+      for (var pn2 in e2.portPositions) {
+        var pp2 = e2.portPositions[pn2];
+        var pext = (pp2.kind === 'provide') ? CFG.ifaceStick + CFG.ifaceRadius + 2 :
+                   (pp2.kind === 'require') ? CFG.ifaceStick + CFG.ifaceRadius + 2 : portHalf;
+        if (pp2.side === 'left') leftOH = Math.max(leftOH, pext);
+        else rightOH = Math.max(rightOH, pext);
+      }
+      minX = Math.min(minX, e2.x - leftOH);
       minY = Math.min(minY, e2.y);
-      maxX = Math.max(maxX, e2.x + e2.box.width + (e2.rightPorts.length > 0 ? CFG.portSize : 0));
-      maxY = Math.max(maxY, e2.y + e2.box.height + (hasPorts ? portLabelFs + 8 : 0));
+      maxX = Math.max(maxX, e2.x + e2.box.width + rightOH);
+      maxY = Math.max(maxY, e2.y + e2.box.height);
     }
 
-    return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
+    // Expand bounds to account for connector labels that may extend beyond components
+    var maxLabelH = 0, maxLabelWHalf = 0;
+    for (var cli = 0; cli < connectors.length; cli++) {
+      if (connectors[cli].label) {
+        var clW = UMLShared.textWidth(connectors[cli].label, false, CFG.fontSize);
+        maxLabelWHalf = Math.max(maxLabelWHalf, clW / 2 + 10);
+        maxLabelH = Math.max(maxLabelH, CFG.fontSize + 16);
+      }
+    }
+    minX -= maxLabelWHalf;
+    minY -= maxLabelH;
+    maxX += maxLabelWHalf;
+    maxY += maxLabelH;
+
+    return {
+      entries: entries,
+      width: maxX - minX + 20,
+      height: maxY - minY,
+      offsetX: -minX,
+      offsetY: -minY,
+      layoutResult: result
+    };
+  }
+
+  // ─── Obstacle-aware orthogonal routing helpers ─────────────────────
+
+  // Check if a route (array of {x,y} points forming orthogonal segments)
+  // intersects any obstacle rect, skipping obstacles named in skipNames.
+  function routeHitsObstacle(points, obstacles, skipNames) {
+    for (var i = 0; i < points.length - 1; i++) {
+      var p0 = points[i], p1 = points[i + 1];
+      if (Math.abs(p0.x - p1.x) < 1) {
+        // Vertical segment
+        var yMin = Math.min(p0.y, p1.y), yMax = Math.max(p0.y, p1.y);
+        for (var j = 0; j < obstacles.length; j++) {
+          var ob = obstacles[j];
+          if (skipNames && skipNames[ob.name]) continue;
+          if (p0.x > ob.x1 && p0.x < ob.x2 && yMax > ob.y1 && yMin < ob.y2) return true;
+        }
+      } else {
+        // Horizontal segment
+        var xMin = Math.min(p0.x, p1.x), xMax = Math.max(p0.x, p1.x);
+        for (var j2 = 0; j2 < obstacles.length; j2++) {
+          var ob2 = obstacles[j2];
+          if (skipNames && skipNames[ob2.name]) continue;
+          if (p0.y > ob2.y1 && p0.y < ob2.y2 && xMax > ob2.x1 && xMin < ob2.x2) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Find nearest clear X for a vertical segment in [yMin,yMax]
+  function findClearX(yMin, yMax, preferX, obstacles, skipNames) {
+    for (var j = 0; j < obstacles.length; j++) {
+      var ob = obstacles[j];
+      if (skipNames && skipNames[ob.name]) continue;
+      if (preferX > ob.x1 && preferX < ob.x2 && yMax > ob.y1 && yMin < ob.y2) {
+        // Hit — search outward
+        for (var d = 10; d < 800; d += 10) {
+          var tryR = preferX + d, tryL = preferX - d;
+          var hitR = false, hitL = false;
+          for (var k = 0; k < obstacles.length; k++) {
+            if (skipNames && skipNames[obstacles[k].name]) continue;
+            var o = obstacles[k];
+            if (tryR > o.x1 && tryR < o.x2 && yMax > o.y1 && yMin < o.y2) hitR = true;
+            if (tryL > o.x1 && tryL < o.x2 && yMax > o.y1 && yMin < o.y2) hitL = true;
+          }
+          if (!hitR) return tryR;
+          if (!hitL) return tryL;
+        }
+      }
+    }
+    return preferX;
+  }
+
+  // Find nearest clear Y for a horizontal segment in [xMin,xMax]
+  function findClearY(xMin, xMax, preferY, obstacles, skipNames) {
+    for (var j = 0; j < obstacles.length; j++) {
+      var ob = obstacles[j];
+      if (skipNames && skipNames[ob.name]) continue;
+      if (preferY > ob.y1 && preferY < ob.y2 && xMax > ob.x1 && xMin < ob.x2) {
+        for (var d = 10; d < 800; d += 10) {
+          var tryD = preferY + d, tryU = preferY - d;
+          var hitD = false, hitU = false;
+          for (var k = 0; k < obstacles.length; k++) {
+            if (skipNames && skipNames[obstacles[k].name]) continue;
+            var o = obstacles[k];
+            if (tryD > o.y1 && tryD < o.y2 && xMax > o.x1 && xMin < o.x2) hitD = true;
+            if (tryU > o.y1 && tryU < o.y2 && xMax > o.x1 && xMin < o.x2) hitU = true;
+          }
+          if (!hitD) return tryD;
+          if (!hitU) return tryU;
+        }
+      }
+    }
+    return preferY;
+  }
+
+  // Remove redundant collinear points from a route
+  function simplifyRoute(pts) {
+    if (pts.length <= 2) return pts;
+    var out = [pts[0]];
+    for (var i = 1; i < pts.length - 1; i++) {
+      var prev = out[out.length - 1], cur = pts[i], next = pts[i + 1];
+      var sameX = Math.abs(prev.x - cur.x) < 1 && Math.abs(cur.x - next.x) < 1;
+      var sameY = Math.abs(prev.y - cur.y) < 1 && Math.abs(cur.y - next.y) < 1;
+      if (!sameX && !sameY) out.push(cur);
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
   }
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
@@ -421,14 +539,96 @@
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var connectors = parsed.connectors;
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
+
+    // Resolve note target — supports dotted paths to sub-elements
+    function resolveTarget(target) {
+      var parts = target.split('.');
+      var entry = entries[parts[0]];
+      if (!entry) return null;
+      return { x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height };
+    }
+
+    // Pre-compute note positions for SVG bounds expansion
+    var notePositions = [];
+    if (parsed.notes) {
+      var noteGap = UMLShared.NOTE_CFG.gap;
+      for (var npi = 0; npi < parsed.notes.length; npi++) {
+        var pn = parsed.notes[npi]; var tgt = resolveTarget(pn.target); if (!tgt) continue;
+        var ns = UMLShared.measureNote(pn.lines);
+        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
+        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
+        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
+        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
+        else { nx = tx; ny = ty + th + noteGap; }
+        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
+      }
+    }
+    var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var npb = notePositions[nbi];
+      if (npb.x < -layout.offsetX) noteExtraL = Math.max(noteExtraL, -layout.offsetX - npb.x + CFG.svgPad);
+      var nr = npb.x + npb.w - (layout.width - layout.offsetX);
+      if (nr > 0) noteExtraR = Math.max(noteExtraR, nr + CFG.svgPad);
+      if (npb.y < -layout.offsetY) noteExtraT = Math.max(noteExtraT, -layout.offsetY - npb.y + CFG.svgPad);
+      var nb = npb.y + npb.h - (layout.height - layout.offsetY);
+      if (nb > 0) noteExtraB = Math.max(noteExtraB, nb + CFG.svgPad);
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + noteExtraL;
+    var oy = layout.offsetY + CFG.svgPad + noteExtraT;
+    var svgW = layout.width + CFG.svgPad * 2 + noteExtraL + noteExtraR;
+    var svgH = layout.height + CFG.svgPad * 2 + noteExtraT + noteExtraB;
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
+    // Build port kind map for interface detection
+    var portKindMap = {};
+    for (var pki = 0; pki < parsed.components.length; pki++) {
+      var pkComp = parsed.components[pki];
+      for (var pkpi = 0; pkpi < pkComp.ports.length; pkpi++) {
+        if (pkComp.ports[pkpi].kind)
+          portKindMap[pkComp.ports[pkpi].alias] = pkComp.ports[pkpi].kind;
+      }
+    }
+
+    // Identify joined ports (assembly connectors between provide/require)
+    var joinedPorts = {};
+    for (var jci = 0; jci < connectors.length; jci++) {
+      var jc = connectors[jci];
+      if (jc.type !== 'assembly') continue;
+      var jfk = jc.fromPort ? portKindMap[jc.fromPort] : null;
+      var jtk = jc.toPort ? portKindMap[jc.toPort] : null;
+      if ((jfk === 'provide' && jtk === 'require') || (jfk === 'require' && jtk === 'provide')) {
+        if (jc.fromPort) joinedPorts[jc.fromPort] = true;
+        if (jc.toPort) joinedPorts[jc.toPort] = true;
+      }
+    }
+
+    // Collect component bounding boxes as obstacles (with interface extensions)
+    var obstaclePad = 12;
+    var obstacles = [];
+    for (var obn in entries) {
+      var obe = entries[obn];
+      var obLeftExt = 0, obRightExt = 0;
+      for (var obpn in obe.portPositions) {
+        var obpp = obe.portPositions[obpn];
+        if (obpp.kind) {
+          var ife = CFG.ifaceStick + CFG.ifaceRadius + 4;
+          if (obpp.side === 'left') obLeftExt = Math.max(obLeftExt, ife);
+          else obRightExt = Math.max(obRightExt, ife);
+        }
+      }
+      obstacles.push({
+        x1: obe.x - obstaclePad - obLeftExt,
+        y1: obe.y - obstaclePad,
+        x2: obe.x + obe.box.width + obstaclePad + obRightExt,
+        y2: obe.y + obe.box.height + obstaclePad,
+        name: obn
+      });
+    }
+
     // ── Draw connectors ──
+    var placedLabels = []; // Track placed label positions for overlap avoidance
     for (var ci = 0; ci < connectors.length; ci++) {
       var conn = connectors[ci];
       var fromE = entries[conn.from];
@@ -438,64 +638,423 @@
       var isDash = conn.type === 'dependency';
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
-      // Start point: port outer attachment or component boundary
-      var x1, y1, x2, y2;
-      if (conn.fromPort && fromE.portPositions[conn.fromPort]) {
-        var fp = fromE.portPositions[conn.fromPort];
-        x1 = fp.connX; y1 = fp.connY;
+      // Detect joined assembly (provide ↔ require via assembly connector)
+      var fpPos = conn.fromPort && fromE.portPositions[conn.fromPort] ? fromE.portPositions[conn.fromPort] : null;
+      var tpPos = conn.toPort && toE.portPositions[conn.toPort] ? toE.portPositions[conn.toPort] : null;
+      var fromKind = fpPos ? fpPos.kind : null;
+      var toKind = tpPos ? tpPos.kind : null;
+      var isJoinedAssembly = conn.type === 'assembly' &&
+        ((fromKind === 'provide' && toKind === 'require') || (fromKind === 'require' && toKind === 'provide'));
+
+      // Start point and exit direction
+      var x1, y1, dir1;
+      if (fpPos) {
+        y1 = fpPos.connY;
+        dir1 = fpPos.side;
+        if (isJoinedAssembly) {
+          // Joined: start at component edge
+          x1 = fpPos.cx;
+        } else if (fpPos.kind === 'provide') {
+          // Disjoined: start at lollipop tip
+          x1 = fpPos.side === 'right' ? fpPos.cx + CFG.ifaceStick + CFG.ifaceRadius :
+                                         fpPos.cx - CFG.ifaceStick - CFG.ifaceRadius;
+        } else if (fpPos.kind === 'require') {
+          x1 = fpPos.side === 'right' ? fpPos.cx + CFG.ifaceStick :
+                                         fpPos.cx - CFG.ifaceStick;
+        } else {
+          x1 = fpPos.connX;
+        }
       } else {
         var fcx = fromE.x + fromE.box.width / 2;
         var fcy = fromE.y + fromE.box.height / 2;
         var tcx = toE.x + toE.box.width / 2;
         var tcy = toE.y + toE.box.height / 2;
         var dx = tcx - fcx, dy = tcy - fcy;
-        if (Math.abs(dx) > Math.abs(dy) * 0.5) {
+        // Prefer horizontal: only use vertical if dx is near zero
+        if (Math.abs(dx) > 5) {
           x1 = dx > 0 ? fromE.x + fromE.box.width : fromE.x;
           y1 = fcy;
+          dir1 = dx > 0 ? 'right' : 'left';
         } else {
           x1 = fcx;
           y1 = dy > 0 ? fromE.y + fromE.box.height : fromE.y;
+          dir1 = dy > 0 ? 'bottom' : 'top';
         }
       }
 
-      // End point: port outer attachment or component boundary
-      if (conn.toPort && toE.portPositions[conn.toPort]) {
-        var tp = toE.portPositions[conn.toPort];
-        x2 = tp.connX; y2 = tp.connY;
+      // End point and entry direction
+      var x2, y2, dir2;
+      if (tpPos) {
+        y2 = tpPos.connY;
+        dir2 = tpPos.side;
+        if (isJoinedAssembly) {
+          x2 = tpPos.cx;
+        } else if (tpPos.kind === 'provide') {
+          x2 = tpPos.side === 'right' ? tpPos.cx + CFG.ifaceStick + CFG.ifaceRadius :
+                                         tpPos.cx - CFG.ifaceStick - CFG.ifaceRadius;
+        } else if (tpPos.kind === 'require') {
+          x2 = tpPos.side === 'right' ? tpPos.cx + CFG.ifaceStick :
+                                         tpPos.cx - CFG.ifaceStick;
+        } else {
+          x2 = tpPos.connX;
+        }
       } else {
         var fcx2 = fromE.x + fromE.box.width / 2;
         var fcy2 = fromE.y + fromE.box.height / 2;
         var tcx2 = toE.x + toE.box.width / 2;
         var tcy2 = toE.y + toE.box.height / 2;
         var dx2 = tcx2 - fcx2, dy2 = tcy2 - fcy2;
-        if (Math.abs(dx2) > Math.abs(dy2) * 0.5) {
+        if (Math.abs(dx2) > 5) {
           x2 = dx2 > 0 ? toE.x : toE.x + toE.box.width;
           y2 = tcy2;
+          dir2 = dx2 > 0 ? 'left' : 'right'; // entry side: line approaches from the left when target is right
         } else {
           x2 = tcx2;
           y2 = dy2 > 0 ? toE.y : toE.y + toE.box.height;
+          dir2 = dy2 > 0 ? 'top' : 'bottom'; // entry side: line approaches from top when target is below
         }
       }
 
-      // Orthogonal route: horizontal Z-shape matches left-to-right layout
+      // Skip source and target when checking obstacles
+      var skipN = {};
+      skipN[conn.from] = true;
+      skipN[conn.to] = true;
+
+      var isH1 = (dir1 === 'left' || dir1 === 'right');
+      var isH2 = (dir2 === 'left' || dir2 === 'right');
+      var margin = 20;
+
       var points;
-      if (Math.abs(x1 - x2) < 2 || Math.abs(y1 - y2) < 2) {
-        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      // Compute extension points: ensure we go far enough past the component
+      // (including port labels) before turning, so lines visibly exit from the port.
+      // Use the expanded obstacle bounds for the source/target components.
+      var fromObs = null, toObs = null;
+      for (var obi = 0; obi < obstacles.length; obi++) {
+        if (obstacles[obi].name === conn.from) fromObs = obstacles[obi];
+        if (obstacles[obi].name === conn.to) toObs = obstacles[obi];
+      }
+
+      var ext1X = x1, ext1Y = y1;
+      if (dir1 === 'right') ext1X = fromObs ? Math.max(x1 + margin, fromObs.x2 + margin) : x1 + margin;
+      else if (dir1 === 'left') ext1X = fromObs ? Math.min(x1 - margin, fromObs.x1 - margin) : x1 - margin;
+      else if (dir1 === 'bottom') ext1Y = fromObs ? Math.max(y1 + margin, fromObs.y2 + margin) : y1 + margin;
+      else if (dir1 === 'top') ext1Y = fromObs ? Math.min(y1 - margin, fromObs.y1 - margin) : y1 - margin;
+
+      var ext2X = x2, ext2Y = y2;
+      if (dir2 === 'right') ext2X = toObs ? Math.max(x2 + margin, toObs.x2 + margin) : x2 + margin;
+      else if (dir2 === 'left') ext2X = toObs ? Math.min(x2 - margin, toObs.x1 - margin) : x2 - margin;
+      else if (dir2 === 'bottom') ext2Y = toObs ? Math.max(y2 + margin, toObs.y2 + margin) : y2 + margin;
+      else if (dir2 === 'top') ext2Y = toObs ? Math.min(y2 - margin, toObs.y1 - margin) : y2 - margin;
+
+      // All cases: build initial route, then always check for obstacles.
+
+      // Detect backward HH: exit direction opposes the direction to target
+      var isBackwardHH = isH1 && isH2 &&
+        ((dir1 === 'right' && x2 < x1) || (dir1 === 'left' && x2 > x1));
+
+      if (isH1 && isH2) {
+        if (isBackwardHH) {
+          // Backward connection: try a short local U-shape first,
+          // routing above or below the bounding box of just source+target.
+          var localMinY = Math.min(
+            fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2
+          );
+          var localMaxY = Math.max(
+            fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2
+          );
+          var backJitter = (ci % 5) * 10;
+          var tryAboveY = localMinY - 20 - backJitter;
+          var tryBelowY = localMaxY + 20 + backJitter;
+          var clearAbove = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryAboveY, obstacles, skipN);
+          var clearBelow = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryBelowY, obstacles, skipN);
+          // Pick whichever stays closest to the diagram (smallest absolute distance from source)
+          var distAbove = Math.abs(y1 - clearAbove);
+          var distBelow = Math.abs(y1 - clearBelow);
+          var backDetourY = distAbove <= distBelow ? clearAbove : clearBelow;
+          points = [
+            { x: x1, y: y1 }, { x: ext1X, y: y1 },
+            { x: ext1X, y: backDetourY },
+            { x: ext2X, y: backDetourY },
+            { x: ext2X, y: y2 }, { x: x2, y: y2 }
+          ];
+        } else if (Math.abs(y1 - y2) < 2) {
+          // Same-Y direct line (only for forward connections)
+          points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+        } else {
+          // S-shape: exit horizontal → vertical channel → enter horizontal
+          var midX;
+          // Place midX based on Y direction so upward/downward routes naturally separate.
+          // Upward connections exit near source; downward connections arrive near target.
+          if ((dir1 === 'right' && dir2 === 'left' && ext1X > ext2X) ||
+              (dir1 === 'left' && dir2 === 'right' && ext1X < ext2X)) {
+            // Backward: route via the far side
+            midX = (dir1 === 'right') ? Math.max(ext1X, ext2X) : Math.min(ext1X, ext2X);
+          } else {
+            var frac = (y2 < y1) ? 0.25 : (y2 > y1) ? 0.75 : 0.5;
+            midX = ext1X + (ext2X - ext1X) * frac;
+          }
+          midX += (ci % 3) * 14 - 14; // small per-connection jitter for same-direction routes
+          // Clamp to corridor so the vertical segment stays between the two components
+          if (dir1 === 'right' && dir2 === 'left' && ext1X <= ext2X) {
+            midX = Math.min(Math.max(midX, ext1X), ext2X);
+          } else if (dir1 === 'left' && dir2 === 'right' && ext2X <= ext1X) {
+            midX = Math.min(Math.max(midX, ext2X), ext1X);
+          }
+          midX = findClearX(Math.min(y1, y2), Math.max(y1, y2), midX, obstacles, skipN);
+          points = [
+            { x: x1, y: y1 }, { x: midX, y: y1 },
+            { x: midX, y: y2 }, { x: x2, y: y2 }
+          ];
+        }
+        // If the route hits obstacles (common for same-Y routes through components),
+        // detour above or below via a clear horizontal channel.
+        if (routeHitsObstacle(points, obstacles, skipN)) {
+          var detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), y1 - 50, obstacles, skipN);
+          points = [
+            { x: x1, y: y1 }, { x: ext1X, y: y1 },
+            { x: ext1X, y: detourY },
+            { x: ext2X, y: detourY },
+            { x: ext2X, y: y2 }, { x: x2, y: y2 }
+          ];
+          // If still blocked, try below
+          if (routeHitsObstacle(points, obstacles, skipN)) {
+            detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), Math.max(y1, y2) + 50, obstacles, skipN);
+            points = [
+              { x: x1, y: y1 }, { x: ext1X, y: y1 },
+              { x: ext1X, y: detourY },
+              { x: ext2X, y: detourY },
+              { x: ext2X, y: y2 }, { x: x2, y: y2 }
+            ];
+          }
+        }
+      } else if (!isH1 && !isH2) {
+        // Both vertical exits
+        if (Math.abs(x1 - x2) < 2) {
+          points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+        } else {
+          var midY = (ext1Y + ext2Y) / 2;
+          if ((dir1 === 'bottom' && dir2 === 'top' && ext1Y > ext2Y) ||
+              (dir1 === 'top' && dir2 === 'bottom' && ext1Y < ext2Y)) {
+            midY = (dir1 === 'bottom') ? Math.max(ext1Y, ext2Y) : Math.min(ext1Y, ext2Y);
+          }
+          midY += (ci % 5) * 12 - 24; // Jitter to prevent identical overlaps
+          midY = findClearY(Math.min(x1, x2), Math.max(x1, x2), midY, obstacles, skipN);
+          points = [
+            { x: x1, y: y1 }, { x: x1, y: midY },
+            { x: x2, y: midY }, { x: x2, y: y2 }
+          ];
+        }
+        if (routeHitsObstacle(points, obstacles, skipN)) {
+          var detourX = findClearX(Math.min(y1, y2), Math.max(y1, y2), x1 - 50, obstacles, skipN);
+          points = [
+            { x: x1, y: y1 }, { x: x1, y: ext1Y },
+            { x: detourX, y: ext1Y },
+            { x: detourX, y: ext2Y },
+            { x: x2, y: ext2Y }, { x: x2, y: y2 }
+          ];
+        }
+      } else if (isH1 && !isH2) {
+        // Horizontal exit → vertical entry — L-shape
+        points = [{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }];
+        if (routeHitsObstacle(points, obstacles, skipN)) {
+          points = [{ x: x1, y: y1 }, { x: ext1X, y: y1 }, { x: ext1X, y: y2 }, { x: x2, y: y2 }];
+        }
       } else {
-        var midX = (x1 + x2) / 2;
-        points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
+        // Vertical exit → horizontal entry — L-shape
+        points = [{ x: x1, y: y1 }, { x: x1, y: y2 }, { x: x2, y: y2 }];
+        if (routeHitsObstacle(points, obstacles, skipN)) {
+          points = [{ x: x1, y: y1 }, { x: x1, y: ext1Y }, { x: x2, y: ext1Y }, { x: x2, y: y2 }];
+        }
       }
 
-      var pStr = '';
-      for (var pi = 0; pi < points.length; pi++) {
-        if (pi > 0) pStr += ' ';
-        pStr += points[pi].x + ',' + points[pi].y;
+      // Final obstacle check — if still blocked, find clear channel
+      if (routeHitsObstacle(points, obstacles, skipN)) {
+        if (isH1) {
+          var detourYf = findClearY(Math.min(x1, x2), Math.max(x1, x2),
+            Math.min(y1, y2) - 50, obstacles, skipN);
+          points = [
+            { x: x1, y: y1 }, { x: ext1X, y: y1 },
+            { x: ext1X, y: detourYf },
+            { x: ext2X, y: detourYf },
+            { x: ext2X, y: y2 }, { x: x2, y: y2 }
+          ];
+        } else {
+          var detourXf = findClearX(Math.min(y1, y2), Math.max(y1, y2),
+            Math.min(x1, x2) - 50, obstacles, skipN);
+          points = [
+            { x: x1, y: y1 }, { x: x1, y: ext1Y },
+            { x: detourXf, y: ext1Y },
+            { x: detourXf, y: ext2Y },
+            { x: x2, y: ext2Y }, { x: x2, y: y2 }
+          ];
+        }
       }
-      svg.push('<polyline points="' + pStr +
-        '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dAttr + '/>');
 
-      // Arrowhead at destination
-      if (conn.type !== 'link') {
+      // Simplify collinear points
+      points = simplifyRoute(points);
+
+      // Post-routing validation: check intermediate segments against obstacles,
+      // skipping source and target (they necessarily border those boxes).
+      if (points.length >= 4) {
+        var intermediateHit = false;
+        for (var vi = 1; vi < points.length - 2; vi++) {
+          var vp0 = points[vi], vp1 = points[vi + 1];
+          var vIsH = Math.abs(vp0.y - vp1.y) < 2;
+          var vIsV = Math.abs(vp0.x - vp1.x) < 2;
+          for (var vj = 0; vj < obstacles.length; vj++) {
+            var vo = obstacles[vj];
+            if (skipN && skipN[vo.name]) continue;
+            if (vIsV && vp0.x > vo.x1 && vp0.x < vo.x2) {
+              var vyMin = Math.min(vp0.y, vp1.y), vyMax = Math.max(vp0.y, vp1.y);
+              if (vyMax > vo.y1 && vyMin < vo.y2) { intermediateHit = true; break; }
+            } else if (vIsH && vp0.y > vo.y1 && vp0.y < vo.y2) {
+              var vxMin = Math.min(vp0.x, vp1.x), vxMax = Math.max(vp0.x, vp1.x);
+              if (vxMax > vo.x1 && vxMin < vo.x2) { intermediateHit = true; break; }
+            }
+          }
+          if (intermediateHit) break;
+        }
+        if (intermediateHit && isH1 && isH2) {
+          // Try to find a clear vertical corridor between ext1X and ext2X.
+          // Scan candidate midX positions outward from the midpoint.
+          var vxL = Math.min(ext1X, ext2X), vxR = Math.max(ext1X, ext2X);
+          var vyLo = Math.min(y1, y2), vyHi = Math.max(y1, y2);
+          var vStep = 14, vBestX = null;
+          // Try positions from quarter-points outward
+          var vCandidates = [];
+          for (var vci = 0; vci <= 20; vci++) {
+            var vcFrac = 0.5 + (vci % 2 === 0 ? 1 : -1) * Math.ceil(vci / 2) * vStep / (vxR - vxL + 1);
+            var vcX = vxL + (vxR - vxL) * Math.max(0, Math.min(1, vcFrac));
+            vCandidates.push(Math.round(vcX));
+          }
+          for (var vki = 0; vki < vCandidates.length; vki++) {
+            var vcx = vCandidates[vki];
+            var vcHit = false;
+            for (var voj = 0; voj < obstacles.length; voj++) {
+              var voo = obstacles[voj];
+              if (skipN && skipN[voo.name]) continue;
+              if (vcx > voo.x1 && vcx < voo.x2 && vyHi > voo.y1 && vyLo < voo.y2) { vcHit = true; break; }
+            }
+            if (!vcHit) { vBestX = vcx; break; }
+          }
+          if (vBestX !== null) {
+            points = [
+              { x: x1, y: y1 }, { x: vBestX, y: y1 },
+              { x: vBestX, y: y2 }, { x: x2, y: y2 }
+            ];
+          } else {
+            // No clear vertical corridor — route above/below the local bounding box only
+            var vLocalMinY = Math.min(fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2);
+            var vLocalMaxY = Math.max(fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2);
+            var vSpanXMin2 = Math.min(ext1X, ext2X), vSpanXMax2 = Math.max(ext1X, ext2X);
+            var vDetourAbove = findClearY(vSpanXMin2, vSpanXMax2, vLocalMinY - 20 - (ci % 3) * 10, obstacles, skipN);
+            var vDetourBelow = findClearY(vSpanXMin2, vSpanXMax2, vLocalMaxY + 20 + (ci % 3) * 10, obstacles, skipN);
+            var vDetourY = (Math.abs(y1 - vDetourAbove) <= Math.abs(y1 - vDetourBelow)) ? vDetourAbove : vDetourBelow;
+            points = [
+              { x: x1, y: y1 }, { x: ext1X, y: y1 },
+              { x: ext1X, y: vDetourY },
+              { x: ext2X, y: vDetourY },
+              { x: ext2X, y: y2 }, { x: x2, y: y2 }
+            ];
+          }
+          points = simplifyRoute(points);
+        }
+      }
+
+      if (isJoinedAssembly) {
+        // ── Ball-and-socket: prefer the longest horizontal segment ──
+        var bsSi = 0, bsSLen = 0, bsFoundH = false;
+        for (var bsi = 0; bsi < points.length - 1; bsi++) {
+          var bsSegIsH = Math.abs(points[bsi+1].y - points[bsi].y) < 1;
+          var bsl = Math.abs(points[bsi+1].x - points[bsi].x) + Math.abs(points[bsi+1].y - points[bsi].y);
+          if (bsSegIsH && (!bsFoundH || bsl > bsSLen)) {
+            bsSi = bsi; bsSLen = bsl; bsFoundH = true;
+          } else if (!bsFoundH && bsl > bsSLen) {
+            bsSi = bsi; bsSLen = bsl;
+          }
+        }
+        var bsSeg0 = points[bsSi], bsSeg1 = points[bsSi + 1];
+        var bsMx = (bsSeg0.x + bsSeg1.x) / 2;
+        var bsMy = (bsSeg0.y + bsSeg1.y) / 2;
+        var bsR = CFG.ifaceRadius;
+        var bsIsH = Math.abs(bsSeg1.y - bsSeg0.y) < 1;
+
+        // Compute ball/socket positions and split points for the line gap
+        var ballCx, ballCy, socketCx, socketCy, gapStart, gapEnd;
+        if (bsIsH) {
+          var fromIsLeft = bsSeg0.x < bsSeg1.x;
+          var ballOnLeft = (fromKind === 'provide') ? fromIsLeft : !fromIsLeft;
+          ballCx = ballOnLeft ? bsMx - bsR / 2 : bsMx + bsR / 2;
+          ballCy = bsMy;
+          socketCx = ballOnLeft ? bsMx + bsR / 2 : bsMx - bsR / 2;
+          socketCy = bsMy;
+          if (ballOnLeft) {
+            gapStart = { x: ballCx - bsR, y: bsMy };
+            gapEnd = { x: socketCx + bsR, y: bsMy };
+          } else {
+            gapStart = { x: socketCx - bsR, y: bsMy };
+            gapEnd = { x: ballCx + bsR, y: bsMy };
+          }
+        } else {
+          var fromIsTop = bsSeg0.y < bsSeg1.y;
+          var ballOnTop = (fromKind === 'provide') ? fromIsTop : !fromIsTop;
+          ballCx = bsMx;
+          ballCy = ballOnTop ? bsMy - bsR / 2 : bsMy + bsR / 2;
+          socketCx = bsMx;
+          socketCy = ballOnTop ? bsMy + bsR / 2 : bsMy - bsR / 2;
+          if (ballOnTop) {
+            gapStart = { x: bsMx, y: ballCy - bsR };
+            gapEnd = { x: bsMx, y: socketCy + bsR };
+          } else {
+            gapStart = { x: bsMx, y: socketCy - bsR };
+            gapEnd = { x: bsMx, y: ballCy + bsR };
+          }
+        }
+
+        // Draw polyline in two parts: before and after the ball-and-socket gap
+        var pts1 = '', pts2 = '';
+        for (var pi = 0; pi <= bsSi; pi++) {
+          if (pi > 0) pts1 += ' ';
+          pts1 += points[pi].x + ',' + points[pi].y;
+        }
+        pts1 += ' ' + gapStart.x + ',' + gapStart.y;
+        pts2 = gapEnd.x + ',' + gapEnd.y;
+        for (var pi2 = bsSi + 1; pi2 < points.length; pi2++) {
+          pts2 += ' ' + points[pi2].x + ',' + points[pi2].y;
+        }
+        svg.push('<polyline points="' + pts1 +
+          '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        svg.push('<polyline points="' + pts2 +
+          '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+
+        // Draw ball (filled circle)
+        svg.push('<circle cx="' + ballCx + '" cy="' + ballCy + '" r="' + bsR +
+          '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        // Draw socket arc
+        if (bsIsH) {
+          var socketSweep = (ballCx < socketCx) ? '1' : '0';
+          svg.push('<path d="M' + socketCx + ',' + (socketCy - bsR) + ' A' + bsR + ',' + bsR +
+            ' 0 0,' + socketSweep + ' ' + socketCx + ',' + (socketCy + bsR) +
+            '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        } else {
+          var vSweep = (ballCy < socketCy) ? '1' : '0';
+          svg.push('<path d="M' + (socketCx - bsR) + ',' + socketCy + ' A' + bsR + ',' + bsR +
+            ' 0 0,' + vSweep + ' ' + (socketCx + bsR) + ',' + socketCy +
+            '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+        }
+      } else {
+        // Draw full polyline for non-joined connectors
+        var pStr = '';
+        for (var pi = 0; pi < points.length; pi++) {
+          if (pi > 0) pStr += ' ';
+          pStr += points[pi].x + ',' + points[pi].y;
+        }
+        svg.push('<polyline points="' + pStr +
+          '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dAttr + '/>');
+      }
+
+      if (!isJoinedAssembly && conn.type !== 'link') {
+        // Arrowhead at destination
         var pLast = points[points.length - 1], pPrev = points[points.length - 2];
         var adx = pLast.x - pPrev.x, ady = pLast.y - pPrev.y;
         var alen = Math.sqrt(adx * adx + ady * ady);
@@ -517,31 +1076,63 @@
         }
       }
 
-      // Connector label
+      // Connector label — placed on the longest segment, with overlap avoidance
       if (conn.label) {
-        var lx, ly, lAnchor;
-        if (points.length === 4) {
-          // Z-route: label above the last horizontal segment (approaching the
-          // destination), well clear of both the vertical bend line and any
-          // port labels near the endpoints.
-          var hSeg0 = points[2], hSeg1 = points[3];
-          lx = (hSeg0.x + hSeg1.x) / 2;
-          ly = hSeg0.y - 10;
-          lAnchor = 'middle';
-        } else {
-          // Direct line: label above the midpoint with enough clearance
-          lx = (points[0].x + points[1].x) / 2;
-          ly = (points[0].y + points[1].y) / 2 - 12;
-          lAnchor = 'middle';
+        var bestSi = 0, bestSLen = 0;
+        for (var lsi = 0; lsi < points.length - 1; lsi++) {
+          var sl = Math.abs(points[lsi+1].x - points[lsi].x) + Math.abs(points[lsi+1].y - points[lsi].y);
+          if (sl > bestSLen) { bestSLen = sl; bestSi = lsi; }
         }
+        var lSeg0 = points[bestSi], lSeg1 = points[bestSi + 1];
+        var lSegIsH = Math.abs(lSeg1.y - lSeg0.y) < 1;
+        var lx = (lSeg0.x + lSeg1.x) / 2;
+        var ly = (lSeg0.y + lSeg1.y) / 2;
+        var lAnchor = 'middle';
+        if (lSegIsH) {
+          ly -= 10;
+        } else {
+          lx += 10; lAnchor = 'start';
+        }
+        // Nudge label until it doesn't overlap any previously placed label
+        var lblW = UMLShared.textWidth(conn.label, false, CFG.fontSize);
+        var lblH = CFG.fontSize + 6;
+        // Compute the actual bounding box edges based on anchor
+        // For "middle": center at lx; for "start": left edge at lx
+        var lblLeft = (lAnchor === 'middle') ? lx - lblW / 2 : lx;
+        var lblRight = lblLeft + lblW;
+        for (var nudge = 0; nudge < 8; nudge++) {
+          var hasOverlap = false;
+          for (var pli = 0; pli < placedLabels.length; pli++) {
+            var pl = placedLabels[pli];
+            // Check actual bounding box overlap
+            if (lblRight + 6 > pl.left && lblLeft - 6 < pl.right &&
+                ly + 2 > pl.top && ly - lblH - 2 < pl.bottom) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          if (!hasOverlap) break;
+          // Shift away from the collision
+          if (lSegIsH) {
+            ly -= lblH;
+          } else {
+            ly += lblH;
+          }
+        }
+        placedLabels.push({
+          left: lblLeft, right: lblRight,
+          top: ly - lblH, bottom: ly + 2,
+          x: lx, y: ly
+        });
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
           UMLShared.escapeXml(conn.label) + '</text>');
       }
     }
 
     // ── Draw component boxes ──
+    var nameAreaH2 = CFG.lineHeight + CFG.padY;
     for (var en in entries) {
       var e = entries[en];
       var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
@@ -560,28 +1151,118 @@
       svg.push('<rect x="' + (ix - CFG.iconTabW / 2) + '" y="' + (iy + CFG.iconH - CFG.iconTabH - 2) + '" width="' + CFG.iconTabW + '" height="' + CFG.iconTabH +
         '" fill="' + colors.fill + '" stroke="' + colors.stroke + '" stroke-width="1"/>');
 
-      // Component name (centered, left of icon)
-      svg.push('<text x="' + (bx + (bw - CFG.iconW - 8) / 2) + '" y="' + (by + bh / 2 + CFG.fontSize * 0.35) +
-        '" text-anchor="middle" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
-        UMLShared.escapeXml(e.comp.name) + '</text>');
+      if (e.hasPorts) {
+        // Name at top-left when component has ports
+        svg.push('<text x="' + (bx + CFG.padX) + '" y="' + (by + CFG.padY + CFG.fontSizeBold * 0.35 + 2) +
+          '" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
+          UMLShared.escapeXml(e.comp.name) + '</text>');
 
-      // ── Draw port squares and labels ──
-      var portHalf = CFG.portSize / 2;
+      } else {
+        // Centered name when no ports
+        svg.push('<text x="' + (bx + (bw - CFG.iconW - 8) / 2) + '" y="' + (by + bh / 2 + CFG.fontSize * 0.35) +
+          '" text-anchor="middle" font-weight="bold" font-size="' + CFG.fontSizeBold + '" fill="' + colors.text + '">' +
+          UMLShared.escapeXml(e.comp.name) + '</text>');
+      }
+
+      // ── Draw ports (squares, lollipops, sockets) and labels ──
+      var portHalf2 = CFG.portSize / 2;
+      var portLblFs2 = CFG.fontSize - 1;
       for (var pname in e.portPositions) {
         var pp = e.portPositions[pname];
+        var plText = pp.label !== undefined ? pp.label : pname;
 
-        // Port square straddling the component boundary
-        svg.push('<rect x="' + pp.x + '" y="' + pp.y +
-          '" width="' + CFG.portSize + '" height="' + CFG.portSize +
-          '" fill="' + colors.fill + '" stroke="' + colors.stroke +
-          '" stroke-width="' + CFG.strokeWidth + '"/>');
+        if (pp.kind === 'provide' || pp.kind === 'require') {
+          // ── Interface port: lollipop (provide) or socket (require) ──
+          if (!joinedPorts[pname]) {
+            // Standalone interface — draw extending from component edge
+            var ifR = CFG.ifaceRadius;
+            var ifS = CFG.ifaceStick;
+            var ifCx, ifCy = pp.cy;
 
-        // Port label below the port square (connection labels go above)
-        svg.push('<text x="' + pp.cx + '" y="' + (pp.cy + portHalf + (CFG.fontSize - 1) + 1) +
-          '" text-anchor="middle" font-size="' + (CFG.fontSize - 1) + '"' +
-          ' font-style="italic" fill="' + colors.text + '">' +
-          UMLShared.escapeXml(pp.label !== undefined ? pp.label : pname) + '</text>');
+            if (pp.side === 'right') {
+              ifCx = pp.cx + ifS;
+              // Stick line from component edge
+              svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + ifCx + '" y2="' + ifCy +
+                '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+              if (pp.kind === 'provide') {
+                // Lollipop: circle at end of stick
+                svg.push('<circle cx="' + ifCx + '" cy="' + ifCy + '" r="' + ifR +
+                  '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+              } else {
+                // Socket: `(` arc opening right (toward provider)
+                svg.push('<path d="M' + ifCx + ',' + (ifCy - ifR) + ' A' + ifR + ',' + ifR +
+                  ' 0 0,0 ' + ifCx + ',' + (ifCy + ifR) +
+                  '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+              }
+            } else {
+              ifCx = pp.cx - ifS;
+              svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + ifCx + '" y2="' + ifCy +
+                '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+              if (pp.kind === 'provide') {
+                svg.push('<circle cx="' + ifCx + '" cy="' + ifCy + '" r="' + ifR +
+                  '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+              } else {
+                // Socket: `)` arc opening left
+                svg.push('<path d="M' + ifCx + ',' + (ifCy - ifR) + ' A' + ifR + ',' + ifR +
+                  ' 0 0,1 ' + ifCx + ',' + (ifCy + ifR) +
+                  '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
+              }
+            }
+            // Label below the interface symbol
+            svg.push('<text x="' + ifCx + '" y="' + (ifCy + ifR + portLblFs2 + 2) +
+              '" text-anchor="middle" font-size="' + portLblFs2 + '"' +
+              ' font-style="italic" fill="' + colors.text +
+              '" stroke="' + colors.fill + '" stroke-width="3" paint-order="stroke">' +
+              UMLShared.escapeXml(plText) + '</text>');
+          }
+          // Joined ports: no standalone symbol drawn (ball-and-socket is on the connector)
+          // but still draw the label inside the component
+          if (joinedPorts[pname]) {
+            var jpLabelX, jpAnchor;
+            if (pp.side === 'left') {
+              jpLabelX = bx + portHalf2 + 6;
+              jpAnchor = 'start';
+            } else {
+              jpLabelX = bx + bw - portHalf2 - 6;
+              jpAnchor = 'end';
+            }
+            svg.push('<text x="' + jpLabelX + '" y="' + (pp.cy + portLblFs2 * 0.35) +
+              '" text-anchor="' + jpAnchor + '" font-size="' + portLblFs2 + '"' +
+              ' font-style="italic" fill="' + colors.text + '">' +
+              UMLShared.escapeXml(plText) + '</text>');
+          }
+        } else {
+          // ── Regular port: square straddling the component boundary ──
+          svg.push('<rect x="' + pp.x + '" y="' + pp.y +
+            '" width="' + CFG.portSize + '" height="' + CFG.portSize +
+            '" fill="' + colors.fill + '" stroke="' + colors.stroke +
+            '" stroke-width="' + CFG.strokeWidth + '"/>');
+
+          // Port label inside the box, next to the port
+          var plLabelX, plAnchor;
+          if (pp.side === 'left') {
+            plLabelX = bx + portHalf2 + 6;
+            plAnchor = 'start';
+          } else {
+            plLabelX = bx + bw - portHalf2 - 6;
+            plAnchor = 'end';
+          }
+          svg.push('<text x="' + plLabelX + '" y="' + (pp.cy + portLblFs2 * 0.35) +
+            '" text-anchor="' + plAnchor + '" font-size="' + portLblFs2 + '"' +
+            ' font-style="italic" fill="' + colors.text + '">' +
+            UMLShared.escapeXml(plText) + '</text>');
+        }
       }
+    }
+
+    // ── Draw notes (using pre-computed positions) ──
+    for (var ni = 0; ni < notePositions.length; ni++) {
+      var np2 = notePositions[ni]; var cF, cT;
+      if (np2.note.position === 'right') { cF = { x: np2.x, y: np2.y + np2.h / 2 }; cT = { x: np2.tx + np2.tw, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'left') { cF = { x: np2.x + np2.w, y: np2.y + np2.h / 2 }; cT = { x: np2.tx, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'top') { cF = { x: np2.x + np2.w / 2, y: np2.y + np2.h }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty }; }
+      else { cF = { x: np2.x + np2.w / 2, y: np2.y }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty + np2.th }; }
+      UMLShared.drawNote(svg, np2.x, np2.y, np2.note.lines, colors, { fromX: cF.x, fromY: cF.y, toX: cT.x, toY: cT.y });
     }
 
     svg.push(UMLShared.svgClose());
@@ -602,6 +1283,7 @@
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────

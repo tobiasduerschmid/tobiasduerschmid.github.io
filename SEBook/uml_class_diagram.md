@@ -224,3 +224,15 @@ Grab a blank piece of paper. Without looking at this chapter, try to draw the UM
 *Review your drawing against the rules in sections 2 and 3. How did you do? Identifying your own gaps in knowledge is the most powerful step in the learning process!*
 
 
+
+## 6. Interactive Practice
+
+Test your knowledge with these retrieval practice exercises. These diagrams are rendered dynamically to ensure you can recognize UML notation in any context.
+
+### Knowledge Quiz
+{% include quiz.html id="uml_class_diagram_examples" %}
+
+### Retrieval Flashcards
+{% include flashcards.html id="uml_class_diagram_examples" %}
+
+*Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*

@@ -673,11 +673,14 @@
 
   <!-- Custom UML diagram renderers -->
   <script src="{{ '/js/uml-shared.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-advanced-layout.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-class-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-sequence-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-state-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-component-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-deployment-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-usecase-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-activity-renderer.js' | relative_url }}"></script>
   <script src="{{ '/js/uml-notation.js' | relative_url }}"></script>
 
   <!-- Global UML inline diagram init — renders data-uml-type/data-uml-spec containers
@@ -685,30 +688,12 @@
   <script>
   (function () {
     'use strict';
-    var RENDERERS = {
-      class:      function () { return window.UMLClassDiagram; },
-      sequence:   function () { return window.UMLSequenceDiagram; },
-      state:      function () { return window.UMLStateDiagram; },
-      component:  function () { return window.UMLComponentDiagram; },
-      deployment: function () { return window.UMLDeploymentDiagram; },
-    };
-
     function renderAll() {
-      var els = document.querySelectorAll('[data-uml-type]');
-      for (var i = 0; i < els.length; i++) {
-        var el = els[i];
-        var type = el.getAttribute('data-uml-type');
-        var spec = el.getAttribute('data-uml-spec');
-        var getR = RENDERERS[type];
-        if (!getR || !spec) continue;
-        var R = getR();
-        if (R) R.render(el, spec);
-      }
-      if (window.UMLNotation) window.UMLNotation.renderAll();
+      if (window.UMLShared) window.UMLShared.renderAll();
     }
 
     function tryRender() {
-      if (window.UMLClassDiagram && window.UMLSequenceDiagram && window.UMLStateDiagram) {
+      if (window.UMLClassDiagram && window.UMLSequenceDiagram && window.UMLShared) {
         renderAll();
       } else {
         setTimeout(tryRender, 80);

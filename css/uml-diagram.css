@@ -11,16 +11,9 @@
   padding: 12px 0;
 }
 
-/* Dark mode — yellow scheme */
-html.dark-mode .uml-class-diagram-container,
-body.dark-mode .uml-class-diagram-container,
-[data-theme="dark"] .uml-class-diagram-container {
-  --uml-stroke: #f5c518;
-  --uml-text: #f5f5f5;
-  --uml-fill: #1a1800;
-  --uml-header-fill: #2e2c00;
-  --uml-line: #f5c518;
-  --uml-bg: transparent;
+/* Dark mode — invert the SVG, then rotate hue back to preserve UCLA blue */
+html.dark-mode .uml-class-diagram-container svg {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 .uml-class-diagram-container svg {

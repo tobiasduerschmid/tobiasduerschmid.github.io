@@ -195,17 +195,156 @@ class Singleton &lt;&lt;singleton&gt;&gt; {
 @enduml
   </code></pre>
 
+  <h2>9. Note with Constraint (Bottom)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class BankAccount {
+  +owner: String
+  +balance: Number
+  +deposit(amount: Number)
+  +withdraw(amount: Number)
+}
+note bottom of BankAccount: {owner->notEmpty() and balance >= 0}
+@enduml
+  </code></pre>
+
+  <h2>10. Multi-line Note with Code and LaTeX</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Order {
+  +id: int
+  +status: String
+  +total: double
+}
+class Customer {
+  +name: String
+  +email: String
+}
+Customer "1" -- "*" Order : places
+note right of Order
+  Status transitions via `updateStatus()`:
+  CREATED -> PAID -> SHIPPED
+  Total must satisfy $total >= 0$
+end note
+@enduml
+  </code></pre>
+
+  <h2>10b. Notes on Attributes and Operations</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Account {
+  +owner: String
+  +balance: double
+  +deposit(amount: double)
+  +withdraw(amount: double)
+}
+note right of Account.owner: Must not be `null` or empty
+note right of Account.withdraw: Throws `InsufficientFundsException`
+@enduml
+  </code></pre>
+
+  <h2>10c. Note with Python Syntax Highlighting</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class BankAccount {
+  +owner: String
+  +balance: float
+  +deposit(amount: float)
+  +withdraw(amount: float)
+}
+note right of BankAccount
+  ```python
+  def withdraw(self, amount):
+      if amount <= 0:
+          raise ValueError("Amount must be positive")
+      if amount > self.balance:
+          raise InsufficientFunds(self.balance)
+      self.balance -= amount
+      return self.balance
+  ```
+end note
+@enduml
+  </code></pre>
+
+  <h2>10d. Note with Java Syntax Highlighting</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class OrderService {
+  +placeOrder(order: Order): boolean
+}
+note right of OrderService
+  ```java
+  public boolean placeOrder(Order order) {
+      if (order == null) {
+          throw new IllegalArgumentException("Order is null");
+      }
+      // Validate and persist
+      boolean saved = repository.save(order);
+      return saved;
+  }
+  ```
+end note
+@enduml
+  </code></pre>
+
+  <h2>10e. Note with JavaScript Syntax Highlighting</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class EventEmitter {
+  +on(event: String, callback: Function)
+  +emit(event: String, data: Object)
+}
+note right of EventEmitter
+  ```javascript
+  async function emit(event, data) {
+      const listeners = this.listeners[event] || [];
+      for (const fn of listeners) {
+          await fn(data); // sequential
+      }
+      console.log("Done:", event);
+  }
+  ```
+end note
+@enduml
+  </code></pre>
+
+  <h2>10f. Note with C++ Syntax Highlighting</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Matrix {
+  -rows: int
+  -cols: int
+  +transpose(): Matrix
+}
+note right of Matrix
+  ```cpp
+  Matrix Matrix::transpose() const {
+      auto result = Matrix(cols, rows);
+      for (int i = 0; i < rows; i++) {
+          for (int j = 0; j < cols; j++) {
+              result(j, i) = this->at(i, j);
+          }
+      }
+      return result;
+  }
+  ```
+end note
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Sequence Diagram Tests</h1>
 
-  <h2>9. Basic Synchronous Call & Response</h2>
+  <h2>11. Basic Synchronous Call & Response</h2>
   <pre><code class="language-uml-sequence">
 @startuml
 participant client_1: Client
 participant server: LibraryServer
 
+activate client_1
 client_1 -> server: GET /book/id
 server --> client_1: responseCode=200, book
+deactivate client_1
 @enduml
   </code></pre>
 
@@ -344,28 +483,289 @@ server --> client: response
 @enduml
   </code></pre>
 
-  <h2>18. Stacked Execution Specifications</h2>
+  <h2>18. Lost and Found Messages</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client: Client
+participant server: Server
+
+o-> client: networkEvent
+client -> server: request()
+server ->o : timeout
+server --> client: response
+client ->o : logEntry
+@enduml
+  </code></pre>
+
+  <h2>19. Stacked Execution Specifications (Observer Pattern)</h2>
+  <pre><code class="language-uml-sequence">
+participant Observer
+participant Subject
+
+Observer -> Subject: register(self)
+activate Subject
+Observer -> Subject: notify(someEvent)
+activate Subject
+Subject -> Observer: update()
+activate Observer
+Observer -> Subject: getData()
+activate Subject
+Subject --> Observer: data
+deactivate Subject
+deactivate Observer
+deactivate Subject
+deactivate Subject
+  </code></pre>
+
+  <h2>19b. Stacked Bars — Deep Nesting</h2>
+  <pre><code class="language-uml-sequence">
+participant client: Client
+participant server: Server
+participant db: Database
+
+client -> server: login()
+activate server
+server -> db: checkCredentials()
+activate db
+server -> db: loadProfile()
+activate db
+db --> server: profile
+deactivate db
+db --> server: valid
+deactivate db
+server --> client: session
+deactivate server
+  </code></pre>
+
+  <h2>20. Nested Fragments (Loop containing Alt)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant s: Server
+participant db: Database
+
+c -> s: fetchAll()
+loop [for each record]
+  s -> db: query(id)
+  alt [found]
+    db --> s: record
+    s -> s: transform()
+  else [not found]
+    db --> s: null
+    s -> s: logMissing()
+  end
+end
+s --> c: results
+@enduml
+  </code></pre>
+
+  <h2>21. Destroy / Delete Message (Lifeline Termination)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant s: Session
+participant db: Database
+
+c -> s: connect()
+s -> db: open()
+db --> s: connection
+s --> c: sessionId
+c -> s: query(sql)
+s -> db: execute(sql)
+db --> s: resultSet
+s --> c: results
+c -> s: disconnect()
+s -> db: close()
+destroy db
+s --> c: bye
+destroy s
+@enduml
+  </code></pre>
+
+  <h2>22. Break Fragment (Early Exit from Loop)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant s: Server
+participant cache: Cache
+
+c -> s: search(query)
+loop [for each page]
+  s -> cache: lookup(page)
+  break [cache hit]
+    cache --> s: cachedResult
+    s --> c: cachedResult
+  end
+  s -> s: computePage()
+end
+s --> c: result
+@enduml
+  </code></pre>
+
+  <h2>23. Par (Parallel) Fragment</h2>
   <pre><code class="language-uml-sequence">
 @startuml
 participant ui: UI
-participant ctrl: Controller
-participant svc: Service
-participant repo: Repository
+participant svc: OrderService
+participant inv: Inventory
+participant pay: PaymentGateway
+participant notif: Notifications
 
-ui -> ctrl: handleClick()
-ctrl -> svc: processOrder()
-svc -> repo: save(order)
-repo --> svc: saved
-svc -> svc: sendNotification()
-svc --> ctrl: result
-ctrl --> ui: updateView()
+ui -> svc: placeOrder()
+par [parallel processing]
+  svc -> inv: reserveItems()
+  inv --> svc: reserved
+else [payment]
+  svc -> pay: chargeCard()
+  pay --> svc: charged
+else [notification]
+  svc -> notif: sendConfirmation()
+  notif --> svc: sent
+end
+svc --> ui: orderComplete
+@enduml
+  </code></pre>
+
+  <h2>24. Ref (Interaction Use) Fragment</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant user: User
+participant app: App
+participant auth: AuthService
+participant api: API
+
+user -> app: login()
+ref [Authentication Handshake]
+  app -> auth: authenticate(credentials)
+  auth --> app: token
+end
+app -> api: getData(token)
+api --> app: data
+app --> user: showDashboard
+@enduml
+  </code></pre>
+
+  <h2>25. Critical Fragment</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant atm: ATM
+participant bank: BankServer
+participant acct: Account
+
+atm -> bank: withdraw(amount)
+critical [atomic transaction]
+  bank -> acct: debit(amount)
+  acct --> bank: success
+  bank -> acct: updateBalance()
+  acct --> bank: newBalance
+end
+bank --> atm: dispenseCash
+@enduml
+  </code></pre>
+
+  <h2>26. Multiple Else Clauses in Alt</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant s: Server
+
+c -> s: request(type)
+alt [type == GET]
+  s --> c: 200 OK + data
+else [type == POST]
+  s -> s: validate()
+  s --> c: 201 Created
+else [type == DELETE]
+  s -> s: authorize()
+  s --> c: 204 No Content
+else [else]
+  s --> c: 405 Method Not Allowed
+end
+@enduml
+  </code></pre>
+
+  <h2>27. Deeply Nested Fragments (3 Levels)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant gw: Gateway
+participant svc: Service
+participant db: Database
+
+c -> gw: request()
+opt [authenticated]
+  gw -> svc: process()
+  loop [retry up to 3 times]
+    svc -> db: query()
+    alt [success]
+      db --> svc: data
+    else [timeout]
+      svc -> svc: wait()
+    end
+  end
+  svc --> gw: result
+end
+gw --> c: response
+@enduml
+  </code></pre>
+
+  <h2>28. Neg (Forbidden/Invalid) Fragment</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant user: User
+participant sys: System
+participant db: Database
+
+user -> sys: deleteAccount()
+neg [must not happen during maintenance]
+  sys -> db: DROP TABLE users
+  db --> sys: error
+end
+sys --> user: maintenanceInProgress
+@enduml
+  </code></pre>
+
+  <h2>29. Async Messages and Create/Destroy Lifecycle</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client: Client
+participant pool: ThreadPool
+participant worker: Worker
+
+client ->> pool: submitTask()
+pool -> worker: create()
+pool ->> worker: execute(task)
+worker ->> pool: taskComplete
+pool --> client: result
+destroy worker
+@enduml
+  </code></pre>
+
+  <h2>30. Sequence Diagram Notes</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant c: Client
+participant s: Server
+participant db: Database
+
+c -> s: authenticate()
+note right of s: Validates JWT token
+s -> db: findUser(token)
+note left of db: Lookup by indexed token field
+db --> s: userRecord
+note over s
+  At this point the server has
+  verified the user identity and
+  can proceed with authorization.
+end note
+s --> c: authResult
 @enduml
   </code></pre>
 
   <hr style="margin-top: 60px;">
   <h1>UML State Machine Diagram Tests</h1>
 
-  <h2>19. Exosuit State Machine (from SEBook)</h2>
+  <h2>31. Exosuit State Machine (from SEBook)</h2>
   <pre><code class="language-uml-state">
 @startuml
 [*] --> Idle : powerOn()
@@ -431,10 +831,25 @@ state Dispensing {
 @enduml
   </code></pre>
 
+  <h2>35. State Diagram with Note</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Idle : init()
+
+Idle --> Processing : startJob [queueNotEmpty]
+Processing --> Done : complete
+Done --> [*]
+Processing --> Error : exception
+Error --> Idle : retry
+
+note right of Processing: Max 3 retries allowed
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Component Diagram Tests</h1>
 
-  <h2>23. Client-Server (from Lecture)</h2>
+  <h2>36. Client-Server (from Lecture)</h2>
   <pre><code class="language-uml-component">
 @startuml
 component Client
@@ -498,10 +913,110 @@ b_eventout --> eb_in : publish
 @enduml
   </code></pre>
 
+  <h2>27. Microservice API Gateway (Port-to-Port)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Gateway {
+  portout "out1" as g_out1
+  portout "out2" as g_out2
+}
+component Auth {
+  portin "in" as a_in
+  portout "out1" as a_out1
+  portout "out2" as a_out2
+}
+component Users {
+  portin "/users" as u_p1
+  portin "/users" as u_p2
+  portin "/users/unsubscribe/{userId}" as u_p3
+}
+component Clubs {
+  portin "/clubs" as c_p1
+  portin "/clubs/event-reference/{eventId}" as c_p2
+  portin "/clubs/roles/{clubId}/{userId}" as c_p3
+  portout "out1" as c_out1
+}
+component Events {
+  portin "/events" as e_p1
+  portin "/events/template-data/{templateId}" as e_p2
+  portout "out1" as e_out1
+  portout "out2" as e_out2
+}
+component Notifications {
+  portin "/notifications/event-update" as n_p1
+  portout "out1" as n_out1
+  portout "out2" as n_out2
+}
+
+g_out1 --> c_p1 : POST
+g_out2 --> u_p2 : POST
+a_out1 --> u_p1 : GET
+a_out2 --> c_p3 : GET
+c_out1 --> e_p1 : GET
+e_out1 --> c_p2 : GET
+e_out2 --> n_p1 : POST
+n_out1 --> e_p2 : GET
+n_out2 --> u_p3 : POST
+@enduml
+  </code></pre>
+
+  <h2>28. Joined Assembly Interfaces (Ball-and-Socket)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Order {
+  provide "OrderItems" as o_items
+  provide "CustomerInfo" as o_cust
+}
+component Warehouse {
+  require "OrderItems" as w_items
+}
+component CRM {
+  require "CustomerInfo" as crm_cust
+}
+o_items --> w_items
+o_cust --> crm_cust
+@enduml
+  </code></pre>
+
+  <h2>29. Disjoined Interfaces (Standalone Lollipop and Socket)</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component WebApp {
+  provide "UserAPI" as wa_api
+  require "DataStore" as wa_ds
+}
+component Database {
+  provide "DataStore" as db_ds
+}
+component MobileApp {
+  require "UserAPI" as ma_api
+}
+wa_api ..> ma_api : REST
+db_ds ..> wa_ds : JDBC
+@enduml
+  </code></pre>
+
+  <h2>40. Component Diagram with Note</h2>
+  <pre><code class="language-uml-component">
+@startuml
+component Frontend
+component API
+component Database
+
+Frontend --> API : REST
+API --> Database : SQL
+note right of API
+  All requests are authenticated
+  via JWT middleware before
+  reaching the handler.
+end note
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Deployment Diagram Tests</h1>
 
-  <h2>26. Web Application Deployment</h2>
+  <h2>41. Web Application Deployment</h2>
   <pre><code class="language-uml-deployment">
 @startuml
 node WebServer {
@@ -567,6 +1082,54 @@ AppNode1 ..> AppNode2 : gRPC
 @enduml
   </code></pre>
 
+  <h2>30. Web App Deployment — Horizontal Layout</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+layout horizontal
+node ClientDevice {
+  component WebBrowser
+}
+node WebServer {
+  component Nginx
+  component AppServer
+}
+node DatabaseServer {
+  component PostgreSQL
+}
+
+ClientDevice --> WebServer : HTTPS
+WebServer --> DatabaseServer : TCP/IP
+@enduml
+  </code></pre>
+
+  <h2>31. Microservices — Horizontal Layout</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+layout horizontal
+node LoadBalancer {
+  component Nginx
+}
+node AppNode1 {
+  component UserService
+  component OrderService
+}
+node AppNode2 {
+  component PaymentService
+  component NotificationService
+}
+node DataNode {
+  component MongoDB
+  component Redis
+}
+
+LoadBalancer --> AppNode1 : HTTP
+LoadBalancer --> AppNode2 : HTTP
+AppNode1 --> DataNode : TCP
+AppNode2 --> DataNode : TCP
+AppNode1 ..> AppNode2 : gRPC
+@enduml
+  </code></pre>
+
   <h2>29. Node Instance Notation (name:Type underlined, per UML spec Fig 9-3)</h2>
   <pre><code class="language-uml-deployment">
 @startuml
@@ -582,11 +1145,215 @@ client:ATMKiosk --> server:BankServer : network
 @enduml
   </code></pre>
 
+  <h2>50. Deployment Diagram with Note</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node LoadBalancer {
+  component HAProxy
+}
+node AppServer {
+  component NodeApp
+}
+node DBServer {
+  component PostgreSQL
+}
+
+LoadBalancer --> AppServer : HTTP
+AppServer --> DBServer : TCP/5432
+note right of DBServer: Encrypted at rest with AES-256
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>New Feature Tests</h1>
+
+  <h2>51. Enumeration (Class Diagram)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+enum Color {
+  RED
+  GREEN
+  BLUE
+}
+enum Size { SMALL; MEDIUM; LARGE }
+class Product {
+  -name: String
+  -color: Color
+  -size: Size
+}
+Product --> Color
+Product --> Size
+@enduml
+  </code></pre>
+
+  <h2>52. Choice Pseudostate (State Machine)</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Validating : submit
+
+state Check &lt;&lt;choice&gt;&gt;
+Validating --> Check : validate()
+Check --> Approved : [valid]
+Check --> Rejected : [invalid]
+Approved --> [*]
+Rejected --> [*]
+@enduml
+  </code></pre>
+
+  <h2>53. Actor Stick Figures (Sequence Diagram)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+actor user: User
+participant app: Application
+participant db: Database
+
+user -> app: login(credentials)
+app -> db: findUser(name)
+db --> app: userRecord
+app --> user: welcome screen
+@enduml
+  </code></pre>
+
+  <h2>54. Create Message (Sequence Diagram)</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant client: Client
+participant server: Server
+
+client -> server: request()
+create Handler
+server -> Handler: handle(req)
+Handler --> server: result
+server --> client: response
+destroy Handler
+@enduml
+  </code></pre>
+
+  <h2>55. Composite State (State Machine)</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Active
+
+state Active {
+  [*] --> Running
+  Running --> Paused : pause()
+  Paused --> Running : resume()
+}
+
+Active --> Idle : deactivate()
+Idle --> Active : activate()
+Idle --> [*] : shutdown()
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Use Case Diagram Tests</h1>
+
+  <h2>56. Login System (Use Case)</h2>
+  <pre><code class="language-uml-usecase">
+@startuml
+actor User
+actor Admin
+
+usecase "Login" as UC1
+usecase "Register" as UC2
+usecase "Reset Password" as UC3
+usecase "Manage Users" as UC4
+
+rectangle "Auth System" {
+  UC1
+  UC2
+  UC3
+  UC4
+}
+
+User -- UC1
+User -- UC2
+User -- UC3
+Admin -- UC1
+Admin -- UC4
+UC1 ..> UC3 : <<extend>>
+UC2 ..> UC1 : <<include>>
+@enduml
+  </code></pre>
+
+  <h2>57. Online Store (Use Case)</h2>
+  <pre><code class="language-uml-usecase">
+@startuml
+actor Customer
+actor PaymentGateway
+
+usecase "Browse Products" as UC1
+usecase "Add to Cart" as UC2
+usecase "Checkout" as UC3
+usecase "Process Payment" as UC4
+
+Customer -- UC1
+Customer -- UC2
+Customer -- UC3
+UC3 ..> UC4 : <<include>>
+UC4 -- PaymentGateway
+@enduml
+  </code></pre>
+
+  <hr style="margin-top: 60px;">
+  <h1>UML Activity Diagram Tests</h1>
+
+  <h2>58. Order Processing (Activity Diagram)</h2>
+  <pre><code class="language-uml-activity">
+@startuml
+(*) --> "Receive Order"
+"Receive Order" --> "Validate Payment"
+if "Payment Valid?" then
+  --> [yes] "Process Order"
+else
+  --> [no] "Reject Order"
+endif
+"Process Order" --> "Ship Order"
+"Ship Order" --> (*)
+"Reject Order" --> (*)
+@enduml
+  </code></pre>
+
+  <h2>59. Login Flow (Activity Diagram)</h2>
+  <pre><code class="language-uml-activity">
+@startuml
+(*) --> "Enter Credentials"
+"Enter Credentials" --> "Authenticate"
+if "Valid?" then
+  --> [yes] "Load Dashboard"
+  "Load Dashboard" --> (*)
+else
+  --> [no] "Show Error"
+  "Show Error" --> "Enter Credentials"
+endif
+@enduml
+  </code></pre>
+
+  <h2>60. Swimlanes (Activity Diagram)</h2>
+  <pre><code class="language-uml-activity">
+@startuml
+|Customer|
+(*) --> "Place Order"
+|Warehouse|
+"Place Order" --> "Pick Items"
+"Pick Items" --> "Pack"
+|Shipping|
+"Pack" --> "Ship"
+|Customer|
+"Ship" --> "Receive"
+"Receive" --> (*)
+@enduml
+  </code></pre>
+
   <script src="/js/uml-shared.js"></script>
+  <script src="/js/uml-advanced-layout.js"></script>
   <script src="/js/uml-class-renderer.js"></script>
   <script src="/js/uml-sequence-renderer.js"></script>
   <script src="/js/uml-state-renderer.js"></script>
   <script src="/js/uml-component-renderer.js"></script>
   <script src="/js/uml-deployment-renderer.js"></script>
+  <script src="/js/uml-usecase-renderer.js"></script>
+  <script src="/js/uml-activity-renderer.js"></script>
 </body>
 </html>

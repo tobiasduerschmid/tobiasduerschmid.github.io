@@ -25,6 +25,8 @@
  *   component Name       Component inside a node
  *   A --> B : label      Communication link between nodes
  *   A ..> B : label      Dependency
+ *   layout horizontal    Left-to-right layout (also: left-to-right, LR)
+ *   layout vertical      Top-to-bottom layout (also: top-to-bottom, TB) [default]
  */
 (function () {
   'use strict';
@@ -62,12 +64,22 @@
     var nodes = [];
     var nodeMap = {};
     var links = [];
+    var notes = [];
     var currentNode = null;
     var braceDepth = 0;
+    var direction = 'TB';
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
+
+      // Layout directive
+      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
+      if (layoutMatch && !currentNode) {
+        var val = layoutMatch[1].toLowerCase();
+        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+        continue;
+      }
 
       // Inside a node block
       if (currentNode !== null) {
@@ -114,6 +126,10 @@
         continue;
       }
 
+      // Note
+      var noteIdx = UMLShared.parseNoteLine(line, lines, i, notes);
+      if (noteIdx >= 0) { i = noteIdx; continue; }
+
       // Link: A --> B : label  or  A ..> B : label
       var linkMatch = line.match(/^(\S+)\s+(-->|\.\.>|--)\s+(\S+)\s*(?::\s*(.*))?$/);
       if (linkMatch) {
@@ -128,7 +144,7 @@
       }
     }
 
-    return { nodes: nodes, links: links };
+    return { nodes: nodes, links: links, notes: notes, direction: direction };
   }
 
   // ─── Layout ───────────────────────────────────────────────────────
@@ -136,9 +152,12 @@
   function computeLayout(parsed) {
     var nodes = parsed.nodes;
     var links = parsed.links;
-    if (nodes.length === 0) return { entries: {}, width: 0, height: 0 };
+    if (nodes.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
     for (var i = 0; i < nodes.length; i++) {
       var n = nodes[i];
       var nameW = UMLShared.textWidth(n.name, true, CFG.fontSizeBold);
@@ -154,6 +173,12 @@
         h = Math.max(h + CFG.nodePadY, CFG.nodeMinH);
       }
       entries[n.name] = { node: n, box: { width: Math.ceil(w), height: Math.ceil(h) }, x: 0, y: 0 };
+      layoutNodes.push({ id: n.name, width: Math.ceil(w), height: Math.ceil(h), data: n });
+    }
+
+    for (var li = 0; li < links.length; li++) {
+      var lk = links[li];
+      layoutEdges.push({ source: lk.from, target: lk.to, type: lk.type, data: lk });
     }
 
     // Compute link label widths for gap sizing
@@ -163,64 +188,12 @@
     }
     var effectiveGapX = Math.max(CFG.gapX, maxLabelW + 40);
 
-    // Build directed graph for layering
-    var children = {}, parents = {};
-    for (var cn in entries) { children[cn] = []; parents[cn] = []; }
-    for (var li2 = 0; li2 < links.length; li2++) {
-      var lk = links[li2];
-      if (entries[lk.from] && entries[lk.to]) {
-        if (children[lk.from].indexOf(lk.to) === -1) { children[lk.from].push(lk.to); parents[lk.to].push(lk.from); }
-      }
-    }
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
 
-    var roots = [];
-    for (var cn2 in entries) { if (parents[cn2].length === 0) roots.push(cn2); }
-    if (roots.length === 0) roots = [nodes[0].name];
-
-    // BFS layer assignment
-    var layers = {}, visited = {}, queue = [];
-    for (var ri = 0; ri < roots.length; ri++) { layers[roots[ri]] = 0; visited[roots[ri]] = true; queue.push(roots[ri]); }
-    while (queue.length > 0) {
-      var nd = queue.shift();
-      var kids = children[nd];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki], nl = (layers[nd] || 0) + 1;
-        if (!visited[kid]) { visited[kid] = true; layers[kid] = nl; queue.push(kid); }
-        else if (nl > layers[kid]) { layers[kid] = nl; queue.push(kid); }
-      }
-    }
-    for (var cn3 in entries) { if (layers[cn3] === undefined) layers[cn3] = 0; }
-
-    // Group and position by layer
-    var layerGroups = {}, maxLayer = 0;
-    for (var cn4 in entries) { var l = layers[cn4]; if (!layerGroups[l]) layerGroups[l] = []; layerGroups[l].push(cn4); maxLayer = Math.max(maxLayer, l); }
-
-    var curY = 0;
-    for (var ly = 0; ly <= maxLayer; ly++) {
-      var group = layerGroups[ly]; if (!group) continue;
-      var curX = 0;
-      for (var gi = 0; gi < group.length; gi++) {
-        entries[group[gi]].x = curX;
-        entries[group[gi]].y = curY;
-        curX += entries[group[gi]].box.width + effectiveGapX;
-      }
-      var maxH = 0;
-      for (var gi2 = 0; gi2 < group.length; gi2++) maxH = Math.max(maxH, entries[group[gi2]].box.height);
-      curY += maxH + CFG.gapY;
-    }
-
-    // Center layers
-    var maxLayerW = 0;
-    for (var ly2 = 0; ly2 <= maxLayer; ly2++) {
-      var g = layerGroups[ly2]; if (!g) continue;
-      var le = entries[g[g.length - 1]];
-      maxLayerW = Math.max(maxLayerW, le.x + le.box.width);
-    }
-    for (var ly3 = 0; ly3 <= maxLayer; ly3++) {
-      var g2 = layerGroups[ly3]; if (!g2) continue;
-      var le2 = entries[g2[g2.length - 1]];
-      var off = (maxLayerW - (le2.x + le2.box.width)) / 2;
-      for (var gi3 = 0; gi3 < g2.length; gi3++) entries[g2[gi3]].x += off;
+    for (var nm in result.nodes) {
+      if (!entries[nm]) continue;
+      entries[nm].x = result.nodes[nm].x;
+      entries[nm].y = result.nodes[nm].y;
     }
 
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -231,7 +204,28 @@
       maxY = Math.max(maxY, e.y + e.box.height);
     }
 
-    return { entries: entries, width: maxX - minX, height: maxY - minY, offsetX: -minX, offsetY: -minY };
+    // Expand bounds to account for link labels that may extend beyond nodes
+    var maxLabelH = 0, maxLabelWHalf = 0;
+    for (var dli = 0; dli < links.length; dli++) {
+      if (links[dli].label) {
+        var dlW = UMLShared.textWidth(links[dli].label, false, CFG.fontSize);
+        maxLabelWHalf = Math.max(maxLabelWHalf, dlW / 2 + 10);
+        maxLabelH = Math.max(maxLabelH, CFG.fontSize + 16);
+      }
+    }
+    minX -= maxLabelWHalf;
+    minY -= maxLabelH;
+    maxX += maxLabelWHalf;
+    maxY += maxLabelH;
+
+    return { 
+      entries: entries, 
+      width: maxX - minX, 
+      height: maxY - minY, 
+      offsetX: -minX, 
+      offsetY: -minY,
+      layoutResult: result 
+    };
   }
 
   // ─── SVG Renderer ─────────────────────────────────────────────────
@@ -239,10 +233,45 @@
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var links = parsed.links;
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
+
+    // Resolve note target — supports dotted paths to sub-elements
+    function resolveTarget(target) {
+      var parts = target.split('.');
+      var entry = entries[parts[0]];
+      if (!entry) return null;
+      return { x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height };
+    }
+
+    // Pre-compute note positions for SVG bounds expansion
+    var notePositions = [];
+    if (parsed.notes) {
+      var noteGap = UMLShared.NOTE_CFG.gap;
+      for (var npi = 0; npi < parsed.notes.length; npi++) {
+        var pn = parsed.notes[npi]; var tgt = resolveTarget(pn.target); if (!tgt) continue;
+        var ns = UMLShared.measureNote(pn.lines);
+        var nx, ny, tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
+        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
+        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
+        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
+        else { nx = tx; ny = ty + th + noteGap; }
+        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height, tx: tx, ty: ty, tw: tw, th: th });
+      }
+    }
+    var noteExtraL = 0, noteExtraR = 0, noteExtraT = 0, noteExtraB = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var npb = notePositions[nbi];
+      if (npb.x < -layout.offsetX) noteExtraL = Math.max(noteExtraL, -layout.offsetX - npb.x + CFG.svgPad);
+      var nr = npb.x + npb.w - (layout.width - layout.offsetX);
+      if (nr > 0) noteExtraR = Math.max(noteExtraR, nr + CFG.svgPad);
+      if (npb.y < -layout.offsetY) noteExtraT = Math.max(noteExtraT, -layout.offsetY - npb.y + CFG.svgPad);
+      var nb = npb.y + npb.h - (layout.height - layout.offsetY);
+      if (nb > 0) noteExtraB = Math.max(noteExtraB, nb + CFG.svgPad);
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + noteExtraL;
+    var oy = layout.offsetY + CFG.svgPad + noteExtraT;
+    var svgW = layout.width + CFG.svgPad * 2 + noteExtraL + noteExtraR;
+    var svgH = layout.height + CFG.svgPad * 2 + noteExtraT + noteExtraB;
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
@@ -284,6 +313,56 @@
       }
     }
 
+    // ── Obstacle-aware routing helpers ──
+    var obPad = 10;
+    var obstacles = [];
+    for (var obn in entries) {
+      var obe = entries[obn];
+      obstacles.push({
+        x1: obe.x - obPad,
+        y1: obe.y - CFG.node3dDepth - obPad,
+        x2: obe.x + obe.box.width + CFG.node3dDepth + obPad,
+        y2: obe.y + obe.box.height + obPad,
+        name: obn
+      });
+    }
+
+    function vSegHitsObs(x, yMin, yMax, skipNames) {
+      for (var i = 0; i < obstacles.length; i++) {
+        var ob = obstacles[i];
+        if (skipNames && (skipNames[ob.name])) continue;
+        if (x > ob.x1 && x < ob.x2 && yMax > ob.y1 && yMin < ob.y2) return true;
+      }
+      return false;
+    }
+
+    function hSegHitsObs(y, xMin, xMax, skipNames) {
+      for (var i = 0; i < obstacles.length; i++) {
+        var ob = obstacles[i];
+        if (skipNames && (skipNames[ob.name])) continue;
+        if (y > ob.y1 && y < ob.y2 && xMax > ob.x1 && xMin < ob.x2) return true;
+      }
+      return false;
+    }
+
+    function findClearX(yMin, yMax, preferX, skipNames) {
+      if (!vSegHitsObs(preferX, yMin, yMax, skipNames)) return preferX;
+      for (var d = 10; d < 800; d += 10) {
+        if (!vSegHitsObs(preferX + d, yMin, yMax, skipNames)) return preferX + d;
+        if (!vSegHitsObs(preferX - d, yMin, yMax, skipNames)) return preferX - d;
+      }
+      return preferX;
+    }
+
+    function findClearY(xMin, xMax, preferY, skipNames) {
+      if (!hSegHitsObs(preferY, xMin, xMax, skipNames)) return preferY;
+      for (var d = 10; d < 800; d += 10) {
+        if (!hSegHitsObs(preferY + d, xMin, xMax, skipNames)) return preferY + d;
+        if (!hSegHitsObs(preferY - d, xMin, xMax, skipNames)) return preferY - d;
+      }
+      return preferY;
+    }
+
     // ── Draw links ──
     for (var li = 0; li < links.length; li++) {
       var lk = links[li];
@@ -301,21 +380,67 @@
       var fromCx = (distExitX[li] !== undefined) ? distExitX[li] : origFromCx;
       var toCx = (distEntryX[li] !== undefined) ? distEntryX[li] : origToCx;
 
+      // Skip names for obstacle checking (don't avoid source/target)
+      var skipN = {};
+      skipN[lk.from] = true;
+      skipN[lk.to] = true;
+
       var x1, y1, x2, y2;
+      var exitDir; // 'top', 'bottom', 'left', 'right'
+      var entryDir;
       if (Math.abs(dx) > Math.abs(dy) * 1.5) {
-        if (dx > 0) { x1 = fromE.x + fromE.box.width; y1 = fromCy; x2 = toE.x; y2 = toCy; }
-        else { x1 = fromE.x; y1 = fromCy; x2 = toE.x + toE.box.width; y2 = toCy; }
+        if (dx > 0) { x1 = fromE.x + fromE.box.width; y1 = fromCy; x2 = toE.x; y2 = toCy; exitDir = 'right'; entryDir = 'left'; }
+        else { x1 = fromE.x; y1 = fromCy; x2 = toE.x + toE.box.width; y2 = toCy; exitDir = 'left'; entryDir = 'right'; }
       } else {
-        if (dy > 0) { x1 = fromCx; y1 = fromE.y + fromE.box.height; x2 = toCx; y2 = toE.y; }
-        else { x1 = fromCx; y1 = fromE.y; x2 = toCx; y2 = toE.y + toE.box.height; }
+        // For vertical links, try to use the same X for both endpoints to avoid angles
+        // Pick the X that is clear of obstacles, preferring mid between the two
+        var sharedX = (fromCx + toCx) / 2;
+        var yTop = Math.min(fromE.y + fromE.box.height, toE.y) ;
+        var yBot = Math.max(fromE.y + fromE.box.height, toE.y);
+        if (!vSegHitsObs(sharedX, yTop, yBot, skipN)) {
+          fromCx = sharedX;
+          toCx = sharedX;
+        } else if (!vSegHitsObs(fromCx, yTop, yBot, skipN)) {
+          toCx = fromCx;
+        } else if (!vSegHitsObs(toCx, yTop, yBot, skipN)) {
+          fromCx = toCx;
+        }
+        if (dy > 0) { x1 = fromCx; y1 = fromE.y + fromE.box.height; x2 = toCx; y2 = toE.y; exitDir = 'bottom'; entryDir = 'top'; }
+        else { x1 = fromCx; y1 = fromE.y; x2 = toCx; y2 = toE.y + toE.box.height; exitDir = 'top'; entryDir = 'bottom'; }
       }
 
       var points;
-      if (Math.abs(x1 - x2) < 2 || Math.abs(y1 - y2) < 2) {
+      if (Math.abs(x1 - x2) < 2 && Math.abs(y1 - y2) < 2) {
         points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+      } else if (exitDir === 'bottom' || exitDir === 'top') {
+        // Vertical link
+        if (Math.abs(x1 - x2) < 2) {
+          // Straight vertical — check if it passes through an obstacle
+          var vTop = Math.min(y1, y2), vBot = Math.max(y1, y2);
+          if (!vSegHitsObs(x1, vTop, vBot, skipN)) {
+            points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+          } else {
+            // Need to route around — find clear X for vertical channel
+            var clearX = findClearX(vTop, vBot, x1, skipN);
+            points = [{ x: x1, y: y1 }, { x: x1, y: (y1 + y2) / 2 }, { x: clearX, y: (y1 + y2) / 2 }, { x: clearX, y: y2 }];
+          }
+        } else {
+          // Different X — use Z-route with obstacle-aware midY
+          var midY = (y1 + y2) / 2;
+          var xMin = Math.min(x1, x2), xMax = Math.max(x1, x2);
+          midY = findClearY(xMin, xMax, midY, skipN);
+          points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        }
       } else {
-        var midY = (y1 + y2) / 2;
-        points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
+        // Horizontal link
+        if (Math.abs(y1 - y2) < 2) {
+          points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
+        } else {
+          var midX = (x1 + x2) / 2;
+          var hTop = Math.min(y1, y2), hBot = Math.max(y1, y2);
+          midX = findClearX(hTop, hBot, midX, skipN);
+          points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
+        }
       }
 
       var pStr = '';
@@ -342,7 +467,7 @@
           '" fill="' + colors.line + '"/>');
       }
 
-      // Label
+      // Label — placed on the longest segment, shifted to avoid overlapping nodes
       if (lk.label) {
         var bestIdx = 0, bestLen = 0;
         for (var si = 0; si < points.length - 1; si++) {
@@ -353,10 +478,50 @@
         var lx = (lp0.x + lp1.x) / 2, ly = (lp0.y + lp1.y) / 2;
         var isH = Math.abs(lp1.y - lp0.y) < 1;
         var lAnchor = 'middle';
-        if (isH) { ly -= 8; } else { lx += 10; lAnchor = 'start'; }
+        var labelW = UMLShared.textWidth(lk.label, false, CFG.fontSize);
+        var labelH = CFG.fontSize;
+        if (isH) {
+          ly -= 8;
+        } else {
+          lx += 10; lAnchor = 'start';
+        }
+        // Check if label overlaps any node and shift if needed
+        var lblLeft = (lAnchor === 'middle') ? lx - labelW / 2 : lx;
+        var lblRight = lblLeft + labelW;
+        var lblTop = ly - labelH;
+        var lblBot = ly + 4;
+        var labelShifted = false;
+        for (var lni = 0; lni < obstacles.length; lni++) {
+          var lob = obstacles[lni];
+          if (lblRight > lob.x1 && lblLeft < lob.x2 && lblBot > lob.y1 && lblTop < lob.y2) {
+            // Label overlaps this node — try placing on opposite side of the line
+            if (!isH) {
+              // Vertical segment: try left side instead
+              lx = lp0.x - 10; lAnchor = 'end';
+              lblLeft = lx - labelW; lblRight = lx;
+              // Check again
+              var stillHits = false;
+              for (var lni2 = 0; lni2 < obstacles.length; lni2++) {
+                var lob2 = obstacles[lni2];
+                if (lblRight > lob2.x1 && lblLeft < lob2.x2 && lblBot > lob2.y1 && lblTop < lob2.y2) {
+                  stillHits = true; break;
+                }
+              }
+              if (stillHits) {
+                // Both sides blocked — place above/below the segment midpoint, offset further right
+                lx = lob.x2 + 10; lAnchor = 'start';
+              }
+            } else {
+              // Horizontal segment: try below instead of above
+              ly = lp0.y + labelH + 4;
+            }
+            labelShifted = true;
+            break;
+          }
+        }
         svg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
-          '" stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
+          '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" font-style="italic">' +
           UMLShared.escapeXml(lk.label) + '</text>');
       }
     }
@@ -430,6 +595,16 @@
       }
     }
 
+    // ── Draw notes (using pre-computed positions) ──
+    for (var ni = 0; ni < notePositions.length; ni++) {
+      var np2 = notePositions[ni]; var cF, cT;
+      if (np2.note.position === 'right') { cF = { x: np2.x, y: np2.y + np2.h / 2 }; cT = { x: np2.tx + np2.tw, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'left') { cF = { x: np2.x + np2.w, y: np2.y + np2.h / 2 }; cT = { x: np2.tx, y: np2.ty + np2.th / 2 }; }
+      else if (np2.note.position === 'top') { cF = { x: np2.x + np2.w / 2, y: np2.y + np2.h }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty }; }
+      else { cF = { x: np2.x + np2.w / 2, y: np2.y }; cT = { x: np2.tx + np2.tw / 2, y: np2.ty + np2.th }; }
+      UMLShared.drawNote(svg, np2.x, np2.y, np2.note.lines, colors, { fromX: cF.x, fromY: cF.y, toX: cT.x, toY: cT.y });
+    }
+
     svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
@@ -448,6 +623,7 @@
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────

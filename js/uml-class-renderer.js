@@ -32,7 +32,7 @@
     fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
     fontSize: 14,
     fontSizeBold: 15,
-    fontSizeStereotype: 12,
+    fontSizeStereotype: 13,
     lineHeight: 22,
     padX: 14,
     padY: 6,
@@ -63,12 +63,22 @@
     var classes = [];
     var relationships = [];
     var classMap = {};
+    var notes = [];
     var inClass = null;
     var braceDepth = 0;
+    var direction = 'TB';
 
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
+
+      // Layout directive
+      var layoutMatch = line.match(/^layout\s+(horizontal|vertical|left-to-right|top-to-bottom|LR|TB)$/i);
+      if (layoutMatch && inClass === null) {
+        var val = layoutMatch[1].toLowerCase();
+        direction = (val === 'horizontal' || val === 'left-to-right' || val === 'lr') ? 'LR' : 'TB';
+        continue;
+      }
 
       // If we're inside a class body
       if (inClass !== null) {
@@ -93,6 +103,10 @@
         }
         continue;
       }
+
+      // Note
+      var noteIdx = UMLShared.parseNoteLine(line, lines, i, notes);
+      if (noteIdx >= 0) { i = noteIdx; continue; }
 
       // Try to parse class declaration
       var cls = parseClassDecl(line);
@@ -134,7 +148,7 @@
       }
     }
 
-    return { classes: classes, relationships: relationships };
+    return { classes: classes, relationships: relationships, notes: notes, direction: direction };
   }
 
   /**
@@ -163,6 +177,9 @@
     } else if (/^interface\s+/.test(cleanLine)) {
       classType = 'interface';
       name = cleanLine.replace(/^interface\s+/, '').trim();
+    } else if (/^enum\s+/.test(cleanLine)) {
+      classType = 'enum';
+      name = cleanLine.replace(/^enum\s+/, '').trim();
     } else if (/^class\s+/.test(cleanLine)) {
       classType = 'class';
       name = cleanLine.replace(/^class\s+/, '').trim();
@@ -256,15 +273,15 @@
       var fromMult = '';
       var toMult = '';
 
-      // Check left side for quoted multiplicity
-      var leftMultMatch = leftPart.match(/^(.+?)\s+"([^"]+)"$/);
+      // Check left side for quoted multiplicity (single or double quotes)
+      var leftMultMatch = leftPart.match(/^(.+?)\s+['"]([^'"]+)['"]$/);
       if (leftMultMatch) {
         leftPart = leftMultMatch[1].trim();
         fromMult = leftMultMatch[2];
       }
 
-      // Check right side for quoted multiplicity
-      var rightMultMatch = rightPart.match(/^"([^"]+)"\s+(.+)$/);
+      // Check right side for quoted multiplicity (single or double quotes)
+      var rightMultMatch = rightPart.match(/^['"]([^'"]+)['"]\s+(.+)$/);
       if (rightMultMatch) {
         toMult = rightMultMatch[1];
         rightPart = rightMultMatch[2].trim();
@@ -307,11 +324,12 @@
    * Returns { width, height, nameH, stereotypeH, attrH, methH }
    */
   function measureBox(cls) {
-    var hasStereotype = cls.type === 'abstract' || cls.type === 'interface' || cls.stereotype;
+    var hasStereotype = cls.type === 'abstract' || cls.type === 'interface' || cls.type === 'enum' || cls.stereotype;
     var stereotypeText = '';
     if (cls.stereotype) stereotypeText = '\u00AB' + cls.stereotype + '\u00BB';
     else if (cls.type === 'abstract') stereotypeText = '\u00ABabstract\u00BB';
     else if (cls.type === 'interface') stereotypeText = '\u00ABinterface\u00BB';
+    else if (cls.type === 'enum') stereotypeText = '\u00ABenumeration\u00BB';
 
     var stereotypeH = hasStereotype ? CFG.lineHeight : 0;
     var nameH = CFG.padY * 2 + CFG.lineHeight + stereotypeH;
@@ -349,248 +367,46 @@
     };
   }
 
-  /**
-   * Build a directed layout graph using ALL directed relationship types.
-   * Generalization/realization: child -> parent (child below parent)
-   * Composition/aggregation: owner above owned
-   * Dependency/navigable: source above target
-   */
-  function buildLayoutGraph(classes, relationships) {
-    var classNames = {};
-    for (var i = 0; i < classes.length; i++) classNames[classes[i].name] = true;
-
-    // Directed edges: from "upper" node to "lower" node
-    // parent -> [children] for layout purposes
-    var downEdges = {};   // upper -> [lower]
-    var upEdges = {};     // lower -> [upper]
-    for (var n in classNames) { downEdges[n] = []; upEdges[n] = []; }
-
-    for (var r = 0; r < relationships.length; r++) {
-      var rel = relationships[r];
-      if (!classNames[rel.from] || !classNames[rel.to]) continue;
-
-      var upper, lower;
-      if (rel.type === 'generalization' || rel.type === 'realization') {
-        upper = rel.to;   // parent above
-        lower = rel.from; // child below
-      } else if (rel.type === 'composition' || rel.type === 'aggregation') {
-        upper = rel.from; // owner above
-        lower = rel.to;   // owned below
-      } else if (rel.type === 'dependency' || rel.type === 'navigable') {
-        upper = rel.from; // source above
-        lower = rel.to;   // target below
-      } else {
-        continue; // plain association — no direction preference
-      }
-
-      if (upper === lower) continue;
-      // Avoid duplicate edges
-      if (downEdges[upper].indexOf(lower) === -1) {
-        downEdges[upper].push(lower);
-        upEdges[lower].push(upper);
-      }
-    }
-
-    return { downEdges: downEdges, upEdges: upEdges };
-  }
 
   /**
-   * Assign layers via longest-path from roots (Sugiyama-style).
-   * Handles cycles by skipping back-edges.
-   */
-  function assignLayers(classes, downEdges, upEdges) {
-    var classNames = {};
-    for (var i = 0; i < classes.length; i++) classNames[classes[i].name] = true;
-
-    // Find roots (no incoming layout edges)
-    var roots = [];
-    for (var n in classNames) {
-      if (upEdges[n].length === 0) roots.push(n);
-    }
-    if (roots.length === 0) {
-      // All nodes have incoming edges (cycle) — pick all as roots
-      roots = Object.keys(classNames);
-    }
-
-    // BFS layer assignment — longest path
-    var layers = {};
-    var visited = {};
-    var queue = [];
-    for (var ri = 0; ri < roots.length; ri++) {
-      if (visited[roots[ri]]) continue;
-      layers[roots[ri]] = 0;
-      visited[roots[ri]] = true;
-      queue.push(roots[ri]);
-    }
-    while (queue.length > 0) {
-      var node = queue.shift();
-      var kids = downEdges[node];
-      for (var ki = 0; ki < kids.length; ki++) {
-        var kid = kids[ki];
-        var newLayer = (layers[node] || 0) + 1;
-        if (!visited[kid]) {
-          visited[kid] = true;
-          layers[kid] = newLayer;
-          queue.push(kid);
-        } else {
-          // Push deeper if needed (longest path)
-          if (newLayer > layers[kid]) {
-            layers[kid] = newLayer;
-            queue.push(kid); // re-process children
-          }
-        }
-      }
-    }
-
-    // Assign any remaining unvisited to layer 0
-    for (var n2 in classNames) {
-      if (layers[n2] === undefined) layers[n2] = 0;
-    }
-
-    return layers;
-  }
-
-  /**
-   * Compute layout positions for all class boxes.
-   * Uses all directed relationships for hierarchy and arranges
-   * disconnected components in a compact grid.
+   * Compute layout positions for all class boxes using AdvancedAlgorithmic framework.
    */
   function computeLayout(parsed) {
     var classes = parsed.classes;
     var relationships = parsed.relationships;
-    if (classes.length === 0) return { entries: {}, width: 0, height: 0 };
+    if (classes.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
 
-    // Measure all boxes
     var entries = {};
+    var layoutNodes = [];
+    var layoutEdges = [];
+
+    // Measure boxes & construct layout input
     for (var i = 0; i < classes.length; i++) {
       var cls = classes[i];
+      var box = measureBox(cls);
       entries[cls.name] = {
         cls: cls,
-        box: measureBox(cls),
+        box: box,
         x: 0,
-        y: 0,
+        y: 0
       };
+      layoutNodes.push({ id: cls.name, width: box.width, height: box.height, data: cls });
     }
 
-    var graph = buildLayoutGraph(classes, relationships);
-    var layers = assignLayers(classes, graph.downEdges, graph.upEdges);
-
-    // Build layout tree: assign each child to one parent for tree positioning
-    // Inheritance children are centered under parent; other children placed to the sides
-    var layoutChildren = {};
-    var inheritChildren = {}; // Track which children are via inheritance
-    var assigned = {};
-    for (var n in entries) { layoutChildren[n] = []; inheritChildren[n] = {}; }
-
-    // First pass: assign inheritance (generalization/realization) children
+    // Construct edge input
     for (var r = 0; r < relationships.length; r++) {
       var rel = relationships[r];
-      if (rel.type !== 'generalization' && rel.type !== 'realization') continue;
-      if (!entries[rel.from] || !entries[rel.to]) continue;
-      var upper = rel.to, lower = rel.from;
-      if (upper === lower) continue;
-      if (!assigned[lower]) {
-        layoutChildren[upper].push(lower);
-        inheritChildren[upper][lower] = true;
-        assigned[lower] = upper;
-      }
+      layoutEdges.push({ source: rel.from, target: rel.to, type: rel.type, data: rel });
     }
 
-    // Second pass: assign other directed children (composition, aggregation, etc.)
-    var otherPriority = ['composition', 'aggregation', 'navigable', 'dependency'];
-    for (var pi = 0; pi < otherPriority.length; pi++) {
-      for (var r2 = 0; r2 < relationships.length; r2++) {
-        var rel2 = relationships[r2];
-        if (rel2.type !== otherPriority[pi]) continue;
-        if (!entries[rel2.from] || !entries[rel2.to]) continue;
-        var upper2, lower2;
-        if (rel2.type === 'composition' || rel2.type === 'aggregation') {
-          upper2 = rel2.from; lower2 = rel2.to;
-        } else {
-          upper2 = rel2.from; lower2 = rel2.to;
-        }
-        if (upper2 === lower2) continue;
-        if (!assigned[lower2]) {
-          layoutChildren[upper2].push(lower2);
-          assigned[lower2] = upper2;
-        }
-      }
-    }
-
-    // ── Barycenter sibling ordering ────────────────────────────────────
-    // For each parent node, sort its children by the original class-index
-    // centroid of the nodes they are connected to. This places children
-    // whose connections fan out to the left/right of the diagram in the
-    // appropriate order, reducing edge crossings between subtrees.
-    var classIndex = {};
-    for (var bci = 0; bci < classes.length; bci++) classIndex[classes[bci].name] = bci;
-    for (var bcParent in layoutChildren) {
-      var bcKids = layoutChildren[bcParent];
-      if (!bcKids || bcKids.length < 2) continue;
-      var bcBary = {};
-      for (var bcKi = 0; bcKi < bcKids.length; bcKi++) {
-        var bcKid = bcKids[bcKi];
-        var bcSum = 0, bcCnt = 0;
-        for (var bcRi = 0; bcRi < relationships.length; bcRi++) {
-          var bcRel = relationships[bcRi];
-          var bcOther = null;
-          if (bcRel.from === bcKid && entries[bcRel.to]) bcOther = bcRel.to;
-          else if (bcRel.to === bcKid && entries[bcRel.from]) bcOther = bcRel.from;
-          if (bcOther !== null && classIndex[bcOther] !== undefined) {
-            bcSum += classIndex[bcOther]; bcCnt++;
-          }
-        }
-        // Fall back to the kid's own original index
-        bcBary[bcKid] = bcCnt > 0 ? bcSum / bcCnt : (classIndex[bcKid] || 0);
-      }
-      bcKids.sort(function (a, b) { return bcBary[a] - bcBary[b]; });
-    }
-
-    // Find connected components using adjacency (undirected)
-    var adjAll = {};
-    for (var cn in entries) adjAll[cn] = [];
-    for (var ri = 0; ri < relationships.length; ri++) {
-      var rr = relationships[ri];
-      if (entries[rr.from] && entries[rr.to]) {
-        if (adjAll[rr.from].indexOf(rr.to) === -1) adjAll[rr.from].push(rr.to);
-        if (adjAll[rr.to].indexOf(rr.from) === -1) adjAll[rr.to].push(rr.from);
-      }
-    }
-    var componentOf = {};
-    var components = []; // array of arrays of class names
-    var compVisited = {};
-    for (var ci = 0; ci < classes.length; ci++) {
-      var startName = classes[ci].name;
-      if (compVisited[startName]) continue;
-      var comp = [];
-      var bfsQ = [startName];
-      compVisited[startName] = true;
-      while (bfsQ.length > 0) {
-        var cur = bfsQ.shift();
-        comp.push(cur);
-        componentOf[cur] = components.length;
-        var neighbors = adjAll[cur];
-        for (var ni = 0; ni < neighbors.length; ni++) {
-          if (!compVisited[neighbors[ni]]) {
-            compVisited[neighbors[ni]] = true;
-            bfsQ.push(neighbors[ni]);
-          }
-        }
-      }
-      components.push(comp);
-    }
-
-    // Compute minimum gap based on relationship label/multiplicity widths.
-    // The gap must fit: [fromMult margin] [label text] [toMult margin]
+    // Use advanced constraints engine
     var effectiveGapX = CFG.gapX;
     for (var rg = 0; rg < relationships.length; rg++) {
       var rgRel = relationships[rg];
       var neededW = 0;
-      // Label text centered in the gap needs full width + margins
       if (rgRel.label) {
         neededW = Math.max(neededW, UMLShared.textWidth(rgRel.label, false, CFG.fontSizeStereotype) + 40);
       }
-      // Multiplicities sit near endpoints — each needs space
       var multW = 0;
       if (rgRel.fromMult) multW += UMLShared.textWidth(rgRel.fromMult, false, CFG.fontSizeStereotype) + 12;
       if (rgRel.toMult) multW += UMLShared.textWidth(rgRel.toMult, false, CFG.fontSizeStereotype) + 12;
@@ -598,174 +414,19 @@
       effectiveGapX = Math.max(effectiveGapX, neededW);
     }
 
-    // For each component, find its layout roots and compute tree layout
-    var subtreeW = {};
-    function computeSubtreeWidth(name) {
-      if (subtreeW[name] !== undefined) return subtreeW[name];
-      var kids = layoutChildren[name];
-      if (!kids || kids.length === 0) {
-        subtreeW[name] = entries[name].box.width;
-        return subtreeW[name];
-      }
-      // Compute total width of all children
-      var total = 0;
-      for (var k = 0; k < kids.length; k++) {
-        total += computeSubtreeWidth(kids[k]);
-        if (k < kids.length - 1) total += effectiveGapX;
-      }
-      // Ensure parent box width plus padding for centered inheritance
-      subtreeW[name] = Math.max(entries[name].box.width, total);
-      return subtreeW[name];
-    }
+    var result = window.UMLAdvancedLayout.compute(layoutNodes, layoutEdges, { gapX: effectiveGapX, gapY: CFG.gapY, direction: parsed.direction || 'TB' });
 
-    function positionNode(name, left, top) {
-      var entry = entries[name];
-      var sw = subtreeW[name];
-      entry.x = left + (sw - entry.box.width) / 2;
-      entry.y = top;
-
-      var kids = layoutChildren[name];
-      if (!kids || kids.length === 0) return;
-
-      // Separate inheritance children from other children
-      var inhKids = [];
-      var otherKids = [];
-      for (var k = 0; k < kids.length; k++) {
-        if (inheritChildren[name] && inheritChildren[name][kids[k]]) {
-          inhKids.push(kids[k]);
-        } else {
-          otherKids.push(kids[k]);
-        }
-      }
-
-      var childY = top + entry.box.height + CFG.gapY;
-      var parentCx = entry.x + entry.box.width / 2;
-
-      // Position inheritance children centered under parent
-      if (inhKids.length > 0) {
-        var inhTotalW = 0;
-        for (var ik = 0; ik < inhKids.length; ik++) {
-          inhTotalW += subtreeW[inhKids[ik]];
-          if (ik < inhKids.length - 1) inhTotalW += effectiveGapX;
-        }
-        var inhLeft = parentCx - inhTotalW / 2;
-        for (var ik2 = 0; ik2 < inhKids.length; ik2++) {
-          positionNode(inhKids[ik2], inhLeft, childY);
-          inhLeft += subtreeW[inhKids[ik2]] + effectiveGapX;
-        }
-      }
-
-      // Position other children (composition, etc.) to the right of inheritance children
-      if (otherKids.length > 0) {
-        // Find the rightmost edge of inheritance children
-        var otherStartX = parentCx + (inhKids.length > 0 ? subtreeW[inhKids[inhKids.length - 1]] / 2 : 0) + effectiveGapX;
-        // Or if inheritance children span far left, start after them
-        if (inhKids.length > 0) {
-          var inhRight = -Infinity;
-          for (var ir = 0; ir < inhKids.length; ir++) {
-            var irEntry = entries[inhKids[ir]];
-            inhRight = Math.max(inhRight, irEntry.x + irEntry.box.width + effectiveGapX);
-          }
-          otherStartX = Math.max(otherStartX, inhRight);
-        } else {
-          otherStartX = left;
-        }
-        for (var ok = 0; ok < otherKids.length; ok++) {
-          positionNode(otherKids[ok], otherStartX, childY);
-          otherStartX += subtreeW[otherKids[ok]] + effectiveGapX;
-        }
-      }
-    }
-
-    // Layout each component, then arrange components in a grid
-    var componentBounds = []; // { width, height } per component
-    for (var ci2 = 0; ci2 < components.length; ci2++) {
-      var comp = components[ci2];
-
-      // Find roots of this component (not assigned as child)
-      var compRoots = [];
-      for (var j = 0; j < comp.length; j++) {
-        if (!assigned[comp[j]]) compRoots.push(comp[j]);
-      }
-      if (compRoots.length === 0) compRoots = [comp[0]];
-
-      // Layout roots side by side within component
-      var compX = 0;
-      for (var cri = 0; cri < compRoots.length; cri++) {
-        computeSubtreeWidth(compRoots[cri]);
-        positionNode(compRoots[cri], compX, 0);
-        compX += subtreeW[compRoots[cri]] + effectiveGapX;
-      }
-
-      // Compute component bounds
-      var cMinX = Infinity, cMinY = Infinity, cMaxX = -Infinity, cMaxY = -Infinity;
-      for (var k = 0; k < comp.length; k++) {
-        var e = entries[comp[k]];
-        cMinX = Math.min(cMinX, e.x);
-        cMinY = Math.min(cMinY, e.y);
-        cMaxX = Math.max(cMaxX, e.x + e.box.width);
-        cMaxY = Math.max(cMaxY, e.y + e.box.height);
-      }
-      componentBounds.push({
-        width: cMaxX - cMinX,
-        height: cMaxY - cMinY,
-        offsetX: cMinX,
-        offsetY: cMinY,
-        members: comp,
-      });
-    }
-
-    // Arrange components: place larger components first, pack into rows
-    // Sort components by height (tallest first) for better packing
-    var compIndices = [];
-    for (var si = 0; si < components.length; si++) compIndices.push(si);
-    compIndices.sort(function (a, b) {
-      return componentBounds[b].height - componentBounds[a].height;
-    });
-
-    // Simple row-based packing
-    var maxRowWidth = 0;
-    for (var mi = 0; mi < componentBounds.length; mi++) {
-      maxRowWidth += componentBounds[mi].width + CFG.gapX;
-    }
-    // Target width: try to make it roughly square, but at least as wide as largest component
-    var targetWidth = Math.max(
-      Math.sqrt(maxRowWidth * (componentBounds.length > 0 ? componentBounds[0].height : 100)),
-      componentBounds.length > 0 ? componentBounds[compIndices[0]].width : 0
-    );
-
-    var rowX = 0, rowY = 0, rowMaxH = 0;
-    for (var pi2 = 0; pi2 < compIndices.length; pi2++) {
-      var cidx = compIndices[pi2];
-      var cb = componentBounds[cidx];
-
-      // Start new row if this component would exceed target width
-      if (rowX > 0 && rowX + cb.width > targetWidth) {
-        rowX = 0;
-        rowY += rowMaxH + CFG.gapY;
-        rowMaxH = 0;
-      }
-
-      // Offset all members of this component
-      var dx = rowX - cb.offsetX;
-      var dy = rowY - cb.offsetY;
-      for (var mi2 = 0; mi2 < cb.members.length; mi2++) {
-        entries[cb.members[mi2]].x += dx;
-        entries[cb.members[mi2]].y += dy;
-      }
-
-      rowX += cb.width + CFG.gapX;
-      rowMaxH = Math.max(rowMaxH, cb.height);
-    }
-
-    // Compute total bounds
+    // Read back positions
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (var en in entries) {
-      var e2 = entries[en];
-      minX = Math.min(minX, e2.x);
-      minY = Math.min(minY, e2.y);
-      maxX = Math.max(maxX, e2.x + e2.box.width);
-      maxY = Math.max(maxY, e2.y + e2.box.height);
+    for (var n in result.nodes) {
+      if (!entries[n]) continue;
+      entries[n].x = result.nodes[n].x;
+      entries[n].y = result.nodes[n].y;
+      
+      minX = Math.min(minX, entries[n].x);
+      minY = Math.min(minY, entries[n].y);
+      maxX = Math.max(maxX, entries[n].x + entries[n].box.width);
+      maxY = Math.max(maxY, entries[n].y + entries[n].box.height);
     }
 
     return {
@@ -774,6 +435,7 @@
       height: maxY - minY,
       offsetX: -minX,
       offsetY: -minY,
+      layoutResult: result // passthrough edge route if ever needed by generateSVG
     };
   }
 
@@ -787,15 +449,80 @@
   function generateSVG(layout, parsed, colors) {
     var entries = layout.entries;
     var relationships = parsed.relationships;
-    var ox = layout.offsetX + CFG.svgPad;
-    var oy = layout.offsetY + CFG.svgPad;
-    var svgW = layout.width + CFG.svgPad * 2;
-    var svgH = layout.height + CFG.svgPad * 2;
+
+    // Resolve note target — supports ClassName or ClassName.memberName
+    function resolveTarget(target) {
+      var parts = target.split('.');
+      var className = parts[0];
+      var memberName = parts.length > 1 ? parts.slice(1).join('.') : null;
+      var entry = entries[className];
+      if (!entry) return null;
+      var box = entry.box;
+      if (!memberName) {
+        return { x: entry.x, y: entry.y, w: box.width, h: box.height };
+      }
+      // Search attributes
+      var cls = entry.cls;
+      for (var ai = 0; ai < cls.attributes.length; ai++) {
+        if (cls.attributes[ai].text.indexOf(memberName) !== -1) {
+          var ay = entry.y + box.nameH + CFG.padY + ai * CFG.lineHeight;
+          return { x: entry.x, y: ay, w: box.width, h: CFG.lineHeight };
+        }
+      }
+      // Search methods
+      for (var mi = 0; mi < cls.methods.length; mi++) {
+        if (cls.methods[mi].text.indexOf(memberName) !== -1) {
+          var my = entry.y + box.nameH + box.attrH + CFG.padY + mi * CFG.lineHeight;
+          return { x: entry.x, y: my, w: box.width, h: CFG.lineHeight };
+        }
+      }
+      return { x: entry.x, y: entry.y, w: box.width, h: box.height };
+    }
+
+    // Pre-compute note positions so SVG bounds can be expanded
+    var notePositions = [];
+    if (parsed.notes) {
+      var noteGap = UMLShared.NOTE_CFG.gap;
+      for (var npi = 0; npi < parsed.notes.length; npi++) {
+        var pn = parsed.notes[npi];
+        var tgt = resolveTarget(pn.target);
+        if (!tgt) continue;
+        var ns = UMLShared.measureNote(pn.lines);
+        var nx, ny;
+        var tx = tgt.x, ty = tgt.y, tw = tgt.w, th = tgt.h;
+        if (pn.position === 'right') { nx = tx + tw + noteGap; ny = ty; }
+        else if (pn.position === 'left') { nx = tx - ns.width - noteGap; ny = ty; }
+        else if (pn.position === 'top') { nx = tx; ny = ty - ns.height - noteGap; }
+        else { nx = tx; ny = ty + th + noteGap; }
+        notePositions.push({ note: pn, x: nx, y: ny, w: ns.width, h: ns.height,
+          tx: tx, ty: ty, tw: tw, th: th });
+      }
+    }
+
+    // Expand SVG bounds to fit notes
+    var extraLeft = 0, extraRight = 0, extraTop = 0, extraBottom = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var np = notePositions[nbi];
+      var minNX = np.x - CFG.svgPad;
+      var maxNX = np.x + np.w + CFG.svgPad;
+      var minNY = np.y - CFG.svgPad;
+      var maxNY = np.y + np.h + CFG.svgPad;
+      if (minNX < -layout.offsetX) extraLeft = Math.max(extraLeft, -layout.offsetX - minNX);
+      if (maxNX > layout.width - layout.offsetX) extraRight = Math.max(extraRight, maxNX - (layout.width - layout.offsetX));
+      if (minNY < -layout.offsetY) extraTop = Math.max(extraTop, -layout.offsetY - minNY);
+      if (maxNY > layout.height - layout.offsetY) extraBottom = Math.max(extraBottom, maxNY - (layout.height - layout.offsetY));
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + extraLeft;
+    var oy = layout.offsetY + CFG.svgPad + extraTop;
+    var svgW = layout.width + CFG.svgPad * 2 + extraLeft + extraRight;
+    var svgH = layout.height + CFG.svgPad * 2 + extraTop + extraBottom;
 
     var svg = [];
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw relationships ──
+    var decorSvg = []; // arrowhead decorations drawn after class boxes
 
     // Group generalization/realization by target for shared-target rendering
     var inheritGroups = {};  // target -> { type, children: [] }
@@ -820,6 +547,35 @@
       }
     }
 
+    // Pre-compute per-child offsets: when a child has multiple parent groups
+    // (e.g. generalization AND realization), offset connection points on the
+    // child's top edge so lines don't overlap.
+    var childParentCount = {};  // childName -> total number of parent groups
+    var childParentIdx = {};    // groupKey + ':' + childName -> index for this group
+    var groupKeys = [];
+    for (var gk0 in inheritGroups) groupKeys.push(gk0);
+    for (var gki = 0; gki < groupKeys.length; gki++) {
+      var grp = inheritGroups[groupKeys[gki]];
+      for (var gci = 0; gci < grp.children.length; gci++) {
+        var cname = grp.children[gci];
+        if (!childParentCount[cname]) childParentCount[cname] = 0;
+        childParentIdx[groupKeys[gki] + ':' + cname] = childParentCount[cname];
+        childParentCount[cname]++;
+      }
+    }
+
+    // Helper: get the X offset for a child's connection point to a specific group
+    var inheritPortSpacing = 20;
+    function childConnX(childEntry, childName, groupKey) {
+      var total = childParentCount[childName] || 1;
+      var idx = childParentIdx[groupKey + ':' + childName] || 0;
+      var cx = childEntry.x + childEntry.box.width / 2;
+      if (total <= 1) return cx;
+      // Spread connection points evenly around center
+      var span = (total - 1) * inheritPortSpacing;
+      return cx - span / 2 + idx * inheritPortSpacing;
+    }
+
     // Draw inheritance/realization with shared-target style
     for (var gk in inheritGroups) {
       var group = inheritGroups[gk];
@@ -830,29 +586,41 @@
       var parentCx = parentEntry.x + parentEntry.box.width / 2;
       var parentBot = parentEntry.y + parentEntry.box.height;
 
-      // Hollow triangle at parent bottom
+      // Hollow triangle at parent bottom (deferred to draw on top of class boxes)
       var triTop = parentBot;
       var triBot = parentBot + CFG.triangleH;
-      svg.push('<polygon points="' +
+      decorSvg.push('<polygon points="' +
         parentCx + ',' + triTop + ' ' +
         (parentCx - CFG.triangleW / 2) + ',' + triBot + ' ' +
         (parentCx + CFG.triangleW / 2) + ',' + triBot +
         '" fill="' + colors.fill + '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
 
       if (group.children.length === 1) {
-        // Single child: straight line (or angled if not aligned)
+        // Single child: orthogonal (90-degree) routing
         var child = entries[group.children[0]];
-        var childCx = child.x + child.box.width / 2;
+        var childCx = childConnX(child, group.children[0], gk);
         var childTop = child.y;
-        svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + childCx + '" y2="' + childTop +
-          '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        if (Math.abs(parentCx - childCx) < 1) {
+          // Aligned: single vertical line
+          svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + childCx + '" y2="' + childTop +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        } else {
+          // Not aligned: vertical from triangle, horizontal jog, vertical to child
+          var junctionY = (triBot + childTop) / 2;
+          svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + parentCx + '" y2="' + junctionY +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          svg.push('<line x1="' + parentCx + '" y1="' + junctionY + '" x2="' + childCx + '" y2="' + junctionY +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          svg.push('<line x1="' + childCx + '" y1="' + junctionY + '" x2="' + childCx + '" y2="' + childTop +
+            '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        }
       } else {
         // Multiple children: shared-target
         var childTops = [];
-        var childCenters = [];
+        var childCxArr = [];
         for (var ci = 0; ci < group.children.length; ci++) {
           var ch = entries[group.children[ci]];
-          childCenters.push(ch.x + ch.box.width / 2);
+          childCxArr.push(childConnX(ch, group.children[ci], gk));
           childTops.push(ch.y);
         }
         var minChildTop = Math.min.apply(null, childTops);
@@ -863,15 +631,15 @@
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
 
         // Horizontal bar at junction
-        var leftCx = Math.min.apply(null, childCenters);
-        var rightCx = Math.max.apply(null, childCenters);
+        var leftCx = Math.min.apply(null, childCxArr);
+        var rightCx = Math.max.apply(null, childCxArr);
         svg.push('<line x1="' + leftCx + '" y1="' + junctionY + '" x2="' + rightCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
 
         // Vertical stems from junction to each child
         for (var ci2 = 0; ci2 < group.children.length; ci2++) {
           var ch2 = entries[group.children[ci2]];
-          var cx = ch2.x + ch2.box.width / 2;
+          var cx = childCxArr[ci2];
           svg.push('<line x1="' + cx + '" y1="' + junctionY + '" x2="' + cx + '" y2="' + ch2.y +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
         }
@@ -879,24 +647,34 @@
     }
 
     // Pre-compute port offsets: when multiple edges exit from the same side of a box,
-    // offset them vertically so they don't overlap
+    // assign port indices sorted by target X to minimize crossings
     var exitPortCounts = {}; // "className:side" -> count
     var exitPortIdx = {};    // edgeIndex -> portIndex
+    var exitGroups = {};     // "className:side" -> [{idx, targetCx}]
     for (var epi = 0; epi < otherRels.length; epi++) {
       var epRel = otherRels[epi];
       if (!entries[epRel.from] || !entries[epRel.to]) continue;
       var epFrom = entries[epRel.from];
       var epTo = entries[epRel.to];
-      // Determine which side the edge exits from
-      var epSide = (hasInheritAtBottom[epRel.from]) ? 'right' :
-        (Math.abs(epTo.x + epTo.box.width/2 - epFrom.x - epFrom.box.width/2) >
+      var epFromCx = epFrom.x + epFrom.box.width / 2;
+      var epToCx = epTo.x + epTo.box.width / 2;
+      var epSide = (hasInheritAtBottom[epRel.from]) ? 'bottom' :
+        (Math.abs(epToCx - epFromCx) >
          Math.abs(epTo.y + epTo.box.height/2 - epFrom.y - epFrom.box.height/2) * 0.6) ?
-        ((epTo.x > epFrom.x) ? 'right' : 'left') :
+        ((epToCx > epFromCx) ? 'right' : 'left') :
         ((epTo.y > epFrom.y) ? 'bottom' : 'top');
       var epKey = epRel.from + ':' + epSide;
-      if (!exitPortCounts[epKey]) exitPortCounts[epKey] = 0;
-      exitPortIdx[epi] = exitPortCounts[epKey];
-      exitPortCounts[epKey]++;
+      if (!exitGroups[epKey]) exitGroups[epKey] = [];
+      exitGroups[epKey].push({ idx: epi, targetCx: epToCx });
+    }
+    // Sort each group by target X and assign port indices
+    for (var gk in exitGroups) {
+      var grp = exitGroups[gk];
+      grp.sort(function(a, b) { return a.targetCx - b.targetCx; });
+      exitPortCounts[gk] = grp.length;
+      for (var gi = 0; gi < grp.length; gi++) {
+        exitPortIdx[grp[gi].idx] = gi;
+      }
     }
 
     // Draw other relationships with orthogonal (right-angle) routing
@@ -911,7 +689,7 @@
 
       // Compute orthogonal route, with port offset for multiple edges from same side
       var portOffset = exitPortIdx[oi] * 16;
-      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], portOffset);
+      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], portOffset, entries, orel.from, orel.to);
       var pathPoints = route.points; // array of {x,y}
 
       // Build polyline points string
@@ -939,16 +717,16 @@
       var endLen = Math.sqrt(endDx * endDx + endDy * endDy);
       if (endLen > 0) { endDx /= endLen; endDy /= endLen; }
 
-      // Source decorations
+      // Source decorations (deferred to draw on top of class boxes)
       if (orel.type === 'composition') {
-        drawDiamond(svg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, true, colors.fill);
+        drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, true, colors.fill);
       } else if (orel.type === 'aggregation') {
-        drawDiamond(svg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, false, colors.fill);
+        drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, false, colors.fill);
       }
 
-      // Target decorations
+      // Target decorations (deferred to draw on top of class boxes)
       if (orel.type === 'navigable' || orel.type === 'dependency') {
-        drawOpenArrow(svg, pLast.x, pLast.y, -endDx, -endDy, endDy, -endDx, colors.line);
+        drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, endDy, -endDx, colors.line);
       }
 
       // Determine if the first/last segment is horizontal or vertical
@@ -974,7 +752,7 @@
         }
         svg.push('<text x="' + labelX + '" y="' + labelY + '" text-anchor="middle" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke" ' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" ' +
           'font-style="italic">' + UMLShared.escapeXml(orel.label) + '</text>');
       }
 
@@ -992,7 +770,7 @@
         }
         svg.push('<text x="' + fmx + '" y="' + fmy + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.fromMult) + '</text>');
       }
       if (orel.toMult) {
@@ -1010,7 +788,7 @@
         }
         svg.push('<text x="' + tmx + '" y="' + tmy + '" text-anchor="' + (tmAnchor || 'start') + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
-          'stroke="' + colors.fill + '" stroke-width="4" stroke-linejoin="round" paint-order="stroke">' +
+          'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.toMult) + '</text>');
       }
     }
@@ -1101,6 +879,30 @@
       }
     }
 
+    // ── Draw arrowhead decorations on top of class boxes ──
+    for (var di = 0; di < decorSvg.length; di++) svg.push(decorSvg[di]);
+
+    // ── Draw notes (using pre-computed positions) ──
+    for (var ni = 0; ni < notePositions.length; ni++) {
+      var np2 = notePositions[ni];
+      var connFrom, connTo;
+      if (np2.note.position === 'right') {
+        connFrom = { x: np2.x, y: np2.y + np2.h / 2 };
+        connTo = { x: np2.tx + np2.tw, y: np2.ty + np2.th / 2 };
+      } else if (np2.note.position === 'left') {
+        connFrom = { x: np2.x + np2.w, y: np2.y + np2.h / 2 };
+        connTo = { x: np2.tx, y: np2.ty + np2.th / 2 };
+      } else if (np2.note.position === 'top') {
+        connFrom = { x: np2.x + np2.w / 2, y: np2.y + np2.h };
+        connTo = { x: np2.tx + np2.tw / 2, y: np2.ty };
+      } else {
+        connFrom = { x: np2.x + np2.w / 2, y: np2.y };
+        connTo = { x: np2.tx + np2.tw / 2, y: np2.ty + np2.th };
+      }
+      UMLShared.drawNote(svg, np2.x, np2.y, np2.note.lines, colors,
+        { fromX: connFrom.x, fromY: connFrom.y, toX: connTo.x, toY: connTo.y });
+    }
+
     svg.push(UMLShared.svgClose());
     return svg.join('\n');
   }
@@ -1111,7 +913,7 @@
    * Uses right-angle bends only when necessary.
    * Returns { points: [{x,y}, ...] } with only horizontal/vertical segments.
    */
-  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset) {
+  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId) {
     portOffset = portOffset || 0;
     var fromCx = fromE.x + fromE.box.width / 2;
     var fromCy = fromE.y + fromE.box.height / 2 + portOffset;
@@ -1131,37 +933,49 @@
     var points;
 
     // If we must avoid bottom of source (inheritance triangle there),
-    // force exit from right or left side instead
+    // exit from the bottom edge at an offset X (avoiding the triangle center),
+    // or from the side if target is not below.
     if (avoidFromBottom && !vOverlap) {
-      // Exit from the side closest to the target
-      var exitSide = (toCx > fromCx) ? 'right' : 'left';
-      var exitX = (exitSide === 'right') ? fromR : fromL;
-      var exitY = fromCy;
-      var entryY = toCy;
-      var entryX = (toCx > fromCx) ? toL : toR;
-
-      // If target is below and source center is above target top, enter from top with a
-      // vertical last segment (90-degree entry). Route: horizontal to toCx, then drop into toT.
-      if (toCy > fromCy && !avoidToTop && exitY < toT) {
+      var triW = CFG.triangleW;
+      var diamondLen = CFG.diamondH * 2; // total length of diamond along edge direction
+      var portGap = diamondLen + 8; // spacing between connection points
+      if (toCy > fromCy) {
+        // Target is below: exit from bottom edge at triangle base, offset X to avoid triangle
+        var exitBottomX;
+        var baseOffset = triW + 8 + portOffset * portGap / 16;
+        if (toCx >= fromCx) {
+          exitBottomX = fromCx + baseOffset;
+        } else {
+          exitBottomX = fromCx - baseOffset;
+        }
+        // Clamp to box edges
+        exitBottomX = Math.max(fromL + 4, Math.min(fromR - 4, exitBottomX));
+        // Diamond starts at Shape's bottom edge (not at triangle base)
+        var exitBottomY = fromB; // diamond touches the class border
+        var routeStartY = exitBottomY + diamondLen; // route continues from diamond tip
+        // Stagger horizontal runs by port index to prevent crossings
+        var horizY = routeStartY + (portOffset / 16) * 12 + 4;
         points = [
-          { x: exitX, y: exitY },
-          { x: toCx, y: exitY },
+          { x: exitBottomX, y: exitBottomY },
+          { x: exitBottomX, y: horizY },
+          { x: toCx, y: horizY },
           { x: toCx, y: toT }
         ];
       } else {
-        // Horizontal route with vertical bend
-        var midX2 = (exitX + entryX) / 2;
+        // Target is at same level or above: exit from the side
+        var exitSide = (toCx > fromCx) ? 'right' : 'left';
+        var exitX = (exitSide === 'right') ? fromR : fromL;
+        var exitY = fromCy + portOffset;
+        var midY = (exitY + toT) / 2;
         points = [
           { x: exitX, y: exitY },
-          { x: midX2, y: exitY },
-          { x: midX2, y: entryY },
-          { x: entryX, y: entryY }
+          { x: exitX, y: midY },
+          { x: toCx, y: midY },
+          { x: toCx, y: toT }
         ];
       }
-      return { points: simplifyPath(points) };
-    }
-
-    if (hOverlap && !avoidFromBottom) {
+      // fall through to obstacle avoidance below
+    } else if (hOverlap && !avoidFromBottom) {
       // Boxes overlap horizontally — use vertical straight line
       var overlapL = Math.max(fromL, toL);
       var overlapR = Math.min(fromR, toR);
@@ -1227,23 +1041,55 @@
           ];
         }
       } else {
-        // Primarily horizontal separation — exit from left/right, bend vertically
+        // Primarily horizontal separation — exit from side, enter target from nearest edge
+        // If target is also below/above, prefer entering from top/bottom (perpendicular)
         if (dx > 0) {
-          var midX = (fromR + toL) / 2;
-          points = [
-            { x: fromR, y: fromCy },
-            { x: midX, y: fromCy },
-            { x: midX, y: toCy },
-            { x: toL, y: toCy }
-          ];
+          if (dy > 10 && fromB < toT) {
+            // Target is right and below: exit right, then enter from top
+            points = [
+              { x: fromR, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toT }
+            ];
+          } else if (dy < -10 && fromT > toB) {
+            // Target is right and above: exit right, then enter from bottom
+            points = [
+              { x: fromR, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toB }
+            ];
+          } else {
+            // Same vertical level: enter from left side
+            var midX = (fromR + toL) / 2;
+            points = [
+              { x: fromR, y: fromCy },
+              { x: midX, y: fromCy },
+              { x: midX, y: toCy },
+              { x: toL, y: toCy }
+            ];
+          }
         } else {
-          var midX2 = (fromL + toR) / 2;
-          points = [
-            { x: fromL, y: fromCy },
-            { x: midX2, y: fromCy },
-            { x: midX2, y: toCy },
-            { x: toR, y: toCy }
-          ];
+          if (dy > 10 && fromB < toT) {
+            points = [
+              { x: fromL, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toT }
+            ];
+          } else if (dy < -10 && fromT > toB) {
+            points = [
+              { x: fromL, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toB }
+            ];
+          } else {
+            var midX2 = (fromL + toR) / 2;
+            points = [
+              { x: fromL, y: fromCy },
+              { x: midX2, y: fromCy },
+              { x: midX2, y: toCy },
+              { x: toR, y: toCy }
+            ];
+          }
         }
       }
 
@@ -1251,7 +1097,90 @@
       points = simplifyPath(points);
     }
 
+    // ── Obstacle avoidance: reroute segments that pass through other class boxes ──
+    if (allEntries && points.length >= 2) {
+      var pad = 12;
+      var obstacles = [];
+      for (var obn in allEntries) {
+        if (obn === fromId || obn === toId) continue;
+        var ob = allEntries[obn];
+        obstacles.push({ l: ob.x - pad, t: ob.y - pad, r: ob.x + ob.box.width + pad, b: ob.y + ob.box.height + pad });
+      }
+      // Check each segment and reroute if needed (one pass)
+      var newPoints = [points[0]];
+      for (var si = 0; si < points.length - 1; si++) {
+        var p1 = points[si], p2 = points[si + 1];
+        var rerouted = false;
+        for (var obi = 0; obi < obstacles.length; obi++) {
+          var ob2 = obstacles[obi];
+          if (segmentIntersectsBox(p1, p2, ob2)) {
+            // Reroute around the obstacle: go around the closer side
+            var goRight = (p1.x + p2.x) / 2 >= (ob2.l + ob2.r) / 2;
+            var bypassX = goRight ? ob2.r : ob2.l;
+            if (p1.x === p2.x) {
+              // Vertical segment hitting a box: jog horizontally around it
+              newPoints.push({ x: p1.x, y: Math.min(p1.y, ob2.t) });
+              newPoints.push({ x: bypassX, y: Math.min(p1.y, ob2.t) });
+              newPoints.push({ x: bypassX, y: Math.max(p2.y, ob2.b) });
+              newPoints.push({ x: p2.x, y: Math.max(p2.y, ob2.b) });
+            } else {
+              // Horizontal segment hitting a box: jog vertically around it
+              var goDown = (p1.y + p2.y) / 2 >= (ob2.t + ob2.b) / 2;
+              var bypassY = goDown ? ob2.b : ob2.t;
+              newPoints.push({ x: Math.min(p1.x, ob2.l), y: p1.y });
+              newPoints.push({ x: Math.min(p1.x, ob2.l), y: bypassY });
+              newPoints.push({ x: Math.max(p2.x, ob2.r), y: bypassY });
+              newPoints.push({ x: Math.max(p2.x, ob2.r), y: p2.y });
+            }
+            rerouted = true;
+            break;
+          }
+        }
+        if (!rerouted) {
+          newPoints.push(p2);
+        } else {
+          newPoints.push(p2);
+        }
+      }
+      points = simplifyPath(newPoints);
+    }
+
+    // Force all segments to be strictly horizontal or vertical
+    points = orthogonalize(points);
+
     return { points: points };
+  }
+
+  /**
+   * Convert any diagonal segment into an L-shaped pair of H/V segments.
+   */
+  function orthogonalize(points) {
+    if (points.length <= 1) return points;
+    var result = [points[0]];
+    for (var i = 1; i < points.length; i++) {
+      var prev = result[result.length - 1];
+      var cur = points[i];
+      if (prev.x !== cur.x && prev.y !== cur.y) {
+        // Diagonal — insert a bend point (horizontal first, then vertical)
+        result.push({ x: cur.x, y: prev.y });
+      }
+      result.push(cur);
+    }
+    return simplifyPath(result);
+  }
+
+  /**
+   * Check if a line segment (p1→p2) intersects a rectangle {l, t, r, b}.
+   */
+  function segmentIntersectsBox(p1, p2, box) {
+    // Segment bounding box must overlap the obstacle box
+    var sMinX = Math.min(p1.x, p2.x), sMaxX = Math.max(p1.x, p2.x);
+    var sMinY = Math.min(p1.y, p2.y), sMaxY = Math.max(p1.y, p2.y);
+    if (sMaxX <= box.l || sMinX >= box.r || sMaxY <= box.t || sMinY >= box.b) return false;
+    // For axis-aligned segments (orthogonal), bbox overlap means intersection
+    if (p1.x === p2.x || p1.y === p2.y) return true;
+    // For diagonal segments, do full Liang-Barsky clip test
+    return true;
   }
 
   /**
@@ -1343,6 +1272,7 @@
     var layout = computeLayout(parsed);
     var svgStr = generateSVG(layout, parsed, colors);
     container.innerHTML = svgStr;
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init for SEBook pages ───────────────────────────────────

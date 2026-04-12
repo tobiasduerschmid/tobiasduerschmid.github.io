@@ -1,0 +1,26 @@
+title: "UML Class Diagram Flashcards"
+description: "Quick review of UML Class Diagram notation and relationships."
+cards:
+  - id: 1
+    question: "What does the following symbol represent in a class diagram?"
+    answer: "Aggregation"
+    explanation: >
+      A hollow diamond on the parent class indicates **Aggregation**, representing a 'part-of' relationship where the parts can exist independently of the whole.
+
+      <div data-uml-type="class" data-uml-spec="class Department&#10;class Professor&#10;Department o-- Professor"></div>
+
+  - id: 2
+    question: "How do you denote a **Static Method** in UML Class Diagrams?"
+    answer: "By underlining the method name."
+    explanation: >
+      Static (class-level) members are underlined in UML.
+
+      <div data-uml-type="class" data-uml-spec="class MathUtils {&#10;  {static} +abs(n: int) : int&#10;  +pi() : double&#10;}"></div>
+
+  - id: 3
+    question: "What is the difference between these two relationships?"
+    answer: "The first is **Composition** (strong), the second is **Aggregation** (weak)."
+    explanation: >
+      A filled diamond (`*--`) is **Composition**, meaning the parts cannot exist without the whole. A hollow diamond (`o--`) is **Aggregation**.
+
+      <div data-uml-type="class" data-uml-spec="class Building&#10;class Room&#10;class Library&#10;class Book&#10;Building *-- Room&#10;Library o-- Book"></div>
