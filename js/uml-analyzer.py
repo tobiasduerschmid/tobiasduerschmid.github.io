@@ -574,7 +574,8 @@ class SequenceDiagramGenerator:
                         if cls_name in self._data_classes:
                             return
                         self._ensure_participant(tgt.id, cls_name)
-                        self.lines.append(caller + ' --> ' + tgt.id + ': <<create>>')
+                        self.lines.append('create ' + tgt.id)
+                        self.lines.append(caller + ' -> ' + tgt.id + ': <<create>>')
                         self._maybe_follow(cls_name, '__init__', tgt.id, depth)
                         return
                     # self.attr = ClassName(...) — attribute composition
@@ -586,7 +587,8 @@ class SequenceDiagramGenerator:
                         pid = tgt.attr
                         self._ensure_participant(pid, cls_name)
                         self._caller_class[pid] = cls_name
-                        self.lines.append(caller + ' --> ' + pid + ': <<create>>')
+                        self.lines.append('create ' + pid)
+                        self.lines.append(caller + ' -> ' + pid + ': <<create>>')
                         return
         # General: scan the whole value expression for calls
         self._scan_expr_for_calls(value, caller, depth)
@@ -614,7 +616,7 @@ class SequenceDiagramGenerator:
         for ln in fragment_lines:
             stripped = ln.strip()
             if stripped and not stripped.startswith(('alt ', 'else ', 'loop ', 'opt ', 'end',
-                                                     'activate ', 'deactivate ')):
+                                                     'activate ', 'deactivate ', 'create ')):
                 return True
         return False
 
@@ -749,7 +751,8 @@ class SequenceDiagramGenerator:
         if method == '__init__':
             self._ensure_participant(callee_id, cls_name)
             self._caller_class[callee_id] = cls_name
-            self.lines.append(caller + ' --> ' + callee_id + ': <<create>>')
+            self.lines.append('create ' + callee_id)
+            self.lines.append(caller + ' -> ' + callee_id + ': <<create>>')
         elif callee_id == caller:
             # Self-call — no return message needed
             self.lines.append(caller + ' -> ' + caller + ': ' + label)
