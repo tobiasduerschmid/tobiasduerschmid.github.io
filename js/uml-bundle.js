@@ -521,7 +521,35 @@
           if (ty > maxY) maxY = ty;
         }
       }
-      var p = pad || 10;
+
+      // Walk all text elements to catch labels that extend beyond
+      // the group bounding box (italic text, edge labels, etc.)
+      var texts = g.querySelectorAll('text');
+      for (var ti = 0; ti < texts.length; ti++) {
+        try {
+          var tb = texts[ti].getBBox();
+          if (!tb || !isFinite(tb.width)) continue;
+          var tctm = texts[ti].getCTM();
+          if (tctm) {
+            var tcorners = [
+              { x: tb.x, y: tb.y },
+              { x: tb.x + tb.width, y: tb.y },
+              { x: tb.x + tb.width, y: tb.y + tb.height },
+              { x: tb.x, y: tb.y + tb.height }
+            ];
+            for (var tc = 0; tc < tcorners.length; tc++) {
+              var ttx = tctm.a * tcorners[tc].x + tctm.c * tcorners[tc].y + tctm.e;
+              var tty = tctm.b * tcorners[tc].x + tctm.d * tcorners[tc].y + tctm.f;
+              if (ttx < minX) minX = ttx;
+              if (tty < minY) minY = tty;
+              if (ttx > maxX) maxX = ttx;
+              if (tty > maxY) maxY = tty;
+            }
+          }
+        } catch (te) { /* skip unmeasurable text */ }
+      }
+
+      var p = pad || 15;
       var vx = Math.floor(minX - p);
       var vy = Math.floor(minY - p);
       var vw = Math.ceil((maxX - minX) + p * 2);
@@ -1669,7 +1697,7 @@
     padX: 14,
     padY: 6,
     gapX: 60,
-    gapY: 80,
+    gapY: 70,
     triangleH: 14,
     triangleW: 14,
     diamondH: 14,
@@ -3861,7 +3889,7 @@
     finalR: 6,
     finalRingR: 11,
     gapX: 80,
-    gapY: 70,
+    gapY: 55,
     arrowSize: 10,
     strokeWidth: 1.5,
     svgPad: 30,
@@ -4177,7 +4205,7 @@
     for (var en0 in entries) {
       maxBoundsX = Math.max(maxBoundsX, entries[en0].x + entries[en0].box.width);
     }
-    var routeMarginX = maxBoundsX + CFG.gapX * 0.4;
+    var routeMarginX = maxBoundsX + CFG.gapX * 0.25;
 
     // Group downward transitions by source state
     var downByFrom = {};
@@ -4372,7 +4400,7 @@
       if (isBackEdge && !customExits[ti]) {
         // Back-edge via right margin
         // Apply an offset based on transitioning index to avoid overlapping routes
-        var dynamicMargin = routeMarginX + (ti * 12);
+        var dynamicMargin = routeMarginX + (ti * 10);
         points = [
           { x: x1, y: y1 },
           { x: dynamicMargin, y: y1 },
@@ -7031,7 +7059,7 @@
     compIconTabH: 3,
     compGapY: 6,
     gapX: 100,
-    gapY: 80,
+    gapY: 55,
     arrowSize: 10,
     strokeWidth: 1.5,
     svgPad: 30,
@@ -8273,11 +8301,11 @@
     initialR: 8,
     finalR: 6,
     finalRingR: 11,
-    diamondSize: 18,
+    diamondSize: 14,
     forkBarH: 4,
     forkBarMinW: 60,
     gapX: 80,
-    gapY: 70,
+    gapY: 50,
     arrowSize: 10,
     strokeWidth: 1.5,
     svgPad: 30,
@@ -8822,7 +8850,7 @@
     for (var en0 in entries) {
       maxBoundsX = Math.max(maxBoundsX, entries[en0].x + entries[en0].box.width);
     }
-    var routeMarginX = maxBoundsX + CFG.gapX * 0.4;
+    var routeMarginX = maxBoundsX + CFG.gapX * 0.25;
 
     var downByFrom = {};
     var decisionByFrom = {};
@@ -8948,7 +8976,7 @@
           { x: x2, y: y2 }
         ];
       } else if (isBackEdge && !customExits[ti]) {
-        var dynamicMargin = routeMarginX + (ti * 12);
+        var dynamicMargin = routeMarginX + (ti * 10);
         points = [
           { x: x1, y: y1 },
           { x: dynamicMargin, y: y1 },

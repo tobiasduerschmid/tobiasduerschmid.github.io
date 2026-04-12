@@ -375,18 +375,31 @@ class SequenceDiagramGenerator:
                                 m_params[arg.arg] = arg.annotation.id
                     if m_params:
                         p_types[item.name] = m_params
-                    # __init__: self.x = ClassName() or self.x: T = ClassName() → attr_types
+                    # __init__: self.x = ClassName() / self.x = param / self.x: T → attr_types
                     if item.name == '__init__':
+                        # Build init param type map for resolving self.x = param
+                        init_params = {}
+                        for arg in item.args.args:
+                            if arg.arg in ('self', 'cls'):
+                                continue
+                            if arg.annotation and isinstance(arg.annotation, ast.Name):
+                                if arg.annotation.id in self.all_class_names:
+                                    init_params[arg.arg] = arg.annotation.id
                         for child in ast.walk(item):
                             if isinstance(child, ast.Assign):
                                 for tgt in child.targets:
                                     if (isinstance(tgt, ast.Attribute)
                                             and isinstance(tgt.value, ast.Name)
-                                            and tgt.value.id == 'self'
-                                            and isinstance(child.value, ast.Call)):
-                                        fn = child.value.func
-                                        if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
-                                            a_types[tgt.attr] = fn.id
+                                            and tgt.value.id == 'self'):
+                                        if isinstance(child.value, ast.Call):
+                                            fn = child.value.func
+                                            if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
+                                                a_types[tgt.attr] = fn.id
+                                        elif isinstance(child.value, ast.Name):
+                                            # self.x = param → resolve via init param types
+                                            param_cls = init_params.get(child.value.id)
+                                            if param_cls:
+                                                a_types[tgt.attr] = param_cls
                             elif isinstance(child, ast.AnnAssign) and child.target:
                                 if (isinstance(child.target, ast.Attribute)
                                         and isinstance(child.target.value, ast.Name)
@@ -396,6 +409,8 @@ class SequenceDiagramGenerator:
                                         fn = child.value.func
                                         if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
                                             resolved = fn.id
+                                    if not resolved and child.value and isinstance(child.value, ast.Name):
+                                        resolved = init_params.get(child.value.id)
                                     if not resolved and child.annotation:
                                         if isinstance(child.annotation, ast.Name) and child.annotation.id in self.all_class_names:
                                             resolved = child.annotation.id
@@ -598,14 +613,32 @@ class SequenceDiagramGenerator:
         """True if any line is a real message (not just fragment markers)."""
         for ln in fragment_lines:
             stripped = ln.strip()
-            if stripped and not stripped.startswith(('alt ', 'else ', 'loop ', 'opt ', 'end')):
+            if stripped and not stripped.startswith(('alt ', 'else ', 'loop ', 'opt ', 'end',
+                                                     'activate ', 'deactivate ')):
                 return True
         return False
 
     def _process_if(self, stmt, caller, depth):
-        # Collect body + all branches first to see if any have messages
-        branches = []
+        """Map if/elif/else to UML 2.0 combined fragments.
+
+        Per Rountev et al. (2005), single-branch if (no else) uses opt,
+        while multi-branch if/else uses alt/else.
+        """
         cond = self._expr_text(stmt.test)
+
+        if not stmt.orelse:
+            # Single-branch if → opt fragment (Rountev 2005)
+            body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
+            if self._has_messages(body_lines):
+                self.lines.append('opt [' + cond + ']')
+                self.lines.extend(body_lines)
+                self.lines.append('end')
+            else:
+                self.lines.extend(body_lines)
+            return
+
+        # Multi-branch if/elif/else → alt/else fragment
+        branches = []
         body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
         branches.append(('alt [' + cond + ']', body_lines))
 
@@ -628,8 +661,6 @@ class SequenceDiagramGenerator:
                 self.lines.extend(blines)
             self.lines.append('end')
         else:
-            # Still flush any nested calls that were collected (shouldn't happen
-            # since we already processed them), but place them inline
             for _, blines in branches:
                 self.lines.extend(blines)
 
@@ -656,14 +687,38 @@ class SequenceDiagramGenerator:
             self.lines.extend(body_lines)
 
     def _process_try(self, stmt, caller, depth):
-        self._process_stmts(stmt.body, caller, depth)
+        """Map try/except to alt/else combined fragments."""
+        body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
+        handler_branches = []
         for handler in stmt.handlers:
-            self._process_stmts(handler.body, caller, depth)
+            exc_type = self._expr_text(handler.type) if handler.type else 'Exception'
+            h_lines = self._collect_fragment_lines(handler.body, caller, depth)
+            handler_branches.append((exc_type, h_lines))
+
+        has_body = self._has_messages(body_lines)
+        has_handlers = any(self._has_messages(hl) for _, hl in handler_branches)
+
+        if has_body or has_handlers:
+            self.lines.append('alt [try]')
+            self.lines.extend(body_lines)
+            for exc_type, h_lines in handler_branches:
+                self.lines.append('else [except ' + exc_type + ']')
+                self.lines.extend(h_lines)
+            self.lines.append('end')
+        else:
+            self.lines.extend(body_lines)
+            for _, h_lines in handler_branches:
+                self.lines.extend(h_lines)
 
     # ── Call processing ──────────────────────────────────────────────
 
     def _process_call(self, call, caller, depth):
-        """Process a single call node: emit a message and optionally follow the body."""
+        """Process a single call node: emit a message and optionally follow the body.
+
+        Improvements based on:
+        - Srinivasan et al. (2016): include argument expressions for comprehension
+        - UML 2.0 spec: return/reply messages (dashed arrows) after sync calls
+        """
         # Scan arguments first (they execute before the call)
         for arg in call.args:
             self._scan_expr_for_calls(arg, caller, depth)
@@ -688,19 +743,79 @@ class SequenceDiagramGenerator:
             attr_hint = call.func.value.attr
         callee_id = self._callee_id_for(cls_name, caller, attr_hint)
 
+        # Build message label with arguments and return type
+        label = self._build_call_label(call, cls_name, method)
+
         if method == '__init__':
             self._ensure_participant(callee_id, cls_name)
             self._caller_class[callee_id] = cls_name
             self.lines.append(caller + ' --> ' + callee_id + ': <<create>>')
         elif callee_id == caller:
-            # Self-call
-            self.lines.append(caller + ' -> ' + caller + ': ' + method + '()')
+            # Self-call — no return message needed
+            self.lines.append(caller + ' -> ' + caller + ': ' + label)
             self._maybe_follow(cls_name, method, callee_id, depth)
         else:
             self._ensure_participant(callee_id, self._participant_label(callee_id, cls_name))
             self._caller_class[callee_id] = cls_name
-            self.lines.append(caller + ' -> ' + callee_id + ': ' + method + '()')
+            self.lines.append(caller + ' -> ' + callee_id + ': ' + label)
             self._maybe_follow(cls_name, method, callee_id, depth)
+            # Return/reply message (dashed arrow back to caller)
+            ret_type = self._get_return_type(cls_name, method)
+            if ret_type:
+                self.lines.append(callee_id + ' --> ' + caller + ': ' + ret_type)
+            else:
+                self.lines.append(callee_id + ' --> ' + caller)
+
+    def _build_call_label(self, call, cls_name, method):
+        """Build a message label with arguments and return type annotation.
+
+        Per Srinivasan (2016), showing arguments aids OO comprehension.
+        Limit to 3 args and truncate long expressions for readability.
+        """
+        # Argument expressions (limit to 3 for readability)
+        arg_parts = []
+        for a in call.args[:3]:
+            text = self._expr_text(a)
+            if len(text) > 20:
+                text = text[:17] + '...'
+            arg_parts.append(text)
+        if len(call.args) > 3:
+            arg_parts.append('...')
+        args_str = ', '.join(arg_parts)
+
+        # Return type annotation
+        ret_type = self._get_return_type(cls_name, method)
+        if ret_type:
+            return method + '(' + args_str + '): ' + ret_type
+        return method + '(' + args_str + ')'
+
+    def _get_return_type(self, cls_name, method_name):
+        """Look up return type annotation for a method, if available."""
+        meths = self.class_methods.get(cls_name)
+        if not meths or method_name not in meths:
+            return None
+        node = meths[method_name]
+        if node.returns:
+            ret = self._annotation_text(node.returns)
+            if ret and ret != 'None':
+                return ret
+        return None
+
+    @staticmethod
+    def _annotation_text(node):
+        """Best-effort readable text for a type annotation AST node."""
+        if isinstance(node, ast.Name):
+            return node.id
+        if isinstance(node, ast.Constant):
+            return str(node.value)
+        if isinstance(node, ast.Attribute):
+            return ast.unparse(node) if hasattr(ast, 'unparse') else node.attr
+        if isinstance(node, ast.Subscript):
+            return ast.unparse(node) if hasattr(ast, 'unparse') else '...'
+        try:
+            return ast.unparse(node)
+        except Exception:
+            return None
 
     def _maybe_follow(self, cls_name, method_name, callee_id, depth):
         """Recursively follow into the called method body."""
@@ -823,16 +938,23 @@ class SequenceDiagramGenerator:
             self.participants.append((pid, label))
 
     def _callee_id_for(self, cls_name, caller, attr_hint=None):
-        """Find the best participant id for a class: prefer attr name or existing variable."""
-        if attr_hint:
-            return attr_hint
-        for v, c in self.var_types.items():
-            if c == cls_name:
-                return v
-        # Check existing participants
+        """Find the best participant id for a class: reuse existing participant when possible.
+
+        Priority: existing participant of same class > attr_hint > local var > class name.
+        This avoids duplicate lifelines for the same object accessed via different names
+        (e.g., local var `db` vs attribute `self._db`).
+        """
+        # Check existing participants first — reuse if same class already has one
         for pid, _lbl in self.participants:
             if self._caller_class.get(pid) == cls_name and pid != 'Main':
                 return pid
+        # Use attr_hint if no existing participant
+        if attr_hint:
+            return attr_hint
+        # Check local variable types
+        for v, c in self.var_types.items():
+            if c == cls_name:
+                return v
         return cls_name
 
     def _participant_label(self, pid, cls_name):
