@@ -1,0 +1,60 @@
+title: "UML Class Diagram Practice"
+description: "Test your ability to read and interpret UML Class Diagrams."
+questions:
+  - id: 1
+    type: single
+    question: >
+      Look at the following diagram. What is the relationship between **Customer** and **Order**?
+
+      <div data-uml-type="class" data-uml-spec="class Customer {&#10;  -name: String&#10;  -email: String&#10;}&#10;class Order {&#10;  -id: int&#10;  -date: Date&#10;}&#10;Customer '1' --> '*' Order : places"></div>
+    options:
+      - "Association: One Order can be placed by many Customers."
+      - "Association: One Customer can place many Orders."
+      - "Composition: An Order is a part of a Customer and cannot exist without it."
+      - "Generalization: Order is a subclass of Customer."
+    correct_index: 1
+    explanation: "The arrow indicates a directed association from **Customer** to **Order**. The multiplicity `1` on Customer and `*` on Order means one customer can be associated with any number of orders."
+
+  - id: 2
+    type: multiple
+    question: >
+      Which of the following members are **private** in the class **Engine**?
+
+      <div data-uml-type="class" data-uml-spec="class Engine {&#10;  -serialNumber: String&#10;  #type: String&#10;  +horsepower: int&#10;  -isRunning: boolean&#10;  ~id: int&#10;  +start()&#10;  -resetInternal()&#10;}"></div>
+    options:
+      - "serialNumber"
+      - "type"
+      - "horsepower"
+      - "isRunning"
+      - "id"
+      - "resetInternal()"
+    correct_indices: [0, 3, 5]
+    explanation: "In UML, `-` denotes **private**, `+` denotes **public**, `#` denotes **protected**, and `~` denotes **package/internal**. The private members are `serialNumber`, `isRunning`, and `resetInternal()`."
+
+  - id: 3
+    type: single
+    question: >
+      What type of relationship is shown here between **Graphic** and **Circle**?
+
+      <div data-uml-type="class" data-uml-spec="abstract class Graphic {&#10;  {abstract} +draw()&#10;}&#10;class Circle {&#10;  +draw()&#10;}&#10;Graphic <|-- Circle"></div>
+    options:
+      - "Aggregation: Circle contains Graphics."
+      - "Realization: Circle implements an interface Graphic."
+      - "Generalization (Inheritance): Circle is a subclass of Graphic."
+      - "Dependency: Circle uses Graphic."
+    correct_index: 2
+    explanation: "The hollow arrowhead (empty triangle) pointing to the parent indicates **Generalization** (Inheritance). Since Graphic is an `abstract class`, Circle is inheriting from it."
+
+  - id: 4
+    type: single
+    question: >
+      Which of the following relationships is shown here?
+
+      <div data-uml-type="class" data-uml-spec="class Car&#10;class Engine&#10;Car *-- Engine"></div>
+    options:
+      - "Association"
+      - "Aggregation"
+      - "Composition"
+      - "Inheritance"
+    correct_index: 2
+    explanation: "The filled diamond (`*--`) represents **Composition** — a strong ownership where `Engine` cannot exist independently of `Car`."
