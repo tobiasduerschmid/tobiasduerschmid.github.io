@@ -57,4 +57,61 @@ questions:
       - "Composition"
       - "Inheritance"
     correct_index: 2
-    explanation: "The filled diamond (`*--`) represents **Composition** — a strong ownership where `Engine` cannot exist independently of `Car`."
+    explanation: "The filled diamond (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"*--\"></span>) represents **Composition** — a strong ownership where `Engine` cannot exist independently of `Car`."
+
+  - id: 5
+    type: single
+    question: >
+      What type of relationship is shown between **Payment** and **Processable**?
+
+      <div data-uml-type="class" data-uml-spec="interface Processable {&#10;  +process(): bool&#10;}&#10;class Payment {&#10;  -amount: float&#10;  +process(): bool&#10;}&#10;Payment ..|> Processable"></div>
+    options:
+      - "Generalization (Inheritance): Payment is a subclass of Processable."
+      - "Association: Payment uses Processable."
+      - "Realization: Payment implements the Processable interface."
+      - "Dependency: Payment depends on Processable."
+    correct_index: 2
+    explanation: "The **dashed line with a hollow arrowhead** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..|>\"></span>) represents **Realization** — the class commits to implementing all methods defined in the interface. Generalization (inheritance) uses a **solid line** with a hollow arrowhead instead."
+
+  - id: 6
+    type: single
+    question: >
+      What does the multiplicity `0..*` on the **Order** side mean in this diagram?
+
+      <div data-uml-type="class" data-uml-spec="class Customer {&#10;  -name: String&#10;}&#10;class Order {&#10;  -date: Date&#10;}&#10;Customer '1' -- '0..*' Order"></div>
+    options:
+      - "A Customer must have at least one Order."
+      - "A Customer can have zero or more Orders."
+      - "An Order can belong to zero or more Customers."
+      - "There are no constraints on the number of Orders."
+    correct_index: 1
+    explanation: "The multiplicity `0..*` means **zero or more**. Reading from the Customer side: one Customer is associated with zero or more Orders. This means a Customer can exist without any Orders, or have as many as needed."
+
+  - id: 7
+    type: multiple
+    question: >
+      Looking at this e-commerce diagram, which statements are correct? (Select all that apply.)
+
+      <div data-uml-type="class" data-uml-spec="interface Billable {&#10;  +processPayment(): bool&#10;}&#10;class Order {&#10;  -status: String&#10;  +calcTotal(): float&#10;}&#10;class LineItem {&#10;  -quantity: int&#10;}&#10;class Product {&#10;  -price: float&#10;}&#10;Order ..|> Billable&#10;Order *-- '1..*' LineItem&#10;LineItem '0..*' -- '1' Product"></div>
+    options:
+      - "If an Order is deleted, its LineItems are also deleted."
+      - "A LineItem can exist independently without an Order."
+      - "Order implements the Billable interface."
+      - "Each LineItem must reference exactly one Product."
+      - "A Product cannot exist without a LineItem."
+    correct_indices: [0, 2, 3]
+    explanation: "The **filled diamond** (composition) between Order and LineItem means LineItems **cannot exist independently** — deleting the Order destroys them too. The **dashed arrow** shows Order **realizes** Billable. The multiplicity `1` on Product means each LineItem references exactly **one** Product. The association between LineItem and Product is a plain association (not composition), so Products **can** exist without LineItems."
+
+  - id: 8
+    type: single
+    question: >
+      What does the `#` visibility modifier mean in UML?
+
+      <div data-uml-type="class" data-uml-spec="class Account {&#10;  -balance: float&#10;  #accountType: String&#10;  +getBalance(): float&#10;}"></div>
+    options:
+      - "Public — accessible from anywhere."
+      - "Private — accessible only within the class."
+      - "Protected — accessible within the class and its subclasses."
+      - "Package — accessible by classes in the same package."
+    correct_index: 2
+    explanation: "The `#` symbol means **protected** — the member is accessible within the class itself and any of its subclasses, but not from unrelated classes. The full set: `+` (public), `-` (private), `#` (protected), `~` (package)."

@@ -1,0 +1,37 @@
+title: "UML State Machine Diagram Flashcards"
+description: "Quick review of UML State Machine Diagram notation and transitions."
+cards:
+  - id: 1
+    question: "What is the syntax for a **transition label** in a state machine diagram?"
+    answer: "`Event [Guard] / Effect`"
+    explanation: >
+      All three parts are optional. The **Event** is the trigger, the **Guard** (in square brackets) is a boolean condition that must be true, and the **Effect** (after `/`) is the action executed during the transition. Example: `buttonPressed [isEnabled] / playSound()`.
+
+  - id: 2
+    question: "What do the **initial pseudostate** (●) and **final state** (◎) look like?"
+    answer: "Initial = solid black circle. Final = solid circle inside a hollow circle (bullseye)."
+    explanation: >
+      The **initial pseudostate** (●) is the entry point — it must have exactly one outgoing transition with no event trigger. The **final state** (◎) indicates the object's lifecycle has ended.
+
+      <div data-uml-type="state" data-uml-spec="@startuml
+      [*] --> Active : create()
+      Active --> [*] : destroy()
+      @enduml"></div>
+
+  - id: 3
+    question: "What happens when a transition's **guard condition** evaluates to false?"
+    answer: "The transition does **not** fire; the object remains in its current state."
+    explanation: >
+      A guard acts as a gatekeeper. Even if the triggering event occurs, the transition is only taken if the guard is true. If false, the event is effectively ignored and the object stays put.
+
+  - id: 4
+    question: "How should states be **named** according to UML conventions?"
+    answer: "Use **present-participial phrases** (e.g., *Processing*, *WaitingForInput*) or **noun phrases** (e.g., *Active*, *Idle*)."
+    explanation: >
+      States represent a *condition of being*, not an action. Avoid verb names like *Login* or *doPayment*. Good names: *LoggedIn*, *Authenticating*, *Idle*, *EmergencyPower*. The name should answer "what condition is the object in?"
+
+  - id: 5
+    question: "When should you use a **state machine diagram** instead of a **sequence diagram**?"
+    answer: "When modeling the **lifecycle of a single object** whose behavior depends on its current state."
+    explanation: >
+      State machines focus on **one object** reacting differently to events based on its state. Sequence diagrams show **interactions between multiple objects** over time. Use state machines for objects with complex, state-dependent behavior (e.g., a UI component, order lifecycle, hardware controller).

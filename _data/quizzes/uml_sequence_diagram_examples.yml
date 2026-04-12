@@ -1,0 +1,140 @@
+title: "UML Sequence Diagram Practice"
+description: "Test your ability to read and interpret UML Sequence Diagrams."
+questions:
+  - id: 1
+    type: single
+    question: >
+      What type of message is represented by a **solid line with a filled (solid) arrowhead**?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant a: Client
+      participant b: Server
+      a -> b: request()
+      @enduml"></div>
+    options:
+      - "Asynchronous message — the sender does not wait for a response."
+      - "Synchronous message — the sender waits for a response before continuing."
+      - "Return message — the response to a previous call."
+      - "Create message — a new object is being instantiated."
+    correct_index: 1
+    explanation: "A solid line with a **filled arrowhead** represents a **synchronous message**. The sender blocks and waits for the receiver to finish processing before continuing. An asynchronous message uses an **open (stick) arrowhead** instead."
+
+  - id: 2
+    type: single
+    question: >
+      What does the **dashed line** in the diagram below represent?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant a: Client
+      participant b: Server
+      a -> b: calculate()
+      b --> a: result
+      @enduml"></div>
+    options:
+      - "An asynchronous message from Server to Client."
+      - "A dependency from Server to Client."
+      - "A return message carrying a response back to the caller."
+      - "A synchronous callback from Server to Client."
+    correct_index: 2
+    explanation: "A **dashed line with an open arrowhead** represents a **return message** — the response flowing back from a called method. Return messages are optional in sequence diagrams but are shown when the return value is important to understand the interaction."
+
+  - id: 3
+    type: single
+    question: >
+      Which combined fragment would you use to model an **if-else** decision in a sequence diagram?
+    options:
+      - "`loop` — repeats messages while a condition is true."
+      - "`opt` — executes messages only if a condition is true."
+      - "`alt` — selects one of multiple branches based on guard conditions."
+      - "`par` — executes messages in parallel."
+    correct_index: 2
+    explanation: "The **`alt`** (alternatives) fragment models if-else logic. It contains two or more regions separated by dashed lines, each with a guard condition. Only one region executes. The **`opt`** fragment is for a simple if-without-else."
+
+  - id: 4
+    type: single
+    question: >
+      Look at this diagram. How many times could the `ping()` message be sent?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant app: App
+      participant server: Server
+      app -> server: connect()
+      loop [1, 5]
+        app -> server: ping()
+        server --> app: ack()
+      end
+      @enduml"></div>
+    options:
+      - "Exactly 5 times."
+      - "Between 1 and 5 times (inclusive)."
+      - "Zero or more times."
+      - "Exactly once."
+    correct_index: 1
+    explanation: "The `loop [1, 5]` fragment specifies a **minimum of 1** and **maximum of 5** iterations. The messages inside will execute between 1 and 5 times depending on conditions at runtime."
+
+  - id: 5
+    type: multiple
+    question: >
+      Which of the following are **valid combined fragment types** in UML sequence diagrams? (Select all that apply.)
+    options:
+      - "`alt` — alternative branches"
+      - "`opt` — optional execution"
+      - "`if` — conditional execution"
+      - "`loop` — repeated execution"
+      - "`try` — exception handling"
+      - "`par` — parallel execution"
+    correct_indices: [0, 1, 3, 5]
+    explanation: "The valid UML combined fragment operators include **`alt`**, **`opt`**, **`loop`**, and **`par`**. There is no `if` or `try` fragment in UML — conditional logic uses `alt`/`opt`, and exception-like behavior uses the `break` fragment."
+
+  - id: 6
+    type: single
+    question: >
+      What does the `opt` fragment in this diagram mean?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant c: Checkout
+      participant p: Pricing Engine
+      c -> p: calculateTotal()
+      opt [hasPromoCode == true]
+        c -> p: applyDiscount()
+        p --> c: discountApplied()
+      end
+      p --> c: finalTotal()
+      @enduml"></div>
+    options:
+      - "The discount is always applied after calculating the total."
+      - "The discount is applied only if `hasPromoCode` is true; otherwise the messages inside are skipped entirely."
+      - "The system chooses between applying the discount or returning the final total."
+      - "The discount is applied repeatedly until the promo code expires."
+    correct_index: 1
+    explanation: "An **`opt` fragment** is equivalent to an `if` statement **without** an `else`. The enclosed messages execute only when the guard condition is true. If the guard is false, the entire fragment is skipped and execution continues after it."
+
+  - id: 7
+    type: single
+    question: >
+      In UML sequence diagrams, what does time represent?
+    options:
+      - "Time flows left-to-right along the horizontal axis."
+      - "Time flows top-to-bottom along the vertical axis."
+      - "Time is not represented; messages can occur in any order."
+      - "Time flows right-to-left, with the most recent message on the left."
+    correct_index: 1
+    explanation: "In sequence diagrams, **time flows top-to-bottom** along the vertical axis. Messages higher in the diagram occur before messages lower in the diagram. The horizontal axis shows the different participants (lifelines)."
+
+  - id: 8
+    type: single
+    question: >
+      Which arrow style represents an **asynchronous message** where the sender does NOT wait for a response?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant a: Sender
+      participant b: Receiver
+      a ->> b: notify()
+      @enduml"></div>
+    options:
+      - "Solid line with filled arrowhead."
+      - "Dashed line with open arrowhead."
+      - "Solid line with open (stick) arrowhead."
+      - "Dashed line with filled arrowhead."
+    correct_index: 2
+    explanation: "An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks."

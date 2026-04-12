@@ -1,0 +1,120 @@
+title: "UML State Machine Diagram Practice"
+description: "Test your ability to read and interpret UML State Machine Diagrams."
+questions:
+  - id: 1
+    type: single
+    question: >
+      What does the **solid black circle** represent in a state machine diagram?
+
+      <div data-uml-type="state" data-uml-spec="@startuml
+      [*] --> Idle : powerOn()
+      Idle --> Active : start()
+      @enduml"></div>
+    options:
+      - "A regular state named 'Start'."
+      - "The initial pseudostate — the entry point of the state machine."
+      - "The final state — the end of the object's lifecycle."
+      - "A choice point for conditional branching."
+    correct_index: 1
+    explanation: "A **solid black circle** (●) is the **initial pseudostate**. It marks where the state machine begins. There is always exactly one initial pseudostate, and it must have exactly one outgoing transition (with no trigger). The **final state** is a different symbol: a solid circle inside a hollow circle (◎)."
+
+  - id: 2
+    type: single
+    question: >
+      Given the transition label `buttonPressed [isEnabled] / playSound()`, which part is the **guard condition**?
+    options:
+      - "`buttonPressed`"
+      - "`[isEnabled]`"
+      - "`/ playSound()`"
+      - "`buttonPressed [isEnabled]`"
+    correct_index: 1
+    explanation: "The transition syntax is `Event [Guard] / Effect`. The **guard** is `[isEnabled]` — a boolean condition in square brackets that must be true for the transition to fire. `buttonPressed` is the event (trigger), and `/ playSound()` is the effect (action executed during the transition)."
+
+  - id: 3
+    type: single
+    question: >
+      In the exosuit diagram below, what happens if `threatDetected` occurs but `sysCheckOK` is **false**?
+
+      <div data-uml-type="state" data-uml-spec="@startuml
+      [*] --> Idle : powerOn()
+      Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
+      CombatMode --> Idle : threatNeutralized / retractWeapons()
+      @enduml"></div>
+    options:
+      - "The system transitions to CombatMode anyway, but without calling deployUI()."
+      - "The system remains in the Idle state — the transition does not fire."
+      - "The system enters an error state."
+      - "The system transitions to the final state."
+    correct_index: 1
+    explanation: "When a guard condition evaluates to **false**, the transition is **not taken** and the object stays in its current state. The event is effectively ignored. The system remains in **Idle** until the event occurs again with the guard satisfied."
+
+  - id: 4
+    type: multiple
+    question: >
+      Which of the following are valid components of a UML transition label? (Select all that apply.)
+
+      Syntax: `Event [Guard] / Effect`
+    options:
+      - "Event — the trigger that causes the transition"
+      - "Guard — a boolean condition in square brackets"
+      - "Effect — an action executed during the transition"
+      - "State — the name of the target state"
+      - "Priority — a number indicating transition precedence"
+    correct_indices: [0, 1, 2]
+    explanation: "A UML transition label has three optional parts: **Event** (trigger), **Guard** (boolean condition in `[]`), and **Effect** (action after `/`). All three are optional — you can have a transition with just a guard, just an event, or any combination. The target state is shown by the arrow's destination, not the label. There is no priority concept."
+
+  - id: 5
+    type: single
+    question: >
+      What does the symbol ◎ (a filled circle inside a hollow circle) represent?
+    options:
+      - "The initial pseudostate — where the state machine starts."
+      - "A history state — remembers the last active substate."
+      - "The final state — the end of the object's lifecycle."
+      - "A choice pseudostate — a conditional branch point."
+    correct_index: 2
+    explanation: "The **bullseye symbol** (◎) is the **final state**. It indicates that the object's lifecycle has ended. This is different from the **initial pseudostate** (solid black circle ●), which marks where the state machine begins."
+
+  - id: 6
+    type: single
+    question: >
+      Which of these is a well-named state according to UML conventions?
+    options:
+      - "`Login`"
+      - "`WaitingForInput`"
+      - "`doPayment`"
+      - "`check_status`"
+    correct_index: 1
+    explanation: "State names should use **present-participial phrases** (e.g., *WaitingForInput*, *Processing*) or **noun phrases** (e.g., *Active*, *Idle*). `Login` is a verb (an action, not a condition of being). `doPayment` and `check_status` are also action verbs. A state represents a *condition or situation*, not an action."
+
+  - id: 7
+    type: single
+    question: >
+      When should you choose a **state machine diagram** over a **sequence diagram**?
+    options:
+      - "When you want to show interactions between multiple objects over time."
+      - "When you want to model how a single object's behavior changes based on its current condition."
+      - "When you want to show the physical deployment of software components."
+      - "When you want to model a business workflow with swim lanes."
+    correct_index: 1
+    explanation: "State machine diagrams model the **lifecycle of a single object** — how it responds differently to events based on its current state. Sequence diagrams show **interactions between multiple objects**. Activity diagrams model **workflows/processes**. Deployment diagrams show **physical infrastructure**."
+
+  - id: 8
+    type: single
+    question: >
+      Look at this diagram. What is the **effect** that executes when transitioning from CombatMode to Idle?
+
+      <div data-uml-type="state" data-uml-spec="@startuml
+      [*] --> Idle : powerOn()
+      Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
+      CombatMode --> Idle : threatNeutralized / retractWeapons()
+      CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()
+      EmergencyPower --> [*] : manualOverride()
+      @enduml"></div>
+    options:
+      - "`threatNeutralized`"
+      - "`deployUI()`"
+      - "`retractWeapons()`"
+      - "`manualOverride()`"
+    correct_index: 2
+    explanation: "The transition from CombatMode to Idle is labeled `threatNeutralized / retractWeapons()`. Using the syntax `Event [Guard] / Effect`, the effect is **`retractWeapons()`** — the action executed as the transition occurs. `threatNeutralized` is the event (trigger)."

@@ -21,6 +21,28 @@ cards:
     question: "What is the difference between these two relationships?"
     answer: "The first is **Composition** (strong), the second is **Aggregation** (weak)."
     explanation: >
-      A filled diamond (`*--`) is **Composition**, meaning the parts cannot exist without the whole. A hollow diamond (`o--`) is **Aggregation**.
+      A filled diamond (<span class="uml-sym" data-diagram="class" data-sym="*--"></span>) is **Composition**, meaning the parts cannot exist without the whole. A hollow diamond (<span class="uml-sym" data-diagram="class" data-sym="o--"></span>) is **Aggregation**.
 
       <div data-uml-type="class" data-uml-spec="class Building&#10;class Room&#10;class Library&#10;class Book&#10;Building *-- Room&#10;Library o-- Book"></div>
+
+  - id: 4
+    question: "What is the difference between **Generalization** and **Realization** arrows?"
+    answer: "Generalization = **solid line** with hollow arrowhead. Realization = **dashed line** with hollow arrowhead."
+    explanation: >
+      **Generalization** (inheritance) connects a subclass to its superclass with a solid line. **Realization** connects a class to an interface it implements with a dashed line. Both use the same hollow triangle arrowhead.
+
+      <div data-uml-type="class" data-uml-spec="interface Flyable {&#10;  +fly(): void&#10;}&#10;class Bird {&#10;  +fly(): void&#10;}&#10;class Sparrow&#10;Bird ..|> Flyable&#10;Sparrow --|> Bird"></div>
+
+  - id: 5
+    question: "What do the four **visibility symbols** mean in UML?"
+    answer: "`+` public, `-` private, `#` protected, `~` package."
+    explanation: >
+      These symbols appear before attribute and operation names in design-level class diagrams. They should **not** be shown on analysis/domain models.
+
+      <div data-uml-type="class" data-uml-spec="class Example {&#10;  +publicAttr: String&#10;  -privateAttr: int&#10;  #protectedAttr: bool&#10;  ~packageAttr: float&#10;}"></div>
+
+  - id: 6
+    question: "What does the multiplicity `1..*` mean on an association?"
+    answer: "**One or more** — at least one instance is required."
+    explanation: >
+      Common multiplicities: `1` (exactly one), `0..1` (zero or one), `0..*` (zero or more), `1..*` (one or more). Always show multiplicity on **both ends** of an association.

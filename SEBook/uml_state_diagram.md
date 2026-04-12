@@ -98,3 +98,15 @@ To ensure these concepts are transferring from working memory to long-term reten
 3. *Challenge:* Sketch a simple state machine on a piece of paper for a standard turnstile (which can be either *Locked* or *Unlocked*, responding to the events *insertCoin* and *push*). 
 
 *Self-Correction Check:* If you struggled with question 2, revisit Section 2.2 to review how Guards act as gatekeepers for transitions.
+
+## Interactive Practice
+
+Test your knowledge with these retrieval practice exercises.
+
+### Knowledge Quiz
+{% include quiz.html id="uml_state_diagram_examples" %}
+
+### Retrieval Flashcards
+{% include flashcards.html id="uml_state_diagram_examples" %}
+
+*Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*

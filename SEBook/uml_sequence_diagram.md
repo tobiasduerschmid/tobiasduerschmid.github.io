@@ -173,3 +173,15 @@ To solidify your learning, attempt these questions without looking back at the t
 1.  What is the key difference between an `ALT` fragment and an `OPT` fragment?
 2.  If you needed to model a user trying to enter a password 3 times before being locked out, which fragment would you use as the outer box, and which fragment would you use inside it?
 3.  Draw a simple sequence diagram (using pen and paper) of yourself ordering a book online. Include one `OPT` fragment representing applying a promo code.
+
+## Interactive Practice
+
+Test your knowledge with these retrieval practice exercises. These diagrams are rendered dynamically to ensure you can recognize UML notation in any context.
+
+### Knowledge Quiz
+{% include quiz.html id="uml_sequence_diagram_examples" %}
+
+### Retrieval Flashcards
+{% include flashcards.html id="uml_sequence_diagram_examples" %}
+
+*Pedagogical Tip: If you find these challenging, it's a good sign! Effortful retrieval is exactly what builds durable mental models. Try coming back to these tomorrow to benefit from [spacing and interleaving](/blog/evidence-based-study-tips-for-college-students/).*

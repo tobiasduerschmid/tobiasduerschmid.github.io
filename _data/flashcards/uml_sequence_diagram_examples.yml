@@ -1,0 +1,56 @@
+title: "UML Sequence Diagram Flashcards"
+description: "Quick review of UML Sequence Diagram notation and fragments."
+cards:
+  - id: 1
+    question: "What is the difference between a **synchronous** and an **asynchronous** message arrow?"
+    answer: "Synchronous uses a **filled arrowhead**; asynchronous uses an **open (stick) arrowhead**."
+    explanation: >
+      A synchronous message (filled arrowhead) means the sender **waits** for the receiver to finish. An asynchronous message (open arrowhead) means the sender **continues immediately** without waiting.
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant a: Caller
+      participant b: Receiver
+      a -> b: syncCall()
+      b --> a: response
+      a ->> b: asyncNotify()
+      @enduml"></div>
+
+  - id: 2
+    question: "How is a **return message** drawn in a sequence diagram?"
+    answer: "A **dashed line** with an open arrowhead."
+    explanation: >
+      Return messages use dashed lines to distinguish them from call messages (which use solid lines). They are optional — include them when the return value is important to understanding the interaction.
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant a: Client
+      participant b: Service
+      a -> b: getData()
+      b --> a: result
+      @enduml"></div>
+
+  - id: 3
+    question: "What is the difference between an `opt` fragment and an `alt` fragment?"
+    answer: "`opt` = if (no else). `alt` = if-else with multiple branches."
+    explanation: >
+      An **`opt`** fragment has a single guard condition — messages execute only if the guard is true (like an `if` without `else`). An **`alt`** fragment has two or more regions separated by dashed lines, each with its own guard — exactly one region executes (like `if-else` or `switch`).
+
+  - id: 4
+    question: "What does a **lifeline** represent, and how is it drawn?"
+    answer: "A participant in the interaction — drawn as a **box** at the top with a **dashed vertical line** extending downward."
+    explanation: >
+      The box contains the participant's name (format: `objectName:ClassName` or `:ClassName`). The dashed vertical line represents the participant's existence over time. Time flows **top-to-bottom**.
+
+  - id: 5
+    question: "Name the combined fragment you would use to model a **for/while loop** in a sequence diagram."
+    answer: "The **`loop`** fragment."
+    explanation: >
+      The `loop` fragment repeats the enclosed messages. It can specify bounds like `loop [1, 5]` (min 1, max 5 iterations) or a guard condition like `loop [items remaining]`.
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml
+      participant a: App
+      participant b: Server
+      loop [1, 3]
+        a -> b: retry()
+        b --> a: ack()
+      end
+      @enduml"></div>
