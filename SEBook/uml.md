@@ -92,7 +92,7 @@ class Car {
 PlantUML uses different arrow styles to represent the various relationships. The direction of the arrow generally goes from the "child" or "part" to the "parent" or "whole."
 
 ### Generalization (Inheritance)
-Use `--|>` <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> to draw a solid line with an empty, closed arrowhead.
+Use <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> to draw a solid line with an empty, closed arrowhead.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Vehicle {
@@ -105,7 +105,7 @@ Motorcycle --|> Vehicle
 @enduml'></div>
 
 ### Interface Realization (Implementation)
-Use `..|>` <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> to draw a dashed line with an empty, closed arrowhead.
+Use <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> to draw a dashed line with an empty, closed arrowhead.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Drivable
@@ -114,7 +114,7 @@ Car ..|> Drivable
 @enduml'></div>
 
 ### Association and Multiplicities
-Use `--` <span class="uml-sym" data-diagram="class" data-sym="--"></span> for a standard solid line. You can add quotes around numbers at either end to define the multiplicities, and a colon followed by text to label the association.
+Use <span class="uml-sym" data-diagram="class" data-sym="--"></span> for a standard solid line. You can add quotes around numbers at either end to define the multiplicities, and a colon followed by text to label the association.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Teacher
@@ -125,7 +125,7 @@ Course "1..*" -- "0..*" Student : enrolled in
 @enduml'></div>
 
 ### Aggregation
-Use `o--` <span class="uml-sym" data-diagram="class" data-sym="o--"></span> to draw a solid line with an empty diamond pointing to the "whole" class.
+Use <span class="uml-sym" data-diagram="class" data-sym="o--"></span> to draw a solid line with an empty diamond pointing to the "whole" class.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Department
@@ -134,7 +134,7 @@ Department o-- Professor
 @enduml'></div>
 
 ### Composition
-Use `*--` <span class="uml-sym" data-diagram="class" data-sym="*--"></span> to draw a solid line with a filled (black) diamond pointing to the "whole" class.
+Use <span class="uml-sym" data-diagram="class" data-sym="*--"></span> to draw a solid line with a filled (black) diamond pointing to the "whole" class.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class House
