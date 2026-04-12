@@ -1387,6 +1387,18 @@ title: "SE Gym"
   {% include scripts.html %}
 
   <!-- ==================== PAGE SCRIPT ==================== -->
+  <!-- Custom UML diagram renderers -->
+  <script src="{{ '/js/uml-shared.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-advanced-layout.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-class-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-sequence-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-state-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-component-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-deployment-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-usecase-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-activity-renderer.js' | relative_url }}"></script>
+  <script src="{{ '/js/uml-notation.js' | relative_url }}"></script>
+
   <script>
     (function () {
       if (!window.PersonalGym) return;
@@ -1851,6 +1863,7 @@ title: "SE Gym"
         } else {
           renderFlashcard(card, index);
         }
+        if (window.UMLShared) window.UMLShared.renderAll();
       }
 
       function updateWorkoutProgress() {
@@ -1955,6 +1968,7 @@ title: "SE Gym"
               PersonalGym.recordResult(q.question, isCorrect);
               correctAnswersEl.style.display = 'flex';
               explanationEl.classList.remove('hidden');
+              if (window.UMLShared) window.UMLShared.renderAll();
               explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             });
           });
@@ -1991,6 +2005,7 @@ title: "SE Gym"
             PersonalGym.recordResult(q.question, isMultiCorrect);
             correctAnswersEl.style.display = 'flex';
             explanationEl.classList.remove('hidden');
+            if (window.UMLShared) window.UMLShared.renderAll();
             explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           });
         }
@@ -2133,7 +2148,11 @@ title: "SE Gym"
           var ca = div.querySelector('.quiz-correct-answers');
           var exp = div.querySelector('.quiz-explanation');
           if (ca) ca.style.display = 'flex';
-          if (exp) { exp.classList.remove('hidden'); exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+          if (exp) {
+            exp.classList.remove('hidden');
+            if (window.UMLShared) window.UMLShared.renderAll();
+            exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
         });
 
         // Reset button
@@ -2190,6 +2209,7 @@ title: "SE Gym"
 
         showBtn.addEventListener('click', function () {
           answerContainer.classList.remove('hidden');
+          if (window.UMLShared) window.UMLShared.renderAll();
           showBtn.classList.add('hidden');
           assessBtns.classList.remove('hidden');
         });

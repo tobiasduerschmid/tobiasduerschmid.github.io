@@ -611,6 +611,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       updateProgress();
+      if (window.UMLShared) window.UMLShared.renderAll();
     }
 
     function handleOptionClick(e) {
@@ -653,6 +654,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       explanation.classList.remove('hidden');
+      if (window.UMLShared) window.UMLShared.renderAll();
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -697,6 +699,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       explanation.classList.remove('hidden');
+      if (window.UMLShared) window.UMLShared.renderAll();
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 

@@ -562,5 +562,55 @@
     drawActorStickFigure: drawActorStickFigure,
     ACTOR_H: ACTOR_H,
     autoFitSVG: autoFitSVG,
+    renderAll: function() {
+      var RENDERERS = {
+        class:      function () { return window.UMLClassDiagram; },
+        sequence:   function () { return window.UMLSequenceDiagram; },
+        state:      function () { return window.UMLStateDiagram; },
+        component:  function () { return window.UMLComponentDiagram; },
+        deployment: function () { return window.UMLDeploymentDiagram; },
+        usecase:    function () { return window.UMLUseCaseDiagram; },
+        activity:   function () { return window.UMLActivityDiagram; },
+      };
+
+      // 1. Process data-uml-type attributes
+      var els = document.querySelectorAll('[data-uml-type]');
+      for (var i = 0; i < els.length; i++) {
+        var el = els[i];
+        if (el.dataset.umlRendered) continue;
+        var type = el.getAttribute('data-uml-type');
+        var spec = el.getAttribute('data-uml-spec');
+        var getR = RENDERERS[type];
+        if (!getR || !spec) continue;
+        var R = getR();
+        if (R) {
+          R.render(el, spec);
+          el.dataset.umlRendered = 'true';
+        }
+      }
+
+      // 2. Process Markdown fenced code blocks (e.g., ```uml-class)
+      for (var key in RENDERERS) {
+        var selector = 'pre > code.language-uml-' + key;
+        var blocks = document.querySelectorAll(selector);
+        for (var j = 0; j < blocks.length; j++) {
+          var codeEl = blocks[j];
+          var pre = codeEl.parentElement;
+          if (pre.dataset.umlRendered) continue;
+
+          var R2 = RENDERERS[key]();
+          if (R2) {
+            var text = codeEl.textContent;
+            var container = document.createElement('div');
+            container.className = 'uml-' + key + '-diagram-container';
+            pre.parentElement.replaceChild(container, pre);
+            R2.render(container, text);
+            container.dataset.umlRendered = 'true';
+          }
+        }
+      }
+
+      if (window.UMLNotation) window.UMLNotation.renderAll();
+    }
   };
 })();

@@ -591,6 +591,15 @@
         }
       }
 
+      // Force all segments to be strictly horizontal or vertical
+      for (var oi = 1; oi < points.length; oi++) {
+        var pp = points[oi - 1], pc = points[oi];
+        if (pp.x !== pc.x && pp.y !== pc.y) {
+          points.splice(oi, 0, { x: pc.x, y: pp.y });
+          oi++;
+        }
+      }
+
       var pStr = '';
       for (var pi = 0; pi < points.length; pi++) {
         if (pi > 0) pStr += ' ';

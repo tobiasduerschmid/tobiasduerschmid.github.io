@@ -56,7 +56,7 @@
     strokeWidth: 1.5,
     destroySize: 12,
     lostFoundRadius: 6,
-    lostFoundGap: 50,
+    lostFoundGap: 60,
   };
 
   // ─── Parser ───────────────────────────────────────────────────────
@@ -326,10 +326,12 @@
       return 0;
     }
 
+    var lastMsgY = curY; // tracks the Y of the most recent message, for activate/deactivate anchoring
     for (var mi = 0; mi < messages.length; mi++) {
       var msg = messages[mi];
 
       if (msg.type === 'message') {
+        lastMsgY = curY;
         msgYs.push(curY);
         curY += CFG.messageGapY;
         // Track which participants are involved in ALL open fragments (not just innermost)
@@ -339,10 +341,11 @@
           for (var fsi = 0; fsi < fragmentStack.length; fsi++) {
             fragmentStack[fsi].minPIdx = Math.min(fragmentStack[fsi].minPIdx, fpi1, fpi2);
             fragmentStack[fsi].maxPIdx = Math.max(fragmentStack[fsi].maxPIdx, fpi1, fpi2);
+            fragmentStack[fsi].lastMsgY = curY;
           }
         }
       } else if (msg.type === 'fragment_start') {
-        fragmentStack.push({ startY: curY - 15, fragType: msg.fragType, condition: msg.condition, elseYs: [], minPIdx: Infinity, maxPIdx: -Infinity, depth: fragmentStack.length });
+        fragmentStack.push({ startY: curY - 15, fragType: msg.fragType, condition: msg.condition, elseYs: [], minPIdx: Infinity, maxPIdx: -Infinity, depth: fragmentStack.length, lastMsgY: curY });
         curY += CFG.fragmentLabelH;
         // Extra space for condition text below the tab
         if (msg.condition) curY += 18;
@@ -357,7 +360,7 @@
       } else if (msg.type === 'fragment_end') {
         if (fragmentStack.length > 0) {
           var frag = fragmentStack.pop();
-          frag.endY = curY + 15;
+          frag.endY = frag.lastMsgY + 20;
           fragments.push(frag);
           // Propagate participant coverage to parent fragment
           if (fragmentStack.length > 0) {
@@ -383,9 +386,9 @@
           }
         }
       } else if (msg.type === 'activate') {
-        msgYs.push(curY);
+        msgYs.push(lastMsgY); // bar starts at the preceding message's Y
       } else if (msg.type === 'deactivate') {
-        msgYs.push(curY);
+        msgYs.push(lastMsgY); // bar ends at the preceding message's Y
       } else if (msg.type === 'destroy') {
         msgYs.push(curY);
         curY += CFG.messageGapY;
@@ -436,21 +439,26 @@
     }
 
     // Expand SVG for lost messages (extend right) and found messages (extend left)
-    var hasFoundMsg = false;
+    var maxFoundGap = 0;
     for (var lfmi = 0; lfmi < messages.length; lfmi++) {
       var lfm = messages[lfmi];
-      if (lfm.type === 'lost') {
-        var lmIdx = findPIdxByName(lfm.from);
-        var lostRightEdge = partX[lmIdx] + halfAct + CFG.lostFoundGap + CFG.lostFoundRadius + CFG.svgPad;
-        if (lostRightEdge > totalW) totalW = lostRightEdge;
-      } else if (lfm.type === 'found') {
-        hasFoundMsg = true;
+      if (lfm.type === 'lost' || lfm.type === 'found') {
+        var ltw = lfm.label ? UMLShared.textWidth(lfm.label, false, CFG.fontSize) : 0;
+        var reqGap = Math.max(CFG.lostFoundGap, ltw + 20);
+
+        if (lfm.type === 'lost') {
+          var lmIdx = findPIdxByName(lfm.from);
+          var lostRightEdge = partX[lmIdx] + halfAct + reqGap + CFG.lostFoundRadius + CFG.svgPad;
+          if (lostRightEdge > totalW) totalW = lostRightEdge;
+        } else {
+          maxFoundGap = Math.max(maxFoundGap, reqGap);
+        }
       }
     }
-    if (hasFoundMsg) {
-      var foundPad = CFG.lostFoundGap + CFG.lostFoundRadius + CFG.svgPad;
-      for (var fpi = 0; fpi < partX.length; fpi++) {
-        partX[fpi] += foundPad;
+    if (maxFoundGap > 0) {
+      var foundPad = maxFoundGap + CFG.lostFoundRadius + CFG.svgPad;
+      for (var fpiOuter = 0; fpiOuter < partX.length; fpiOuter++) {
+        partX[fpiOuter] += foundPad;
       }
       totalW += foundPad;
     }
@@ -514,6 +522,23 @@
         var oEntry = activeStarts[openId].pop();
         activationBars.push({ pIdx: findPIdx(openId), startY: oEntry.y, endY: totalH - 20, depth: oEntry.depth });
       }
+    }
+    // Helper to find the connection point X (lifeline center or activation bar edge)
+    function getEdgeX(pIdx, y, side) {
+      if (pIdx === undefined) return 0;
+      var center = partX[pIdx];
+      var bestDepth = -1;
+      for (var k = 0; k < activationBars.length; k++) {
+        var ab = activationBars[k];
+        // Include start/end Y exactly to handle start/stop of activations
+        // Add a tiny epsilon to handle edge cases of messages exactly at activation start/end
+        if (ab.pIdx === pIdx && y >= ab.startY - 0.1 && y <= ab.endY + 0.1) {
+          if (ab.depth > bestDepth) bestDepth = ab.depth;
+        }
+      }
+      if (bestDepth === -1) return center;
+      var abx = center - CFG.activationW / 2 + bestDepth * CFG.activationOffset;
+      return (side === 'right') ? (abx + CFG.activationW) : abx;
     }
 
     // ── Build SVG ──
@@ -630,25 +655,14 @@
           if (participants[p].id === m.from) fromIdx = p;
           if (participants[p].id === m.to) toIdx = p;
         }
-        var x1 = partX[fromIdx];
-        var x2 = partX[toIdx];
-        var isLeft = x2 < x1;
-        var halfAct = CFG.activationW / 2;
-
-        // Offset outgoing sync arrows to start from activation bar edge.
-        // Response arrows (dashed) stay at lifeline center.
-        if (fromIdx !== toIdx && !m.isDashed) {
-          if (isLeft) {
-            x1 -= halfAct;
-          } else {
-            x1 += halfAct;
-          }
-        }
+        var isLeft = partX[toIdx] < partX[fromIdx];
+        var x1 = getEdgeX(fromIdx, my, isLeft ? 'left' : 'right');
+        var x2 = getEdgeX(toIdx, my, isLeft ? 'right' : 'left');
 
         // Self-message
         if (fromIdx === toIdx) {
           var selfW = 40;
-          var selfX = partX[fromIdx] + halfAct; // start from right edge of activation bar
+          var selfX = getEdgeX(fromIdx, my, 'right');
           svg.push('<polyline points="' + selfX + ',' + my + ' ' + (selfX + selfW) + ',' + my + ' ' +
             (selfX + selfW) + ',' + (my + 20) + ' ' + selfX + ',' + (my + 20) +
             '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth +
@@ -694,12 +708,12 @@
         if (mi2 > 0 && messages[mi2 - 1].type === 'message') {
           var prevMsg = messages[mi2 - 1];
           var senderIdx = findPIdx(prevMsg.from);
-          var sx = partX[senderIdx] + CFG.activationW / 2;
+          var sx = getEdgeX(senderIdx, my + partH / 2, 'right');
           var tx = partX[cIdx] - partWidths[cIdx] / 2;
           var arrowY = my + partH / 2;
           svg.push('<line x1="' + sx + '" y1="' + arrowY + '" x2="' + tx + '" y2="' + arrowY +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '" stroke-dasharray="6,4"/>');
-          drawMsgArrow(svg, tx, arrowY, 1, 'sync', colors);
+          drawMsgArrow(svg, tx, arrowY, -1, 'sync', colors);
         }
       } else if (m.type === 'destroy') {
         // Draw X mark on the participant
@@ -716,8 +730,10 @@
       } else if (m.type === 'lost') {
         // Lost message: line from sender to a filled circle
         var lIdx = findPIdx(m.from);
-        var lx1 = partX[lIdx] + CFG.activationW / 2;
-        var lx2 = lx1 + CFG.lostFoundGap;
+        var ltw2 = m.label ? UMLShared.textWidth(m.label, false, CFG.fontSize) : 0;
+        var lgap = Math.max(CFG.lostFoundGap, ltw2 + 20);
+        var lx1 = getEdgeX(lIdx, my, 'right');
+        var lx2 = lx1 + lgap;
         var lr = CFG.lostFoundRadius;
         svg.push('<line x1="' + lx1 + '" y1="' + my + '" x2="' + (lx2 - lr) + '" y2="' + my +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
@@ -734,8 +750,10 @@
       } else if (m.type === 'found') {
         // Found message: filled circle to receiver
         var fIdx = findPIdx(m.to);
-        var fx2 = partX[fIdx] - CFG.activationW / 2;
-        var fx1 = fx2 - CFG.lostFoundGap;
+        var ftw = m.label ? UMLShared.textWidth(m.label, false, CFG.fontSize) : 0;
+        var fgap = Math.max(CFG.lostFoundGap, ftw + 20);
+        var fx2 = getEdgeX(fIdx, my, 'left');
+        var fx1 = fx2 - fgap;
         var fr = CFG.lostFoundRadius;
         svg.push('<circle cx="' + fx1 + '" cy="' + my + '" r="' + fr +
           '" fill="' + colors.line + '" stroke="' + colors.line + '"/>');
@@ -757,13 +775,13 @@
         var noteX, noteY = my;
         var connFromX, connToX;
         if (m.position === 'left') {
-          noteX = partX[nIdx] - CFG.activationW / 2 - UMLShared.NOTE_CFG.gap - noteSize.width;
+          noteX = getEdgeX(nIdx, my, 'left') - UMLShared.NOTE_CFG.gap - noteSize.width;
           connFromX = noteX + noteSize.width;
-          connToX = partX[nIdx] - CFG.activationW / 2;
+          connToX = getEdgeX(nIdx, my, 'left');
         } else if (m.position === 'right') {
-          noteX = partX[nIdx] + CFG.activationW / 2 + UMLShared.NOTE_CFG.gap;
+          noteX = getEdgeX(nIdx, my, 'right') + UMLShared.NOTE_CFG.gap;
           connFromX = noteX;
-          connToX = partX[nIdx] + CFG.activationW / 2;
+          connToX = getEdgeX(nIdx, my, 'right');
         } else { // over
           noteX = partX[nIdx] - noteSize.width / 2;
           connFromX = null; // no connector for 'over'
@@ -819,7 +837,7 @@
   }
 
   function drawMsgArrow(svg, x, y, dir, msgType, colors) {
-    // dir: 1 = pointing right, -1 = pointing left
+    // dir: -1 = pointing right, 1 = pointing left
     var as = CFG.arrowSize;
     var hw = as * 0.4;
 

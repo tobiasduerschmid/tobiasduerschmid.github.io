@@ -688,32 +688,12 @@
   <script>
   (function () {
     'use strict';
-    var RENDERERS = {
-      class:      function () { return window.UMLClassDiagram; },
-      sequence:   function () { return window.UMLSequenceDiagram; },
-      state:      function () { return window.UMLStateDiagram; },
-      component:  function () { return window.UMLComponentDiagram; },
-      deployment: function () { return window.UMLDeploymentDiagram; },
-      usecase:    function () { return window.UMLUseCaseDiagram; },
-      activity:   function () { return window.UMLActivityDiagram; },
-    };
-
     function renderAll() {
-      var els = document.querySelectorAll('[data-uml-type]');
-      for (var i = 0; i < els.length; i++) {
-        var el = els[i];
-        var type = el.getAttribute('data-uml-type');
-        var spec = el.getAttribute('data-uml-spec');
-        var getR = RENDERERS[type];
-        if (!getR || !spec) continue;
-        var R = getR();
-        if (R) R.render(el, spec);
-      }
-      if (window.UMLNotation) window.UMLNotation.renderAll();
+      if (window.UMLShared) window.UMLShared.renderAll();
     }
 
     function tryRender() {
-      if (window.UMLClassDiagram && window.UMLSequenceDiagram && window.UMLStateDiagram) {
+      if (window.UMLClassDiagram && window.UMLSequenceDiagram && window.UMLShared) {
         renderAll();
       } else {
         setTimeout(tryRender, 80);

@@ -2,7 +2,7 @@
 UML Diagram Analyzer — extracts class diagrams and sequence diagrams from Python source.
 
 Runs inside Pyodide. Receives a dict of {filename: source_code} via global `__uml_sources`,
-prints a JSON result with Mermaid syntax for both diagram types.
+produces a JSON result with custom @startuml/@enduml syntax for the SVG renderers.
 """
 import ast
 import json
@@ -334,7 +334,7 @@ class SequenceDiagramGenerator:
                     self.var_types[var] = cls_name
                     self._caller_class[var] = cls_name
                     pid = var
-                    plabel = var + ': ' + cls_name
+                    plabel = cls_name
                     self._ensure_participant(pid, plabel)
                     self.lines.append(caller + ' --> ' + pid + ': <<create>>')
                     return
@@ -351,36 +351,74 @@ class SequenceDiagramGenerator:
 
     # ── Control flow → combined fragments ────────────────────────────
 
+    def _collect_fragment_lines(self, stmts, caller, depth):
+        """Process statements into a temporary buffer; return only message lines."""
+        snapshot = len(self.lines)
+        self._process_stmts(stmts, caller, depth)
+        new_lines = self.lines[snapshot:]
+        del self.lines[snapshot:]
+        return new_lines
+
+    def _has_messages(self, fragment_lines):
+        """True if any line is a real message (not just fragment markers)."""
+        for ln in fragment_lines:
+            stripped = ln.strip()
+            if stripped and not stripped.startswith(('alt ', 'else ', 'loop ', 'opt ', 'end')):
+                return True
+        return False
+
     def _process_if(self, stmt, caller, depth):
+        # Collect body + all branches first to see if any have messages
+        branches = []
         cond = self._expr_text(stmt.test)
-        self.lines.append('alt [' + cond + ']')
-        self._process_stmts(stmt.body, caller, depth)
+        body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
+        branches.append(('alt [' + cond + ']', body_lines))
+
         orelse = stmt.orelse
         while orelse:
             if len(orelse) == 1 and isinstance(orelse[0], ast.If):
                 elif_node = orelse[0]
-                self.lines.append('else [' + self._expr_text(elif_node.test) + ']')
-                self._process_stmts(elif_node.body, caller, depth)
+                elif_lines = self._collect_fragment_lines(elif_node.body, caller, depth)
+                branches.append(('else [' + self._expr_text(elif_node.test) + ']', elif_lines))
                 orelse = elif_node.orelse
             else:
-                self.lines.append('else [else]')
-                self._process_stmts(orelse, caller, depth)
+                else_lines = self._collect_fragment_lines(orelse, caller, depth)
+                branches.append(('else [else]', else_lines))
                 break
-        self.lines.append('end')
+
+        # Only emit if at least one branch produced messages
+        if any(self._has_messages(bl) for _, bl in branches):
+            for header, blines in branches:
+                self.lines.append(header)
+                self.lines.extend(blines)
+            self.lines.append('end')
+        else:
+            # Still flush any nested calls that were collected (shouldn't happen
+            # since we already processed them), but place them inline
+            for _, blines in branches:
+                self.lines.extend(blines)
 
     def _process_for(self, stmt, caller, depth):
         target = self._expr_text(stmt.target)
         iter_text = self._expr_text(stmt.iter)
-        self.lines.append('loop [for ' + target + ' in ' + iter_text + ']')
         # Infer loop variable type from iter expression
         self._infer_loop_var_type(stmt, caller)
-        self._process_stmts(stmt.body, caller, depth)
-        self.lines.append('end')
+        body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
+        if self._has_messages(body_lines):
+            self.lines.append('loop [for ' + target + ' in ' + iter_text + ']')
+            self.lines.extend(body_lines)
+            self.lines.append('end')
+        else:
+            self.lines.extend(body_lines)
 
     def _process_while(self, stmt, caller, depth):
-        self.lines.append('loop [while ' + self._expr_text(stmt.test) + ']')
-        self._process_stmts(stmt.body, caller, depth)
-        self.lines.append('end')
+        body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
+        if self._has_messages(body_lines):
+            self.lines.append('loop [while ' + self._expr_text(stmt.test) + ']')
+            self.lines.extend(body_lines)
+            self.lines.append('end')
+        else:
+            self.lines.extend(body_lines)
 
     def _process_try(self, stmt, caller, depth):
         self._process_stmts(stmt.body, caller, depth)
@@ -404,7 +442,7 @@ class SequenceDiagramGenerator:
         callee_id = self._callee_id_for(cls_name, caller)
 
         if method == '__init__':
-            self._ensure_participant(callee_id, ':' + cls_name)
+            self._ensure_participant(callee_id, cls_name)
             self._caller_class[callee_id] = cls_name
             self.lines.append(caller + ' --> ' + callee_id + ': <<create>>')
         elif callee_id == caller:
@@ -549,9 +587,8 @@ class SequenceDiagramGenerator:
         return cls_name
 
     def _participant_label(self, pid, cls_name):
-        if pid != cls_name:
-            return pid + ': ' + cls_name
-        return ':' + cls_name
+        """Return class name — renderer prepends 'id: ' when id != label."""
+        return cls_name
 
     def _class_of(self, participant_id):
         """Return the class name associated with a participant."""
@@ -670,7 +707,7 @@ def generate_sequence_diagram(trees, all_class_names):
 
 def analyze(sources):
     """
-    Analyze Python sources and return Mermaid diagram syntax.
+    Analyze Python sources and return diagram syntax.
 
     Args:
         sources: dict of {filename: source_code_string}

@@ -1100,7 +1100,28 @@
       points = simplifyPath(newPoints);
     }
 
+    // Force all segments to be strictly horizontal or vertical
+    points = orthogonalize(points);
+
     return { points: points };
+  }
+
+  /**
+   * Convert any diagonal segment into an L-shaped pair of H/V segments.
+   */
+  function orthogonalize(points) {
+    if (points.length <= 1) return points;
+    var result = [points[0]];
+    for (var i = 1; i < points.length; i++) {
+      var prev = result[result.length - 1];
+      var cur = points[i];
+      if (prev.x !== cur.x && prev.y !== cur.y) {
+        // Diagonal — insert a bend point (horizontal first, then vertical)
+        result.push({ x: cur.x, y: prev.y });
+      }
+      result.push(cur);
+    }
+    return simplifyPath(result);
   }
 
   /**
