@@ -1266,6 +1266,7 @@
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────

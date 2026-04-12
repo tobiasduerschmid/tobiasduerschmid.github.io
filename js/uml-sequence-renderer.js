@@ -274,6 +274,7 @@
     var colors = UMLShared.getThemeColors(container);
     var svg = generateSequenceSVG(parsed, colors);
     container.innerHTML = svg;
+    UMLShared.autoFitSVG(container);
   }
 
   function generateSequenceSVG(parsed, colors) {

@@ -477,6 +477,38 @@
     return -1; // not a note line
   }
 
+  // ─── SVG Auto-Fit ───────────────────────────────────────────
+
+  /**
+   * After rendering SVG into a container, expand the viewBox to fit all content.
+   * Call this after setting container.innerHTML = svgString.
+   */
+  function autoFitSVG(container, pad) {
+    var svg = container.querySelector('svg');
+    if (!svg) return;
+    var g = svg.querySelector('g');
+    if (!g) return;
+    try {
+      // getBBox returns local coordinates; we need to account for the <g> transform
+      var bbox = g.getBBox();
+      var transform = g.getAttribute('transform') || '';
+      var tx = 0, ty = 0;
+      var tMatch = transform.match(/translate\(\s*([\d.e+-]+)\s*,\s*([\d.e+-]+)\s*\)/);
+      if (tMatch) { tx = parseFloat(tMatch[1]); ty = parseFloat(tMatch[2]); }
+      var p = pad || 10;
+      // Compute viewBox in SVG root coordinate space
+      var actualX = bbox.x + tx;
+      var actualY = bbox.y + ty;
+      var vx = Math.min(0, actualX) - p;
+      var vy = Math.min(0, actualY) - p;
+      var vw = Math.max(actualX + bbox.width, parseFloat(svg.getAttribute('width')) || 0) - vx + p;
+      var vh = Math.max(actualY + bbox.height, parseFloat(svg.getAttribute('height')) || 0) - vy + p;
+      svg.setAttribute('width', Math.ceil(vw));
+      svg.setAttribute('height', Math.ceil(vh));
+      svg.setAttribute('viewBox', Math.floor(vx) + ' ' + Math.floor(vy) + ' ' + Math.ceil(vw) + ' ' + Math.ceil(vh));
+    } catch (e) { /* getBBox can fail on hidden elements */ }
+  }
+
   // ─── Actor Stick Figure ──────────────────────────────────────
 
   /**
@@ -529,5 +561,6 @@
     parseNoteLine: parseNoteLine,
     drawActorStickFigure: drawActorStickFigure,
     ACTOR_H: ACTOR_H,
+    autoFitSVG: autoFitSVG,
   };
 })();

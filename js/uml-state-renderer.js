@@ -489,6 +489,7 @@
 
     var svg = [];
     var labelSvg = []; // Transition labels rendered after states so they appear on top
+    var placedLabels = []; // { l, r, t, b } bounding boxes for collision avoidance
     svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw transitions (behind states) ──
@@ -668,6 +669,19 @@
             break;
           }
         }
+        // Check if label overlaps any previously placed label and nudge
+        lblW = UMLShared.textWidth(tr.label, false, CFG.fontSize);
+        lblL = (lAnchor === 'middle') ? lx - lblW / 2 : (lAnchor === 'start' ? lx : lx - lblW);
+        lblR = lblL + lblW; lblT = ly - CFG.fontSize; lblB = ly + 4;
+        for (var pli = 0; pli < placedLabels.length; pli++) {
+          var pl = placedLabels[pli];
+          if (lblR > pl.l && lblL < pl.r && lblB > pl.t && lblT < pl.b) {
+            ly = pl.b + CFG.fontSize + 2; // nudge below the colliding label
+            lblT = ly - CFG.fontSize; lblB = ly + 4;
+          }
+        }
+        placedLabels.push({ l: lblL, r: lblR, t: lblT, b: lblB });
+
         labelSvg.push('<text x="' + lx + '" y="' + ly +
           '" text-anchor="' + lAnchor + '" font-size="' + CFG.fontSize + '" fill="' + colors.text +
           '" stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
@@ -802,6 +816,7 @@
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────

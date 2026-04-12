@@ -73,6 +73,8 @@
 
     // Decision stack for if/else/endif nesting
     var decisionStack = [];
+    // Pending branch endpoints from endif (to connect to next node instead of merge diamond)
+    var pendingMergeEnds = [];
 
     function ensureNode(id, type, label) {
       if (!nodes[id]) {
@@ -114,6 +116,18 @@
       edges.push({ from: fromId, to: toId, guard: guard || '' });
     }
 
+    // After endif, pending branch endpoints need to connect to the next
+    // node that currentNode connects to.  Call this whenever we create
+    // an edge from currentNode to some target.
+    function flushPendingMergeEnds(targetId) {
+      if (pendingMergeEnds.length > 0) {
+        for (var pm = 0; pm < pendingMergeEnds.length; pm++) {
+          addEdge(pendingMergeEnds[pm], targetId);
+        }
+        pendingMergeEnds = [];
+      }
+    }
+
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line || line === '@startuml' || line === '@enduml') continue;
@@ -149,6 +163,7 @@
         nodes[forkId].lane = currentLane;
         if (currentNode) {
           addEdge(currentNode, forkId);
+          flushPendingMergeEnds(forkId);
         }
         // Push fork context: collect branches until endfork
         decisionStack.push({ type: 'fork', forkId: forkId, branches: [], currentBranch: null });
@@ -189,6 +204,7 @@
         nodes[decId].lane = currentLane;
         if (currentNode) {
           addEdge(currentNode, decId);
+          flushPendingMergeEnds(decId);
         }
         decisionStack.push({
           type: 'decision',
@@ -235,19 +251,23 @@
           } else {
             decCtx2.elseEnd = currentNode;
           }
-          // Create implicit merge node
-          mergeCount++;
-          var mergeId = 'merge_' + mergeCount;
-          ensureNode(mergeId, 'merge', '');
-          nodes[mergeId].lane = currentLane;
-          // Connect then-branch end and else-branch end to merge
+          // Instead of creating a merge diamond, collect pending
+          // branch endpoints so the next node receives their edges.
+          var pendingEnds = [];
           if (decCtx2.thenEnd && !isFinalNode(decCtx2.thenEnd)) {
-            addEdge(decCtx2.thenEnd, mergeId);
+            pendingEnds.push(decCtx2.thenEnd);
           }
           if (decCtx2.elseEnd && !isFinalNode(decCtx2.elseEnd)) {
-            addEdge(decCtx2.elseEnd, mergeId);
+            pendingEnds.push(decCtx2.elseEnd);
           }
-          currentNode = mergeId;
+          // Use the first pending end as currentNode (for the next
+          // transition line) and stash the rest to be connected later.
+          if (pendingEnds.length > 0) {
+            currentNode = pendingEnds[0];
+            for (var pe = 1; pe < pendingEnds.length; pe++) {
+              pendingMergeEnds.push(pendingEnds[pe]);
+            }
+          }
           decisionStack.splice(decIdx, 1);
         }
         continue;
@@ -261,6 +281,7 @@
         var targetNode = getOrCreateAction(targetLabel);
         if (currentNode) {
           addEdge(currentNode, targetNode.id, guard);
+          flushPendingMergeEnds(targetNode.id);
         }
         // If inside a fork context, record branch endpoint
         var topCtx = decisionStack.length > 0 ? decisionStack[decisionStack.length - 1] : null;
@@ -283,6 +304,7 @@
         nodes[fId].lane = currentLane;
         if (currentNode) {
           addEdge(currentNode, fId, fGuard);
+          flushPendingMergeEnds(fId);
         }
         // Inside fork, record branch endpoint
         var topCtx2 = decisionStack.length > 0 ? decisionStack[decisionStack.length - 1] : null;
@@ -411,16 +433,64 @@
       direction: parsed.direction || 'TB',
     });
 
-    // Map coords back
-    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    // Map coords back (Y positions from Sugiyama, X will be overridden for swimlanes)
     for (var nm in result.nodes) {
       if (!entries[nm]) continue;
       entries[nm].x = result.nodes[nm].x;
       entries[nm].y = result.nodes[nm].y;
-      minX = Math.min(minX, entries[nm].x);
-      minY = Math.min(minY, entries[nm].y);
-      maxX = Math.max(maxX, entries[nm].x + entries[nm].box.width);
-      maxY = Math.max(maxY, entries[nm].y + entries[nm].box.height);
+    }
+
+    // ── Override X positions for swimlane columns ──
+    if (parsed.lanes && parsed.lanes.length > 0) {
+      var lanes = parsed.lanes;
+      var laneMinW = 180;
+
+      // Compute the minimum width needed for each lane
+      var laneWidths = [];
+      for (var lw = 0; lw < lanes.length; lw++) {
+        var maxNodeW = 0;
+        for (var nid in entries) {
+          if (entries[nid].node.lane === lanes[lw]) {
+            maxNodeW = Math.max(maxNodeW, entries[nid].box.width);
+          }
+        }
+        var headerW = UMLShared.textWidth(lanes[lw], true, CFG.fontSizeBold) + CFG.lanePadX * 2;
+        laneWidths.push(Math.max(laneMinW, maxNodeW + CFG.lanePadX * 2, headerW));
+      }
+
+      // Compute lane column X positions (left edge of each lane)
+      var laneXStarts = [];
+      var curX = 0;
+      for (var lx = 0; lx < lanes.length; lx++) {
+        laneXStarts.push(curX);
+        curX += laneWidths[lx];
+      }
+
+      // Build a lane index lookup
+      var laneIndex = {};
+      for (var idx = 0; idx < lanes.length; idx++) {
+        laneIndex[lanes[idx]] = idx;
+      }
+
+      // Override X for each node: center within its lane column
+      for (var nid2 in entries) {
+        var ent = entries[nid2];
+        var laneName = ent.node.lane;
+        if (laneName && laneIndex[laneName] !== undefined) {
+          var li2 = laneIndex[laneName];
+          var laneCenterX = laneXStarts[li2] + laneWidths[li2] / 2;
+          ent.x = laneCenterX - ent.box.width / 2;
+        }
+      }
+    }
+
+    // Compute bounding box after any swimlane overrides
+    var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (var nm2 in entries) {
+      minX = Math.min(minX, entries[nm2].x);
+      minY = Math.min(minY, entries[nm2].y);
+      maxX = Math.max(maxX, entries[nm2].x + entries[nm2].box.width);
+      maxY = Math.max(maxY, entries[nm2].y + entries[nm2].box.height);
     }
 
     return {
@@ -854,6 +924,7 @@
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init ────────────────────────────────────────────────────

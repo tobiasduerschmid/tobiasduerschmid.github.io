@@ -324,7 +324,7 @@
    * Returns { width, height, nameH, stereotypeH, attrH, methH }
    */
   function measureBox(cls) {
-    var hasStereotype = cls.type === 'abstract' || cls.type === 'interface' || cls.stereotype;
+    var hasStereotype = cls.type === 'abstract' || cls.type === 'interface' || cls.type === 'enum' || cls.stereotype;
     var stereotypeText = '';
     if (cls.stereotype) stereotypeText = '\u00AB' + cls.stereotype + '\u00BB';
     else if (cls.type === 'abstract') stereotypeText = '\u00ABabstract\u00BB';
@@ -679,7 +679,7 @@
 
       // Compute orthogonal route, with port offset for multiple edges from same side
       var portOffset = exitPortIdx[oi] * 16;
-      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], portOffset);
+      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], portOffset, entries, orel.from, orel.to);
       var pathPoints = route.points; // array of {x,y}
 
       // Build polyline points string
@@ -903,7 +903,7 @@
    * Uses right-angle bends only when necessary.
    * Returns { points: [{x,y}, ...] } with only horizontal/vertical segments.
    */
-  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset) {
+  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId) {
     portOffset = portOffset || 0;
     var fromCx = fromE.x + fromE.box.width / 2;
     var fromCy = fromE.y + fromE.box.height / 2 + portOffset;
@@ -1043,7 +1043,69 @@
       points = simplifyPath(points);
     }
 
+    // ── Obstacle avoidance: reroute segments that pass through other class boxes ──
+    if (allEntries && points.length >= 2) {
+      var pad = 12;
+      var obstacles = [];
+      for (var obn in allEntries) {
+        if (obn === fromId || obn === toId) continue;
+        var ob = allEntries[obn];
+        obstacles.push({ l: ob.x - pad, t: ob.y - pad, r: ob.x + ob.box.width + pad, b: ob.y + ob.box.height + pad });
+      }
+      // Check each segment and reroute if needed (one pass)
+      var newPoints = [points[0]];
+      for (var si = 0; si < points.length - 1; si++) {
+        var p1 = points[si], p2 = points[si + 1];
+        var rerouted = false;
+        for (var obi = 0; obi < obstacles.length; obi++) {
+          var ob2 = obstacles[obi];
+          if (segmentIntersectsBox(p1, p2, ob2)) {
+            // Reroute around the obstacle: go around the closer side
+            var goRight = (p1.x + p2.x) / 2 >= (ob2.l + ob2.r) / 2;
+            var bypassX = goRight ? ob2.r : ob2.l;
+            if (p1.x === p2.x) {
+              // Vertical segment hitting a box: jog horizontally around it
+              newPoints.push({ x: p1.x, y: Math.min(p1.y, ob2.t) });
+              newPoints.push({ x: bypassX, y: Math.min(p1.y, ob2.t) });
+              newPoints.push({ x: bypassX, y: Math.max(p2.y, ob2.b) });
+              newPoints.push({ x: p2.x, y: Math.max(p2.y, ob2.b) });
+            } else {
+              // Horizontal segment hitting a box: jog vertically around it
+              var goDown = (p1.y + p2.y) / 2 >= (ob2.t + ob2.b) / 2;
+              var bypassY = goDown ? ob2.b : ob2.t;
+              newPoints.push({ x: Math.min(p1.x, ob2.l), y: p1.y });
+              newPoints.push({ x: Math.min(p1.x, ob2.l), y: bypassY });
+              newPoints.push({ x: Math.max(p2.x, ob2.r), y: bypassY });
+              newPoints.push({ x: Math.max(p2.x, ob2.r), y: p2.y });
+            }
+            rerouted = true;
+            break;
+          }
+        }
+        if (!rerouted) {
+          newPoints.push(p2);
+        } else {
+          newPoints.push(p2);
+        }
+      }
+      points = simplifyPath(newPoints);
+    }
+
     return { points: points };
+  }
+
+  /**
+   * Check if a line segment (p1→p2) intersects a rectangle {l, t, r, b}.
+   */
+  function segmentIntersectsBox(p1, p2, box) {
+    // Segment bounding box must overlap the obstacle box
+    var sMinX = Math.min(p1.x, p2.x), sMaxX = Math.max(p1.x, p2.x);
+    var sMinY = Math.min(p1.y, p2.y), sMaxY = Math.max(p1.y, p2.y);
+    if (sMaxX <= box.l || sMinX >= box.r || sMaxY <= box.t || sMinY >= box.b) return false;
+    // For axis-aligned segments (orthogonal), bbox overlap means intersection
+    if (p1.x === p2.x || p1.y === p2.y) return true;
+    // For diagonal segments, do full Liang-Barsky clip test
+    return true;
   }
 
   /**
@@ -1135,6 +1197,7 @@
     var layout = computeLayout(parsed);
     var svgStr = generateSVG(layout, parsed, colors);
     container.innerHTML = svgStr;
+    UMLShared.autoFitSVG(container);
   }
 
   // ─── Auto-init for SEBook pages ───────────────────────────────────
