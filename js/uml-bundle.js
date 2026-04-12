@@ -5049,10 +5049,51 @@
       var portNeighbors = {};
       var groupPositions = {};
       var groups = [];
+      var processedGroups = {};
 
       function pushNeighbor(fromPortKey, toPortKey, toGroupKey) {
         if (!portNeighbors[fromPortKey]) portNeighbors[fromPortKey] = [];
         portNeighbors[fromPortKey].push({ portKey: toPortKey, groupKey: toGroupKey });
+      }
+
+      function portTopForEntry(entry) {
+        return entry.hasPorts ? entry.y + nameAreaH : entry.y;
+      }
+
+      function portAreaHeightForEntry(entry) {
+        return entry.box.height - (entry.hasPorts ? nameAreaH : 0);
+      }
+
+      function computeGroupCenters(entry, side, ports) {
+        return computeOrderedPortCenters(entry, ports, portTopForEntry(entry), portAreaHeightForEntry(entry));
+      }
+
+      function buildProvisionalPortCenters() {
+        var provisional = {};
+        for (var provisionalName in entries) {
+          var provisionalEntry = entries[provisionalName];
+          var provisionalLeft = computeGroupCenters(provisionalEntry, 'left', provisionalEntry.leftPorts);
+          var provisionalRight = computeGroupCenters(provisionalEntry, 'right', provisionalEntry.rightPorts);
+          for (var pli = 0; pli < provisionalEntry.leftPorts.length; pli++) {
+            var leftAlias = provisionalEntry.leftPorts[pli];
+            provisional[portKey(provisionalName, leftAlias)] = provisionalLeft[leftAlias];
+          }
+          for (var pri = 0; pri < provisionalEntry.rightPorts.length; pri++) {
+            var rightAlias = provisionalEntry.rightPorts[pri];
+            provisional[portKey(provisionalName, rightAlias)] = provisionalRight[rightAlias];
+          }
+        }
+        return provisional;
+      }
+
+      function updateProvisionalGroupCenters(provisionalCenters, group) {
+        var provisionalEntry = entries[group.compName];
+        var orderedPorts = group.side === 'left' ? provisionalEntry.leftPorts : provisionalEntry.rightPorts;
+        var centers = computeGroupCenters(provisionalEntry, group.side, orderedPorts);
+        for (var ci = 0; ci < orderedPorts.length; ci++) {
+          var alias = orderedPorts[ci];
+          provisionalCenters[portKey(group.compName, alias)] = centers[alias];
+        }
       }
 
       for (var entryName in entries) {
@@ -5090,6 +5131,8 @@
         return a.compName < b.compName ? -1 : 1;
       });
 
+      var provisionalCenters = buildProvisionalPortCenters();
+
       function buildPortRankMap() {
         var ranks = {};
         for (var name in entries) {
@@ -5115,12 +5158,13 @@
         else currentEntry.rightPorts = orderedPorts;
       }
 
-      function orderCost(entry, candidate, desiredRankMap) {
+      function orderCost(entry, side, candidate, desiredYMap) {
+        var candidateCenters = computeGroupCenters(entry, side, candidate);
         var score = 0;
         for (var i = 0; i < candidate.length; i++) {
           var alias = candidate[i];
-          if (desiredRankMap.hasOwnProperty(alias)) {
-            score += Math.abs(i - desiredRankMap[alias]);
+          if (desiredYMap.hasOwnProperty(alias)) {
+            score += Math.abs(candidateCenters[alias] - desiredYMap[alias]);
           }
           score += ((entry.portOrderIndex[alias] || 0) * 0.001);
         }
@@ -5134,7 +5178,7 @@
         if (currentPorts.length < 2) continue;
 
         var portRanks = buildPortRankMap();
-        var desiredRankMap = {};
+        var desiredYMap = {};
         var desiredCount = 0;
 
         for (var pi3 = 0; pi3 < currentPorts.length; pi3++) {
@@ -5144,30 +5188,47 @@
           var count = 0;
           for (var ni = 0; ni < neighbors.length; ni++) {
             var neighbor = neighbors[ni];
-            if ((groupPositions[neighbor.groupKey] || 0) >= group.x - 1) continue;
+            if (!processedGroups[neighbor.groupKey]) continue;
+            if (provisionalCenters[neighbor.portKey] !== undefined) {
+              total += provisionalCenters[neighbor.portKey];
+              count++;
+              continue;
+            }
             if (portRanks[neighbor.portKey] === undefined) continue;
-            total += portRanks[neighbor.portKey];
+            var fallbackPortY = averagePortY(neighbor.portKey);
+            if (fallbackPortY === null) continue;
+            total += fallbackPortY;
             count++;
           }
           if (count > 0) {
-            desiredRankMap[alias] = total / count;
+            desiredYMap[alias] = total / count;
             desiredCount++;
           }
         }
 
-        if (!desiredCount) continue;
+        if (!desiredCount) {
+          processedGroups[group.key] = true;
+          updateProvisionalGroupCenters(provisionalCenters, group);
+          continue;
+        }
 
         var ordered = currentPorts.slice();
+        ordered.sort(function(a, b) {
+          var ay = desiredYMap.hasOwnProperty(a) ? desiredYMap[a] : Number.POSITIVE_INFINITY;
+          var by = desiredYMap.hasOwnProperty(b) ? desiredYMap[b] : Number.POSITIVE_INFINITY;
+          if (Math.abs(ay - by) > 0.5) return ay - by;
+          return (entry.portOrderIndex[a] || 0) - (entry.portOrderIndex[b] || 0);
+        });
         var improved = true;
         while (improved) {
           improved = false;
           for (var swapIdx = 0; swapIdx < ordered.length - 1; swapIdx++) {
-            var currentScore = orderCost(entry, ordered, desiredRankMap);
+            var currentScore = orderCost(entry, group.side, ordered, desiredYMap);
             var swapped = ordered.slice();
             var temp = swapped[swapIdx];
             swapped[swapIdx] = swapped[swapIdx + 1];
             swapped[swapIdx + 1] = temp;
-            var swappedScore = orderCost(entry, swapped, desiredRankMap);
+            var swappedScore = orderCost(entry, group.side, swapped, desiredYMap);
             if (swappedScore + 0.01 < currentScore) {
               ordered = swapped;
               improved = true;
@@ -5176,6 +5237,8 @@
         }
 
         setGroupPorts(group, ordered);
+        processedGroups[group.key] = true;
+        updateProvisionalGroupCenters(provisionalCenters, group);
       }
     }
 
