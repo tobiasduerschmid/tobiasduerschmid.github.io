@@ -157,15 +157,8 @@
   <script>if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'default' });</script>
 
   <!-- Custom UML diagram renderers -->
-  <script src="{{ '/js/uml-shared.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-advanced-layout.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-class-renderer.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-sequence-renderer.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-state-renderer.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-component-renderer.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-deployment-renderer.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-usecase-renderer.js' | relative_url }}"></script>
-  <script src="{{ '/js/uml-activity-renderer.js' | relative_url }}"></script>
+  <!-- Bundled UML diagram renderer -->
+  <script src="{{ '/js/uml-bundle.js' | relative_url }}" defer></script>
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
 
   <!-- Tutorial engine — unified (v86 / pyodide / webcontainer) -->

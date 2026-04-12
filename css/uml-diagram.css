@@ -1,5 +1,23 @@
 /* ── UML Diagram Theming ── */
 
+/* Hide raw UML source until it is rendered to prevent flash of unstyled content */
+pre:has(> code[class*="language-uml-"]),
+[data-uml-type]:not([data-uml-rendered="true"]) {
+  display: none !important;
+}
+
+/* Ensure containers are visible once rendered */
+.uml-class-diagram-container,
+.uml-sequence-diagram-container,
+.uml-state-diagram-container,
+.uml-activity-diagram-container,
+.uml-usecase-diagram-container,
+.uml-component-diagram-container,
+.uml-deployment-diagram-container {
+  display: block;
+}
+
+
 .uml-class-diagram-container {
   --uml-stroke: #4060a0;
   --uml-text: #222;
