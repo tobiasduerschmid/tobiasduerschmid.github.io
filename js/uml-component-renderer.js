@@ -754,28 +754,23 @@
 
       if (isH1 && isH2) {
         if (isBackwardHH) {
-          // Backward connection: route via U-shape around ALL components
-          var globalMinY = Infinity, globalMaxY = -Infinity;
-          for (var gbi = 0; gbi < obstacles.length; gbi++) {
-            globalMinY = Math.min(globalMinY, obstacles[gbi].y1);
-            globalMaxY = Math.max(globalMaxY, obstacles[gbi].y2);
-          }
-          var spaceAbove = Math.min(y1, y2) - globalMinY;
-          var spaceBelow = globalMaxY - Math.max(y1, y2);
-          var backJitter = (ci % 5) * 12;
-          var backDetourY;
-          if (spaceAbove <= spaceBelow) {
-            // Route above all components
-            backDetourY = globalMinY - 20 - backJitter;
-          } else {
-            // Route below all components
-            backDetourY = globalMaxY + 20 + backJitter;
-          }
-          // Validate with empty skipNames — check ALL obstacles
-          backDetourY = findClearY(
-            Math.min(ext1X, ext2X), Math.max(ext1X, ext2X),
-            backDetourY, obstacles, {}
+          // Backward connection: try a short local U-shape first,
+          // routing above or below the bounding box of just source+target.
+          var localMinY = Math.min(
+            fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2
           );
+          var localMaxY = Math.max(
+            fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2
+          );
+          var backJitter = (ci % 5) * 10;
+          var tryAboveY = localMinY - 20 - backJitter;
+          var tryBelowY = localMaxY + 20 + backJitter;
+          var clearAbove = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryAboveY, obstacles, skipN);
+          var clearBelow = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryBelowY, obstacles, skipN);
+          // Pick whichever stays closest to the diagram (smallest absolute distance from source)
+          var distAbove = Math.abs(y1 - clearAbove);
+          var distBelow = Math.abs(y1 - clearBelow);
+          var backDetourY = distAbove <= distBelow ? clearAbove : clearBelow;
           points = [
             { x: x1, y: y1 }, { x: ext1X, y: y1 },
             { x: ext1X, y: backDetourY },
@@ -787,14 +782,19 @@
           points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
         } else {
           // S-shape: exit horizontal → vertical channel → enter horizontal
-          var midX = (ext1X + ext2X) / 2;
+          var midX;
+          // Place midX based on Y direction so upward/downward routes naturally separate.
+          // Upward connections exit near source; downward connections arrive near target.
           if ((dir1 === 'right' && dir2 === 'left' && ext1X > ext2X) ||
               (dir1 === 'left' && dir2 === 'right' && ext1X < ext2X)) {
+            // Backward: route via the far side
             midX = (dir1 === 'right') ? Math.max(ext1X, ext2X) : Math.min(ext1X, ext2X);
+          } else {
+            var frac = (y2 < y1) ? 0.25 : (y2 > y1) ? 0.75 : 0.5;
+            midX = ext1X + (ext2X - ext1X) * frac;
           }
-          midX += (ci % 5) * 12 - 24; // Jitter to prevent identical overlaps
+          midX += (ci % 3) * 14 - 14; // small per-connection jitter for same-direction routes
           // Clamp to corridor so the vertical segment stays between the two components
-          // and doesn't get pushed back inside the source or target obstacle zone.
           if (dir1 === 'right' && dir2 === 'left' && ext1X <= ext2X) {
             midX = Math.min(Math.max(midX, ext1X), ext2X);
           } else if (dir1 === 'left' && dir2 === 'right' && ext2X <= ext1X) {
@@ -893,8 +893,8 @@
       // Simplify collinear points
       points = simplifyRoute(points);
 
-      // Post-routing validation: check intermediate segments against ALL obstacles.
-      // First/last segments necessarily touch source/target, so only check inner ones.
+      // Post-routing validation: check intermediate segments against obstacles,
+      // skipping source and target (they necessarily border those boxes).
       if (points.length >= 4) {
         var intermediateHit = false;
         for (var vi = 1; vi < points.length - 2; vi++) {
@@ -903,6 +903,7 @@
           var vIsV = Math.abs(vp0.x - vp1.x) < 2;
           for (var vj = 0; vj < obstacles.length; vj++) {
             var vo = obstacles[vj];
+            if (skipN && skipN[vo.name]) continue;
             if (vIsV && vp0.x > vo.x1 && vp0.x < vo.x2) {
               var vyMin = Math.min(vp0.y, vp1.y), vyMax = Math.max(vp0.y, vp1.y);
               if (vyMax > vo.y1 && vyMin < vo.y2) { intermediateHit = true; break; }
@@ -913,29 +914,45 @@
           }
           if (intermediateHit) break;
         }
-        if (intermediateHit) {
-          // Reroute via clear channel above or below ALL obstacles
-          var vGlobalMinY = Infinity, vGlobalMaxY = -Infinity;
-          for (var vgi = 0; vgi < obstacles.length; vgi++) {
-            vGlobalMinY = Math.min(vGlobalMinY, obstacles[vgi].y1);
-            vGlobalMaxY = Math.max(vGlobalMaxY, obstacles[vgi].y2);
+        if (intermediateHit && isH1 && isH2) {
+          // Try to find a clear vertical corridor between ext1X and ext2X.
+          // Scan candidate midX positions outward from the midpoint.
+          var vxL = Math.min(ext1X, ext2X), vxR = Math.max(ext1X, ext2X);
+          var vyLo = Math.min(y1, y2), vyHi = Math.max(y1, y2);
+          var vStep = 14, vBestX = null;
+          // Try positions from quarter-points outward
+          var vCandidates = [];
+          for (var vci = 0; vci <= 20; vci++) {
+            var vcFrac = 0.5 + (vci % 2 === 0 ? 1 : -1) * Math.ceil(vci / 2) * vStep / (vxR - vxL + 1);
+            var vcX = vxL + (vxR - vxL) * Math.max(0, Math.min(1, vcFrac));
+            vCandidates.push(Math.round(vcX));
           }
-          var vSpanXMin = Math.min(x1, x2, ext1X, ext2X);
-          var vSpanXMax = Math.max(x1, x2, ext1X, ext2X);
-          var vDetourY = findClearY(vSpanXMin, vSpanXMax,
-            vGlobalMinY - 30 - (ci % 5) * 12, obstacles, {});
-          if (isH1) {
+          for (var vki = 0; vki < vCandidates.length; vki++) {
+            var vcx = vCandidates[vki];
+            var vcHit = false;
+            for (var voj = 0; voj < obstacles.length; voj++) {
+              var voo = obstacles[voj];
+              if (skipN && skipN[voo.name]) continue;
+              if (vcx > voo.x1 && vcx < voo.x2 && vyHi > voo.y1 && vyLo < voo.y2) { vcHit = true; break; }
+            }
+            if (!vcHit) { vBestX = vcx; break; }
+          }
+          if (vBestX !== null) {
+            points = [
+              { x: x1, y: y1 }, { x: vBestX, y: y1 },
+              { x: vBestX, y: y2 }, { x: x2, y: y2 }
+            ];
+          } else {
+            // No clear vertical corridor — route above/below the local bounding box only
+            var vLocalMinY = Math.min(fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2);
+            var vLocalMaxY = Math.max(fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2);
+            var vSpanXMin2 = Math.min(ext1X, ext2X), vSpanXMax2 = Math.max(ext1X, ext2X);
+            var vDetourAbove = findClearY(vSpanXMin2, vSpanXMax2, vLocalMinY - 20 - (ci % 3) * 10, obstacles, skipN);
+            var vDetourBelow = findClearY(vSpanXMin2, vSpanXMax2, vLocalMaxY + 20 + (ci % 3) * 10, obstacles, skipN);
+            var vDetourY = (Math.abs(y1 - vDetourAbove) <= Math.abs(y1 - vDetourBelow)) ? vDetourAbove : vDetourBelow;
             points = [
               { x: x1, y: y1 }, { x: ext1X, y: y1 },
               { x: ext1X, y: vDetourY },
-              { x: ext2X, y: vDetourY },
-              { x: ext2X, y: y2 }, { x: x2, y: y2 }
-            ];
-          } else {
-            points = [
-              { x: x1, y: y1 }, { x: x1, y: ext1Y },
-              { x: vSpanXMin - 30, y: ext1Y },
-              { x: vSpanXMin - 30, y: vDetourY },
               { x: ext2X, y: vDetourY },
               { x: ext2X, y: y2 }, { x: x2, y: y2 }
             ];

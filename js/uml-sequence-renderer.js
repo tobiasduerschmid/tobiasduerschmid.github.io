@@ -373,7 +373,7 @@
             }
           }
         }
-        curY += 20;
+        curY = frag ? frag.endY + CFG.messageGapY / 2 : curY + 20;
         msgYs.push(curY);
       } else if (msg.type === 'lost' || msg.type === 'found') {
         msgYs.push(curY);

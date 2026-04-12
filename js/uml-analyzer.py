@@ -167,6 +167,7 @@ class SequenceDiagramGenerator:
         self.attr_types = {}          # {class_name: {attr_name: class_name}}
         self.param_types = {}         # {class_name: {method_name: {param: class_name}}}
         self._build_lookups()
+        self._data_classes = self._identify_data_classes()
 
         # Output state (accumulated during generate())
         self.participants = []        # [(id, label)]
@@ -205,7 +206,7 @@ class SequenceDiagramGenerator:
                                 m_params[arg.arg] = arg.annotation.id
                     if m_params:
                         p_types[item.name] = m_params
-                    # __init__: self.x = ClassName() → attr_types
+                    # __init__: self.x = ClassName() or self.x: T = ClassName() → attr_types
                     if item.name == '__init__':
                         for child in ast.walk(item):
                             if isinstance(child, ast.Assign):
@@ -217,9 +218,60 @@ class SequenceDiagramGenerator:
                                         fn = child.value.func
                                         if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
                                             a_types[tgt.attr] = fn.id
+                            elif isinstance(child, ast.AnnAssign) and child.target:
+                                if (isinstance(child.target, ast.Attribute)
+                                        and isinstance(child.target.value, ast.Name)
+                                        and child.target.value.id == 'self'):
+                                    resolved = None
+                                    if child.value and isinstance(child.value, ast.Call):
+                                        fn = child.value.func
+                                        if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
+                                            resolved = fn.id
+                                    if not resolved and child.annotation:
+                                        if isinstance(child.annotation, ast.Name) and child.annotation.id in self.all_class_names:
+                                            resolved = child.annotation.id
+                                    if resolved:
+                                        a_types[child.target.attr] = resolved
                 self.class_methods[cname] = methods
                 self.attr_types[cname] = a_types
                 self.param_types[cname] = p_types
+
+    def _identify_data_classes(self):
+        """Identify @dataclass-decorated and method-free classes (value objects).
+
+        These are excluded from sequence diagrams since they don't represent
+        collaborating actors — they're just data being passed around.
+        """
+        data = set()
+        for _fn, tree in self.trees.items():
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                if node.name not in self.all_class_names:
+                    continue
+                # Check for @dataclass decorator
+                for dec in node.decorator_list:
+                    if isinstance(dec, ast.Name) and dec.id == 'dataclass':
+                        data.add(node.name)
+                        break
+                    if (isinstance(dec, ast.Call) and isinstance(dec.func, ast.Name)
+                            and dec.func.id == 'dataclass'):
+                        data.add(node.name)
+                        break
+                    if isinstance(dec, ast.Attribute) and dec.attr == 'dataclass':
+                        data.add(node.name)
+                        break
+                else:
+                    # No dataclass decorator: check for behavioral methods
+                    has_behavioral = False
+                    for item in node.body:
+                        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            if not (item.name.startswith('__') and item.name.endswith('__')):
+                                has_behavioral = True
+                                break
+                    if not has_behavioral:
+                        data.add(node.name)
+        return data
 
     # ── Public entry point ───────────────────────────────────────────
 
@@ -329,15 +381,29 @@ class SequenceDiagramGenerator:
             resolved = self._resolve_call(value, caller)
             if resolved:
                 cls_name, method = resolved
-                if method == '__init__' and len(targets) == 1 and isinstance(targets[0], ast.Name):
-                    var = targets[0].id
-                    self.var_types[var] = cls_name
-                    self._caller_class[var] = cls_name
-                    pid = var
-                    plabel = cls_name
-                    self._ensure_participant(pid, plabel)
-                    self.lines.append(caller + ' --> ' + pid + ': <<create>>')
-                    return
+                if method == '__init__' and len(targets) == 1:
+                    tgt = targets[0]
+                    # var = ClassName(...) — local variable
+                    if isinstance(tgt, ast.Name):
+                        self.var_types[tgt.id] = cls_name
+                        self._caller_class[tgt.id] = cls_name
+                        if cls_name in self._data_classes:
+                            return
+                        self._ensure_participant(tgt.id, cls_name)
+                        self.lines.append(caller + ' --> ' + tgt.id + ': <<create>>')
+                        self._maybe_follow(cls_name, '__init__', tgt.id, depth)
+                        return
+                    # self.attr = ClassName(...) — attribute composition
+                    if (isinstance(tgt, ast.Attribute)
+                            and isinstance(tgt.value, ast.Name)
+                            and tgt.value.id == 'self'):
+                        if cls_name in self._data_classes:
+                            return
+                        pid = tgt.attr
+                        self._ensure_participant(pid, cls_name)
+                        self._caller_class[pid] = cls_name
+                        self.lines.append(caller + ' --> ' + pid + ': <<create>>')
+                        return
         # General: scan the whole value expression for calls
         self._scan_expr_for_calls(value, caller, depth)
 
@@ -439,7 +505,19 @@ class SequenceDiagramGenerator:
         if not resolved:
             return
         cls_name, method = resolved
-        callee_id = self._callee_id_for(cls_name, caller)
+
+        # Skip data/value classes — they're not collaborating actors
+        if cls_name in self._data_classes:
+            return
+
+        # Use attribute name as participant id for self.attr.method() calls
+        attr_hint = None
+        if (isinstance(call.func, ast.Attribute)
+                and isinstance(call.func.value, ast.Attribute)
+                and isinstance(call.func.value.value, ast.Name)
+                and call.func.value.value.id == 'self'):
+            attr_hint = call.func.value.attr
+        callee_id = self._callee_id_for(cls_name, caller, attr_hint)
 
         if method == '__init__':
             self._ensure_participant(callee_id, cls_name)
@@ -575,8 +653,10 @@ class SequenceDiagramGenerator:
             self._participant_set.add(pid)
             self.participants.append((pid, label))
 
-    def _callee_id_for(self, cls_name, caller):
-        """Find the best participant id for a class: prefer an existing variable."""
+    def _callee_id_for(self, cls_name, caller, attr_hint=None):
+        """Find the best participant id for a class: prefer attr name or existing variable."""
+        if attr_hint:
+            return attr_hint
         for v, c in self.var_types.items():
             if c == cls_name:
                 return v

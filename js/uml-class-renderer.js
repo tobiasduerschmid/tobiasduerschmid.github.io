@@ -273,15 +273,15 @@
       var fromMult = '';
       var toMult = '';
 
-      // Check left side for quoted multiplicity
-      var leftMultMatch = leftPart.match(/^(.+?)\s+"([^"]+)"$/);
+      // Check left side for quoted multiplicity (single or double quotes)
+      var leftMultMatch = leftPart.match(/^(.+?)\s+['"]([^'"]+)['"]$/);
       if (leftMultMatch) {
         leftPart = leftMultMatch[1].trim();
         fromMult = leftMultMatch[2];
       }
 
-      // Check right side for quoted multiplicity
-      var rightMultMatch = rightPart.match(/^"([^"]+)"\s+(.+)$/);
+      // Check right side for quoted multiplicity (single or double quotes)
+      var rightMultMatch = rightPart.match(/^['"]([^'"]+)['"]\s+(.+)$/);
       if (rightMultMatch) {
         toMult = rightMultMatch[1];
         rightPart = rightMultMatch[2].trim();
@@ -647,26 +647,34 @@
     }
 
     // Pre-compute port offsets: when multiple edges exit from the same side of a box,
-    // offset them vertically so they don't overlap
+    // assign port indices sorted by target X to minimize crossings
     var exitPortCounts = {}; // "className:side" -> count
     var exitPortIdx = {};    // edgeIndex -> portIndex
+    var exitGroups = {};     // "className:side" -> [{idx, targetCx}]
     for (var epi = 0; epi < otherRels.length; epi++) {
       var epRel = otherRels[epi];
       if (!entries[epRel.from] || !entries[epRel.to]) continue;
       var epFrom = entries[epRel.from];
       var epTo = entries[epRel.to];
-      // Determine which side the edge exits from
       var epFromCx = epFrom.x + epFrom.box.width / 2;
       var epToCx = epTo.x + epTo.box.width / 2;
-      var epSide = (hasInheritAtBottom[epRel.from]) ? ((epToCx >= epFromCx) ? 'right' : 'left') :
+      var epSide = (hasInheritAtBottom[epRel.from]) ? 'bottom' :
         (Math.abs(epToCx - epFromCx) >
          Math.abs(epTo.y + epTo.box.height/2 - epFrom.y - epFrom.box.height/2) * 0.6) ?
         ((epToCx > epFromCx) ? 'right' : 'left') :
         ((epTo.y > epFrom.y) ? 'bottom' : 'top');
       var epKey = epRel.from + ':' + epSide;
-      if (!exitPortCounts[epKey]) exitPortCounts[epKey] = 0;
-      exitPortIdx[epi] = exitPortCounts[epKey];
-      exitPortCounts[epKey]++;
+      if (!exitGroups[epKey]) exitGroups[epKey] = [];
+      exitGroups[epKey].push({ idx: epi, targetCx: epToCx });
+    }
+    // Sort each group by target X and assign port indices
+    for (var gk in exitGroups) {
+      var grp = exitGroups[gk];
+      grp.sort(function(a, b) { return a.targetCx - b.targetCx; });
+      exitPortCounts[gk] = grp.length;
+      for (var gi = 0; gi < grp.length; gi++) {
+        exitPortIdx[grp[gi].idx] = gi;
+      }
     }
 
     // Draw other relationships with orthogonal (right-angle) routing
@@ -925,40 +933,45 @@
     var points;
 
     // If we must avoid bottom of source (inheritance triangle there),
-    // force exit from right or left side instead
+    // exit from the bottom edge at an offset X (avoiding the triangle center),
+    // or from the side if target is not below.
     if (avoidFromBottom && !vOverlap) {
-      // If target is nearly centered below source, use left side exit with L-route
-      // to avoid crossing through sibling boxes
-      var exitSide, exitX, entryX;
-      if (Math.abs(toCx - fromCx) < fromE.box.width * 0.6) {
-        // Target is roughly centered below — exit from the side away from other siblings
-        exitSide = (toCx <= fromCx) ? 'left' : 'right';
-      } else {
-        exitSide = (toCx > fromCx) ? 'right' : 'left';
-      }
-      exitX = (exitSide === 'right') ? fromR : fromL;
-      var exitY = fromCy + portOffset;
-      var entryY = toCy;
-      entryX = (toCx > fromCx) ? toL : toR;
-
-      // If target is below, route: horizontal out, then vertical down to target top
-      if (toCy > fromCy && !avoidToTop && exitY < toT) {
-        // Route around: go out to the side, then drop at target edge (not center)
-        var dropX = (exitSide === 'right') ? Math.max(fromR, toR) + 20 : Math.min(fromL, toL) - 20;
+      var triW = CFG.triangleW;
+      var diamondLen = CFG.diamondH * 2; // total length of diamond along edge direction
+      var portGap = diamondLen + 8; // spacing between connection points
+      if (toCy > fromCy) {
+        // Target is below: exit from bottom edge at triangle base, offset X to avoid triangle
+        var exitBottomX;
+        var baseOffset = triW + 8 + portOffset * portGap / 16;
+        if (toCx >= fromCx) {
+          exitBottomX = fromCx + baseOffset;
+        } else {
+          exitBottomX = fromCx - baseOffset;
+        }
+        // Clamp to box edges
+        exitBottomX = Math.max(fromL + 4, Math.min(fromR - 4, exitBottomX));
+        // Diamond starts at Shape's bottom edge (not at triangle base)
+        var exitBottomY = fromB; // diamond touches the class border
+        var routeStartY = exitBottomY + diamondLen; // route continues from diamond tip
+        // Stagger horizontal runs by port index to prevent crossings
+        var horizY = routeStartY + (portOffset / 16) * 12 + 4;
         points = [
-          { x: exitX, y: exitY },
-          { x: dropX, y: exitY },
-          { x: dropX, y: toT },
+          { x: exitBottomX, y: exitBottomY },
+          { x: exitBottomX, y: horizY },
+          { x: toCx, y: horizY },
           { x: toCx, y: toT }
         ];
       } else {
-        // Horizontal route with vertical bend
-        var midX2 = (exitX + entryX) / 2;
+        // Target is at same level or above: exit from the side
+        var exitSide = (toCx > fromCx) ? 'right' : 'left';
+        var exitX = (exitSide === 'right') ? fromR : fromL;
+        var exitY = fromCy + portOffset;
+        var midY = (exitY + toT) / 2;
         points = [
           { x: exitX, y: exitY },
-          { x: midX2, y: exitY },
-          { x: midX2, y: entryY },
-          { x: entryX, y: entryY }
+          { x: exitX, y: midY },
+          { x: toCx, y: midY },
+          { x: toCx, y: toT }
         ];
       }
       // fall through to obstacle avoidance below
@@ -1028,23 +1041,55 @@
           ];
         }
       } else {
-        // Primarily horizontal separation — exit from left/right, bend vertically
+        // Primarily horizontal separation — exit from side, enter target from nearest edge
+        // If target is also below/above, prefer entering from top/bottom (perpendicular)
         if (dx > 0) {
-          var midX = (fromR + toL) / 2;
-          points = [
-            { x: fromR, y: fromCy },
-            { x: midX, y: fromCy },
-            { x: midX, y: toCy },
-            { x: toL, y: toCy }
-          ];
+          if (dy > 10 && fromB < toT) {
+            // Target is right and below: exit right, then enter from top
+            points = [
+              { x: fromR, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toT }
+            ];
+          } else if (dy < -10 && fromT > toB) {
+            // Target is right and above: exit right, then enter from bottom
+            points = [
+              { x: fromR, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toB }
+            ];
+          } else {
+            // Same vertical level: enter from left side
+            var midX = (fromR + toL) / 2;
+            points = [
+              { x: fromR, y: fromCy },
+              { x: midX, y: fromCy },
+              { x: midX, y: toCy },
+              { x: toL, y: toCy }
+            ];
+          }
         } else {
-          var midX2 = (fromL + toR) / 2;
-          points = [
-            { x: fromL, y: fromCy },
-            { x: midX2, y: fromCy },
-            { x: midX2, y: toCy },
-            { x: toR, y: toCy }
-          ];
+          if (dy > 10 && fromB < toT) {
+            points = [
+              { x: fromL, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toT }
+            ];
+          } else if (dy < -10 && fromT > toB) {
+            points = [
+              { x: fromL, y: fromCy },
+              { x: toCx, y: fromCy },
+              { x: toCx, y: toB }
+            ];
+          } else {
+            var midX2 = (fromL + toR) / 2;
+            points = [
+              { x: fromL, y: fromCy },
+              { x: midX2, y: fromCy },
+              { x: midX2, y: toCy },
+              { x: toR, y: toCy }
+            ];
+          }
         }
       }
 
