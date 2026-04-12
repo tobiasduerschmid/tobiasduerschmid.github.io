@@ -518,6 +518,236 @@ LineItem "0..*" -- "1" Product
 
 ---
 
+## Real-World Examples
+
+The following examples apply everything from this chapter to systems you interact with every day. Try reading each diagram yourself before the walkthrough — this is retrieval practice in action.
+
+---
+
+### Example 1: Spotify — Music Streaming Domain Model
+
+**Scenario:** An analysis-level domain model for a music streaming service. The goal is to capture *what things are* and *how they relate* — not implementation details like database schemas or network calls.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class User {
+  + search(query: String): list
+  + createPlaylist(name: String): Playlist
+}
+class FreeUser
+class PremiumUser {
+  + download(track: Track): void
+}
+class Playlist {
+  + addTrack(t: Track): void
+}
+class Track {
+  + title: String
+  + duration: int
+}
+class Artist {
+  + name: String
+}
+FreeUser --|> User
+PremiumUser --|> User
+User "1" *-- "0..*" Playlist : owns
+Playlist "0..*" o-- "0..*" Track : contains
+Track "0..*" -- "1..*" Artist : performedBy
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Generalization (hollow triangle):** `FreeUser` and `PremiumUser` both extend `User`, inheriting `search()` and `createPlaylist()`. Only `PremiumUser` adds `download()` — a capability unlocked by upgrading. The hollow triangle always points *up* toward the parent class.
+2. **Composition (filled diamond, User → Playlist):** A `User` *owns* their playlists. Deleting a user account deletes their playlists — the parts cannot outlive the whole. The filled diamond sits on the *owner's* side.
+3. **Aggregation (hollow diamond, Playlist → Track):** A `Playlist` *contains* tracks, but tracks exist independently — the same track can appear in many playlists. Deleting a playlist does not remove the track from the catalogue.
+4. **Association with multiplicity (Track → Artist):** Each track is performed by `1..*` artists — at least one (solo) or more (collaboration). This multiplicity directly encodes a real business rule.
+
+> **Analysis vs. design level:** This diagram has no visibility modifiers (`+`, `-`). That is intentional — at the analysis level we model *what things are and do*, not encapsulation decisions. Visibility is a design-level concern added in a later phase.
+
+---
+
+### Example 2: GitHub — Pull Request Design Model
+
+**Scenario:** A design-level diagram (note the visibility modifiers) showing how GitHub's code review system could be modelled internally. Notice how an interface creates a formal contract between components.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface Mergeable {
+  + canMerge(): bool
+  + merge(): void
+}
+class Repository {
+  - name: String
+  - isPrivate: bool
+  + openPR(title: String): PullRequest
+}
+class PullRequest {
+  - title: String
+  - status: String
+  + addReview(r: Review): void
+  + canMerge(): bool
+  + merge(): void
+}
+class Review {
+  - verdict: String
+  + approve(): void
+  + requestChanges(): void
+}
+class CICheck {
+  - passed: bool
+  + getResult(): bool
+}
+PullRequest ..|> Mergeable
+Repository "1" *-- "0..*" PullRequest
+PullRequest "1" *-- "0..*" Review
+PullRequest ..> CICheck
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Interface Realization (dashed hollow arrow):** `PullRequest` implements `Mergeable` — a contract committing the class to provide `canMerge()` and `merge()`. A merge pipeline can work with any `Mergeable` object without knowing the concrete type.
+2. **Composition (Repository → PullRequest):** A PR cannot exist without its repository. Delete the repo, and all its PRs are deleted — the filled diamond on `Repository`'s side shows ownership.
+3. **Composition (PullRequest → Review):** A review only exists in the context of one PR. `1 *-- 0..*` reads: one PR can have zero or more reviews; each review belongs to exactly one PR.
+4. **Dependency (dashed open arrow, PullRequest → CICheck):** `PullRequest` *uses* `CICheck` temporarily — perhaps receiving it as a method parameter. It does not hold a permanent field reference, so this is a dependency, not an association.
+
+---
+
+### Example 3: Uber Eats — Food Delivery Domain Model
+
+**Scenario:** The domain model for a food delivery platform. This example is excellent for practicing multiplicity — every `0..1`, `1`, and `0..*` encodes a real business rule the engineering team must enforce.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Customer {
+  - name: String
+  - address: String
+}
+class Order {
+  - placedAt: DateTime
+  - status: String
+  + calcTotal(): float
+}
+class OrderItem {
+  - quantity: int
+  - unitPrice: float
+}
+class MenuItem {
+  - name: String
+  - price: float
+}
+class Restaurant {
+  - name: String
+  - rating: float
+}
+class Driver {
+  - name: String
+  - vehicleType: String
+}
+Customer "1" -- "0..*" Order : places
+Order *-- "1..*" OrderItem : contains
+OrderItem "0..*" -- "1" MenuItem : references
+Restaurant "1" -- "1..*" MenuItem : offers
+Driver "0..1" -- "0..1" Order : delivers
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **`Customer "1" -- "0..*" Order`:** One customer can have zero orders (a new account) or many. The navigability arrow shows `Customer` holds the reference — in code, a `Customer` would have an `orders` collection field.
+2. **Composition (Order → OrderItem):** Order items only exist within an order. Cancelling the order destroys the items. The `1..*` on `OrderItem` enforces that every order must have at least one item.
+3. **`OrderItem "0..*" -- "1" MenuItem`:** Each item references exactly one menu item. Many orders can reference the same menu item — deleting an order does **not** remove the menu item from the restaurant's catalogue.
+4. **`Driver "0..1" -- "0..1" Order`:** A driver handles at most one active delivery at a time; an order has at most one assigned driver. Before dispatch, both sides satisfy `0` — neither requires the other to exist yet. This captures a real business constraint in two characters.
+
+---
+
+### Example 4: Netflix — Content Catalogue Model
+
+**Scenario:** Netflix serves two fundamentally different types of content — movies (watched once) and TV shows (composed of seasons and episodes). This diagram shows how inheritance and composition work together to model a content catalogue.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+abstract class Content {
+  # title: String
+  # rating: String
+  {abstract} + play(): void
+}
+class Movie {
+  - duration: int
+  + play(): void
+}
+class TVShow {
+  + play(): void
+}
+class Season {
+  - seasonNumber: int
+}
+class Episode {
+  - episodeNumber: int
+  - duration: int
+  + play(): void
+}
+class Genre {
+  - name: String
+}
+Movie --|> Content
+TVShow --|> Content
+TVShow "1" *-- "1..*" Season : contains
+Season "1" *-- "1..*" Episode : contains
+Content "0..*" -- "1..*" Genre : classifiedBy
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Abstract class (`abstract class Content`):** The italicised class name and `{abstract}` on `play()` signal that `Content` is never instantiated directly — you never watch a "content", only a `Movie` or `TVShow`. Both subclasses override `play()` with their own implementation.
+2. **Generalization hierarchy:** Both `Movie` and `TVShow` extend `Content`, inheriting `title` and `rating`. A `Movie` adds `duration` directly; a `TVShow` delegates duration implicitly through its episodes.
+3. **Nested composition (`TVShow → Season → Episode`):** A `TVShow` is composed of seasons; each season is composed of episodes. Delete a show and the seasons disappear; delete a season and the episodes disappear. The chain of filled diamonds models this cascade.
+4. **Association with multiplicity (`Content → Genre`):** A movie or show belongs to `1..*` genres (at least one — e.g., Action). A genre classifies `0..*` content items. This is a plain association — deleting a genre does not delete the content.
+
+---
+
+### Example 5: Strategy Pattern — Pluggable Payment Processing
+
+**Scenario:** A shopping cart needs to support multiple payment methods (credit card, PayPal, crypto) and let users switch between them at runtime. This is the **Strategy design pattern** — and a class diagram is the canonical way to document it.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+interface PaymentStrategy {
+  + pay(amount: float): bool
+  + refund(amount: float): bool
+}
+class CreditCardPayment {
+  - cardNumber: String
+  - cvv: String
+  + pay(amount: float): bool
+  + refund(amount: float): bool
+}
+class PayPalPayment {
+  - email: String
+  + pay(amount: float): bool
+  + refund(amount: float): bool
+}
+class CryptoPayment {
+  - walletAddress: String
+  + pay(amount: float): bool
+  + refund(amount: float): bool
+}
+class ShoppingCart {
+  - items: list
+  - strategy: PaymentStrategy
+  + setPayment(s: PaymentStrategy): void
+  + checkout(): bool
+}
+CreditCardPayment ..|> PaymentStrategy
+PayPalPayment ..|> PaymentStrategy
+CryptoPayment ..|> PaymentStrategy
+ShoppingCart --> PaymentStrategy : uses
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Interface as contract:** `PaymentStrategy` defines the contract — `pay()` and `refund()`. Every concrete implementation must provide both. The interface appears at the top of the hierarchy, with implementors below.
+2. **Three realizations (..|>):** `CreditCardPayment`, `PayPalPayment`, and `CryptoPayment` all implement `PaymentStrategy`. The dashed hollow arrow points *toward* the interface each class promises to fulfill.
+3. **Association `ShoppingCart --> PaymentStrategy`:** The cart holds a *reference* to `PaymentStrategy` — not to any specific implementation. This navigability arrow (open head, not filled diamond) means `ShoppingCart` has a field of type `PaymentStrategy`. Crucially, it is typed to the *interface*, not a concrete class.
+4. **The power of this design:** Because `ShoppingCart` depends on `PaymentStrategy` (the interface), you can call `cart.setPayment(new CryptoPayment())` at runtime and the cart works without any changes to its own code. The class diagram makes this extensibility *visible* — and it shows exactly where the seam between context and strategy is.
+
+> **Connection to practice:** This is the same pattern behind Java's `Comparator`, Python's `sort(key=...)`, and every payment SDK you will ever integrate in your career. Class diagrams let you see the shape of the pattern independent of any language.
+
+---
+
 ## 5. Chapter Review & Spaced Practice
 
 To lock this information into your long-term memory, do not skip this section! 

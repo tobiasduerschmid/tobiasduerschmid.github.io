@@ -169,6 +169,8 @@ questions:
     type: multiple
     question: >
       Which of the following Java code patterns would result in a **dependency** (dashed arrow) relationship in UML, rather than an association? (Select all that apply.)
+
+      <div data-uml-type="class" data-uml-spec="@startuml&#10;class ReportGenerator {&#10;  +generate(data: String): String&#10;}&#10;class Logger&#10;class IOException&#10;ReportGenerator ..> Logger&#10;ReportGenerator ..> IOException&#10;@enduml"></div>
     options:
       - "A class uses another class as a method parameter type."
       - "A class stores another class as an instance variable (field)."
@@ -195,6 +197,8 @@ questions:
     type: single
     question: >
       When should you add **navigability arrowheads** to associations in a class diagram?
+
+      <div data-uml-type="class" data-uml-spec="@startuml&#10;class Invoice {&#10;  -total: float&#10;}&#10;class Customer {&#10;  -name: String&#10;}&#10;Invoice --> Customer : billedTo&#10;@enduml"></div>
     options:
       - "Always — every association must show navigability."
       - "Only in analysis/domain models, not in design models."

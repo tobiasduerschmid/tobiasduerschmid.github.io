@@ -5,6 +5,8 @@ questions:
     type: single
     question: >
       In a use case diagram, what does an **actor** represent?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor Customer&#10;actor &quot;Payment System&quot; as PS&#10;usecase &quot;Place Order&quot; as UC1&#10;usecase &quot;Process Payment&quot; as UC2&#10;rectangle &quot;Online Store&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;Customer -- UC1&#10;PS -- UC2&#10;@enduml"></div>
     options:
       - "A specific person who uses the system."
       - "A role that a user takes when interacting with the system."
@@ -31,6 +33,8 @@ questions:
     type: single
     question: >
       What is the key difference between `<<include>>` and `<<extend>>`?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Checkout&quot; as UC1&#10;usecase &quot;Login&quot; as UC2&#10;usecase &quot;Apply Coupon&quot; as UC3&#10;rectangle &quot;Shop&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;User -- UC1&#10;UC1 ..> UC2 : <<include>>&#10;UC3 ..> UC1 : <<extend>>&#10;@enduml"></div>
     options:
       - "Include uses a solid arrow; extend uses a dashed arrow."
       - "Include is for actors; extend is for use cases."
@@ -57,6 +61,8 @@ questions:
     type: single
     question: >
       What does the **rectangle** (system boundary) represent in a use case diagram?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor Student&#10;actor Admin&#10;usecase &quot;Enroll in Course&quot; as UC1&#10;usecase &quot;Drop Course&quot; as UC2&#10;usecase &quot;Manage Courses&quot; as UC3&#10;rectangle &quot;University Portal&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;Student -- UC1&#10;Student -- UC2&#10;Admin -- UC3&#10;@enduml"></div>
     options:
       - "A package of related classes."
       - "The scope of the system --- use cases go inside, actors go outside."
@@ -83,6 +89,8 @@ questions:
     type: single
     question: >
       How is **generalization** between use cases shown?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Pay Online&quot; as UC1&#10;usecase &quot;Pay by Credit Card&quot; as UC2&#10;usecase &quot;Pay by PayPal&quot; as UC3&#10;rectangle &quot;Payment System&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;User -- UC1&#10;UC2 --|> UC1&#10;UC3 --|> UC1&#10;@enduml"></div>
     options:
       - "A dashed arrow labeled `<<generalize>>`."
       - "A solid line with a hollow triangle arrowhead pointing to the parent use case."
@@ -95,6 +103,8 @@ questions:
     type: single
     question: >
       A university system requires that both 'Enroll in Course' and 'Drop Course' always verify the student's identity first. How should 'Verify Identity' be related to these use cases?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor Student&#10;usecase &quot;Enroll in Course&quot; as UC1&#10;usecase &quot;Drop Course&quot; as UC2&#10;usecase &quot;Verify Identity&quot; as UC3&#10;rectangle &quot;University System&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;Student -- UC1&#10;Student -- UC2&#10;UC1 ..> UC3 : <<include>>&#10;UC2 ..> UC3 : <<include>>&#10;@enduml"></div>
     options:
       - "Verify Identity `<<extend>>` both Enroll and Drop (optional behavior)."
       - "Both Enroll and Drop `<<include>>` Verify Identity (mandatory shared behavior)."

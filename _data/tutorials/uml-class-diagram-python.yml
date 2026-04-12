@@ -1,0 +1,136 @@
+title: "UML Class Diagrams in Python"
+description: "Learn UML class diagrams using Python with type annotations."
+
+backend: pyodide
+uml_diagram: true
+uml_position: right
+require_tests: false
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+
+  - title: "Placeholder Step 1"
+    instructions: |
+      ## Step 1: Placeholder
+
+      This is placeholder content. Real tutorial steps will go here.
+
+      The **UML Diagram** tab at the bottom right shows the class diagram
+      for the current code. Click it to see the diagram!
+
+    uml_files:
+      - main.py
+
+    files:
+      - path: main.py
+        content: |
+          # Placeholder — real code goes here
+          class Animal:
+              def __init__(self, name: str) -> None:
+                  self.name: str = name
+
+              def speak(self) -> str:
+                  return "..."
+
+          class Dog(Animal):
+              def __init__(self, name: str, breed: str) -> None:
+                  super().__init__(name)
+                  self.breed: str = breed
+
+              def speak(self) -> str:
+                  return "Woof!"
+
+          if __name__ == "__main__":
+              dog = Dog("Rex", "Labrador")
+              print(dog.speak())
+        language: python
+
+    open_file: main.py
+
+  - title: "Placeholder Step 2"
+    instructions: |
+      ## Step 2: Placeholder
+
+      More placeholder content. Real tutorial content will replace this.
+
+    uml_files:
+      - main.py
+
+    files:
+      - path: main.py
+        content: |
+          # Placeholder — real code goes here
+          class Shape:
+              def __init__(self, color: str) -> None:
+                  self.color: str = color
+
+              def area(self) -> float:
+                  return 0.0
+
+          class Circle(Shape):
+              def __init__(self, color: str, radius: float) -> None:
+                  super().__init__(color)
+                  self.radius: float = radius
+
+              def area(self) -> float:
+                  return 3.14159 * self.radius ** 2
+
+          class Rectangle(Shape):
+              def __init__(self, color: str, width: float, height: float) -> None:
+                  super().__init__(color)
+                  self.width: float = width
+                  self.height: float = height
+
+              def area(self) -> float:
+                  return self.width * self.height
+
+          if __name__ == "__main__":
+              c = Circle("red", 5.0)
+              r = Rectangle("blue", 3.0, 4.0)
+              print(f"Circle area: {c.area():.2f}")
+              print(f"Rectangle area: {r.area():.2f}")
+        language: python
+
+    open_file: main.py
+
+  - title: "Placeholder Step 3"
+    instructions: |
+      ## Step 3: Placeholder
+
+      Final placeholder step. Real tutorial content will go here.
+
+    uml_files:
+      - main.py
+
+    files:
+      - path: main.py
+        content: |
+          # Placeholder — real code goes here
+          from typing import List
+
+          class Engine:
+              def __init__(self, horsepower: int) -> None:
+                  self.horsepower: int = horsepower
+
+              def start(self) -> str:
+                  return f"Engine with {self.horsepower}hp started"
+
+          class Car:
+              def __init__(self, make: str, model: str, engine: Engine) -> None:
+                  self.make: str = make
+                  self.model: str = model
+                  self.engine: Engine = engine
+
+              def drive(self) -> str:
+                  return f"{self.make} {self.model} is driving"
+
+          if __name__ == "__main__":
+              engine = Engine(200)
+              car = Car("Toyota", "Camry", engine)
+              print(car.drive())
+              print(engine.start())
+        language: python
+
+    open_file: main.py

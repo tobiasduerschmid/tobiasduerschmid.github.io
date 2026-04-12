@@ -108,6 +108,86 @@ EmergencyPower --> [*] : manualOverride()
 
 ---
 
+## Real-World Examples
+
+The exosuit above introduces the syntax. Now let's see state machines applied to three modern systems. Each example highlights a different aspect of state machine design.
+
+---
+
+### Example 1: Spotify — Music Player States
+
+**Scenario:** A track player has distinct states that determine how it responds to the same button press. Pressing play does nothing when you are *already* playing — but it transitions correctly from `Paused` or `Idle`. This context-dependence is exactly what state machines model.
+
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Idle : appLaunch()
+Idle --> Buffering : playTrack(trackId)
+Buffering --> Playing : bufferReady
+Buffering --> Idle : loadError / showErrorMessage()
+Playing --> Paused : pauseButton
+Paused --> Playing : playButton
+Playing --> Buffering : skipTrack(nextId) / clearBuffer()
+Playing --> Idle : stopButton
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **`Buffering` as a transitional state:** When a track is requested, the player cannot play immediately — it must buffer first. The guard-free transition `bufferReady` fires automatically when enough data has loaded.
+2. **Error handling via effect:** If loading fails, `loadError` fires and the effect `/ showErrorMessage()` executes before returning to `Idle`. One transition handles the rollback and the user feedback.
+3. **`skipTrack` resets the buffer:** Skipping while playing triggers `/ clearBuffer()` as a transition effect, moving back to `Buffering` for the new track. Making side effects explicit in the diagram (rather than hiding them in code comments) is a key UML best practice.
+4. **No final state:** A music player runs indefinitely — there is no lifecycle end for this object. Omitting the final state is the correct choice here, not an oversight.
+
+---
+
+### Example 2: GitHub — Pull Request Lifecycle
+
+**Scenario:** A pull request moves through a well-defined set of states from creation to merge or closure. Guards prevent premature merging — merging broken code has real consequences in a real system.
+
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Open : createPR()
+Open --> ChangesRequested : reviewSubmitted [hasRejection]
+ChangesRequested --> Open : pushNewCommit
+Open --> Approved : reviewSubmitted [allApproved] / notifyAuthor()
+Approved --> Merged : mergePR [ciPassed] / closeHeadBranch()
+Open --> Closed : closePR()
+ChangesRequested --> Closed : closePR()
+Merged --> [*]
+Closed --> [*]
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **Guards on the same event:** Both `Open → ChangesRequested` and `Open → Approved` are triggered by `reviewSubmitted`. The guards `[hasRejection]` and `[allApproved]` select which transition fires. The same event can lead to different states — the guard is the deciding factor.
+2. **Cyclic path (ChangesRequested → Open):** After a reviewer requests changes, the author pushes new commits, sending the PR back to `Open`. State machines can loop — objects do not always progress linearly.
+3. **Guard on merge (`[ciPassed]`):** The PR stays `Approved` until CI passes. This is a business rule — it cannot be merged in a broken state. The diagram makes the constraint explicit without requiring you to read the code.
+4. **Two final states:** Both `Merged` and `Closed` are terminal states. Every PR ends one of these two ways. Multiple final states are valid and common in business process models.
+
+---
+
+### Example 3: Food Delivery — Order Lifecycle
+
+**Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — but it can be cancelled at any point before pickup.
+
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Placed : submitOrder()
+Placed --> Confirmed : restaurantAccepts()
+Placed --> Cancelled : restaurantDeclines() / refundPayment()
+Confirmed --> Preparing : kitchenStart()
+Preparing --> ReadyForPickup : foodReady()
+ReadyForPickup --> InTransit : driverPickedUp()
+InTransit --> Delivered : driverArrived() / notifyCustomer()
+Delivered --> [*]
+Cancelled --> [*]
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **Early exit with effect:** `Placed → Cancelled` fires if the restaurant declines, triggering `/ refundPayment()`. The effect makes the business rule explicit: every cancellation must trigger a refund.
+2. **The happy path is visually obvious:** `Placed → Confirmed → Preparing → ReadyForPickup → InTransit → Delivered` flows in a clear left-to-right, top-to-bottom reading. A new engineer on the team can understand the order lifecycle in 30 seconds.
+3. **Effect on delivery (`/ notifyCustomer()`):** The customer gets a push notification the moment the driver marks the order delivered. Transition effects tie business actions to the precise moment a state change occurs.
+4. **Two terminal states:** `Delivered` and `Cancelled` both lead to `[*]`. An order always ends — there is no indefinitely running lifecycle for a delivery order, unlike a server or a music player.
+
+---
+
 ## 🛠️ Retrieval Practice
 
 To ensure these concepts are transferring from working memory to long-term retention, take a moment to answer these questions without looking back at the text:

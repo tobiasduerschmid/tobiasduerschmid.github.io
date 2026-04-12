@@ -228,6 +228,126 @@ UC2 ..> UC3 : <<include>>
 
 ---
 
+## Real-World Examples
+
+These three examples show use case diagrams applied to modern platforms. Pay close attention to the direction of arrows and the distinction between `<<include>>` (always happens) and `<<extend>>` (sometimes happens) — this is the most commonly confused aspect of use case diagrams.
+
+---
+
+### Example 1: GitHub — Repository Collaboration
+
+**Scenario:** A shared codebase has three types of actors: contributors who submit code, maintainers who review and merge, and an automated CI bot. CI checks are mandatory before merging — this is an `<<include>>`, not an `<<extend>>`.
+
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+actor Contributor
+actor Maintainer
+actor "CI Bot" as CI
+usecase "Create Pull Request" as UC1
+usecase "Review Code" as UC2
+usecase "Merge Pull Request" as UC3
+usecase "Run CI Checks" as UC4
+usecase "Authenticate" as UC5
+rectangle "GitHub Repository" {
+  UC1
+  UC2
+  UC3
+  UC4
+  UC5
+}
+Contributor -- UC1
+Maintainer -- UC2
+Maintainer -- UC3
+CI -- UC4
+UC1 ..> UC5 : <<include>>
+UC3 ..> UC4 : <<include>>
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **`CI Bot` as a non-human actor:** Actors don't have to be people. Any external role that interacts with the system qualifies — automated services, payment providers, external APIs. The CI bot initiates the `Run CI Checks` use case just as a human would trigger any other.
+2. **`<<include>>` (Create PR → Authenticate):** You cannot create a PR without being logged in. This is mandatory, unconditional behavior — `<<include>>` is correct. The arrow points *from the base* toward the included behavior.
+3. **`<<include>>` (Merge PR → Run CI Checks):** A maintainer cannot merge without CI passing. The checks run automatically as part of every merge — they are not optional. This is another `<<include>>`.
+4. **What is NOT shown:** There is no `<<extend>>` here, because there is no optional behavior in this workflow. Not every use case diagram needs `<<extend>>` — use it only when behavior genuinely *sometimes* happens.
+
+---
+
+### Example 2: Airbnb — Accommodation Booking
+
+**Scenario:** Guests search and book; hosts list properties; payment is handled by an external service. Leaving a review is optional behavior that extends the booking flow — making this an `<<extend>>`.
+
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+actor Guest
+actor Host
+actor "Payment Service" as PS
+usecase "Search Listings" as UC1
+usecase "Book Accommodation" as UC2
+usecase "Process Payment" as UC3
+usecase "Leave Review" as UC4
+usecase "List Property" as UC5
+rectangle "Airbnb Platform" {
+  UC1
+  UC2
+  UC3
+  UC4
+  UC5
+}
+Guest -- UC1
+Guest -- UC2
+Guest -- UC4
+Host -- UC5
+PS -- UC3
+UC2 ..> UC3 : <<include>>
+UC4 ..> UC2 : <<extend>>
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **`<<include>>` (Booking → Payment):** Every booking always processes payment. There is no booking without payment — the arrow points *from* `Book Accommodation` *toward* `Process Payment`.
+2. **`<<extend>>` (Review → Booking):** A guest *may* leave a review after a booking, but they don't have to. The `<<extend>>` arrow points *from* the optional use case (`Leave Review`) *toward* the base use case (`Book Accommodation`) — the opposite direction from `<<include>>`.
+3. **`Payment Service` as an external actor:** The payment provider lives outside the Airbnb platform boundary. Showing it as an actor with an association to `Process Payment` makes the external dependency visible in the requirements model.
+4. **Arrow direction summary:** `<<include>>` points *toward* the behavior that is always included; `<<extend>>` points *toward* the base use case being sometimes extended. Both use dashed arrows — only the direction differs.
+
+---
+
+### Example 3: University LMS — Canvas-Style Learning Platform
+
+**Scenario:** Students submit assignments and view grades; instructors grade and post announcements. Both roles require authentication for sensitive operations. Email notifications are optional — they extend the announcement flow.
+
+<div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
+actor Student
+actor Instructor
+usecase "Submit Assignment" as UC1
+usecase "Grade Submission" as UC2
+usecase "View Grades" as UC3
+usecase "Post Announcement" as UC4
+usecase "Authenticate" as UC5
+usecase "Send Email Notification" as UC6
+rectangle "Learning Management System" {
+  UC1
+  UC2
+  UC3
+  UC4
+  UC5
+  UC6
+}
+Student -- UC1
+Student -- UC3
+Instructor -- UC2
+Instructor -- UC4
+UC1 ..> UC5 : <<include>>
+UC2 ..> UC5 : <<include>>
+UC6 ..> UC4 : <<extend>>
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **Multiple use cases sharing one `<<include>>` target:** Both `Submit Assignment` and `Grade Submission` include `Authenticate`. This is the real value of `<<include>>` — one shared behavior, referenced from many places, maintained in one spot. If authentication changes, you update it once.
+2. **`<<extend>>` for optional notification:** `Send Email Notification` extends `Post Announcement`. Sometimes an instructor sends an email alongside the announcement, sometimes they don't. `<<extend>>` captures this conditionality.
+3. **Role separation:** Students and Instructors have distinct, non-overlapping primary interactions. A student cannot grade; an instructor is not shown submitting assignments. The diagram communicates the access control model at a glance.
+4. **`Authenticate` has no actor association:** `Authenticate` is never triggered directly by an actor — it is always triggered by another use case (`<<include>>`). This is correct — actors initiate top-level use cases, not shared sub-behaviors.
+
+---
+
 ## 7. Active Recall Challenge
 
 Grab a blank piece of paper. Without looking at this chapter, try to draw the use case diagram for the following scenario:

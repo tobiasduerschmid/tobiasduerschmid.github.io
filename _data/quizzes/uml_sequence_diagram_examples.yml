@@ -33,6 +33,8 @@ questions:
     type: single
     question: >
       Which combined fragment would you use to model an **if-else** decision in a sequence diagram?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant c: Client&#10;participant a: AuthService&#10;c -> a: login(user, pass)&#10;alt [credentials valid]&#10;  a --> c: token&#10;else [credentials invalid]&#10;  a --> c: error&#10;end&#10;@enduml"></div>
     options:
       - "`loop` — repeats messages while a condition is true."
       - "`opt` — executes messages only if a condition is true."
@@ -113,6 +115,8 @@ questions:
     type: single
     question: >
       What does an **activation bar** (thin rectangle on a lifeline) represent?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ui: UI&#10;participant os: OrderService&#10;participant db: Database&#10;ui -> os: placeOrder(items)&#10;os -> db: saveOrder(items)&#10;db --> os: orderId&#10;os --> ui: confirmation(orderId)&#10;@enduml"></div>
     options:
       - "The object is waiting for input and doing nothing."
       - "The object is actively performing an action or executing a method."
@@ -125,6 +129,8 @@ questions:
     type: single
     question: >
       What is the correct lifeline label format for an unnamed instance of class `ShoppingCart`?
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant sc: ShoppingCart&#10;participant ch: Checkout&#10;sc -> ch: submit()&#10;ch --> sc: receipt&#10;@enduml"></div>
     options:
       - "`ShoppingCart`"
       - "`: ShoppingCart`"
@@ -144,6 +150,8 @@ questions:
           p.authorize();
       }
       ```
+
+      <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ch: Checkout&#10;participant p: Payment&#10;ch -> p: new Payment(amount)&#10;ch -> p: authorize()&#10;p --> ch: authorized&#10;@enduml"></div>
     options:
       - "A synchronous message labeled `new Payment(amount)` to an existing Payment lifeline."
       - "A create message to a new Payment lifeline that appears at the point of creation."

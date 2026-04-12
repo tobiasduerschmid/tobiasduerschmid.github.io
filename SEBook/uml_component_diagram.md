@@ -241,6 +241,128 @@ Here, `OrderService` depends on `Logger` and `MetricsCollector` for cross-cuttin
 
 ---
 
+## Real-World Examples
+
+These three examples show component diagrams for well-known architectures. Notice how each diagram abstracts away class-level details entirely and focuses on deployable modules and their interfaces.
+
+---
+
+### Example 1: Netflix — Streaming Service Architecture
+
+**Scenario:** When you open Netflix and press play, your browser hits an API gateway that routes requests to three specialized backend services. This diagram shows the high-level communication structure of that system.
+
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+component "WebClient" {
+  portout "api" as wc_out
+}
+component "APIGateway" {
+  portin "https" as gw_in
+  portout "content" as gw_content
+  portout "auth" as gw_auth
+  portout "recs" as gw_rec
+}
+component "AuthService" {
+  portin "verify" as auth_in
+}
+component "ContentService" {
+  portin "stream" as cs_in
+}
+component "RecommendationEngine" {
+  portin "suggest" as re_in
+}
+wc_out --> gw_in : HTTPS
+gw_auth --> auth_in : gRPC
+gw_content --> cs_in : gRPC
+gw_rec --> re_in : gRPC
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **Ports organize communication surfaces:** `APIGateway` has one incoming port (`https`) and three outgoing ports (`auth`, `content`, `recs`). The ports make explicit that the gateway *routes* — one input, three outputs.
+2. **`APIGateway` as a hub:** All external traffic enters through a single point. The gateway authenticates the request, then routes to the right backend service. The component diagram makes this routing topology visible at a glance — no code reading required.
+3. **Protocol labels (`HTTPS`, `gRPC`):** Labels communicate the *type of coupling*. The browser uses HTTPS (human-readable, firewall-friendly); internal service-to-service calls use gRPC (binary, low-latency). Different protocols communicate different architectural decisions.
+4. **What is deliberately NOT shown:** How `ContentService` stores video, how `AuthService` checks tokens, what database `RecommendationEngine` uses. Component diagrams show the *seams* between modules, not the internals. This is the right level of abstraction for architectural communication.
+
+---
+
+### Example 2: E-Commerce — Microservices Backend
+
+**Scenario:** A mobile app communicates through an API gateway to two microservices. The `OrderService` depends on `PaymentService` through a formal interface — enabling the payment provider to be swapped without touching `OrderService`.
+
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+component "MobileApp" {
+  portout "gateway" as app_out
+}
+component "APIGateway" {
+  portin "http" as gw_in
+  portout "orders" as gw_orders
+  portout "pay" as gw_pay
+}
+component "OrderService" {
+  portin "api" as os_in
+  portout "db" as os_db
+  require "IPayment" as os_req
+}
+component "PaymentService" {
+  portin "charge" as ps_in
+  provide "IPayment" as ps_prov
+}
+component "OrderDB" {
+  portin "sql" as db_in
+}
+app_out --> gw_in : HTTPS
+gw_orders --> os_in : REST
+gw_pay --> ps_in : REST
+os_db --> db_in : SQL
+os_req --> ps_prov
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **Provided interface (ball, `IPayment`):** `PaymentService` declares that it *provides* the `IPayment` interface. The implementation — Stripe, PayPal, or an in-house processor — is hidden behind the interface.
+2. **Required interface (socket, `IPayment`):** `OrderService` declares it *requires* `IPayment`. The `os_req --> ps_prov` connector is the **assembly connector** — the socket snaps into the ball, satisfying the dependency.
+3. **Substitutability:** Because `OrderService` depends on an *interface*, you could swap `PaymentService` for a `MockPaymentService` in tests, or switch from Stripe to PayPal in production, without changing a single line in `OrderService`. The diagram makes this architectural quality *visible*.
+4. **`OrderDB` is a component:** Databases are deployable units and belong in component diagrams. The `SQL` label distinguishes this connection from REST/gRPC connections at a glance.
+
+---
+
+### Example 3: CI/CD Pipeline — GitHub Actions Architecture
+
+**Scenario:** A developer pushes code; GitHub triggers a build; the build pushes an artifact and optionally deploys it. Slack notifications are a cross-cutting concern — modelled with a dependency (dashed arrow), not a port-based connector.
+
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+component "GitHub" {
+  portout "events" as gh_ev
+}
+component "BuildService" {
+  portin "webhook" as bs_in
+  portout "artifact" as bs_art
+  portout "deploy" as bs_dep
+}
+component "ArtifactRegistry" {
+  portin "push" as ar_in
+}
+component "DeployService" {
+  portin "trigger" as ds_in
+}
+component "SlackNotifier" {
+  portin "notify" as sn_in
+}
+gh_ev --> bs_in : webhook
+bs_art --> ar_in : push image
+bs_dep --> ds_in : trigger deploy
+BuildService ..> SlackNotifier : build status
+@enduml'></div>
+
+**Reading the diagram:**
+
+1. **Primary connectors (solid arrows):** The core data flow — GitHub triggers builds, builds push artifacts, builds trigger deployments. These are the main communication pathways of the pipeline.
+2. **Dependency (dashed arrow, `BuildService ..> SlackNotifier`):** Slack is a *cross-cutting concern* — the build reports status, but Slack is not part of the core build pipeline. A dashed arrow signals "I use this, but it is not a primary architectural interface." If Slack is down, the pipeline still builds and deploys.
+3. **Ports vs. no ports:** `SlackNotifier` has a `portin`, but `BuildService` reaches it via a dependency arrow without a named port. This is intentional — the Slack integration is loose, not a structured interface contract. The diagram communicates that informality.
+4. **The whole pipeline in 30 seconds:** Push → build → artifact + deploy → notify. A new engineer can read the complete CI/CD flow from this diagram without opening a YAML config file. That is the core value proposition of component diagrams.
+
+---
+
 ## 7. Active Recall Challenge
 
 Grab a blank piece of paper. Without looking at this chapter, try to draw a component diagram for the following system:

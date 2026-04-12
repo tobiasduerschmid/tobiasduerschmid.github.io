@@ -361,6 +361,161 @@ public class A {
 
 ---
 
+## Real-World Examples
+
+These examples show sequence diagrams for real systems. For each diagram, trace through the arrows top-to-bottom and narrate what is happening *before* reading the walkthrough.
+
+---
+
+### Example 1: Google Sign-In — OAuth2 Login Flow
+
+**Scenario:** When you click "Sign in with Google," three systems exchange a precise sequence of messages. This diagram shows that flow — it illustrates how return messages carry data back and why the *ordering* of messages matters.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant B: Browser
+participant A: AppBackend
+participant G: GoogleOAuth
+B -> A: GET /login
+A --> B: 302 redirect to accounts.google.com
+B -> G: GET /authorize (clientId, scope)
+G --> B: 200 auth form
+B -> G: POST /authorize (credentials)
+G --> B: 302 redirect with authCode
+B -> A: GET /callback?code=authCode
+A -> G: POST /token (authCode, clientSecret)
+G --> A: accessToken
+A --> B: 200 session cookie
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Three lifelines, one flow:** `Browser`, `AppBackend`, and `GoogleOAuth` are the three participants. The browser intermediates between your app and Google — this is why OAuth feels like a redirect chain.
+2. **Solid arrows (synchronous calls):** Every `->` means the sender blocks and waits for a response before continuing. The browser sends a request and waits for the redirect before proceeding.
+3. **Dashed arrows (return messages):** The `-->` arrows carry responses back — the auth code, the access token, the session cookie. Return messages always flow back to the caller.
+4. **Top-to-bottom = time:** Reading vertically, you reconstruct the complete OAuth handshake in order. Swapping any two messages would break the protocol — the diagram makes those ordering dependencies visible.
+
+---
+
+### Example 2: DoorDash — Placing a Food Order
+
+**Scenario:** When a user submits an order, the app charges their card and notifies the restaurant. But what if the payment fails? This diagram uses an `alt` fragment to model both the success and failure paths explicitly.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant app: MobileApp
+participant os: OrderService
+participant pg: PaymentGateway
+participant rest: Restaurant
+app -> os: submitOrder(items, paymentInfo)
+os -> pg: charge(amount, card)
+alt [payment approved]
+  pg --> os: transactionId
+  os -> rest: notifyNewOrder(items)
+  rest --> os: estimatedTime
+  os --> app: confirmed(orderId, eta)
+else [payment declined]
+  pg --> os: declineReason
+  os --> app: error(declineReason)
+end
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **`alt` fragment (if/else):** The dashed horizontal line inside the box divides the two branches. Only one branch executes at runtime. When you see `alt`, think `if/else`.
+2. **Guard conditions in `[ ]`:** `[payment approved]` and `[payment declined]` are boolean guards — they must be mutually exclusive so exactly one branch fires.
+3. **Different paths, different participants:** In the success branch, the flow continues to `Restaurant`. In the failure branch, it returns immediately to the app. The diagram makes both paths equally visible — no "happy path bias."
+4. **Why `alt` and not `opt`?** An `opt` fragment has only one branch (if, no else). Because we have two explicit outcomes — success and failure — `alt` is the correct choice.
+
+---
+
+### Example 3: GitHub Actions — CI/CD Pipeline Trigger
+
+**Scenario:** A developer pushes code, GitHub triggers a build, tests run, and deployment happens only if tests pass. This diagram uses `opt` for conditional deployment and a self-call for internal processing.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant dev: Developer
+participant gh: GitHub
+participant build: BuildService
+participant deploy: DeployService
+dev -> gh: git push origin main
+gh -> build: triggerBuild(commitSha)
+build -> build: runTests()
+build --> gh: testResults
+opt [all tests passed]
+  build -> deploy: deployToStaging(artifact)
+  deploy --> build: stagingUrl
+end
+gh --> dev: notify(testResults)
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Self-call (`build -> build`):** A message from a lifeline back to itself models an internal call — `BuildService` running its own test suite. The arrow loops back to the same column.
+2. **`opt` fragment (if, no else):** Deployment only happens if all tests pass. There is no "else" branch — on failure the flow skips the `opt` block and continues to the notification.
+3. **Return after the fragment:** `gh --> dev: notify(testResults)` executes regardless of whether deployment occurred — it is outside the `opt` box, at the outer sequence level.
+4. **Activation ordering:** `build` runs `runTests()` before returning `testResults` to `gh`. Top-to-bottom ordering guarantees tests complete before GitHub is notified.
+
+---
+
+### Example 4: Uber — Real-Time Driver Matching
+
+**Scenario:** When a rider requests a trip, the matching service offers the ride to drivers until one accepts. This diagram shows a `loop` fragment combined with an `alt` inside — the most powerful combination in sequence diagrams.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant rider: RiderApp
+participant match: MatchingService
+participant driver: DriverApp
+participant notif: NotificationService
+rider -> match: requestRide(location, rideType)
+loop [no driver accepted]
+  match -> driver: offerRide(request)
+  alt [driver accepts]
+    driver --> match: accepted
+  else [driver declines or timeout]
+    driver --> match: declined
+  end
+end
+match -> notif: notifyRider(driverId, eta)
+notif --> rider: driverAssigned(eta)
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **`loop` fragment:** The matching service repeats the offer-cycle until a driver accepts. `loop` models iteration — equivalent to a `while` loop. In practice this loop has a timeout (e.g., 3 attempts before cancellation), which would be the loop guard condition.
+2. **Nested `alt` inside `loop`:** Each iteration of the loop has its own if/else: did the driver accept or decline? Nesting fragments is valid and common — it directly mirrors nested control flow in code.
+3. **Flow continues after the loop:** Once a driver accepts, execution exits the `loop` and the notification is sent. Messages *outside* a fragment are unconditional.
+4. **`DriverApp` as a participant:** The driver's mobile app is a first-class lifeline. This shows that sequence diagrams can include mobile clients, web clients, and backend services on equal footing.
+
+---
+
+### Example 5: Slack — Real-Time Message Delivery
+
+**Scenario:** When you send a Slack message, it is persisted, then broadcast to all subscribers of that channel. This diagram shows the fan-out delivery pattern using a `loop` fragment.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: SlackClient
+participant ws: WebSocketGateway
+participant msg: MessageService
+participant notif: NotificationService
+client -> ws: sendMessage(channelId, text)
+ws -> msg: persist(channelId, text, userId)
+msg --> ws: messageId
+ws -> notif: broadcastToChannel(channelId, message)
+loop [for each online subscriber]
+  notif -> ws: deliver(userId, message)
+  ws --> client: messageReceived
+end
+ws --> client: ack(messageId)
+@enduml'></div>
+
+**What the UML notation captures:**
+
+1. **Sequence before the loop:** `persist` and get `messageId` happen exactly once — before the broadcast. The diagram makes this ordering explicit: a message is saved before it is delivered to anyone.
+2. **`loop` for fan-out delivery:** Each online subscriber receives their own delivery call. In a channel with 200 members, the loop body executes 200 times. The diagram abstracts this into a single readable fragment.
+3. **`ack` after the loop:** The sender receives their acknowledgement (`ack(messageId)`) only after the broadcast completes. This is outside the loop — it is unconditional and happens once.
+4. **`WebSocketGateway` as the central hub:** All messages flow in and out through the gateway. The diagram shows this hub topology clearly — every arrow touches `ws`, revealing it as the architectural bottleneck. This is a useful architectural insight visible only in the sequence diagram.
+
+---
+
 ## Chapter Summary
 
 Sequence diagrams are a powerful tool to understand the dynamic, time-based behavior of a system.

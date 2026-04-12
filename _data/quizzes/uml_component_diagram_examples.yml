@@ -17,6 +17,8 @@ questions:
     type: single
     question: >
       In a component diagram, what does a **provided interface** (lollipop/ball symbol) indicate?
+
+      <div data-uml-type="component" data-uml-spec="@startuml&#10;component OrderService {&#10;  provide &quot;IOrderAPI&quot; as p1&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;@enduml"></div>
     options:
       - "The component requires this interface from another component."
       - "The component implements and offers this interface to other components."
@@ -29,6 +31,8 @@ questions:
     type: single
     question: >
       What is the purpose of **ports** (small squares on component boundaries)?
+
+      <div data-uml-type="component" data-uml-spec="@startuml&#10;component NotificationService {&#10;  portin &quot;requests&quot; as ns_in&#10;  portout &quot;email&quot; as ns_email&#10;  portout &quot;sms&quot; as ns_sms&#10;}&#10;@enduml"></div>
     options:
       - "They represent individual methods on the component."
       - "They are named interaction points that organize the component's interfaces into logical groups."
@@ -53,6 +57,8 @@ questions:
     type: single
     question: >
       What does a **dashed arrow** between two components represent?
+
+      <div data-uml-type="component" data-uml-spec="@startuml&#10;component OrderService {&#10;  portout &quot;log&quot; as os_log&#10;}&#10;component LoggingService {&#10;  portin &quot;write&quot; as ls_in&#10;}&#10;os_log ..> ls_in&#10;@enduml"></div>
     options:
       - "An assembly connector between provided and required interfaces."
       - "A dependency — one component uses or depends on another."
@@ -79,6 +85,8 @@ questions:
     type: single
     question: >
       What does the ball-and-socket notation (assembly connector) represent?
+
+      <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:
       - "A component inherits from another component."
       - "A required interface on one component is connected to a matching provided interface on another component."
@@ -91,6 +99,8 @@ questions:
     type: single
     question: >
       A system has a `ShoppingCart` component that needs payment processing, and a `StripeGateway` component that provides it. If you want to later swap `StripeGateway` for `PayPalGateway`, what UML concept enables this?
+
+      <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;component PayPalGateway {&#10;  provide &quot;IPayment&quot; as p2&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:
       - "Generalization — PayPalGateway inherits from StripeGateway."
       - "Provided/required interfaces — ShoppingCart requires `IPayment`, and any component providing `IPayment` can be substituted."

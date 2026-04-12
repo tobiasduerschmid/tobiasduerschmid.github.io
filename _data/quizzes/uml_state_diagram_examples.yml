@@ -19,6 +19,8 @@ questions:
     type: single
     question: >
       Given the transition label `buttonPressed [isEnabled] / playSound()`, which part is the **guard condition**?
+
+      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Idle&#10;Idle --> Running : startButton [isReady] / initDisplay()&#10;Running --> Idle : stopButton / saveState()&#10;@enduml"></div>
     options:
       - "`buttonPressed`"
       - "`[isEnabled]`"
@@ -74,6 +76,8 @@ questions:
     type: single
     question: >
       Which of these is a well-named state according to UML conventions?
+
+      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> WaitingForInput&#10;WaitingForInput --> Processing : submitForm&#10;Processing --> DisplayingResults : dataLoaded&#10;DisplayingResults --> WaitingForInput : reset&#10;DisplayingResults --> [*] : logout&#10;@enduml"></div>
     options:
       - "`Login`"
       - "`WaitingForInput`"
@@ -153,6 +157,8 @@ questions:
     type: single
     question: >
       What is the difference between an `entry/` internal activity and an effect on a transition (`/ action`)?
+
+      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Connecting : connect()&#10;Connecting : entry/ showSpinner()&#10;Connecting : exit/ hideSpinner()&#10;Connecting --> Connected : handshakeOK / logSuccess()&#10;Connecting --> Error : timeout / logError()&#10;@enduml"></div>
     options:
       - "There is no difference; they are the same thing."
       - "The entry/ action runs every time the state is entered (from any transition), while a transition effect only runs during that specific transition."
@@ -165,6 +171,8 @@ questions:
     type: single
     question: >
       Does every state machine diagram need a **final state**?
+
+      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Listening : start()&#10;Listening --> Processing : requestReceived&#10;Processing --> Listening : requestHandled&#10;@enduml"></div>
     options:
       - "Yes — every state machine must have both an initial and a final state."
       - "No — a final state is only needed if the object's lifecycle can actually end."
