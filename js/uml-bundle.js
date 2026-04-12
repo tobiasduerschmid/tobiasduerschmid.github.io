@@ -1739,14 +1739,14 @@
 
       // Source decorations (deferred to draw on top of class boxes)
       if (orel.type === 'composition') {
-        UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, true, colors.fill);
+        UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, colors.line, true, colors.fill);
       } else if (orel.type === 'aggregation') {
-        UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, -startDy, startDx, colors.line, false, colors.fill);
+        UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, colors.line, false, colors.fill);
       }
 
       // Target decorations (deferred to draw on top of class boxes)
       if (orel.type === 'navigable' || orel.type === 'dependency') {
-        UMLShared.drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, endDy, -endDx, colors.line);
+        UMLShared.drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
       }
 
       // Determine if the first/last segment is horizontal or vertical
@@ -2290,7 +2290,7 @@
     return html;
   }
 
-  UMLShared.createAutoInit('pre > code.language-uml-class', render, { extractText: extractCodeText });
+  UMLShared.createAutoInit('pre > code.language-uml-class', render, { type: 'class', extractText: extractCodeText });
 
   // ─── Export ────────────────────────────────────────────────────────
 
@@ -3163,7 +3163,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  UMLShared.createAutoInit('pre > code.language-uml-sequence', render);
+  UMLShared.createAutoInit('pre > code.language-uml-sequence', render, { type: 'sequence' });
 
   // ─── Export ────────────────────────────────────────────────────────
 
@@ -3974,7 +3974,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  UMLShared.createAutoInit('pre > code.language-uml-state', render);
+  UMLShared.createAutoInit('pre > code.language-uml-state', render, { type: 'state' });
   window.UMLStateDiagram = { render: render, parse: parse };
 })();
 /**
@@ -5262,7 +5262,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  UMLShared.createAutoInit('pre > code.language-uml-component', render);
+  UMLShared.createAutoInit('pre > code.language-uml-component', render, { type: 'component' });
 
   window.UMLComponentDiagram = { render: render, parse: parse };
 })();
@@ -5890,7 +5890,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  UMLShared.createAutoInit('pre > code.language-uml-deployment', render);
+  UMLShared.createAutoInit('pre > code.language-uml-deployment', render, { type: 'deployment' });
 
   window.UMLDeploymentDiagram = { render: render, parse: parse };
 })();
@@ -6543,7 +6543,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  UMLShared.createAutoInit('pre > code.language-uml-usecase', render);
+  UMLShared.createAutoInit('pre > code.language-uml-usecase', render, { type: 'usecase' });
   window.UMLUseCaseDiagram = { render: render, parse: parse };
 })();
 /**
@@ -7459,7 +7459,7 @@
 
   // ─── Auto-init ────────────────────────────────────────────────────
 
-  UMLShared.createAutoInit('pre > code.language-uml-activity', render);
+  UMLShared.createAutoInit('pre > code.language-uml-activity', render, { type: 'activity' });
   window.UMLActivityDiagram = { render: render, parse: parse };
 })();
 /**
