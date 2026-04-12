@@ -3968,24 +3968,12 @@
     for (var si = 0; si < sideOrder.length && si < 3; si++) {
       var side = sideOrder[si];
       var horizontalSide = side === 'top' || side === 'bottom';
-      var min = horizontalSide ? entry.x + 12 : entry.y + 12;
-      var max = horizontalSide ? entry.x + entry.box.width - 12 : entry.y + entry.box.height - 12;
-      var otherMin = horizontalSide ? otherEntry.x + 12 : otherEntry.y + 12;
-      var otherMax = horizontalSide ? otherEntry.x + otherEntry.box.width - 12 : otherEntry.y + otherEntry.box.height - 12;
-
-      var overlapMin = Math.max(min, otherMin);
-      var overlapMax = Math.min(max, otherMax);
-      var hasOverlap = overlapMax >= overlapMin;
-
       var preferredCoord = horizontalSide ? otherCx : otherCy;
-      if (hasOverlap) {
-         preferredCoord = (overlapMin + overlapMax) / 2;
-      }
-
       var biasCoord = horizontalSide ? otherCx : otherCy;
       var avoidCenter = (side === 'top' && opts.avoidTop) || (side === 'bottom' && opts.avoidBottom);
       var positions = buildClassSidePositions(entry, side, preferredCoord, slotOffset, avoidCenter, biasCoord);
-
+      var min = horizontalSide ? entry.x + 12 : entry.y + 12;
+      var max = horizontalSide ? entry.x + entry.box.width - 12 : entry.y + entry.box.height - 12;
       var clampedPreferred = classClamp(preferredCoord + slotOffset * 0.28, min, max);
 
       for (var pi = 0; pi < positions.length; pi++) {
@@ -6593,20 +6581,12 @@
       if (portDef.direction === 'out') return 'right';
       return portSides[compName + '.' + portDef.alias] || 'right';
     }
-    function chooseInitialPortSide(entry, portDef, partnerEntry) {
+    function chooseInitialPortSide(entry, portDef, partnerCenterX) {
       var preferred = defaultPortSide(entry.comp.name, portDef);
-      if (!partnerEntry) return preferred;
-      var myLeft = entry.x;
-      var myRight = entry.x + entry.box.width;
-      var partnerLeft = partnerEntry.x;
-      var partnerRight = partnerEntry.x + partnerEntry.box.width;
-      
-      // Only force 'left' if the partner is entirely to the left
-      if (partnerRight < myLeft + 18) return 'left';
-      // Only force 'right' if the partner is entirely to the right
-      if (partnerLeft > myRight - 18) return 'right';
-      
-      // If they overlap horizontally, fallback to the preferred/default side to avoid crossing inward facing ports
+      if (partnerCenterX === null || partnerCenterX === undefined) return preferred;
+      var centerX = entry.x + entry.box.width / 2;
+      if (partnerCenterX < centerX - 18) return 'left';
+      if (partnerCenterX > centerX + 18) return 'right';
       return preferred;
     }
     function rebuildDesiredPortY(useActualPartnerPorts) {
@@ -6646,19 +6626,19 @@
       var newRightPorts = [];
       for (var pidx = 0; pidx < pe.comp.ports.length; pidx++) {
         var portDef = pe.comp.ports[pidx];
-        var partnerEntry = null;
+        var partnerCenterX = null;
         for (var cpi = 0; cpi < connectors.length; cpi++) {
           var connHint = connectors[cpi];
           if (connHint.from === pn && connHint.fromPort === portDef.alias && entries[connHint.to]) {
-            partnerEntry = entries[connHint.to];
+            partnerCenterX = entries[connHint.to].x + entries[connHint.to].box.width / 2;
             break;
           }
           if (connHint.to === pn && connHint.toPort === portDef.alias && entries[connHint.from]) {
-            partnerEntry = entries[connHint.from];
+            partnerCenterX = entries[connHint.from].x + entries[connHint.from].box.width / 2;
             break;
           }
         }
-        var side = chooseInitialPortSide(pe, portDef, partnerEntry);
+        var side = chooseInitialPortSide(pe, portDef, partnerCenterX);
         if (side === 'left') newLeftPorts.push(portDef.alias);
         else newRightPorts.push(portDef.alias);
       }
@@ -7780,20 +7760,7 @@
           apply: null
         });
         if (otherEntry && (sideAnchor.side === 'left' || sideAnchor.side === 'right')) {
-          var eMin = entry.y + COMPONENT_SIDE_ANCHOR_PAD;
-          var eMax = entry.y + entry.box.height - COMPONENT_SIDE_ANCHOR_PAD;
-          var oMin = otherEntry.y + COMPONENT_SIDE_ANCHOR_PAD;
-          var oMax = otherEntry.y + otherEntry.box.height - COMPONENT_SIDE_ANCHOR_PAD;
-          var overlapMin = Math.max(eMin, oMin);
-          var overlapMax = Math.min(eMax, oMax);
-          
-          var preferredAnchorY;
-          if (overlapMax >= overlapMin) {
-            preferredAnchorY = (overlapMin + overlapMax) / 2;
-          } else {
-            preferredAnchorY = Math.max(eMin, Math.min(eMax, otherEntry.y + otherEntry.box.height / 2));
-          }
-
+          var preferredAnchorY = Math.max(entry.y + COMPONENT_SIDE_ANCHOR_PAD, Math.min(entry.y + entry.box.height - COMPONENT_SIDE_ANCHOR_PAD, otherEntry.y + otherEntry.box.height / 2));
           pushCandidate({
             x: sideAnchor.x,
             y: preferredAnchorY,
@@ -7804,20 +7771,7 @@
           });
         }
         if (otherEntry && (sideAnchor.side === 'top' || sideAnchor.side === 'bottom')) {
-          var eMinX = entry.x + COMPONENT_SIDE_ANCHOR_PAD;
-          var eMaxX = entry.x + entry.box.width - COMPONENT_SIDE_ANCHOR_PAD;
-          var oMinX = otherEntry.x + COMPONENT_SIDE_ANCHOR_PAD;
-          var oMaxX = otherEntry.x + otherEntry.box.width - COMPONENT_SIDE_ANCHOR_PAD;
-          var overlapMinX = Math.max(eMinX, oMinX);
-          var overlapMaxX = Math.min(eMaxX, oMaxX);
-          
-          var preferredAnchorX;
-          if (overlapMaxX >= overlapMinX) {
-            preferredAnchorX = (overlapMinX + overlapMaxX) / 2;
-          } else {
-            preferredAnchorX = Math.max(eMinX, Math.min(eMaxX, otherEntry.x + otherEntry.box.width / 2));
-          }
-
+          var preferredAnchorX = Math.max(entry.x + COMPONENT_SIDE_ANCHOR_PAD, Math.min(entry.x + entry.box.width - COMPONENT_SIDE_ANCHOR_PAD, otherEntry.x + otherEntry.box.width / 2));
           pushCandidate({
             x: preferredAnchorX,
             y: sideAnchor.y,
