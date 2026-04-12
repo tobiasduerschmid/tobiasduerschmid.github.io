@@ -1322,57 +1322,116 @@
       }
     });
 
-    // 5. Crossing Minimization (Barycenter)
+    // 5. Crossing Minimization (Barycenter + Median, best-of-N)
     var pos = {};
     layerGroups.forEach(function(g, l) {
       if (!g) return;
       g.forEach(function(u, i) { pos[u] = i; });
     });
 
-    for (var pass = 0; pass < 6; pass++) {
-      if (pass % 2 === 0) { // Forward
+    // Count edge crossings between two adjacent layers
+    function countCrossings(l1, l2) {
+      if (!l1 || !l2) return 0;
+      var c = 0;
+      for (var i = 0; i < l1.length; i++) {
+        for (var j = i + 1; j < l1.length; j++) {
+          var t1 = adj[l1[i]] ? adj[l1[i]].filter(function(v) { return l2.indexOf(v) !== -1; }) : [];
+          var t2 = adj[l1[j]] ? adj[l1[j]].filter(function(v) { return l2.indexOf(v) !== -1; }) : [];
+          for (var ti = 0; ti < t1.length; ti++)
+            for (var tj = 0; tj < t2.length; tj++)
+              if (pos[t1[ti]] > pos[t2[tj]]) c++;
+        }
+      }
+      return c;
+    }
+    function totalCrossings() {
+      var t = 0;
+      for (var l = 0; l < layerMax; l++)
+        if (layerGroups[l] && layerGroups[l+1]) t += countCrossings(layerGroups[l], layerGroups[l+1]);
+      return t;
+    }
+
+    // Median of neighbor positions
+    function medianOf(neighbors) {
+      if (neighbors.length === 0) return -1;
+      var ps = neighbors.map(function(v) { return pos[v]; }).sort(function(a,b) { return a - b; });
+      if (ps.length % 2 === 1) return ps[Math.floor(ps.length / 2)];
+      return (ps[Math.floor(ps.length / 2) - 1] + ps[Math.floor(ps.length / 2)]) / 2;
+    }
+
+    // Save best ordering found
+    var bestPos = {}; for (var bp0 in pos) bestPos[bp0] = pos[bp0];
+    var bestCrossings = totalCrossings();
+    var bestOrders = [];
+    for (var bl0 = 0; bl0 <= layerMax; bl0++)
+      bestOrders[bl0] = layerGroups[bl0] ? layerGroups[bl0].slice() : null;
+
+    for (var pass = 0; pass < 16; pass++) {
+      var useMedian = pass >= 8; // barycenter first 8, median next 8
+      if (pass % 2 === 0) { // Forward sweep
         for (var l = 1; l <= layerMax; l++) {
           if (!layerGroups[l] || !layerGroups[l-1]) continue;
           var g = layerGroups[l];
-          var bary = {};
+          var score = {};
           g.forEach(function(u) {
-            var sum = 0, count = 0;
-            // find predecessors in l-1
+            var preds = [];
             layerGroups[l-1].forEach(function(v) {
-              if (adj[v] && adj[v].indexOf(u) !== -1) {
-                sum += pos[v]; count++;
-              }
+              if (adj[v] && adj[v].indexOf(u) !== -1) preds.push(v);
             });
-            bary[u] = count > 0 ? sum / count : pos[u];
+            if (useMedian) {
+              var m = medianOf(preds);
+              score[u] = m >= 0 ? m : pos[u];
+            } else {
+              var sum = 0;
+              for (var pi = 0; pi < preds.length; pi++) sum += pos[preds[pi]];
+              score[u] = preds.length > 0 ? sum / preds.length : pos[u];
+            }
           });
-          g.sort(function(a,b) { return bary[a] - bary[b]; });
+          g.sort(function(a,b) { return score[a] - score[b]; });
           g.forEach(function(u, i) { pos[u] = i; });
         }
-      } else { // Backward
+      } else { // Backward sweep
         for (var l = layerMax - 1; l >= 0; l--) {
           if (!layerGroups[l] || !layerGroups[l+1]) continue;
           var g = layerGroups[l];
-          var bary = {};
+          var score = {};
           g.forEach(function(u) {
-            var sum = 0, count = 0;
-            if (adj[u]) {
-              adj[u].forEach(function(v) {
-                if (pos[v] !== undefined) {
-                  sum += pos[v]; count++;
-                }
-              });
+            var succs = adj[u] ? adj[u].filter(function(v) { return pos[v] !== undefined; }) : [];
+            if (useMedian) {
+              var m = medianOf(succs);
+              score[u] = m >= 0 ? m : pos[u];
+            } else {
+              var sum = 0;
+              for (var si = 0; si < succs.length; si++) sum += pos[succs[si]];
+              score[u] = succs.length > 0 ? sum / succs.length : pos[u];
             }
-            bary[u] = count > 0 ? sum / count : pos[u];
           });
-          g.sort(function(a,b) { return bary[a] - bary[b]; });
+          g.sort(function(a,b) { return score[a] - score[b]; });
           g.forEach(function(u, i) { pos[u] = i; });
         }
       }
+      // Keep best
+      var cur = totalCrossings();
+      if (cur < bestCrossings) {
+        bestCrossings = cur;
+        for (var bpi in pos) bestPos[bpi] = pos[bpi];
+        for (var bli = 0; bli <= layerMax; bli++)
+          bestOrders[bli] = layerGroups[bli] ? layerGroups[bli].slice() : null;
+      }
     }
+    // Restore best ordering
+    for (var ri in bestPos) pos[ri] = bestPos[ri];
+    for (var rli = 0; rli <= layerMax; rli++)
+      if (bestOrders[rli]) layerGroups[rli] = bestOrders[rli];
 
-    // 6. X-Coordinate Assignment (Simple packing)
+    // 6. X-Coordinate Assignment (per-node priority alignment)
+    //    Phase 1: initial packing (left-to-right, compute sizes)
+    //    Phase 2: top-down per-node alignment under parent centers
+    //    Phase 3: overlap removal (forward pass)
     var coords = {}; // id -> {x, y, w, h}
     var currentY = 0;
+
+    // Phase 1: initial left-to-right packing + Y assignment
     for (var l = 0; l <= layerMax; l++) {
       if (!layerGroups[l]) continue;
       var currentX = 0;
@@ -1384,34 +1443,31 @@
         currentX += w + gapX;
         layerH = Math.max(layerH, h);
       });
-      
-      // Center the layer based on the previous layer's center of mass to create nicer trees
-      if (l > 0 && layerGroups[l-1]) {
-        var idealX = 0, idealCount = 0;
-        layerGroups[l].forEach(function(u) {
-           layerGroups[l-1].forEach(function(v) {
-             if (adj[v] && adj[v].indexOf(u) !== -1) {
-               idealX += coords[v].x + coords[v].w/2;
-               idealCount++;
-             }
-           });
-        });
-        if (idealCount > 0) {
-          idealX /= idealCount;
-          var layerCentX = (coords[layerGroups[l][0]].x + coords[layerGroups[l][layerGroups[l].length-1]].x + coords[layerGroups[l][layerGroups[l].length-1]].w) / 2;
-          var shift = idealX - layerCentX;
-          layerGroups[l].forEach(function(u) { coords[u].x += shift; });
-        }
-      }
-
       var cMaxY = currentY + layerH;
       layerGroups[l].forEach(function(u) {
-         coords[u].y = currentY; // Top aligned
+         coords[u].y = currentY;
       });
       currentY = cMaxY + gapY;
     }
 
-    // Ensure no overlapping horizontally if shifted (Overlap removal)
+    // Phase 2: per-node ideal X based on parent centers (top-down)
+    for (var l = 1; l <= layerMax; l++) {
+      if (!layerGroups[l] || !layerGroups[l-1]) continue;
+      layerGroups[l].forEach(function(u) {
+        var parentCxs = [];
+        layerGroups[l-1].forEach(function(v) {
+          if (adj[v] && adj[v].indexOf(u) !== -1) {
+            parentCxs.push(coords[v].x + coords[v].w / 2);
+          }
+        });
+        if (parentCxs.length > 0) {
+          var avgCx = parentCxs.reduce(function(s, v) { return s + v; }, 0) / parentCxs.length;
+          coords[u].x = avgCx - coords[u].w / 2;
+        }
+      });
+    }
+
+    // Phase 3: overlap removal (forward pass, enforces min gap)
     for (var l = 0; l <= layerMax; l++) {
       if (!layerGroups[l]) continue;
       var g = layerGroups[l];
@@ -1426,10 +1482,55 @@
       }
     }
 
+    // 6b. Symmetry Enhancement (gentle, order-preserving nudge)
+    //     Nudge nodes toward the center of their connected neighbors
+    //     without ever reordering nodes within a layer.
+    function nudgeRange(nodeId, layer) {
+      // Returns [minX, maxX] this node can move to without reordering
+      var g = layerGroups[layer];
+      if (!g) return null;
+      var idx = g.indexOf(nodeId);
+      if (idx === -1) return null;
+      var lo = idx > 0 ? coords[g[idx - 1]].x + coords[g[idx - 1]].w + gapX : -Infinity;
+      var hi = idx < g.length - 1 ? coords[g[idx + 1]].x - coords[nodeId].w - gapX : Infinity;
+      return [lo, hi];
+    }
+    for (var symPass = 0; symPass < 3; symPass++) {
+      // Bottom-up: nudge parent toward center of children
+      for (var l = layerMax - 1; l >= 0; l--) {
+        if (!layerGroups[l]) continue;
+        layerGroups[l].forEach(function(u) {
+          if (!adj[u] || adj[u].length === 0) return;
+          var childCxs = [];
+          adj[u].forEach(function(v) { if (coords[v]) childCxs.push(coords[v].x + coords[v].w / 2); });
+          if (childCxs.length === 0) return;
+          var target = childCxs.reduce(function(s, v) { return s + v; }, 0) / childCxs.length - coords[u].w / 2;
+          var range = nudgeRange(u, l);
+          if (!range) return;
+          coords[u].x = Math.max(range[0], Math.min(range[1], target));
+        });
+      }
+      // Top-down: nudge child toward center under parents
+      for (var l = 1; l <= layerMax; l++) {
+        if (!layerGroups[l] || !layerGroups[l-1]) continue;
+        layerGroups[l].forEach(function(u) {
+          var parentCxs = [];
+          layerGroups[l-1].forEach(function(v) {
+            if (adj[v] && adj[v].indexOf(u) !== -1) parentCxs.push(coords[v].x + coords[v].w / 2);
+          });
+          if (parentCxs.length === 0) return;
+          var target = parentCxs.reduce(function(s, v) { return s + v; }, 0) / parentCxs.length - coords[u].w / 2;
+          var range = nudgeRange(u, l);
+          if (!range) return;
+          coords[u].x = Math.max(range[0], Math.min(range[1], target));
+        });
+      }
+    }
+
     // 7. Route Edges
     var resultNodes = {};
     var resultEdges = [];
-    
+
     nodes.forEach(function(n) {
       resultNodes[n.id] = { x: coords[n.id].x, y: coords[n.id].y, width: coords[n.id].w, height: coords[n.id].h, data: n.data };
     });
