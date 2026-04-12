@@ -17,6 +17,75 @@ The **Façade Pattern** provides a unified interface to a set of interfaces in a
 
 In the Home Theater example, we create a `HomeTheaterFacade`. Instead of the client calling twelve different methods on six different objects, the client calls one high-level method: `watchMovie()`. The Façade object then handles the "dirty work" of delegating those requests to the underlying subsystems. This creates a single point of use for the entire component, effectively hiding the complex "how" of the implementation from the outside world.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class Client
+class Facade {
+	+ operation(): void
+}
+class SubsystemA {
+	+ stepA(): void
+}
+class SubsystemB {
+	+ stepB(): void
+}
+class SubsystemC {
+	+ stepC(): void
+}
+Client --> Facade : uses >
+Facade --> SubsystemA
+Facade --> SubsystemB
+Facade --> SubsystemC
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class MovieNightClient
+class HomeTheaterFacade {
+	+ watchMovie(title: String): void
+	+ endMovie(): void
+}
+class Amplifier
+class Projector
+class StreamingPlayer
+class TheaterLights
+class Screen
+class PopcornPopper
+MovieNightClient --> HomeTheaterFacade
+HomeTheaterFacade --> Amplifier
+HomeTheaterFacade --> Projector
+HomeTheaterFacade --> StreamingPlayer
+HomeTheaterFacade --> TheaterLights
+HomeTheaterFacade --> Screen
+HomeTheaterFacade --> PopcornPopper
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: MovieNightClient
+participant facade: HomeTheaterFacade
+participant lights: TheaterLights
+participant screen: Screen
+participant projector: Projector
+participant amp: Amplifier
+participant player: StreamingPlayer
+participant popper: PopcornPopper
+client -> facade: watchMovie("Raiders")
+activate facade
+facade -> popper: on()
+facade -> lights: dim(10)
+facade -> screen: down()
+facade -> projector: on()
+facade -> amp: on()
+facade -> player: play("Raiders")
+deactivate facade
+@enduml'></div>
+
 # Consequences
 Applying the Façade pattern leads to several architectural benefits and trade-offs:
 *   **Simplified Interface:** The primary intent of a Façade is to simplify the interface for the client.

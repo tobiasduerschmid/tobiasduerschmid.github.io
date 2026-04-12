@@ -33,6 +33,106 @@ When the *Subject*'s state changes, it iterates through its list of attached *Ob
 
 This creates a loosely coupled system: the *Subject* only knows that its *Observers* implement a specific interface, not their concrete implementation details.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+interface Subject {
+	+ attach(observer: Observer): void
+	+ detach(observer: Observer): void
+	+ notifyObservers(): void
+}
+interface Observer {
+	+ update(): void
+}
+class ConcreteSubject {
+	- subjectState: String
+	+ getState(): String
+	+ setState(value: String): void
+}
+class ConcreteObserver {
+	- subject: ConcreteSubject
+	- observerState: String
+	+ update(): void
+}
+ConcreteSubject ..|> Subject
+ConcreteObserver ..|> Observer
+Subject "1" -- "0..*" Observer : observers
+ConcreteObserver --> ConcreteSubject : subject
+note right of Subject.notifyObservers
+	for each o in observers {
+		o.update()
+	}
+end note
+note bottom of ConcreteObserver.update
+	observerState =
+	subject.getState()
+end note
+note bottom of ConcreteSubject.getState: getState() returns subjectState
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+class NewsChannel {
+	- latestPost: String
+	- subscribers: List<Subscriber>
+	+ follow(subscriber: Subscriber): void
+	+ unfollow(subscriber: Subscriber): void
+	+ publishPost(text: String): void
+	+ getLatestPost(): String
+}
+interface Subscriber {
+	+ update(): void
+}
+class MobileApp {
+	- channel: NewsChannel
+	+ update(): void
+}
+class EmailDigest {
+	- channel: NewsChannel
+	+ update(): void
+}
+NewsChannel "1" -- "0..*" Subscriber : subscribers
+MobileApp ..|> Subscriber
+EmailDigest ..|> Subscriber
+MobileApp --> NewsChannel : channel
+EmailDigest --> NewsChannel : channel
+note right of NewsChannel.publishPost
+	publishPost() updates
+	all subscribers
+end note
+note bottom of EmailDigest.update
+	Concrete subscribers pull only
+	the state they need
+end note
+@enduml'></div>
+
+## Sequence Diagram
+
+This pattern is fundamentally about runtime collaboration, so a sequence diagram is helpful here.
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant creator: ContentCreator
+participant channel: NewsChannel
+participant app: MobileApp
+participant email: EmailDigest
+creator -> channel: publishPost("New video")
+activate channel
+channel -> app: update()
+activate app
+app -> channel: getLatestPost()
+channel --> app: latestPost
+deactivate app
+channel -> email: update()
+activate email
+email -> channel: getLatestPost()
+channel --> email: latestPost
+deactivate email
+deactivate channel
+@enduml'></div>
+
 # Design Decisions
 
 ## Push vs. Pull Model: 

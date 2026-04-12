@@ -27,6 +27,72 @@ According to the **course material**, there are four key roles in this structure
 
 In the "Turkey that wants to be a Duck" example, we create a `TurkeyAdapter` that implements the `Duck` interface. When the client calls `quack()` on the adapter, the adapter internally calls `gobble()` on the wrapped turkey object. This syntactic translation effectively hides the underlying implementation from the client.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class Client
+interface Target {
+	+ request(): void
+}
+class Adapter {
+	- adaptee: Adaptee
+	+ request(): void
+}
+class Adaptee {
+	+ specificRequest(): void
+}
+Client --> Target : uses >
+Adapter ..|> Target
+Adapter --> Adaptee : translates to
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class DuckSimulator
+interface Duck {
+	+ quack(): void
+	+ fly(): void
+}
+interface Turkey {
+	+ gobble(): void
+	+ flyShort(): void
+}
+class TurkeyAdapter {
+	- turkey: Turkey
+	+ quack(): void
+	+ fly(): void
+}
+class WildTurkey {
+	+ gobble(): void
+	+ flyShort(): void
+}
+DuckSimulator --> Duck : expects >
+TurkeyAdapter ..|> Duck
+WildTurkey ..|> Turkey
+TurkeyAdapter --> Turkey : wraps
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant simulator: DuckSimulator
+participant adapter: TurkeyAdapter
+participant turkey: WildTurkey
+simulator -> adapter: quack()
+activate adapter
+adapter -> turkey: gobble()
+deactivate adapter
+simulator -> adapter: fly()
+activate adapter
+loop 5 short bursts
+adapter -> turkey: flyShort()
+end
+deactivate adapter
+@enduml'></div>
+
 # Consequences
 Applying the Adapter pattern results in several significant architectural trade-offs:
 *   **Loose Coupling:** It decouples the client from the legacy or vendor code. The client only knows the Target interface, allowing the Adaptee to evolve independently without breaking the client code.

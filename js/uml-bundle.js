@@ -582,17 +582,44 @@
 
   function resolveNodeTarget(targetName, entries) {
     if (!targetName) return null;
-    var cleanTarget = targetName.replace(/^"|"$/g, '').split('.')[0];
-    if (entries[cleanTarget]) {
-      var entry = entries[cleanTarget];
-      return { x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height };
+
+    var cleanTarget = targetName.replace(/^"|"$/g, '').trim();
+    var dotIdx = cleanTarget.indexOf('.');
+    var baseTarget = dotIdx === -1 ? cleanTarget : cleanTarget.substring(0, dotIdx).trim();
+    var memberTarget = dotIdx === -1 ? '' : cleanTarget.substring(dotIdx + 1).trim();
+
+    function rectForEntry(entry) {
+      return entry ? { x: entry.x, y: entry.y, w: entry.box.width, h: entry.box.height } : null;
     }
-    for (var key in entries) {
-      var ent = entries[key];
-      if ((ent.node && ent.node.label === cleanTarget) ||
-          (ent.state && ent.state.name === cleanTarget) ||
-          (ent.comp && ent.comp.name === cleanTarget)) {
-        return { x: ent.x, y: ent.y, w: ent.box.width, h: ent.box.height };
+
+    function resolveMemberRect(entry, memberName) {
+      if (!entry || !entry.noteTargets || !memberName) return null;
+      if (entry.noteTargets[memberName]) return entry.noteTargets[memberName];
+
+      var lower = memberName.toLowerCase();
+      for (var key in entry.noteTargets) {
+        if (Object.prototype.hasOwnProperty.call(entry.noteTargets, key) && key.toLowerCase() === lower) {
+          return entry.noteTargets[key];
+        }
+      }
+      return null;
+    }
+
+    function matchesEntry(entry, name) {
+      return (entry.node && entry.node.label === name) ||
+        (entry.state && entry.state.name === name) ||
+        (entry.comp && entry.comp.name === name) ||
+        (entry.cls && entry.cls.name === name);
+    }
+
+    if (entries[baseTarget]) {
+      return resolveMemberRect(entries[baseTarget], memberTarget) || rectForEntry(entries[baseTarget]);
+    }
+    for (var entryKey in entries) {
+      if (!Object.prototype.hasOwnProperty.call(entries, entryKey)) continue;
+      var ent = entries[entryKey];
+      if (matchesEntry(ent, baseTarget)) {
+        return resolveMemberRect(ent, memberTarget) || rectForEntry(ent);
       }
     }
     return null;
@@ -1616,6 +1643,7 @@
     var directedEdges = [];
     edges.forEach(function(e) {
       if (!nodeMap[e.source] || !nodeMap[e.target]) return;
+      if (e.layerParticipates === false || (e.data && e.data.layerParticipates === false)) return;
       var src = e.source, tgt = e.target;
 
       // Inheritance: target is upper, source is lower
@@ -2323,9 +2351,16 @@
 
     // Determine if method (has parentheses)
     var isMethod = line.indexOf('(') !== -1;
+    var memberName = '';
+    if (isMethod) {
+      memberName = line.split('(')[0].trim();
+    } else {
+      memberName = line.split(':')[0].trim();
+    }
 
     return {
       text: (visibility ? visibility : '') + line,
+      name: memberName,
       visibility: visibility,
       isMethod: isMethod,
       isAbstract: isAbstract,
@@ -2504,6 +2539,94 @@
     };
   }
 
+  function buildMemberNoteTargets(entry) {
+    if (!entry || !entry.cls || !entry.box) return {};
+
+    var cls = entry.cls;
+    var box = entry.box;
+    var targets = {};
+    var rowInset = 4;
+    var attrBaseY = entry.y + box.nameH + CFG.padY;
+    var methBaseY = entry.y + box.nameH + box.attrH + CFG.padY;
+
+    for (var ai = 0; ai < cls.attributes.length; ai++) {
+      var attr = cls.attributes[ai];
+      if (!attr || !attr.name) continue;
+      targets[attr.name] = {
+        x: entry.x + rowInset,
+        y: attrBaseY + ai * CFG.lineHeight,
+        w: Math.max(10, box.width - rowInset * 2),
+        h: CFG.lineHeight
+      };
+    }
+
+    for (var mi = 0; mi < cls.methods.length; mi++) {
+      var meth = cls.methods[mi];
+      if (!meth || !meth.name) continue;
+      targets[meth.name] = {
+        x: entry.x + rowInset,
+        y: methBaseY + mi * CFG.lineHeight,
+        w: Math.max(10, box.width - rowInset * 2),
+        h: CFG.lineHeight
+      };
+    }
+
+    return targets;
+  }
+
+  function pushOrthogonalSegment(segments, x1, y1, x2, y2) {
+    var length = Math.abs(x2 - x1) + Math.abs(y2 - y1);
+    if (length < 4) return;
+    if (Math.abs(y2 - y1) < 1) {
+      segments.push({
+        segmentIndex: segments.length,
+        isH: true,
+        length: length,
+        x1: Math.min(x1, x2),
+        x2: Math.max(x1, x2),
+        y: y1
+      });
+    } else if (Math.abs(x2 - x1) < 1) {
+      segments.push({
+        segmentIndex: segments.length,
+        isH: false,
+        length: length,
+        x: x1,
+        y1: Math.min(y1, y2),
+        y2: Math.max(y1, y2)
+      });
+    }
+  }
+
+  function segmentObstacleRect(segment, pad) {
+    var inset = typeof pad === 'number' ? pad : 10;
+    if (!segment) return null;
+    if (segment.isH) {
+      return {
+        x: segment.x1 - inset,
+        y: segment.y - inset,
+        w: Math.max(1, segment.x2 - segment.x1) + inset * 2,
+        h: inset * 2
+      };
+    }
+    return {
+      x: segment.x - inset,
+      y: segment.y1 - inset,
+      w: inset * 2,
+      h: Math.max(1, segment.y2 - segment.y1) + inset * 2
+    };
+  }
+
+  function pointObstacleRect(x, y, pad) {
+    var inset = typeof pad === 'number' ? pad : 10;
+    return {
+      x: x - inset,
+      y: y - inset,
+      w: inset * 2,
+      h: inset * 2
+    };
+  }
+
 
   /**
    * Compute layout positions for all class boxes using AdvancedAlgorithmic framework.
@@ -2512,6 +2635,10 @@
     var classes = parsed.classes;
     var relationships = parsed.relationships;
     if (classes.length === 0) return { entries: {}, width: 0, height: 0, offsetX: 0, offsetY: 0 };
+
+    var hasHierarchyEdges = relationships.some(function(rel) {
+      return rel.type === 'generalization' || rel.type === 'realization';
+    });
 
     var entries = {};
     var layoutNodes = [];
@@ -2533,7 +2660,13 @@
     // Construct edge input
     for (var r = 0; r < relationships.length; r++) {
       var rel = relationships[r];
-      layoutEdges.push({ source: rel.from, target: rel.to, type: rel.type, data: rel });
+      layoutEdges.push({
+        source: rel.from,
+        target: rel.to,
+        type: rel.type,
+        data: rel,
+        layerParticipates: !hasHierarchyEdges || rel.type === 'generalization' || rel.type === 'realization'
+      });
     }
 
     // Use advanced constraints engine
@@ -2550,10 +2683,6 @@
       neededW = Math.max(neededW, multW + 20);
       effectiveGapX = Math.max(effectiveGapX, neededW);
     }
-
-    var hasHierarchyEdges = relationships.some(function(rel) {
-      return rel.type === 'generalization' || rel.type === 'realization';
-    });
 
     var layoutPreference = parsed.layoutPreference || null;
     var effectiveDirection = parsed.direction || 'TB';
@@ -2590,6 +2719,7 @@
       if (!entries[n]) continue;
       entries[n].x = result.nodes[n].x;
       entries[n].y = result.nodes[n].y;
+      if (entries[n].cls) entries[n].noteTargets = buildMemberNoteTargets(entries[n]);
       
       minX = Math.min(minX, entries[n].x);
       minY = Math.min(minY, entries[n].y);
@@ -2618,34 +2748,12 @@
     var entries = layout.entries;
     var relationships = parsed.relationships;
 
-    // Resolve note target — supports ClassName or ClassName.memberName
-
-    // Pre-compute note positions so SVG bounds can be expanded
-    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
-
-    // Expand SVG bounds to fit notes
-    var extraLeft = 0, extraRight = 0, extraTop = 0, extraBottom = 0;
-    for (var nbi = 0; nbi < notePositions.length; nbi++) {
-      var np = notePositions[nbi];
-      var minNX = np.x - CFG.svgPad;
-      var maxNX = np.x + np.w + CFG.svgPad;
-      var minNY = np.y - CFG.svgPad;
-      var maxNY = np.y + np.h + CFG.svgPad;
-      if (minNX < -layout.offsetX) extraLeft = Math.max(extraLeft, -layout.offsetX - minNX);
-      if (maxNX > layout.width - layout.offsetX) extraRight = Math.max(extraRight, maxNX - (layout.width - layout.offsetX));
-      if (minNY < -layout.offsetY) extraTop = Math.max(extraTop, -layout.offsetY - minNY);
-      if (maxNY > layout.height - layout.offsetY) extraBottom = Math.max(extraBottom, maxNY - (layout.height - layout.offsetY));
-    }
-
-    var ox = layout.offsetX + CFG.svgPad + extraLeft;
-    var oy = layout.offsetY + CFG.svgPad + extraTop;
-    var svgW = layout.width + CFG.svgPad * 2 + extraLeft + extraRight;
-    var svgH = layout.height + CFG.svgPad * 2 + extraTop + extraBottom;
-
     var svg = [];
     var labelSvg = [];
     var placedLabels = [];
     var placedRouteSegments = [];
+    var noteRouteSegments = [];
+    var noteMarkerObstacles = [];
     var classObstacles = [];
     for (var obstacleName in entries) {
       if (!Object.prototype.hasOwnProperty.call(entries, obstacleName)) continue;
@@ -2657,7 +2765,6 @@
         y2: obstacleEntry.y + obstacleEntry.box.height
       });
     }
-    svg.push(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw relationships ──
     var decorSvg = []; // arrowhead decorations drawn after class boxes
@@ -2727,6 +2834,12 @@
       // Hollow triangle at parent bottom (deferred to draw on top of class boxes)
       var triTop = parentBot;
       var triBot = parentBot + CFG.triangleH;
+      noteMarkerObstacles.push({
+        x: parentCx - CFG.triangleW / 2 - 6,
+        y: triTop - 4,
+        w: CFG.triangleW + 12,
+        h: CFG.triangleH + 10
+      });
       decorSvg.push('<polygon points="' +
         parentCx + ',' + triTop + ' ' +
         (parentCx - CFG.triangleW / 2) + ',' + triBot + ' ' +
@@ -2742,6 +2855,7 @@
           // Aligned: single vertical line
           svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + childCx + '" y2="' + childTop +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          pushOrthogonalSegment(noteRouteSegments, parentCx, triBot, childCx, childTop);
         } else {
           // Not aligned: vertical from triangle, horizontal jog, vertical to child
           var junctionY = (triBot + childTop) / 2;
@@ -2751,6 +2865,9 @@
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
           svg.push('<line x1="' + childCx + '" y1="' + junctionY + '" x2="' + childCx + '" y2="' + childTop +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          pushOrthogonalSegment(noteRouteSegments, parentCx, triBot, parentCx, junctionY);
+          pushOrthogonalSegment(noteRouteSegments, parentCx, junctionY, childCx, junctionY);
+          pushOrthogonalSegment(noteRouteSegments, childCx, junctionY, childCx, childTop);
         }
       } else {
         // Multiple children: shared-target
@@ -2767,12 +2884,14 @@
         // Trunk: triangle bottom to junction
         svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + parentCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        pushOrthogonalSegment(noteRouteSegments, parentCx, triBot, parentCx, junctionY);
 
         // Horizontal bar at junction
         var leftCx = Math.min.apply(null, childCxArr.concat([parentCx]));
         var rightCx = Math.max.apply(null, childCxArr.concat([parentCx]));
         svg.push('<line x1="' + leftCx + '" y1="' + junctionY + '" x2="' + rightCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+        pushOrthogonalSegment(noteRouteSegments, leftCx, junctionY, rightCx, junctionY);
 
         // Vertical stems from junction to each child
         for (var ci2 = 0; ci2 < group.children.length; ci2++) {
@@ -2780,6 +2899,7 @@
           var cx = childCxArr[ci2];
           svg.push('<line x1="' + cx + '" y1="' + junctionY + '" x2="' + cx + '" y2="' + ch2.y +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
+          pushOrthogonalSegment(noteRouteSegments, cx, junctionY, cx, ch2.y);
         }
       }
     }
@@ -2896,8 +3016,10 @@
       // Source decorations (deferred to draw on top of class boxes)
       if (orel.type === 'composition') {
         UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, colors.line, true, colors.fill);
+        noteMarkerObstacles.push(pointObstacleRect(p0.x + startDx * CFG.diamondH / 2, p0.y + startDy * CFG.diamondH / 2, CFG.diamondH));
       } else if (orel.type === 'aggregation') {
         UMLShared.drawDiamond(decorSvg, p0.x, p0.y, startDx, startDy, colors.line, false, colors.fill);
+        noteMarkerObstacles.push(pointObstacleRect(p0.x + startDx * CFG.diamondH / 2, p0.y + startDy * CFG.diamondH / 2, CFG.diamondH));
       }
 
       if (orel.navigability === 'bidirectional') {
@@ -2909,15 +3031,19 @@
           sourceArrowY += startDy * markerOffset;
         }
         UMLShared.drawOpenArrow(decorSvg, sourceArrowX, sourceArrowY, startDx, startDy, colors.line);
+        noteMarkerObstacles.push(pointObstacleRect(sourceArrowX, sourceArrowY, CFG.arrowSize + 6));
       } else if (orel.navigability === 'non-navigable-both') {
         UMLShared.drawCrossMarker(decorSvg, p0.x, p0.y, startDx, startDy, colors.line);
+        noteMarkerObstacles.push(pointObstacleRect(p0.x, p0.y, CFG.arrowSize + 6));
       }
 
       // Target decorations (deferred to draw on top of class boxes)
       if (orel.type === 'dependency' || orel.type === 'navigable' || orel.navigability === 'navigable' || orel.navigability === 'bidirectional') {
         UMLShared.drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
+        noteMarkerObstacles.push(pointObstacleRect(pLast.x, pLast.y, CFG.arrowSize + 6));
       } else if (orel.navigability === 'non-navigable' || orel.navigability === 'non-navigable-both') {
         UMLShared.drawCrossMarker(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
+        noteMarkerObstacles.push(pointObstacleRect(pLast.x, pLast.y, CFG.arrowSize + 6));
       }
 
       // Determine if the first/last segment is horizontal or vertical
@@ -3006,6 +3132,7 @@
       }
 
       placedRouteSegments = placedRouteSegments.concat(routeSegments);
+      noteRouteSegments = noteRouteSegments.concat(routeSegments);
     }
 
     // ── Draw class boxes (on top of lines) ──
@@ -3099,6 +3226,40 @@
 
     // ── Draw relationship labels on top of lines and class boxes ──
     for (var lsi = 0; lsi < labelSvg.length; lsi++) svg.push(labelSvg[lsi]);
+
+    var noteObstacles = [];
+    for (var noi = 0; noi < placedLabels.length; noi++) noteObstacles.push(placedLabels[noi]);
+    for (var nri = 0; nri < noteRouteSegments.length; nri++) {
+      var routeObstacle = segmentObstacleRect(noteRouteSegments[nri], 12);
+      if (routeObstacle) noteObstacles.push(routeObstacle);
+    }
+    for (var nmi = 0; nmi < noteMarkerObstacles.length; nmi++) noteObstacles.push(noteMarkerObstacles[nmi]);
+
+    var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries, noteObstacles, {
+      gap: 22,
+      slideStep: 20,
+      distanceLevels: 5,
+      overlapPad: 10
+    });
+
+    var extraLeft = 0, extraRight = 0, extraTop = 0, extraBottom = 0;
+    for (var nbi = 0; nbi < notePositions.length; nbi++) {
+      var np = notePositions[nbi];
+      var minNX = np.x - CFG.svgPad;
+      var maxNX = np.x + np.w + CFG.svgPad;
+      var minNY = np.y - CFG.svgPad;
+      var maxNY = np.y + np.h + CFG.svgPad;
+      if (minNX < -layout.offsetX) extraLeft = Math.max(extraLeft, -layout.offsetX - minNX);
+      if (maxNX > layout.width - layout.offsetX) extraRight = Math.max(extraRight, maxNX - (layout.width - layout.offsetX));
+      if (minNY < -layout.offsetY) extraTop = Math.max(extraTop, -layout.offsetY - minNY);
+      if (maxNY > layout.height - layout.offsetY) extraBottom = Math.max(extraBottom, maxNY - (layout.height - layout.offsetY));
+    }
+
+    var ox = layout.offsetX + CFG.svgPad + extraLeft;
+    var oy = layout.offsetY + CFG.svgPad + extraTop;
+    var svgW = layout.width + CFG.svgPad * 2 + extraLeft + extraRight;
+    var svgH = layout.height + CFG.svgPad * 2 + extraTop + extraBottom;
+    svg.unshift(UMLShared.svgOpen(svgW, svgH, ox, oy, CFG.fontFamily));
 
     // ── Draw notes (using pre-computed positions) ──
     for (var ni = 0; ni < notePositions.length; ni++) {

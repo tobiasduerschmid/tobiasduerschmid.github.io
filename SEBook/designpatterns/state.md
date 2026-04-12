@@ -25,6 +25,80 @@ Create **Concrete State classes** that inherit from the Abstract State and imple
 
 The only interactions that should be allowed are interactions between the Context and Concrete States. There are no interactions among Concrete State objects.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class Context {
+	- state: State
+	+ request(): void
+	+ setState(state: State): void
+}
+interface State {
+	+ handle(context: Context): void
+}
+class ConcreteStateA {
+	+ handle(context: Context): void
+}
+class ConcreteStateB {
+	+ handle(context: Context): void
+}
+Context --> State : delegates to
+ConcreteStateA ..|> State
+ConcreteStateB ..|> State
+ConcreteStateA --> Context : transition via setState
+ConcreteStateB --> Context : transition via setState
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class GumballMachine {
+	- state: State
+	+ insertQuarter(): void
+	+ turnCrank(): void
+	+ releaseBall(): void
+	+ setState(state: State): void
+}
+interface State {
+	+ insertQuarter(machine: GumballMachine): void
+	+ turnCrank(machine: GumballMachine): void
+}
+class NoQuarterState
+class HasQuarterState
+class SoldState
+GumballMachine --> State : delegates
+NoQuarterState ..|> State
+HasQuarterState ..|> State
+SoldState ..|> State
+NoQuarterState --> GumballMachine : setState(...)
+HasQuarterState --> GumballMachine : releaseBall(), setState(...)
+SoldState --> GumballMachine : setState(...)
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant customer: Customer
+participant machine: GumballMachine
+participant noQuarter: NoQuarterState
+participant hasQuarter: HasQuarterState
+customer -> machine: insertQuarter()
+activate machine
+machine -> noQuarter: insertQuarter(machine)
+activate noQuarter
+noQuarter -> machine: setState(hasQuarter)
+deactivate noQuarter
+customer -> machine: turnCrank()
+machine -> hasQuarter: turnCrank(machine)
+activate hasQuarter
+hasQuarter -> machine: releaseBall()
+hasQuarter -> machine: setState(noQuarter)
+deactivate hasQuarter
+deactivate machine
+@enduml'></div>
+
 # Design Decisions
 
 ## How to let the state make operations on the context object?

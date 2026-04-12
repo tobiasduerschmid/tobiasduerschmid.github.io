@@ -29,6 +29,74 @@ To maintain consistency without introducing tight coupling, MVC relies heavily o
 * Second, the relationship between the View and the Controller utilizes the Strategy pattern. The controller encapsulates the strategy for handling user input, allowing the view to delegate all input response behavior. This allows software engineers to easily swap controllers at runtime if different behavior is required (e.g., swapping a standard controller for a read-only controller).
 * Third, the view often employs the *[Composite](/SEBook/designpatterns/composite.html)* pattern to manage complex, nested user interface elements, such as windows containing panels, which in turn contain buttons.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class Model
+interface Observer {
+    + update(model: Model): void
+}
+class View {
+    + update(model: Model): void
+    + render(): void
+}
+class Controller {
+    + handleInput(): void
+}
+Model "1" -- "0..*" Observer : notifies >
+View ..|> Observer
+View --> Model : reads
+View --> Controller : delegates input
+Controller --> Model : updates
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+class TaskModel {
+    + addTask(task: String): void
+    + getTasks(): List<String>
+}
+interface Observer {
+    + update(model: TaskModel): void
+}
+class TaskView {
+    + update(model: TaskModel): void
+    + showTasks(tasks: List<String>): void
+}
+class TaskController {
+    + addNewTask(task: String): void
+}
+TaskModel "1" -- "0..*" Observer : notifies >
+TaskView ..|> Observer
+TaskView --> TaskModel : reads tasks
+TaskController --> TaskModel : changes state
+TaskView --> TaskController : delegates commands
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant user: User
+participant controller: TaskController
+participant model: TaskModel
+participant view: TaskView
+user -> controller: addNewTask("Learn Observer")
+activate controller
+controller -> model: addTask("Learn Observer")
+activate model
+model -> view: update(model)
+activate view
+view -> model: getTasks()
+model --> view: tasks
+view -> view: showTasks(tasks)
+deactivate view
+deactivate model
+deactivate controller
+@enduml'></div>
+
 
 # Consequences
 

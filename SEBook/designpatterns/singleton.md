@@ -20,6 +20,62 @@ The **Singleton Pattern** solves these issues by ensuring a class has only one i
 2.  **A Static Field:** The class maintains a private static variable (often named `uniqueInstance`) to hold its own single instance.
 3.  **A Static Access Method:** A public static method, typically named `getInstance()`, serves as the sole gateway to the object.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class Singleton {
+	- uniqueInstance: Singleton {static}
+	- Singleton()
+	+ getInstance(): Singleton {static}
+	+ operation(): void
+}
+class ClientA
+class ClientB
+ClientA --> Singleton : getInstance()
+ClientB --> Singleton : getInstance()
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class ChocolateBoiler {
+	- empty: bool
+	- boiled: bool
+	- uniqueInstance: ChocolateBoiler {static}
+	- ChocolateBoiler()
+	+ getInstance(): ChocolateBoiler {static}
+	+ fill(): void
+	+ boil(): void
+	+ drain(): void
+}
+class CandyMaker
+class CleaningCycle
+CandyMaker --> ChocolateBoiler : uses
+CleaningCycle --> ChocolateBoiler : uses
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant maker: CandyMaker
+participant cleaner: CleaningCycle
+participant boiler: ChocolateBoiler
+maker -> boiler: getInstance()
+activate boiler
+boiler --> maker: instance
+deactivate boiler
+cleaner -> boiler: getInstance()
+activate boiler
+boiler --> cleaner: same instance
+deactivate boiler
+maker -> boiler: fill()
+cleaner -> boiler: drain()
+@enduml'></div>
+
 ## Refining the Solution: Thread Safety and Performance
 The "Classic Singleton" implementation uses **lazy instantiation**, checking if the instance is `null` before creating it. However, this is not thread-safe; if two threads call `getInstance()` simultaneously, they might both find the instance to be `null` and create two separate objects. 
 

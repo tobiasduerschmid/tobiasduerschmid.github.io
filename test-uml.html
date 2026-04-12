@@ -325,6 +325,45 @@ note right of Account.withdraw: Throws `InsufficientFundsException`
 @enduml
   </code></pre>
 
+  <h2>10b2. Observer Notes Avoid Relation Endpoints</h2>
+  <pre><code class="language-uml-class">
+@startuml
+layout horizontal
+interface Subject {
+  +attach(observer: Observer): void
+  +detach(observer: Observer): void
+  +notifyObservers(): void
+}
+interface Observer {
+  +update(): void
+}
+class ConcreteSubject {
+  -subjectState: String
+  +getState(): String
+  +setState(value: String): void
+}
+class ConcreteObserver {
+  -subject: ConcreteSubject
+  -observerState: String
+  +update(): void
+}
+ConcreteSubject ..|> Subject
+ConcreteObserver ..|> Observer
+Subject "1" -- "0..*" Observer : observers
+ConcreteObserver --> ConcreteSubject : subject
+note right of Subject.notifyObservers
+  for each o in observers {
+    o.update()
+  }
+end note
+note bottom of ConcreteSubject.getState: getState() returns subjectState
+note bottom of ConcreteObserver.update
+  observerState =
+  subject.getState()
+end note
+@enduml
+  </code></pre>
+
   <h2>10c. Note with Python Syntax Highlighting</h2>
   <pre><code class="language-uml-class">
 @startuml

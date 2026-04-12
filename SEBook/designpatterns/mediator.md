@@ -18,6 +18,77 @@ The **Mediator Pattern** solves this by encapsulating many-to-many communication
 
 The objects (often called "colleagues") tell the Mediator when their state changes. The Mediator then contains all the complex control logic and coordination rules to tell the other objects how to respond. For example, the alarm clock simply tells the Mediator "I've been snoozed," and the Mediator checks the calendar and decides whether to trigger the coffee maker. This reduces the communication structure from N-to-N complex dependencies to a simpler N-to-1 structure.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+interface Mediator {
+	+ notify(sender: Colleague, event: String): void
+}
+abstract class Colleague {
+	- mediator: Mediator
+}
+class ConcreteMediator
+class ColleagueA
+class ColleagueB
+ConcreteMediator ..|> Mediator
+ColleagueA --|> Colleague
+ColleagueB --|> Colleague
+Colleague --> Mediator
+ConcreteMediator --> ColleagueA : coordinates
+ConcreteMediator --> ColleagueB : coordinates
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+interface SmartHomeMediator {
+	+ notify(sender: Object, event: String): void
+}
+class SmartHomeHub
+class AlarmClock {
+	- mediator: SmartHomeMediator
+}
+class CoffeeMaker {
+	- mediator: SmartHomeMediator
+}
+class Calendar {
+	- mediator: SmartHomeMediator
+	+ isWeekday(): bool
+}
+class Sprinkler {
+	- mediator: SmartHomeMediator
+}
+SmartHomeHub ..|> SmartHomeMediator
+AlarmClock --> SmartHomeMediator
+CoffeeMaker --> SmartHomeMediator
+Calendar --> SmartHomeMediator
+Sprinkler --> SmartHomeMediator
+SmartHomeHub --> CoffeeMaker : commands
+SmartHomeHub --> Calendar : queries
+SmartHomeHub --> Sprinkler : commands
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant alarm: AlarmClock
+participant hub: SmartHomeHub
+participant calendar: Calendar
+participant coffee: CoffeeMaker
+participant sprinkler: Sprinkler
+alarm -> hub: notify(this, "alarmRang")
+activate hub
+hub -> calendar: isWeekday()
+activate calendar
+calendar --> hub: true
+deactivate calendar
+hub -> coffee: brew()
+hub -> sprinkler: skipMorningWatering()
+deactivate hub
+@enduml'></div>
+
 # Consequences
 Applying the Mediator pattern involves significant trade-offs:
 *   **Increased Reusability:** Individual objects become more reusable because they make fewer assumptions about the existence of other objects or specific system requirements.

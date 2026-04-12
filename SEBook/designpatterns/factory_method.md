@@ -39,6 +39,69 @@ The structure involves four key roles:
 *   **Creator:** The abstract class that contains the high-level business logic (the "Template Method") and declares the Factory Method.
 *   **Concrete Creator:** The subclass that implements the Factory Method to produce the actual product.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+interface Product {
+    + use(): void
+}
+abstract class Creator {
+    + operation(): void
+    + createProduct(): Product
+}
+class ConcreteCreator
+class ConcreteProduct {
+    + use(): void
+}
+ConcreteCreator --|> Creator
+ConcreteProduct ..|> Product
+Creator --> Product : creates and uses >
+ConcreteCreator --> ConcreteProduct : instantiates
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+abstract class PizzaStore {
+    + orderPizza(type: String): Pizza
+    + createPizza(type: String): Pizza
+}
+abstract class Pizza {
+    + prepare(): void
+    + bake(): void
+    + cut(): void
+    + box(): void
+}
+class NYPizzaStore
+class NYStyleCheesePizza
+NYPizzaStore --|> PizzaStore
+NYStyleCheesePizza --|> Pizza
+PizzaStore --> Pizza : prepares >
+NYPizzaStore --> NYStyleCheesePizza : creates
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant customer: Customer
+participant store: NYPizzaStore
+participant pizza: NYStyleCheesePizza
+customer -> store: orderPizza("cheese")
+activate store
+store -> store: createPizza("cheese")
+store -> pizza: prepare()
+activate pizza
+pizza --> store
+store -> pizza: bake()
+store -> pizza: cut()
+store -> pizza: box()
+store --> customer: pizza
+deactivate pizza
+deactivate store
+@enduml'></div>
+
 # Consequences
 The primary benefit of this pattern is **decoupling**: the high-level "Creator" code is completely oblivious to which "Concrete Product" it is actually using. This allows the system to evolve independently; you can add a `LAPizzaStore` without touching a single line of code in the original `PizzaStore` base class.
 

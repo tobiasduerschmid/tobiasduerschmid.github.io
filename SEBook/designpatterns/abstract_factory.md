@@ -20,6 +20,80 @@ The design pattern involves these roles:
 2.  **Concrete Factories:** Implementing regional subclasses (e.g., `NYPizzaIngredientFactory`) that produce the specific variants of those products.
 3.  **Client:** The client (e.g., the `Pizza` class) no longer knows about specific ingredients. Instead, it is passed an `IngredientFactory` and simply asks for its components, remaining completely oblivious to whether it is receiving New York or Chicago variants.
 
+## UML Role Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+interface AbstractFactory {
+	+ createProductA(): AbstractProductA
+	+ createProductB(): AbstractProductB
+}
+interface AbstractProductA
+interface AbstractProductB
+class ConcreteFactory
+class ConcreteProductA
+class ConcreteProductB
+class Client
+ConcreteFactory ..|> AbstractFactory
+ConcreteProductA ..|> AbstractProductA
+ConcreteProductB ..|> AbstractProductB
+Client --> AbstractFactory : uses >
+ConcreteFactory --> ConcreteProductA : creates
+ConcreteFactory --> ConcreteProductB : creates
+@enduml'></div>
+
+## UML Example Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout landscape
+interface PizzaIngredientFactory {
+	+ createDough(): Dough
+	+ createSauce(): Sauce
+	+ createCheese(): Cheese
+}
+interface Dough
+interface Sauce
+interface Cheese
+class NYPizzaIngredientFactory
+class ThinCrustDough
+class MarinaraSauce
+class ReggianoCheese
+class CheesePizza {
+	- ingredientFactory: PizzaIngredientFactory
+	+ prepare(): void
+}
+NYPizzaIngredientFactory ..|> PizzaIngredientFactory
+ThinCrustDough ..|> Dough
+MarinaraSauce ..|> Sauce
+ReggianoCheese ..|> Cheese
+CheesePizza --> PizzaIngredientFactory : requests family
+NYPizzaIngredientFactory --> ThinCrustDough : creates
+NYPizzaIngredientFactory --> MarinaraSauce : creates
+NYPizzaIngredientFactory --> ReggianoCheese : creates
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant pizza: CheesePizza
+participant factory: NYPizzaIngredientFactory
+participant dough: ThinCrustDough
+participant sauce: MarinaraSauce
+participant cheese: ReggianoCheese
+pizza -> factory: createDough()
+activate factory
+factory --> pizza: dough
+deactivate factory
+pizza -> factory: createSauce()
+activate factory
+factory --> pizza: sauce
+deactivate factory
+pizza -> factory: createCheese()
+activate factory
+factory --> pizza: cheese
+deactivate factory
+@enduml'></div>
+
 # Consequences
 Applying the Abstract Factory pattern results in several significant architectural trade-offs:
 *   **Isolation of Concrete Classes:** It decouples the client code from the actual factory and product implementations, promoting high information hiding.
