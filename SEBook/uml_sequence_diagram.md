@@ -53,14 +53,65 @@ atm --> customer: (4) promptPIN()
 
 **Notice the flow of time:** Message 1 happens first, then 2, 3, and 4. The vertical dimension is strictly used to represent the passage of time.
 
-> **Stop and Think (Retrieval Practice):** \> If the ATM sent an alert to your phone about a login attempt but didn't wait for you to reply before proceeding, what type of message arrow would represent that alert? *(Think about your answer before reading on).*
->
-> \<details\>
-> \<summary\>\<i\>Reveal Answer\</i\>\</summary\>
-> An asynchronous message, represented by an open/stick arrowhead (-\>), because the ATM does not wait for a response.
-> \</details\>
+> **Stop and Think (Retrieval Practice):** If the ATM sent an alert to your phone about a login attempt but didn't wait for you to reply before proceeding, what type of message arrow would represent that alert? *(Think about your answer before reading on).*
+
+<details>
+<summary><i>Reveal Answer</i></summary>
+An asynchronous message, represented by an open/stick arrowhead, because the ATM does not wait for a response.
+</details>
 
 -----
+
+## Part 1.5: Activation Bars and Object Naming
+
+Now that you understand the basic elements, let's add two important details that appear in real-world sequence diagrams.
+
+### Activation Bars (Execution Specifications)
+
+An **activation bar** (also called an execution specification) is a thin rectangle drawn on a lifeline. It represents the period during which an object is **actively performing an action or behavior**---for example, executing a method. Activation bars can be nested across actors and within a single actor (e.g., when an object calls one of its own methods).
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant passenger: Passenger
+participant station: Station
+participant train: Train
+passenger -> station: pushButton()
+activate station
+station -> train: addStop()
+activate train
+deactivate train
+deactivate station
+train -> train: openDoors()
+activate train
+passenger -> station: pushButton(S)
+activate station
+station -> train: closeDoors()
+activate train
+deactivate train
+deactivate station
+deactivate train
+@enduml'></div>
+
+The blue bars show when each object is actively processing. Notice how the `Station` is active from when it receives `pushButton()` until the `Train` finishes processing `addStop()`.
+
+### Object Naming Convention
+
+Lifelines in sequence diagrams represent specific **object instances**, not classes. The standard naming convention is:
+
+`objectName : ClassName`
+
+- If the specific object name matters: `myCart : ShoppingCart`
+- If only the class matters: `: ShoppingCart` (anonymous instance)
+- Multiple instances of the same class get distinct names: `primary : Server`, `backup : Server`
+
+This is different from class diagrams, which show classes in general. Sequence diagrams show **one particular scenario** of interactions between concrete instances.
+
+### Consistency with Class Diagrams
+
+When you draw both a class diagram and a sequence diagram for the same system, they must be **consistent**:
+- Every message arrow in the sequence diagram must correspond to a method defined in the receiving object's class (or a superclass).
+- The method names, parameter types, and return types must match between the two diagrams.
+
+---
 
 ## Part 2: Adding Logic – Combined Fragments
 
@@ -154,6 +205,151 @@ end
 @enduml'></div>
 
 -----
+
+## Part 4: Combined Fragment Reference
+
+The three fragments above (opt, alt, loop) are the most common, but UML defines additional fragment operators:
+
+| Fragment | Meaning | Code Equivalent |
+|----------|---------|-----------------|
+| **alt** | Alternative branches (mutual exclusion) | `if-else` / `switch` |
+| **opt** | Optional execution if guard is true | `if` (no else) |
+| **loop** | Repeat while guard is true | `while` / `for` loop |
+| **par** | Parallel execution of fragments | Concurrent threads |
+| **region** | Critical region (only one thread at a time) | `synchronized` block |
+
+---
+
+## Part 5: From Code to Diagram
+
+Translating between code and sequence diagrams is a critical skill. Let's work through a progression of examples.
+
+### Example 1: Simple Method Calls
+
+```java
+public class Register {
+    public void method(Sale s) {
+        s.makePayment(cashTendered);
+    }
+}
+public class Sale {
+    public void makePayment(int amount) {
+        Payment p = new Payment(amount);
+        p.authorize();
+    }
+}
+```
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant register: Register
+participant sale: Sale
+participant payment: Payment
+register -> sale: makePayment(cashTendered)
+activate sale
+sale -> payment: create(cashTendered)
+activate payment
+deactivate payment
+sale -> payment: authorize()
+activate payment
+deactivate payment
+deactivate sale
+@enduml'></div>
+
+Notice how the `new Payment(amount)` constructor call in Java becomes a `create` message in the sequence diagram. The `Payment` object appears at the point in the timeline when it is created.
+
+### Example 2: Loops in Code and Diagrams
+
+```java
+public class A {
+    List items = null;
+    public void noName(B b) {
+        b.makeNewSale();
+        for (Item item : getItems()) {
+            b.enterItem(item.getID(), quantity);
+            total = total + b.total;
+            description = b.desc;
+        }
+        b.endSale();
+    }
+}
+```
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant a: A
+participant b: B
+a -> b: makeNewSale()
+loop [more items]
+  a -> b: enterItem(itemID, quantity)
+  b --> a: description, total
+end
+a -> b: endSale()
+@enduml'></div>
+
+The `for` loop in code maps directly to a `loop` fragment. The guard condition `[more items]` is a Boolean expression that describes when the loop continues.
+
+### Example 3: Alt Fragment to Code
+
+Given this sequence diagram:
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant a: A
+participant b: B
+participant c: C
+a -> a: doX(x)
+alt [x < 10]
+  a -> b: calculate()
+else [else]
+  a -> c: calculate()
+end
+@enduml'></div>
+
+The equivalent Java code is:
+
+```java
+public class A {
+    public void doX(int x) {
+        if (x < 10) {
+            b.calculate();
+        } else {
+            c.calculate();
+        }
+    }
+}
+```
+
+> **Concept Check (Generation):** Try translating this code into a sequence diagram before checking the answer:
+> ```java
+> public class OrderProcessor {
+>     public void process(Order order, Inventory inv) {
+>         if (inv.checkStock(order.getItemId())) {
+>             inv.reserve(order.getItemId());
+>             order.confirm();
+>         } else {
+>             order.reject("Out of stock");
+>         }
+>     }
+> }
+> ```
+>
+> <details>
+> <summary><i>Reveal Answer</i></summary>
+>
+> <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+> participant proc: OrderProcessor
+> participant inv: Inventory
+> participant order: Order
+> proc -> inv: checkStock(itemId)
+> inv --> proc: inStock
+> alt [inStock == true]
+>   proc -> inv: reserve(itemId)
+>   proc -> order: confirm()
+> else [inStock == false]
+>   proc -> order: reject("Out of stock")
+> end
+> @enduml'></div>
+> </details>
+
+---
 
 ## Chapter Summary
 

@@ -7,13 +7,7 @@ cards:
     explanation: >
       A synchronous message (filled arrowhead) means the sender **waits** for the receiver to finish. An asynchronous message (open arrowhead) means the sender **continues immediately** without waiting.
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant a: Caller
-      participant b: Receiver
-      a -> b: syncCall()
-      b --> a: response
-      a ->> b: asyncNotify()
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Caller&#10;participant b: Receiver&#10;a -> b: syncCall()&#10;b --> a: response&#10;a ->> b: asyncNotify()"></div>
 
   - id: 2
     question: "How is a **return message** drawn in a sequence diagram?"
@@ -21,12 +15,7 @@ cards:
     explanation: >
       Return messages use dashed lines to distinguish them from call messages (which use solid lines). They are optional — include them when the return value is important to understanding the interaction.
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant a: Client
-      participant b: Service
-      a -> b: getData()
-      b --> a: result
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Service&#10;a -> b: getData()&#10;b --> a: result"></div>
 
   - id: 3
     question: "What is the difference between an `opt` fragment and an `alt` fragment?"
@@ -46,11 +35,22 @@ cards:
     explanation: >
       The `loop` fragment repeats the enclosed messages. It can specify bounds like `loop [1, 5]` (min 1, max 5 iterations) or a guard condition like `loop [items remaining]`.
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant a: App
-      participant b: Server
-      loop [1, 3]
-        a -> b: retry()
-        b --> a: ack()
-      end
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: App&#10;participant b: Server&#10;loop [1, 3]&#10;  a -> b: retry()&#10;  b --> a: ack()&#10;end"></div>
+
+  - id: 6
+    question: "What does an **activation bar** (execution specification) represent on a lifeline?"
+    answer: "The period during which the object is **actively performing** an action or behavior."
+    explanation: >
+      Activation bars are thin rectangles on lifelines. They show when an object is processing a method call. They can be nested (when object A calls B which calls C, all three have overlapping activation bars). They help visualize which objects are busy at any point in time.
+
+  - id: 7
+    question: "What is the correct naming convention for lifelines in sequence diagrams?"
+    answer: "`objectName : ClassName` (e.g., `myCart : ShoppingCart` or `: ShoppingCart` for anonymous instances)."
+    explanation: >
+      Sequence diagrams show interactions between specific **object instances**, not classes in general. If the object name is irrelevant, you can omit it and write just `: ClassName`. This distinguishes sequence diagrams from class diagrams, which model classes in general.
+
+  - id: 8
+    question: "What is the `par` combined fragment used for?"
+    answer: "To model messages that execute **in parallel** (concurrently)."
+    explanation: >
+      The `par` fragment divides the interaction into regions that execute simultaneously. This is useful for modeling multi-threaded behavior or concurrent operations. The `region` fragment is related: it defines a critical section where only one thread can run at a time.

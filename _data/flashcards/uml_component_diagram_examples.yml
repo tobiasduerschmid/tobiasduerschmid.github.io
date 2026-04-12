@@ -1,0 +1,38 @@
+title: "UML Component Diagram Flashcards"
+description: "Quick review of UML Component Diagram notation and architecture-level modeling."
+cards:
+  - id: 1
+    question: "What does a **component** represent in a UML component diagram?"
+    answer: "A modular, deployable, and replaceable part of a system that encapsulates its contents and exposes functionality through interfaces."
+    explanation: >
+      Components are drawn as rectangles with a small component icon. Examples include microservices, libraries, databases, frontend applications, and message queues. They operate at a higher level of abstraction than classes.
+
+  - id: 2
+    question: "What is the difference between a **provided interface** (lollipop) and a **required interface** (socket)?"
+    answer: "Provided = the component **offers** this service (ball). Required = the component **needs** this service (socket)."
+    explanation: >
+      A provided interface (lollipop/ball) says "I implement this and you can call me." A required interface (socket/half-circle) says "I need someone to provide this for me to work." When a required interface connects to a matching provided interface, this forms an assembly connector.
+
+  - id: 3
+    question: "What is a **port** in a component diagram?"
+    answer: "A named interaction point on a component's boundary, shown as a small square."
+    explanation: >
+      Ports organize a component's interfaces into logical groups. **portin** (incoming, on the left edge) receives requests. **portout** (outgoing, on the right edge) sends requests. Ports make it clear which side of the component handles which communication.
+
+  - id: 4
+    question: "What is an **assembly connector** (ball-and-socket)?"
+    answer: "A connector that links one component's **required** interface to another component's **provided** interface."
+    explanation: >
+      The ball-and-socket notation shows that the dependency is satisfied: the requiring component can use the providing component. This enables **loose coupling** --- components depend on interfaces, not implementations, so you can swap providers without changing the consumer.
+
+  - id: 5
+    question: "When should you use a **component diagram** instead of a **class diagram**?"
+    answer: "When modeling the **high-level deployable parts** of a system and their connections, rather than individual code-level classes."
+    explanation: >
+      Rule of thumb: if you can deploy it, containerize it, or replace it independently, it belongs in a component diagram. Internal implementation details (classes, methods, inheritance) belong in class diagrams.
+
+  - id: 6
+    question: "How is a **dependency** shown between components?"
+    answer: "A **dashed arrow** from the dependent component to the component it depends on."
+    explanation: >
+      This is the same notation as class diagram dependencies (<span class="uml-sym" data-diagram="class" data-sym="..>"></span>). Use it for weaker, auxiliary relationships (e.g., logging, metrics) rather than core architectural connections. Assembly connectors (<span class="uml-sym" data-diagram="class" data-sym="-->"></span>) are used for primary communication pathways.

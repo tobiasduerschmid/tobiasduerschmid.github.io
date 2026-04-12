@@ -8,15 +8,12 @@ cards:
       All three parts are optional. The **Event** is the trigger, the **Guard** (in square brackets) is a boolean condition that must be true, and the **Effect** (after `/`) is the action executed during the transition. Example: `buttonPressed [isEnabled] / playSound()`.
 
   - id: 2
-    question: "What do the **initial pseudostate** (●) and **final state** (◎) look like?"
+    question: "What do the **initial pseudostate** and **final state** look like?"
     answer: "Initial = solid black circle. Final = solid circle inside a hollow circle (bullseye)."
     explanation: >
       The **initial pseudostate** (●) is the entry point — it must have exactly one outgoing transition with no event trigger. The **final state** (◎) indicates the object's lifecycle has ended.
 
-      <div data-uml-type="state" data-uml-spec="@startuml
-      [*] --> Active : create()
-      Active --> [*] : destroy()
-      @enduml"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Active : create()&#10;Active --> [*] : destroy()"></div>
 
   - id: 3
     question: "What happens when a transition's **guard condition** evaluates to false?"
@@ -35,3 +32,15 @@ cards:
     answer: "When modeling the **lifecycle of a single object** whose behavior depends on its current state."
     explanation: >
       State machines focus on **one object** reacting differently to events based on its state. Sequence diagrams show **interactions between multiple objects** over time. Use state machines for objects with complex, state-dependent behavior (e.g., a UI component, order lifecycle, hardware controller).
+
+  - id: 6
+    question: "What are the three types of **internal activities** a state can have?"
+    answer: "`entry /` (runs on entering), `exit /` (runs on leaving), `do /` (runs while in the state)."
+    explanation: >
+      Internal activities execute at specific points: **entry/** runs every time the state is entered (regardless of which transition was taken), **exit/** runs every time the state is exited, and **do/** runs continuously while the object remains in that state. These are different from transition effects, which only execute during a specific transition.
+
+  - id: 7
+    question: "Does a state machine always need a **final state**?"
+    answer: "No. A state machine always needs an **initial** pseudostate, but a final state is only needed if the object's lifecycle can end."
+    explanation: >
+      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial state but no final state. An order, on the other hand, has a clear end-of-life (delivered, cancelled), so it needs a final state.

@@ -64,6 +64,25 @@ Transitions are labeled using the following syntax:
 * **Guard:** A boolean condition that *must* be true for the transition to occur (e.g., `[powerLevel > 10]`).
 * **Effect:** An action or behavior that executes during the transition (e.g., `/ turnOnLED()`).
 
+### 2.3 Internal Activities
+
+States can have **internal activities** that execute at specific points during the state's lifetime. These are written inside the state rectangle:
+
+- **`entry /`** --- An action that executes every time the state is entered.
+- **`exit /`** --- An action that executes every time the state is exited.
+- **`do /`** --- An ongoing activity that runs while the object is in this state.
+
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Idle : powerOn()
+Idle --> Processing : requestReceived / logRequest()
+Processing --> Idle : complete
+Processing --> [*] : fatalError / shutDown()
+@enduml'></div>
+
+Internal activities are particularly useful for modeling embedded systems, UI components, and any object that needs to perform setup/teardown when entering or leaving a state.
+
+> **Concept Check (Retrieval Practice):** What is the difference between an `entry/` action and an effect on a transition (the `/ action` part of `Event [Guard] / Effect`)? Think about *when* each executes. The entry action runs every time the state is entered regardless of which transition was taken, while the transition effect runs only during that specific transition.
+
 ---
 
 ## 3. Case Study: Modeling an Advanced Exosuit

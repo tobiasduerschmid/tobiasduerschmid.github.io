@@ -1,0 +1,104 @@
+title: "UML Use Case Diagram Practice"
+description: "Test your ability to read and interpret UML Use Case Diagrams."
+questions:
+  - id: 1
+    type: single
+    question: >
+      In a use case diagram, what does an **actor** represent?
+    options:
+      - "A specific person who uses the system."
+      - "A role that a user takes when interacting with the system."
+      - "A class that implements system behavior."
+      - "A database that stores user information."
+    correct_index: 1
+    explanation: "An actor represents a **role**, not a specific person. One person can play multiple roles (e.g., a professor who is also a student), and multiple people can share the same role."
+
+  - id: 2
+    type: single
+    question: >
+      Look at this diagram. What does the `<<include>>` relationship mean here?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor Customer&#10;usecase &quot;Purchase Item&quot; as UC1&#10;usecase &quot;Login&quot; as UC2&#10;rectangle &quot;Store&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;Customer -- UC1&#10;UC1 ..> UC2 : <<include>>&#10;@enduml"></div>
+    options:
+      - "Login can optionally occur when purchasing an item."
+      - "Login always occurs as part of purchasing an item."
+      - "Purchase Item is a specialized version of Login."
+      - "Login extends the Purchase Item behavior with additional steps."
+    correct_index: 1
+    explanation: "The `<<include>>` relationship means the included behavior **always** occurs. Whenever a customer purchases an item, they always go through the login process. This is mandatory, not optional."
+
+  - id: 3
+    type: single
+    question: >
+      What is the key difference between `<<include>>` and `<<extend>>`?
+    options:
+      - "Include uses a solid arrow; extend uses a dashed arrow."
+      - "Include is for actors; extend is for use cases."
+      - "Include means the behavior always happens; extend means it sometimes happens."
+      - "Include arrows point to the base; extend arrows point to the extension."
+    correct_index: 2
+    explanation: "`<<include>>` models **mandatory** shared behavior (always happens). `<<extend>>` models **optional** or conditional behavior (sometimes happens). Both use dashed arrows, but they point in opposite directions."
+
+  - id: 4
+    type: single
+    question: >
+      In this diagram, which direction does the `<<extend>>` arrow point?
+
+      <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Place Order&quot; as UC1&#10;usecase &quot;Apply Coupon&quot; as UC2&#10;rectangle &quot;Shop&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;User -- UC1&#10;UC2 ..> UC1 : <<extend>>&#10;@enduml"></div>
+    options:
+      - "From Place Order to Apply Coupon."
+      - "From Apply Coupon to Place Order."
+      - "Both directions (bidirectional)."
+      - "There is no arrow --- extend uses a plain line."
+    correct_index: 1
+    explanation: "The `<<extend>>` arrow points **from the extending use case to the base use case** --- from 'Apply Coupon' to 'Place Order.' This indicates that 'Apply Coupon' is optional behavior that may extend the 'Place Order' flow."
+
+  - id: 5
+    type: single
+    question: >
+      What does the **rectangle** (system boundary) represent in a use case diagram?
+    options:
+      - "A package of related classes."
+      - "The scope of the system --- use cases go inside, actors go outside."
+      - "A composite state containing substates."
+      - "A container for related sequence diagrams."
+    correct_index: 1
+    explanation: "The system boundary rectangle defines the **scope of the system**. Use cases (the functionality the system provides) are placed inside, while actors (external users/roles) are placed outside. The system name appears at the top."
+
+  - id: 6
+    type: multiple
+    question: >
+      Which of the following are valid elements in a UML Use Case Diagram? (Select all that apply.)
+    options:
+      - "Actors (stick figures)"
+      - "Use cases (ovals)"
+      - "System boundary (rectangle)"
+      - "Classes (three-compartment rectangles)"
+      - "Lifelines (dashed vertical lines)"
+      - "Associations (lines between actors and use cases)"
+    correct_indices: [0, 1, 2, 5]
+    explanation: "Use case diagrams contain **actors** (stick figures), **use cases** (ovals), **system boundaries** (rectangles), and **associations** (lines). Classes belong in class diagrams, and lifelines belong in sequence diagrams."
+
+  - id: 7
+    type: single
+    question: >
+      How is **generalization** between use cases shown?
+    options:
+      - "A dashed arrow labeled `<<generalize>>`."
+      - "A solid line with a hollow triangle arrowhead pointing to the parent use case."
+      - "A dotted line with no arrowhead."
+      - "A solid line with a filled diamond."
+    correct_index: 1
+    explanation: "Use case generalization uses the same notation as class generalization: a **solid line with a hollow triangle** pointing to the general (parent) use case. A specialized use case can replace or enhance the parent's behavior."
+
+  - id: 8
+    type: single
+    question: >
+      A university system requires that both 'Enroll in Course' and 'Drop Course' always verify the student's identity first. How should 'Verify Identity' be related to these use cases?
+    options:
+      - "Verify Identity `<<extend>>` both Enroll and Drop (optional behavior)."
+      - "Both Enroll and Drop `<<include>>` Verify Identity (mandatory shared behavior)."
+      - "Verify Identity generalizes both Enroll and Drop."
+      - "No relationship needed --- just connect the actor to all three use cases."
+    correct_index: 1
+    explanation: "Since identity verification **always** happens (mandatory), this is an `<<include>>` relationship. Both 'Enroll in Course' and 'Drop Course' include 'Verify Identity.' The include arrows point from the including use cases toward Verify Identity."

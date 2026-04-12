@@ -1,0 +1,100 @@
+title: "UML Component Diagram Practice"
+description: "Test your ability to read and interpret UML Component Diagrams."
+questions:
+  - id: 1
+    type: single
+    question: >
+      What level of abstraction do component diagrams operate at, compared to class diagrams?
+    options:
+      - "Lower — component diagrams show more implementation detail than class diagrams."
+      - "The same — both show classes and their relationships."
+      - "Higher — component diagrams show deployable modules and their interfaces, not individual classes."
+      - "Component diagrams are only used for hardware, not software."
+    correct_index: 2
+    explanation: "Component diagrams operate at a **higher level of abstraction** than class diagrams. They show deployable units (services, libraries, subsystems) and how they connect through well-defined interfaces, while class diagrams show the internal code-level structure (attributes, methods, inheritance)."
+
+  - id: 2
+    type: single
+    question: >
+      In a component diagram, what does a **provided interface** (lollipop/ball symbol) indicate?
+    options:
+      - "The component requires this interface from another component."
+      - "The component implements and offers this interface to other components."
+      - "The component has a dependency on this interface."
+      - "The interface is optional and may not be implemented."
+    correct_index: 1
+    explanation: "A **provided interface** (lollipop/ball) means the component **implements and offers** this service. Other components can connect to it. The opposite --- a **required interface** (socket) --- means the component needs this service from someone else."
+
+  - id: 3
+    type: single
+    question: >
+      What is the purpose of **ports** (small squares on component boundaries)?
+    options:
+      - "They represent individual methods on the component."
+      - "They are named interaction points that organize the component's interfaces into logical groups."
+      - "They indicate that the component is abstract and cannot be deployed."
+      - "They show the number of instances of the component."
+    correct_index: 1
+    explanation: "**Ports** are named interaction points on a component's boundary. They organize interfaces into logical groups. An incoming port (**portin**) receives requests on the left edge; an outgoing port (**portout**) sends requests on the right edge."
+
+  - id: 4
+    type: single
+    question: >
+      When would you choose a component diagram over a class diagram?
+    options:
+      - "When you need to show the inheritance hierarchy of classes."
+      - "When you need to show attribute types and method signatures."
+      - "When you need to show the high-level deployable modules of a system and how they communicate."
+      - "When you need to model the lifecycle states of a single object."
+    correct_index: 2
+    explanation: "Component diagrams are for **architecture-level** modeling — showing the major deployable parts (services, libraries, databases) and their connections through interfaces. Class diagrams are for **code-level** details (attributes, methods, inheritance). State machines model **object lifecycles**."
+
+  - id: 5
+    type: single
+    question: >
+      What does a **dashed arrow** between two components represent?
+    options:
+      - "An assembly connector between provided and required interfaces."
+      - "A dependency — one component uses or depends on another."
+      - "A generalization — one component inherits from another."
+      - "A bidirectional communication link."
+    correct_index: 1
+    explanation: "A **dashed arrow** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..>\"></span>) represents a **dependency** — a weaker relationship where one component uses another (e.g., for logging, metrics). This is the same notation as class diagram dependencies. Solid arrows (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"-->\"></span>) represent assembly connectors for primary communication pathways."
+
+  - id: 6
+    type: multiple
+    question: >
+      Which of the following are valid elements in a UML Component Diagram? (Select all that apply.)
+    options:
+      - "Components (rectangles with component icon)"
+      - "Provided interfaces (lollipop/ball)"
+      - "Required interfaces (socket/half-circle)"
+      - "Ports (small squares on component boundary)"
+      - "Lifelines (dashed vertical lines)"
+      - "Assembly connectors (solid arrows between interfaces)"
+    correct_indices: [0, 1, 2, 3, 5]
+    explanation: "Component diagrams contain **components**, **provided interfaces** (ball), **required interfaces** (socket), **ports** (squares), and **assembly connectors** (arrows). **Lifelines** belong in sequence diagrams, not component diagrams."
+
+  - id: 7
+    type: single
+    question: >
+      What does the ball-and-socket notation (assembly connector) represent?
+    options:
+      - "A component inherits from another component."
+      - "A required interface on one component is connected to a matching provided interface on another component."
+      - "Two components share the same database."
+      - "A component is deployed on a specific server."
+    correct_index: 1
+    explanation: "The **ball-and-socket** (assembly connector) links a component's **required interface** (socket) to another component's **provided interface** (ball). This shows the dependency is satisfied and enables **loose coupling** — components depend on interfaces, not specific implementations."
+
+  - id: 8
+    type: single
+    question: >
+      A system has a `ShoppingCart` component that needs payment processing, and a `StripeGateway` component that provides it. If you want to later swap `StripeGateway` for `PayPalGateway`, what UML concept enables this?
+    options:
+      - "Generalization — PayPalGateway inherits from StripeGateway."
+      - "Provided/required interfaces — ShoppingCart requires `IPayment`, and any component providing `IPayment` can be substituted."
+      - "Dependency — add a dashed arrow from ShoppingCart to PayPalGateway."
+      - "Composition — embed PayPalGateway inside ShoppingCart."
+    correct_index: 1
+    explanation: "The **provided/required interface** pattern enables substitutability. If `ShoppingCart` requires `IPayment` and `StripeGateway` provides it, any other component that provides `IPayment` (like `PayPalGateway`) can be substituted without changing `ShoppingCart`. This is the key architectural benefit of component diagrams."

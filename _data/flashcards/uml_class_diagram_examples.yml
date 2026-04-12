@@ -46,3 +46,25 @@ cards:
     answer: "**One or more** — at least one instance is required."
     explanation: >
       Common multiplicities: `1` (exactly one), `0..1` (zero or one), `0..*` (zero or more), `1..*` (one or more). Always show multiplicity on **both ends** of an association.
+
+  - id: 7
+    question: "What does a **dashed arrow** (<span class='uml-sym' data-diagram='class' data-sym='..>'></span>) between two classes represent?"
+    answer: "A **Dependency** — the weakest relationship. One class temporarily uses another."
+    explanation: >
+      Dependency means a class uses another as a method parameter, local variable, return type, or thrown exception — but does not hold a permanent reference. It is the weakest of all class relationships.
+
+      <div data-uml-type="class" data-uml-spec="class Train {&#10;  # addStop(stop: Event): void&#10;}&#10;class Event&#10;Train ..> Event"></div>
+
+  - id: 8
+    question: "How do you indicate an **abstract class** in UML?"
+    answer: "By *italicizing* the class name, or adding `{abstract}`."
+    explanation: >
+      An abstract class cannot be instantiated directly. Abstract operations (methods with no implementation) are also shown in italics. Subclasses must provide concrete implementations.
+
+      <div data-uml-type="class" data-uml-spec="abstract class Shape {&#10;  {abstract} +draw(): void&#10;}&#10;class Circle {&#10;  +draw(): void&#10;}&#10;Circle --|> Shape"></div>
+
+  - id: 9
+    question: "List the class relationships from **weakest to strongest**."
+    answer: "Dependency < Association < Aggregation < Composition < Generalization/Realization"
+    explanation: >
+      **Dependency** (dashed arrow, temporary use) is weakest. **Association** (solid line, structural link) is stronger. **Aggregation** (hollow diamond, parts can exist alone) and **Composition** (filled diamond, parts die with whole) add ownership semantics. **Generalization** (hollow triangle, inheritance) and **Realization** (dashed hollow triangle, interface implementation) represent the strongest "is-a" relationships.

@@ -6,10 +6,7 @@ questions:
     question: >
       What does the **solid black circle** represent in a state machine diagram?
 
-      <div data-uml-type="state" data-uml-spec="@startuml
-      [*] --> Idle : powerOn()
-      Idle --> Active : start()
-      @enduml"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> Active : start()"></div>
     options:
       - "A regular state named 'Start'."
       - "The initial pseudostate — the entry point of the state machine."
@@ -33,13 +30,9 @@ questions:
   - id: 3
     type: single
     question: >
-      In the exosuit diagram below, what happens if `threatDetected` occurs but `sysCheckOK` is **false**?
+      In this diagram, what happens if `threatDetected` occurs but `sysCheckOK` is **false**?
 
-      <div data-uml-type="state" data-uml-spec="@startuml
-      [*] --> Idle : powerOn()
-      Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
-      CombatMode --> Idle : threatNeutralized / retractWeapons()
-      @enduml"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()"></div>
     options:
       - "The system transitions to CombatMode anyway, but without calling deployUI()."
       - "The system remains in the Idle state — the transition does not fire."
@@ -67,6 +60,8 @@ questions:
     type: single
     question: >
       What does the symbol ◎ (a filled circle inside a hollow circle) represent?
+
+      <div data-uml-type="state" data-uml-spec="[*] --> Active : create()&#10;Active --> [*] : destroy()"></div>
     options:
       - "The initial pseudostate — where the state machine starts."
       - "A history state — remembers the last active substate."
@@ -104,13 +99,7 @@ questions:
     question: >
       Look at this diagram. What is the **effect** that executes when transitioning from CombatMode to Idle?
 
-      <div data-uml-type="state" data-uml-spec="@startuml
-      [*] --> Idle : powerOn()
-      Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
-      CombatMode --> Idle : threatNeutralized / retractWeapons()
-      CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()
-      EmergencyPower --> [*] : manualOverride()
-      @enduml"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()&#10;EmergencyPower --> [*] : manualOverride()"></div>
     options:
       - "`threatNeutralized`"
       - "`deployUI()`"
@@ -118,3 +107,68 @@ questions:
       - "`manualOverride()`"
     correct_index: 2
     explanation: "The transition from CombatMode to Idle is labeled `threatNeutralized / retractWeapons()`. Using the syntax `Event [Guard] / Effect`, the effect is **`retractWeapons()`** — the action executed as the transition occurs. `threatNeutralized` is the event (trigger)."
+
+  - id: 9
+    type: single
+    question: >
+      How many **states** (not counting the initial pseudostate or final state) are in this diagram?
+
+      <div data-uml-type="state" data-uml-spec="[*] --> Created : orderPlaced&#10;Created --> Paid : paymentReceived&#10;Paid --> Shipped : itemDispatched&#10;Shipped --> Delivered : deliveryConfirmed&#10;Created --> Cancelled : customerCancels&#10;Delivered --> [*]&#10;Cancelled --> [*]"></div>
+    options:
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+    correct_index: 2
+    explanation: "There are **5 regular states**: Created, Paid, Shipped, Delivered, and Cancelled. The solid black circle (initial pseudostate) and the bullseye symbols (final states) are **pseudostates**, not regular states."
+
+  - id: 10
+    type: single
+    question: >
+      In this diagram, which transition has **both** a guard condition and an effect?
+
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()"></div>
+    options:
+      - "Idle to CombatMode"
+      - "CombatMode to Idle"
+      - "CombatMode to EmergencyPower"
+      - "Initial to Idle"
+    correct_index: 0
+    explanation: "The transition from **Idle to CombatMode** is labeled `threatDetected [sysCheckOK] / deployUI()`. It has all three parts: event (`threatDetected`), guard (`[sysCheckOK]`), and effect (`/ deployUI()`). The other transitions have an event and effect but no guard condition."
+
+  - id: 11
+    type: multiple
+    question: >
+      Which of the following are **true** about the initial pseudostate (●) in a state machine diagram? (Select all that apply.)
+    options:
+      - "It represents the starting point of the state machine."
+      - "It can have multiple outgoing transitions."
+      - "Its outgoing transition should have no event trigger."
+      - "It is a regular state where the object can remain indefinitely."
+      - "There must be exactly one initial pseudostate per state machine (or per region)."
+    correct_indices: [0, 2, 4]
+    explanation: "The initial pseudostate (●) marks the **entry point** of the state machine. It must have **exactly one** outgoing transition, and that transition should have **no event trigger** (it fires automatically). The initial pseudostate is NOT a regular state — the object passes through it immediately."
+
+  - id: 12
+    type: single
+    question: >
+      What is the difference between an `entry/` internal activity and an effect on a transition (`/ action`)?
+    options:
+      - "There is no difference; they are the same thing."
+      - "The entry/ action runs every time the state is entered (from any transition), while a transition effect only runs during that specific transition."
+      - "The entry/ action runs before the transition, while the effect runs after."
+      - "The entry/ action is optional, while transition effects are mandatory."
+    correct_index: 1
+    explanation: "An **entry/** action runs every time the state is entered, regardless of which incoming transition was taken. A **transition effect** (`/ action`) runs only when that specific transition fires. If a state has three incoming transitions, the entry/ action runs for all three, but each transition's effect only runs for its own transition."
+
+  - id: 13
+    type: single
+    question: >
+      Does every state machine diagram need a **final state**?
+    options:
+      - "Yes — every state machine must have both an initial and a final state."
+      - "No — a final state is only needed if the object's lifecycle can actually end."
+      - "No — state machines never have final states."
+      - "Yes — but only if the state machine has more than 3 states."
+    correct_index: 1
+    explanation: "A state machine **always** needs an initial pseudostate (the starting point), but a final state is **only needed if the object's lifecycle can end**. Many real-world objects (servers, embedded controllers) run indefinitely and never reach a final state. Objects like orders or transactions do have a clear end-of-life."

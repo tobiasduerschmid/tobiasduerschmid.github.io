@@ -13,6 +13,17 @@ topics:
   - name: UML
     icon: null
     url: /SEBook/uml.html
+    subtopics:
+      - name: Use Case Diagrams
+        url: /SEBook/uml_use_case_diagram.html
+      - name: Class Diagrams
+        url: /SEBook/uml_class_diagram.html
+      - name: Sequence Diagrams
+        url: /SEBook/uml_sequence_diagram.html
+      - name: State Machine Diagrams
+        url: /SEBook/uml_state_diagram.html
+      - name: Component Diagrams
+        url: /SEBook/uml_component_diagram.html
 
   - name: Design Patterns
     icon: null

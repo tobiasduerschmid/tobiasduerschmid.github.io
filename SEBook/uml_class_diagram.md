@@ -123,15 +123,29 @@ SUV --|> Car
 ### Category 2: "Has-A" / "Knows-A" Relationships
 
 **1. Association**
-A basic structural relationship indicating that objects of one class are connected to objects of another (e.g., a "Teacher" knows about a "Student"). 
+A basic structural relationship indicating that objects of one class are connected to objects of another (e.g., a "Teacher" knows about a "Student"). Attributes can also be represented as association lines: a line is drawn between the owning class and the target attribute's class, providing a quick visual indication of which classes are related.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--"></span> A simple solid line.
+* You can also **name** associations and make them **directional** using an arrowhead to indicate navigability (which class holds a reference to the other).
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Student {
+  - name: String
+}
+class Course {
+  - title: String
+}
+Student "0..*" -- "1..*" Course : enrolled in
+@enduml'></div>
 
 **2. Multiplicities**
-Along association lines, we use numbers to define *how many* objects are involved.
-* `1` : Exactly one
-* `0..1` : Zero or one
-* `*` or `0..*` : Zero to many
-* `1..*` : One to many
+Along association lines, we use numbers to define *how many* objects are involved. Always show multiplicity on **both** ends of an association.
+
+| Notation | Meaning |
+|----------|---------|
+| `1` | Exactly one |
+| `0..1` | Zero or one (optional) |
+| `*` or `0..*` | Zero to many |
+| `1..*` | One to many (at least one required) |
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Author
@@ -140,7 +154,7 @@ Author "1" -- "1..*" Book : writes
 @enduml'></div>
 
 **3. Aggregation (Weak "Has-A")**
-A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist.
+A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist. Think of aggregation as a long-term, whole-part association.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> A solid line with an **empty diamond** at the "whole" end.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
@@ -150,8 +164,9 @@ University "1" o-- "0..*" Professor
 @enduml'></div>
 
 **4. Composition (Strong "Has-A")**
-A strict relationship where the parts *cannot* exist without the whole. If you destroy a House, the Rooms inside it are also destroyed.
+A strict relationship where the parts *cannot* exist without the whole. If you destroy a House, the Rooms inside it are also destroyed. A part may belong to **only one** composite at a time (exclusive ownership), and the composite has sole responsibility for the lifetime of its parts.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> A solid line with a **filled diamond** at the "whole" end.
+* Per the UML spec, the multiplicity on the composite end must be `1` or `0..1`.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class House
@@ -159,8 +174,216 @@ class Room
 House "1" *-- "1..*" Room
 @enduml'></div>
 
+**A helpful way to think about the difference:** In C++, aggregation is usually defined by pointers/references (the part can exist separately), while composition is defined by containing instances (the part's lifetime is tied to the whole). In Java, composition is often indicative of an inner class relationship.
+
 > 🧠 **Concept Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
+
+### Category 3: "Uses" Relationships
+
+**5. Dependency (Weakest Relationship)**
+A dependency indicates that one class *uses* another, but does not hold a permanent reference to it. For example, a class might use another class as a method parameter, local variable, or return type. Dependency is the weakest relationship in a class diagram.
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> A **dashed line** with an open arrowhead.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Train {
+  # addStop(stop: ButtonPressedEvent): void
+  + startTrain(velocity: double): void
+}
+class ButtonPressedEvent
+Train ..> ButtonPressedEvent
+@enduml'></div>
+
+In this example, `Train` depends on `ButtonPressedEvent` because it uses it as a parameter type in `addStop()`. However, `Train` does not store a permanent reference to `ButtonPressedEvent`---the dependency exists only for the duration of the method call.
+
+Here is another example where a class depends on an exception it throws:
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class ChecksumValidator {
+  + execute(): bool
+  + validate(): void
+}
+class InvalidChecksumException
+ChecksumValidator ..> InvalidChecksumException
+@enduml'></div>
+
+### Relationship Strength Summary
+
+From weakest to strongest, the class relationships are:
+
+<table>
+<thead>
+<tr><th>Relationship</th><th>Symbol</th><th>Meaning</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Dependency</strong></td><td><span class="uml-sym" data-diagram="class" data-sym="..>"></span> Dashed arrow</td><td>"uses" temporarily</td><td>Method parameter, thrown exception</td></tr>
+<tr><td><strong>Association</strong></td><td><span class="uml-sym" data-diagram="class" data-sym="--"></span> Solid line</td><td>"knows about" structurally</td><td>Employee knows about Boss</td></tr>
+<tr><td><strong>Aggregation</strong></td><td><span class="uml-sym" data-diagram="class" data-sym="o--"></span> Hollow diamond</td><td>"has-a" (parts can exist alone)</td><td>Library has Books</td></tr>
+<tr><td><strong>Composition</strong></td><td><span class="uml-sym" data-diagram="class" data-sym="*--"></span> Filled diamond</td><td>"made up of" (parts die with whole)</td><td>House is made of Rooms</td></tr>
+<tr><td><strong>Generalization</strong></td><td><span class="uml-sym" data-diagram="class" data-sym="--|>"></span> Hollow triangle</td><td>"is-a" (inheritance)</td><td>Car is-a Vehicle</td></tr>
+<tr><td><strong>Realization</strong></td><td><span class="uml-sym" data-diagram="class" data-sym="..|>"></span> Dashed hollow triangle</td><td>"implements" (interface)</td><td>Car implements Drivable</td></tr>
+</tbody>
+</table>
+
+---
+
+## Advanced Class Notation
+
+### Abstract Classes and Operations
+
+An **abstract class** is a class that cannot be instantiated directly---it serves as a base for subclasses. In UML, an abstract class is indicated by *italicizing* the class name or adding `{abstract}`.
+
+An **abstract operation** is a method with no implementation, intended to be supplied by descendant classes. Abstract operations are shown by *italicizing* the operation name.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+abstract class Shape {
+  - color: int
+  + setColor(r: int, g: int, b: int): void
+  {abstract} + draw(): void
+}
+class Rectangle {
+  - width: int
+  - length: int
+  + setWidth(width: int): void
+  + setHeight(height: int): void
+  + draw(): void
+}
+Rectangle --|> Shape
+@enduml'></div>
+
+In this example, `Shape` is abstract (it cannot be created directly) and declares an abstract `draw()` method. `Rectangle` inherits from `Shape` and provides a concrete implementation of `draw()`.
+
+### Static Members
+
+**Static** (class-level) attributes and operations belong to the class itself rather than to individual instances. In UML, static members are shown **underlined**.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class MathUtils {
+  {static} +PI: double
+  {static} +abs(n: int): int
+  +round(n: double): int
+}
+@enduml'></div>
+
+---
+
+## From Code to Diagram: Worked Examples
+
+A key skill is translating between code and UML class diagrams. Let's work through several examples that progressively build this skill.
+
+### Example 1: A Simple Class
+
+```java
+public class BaseSynchronizer {
+    public void synchronizationStarted() { }
+}
+```
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class BaseSynchronizer {
+  + synchronizationStarted(): void
+}
+@enduml'></div>
+
+Each public method becomes a `+` operation in the bottom compartment. The return type follows a colon after the method signature.
+
+### Example 2: Attributes and Associations
+
+When a class holds a reference to another class, you can show it either as an attribute *or* as an association line (but be consistent throughout your diagram).
+
+```java
+public class Student {
+    Roster roster;
+    public void storeRoster(Roster r) {
+        roster = r;
+    }
+}
+```
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class Student {
+  ~ roster: Roster
+  + storeRoster(r: Roster): void
+}
+class Roster
+Student --> Roster
+@enduml'></div>
+
+Notice: the `roster` field has package visibility (`~`) because no access modifier was specified in the Java code (Java default is package-private).
+
+### Example 3: Dependency from Exception Handling
+
+```java
+public class ChecksumValidator {
+    public boolean execute() {
+        try {
+            this.validate();
+        } catch (InvalidChecksumException e) {
+            // handle error
+        }
+        return true;
+    }
+    public void validate() throws InvalidChecksumException { }
+}
+```
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class ChecksumValidator {
+  + execute(): bool
+  + validate(): void
+}
+class InvalidChecksumException
+ChecksumValidator ..> InvalidChecksumException
+@enduml'></div>
+
+The `ChecksumValidator` *depends on* `InvalidChecksumException` (it uses it in a throws clause and catch block) but does not store a permanent reference to it. This is a dependency, not an association.
+
+### Example 4: Composition from Inner Classes
+
+```java
+public class MotherBoard {
+    private class IDEBus { }
+    IDEBus primaryIDE;
+    IDEBus secondaryIDE;
+}
+```
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class MotherBoard {
+  - primaryIDE: IDEBus
+  - secondaryIDE: IDEBus
+}
+class IDEBus
+MotherBoard *-- "2" IDEBus
+@enduml'></div>
+
+The inner class pattern in Java typically indicates composition---the `IDEBus` instances cannot exist without the `MotherBoard`.
+
+> **Concept Check (Generation):** Before looking at the answer below, try to draw the UML class diagram for this code:
+> ```java
+> import java.util.ArrayList;
+> import java.util.List;
+> public class Division {
+>     private List<Employee> division = new ArrayList<>();
+>     private Employee[] employees = new Employee[10];
+> }
+> ```
+>
+> <details>
+> <summary><i>Reveal Answer</i></summary>
+>
+> <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+> class Division {
+>   - division: List~Employee~
+>   - employees: Employee[]
+> }
+> class Employee
+> Division o-- "0..*" Employee
+> Division -- "10" Employee
+> @enduml'></div>
+>
+> The <code>List&lt;Employee&gt;</code> field suggests aggregation (the collection can grow dynamically, employees can exist independently). The array with a fixed size of 10 is a direct association with a specific multiplicity.
+> </details>
 
 ---
 

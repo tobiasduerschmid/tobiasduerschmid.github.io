@@ -20,6 +20,13 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="usecase">Use Case</option>
       <option value="activity">Activity</option>
     </select>
+    <label for="uml-pg-layout">Layout:</label>
+    <select id="uml-pg-layout">
+      <option value="auto">Auto</option>
+      <option value="square" selected>Square</option>
+      <option value="landscape">Landscape</option>
+      <option value="portrait">Portrait</option>
+    </select>
     <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
     <span id="uml-pg-status"></span>
   </div>
@@ -61,7 +68,8 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
   margin: 0;
 }
 
-#uml-pg-type {
+#uml-pg-type,
+#uml-pg-layout {
   font-size: 0.88em;
   padding: 3px 8px;
   border: 1px solid #b0bdd4;
@@ -164,7 +172,8 @@ body.dark-mode #uml-playground-toolbar label {
   color: #b0c4d8;
 }
 
-body.dark-mode #uml-pg-type {
+body.dark-mode #uml-pg-type,
+body.dark-mode #uml-pg-layout {
   background: #243347;
   border-color: #3a4a60;
   color: #d0e0f0;
@@ -346,19 +355,53 @@ body.dark-mode #uml-pg-status {
 
   function init() {
     var typeSelect = document.getElementById('uml-pg-type');
+    var layoutSelect = document.getElementById('uml-pg-layout');
     var textarea = document.getElementById('uml-pg-input');
     var output = document.getElementById('uml-pg-output');
     var errorBox = document.getElementById('uml-pg-error');
     var downloadBtn = document.getElementById('uml-pg-download');
     var status = document.getElementById('uml-pg-status');
 
-    if (!typeSelect || !textarea || !output) return;
+    if (!typeSelect || !layoutSelect || !textarea || !output) return;
 
     var debounceTimer = null;
     var currentType = typeSelect.value;
 
+    function normalizeLineEndings(text) {
+      return (text || '').replace(/\r\n?/g, '\n');
+    }
+
+    function normalizeLayoutMode(mode) {
+      var value = (mode || '').toLowerCase();
+      if (value === 'square' || value === 'landscape' || value === 'portrait' || value === 'auto') return value;
+      return null;
+    }
+
+    function applyLayoutDirective(text, layoutMode) {
+      var normalizedText = normalizeLineEndings(text);
+      var lines = normalizedText.split('\n');
+      var filtered = [];
+      for (var i = 0; i < lines.length; i++) {
+        if (/^\s*layout\s+.+$/i.test(lines[i].trim())) continue;
+        filtered.push(lines[i]);
+      }
+
+      var mode = normalizeLayoutMode(layoutMode);
+      if (!mode) return filtered.join('\n');
+
+      var insertAt = 0;
+      while (insertAt < filtered.length && !filtered[insertAt].trim()) insertAt++;
+      if (insertAt < filtered.length && filtered[insertAt].trim() === '@startuml') insertAt++;
+      filtered.splice(insertAt, 0, 'layout ' + mode);
+      return filtered.join('\n');
+    }
+
+    function exampleText(type, layoutMode) {
+      return applyLayoutDirective(EXAMPLES[type] || '', layoutMode);
+    }
+
     // Load initial example
-    textarea.value = EXAMPLES[currentType] || '';
+    textarea.value = exampleText(currentType, layoutSelect.value);
 
     function renderDiagram() {
       var text = textarea.value.trim();
@@ -410,9 +453,14 @@ body.dark-mode #uml-pg-status {
     typeSelect.addEventListener('change', function () {
       var prev = currentType;
       currentType = typeSelect.value;
-      if (textarea.value.trim() === (EXAMPLES[prev] || '').trim()) {
-        textarea.value = EXAMPLES[currentType] || '';
+      if (normalizeLineEndings(textarea.value).trim() === exampleText(prev, layoutSelect.value).trim()) {
+        textarea.value = exampleText(currentType, layoutSelect.value);
       }
+      renderDiagram();
+    });
+
+    layoutSelect.addEventListener('change', function () {
+      textarea.value = applyLayoutDirective(textarea.value, layoutSelect.value);
       renderDiagram();
     });
 

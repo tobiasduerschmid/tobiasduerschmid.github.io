@@ -6,11 +6,7 @@ questions:
     question: >
       What type of message is represented by a **solid line with a filled (solid) arrowhead**?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant a: Client
-      participant b: Server
-      a -> b: request()
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Server&#10;a -> b: request()"></div>
     options:
       - "Asynchronous message — the sender does not wait for a response."
       - "Synchronous message — the sender waits for a response before continuing."
@@ -24,12 +20,7 @@ questions:
     question: >
       What does the **dashed line** in the diagram below represent?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant a: Client
-      participant b: Server
-      a -> b: calculate()
-      b --> a: result
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Server&#10;a -> b: calculate()&#10;b --> a: result"></div>
     options:
       - "An asynchronous message from Server to Client."
       - "A dependency from Server to Client."
@@ -55,15 +46,7 @@ questions:
     question: >
       Look at this diagram. How many times could the `ping()` message be sent?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant app: App
-      participant server: Server
-      app -> server: connect()
-      loop [1, 5]
-        app -> server: ping()
-        server --> app: ack()
-      end
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant app: App&#10;participant server: Server&#10;app -> server: connect()&#10;loop [1, 5]&#10;  app -> server: ping()&#10;  server --> app: ack()&#10;end"></div>
     options:
       - "Exactly 5 times."
       - "Between 1 and 5 times (inclusive)."
@@ -91,16 +74,7 @@ questions:
     question: >
       What does the `opt` fragment in this diagram mean?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant c: Checkout
-      participant p: Pricing Engine
-      c -> p: calculateTotal()
-      opt [hasPromoCode == true]
-        c -> p: applyDiscount()
-        p --> c: discountApplied()
-      end
-      p --> c: finalTotal()
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant c: Checkout&#10;participant p: Pricing Engine&#10;c -> p: calculateTotal()&#10;opt [hasPromoCode == true]&#10;  c -> p: applyDiscount()&#10;  p --> c: discountApplied()&#10;end&#10;p --> c: finalTotal()"></div>
     options:
       - "The discount is always applied after calculating the total."
       - "The discount is applied only if `hasPromoCode` is true; otherwise the messages inside are skipped entirely."
@@ -126,11 +100,7 @@ questions:
     question: >
       Which arrow style represents an **asynchronous message** where the sender does NOT wait for a response?
 
-      <div data-uml-type="sequence" data-uml-spec="@startuml
-      participant a: Sender
-      participant b: Receiver
-      a ->> b: notify()
-      @enduml"></div>
+      <div data-uml-type="sequence" data-uml-spec="participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()"></div>
     options:
       - "Solid line with filled arrowhead."
       - "Dashed line with open arrowhead."
@@ -138,3 +108,58 @@ questions:
       - "Dashed line with filled arrowhead."
     correct_index: 2
     explanation: "An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks."
+
+  - id: 9
+    type: single
+    question: >
+      What does an **activation bar** (thin rectangle on a lifeline) represent?
+    options:
+      - "The object is waiting for input and doing nothing."
+      - "The object is actively performing an action or executing a method."
+      - "The object has been destroyed."
+      - "The object is in a suspended state."
+    correct_index: 1
+    explanation: "An **activation bar** (execution specification) shows the period during which an object is **actively processing** — executing a method, performing computation, or waiting for a sub-call to return. Activation bars can nest when one method calls another."
+
+  - id: 10
+    type: single
+    question: >
+      What is the correct lifeline label format for an unnamed instance of class `ShoppingCart`?
+    options:
+      - "`ShoppingCart`"
+      - "`: ShoppingCart`"
+      - "`cart: ShoppingCart`"
+      - "`class ShoppingCart`"
+    correct_index: 1
+    explanation: "The standard UML format is `objectName : ClassName`. When the specific object name is irrelevant, you omit the name and write `: ShoppingCart` (with the colon). Sequence diagrams model interactions between **specific object instances**, not classes in general."
+
+  - id: 11
+    type: single
+    question: >
+      Given this Java code, which sequence diagram element represents the `new Payment(amount)` call?
+
+      ```java
+      public void makePayment(int amount) {
+          Payment p = new Payment(amount);
+          p.authorize();
+      }
+      ```
+    options:
+      - "A synchronous message labeled `new Payment(amount)` to an existing Payment lifeline."
+      - "A create message to a new Payment lifeline that appears at the point of creation."
+      - "A return message from Payment back to the caller."
+      - "A loop fragment containing the Payment creation."
+    correct_index: 1
+    explanation: "Constructor calls (`new`) in code become **create messages** in sequence diagrams. The new object's lifeline starts at the point in time when it is created (placed at that vertical position), rather than appearing at the top of the diagram like pre-existing objects."
+
+  - id: 12
+    type: single
+    question: >
+      A sequence diagram and a class diagram are drawn for the same system. An arrow in the sequence diagram shows `order -> inventory: checkStock(itemId)`. What must be true in the class diagram?
+    options:
+      - "There must be an `Inventory` class with a method `checkStock(itemId)` (or its superclass must define it)."
+      - "There must be a dependency arrow from Order to Inventory."
+      - "Inventory must be an interface that Order realizes."
+      - "Order must have an attribute of type Inventory."
+    correct_index: 0
+    explanation: "Sequence diagrams and class diagrams must be **consistent**. Every message in a sequence diagram must correspond to a method defined in the receiving object's class (or a superclass). The `Inventory` class must have a `checkStock` method that accepts the appropriate parameter type."

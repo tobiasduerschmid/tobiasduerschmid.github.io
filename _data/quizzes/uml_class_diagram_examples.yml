@@ -115,3 +115,64 @@ questions:
       - "Package — accessible by classes in the same package."
     correct_index: 2
     explanation: "The `#` symbol means **protected** — the member is accessible within the class itself and any of its subclasses, but not from unrelated classes. The full set: `+` (public), `-` (private), `#` (protected), `~` (package)."
+
+  - id: 9
+    type: single
+    question: >
+      What type of relationship is shown here between **Formatter** and **IOException**?
+
+      <div data-uml-type="class" data-uml-spec="class Formatter {&#10;  +format(data: String): String&#10;}&#10;class IOException&#10;Formatter ..> IOException"></div>
+    options:
+      - "Association — Formatter holds a reference to IOException."
+      - "Composition — IOException is part of Formatter."
+      - "Dependency — Formatter temporarily uses IOException (e.g., throws it)."
+      - "Generalization — Formatter inherits from IOException."
+    correct_index: 2
+    explanation: "The **dashed arrow** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..>\"></span>) represents a **Dependency** — the weakest class relationship. Formatter uses IOException (e.g., as a thrown exception) but does not hold a permanent reference to it."
+
+  - id: 10
+    type: single
+    question: >
+      Given this Java code, what is the correct UML class diagram?
+
+      ```java
+      public class Student {
+          Roster roster;
+          public void storeRoster(Roster r) {
+              roster = r;
+          }
+      }
+      ```
+    options:
+      - "Student has an association to Roster, with `roster` as a package-visibility (~) attribute."
+      - "Student has a dependency on Roster (dashed arrow)."
+      - "Student has a composition with Roster (filled diamond)."
+      - "Student inherits from Roster (hollow triangle)."
+    correct_index: 0
+    explanation: "Since `Student` stores a **permanent reference** to `Roster` as a field, this is an **association** (not a dependency). The field has no explicit Java access modifier, so in Java it defaults to **package-private**, which maps to `~` visibility in UML."
+
+  - id: 11
+    type: single
+    question: >
+      How is an **abstract class** indicated in UML?
+
+      <div data-uml-type="class" data-uml-spec="abstract class Vehicle {&#10;  {abstract} +move(): void&#10;}&#10;class Car {&#10;  +move(): void&#10;}&#10;Car --|> Vehicle"></div>
+    options:
+      - "By underlining the class name."
+      - "By italicizing the class name or adding {abstract}."
+      - "By using the <<interface>> stereotype."
+      - "By placing a # symbol before the class name."
+    correct_index: 1
+    explanation: "An abstract class is indicated by **italicizing** the class name or annotating it with `{abstract}`. Abstract operations (methods without implementation) are also italicized. The `<<interface>>` stereotype is used for interfaces, not abstract classes."
+
+  - id: 12
+    type: multiple
+    question: >
+      Which of the following Java code patterns would result in a **dependency** (dashed arrow) relationship in UML, rather than an association? (Select all that apply.)
+    options:
+      - "A class uses another class as a method parameter type."
+      - "A class stores another class as an instance variable (field)."
+      - "A class catches an exception of another class type."
+      - "A class creates a local variable of another class type inside a method."
+    correct_indices: [0, 2, 3]
+    explanation: "A **dependency** is a temporary \"uses\" relationship — it occurs when one class references another only as a method parameter, local variable, return type, or exception. Storing a reference as an instance **field** creates a permanent structural link, making it an **association** (or aggregation/composition) rather than a dependency."

@@ -1,0 +1,38 @@
+title: "UML Use Case Diagram Flashcards"
+description: "Quick review of UML Use Case Diagram notation and relationships."
+cards:
+  - id: 1
+    question: "What does an **actor** represent in a use case diagram, and how is it drawn?"
+    answer: "A **role** that a user takes when interacting with the system, drawn as a **stick figure**."
+    explanation: >
+      An actor is a role, not a specific person. One person can play multiple roles. Actors are always external to the system boundary.
+
+  - id: 2
+    question: "What is the difference between `<<include>>` and `<<extend>>`?"
+    answer: "`<<include>>` = **always** happens (mandatory). `<<extend>>` = **sometimes** happens (optional)."
+    explanation: >
+      Include factors out shared behavior that must always occur. Extend adds optional behavior that only occurs under certain conditions. Both use dashed arrows, but the arrow directions differ: include points toward the included use case; extend points toward the base use case.
+
+  - id: 3
+    question: "Which direction does the `<<include>>` arrow point?"
+    answer: "From the **including** (base) use case **to** the **included** (shared) use case."
+    explanation: >
+      For example, if "Purchase Item" always includes "Login," the arrow goes from "Purchase Item" to "Login." Think of it like a function call: the caller points to the callee.
+
+  - id: 4
+    question: "Which direction does the `<<extend>>` arrow point?"
+    answer: "From the **extending** (optional) use case **to** the **base** use case."
+    explanation: >
+      For example, if "Log Debug Info" optionally extends "Purchase Item," the arrow goes from "Log Debug Info" to "Purchase Item." This is the opposite direction from include.
+
+  - id: 5
+    question: "What does the **system boundary** (rectangle) represent in a use case diagram?"
+    answer: "The **scope of the system** --- use cases go inside, actors go outside."
+    explanation: >
+      The rectangle is labeled with the system name at the top. Everything inside the boundary is functionality the system provides. Everything outside (actors) interacts with the system but is not part of it.
+
+  - id: 6
+    question: "How is **generalization** between use cases drawn?"
+    answer: "A **solid line** with a **hollow triangle arrowhead** pointing to the general (parent) use case."
+    explanation: >
+      This is the same notation as class generalization (inheritance). A specialized use case can replace or enhance the behavior of the general use case.
