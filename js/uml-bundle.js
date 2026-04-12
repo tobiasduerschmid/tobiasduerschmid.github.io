@@ -85,6 +85,62 @@
     return '</g></svg>';
   }
 
+  function expandBounds(bounds, node, svg) {
+    if (!node || !node.getBBox) return false;
+    try {
+      var bbox = node.getBBox();
+      if (!bbox || !isFinite(bbox.x) || !isFinite(bbox.y) || !isFinite(bbox.width) || !isFinite(bbox.height)) {
+        return false;
+      }
+      var ctm = node.getScreenCTM ? node.getScreenCTM() : null;
+      var svgCtm = svg && svg.getScreenCTM ? svg.getScreenCTM() : null;
+      if (!ctm || !svgCtm) return false;
+      var rel = svgCtm.inverse().multiply(ctm);
+      var corners = [
+        { x: bbox.x, y: bbox.y },
+        { x: bbox.x + bbox.width, y: bbox.y },
+        { x: bbox.x + bbox.width, y: bbox.y + bbox.height },
+        { x: bbox.x, y: bbox.y + bbox.height }
+      ];
+      for (var i = 0; i < corners.length; i++) {
+        var pt = corners[i];
+        var tx = rel.a * pt.x + rel.c * pt.y + rel.e;
+        var ty = rel.b * pt.x + rel.d * pt.y + rel.f;
+        if (tx < bounds.minX) bounds.minX = tx;
+        if (ty < bounds.minY) bounds.minY = ty;
+        if (tx > bounds.maxX) bounds.maxX = tx;
+        if (ty > bounds.maxY) bounds.maxY = ty;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function collectSvgBounds(svg, g) {
+    if (!svg || !g) return null;
+    var bounds = {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity
+    };
+    var measured = false;
+    var nodes = g.querySelectorAll('*');
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var tag = node.tagName ? node.tagName.toLowerCase() : '';
+      if (!tag || tag === 'defs' || tag === 'marker' || tag === 'script' || tag === 'style' || tag === 'title' || tag === 'desc') {
+        continue;
+      }
+      if (expandBounds(bounds, node, svg)) measured = true;
+    }
+    if (!measured) {
+      measured = expandBounds(bounds, g, svg);
+    }
+    return measured ? bounds : null;
+  }
+
   // ─── Auto-Init Factory ─────────────────────────────────────────
 
   /**
@@ -98,6 +154,72 @@
   function createAutoInit(selector, renderFn, opts) {
     var diagrams = [];
     var extractText = (opts && opts.extractText) || function (el) { return el.textContent; };
+    var refitQueued = false;
+    var settleTimer = null;
+    var settlePasses = 0;
+    var visibilityMutationObserver = null;
+    var visibilityObserver = typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver(function (entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (!entries[i].isIntersecting) continue;
+            autoFitSVG(entries[i].target);
+            var svg = entries[i].target.querySelector('svg');
+            if (!isPlaceholderAutoFit(svg)) visibilityObserver.unobserve(entries[i].target);
+          }
+        }, { rootMargin: '200px 0px' })
+      : null;
+
+    function getDiagramContainers() {
+      return document.querySelectorAll(
+        '.uml-class-diagram-container,' +
+        '.uml-sequence-diagram-container,' +
+        '.uml-state-diagram-container,' +
+        '.uml-component-diagram-container,' +
+        '.uml-deployment-diagram-container,' +
+        '.uml-usecase-diagram-container,' +
+        '.uml-activity-diagram-container'
+      );
+    }
+
+    function startSettleLoop() {
+      if (settleTimer) return;
+      settlePasses = 0;
+      settleTimer = setInterval(function () {
+        settlePasses++;
+        var remaining = 0;
+        var containers = getDiagramContainers();
+        for (var d = 0; d < containers.length; d++) {
+          var container = containers[d];
+          if (!container || !container.isConnected) continue;
+          autoFitSVG(container);
+          var svg = container.querySelector('svg');
+          if (isPlaceholderAutoFit(svg)) remaining++;
+        }
+        if (remaining === 0 || settlePasses >= 8) {
+          clearInterval(settleTimer);
+          settleTimer = null;
+        }
+      }, 400);
+    }
+
+    function refitAll() {
+      refitQueued = false;
+      var containers = getDiagramContainers();
+      for (var d = 0; d < containers.length; d++) {
+        if (containers[d] && containers[d].isConnected) {
+          autoFitSVG(containers[d]);
+        }
+      }
+    }
+
+    function queueRefitAll() {
+      if (refitQueued || typeof window === 'undefined') return;
+      refitQueued = true;
+      var raf = window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); };
+      raf(function () {
+        raf(refitAll);
+      });
+    }
 
     function init() {
       var blocks = document.querySelectorAll(selector);
@@ -110,12 +232,40 @@
         pre.parentElement.replaceChild(container, pre);
         renderFn(container, text);
         diagrams.push({ container: container, text: text });
+        if (visibilityObserver) visibilityObserver.observe(container);
       }
+      queueRefitAll();
+      startSettleLoop();
+
+      if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') {
+        document.fonts.ready.then(queueRefitAll).catch(function () {});
+      }
+      window.addEventListener('load', queueRefitAll, { once: true });
+
+      if (!visibilityMutationObserver && document.body) {
+        visibilityMutationObserver = new MutationObserver(function () {
+          setTimeout(function () {
+            queueRefitAll();
+            startSettleLoop();
+          }, 60);
+        });
+        visibilityMutationObserver.observe(document.body, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['class', 'style', 'open', 'hidden']
+        });
+      }
+
       var observer = new MutationObserver(function (mutations) {
         for (var m = 0; m < mutations.length; m++) {
           if (mutations[m].attributeName === 'class') {
             setTimeout(function () {
-              for (var d = 0; d < diagrams.length; d++) renderFn(diagrams[d].container, diagrams[d].text);
+              for (var d = 0; d < diagrams.length; d++) {
+                renderFn(diagrams[d].container, diagrams[d].text);
+                if (visibilityObserver) visibilityObserver.observe(diagrams[d].container);
+              }
+              queueRefitAll();
+              startSettleLoop();
             }, 50);
             break;
           }
@@ -503,71 +653,32 @@
    * After rendering SVG into a container, expand the viewBox to fit all content.
    * Call this after setting container.innerHTML = svgString.
    */
-  function autoFitSVG(container, pad) {
+  function isPlaceholderAutoFit(svg) {
+    if (!svg) return false;
+    return svg.getAttribute('viewBox') === '-24 -24 48 48' &&
+      svg.getAttribute('width') === '48' &&
+      svg.getAttribute('height') === '48' &&
+      !!svg.querySelector('g > *');
+  }
+
+  function applyAutoFitSVG(container, pad) {
     var svg = container.querySelector('svg');
-    if (!svg) return;
+    if (!svg) return false;
     var g = svg.querySelector('g');
-    if (!g) return;
+    if (!g) return false;
     try {
-      // Measure the rendered content group, not the root SVG viewport.
-      // Measuring the root can collapse the diagram to its initial tiny
-      // placeholder size on some pages after viewBox updates.
-      var bbox = g.getBBox();
-      if (!bbox || !isFinite(bbox.width) || !isFinite(bbox.height) || bbox.width <= 0 || bbox.height <= 0) return;
-      var ctm = g.getCTM();
-      var minX = bbox.x, minY = bbox.y, maxX = bbox.x + bbox.width, maxY = bbox.y + bbox.height;
+      // Flush layout so SVG transforms are current before measuring bounds.
+      svg.getBoundingClientRect();
 
-      // getBBox() is reported in the group's local coordinates and does not
-      // include the root translate(...) used by svgOpen(). Apply the current
-      // transform matrix so the fitted viewBox covers the actual rendered area.
-      if (ctm) {
-        var corners = [
-          { x: bbox.x, y: bbox.y },
-          { x: bbox.x + bbox.width, y: bbox.y },
-          { x: bbox.x + bbox.width, y: bbox.y + bbox.height },
-          { x: bbox.x, y: bbox.y + bbox.height }
-        ];
-        minX = Infinity;
-        minY = Infinity;
-        maxX = -Infinity;
-        maxY = -Infinity;
-        for (var i = 0; i < corners.length; i++) {
-          var pt = corners[i];
-          var tx = ctm.a * pt.x + ctm.c * pt.y + ctm.e;
-          var ty = ctm.b * pt.x + ctm.d * pt.y + ctm.f;
-          if (tx < minX) minX = tx;
-          if (ty < minY) minY = ty;
-          if (tx > maxX) maxX = tx;
-          if (ty > maxY) maxY = ty;
-        }
-      }
-
-      // Walk all text elements to catch labels that extend beyond
-      // the group bounding box (italic text, edge labels, etc.)
-      var texts = g.querySelectorAll('text');
-      for (var ti = 0; ti < texts.length; ti++) {
-        try {
-          var tb = texts[ti].getBBox();
-          if (!tb || !isFinite(tb.width)) continue;
-          var tctm = texts[ti].getCTM();
-          if (tctm) {
-            var tcorners = [
-              { x: tb.x, y: tb.y },
-              { x: tb.x + tb.width, y: tb.y },
-              { x: tb.x + tb.width, y: tb.y + tb.height },
-              { x: tb.x, y: tb.y + tb.height }
-            ];
-            for (var tc = 0; tc < tcorners.length; tc++) {
-              var ttx = tctm.a * tcorners[tc].x + tctm.c * tcorners[tc].y + tctm.e;
-              var tty = tctm.b * tcorners[tc].x + tctm.d * tcorners[tc].y + tctm.f;
-              if (ttx < minX) minX = ttx;
-              if (tty < minY) minY = tty;
-              if (ttx > maxX) maxX = ttx;
-              if (tty > maxY) maxY = tty;
-            }
-          }
-        } catch (te) { /* skip unmeasurable text */ }
-      }
+      // Measure descendant nodes individually. A root <g>.getBBox() can miss
+      // transformed descendants in dense component/class layouts, which clips
+      // long routes and port labels when the viewBox is recomputed.
+      var bounds = collectSvgBounds(svg, g);
+      if (!bounds) return false;
+      var minX = bounds.minX;
+      var minY = bounds.minY;
+      var maxX = bounds.maxX;
+      var maxY = bounds.maxY;
 
       var p = pad || 24;
       var vx = Math.floor(minX - p);
@@ -577,7 +688,32 @@
       svg.setAttribute('width', Math.ceil(vw));
       svg.setAttribute('height', Math.ceil(vh));
       svg.setAttribute('viewBox', Math.floor(vx) + ' ' + Math.floor(vy) + ' ' + Math.ceil(vw) + ' ' + Math.ceil(vh));
+      return true;
     } catch (e) { /* getBBox can fail on hidden elements */ }
+    return false;
+  }
+
+  function autoFitSVG(container, pad) {
+    applyAutoFitSVG(container, pad);
+    var svg = container && container.querySelector ? container.querySelector('svg') : null;
+    if (!isPlaceholderAutoFit(svg)) {
+      if (container && container.removeAttribute) container.removeAttribute('data-uml-autofit-retries');
+      return;
+    }
+
+    var retries = Number(container.getAttribute('data-uml-autofit-retries') || '0');
+    if (retries >= 2) return;
+
+    container.setAttribute('data-uml-autofit-retries', String(retries + 1));
+    setTimeout(function () {
+      applyAutoFitSVG(container, pad);
+      var retriedSvg = container.querySelector('svg');
+      if (isPlaceholderAutoFit(retriedSvg)) {
+        autoFitSVG(container, pad);
+      } else {
+        container.removeAttribute('data-uml-autofit-retries');
+      }
+    }, retries === 0 ? 120 : 360);
   }
 
   function resolveNodeTarget(targetName, entries) {
@@ -1156,6 +1292,28 @@
     return bends;
   }
 
+  function countRouteCrossings(points, occupied) {
+    if (!points || !occupied) return 0;
+    var crossings = 0;
+    for (var i = 0; i < points.length - 1; i++) {
+        var p0 = points[i], p1 = points[i + 1];
+        if (Math.abs(p0.y - p1.y) < 1) { // horizontal segment
+            var xMin = Math.min(p0.x, p1.x), xMax = Math.max(p0.x, p1.x);
+            for (var j = 0; j < occupied.v.length; j++) {
+                var vseg = occupied.v[j];
+                if (vseg.x > xMin + 2 && vseg.x < xMax - 2 && p0.y > vseg.y1 + 2 && p0.y < vseg.y2 - 2) crossings++;
+            }
+        } else if (Math.abs(p0.x - p1.x) < 1) { // vertical segment
+            var yMin = Math.min(p0.y, p1.y), yMax = Math.max(p0.y, p1.y);
+            for (var k = 0; k < occupied.h.length; k++) {
+                var hseg = occupied.h[k];
+                if (hseg.y > yMin + 2 && hseg.y < yMax - 2 && p0.x > hseg.x1 + 2 && p0.x < hseg.x2 - 2) crossings++;
+            }
+        }
+    }
+    return crossings;
+  }
+
   function routeHitsObstacle(points, obstacles, skipNames, occupied) {
     if (!points) return true;
     for (var i = 0; i < points.length - 1; i++) {
@@ -1634,6 +1792,7 @@
     simplifyOrthogonalPath: simplifyOrthogonalPath,
     measureOrthogonalRoute: measureOrthogonalRoute,
     countOrthogonalBends: countOrthogonalBends,
+    countRouteCrossings: countRouteCrossings,
     routeHitsObstacle: routeHitsObstacle,
     findClearX: findClearX,
     findClearY: findClearY,
@@ -3467,6 +3626,12 @@
       }
     }
 
+    var hierarchyRouteObstacles = [];
+    for (var hri = 0; hri < noteRouteSegments.length; hri++) {
+      var hierarchyObstacle = segmentObstacleRect(noteRouteSegments[hri], 10);
+      if (hierarchyObstacle) hierarchyRouteObstacles.push(hierarchyObstacle);
+    }
+
     // Pre-compute port offsets: when multiple edges exit from the same side of a box,
     // assign port indices sorted by target X to minimize crossings
     var exitPortCounts = {}; // "className:side" -> count
@@ -3484,11 +3649,7 @@
       var epFromCy = epFrom.y + epFrom.box.height / 2;
       var epToCx = epTo.x + epTo.box.width / 2;
       var epToCy = epTo.y + epTo.box.height / 2;
-      var epSide = (hasInheritAtBottom[epRel.from]) ? 'bottom' :
-        (Math.abs(epToCx - epFromCx) >
-         Math.abs(epToCy - epFromCy) * 0.6) ?
-        ((epToCx > epFromCx) ? 'right' : 'left') :
-        ((epToCy > epFromCy) ? 'bottom' : 'top');
+      var epSide = routeSourceSideForRelation(epFrom, epTo, epRel.type, hasInheritAtBottom[epRel.from]);
       var epKey = epRel.from + ':' + epSide;
       if (!exitGroups[epKey]) exitGroups[epKey] = [];
       exitGroups[epKey].push({ idx: epi, targetCx: epToCx });
@@ -3536,7 +3697,7 @@
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
       // Compute orthogonal route, with port offset for multiple edges from same side
-      var sourceSide = routeSide(fromE, toE, hasInheritAtBottom[orel.from]);
+      var sourceSide = routeSourceSideForRelation(fromE, toE, orel.type, hasInheritAtBottom[orel.from]);
       var srcKey = orel.from + ':' + sourceSide;
       var srcCount = exitPortCounts[srcKey] || 1;
       var srcPortSpacing = srcCount > 1 ? 22 : 16;
@@ -3547,6 +3708,8 @@
       var tgtCount = entryPortCounts[tgtKey] || 1;
       var tgtPortSpacing = tgtCount > 1 ? 24 : 14;
       var tgtCentered = ((entryPortIdx[oi] || 0) - (tgtCount - 1) / 2) * tgtPortSpacing;
+      var restrictSourceSide = (orel.type === 'composition' || orel.type === 'aggregation') &&
+        (sourceSide === 'top' || sourceSide === 'bottom');
 
       var route = computeOrthogonalRoute(
         fromE,
@@ -3562,9 +3725,14 @@
         sourceSide,
         hasInheritAtTop[orel.from],
         hasInheritAtBottom[orel.to],
-        classOccupiedSegments
+        classOccupiedSegments,
+        hierarchyRouteObstacles,
+        restrictSourceSide
       );
       var pathPoints = route.points; // array of {x,y}
+      if ((orel.type === 'composition' || orel.type === 'aggregation') && (sourceSide === 'top' || sourceSide === 'bottom')) {
+        pathPoints = reanchorWholePartRouteStart(pathPoints, fromE, sourceSide);
+      }
       var routeSegments = UMLShared.buildOrthogonalSegments(pathPoints);
 
       // Build polyline points string
@@ -3581,16 +3749,30 @@
       // Determine direction at each end for decorations
       var p0 = pathPoints[0], p1 = pathPoints[1];
       var pLast = pathPoints[pathPoints.length - 1], pPrev = pathPoints[pathPoints.length - 2];
+      var actualSourceSide = classEdgeForPoint(p0, fromE, sourceSide);
+      var actualTargetSide = classEdgeForPoint(pLast, toE, tgtSide);
+      var sourceVector = classSideVector(actualSourceSide);
+      var targetVector = classSideVector(actualTargetSide);
 
       // Direction FROM start (away from source box)
-      var startDx = p1.x - p0.x, startDy = p1.y - p0.y;
-      var startLen = Math.sqrt(startDx * startDx + startDy * startDy);
-      if (startLen > 0) { startDx /= startLen; startDy /= startLen; }
+      var startDx = sourceVector.x;
+      var startDy = sourceVector.y;
+      if (startDx === 0 && startDy === 0) {
+        startDx = p1.x - p0.x;
+        startDy = p1.y - p0.y;
+        var startLen = Math.sqrt(startDx * startDx + startDy * startDy);
+        if (startLen > 0) { startDx /= startLen; startDy /= startLen; }
+      }
 
-      // Direction INTO end (arriving at target box)
-      var endDx = pLast.x - pPrev.x, endDy = pLast.y - pPrev.y;
-      var endLen = Math.sqrt(endDx * endDx + endDy * endDy);
-      if (endLen > 0) { endDx /= endLen; endDy /= endLen; }
+      // Direction FROM end (away from target box)
+      var endDx = targetVector.x;
+      var endDy = targetVector.y;
+      if (endDx === 0 && endDy === 0) {
+        endDx = pPrev.x - pLast.x;
+        endDy = pPrev.y - pLast.y;
+        var endLen = Math.sqrt(endDx * endDx + endDy * endDy);
+        if (endLen > 0) { endDx /= endLen; endDy /= endLen; }
+      }
 
       // Source decorations (deferred to draw on top of class boxes)
       if (orel.type === 'composition') {
@@ -3618,10 +3800,10 @@
 
       // Target decorations (deferred to draw on top of class boxes)
       if (orel.type === 'dependency' || orel.type === 'navigable' || orel.navigability === 'navigable' || orel.navigability === 'bidirectional') {
-        UMLShared.drawOpenArrow(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
+        UMLShared.drawOpenArrow(decorSvg, pLast.x, pLast.y, endDx, endDy, colors.line);
         noteMarkerObstacles.push(pointObstacleRect(pLast.x, pLast.y, CFG.arrowSize + 6));
       } else if (orel.navigability === 'non-navigable' || orel.navigability === 'non-navigable-both') {
-        UMLShared.drawCrossMarker(decorSvg, pLast.x, pLast.y, -endDx, -endDy, colors.line);
+        UMLShared.drawCrossMarker(decorSvg, pLast.x, pLast.y, endDx, endDy, colors.line);
         noteMarkerObstacles.push(pointObstacleRect(pLast.x, pLast.y, CFG.arrowSize + 6));
       }
 
@@ -3683,10 +3865,10 @@
         var tmx, tmy;
         if (isLastHoriz) {
           // Horizontal entry: place multiplicity above the line, near target box edge
-          tmx = pLast.x - endDx * 6;
+          tmx = pLast.x + endDx * 6;
           tmy = pLast.y - horizMultLane;
           // Anchor toward the target box
-          var tmAnchor = (endDx > 0) ? 'end' : 'start';
+          var tmAnchor = (endDx < 0) ? 'end' : 'start';
         } else {
           var prevSegStart = pathPoints.length >= 3 ? pathPoints[pathPoints.length - 3] : null;
           var prevSegIsHoriz = prevSegStart && Math.abs(prevSegStart.y - pPrev.y) < 1;
@@ -3700,7 +3882,7 @@
             if (toSideBias === 0) toSideBias = (fromE.x + fromE.box.width / 2 <= toCx0) ? -1 : 1;
             var toLabelOffset = tgtCount > 1 ? (18 + Math.abs(tgtCentered)) : 8;
             tmx = pLast.x + toSideBias * toLabelOffset;
-            tmy = pLast.y - endDy * 14;
+            tmy = pLast.y + endDy * 14;
             tmAnchor = (toSideBias < 0) ? 'end' : 'start';
           }
         }
@@ -3965,7 +4147,7 @@
     var otherCy = otherEntry.y + otherEntry.box.height / 2;
     var candidates = [];
 
-    for (var si = 0; si < sideOrder.length && si < 3; si++) {
+    for (var si = 0; si < sideOrder.length && si < 4; si++) {
       var side = sideOrder[si];
       var horizontalSide = side === 'top' || side === 'bottom';
       var preferredCoord = horizontalSide ? otherCx : otherCy;
@@ -3991,11 +4173,33 @@
     return candidates;
   }
 
+  function classEdgeForPoint(point, entry, fallback) {
+    if (!point || !entry || !entry.box) return fallback;
+    var tol = 1.5;
+    var left = entry.x;
+    var right = entry.x + entry.box.width;
+    var top = entry.y;
+    var bottom = entry.y + entry.box.height;
+    if (Math.abs(point.y - top) <= tol && point.x >= left - tol && point.x <= right + tol) return 'top';
+    if (Math.abs(point.y - bottom) <= tol && point.x >= left - tol && point.x <= right + tol) return 'bottom';
+    if (Math.abs(point.x - left) <= tol && point.y >= top - tol && point.y <= bottom + tol) return 'left';
+    if (Math.abs(point.x - right) <= tol && point.y >= top - tol && point.y <= bottom + tol) return 'right';
+    return fallback;
+  }
+
+  function classSideVector(side) {
+    if (side === 'left') return { x: -1, y: 0 };
+    if (side === 'right') return { x: 1, y: 0 };
+    if (side === 'top') return { x: 0, y: -1 };
+    if (side === 'bottom') return { x: 0, y: 1 };
+    return { x: 0, y: 0 };
+  }
+
   /**
    * Compute orthogonal (Manhattan) route between two class boxes using the
    * shared obstacle-aware router and multi-anchor candidate scoring.
    */
-  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId, targetEntryOffset, targetEntrySide, sourceSide, avoidFromTop, avoidToBottom, occupiedSegments) {
+  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId, targetEntryOffset, targetEntrySide, sourceSide, avoidFromTop, avoidToBottom, occupiedSegments, extraObstacleRects, restrictSourceSide) {
     portOffset = portOffset || 0;
     targetEntryOffset = targetEntryOffset || 0;
     avoidFromTop = !!avoidFromTop;
@@ -4026,13 +4230,21 @@
       }
     }
 
-    var sourceOrder = buildClassPreferredSideOrder(
-      fromE,
-      toE,
-      'source',
-      sourceSide,
-      avoidFromBottom && sourceSide === 'bottom'
-    );
+    if (extraObstacleRects && extraObstacleRects.length) {
+      for (var eoi = 0; eoi < extraObstacleRects.length; eoi++) {
+        obstacles.push(extraObstacleRects[eoi]);
+      }
+    }
+
+    var sourceOrder = restrictSourceSide
+      ? [sourceSide]
+      : buildClassPreferredSideOrder(
+          fromE,
+          toE,
+          'source',
+          sourceSide,
+          avoidFromBottom && sourceSide === 'bottom'
+        );
     var targetOrder = buildClassPreferredSideOrder(
       fromE,
       toE,
@@ -4067,21 +4279,15 @@
         });
         var points = enforceOrthogonalEndpointApproach(routed.points, fromE, toE, sourceCandidate.side, targetCandidate.side);
         points = UMLShared.simplifyOrthogonalPath(points);
+
         if (UMLShared.routeHitsObstacle(points, obstacles, skipNames, null)) continue;
+        
+        var crosses = UMLShared.countRouteCrossings(points, occupiedSegments);
+        var occupiedPenalty = crosses * 5000;
 
         var score = UMLShared.measureOrthogonalRoute(points) +
           UMLShared.countOrthogonalBends(points) * 48 +
-          sourceCandidate.penalty + targetCandidate.penalty;
-        var sourceVertical = sourceCandidate.side === 'top' || sourceCandidate.side === 'bottom';
-        var targetVertical = targetCandidate.side === 'top' || targetCandidate.side === 'bottom';
-        if (dxAbs > dyAbs * 0.8) {
-          if (sourceVertical && targetVertical) score += 24;
-          else if (sourceVertical || targetVertical) score += 8;
-        } else if (!sourceVertical && !targetVertical) {
-          score += 18;
-        }
-        if ((sourceCandidate.side === 'bottom' && avoidFromBottom) || (sourceCandidate.side === 'top' && avoidFromTop)) score += 8;
-        if ((targetCandidate.side === 'top' && avoidToTop) || (targetCandidate.side === 'bottom' && avoidToBottom)) score += 8;
+          sourceCandidate.penalty + targetCandidate.penalty + occupiedPenalty;
 
         if (!best || score + 0.01 < best.score) {
           best = {
@@ -4093,9 +4299,9 @@
     }
 
     if (!best) {
-      var fallbackSource = { x: fromE.x + fromE.box.width, y: fromCy, side: 'right', stub: stub };
-      var fallbackTarget = { x: toE.x, y: toCy, side: 'left', stub: stub };
-      if (toCx < fromCx) {
+      var fallbackSource = sourceCandidates[0] || { x: fromE.x + fromE.box.width, y: fromCy, side: 'right', stub: stub };
+      var fallbackTarget = targetCandidates[0] || { x: toE.x, y: toCy, side: 'left', stub: stub };
+      if (!sourceCandidates.length && !targetCandidates.length && toCx < fromCx) {
         fallbackSource = { x: fromE.x, y: fromCy, side: 'left', stub: stub };
         fallbackTarget = { x: toE.x + toE.box.width, y: toCy, side: 'right', stub: stub };
       }
@@ -4119,6 +4325,7 @@
     if (!points || points.length < 3) return points;
 
     var tol = 1.5;
+    var outwardGap = Math.max(16, CFG.diamondH + 4, CFG.arrowSize + 4);
 
     function needsVertical(side) {
       return side === 'top' || side === 'bottom';
@@ -4128,37 +4335,90 @@
       return side === 'left' || side === 'right';
     }
 
-    function edgeForPoint(point, entry, fallback) {
-      if (!entry || !entry.box) return fallback;
-      var left = entry.x;
-      var right = entry.x + entry.box.width;
-      var top = entry.y;
-      var bottom = entry.y + entry.box.height;
-      if (Math.abs(point.y - top) <= tol && point.x >= left - tol && point.x <= right + tol) return 'top';
-      if (Math.abs(point.y - bottom) <= tol && point.x >= left - tol && point.x <= right + tol) return 'bottom';
-      if (Math.abs(point.x - left) <= tol && point.y >= top - tol && point.y <= bottom + tol) return 'left';
-      if (Math.abs(point.x - right) <= tol && point.y >= top - tol && point.y <= bottom + tol) return 'right';
-      return fallback;
+    function buildStubPoint(side, entry, point) {
+      if (!entry || !entry.box) return point;
+      if (side === 'left') return { x: entry.x - outwardGap, y: point.y };
+      if (side === 'right') return { x: entry.x + entry.box.width + outwardGap, y: point.y };
+      if (side === 'top') return { x: point.x, y: entry.y - outwardGap };
+      if (side === 'bottom') return { x: point.x, y: entry.y + entry.box.height + outwardGap };
+      return point;
+    }
+
+    function startsOutward(anchor, next, side) {
+      if (!anchor || !next) return true;
+      if (side === 'left') return Math.abs(next.y - anchor.y) <= tol && next.x <= anchor.x - tol;
+      if (side === 'right') return Math.abs(next.y - anchor.y) <= tol && next.x >= anchor.x + tol;
+      if (side === 'top') return Math.abs(next.x - anchor.x) <= tol && next.y <= anchor.y - tol;
+      if (side === 'bottom') return Math.abs(next.x - anchor.x) <= tol && next.y >= anchor.y + tol;
+      return true;
+    }
+
+    function endsOutward(prev, anchor, side) {
+      if (!anchor || !prev) return true;
+      if (side === 'left') return Math.abs(prev.y - anchor.y) <= tol && prev.x <= anchor.x - tol;
+      if (side === 'right') return Math.abs(prev.y - anchor.y) <= tol && prev.x >= anchor.x + tol;
+      if (side === 'top') return Math.abs(prev.x - anchor.x) <= tol && prev.y <= anchor.y - tol;
+      if (side === 'bottom') return Math.abs(prev.x - anchor.x) <= tol && prev.y >= anchor.y + tol;
+      return true;
+    }
+
+    function rebuildStart(pointsIn, side, entry) {
+      if (!pointsIn || pointsIn.length < 2) return pointsIn;
+      if (startsOutward(pointsIn[0], pointsIn[1], side)) return pointsIn;
+
+      var stub = buildStubPoint(side, entry, pointsIn[0]);
+      var rebuilt = [pointsIn[0], stub];
+      var turnIndex = 1;
+
+      if (needsHorizontal(side)) {
+        while (turnIndex < pointsIn.length && Math.abs(pointsIn[turnIndex].y - pointsIn[0].y) <= tol) turnIndex++;
+        if (turnIndex < pointsIn.length) {
+          rebuilt.push({ x: stub.x, y: pointsIn[turnIndex].y });
+        }
+      } else {
+        while (turnIndex < pointsIn.length && Math.abs(pointsIn[turnIndex].x - pointsIn[0].x) <= tol) turnIndex++;
+        if (turnIndex < pointsIn.length) {
+          rebuilt.push({ x: pointsIn[turnIndex].x, y: stub.y });
+        }
+      }
+
+      return rebuilt.concat(pointsIn.slice(turnIndex));
+    }
+
+    function rebuildEnd(pointsIn, side, entry) {
+      if (!pointsIn || pointsIn.length < 2) return pointsIn;
+      var lastIndex = pointsIn.length - 1;
+      if (endsOutward(pointsIn[lastIndex - 1], pointsIn[lastIndex], side)) return pointsIn;
+
+      var end = pointsIn[lastIndex];
+      var stub = buildStubPoint(side, entry, end);
+      var rebuilt = [];
+      var turnIndex = lastIndex - 1;
+
+      if (needsHorizontal(side)) {
+        while (turnIndex >= 0 && Math.abs(pointsIn[turnIndex].y - end.y) <= tol) turnIndex--;
+        rebuilt = pointsIn.slice(0, turnIndex + 1);
+        if (turnIndex >= 0) {
+          rebuilt.push({ x: pointsIn[turnIndex].x, y: stub.y });
+        }
+      } else {
+        while (turnIndex >= 0 && Math.abs(pointsIn[turnIndex].x - end.x) <= tol) turnIndex--;
+        rebuilt = pointsIn.slice(0, turnIndex + 1);
+        if (turnIndex >= 0) {
+          rebuilt.push({ x: stub.x, y: pointsIn[turnIndex].y });
+        }
+      }
+      rebuilt.push(stub);
+      rebuilt.push(end);
+      return rebuilt;
     }
 
     var adjusted = points.slice();
-    var actualSourceSide = edgeForPoint(adjusted[0], fromE, sourceSide);
-    var actualTargetSide = edgeForPoint(adjusted[adjusted.length - 1], toE, targetSide);
+  var actualSourceSide = classEdgeForPoint(adjusted[0], fromE, sourceSide);
+  var actualTargetSide = classEdgeForPoint(adjusted[adjusted.length - 1], toE, targetSide);
 
-    if (needsVertical(actualSourceSide) && adjusted[0].y === adjusted[1].y && adjusted[2]) {
-      adjusted[1] = { x: adjusted[0].x, y: adjusted[2].y };
-    } else if (needsHorizontal(actualSourceSide) && adjusted[0].x === adjusted[1].x && adjusted[2]) {
-      adjusted[1] = { x: adjusted[2].x, y: adjusted[0].y };
-    }
-
-    var last = adjusted.length - 1;
-    if (last >= 2) {
-      if (needsVertical(actualTargetSide) && adjusted[last - 1].y === adjusted[last].y && adjusted[last - 2]) {
-        adjusted[last - 1] = { x: adjusted[last].x, y: adjusted[last - 2].y };
-      } else if (needsHorizontal(actualTargetSide) && adjusted[last - 1].x === adjusted[last].x && adjusted[last - 2]) {
-        adjusted[last - 1] = { x: adjusted[last - 2].x, y: adjusted[last].y };
-      }
-    }
+    adjusted = rebuildStart(adjusted, actualSourceSide, fromE);
+    adjusted = rebuildEnd(adjusted, actualTargetSide, toE);
 
     return simplifyPath(orthogonalize(adjusted));
   }
@@ -4175,6 +4435,31 @@
     return (toCy > fromCy) ? 'bottom' : 'top';
   }
 
+  function routeSourceSideForRelation(fromE, toE, relationType, avoidFromBottom) {
+    if (relationType === 'composition' || relationType === 'aggregation') {
+      var fromCx = fromE.x + fromE.box.width / 2;
+      var fromCy = fromE.y + fromE.box.height / 2;
+      var toCx = toE.x + toE.box.width / 2;
+      var toCy = toE.y + toE.box.height / 2;
+      var dx = toCx - fromCx;
+      var dy = toCy - fromCy;
+
+      var targetBottom = toE.y + toE.box.height;
+      var targetTop = toE.y;
+      var verticalGap = Math.abs(dy);
+      var horizontalGap = Math.abs(dx);
+      if (targetBottom <= fromE.y + 8 && verticalGap >= horizontalGap * 0.45) return 'top';
+      if (!avoidFromBottom) {
+      if (targetTop >= fromE.y + fromE.box.height - 8) return 'bottom';
+      }
+
+      if (Math.abs(dx) > Math.abs(dy) * 0.8) {
+        return dx >= 0 ? 'right' : 'left';
+      }
+    }
+    return routeSide(fromE, toE, avoidFromBottom);
+  }
+
   function routeEntrySide(fromE, toE, avoidToTop) {
     if (avoidToTop) return 'top';
     var fromCx = fromE.x + fromE.box.width / 2;
@@ -4185,6 +4470,36 @@
       return (fromCx > toCx) ? 'right' : 'left';
     }
     return (fromCy > toCy) ? 'bottom' : 'top';
+  }
+
+  function reanchorWholePartRouteStart(points, entry, desiredSide) {
+    if (!points || points.length < 2) return points;
+    if (desiredSide !== 'top' && desiredSide !== 'bottom') return points;
+
+    var boundaryY = desiredSide === 'top' ? entry.y : (entry.y + entry.box.height);
+    var minX = entry.x - 1;
+    var maxX = entry.x + entry.box.width + 1;
+    if (Math.abs(points[0].y - boundaryY) > 1 || Math.abs(points[1].y - boundaryY) > 1) return points;
+    if (points[1].x < minX || points[1].x > maxX) return points;
+
+    var outsideIndex = -1;
+    for (var i = 1; i < points.length; i++) {
+      var point = points[i];
+      if (desiredSide === 'top' && point.y < entry.y - 1) {
+        outsideIndex = i;
+        break;
+      }
+      if (desiredSide === 'bottom' && point.y > entry.y + entry.box.height + 1) {
+        outsideIndex = i;
+        break;
+      }
+    }
+
+    if (outsideIndex === -1) return points;
+
+    var exitPoint = points[outsideIndex];
+    var rebuilt = [{ x: exitPoint.x, y: boundaryY }].concat(points.slice(outsideIndex));
+    return UMLShared.simplifyOrthogonalPath(rebuilt);
   }
 
   /**
@@ -6692,6 +7007,7 @@
       var groupPositions = {};
       var groups = [];
       var processedGroups = {};
+      var stableTieThreshold = Math.max(8, CFG.portPad * 0.35);
 
       function pushNeighbor(fromPortKey, toPortKey, toGroupKey) {
         if (!portNeighbors[fromPortKey]) portNeighbors[fromPortKey] = [];
@@ -6810,6 +7126,18 @@
           }
           score += ((entry.portOrderIndex[alias] || 0) * 0.001);
         }
+        for (var ai = 0; ai < candidate.length - 1; ai++) {
+          var aAlias = candidate[ai];
+          if (!desiredYMap.hasOwnProperty(aAlias)) continue;
+          for (var bi = ai + 1; bi < candidate.length; bi++) {
+            var bAlias = candidate[bi];
+            if (!desiredYMap.hasOwnProperty(bAlias)) continue;
+            if (Math.abs(desiredYMap[aAlias] - desiredYMap[bAlias]) >= stableTieThreshold) continue;
+            if ((entry.portOrderIndex[aAlias] || 0) > (entry.portOrderIndex[bAlias] || 0)) {
+              score += stableTieThreshold * 0.75;
+            }
+          }
+        }
         return score;
       }
 
@@ -6845,6 +7173,13 @@
           if (count > 0) {
             desiredYMap[alias] = total / count;
             desiredCount++;
+            continue;
+          }
+
+          var globalDesiredY = averagePortY(portKey(group.compName, alias));
+          if (globalDesiredY !== null) {
+            desiredYMap[alias] = globalDesiredY;
+            desiredCount++;
           }
         }
 
@@ -6858,7 +7193,7 @@
         ordered.sort(function(a, b) {
           var ay = desiredYMap.hasOwnProperty(a) ? desiredYMap[a] : Number.POSITIVE_INFINITY;
           var by = desiredYMap.hasOwnProperty(b) ? desiredYMap[b] : Number.POSITIVE_INFINITY;
-          if (Math.abs(ay - by) > 0.5) return ay - by;
+          if (Math.abs(ay - by) > stableTieThreshold) return ay - by;
           return (entry.portOrderIndex[a] || 0) - (entry.portOrderIndex[b] || 0);
         });
         var improved = true;
@@ -6955,11 +7290,12 @@
           var symbolRadius = pp2.kind === 'require' ? CFG.ifaceSocketRadius : CFG.ifaceRadius;
           var ifaceCenterX = pp2.cx + sideFactor * (CFG.ifaceStick + symbolRadius);
           var ifaceRadius = symbolRadius + 2;
+          // Labels are centered below the symbol
           var ifaceLabelHalf = UMLShared.textWidth(pp2.label || pn2, false, portLabelFs) / 2 + 4;
-          minX = Math.min(minX, ifaceCenterX - Math.max(ifaceRadius, ifaceLabelHalf));
-          maxX = Math.max(maxX, ifaceCenterX + Math.max(ifaceRadius, ifaceLabelHalf));
-          minY = Math.min(minY, pp2.cy - CFG.ifaceRadius - portLabelFs - 8);
-          maxY = Math.max(maxY, pp2.cy + CFG.ifaceRadius + 2);
+          minX = Math.min(minX, ifaceCenterX - Math.max(symbolRadius, ifaceLabelHalf));
+          maxX = Math.max(maxX, ifaceCenterX + Math.max(symbolRadius, ifaceLabelHalf));
+          minY = Math.min(minY, pp2.cy - symbolRadius);
+          maxY = Math.max(maxY, pp2.cy + symbolRadius + portLabelFs + 6);
         } else {
           minX = Math.min(minX, pp2.x);
           minY = Math.min(minY, pp2.y);
@@ -6986,7 +7322,7 @@
     return {
       entries: entries,
       width: maxX - minX + 20,
-      height: maxY - minY,
+      height: maxY - minY + 20,
       offsetX: -minX,
       offsetY: -minY,
       layoutResult: result
@@ -8210,6 +8546,17 @@
     for (var cri = 0; cri < connectorRoutes.length; cri++) {
       var routeInfo = connectorRoutes[cri];
       if (!routeInfo.conn.label) continue;
+      // Skip connector label when source or target is a standalone lollipop port —
+      // the lollipop already renders its own label at the symbol, so a connector
+      // label would double up and overlap it.
+      var lConn = routeInfo.conn;
+      var lFromE = entries[lConn.from], lToE = entries[lConn.to];
+      var lFromPP = lFromE && lConn.fromPort && lFromE.portPositions[lConn.fromPort];
+      var lToPP = lToE && lConn.toPort && lToE.portPositions[lConn.toPort];
+      if ((lFromPP && (lFromPP.kind === 'provide' || lFromPP.kind === 'require') && !joinedPorts[lConn.fromPort]) ||
+          (lToPP && (lToPP.kind === 'provide' || lToPP.kind === 'require') && !joinedPorts[lConn.toPort])) {
+        continue;
+      }
       var labelPlacement = placeComponentConnectorLabel(
         routeInfo.conn.label,
         routeInfo.points,
@@ -8292,9 +8639,10 @@
                   ' 0 0,0 ' + ifCx + ',' + (ifCy + ifR) +
                   '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               }
-              labelX = ifCx + ifR + 6;
-              labelAnchor = 'start';
-              labelY = ifCy - ifR + 4;
+              // Label centered below the symbol (avoids collision with the opposing port's label)
+              labelX = ifCx;
+              labelAnchor = 'middle';
+              labelY = ifCy + ifR + portLblFs2 + 2;
             } else {
               ifCx = pp.cx - ifS - ifR;
               svg.push('<line x1="' + pp.cx + '" y1="' + ifCy + '" x2="' + (ifCx + ifR) + '" y2="' + ifCy +
@@ -8308,9 +8656,10 @@
                   ' 0 0,1 ' + ifCx + ',' + (ifCy + ifR) +
                   '" fill="none" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"/>');
               }
-              labelX = ifCx - ifR - 6;
-              labelAnchor = 'end';
-              labelY = ifCy - ifR + 4;
+              // Label centered below the symbol (avoids collision with the opposing port's label)
+              labelX = ifCx;
+              labelAnchor = 'middle';
+              labelY = ifCy + ifR + portLblFs2 + 2;
             }
             svg.push('<text x="' + labelX + '" y="' + labelY +
               '" text-anchor="' + labelAnchor + '" font-size="' + portLblFs2 + '"' +
@@ -9620,6 +9969,78 @@
     }
 
     spreadEntriesVertically(entries, actorIds, 18);
+
+    // Resolve actor–usecase collisions: an actor placed to the left of its use case
+    // may land on top of another use case that sits between them (e.g. when an
+    // include chain places the target use case to the right of an intermediate one).
+    // Push the colliding actor further left (or to the right if that is closer).
+    var gap = CFG.gapX * 0.5;
+    for (var colActorId in entries) {
+      var colActor = entries[colActorId];
+      if (!colActor || colActor.type !== 'actor') continue;
+      for (var colUcId in entries) {
+        var colUc = entries[colUcId];
+        if (!colUc || colUc.type !== 'usecase') continue;
+        // Check overlap (with a small margin)
+        var overlapX = colActor.x + colActor.box.width > colUc.x + gap &&
+                       colActor.x < colUc.x + colUc.box.width - gap;
+        var overlapY = colActor.y + colActor.box.height > colUc.y + gap &&
+                       colActor.y < colUc.y + colUc.box.height - gap;
+        if (overlapX && overlapY) {
+          // Choose side: push left past the use case's left edge
+          colActor.x = colUc.x - colActor.box.width - gap * 2;
+        }
+      }
+    }
+
+    // Ensure all actors are outside system boundaries (actors may be on left or right)
+    if (parsed.systems && parsed.systems.length > 0) {
+      var sysBounds = [];
+      for (var syi = 0; syi < parsed.systems.length; syi++) {
+        var sys = parsed.systems[syi];
+        var sMinX = Infinity, sMinY = Infinity, sMaxX = -Infinity, sMaxY = -Infinity;
+        var hasUsecaseMember = false;
+        for (var smi = 0; smi < sys.members.length; smi++) {
+          var smid = parsed.aliasToId[sys.members[smi]] || sys.members[smi];
+          var sme = entries[smid];
+          if (!sme || sme.type !== 'usecase') continue;
+          hasUsecaseMember = true;
+          sMinX = Math.min(sMinX, sme.x - CFG.sysPadX);
+          sMinY = Math.min(sMinY, sme.y - CFG.sysPadY);
+          sMaxX = Math.max(sMaxX, sme.x + sme.box.width + CFG.sysPadX);
+          sMaxY = Math.max(sMaxY, sme.y + sme.box.height + CFG.sysPadY);
+        }
+        if (hasUsecaseMember) {
+          sysBounds.push({ minX: sMinX, minY: sMinY, maxX: sMaxX, maxY: sMaxY });
+        }
+      }
+      for (var actorCheckId in entries) {
+        var actorCheckEntry = entries[actorCheckId];
+        if (!actorCheckEntry || actorCheckEntry.type !== 'actor') continue;
+        for (var sbi2 = 0; sbi2 < sysBounds.length; sbi2++) {
+          var sb = sysBounds[sbi2];
+          if (actorCheckEntry.x + actorCheckEntry.box.width > sb.minX &&
+              actorCheckEntry.x < sb.maxX &&
+              actorCheckEntry.y + actorCheckEntry.box.height > sb.minY &&
+              actorCheckEntry.y < sb.maxY) {
+            // Determine side based on actor center vs system center
+            var aCenterX = actorCheckEntry.x + actorCheckEntry.box.width / 2;
+            var sCenterX = (sb.minX + sb.maxX) / 2;
+            if (aCenterX <= sCenterX) {
+              actorCheckEntry.x = sb.minX - actorCheckEntry.box.width - CFG.gapX * 0.7;
+            } else {
+              actorCheckEntry.x = sb.maxX + CFG.gapX * 0.7;
+            }
+          }
+        }
+      }
+      // Re-spread all actors vertically after boundary adjustments
+      var allActorIds = [];
+      for (var reSpreadId in entries) {
+        if (entries[reSpreadId] && entries[reSpreadId].type === 'actor') allActorIds.push(reSpreadId);
+      }
+      spreadEntriesVertically(entries, allActorIds, 18);
+    }
   }
 
   // ─── Layout ───────────────────────────────────────────────────────

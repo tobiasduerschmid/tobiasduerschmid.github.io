@@ -36,7 +36,7 @@ class Composite {
 class Client
 Leaf --|> Component
 Composite --|> Component
-Composite "1" *-- "0..*" Component
+Composite "1" *--> "0..*" Component
 Client --> Component : treats uniformly >
 @enduml'></div>
 

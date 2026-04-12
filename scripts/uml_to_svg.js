@@ -40,7 +40,7 @@ async function renderUML(type, text) {
 
     await page.setContent(html);
 
-    const svg = await page.evaluate(({ type, text }) => {
+    const svg = await page.evaluate(async ({ type, text }) => {
         const container = document.getElementById('container');
         const RENDERERS = {
             class:      window.UMLClassDiagram,
@@ -54,6 +54,7 @@ async function renderUML(type, text) {
         const R = RENDERERS[type];
         if (!R) return 'Error: Unknown renderer type: ' + type;
         R.render(container, text);
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const svgEl = container.querySelector('svg');
         return svgEl ? svgEl.outerHTML : 'Error: No SVG generated';
     }, { type, text });
@@ -86,7 +87,7 @@ if (require.main === module) {
                 continue;
             }
 
-            const svg = await page.evaluate(({ type, text }) => {
+            const svg = await page.evaluate(async ({ type, text }) => {
                 const container = document.getElementById('container');
                 container.innerHTML = '';
                 const RENDERERS = {
@@ -101,6 +102,7 @@ if (require.main === module) {
                 const R = RENDERERS[type];
                 if (!R) return 'Error: Unknown renderer type: ' + type;
                 R.render(container, text);
+                await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                 const svgEl = container.querySelector('svg');
                 return svgEl ? svgEl.outerHTML : 'Error: No SVG generated';
             }, { type, text });

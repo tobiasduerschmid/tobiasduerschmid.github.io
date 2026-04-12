@@ -44,10 +44,10 @@ async function main() {
   const html = `<html><head><script>${bundleJs}</script></head><body><div id="c"></div></body></html>`;
 
   const browser = await chromium.launch();
-  const page    = await browser.newPage();
+  const page    = await browser.newPage(); page.on("console", msg => console.log(msg.text()));
   await page.setContent(html);
 
-  const result = await page.evaluate(({ type, spec }) => {
+  const result = await page.evaluate(async ({ type, spec }) => {
     const RENDERERS = {
       class:      window.UMLClassDiagram,
       sequence:   window.UMLSequenceDiagram,
@@ -61,6 +61,7 @@ async function main() {
     if (!R) return { error: 'Unknown renderer: ' + type };
     const container = document.getElementById('c');
     R.render(container, spec);
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const svgEl = container.querySelector('svg');
     if (!svgEl) return { error: 'Renderer produced no SVG' };
     return { svg: svgEl.outerHTML };

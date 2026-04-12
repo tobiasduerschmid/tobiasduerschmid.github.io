@@ -1407,10 +1407,12 @@ UC2 ..> UC5 : &lt;&lt;include&gt;&gt;
 actor Customer
 actor "Payment Gateway" as PaymentGateway
 
-usecase "Browse Products" as UC1
-usecase "Add to Cart" as UC2
-usecase "Checkout" as UC3
-usecase "Pay for Order" as UC4
+rectangle "Online Store" {
+  usecase "Browse Products" as UC1
+  usecase "Add to Cart" as UC2
+  usecase "Checkout" as UC3
+  usecase "Pay for Order" as UC4
+}
 
 Customer -- UC1
 Customer -- UC2
