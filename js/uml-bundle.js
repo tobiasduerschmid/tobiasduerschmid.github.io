@@ -489,8 +489,11 @@
     var g = svg.querySelector('g');
     if (!g) return;
     try {
-      // Use SVG's own coordinate mapping to get the true bounding box
-      var bbox = svg.getBBox();
+      // Measure the rendered content group, not the root SVG viewport.
+      // Measuring the root can collapse the diagram to its initial tiny
+      // placeholder size on some pages after viewBox updates.
+      var bbox = g.getBBox();
+      if (!bbox || !isFinite(bbox.width) || !isFinite(bbox.height) || bbox.width <= 0 || bbox.height <= 0) return;
       var p = pad || 10;
       var vx = Math.floor(bbox.x - p);
       var vy = Math.floor(bbox.y - p);

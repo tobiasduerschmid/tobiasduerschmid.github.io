@@ -36,7 +36,7 @@ questions:
     question: >
       What type of relationship is shown here between **Graphic** and **Circle**?
 
-      <div data-uml-type="class" data-uml-spec="abstract class Graphic {&#10;  {abstract} +draw()&#10;}&#10;class Circle {&#10;  +draw()&#10;}&#10;Graphic <|-- Circle"></div>
+      <div data-uml-type="class" data-uml-spec="abstract class Graphic {&#10;  {abstract} +draw()&#10;}&#10;class Circle {&#10;  +draw()&#10;}&#10;Circle --|> Graphic"></div>
     options:
       - "Aggregation: Circle contains Graphics."
       - "Realization: Circle implements an interface Graphic."
