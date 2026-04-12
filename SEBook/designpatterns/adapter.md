@@ -97,5 +97,50 @@ deactivate adapter
 Applying the Adapter pattern results in several significant architectural trade-offs:
 *   **Loose Coupling:** It decouples the client from the legacy or vendor code. The client only knows the Target interface, allowing the Adaptee to evolve independently without breaking the client code.
 *   **Information Hiding:** It follows the Information Hiding principle by concealing the "secret" that the system is using a legacy component.
-*   **Single vs. Multiple Adapters:** In languages like Java, we typically use "Object Adapters" via composition (wrapping the adaptee). In languages like C++, "Class Adapters" can be created using multiple inheritance to inherit from both the Target and the Adaptee.
 *   **Flexibility vs. Complexity:** While adapters make a system more flexible, they add a layer of indirection that can make it harder to trace the execution flow of the program since the client doesn't know which object is actually receiving the signal.
+
+# Design Decisions
+
+## Object Adapter vs. Class Adapter
+* **Object Adapter** (via composition): The adapter wraps an instance of the Adaptee. This is the standard approach in Java and most modern languages. It can adapt an entire class hierarchy (any subclass of the Adaptee works), and the adaptation can be configured at runtime.
+* **Class Adapter** (via multiple inheritance): The adapter inherits from *both* the Target and the Adaptee simultaneously. This is only possible in languages that support multiple inheritance (e.g., C++). It avoids the indirection overhead of delegation but ties the adapter to a single concrete Adaptee class.
+
+Modern consensus strongly favors **Object Adapters** for their flexibility and compatibility with single-inheritance languages.
+
+## Adaptation Scope
+Not all adapters are created equal. The complexity of adaptation ranges widely:
+* **Simple rename:** `quack()` maps directly to `gobble()`. Trivial and low-risk.
+* **Data transformation:** Converting units, reformatting data structures, or translating between protocols. Moderate complexity.
+* **Behavioral adaptation:** The adaptee's behavior is fundamentally different and the adapter must add logic to bridge the semantic gap. High complexity—and a warning sign that the adapter may be growing into a service.
+
+If an adapter becomes "too thick" (containing significant business logic), it is no longer just translating an interface—it has become a separate component that happens to look like an adapter.
+
+# Adapter is a Family, Not a Single Pattern
+
+Buschmann et al. (POSA5) argue that "the notion that there is a single pattern called ADAPTER is in practice present nowhere except in the table of contents of the Gang-of-Four book." In practice, there are at least four distinct adaptation patterns:
+1. **Object Adapter:** Wraps an adaptee via composition (the standard form).
+2. **Class Adapter:** Inherits from both target and adaptee (multiple inheritance).
+3. **Two-Way Adapter:** Implements both the target and adaptee interfaces, allowing communication in both directions.
+4. **Pluggable Adapter:** Uses interfaces or abstract classes to make the adapter configurable, so it can adapt different adaptees without creating new adapter classes.
+
+This insight is educationally important: when a reference says "use the Adapter pattern," you must clarify *which* form of adaptation is needed.
+
+# Adapter vs. Facade vs. Decorator
+
+These three patterns all "wrap" another object, but with different intents:
+
+| Pattern | Intent | Scope |
+|---------|--------|-------|
+| **Adapter** | *Convert* one interface to match another | One-to-one: translates a single incompatible interface |
+| **[Façade](/SEBook/designpatterns/facade.html)** | *Simplify* a complex set of interfaces | Many-to-one: wraps an entire subsystem behind one interface |
+| **Decorator** | *Add behavior* to an object without changing its interface | One-to-one: wraps a single object, preserving its interface |
+
+The key discriminator: Adapter changes *what* the interface looks like. Facade changes *how much* of the interface you see. Decorator changes *what the object does* through the same interface.
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_structural" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_structural" %}

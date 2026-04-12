@@ -85,10 +85,39 @@ deactivate allMenus
 
 ## Transparent vs. Safe Composite
 
-In a **transparent** composite, the full child-management interface is declared on `Component`, so clients can treat leaves and composites the same way. In a **safe** composite, only `Composite` exposes `add()` and `remove()`, which prevents nonsensical operations on leaves but slightly reduces uniformity.
+This is the fundamental design trade-off of the Composite pattern:
+
+* **Transparent composite:** The full child-management interface (`add()`, `remove()`, `getChild()`) is declared on `Component`, so clients can treat leaves and composites identically through a single interface. This maximizes uniformity but means leaves inherit methods that make no sense for them (e.g., `add()` on a `MenuItem`). Leaves must either throw an exception or silently ignore these calls.
+
+* **Safe composite:** Only `Composite` exposes `add()` and `remove()`, preventing nonsensical operations on leaves at compile time. But clients must now distinguish between leaves and composites when managing children, reducing the pattern's primary benefit of uniform treatment.
+
+Neither approach is universally better—the choice depends on whether **uniformity** (transparent) or **type safety** (safe) is more important in your context.
 
 ## Child Ownership
 
-If child objects cannot exist independently of their parent, use composition semantics and let the composite own the child lifetime. If children may be shared across multiple structures, model a weaker association instead.
+If child objects cannot exist independently of their parent, use composition semantics and let the composite own the child lifetime. If children may be shared across multiple structures, model a weaker association instead. In UML, this distinction maps to filled-diamond composition vs. open-diamond aggregation.
+
+## Parent References
+
+Adding a parent reference to `Component` enables upward traversal (e.g., "which menu does this item belong to?") but complicates `add()` and `remove()` operations, which must now maintain bidirectional consistency.
+
+# Composite in Pattern Compounds
+
+The Composite pattern frequently appears as a building block in larger pattern compounds, because many patterns need to operate on tree structures:
+
+* **Composite + Builder:** The Builder pattern can construct complex Composite structures step by step. The Composite's `Component` acts as the Builder's product, and the Builder handles the complexity of assembling the recursive tree.
+* **Composite + Visitor:** When many distinct operations need to be performed on a Composite structure without modifying its classes, the Visitor pattern provides a clean separation of concerns. This is especially useful when new operations are added frequently but new leaf types are rare.
+* **Composite + Iterator:** An Iterator can traverse the Composite tree in different orders (depth-first, breadth-first) without exposing the tree's internal structure to the client.
+* **Composite + Command:** A Composite Command groups multiple command objects into a tree, allowing hierarchical undo/redo operations and macro commands that execute sub-commands in sequence.
+
+These compounds are so common that recognizing the Composite pattern is often the first step toward identifying a larger architectural pattern at work.
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_structural" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_structural" %}
 
 # Sample Code

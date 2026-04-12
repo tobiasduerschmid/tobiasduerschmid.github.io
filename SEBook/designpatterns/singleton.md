@@ -89,4 +89,33 @@ Applying the Singleton Pattern results in several important architectural outcom
 *   **Controlled Access:** The pattern provides a single point of access that can be easily managed and updated.
 *   **Resource Efficiency:** It prevents the system from being cluttered with redundant, resource-intensive objects.
 *   **The Risk of "Singleitis":** A major drawback is the tendency for developers to overuse the pattern. Using a Singleton just for easy global access can lead to a hard-to-maintain design with high coupling, where it becomes unclear which classes depend on the Singleton and why.
-*   **Complexity in Testing:** Singletons can be difficult to mock during unit testing because they maintain state throughout the lifespan of the application.
+*   **Complexity in Testing:** Singletons can be difficult to mock during unit testing because they maintain state throughout the lifespan of the application. A `static getInstance()` call is a *hardcoded dependency*—there is no seam where a test double can be injected. This is why the pattern is considered an anti-pattern in test-driven development.
+
+# A Pattern with a "Weak Solution"
+
+The Singleton is perhaps the most controversial of all GoF patterns. Buschmann et al. (POSA5) describe it as **"a well-known pattern with a weak solution"**, noting that "the literature that discusses [Singleton's] issues dwarfs the page count of the original pattern description in the Gang-of-Four book." The core problem is that the pattern conflates two separate concerns:
+1. **Ensuring a single instance**—a legitimate design constraint.
+2. **Providing global access**—a convenience that introduces hidden coupling.
+
+Modern practice separates these concerns. A **dependency injection (DI) container** can manage the *singleton lifetime* (ensuring only one instance exists) while keeping constructors injectable and dependencies explicit. This gives you the same lifecycle guarantee without the testability and coupling problems.
+
+## When Singleton is Acceptable
+The Singleton pattern remains acceptable when:
+* It controls a true infrastructure resource (e.g., a hardware driver in an embedded system).
+* DI is genuinely unavailable (small scripts, legacy code).
+* Testability of consuming code is not a concern.
+
+In all other cases, prefer DI with singleton scope. As Feathers puts it: *"If your code isn't testable, it isn't a good design."*
+
+## When Singleton is an Anti-Pattern
+* When the "only one" assumption is actually a *convenience* assumption, not a hard requirement. Many "singletons" later need multiple instances (per-tenant, per-thread, per-test).
+* When it is used to create global state—making it impossible to reason about what depends on what.
+* When it blocks unit testing by making dependencies invisible and unmockable.
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_singleton" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_singleton" %}

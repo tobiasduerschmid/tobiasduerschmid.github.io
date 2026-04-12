@@ -108,3 +108,35 @@ The primary benefit of this pattern is **decoupling**: the high-level "Creator" 
 However, there are trade-offs:
 *   **Boilerplate Code:** It requires creating many new classes (one for each product type and one for each creator type), which can increase the "static" complexity of the code.
 *   **Program Comprehension:** While it reduces long-term maintenance costs, it can make the initial learning curve steeper for new developers who aren't familiar with the pattern.
+
+# Design Decisions
+
+## Abstract vs. Concrete Creator
+* **Abstract Creator** (as shown above): Forces every subclass to implement the factory method. Maximum flexibility, but requires subclassing even for simple cases.
+* **Concrete Creator with default:** The base creator provides a default product. Subclasses only override when they need a different product. Simpler, but may lead to confusion about when overriding is expected.
+
+## Parameterized Factory Method
+Instead of having separate subclasses for each product, a single factory method takes a parameter (like a string or enum) to decide which product to create. This reduces the class count but violates the Open/Closed Principle—adding a new product requires modifying the factory method's conditional logic.
+
+## Static Factory Method (Not GoF)
+A common idiom—`Loan.newTermLoan()`—uses static methods on the product class itself to control creation. This is not the GoF Factory Method (which relies on subclass override), but is widely used in practice. It provides named constructors and can return cached instances or subtype variants.
+
+# Choosing the Right Creational Pattern
+
+A common source of confusion is when to use Factory Method vs. the other creational patterns. The key discriminators are:
+
+| Pattern | Use When... | Key Characteristic |
+|---------|-------------|-------------------|
+| **Factory Method** | Only one type of product; subclasses decide which concrete type | Simplest; uses inheritance (subclass overrides a method) |
+| **[Abstract Factory](/SEBook/designpatterns/abstract_factory.html)** | A *family* of multiple related product types that must work together | Uses composition (client receives a factory object); highest extensibility for new families |
+| **Builder** | Product has many parts with sequential construction; construction process itself varies | Separates the construction algorithm from the object representation |
+
+An important insight: **factory methods often lurk inside Abstract Factories**. Each creation method in an Abstract Factory (e.g., `createDough()`, `createSauce()`) is itself a factory method. The Abstract Factory defines the interface; the concrete factory subclasses implement each method—which is exactly the Factory Method pattern applied to multiple products.
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_factory" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_factory" %}

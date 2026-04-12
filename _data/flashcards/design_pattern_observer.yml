@@ -1,0 +1,23 @@
+title: "Observer Pattern Flashcards"
+description: "Key concepts, design decisions, and trade-offs of the Observer design pattern."
+cards:
+  - id: 1
+    question: "What problem does the Observer pattern solve?"
+    answer: "Maintaining a one-to-many dependency between objects efficiently and without tight coupling—when one object changes state, all dependents are notified automatically."
+    explanation: "The Subject maintains a dynamic list of Observers and notifies them via `update()`. This avoids polling and avoids hardcoding the subject to specific dependents."
+  - id: 2
+    question: "Push vs. Pull model in Observer: which has tighter coupling?"
+    answer: "The **Pull model**, because observers must hold a reference back to the subject and know its interface well enough to query for specific data."
+    explanation: "Push: subject sends all data. Pull: subject sends minimal notification, observers query. A hybrid approach (push the event type, observers decide whether to pull) is most common in practice."
+  - id: 3
+    question: "What is the **lapsed listener problem**?"
+    answer: "A memory leak where observers register with a subject but are never unsubscribed, causing the subject's reference to keep them alive in memory."
+    explanation: "Solutions: explicit unsubscribe (disciplined but error-prone), weak references (language-dependent), or scoped subscriptions tied to lifecycle management."
+  - id: 4
+    question: "What does 'inverted dependency flow' mean for Observer?"
+    answer: "In code, observers call the subject to register (dependency points observer→subject), but data conceptually flows subject→observer—making it hard to trace what depends on what."
+    explanation: "An empirical study on reactive programming found this inversion hurts comprehension: when encountering an observer, there is no nearby sign of what it depends on."
+  - id: 5
+    question: "Name three contexts where Observer is highly applicable."
+    answer: "GUI/MVC architectures (model notifies views), event management systems (listeners for events), and social media feeds (followers notified of new posts)."
+    explanation: "The Observer pattern is one of the most heavily used patterns in modern frameworks. Java's Swing, JavaScript's EventEmitter, and Reactive Extensions all implement variants of Observer."

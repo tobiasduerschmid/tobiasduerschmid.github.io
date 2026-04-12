@@ -110,11 +110,30 @@ Applying the MVC pattern yields profound architectural advantages, but it also i
 
 ## Liabilities
 
-* **Increased Complexity**: The strict division of responsibilities requires designing and maintaining three distinct kinds of components and their interactions. For relatively simple user interfaces, the MVC pattern can be heavy-handed and over-engineered.
-* **Potential for Excessive Updates**: Because changes to the model are blindly published to all subscribing views, minor data manipulations can trigger an excessive cascade of notifications, potentially causing severe performance bottlenecks.
+* **Increased Complexity**: The strict division of responsibilities requires designing and maintaining three distinct kinds of components and their interactions. For relatively simple user interfaces, the MVC pattern can be heavy-handed and over-engineered. As Bass, Clements, and Kazman note: *"The complexity may not be worth it for simple user interfaces."*
+* **Potential for Excessive Updates**: Because changes to the model are blindly published to all subscribing views, minor data manipulations can trigger an excessive cascade of notifications, potentially causing severe performance bottlenecks. This is the same "notification storm" problem that plagues the Observer pattern—MVC inherits it directly.
 * **Inefficiency of Data Access**: To preserve loose coupling, views must frequently query the model through its public interface to retrieve display data. If not carefully designed with data caching, this frequent polling can be highly inefficient.
 * **Tight Coupling Between View and Controller**: While the model is isolated, the view and its corresponding controller are often intimately connected. A view rarely exists without its specific controller, which hinders their individual reuse.
-    
+
+# MVC as a Pattern Compound
+
+MVC is one of the most important examples of a **pattern compound**—a combination of patterns where the whole is greater than the sum of its parts. Understanding MVC at the compound level reveals why it works:
+
+1. **Observer** (Model ↔ View): The model broadcasts change notifications; views subscribe and update themselves. This enables multiple synchronized views of the same data without the model knowing anything about the views.
+2. **Strategy** (View ↔ Controller): The view delegates input handling to a controller object. Because the controller is a Strategy, it can be swapped at runtime—for example, replacing a standard editing controller with a read-only controller.
+3. **Composite** (View internals): The view itself is often a tree of nested UI components (windows containing panels containing buttons). The Composite pattern allows operations like `render()` to propagate through this tree uniformly.
+
+The **emergent property** of this compound is a clean three-way separation where each component can be developed, tested, and replaced independently. No individual pattern achieves this alone—it is the *combination* of Observer (data synchronization), Strategy (input flexibility), and Composite (UI structure) that makes MVC powerful.
+
+# MVC in Modern Frameworks
+
+While the original MVC concept remains foundational, modern frameworks have evolved several variants:
+* **MVVM (Model-View-ViewModel)**: Used in WPF, SwiftUI, and Vue.js. The ViewModel acts as an adapter between Model and View, exposing data through bindings rather than explicit Observer subscriptions.
+* **MVP (Model-View-Presenter)**: Used in Android (traditional). The Presenter replaces the Controller and takes on more responsibility for updating the View directly.
+* **Reactive/Component-Based**: Modern frameworks replace the explicit Observer mechanism with framework-managed reactivity. React uses hooks and virtual DOM diffing; Angular 16+ and SolidJS use Signals; Vue.js uses reactive proxies. In all cases, the framework handles notification propagation internally, so developers rarely implement Observer explicitly.
+
+Despite these variations, the core principle remains: **separate what the system knows (Model) from how it looks (View) from how the user interacts with it (Controller/ViewModel/Presenter)**.
+
 # Sample Code 
 This sample code shows how MVC could be implemented in Python:
 
@@ -209,3 +228,11 @@ if __name__ == "__main__":
     app_controller.add_new_task("Learn the Observer pattern")
     app_controller.add_new_task("Combine Observer with MVC")
 ```
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_mvc" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_mvc" %}

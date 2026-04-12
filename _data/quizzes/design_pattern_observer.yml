@@ -1,0 +1,62 @@
+title: "Observer Pattern Quiz"
+description: "Test your understanding of the Observer pattern's design decisions, trade-offs, and common pitfalls."
+questions:
+  - id: 1
+    type: single
+    question: |
+      A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
+    options:
+      - "The Push model violates the Open/Closed Principle"
+      - "Observers receive large amounts of data they may not need, causing performance bottlenecks at high update frequency"
+      - "The Push model creates tighter coupling than the Pull model"
+      - "The Push model prevents adding new observers at runtime"
+    correct_index: 1
+    explanation: "In the Push model, the subject sends **all** data to **every** observer on **every** change. At 1,000 updates/second with 50 widgets, most of which may only need a small subset of the data, this creates massive unnecessary data transfer. A **hybrid model** (push the event type, let observers pull only what they need) combined with **batched notifications** would be far more appropriate here."
+
+  - id: 2
+    type: single
+    question: |
+      A developer registers observers with a subject but never calls `detach()` when the observers are no longer needed. The application gradually slows down over time. What is this problem called?
+    options:
+      - "The notification storm problem"
+      - "The inverted dependency problem"
+      - "The lapsed listener problem"
+      - "The god class problem"
+    correct_index: 2
+    explanation: "This is the **lapsed listener problem** — a memory leak caused by observers that remain registered with a subject indefinitely. The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
+
+  - id: 3
+    type: single
+    question: |
+      An empirical study on reactive programming found that the Observer pattern creates an "inverted dependency flow." What does this mean in practice?
+    options:
+      - "Observers depend on the subject, but the subject also depends on observers — creating a circular dependency"
+      - "In code, observers call the subject to register (observer→subject), but data flows from subject to observer — making it hard to trace dependencies by reading the code"
+      - "The subject must be created before any observers, inverting the normal object creation order"
+      - "The Pull model inverts the Push model's data flow direction"
+    correct_index: 1
+    explanation: "The inversion is about **code readability vs. conceptual flow**. Conceptually, change flows from subject to observer. But in code, observers call the subject to register, so the dependency arrow points from observer to subject. When a reader encounters an observer in the codebase, there is **no nearby sign** of what it depends on — they must trace back to the registration call to understand the data flow."
+
+  - id: 4
+    type: single
+    question: |
+      A colleague says: "We only have one observer right now, so we don't need the Observer pattern — just call the method directly." When is this argument **most valid**?
+    options:
+      - "Never — the Observer pattern should always be used when notifications are needed"
+      - "When the single observer will never change and no additional observers are foreseeable"
+      - "When the observer uses the Pull model instead of the Push model"
+      - "When the subject and observer are in the same package"
+    correct_index: 1
+    explanation: "A direct method call is simpler and introduces no unnecessary abstraction. The Observer pattern solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. This is the **Rule of Three** in action — don't apply a pattern until you've seen the need multiple times."
+
+  - id: 5
+    type: single
+    question: |
+      In MVC, the Model acts as the Observer's Subject. The View registers as an Observer, and the Model calls `update()` on all views when its state changes. Which notification trigger approach is being used here?
+    options:
+      - "Client-triggered — the Controller explicitly calls notifyObservers() after updating the Model"
+      - "Automatic — the Model's setter methods call notifyObservers() internally after every state change"
+      - "Batched — notifications are deferred and sent at a synchronization point"
+      - "It depends on whether Push or Pull model is used"
+    correct_index: 1
+    explanation: "In the standard MVC implementation, the Model's data-mutation methods (like `addTask()`) internally call `notify()` after modifying state. This is **automatic notification** — the Model itself triggers the update. The alternative, **client-triggered**, would require the Controller to explicitly call `notifyObservers()` after making changes, which is more efficient for batch updates but places the burden on the caller."

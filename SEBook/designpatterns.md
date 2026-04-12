@@ -21,16 +21,32 @@ A true pattern is more than simply a good idea or a random solution; it requires
 
 ## GoF Design Patterns
 
-Here are some examples of design patterns that we describe in more detail:
-* [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
+The GoF (Gang of Four) design patterns are organized into three categories based on the *type of design problem* they address:
 
-* [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that a group of dependent objects is automatically notified and updated whenever the internal state of their shared subject changes.
+**Creational Patterns** address the problem of *object creation*—how to instantiate objects in a flexible, decoupled way:
+* [**Factory Method**](/SEBook/designpatterns/factory_method.html): Defines an interface for creating an object but lets subclasses decide which class to instantiate, deferring creation to subclasses.
+* [**Abstract Factory**](/SEBook/designpatterns/abstract_factory.html): Provides an interface for creating families of related objects without specifying their concrete classes.
+* [**Singleton**](/SEBook/designpatterns/singleton.html): Ensures a class has only one instance while providing a controlled global point of access to it.
+
+**Structural Patterns** address the problem of *class and object composition*—how to assemble objects and classes into larger structures:
+* [**Adapter**](/SEBook/designpatterns/adapter.html): Converts the interface of a class into another interface clients expect, letting classes work together that otherwise couldn't due to incompatible interfaces.
+* [**Composite**](/SEBook/designpatterns/composite.html): Composes objects into tree structures to represent part-whole hierarchies, letting clients treat individual objects and compositions uniformly.
+* [**Façade**](/SEBook/designpatterns/facade.html): Provides a unified interface to a set of interfaces in a subsystem, making the subsystem easier to use.
+
+**Behavioral Patterns** address the problem of *object interaction and responsibility*—how objects communicate and distribute work:
+* [**Observer**](/SEBook/designpatterns/observer.html): Establishes a one-to-many dependency between objects, ensuring that dependent objects are automatically notified and updated whenever the subject's state changes.
+* [**State**](/SEBook/designpatterns/state.html): Encapsulates state-based behavior into distinct classes, allowing a context object to dynamically alter its behavior at runtime by delegating operations to its current state object.
+* [**Mediator**](/SEBook/designpatterns/mediator.html): Encapsulates how a set of objects interact by introducing a mediator object that centralizes complex communication logic.
+
+These categories help practitioners narrow down which pattern might apply: if the problem is about *creating* objects flexibly, look at creational patterns; if it is about *structuring* relationships between classes, look at structural patterns; if it is about *coordinating behavior* between objects, look at behavioral patterns.
 
 ## Architectural Patterns
 
+Architectural patterns operate at a higher level of abstraction than GoF design patterns. While GoF patterns deal with classes, objects, and method calls, architectural patterns constrain the gross structure of an entire system. As Taylor and Medvidovic put it: **architectural styles are strategic while patterns are tactical design tools**—a style constrains the overall architectural decisions, while a pattern provides a concrete, parameterized solution fragment.
+
 Here are some examples of architectural patterns that we describe in more detail:
 
-* [**Model-View-Controller (MVC)**](/SEBook/designpatterns/mvc.html): The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates
+* [**Model-View-Controller (MVC)**](/SEBook/designpatterns/mvc.html): The Model-View-Controller (MVC) architectural pattern decomposes an interactive application into three distinct components: a model that encapsulates the core application data and business logic, a view that renders this information to the user, and a controller that translates user inputs into corresponding state updates.
 
 ## The Benefits of a Shared Toolbox
 Just as a mechanic must know their toolbox, a software engineer must know design patterns intimately—understanding their advantages, disadvantages, and knowing precisely when (and when not) to use them.
@@ -42,10 +58,19 @@ Just as a mechanic must know their toolbox, a software engineer must know design
 ## Challenges and Pitfalls of Design Patterns
 Despite their power, design patterns are not silver bullets. Misusing them introduces severe challenges:
 
-*   **The "Hammer and Nail" Syndrome:** Novice developers who just learned patterns often try to apply them to every problem they see. **Software quality is not measured by the number of patterns used.** Often, keeping the code simple and avoiding a pattern entirely is the best solution.
+*   **The "Hammer and Nail" Syndrome:** Novice developers who just learned patterns often try to apply them to every problem they see. **Software quality is not measured by the number of patterns used.** Often, keeping the code simple and avoiding a pattern entirely is the best solution. As Beck advocates: *"Start stupid and evolve."* Or as Booch puts it: *"Complex systems that work evolved from simple systems that worked."*
 *   **Over-engineering vs. Under-engineering:** Under-engineering makes software too rigid for future changes. However, over-applying patterns leads to over-engineering—creating premature abstractions that make the codebase unnecessarily complex, unreadable, and a waste of development time. Developers must constantly balance **simplicity** (fewer classes and patterns) against **changeability** (greater flexibility but more abstraction).
 *   **Implicit Dependencies:** Patterns intentionally replace static, compile-time dependencies with dynamic, runtime interactions. This flexibility comes at a cost: it becomes harder to trace the execution flow and state of the system just by reading the code.
-*   **Misinterpretation as Recipes:** A pattern is an abstract idea, not a snippet of code from Stack Overflow. Integrating a pattern into a system is a human-intensive, manual activity that requires tailoring the solution to fit a concrete context.
+*   **Misinterpretation as Recipes:** A pattern is an abstract idea, not a snippet of code from Stack Overflow. Integrating a pattern into a system is a human-intensive, manual activity that requires tailoring the solution to fit a concrete context. As Bass, Clements, and Kazman note: *"Applying a pattern is not an all-or-nothing proposition. Pattern definitions given in catalogs are strict, but in practice architects may choose to violate them in small ways when there is a good design tradeoff to be had."*
+
+## Common Student Misconceptions
+
+Research on teaching design patterns reveals specific, recurring pitfalls that learners should be aware of:
+
+*   **Learning Structure but Not Intent:** A study by Cai et al. found that **as many as 74% of student submissions** did not faithfully implement a modular design even though their software functioned correctly. Students learned the gross structure of patterns easily, yet they made lower-level mistakes that violated the pattern's underlying intent—introducing extra dependencies that defeated the very modularity the pattern was meant to achieve. The lesson: *correct behavior is not the same as correct design*. A program can produce the right output while still being poorly structured for future change.
+*   **Ignoring Evolution Scenarios:** The true value of a design pattern is only realized as software evolves, but student assignments, once completed, seldom evolve. Without experiencing the pain of modifying tightly coupled code, it is hard to appreciate why a pattern matters. To internalize the value of patterns, try to imagine concrete future changes (e.g., "What if we need a new type of observer?" or "What if we need to swap the database?") and evaluate whether the design would gracefully accommodate them.
+*   **Confusing Patterns with Antipatterns:** Just as patterns represent proven solutions, **antipatterns** represent common *poor* design choices—such as Spaghetti Code, God Class, or Lava Flow—that lead to maintainability and security issues. Recognizing antipatterns requires going beyond individual instructions into reasoning about how methods and classes are architected. Students should be exposed to both: patterns teach *what good structure looks like*, while antipatterns teach *what to avoid*.
+*   **The "Before and After" Exercise:** A powerful technique for internalizing patterns, reported by Astrachan et al. from the first UP (Using Patterns) conference, involves taking a working solution that does *not* use a pattern and then refactoring it to introduce the appropriate pattern. By comparing the "before" and "after" versions—particularly when extending both with a new requirement—the concrete advantages of the pattern become viscerally clear. As the adage goes: *"Good design comes from experience, and experience comes from bad design."*
 
 # Context Tailoring 
 It is important to remember that the standard description of a pattern presents an abstract solution to an abstract problem. Integrating a pattern into a software system is a highly human-intensive, manual activity; patterns cannot simply be misinterpreted as step-by-step recipes or copied as raw code. Instead, developers must engage in **context tailoring**—the process of taking an abstract pattern and instantiating it into a concrete solution that perfectly fits the concrete problem and the concrete context of their application.
@@ -121,6 +146,24 @@ Despite their power, pattern compounds introduce distinct architectural and cogn
 *   **Naming Limitations:** Accurately naming a class to reflect its domain purpose alongside multiple pattern roles (e.g., a "PlayerObserver") quickly becomes unmanageable, forcing teams to rely heavily on external documentation to explain the architecture.
 *   **The Over-Engineering Trap:** As with any design abstraction, possessing the "hammer" of a pattern compound does not make every problem a nail. Developers must constantly evaluate whether the resulting architectural complexity is truly justified by the context.
 
+# Design Patterns and Refactoring
+
+Design patterns and refactoring are deeply connected. As Tokuda and Batory demonstrated, refactorings are behavior-preserving program transformations that can automate the evolution of a design *toward* a pattern. The principle is straightforward: **designs should evolve on an if-needed basis**. Rather than speculating upfront about which patterns might be needed, start with the simplest working solution and refactor toward a pattern when code smells indicate the need.
+
+Common code smells that suggest specific patterns:
+
+| Code Smell | Suggested Pattern | Why |
+|------------|-------------------|-----|
+| Large `if/else` or `switch` on object state | [State](/SEBook/designpatterns/state.html) | Replace conditional logic with polymorphic state objects |
+| Duplicated conditional logic choosing algorithms | Strategy | Extract varying algorithms into interchangeable objects |
+| Complex object creation with many conditionals | [Factory Method](/SEBook/designpatterns/factory_method.html) or [Abstract Factory](/SEBook/designpatterns/abstract_factory.html) | Separate creation logic from usage logic |
+| Client tightly coupled to incompatible third-party API | [Adapter](/SEBook/designpatterns/adapter.html) | Translate the foreign interface behind a wrapper |
+| Client must orchestrate many subsystem calls | [Façade](/SEBook/designpatterns/facade.html) | Hide coordination behind a simplified interface |
+| Many-to-many dependencies between objects | [Mediator](/SEBook/designpatterns/mediator.html) | Centralize interaction logic |
+| Hardcoded notification to specific dependents | [Observer](/SEBook/designpatterns/observer.html) | Decouple subject from its dependents |
+
+The **Rule of Three** provides a useful heuristic: do not apply a pattern until you have seen the need at least three times. This prevents speculative abstraction—creating flexibility for variation points that may never actually vary.
+
 # Advanced Concepts 
 ## Patterns Within Patterns: Core Principles
 When analyzing various design patterns, you will begin to notice recurring micro-architectures. Design patterns are often built upon fundamental software engineering principles:
@@ -134,6 +177,16 @@ When analyzing various design patterns, you will begin to notice recurring micro
 The Gang of Four patterns are generic to object-oriented programming, but patterns exist at all levels. 
 *   **Domain-Specific Patterns:** Certain industries (like Game Development, Android Apps, or Security) have their own highly tailored patterns. Because these patterns make assumptions about a specific domain, they generally carry fewer negative consequences within their niche, but they require the team to actually possess domain expertise.
 *   **Application-Specific Patterns:** Every distinct software project will eventually develop its own localized patterns—agreed-upon conventions and structures unique to that team. Identifying and documenting these implicit patterns is one of the most critical steps when a new developer joins an existing codebase, as it massively improves program comprehension.
+
+# Flashcards
+
+{% include flashcards.html id="design_patterns" %}
+
+{% include flashcards.html id="design_patterns_gof" %}
+
+# Quiz
+
+{% include quiz.html id="design_patterns" %}
 
 # Conclusion
 Design patterns are the foundational building blocks of robust software architecture. However, they are a substitute for neither domain expertise nor critical thought. The mark of an expert engineer is not knowing how to implement every pattern, but possessing the wisdom to evaluate trade-offs, carefully observe the context, and know exactly when the simplest code is actually the smartest design.

@@ -1,0 +1,83 @@
+title: "GoF Design Pattern Details"
+description: "Key concepts, design decisions, and trade-offs for each individual GoF pattern covered in the course."
+cards:
+  - id: 1
+    question: "What problem does the **Observer** pattern solve?"
+    answer: "Maintaining a one-to-many dependency between objects efficiently and without tight coupling—when one object changes state, all dependents are notified automatically."
+    explanation: "The Subject maintains a dynamic list of Observers and calls their `update()` method when its state changes. This avoids polling and avoids hardcoding the subject to specific dependents."
+  - id: 2
+    question: "Observer: Push vs. Pull model—which has tighter coupling?"
+    answer: "The **Pull model**, because observers must hold a reference back to the subject and know its interface well enough to query for specific data."
+    explanation: "Push: subject sends all data in `update()`. Pull: subject sends minimal notification, observers query back. A hybrid approach—pushing the event type, letting observers decide whether to pull—is most common in practice."
+  - id: 3
+    question: "What is the **lapsed listener problem** in Observer?"
+    answer: "A memory leak that occurs when observers register with a subject but are never explicitly unsubscribed, causing the subject's reference to keep them alive in memory."
+    explanation: "Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
+  - id: 4
+    question: "What does 'inverted dependency flow' mean in Observer?"
+    answer: "In the code, observers call the subject to register (dependency points observer→subject), but data conceptually flows from subject to observer—making it hard to trace by reading code."
+    explanation: "An empirical study found this inversion hurts program comprehension: when encountering an observer in code, there is no sign of what it depends on."
+  - id: 5
+    question: "What problem does the **State** pattern solve?"
+    answer: "Eliminates complex conditional logic that checks an object's state, replacing it with polymorphic state objects that encapsulate state-specific behavior."
+    explanation: "Each state becomes its own class. Adding a new state means adding a new class rather than modifying existing if/else chains throughout the codebase."
+  - id: 6
+    question: "How does **State** differ from **Strategy**?"
+    answer: "State: behavior changes *implicitly* via internal transitions. Strategy: behavior is *explicitly* selected by the client. State objects transition between each other; strategies do not."
+    explanation: "They have identical UML structures but different intents. If implementations transition between each other based on internal logic, it's State. If the client selects at configuration time, it's Strategy."
+  - id: 7
+    question: "State pattern: who should define state transitions?"
+    answer: "**Context-driven**: all transitions visible in one place, good for complex conditions. **State-driven**: each state knows its successors, more flexible but harder to see full state machine."
+    explanation: "State-driven transitions are preferred when states are well-defined and transitions are local. Context-driven works better when transitions depend on complex external conditions."
+  - id: 8
+    question: "Why is **Singleton** considered a 'pattern with a weak solution' (POSA5)?"
+    answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (introduces hidden coupling and harms testability)."
+    explanation: "A `static getInstance()` call is a hardcoded dependency with no seam for test doubles. Modern practice uses DI containers to manage singleton lifetime while keeping constructors injectable."
+  - id: 9
+    question: "Name three thread-safety approaches for Singleton in Java."
+    answer: "(1) Synchronized `getInstance()` (simple, slow), (2) Eager instantiation in static field (fast, may waste memory), (3) Double-checked locking with `volatile` (efficient, complex)."
+    explanation: "The classic lazy singleton is not thread-safe: two threads can both find the instance null and create two objects. Each solution trades off simplicity, performance, and memory usage."
+  - id: 10
+    question: "What problem does **Factory Method** solve?"
+    answer: "Decouples object creation from usage by letting subclasses decide which class to instantiate, avoiding conditional creation logic in the creator."
+    explanation: "The creator defines an abstract `createProduct()` method; concrete creator subclasses implement it. This allows the system to evolve: add a new creator subclass without touching existing code."
+  - id: 11
+    question: "**Factory Method** vs. **Abstract Factory**: when to use which?"
+    answer: "Factory Method: one product type, subclass decides. Abstract Factory: families of related products that must be used together."
+    explanation: "Factory Method uses inheritance (subclass overrides a method). Abstract Factory uses composition (client receives a factory object). Factory methods often lurk *inside* Abstract Factories."
+  - id: 12
+    question: "What is the 'Rigid Interface' drawback of Abstract Factory?"
+    answer: "Adding a new product type to the family requires changing the Abstract Factory interface and modifying *every* concrete factory subclass."
+    explanation: "The pattern has an asymmetry: adding new *families* is easy (pure addition). Adding new *product types* is hard (changes ripple). This is a fundamental design trade-off."
+  - id: 13
+    question: "What problem does **Adapter** solve?"
+    answer: "Allows classes with incompatible interfaces to work together by translating one interface into another that the client expects."
+    explanation: "Like a power outlet adapter for international travel—the adapter translates between two incompatible plug standards without modifying either one."
+  - id: 14
+    question: "**Adapter** vs. **Facade** vs. **Decorator**: what's the key distinction?"
+    answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* to an object through the same interface."
+    explanation: "All three 'wrap' another object, but with different intents. The key discriminator is what changes: Adapter changes what the interface looks like; Facade reduces how much you see; Decorator enhances what the object does."
+  - id: 15
+    question: "What problem does **Composite** solve?"
+    answer: "Treats individual objects and nested groups uniformly through a shared abstraction, eliminating special-case code for leaves vs. containers."
+    explanation: "Clients program against the Component interface, which both Leaf and Composite implement. The recursive structure allows operations like `print()` or `totalPrice()` to work identically on single items and nested trees."
+  - id: 16
+    question: "Composite: **Transparent** vs. **Safe** design?"
+    answer: "Transparent: child-management methods on Component (uniform, but leaves get meaningless methods). Safe: child-management only on Composite (type-safe, but clients must distinguish)."
+    explanation: "This is the fundamental trade-off of Composite. Transparent maximizes uniformity; Safe maximizes type safety. The choice depends on the specific context."
+  - id: 17
+    question: "What problem does **Façade** solve?"
+    answer: "Provides a simplified, unified interface to a complex subsystem, reducing the number of objects a client must interact with."
+    explanation: "Instead of the client calling twelve methods on six objects, it calls one high-level method on the Facade. Importantly, the Facade does not 'trap' the subsystem—direct access remains available."
+  - id: 18
+    question: "**Facade** vs. **Mediator**: what's the communication direction?"
+    answer: "Facade: one-directional (Facade calls subsystem; subsystem is unaware). Mediator: bidirectional (colleagues communicate through mediator and mediator coordinates back)."
+    explanation: "Facade simplifies; Mediator coordinates. If the intermediary simply delegates without adding coordination logic, it's a Facade. If it manages bidirectional control flow, it's a Mediator."
+  - id: 19
+    question: "What problem does **Mediator** solve?"
+    answer: "Reduces many-to-many dependencies between objects by centralizing interaction logic in a single mediator, converting N-to-N complexity into N-to-1."
+    explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
+  - id: 20
+    question: "**Observer** vs. **Mediator**: what's the core difference?"
+    answer: "Observer: *distributed* intelligence (each observer reacts independently). Mediator: *centralized* intelligence (the mediator coordinates all responses)."
+    explanation: "Observer is best for extensibility (adding new observers). Mediator is best for changeability (modifying coordination rules). They are often combined in practice."

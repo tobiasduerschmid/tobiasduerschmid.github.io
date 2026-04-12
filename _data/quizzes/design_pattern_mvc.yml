@@ -1,0 +1,62 @@
+title: "MVC Pattern Quiz"
+description: "Test your understanding of the MVC architectural pattern, its compound structure, and its modern variants."
+questions:
+  - id: 1
+    type: single
+    question: |
+      MVC is called a "compound pattern." Which three design patterns does it combine, and what role does each play?
+    options:
+      - "Observer (model→view notification), Strategy (view delegates to controller), Composite (view is a tree of UI components)"
+      - "Singleton (one model), Factory Method (create views), Adapter (controller adapts input)"
+      - "State (model states), Mediator (controller mediates), Facade (view simplifies display)"
+      - "Iterator (traverse model data), Command (controller commands), Decorator (view decorates output)"
+    correct_index: 0
+    explanation: "MVC combines: **Observer** — the model acts as Subject and views register as Observers, enabling automatic synchronization. **Strategy** — the view delegates input handling to a controller, which can be swapped for different behaviors. **Composite** — the view is often a tree of nested UI components (windows > panels > buttons). The **emergent property** is clean three-way separation that no individual pattern achieves alone."
+
+  - id: 2
+    type: single
+    question: |
+      In MVC, the Model is completely independent of the View and Controller. Why is this considered the most important architectural property of MVC?
+    options:
+      - "It makes the Model smaller and simpler"
+      - "It allows the core domain logic to be reused, tested, and ported to different platforms without modification"
+      - "It prevents the Model from becoming a god class"
+      - "It makes the View easier to implement"
+    correct_index: 1
+    explanation: "The Model's independence is MVC's most powerful property. Because the Model knows nothing about Views or Controllers, the **core domain logic** can be: (1) **reused** across different applications, (2) **tested** without any UI framework, and (3) **ported** to a completely different platform by only rewriting the View and Controller. This is why MVC says 'the Model is blind to how it is displayed.'"
+
+  - id: 3
+    type: single
+    question: |
+      A team uses MVC for a simple CRUD form with one view and no plans for additional views. A colleague suggests the architecture is over-engineered. Is this criticism valid?
+    options:
+      - "No — MVC should always be used for any application with a user interface"
+      - "Yes — for simple UIs, MVC's three-component division adds complexity without proportionate benefit"
+      - "No — MVC is necessary for any application that handles user input"
+      - "Yes — but only because CRUD forms should use the State pattern instead"
+    correct_index: 1
+    explanation: "As Bass, Clements, and Kazman note: *'The complexity may not be worth it for simple user interfaces.'* MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice. Applying MVC to every UI is a form of the 'Hammer and Nail' syndrome."
+
+  - id: 4
+    type: single
+    question: |
+      The Model in MVC automatically notifies all registered Views whenever its state changes. A developer adds 50 Views to the same Model. Performance degrades. What Observer-specific problem has MVC inherited?
+    options:
+      - "The lapsed listener problem"
+      - "The notification storm problem — every model change triggers 50 view updates, many of which may be unnecessary"
+      - "The inverted dependency problem"
+      - "The god class problem"
+    correct_index: 1
+    explanation: "MVC inherits the **notification storm** problem directly from the Observer pattern. When the Model changes, it blindly broadcasts to ALL 50 views, even if most don't need to update for a given change. Solutions include: **batched/deferred notifications** (collect changes, notify once), **granular event types** (views subscribe only to relevant changes), and **smart change detection** (views compare old vs. new data before re-rendering)."
+
+  - id: 5
+    type: single
+    question: |
+      Modern frameworks like React effectively replace MVC's Observer mechanism with reactive state management (hooks, signals). Which core MVC principle do these frameworks still preserve?
+    options:
+      - "The Strategy pattern for swappable controllers"
+      - "Separation of what the system knows (state) from how it looks (UI) from how the user interacts (event handlers)"
+      - "The Composite pattern for UI tree structure"
+      - "The use of explicit Subject and Observer base classes"
+    correct_index: 1
+    explanation: "While modern frameworks have evolved beyond explicit Observer/Subject classes, the **core principle** of MVC remains: separate **domain state** from **presentation** from **interaction handling**. React components combine View + Controller but still separate state management (Model) from rendering (View). The mechanisms change (reactive bindings replace Observer), but the architectural principle — separation of concerns between data, display, and input — endures."

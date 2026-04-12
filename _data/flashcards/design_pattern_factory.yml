@@ -1,0 +1,31 @@
+title: "Factory Method & Abstract Factory Flashcards"
+description: "Key concepts and comparisons for creational design patterns."
+cards:
+  - id: 1
+    question: "What problem does Factory Method solve?"
+    answer: "Decouples object creation from usage by letting subclasses decide which class to instantiate, avoiding conditional creation logic in the creator."
+    explanation: "The creator defines an abstract `createProduct()` method; concrete creator subclasses implement it. Adding a new product variant means adding a new subclass, not modifying existing code."
+  - id: 2
+    question: "What are the four roles in Factory Method?"
+    answer: "**Product** (interface), **Concrete Product** (implementation), **Creator** (declares factory method + business logic), **Concrete Creator** (implements factory method)."
+    explanation: "The Creator contains the high-level workflow (a Template Method) that calls the factory method. Subclasses provide the concrete product without the Creator knowing which type it gets."
+  - id: 3
+    question: "Factory Method vs. Abstract Factory: when to use which?"
+    answer: "Factory Method: one product type, subclass decides. Abstract Factory: families of related products that must be used together."
+    explanation: "Factory Method uses inheritance (subclass overrides). Abstract Factory uses composition (client receives a factory object). Factory methods lurk inside Abstract Factories."
+  - id: 4
+    question: "What is a parameterized factory method?"
+    answer: "A single factory method that takes a parameter (string/enum) to decide which product to create. Simpler but violates Open/Closed Principle."
+    explanation: "Adding a new product type requires modifying the conditional logic inside the factory method, rather than adding a new subclass."
+  - id: 5
+    question: "How does Factory Method relate to Abstract Factory?"
+    answer: "Each creation method inside an Abstract Factory (e.g., `createDough()`, `createSauce()`) is itself a Factory Method."
+    explanation: "Abstract Factory defines the interface; concrete factory subclasses implement each method — which is exactly Factory Method applied to multiple product types."
+  - id: 6
+    question: "What is the 'Rigid Interface' drawback of Abstract Factory?"
+    answer: "Adding a new product type to the family requires changing the interface and modifying *every* concrete factory."
+    explanation: "The pattern has an asymmetry: adding new families is easy (pure addition), but adding new product types is hard (changes ripple). This is a fundamental design trade-off."
+  - id: 7
+    question: "Abstract Factory uses ___ ; Factory Method uses ___."
+    answer: "Abstract Factory uses **object composition** (client receives a factory). Factory Method uses **inheritance** (subclass overrides a method)."
+    explanation: "This is the key structural difference. Composition provides more flexibility (factory can be swapped at runtime), while inheritance is simpler when the product hierarchy is straightforward."

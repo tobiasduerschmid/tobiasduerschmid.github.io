@@ -135,10 +135,43 @@ deactivate channel
 
 # Design Decisions
 
-## Push vs. Pull Model: 
+## Push vs. Pull Model
+This is the most important design decision when tailoring the Observer pattern.
+
 **Push Model:** 
 The *Subject* sends the **detailed state information** to the *Observer* as arguments in the `update()` method, even if the *Observer* doesn't need all data. 
-This keeps the Observer completely decoupled from the Subject but can be inefficient if large data is passed unnecessarily.
+This keeps the Observer completely decoupled from the Subject but can be inefficient if large data is passed unnecessarily. Use this when all observers need the same data, or when the Subject's interface should remain hidden from observers.
 
 **Pull Model:** 
-The *Subject* sends a **minimal notification**, and the *Observer* is responsible for querying the *Subject* for the specific data it needs. This requires the *Observer* to have a reference back to the *Subject*, slightly increasing coupling, but it is often more efficient.
+The *Subject* sends a **minimal notification**, and the *Observer* is responsible for querying the *Subject* for the specific data it needs. This requires the *Observer* to have a reference back to the *Subject*, slightly increasing coupling, but it is often more efficient. Use this when different observers need different subsets of data.
+
+**Hybrid Model:** The *Subject* pushes the *type* of change (e.g., an event enum or change descriptor), and observers decide whether to pull additional data based on the event type. This balances decoupling with efficiency and is the most common approach in modern frameworks.
+
+## Observer Lifecycle: The Lapsed Listener Problem
+A critical but often overlooked decision is how observer registrations are managed over time. If an observer registers with a subject but is never explicitly detached, the subject's reference list keeps the observer alive in memory—even after the observer is otherwise unused. This is the **lapsed listener problem**, a common source of memory leaks. Solutions include:
+* **Explicit unsubscribe:** Require observers to detach themselves (disciplined but error-prone).
+* **Weak references:** The subject holds weak references to observers, allowing garbage collection (language-dependent).
+* **Scoped subscriptions:** Tie the observer's registration to a lifecycle scope that automatically unsubscribes on cleanup (common in modern UI frameworks).
+
+## Notification Trigger
+Who triggers the notification? Three options exist:
+* **Automatic:** The Subject's setter methods call `notifyObservers()` after every state change. Simple but can cause notification storms if multiple properties are updated in sequence.
+* **Client-triggered:** The client explicitly calls `notifyObservers()` after making all desired changes. More efficient but places the burden on the client.
+* **Batched/deferred:** Notifications are collected and dispatched after a delay or at a synchronization point, reducing redundant updates.
+
+# Consequences
+
+Applying the Observer pattern yields several important consequences:
+* **Loose Coupling:** The subject and observers can vary independently. The subject knows only that its observers implement a given interface—not their concrete types, not how many there are, not what they do with the data.
+* **Dynamic Relationships:** Observers can be added and removed at any time during execution, enabling highly flexible architectures.
+* **Broadcast Communication:** When the subject changes, all registered observers are notified—the subject does not need to know who they are.
+* **Unexpected Updates:** Because observers have no knowledge of each other, a change triggered by one observer can cascade through the system in unexpected ways. A notification chain where observer A's update triggers subject B's notification, which updates observer C, can be very difficult to debug.
+* **Inverted Dependency Flow:** An empirical study on reactive programming found that the Observer pattern *inverts the natural dependency flow* in code. Conceptually, data flows from subject to observer, but in the code, observers call the subject to register themselves. This means that when a reader encounters an observer for the first time, there is no sign in the code near the observer of *what* it depends on. This inversion makes program comprehension harder—a critical insight for anyone debugging Observer-based systems.
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_observer" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_observer" %}

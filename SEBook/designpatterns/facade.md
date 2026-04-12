@@ -91,5 +91,35 @@ Applying the Façade pattern leads to several architectural benefits and trade-o
 *   **Simplified Interface:** The primary intent of a Façade is to simplify the interface for the client.
 *   **Reduced Coupling:** It decouples the client from the subsystem. Because the client only interacts with the Façade, internal changes to the subsystem (like adding a new device) do not require changes to the client code.
 *   **Improved Information Hiding:** It promotes modularity by ensuring that the low-level details of the subsystems are "secrets" kept within the component.
-*   **Façade vs. Adapter:** It is important to distinguish this from the **Adapter Pattern**. While an Adapter's intent is to *convert* one interface into another to match a client's expectations, a Façade's intent is solely to *simplify* a complex set of interfaces.
-*   **Flexibility:** Clients that still need the power of the low-level interfaces can still access them directly; the Façade does not "trap" the subsystem, it just provides a more convenient way to use it for common tasks.
+*   **Flexibility:** Clients that still need the power of the low-level interfaces can still access them directly; the Façade does not "trap" the subsystem, it just provides a more convenient way to use it for common tasks. This is a critical point: **a Facade is a convenience, not a prison**.
+
+# Design Decisions
+
+## Single vs. Multiple Facades
+When a subsystem is large, a single Facade can become a "god class" that handles too many concerns. In such cases, create **multiple facades**, each responsible for a different aspect of the subsystem (e.g., `HomeTheaterPlaybackFacade` and `HomeTheaterSetupFacade`). This keeps each Facade cohesive and manageable.
+
+## Facade Awareness
+Subsystem classes should **not know** about the Facade. The Facade knows the subsystem internals and delegates to them, but the subsystem components remain fully independent. This one-directional knowledge ensures the subsystem can be used without the Facade and can be tested independently.
+
+## Abstract Facade
+When testability matters or when the subsystem may have platform-specific implementations, define the Facade as an **interface or abstract class**. This allows test doubles to substitute for the real Facade, and enables different Facade implementations for different platforms.
+
+# Distinguishing Facade from Related Patterns
+
+The Facade is often confused with Adapter and Mediator because all three involve intermediary objects. The distinctions are:
+
+| Pattern | Intent | Communication Direction |
+|---------|--------|------------------------|
+| **Façade** | *Simplify* a complex subsystem into a convenient interface | One-directional: Facade calls subsystem; subsystem is unaware |
+| **[Adapter](/SEBook/designpatterns/adapter.html)** | *Convert* an incompatible interface into a compatible one | One-directional: Adapter translates between client and adaptee |
+| **[Mediator](/SEBook/designpatterns/mediator.html)** | *Coordinate* interactions between peer objects | Bidirectional: colleagues communicate through the mediator, and the mediator communicates back |
+
+A Facade simplifies; an Adapter translates; a Mediator coordinates. If the intermediary simply delegates without adding coordination logic, it is a Facade. If it translates between incompatible interfaces, it is an Adapter. If it manages bidirectional communication and control flow between peers, it is a Mediator.
+
+# Flashcards
+
+{% include flashcards.html id="design_pattern_structural" %}
+
+# Quiz
+
+{% include quiz.html id="design_pattern_structural" %}

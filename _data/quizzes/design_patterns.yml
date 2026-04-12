@@ -1,0 +1,146 @@
+title: "Design Patterns Quiz"
+description: "Test your understanding of design patterns at the Analyze and Evaluate levels of Bloom's taxonomy. These questions go beyond pattern recognition to test design reasoning."
+questions:
+  - id: 1
+    type: single
+    question: |
+      A colleague proposes using the Observer pattern in a module that has exactly one dependent object which will never change. What is the best assessment of this decision?
+    options:
+      - "Good idea — it future-proofs the design for when more observers are needed"
+      - "Bad idea — the pattern adds unnecessary complexity without addressing a real problem"
+      - "Good idea — design patterns should always be applied to improve code quality"
+      - "It depends on whether the programming language supports interfaces"
+    correct_index: 1
+    explanation: "The Observer pattern solves the problem of maintaining a **dynamic, one-to-many** dependency. With exactly one dependent that will never change, there is no one-to-many problem and no need for dynamic subscription. The pattern adds indirection, a subscriber list, and notification logic for no benefit. This is the 'Hammer and Nail' syndrome — applying a pattern without a matching problem. The **Rule of Three** suggests waiting until you've seen the need at least three times."
+
+  - id: 2
+    type: single
+    question: |
+      A student implements the Observer pattern. Their code works correctly: when the Subject changes, the Observer updates. However, the Observer's `update()` method directly accesses `subject.internalData` (a private field accessed via reflection) rather than using `subject.getState()`. What is the primary design problem?
+    options:
+      - "The code has a bug because reflection is not allowed in Java"
+      - "The Observer violates the pattern's intent by introducing a tight coupling that defeats modularity"
+      - "There is no problem — the code works correctly"
+      - "The Observer should use the Push model instead of the Pull model"
+    correct_index: 1
+    explanation: "This illustrates the key finding from Cai et al.'s research: **students learn the gross structure of patterns easily, yet make mistakes that violate the pattern's intent**. The code works, but the direct access to internal data defeats the loose coupling that the Observer pattern is meant to achieve. Correct behavior is not the same as correct design — this is exactly the kind of dependency that 74% of students introduced in the study."
+
+  - id: 3
+    type: single
+    question: |
+      You have a `Document` class whose behavior depends on its state (Draft, Review, Published, Archived). Currently, every method contains a large `switch` statement checking `this.status`. Which pattern best addresses this?
+    options:
+      - "Observer — the document should notify other objects of state changes"
+      - "Strategy — the client should choose the behavior at runtime"
+      - "State — the behavior should change implicitly as the document's internal state transitions"
+      - "Factory Method — creation of documents should be deferred to subclasses"
+    correct_index: 2
+    explanation: "The State pattern is designed exactly for this situation: an object's behavior changes based on its internal state, and the state transitions happen implicitly. The key diagnostic is the `switch` statement on a state variable that appears in multiple methods. State replaces each branch with a polymorphic object, embodying the principle of **polymorphism over conditions**. Strategy would be appropriate if the *client* explicitly selected the behavior, but here the transitions are internal."
+
+  - id: 4
+    type: single
+    question: |
+      A system uses the Singleton pattern for a database connection pool. A new requirement arrives: the system must support multi-tenant deployments where each tenant has its own database. What happens to the Singleton?
+    options:
+      - "Add a parameter to `getInstance(tenantId)` — simple fix"
+      - "The Singleton's core assumption (exactly one instance) is invalidated, requiring a fundamental redesign"
+      - "Create a Singleton for each tenant — the pattern still works"
+      - "Use the Adapter pattern to wrap the existing Singleton for each tenant"
+    correct_index: 1
+    explanation: "This reveals the fundamental fragility of Singleton: the assumption of 'exactly one instance' is often a convenience assumption, not a hard requirement. Many 'singletons' later need multiple instances (per-tenant, per-test, per-thread). POSA5 calls Singleton a 'pattern with a weak solution' precisely because this scenario is common. **Dependency injection with singleton scope** avoids this problem entirely — the DI container manages lifetime without hardcoding the 'exactly one' assumption into the code."
+
+  - id: 5
+    type: single
+    question: |
+      You need to create objects from a family of related types (Dough, Sauce, Cheese) that must always be used together consistently (e.g., NY-style ingredients vs. Chicago-style). Which creational pattern is most appropriate?
+    options:
+      - "Factory Method — create one product type with subclass override"
+      - "Abstract Factory — create families of related products that must work together"
+      - "Builder — construct a complex product step by step"
+      - "Singleton — ensure only one ingredient factory exists"
+    correct_index: 1
+    explanation: "Abstract Factory is designed for exactly this case: **families** of related product types that must be used together. Factory Method handles only one product type. Builder handles step-by-step construction of a single complex product. The key discriminator is the need for *consistency across a product family* — Abstract Factory ensures that NY dough is always paired with NY sauce and NY cheese."
+
+  - id: 6
+    type: single
+    question: |
+      An existing third-party library provides a `LegacyPrinter` class with methods `printText(String s)` and `printImage(byte[] data)`. Your system expects a `ModernPrinter` interface with `render(Document d)`. Which pattern is most appropriate?
+    options:
+      - "Facade — simplify the complex printing subsystem"
+      - "Adapter — convert the incompatible LegacyPrinter interface to match ModernPrinter"
+      - "Decorator — add rendering capability to LegacyPrinter"
+      - "Mediator — coordinate communication between the legacy and modern systems"
+    correct_index: 1
+    explanation: "This is a classic Adapter scenario: you have an existing class whose interface doesn't match what your system needs, and you cannot modify the existing class. The Adapter wraps `LegacyPrinter` and implements `ModernPrinter`, translating `render(Document)` into the appropriate calls to `printText()` and `printImage()`. Facade would simplify a *complex subsystem*; Decorator would add *behavior* through the *same* interface; Mediator would *coordinate* between peers."
+
+  - id: 7
+    type: single
+    question: |
+      In the Composite pattern, a `Menu` can contain both `MenuItem` objects (leaves) and other `Menu` objects (composites). A developer declares `add(MenuComponent)` and `remove(MenuComponent)` on the abstract `MenuComponent` class. What design trade-off does this represent?
+    options:
+      - "The Safe Composite approach — only composites expose child management"
+      - "The Transparent Composite approach — uniform interface at the cost of meaningless methods on leaves"
+      - "A violation of the pattern — these methods should only be on Composite"
+      - "The Observer approach — leaves subscribe to composites"
+    correct_index: 1
+    explanation: "This is the **Transparent Composite** design: the full child-management interface is on the Component base class, so clients can treat all components uniformly. The trade-off is that leaves inherit methods that are meaningless for them (what does `add()` mean for a `MenuItem`?). The alternative, **Safe Composite**, puts these methods only on `Composite`, gaining type safety but requiring clients to distinguish leaf from composite."
+
+  - id: 8
+    type: single
+    question: |
+      A smart home system has an alarm clock, coffee maker, calendar, and sprinkler that need to coordinate: "When the alarm rings on a weekday, brew coffee and skip watering." Where should the rule "only on weekdays" live?
+    options:
+      - "In the AlarmClock — it should check the calendar before notifying others"
+      - "In the CoffeeMaker — it should check the calendar before brewing"
+      - "In a Mediator (SmartHomeHub) — it centralizes coordination rules"
+      - "In an Observer — the calendar observes the alarm and decides"
+    correct_index: 2
+    explanation: "The Mediator pattern is designed for exactly this: **centralizing coordination rules** that involve multiple objects. If the rule lived in the AlarmClock or CoffeeMaker, those objects would need to know about each other, creating tight coupling. The Mediator (SmartHomeHub) receives the 'alarm rang' event, checks the calendar, and commands the coffee maker — keeping each device reusable and the rules in one maintainable place."
+
+  - id: 9
+    type: multiple
+    question: |
+      Which of the following are valid reasons to **avoid** using the Singleton pattern? (Select all that apply)
+    options:
+      - "It makes unit testing difficult because dependencies are hidden and unmockable"
+      - "The 'only one instance' assumption often turns out to be a convenience, not a hard requirement"
+      - "It conflates singleton lifetime management with global access"
+      - "It is always slower than creating new instances"
+    correct_indices: [0, 1, 2]
+    explanation: "The first three are all well-documented criticisms of Singleton. (1) `getInstance()` is a hardcoded dependency with no seam for test doubles. (2) Many singletons later need per-tenant, per-thread, or per-test instances. (3) POSA5 argues it conflates two concerns: lifetime management (legitimate) and global access (harmful). The fourth option is false — Singleton is about controlling instances, not about performance."
+
+  - id: 10
+    type: single
+    question: |
+      MVC is described as a 'compound pattern.' Which three patterns does it combine?
+    options:
+      - "Singleton + Factory Method + Adapter"
+      - "Observer + Strategy + Composite"
+      - "State + Mediator + Facade"
+      - "Iterator + Command + Decorator"
+    correct_index: 1
+    explanation: "MVC combines: **Observer** (model notifies views of state changes), **Strategy** (view delegates input handling to a controller, which can be swapped), and **Composite** (view is a tree of nested UI components). These three patterns work together to decouple model, view, and controller while keeping them synchronized."
+
+  - id: 11
+    type: single
+    question: |
+      The State and Strategy patterns have identical UML class diagrams. What is the key difference between them?
+    options:
+      - "State uses interfaces; Strategy uses abstract classes"
+      - "State involves implicit internal transitions between implementations; Strategy involves explicit client selection"
+      - "State is a behavioral pattern; Strategy is a structural pattern"
+      - "There is no meaningful difference — they are the same pattern with different names"
+    correct_index: 1
+    explanation: "The difference is entirely in **intent**. In State, the concrete implementations transition between each other based on internal logic (the client doesn't choose which state is active). In Strategy, the client explicitly selects which algorithm to use, and there are no automatic transitions. Same structure, different behavior and purpose."
+
+  - id: 12
+    type: single
+    question: |
+      A developer writes a `TurkeyAdapter` that implements the `Duck` interface. The `quack()` method calls `turkey.gobble()`, and the `fly()` method calls `turkey.flyShort()` five times in a loop. Which aspect of this adapter introduces the most design risk?
+    options:
+      - "The quack()-to-gobble() mapping, because it changes the method name"
+      - "The fly()-to-flyShort() mapping, because it involves behavioral adaptation beyond simple interface translation"
+      - "The fact that the adapter wraps the turkey via composition"
+      - "The adapter should use multiple inheritance instead"
+    correct_index: 1
+    explanation: "The `fly()` mapping is not a simple rename — it contains **behavioral adaptation** (calling a method five times in a loop). This is a warning sign: as adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. Simple renaming (quack→gobble) is low-risk; behavioral logic in an adapter should be scrutinized carefully."

@@ -1,0 +1,23 @@
+title: "Mediator Pattern Flashcards"
+description: "Key concepts, design decisions, and the Observer vs. Mediator comparison."
+cards:
+  - id: 1
+    question: "What problem does Mediator solve?"
+    answer: "Reduces many-to-many dependencies between objects by centralizing interaction logic in a single mediator, converting N-to-N complexity into N-to-1."
+    explanation: "Instead of objects talking directly, they report events to the mediator. The mediator contains the coordination rules and tells objects how to respond."
+  - id: 2
+    question: "Observer vs. Mediator: key difference?"
+    answer: "Observer: **distributed** intelligence (each observer reacts independently). Mediator: **centralized** intelligence (mediator coordinates all responses)."
+    explanation: "Observer for extensibility (adding new dependents). Mediator for changeability (modifying coordination rules). They are often combined in practice."
+  - id: 3
+    question: "When to use Observer vs. Mediator?"
+    answer: "Observer when objects need to react **independently** to a change. Mediator when objects need to be **coordinated** (the response depends on collective state)."
+    explanation: "If each observer does its own thing, use Observer. If the response requires checking multiple objects' states, use Mediator."
+  - id: 4
+    question: "What is the 'god class' risk of Mediator?"
+    answer: "The mediator centralizes all coordination logic, so complex systems produce complex mediators. The pattern displaces complexity rather than removing it."
+    explanation: "Without careful design, the Mediator can become an unmaintainable monolith. Consider splitting into multiple mediators for different subsystem aspects."
+  - id: 5
+    question: "What is a 'Managed Observer'?"
+    answer: "A pattern compound combining Observer (for loose notification) with Mediator (for centralized coordination), giving both decoupling and control."
+    explanation: "Colleagues use Observer-style notifications to inform the mediator; the mediator uses direct calls to coordinate responses. This is common in real systems."

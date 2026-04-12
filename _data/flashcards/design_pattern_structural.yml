@@ -1,0 +1,43 @@
+title: "Structural Pattern Flashcards"
+description: "Key concepts for Adapter, Composite, and Facade patterns."
+cards:
+  - id: 1
+    question: "What problem does Adapter solve?"
+    answer: "Allows classes with incompatible interfaces to work together by translating one interface into another that the client expects."
+    explanation: "Like a power outlet adapter for international travel — translates between two incompatible standards without modifying either one."
+  - id: 2
+    question: "Object Adapter vs. Class Adapter?"
+    answer: "Object Adapter uses **composition** (wraps the adaptee), works in any language. Class Adapter uses **multiple inheritance**, only in C++."
+    explanation: "Modern consensus strongly favors Object Adapters for flexibility and compatibility with single-inheritance languages like Java."
+  - id: 3
+    question: "Adapter vs. Facade vs. Decorator?"
+    answer: "Adapter *converts* an interface. Facade *simplifies* a set of interfaces. Decorator *adds behavior* through the same interface."
+    explanation: "Key: Adapter changes what the interface looks like; Facade reduces how much you see; Decorator enhances what the object does."
+  - id: 4
+    question: "What does POSA5 say about 'the Adapter pattern'?"
+    answer: "It is actually a family of at least four patterns: Object Adapter, Class Adapter, Two-Way Adapter, and Pluggable Adapter."
+    explanation: "When someone says 'use the Adapter pattern,' you must clarify which form of adaptation is needed."
+  - id: 5
+    question: "What problem does Composite solve?"
+    answer: "Treats individual objects and nested groups uniformly through a shared abstraction, eliminating special-case code for leaves vs. containers."
+    explanation: "Clients program against the Component interface. The recursive structure lets operations work identically on single items and nested trees."
+  - id: 6
+    question: "Composite: Transparent vs. Safe design?"
+    answer: "Transparent: child-management on Component (uniform, leaves get meaningless methods). Safe: child-management only on Composite (type-safe, clients must distinguish)."
+    explanation: "Fundamental trade-off. Transparent maximizes uniformity; Safe maximizes type safety. Choice depends on context."
+  - id: 7
+    question: "Name three pattern compounds involving Composite."
+    answer: "Composite + Builder (construct trees), Composite + Visitor (operate on trees), Composite + Iterator (traverse trees)."
+    explanation: "Composite is a natural building block for other patterns because many patterns need to operate on recursive tree structures."
+  - id: 8
+    question: "What problem does Facade solve?"
+    answer: "Provides a simplified, unified interface to a complex subsystem, reducing the number of objects a client must interact with."
+    explanation: "The Facade handles coordination between subsystem components. Importantly, it does not 'trap' the subsystem — direct access remains available."
+  - id: 9
+    question: "Facade vs. Mediator: what's the communication direction?"
+    answer: "Facade: **one-directional** (subsystem unaware of Facade). Mediator: **bidirectional** (colleagues communicate through mediator and back)."
+    explanation: "Facade simplifies. Mediator coordinates. If the intermediary just delegates, it's a Facade. If it manages bidirectional control flow, it's a Mediator."
+  - id: 10
+    question: "Should the subsystem know about its Facade?"
+    answer: "No. The Facade knows the subsystem, but the subsystem remains independent — it can function without the Facade."
+    explanation: "This one-directional knowledge is a key design property. The subsystem can be used and tested independently of the Facade."

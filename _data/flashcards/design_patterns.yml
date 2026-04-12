@@ -1,0 +1,51 @@
+title: "Design Patterns Fundamentals"
+description: "Core concepts, categories, and principles of design patterns in software engineering."
+cards:
+  - id: 1
+    question: "What is a design pattern?"
+    answer: "A common, acceptable solution to a recurring design problem in a specific context."
+    explanation: "A design pattern includes a name, problem, context, forces, solution, and consequences. Patterns are not invented—they are distilled from best practices of experienced practitioners."
+  - id: 2
+    question: "What are the three GoF pattern categories?"
+    answer: "**Creational** (object creation), **Structural** (class/object composition), **Behavioral** (object interaction and responsibility distribution)."
+    explanation: "If the problem is about *creating* objects flexibly, look at creational patterns. If it is about *structuring* relationships, look at structural. If it is about *coordinating behavior*, look at behavioral."
+  - id: 3
+    question: "What is context tailoring?"
+    answer: "The process of taking an abstract pattern and adapting it to fit the concrete problem, context, and constraints of a specific application."
+    explanation: "A pattern is never copied verbatim. The developer must observe the project's needs, desired system properties, and the surrounding code, then cut the pattern to fit—documenting the rationale for each adjustment."
+  - id: 4
+    question: "What is a pattern compound?"
+    answer: "A reoccurring set of patterns with overlapping roles from which additional emergent properties arise."
+    explanation: "Example: MVC is a compound of Observer (model notifies views), Strategy (view delegates to controller), and Composite (view is a tree of UI components). The combination yields properties none of the individual patterns provide alone."
+  - id: 5
+    question: "What is the 'Hammer and Nail' syndrome?"
+    answer: "The tendency for developers who just learned patterns to apply them to every problem, even when simple code would be a better solution."
+    explanation: "Software quality is not measured by the number of patterns used. Often, keeping the code simple and avoiding a pattern entirely is the best solution."
+  - id: 6
+    question: "What is the Rule of Three?"
+    answer: "Do not apply a pattern until you have seen the need at least three times."
+    explanation: "This prevents speculative abstraction—creating flexibility for variation points that may never actually vary. Premature pattern application adds complexity without benefit."
+  - id: 7
+    question: "What is the difference between architectural patterns and design patterns?"
+    answer: "Architectural patterns are *strategic* (constrain the overall system structure); design patterns are *tactical* (solve class/object-level problems)."
+    explanation: "As Taylor and Medvidovic put it: architectural styles constrain the overall architectural decisions, while design patterns provide concrete, parameterized solution fragments."
+  - id: 8
+    question: "What does the 'Before and After' teaching technique involve?"
+    answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
+    explanation: "This technique from Astrachan et al. makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
+  - id: 9
+    question: "What does the '74% of student submissions' finding refer to?"
+    answer: "Cai et al. found that 74% of students introduced modularity-violating dependencies even though their software functioned correctly."
+    explanation: "This shows that correct behavior does not mean correct design. Students learned the gross structure of patterns but made lower-level mistakes that defeated the modularity the patterns were meant to achieve."
+  - id: 10
+    question: "Why do experts say 'start stupid and evolve'?"
+    answer: "Complex systems that work evolved from simple systems that worked. Start simple, then refactor toward patterns as concrete needs emerge."
+    explanation: "Rather than speculating upfront about which patterns might be needed, use the simplest working solution and refactor when code smells indicate the need. This prevents over-engineering."
+  - id: 11
+    question: "What is the relationship between code smells and design patterns?"
+    answer: "Code smells indicate *when* a pattern might be needed; patterns provide *how* to fix the smell."
+    explanation: "For example: large if/else chains on state → State pattern. Duplicated algorithm selection → Strategy pattern. Complex object creation → Factory Method. Code smells are the diagnostic; patterns are the treatment."
+  - id: 12
+    question: "What does 'polymorphism over conditions' mean?"
+    answer: "Replace complex if/else or switch statements with polymorphic objects that each handle one case."
+    explanation: "This is a core principle embodied by State, Strategy, and Command patterns. Adding a new case requires adding a new class rather than modifying existing conditional logic (Open/Closed Principle)."

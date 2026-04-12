@@ -1,0 +1,23 @@
+title: "Singleton Pattern Flashcards"
+description: "Key concepts, controversies, and modern alternatives for the Singleton design pattern."
+cards:
+  - id: 1
+    question: "What are the three implementation aspects of Singleton?"
+    answer: "(1) Private constructor, (2) private static field holding the instance, (3) public static `getInstance()` method as sole access point."
+    explanation: "The private constructor prevents external instantiation. The static field stores the single instance. The static method provides controlled access."
+  - id: 2
+    question: "Why is Singleton controversial in modern practice?"
+    answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (harmful coupling). DI containers solve the first without introducing the second."
+    explanation: "POSA5 calls it 'a well-known pattern with a weak solution.' The literature discussing Singleton's issues dwarfs the original GoF description."
+  - id: 3
+    question: "Name three thread-safety approaches for Singleton in Java."
+    answer: "(1) Synchronized `getInstance()` (simple, slow), (2) Eager instantiation in static field (fast, may waste memory), (3) Double-checked locking with `volatile` (efficient, complex)."
+    explanation: "The classic lazy singleton is not thread-safe. Each approach trades off simplicity, performance, and memory. Java's enum approach is considered the safest."
+  - id: 4
+    question: "What is 'Singleitis'?"
+    answer: "The tendency to overuse Singleton for easy global access, creating high coupling and unclear dependencies — a form of the 'Hammer and Nail' syndrome."
+    explanation: "Using Singleton just for convenience rather than a genuine 'exactly one instance' constraint leads to a hard-to-maintain design where dependencies are invisible."
+  - id: 5
+    question: "When is Singleton acceptable in modern code?"
+    answer: "When controlling a true infrastructure resource where DI is unavailable and testability of consuming code is not a concern. In all other cases, prefer DI with singleton scope."
+    explanation: "A DI container can manage singleton *lifetime* (ensuring one instance) while keeping constructors injectable and dependencies explicit, avoiding the testability problem."
