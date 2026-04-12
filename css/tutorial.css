@@ -594,45 +594,209 @@ html:not(.dark-mode) {
 .tvm-diagram-toolbar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: #252535;
-  border-bottom: 1px solid #3a3a4a;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #1a1a28;
+  border-bottom: 1px solid #2e2e42;
   flex-shrink: 0;
 }
 .tvm-diagram-type-btn {
-  padding: 4px 14px;
-  border: 1px solid #555;
-  border-radius: 4px;
+  padding: 4px 13px;
+  border: 1px solid transparent;
+  border-radius: 3px;
   background: transparent;
-  color: #aaa;
+  color: #8090a8;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.12s, color 0.12s;
+  letter-spacing: 0.01em;
 }
 .tvm-diagram-type-btn:hover {
-  background: #333345;
-  color: #ddd;
+  background: #2a2a40;
+  color: #c8d4e4;
 }
 .tvm-diagram-type-btn.active {
   background: #2774AE;
-  border-color: #2774AE;
+  border-color: #1a5e94;
   color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+.tvm-diagram-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-left: auto;
+  background: #252538;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  padding: 1px;
+}
+.tvm-diagram-zoom-btn {
+  padding: 2px 7px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #7a8aa0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.4;
+  min-width: 22px;
+  text-align: center;
+  transition: background 0.1s, color 0.1s;
+}
+.tvm-diagram-zoom-btn:hover {
+  background: #35354e;
+  color: #c8d4e4;
+}
+.tvm-diagram-zoom-label {
+  font-size: 11px;
+  color: #6a7a90;
+  min-width: 38px;
+  text-align: center;
+  font-weight: 600;
+  user-select: none;
+  padding: 0 2px;
+  border-left: 1px solid #3a3a52;
+  border-right: 1px solid #3a3a52;
+}
+.tvm-diagram-fullscreen-btn {
+  padding: 3px 7px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #252538;
+  color: #7a8aa0;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1.3;
+  margin-left: 5px;
+  transition: background 0.1s, color 0.1s;
+}
+.tvm-diagram-fullscreen-btn:hover {
+  background: #35354e;
+  color: #c8d4e4;
+  border-color: #5a5a78;
 }
 .tvm-diagram-refresh-btn {
-  margin-left: auto;
-  padding: 4px 12px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background: transparent;
-  color: #aaa;
+  padding: 3px 10px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #252538;
+  color: #7a8aa0;
   font-size: 12px;
   cursor: pointer;
+  margin-left: 3px;
+  transition: background 0.1s, color 0.1s;
 }
 .tvm-diagram-refresh-btn:hover {
-  background: #333345;
-  color: #ddd;
+  background: #35354e;
+  color: #c8d4e4;
+  border-color: #5a5a78;
+}
+
+/* Fullscreen overlay */
+.tvm-diagram-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #1e1e2e;
+  display: flex;
+  flex-direction: column;
+}
+.tvm-diagram-fs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  background: #1a1a28;
+  border-bottom: 1px solid #2e2e42;
+  flex-shrink: 0;
+}
+.tvm-diagram-fs-type-btn {
+  padding: 5px 15px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #8090a8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  letter-spacing: 0.01em;
+}
+.tvm-diagram-fs-type-btn:hover {
+  background: #2a2a40;
+  color: #c8d4e4;
+}
+.tvm-diagram-fs-type-btn.active {
+  background: #2774AE;
+  border-color: #1a5e94;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+.tvm-diagram-fs-zoom-btn {
+  padding: 2px 7px;
+  border: none;
+  border-radius: 2px;
+  background: transparent;
+  color: #7a8aa0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.4;
+  min-width: 22px;
+  text-align: center;
+  transition: background 0.1s, color 0.1s;
+}
+.tvm-diagram-fs-zoom-btn:hover {
+  background: #35354e;
+  color: #c8d4e4;
+}
+.tvm-diagram-fs-zoom-label {
+  font-size: 11px;
+  color: #6a7a90;
+  min-width: 38px;
+  text-align: center;
+  font-weight: 600;
+  user-select: none;
+  padding: 0 2px;
+  border-left: 1px solid #3a3a52;
+  border-right: 1px solid #3a3a52;
+}
+.tvm-diagram-fs-close {
+  padding: 4px 12px;
+  border: 1px solid #8a3030;
+  border-radius: 3px;
+  background: rgba(180, 50, 50, 0.15);
+  color: #e88;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: background 0.12s, color 0.12s;
+}
+.tvm-diagram-fs-close:hover {
+  background: rgba(208, 64, 64, 0.28);
+  color: #fcc;
+  border-color: #b04040;
+}
+.tvm-diagram-fs-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  cursor: grab;
+}
+.tvm-diagram-fs-content:active {
+  cursor: grabbing;
+}
+.tvm-diagram-fs-content svg {
+  max-width: 100%;
+  height: auto;
 }
 .tvm-diagram-content {
   flex: 1;
@@ -642,6 +806,10 @@ html:not(.dark-mode) {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  cursor: grab;
+}
+.tvm-diagram-content:active {
+  cursor: grabbing;
 }
 .tvm-diagram-content svg {
   max-width: 100%;
@@ -665,36 +833,108 @@ html:not(.dark-mode) {
 
 /* UML diagram light mode */
 html:not(.dark-mode) .tvm-diagram-container {
-  background: #fafbfc;
+  background: #fff;
   color: #333;
 }
 html:not(.dark-mode) .tvm-diagram-toolbar {
-  background: #f0f1f3;
-  border-bottom-color: #d4d4d4;
+  background: #f3f4f6;
+  border-bottom: 1px solid #dde1e8;
 }
 html:not(.dark-mode) .tvm-diagram-type-btn {
-  border-color: #bbb;
-  color: #555;
+  color: #556;
 }
 html:not(.dark-mode) .tvm-diagram-type-btn:hover {
-  background: #e0e1e5;
+  background: #e5e8ee;
   color: #222;
 }
 html:not(.dark-mode) .tvm-diagram-type-btn.active {
   background: #2774AE;
-  border-color: #2774AE;
+  border-color: #1a5e94;
   color: #fff;
+  box-shadow: 0 1px 4px rgba(39,116,174,0.3);
 }
-html:not(.dark-mode) .tvm-diagram-refresh-btn {
-  border-color: #bbb;
-  color: #555;
+html:not(.dark-mode) .tvm-diagram-zoom-controls {
+  background: #eaecf0;
+  border-color: #cdd0d8;
 }
-html:not(.dark-mode) .tvm-diagram-refresh-btn:hover {
-  background: #e0e1e5;
+html:not(.dark-mode) .tvm-diagram-zoom-btn {
+  color: #5a6270;
+}
+html:not(.dark-mode) .tvm-diagram-zoom-btn:hover {
+  background: #d8dce6;
   color: #222;
 }
+html:not(.dark-mode) .tvm-diagram-zoom-label {
+  color: #6a7080;
+  border-color: #cdd0d8;
+}
+html:not(.dark-mode) .tvm-diagram-fullscreen-btn {
+  background: #eaecf0;
+  border-color: #cdd0d8;
+  color: #5a6270;
+}
+html:not(.dark-mode) .tvm-diagram-fullscreen-btn:hover {
+  background: #d8dce6;
+  color: #222;
+  border-color: #b0b6c4;
+}
+html:not(.dark-mode) .tvm-diagram-refresh-btn {
+  background: #eaecf0;
+  border-color: #cdd0d8;
+  color: #5a6270;
+}
+html:not(.dark-mode) .tvm-diagram-refresh-btn:hover {
+  background: #d8dce6;
+  color: #222;
+  border-color: #b0b6c4;
+}
 html:not(.dark-mode) .tvm-diagram-empty {
-  color: #666;
+  color: #778;
+}
+html:not(.dark-mode) .tvm-diagram-fullscreen-overlay {
+  background: #fff;
+}
+html:not(.dark-mode) .tvm-diagram-fs-toolbar {
+  background: #f3f4f6;
+  border-bottom: 1px solid #dde1e8;
+}
+html:not(.dark-mode) .tvm-diagram-fs-type-btn {
+  color: #556;
+}
+html:not(.dark-mode) .tvm-diagram-fs-type-btn:hover {
+  background: #e5e8ee;
+  color: #222;
+}
+html:not(.dark-mode) .tvm-diagram-fs-type-btn.active {
+  background: #2774AE;
+  border-color: #1a5e94;
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(39,116,174,0.3);
+}
+html:not(.dark-mode) .tvm-diagram-zoom-controls {  /* shared between inline & fs */
+  background: #eaecf0;
+  border-color: #cdd0d8;
+}
+html:not(.dark-mode) .tvm-diagram-fs-zoom-btn {
+  color: #5a6270;
+}
+html:not(.dark-mode) .tvm-diagram-fs-zoom-btn:hover {
+  background: #d8dce6;
+  color: #222;
+}
+html:not(.dark-mode) .tvm-diagram-fs-zoom-label {
+  color: #6a7080;
+  border-color: #cdd0d8;
+}
+html:not(.dark-mode) .tvm-diagram-fs-close {
+  background: rgba(192, 50, 50, 0.07);
+  border-color: #c04040;
+  color: #b03030;
+}
+html:not(.dark-mode) .tvm-diagram-fs-close:hover {
+  background: rgba(192, 64, 64, 0.15);
+  color: #8a1a1a;
+  border-color: #902020;
 }
 
 /* Vertical splitter (between editor and terminal) */

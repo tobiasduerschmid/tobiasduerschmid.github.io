@@ -1697,7 +1697,7 @@
     padX: 14,
     padY: 6,
     gapX: 60,
-    gapY: 70,
+    gapY: 80,
     triangleH: 14,
     triangleW: 14,
     diamondH: 14,
@@ -2392,8 +2392,10 @@
           fmy = p0.y - 8;
         } else {
           // Vertical exit: place to the right of the lifeline
+          // If there's an inheritance triangle at the bottom, offset further to avoid overlap
+          var fromInheritOffset = (startDy > 0 && hasInheritAtBottom[orel.from]) ? CFG.triangleH + CFG.junctionGap + 4 : 0;
           fmx = p0.x + 8;
-          fmy = p0.y + startDy * 14;
+          fmy = p0.y + startDy * 14 + fromInheritOffset;
         }
         svg.push('<text x="' + fmx + '" y="' + fmy + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
@@ -3309,7 +3311,8 @@
       } else if (msg.type === 'create') {
         createYs[msg.target] = curY;
         msgYs.push(curY);
-        curY += partH + 10;
+        // Advance only to box center — the following <<create>> message aligns here
+        curY += partH / 2;
       } else {
         msgYs.push(curY);
         curY += CFG.messageGapY / 2;
@@ -3596,7 +3599,15 @@
         }
         var isLeft = partX[toIdx] < partX[fromIdx];
         var x1 = getEdgeX(fromIdx, my, isLeft ? 'left' : 'right');
-        var x2 = getEdgeX(toIdx, my, isLeft ? 'right' : 'left');
+        var x2;
+        // Create messages: arrow points to the participant box edge (UML 2.0 G179)
+        if (createYs.hasOwnProperty(m.to) && my <= createYs[m.to] + partH) {
+          x2 = isLeft
+            ? partX[toIdx] + partWidths[toIdx] / 2   // right edge of box
+            : partX[toIdx] - partWidths[toIdx] / 2;  // left edge of box
+        } else {
+          x2 = getEdgeX(toIdx, my, isLeft ? 'right' : 'left');
+        }
 
         // Self-message
         if (fromIdx === toIdx) {
@@ -4022,13 +4033,35 @@
       if (transitions[t].from === '[*]') {
         var iName = '__initial__' + initialCount;
         initialNames[t] = iName;
-        if (!states[iName]) states[iName] = { name: iName, type: 'initial', entryAction: '', exitAction: '', doActivity: '' };
+          if (!states[iName]) {
+            states[iName] = {
+              name: iName,
+              type: 'initial',
+              entryAction: '',
+              exitAction: '',
+              doActivity: '',
+              parent: transitions[t].parent || null
+            };
+          } else if (transitions[t].parent && !states[iName].parent) {
+            states[iName].parent = transitions[t].parent;
+          }
         initialCount++;
       }
       if (transitions[t].to === '[*]') {
         var fName = '__final__' + finalCount;
         finalNames[t] = fName;
-        if (!states[fName]) states[fName] = { name: fName, type: 'final', entryAction: '', exitAction: '', doActivity: '' };
+          if (!states[fName]) {
+            states[fName] = {
+              name: fName,
+              type: 'final',
+              entryAction: '',
+              exitAction: '',
+              doActivity: '',
+              parent: transitions[t].parent || null
+            };
+          } else if (transitions[t].parent && !states[fName].parent) {
+            states[fName].parent = transitions[t].parent;
+          }
         finalCount++;
       }
     }

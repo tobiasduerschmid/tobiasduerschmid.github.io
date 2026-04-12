@@ -175,6 +175,10 @@
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
     this._umlViewActive = false;        // true when UML tab is selected
     this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
+    this._umlZoom = 1;                  // current zoom level (inline view)
+    this._umlFsZoom = 1;               // current zoom level (fullscreen view)
+    this._umlFullscreenEl = null;       // fullscreen overlay element
+    this._umlFsContentEl = null;        // fullscreen diagram content element
 
     // React preview state
     this._previewFrame = null;
@@ -353,9 +357,30 @@
       '<div class="tvm-diagram-toolbar">' +
       '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
       '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+      '<div class="tvm-diagram-zoom-controls">' +
+      '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+      '<span class="tvm-diagram-zoom-label">100%</span>' +
+      '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+      '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+      '</div>' +
+      '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
       '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
       '</div>' +
       '<div class="tvm-diagram-content"></div>' +
+      '</div>' +
+      '<div class="tvm-diagram-fullscreen-overlay" style="display:none">' +
+      '<div class="tvm-diagram-fs-toolbar">' +
+      '<button class="tvm-diagram-fs-type-btn active" data-type="class">Class Diagram</button>' +
+      '<button class="tvm-diagram-fs-type-btn" data-type="sequence">Sequence Diagram</button>' +
+      '<div class="tvm-diagram-zoom-controls">' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+      '<span class="tvm-diagram-fs-zoom-label">100%</span>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+      '</div>' +
+      '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
+      '</div>' +
+      '<div class="tvm-diagram-fs-content"></div>' +
       '</div>' +
       '</div>' +
       (this.gitGraphPath
@@ -385,6 +410,8 @@
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
     this._umlContainer = this.root.querySelector('.tvm-diagram-container');
     this._umlContentEl = this.root.querySelector('.tvm-diagram-content');
+    this._umlFullscreenEl = this.root.querySelector('.tvm-diagram-fullscreen-overlay');
+    this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
 
     var self = this;
 
@@ -404,6 +431,96 @@
       }
       var refreshBtn = this._umlContainer.querySelector('.tvm-diagram-refresh-btn');
       if (refreshBtn) refreshBtn.addEventListener('click', function () { self._refreshUMLDiagram(); });
+
+      // Inline zoom controls
+      var zoomLabel = this._umlContainer.querySelector('.tvm-diagram-zoom-label');
+      var zoomBtns = this._umlContainer.querySelectorAll('.tvm-diagram-zoom-btn');
+      for (var zi = 0; zi < zoomBtns.length; zi++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            var dir = btn.getAttribute('data-zoom');
+            if (dir === 'in') self._umlZoom = Math.min(4, parseFloat((self._umlZoom + 0.1).toFixed(2)));
+            else if (dir === 'out') self._umlZoom = Math.max(0.1, parseFloat((self._umlZoom - 0.1).toFixed(2)));
+            else self._umlZoom = 1;
+            self._applyUMLZoom(self._umlContentEl, self._umlZoom, zoomLabel);
+          });
+        })(zoomBtns[zi]);
+      }
+      // Mouse-wheel zoom on the inline diagram area
+      if (this._umlContentEl) {
+        this._umlContentEl.addEventListener('wheel', function (e) {
+          if (!e.ctrlKey && !e.metaKey) return;
+          e.preventDefault();
+          self._umlZoom = e.deltaY < 0
+            ? Math.min(4, parseFloat((self._umlZoom + 0.05).toFixed(2)))
+            : Math.max(0.1, parseFloat((self._umlZoom - 0.05).toFixed(2)));
+          self._applyUMLZoom(self._umlContentEl, self._umlZoom, zoomLabel);
+        }, { passive: false });
+        self._installUMLPan(this._umlContentEl);
+      }
+
+      // Fullscreen button
+      var fsBtn = this._umlContainer.querySelector('.tvm-diagram-fullscreen-btn');
+      if (fsBtn) {
+        fsBtn.addEventListener('click', function () { self._openUMLFullscreen(); });
+      }
+    }
+
+    // Fullscreen overlay controls
+    if (this._umlFullscreenEl) {
+      var fsTypeBtns = this._umlFullscreenEl.querySelectorAll('.tvm-diagram-fs-type-btn');
+      for (var fti = 0; fti < fsTypeBtns.length; fti++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            self._umlActiveType = btn.getAttribute('data-type');
+            for (var j = 0; j < fsTypeBtns.length; j++) {
+              fsTypeBtns[j].classList.toggle('active', fsTypeBtns[j] === btn);
+            }
+            // Sync inline type buttons too
+            var inlineBtns = self._umlContainer ? self._umlContainer.querySelectorAll('.tvm-diagram-type-btn') : [];
+            for (var k = 0; k < inlineBtns.length; k++) {
+              inlineBtns[k].classList.toggle('active', inlineBtns[k].getAttribute('data-type') === self._umlActiveType);
+            }
+            // Re-render in fullscreen view
+            self._renderUMLInFullscreen();
+          });
+        })(fsTypeBtns[fti]);
+      }
+
+      var fzLabel = this._umlFullscreenEl.querySelector('.tvm-diagram-fs-zoom-label');
+      var fzBtns = this._umlFullscreenEl.querySelectorAll('.tvm-diagram-fs-zoom-btn');
+      for (var fzi = 0; fzi < fzBtns.length; fzi++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            var dir = btn.getAttribute('data-zoom');
+            if (dir === 'in') self._umlFsZoom = Math.min(4, parseFloat((self._umlFsZoom + 0.1).toFixed(2)));
+            else if (dir === 'out') self._umlFsZoom = Math.max(0.1, parseFloat((self._umlFsZoom - 0.1).toFixed(2)));
+            else self._umlFsZoom = 1;
+            self._applyUMLZoom(self._umlFsContentEl, self._umlFsZoom, fzLabel);
+          });
+        })(fzBtns[fzi]);
+      }
+      if (this._umlFsContentEl) {
+        this._umlFsContentEl.addEventListener('wheel', function (e) {
+          if (!e.ctrlKey && !e.metaKey) return;
+          e.preventDefault();
+          self._umlFsZoom = e.deltaY < 0
+            ? Math.min(4, parseFloat((self._umlFsZoom + 0.05).toFixed(2)))
+            : Math.max(0.1, parseFloat((self._umlFsZoom - 0.05).toFixed(2)));
+          self._applyUMLZoom(self._umlFsContentEl, self._umlFsZoom, fzLabel);
+        }, { passive: false });
+        self._installUMLPan(this._umlFsContentEl);
+      }
+
+      var fsClose = this._umlFullscreenEl.querySelector('.tvm-diagram-fs-close');
+      if (fsClose) fsClose.addEventListener('click', function () { self._closeUMLFullscreen(); });
+
+      // Close on Escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && self._umlFullscreenEl && self._umlFullscreenEl.style.display !== 'none') {
+          self._closeUMLFullscreen();
+        }
+      });
     }
 
     // Git graph toggle buttons
@@ -1989,6 +2106,8 @@
     }
     this._umlContentEl.innerHTML = '';
     UMLClassDiagram.render(this._umlContentEl, syntax);
+    var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
+    this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
   };
 
   /** Render sequence diagram using the custom SVG renderer */
@@ -1999,6 +2118,8 @@
     }
     this._umlContentEl.innerHTML = '';
     UMLSequenceDiagram.render(this._umlContentEl, syntax);
+    var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
+    this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
   };
 
   /** Render Mermaid syntax into SVG in the diagram content area */
@@ -2042,6 +2163,139 @@
     if (this._umlContentEl) {
       this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty" style="color:#e55;">' + msg + '</div>';
     }
+  };
+
+  /**
+   * Install drag-to-pan (grab hand) on a scrollable diagram content element.
+   * Only one listener set is attached per element (guarded by a flag).
+   */
+  TutorialCode.prototype._installUMLPan = function (contentEl) {
+    if (!contentEl || contentEl._umlPanInstalled) return;
+    contentEl._umlPanInstalled = true;
+
+    var dragging = false;
+    var startX, startY, scrollLeft, scrollTop;
+
+    contentEl.style.cursor = 'grab';
+
+    contentEl.addEventListener('mousedown', function (e) {
+      // Only pan with left button; ignore clicks on buttons inside
+      if (e.button !== 0 || e.target.tagName === 'BUTTON') return;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      scrollLeft = contentEl.scrollLeft;
+      scrollTop = contentEl.scrollTop;
+      contentEl.style.cursor = 'grabbing';
+      contentEl.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      var dx = e.clientX - startX;
+      var dy = e.clientY - startY;
+      contentEl.scrollLeft = scrollLeft - dx;
+      contentEl.scrollTop = scrollTop - dy;
+    });
+
+    document.addEventListener('mouseup', function () {
+      if (!dragging) return;
+      dragging = false;
+      contentEl.style.cursor = 'grab';
+      contentEl.style.userSelect = '';
+    });
+  };
+
+  /** Apply a zoom level to the SVG inside a content element and update label */
+  TutorialCode.prototype._applyUMLZoom = function (contentEl, zoom, labelEl) {
+    if (!contentEl) return;
+    var svg = contentEl.querySelector('svg');
+    if (svg) {
+      if (zoom === 1) {
+        svg.style.transform = '';
+        svg.style.width = '';
+        svg.style.height = '';
+        svg.style.maxWidth = '';
+      } else {
+        var baseW = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width
+          ? svg.viewBox.baseVal.width
+          : (parseFloat(svg.getAttribute('width')) || 400);
+        var baseH = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.height
+          ? svg.viewBox.baseVal.height
+          : (parseFloat(svg.getAttribute('height')) || 300);
+        svg.style.width = (baseW * zoom) + 'px';
+        svg.style.height = (baseH * zoom) + 'px';
+        svg.style.maxWidth = 'none';
+        svg.style.transform = '';
+      }
+    }
+    if (labelEl) labelEl.textContent = Math.round(zoom * 100) + '%';
+  };
+
+  /** Render the current diagram into the fullscreen content area */
+  TutorialCode.prototype._renderUMLInFullscreen = function () {
+    if (!this._umlFsContentEl) return;
+    var fzLabel = this._umlFullscreenEl ? this._umlFullscreenEl.querySelector('.tvm-diagram-fs-zoom-label') : null;
+
+    this._umlFsContentEl.innerHTML = '';
+    if (!this._umlLastDiagrams) {
+      this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No diagram data yet. Refresh first.</div>';
+      return;
+    }
+    try {
+      if (this._umlActiveType === 'sequence') {
+        var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
+        if (seqSyntax && window.UMLSequenceDiagram) {
+          UMLSequenceDiagram.render(this._umlFsContentEl, seqSyntax);
+        } else {
+          this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No sequence diagram available.</div>';
+        }
+      } else {
+        var classSyntax = this._umlLastDiagrams.classDiagram;
+        if (classSyntax && window.UMLClassDiagram) {
+          UMLClassDiagram.render(this._umlFsContentEl, classSyntax);
+        } else {
+          this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No class diagram available.</div>';
+        }
+      }
+    } catch (e) {
+      this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty" style="color:#e55;">Render error: ' + (e.message || e) + '</div>';
+    }
+    this._applyUMLZoom(this._umlFsContentEl, this._umlFsZoom, fzLabel);
+  };
+
+  /** Open the fullscreen overlay and render the current diagram inside it */
+  TutorialCode.prototype._openUMLFullscreen = function () {
+    if (!this._umlFullscreenEl || !this._umlFsContentEl) return;
+
+    // Sync type buttons
+    var fsTypeBtns = this._umlFullscreenEl.querySelectorAll('.tvm-diagram-fs-type-btn');
+    for (var i = 0; i < fsTypeBtns.length; i++) {
+      fsTypeBtns[i].classList.toggle('active', fsTypeBtns[i].getAttribute('data-type') === this._umlActiveType);
+    }
+
+    // Reset zoom for new fullscreen session
+    this._umlFsZoom = 1;
+    var fzLabel = this._umlFullscreenEl.querySelector('.tvm-diagram-fs-zoom-label');
+    if (fzLabel) fzLabel.textContent = '100%';
+
+    // Move overlay to body to escape any parent stacking context / transform
+    if (this._umlFullscreenEl.parentNode !== document.body) {
+      document.body.appendChild(this._umlFullscreenEl);
+    }
+
+    this._renderUMLInFullscreen();
+    this._umlFullscreenEl.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+
+  /** Close the fullscreen overlay */
+  TutorialCode.prototype._closeUMLFullscreen = function () {
+    if (!this._umlFullscreenEl) return;
+    this._umlFullscreenEl.style.display = 'none';
+    document.body.style.overflow = '';
+    if (this._umlFsContentEl) this._umlFsContentEl.innerHTML = '';
   };
 
   /**
