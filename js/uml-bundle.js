@@ -1808,11 +1808,16 @@
       }
     }
 
-    // Auto-upgrade: generalization targeting an interface becomes realization
+    // Auto-upgrade: generalization targeting an interface becomes realization,
+    // BUT only when the source is a class (not another interface).
+    // Interface-extends-interface is generalization (solid line), per UML spec.
     for (var ri2 = 0; ri2 < relationships.length; ri2++) {
       var rel2 = relationships[ri2];
       if (rel2.type === 'generalization' && classMap[rel2.to] && classMap[rel2.to].type === 'interface') {
-        rel2.type = 'realization';
+        var fromCls = classMap[rel2.from];
+        if (!fromCls || fromCls.type !== 'interface') {
+          rel2.type = 'realization';
+        }
       }
     }
 
