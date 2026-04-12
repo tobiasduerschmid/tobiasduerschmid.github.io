@@ -494,11 +494,38 @@
       // placeholder size on some pages after viewBox updates.
       var bbox = g.getBBox();
       if (!bbox || !isFinite(bbox.width) || !isFinite(bbox.height) || bbox.width <= 0 || bbox.height <= 0) return;
+      var ctm = g.getCTM();
+      var minX = bbox.x, minY = bbox.y, maxX = bbox.x + bbox.width, maxY = bbox.y + bbox.height;
+
+      // getBBox() is reported in the group's local coordinates and does not
+      // include the root translate(...) used by svgOpen(). Apply the current
+      // transform matrix so the fitted viewBox covers the actual rendered area.
+      if (ctm) {
+        var corners = [
+          { x: bbox.x, y: bbox.y },
+          { x: bbox.x + bbox.width, y: bbox.y },
+          { x: bbox.x + bbox.width, y: bbox.y + bbox.height },
+          { x: bbox.x, y: bbox.y + bbox.height }
+        ];
+        minX = Infinity;
+        minY = Infinity;
+        maxX = -Infinity;
+        maxY = -Infinity;
+        for (var i = 0; i < corners.length; i++) {
+          var pt = corners[i];
+          var tx = ctm.a * pt.x + ctm.c * pt.y + ctm.e;
+          var ty = ctm.b * pt.x + ctm.d * pt.y + ctm.f;
+          if (tx < minX) minX = tx;
+          if (ty < minY) minY = ty;
+          if (tx > maxX) maxX = tx;
+          if (ty > maxY) maxY = ty;
+        }
+      }
       var p = pad || 10;
-      var vx = Math.floor(bbox.x - p);
-      var vy = Math.floor(bbox.y - p);
-      var vw = Math.ceil(bbox.width + p * 2);
-      var vh = Math.ceil(bbox.height + p * 2);
+      var vx = Math.floor(minX - p);
+      var vy = Math.floor(minY - p);
+      var vw = Math.ceil((maxX - minX) + p * 2);
+      var vh = Math.ceil((maxY - minY) + p * 2);
       svg.setAttribute('width', Math.ceil(vw));
       svg.setAttribute('height', Math.ceil(vh));
       svg.setAttribute('viewBox', Math.floor(vx) + ' ' + Math.floor(vy) + ' ' + Math.ceil(vw) + ' ' + Math.ceil(vh));
@@ -4429,9 +4456,43 @@
 
   // ─── Obstacle-aware orthogonal routing helpers ─────────────────────
 
+  var ROUTE_LANE_STEP = 14;
+  var ROUTE_LANE_CLEARANCE = 10;
+  var ROUTE_TRACK_MIN_LEN = 24;
+
+  function rangesOverlap(a1, a2, b1, b2, minOverlap) {
+    var overlap = Math.min(Math.max(a1, a2), Math.max(b1, b2)) -
+      Math.max(Math.min(a1, a2), Math.min(b1, b2));
+    return overlap > (minOverlap || 0);
+  }
+
+  function hSegHitsOccupied(y, xMin, xMax, occupied) {
+    if (!occupied) return false;
+    for (var i = 0; i < occupied.h.length; i++) {
+      var seg = occupied.h[i];
+      if (Math.abs(seg.y - y) < ROUTE_LANE_CLEARANCE &&
+          rangesOverlap(xMin, xMax, seg.x1, seg.x2, 6)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function vSegHitsOccupied(x, yMin, yMax, occupied) {
+    if (!occupied) return false;
+    for (var i = 0; i < occupied.v.length; i++) {
+      var seg = occupied.v[i];
+      if (Math.abs(seg.x - x) < ROUTE_LANE_CLEARANCE &&
+          rangesOverlap(yMin, yMax, seg.y1, seg.y2, 6)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Check if a route (array of {x,y} points forming orthogonal segments)
   // intersects any obstacle rect, skipping obstacles named in skipNames.
-  function routeHitsObstacle(points, obstacles, skipNames) {
+  function routeHitsObstacle(points, obstacles, skipNames, occupied) {
     for (var i = 0; i < points.length - 1; i++) {
       var p0 = points[i], p1 = points[i + 1];
       if (Math.abs(p0.x - p1.x) < 1) {
@@ -4442,6 +4503,7 @@
           if (skipNames && skipNames[ob.name]) continue;
           if (p0.x > ob.x1 && p0.x < ob.x2 && yMax > ob.y1 && yMin < ob.y2) return true;
         }
+        if (vSegHitsOccupied(p0.x, yMin, yMax, occupied)) return true;
       } else {
         // Horizontal segment
         var xMin = Math.min(p0.x, p1.x), xMax = Math.max(p0.x, p1.x);
@@ -4450,56 +4512,107 @@
           if (skipNames && skipNames[ob2.name]) continue;
           if (p0.y > ob2.y1 && p0.y < ob2.y2 && xMax > ob2.x1 && xMin < ob2.x2) return true;
         }
+        if (hSegHitsOccupied(p0.y, xMin, xMax, occupied)) return true;
       }
     }
     return false;
   }
 
   // Find nearest clear X for a vertical segment in [yMin,yMax]
-  function findClearX(yMin, yMax, preferX, obstacles, skipNames) {
-    for (var j = 0; j < obstacles.length; j++) {
-      var ob = obstacles[j];
-      if (skipNames && skipNames[ob.name]) continue;
-      if (preferX > ob.x1 && preferX < ob.x2 && yMax > ob.y1 && yMin < ob.y2) {
-        // Hit — search outward
-        for (var d = 10; d < 800; d += 10) {
-          var tryR = preferX + d, tryL = preferX - d;
-          var hitR = false, hitL = false;
-          for (var k = 0; k < obstacles.length; k++) {
-            if (skipNames && skipNames[obstacles[k].name]) continue;
-            var o = obstacles[k];
-            if (tryR > o.x1 && tryR < o.x2 && yMax > o.y1 && yMin < o.y2) hitR = true;
-            if (tryL > o.x1 && tryL < o.x2 && yMax > o.y1 && yMin < o.y2) hitL = true;
-          }
-          if (!hitR) return tryR;
-          if (!hitL) return tryL;
-        }
+  function findClearX(yMin, yMax, preferX, obstacles, skipNames, occupied) {
+    function isBlocked(candidateX) {
+      for (var j = 0; j < obstacles.length; j++) {
+        var ob = obstacles[j];
+        if (skipNames && skipNames[ob.name]) continue;
+        if (candidateX > ob.x1 && candidateX < ob.x2 && yMax > ob.y1 && yMin < ob.y2) return true;
       }
+      return vSegHitsOccupied(candidateX, yMin, yMax, occupied);
+    }
+
+    if (!isBlocked(preferX)) return preferX;
+    for (var d = ROUTE_LANE_STEP; d < 1600; d += ROUTE_LANE_STEP) {
+      var tryR = preferX + d, tryL = preferX - d;
+      if (!isBlocked(tryR)) return tryR;
+      if (!isBlocked(tryL)) return tryL;
     }
     return preferX;
   }
 
   // Find nearest clear Y for a horizontal segment in [xMin,xMax]
-  function findClearY(xMin, xMax, preferY, obstacles, skipNames) {
-    for (var j = 0; j < obstacles.length; j++) {
-      var ob = obstacles[j];
-      if (skipNames && skipNames[ob.name]) continue;
-      if (preferY > ob.y1 && preferY < ob.y2 && xMax > ob.x1 && xMin < ob.x2) {
-        for (var d = 10; d < 800; d += 10) {
-          var tryD = preferY + d, tryU = preferY - d;
-          var hitD = false, hitU = false;
-          for (var k = 0; k < obstacles.length; k++) {
-            if (skipNames && skipNames[obstacles[k].name]) continue;
-            var o = obstacles[k];
-            if (tryD > o.y1 && tryD < o.y2 && xMax > o.x1 && xMin < o.x2) hitD = true;
-            if (tryU > o.y1 && tryU < o.y2 && xMax > o.x1 && xMin < o.x2) hitU = true;
-          }
-          if (!hitD) return tryD;
-          if (!hitU) return tryU;
+  function findClearY(xMin, xMax, preferY, obstacles, skipNames, occupied) {
+    function isBlocked(candidateY) {
+      for (var j = 0; j < obstacles.length; j++) {
+        var ob = obstacles[j];
+        if (skipNames && skipNames[ob.name]) continue;
+        if (candidateY > ob.y1 && candidateY < ob.y2 && xMax > ob.x1 && xMin < ob.x2) return true;
+      }
+      return hSegHitsOccupied(candidateY, xMin, xMax, occupied);
+    }
+
+    if (!isBlocked(preferY)) return preferY;
+    for (var d = ROUTE_LANE_STEP; d < 1600; d += ROUTE_LANE_STEP) {
+      var tryD = preferY + d, tryU = preferY - d;
+      if (!isBlocked(tryD)) return tryD;
+      if (!isBlocked(tryU)) return tryU;
+    }
+    return preferY;
+  }
+
+  function reserveRoute(points, occupied) {
+    if (!occupied) return;
+    for (var i = 0; i < points.length - 1; i++) {
+      var p0 = points[i], p1 = points[i + 1];
+      if (Math.abs(p0.x - p1.x) < 1) {
+        var y1 = Math.min(p0.y, p1.y), y2 = Math.max(p0.y, p1.y);
+        if ((y2 - y1) >= ROUTE_TRACK_MIN_LEN) {
+          occupied.v.push({ x: p0.x, y1: y1, y2: y2 });
+        }
+      } else if (Math.abs(p0.y - p1.y) < 1) {
+        var x1 = Math.min(p0.x, p1.x), x2 = Math.max(p0.x, p1.x);
+        if ((x2 - x1) >= ROUTE_TRACK_MIN_LEN) {
+          occupied.h.push({ y: p0.y, x1: x1, x2: x2 });
         }
       }
     }
-    return preferY;
+  }
+
+  function spreadRouteToFreeLanes(points, obstacles, skipNames, occupied) {
+    if (!occupied || points.length < 4) return points;
+
+    var adjusted = [];
+    for (var i = 0; i < points.length; i++) adjusted.push({ x: points[i].x, y: points[i].y });
+
+    for (var pass = 0; pass < 2; pass++) {
+      var moved = false;
+      for (var si = 1; si < adjusted.length - 2; si++) {
+        var p0 = adjusted[si], p1 = adjusted[si + 1];
+        if (Math.abs(p0.y - p1.y) < 1) {
+          var xMin = Math.min(p0.x, p1.x), xMax = Math.max(p0.x, p1.x);
+          if (hSegHitsOccupied(p0.y, xMin, xMax, occupied)) {
+            var clearY = findClearY(xMin, xMax, p0.y, obstacles, skipNames, occupied);
+            if (Math.abs(clearY - p0.y) >= 1) {
+              adjusted[si].y = clearY;
+              adjusted[si + 1].y = clearY;
+              moved = true;
+            }
+          }
+        } else if (Math.abs(p0.x - p1.x) < 1) {
+          var yMin = Math.min(p0.y, p1.y), yMax = Math.max(p0.y, p1.y);
+          if (vSegHitsOccupied(p0.x, yMin, yMax, occupied)) {
+            var clearX = findClearX(yMin, yMax, p0.x, obstacles, skipNames, occupied);
+            if (Math.abs(clearX - p0.x) >= 1) {
+              adjusted[si].x = clearX;
+              adjusted[si + 1].x = clearX;
+              moved = true;
+            }
+          }
+        }
+      }
+      adjusted = simplifyRoute(adjusted);
+      if (!moved) break;
+    }
+
+    return adjusted;
   }
 
   // Remove redundant collinear points from a route
@@ -4602,6 +4715,8 @@
         name: obn
       });
     }
+
+    var occupiedSegments = { h: [], v: [] };
 
     // ── Draw connectors ──
     var placedLabels = []; // Track placed label positions for overlap avoidance
@@ -4741,8 +4856,8 @@
           var backJitter = (ci % 5) * 10;
           var tryAboveY = localMinY - 20 - backJitter;
           var tryBelowY = localMaxY + 20 + backJitter;
-          var clearAbove = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryAboveY, obstacles, skipN);
-          var clearBelow = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryBelowY, obstacles, skipN);
+          var clearAbove = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryAboveY, obstacles, skipN, occupiedSegments);
+          var clearBelow = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryBelowY, obstacles, skipN, occupiedSegments);
           // Pick whichever stays closest to the diagram (smallest absolute distance from source)
           var distAbove = Math.abs(y1 - clearAbove);
           var distBelow = Math.abs(y1 - clearBelow);
@@ -4776,7 +4891,7 @@
           } else if (dir1 === 'left' && dir2 === 'right' && ext2X <= ext1X) {
             midX = Math.min(Math.max(midX, ext2X), ext1X);
           }
-          midX = findClearX(Math.min(y1, y2), Math.max(y1, y2), midX, obstacles, skipN);
+          midX = findClearX(Math.min(y1, y2), Math.max(y1, y2), midX, obstacles, skipN, occupiedSegments);
           points = [
             { x: x1, y: y1 }, { x: midX, y: y1 },
             { x: midX, y: y2 }, { x: x2, y: y2 }
@@ -4784,8 +4899,8 @@
         }
         // If the route hits obstacles (common for same-Y routes through components),
         // detour above or below via a clear horizontal channel.
-        if (routeHitsObstacle(points, obstacles, skipN)) {
-          var detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), y1 - 50, obstacles, skipN);
+        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
+          var detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), y1 - 50, obstacles, skipN, occupiedSegments);
           points = [
             { x: x1, y: y1 }, { x: ext1X, y: y1 },
             { x: ext1X, y: detourY },
@@ -4793,8 +4908,8 @@
             { x: ext2X, y: y2 }, { x: x2, y: y2 }
           ];
           // If still blocked, try below
-          if (routeHitsObstacle(points, obstacles, skipN)) {
-            detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), Math.max(y1, y2) + 50, obstacles, skipN);
+          if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
+            detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), Math.max(y1, y2) + 50, obstacles, skipN, occupiedSegments);
             points = [
               { x: x1, y: y1 }, { x: ext1X, y: y1 },
               { x: ext1X, y: detourY },
@@ -4814,14 +4929,14 @@
             midY = (dir1 === 'bottom') ? Math.max(ext1Y, ext2Y) : Math.min(ext1Y, ext2Y);
           }
           midY += (ci % 5) * 12 - 24; // Jitter to prevent identical overlaps
-          midY = findClearY(Math.min(x1, x2), Math.max(x1, x2), midY, obstacles, skipN);
+          midY = findClearY(Math.min(x1, x2), Math.max(x1, x2), midY, obstacles, skipN, occupiedSegments);
           points = [
             { x: x1, y: y1 }, { x: x1, y: midY },
             { x: x2, y: midY }, { x: x2, y: y2 }
           ];
         }
-        if (routeHitsObstacle(points, obstacles, skipN)) {
-          var detourX = findClearX(Math.min(y1, y2), Math.max(y1, y2), x1 - 50, obstacles, skipN);
+        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
+          var detourX = findClearX(Math.min(y1, y2), Math.max(y1, y2), x1 - 50, obstacles, skipN, occupiedSegments);
           points = [
             { x: x1, y: y1 }, { x: x1, y: ext1Y },
             { x: detourX, y: ext1Y },
@@ -4832,22 +4947,22 @@
       } else if (isH1 && !isH2) {
         // Horizontal exit → vertical entry — L-shape
         points = [{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }];
-        if (routeHitsObstacle(points, obstacles, skipN)) {
+        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
           points = [{ x: x1, y: y1 }, { x: ext1X, y: y1 }, { x: ext1X, y: y2 }, { x: x2, y: y2 }];
         }
       } else {
         // Vertical exit → horizontal entry — L-shape
         points = [{ x: x1, y: y1 }, { x: x1, y: y2 }, { x: x2, y: y2 }];
-        if (routeHitsObstacle(points, obstacles, skipN)) {
+        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
           points = [{ x: x1, y: y1 }, { x: x1, y: ext1Y }, { x: x2, y: ext1Y }, { x: x2, y: y2 }];
         }
       }
 
       // Final obstacle check — if still blocked, find clear channel
-      if (routeHitsObstacle(points, obstacles, skipN)) {
+      if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
         if (isH1) {
           var detourYf = findClearY(Math.min(x1, x2), Math.max(x1, x2),
-            Math.min(y1, y2) - 50, obstacles, skipN);
+            Math.min(y1, y2) - 50, obstacles, skipN, occupiedSegments);
           points = [
             { x: x1, y: y1 }, { x: ext1X, y: y1 },
             { x: ext1X, y: detourYf },
@@ -4856,7 +4971,7 @@
           ];
         } else {
           var detourXf = findClearX(Math.min(y1, y2), Math.max(y1, y2),
-            Math.min(x1, x2) - 50, obstacles, skipN);
+            Math.min(x1, x2) - 50, obstacles, skipN, occupiedSegments);
           points = [
             { x: x1, y: y1 }, { x: x1, y: ext1Y },
             { x: detourXf, y: ext1Y },
@@ -4924,8 +5039,8 @@
             // No gap — route above/below the local bounding box
             var vLocalMinY = Math.min(fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2);
             var vLocalMaxY = Math.max(fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2);
-            var vDetourAbove = findClearY(vxL, vxR, vLocalMinY - 20 - (ci % 3) * 10, obstacles, skipN);
-            var vDetourBelow = findClearY(vxL, vxR, vLocalMaxY + 20 + (ci % 3) * 10, obstacles, skipN);
+            var vDetourAbove = findClearY(vxL, vxR, vLocalMinY - 20 - (ci % 3) * 10, obstacles, skipN, occupiedSegments);
+            var vDetourBelow = findClearY(vxL, vxR, vLocalMaxY + 20 + (ci % 3) * 10, obstacles, skipN, occupiedSegments);
             var vDetourY = (Math.abs(y1 - vDetourAbove) <= Math.abs(y1 - vDetourBelow)) ? vDetourAbove : vDetourBelow;
             points = [
               { x: x1, y: y1 }, { x: ext1X, y: y1 },
@@ -4937,6 +5052,16 @@
           points = simplifyRoute(points);
         }
       }
+
+      points = spreadRouteToFreeLanes(points, obstacles, skipN, occupiedSegments);
+      points = simplifyRoute(points);
+
+      if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
+        points = spreadRouteToFreeLanes(points, obstacles, skipN, occupiedSegments);
+        points = simplifyRoute(points);
+      }
+
+      reserveRoute(points, occupiedSegments);
 
       if (isJoinedAssembly) {
         // ── Ball-and-socket: prefer the longest horizontal segment ──

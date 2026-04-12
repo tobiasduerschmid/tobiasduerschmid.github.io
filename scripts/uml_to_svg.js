@@ -5,13 +5,14 @@ const crypto = require('crypto');
 
 const BUNDLE_PATH = path.join(__dirname, '../js/uml-bundle.js');
 const CACHE_DIR = path.join(__dirname, '../.uml_cache');
+const BUNDLE_HASH = crypto.createHash('md5').update(fs.readFileSync(BUNDLE_PATH, 'utf8')).digest('hex');
 
 if (!fs.existsSync(CACHE_DIR)) {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 
 async function renderUML(type, text) {
-    const hash = crypto.createHash('md5').update(type + text).digest('hex');
+    const hash = crypto.createHash('md5').update(BUNDLE_HASH + '|' + type + '|' + text).digest('hex');
     const cachePath = path.join(CACHE_DIR, hash + '.svg');
 
     if (fs.existsSync(cachePath)) {
@@ -77,7 +78,7 @@ if (require.main === module) {
         const results = {};
         for (const [id, diagram] of Object.entries(input)) {
             const { type, text } = diagram;
-            const hash = crypto.createHash('md5').update(type + text).digest('hex');
+            const hash = crypto.createHash('md5').update(BUNDLE_HASH + '|' + type + '|' + text).digest('hex');
             const cachePath = path.join(CACHE_DIR, hash + '.svg');
 
             if (fs.existsSync(cachePath)) {

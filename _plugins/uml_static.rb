@@ -19,7 +19,13 @@ module Jekyll
         end
         
         @script_path = File.join(Dir.pwd, 'scripts/uml_to_svg.js')
+        @bundle_path = File.join(Dir.pwd, 'js/uml-bundle.js')
         @cache_dir = File.join(Dir.pwd, '.uml_cache')
+        @renderer_hash = begin
+          Digest::MD5.file(@bundle_path).hexdigest
+        rescue
+          'renderer-unknown'
+        end
         FileUtils.mkdir_p(@cache_dir)
       end
 
@@ -47,7 +53,7 @@ module Jekyll
         # 2. Filter out already cached blocks (in memory)
         to_render = {}
         blocks.each_with_index do |block, idx|
-          hash = Digest::MD5.hexdigest(block[:type] + block[:text])
+          hash = Digest::MD5.hexdigest(@renderer_hash + '|' + block[:type] + '|' + block[:text])
           if @cache[hash]
             block[:svg] = @cache[hash]
           elsif File.exist?(File.join(@cache_dir, "#{hash}.svg"))
@@ -67,7 +73,7 @@ module Jekyll
             results = JSON.parse(stdout)
             results.each do |idx_str, svg|
               idx = idx_str.to_i
-              hash = Digest::MD5.hexdigest(blocks[idx][:type] + blocks[idx][:text])
+              hash = Digest::MD5.hexdigest(@renderer_hash + '|' + blocks[idx][:type] + '|' + blocks[idx][:text])
               @cache[hash] = svg
               blocks[idx][:svg] = svg
             end
