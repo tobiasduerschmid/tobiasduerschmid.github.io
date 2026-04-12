@@ -656,10 +656,12 @@
       var epFrom = entries[epRel.from];
       var epTo = entries[epRel.to];
       // Determine which side the edge exits from
-      var epSide = (hasInheritAtBottom[epRel.from]) ? 'right' :
-        (Math.abs(epTo.x + epTo.box.width/2 - epFrom.x - epFrom.box.width/2) >
+      var epFromCx = epFrom.x + epFrom.box.width / 2;
+      var epToCx = epTo.x + epTo.box.width / 2;
+      var epSide = (hasInheritAtBottom[epRel.from]) ? ((epToCx >= epFromCx) ? 'right' : 'left') :
+        (Math.abs(epToCx - epFromCx) >
          Math.abs(epTo.y + epTo.box.height/2 - epFrom.y - epFrom.box.height/2) * 0.6) ?
-        ((epTo.x > epFrom.x) ? 'right' : 'left') :
+        ((epToCx > epFromCx) ? 'right' : 'left') :
         ((epTo.y > epFrom.y) ? 'bottom' : 'top');
       var epKey = epRel.from + ':' + epSide;
       if (!exitPortCounts[epKey]) exitPortCounts[epKey] = 0;
@@ -925,19 +927,28 @@
     // If we must avoid bottom of source (inheritance triangle there),
     // force exit from right or left side instead
     if (avoidFromBottom && !vOverlap) {
-      // Exit from the side closest to the target
-      var exitSide = (toCx > fromCx) ? 'right' : 'left';
-      var exitX = (exitSide === 'right') ? fromR : fromL;
-      var exitY = fromCy;
+      // If target is nearly centered below source, use left side exit with L-route
+      // to avoid crossing through sibling boxes
+      var exitSide, exitX, entryX;
+      if (Math.abs(toCx - fromCx) < fromE.box.width * 0.6) {
+        // Target is roughly centered below — exit from the side away from other siblings
+        exitSide = (toCx <= fromCx) ? 'left' : 'right';
+      } else {
+        exitSide = (toCx > fromCx) ? 'right' : 'left';
+      }
+      exitX = (exitSide === 'right') ? fromR : fromL;
+      var exitY = fromCy + portOffset;
       var entryY = toCy;
-      var entryX = (toCx > fromCx) ? toL : toR;
+      entryX = (toCx > fromCx) ? toL : toR;
 
-      // If target is below and source center is above target top, enter from top with a
-      // vertical last segment (90-degree entry). Route: horizontal to toCx, then drop into toT.
+      // If target is below, route: horizontal out, then vertical down to target top
       if (toCy > fromCy && !avoidToTop && exitY < toT) {
+        // Route around: go out to the side, then drop at target edge (not center)
+        var dropX = (exitSide === 'right') ? Math.max(fromR, toR) + 20 : Math.min(fromL, toL) - 20;
         points = [
           { x: exitX, y: exitY },
-          { x: toCx, y: exitY },
+          { x: dropX, y: exitY },
+          { x: dropX, y: toT },
           { x: toCx, y: toT }
         ];
       } else {
@@ -950,10 +961,8 @@
           { x: entryX, y: entryY }
         ];
       }
-      return { points: simplifyPath(points) };
-    }
-
-    if (hOverlap && !avoidFromBottom) {
+      // fall through to obstacle avoidance below
+    } else if (hOverlap && !avoidFromBottom) {
       // Boxes overlap horizontally — use vertical straight line
       var overlapL = Math.max(fromL, toL);
       var overlapR = Math.min(fromR, toR);

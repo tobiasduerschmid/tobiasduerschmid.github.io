@@ -143,152 +143,431 @@ class ClassVisitor(ast.NodeVisitor):
         return ''
 
 
-class CallVisitor(ast.NodeVisitor):
-    """Extract method call sequences for sequence diagrams."""
+class SequenceDiagramGenerator:
+    """Generate @startuml/@enduml sequence diagrams from Python AST.
 
-    def __init__(self, all_class_names):
+    Approach based on Fauzi et al. (2016) "Reverse engineering of source code
+    to sequence diagram using AST" and Rountev et al. (2005) "Static
+    control-flow analysis for reverse engineering of UML sequence diagrams":
+      - Walk AST in execution order from the entry point
+      - Map control-flow structures to UML 2.0 combined fragments
+        (if/elif/else → alt, for/while → loop)
+      - Track object creation, method calls, and self-calls
+      - Recursively follow called method bodies to expose delegation chains
+    """
+
+    MAX_DEPTH = 3  # How deep to follow method calls
+
+    def __init__(self, trees, all_class_names):
+        self.trees = trees            # {filename: ast.Module}
         self.all_class_names = all_class_names
-        self.calls = []  # [(caller_class, caller_method, callee_class, callee_method)]
-        self._current_class = None
-        self._current_method = None
-        # Maps attribute names to class names from self.x = Foo() patterns
-        self._attr_types = {}
 
-    def visit_ClassDef(self, node):
-        prev = self._current_class
-        self._current_class = node.name
-        self._attr_types = {}
-        self.generic_visit(node)
-        self._current_class = prev
+        # Lookup tables built once from all ASTs
+        self.class_methods = {}       # {class_name: {method_name: ast.FunctionDef}}
+        self.attr_types = {}          # {class_name: {attr_name: class_name}}
+        self.param_types = {}         # {class_name: {method_name: {param: class_name}}}
+        self._build_lookups()
 
-    def visit_FunctionDef(self, node):
-        prev = self._current_method
-        self._current_method = node.name
-        # In __init__, build attr type map
-        if node.name == '__init__' and self._current_class:
-            for child in ast.walk(node):
-                if isinstance(child, ast.Assign):
-                    for target in child.targets:
-                        if (isinstance(target, ast.Attribute) and
-                                isinstance(target.value, ast.Name) and
-                                target.value.id == 'self' and
-                                isinstance(child.value, ast.Call)):
-                            func = child.value.func
-                            if isinstance(func, ast.Name) and func.id in self.all_class_names:
-                                self._attr_types[target.attr] = func.id
-        self.generic_visit(node)
-        self._current_method = prev
+        # Output state (accumulated during generate())
+        self.participants = []        # [(id, label)]
+        self._participant_set = set()
+        self.lines = []               # body lines of the diagram
 
-    visit_AsyncFunctionDef = visit_FunctionDef
+        # Scope tracking
+        self.var_types = {}           # {var_name: class_name} in current scope
+        self._caller_class = {}       # {participant_id: class_name}
 
-    def visit_Call(self, node):
-        if self._current_class and self._current_method:
-            # self.attr.method() pattern
-            if (isinstance(node.func, ast.Attribute) and
-                    isinstance(node.func.value, ast.Attribute) and
-                    isinstance(node.func.value.value, ast.Name) and
-                    node.func.value.value.id == 'self'):
-                attr_name = node.func.value.attr
-                method_name = node.func.attr
-                if attr_name in self._attr_types:
-                    callee_class = self._attr_types[attr_name]
-                    self.calls.append((
-                        self._current_class, self._current_method,
-                        callee_class, method_name
-                    ))
+        # Recursion guard
+        self._call_stack = set()      # (class_name, method_name) currently being followed
 
-            # Direct ClassName.method() or ClassName() calls
-            elif isinstance(node.func, ast.Name):
-                if node.func.id in self.all_class_names:
-                    self.calls.append((
-                        self._current_class, self._current_method,
-                        node.func.id, '__init__'
-                    ))
+    # ── Build phase ──────────────────────────────────────────────────
 
-            # super().method() pattern
-            elif (isinstance(node.func, ast.Attribute) and
-                  isinstance(node.func.value, ast.Call) and
-                  isinstance(node.func.value.func, ast.Name) and
-                  node.func.value.func.id == 'super'):
-                method_name = node.func.attr
-                self.calls.append((
-                    self._current_class, self._current_method,
-                    'super', method_name
-                ))
+    def _build_lookups(self):
+        for _fn, tree in self.trees.items():
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                cname = node.name
+                methods = {}
+                a_types = {}
+                p_types = {}
+                for item in node.body:
+                    if not isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        continue
+                    methods[item.name] = item
+                    # Parameter type hints → param_types
+                    m_params = {}
+                    for arg in item.args.args:
+                        if arg.arg in ('self', 'cls'):
+                            continue
+                        if arg.annotation and isinstance(arg.annotation, ast.Name):
+                            if arg.annotation.id in self.all_class_names:
+                                m_params[arg.arg] = arg.annotation.id
+                    if m_params:
+                        p_types[item.name] = m_params
+                    # __init__: self.x = ClassName() → attr_types
+                    if item.name == '__init__':
+                        for child in ast.walk(item):
+                            if isinstance(child, ast.Assign):
+                                for tgt in child.targets:
+                                    if (isinstance(tgt, ast.Attribute)
+                                            and isinstance(tgt.value, ast.Name)
+                                            and tgt.value.id == 'self'
+                                            and isinstance(child.value, ast.Call)):
+                                        fn = child.value.func
+                                        if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
+                                            a_types[tgt.attr] = fn.id
+                self.class_methods[cname] = methods
+                self.attr_types[cname] = a_types
+                self.param_types[cname] = p_types
 
-        self.generic_visit(node)
+    # ── Public entry point ───────────────────────────────────────────
 
+    def generate(self):
+        """Return the full @startuml … @enduml string, or '' if nothing to show."""
+        entry = self._collect_entry_stmts()
+        if not entry:
+            return ''
 
-class TopLevelCallVisitor(ast.NodeVisitor):
-    """Find calls and variable assignments in top-level / __main__ code."""
+        self._ensure_participant('Main', 'Main')
+        self._process_stmts(entry, 'Main', depth=0)
 
-    def __init__(self, all_class_names):
-        self.all_class_names = all_class_names
-        self.calls = []       # [(var_name_or_None, callee_class, callee_method)]
-        self.var_types = {}   # {var_name: class_name}  from var = ClassName(...)
-        self._in_main = False
+        if not self.lines:
+            return ''
 
-    def visit_ClassDef(self, node):
-        pass  # Skip class bodies
+        out = ['@startuml']
+        for pid, plabel in self.participants:
+            out.append('participant ' + pid + ': ' + plabel)
+        out.append('')
+        out.extend(self.lines)
+        out.append('@enduml')
+        return '\n'.join(out)
 
-    def visit_FunctionDef(self, node):
-        pass  # Skip function bodies
+    # ── Entry-point collection ───────────────────────────────────────
 
-    def visit_If(self, node):
-        if self._is_main_guard(node):
-            self._in_main = True
-            for child in node.body:
-                self.visit(child)
-            self._in_main = False
+    def _collect_entry_stmts(self):
+        """Gather executable top-level statements (including __main__ blocks).
+
+        Heuristic: if any file has a __main__ guard, use only the __main__
+        block from the *last* file that has one (typically the driver/main script
+        that imports the others).  If no file has __main__, fall back to all
+        top-level executable statements.
+        """
+        # First pass: find __main__ blocks per file (preserving insertion order)
+        main_blocks = {}   # {filename: [stmts]}
+        top_stmts = []     # non-main top-level stmts across all files
+        for fn, tree in self.trees.items():
+            for node in tree.body:
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef,
+                                     ast.AsyncFunctionDef,
+                                     ast.Import, ast.ImportFrom)):
+                    continue
+                if isinstance(node, ast.If) and self._is_main_guard(node):
+                    main_blocks.setdefault(fn, []).extend(node.body)
+                else:
+                    top_stmts.append(node)
+
+        if main_blocks:
+            # Use the last file's __main__ block
+            last_fn = list(main_blocks.keys())[-1]
+            return main_blocks[last_fn]
+        return top_stmts
+
+    @staticmethod
+    def _is_main_guard(node):
+        if not isinstance(node.test, ast.Compare):
+            return False
+        left = node.test.left
+        if not (isinstance(left, ast.Name) and left.id == '__name__'):
+            return False
+        if len(node.test.comparators) != 1:
+            return False
+        comp = node.test.comparators[0]
+        return isinstance(comp, ast.Constant) and comp.value == '__main__'
+
+    # ── Statement processing ─────────────────────────────────────────
+
+    def _process_stmts(self, stmts, caller, depth):
+        for s in stmts:
+            self._process_stmt(s, caller, depth)
+
+    def _process_stmt(self, stmt, caller, depth):
+        if isinstance(stmt, ast.Assign):
+            self._process_assign(stmt, caller, depth)
+        elif isinstance(stmt, ast.AnnAssign):
+            if stmt.value:
+                self._process_assign_value(stmt.value, [stmt.target], caller, depth)
+        elif isinstance(stmt, ast.AugAssign):
+            self._scan_expr_for_calls(stmt.value, caller, depth)
+        elif isinstance(stmt, ast.Expr):
+            self._process_expr_stmt(stmt, caller, depth)
+        elif isinstance(stmt, ast.Return):
+            if stmt.value:
+                self._scan_expr_for_calls(stmt.value, caller, depth)
+        elif isinstance(stmt, ast.If):
+            if not self._is_main_guard(stmt):
+                self._process_if(stmt, caller, depth)
+            else:
+                self._process_stmts(stmt.body, caller, depth)
+        elif isinstance(stmt, ast.For):
+            self._process_for(stmt, caller, depth)
+        elif isinstance(stmt, ast.While):
+            self._process_while(stmt, caller, depth)
+        elif isinstance(stmt, ast.With):
+            self._process_stmts(stmt.body, caller, depth)
+        elif isinstance(stmt, ast.Try):
+            self._process_try(stmt, caller, depth)
+
+    # ── Assignments ──────────────────────────────────────────────────
+
+    def _process_assign(self, stmt, caller, depth):
+        self._process_assign_value(stmt.value, stmt.targets, caller, depth)
+
+    def _process_assign_value(self, value, targets, caller, depth):
+        """Handle var = ClassName(...) and general call detection in assignments."""
+        if isinstance(value, ast.Call):
+            resolved = self._resolve_call(value, caller)
+            if resolved:
+                cls_name, method = resolved
+                if method == '__init__' and len(targets) == 1 and isinstance(targets[0], ast.Name):
+                    var = targets[0].id
+                    self.var_types[var] = cls_name
+                    self._caller_class[var] = cls_name
+                    pid = var
+                    plabel = var + ': ' + cls_name
+                    self._ensure_participant(pid, plabel)
+                    self.lines.append(caller + ' --> ' + pid + ': <<create>>')
+                    return
+        # General: scan the whole value expression for calls
+        self._scan_expr_for_calls(value, caller, depth)
+
+    # ── Expression statements ────────────────────────────────────────
+
+    def _process_expr_stmt(self, stmt, caller, depth):
+        if isinstance(stmt.value, ast.Call):
+            self._process_call(stmt.value, caller, depth)
         else:
-            self.generic_visit(node)
+            self._scan_expr_for_calls(stmt.value, caller, depth)
 
-    def _is_main_guard(self, node):
-        if isinstance(node.test, ast.Compare):
-            left = node.test.left
-            if (isinstance(left, ast.Name) and left.id == '__name__' and
-                    len(node.test.comparators) == 1):
-                comp = node.test.comparators[0]
-                if isinstance(comp, ast.Constant) and comp.value == '__main__':
-                    return True
+    # ── Control flow → combined fragments ────────────────────────────
+
+    def _process_if(self, stmt, caller, depth):
+        cond = self._expr_text(stmt.test)
+        self.lines.append('alt [' + cond + ']')
+        self._process_stmts(stmt.body, caller, depth)
+        orelse = stmt.orelse
+        while orelse:
+            if len(orelse) == 1 and isinstance(orelse[0], ast.If):
+                elif_node = orelse[0]
+                self.lines.append('else [' + self._expr_text(elif_node.test) + ']')
+                self._process_stmts(elif_node.body, caller, depth)
+                orelse = elif_node.orelse
+            else:
+                self.lines.append('else [else]')
+                self._process_stmts(orelse, caller, depth)
+                break
+        self.lines.append('end')
+
+    def _process_for(self, stmt, caller, depth):
+        target = self._expr_text(stmt.target)
+        iter_text = self._expr_text(stmt.iter)
+        self.lines.append('loop [for ' + target + ' in ' + iter_text + ']')
+        # Infer loop variable type from iter expression
+        self._infer_loop_var_type(stmt, caller)
+        self._process_stmts(stmt.body, caller, depth)
+        self.lines.append('end')
+
+    def _process_while(self, stmt, caller, depth):
+        self.lines.append('loop [while ' + self._expr_text(stmt.test) + ']')
+        self._process_stmts(stmt.body, caller, depth)
+        self.lines.append('end')
+
+    def _process_try(self, stmt, caller, depth):
+        self._process_stmts(stmt.body, caller, depth)
+        for handler in stmt.handlers:
+            self._process_stmts(handler.body, caller, depth)
+
+    # ── Call processing ──────────────────────────────────────────────
+
+    def _process_call(self, call, caller, depth):
+        """Process a single call node: emit a message and optionally follow the body."""
+        # Scan arguments first (they execute before the call)
+        for arg in call.args:
+            self._scan_expr_for_calls(arg, caller, depth)
+        for kw in call.keywords:
+            self._scan_expr_for_calls(kw.value, caller, depth)
+
+        resolved = self._resolve_call(call, caller)
+        if not resolved:
+            return
+        cls_name, method = resolved
+        callee_id = self._callee_id_for(cls_name, caller)
+
+        if method == '__init__':
+            self._ensure_participant(callee_id, ':' + cls_name)
+            self._caller_class[callee_id] = cls_name
+            self.lines.append(caller + ' --> ' + callee_id + ': <<create>>')
+        elif callee_id == caller:
+            # Self-call
+            self.lines.append(caller + ' -> ' + caller + ': ' + method + '()')
+            self._maybe_follow(cls_name, method, callee_id, depth)
+        else:
+            self._ensure_participant(callee_id, self._participant_label(callee_id, cls_name))
+            self._caller_class[callee_id] = cls_name
+            self.lines.append(caller + ' -> ' + callee_id + ': ' + method + '()')
+            self._maybe_follow(cls_name, method, callee_id, depth)
+
+    def _maybe_follow(self, cls_name, method_name, callee_id, depth):
+        """Recursively follow into the called method body."""
+        if depth >= self.MAX_DEPTH:
+            return
+        key = (cls_name, method_name)
+        if key in self._call_stack:
+            return
+        meths = self.class_methods.get(cls_name)
+        if not meths or method_name not in meths:
+            return
+        node = meths[method_name]
+        self._call_stack.add(key)
+        saved = self.var_types.copy()
+        # Seed local scope with parameter type hints
+        self.var_types = {}
+        pt = self.param_types.get(cls_name, {}).get(method_name, {})
+        self.var_types.update(pt)
+        self._process_stmts(node.body, callee_id, depth + 1)
+        self.var_types = saved
+        self._call_stack.discard(key)
+
+    # ── Call resolution ──────────────────────────────────────────────
+
+    def _resolve_call(self, call, caller):
+        """Return (class_name, method_name) or None."""
+        func = call.func
+
+        # ClassName(...)
+        if isinstance(func, ast.Name) and func.id in self.all_class_names:
+            return (func.id, '__init__')
+
+        # var.method()
+        if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+            var = func.value.id
+            method = func.attr
+            if var == 'self':
+                cc = self._class_of(caller)
+                if cc:
+                    return (cc, method)
+            elif var in self.var_types:
+                return (self.var_types[var], method)
+            return None
+
+        # self.attr.method()
+        if (isinstance(func, ast.Attribute)
+                and isinstance(func.value, ast.Attribute)
+                and isinstance(func.value.value, ast.Name)
+                and func.value.value.id == 'self'):
+            attr = func.value.attr
+            method = func.attr
+            cc = self._class_of(caller)
+            if cc and cc in self.attr_types and attr in self.attr_types[cc]:
+                return (self.attr_types[cc][attr], method)
+
+        return None
+
+    # ── Scan nested calls in arbitrary expressions ───────────────────
+
+    def _scan_expr_for_calls(self, node, caller, depth):
+        """Walk an expression tree and process every Call node found."""
+        if node is None:
+            return
+        if isinstance(node, ast.Call):
+            self._process_call(node, caller, depth)
+            return  # _process_call already scans args
+        for child in ast.iter_child_nodes(node):
+            self._scan_expr_for_calls(child, caller, depth)
+
+    # ── Loop variable type inference ─────────────────────────────────
+
+    def _infer_loop_var_type(self, for_node, caller):
+        """Try to infer the type of the loop variable from the iterable."""
+        if not isinstance(for_node.target, ast.Name):
+            return
+        var = for_node.target.id
+        it = for_node.iter
+        # for x in self.things  →  check attr_types for 'things'
+        if (isinstance(it, ast.Attribute)
+                and isinstance(it.value, ast.Name)
+                and it.value.id == 'self'):
+            attr = it.attr
+            cc = self._class_of(caller)
+            if cc:
+                # Look for add_* methods that take a typed parameter
+                meths = self.class_methods.get(cc, {})
+                for mname, mnode in meths.items():
+                    for arg in mnode.args.args:
+                        if arg.arg in ('self', 'cls'):
+                            continue
+                        if arg.annotation and isinstance(arg.annotation, ast.Name):
+                            if arg.annotation.id in self.all_class_names:
+                                # Check if this method appends to the same attr
+                                if self._method_appends_to(mnode, attr):
+                                    self.var_types[var] = arg.annotation.id
+                                    return
+        # for x in var  →  check var_types
+        if isinstance(it, ast.Name) and it.id in self.var_types:
+            pass  # can't infer element type from container type alone
+
+    @staticmethod
+    def _method_appends_to(func_node, attr_name):
+        """Check if a method body contains self.<attr_name>.append(...)."""
+        for child in ast.walk(func_node):
+            if (isinstance(child, ast.Call)
+                    and isinstance(child.func, ast.Attribute)
+                    and child.func.attr == 'append'
+                    and isinstance(child.func.value, ast.Attribute)
+                    and isinstance(child.func.value.value, ast.Name)
+                    and child.func.value.value.id == 'self'
+                    and child.func.value.attr == attr_name):
+                return True
         return False
 
-    def visit_Assign(self, node):
-        """Track var = ClassName(...) assignments."""
-        if isinstance(node.value, ast.Call):
-            if isinstance(node.value.func, ast.Name):
-                class_name = node.value.func.id
-                if class_name in self.all_class_names:
-                    for target in node.targets:
-                        if isinstance(target, ast.Name):
-                            var_name = target.id
-                            self.var_types[var_name] = class_name
-                            self.calls.append((var_name, class_name, '__init__'))
-                            return
-            # Not a known class — still visit children
-        self.generic_visit(node)
+    # ── Helpers ──────────────────────────────────────────────────────
 
-    def visit_Expr(self, node):
-        """Track standalone calls like var.method()."""
-        if isinstance(node.value, ast.Call):
-            call = node.value
-            if isinstance(call.func, ast.Attribute):
-                if isinstance(call.func.value, ast.Name):
-                    var_name = call.func.value.id
-                    method_name = call.func.attr
-                    if var_name in self.var_types:
-                        self.calls.append((None, var_name, method_name))
-                        return
-            elif isinstance(call.func, ast.Name):
-                if call.func.id in self.all_class_names:
-                    self.calls.append((None, call.func.id, '__init__'))
-                    return
-        self.generic_visit(node)
+    def _ensure_participant(self, pid, label):
+        if pid not in self._participant_set:
+            self._participant_set.add(pid)
+            self.participants.append((pid, label))
 
+    def _callee_id_for(self, cls_name, caller):
+        """Find the best participant id for a class: prefer an existing variable."""
+        for v, c in self.var_types.items():
+            if c == cls_name:
+                return v
+        # Check existing participants
+        for pid, _lbl in self.participants:
+            if self._caller_class.get(pid) == cls_name and pid != 'Main':
+                return pid
+        return cls_name
 
-def _escape_mermaid(s):
-    """Escape characters that break Mermaid syntax."""
-    return s.replace('"', "'").replace('<', '&lt;').replace('>', '&gt;')
+    def _participant_label(self, pid, cls_name):
+        if pid != cls_name:
+            return pid + ': ' + cls_name
+        return ':' + cls_name
+
+    def _class_of(self, participant_id):
+        """Return the class name associated with a participant."""
+        if participant_id in self._caller_class:
+            return self._caller_class[participant_id]
+        if participant_id in self.all_class_names:
+            return participant_id
+        return None
+
+    @staticmethod
+    def _expr_text(node):
+        """Best-effort readable text for an AST expression."""
+        try:
+            return ast.unparse(node)
+        except Exception:
+            return '...'
 
 
 def _topo_sort_classes(all_classes):
@@ -379,81 +658,14 @@ def generate_class_diagram(all_classes):
     return '\n'.join(lines)
 
 
-def generate_sequence_diagram(class_calls, top_calls, top_var_types, all_class_names):
-    """Generate Mermaid sequenceDiagram syntax with proper UML notation.
+def generate_sequence_diagram(trees, all_class_names):
+    """Generate @startuml/@enduml sequence diagram using AST-based static analysis.
 
-    Uses :ClassName notation for instances (var: ClassName) and <<create>> for construction.
+    Uses SequenceDiagramGenerator which walks the AST in execution order,
+    maps control-flow to combined fragments, and follows method bodies.
     """
-    lines = ['sequenceDiagram']
-    lines.append('  participant Main')
-
-    # Build participant list with :ClassName notation
-    # Track which participants have been declared
-    declared = {'Main'}  # Main is always declared
-    call_lines = []
-
-    # Process top-level calls in order (preserves code sequence)
-    for item in top_calls:
-        var_name, target, method = item
-
-        if method == '__init__':
-            # Object creation: var = ClassName(...)
-            if target in all_class_names:
-                # Participant name: "var: ClassName" or just ":ClassName"
-                if var_name:
-                    participant_id = var_name
-                    participant_label = var_name + ': ' + target
-                else:
-                    participant_id = target
-                    participant_label = ':' + target
-                if participant_id not in declared:
-                    declared.add(participant_id)
-                    # Use create + dashed open arrow for UML create message
-                    call_lines.append('  create participant ' + participant_id + ' as ' + participant_label)
-                    call_lines.append('  Main-->' + participant_id + ': <<create>>')
-                else:
-                    call_lines.append('  Main-->' + participant_id + ': <<create>>')
-        else:
-            # Method call: var.method()
-            caller_id = 'Main'
-            # target is the variable name here
-            callee_id = target
-            if callee_id not in declared:
-                # Resolve variable to class name
-                class_name = top_var_types.get(target, target)
-                participant_label = target + ': ' + class_name if class_name != target else ':' + target
-                declared.add(callee_id)
-                lines.append('  participant ' + callee_id + ' as ' + participant_label)
-            call_lines.append('  ' + caller_id + '->>' + callee_id + ': ' + _escape_mermaid(method) + '()')
-
-    # Inter-class method calls
-    seen_inter = set()
-    for caller, caller_m, callee, callee_m in class_calls:
-        if callee == 'super':
-            continue
-        call_key = (caller, callee, callee_m)
-        if call_key in seen_inter:
-            continue
-        seen_inter.add(call_key)
-
-        # Ensure caller participant exists
-        if caller not in declared:
-            declared.add(caller)
-            lines.append('  participant ' + caller + ' as :' + caller)
-        if callee not in declared:
-            declared.add(callee)
-            lines.append('  participant ' + callee + ' as :' + callee)
-
-        if callee_m == '__init__':
-            call_lines.append('  ' + caller + '-->' + callee + ': <<create>>')
-        else:
-            call_lines.append('  ' + caller + '->>' + callee + ': ' + _escape_mermaid(callee_m) + '()')
-
-    if not call_lines:
-        return ''
-
-    lines.extend(call_lines)
-    return '\n'.join(lines)
+    gen = SequenceDiagramGenerator(trees, all_class_names)
+    return gen.generate()
 
 
 def analyze(sources):
@@ -490,24 +702,8 @@ def analyze(sources):
         visitor.visit(tree)
         all_classes.extend(visitor.classes)
 
-    # Third pass: extract call graph
-    all_calls = []
-    all_top_calls = []
-    all_top_var_types = {}
-    for filename, tree in trees.items():
-        cv = CallVisitor(all_class_names)
-        cv.visit(tree)
-        all_calls.extend(cv.calls)
-
-        tv = TopLevelCallVisitor(all_class_names)
-        tv.visit(tree)
-        all_top_calls.extend(tv.calls)
-        all_top_var_types.update(tv.var_types)
-
     class_diagram = generate_class_diagram(all_classes) if all_classes else ''
-    sequence_diagram = generate_sequence_diagram(
-        all_calls, all_top_calls, all_top_var_types, all_class_names
-    ) if all_classes else ''
+    sequence_diagram = generate_sequence_diagram(trees, all_class_names) if all_classes else ''
 
     return {
         'classDiagram': class_diagram,
