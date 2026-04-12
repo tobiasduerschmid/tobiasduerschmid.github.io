@@ -122,6 +122,72 @@ html, body {
   border-right: 1px solid #2a2a2e;
 }
 
+/* Left-panel tab switcher (Steps / UML Diagram) */
+.tvm-left-tab-bar {
+  display: flex;
+  flex-shrink: 0;
+  background: #141416;
+  border-bottom: 1px solid #2a2a2e;
+}
+.tvm-left-tab {
+  flex: 1;
+  padding: 9px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #778;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tvm-left-tab i {
+  font-size: 13px;
+}
+.tvm-left-tab:hover {
+  color: #aab;
+}
+.tvm-left-tab.active {
+  color: #d0d8f0;
+  border-bottom-color: #2774AE;
+}
+
+.tvm-steps-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tvm-uml-left-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Light mode overrides for left tab bar */
+html:not(.dark-mode) .tvm-left-tab-bar {
+  background: #f3f4f6;
+  border-bottom-color: #dde1e8;
+}
+html:not(.dark-mode) .tvm-left-tab {
+  color: #8090a8;
+}
+html:not(.dark-mode) .tvm-left-tab:hover {
+  color: #445;
+}
+html:not(.dark-mode) .tvm-left-tab.active {
+  color: #1a3a5a;
+  border-bottom-color: #2774AE;
+}
+
 .tvm-step-nav-bar {
   flex-shrink: 0;
   padding: 10px 20px;
@@ -584,7 +650,7 @@ html:not(.dark-mode) {
 }
 
 /* ── UML Diagram panel ── */
-.tvm-diagram-container {
+.tvm-uml-left-view {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -832,7 +898,7 @@ html:not(.dark-mode) {
 }
 
 /* UML diagram light mode */
-html:not(.dark-mode) .tvm-diagram-container {
+html:not(.dark-mode) .tvm-uml-left-view {
   background: #fff;
   color: #333;
 }
