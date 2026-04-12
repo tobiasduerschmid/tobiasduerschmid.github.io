@@ -15,10 +15,6 @@ pre:has(> code[class*="language-uml-"]),
 .uml-component-diagram-container,
 .uml-deployment-diagram-container {
   display: block;
-}
-
-
-.uml-class-diagram-container {
   --uml-stroke: #4060a0;
   --uml-text: #222;
   --uml-fill: #fff;
@@ -29,15 +25,30 @@ pre:has(> code[class*="language-uml-"]),
   padding: 12px 0;
 }
 
+
 /* Dark mode — invert the SVG, then rotate hue back to preserve UCLA blue */
-html.dark-mode .uml-class-diagram-container svg {
+html.dark-mode .uml-class-diagram-container svg,
+html.dark-mode .uml-sequence-diagram-container svg,
+html.dark-mode .uml-state-diagram-container svg,
+html.dark-mode .uml-activity-diagram-container svg,
+html.dark-mode .uml-usecase-diagram-container svg,
+html.dark-mode .uml-component-diagram-container svg,
+html.dark-mode .uml-deployment-diagram-container svg {
   filter: invert(1) hue-rotate(180deg);
 }
 
-.uml-class-diagram-container svg {
+.uml-class-diagram-container svg,
+.uml-sequence-diagram-container svg,
+.uml-state-diagram-container svg,
+.uml-activity-diagram-container svg,
+.uml-usecase-diagram-container svg,
+.uml-component-diagram-container svg,
+.uml-deployment-diagram-container svg {
   display: block;
   margin: 0 auto;
   overflow: visible;
+  max-width: 100%;
+  height: auto;
 }
 
 /* ── Inline notation symbols ── */

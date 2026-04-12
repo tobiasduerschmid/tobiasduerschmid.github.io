@@ -166,6 +166,7 @@
 
     // UML diagram state
     this._umlDiagramEnabled = options.uml_diagram || false;
+    this._umlPositionRight = options.uml_position === 'right'; // diagram in right bottom tab
     this._umlContainer = null;
     this._umlContentEl = null;
     this._umlRefreshTimer = null;
@@ -302,6 +303,47 @@
         '<div class="tvm-preview-container">' +
         '<iframe class="tvm-preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>' +
         '</div></div>';
+    } else if (this._umlPositionRight && this._umlDiagramEnabled) {
+      // Right-positioned UML layout: output + UML diagram share a tabbed bottom panel
+      var umlRightToolbar =
+        '<div class="tvm-diagram-toolbar">' +
+        '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
+        '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+        '<div class="tvm-diagram-zoom-controls">' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+        '<span class="tvm-diagram-zoom-label">100%</span>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+        '</div>' +
+        '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+        '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+        '</div>';
+      terminalHtml =
+        '<div class="tvm-output-panel tvm-right-tabbed-panel">' +
+        '<div class="tvm-right-tab-bar">' +
+        '<button class="tvm-right-tab active" data-panel="output"><i class="fa fa-terminal"></i> Output</button>' +
+        '<button class="tvm-right-tab" data-panel="uml" style="display:none"><i class="fa fa-diagram-project"></i> UML Diagram</button>' +
+        '</div>' +
+        '<div class="tvm-output-view">' +
+        '<div class="tvm-output-header">' +
+        '<div class="tvm-output-actions">' +
+        '<span class="tvm-args-label" style="display:none; font-size:11px; color:#888; font-family:\'Fira Code\', \'Cascadia Code\', Menlo, monospace;">args:</span>' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" />' +
+        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams">' +
+        '<option value="all">All Output</option>' +
+        '<option value="stdout">Stdout Only</option>' +
+        '<option value="stderr">Stderr Only</option>' +
+        '</select>' +
+        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
+        '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
+        '</div></div>' +
+        '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
+        '</div>' +
+        '<div class="tvm-uml-right-view" style="display:none">' +
+        umlRightToolbar +
+        '<div class="tvm-diagram-content"></div>' +
+        '</div>' +
+        '</div>';
     } else {
       terminalHtml = '<div class="tvm-output-panel">' +
         '<div class="tvm-output-header">' +
@@ -321,6 +363,7 @@
         '</div>';
     }
 
+    var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight;
     this.root.innerHTML =
       '<div class="tvm-loading">' +
       '<div class="tvm-loading-spinner"></div>' +
@@ -328,7 +371,7 @@
       '</div>' +
       '<div class="tvm-container" style="display:none">' +
       '<div class="tvm-instructions-panel">' +
-      (this._umlDiagramEnabled
+      (useLeftUml
         ? '<div class="tvm-left-tab-bar">' +
           '<button class="tvm-left-tab active" data-panel="steps"><i class="fa fa-book-open"></i> Steps</button>' +
           '<button class="tvm-left-tab" data-panel="uml"><i class="fa fa-diagram-project"></i> UML Diagram</button>' +
@@ -340,7 +383,7 @@
       '<div class="tvm-quiz-panel" style="display:none"></div>' +
       '<div class="tvm-step-controls-bar"><div class="tvm-step-controls"></div></div>' +
       '</div>' +
-      (this._umlDiagramEnabled
+      (useLeftUml
         ? '<div class="tvm-uml-left-view" style="display:none">' +
           '<div class="tvm-diagram-toolbar">' +
           '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
@@ -359,7 +402,7 @@
         : '') +
       '</div>' +
       '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
-      '<div class="tvm-workspace">' +
+      '<div class="tvm-workspace' + (this._umlPositionRight ? ' tvm-uml-right' : '') + '">' +
       (this.gitGraphPath
         ? '<div class="tvm-view-toggle">' +
           '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
@@ -420,7 +463,9 @@
     this.editorContainerEl = this.root.querySelector('.tvm-editor-container');
     this.gitGraphPanelEl = this.root.querySelector('.tvm-git-graph-panel');
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
-    this._umlContainer = this.root.querySelector('.tvm-uml-left-view');
+    this._umlContainer = this._umlPositionRight
+      ? this.root.querySelector('.tvm-uml-right-view')
+      : this.root.querySelector('.tvm-uml-left-view');
     this._umlContentEl = this.root.querySelector('.tvm-diagram-content');
     this._umlFullscreenEl = this.root.querySelector('.tvm-diagram-fullscreen-overlay');
     this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
@@ -559,6 +604,34 @@
             }
           });
         })(leftTabs[lti]);
+      }
+    }
+
+    // Right-panel tab switcher (Output ↔ UML Diagram) — used when uml_position: right
+    var rightTabBarEl = this.root.querySelector('.tvm-right-tab-bar');
+    if (rightTabBarEl) {
+      var rightTabs = rightTabBarEl.querySelectorAll('.tvm-right-tab');
+      for (var rti = 0; rti < rightTabs.length; rti++) {
+        (function (tab) {
+          tab.addEventListener('click', function () {
+            var panel = tab.getAttribute('data-panel');
+            for (var j = 0; j < rightTabs.length; j++) {
+              rightTabs[j].classList.toggle('active', rightTabs[j] === tab);
+            }
+            var outputView = self.root.querySelector('.tvm-output-view');
+            var umlRightView = self.root.querySelector('.tvm-uml-right-view');
+            if (panel === 'uml') {
+              self._umlViewActive = true;
+              if (outputView) outputView.style.display = 'none';
+              if (umlRightView) umlRightView.style.display = 'flex';
+              self._refreshUMLDiagram();
+            } else {
+              self._umlViewActive = false;
+              if (umlRightView) umlRightView.style.display = 'none';
+              if (outputView) outputView.style.display = 'flex';
+            }
+          });
+        })(rightTabs[rti]);
       }
     }
 
@@ -1962,6 +2035,15 @@
       }
     }
 
+    // Update right-panel UML tab visibility (uml_position: right)
+    var rightTabBar = this.root ? this.root.querySelector('.tvm-right-tab-bar') : null;
+    if (rightTabBar) {
+      var umlRightTab = rightTabBar.querySelector('[data-panel="uml"]');
+      if (umlRightTab) {
+        umlRightTab.style.display = this._umlWatchedFiles.length > 0 ? '' : 'none';
+      }
+    }
+
     // Ensure the active tab is always visible — scroll it into view horizontally
     // without affecting page-level vertical scroll (block: 'nearest').
     var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
@@ -1993,8 +2075,24 @@
   // UML Diagram Methods
   // ---------------------------------------------------------------------------
 
-  /** Show UML diagram in the left panel (switch left tab to UML) */
+  /** Show UML diagram — switches left tab (default) or right tab (uml_position: right) */
   TutorialCode.prototype._showDiagramHideEditor = function () {
+    if (this._umlPositionRight) {
+      // Right mode: switch bottom-right tab to UML; steps panel stays visible
+      var outputView = this.root.querySelector('.tvm-output-view');
+      var umlRightView = this.root.querySelector('.tvm-uml-right-view');
+      if (outputView) outputView.style.display = 'none';
+      if (umlRightView) umlRightView.style.display = 'flex';
+      if (this._umlContainer) this._umlContainer.style.display = 'flex';
+      var rightTabBar = this.root.querySelector('.tvm-right-tab-bar');
+      if (rightTabBar) {
+        var rtabs = rightTabBar.querySelectorAll('.tvm-right-tab');
+        for (var ri = 0; ri < rtabs.length; ri++) {
+          rtabs[ri].classList.toggle('active', rtabs[ri].getAttribute('data-panel') === 'uml');
+        }
+      }
+      return;
+    }
     if (this._stepsViewEl) this._stepsViewEl.style.display = 'none';
     if (this._umlContainer) this._umlContainer.style.display = 'flex';
     // Sync left tab buttons
@@ -2006,8 +2104,24 @@
     }
   };
 
-  /** Show steps in the left panel (switch left tab to Steps) */
+  /** Show steps — switches left tab (default) or right tab to Output (uml_position: right) */
   TutorialCode.prototype._showEditorHideDiagram = function () {
+    if (this._umlPositionRight) {
+      // Right mode: switch bottom-right tab to Output; steps panel stays visible
+      var outputView = this.root.querySelector('.tvm-output-view');
+      var umlRightView = this.root.querySelector('.tvm-uml-right-view');
+      if (umlRightView) umlRightView.style.display = 'none';
+      if (outputView) outputView.style.display = 'flex';
+      if (this._umlContainer) this._umlContainer.style.display = 'none';
+      var rightTabBar = this.root.querySelector('.tvm-right-tab-bar');
+      if (rightTabBar) {
+        var rtabs = rightTabBar.querySelectorAll('.tvm-right-tab');
+        for (var ri = 0; ri < rtabs.length; ri++) {
+          rtabs[ri].classList.toggle('active', rtabs[ri].getAttribute('data-panel') === 'output');
+        }
+      }
+      return;
+    }
     if (this._umlContainer) this._umlContainer.style.display = 'none';
     if (this._stepsViewEl) this._stepsViewEl.style.display = 'flex';
     // Sync left tab buttons

@@ -77,7 +77,7 @@
     var ff = fontFamily || BASE_CFG.fontFamily;
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" ' +
       'viewBox="0 0 ' + w + ' ' + h + '" ' +
-      'style="font-family: ' + ff + '; max-width: none;">' +
+      'style="font-family: ' + ff + '; max-width: 100%; height: auto;">' +
       '<g transform="translate(' + ox + ',' + oy + ')">';
   }
 
@@ -1074,6 +1074,507 @@
     };
   }
 
+  var ORTHO_ROUTE_LANE_STEP = 14;
+  var ORTHO_ROUTE_LANE_CLEARANCE = 6;
+  var ORTHO_ROUTE_TRACK_MIN_LEN = 24;
+  var ORTHO_ROUTE_BEND_PENALTY = 42;
+
+  function rangesOverlap(a1, a2, b1, b2, minOverlap) {
+    var overlap = Math.min(Math.max(a1, a2), Math.max(b1, b2)) -
+      Math.max(Math.min(a1, a2), Math.min(b1, b2));
+    return overlap > (minOverlap || 0);
+  }
+
+  function hSegHitsOccupied(y, xMin, xMax, occupied) {
+    if (!occupied) return false;
+    for (var i = 0; i < occupied.h.length; i++) {
+      var seg = occupied.h[i];
+      if (Math.abs(seg.y - y) < ORTHO_ROUTE_LANE_CLEARANCE &&
+          rangesOverlap(xMin, xMax, seg.x1, seg.x2, 6)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function vSegHitsOccupied(x, yMin, yMax, occupied) {
+    if (!occupied) return false;
+    for (var i = 0; i < occupied.v.length; i++) {
+      var seg = occupied.v[i];
+      if (Math.abs(seg.x - x) < ORTHO_ROUTE_LANE_CLEARANCE &&
+          rangesOverlap(yMin, yMax, seg.y1, seg.y2, 6)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function simplifyOrthogonalPath(points) {
+    if (!points || points.length <= 2) return points || [];
+
+    function isBetween(a, b, c) {
+      var min = Math.min(a, c) - 0.5;
+      var max = Math.max(a, c) + 0.5;
+      return b >= min && b <= max;
+    }
+
+    var result = [points[0]];
+    for (var i = 1; i < points.length - 1; i++) {
+      var prev = result[result.length - 1];
+      var curr = points[i];
+      var next = points[i + 1];
+      if ((Math.abs(prev.x - curr.x) < 0.5 && Math.abs(curr.x - next.x) < 0.5 && isBetween(prev.y, curr.y, next.y)) ||
+          (Math.abs(prev.y - curr.y) < 0.5 && Math.abs(curr.y - next.y) < 0.5 && isBetween(prev.x, curr.x, next.x))) {
+        continue;
+      }
+      result.push(curr);
+    }
+    result.push(points[points.length - 1]);
+    return result;
+  }
+
+  function measureOrthogonalRoute(points) {
+    var total = 0;
+    if (!points) return total;
+    for (var i = 0; i < points.length - 1; i++) {
+      total += Math.abs(points[i + 1].x - points[i].x) + Math.abs(points[i + 1].y - points[i].y);
+    }
+    return total;
+  }
+
+  function countOrthogonalBends(points) {
+    if (!points || points.length < 3) return 0;
+    var bends = 0;
+    for (var i = 1; i < points.length - 1; i++) {
+      var prev = points[i - 1];
+      var curr = points[i];
+      var next = points[i + 1];
+      var dir1 = Math.abs(curr.x - prev.x) > Math.abs(curr.y - prev.y) ? 'H' : 'V';
+      var dir2 = Math.abs(next.x - curr.x) > Math.abs(next.y - curr.y) ? 'H' : 'V';
+      if (dir1 !== dir2) bends++;
+    }
+    return bends;
+  }
+
+  function routeHitsObstacle(points, obstacles, skipNames, occupied) {
+    if (!points) return true;
+    for (var i = 0; i < points.length - 1; i++) {
+      var p0 = points[i], p1 = points[i + 1];
+      if (Math.abs(p0.x - p1.x) < 1) {
+        var yMin = Math.min(p0.y, p1.y), yMax = Math.max(p0.y, p1.y);
+        for (var j = 0; j < obstacles.length; j++) {
+          var obRect = obstacleToRect(obstacles[j]);
+          if (!obRect) continue;
+          if (skipNames && obstacles[j].name && skipNames[obstacles[j].name]) continue;
+          if (p0.x > obRect.left && p0.x < obRect.right && yMax > obRect.top && yMin < obRect.bottom) return true;
+        }
+        if (vSegHitsOccupied(p0.x, yMin, yMax, occupied)) return true;
+      } else if (Math.abs(p0.y - p1.y) < 1) {
+        var xMin = Math.min(p0.x, p1.x), xMax = Math.max(p0.x, p1.x);
+        for (var j2 = 0; j2 < obstacles.length; j2++) {
+          var obRect2 = obstacleToRect(obstacles[j2]);
+          if (!obRect2) continue;
+          if (skipNames && obstacles[j2].name && skipNames[obstacles[j2].name]) continue;
+          if (p0.y > obRect2.top && p0.y < obRect2.bottom && xMax > obRect2.left && xMin < obRect2.right) return true;
+        }
+        if (hSegHitsOccupied(p0.y, xMin, xMax, occupied)) return true;
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function findClearX(yMin, yMax, preferX, obstacles, skipNames, occupied) {
+    function isBlocked(candidateX) {
+      for (var j = 0; j < obstacles.length; j++) {
+        var obRect = obstacleToRect(obstacles[j]);
+        if (!obRect) continue;
+        if (skipNames && obstacles[j].name && skipNames[obstacles[j].name]) continue;
+        if (candidateX > obRect.left && candidateX < obRect.right && yMax > obRect.top && yMin < obRect.bottom) return true;
+      }
+      return vSegHitsOccupied(candidateX, yMin, yMax, occupied);
+    }
+
+    if (!isBlocked(preferX)) return preferX;
+    for (var d = ORTHO_ROUTE_LANE_STEP; d < 1600; d += ORTHO_ROUTE_LANE_STEP) {
+      if (!isBlocked(preferX + d)) return preferX + d;
+      if (!isBlocked(preferX - d)) return preferX - d;
+    }
+    return preferX;
+  }
+
+  function findClearY(xMin, xMax, preferY, obstacles, skipNames, occupied) {
+    function isBlocked(candidateY) {
+      for (var j = 0; j < obstacles.length; j++) {
+        var obRect = obstacleToRect(obstacles[j]);
+        if (!obRect) continue;
+        if (skipNames && obstacles[j].name && skipNames[obstacles[j].name]) continue;
+        if (candidateY > obRect.top && candidateY < obRect.bottom && xMax > obRect.left && xMin < obRect.right) return true;
+      }
+      return hSegHitsOccupied(candidateY, xMin, xMax, occupied);
+    }
+
+    if (!isBlocked(preferY)) return preferY;
+    for (var d = ORTHO_ROUTE_LANE_STEP; d < 1600; d += ORTHO_ROUTE_LANE_STEP) {
+      if (!isBlocked(preferY + d)) return preferY + d;
+      if (!isBlocked(preferY - d)) return preferY - d;
+    }
+    return preferY;
+  }
+
+  function reserveOrthogonalRoute(points, occupied) {
+    if (!occupied || !points) return;
+    for (var i = 0; i < points.length - 1; i++) {
+      var p0 = points[i], p1 = points[i + 1];
+      if (Math.abs(p0.x - p1.x) < 1) {
+        var y1 = Math.min(p0.y, p1.y), y2 = Math.max(p0.y, p1.y);
+        if ((y2 - y1) >= ORTHO_ROUTE_TRACK_MIN_LEN) occupied.v.push({ x: p0.x, y1: y1, y2: y2 });
+      } else if (Math.abs(p0.y - p1.y) < 1) {
+        var x1 = Math.min(p0.x, p1.x), x2 = Math.max(p0.x, p1.x);
+        if ((x2 - x1) >= ORTHO_ROUTE_TRACK_MIN_LEN) occupied.h.push({ y: p0.y, x1: x1, x2: x2 });
+      }
+    }
+  }
+
+  function spreadRouteToFreeLanes(points, obstacles, skipNames, occupied) {
+    if (!occupied || !points || points.length < 4) return points;
+
+    var adjusted = [];
+    for (var i = 0; i < points.length; i++) adjusted.push({ x: points[i].x, y: points[i].y });
+
+    for (var pass = 0; pass < 2; pass++) {
+      var moved = false;
+      for (var si = 1; si < adjusted.length - 2; si++) {
+        var p0 = adjusted[si], p1 = adjusted[si + 1];
+        if (Math.abs(p0.y - p1.y) < 1) {
+          var xMin = Math.min(p0.x, p1.x), xMax = Math.max(p0.x, p1.x);
+          if (hSegHitsOccupied(p0.y, xMin, xMax, occupied)) {
+            var clearY = findClearY(xMin, xMax, p0.y, obstacles, skipNames, occupied);
+            if (Math.abs(clearY - p0.y) >= 1) {
+              adjusted[si].y = clearY;
+              adjusted[si + 1].y = clearY;
+              moved = true;
+            }
+          }
+        } else if (Math.abs(p0.x - p1.x) < 1) {
+          var yMin = Math.min(p0.y, p1.y), yMax = Math.max(p0.y, p1.y);
+          if (vSegHitsOccupied(p0.x, yMin, yMax, occupied)) {
+            var clearX = findClearX(yMin, yMax, p0.x, obstacles, skipNames, occupied);
+            if (Math.abs(clearX - p0.x) >= 1) {
+              adjusted[si].x = clearX;
+              adjusted[si + 1].x = clearX;
+              moved = true;
+            }
+          }
+        }
+      }
+      adjusted = simplifyOrthogonalPath(adjusted);
+      if (!moved) break;
+    }
+
+    return adjusted;
+  }
+
+  function uniqueSortedNumbers(values) {
+    var sorted = values.slice().sort(function(a, b) { return a - b; });
+    var out = [];
+    for (var i = 0; i < sorted.length; i++) {
+      var value = sorted[i];
+      if (!isFinite(value)) continue;
+      if (!out.length || Math.abs(value - out[out.length - 1]) > 0.5) out.push(value);
+    }
+    return out;
+  }
+
+  function findCoordinateIndex(coords, value) {
+    for (var i = 0; i < coords.length; i++) {
+      if (Math.abs(coords[i] - value) < 0.75) return i;
+    }
+    return -1;
+  }
+
+  function pointInsideObstacle(x, y, obstacles, skipNames) {
+    for (var i = 0; i < obstacles.length; i++) {
+      var obstacle = obstacles[i];
+      if (skipNames && obstacle.name && skipNames[obstacle.name]) continue;
+      var rect = obstacleToRect(obstacle);
+      if (!rect) continue;
+      if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) return true;
+    }
+    return false;
+  }
+
+  function createPriorityQueue() {
+    var heap = [];
+
+    function swap(i, j) {
+      var temp = heap[i];
+      heap[i] = heap[j];
+      heap[j] = temp;
+    }
+
+    function bubbleUp(index) {
+      while (index > 0) {
+        var parent = Math.floor((index - 1) / 2);
+        if (heap[parent].f <= heap[index].f) break;
+        swap(parent, index);
+        index = parent;
+      }
+    }
+
+    function bubbleDown(index) {
+      while (true) {
+        var left = index * 2 + 1;
+        var right = left + 1;
+        var smallest = index;
+        if (left < heap.length && heap[left].f < heap[smallest].f) smallest = left;
+        if (right < heap.length && heap[right].f < heap[smallest].f) smallest = right;
+        if (smallest === index) break;
+        swap(index, smallest);
+        index = smallest;
+      }
+    }
+
+    return {
+      push: function(item) {
+        heap.push(item);
+        bubbleUp(heap.length - 1);
+      },
+      pop: function() {
+        if (!heap.length) return null;
+        var first = heap[0];
+        var last = heap.pop();
+        if (heap.length) {
+          heap[0] = last;
+          bubbleDown(0);
+        }
+        return first;
+      },
+      isEmpty: function() {
+        return heap.length === 0;
+      }
+    };
+  }
+
+  function buildOrthogonalGraph(xs, ys, obstacles, skipNames, occupied) {
+    var nodes = [];
+    var nodeMap = {};
+    var rows = {};
+    var cols = {};
+
+    for (var xi = 0; xi < xs.length; xi++) {
+      for (var yi = 0; yi < ys.length; yi++) {
+        var x = xs[xi], y = ys[yi];
+        if (pointInsideObstacle(x, y, obstacles, skipNames)) continue;
+        var key = xi + ':' + yi;
+        var nodeIndex = nodes.length;
+        nodes.push({ x: x, y: y, xi: xi, yi: yi });
+        nodeMap[key] = nodeIndex;
+        if (!rows[yi]) rows[yi] = [];
+        if (!cols[xi]) cols[xi] = [];
+        rows[yi].push(nodeIndex);
+        cols[xi].push(nodeIndex);
+      }
+    }
+
+    var adjacency = [];
+    for (var ni = 0; ni < nodes.length; ni++) adjacency.push([]);
+
+    function connect(aIdx, bIdx, dir) {
+      var a = nodes[aIdx], b = nodes[bIdx];
+      var p0 = { x: a.x, y: a.y };
+      var p1 = { x: b.x, y: b.y };
+      if (routeHitsObstacle([p0, p1], obstacles, skipNames, occupied)) return;
+      var cost = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+      adjacency[aIdx].push({ to: bIdx, dir: dir, cost: cost });
+      adjacency[bIdx].push({ to: aIdx, dir: dir, cost: cost });
+    }
+
+    for (var rowKey in rows) {
+      var row = rows[rowKey];
+      row.sort(function(a, b) { return nodes[a].x - nodes[b].x; });
+      for (var ri = 0; ri < row.length - 1; ri++) connect(row[ri], row[ri + 1], 'H');
+    }
+    for (var colKey in cols) {
+      var col = cols[colKey];
+      col.sort(function(a, b) { return nodes[a].y - nodes[b].y; });
+      for (var ci = 0; ci < col.length - 1; ci++) connect(col[ci], col[ci + 1], 'V');
+    }
+
+    return { nodes: nodes, nodeMap: nodeMap, adjacency: adjacency };
+  }
+
+  function findOrthogonalGridPath(start, end, obstacles, skipNames, occupied, options) {
+    var opts = options || {};
+    var clearance = opts.clearance != null ? opts.clearance : 14;
+    var bendPenalty = opts.bendPenalty != null ? opts.bendPenalty : ORTHO_ROUTE_BEND_PENALTY;
+    var extraXs = opts.extraXs || [];
+    var extraYs = opts.extraYs || [];
+    var xs = [start.x, end.x];
+    var ys = [start.y, end.y];
+
+    for (var exi = 0; exi < extraXs.length; exi++) xs.push(extraXs[exi]);
+    for (var eyi = 0; eyi < extraYs.length; eyi++) ys.push(extraYs[eyi]);
+
+    for (var oi = 0; oi < obstacles.length; oi++) {
+      var obstacle = obstacles[oi];
+      if (skipNames && obstacle.name && skipNames[obstacle.name]) continue;
+      var rect = obstacleToRect(obstacle);
+      if (!rect) continue;
+      xs.push(rect.left - clearance, rect.right + clearance);
+      ys.push(rect.top - clearance, rect.bottom + clearance);
+    }
+
+    xs = uniqueSortedNumbers(xs);
+    ys = uniqueSortedNumbers(ys);
+
+    var graph = buildOrthogonalGraph(xs, ys, obstacles, skipNames, occupied);
+    var startXi = findCoordinateIndex(xs, start.x);
+    var startYi = findCoordinateIndex(ys, start.y);
+    var endXi = findCoordinateIndex(xs, end.x);
+    var endYi = findCoordinateIndex(ys, end.y);
+    var startKey = startXi + ':' + startYi;
+    var endKey = endXi + ':' + endYi;
+    var startIndex = graph.nodeMap[startKey];
+    var endIndex = graph.nodeMap[endKey];
+    if (startIndex === undefined || endIndex === undefined) return null;
+
+    var queue = createPriorityQueue();
+    var startState = startIndex + ':N';
+    var dist = {};
+    var prev = {};
+    dist[startState] = 0;
+    queue.push({ state: startState, nodeIndex: startIndex, dir: 'N', f: Math.abs(start.x - end.x) + Math.abs(start.y - end.y) });
+
+    while (!queue.isEmpty()) {
+      var current = queue.pop();
+      if (!current) break;
+      if (current.nodeIndex === endIndex) {
+        var stateCursor = current.state;
+        var path = [];
+        while (stateCursor) {
+          var stateParts = stateCursor.split(':');
+          var nodeIdx = parseInt(stateParts[0], 10);
+          path.push({ x: graph.nodes[nodeIdx].x, y: graph.nodes[nodeIdx].y });
+          stateCursor = prev[stateCursor];
+        }
+        path.reverse();
+        return simplifyOrthogonalPath(path);
+      }
+
+      if (current.f - (Math.abs(graph.nodes[current.nodeIndex].x - end.x) + Math.abs(graph.nodes[current.nodeIndex].y - end.y)) > (dist[current.state] || 0) + 0.001) {
+        continue;
+      }
+
+      var neighbors = graph.adjacency[current.nodeIndex];
+      for (var ni = 0; ni < neighbors.length; ni++) {
+        var edge = neighbors[ni];
+        var nextState = edge.to + ':' + edge.dir;
+        var bendCost = current.dir !== 'N' && current.dir !== edge.dir ? bendPenalty : 0;
+        var corridorPenalty = edge.dir === 'H'
+          ? Math.abs(graph.nodes[current.nodeIndex].y - end.y) * 0.05
+          : Math.abs(graph.nodes[current.nodeIndex].x - end.x) * 0.05;
+        var candidateDist = dist[current.state] + edge.cost + bendCost + corridorPenalty;
+        if (dist[nextState] === undefined || candidateDist + 0.01 < dist[nextState]) {
+          dist[nextState] = candidateDist;
+          prev[nextState] = current.state;
+          var heuristic = Math.abs(graph.nodes[edge.to].x - end.x) + Math.abs(graph.nodes[edge.to].y - end.y);
+          queue.push({
+            state: nextState,
+            nodeIndex: edge.to,
+            dir: edge.dir,
+            f: candidateDist + heuristic
+          });
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function extendAnchor(anchor, fallbackStub) {
+    var stub = anchor && anchor.stub != null ? anchor.stub : (fallbackStub != null ? fallbackStub : 18);
+    var point = { x: anchor.x, y: anchor.y };
+    var outer = { x: point.x, y: point.y };
+    if (anchor.side === 'left') outer.x -= stub;
+    else if (anchor.side === 'right') outer.x += stub;
+    else if (anchor.side === 'top') outer.y -= stub;
+    else if (anchor.side === 'bottom') outer.y += stub;
+    return { point: point, outer: outer };
+  }
+
+  function buildSimpleOrthogonalFallback(start, end) {
+    var horizontalFirst = simplifyOrthogonalPath([
+      { x: start.x, y: start.y },
+      { x: end.x, y: start.y },
+      { x: end.x, y: end.y }
+    ]);
+    var verticalFirst = simplifyOrthogonalPath([
+      { x: start.x, y: start.y },
+      { x: start.x, y: end.y },
+      { x: end.x, y: end.y }
+    ]);
+    return measureOrthogonalRoute(horizontalFirst) <= measureOrthogonalRoute(verticalFirst)
+      ? horizontalFirst
+      : verticalFirst;
+  }
+
+  function routeOrthogonalConnector(startAnchor, endAnchor, obstacles, options) {
+    var opts = options || {};
+    var skipNames = opts.skipNames || null;
+    var occupied = opts.occupied || null;
+    var start = extendAnchor(startAnchor, opts.stub);
+    var end = extendAnchor(endAnchor, opts.stub);
+    var tried = [];
+    var path = null;
+    var attempts = [
+      { occupied: occupied, clearance: opts.clearance != null ? opts.clearance : 14 },
+      { occupied: occupied, clearance: 8 },
+      { occupied: null, clearance: opts.clearance != null ? opts.clearance : 14 },
+      { occupied: null, clearance: 6 }
+    ];
+
+    for (var ai = 0; ai < attempts.length; ai++) {
+      var attempt = attempts[ai];
+      var key = String(!!attempt.occupied) + ':' + attempt.clearance;
+      if (tried.indexOf(key) >= 0) continue;
+      tried.push(key);
+      path = findOrthogonalGridPath(start.outer, end.outer, obstacles, skipNames, attempt.occupied, {
+        clearance: attempt.clearance,
+        bendPenalty: opts.bendPenalty,
+        extraXs: opts.extraXs,
+        extraYs: opts.extraYs
+      });
+      if (path) {
+        occupied = attempt.occupied;
+        break;
+      }
+    }
+
+    if (!path) path = buildSimpleOrthogonalFallback(start.outer, end.outer);
+
+    var points = [start.point];
+    for (var pi = 0; pi < path.length; pi++) {
+      if (!points.length || Math.abs(points[points.length - 1].x - path[pi].x) > 0.5 || Math.abs(points[points.length - 1].y - path[pi].y) > 0.5) {
+        points.push({ x: path[pi].x, y: path[pi].y });
+      }
+    }
+    if (!points.length || Math.abs(points[points.length - 1].x - end.point.x) > 0.5 || Math.abs(points[points.length - 1].y - end.point.y) > 0.5) {
+      points.push(end.point);
+    }
+
+    points = simplifyOrthogonalPath(points);
+    points = spreadRouteToFreeLanes(points, obstacles, skipNames, occupied);
+    points = simplifyOrthogonalPath(points);
+
+    return {
+      points: points,
+      length: measureOrthogonalRoute(points),
+      bends: countOrthogonalBends(points)
+    };
+  }
+
   // ─── Actor Stick Figure ──────────────────────────────────────
 
   /**
@@ -1130,6 +1631,15 @@
     autoFitSVG: autoFitSVG,
     buildOrthogonalSegments: buildOrthogonalSegments,
     placeOrthogonalLabel: placeOrthogonalLabel,
+    simplifyOrthogonalPath: simplifyOrthogonalPath,
+    measureOrthogonalRoute: measureOrthogonalRoute,
+    countOrthogonalBends: countOrthogonalBends,
+    routeHitsObstacle: routeHitsObstacle,
+    findClearX: findClearX,
+    findClearY: findClearY,
+    reserveOrthogonalRoute: reserveOrthogonalRoute,
+    spreadRouteToFreeLanes: spreadRouteToFreeLanes,
+    routeOrthogonalConnector: routeOrthogonalConnector,
 
     // ─── Drawing Utilities ───────────────────────────────────────
     drawArrow: function(svg, x, y, ux, uy, color, size, sw) {
@@ -1533,42 +2043,80 @@
     }
 
     var targetAspect = targetAspectForPreference(layoutPreference, direction);
-    var paddedArea = 0;
-    var widestComponent = 0;
-    for (var i = 0; i < layouts.length; i++) {
-      paddedArea += (layouts[i].width + gapX) * (layouts[i].height + gapY);
-      widestComponent = Math.max(widestComponent, layouts[i].width);
-    }
 
-    var targetRowWidth = Math.max(widestComponent, Math.sqrt(Math.max(paddedArea, 1) * targetAspect));
-    var rows = [];
-    var currentRow = null;
-    function startRow() {
-      currentRow = { items: [], width: 0, height: 0 };
-      rows.push(currentRow);
-    }
-
-    for (var li = 0; li < layouts.length; li++) {
-      var layout = layouts[li];
-      if (!currentRow) startRow();
-
-      var proposedWidth = currentRow.items.length ? currentRow.width + gapX + layout.width : layout.width;
-      if (currentRow.items.length && proposedWidth > targetRowWidth) {
-        startRow();
+    function buildPacking(itemsPerRow) {
+      var rows = [];
+      for (var start = 0; start < layouts.length; start += itemsPerRow) {
+        var rowItems = layouts.slice(start, start + itemsPerRow);
+        var rowWidth = 0;
+        var rowHeight = 0;
+        for (var ri = 0; ri < rowItems.length; ri++) {
+          if (ri > 0) rowWidth += gapX;
+          rowWidth += rowItems[ri].width;
+          rowHeight = Math.max(rowHeight, rowItems[ri].height);
+        }
+        rows.push({ items: rowItems, width: rowWidth, height: rowHeight });
       }
 
-      currentRow.items.push(layout);
-      currentRow.width = currentRow.items.length === 1 ? layout.width : currentRow.width + gapX + layout.width;
-      currentRow.height = Math.max(currentRow.height, layout.height);
+      var totalWidth = 0;
+      var totalHeight = 0;
+      var raggedness = 0;
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        totalWidth = Math.max(totalWidth, rows[rowIndex].width);
+        if (rowIndex > 0) totalHeight += gapY;
+        totalHeight += rows[rowIndex].height;
+      }
+      for (var raggedIndex = 0; raggedIndex < rows.length; raggedIndex++) {
+        raggedness += totalWidth - rows[raggedIndex].width;
+      }
+
+      return {
+        rows: rows,
+        width: Math.max(1, totalWidth),
+        height: Math.max(1, totalHeight),
+        aspect: Math.max(1, totalWidth) / Math.max(1, totalHeight),
+        area: Math.max(1, totalWidth) * Math.max(1, totalHeight),
+        raggedness: raggedness
+      };
+    }
+
+    function scorePacking(packing) {
+      var score = Math.abs(Math.log(Math.max(packing.aspect, 0.01) / targetAspect)) * 135;
+      score += Math.log(Math.max(packing.area, 1)) * 2.5;
+      score += Math.log(Math.max(packing.width, packing.height) + 1) * 3;
+      score += packing.raggedness * 0.025;
+      score += (packing.rows.length - 1) * 3;
+
+      if (layoutPreference === 'portrait') score += packing.width * 0.025;
+      if (layoutPreference === 'landscape') score += packing.height * 0.025;
+      if (layoutPreference === 'square') score += Math.abs(packing.width - packing.height) * 0.035;
+
+      return score;
+    }
+
+    var bestPacking = null;
+    for (var itemsPerRow = 1; itemsPerRow <= layouts.length; itemsPerRow++) {
+      var candidatePacking = buildPacking(itemsPerRow);
+      var candidateScore = scorePacking(candidatePacking);
+      if (!bestPacking || candidateScore < bestPacking.score - 0.01 ||
+          (Math.abs(candidateScore - bestPacking.score) <= 0.01 && candidatePacking.area < bestPacking.area)) {
+        bestPacking = {
+          rows: candidatePacking.rows,
+          width: candidatePacking.width,
+          height: candidatePacking.height,
+          area: candidatePacking.area,
+          score: candidateScore
+        };
+      }
     }
 
     var packedNodes = {};
     var packedEdges = [];
     var currentY = 0;
 
-    for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      var row = rows[rowIndex];
-      var currentX = 0;
+    for (var rowIndex = 0; rowIndex < bestPacking.rows.length; rowIndex++) {
+      var row = bestPacking.rows[rowIndex];
+      var currentX = Math.round((bestPacking.width - row.width) / 2);
       for (var itemIndex = 0; itemIndex < row.items.length; itemIndex++) {
         var item = row.items[itemIndex];
         var offsetY = currentY + Math.round((row.height - item.height) / 2);
@@ -2752,6 +3300,7 @@
     var labelSvg = [];
     var placedLabels = [];
     var placedRouteSegments = [];
+    var classOccupiedSegments = { h: [], v: [] };
     var noteRouteSegments = [];
     var noteMarkerObstacles = [];
     var classObstacles = [];
@@ -2821,6 +3370,13 @@
       return cx - span / 2 + idx * inheritPortSpacing;
     }
 
+    function reserveClassHierarchySegment(x1, y1, x2, y2) {
+      UMLShared.reserveOrthogonalRoute([
+        { x: x1, y: y1 },
+        { x: x2, y: y2 }
+      ], classOccupiedSegments);
+    }
+
     // Draw inheritance/realization with shared-target style
     for (var gk in inheritGroups) {
       var group = inheritGroups[gk];
@@ -2856,6 +3412,7 @@
           svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + childCx + '" y2="' + childTop +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
           pushOrthogonalSegment(noteRouteSegments, parentCx, triBot, childCx, childTop);
+          reserveClassHierarchySegment(parentCx, triBot, childCx, childTop);
         } else {
           // Not aligned: vertical from triangle, horizontal jog, vertical to child
           var junctionY = (triBot + childTop) / 2;
@@ -2868,6 +3425,9 @@
           pushOrthogonalSegment(noteRouteSegments, parentCx, triBot, parentCx, junctionY);
           pushOrthogonalSegment(noteRouteSegments, parentCx, junctionY, childCx, junctionY);
           pushOrthogonalSegment(noteRouteSegments, childCx, junctionY, childCx, childTop);
+          reserveClassHierarchySegment(parentCx, triBot, parentCx, junctionY);
+          reserveClassHierarchySegment(parentCx, junctionY, childCx, junctionY);
+          reserveClassHierarchySegment(childCx, junctionY, childCx, childTop);
         }
       } else {
         // Multiple children: shared-target
@@ -2885,6 +3445,7 @@
         svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + parentCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
         pushOrthogonalSegment(noteRouteSegments, parentCx, triBot, parentCx, junctionY);
+        reserveClassHierarchySegment(parentCx, triBot, parentCx, junctionY);
 
         // Horizontal bar at junction
         var leftCx = Math.min.apply(null, childCxArr.concat([parentCx]));
@@ -2892,6 +3453,7 @@
         svg.push('<line x1="' + leftCx + '" y1="' + junctionY + '" x2="' + rightCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
         pushOrthogonalSegment(noteRouteSegments, leftCx, junctionY, rightCx, junctionY);
+        reserveClassHierarchySegment(leftCx, junctionY, rightCx, junctionY);
 
         // Vertical stems from junction to each child
         for (var ci2 = 0; ci2 < group.children.length; ci2++) {
@@ -2900,6 +3462,7 @@
           svg.push('<line x1="' + cx + '" y1="' + junctionY + '" x2="' + cx + '" y2="' + ch2.y +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
           pushOrthogonalSegment(noteRouteSegments, cx, junctionY, cx, ch2.y);
+          reserveClassHierarchySegment(cx, junctionY, cx, ch2.y);
         }
       }
     }
@@ -2973,7 +3536,8 @@
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
       // Compute orthogonal route, with port offset for multiple edges from same side
-      var srcKey = orel.from + ':' + routeSide(fromE, toE, hasInheritAtBottom[orel.from]);
+      var sourceSide = routeSide(fromE, toE, hasInheritAtBottom[orel.from]);
+      var srcKey = orel.from + ':' + sourceSide;
       var srcCount = exitPortCounts[srcKey] || 1;
       var srcPortSpacing = srcCount > 1 ? 22 : 16;
       var srcCentered = ((exitPortIdx[oi] || 0) - (srcCount - 1) / 2) * srcPortSpacing;
@@ -2984,9 +3548,24 @@
       var tgtPortSpacing = tgtCount > 1 ? 24 : 14;
       var tgtCentered = ((entryPortIdx[oi] || 0) - (tgtCount - 1) / 2) * tgtPortSpacing;
 
-      var route = computeOrthogonalRoute(fromE, toE, hasInheritAtBottom[orel.from], hasInheritAtTop[orel.to], srcCentered, entries, orel.from, orel.to, tgtCentered, tgtSide);
+      var route = computeOrthogonalRoute(
+        fromE,
+        toE,
+        hasInheritAtBottom[orel.from],
+        hasInheritAtTop[orel.to],
+        srcCentered,
+        entries,
+        orel.from,
+        orel.to,
+        tgtCentered,
+        tgtSide,
+        sourceSide,
+        hasInheritAtTop[orel.from],
+        hasInheritAtBottom[orel.to],
+        classOccupiedSegments
+      );
       var pathPoints = route.points; // array of {x,y}
-  var routeSegments = UMLShared.buildOrthogonalSegments(pathPoints);
+      var routeSegments = UMLShared.buildOrthogonalSegments(pathPoints);
 
       // Build polyline points string
       var pointsStr = '';
@@ -3131,6 +3710,7 @@
           UMLShared.escapeXml(orel.toMult) + '</text>');
       }
 
+      UMLShared.reserveOrthogonalRoute(pathPoints, classOccupiedSegments);
       placedRouteSegments = placedRouteSegments.concat(routeSegments);
       noteRouteSegments = noteRouteSegments.concat(routeSegments);
     }
@@ -3286,299 +3866,301 @@
     return svg.join('\n');
   }
 
-  /**
-   * Compute orthogonal (Manhattan) route between two class boxes.
-   * Prefers straight lines when boxes are aligned vertically or horizontally.
-   * Uses right-angle bends only when necessary.
-   * Returns { points: [{x,y}, ...] } with only horizontal/vertical segments.
-   */
-  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId, targetEntryOffset, targetEntrySide) {
-    portOffset = portOffset || 0;
-    targetEntryOffset = targetEntryOffset || 0;
-    var fromCx = fromE.x + fromE.box.width / 2;
-    var fromCy = fromE.y + fromE.box.height / 2 + portOffset;
-    var fromL = fromE.x, fromR = fromE.x + fromE.box.width;
-    var fromT = fromE.y, fromB = fromE.y + fromE.box.height;
+  function classClamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
 
+  function classCenterLaneClearance(offset) {
+    return CFG.triangleW + CFG.diamondW + 16 + Math.min(28, Math.round(Math.abs(offset || 0) * 1.1));
+  }
+
+  function pushUniqueSide(order, side) {
+    if (order.indexOf(side) < 0) order.push(side);
+  }
+
+  function buildClassPreferredSideOrder(fromE, toE, role, preferredSide, ignorePreferred) {
+    var order = [];
+    var fromCx = fromE.x + fromE.box.width / 2;
+    var fromCy = fromE.y + fromE.box.height / 2;
     var toCx = toE.x + toE.box.width / 2;
     var toCy = toE.y + toE.box.height / 2;
-    var toL = toE.x, toR = toE.x + toE.box.width;
-    var toT = toE.y, toB = toE.y + toE.box.height;
+    var dx = toCx - fromCx;
+    var dy = toCy - fromCy;
 
-    // Check if boxes overlap horizontally (can use vertical straight line)
-    var hOverlap = fromL < toR && fromR > toL;
-    // Check if boxes overlap vertically (can use horizontal straight line)
-    var vOverlap = fromT < toB && fromB > toT;
+    if (preferredSide && !ignorePreferred) pushUniqueSide(order, preferredSide);
 
-    function clamp(val, min, max) {
-      return Math.max(min, Math.min(max, val));
-    }
-
-    function topEntryX() {
-      if (!avoidToTop) return toCx;
-      var offsetDir = (fromCx >= toCx) ? 1 : -1;
-      var offsetMag = CFG.triangleW + 10 + Math.min(18, Math.abs(portOffset));
-      return clamp(toCx + offsetDir * offsetMag, toL + 10, toR - 10);
-    }
-
-    function adjustedTargetTopX() {
-      return clamp(topEntryX() + targetEntryOffset, toL + 10, toR - 10);
-    }
-
-    function adjustedTargetBottomX() {
-      return clamp(toCx + targetEntryOffset, toL + 10, toR - 10);
-    }
-
-    function adjustedTargetLeftY() {
-      return clamp(toCy + targetEntryOffset, toT + 10, toB - 10);
-    }
-
-    function adjustedTargetRightY() {
-      return clamp(toCy + targetEntryOffset, toT + 10, toB - 10);
-    }
-
-    var points;
-
-    // If we must avoid bottom of source (inheritance triangle there),
-    // exit from the bottom edge at an offset X (avoiding the triangle center),
-    // or from the side if target is not below.
-    if (avoidFromBottom && !vOverlap) {
-      var triW = CFG.triangleW;
-      var diamondLen = CFG.diamondH * 2; // total length of diamond along edge direction
-      var portGap = diamondLen + 8; // spacing between connection points
-      if (toCy > fromCy) {
-        // Target is below: exit from bottom edge at triangle base, offset X to avoid triangle
-        var exitBottomX;
-        var inheritedCenterClearance = triW + CFG.diamondW + 6;
-        var sideAwareOffset = (toCx >= fromCx) ? Math.max(0, portOffset) : Math.max(0, -portOffset);
-        var baseOffset = inheritedCenterClearance + sideAwareOffset * portGap / 16;
-        if (toCx >= fromCx) {
-          exitBottomX = fromCx + baseOffset;
-        } else {
-          exitBottomX = fromCx - baseOffset;
-        }
-        // Clamp to box edges
-        exitBottomX = Math.max(fromL + 4, Math.min(fromR - 4, exitBottomX));
-        // Diamond starts at Shape's bottom edge (not at triangle base)
-        var exitBottomY = fromB; // diamond touches the class border
-        var routeStartY = exitBottomY + diamondLen; // route continues from diamond tip
-        // Stagger horizontal runs by port index to prevent crossings
-        var horizY = routeStartY + (portOffset / 16) * 12 + 4;
-        var targetTopX = adjustedTargetTopX();
-        points = [
-          { x: exitBottomX, y: exitBottomY },
-          { x: exitBottomX, y: horizY },
-          { x: targetTopX, y: horizY },
-          { x: targetTopX, y: toT }
-        ];
+    if (Math.abs(dx) > Math.abs(dy) * 0.8) {
+      if (role === 'source') {
+        pushUniqueSide(order, dx >= 0 ? 'right' : 'left');
+        pushUniqueSide(order, dy >= 0 ? 'bottom' : 'top');
+        pushUniqueSide(order, dy >= 0 ? 'top' : 'bottom');
       } else {
-        // Target is at same level or above: exit from the side
-        var exitSide = (toCx > fromCx) ? 'right' : 'left';
-        var exitX = (exitSide === 'right') ? fromR : fromL;
-        var exitY = fromCy + portOffset;
-        var midY = (exitY + toT) / 2;
-        points = [
-          { x: exitX, y: exitY },
-          { x: exitX, y: midY },
-          { x: toCx, y: midY },
-          { x: toCx, y: toT }
-        ];
-      }
-      // fall through to obstacle avoidance below
-    } else if (hOverlap && !avoidFromBottom) {
-      // Boxes overlap horizontally — use vertical straight line
-      var overlapL = Math.max(fromL, toL);
-      var overlapR = Math.min(fromR, toR);
-      var connX = (overlapL + overlapR) / 2;
-
-      if (fromCy < toCy) {
-        var entryX = adjustedTargetTopX();
-        if (Math.abs(entryX - connX) < 1) {
-          points = [{ x: connX, y: fromB }, { x: connX, y: toT }];
-        } else {
-          var midY0 = (fromB + toT) / 2;
-          points = [
-            { x: connX, y: fromB },
-            { x: connX, y: midY0 },
-            { x: entryX, y: midY0 },
-            { x: entryX, y: toT }
-          ];
-        }
-      } else {
-        points = [{ x: connX, y: fromT }, { x: connX, y: toB }];
-      }
-    } else if (hOverlap && avoidFromBottom) {
-      // Horizontal overlap but must avoid bottom — use right side exit
-      var exitX2 = fromR;
-      var bypassX = Math.max(fromR, toR) + 20;
-      if (fromCy < toCy) {
-        points = [
-          { x: exitX2, y: fromCy },
-          { x: bypassX, y: fromCy },
-          { x: bypassX, y: toCy },
-          { x: toR, y: toCy }
-        ];
-      } else {
-        points = [
-          { x: exitX2, y: fromCy },
-          { x: bypassX, y: fromCy },
-          { x: bypassX, y: toCy },
-          { x: toR, y: toCy }
-        ];
-      }
-    } else if (vOverlap) {
-      // Boxes overlap vertically — use horizontal straight line
-      var overlapT = Math.max(fromT, toT);
-      var overlapB = Math.min(fromB, toB);
-      var connY = (overlapT + overlapB) / 2;
-
-      if (fromCx < toCx) {
-        points = [{ x: fromR, y: connY }, { x: toL, y: connY }];
-      } else {
-        points = [{ x: fromL, y: connY }, { x: toR, y: connY }];
+        pushUniqueSide(order, dx >= 0 ? 'left' : 'right');
+        pushUniqueSide(order, dy >= 0 ? 'top' : 'bottom');
+        pushUniqueSide(order, dy >= 0 ? 'bottom' : 'top');
       }
     } else {
-      // No overlap — need an L-shaped or Z-shaped route
-      var dx = toCx - fromCx;
-      var dy = toCy - fromCy;
-
-      if (Math.abs(dy) >= Math.abs(dx)) {
-        // Primarily vertical separation — exit from bottom/top, bend horizontally
-        if (dy > 0) {
-          var midY = (fromB + toT) / 2;
-          var topX = adjustedTargetTopX();
-          points = [
-            { x: fromCx, y: fromB },
-            { x: fromCx, y: midY },
-            { x: topX, y: midY },
-            { x: topX, y: toT }
-          ];
-        } else {
-          var midY2 = (fromT + toB) / 2;
-          points = [
-            { x: fromCx, y: fromT },
-            { x: fromCx, y: midY2 },
-            { x: toCx, y: midY2 },
-            { x: toCx, y: toB }
-          ];
-        }
+      if (role === 'source') {
+        pushUniqueSide(order, dy >= 0 ? 'bottom' : 'top');
+        pushUniqueSide(order, dx >= 0 ? 'right' : 'left');
+        pushUniqueSide(order, dx >= 0 ? 'left' : 'right');
       } else {
-        // Primarily horizontal separation — exit from side, enter target from nearest edge
-        // If target is also below/above, prefer entering from top/bottom (perpendicular)
-        if (dx > 0) {
-          if (dy > 10 && fromB < toT) {
-            // Target is right and below: exit right, then enter from top
-            var topX2 = adjustedTargetTopX();
-            points = [
-              { x: fromR, y: fromCy },
-              { x: topX2, y: fromCy },
-              { x: topX2, y: toT }
-            ];
-          } else if (dy < -10 && fromT > toB) {
-            var botX = adjustedTargetBottomX();
-            // Target is right and above: exit right, then enter from bottom
-            points = [
-              { x: fromR, y: fromCy },
-              { x: botX, y: fromCy },
-              { x: botX, y: toB }
-            ];
-          } else {
-            // Same vertical level: enter from left side
-            var targetLeftY = (targetEntrySide === 'left') ? adjustedTargetLeftY() : toCy;
-            var midX = (fromR + toL) / 2;
-            points = [
-              { x: fromR, y: fromCy },
-              { x: midX, y: fromCy },
-              { x: midX, y: targetLeftY },
-              { x: toL, y: targetLeftY }
-            ];
-          }
-        } else {
-          if (dy > 10 && fromB < toT) {
-            var topX3 = adjustedTargetTopX();
-            points = [
-              { x: fromL, y: fromCy },
-              { x: topX3, y: fromCy },
-              { x: topX3, y: toT }
-            ];
-          } else if (dy < -10 && fromT > toB) {
-            var botX2 = adjustedTargetBottomX();
-            points = [
-              { x: fromL, y: fromCy },
-              { x: botX2, y: fromCy },
-              { x: botX2, y: toB }
-            ];
-          } else {
-            var targetRightY = (targetEntrySide === 'right') ? adjustedTargetRightY() : toCy;
-            var midX2 = (fromL + toR) / 2;
-            points = [
-              { x: fromL, y: fromCy },
-              { x: midX2, y: fromCy },
-              { x: midX2, y: targetRightY },
-              { x: toR, y: targetRightY }
-            ];
-          }
-        }
+        pushUniqueSide(order, dy >= 0 ? 'top' : 'bottom');
+        pushUniqueSide(order, dx >= 0 ? 'left' : 'right');
+        pushUniqueSide(order, dx >= 0 ? 'right' : 'left');
       }
-
-      // Simplify: remove redundant intermediate points on same axis
-      points = simplifyPath(points);
     }
 
-    // ── Obstacle avoidance: reroute segments that pass through other class boxes ──
-    if (allEntries && points.length >= 2) {
-      var pad = 12;
-      var obstacles = [];
+    pushUniqueSide(order, 'top');
+    pushUniqueSide(order, 'right');
+    pushUniqueSide(order, 'bottom');
+    pushUniqueSide(order, 'left');
+    return order;
+  }
+
+  function buildClassSidePositions(entry, side, preferredCoord, slotOffset, avoidCenter, biasCoord) {
+    var horizontalSide = side === 'top' || side === 'bottom';
+    var min = horizontalSide ? entry.x + 12 : entry.y + 12;
+    var max = horizontalSide ? entry.x + entry.box.width - 12 : entry.y + entry.box.height - 12;
+    var center = horizontalSide ? entry.x + entry.box.width / 2 : entry.y + entry.box.height / 2;
+    var span = Math.max(0, max - min);
+    var preferred = classClamp(preferredCoord + slotOffset * 0.28, min, max);
+    var biasDir = biasCoord >= center ? 1 : -1;
+    if (!isFinite(biasDir) || biasDir === 0) biasDir = slotOffset >= 0 ? 1 : -1;
+    var exclusion = avoidCenter ? classCenterLaneClearance(slotOffset) : 0;
+    var positions = [];
+
+    function normalize(value) {
+      var clamped = classClamp(value, min, max);
+      if (avoidCenter && Math.abs(clamped - center) < exclusion) {
+        clamped = classClamp(center + biasDir * exclusion, min, max);
+      }
+      return clamped;
+    }
+
+    function push(value) {
+      var normalized = normalize(value);
+      for (var i = 0; i < positions.length; i++) {
+        if (Math.abs(positions[i] - normalized) < 0.75) return;
+      }
+      positions.push(normalized);
+    }
+
+    push(preferred);
+    push(center + slotOffset * 0.18);
+    push(preferred - 24);
+    push(preferred + 24);
+    push(min + span * 0.25);
+    push(min + span * 0.75);
+
+    positions.sort(function(a, b) {
+      return Math.abs(a - preferred) - Math.abs(b - preferred);
+    });
+    return positions.slice(0, 4);
+  }
+
+  function buildClassAnchorCandidates(entry, otherEntry, sideOrder, slotOffset, options) {
+    var opts = options || {};
+    var otherCx = otherEntry.x + otherEntry.box.width / 2;
+    var otherCy = otherEntry.y + otherEntry.box.height / 2;
+    var candidates = [];
+
+    for (var si = 0; si < sideOrder.length && si < 3; si++) {
+      var side = sideOrder[si];
+      var horizontalSide = side === 'top' || side === 'bottom';
+      var preferredCoord = horizontalSide ? otherCx : otherCy;
+      var biasCoord = horizontalSide ? otherCx : otherCy;
+      var avoidCenter = (side === 'top' && opts.avoidTop) || (side === 'bottom' && opts.avoidBottom);
+      var positions = buildClassSidePositions(entry, side, preferredCoord, slotOffset, avoidCenter, biasCoord);
+      var min = horizontalSide ? entry.x + 12 : entry.y + 12;
+      var max = horizontalSide ? entry.x + entry.box.width - 12 : entry.y + entry.box.height - 12;
+      var clampedPreferred = classClamp(preferredCoord + slotOffset * 0.28, min, max);
+
+      for (var pi = 0; pi < positions.length; pi++) {
+        var pos = positions[pi];
+        candidates.push({
+          x: horizontalSide ? pos : (side === 'left' ? entry.x : entry.x + entry.box.width),
+          y: horizontalSide ? (side === 'top' ? entry.y : entry.y + entry.box.height) : pos,
+          side: side,
+          stub: opts.stub,
+          penalty: si * 26 + pi * 4 + Math.abs(pos - clampedPreferred) * 0.18
+        });
+      }
+    }
+
+    return candidates;
+  }
+
+  /**
+   * Compute orthogonal (Manhattan) route between two class boxes using the
+   * shared obstacle-aware router and multi-anchor candidate scoring.
+   */
+  function computeOrthogonalRoute(fromE, toE, avoidFromBottom, avoidToTop, portOffset, allEntries, fromId, toId, targetEntryOffset, targetEntrySide, sourceSide, avoidFromTop, avoidToBottom, occupiedSegments) {
+    portOffset = portOffset || 0;
+    targetEntryOffset = targetEntryOffset || 0;
+    avoidFromTop = !!avoidFromTop;
+    avoidToBottom = !!avoidToBottom;
+    var fromCx = fromE.x + fromE.box.width / 2;
+    var fromCy = fromE.y + fromE.box.height / 2;
+    var toCx = toE.x + toE.box.width / 2;
+    var toCy = toE.y + toE.box.height / 2;
+    var dxAbs = Math.abs(toCx - fromCx);
+    var dyAbs = Math.abs(toCy - fromCy);
+    var stub = Math.max(18, CFG.junctionGap + 8);
+    var obstacles = [];
+    var skipNames = {};
+    skipNames[fromId] = true;
+    skipNames[toId] = true;
+
+    if (allEntries) {
       for (var obn in allEntries) {
-        if (obn === fromId || obn === toId) continue;
+        if (!Object.prototype.hasOwnProperty.call(allEntries, obn) || obn === fromId || obn === toId) continue;
         var ob = allEntries[obn];
-        obstacles.push({ l: ob.x - pad, t: ob.y - pad, r: ob.x + ob.box.width + pad, b: ob.y + ob.box.height + pad });
+        obstacles.push({
+          x1: ob.x - 12,
+          y1: ob.y - 12,
+          x2: ob.x + ob.box.width + 12,
+          y2: ob.y + ob.box.height + 12,
+          name: obn
+        });
       }
-      // Check each segment and reroute if needed (one pass)
-      var newPoints = [points[0]];
-      for (var si = 0; si < points.length - 1; si++) {
-        var p1 = points[si], p2 = points[si + 1];
-        var rerouted = false;
-        for (var obi = 0; obi < obstacles.length; obi++) {
-          var ob2 = obstacles[obi];
-          if (segmentIntersectsBox(p1, p2, ob2)) {
-            var nextPoint = points[si + 2] || null;
-            var keepOriginalPoint = true;
-            if (p1.x === p2.x) {
-              // Vertical segment hitting a box: jog left/right while preserving overall direction.
-              var goRight = nextPoint ? nextPoint.x >= p2.x : p1.x >= (ob2.l + ob2.r) / 2;
-              var bypassX = goRight ? ob2.r : ob2.l;
-              newPoints.push({ x: bypassX, y: p1.y });
-              newPoints.push({ x: bypassX, y: p2.y });
-              if (nextPoint && nextPoint.y === p2.y && p2.y > ob2.t && p2.y < ob2.b) {
-                keepOriginalPoint = false;
-              }
-            } else {
-              // Horizontal segment hitting a box: jog above/below while preserving overall direction.
-              var goDown = nextPoint ? nextPoint.y >= p2.y : p1.y >= (ob2.t + ob2.b) / 2;
-              var bypassY = goDown ? ob2.b : ob2.t;
-              newPoints.push({ x: p1.x, y: bypassY });
-              newPoints.push({ x: p2.x, y: bypassY });
-              if (nextPoint && nextPoint.x === p2.x && p2.x > ob2.l && p2.x < ob2.r) {
-                keepOriginalPoint = false;
-              }
-            }
-            if (keepOriginalPoint || si === points.length - 2) newPoints.push(p2);
-            rerouted = true;
-            break;
-          }
-        }
-        if (!rerouted) {
-          newPoints.push(p2);
-        }
-      }
-      points = simplifyPath(newPoints);
     }
 
-    // Force all segments to be strictly horizontal or vertical
-    points = orthogonalize(points);
+    var sourceOrder = buildClassPreferredSideOrder(
+      fromE,
+      toE,
+      'source',
+      sourceSide,
+      avoidFromBottom && sourceSide === 'bottom'
+    );
+    var targetOrder = buildClassPreferredSideOrder(
+      fromE,
+      toE,
+      'target',
+      targetEntrySide,
+      avoidToTop && targetEntrySide === 'top'
+    );
 
-    return { points: points };
+    var sourceCandidates = buildClassAnchorCandidates(fromE, toE, sourceOrder, portOffset, {
+      avoidTop: avoidFromTop,
+      avoidBottom: avoidFromBottom,
+      stub: stub
+    });
+    var targetCandidates = buildClassAnchorCandidates(toE, fromE, targetOrder, targetEntryOffset, {
+      avoidTop: avoidToTop,
+      avoidBottom: avoidToBottom,
+      stub: stub
+    });
+
+    var best = null;
+    for (var si2 = 0; si2 < sourceCandidates.length; si2++) {
+      var sourceCandidate = sourceCandidates[si2];
+      for (var ti = 0; ti < targetCandidates.length; ti++) {
+        var targetCandidate = targetCandidates[ti];
+        var routed = UMLShared.routeOrthogonalConnector(sourceCandidate, targetCandidate, obstacles, {
+          skipNames: skipNames,
+          occupied: occupiedSegments,
+          stub: stub,
+          bendPenalty: 46,
+          extraXs: [fromCx, toCx],
+          extraYs: [fromCy, toCy]
+        });
+        var points = enforceOrthogonalEndpointApproach(routed.points, fromE, toE, sourceCandidate.side, targetCandidate.side);
+        points = UMLShared.simplifyOrthogonalPath(points);
+        if (UMLShared.routeHitsObstacle(points, obstacles, skipNames, null)) continue;
+
+        var score = UMLShared.measureOrthogonalRoute(points) +
+          UMLShared.countOrthogonalBends(points) * 48 +
+          sourceCandidate.penalty + targetCandidate.penalty;
+        var sourceVertical = sourceCandidate.side === 'top' || sourceCandidate.side === 'bottom';
+        var targetVertical = targetCandidate.side === 'top' || targetCandidate.side === 'bottom';
+        if (dxAbs > dyAbs * 0.8) {
+          if (sourceVertical && targetVertical) score += 24;
+          else if (sourceVertical || targetVertical) score += 8;
+        } else if (!sourceVertical && !targetVertical) {
+          score += 18;
+        }
+        if ((sourceCandidate.side === 'bottom' && avoidFromBottom) || (sourceCandidate.side === 'top' && avoidFromTop)) score += 8;
+        if ((targetCandidate.side === 'top' && avoidToTop) || (targetCandidate.side === 'bottom' && avoidToBottom)) score += 8;
+
+        if (!best || score + 0.01 < best.score) {
+          best = {
+            score: score,
+            points: points
+          };
+        }
+      }
+    }
+
+    if (!best) {
+      var fallbackSource = { x: fromE.x + fromE.box.width, y: fromCy, side: 'right', stub: stub };
+      var fallbackTarget = { x: toE.x, y: toCy, side: 'left', stub: stub };
+      if (toCx < fromCx) {
+        fallbackSource = { x: fromE.x, y: fromCy, side: 'left', stub: stub };
+        fallbackTarget = { x: toE.x + toE.box.width, y: toCy, side: 'right', stub: stub };
+      }
+      var fallbackRoute = UMLShared.routeOrthogonalConnector(fallbackSource, fallbackTarget, obstacles, {
+        skipNames: skipNames,
+        occupied: occupiedSegments,
+        stub: stub,
+        bendPenalty: 46,
+        extraXs: [fromCx, toCx],
+        extraYs: [fromCy, toCy]
+      });
+      best = {
+        points: enforceOrthogonalEndpointApproach(fallbackRoute.points, fromE, toE, fallbackSource.side, fallbackTarget.side)
+      };
+    }
+
+    return { points: best.points };
+  }
+
+  function enforceOrthogonalEndpointApproach(points, fromE, toE, sourceSide, targetSide) {
+    if (!points || points.length < 3) return points;
+
+    var tol = 1.5;
+
+    function needsVertical(side) {
+      return side === 'top' || side === 'bottom';
+    }
+
+    function needsHorizontal(side) {
+      return side === 'left' || side === 'right';
+    }
+
+    function edgeForPoint(point, entry, fallback) {
+      if (!entry || !entry.box) return fallback;
+      var left = entry.x;
+      var right = entry.x + entry.box.width;
+      var top = entry.y;
+      var bottom = entry.y + entry.box.height;
+      if (Math.abs(point.y - top) <= tol && point.x >= left - tol && point.x <= right + tol) return 'top';
+      if (Math.abs(point.y - bottom) <= tol && point.x >= left - tol && point.x <= right + tol) return 'bottom';
+      if (Math.abs(point.x - left) <= tol && point.y >= top - tol && point.y <= bottom + tol) return 'left';
+      if (Math.abs(point.x - right) <= tol && point.y >= top - tol && point.y <= bottom + tol) return 'right';
+      return fallback;
+    }
+
+    var adjusted = points.slice();
+    var actualSourceSide = edgeForPoint(adjusted[0], fromE, sourceSide);
+    var actualTargetSide = edgeForPoint(adjusted[adjusted.length - 1], toE, targetSide);
+
+    if (needsVertical(actualSourceSide) && adjusted[0].y === adjusted[1].y && adjusted[2]) {
+      adjusted[1] = { x: adjusted[0].x, y: adjusted[2].y };
+    } else if (needsHorizontal(actualSourceSide) && adjusted[0].x === adjusted[1].x && adjusted[2]) {
+      adjusted[1] = { x: adjusted[2].x, y: adjusted[0].y };
+    }
+
+    var last = adjusted.length - 1;
+    if (last >= 2) {
+      if (needsVertical(actualTargetSide) && adjusted[last - 1].y === adjusted[last].y && adjusted[last - 2]) {
+        adjusted[last - 1] = { x: adjusted[last].x, y: adjusted[last - 2].y };
+      } else if (needsHorizontal(actualTargetSide) && adjusted[last - 1].x === adjusted[last].x && adjusted[last - 2]) {
+        adjusted[last - 1] = { x: adjusted[last - 2].x, y: adjusted[last].y };
+      }
+    }
+
+    return simplifyPath(orthogonalize(adjusted));
   }
 
   function routeSide(fromE, toE, avoidFromBottom) {
@@ -3996,6 +4578,42 @@
     }
   }
 
+  function computeSequenceSpacing(participants) {
+    var metrics = {
+      participantPadX: CFG.participantPadX,
+      participantMinW: CFG.participantMinW,
+      participantGap: CFG.participantGap,
+    };
+    var count = participants.length || 0;
+    if (count <= 5) return metrics;
+
+    var widestLabel = 0;
+    var totalLabelWidth = 0;
+    for (var i = 0; i < participants.length; i++) {
+      var part = participants[i];
+      var displayText = (part.id !== part.label) ? (part.id + ': ' + part.label) : part.label;
+      var labelWidth = UMLShared.textWidth(displayText, true, CFG.fontSizeBold);
+      widestLabel = Math.max(widestLabel, labelWidth);
+      totalLabelWidth += labelWidth;
+    }
+
+    var averageLabelWidth = totalLabelWidth / count;
+    var density = Math.max(0, count - 5);
+    var gapReduction = Math.min(24, density * 4);
+    var padReduction = Math.min(8, Math.round(density * 1.5));
+
+    if (averageLabelWidth > 120 || widestLabel > 180) gapReduction = Math.min(30, gapReduction + 6);
+    if (averageLabelWidth < 96 && count >= 7) gapReduction += 4;
+
+    metrics.participantGap = Math.max(28, CFG.participantGap - gapReduction);
+    metrics.participantPadX = Math.max(12, CFG.participantPadX - padReduction);
+
+    if (count >= 8) metrics.participantMinW = Math.max(88, CFG.participantMinW - 8);
+    else if (count >= 6) metrics.participantMinW = Math.max(92, CFG.participantMinW - 4);
+
+    return metrics;
+  }
+
   // ─── Layout & Render ──────────────────────────────────────────────
 
   function render(container, text, options) {
@@ -4017,6 +4635,7 @@
   function generateSequenceSVG(parsed, colors) {
     var participants = parsed.participants;
     var messages = parsed.messages;
+    var spacing = computeSequenceSpacing(participants);
 
     // ── Measure participant boxes ──
     var partWidths = [];
@@ -4024,8 +4643,8 @@
     for (var pi = 0; pi < participants.length; pi++) {
       var part = participants[pi];
       var displayText = (part.id !== part.label) ? (part.id + ': ' + part.label) : part.label;
-      var pw = UMLShared.textWidth(displayText, true, CFG.fontSizeBold) + CFG.participantPadX * 2;
-      pw = Math.max(pw, CFG.participantMinW);
+      var pw = UMLShared.textWidth(displayText, true, CFG.fontSizeBold) + spacing.participantPadX * 2;
+      pw = Math.max(pw, spacing.participantMinW);
       partWidths.push(pw);
       partMaxW = Math.max(partMaxW, pw);
     }
@@ -4044,9 +4663,9 @@
     for (var pi2 = 0; pi2 < participants.length; pi2++) {
       var w = partWidths[pi2];
       partX.push(curX + w / 2);
-      curX += w + CFG.participantGap;
+      curX += w + spacing.participantGap;
     }
-    var totalW = curX - CFG.participantGap + CFG.svgPad;
+    var totalW = curX - spacing.participantGap + CFG.svgPad;
 
     // ── Process messages to compute Y positions ──
     var curY = CFG.svgPad + partH + 20; // Start below participant boxes
@@ -7020,7 +7639,7 @@
       pos.connY = snapshot.connY;
     }
 
-    function movePortPositionToY(entry, alias, targetY) {
+    function getPortMovementBounds(entry, alias) {
       var pos = entry && entry.portPositions ? entry.portPositions[alias] : null;
       if (!pos || (pos.side !== 'left' && pos.side !== 'right')) return null;
       if ((portUsageCount[componentPortUsageKey(entry.comp.name, alias)] || 0) !== 1) return null;
@@ -7049,14 +7668,131 @@
       }
       if (upper < lower) return null;
 
-      var newY = Math.max(lower, Math.min(upper, targetY));
+      return {
+        pos: pos,
+        lower: lower,
+        upper: upper,
+        halfPort: halfPort
+      };
+    }
+
+    function movePortPositionToY(entry, alias, targetY) {
+      var bounds = getPortMovementBounds(entry, alias);
+      if (!bounds) return null;
+
+      var pos = bounds.pos;
+      var newY = Math.max(bounds.lower, Math.min(bounds.upper, targetY));
       if (Math.abs(newY - pos.cy) < 0.75) return null;
 
       var snapshot = snapshotPortPosition(pos);
       pos.cy = newY;
       pos.connY = newY;
-      pos.y = newY - halfPort;
+      pos.y = newY - bounds.halfPort;
       return snapshot;
+    }
+
+    function clampComponentPortY(entry, alias, targetY) {
+      var bounds = getPortMovementBounds(entry, alias);
+      if (!bounds) return null;
+      return Math.max(bounds.lower, Math.min(bounds.upper, targetY));
+    }
+
+    function componentEndpointX(pos, isJoinedAssembly) {
+      if (!pos) return null;
+      if (isJoinedAssembly) return pos.cx;
+      if (pos.kind === 'provide') {
+        return pos.side === 'right' ? pos.cx + CFG.ifaceStick + CFG.ifaceRadius : pos.cx - CFG.ifaceStick - CFG.ifaceRadius;
+      }
+      if (pos.kind === 'require') {
+        return pos.side === 'right' ? pos.cx + CFG.ifaceStick : pos.cx - CFG.ifaceStick;
+      }
+      return pos.connX;
+    }
+
+    function buildComponentEndpointCandidates(entry, alias, pos, sideAnchor, otherEntry, otherPos, isJoinedAssembly, role) {
+      var candidates = [];
+      var stub = 20;
+
+      function pushCandidate(candidate) {
+        for (var i = 0; i < candidates.length; i++) {
+          if (Math.abs(candidates[i].x - candidate.x) < 0.75 &&
+              Math.abs(candidates[i].y - candidate.y) < 0.75 &&
+              candidates[i].side === candidate.side) {
+            return;
+          }
+        }
+        candidates.push(candidate);
+      }
+
+      if (pos) {
+        var preferredY = otherPos ? otherPos.cy : (otherEntry ? otherEntry.y + otherEntry.box.height / 2 : pos.cy);
+        var desiredY = clampComponentPortY(entry, alias, preferredY);
+        var candidateYs = [pos.cy];
+        if (desiredY !== null) {
+          candidateYs.push(desiredY);
+          candidateYs.push((pos.cy + desiredY) / 2);
+        }
+
+        for (var yi = 0; yi < candidateYs.length; yi++) {
+          var candidateY = desiredY === null ? pos.cy : clampComponentPortY(entry, alias, candidateYs[yi]);
+          if (candidateY === null) candidateY = pos.cy;
+          pushCandidate({
+            x: componentEndpointX(pos, isJoinedAssembly),
+            y: candidateY,
+            side: pos.side,
+            stub: stub,
+            movePenalty: Math.abs(candidateY - pos.cy) * 0.5,
+            apply: Math.abs(candidateY - pos.cy) > 0.75 ? function(entryRef, aliasRef, targetYRef) {
+              return function() { movePortPositionToY(entryRef, aliasRef, targetYRef); };
+            }(entry, alias, candidateY) : null
+          });
+        }
+        return candidates;
+      }
+
+      if (sideAnchor) {
+        pushCandidate({
+          x: sideAnchor.x,
+          y: sideAnchor.y,
+          side: sideAnchor.side,
+          stub: stub,
+          movePenalty: 0,
+          apply: null
+        });
+        if (otherEntry && (sideAnchor.side === 'left' || sideAnchor.side === 'right')) {
+          var preferredAnchorY = Math.max(entry.y + COMPONENT_SIDE_ANCHOR_PAD, Math.min(entry.y + entry.box.height - COMPONENT_SIDE_ANCHOR_PAD, otherEntry.y + otherEntry.box.height / 2));
+          pushCandidate({
+            x: sideAnchor.x,
+            y: preferredAnchorY,
+            side: sideAnchor.side,
+            stub: stub,
+            movePenalty: Math.abs(preferredAnchorY - sideAnchor.y) * 0.18,
+            apply: null
+          });
+        }
+        if (otherEntry && (sideAnchor.side === 'top' || sideAnchor.side === 'bottom')) {
+          var preferredAnchorX = Math.max(entry.x + COMPONENT_SIDE_ANCHOR_PAD, Math.min(entry.x + entry.box.width - COMPONENT_SIDE_ANCHOR_PAD, otherEntry.x + otherEntry.box.width / 2));
+          pushCandidate({
+            x: preferredAnchorX,
+            y: sideAnchor.y,
+            side: sideAnchor.side,
+            stub: stub,
+            movePenalty: Math.abs(preferredAnchorX - sideAnchor.x) * 0.18,
+            apply: null
+          });
+        }
+        return candidates;
+      }
+
+      if (otherEntry) {
+        var pref = getPreferredComponentSides(entry, otherEntry);
+        var side = role === 'target' ? pref.toSide : pref.fromSide;
+        var fallbackX = side === 'left' ? entry.x : side === 'right' ? entry.x + entry.box.width : entry.x + entry.box.width / 2;
+        var fallbackY = side === 'top' ? entry.y : side === 'bottom' ? entry.y + entry.box.height : entry.y + entry.box.height / 2;
+        pushCandidate({ x: fallbackX, y: fallbackY, side: side, stub: stub, movePenalty: 0, apply: null });
+      }
+
+      return candidates;
     }
 
     function applySourceLaneSmoothing(points, newY) {
@@ -7254,260 +7990,78 @@
       var skipN = {};
       skipN[conn.from] = true;
       skipN[conn.to] = true;
+      var sourceCandidates = buildComponentEndpointCandidates(fromE, conn.fromPort, fpPos, exitAnchor, toE, tpPos, isJoinedAssembly, 'source');
+      var targetCandidates = buildComponentEndpointCandidates(toE, conn.toPort, tpPos, entryAnchor, fromE, fpPos, isJoinedAssembly, 'target');
+      if (!sourceCandidates.length) sourceCandidates.push({ x: x1, y: y1, side: dir1, stub: 20, movePenalty: 0, apply: null });
+      if (!targetCandidates.length) targetCandidates.push({ x: x2, y: y2, side: dir2, stub: 20, movePenalty: 0, apply: null });
 
-      var isH1 = (dir1 === 'left' || dir1 === 'right');
-      var isH2 = (dir2 === 'left' || dir2 === 'right');
-      var margin = 20;
+      var bestRoute = null;
+      for (var sci = 0; sci < sourceCandidates.length; sci++) {
+        var sourceCandidate = sourceCandidates[sci];
+        for (var tci = 0; tci < targetCandidates.length; tci++) {
+          var targetCandidate = targetCandidates[tci];
+          var routed = UMLShared.routeOrthogonalConnector(sourceCandidate, targetCandidate, obstacles, {
+            skipNames: skipN,
+            occupied: occupiedSegments,
+            stub: 20,
+            bendPenalty: 38,
+            extraXs: [fromE.x + fromE.box.width / 2, toE.x + toE.box.width / 2],
+            extraYs: [fromE.y + fromE.box.height / 2, toE.y + toE.box.height / 2]
+          });
+          var candidatePoints = UMLShared.simplifyOrthogonalPath(routed.points);
+          if (UMLShared.routeHitsObstacle(candidatePoints, obstacles, skipN, null)) continue;
 
-      var points;
-      // Compute extension points: ensure we go far enough past the component
-      // (including port labels) before turning, so lines visibly exit from the port.
-      // Use the expanded obstacle bounds for the source/target components.
-      var fromObs = null, toObs = null;
-      for (var obi = 0; obi < obstacles.length; obi++) {
-        if (obstacles[obi].name === conn.from) fromObs = obstacles[obi];
-        if (obstacles[obi].name === conn.to) toObs = obstacles[obi];
-      }
+          var bends = UMLShared.countOrthogonalBends(candidatePoints);
+          var score = UMLShared.measureOrthogonalRoute(candidatePoints) + bends * 36 +
+            sourceCandidate.movePenalty + targetCandidate.movePenalty;
+          if (isJoinedAssembly && bends > 3) score += 12;
 
-      var ext1X = x1, ext1Y = y1;
-      if (dir1 === 'right') ext1X = fromObs ? Math.max(x1 + margin, fromObs.x2 + margin) : x1 + margin;
-      else if (dir1 === 'left') ext1X = fromObs ? Math.min(x1 - margin, fromObs.x1 - margin) : x1 - margin;
-      else if (dir1 === 'bottom') ext1Y = fromObs ? Math.max(y1 + margin, fromObs.y2 + margin) : y1 + margin;
-      else if (dir1 === 'top') ext1Y = fromObs ? Math.min(y1 - margin, fromObs.y1 - margin) : y1 - margin;
-
-      var ext2X = x2, ext2Y = y2;
-      if (dir2 === 'right') ext2X = toObs ? Math.max(x2 + margin, toObs.x2 + margin) : x2 + margin;
-      else if (dir2 === 'left') ext2X = toObs ? Math.min(x2 - margin, toObs.x1 - margin) : x2 - margin;
-      else if (dir2 === 'bottom') ext2Y = toObs ? Math.max(y2 + margin, toObs.y2 + margin) : y2 + margin;
-      else if (dir2 === 'top') ext2Y = toObs ? Math.min(y2 - margin, toObs.y1 - margin) : y2 - margin;
-
-      // All cases: build initial route, then always check for obstacles.
-
-      // Detect backward HH: exit direction opposes the direction to target
-      var isBackwardHH = isH1 && isH2 &&
-        ((dir1 === 'right' && x2 < x1) || (dir1 === 'left' && x2 > x1));
-
-      if (isH1 && isH2) {
-        if (isBackwardHH) {
-          // Backward connection: try a short local U-shape first,
-          // routing above or below the bounding box of just source+target.
-          var localMinY = Math.min(
-            fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2
-          );
-          var localMaxY = Math.max(
-            fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2
-          );
-          var backJitter = (ci % 5) * 10;
-          var tryAboveY = localMinY - 20 - backJitter;
-          var tryBelowY = localMaxY + 20 + backJitter;
-          var clearAbove = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryAboveY, obstacles, skipN, occupiedSegments);
-          var clearBelow = findClearY(Math.min(ext1X, ext2X), Math.max(ext1X, ext2X), tryBelowY, obstacles, skipN, occupiedSegments);
-          // Pick whichever stays closest to the diagram (smallest absolute distance from source)
-          var distAbove = Math.abs(y1 - clearAbove);
-          var distBelow = Math.abs(y1 - clearBelow);
-          var backDetourY = distAbove <= distBelow ? clearAbove : clearBelow;
-          points = [
-            { x: x1, y: y1 }, { x: ext1X, y: y1 },
-            { x: ext1X, y: backDetourY },
-            { x: ext2X, y: backDetourY },
-            { x: ext2X, y: y2 }, { x: x2, y: y2 }
-          ];
-        } else if (Math.abs(y1 - y2) < 2) {
-          // Same-Y direct line (only for forward connections)
-          points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-        } else {
-          // S-shape: exit horizontal → vertical channel → enter horizontal
-          var midX;
-          // Place midX based on Y direction so upward/downward routes naturally separate.
-          // Upward connections exit near source; downward connections arrive near target.
-          if ((dir1 === 'right' && dir2 === 'left' && ext1X > ext2X) ||
-              (dir1 === 'left' && dir2 === 'right' && ext1X < ext2X)) {
-            // Backward: route via the far side
-            midX = (dir1 === 'right') ? Math.max(ext1X, ext2X) : Math.min(ext1X, ext2X);
-          } else {
-            var frac = (y2 < y1) ? 0.25 : (y2 > y1) ? 0.75 : 0.5;
-            midX = ext1X + (ext2X - ext1X) * frac;
+          if (!bestRoute || score + 0.01 < bestRoute.score) {
+            bestRoute = {
+              score: score,
+              points: candidatePoints,
+              source: sourceCandidate,
+              target: targetCandidate
+            };
           }
-          midX += (ci % 3) * 14 - 14; // small per-connection jitter for same-direction routes
-          // Clamp to corridor so the vertical segment stays between the two components
-          if (dir1 === 'right' && dir2 === 'left' && ext1X <= ext2X) {
-            midX = Math.min(Math.max(midX, ext1X), ext2X);
-          } else if (dir1 === 'left' && dir2 === 'right' && ext2X <= ext1X) {
-            midX = Math.min(Math.max(midX, ext2X), ext1X);
-          }
-          midX = findClearX(Math.min(y1, y2), Math.max(y1, y2), midX, obstacles, skipN, occupiedSegments);
-          points = [
-            { x: x1, y: y1 }, { x: midX, y: y1 },
-            { x: midX, y: y2 }, { x: x2, y: y2 }
-          ];
-        }
-        // If the route hits obstacles (common for same-Y routes through components),
-        // detour above or below via a clear horizontal channel.
-        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-          var detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), y1 - 50, obstacles, skipN, occupiedSegments);
-          points = [
-            { x: x1, y: y1 }, { x: ext1X, y: y1 },
-            { x: ext1X, y: detourY },
-            { x: ext2X, y: detourY },
-            { x: ext2X, y: y2 }, { x: x2, y: y2 }
-          ];
-          // If still blocked, try below
-          if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-            detourY = findClearY(Math.min(x1, x2), Math.max(x1, x2), Math.max(y1, y2) + 50, obstacles, skipN, occupiedSegments);
-            points = [
-              { x: x1, y: y1 }, { x: ext1X, y: y1 },
-              { x: ext1X, y: detourY },
-              { x: ext2X, y: detourY },
-              { x: ext2X, y: y2 }, { x: x2, y: y2 }
-            ];
-          }
-        }
-      } else if (!isH1 && !isH2) {
-        // Both vertical exits
-        if (Math.abs(x1 - x2) < 2) {
-          points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-        } else {
-          var midY = (ext1Y + ext2Y) / 2;
-          if ((dir1 === 'bottom' && dir2 === 'top' && ext1Y > ext2Y) ||
-              (dir1 === 'top' && dir2 === 'bottom' && ext1Y < ext2Y)) {
-            midY = (dir1 === 'bottom') ? Math.max(ext1Y, ext2Y) : Math.min(ext1Y, ext2Y);
-          }
-          midY += (ci % 5) * 12 - 24; // Jitter to prevent identical overlaps
-          midY = findClearY(Math.min(x1, x2), Math.max(x1, x2), midY, obstacles, skipN, occupiedSegments);
-          points = [
-            { x: x1, y: y1 }, { x: x1, y: midY },
-            { x: x2, y: midY }, { x: x2, y: y2 }
-          ];
-        }
-        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-          var detourX = findClearX(Math.min(y1, y2), Math.max(y1, y2), x1 - 50, obstacles, skipN, occupiedSegments);
-          points = [
-            { x: x1, y: y1 }, { x: x1, y: ext1Y },
-            { x: detourX, y: ext1Y },
-            { x: detourX, y: ext2Y },
-            { x: x2, y: ext2Y }, { x: x2, y: y2 }
-          ];
-        }
-      } else if (isH1 && !isH2) {
-        // Horizontal exit → vertical entry — L-shape
-        points = [{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }];
-        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-          points = [{ x: x1, y: y1 }, { x: ext1X, y: y1 }, { x: ext1X, y: y2 }, { x: x2, y: y2 }];
-        }
-      } else {
-        // Vertical exit → horizontal entry — L-shape
-        points = [{ x: x1, y: y1 }, { x: x1, y: y2 }, { x: x2, y: y2 }];
-        if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-          points = [{ x: x1, y: y1 }, { x: x1, y: ext1Y }, { x: x2, y: ext1Y }, { x: x2, y: y2 }];
         }
       }
 
-      // Final obstacle check — if still blocked, find clear channel
-      if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-        if (isH1) {
-          var detourYf = findClearY(Math.min(x1, x2), Math.max(x1, x2),
-            Math.min(y1, y2) - 50, obstacles, skipN, occupiedSegments);
-          points = [
-            { x: x1, y: y1 }, { x: ext1X, y: y1 },
-            { x: ext1X, y: detourYf },
-            { x: ext2X, y: detourYf },
-            { x: ext2X, y: y2 }, { x: x2, y: y2 }
-          ];
-        } else {
-          var detourXf = findClearX(Math.min(y1, y2), Math.max(y1, y2),
-            Math.min(x1, x2) - 50, obstacles, skipN, occupiedSegments);
-          points = [
-            { x: x1, y: y1 }, { x: x1, y: ext1Y },
-            { x: detourXf, y: ext1Y },
-            { x: detourXf, y: ext2Y },
-            { x: x2, y: ext2Y }, { x: x2, y: y2 }
-          ];
-        }
+      if (!bestRoute) {
+        bestRoute = {
+          score: 0,
+          points: UMLShared.routeOrthogonalConnector(sourceCandidates[0], targetCandidates[0], obstacles, {
+            skipNames: skipN,
+            occupied: null,
+            stub: 20,
+            bendPenalty: 38
+          }).points,
+          source: sourceCandidates[0],
+          target: targetCandidates[0]
+        };
       }
 
-      // Simplify collinear points
-      points = simplifyRoute(points);
+      if (bestRoute.source.apply) bestRoute.source.apply();
+      if (bestRoute.target.apply) bestRoute.target.apply();
+      if (conn.fromPort && fromE.portPositions[conn.fromPort]) fpPos = fromE.portPositions[conn.fromPort];
+      if (conn.toPort && toE.portPositions[conn.toPort]) tpPos = toE.portPositions[conn.toPort];
 
-      // Post-routing validation: check intermediate segments against obstacles,
-      // skipping source and target (they necessarily border those boxes).
-      if (points.length >= 4) {
-        var intermediateHit = false;
-        for (var vi = 1; vi < points.length - 2; vi++) {
-          var vp0 = points[vi], vp1 = points[vi + 1];
-          var vIsH = Math.abs(vp0.y - vp1.y) < 2;
-          var vIsV = Math.abs(vp0.x - vp1.x) < 2;
-          for (var vj = 0; vj < obstacles.length; vj++) {
-            var vo = obstacles[vj];
-            if (skipN && skipN[vo.name]) continue;
-            if (vIsV && vp0.x > vo.x1 && vp0.x < vo.x2) {
-              var vyMin = Math.min(vp0.y, vp1.y), vyMax = Math.max(vp0.y, vp1.y);
-              if (vyMax > vo.y1 && vyMin < vo.y2) { intermediateHit = true; break; }
-            } else if (vIsH && vp0.y > vo.y1 && vp0.y < vo.y2) {
-              var vxMin = Math.min(vp0.x, vp1.x), vxMax = Math.max(vp0.x, vp1.x);
-              if (vxMax > vo.x1 && vxMin < vo.x2) { intermediateHit = true; break; }
-            }
-          }
-          if (intermediateHit) break;
-        }
-        if (intermediateHit && isH1 && isH2) {
-          // Find the widest clear vertical corridor between ext1X and ext2X
-          // by collecting all obstacle X intervals that overlap [vyLo, vyHi].
-          var vxL = Math.min(ext1X, ext2X), vxR = Math.max(ext1X, ext2X);
-          var vyLo = Math.min(y1, y2), vyHi = Math.max(y1, y2);
-          // Build sorted list of blocked X intervals in that Y band
-          var vBlocked = [];
-          for (var vbj = 0; vbj < obstacles.length; vbj++) {
-            var vbo = obstacles[vbj];
-            if (skipN && skipN[vbo.name]) continue;
-            if (vbo.x2 > vxL && vbo.x1 < vxR && vyHi > vbo.y1 && vyLo < vbo.y2) {
-              vBlocked.push({ a: Math.max(vbo.x1, vxL), b: Math.min(vbo.x2, vxR) });
-            }
-          }
-          vBlocked.sort(function(a, b) { return a.a - b.a; });
-          // Find widest gap
-          var vGapStart = vxL, vBestGapW = 0, vBestMidX = null;
-          for (var vgi2 = 0; vgi2 < vBlocked.length; vgi2++) {
-            var vgapW = vBlocked[vgi2].a - vGapStart;
-            if (vgapW > vBestGapW) { vBestGapW = vgapW; vBestMidX = (vGapStart + vBlocked[vgi2].a) / 2; }
-            if (vBlocked[vgi2].b > vGapStart) vGapStart = vBlocked[vgi2].b;
-          }
-          var vTrailGap = vxR - vGapStart;
-          if (vTrailGap > vBestGapW) { vBestMidX = (vGapStart + vxR) / 2; }
-
-          if (vBestMidX !== null) {
-            points = [
-              { x: x1, y: y1 }, { x: vBestMidX, y: y1 },
-              { x: vBestMidX, y: y2 }, { x: x2, y: y2 }
-            ];
-          } else {
-            // No gap — route above/below the local bounding box
-            var vLocalMinY = Math.min(fromObs ? fromObs.y1 : y1, toObs ? toObs.y1 : y2);
-            var vLocalMaxY = Math.max(fromObs ? fromObs.y2 : y1, toObs ? toObs.y2 : y2);
-            var vDetourAbove = findClearY(vxL, vxR, vLocalMinY - 20 - (ci % 3) * 10, obstacles, skipN, occupiedSegments);
-            var vDetourBelow = findClearY(vxL, vxR, vLocalMaxY + 20 + (ci % 3) * 10, obstacles, skipN, occupiedSegments);
-            var vDetourY = (Math.abs(y1 - vDetourAbove) <= Math.abs(y1 - vDetourBelow)) ? vDetourAbove : vDetourBelow;
-            points = [
-              { x: x1, y: y1 }, { x: ext1X, y: y1 },
-              { x: ext1X, y: vDetourY },
-              { x: ext2X, y: vDetourY },
-              { x: ext2X, y: y2 }, { x: x2, y: y2 }
-            ];
-          }
-          points = simplifyRoute(points);
-        }
+      var points = refineRouteEndpoints(conn, bestRoute.points, fpPos, tpPos, skipN);
+      points = UMLShared.simplifyOrthogonalPath(points);
+      if (UMLShared.routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
+        points = UMLShared.routeOrthogonalConnector(bestRoute.source, bestRoute.target, obstacles, {
+          skipNames: skipN,
+          occupied: null,
+          stub: 20,
+          bendPenalty: 38,
+          extraXs: [fromE.x + fromE.box.width / 2, toE.x + toE.box.width / 2],
+          extraYs: [fromE.y + fromE.box.height / 2, toE.y + toE.box.height / 2]
+        }).points;
+        points = refineRouteEndpoints(conn, points, fpPos, tpPos, skipN);
+        points = UMLShared.simplifyOrthogonalPath(points);
       }
 
-      points = spreadRouteToFreeLanes(points, obstacles, skipN, occupiedSegments);
-      points = simplifyRoute(points);
-
-      if (routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
-        points = spreadRouteToFreeLanes(points, obstacles, skipN, occupiedSegments);
-        points = simplifyRoute(points);
-      }
-
-      points = refineRouteEndpoints(conn, points, fpPos, tpPos, skipN);
-
-      reserveRoute(points, occupiedSegments);
+      UMLShared.reserveOrthogonalRoute(points, occupiedSegments);
 
       if (isJoinedAssembly) {
         // ── Ball-and-socket: prefer the longest horizontal segment ──
@@ -8201,6 +8755,7 @@
       entriesByTo[plk.to].push(pli);
     }
     var distExitX = {}, distEntryX = {};
+    var distExitY = {}, distEntryY = {};
     for (var efn in exitsByFrom) {
       var efg = exitsByFrom[efn];
       if (efg.length < 2) continue;
@@ -8212,6 +8767,15 @@
       });
       for (var efi = 0; efi < efg.length; efi++) {
         distExitX[efg[efi]] = efe.x + efe.box.width * (efi + 1) / (efg.length + 1);
+      }
+
+      var efgByY = efg.slice().sort(function(a, b) {
+        var ta = entries[links[a].to], tb = entries[links[b].to];
+        if (!ta || !tb) return 0;
+        return (ta.y + ta.box.height / 2) - (tb.y + tb.box.height / 2);
+      });
+      for (var efyi = 0; efyi < efgByY.length; efyi++) {
+        distExitY[efgByY[efyi]] = efe.y + efe.box.height * (efyi + 1) / (efgByY.length + 1);
       }
     }
     for (var etn in entriesByTo) {
@@ -8225,6 +8789,15 @@
       });
       for (var eti = 0; eti < etg.length; eti++) {
         distEntryX[etg[eti]] = ete.x + ete.box.width * (eti + 1) / (etg.length + 1);
+      }
+
+      var etgByY = etg.slice().sort(function(a, b) {
+        var fa = entries[links[a].from], fb = entries[links[b].from];
+        if (!fa || !fb) return 0;
+        return (fa.y + fa.box.height / 2) - (fb.y + fb.box.height / 2);
+      });
+      for (var etyi = 0; etyi < etgByY.length; etyi++) {
+        distEntryY[etgByY[etyi]] = ete.y + ete.box.height * (etyi + 1) / (etgByY.length + 1);
       }
     }
 
@@ -8278,7 +8851,83 @@
       return preferY;
     }
 
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function uniqueAnchorValues(values) {
+      var out = [];
+      for (var i = 0; i < values.length; i++) {
+        if (values[i] == null || !isFinite(values[i])) continue;
+        if (!out.length || Math.abs(values[i] - out[out.length - 1]) > 0.5) out.push(values[i]);
+      }
+      return out;
+    }
+
+    function buildDeploymentPreferredSideOrder(sourceEntry, targetEntry, isSource) {
+      var sourceCx = sourceEntry.x + sourceEntry.box.width / 2;
+      var sourceCy = sourceEntry.y + sourceEntry.box.height / 2;
+      var targetCx = targetEntry.x + targetEntry.box.width / 2;
+      var targetCy = targetEntry.y + targetEntry.box.height / 2;
+      var dx = targetCx - sourceCx;
+      var dy = targetCy - sourceCy;
+      var primaryH = dx >= 0 ? (isSource ? 'right' : 'left') : (isSource ? 'left' : 'right');
+      var secondaryH = dx >= 0 ? (isSource ? 'left' : 'right') : (isSource ? 'right' : 'left');
+      var primaryV = dy >= 0 ? (isSource ? 'bottom' : 'top') : (isSource ? 'top' : 'bottom');
+      var secondaryV = dy >= 0 ? (isSource ? 'top' : 'bottom') : (isSource ? 'bottom' : 'top');
+
+      if (Math.abs(dx) > Math.abs(dy) * 1.15) return [primaryH, primaryV, secondaryV, secondaryH];
+      if (Math.abs(dy) > Math.abs(dx) * 1.15) return [primaryV, primaryH, secondaryH, secondaryV];
+      return [primaryH, primaryV, secondaryH, secondaryV];
+    }
+
+    function buildDeploymentAnchorCandidates(entry, side, preferredCoord) {
+      var left = entry.x;
+      var right = entry.x + entry.box.width;
+      var top = entry.y;
+      var bottom = entry.y + entry.box.height;
+      var centerX = left + entry.box.width / 2;
+      var centerY = top + entry.box.height / 2;
+      var anchors = [];
+      var values;
+
+      if (side === 'top' || side === 'bottom') {
+        var insetX = Math.max(16, Math.min(32, entry.box.width * 0.18));
+        values = uniqueAnchorValues([
+          preferredCoord != null ? clamp(preferredCoord, left + insetX, right - insetX) : centerX,
+          centerX,
+          centerX - entry.box.width * 0.28,
+          centerX + entry.box.width * 0.28
+        ]);
+        for (var xi = 0; xi < values.length; xi++) {
+          anchors.push({
+            x: clamp(values[xi], left + insetX, right - insetX),
+            y: side === 'top' ? top : bottom,
+            side: side
+          });
+        }
+        return anchors;
+      }
+
+      var insetY = Math.max(16, Math.min(28, entry.box.height * 0.18));
+      values = uniqueAnchorValues([
+        preferredCoord != null ? clamp(preferredCoord, top + insetY, bottom - insetY) : centerY,
+        centerY,
+        centerY - entry.box.height * 0.26,
+        centerY + entry.box.height * 0.26
+      ]);
+      for (var yi = 0; yi < values.length; yi++) {
+        anchors.push({
+          x: side === 'left' ? left : right,
+          y: clamp(values[yi], top + insetY, bottom - insetY),
+          side: side
+        });
+      }
+      return anchors;
+    }
+
     // ── Draw links ──
+    var occupiedSegments = { h: [], v: [] };
     for (var li = 0; li < links.length; li++) {
       var lk = links[li];
       var fromE = entries[lk.from], toE = entries[lk.to];
@@ -8287,76 +8936,93 @@
       var isDash = lk.type === 'dependency';
       var dAttr = isDash ? ' stroke-dasharray="8,4"' : '';
 
-      var origFromCx = fromE.x + fromE.box.width / 2;
-      var origToCx = toE.x + toE.box.width / 2;
-      var fromCy = fromE.y + fromE.box.height / 2;
-      var toCy = toE.y + toE.box.height / 2;
-      var dx = origToCx - origFromCx, dy = toCy - fromCy;
-      var fromCx = (distExitX[li] !== undefined) ? distExitX[li] : origFromCx;
-      var toCx = (distEntryX[li] !== undefined) ? distEntryX[li] : origToCx;
+      var sourceCenterX = fromE.x + fromE.box.width / 2;
+      var sourceCenterY = fromE.y + fromE.box.height / 2;
+      var targetCenterX = toE.x + toE.box.width / 2;
+      var targetCenterY = toE.y + toE.box.height / 2;
 
-      // Skip names for obstacle checking (don't avoid source/target)
       var skipN = {};
       skipN[lk.from] = true;
       skipN[lk.to] = true;
 
-      var x1, y1, x2, y2;
-      var exitDir; // 'top', 'bottom', 'left', 'right'
-      var entryDir;
-      if (Math.abs(dx) > Math.abs(dy) * 1.5) {
-        if (dx > 0) { x1 = fromE.x + fromE.box.width; y1 = fromCy; x2 = toE.x; y2 = toCy; exitDir = 'right'; entryDir = 'left'; }
-        else { x1 = fromE.x; y1 = fromCy; x2 = toE.x + toE.box.width; y2 = toCy; exitDir = 'left'; entryDir = 'right'; }
-      } else {
-        // For vertical links, try to use the same X for both endpoints to avoid angles
-        // Pick the X that is clear of obstacles, preferring mid between the two
-        var sharedX = (fromCx + toCx) / 2;
-        var yTop = Math.min(fromE.y + fromE.box.height, toE.y) ;
-        var yBot = Math.max(fromE.y + fromE.box.height, toE.y);
-        if (!vSegHitsObs(sharedX, yTop, yBot, skipN)) {
-          fromCx = sharedX;
-          toCx = sharedX;
-        } else if (!vSegHitsObs(fromCx, yTop, yBot, skipN)) {
-          toCx = fromCx;
-        } else if (!vSegHitsObs(toCx, yTop, yBot, skipN)) {
-          fromCx = toCx;
+      var sourceSideOrder = buildDeploymentPreferredSideOrder(fromE, toE, true);
+      var targetSideOrder = buildDeploymentPreferredSideOrder(fromE, toE, false);
+      var sourcePreferredX = distExitX[li] !== undefined ? distExitX[li] : sourceCenterX;
+      var targetPreferredX = distEntryX[li] !== undefined ? distEntryX[li] : targetCenterX;
+      var sourcePreferredY = distExitY[li] !== undefined ? distExitY[li] : sourceCenterY;
+      var targetPreferredY = distEntryY[li] !== undefined ? distEntryY[li] : targetCenterY;
+      var sourceCandidates = [];
+      var targetCandidates = [];
+      var routeExtraXs = [sourceCenterX, targetCenterX, sourcePreferredX, targetPreferredX];
+      var routeExtraYs = [sourceCenterY, targetCenterY, sourcePreferredY, targetPreferredY];
+
+      for (var ssi = 0; ssi < sourceSideOrder.length; ssi++) {
+        var sourceSide = sourceSideOrder[ssi];
+        var sourceAnchors = buildDeploymentAnchorCandidates(
+          fromE,
+          sourceSide,
+          (sourceSide === 'top' || sourceSide === 'bottom') ? sourcePreferredX : sourcePreferredY
+        );
+        for (var sai = 0; sai < sourceAnchors.length; sai++) {
+          sourceCandidates.push({ anchor: sourceAnchors[sai], sideRank: ssi, anchorRank: sai });
         }
-        if (dy > 0) { x1 = fromCx; y1 = fromE.y + fromE.box.height; x2 = toCx; y2 = toE.y; exitDir = 'bottom'; entryDir = 'top'; }
-        else { x1 = fromCx; y1 = fromE.y; x2 = toCx; y2 = toE.y + toE.box.height; exitDir = 'top'; entryDir = 'bottom'; }
       }
 
-      var points;
-      if (Math.abs(x1 - x2) < 2 && Math.abs(y1 - y2) < 2) {
-        points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-      } else if (exitDir === 'bottom' || exitDir === 'top') {
-        // Vertical link
-        if (Math.abs(x1 - x2) < 2) {
-          // Straight vertical — check if it passes through an obstacle
-          var vTop = Math.min(y1, y2), vBot = Math.max(y1, y2);
-          if (!vSegHitsObs(x1, vTop, vBot, skipN)) {
-            points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-          } else {
-            // Need to route around — find clear X for vertical channel
-            var clearX = findClearX(vTop, vBot, x1, skipN);
-            points = [{ x: x1, y: y1 }, { x: x1, y: (y1 + y2) / 2 }, { x: clearX, y: (y1 + y2) / 2 }, { x: clearX, y: y2 }];
-          }
-        } else {
-          // Different X — use Z-route with obstacle-aware midY
-          var midY = (y1 + y2) / 2;
-          var xMin = Math.min(x1, x2), xMax = Math.max(x1, x2);
-          midY = findClearY(xMin, xMax, midY, skipN);
-          points = [{ x: x1, y: y1 }, { x: x1, y: midY }, { x: x2, y: midY }, { x: x2, y: y2 }];
-        }
-      } else {
-        // Horizontal link
-        if (Math.abs(y1 - y2) < 2) {
-          points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-        } else {
-          var midX = (x1 + x2) / 2;
-          var hTop = Math.min(y1, y2), hBot = Math.max(y1, y2);
-          midX = findClearX(hTop, hBot, midX, skipN);
-          points = [{ x: x1, y: y1 }, { x: midX, y: y1 }, { x: midX, y: y2 }, { x: x2, y: y2 }];
+      for (var tsi = 0; tsi < targetSideOrder.length; tsi++) {
+        var targetSide = targetSideOrder[tsi];
+        var targetAnchors = buildDeploymentAnchorCandidates(
+          toE,
+          targetSide,
+          (targetSide === 'top' || targetSide === 'bottom') ? targetPreferredX : targetPreferredY
+        );
+        for (var tai = 0; tai < targetAnchors.length; tai++) {
+          targetCandidates.push({ anchor: targetAnchors[tai], sideRank: tsi, anchorRank: tai });
         }
       }
+
+      var bestRoute = null;
+      for (var sci = 0; sci < sourceCandidates.length; sci++) {
+        var sourceCandidate = sourceCandidates[sci];
+        for (var tci = 0; tci < targetCandidates.length; tci++) {
+          var targetCandidate = targetCandidates[tci];
+          var routed = UMLShared.routeOrthogonalConnector(sourceCandidate.anchor, targetCandidate.anchor, obstacles, {
+            skipNames: skipN,
+            occupied: occupiedSegments,
+            clearance: 10,
+            bendPenalty: 44,
+            extraXs: routeExtraXs,
+            extraYs: routeExtraYs
+          });
+          if (!routed || !routed.points || routed.points.length < 2) continue;
+
+          var score = routed.length + routed.bends * 40;
+          score += sourceCandidate.sideRank * 28 + targetCandidate.sideRank * 28;
+          score += sourceCandidate.anchorRank * 6 + targetCandidate.anchorRank * 6;
+
+          if (!bestRoute || score < bestRoute.score - 0.5 ||
+              (Math.abs(score - bestRoute.score) <= 0.5 && routed.bends < bestRoute.bends) ||
+              (Math.abs(score - bestRoute.score) <= 0.5 && routed.bends === bestRoute.bends && routed.length < bestRoute.length)) {
+            bestRoute = {
+              points: routed.points,
+              score: score,
+              bends: routed.bends,
+              length: routed.length
+            };
+          }
+        }
+      }
+
+      var points = bestRoute ? bestRoute.points : UMLShared.routeOrthogonalConnector(
+        buildDeploymentAnchorCandidates(fromE, sourceSideOrder[0], sourceSideOrder[0] === 'top' || sourceSideOrder[0] === 'bottom' ? sourcePreferredX : sourcePreferredY)[0],
+        buildDeploymentAnchorCandidates(toE, targetSideOrder[0], targetSideOrder[0] === 'top' || targetSideOrder[0] === 'bottom' ? targetPreferredX : targetPreferredY)[0],
+        obstacles,
+        {
+          skipNames: skipN,
+          extraXs: routeExtraXs,
+          extraYs: routeExtraYs
+        }
+      ).points;
+      UMLShared.reserveOrthogonalRoute(points, occupiedSegments);
 
       var pStr = '';
       for (var pi = 0; pi < points.length; pi++) { if (pi > 0) pStr += ' '; pStr += points[pi].x + ',' + points[pi].y; }
