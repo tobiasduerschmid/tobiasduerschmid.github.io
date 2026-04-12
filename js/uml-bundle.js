@@ -4694,9 +4694,11 @@
     for (var i = 0; i < components.length; i++) {
       var c = components[i];
       var leftPorts = [], rightPorts = [];
+      var portOrderIndex = {};
       for (var pi = 0; pi < c.ports.length; pi++) {
         var port = c.ports[pi];
         var alias = port.alias;
+        portOrderIndex[alias] = pi;
         if (port.direction === 'in') {
           leftPorts.push(alias);
         } else if (port.direction === 'out') {
@@ -4749,6 +4751,7 @@
         x: 0, y: 0,
         leftPorts: leftPorts,
         rightPorts: rightPorts,
+        portOrderIndex: portOrderIndex,
         portPositions: {},
         hasPorts: hasPorts,
       };
@@ -4863,20 +4866,48 @@
 
       if (columns.length > fixedPrefix + 1) {
         var optimizedColumns = columns.slice();
-        var improved = true;
-        while (improved) {
-          improved = false;
-          var currentScore = scoreColumnOrder(optimizedColumns);
-          for (var swapIdx = fixedPrefix; swapIdx < optimizedColumns.length - 1; swapIdx++) {
-            var candidate = optimizedColumns.slice();
-            var tmp = candidate[swapIdx];
-            candidate[swapIdx] = candidate[swapIdx + 1];
-            candidate[swapIdx + 1] = tmp;
-            var candidateScore = scoreColumnOrder(candidate);
-            if (candidateScore + 0.01 < currentScore) {
-              optimizedColumns = candidate;
-              currentScore = candidateScore;
-              improved = true;
+        var movableColumns = columns.slice(fixedPrefix);
+
+        if (movableColumns.length <= 7) {
+          var bestOrder = columns.slice();
+          var bestScore = scoreColumnOrder(bestOrder);
+
+          function searchColumnOrders(prefixOrder, remaining) {
+            if (!remaining.length) {
+              var fullOrder = columns.slice(0, fixedPrefix).concat(prefixOrder);
+              var fullScore = scoreColumnOrder(fullOrder);
+              if (fullScore + 0.01 < bestScore) {
+                bestOrder = fullOrder;
+                bestScore = fullScore;
+              }
+              return;
+            }
+
+            for (var ri2 = 0; ri2 < remaining.length; ri2++) {
+              var nextPrefix = prefixOrder.concat([remaining[ri2]]);
+              var nextRemaining = remaining.slice(0, ri2).concat(remaining.slice(ri2 + 1));
+              searchColumnOrders(nextPrefix, nextRemaining);
+            }
+          }
+
+          searchColumnOrders([], movableColumns);
+          optimizedColumns = bestOrder;
+        } else {
+          var improved = true;
+          while (improved) {
+            improved = false;
+            var currentScore = scoreColumnOrder(optimizedColumns);
+            for (var swapIdx = fixedPrefix; swapIdx < optimizedColumns.length - 1; swapIdx++) {
+              var candidate = optimizedColumns.slice();
+              var tmp = candidate[swapIdx];
+              candidate[swapIdx] = candidate[swapIdx + 1];
+              candidate[swapIdx + 1] = tmp;
+              var candidateScore = scoreColumnOrder(candidate);
+              if (candidateScore + 0.01 < currentScore) {
+                optimizedColumns = candidate;
+                currentScore = candidateScore;
+                improved = true;
+              }
             }
           }
         }
@@ -4894,94 +4925,83 @@
       }
     }
 
-    // ── Reorder ports to minimize crossing lines ──
-    // Sort ports by the angle from this component to their connection partner.
-    // Ports connecting to targets above-right get negative angles (sorted to top),
-    // ports connecting below-right get positive angles (sorted to bottom).
-    var portTargetPos = {};  // right-port alias → { x, y } of target center
-    var portSourcePos = {};  // left-port alias → { x, y } of source center
-    var desiredPortY = {};   // component.port → [partner center Y values]
+    // ── Place ports to minimize crossings and avoidable bends ──
+    var desiredPortY = {};
+    function portKey(compName, alias) {
+      return compName + '.' + alias;
+    }
     function pushDesiredPortY(compName, alias, y) {
-      var key = compName + '.' + alias;
+      var key = portKey(compName, alias);
       if (!desiredPortY[key]) desiredPortY[key] = [];
       desiredPortY[key].push(y);
     }
-    function averagePortY(values) {
+    function averagePortY(key) {
+      var values = desiredPortY[key];
       if (!values || !values.length) return null;
       var total = 0;
       for (var vi = 0; vi < values.length; vi++) total += values[vi];
       return total / values.length;
     }
-    for (var ri = 0; ri < connectors.length; ri++) {
-      var rc = connectors[ri];
-      if (rc.fromPort && entries[rc.from] && entries[rc.to]) {
-        var rte = entries[rc.to];
-        portTargetPos[rc.fromPort] = { x: rte.x, y: rte.y + rte.box.height / 2 };
-        pushDesiredPortY(rc.from, rc.fromPort, rte.y + rte.box.height / 2);
-      }
-      if (rc.toPort && entries[rc.from] && entries[rc.to]) {
-        var rse = entries[rc.from];
-        portSourcePos[rc.toPort] = { x: rse.x + rse.box.width, y: rse.y + rse.box.height / 2 };
-        pushDesiredPortY(rc.to, rc.toPort, rse.y + rse.box.height / 2);
+    function defaultPortSide(compName, portDef) {
+      if (portDef.direction === 'in') return 'left';
+      if (portDef.direction === 'out') return 'right';
+      return portSides[compName + '.' + portDef.alias] || 'right';
+    }
+    function chooseInitialPortSide(entry, portDef, partnerCenterX) {
+      var preferred = defaultPortSide(entry.comp.name, portDef);
+      if (partnerCenterX === null || partnerCenterX === undefined) return preferred;
+      var centerX = entry.x + entry.box.width / 2;
+      if (partnerCenterX < centerX - 18) return 'left';
+      if (partnerCenterX > centerX + 18) return 'right';
+      return preferred;
+    }
+    function rebuildDesiredPortY(useActualPartnerPorts) {
+      desiredPortY = {};
+      for (var ri = 0; ri < connectors.length; ri++) {
+        var rc = connectors[ri];
+        if (!entries[rc.from] || !entries[rc.to]) continue;
+
+        var fromEntry = entries[rc.from];
+        var toEntry = entries[rc.to];
+        var fromPartnerY = toEntry.y + toEntry.box.height / 2;
+        var toPartnerY = fromEntry.y + fromEntry.box.height / 2;
+
+        if (useActualPartnerPorts && rc.toPort && toEntry.portPositions[rc.toPort]) {
+          fromPartnerY = toEntry.portPositions[rc.toPort].cy;
+        }
+        if (useActualPartnerPorts && rc.fromPort && fromEntry.portPositions[rc.fromPort]) {
+          toPartnerY = fromEntry.portPositions[rc.fromPort].cy;
+        }
+
+        if (rc.fromPort) pushDesiredPortY(rc.from, rc.fromPort, fromPartnerY);
+        if (rc.toPort) pushDesiredPortY(rc.to, rc.toPort, toPartnerY);
       }
     }
+
     for (var pn in entries) {
       var pe = entries[pn];
-      var centerX = pe.x + pe.box.width / 2;
       var newLeftPorts = [];
       var newRightPorts = [];
       for (var pidx = 0; pidx < pe.comp.ports.length; pidx++) {
         var portDef = pe.comp.ports[pidx];
-        var alias = portDef.alias;
-        var side = portDef.direction === 'in'
-          ? 'left'
-          : (portDef.direction === 'out' ? 'right' : (portSides[pn + '.' + alias] || 'right'));
-        var partnerPos = portTargetPos[alias] || portSourcePos[alias];
-        if (partnerPos) {
-          if (partnerPos.x < centerX - 18) side = 'left';
-          else if (partnerPos.x > centerX + 18) side = 'right';
+        var partnerCenterX = null;
+        for (var cpi = 0; cpi < connectors.length; cpi++) {
+          var connHint = connectors[cpi];
+          if (connHint.from === pn && connHint.fromPort === portDef.alias && entries[connHint.to]) {
+            partnerCenterX = entries[connHint.to].x + entries[connHint.to].box.width / 2;
+            break;
+          }
+          if (connHint.to === pn && connHint.toPort === portDef.alias && entries[connHint.from]) {
+            partnerCenterX = entries[connHint.from].x + entries[connHint.from].box.width / 2;
+            break;
+          }
         }
-        if (side === 'left') newLeftPorts.push(alias);
-        else newRightPorts.push(alias);
+        var side = chooseInitialPortSide(pe, portDef, partnerCenterX);
+        if (side === 'left') newLeftPorts.push(portDef.alias);
+        else newRightPorts.push(portDef.alias);
       }
       pe.leftPorts = newLeftPorts;
       pe.rightPorts = newRightPorts;
-    }
-    for (var sn in entries) {
-      var se = entries[sn];
-      var seCY = se.y + se.box.height / 2;
-      // Right ports: sort by angle to target
-      var seRightX = se.x + se.box.width;
-      se.rightPorts.sort(function(a, b) {
-        var desiredA = averagePortY(desiredPortY[sn + '.' + a]);
-        var desiredB = averagePortY(desiredPortY[sn + '.' + b]);
-        if (desiredA !== null && desiredB !== null && Math.abs(desiredA - desiredB) > 1) {
-          return desiredA - desiredB;
-        }
-        var pa = portTargetPos[a], pb = portTargetPos[b];
-        if (!pa && !pb) return 0;
-        if (!pa) return 1;
-        if (!pb) return -1;
-        var angleA = Math.atan2(pa.y - seCY, Math.max(1, pa.x - seRightX));
-        var angleB = Math.atan2(pb.y - seCY, Math.max(1, pb.x - seRightX));
-        return angleA - angleB;
-      });
-      // Left ports: sort by angle from source
-      var seLeftX = se.x;
-      se.leftPorts.sort(function(a, b) {
-        var desiredA = averagePortY(desiredPortY[sn + '.' + a]);
-        var desiredB = averagePortY(desiredPortY[sn + '.' + b]);
-        if (desiredA !== null && desiredB !== null && Math.abs(desiredA - desiredB) > 1) {
-          return desiredA - desiredB;
-        }
-        var pa = portSourcePos[a], pb = portSourcePos[b];
-        if (!pa && !pb) return 0;
-        if (!pa) return 1;
-        if (!pb) return -1;
-        var angleA = Math.atan2(pa.y - seCY, Math.max(1, seLeftX - pa.x));
-        var angleB = Math.atan2(pb.y - seCY, Math.max(1, seLeftX - pb.x));
-        return angleA - angleB;
-      });
     }
 
     // Compute port positions (after x,y are finalized and ports are reordered)
@@ -4993,17 +5013,17 @@
       var lower = portTop + portHalf + 4;
       var upper = portTop + portAreaH - portHalf - 4;
       if (sidePorts.length === 1) {
-        var onlyKey = entry.comp.name + '.' + sidePorts[0];
-        var onlyDesired = averagePortY(desiredPortY[onlyKey]);
-        centers[sidePorts[0]] = onlyDesired === null ? (lower + upper) / 2 : Math.max(lower, Math.min(upper, onlyDesired));
+        var onlyKey = portKey(entry.comp.name, sidePorts[0]);
+        var onlyDesiredY = averagePortY(onlyKey);
+        centers[sidePorts[0]] = onlyDesiredY === null ? (lower + upper) / 2 : Math.max(lower, Math.min(upper, onlyDesiredY));
         return centers;
       }
       var span = Math.max(0, upper - lower);
       var desired = [];
       for (var i2 = 0; i2 < sidePorts.length; i2++) {
-        var portKey = entry.comp.name + '.' + sidePorts[i2];
+        var currentKey = portKey(entry.comp.name, sidePorts[i2]);
         var fallback = lower + span * (i2 / (sidePorts.length - 1));
-        var sampleY = averagePortY(desiredPortY[portKey]);
+        var sampleY = averagePortY(currentKey);
         desired.push(sampleY === null ? fallback : Math.max(lower, Math.min(upper, sampleY)));
       }
       var minGap = span / Math.max(1, sidePorts.length - 1);
@@ -5022,51 +5042,196 @@
       for (var ci2 = 0; ci2 < sidePorts.length; ci2++) centers[sidePorts[ci2]] = actual[ci2];
       return centers;
     }
-    for (var en in entries) {
-      var e = entries[en];
-      var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
+    function groupKey(compName, side) {
+      return compName + ':' + side;
+    }
+    function optimizePortConnectionGraphOrder() {
+      var portNeighbors = {};
+      var groupPositions = {};
+      var groups = [];
 
-      var portLabelByAlias = {};
-      var portKindByAlias = {};
-      for (var pni = 0; pni < e.comp.ports.length; pni++) {
-        var p = e.comp.ports[pni];
-        portLabelByAlias[p.alias] = p.name;
-        if (p.kind) portKindByAlias[p.alias] = p.kind;
+      function pushNeighbor(fromPortKey, toPortKey, toGroupKey) {
+        if (!portNeighbors[fromPortKey]) portNeighbors[fromPortKey] = [];
+        portNeighbors[fromPortKey].push({ portKey: toPortKey, groupKey: toGroupKey });
       }
 
-      // Port area starts below the name row (or uses full height if no ports flag)
-      var portTop = e.hasPorts ? by + nameAreaH : by;
-      var portAreaH = bh - (e.hasPorts ? nameAreaH : 0);
-      var leftCenters = computeOrderedPortCenters(e, e.leftPorts, portTop, portAreaH);
-      var rightCenters = computeOrderedPortCenters(e, e.rightPorts, portTop, portAreaH);
-
-      for (var lpi2 = 0; lpi2 < e.leftPorts.length; lpi2++) {
-        var lpn = e.leftPorts[lpi2];
-        var pcy = leftCenters[lpn];
-        var lpK = portKindByAlias[lpn] || null;
-        e.portPositions[lpn] = {
-          x: bx - portHalf, y: pcy - portHalf,
-          cx: bx, cy: pcy,
-          connX: bx - portHalf, connY: pcy,
-          side: 'left',
-          kind: lpK,
-          label: portLabelByAlias[lpn] !== undefined ? portLabelByAlias[lpn] : lpn,
-        };
+      for (var entryName in entries) {
+        var entry = entries[entryName];
+        if (entry.leftPorts.length) {
+          var leftKey = groupKey(entryName, 'left');
+          groupPositions[leftKey] = entry.x;
+          groups.push({ compName: entryName, side: 'left', key: leftKey, x: entry.x });
+        }
+        if (entry.rightPorts.length) {
+          var rightKey = groupKey(entryName, 'right');
+          groupPositions[rightKey] = entry.x + entry.box.width;
+          groups.push({ compName: entryName, side: 'right', key: rightKey, x: entry.x + entry.box.width });
+        }
       }
 
-      for (var rpi2 = 0; rpi2 < e.rightPorts.length; rpi2++) {
-        var rpn = e.rightPorts[rpi2];
-        var pcy2 = rightCenters[rpn];
-        var rpK = portKindByAlias[rpn] || null;
-        e.portPositions[rpn] = {
-          x: bx + bw - portHalf, y: pcy2 - portHalf,
-          cx: bx + bw, cy: pcy2,
-          connX: bx + bw + portHalf, connY: pcy2,
-          side: 'right',
-          kind: rpK,
-          label: portLabelByAlias[rpn] !== undefined ? portLabelByAlias[rpn] : rpn,
-        };
+      for (var ci4 = 0; ci4 < connectors.length; ci4++) {
+        var conn4 = connectors[ci4];
+        if (!conn4.fromPort || !conn4.toPort) continue;
+        var fromEntry4 = entries[conn4.from];
+        var toEntry4 = entries[conn4.to];
+        if (!fromEntry4 || !toEntry4) continue;
+
+        var fromSide = fromEntry4.leftPorts.indexOf(conn4.fromPort) >= 0 ? 'left' : 'right';
+        var toSide = toEntry4.leftPorts.indexOf(conn4.toPort) >= 0 ? 'left' : 'right';
+        var fromPortKey = portKey(conn4.from, conn4.fromPort);
+        var toPortKey = portKey(conn4.to, conn4.toPort);
+        pushNeighbor(fromPortKey, toPortKey, groupKey(conn4.to, toSide));
+        pushNeighbor(toPortKey, fromPortKey, groupKey(conn4.from, fromSide));
       }
+
+      groups.sort(function(a, b) {
+        if (Math.abs(a.x - b.x) > 1) return a.x - b.x;
+        if (a.side !== b.side) return a.side === 'left' ? -1 : 1;
+        return a.compName < b.compName ? -1 : 1;
+      });
+
+      function buildPortRankMap() {
+        var ranks = {};
+        for (var name in entries) {
+          var currentEntry = entries[name];
+          for (var li = 0; li < currentEntry.leftPorts.length; li++) {
+            ranks[portKey(name, currentEntry.leftPorts[li])] = li;
+          }
+          for (var ri = 0; ri < currentEntry.rightPorts.length; ri++) {
+            ranks[portKey(name, currentEntry.rightPorts[ri])] = ri;
+          }
+        }
+        return ranks;
+      }
+
+      function getGroupPorts(group) {
+        var currentEntry = entries[group.compName];
+        return group.side === 'left' ? currentEntry.leftPorts.slice() : currentEntry.rightPorts.slice();
+      }
+
+      function setGroupPorts(group, orderedPorts) {
+        var currentEntry = entries[group.compName];
+        if (group.side === 'left') currentEntry.leftPorts = orderedPorts;
+        else currentEntry.rightPorts = orderedPorts;
+      }
+
+      function orderCost(entry, candidate, desiredRankMap) {
+        var score = 0;
+        for (var i = 0; i < candidate.length; i++) {
+          var alias = candidate[i];
+          if (desiredRankMap.hasOwnProperty(alias)) {
+            score += Math.abs(i - desiredRankMap[alias]);
+          }
+          score += ((entry.portOrderIndex[alias] || 0) * 0.001);
+        }
+        return score;
+      }
+
+      for (var gi = 0; gi < groups.length; gi++) {
+        var group = groups[gi];
+        var entry = entries[group.compName];
+        var currentPorts = getGroupPorts(group);
+        if (currentPorts.length < 2) continue;
+
+        var portRanks = buildPortRankMap();
+        var desiredRankMap = {};
+        var desiredCount = 0;
+
+        for (var pi3 = 0; pi3 < currentPorts.length; pi3++) {
+          var alias = currentPorts[pi3];
+          var neighbors = portNeighbors[portKey(group.compName, alias)] || [];
+          var total = 0;
+          var count = 0;
+          for (var ni = 0; ni < neighbors.length; ni++) {
+            var neighbor = neighbors[ni];
+            if ((groupPositions[neighbor.groupKey] || 0) >= group.x - 1) continue;
+            if (portRanks[neighbor.portKey] === undefined) continue;
+            total += portRanks[neighbor.portKey];
+            count++;
+          }
+          if (count > 0) {
+            desiredRankMap[alias] = total / count;
+            desiredCount++;
+          }
+        }
+
+        if (!desiredCount) continue;
+
+        var ordered = currentPorts.slice();
+        var improved = true;
+        while (improved) {
+          improved = false;
+          for (var swapIdx = 0; swapIdx < ordered.length - 1; swapIdx++) {
+            var currentScore = orderCost(entry, ordered, desiredRankMap);
+            var swapped = ordered.slice();
+            var temp = swapped[swapIdx];
+            swapped[swapIdx] = swapped[swapIdx + 1];
+            swapped[swapIdx + 1] = temp;
+            var swappedScore = orderCost(entry, swapped, desiredRankMap);
+            if (swappedScore + 0.01 < currentScore) {
+              ordered = swapped;
+              improved = true;
+            }
+          }
+        }
+
+        setGroupPorts(group, ordered);
+      }
+    }
+
+    rebuildDesiredPortY(false);
+    for (var layoutPass = 0; layoutPass < 3; layoutPass++) {
+      optimizePortConnectionGraphOrder();
+
+      for (var en in entries) {
+        var e = entries[en];
+        var bx = e.x, by = e.y, bw = e.box.width, bh = e.box.height;
+
+        var portLabelByAlias = {};
+        var portKindByAlias = {};
+        for (var pni = 0; pni < e.comp.ports.length; pni++) {
+          var p = e.comp.ports[pni];
+          portLabelByAlias[p.alias] = p.name;
+          if (p.kind) portKindByAlias[p.alias] = p.kind;
+        }
+
+        e.portPositions = {};
+
+        var portTop = e.hasPorts ? by + nameAreaH : by;
+        var portAreaH = bh - (e.hasPorts ? nameAreaH : 0);
+        var leftCenters = computeOrderedPortCenters(e, e.leftPorts, portTop, portAreaH);
+        var rightCenters = computeOrderedPortCenters(e, e.rightPorts, portTop, portAreaH);
+
+        for (var lpi2 = 0; lpi2 < e.leftPorts.length; lpi2++) {
+          var lpn = e.leftPorts[lpi2];
+          var pcy = leftCenters[lpn];
+          var lpK = portKindByAlias[lpn] || null;
+          e.portPositions[lpn] = {
+            x: bx - portHalf, y: pcy - portHalf,
+            cx: bx, cy: pcy,
+            connX: bx - portHalf, connY: pcy,
+            side: 'left',
+            kind: lpK,
+            label: portLabelByAlias[lpn] !== undefined ? portLabelByAlias[lpn] : lpn,
+          };
+        }
+
+        for (var rpi2 = 0; rpi2 < e.rightPorts.length; rpi2++) {
+          var rpn = e.rightPorts[rpi2];
+          var pcy2 = rightCenters[rpn];
+          var rpK = portKindByAlias[rpn] || null;
+          e.portPositions[rpn] = {
+            x: bx + bw - portHalf, y: pcy2 - portHalf,
+            cx: bx + bw, cy: pcy2,
+            connX: bx + bw + portHalf, connY: pcy2,
+            side: 'right',
+            kind: rpK,
+            label: portLabelByAlias[rpn] !== undefined ? portLabelByAlias[rpn] : rpn,
+          };
+        }
+      }
+
+      if (layoutPass < 2) rebuildDesiredPortY(true);
     }
 
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
