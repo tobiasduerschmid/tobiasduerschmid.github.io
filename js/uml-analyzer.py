@@ -335,6 +335,8 @@ class SequenceDiagramGenerator:
         self.class_methods = {}       # {class_name: {method_name: ast.FunctionDef}}
         self.attr_types = {}          # {class_name: {attr_name: class_name}}
         self.param_types = {}         # {class_name: {method_name: {param: class_name}}}
+        self.field_annotations = {}   # {class_name: {attr_name: ast annotation node}}
+        self.class_bases = {}         # {class_name: [base_class_name, ...]}
         self._build_lookups()
         self._data_classes = self._identify_data_classes()
 
@@ -361,30 +363,43 @@ class SequenceDiagramGenerator:
                 methods = {}
                 a_types = {}
                 p_types = {}
+                f_anns = {}   # field annotations {attr_name: annotation_node}
+
+                # Track class bases for super() resolution and polymorphism
+                bases = []
+                for base in node.bases:
+                    if isinstance(base, ast.Name) and base.id in self.all_class_names:
+                        bases.append(base.id)
+                self.class_bases[cname] = bases
+
                 for item in node.body:
                     if not isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         continue
                     methods[item.name] = item
                     # Parameter type hints → param_types
+                    # Handle both bare Name (Task) and Subscript (List[Task])
                     m_params = {}
                     for arg in item.args.args:
                         if arg.arg in ('self', 'cls'):
                             continue
-                        if arg.annotation and isinstance(arg.annotation, ast.Name):
-                            if arg.annotation.id in self.all_class_names:
-                                m_params[arg.arg] = arg.annotation.id
+                        if not arg.annotation:
+                            continue
+                        resolved = self._resolve_annotation_to_class(arg.annotation)
+                        if resolved:
+                            m_params[arg.arg] = resolved
                     if m_params:
                         p_types[item.name] = m_params
                     # __init__: self.x = ClassName() / self.x = param / self.x: T → attr_types
                     if item.name == '__init__':
-                        # Build init param type map for resolving self.x = param
+                        # Build init param type map — handles List[T] via _resolve_annotation_to_class
                         init_params = {}
                         for arg in item.args.args:
                             if arg.arg in ('self', 'cls'):
                                 continue
-                            if arg.annotation and isinstance(arg.annotation, ast.Name):
-                                if arg.annotation.id in self.all_class_names:
-                                    init_params[arg.arg] = arg.annotation.id
+                            if arg.annotation:
+                                resolved = self._resolve_annotation_to_class(arg.annotation)
+                                if resolved:
+                                    init_params[arg.arg] = resolved
                         for child in ast.walk(item):
                             if isinstance(child, ast.Assign):
                                 for tgt in child.targets:
@@ -396,7 +411,6 @@ class SequenceDiagramGenerator:
                                             if isinstance(fn, ast.Name) and fn.id in self.all_class_names:
                                                 a_types[tgt.attr] = fn.id
                                         elif isinstance(child.value, ast.Name):
-                                            # self.x = param → resolve via init param types
                                             param_cls = init_params.get(child.value.id)
                                             if param_cls:
                                                 a_types[tgt.attr] = param_cls
@@ -404,6 +418,10 @@ class SequenceDiagramGenerator:
                                 if (isinstance(child.target, ast.Attribute)
                                         and isinstance(child.target.value, ast.Name)
                                         and child.target.value.id == 'self'):
+                                    attr_name = child.target.attr
+                                    # Track the raw annotation node for loop var inference
+                                    if child.annotation:
+                                        f_anns[attr_name] = child.annotation
                                     resolved = None
                                     if child.value and isinstance(child.value, ast.Call):
                                         fn = child.value.func
@@ -412,13 +430,29 @@ class SequenceDiagramGenerator:
                                     if not resolved and child.value and isinstance(child.value, ast.Name):
                                         resolved = init_params.get(child.value.id)
                                     if not resolved and child.annotation:
-                                        if isinstance(child.annotation, ast.Name) and child.annotation.id in self.all_class_names:
-                                            resolved = child.annotation.id
+                                        resolved = self._resolve_annotation_to_class(child.annotation)
                                     if resolved:
-                                        a_types[child.target.attr] = resolved
+                                        a_types[attr_name] = resolved
                 self.class_methods[cname] = methods
                 self.attr_types[cname] = a_types
                 self.param_types[cname] = p_types
+                self.field_annotations[cname] = f_anns
+
+    def _resolve_annotation_to_class(self, ann_node):
+        """Resolve a type annotation to a known class name.
+
+        Handles bare names (Task), containers (List[Task], Set[Task]),
+        and Optional[Task]. Returns the inner class name or None.
+        """
+        if isinstance(ann_node, ast.Name):
+            return ann_node.id if ann_node.id in self.all_class_names else None
+        if isinstance(ann_node, ast.Subscript):
+            # List[Task], Set[Task], Optional[Task] → extract inner type
+            return self._resolve_annotation_to_class(ann_node.slice)
+        if isinstance(ann_node, ast.Tuple) and ann_node.elts:
+            # Dict[K, V] → try value type (last element)
+            return self._resolve_annotation_to_class(ann_node.elts[-1])
+        return None
 
     def _identify_data_classes(self):
         """Identify @dataclass-decorated and method-free classes (value objects).
@@ -748,11 +782,23 @@ class SequenceDiagramGenerator:
         # Build message label with arguments and return type
         label = self._build_call_label(call, cls_name, method)
 
-        if method == '__init__':
+        # Detect if this is a super() call — not a create, just a delegation
+        is_super = (isinstance(call.func, ast.Attribute)
+                     and isinstance(call.func.value, ast.Call)
+                     and isinstance(call.func.value.func, ast.Name)
+                     and call.func.value.func.id == 'super')
+
+        if method == '__init__' and not is_super:
             self._ensure_participant(callee_id, cls_name)
             self._caller_class[callee_id] = cls_name
             self.lines.append('create ' + callee_id)
             self.lines.append(caller + ' --> ' + callee_id + ': <<create>>')
+        elif method == '__init__' and is_super:
+            # super().__init__() — show as regular call to parent, not create
+            self._ensure_participant(callee_id, self._participant_label(callee_id, cls_name))
+            self._caller_class[callee_id] = cls_name
+            self.lines.append(caller + ' -> ' + callee_id + ': ' + label)
+            self._maybe_follow(cls_name, method, callee_id, depth)
         elif callee_id == caller:
             # Self-call — no return message needed
             self.lines.append(caller + ' -> ' + caller + ': ' + label)
@@ -762,20 +808,19 @@ class SequenceDiagramGenerator:
             self._caller_class[callee_id] = cls_name
             self.lines.append(caller + ' -> ' + callee_id + ': ' + label)
             self._maybe_follow(cls_name, method, callee_id, depth)
-            # Return/reply message (dashed arrow back to caller)
+            # Return/reply message — only when method has a return type (Ambler G172:
+            # "Label return messages only when not obvious." Void returns are obvious.)
             ret_type = self._get_return_type(cls_name, method)
             if ret_type:
                 self.lines.append(callee_id + ' --> ' + caller + ': ' + ret_type)
-            else:
-                self.lines.append(callee_id + ' --> ' + caller)
 
     def _build_call_label(self, call, cls_name, method):
-        """Build a message label with arguments and return type annotation.
+        """Build a message label with argument expressions.
 
         Per Srinivasan (2016), showing arguments aids OO comprehension.
+        Return type is shown on the reply arrow, not the call (Ambler G172).
         Limit to 3 args and truncate long expressions for readability.
         """
-        # Argument expressions (limit to 3 for readability)
         arg_parts = []
         for a in call.args[:3]:
             text = self._expr_text(a)
@@ -785,23 +830,27 @@ class SequenceDiagramGenerator:
         if len(call.args) > 3:
             arg_parts.append('...')
         args_str = ', '.join(arg_parts)
-
-        # Return type annotation
-        ret_type = self._get_return_type(cls_name, method)
-        if ret_type:
-            return method + '(' + args_str + '): ' + ret_type
         return method + '(' + args_str + ')'
 
     def _get_return_type(self, cls_name, method_name):
-        """Look up return type annotation for a method, if available."""
-        meths = self.class_methods.get(cls_name)
-        if not meths or method_name not in meths:
-            return None
-        node = meths[method_name]
-        if node.returns:
+        """Look up return type annotation for a method, checking parent classes."""
+        node = self._find_method_node(cls_name, method_name)
+        if node and node.returns:
             ret = self._annotation_text(node.returns)
             if ret and ret != 'None':
                 return ret
+        return None
+
+    def _find_method_node(self, cls_name, method_name):
+        """Find a method's AST node, walking up the inheritance chain."""
+        visited = set()
+        current = cls_name
+        while current and current not in visited:
+            visited.add(current)
+            meths = self.class_methods.get(current, {})
+            if method_name in meths:
+                return meths[method_name]
+            current = self._find_parent(current)
         return None
 
     @staticmethod
@@ -821,16 +870,29 @@ class SequenceDiagramGenerator:
             return None
 
     def _maybe_follow(self, cls_name, method_name, callee_id, depth):
-        """Recursively follow into the called method body."""
+        """Recursively follow into the called method body.
+
+        If the method is abstract/stub, searches for a concrete override
+        in subclasses to follow instead (shows delegation chains like
+        format_message self-calls inside deliver).
+        """
         if depth >= self.MAX_DEPTH:
             return
         key = (cls_name, method_name)
         if key in self._call_stack:
             return
-        meths = self.class_methods.get(cls_name)
-        if not meths or method_name not in meths:
+        # Find method node, walking up inheritance chain if needed
+        node = self._find_method_node(cls_name, method_name)
+        if not node:
             return
-        node = meths[method_name]
+        # If method is a stub (abstract/pass), try a concrete subclass override
+        if self._is_stub_method(node):
+            concrete = self._find_concrete_override(cls_name, method_name)
+            if concrete:
+                cls_name, node = concrete
+                key = (cls_name, method_name)
+                if key in self._call_stack:
+                    return
         self._call_stack.add(key)
         saved = self.var_types.copy()
         # Seed local scope with parameter type hints
@@ -872,7 +934,24 @@ class SequenceDiagramGenerator:
             method = func.attr
             cc = self._class_of(caller)
             if cc and cc in self.attr_types and attr in self.attr_types[cc]:
-                return (self.attr_types[cc][attr], method)
+                target_cls = self.attr_types[cc][attr]
+                # Verify the target class actually has this method (avoids resolving
+                # list.append() as TargetClass.append() for container-typed fields)
+                target_meths = self.class_methods.get(target_cls, {})
+                if method in target_meths:
+                    return (target_cls, method)
+
+        # super().method() — resolve to parent class
+        if (isinstance(func, ast.Attribute)
+                and isinstance(func.value, ast.Call)
+                and isinstance(func.value.func, ast.Name)
+                and func.value.func.id == 'super'):
+            method = func.attr
+            cc = self._class_of(caller)
+            if cc:
+                parent = self._find_parent(cc)
+                if parent:
+                    return (parent, method)
 
         return None
 
@@ -891,33 +970,48 @@ class SequenceDiagramGenerator:
     # ── Loop variable type inference ─────────────────────────────────
 
     def _infer_loop_var_type(self, for_node, caller):
-        """Try to infer the type of the loop variable from the iterable."""
+        """Try to infer the type of the loop variable from the iterable.
+
+        Three strategies (tried in order):
+        1. Field annotation: self._items: List[Task] → element type Task
+        2. Append heuristic: method that appends typed param to the field
+        3. attr_types: self._items has a known element type from constructor
+        """
         if not isinstance(for_node.target, ast.Name):
             return
         var = for_node.target.id
         it = for_node.iter
-        # for x in self.things  →  check attr_types for 'things'
+        # for x in self.things
         if (isinstance(it, ast.Attribute)
                 and isinstance(it.value, ast.Name)
                 and it.value.id == 'self'):
             attr = it.attr
             cc = self._class_of(caller)
-            if cc:
-                # Look for add_* methods that take a typed parameter
-                meths = self.class_methods.get(cc, {})
-                for mname, mnode in meths.items():
-                    for arg in mnode.args.args:
-                        if arg.arg in ('self', 'cls'):
-                            continue
-                        if arg.annotation and isinstance(arg.annotation, ast.Name):
-                            if arg.annotation.id in self.all_class_names:
-                                # Check if this method appends to the same attr
-                                if self._method_appends_to(mnode, attr):
-                                    self.var_types[var] = arg.annotation.id
-                                    return
-        # for x in var  →  check var_types
-        if isinstance(it, ast.Name) and it.id in self.var_types:
-            pass  # can't infer element type from container type alone
+            if not cc:
+                return
+            # Strategy 1: Check field annotation (e.g., self._tasks: List[Task])
+            ann = self.field_annotations.get(cc, {}).get(attr)
+            if ann:
+                elem_type = self._resolve_annotation_to_class(ann)
+                if elem_type:
+                    self.var_types[var] = elem_type
+                    return
+            # Strategy 2: Look for methods that append a typed parameter
+            meths = self.class_methods.get(cc, {})
+            for mname, mnode in meths.items():
+                for arg in mnode.args.args:
+                    if arg.arg in ('self', 'cls'):
+                        continue
+                    if arg.annotation:
+                        resolved = self._resolve_annotation_to_class(arg.annotation)
+                        if resolved and self._method_appends_to(mnode, attr):
+                            self.var_types[var] = resolved
+                            return
+            # Strategy 3: Use attr_types directly (from constructor resolution)
+            elem = self.attr_types.get(cc, {}).get(attr)
+            if elem:
+                self.var_types[var] = elem
+                return
 
     @staticmethod
     def _method_appends_to(func_node, attr_name):
@@ -932,6 +1026,63 @@ class SequenceDiagramGenerator:
                     and child.func.value.attr == attr_name):
                 return True
         return False
+
+    # ── Class hierarchy helpers ──────────────────────────────────────
+
+    def _find_parent(self, cls_name):
+        """Return the first known parent class, or None."""
+        bases = self.class_bases.get(cls_name, [])
+        for base in bases:
+            if base in ('ABC', 'ABCMeta'):
+                continue
+            if base in self.class_methods:
+                return base
+        return None
+
+    @staticmethod
+    def _is_stub_method(node):
+        """Check if a method body is a stub (pass, ..., docstring, or raise NotImplementedError)."""
+        body = node.body
+        if not body:
+            return True
+        # Filter out docstring
+        stmts = body
+        if (isinstance(stmts[0], ast.Expr)
+                and isinstance(stmts[0].value, ast.Constant)
+                and isinstance(stmts[0].value.value, str)):
+            stmts = stmts[1:]
+        if not stmts:
+            return True
+        if len(stmts) == 1:
+            s = stmts[0]
+            # pass
+            if isinstance(s, ast.Pass):
+                return True
+            # ... (Ellipsis)
+            if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant) and s.value.value is ...:
+                return True
+            # raise NotImplementedError
+            if isinstance(s, ast.Raise):
+                return True
+            # return with no value or simple literal
+            if isinstance(s, ast.Return) and (s.value is None or isinstance(s.value, ast.Constant)):
+                return True
+        return False
+
+    def _find_concrete_override(self, cls_name, method_name):
+        """Find a concrete (non-stub) override of a method in a subclass.
+
+        Searches all classes that inherit from cls_name.
+        Returns (concrete_class_name, method_node) or None.
+        """
+        for cname, bases in self.class_bases.items():
+            if cls_name in bases and cname in self.class_methods:
+                meths = self.class_methods[cname]
+                if method_name in meths:
+                    node = meths[method_name]
+                    if not self._is_stub_method(node):
+                        return (cname, node)
+        return None
 
     # ── Helpers ──────────────────────────────────────────────────────
 
