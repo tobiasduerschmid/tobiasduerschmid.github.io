@@ -2258,8 +2258,8 @@
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
 
         // Horizontal bar at junction
-        var leftCx = Math.min.apply(null, childCxArr);
-        var rightCx = Math.max.apply(null, childCxArr);
+        var leftCx = Math.min.apply(null, childCxArr.concat([parentCx]));
+        var rightCx = Math.max.apply(null, childCxArr.concat([parentCx]));
         svg.push('<line x1="' + leftCx + '" y1="' + junctionY + '" x2="' + rightCx + '" y2="' + junctionY +
           '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
 
@@ -2385,19 +2385,24 @@
 
       // Draw multiplicities near their respective endpoints, well clear of the box
       if (orel.fromMult) {
-        var fmx, fmy;
+        var fmx, fmy, fmAnchor = 'start';
         if (isFirstHoriz) {
           // Horizontal exit: place multiplicity above the line, near source box edge
           fmx = p0.x + startDx * 6;
           fmy = p0.y - 8;
+          fmAnchor = (startDx < 0) ? 'end' : 'start';
         } else {
           // Vertical exit: place to the right of the lifeline
           // If there's an inheritance triangle at the bottom, offset further to avoid overlap
           var fromInheritOffset = (startDy > 0 && hasInheritAtBottom[orel.from]) ? CFG.triangleH + CFG.junctionGap + 4 : 0;
-          fmx = p0.x + 8;
+          var fromCx0 = fromE.x + fromE.box.width / 2;
+          var fromSideBias = (p0.x < fromCx0 - 1) ? -1 : ((p0.x > fromCx0 + 1) ? 1 : 0);
+          if (fromSideBias === 0) fromSideBias = (toE.x + toE.box.width / 2 >= fromCx0) ? 1 : -1;
+          fmx = p0.x + fromSideBias * 8;
           fmy = p0.y + startDy * 14 + fromInheritOffset;
+          fmAnchor = (fromSideBias < 0) ? 'end' : 'start';
         }
-        svg.push('<text x="' + fmx + '" y="' + fmy + '" ' +
+        svg.push('<text x="' + fmx + '" y="' + fmy + '" text-anchor="' + fmAnchor + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
           'stroke="' + colors.fill + '" stroke-width="4" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke">' +
           UMLShared.escapeXml(orel.fromMult) + '</text>');
@@ -2411,9 +2416,12 @@
           // Anchor toward the target box
           var tmAnchor = (endDx > 0) ? 'end' : 'start';
         } else {
-          tmx = pLast.x + 8;
+          var toCx0 = toE.x + toE.box.width / 2;
+          var toSideBias = (pLast.x < toCx0 - 1) ? -1 : ((pLast.x > toCx0 + 1) ? 1 : 0);
+          if (toSideBias === 0) toSideBias = (fromE.x + fromE.box.width / 2 <= toCx0) ? -1 : 1;
+          tmx = pLast.x + toSideBias * 8;
           tmy = pLast.y - endDy * 14;
-          tmAnchor = 'start';
+          tmAnchor = (toSideBias < 0) ? 'end' : 'start';
         }
         svg.push('<text x="' + tmx + '" y="' + tmy + '" text-anchor="' + (tmAnchor || 'start') + '" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '" ' +
@@ -2559,6 +2567,17 @@
     // Check if boxes overlap vertically (can use horizontal straight line)
     var vOverlap = fromT < toB && fromB > toT;
 
+    function clamp(val, min, max) {
+      return Math.max(min, Math.min(max, val));
+    }
+
+    function topEntryX() {
+      if (!avoidToTop) return toCx;
+      var offsetDir = (fromCx >= toCx) ? 1 : -1;
+      var offsetMag = CFG.triangleW + 10 + Math.min(18, Math.abs(portOffset));
+      return clamp(toCx + offsetDir * offsetMag, toL + 10, toR - 10);
+    }
+
     var points;
 
     // If we must avoid bottom of source (inheritance triangle there),
@@ -2584,11 +2603,12 @@
         var routeStartY = exitBottomY + diamondLen; // route continues from diamond tip
         // Stagger horizontal runs by port index to prevent crossings
         var horizY = routeStartY + (portOffset / 16) * 12 + 4;
+        var targetTopX = topEntryX();
         points = [
           { x: exitBottomX, y: exitBottomY },
           { x: exitBottomX, y: horizY },
-          { x: toCx, y: horizY },
-          { x: toCx, y: toT }
+          { x: targetTopX, y: horizY },
+          { x: targetTopX, y: toT }
         ];
       } else {
         // Target is at same level or above: exit from the side
@@ -2611,7 +2631,18 @@
       var connX = (overlapL + overlapR) / 2;
 
       if (fromCy < toCy) {
-        points = [{ x: connX, y: fromB }, { x: connX, y: toT }];
+        var entryX = topEntryX();
+        if (Math.abs(entryX - connX) < 1) {
+          points = [{ x: connX, y: fromB }, { x: connX, y: toT }];
+        } else {
+          var midY0 = (fromB + toT) / 2;
+          points = [
+            { x: connX, y: fromB },
+            { x: connX, y: midY0 },
+            { x: entryX, y: midY0 },
+            { x: entryX, y: toT }
+          ];
+        }
       } else {
         points = [{ x: connX, y: fromT }, { x: connX, y: toB }];
       }
@@ -2654,11 +2685,12 @@
         // Primarily vertical separation — exit from bottom/top, bend horizontally
         if (dy > 0) {
           var midY = (fromB + toT) / 2;
+          var topX = topEntryX();
           points = [
             { x: fromCx, y: fromB },
             { x: fromCx, y: midY },
-            { x: toCx, y: midY },
-            { x: toCx, y: toT }
+            { x: topX, y: midY },
+            { x: topX, y: toT }
           ];
         } else {
           var midY2 = (fromT + toB) / 2;
@@ -2675,10 +2707,11 @@
         if (dx > 0) {
           if (dy > 10 && fromB < toT) {
             // Target is right and below: exit right, then enter from top
+            var topX2 = topEntryX();
             points = [
               { x: fromR, y: fromCy },
-              { x: toCx, y: fromCy },
-              { x: toCx, y: toT }
+              { x: topX2, y: fromCy },
+              { x: topX2, y: toT }
             ];
           } else if (dy < -10 && fromT > toB) {
             // Target is right and above: exit right, then enter from bottom
@@ -2699,10 +2732,11 @@
           }
         } else {
           if (dy > 10 && fromB < toT) {
+            var topX3 = topEntryX();
             points = [
               { x: fromL, y: fromCy },
-              { x: toCx, y: fromCy },
-              { x: toCx, y: toT }
+              { x: topX3, y: fromCy },
+              { x: topX3, y: toT }
             ];
           } else if (dy < -10 && fromT > toB) {
             points = [
