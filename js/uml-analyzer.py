@@ -16,11 +16,35 @@ class ClassInfo:
         self.filename = filename
         self.methods = []       # [(name, params, is_private)]
         self.attributes = []    # [(name, type_hint_or_None)]
-        self.compositions = []  # [class_name] — from type hints or Foo() calls in __init__
+        self.compositions = []  # [class_name] — object created internally (strong ownership)
+        self.aggregations = []  # [class_name] — object injected from outside (weak ownership)
+        self.associations = []  # [class_name] — reference without clear ownership semantics
+        self.dependencies = []  # [class_name] — used in method params/locals/returns
+        self._rel_attrs = set() # attribute names promoted to relationship arrows
 
 
 class ClassVisitor(ast.NodeVisitor):
-    """Extract class definitions, methods, attributes, and relationships."""
+    """Extract class definitions, methods, attributes, and relationships.
+
+    Relationship inference based on:
+    - Milanova (2007) "Composition inference for UML class diagrams"
+      DOI: 10.1007/s10515-007-0010-8
+    - SEKE 2021 "Mapping OO relationships to UML relationships"
+      DOI: 10.18293/SEKE2021-170
+
+    Key heuristics:
+    - Composition: self.x = ClassName() — object created internally
+    - Aggregation: self.x = param (where param is a typed __init__ arg) — injected
+    - Association: self.x: ClassName (annotation only, no init value) — reference
+    - Dependency: method parameter/return/local of known class type — transient use
+    """
+
+    # Container types whose first subscript argument holds the element class
+    _CONTAINER_TYPES = {'List', 'list', 'Set', 'set', 'Tuple', 'tuple',
+                        'FrozenSet', 'frozenset', 'Sequence', 'Iterable',
+                        'Collection', 'Deque', 'deque'}
+    _OPTIONAL_TYPES = {'Optional'}
+    _MAPPING_TYPES = {'Dict', 'dict', 'Mapping', 'DefaultDict', 'OrderedDict'}
 
     def __init__(self, filename, all_class_names):
         self.filename = filename
@@ -28,6 +52,7 @@ class ClassVisitor(ast.NodeVisitor):
         self.classes = []
         self._current_class = None
         self._current_method = None
+        self._init_param_types = {}  # {param_name: class_name} for current __init__
 
     def visit_ClassDef(self, node):
         bases = []
@@ -48,6 +73,9 @@ class ClassVisitor(ast.NodeVisitor):
             else:
                 self.visit(item)
 
+        # After visiting all methods, collect dependencies from method signatures
+        self._collect_dependencies(node)
+
         self._current_class = prev_class
 
     def _visit_method(self, node):
@@ -67,11 +95,26 @@ class ClassVisitor(ast.NodeVisitor):
         prev_method = self._current_method
         self._current_method = node.name
 
-        # Scan body for self.x assignments and composition patterns
+        # For __init__, build a map of parameter names to their class types
+        saved_init_params = self._init_param_types
+        if node.name == '__init__':
+            self._init_param_types = {}
+            for arg in node.args.args:
+                if arg.arg in ('self', 'cls'):
+                    continue
+                if arg.annotation:
+                    cls_name = self._extract_class_from_annotation(arg.annotation)
+                    if cls_name:
+                        self._init_param_types[arg.arg] = cls_name
+        else:
+            self._init_param_types = {}
+
+        # Scan body for self.x assignments and relationship patterns
         for child in ast.walk(node):
             self._check_attribute(child)
-            self._check_composition(child)
+            self._check_field_relationship(child)
 
+        self._init_param_types = saved_init_params
         self._current_method = prev_method
 
     def _check_attribute(self, node):
@@ -99,29 +142,155 @@ class ClassVisitor(ast.NodeVisitor):
             if attr_name not in existing:
                 self._current_class.attributes.append((attr_name, type_hint))
 
-    def _check_composition(self, node):
-        """Detect self.x = Foo() or self.x: Foo = Foo() patterns."""
+    def _check_field_relationship(self, node):
+        """Classify self.x assignments as composition, aggregation, or association.
+
+        Based on Milanova (2007) ownership model and SEKE 2021 mappings:
+        - self.x = ClassName()          → Composition (created internally)
+        - self.x = param (typed init)   → Aggregation (injected from outside)
+        - self.x: ClassName (no value)  → Association (reference only)
+        - self.x: ClassName = ClassName()  → Composition
+        - self.x: ClassName = param        → Aggregation
+        """
         if not self._current_class:
             return
+        cls = self._current_class
+
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if (isinstance(target, ast.Attribute) and
-                        isinstance(target.value, ast.Name) and
-                        target.value.id == 'self'):
-                    if isinstance(node.value, ast.Call):
-                        callee = self._call_name(node.value)
-                        if callee and callee in self.all_class_names:
-                            if callee not in self._current_class.compositions:
-                                self._current_class.compositions.append(callee)
+                if not self._is_self_attr(target):
+                    continue
+                attr_name = target.attr
+                # self.x = ClassName() → composition
+                if isinstance(node.value, ast.Call):
+                    callee = self._call_name(node.value)
+                    if callee and callee in self.all_class_names:
+                        self._add_unique(cls.compositions, callee)
+                        cls._rel_attrs.add(attr_name)
+                        continue
+                # self.x = param → aggregation if param is a typed __init__ arg
+                if isinstance(node.value, ast.Name):
+                    param_cls = self._init_param_types.get(node.value.id)
+                    if param_cls:
+                        self._add_unique(cls.aggregations, param_cls)
+                        cls._rel_attrs.add(attr_name)
+
         elif isinstance(node, ast.AnnAssign) and node.target:
-            if (isinstance(node.target, ast.Attribute) and
-                    isinstance(node.target.value, ast.Name) and
-                    node.target.value.id == 'self'):
-                if node.annotation:
-                    type_name = self._annotation_str(node.annotation)
-                    if type_name in self.all_class_names:
-                        if type_name not in self._current_class.compositions:
-                            self._current_class.compositions.append(type_name)
+            if not self._is_self_attr(node.target):
+                return
+            attr_name = node.target.attr
+            ann_cls = self._extract_class_from_annotation(node.annotation) if node.annotation else None
+
+            if node.value:
+                # self.x: T = ClassName() → composition
+                if isinstance(node.value, ast.Call):
+                    callee = self._call_name(node.value)
+                    if callee and callee in self.all_class_names:
+                        self._add_unique(cls.compositions, callee)
+                        cls._rel_attrs.add(attr_name)
+                        return
+                # self.x: T = param → aggregation if param is a typed __init__ arg
+                if isinstance(node.value, ast.Name):
+                    param_cls = self._init_param_types.get(node.value.id)
+                    if param_cls:
+                        self._add_unique(cls.aggregations, param_cls)
+                        cls._rel_attrs.add(attr_name)
+                        return
+                # self.x: T = <other expr> — use annotation type as association
+                if ann_cls:
+                    self._add_unique(cls.associations, ann_cls)
+                    cls._rel_attrs.add(attr_name)
+            else:
+                # self.x: ClassName (annotation only, no value) → association
+                if ann_cls:
+                    self._add_unique(cls.associations, ann_cls)
+                    cls._rel_attrs.add(attr_name)
+
+    def _collect_dependencies(self, class_node):
+        """Collect dependency relationships from method signatures and local usage.
+
+        Dependencies come from:
+        - Method parameter type annotations (non-__init__ params that aren't stored)
+        - Return type annotations referencing known classes
+        - Local variable ClassName() calls not assigned to self
+        """
+        if not self._current_class:
+            return
+        cls = self._current_class
+        # Classes already in structural relationships
+        structural = set(cls.compositions + cls.aggregations + cls.associations)
+        structural.update(cls.bases)
+
+        for item in class_node.body:
+            if not isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+
+            # Method parameter types → dependency
+            for arg in item.args.args:
+                if arg.arg in ('self', 'cls'):
+                    continue
+                if arg.annotation:
+                    param_cls = self._extract_class_from_annotation(arg.annotation)
+                    if param_cls and param_cls not in structural:
+                        # __init__ params that became aggregations are already structural
+                        if item.name == '__init__' and param_cls in cls.aggregations:
+                            continue
+                        self._add_unique(cls.dependencies, param_cls)
+
+            # Return type → dependency
+            if item.returns:
+                ret_cls = self._extract_class_from_annotation(item.returns)
+                if ret_cls and ret_cls not in structural:
+                    self._add_unique(cls.dependencies, ret_cls)
+
+            # Local ClassName() calls not assigned to self → dependency
+            if item.name != '__init__':
+                for child in ast.walk(item):
+                    if isinstance(child, ast.Assign):
+                        for tgt in child.targets:
+                            if isinstance(tgt, ast.Name) and isinstance(child.value, ast.Call):
+                                callee = self._call_name(child.value)
+                                if callee and callee in self.all_class_names and callee not in structural:
+                                    self._add_unique(cls.dependencies, callee)
+
+    def _extract_class_from_annotation(self, node):
+        """Extract a known class name from a type annotation, unwrapping containers.
+
+        Handles: ClassName, List[ClassName], Optional[ClassName], Dict[K, ClassName]
+        Returns the class name if it's in all_class_names, else None.
+        """
+        if isinstance(node, ast.Name):
+            if node.id in self.all_class_names:
+                return node.id
+            return None
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if node.value in self.all_class_names:
+                return node.value
+            return None
+        if isinstance(node, ast.Subscript):
+            wrapper = self._annotation_str(node.value) if isinstance(node.value, ast.Name) else ''
+            # List[X], Set[X], Optional[X], etc. — extract inner type
+            if wrapper in self._CONTAINER_TYPES or wrapper in self._OPTIONAL_TYPES:
+                return self._extract_class_from_annotation(node.slice)
+            # Dict[K, V] — extract value type
+            if wrapper in self._MAPPING_TYPES:
+                if isinstance(node.slice, ast.Tuple) and len(node.slice.elts) == 2:
+                    return self._extract_class_from_annotation(node.slice.elts[1])
+            return None
+        return None
+
+    @staticmethod
+    def _is_self_attr(node):
+        """Check if node is a self.xxx attribute access."""
+        return (isinstance(node, ast.Attribute) and
+                isinstance(node.value, ast.Name) and
+                node.value.id == 'self')
+
+    @staticmethod
+    def _add_unique(lst, item):
+        """Append item to list if not already present."""
+        if item not in lst:
+            lst.append(item)
 
     def _call_name(self, node):
         if isinstance(node, ast.Call):
@@ -729,7 +898,15 @@ def _is_interface(cls):
 
 
 def generate_class_diagram(all_classes):
-    """Generate UML class diagram text in custom format for the SVG renderer."""
+    """Generate UML class diagram text in custom format for the SVG renderer.
+
+    Emits five relationship types based on static analysis heuristics:
+    - Inheritance (--|>): from class bases
+    - Composition (*--): field holds object created internally
+    - Aggregation (o--): field holds object injected from outside
+    - Association (-->): field references a class without clear ownership
+    - Dependency (..>): method parameter/return/local usage of a class
+    """
     lines = ['@startuml']
 
     sorted_classes = _topo_sort_classes(all_classes)
@@ -745,8 +922,10 @@ def generate_class_diagram(all_classes):
 
         lines.append(decl + ' {')
 
-        # Attributes
+        # Attributes — filter out those promoted to relationships
         for attr_name, type_hint in cls.attributes:
+            if attr_name in cls._rel_attrs:
+                continue  # shown as relationship arrow instead
             prefix = '-' if attr_name.startswith('_') else '+'
             if type_hint:
                 lines.append('  ' + prefix + attr_name + ': ' + type_hint)
@@ -763,16 +942,29 @@ def generate_class_diagram(all_classes):
 
     # Relationships
     for cls in sorted_classes:
+        # Inheritance
         for base in cls.bases:
             if base in ('ABC', 'ABCMeta'):
-                continue  # Skip ABC as a base — it's a marker, not a real parent
+                continue
             if any(c.name == base for c in all_classes):
                 lines.append(cls.name + ' --|> ' + base)
+        # Composition (strong ownership — filled diamond)
         for comp in cls.compositions:
             lines.append(cls.name + ' *-- ' + comp)
+        # Aggregation (weak ownership — hollow diamond)
+        for agg in cls.aggregations:
+            lines.append(cls.name + ' o-- ' + agg)
+        # Association (navigable reference — solid arrow)
+        for assoc in cls.associations:
+            lines.append(cls.name + ' --> ' + assoc)
+        # Dependency (transient usage — dashed arrow)
+        for dep in cls.dependencies:
+            lines.append(cls.name + ' ..> ' + dep)
 
     lines.append('@enduml')
     return '\n'.join(lines)
+
+
 
 
 def generate_sequence_diagram(trees, all_class_names):
