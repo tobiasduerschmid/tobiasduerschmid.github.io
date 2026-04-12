@@ -1,5 +1,5 @@
 ---
-title: UML
+title: "UML Component Diagrams"
 layout: sebook
 ---
 

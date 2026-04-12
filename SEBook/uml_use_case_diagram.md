@@ -1,5 +1,5 @@
 ---
-title: UML
+title: "UML Use Case Diagrams"
 layout: sebook
 ---
 

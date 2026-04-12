@@ -1,5 +1,5 @@
 ---
-title: UML
+title: "UML State Machine Diagrams"
 layout: sebook
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: UML
+title: "UML Class Diagrams"
 layout: sebook
 ---
 

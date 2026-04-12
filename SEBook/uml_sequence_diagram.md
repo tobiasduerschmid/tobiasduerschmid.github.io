@@ -1,5 +1,5 @@
 ---
-title: UML
+title: "UML Sequence Diagrams"
 layout: sebook
 ---
 # Unlocking System Behavior with UML Sequence Diagrams
