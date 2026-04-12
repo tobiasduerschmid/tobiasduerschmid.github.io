@@ -5762,7 +5762,8 @@
     return isFinite(min) ? min : 120;
   }
 
-  function placeComponentConnectorLabel(label, points, routeIndex, obstacles, placedLabels, routeSegments, cfg) {
+  function placeComponentConnectorLabel(label, points, routeIndex, obstacles, placedLabels, routeSegments, cfg, options) {
+    var opts = options || {};
     var labelW = UMLShared.textWidth(label, false, cfg.fontSize);
     var labelH = cfg.fontSize + 6;
     var segments = [];
@@ -5797,8 +5798,8 @@
       var segment = segments[gi];
       var placements = segment.isH
         ? [
-            { anchor: 'middle', dx: 0, dy: -10, penalty: 0 },
-            { anchor: 'middle', dx: 0, dy: labelH + 4, penalty: 8 }
+            { anchor: 'middle', dx: 0, dy: -10, penalty: 0, vSide: 'above' },
+            { anchor: 'middle', dx: 0, dy: labelH + 4, penalty: 8, vSide: 'below' }
           ]
         : [
             { anchor: 'start', dx: 10, dy: 0, penalty: 2 },
@@ -5826,6 +5827,11 @@
           var clearance = minLabelClearance(rect, obstacles, placedLabels, routeSegments, routeIndex, segment.segmentIndex);
           var score = segment.length * 2 + (segment.isH ? 24 : 0) + Math.min(clearance, 80) -
             Math.abs(fraction - 0.5) * 30 - placement.penalty;
+
+          if (segment.isH && opts.preferredVerticalSide) {
+            if (placement.vSide === opts.preferredVerticalSide) score += 18;
+            else score -= 18;
+          }
 
           var candidate = {
             x: lx,
@@ -5860,7 +5866,9 @@
     var fallbackSeg = segments[0];
     var fallbackAnchor = fallbackSeg.isH ? 'middle' : 'start';
     var fallbackX = fallbackSeg.isH ? (fallbackSeg.x1 + fallbackSeg.x2) / 2 : fallbackSeg.x + 10;
-    var fallbackY = fallbackSeg.isH ? fallbackSeg.y - 10 : (fallbackSeg.y1 + fallbackSeg.y2) / 2;
+    var fallbackY = fallbackSeg.isH
+      ? (opts.preferredVerticalSide === 'below' ? fallbackSeg.y + labelH + 4 : fallbackSeg.y - 10)
+      : (fallbackSeg.y1 + fallbackSeg.y2) / 2;
     return {
       x: fallbackX,
       y: fallbackY,
@@ -6592,6 +6600,28 @@
     }
 
     var componentRouteSegments = buildComponentRouteSegments(connectorRoutes);
+    function preferredLabelVerticalSide(conn) {
+      var fromEntry = entries[conn.from];
+      var toEntry = entries[conn.to];
+      if (!fromEntry || !toEntry) return null;
+
+      var fromY = conn.fromPort && fromEntry.portPositions[conn.fromPort]
+        ? fromEntry.portPositions[conn.fromPort].cy
+        : fromEntry.y + fromEntry.box.height / 2;
+      var toY = conn.toPort && toEntry.portPositions[conn.toPort]
+        ? toEntry.portPositions[conn.toPort].cy
+        : toEntry.y + toEntry.box.height / 2;
+      var routeY = (fromY + toY) / 2;
+
+      var fromCenterY = fromEntry.y + fromEntry.box.height / 2;
+      var toCenterY = toEntry.y + toEntry.box.height / 2;
+      var centerY = (fromCenterY + toCenterY) / 2;
+
+      if (routeY < centerY - 6) return 'above';
+      if (routeY > centerY + 6) return 'below';
+      return null;
+    }
+
     for (var cri = 0; cri < connectorRoutes.length; cri++) {
       var routeInfo = connectorRoutes[cri];
       if (!routeInfo.conn.label) continue;
@@ -6602,7 +6632,8 @@
         obstacles,
         placedLabels,
         componentRouteSegments,
-        CFG
+        CFG,
+        { preferredVerticalSide: preferredLabelVerticalSide(routeInfo.conn) }
       );
       if (!labelPlacement) continue;
       placedLabels.push(labelPlacement.rect);
