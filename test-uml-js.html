@@ -1,0 +1,380 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>JS/TS UML Analyzer Test</title>
+  <link rel="stylesheet" href="/css/uml-diagram.css">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+    h2 { margin-top: 50px; border-bottom: 2px solid #2774AE; padding-bottom: 8px; }
+    h1 { border-bottom: 3px solid #2774AE; padding-bottom: 12px; }
+    .test-case { display: flex; gap: 24px; margin-top: 16px; }
+    .test-source { flex: 1; min-width: 0; }
+    .test-output { flex: 1; min-width: 0; }
+    .test-source textarea { width: 100%; min-height: 220px; font-family: monospace; font-size: 13px; tab-size: 2; }
+    .test-syntax { background: #f5f5f5; border: 1px solid #ddd; padding: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow: auto; margin-bottom: 8px; }
+    .test-diagram { border: 1px solid #ccc; padding: 8px; min-height: 200px; }
+    .status { padding: 4px 8px; border-radius: 4px; font-size: 13px; margin-top: 8px; }
+    .status.loading { background: #fff3cd; color: #856404; }
+    .status.ok { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    button { padding: 6px 16px; cursor: pointer; margin: 4px 2px; }
+    label { font-weight: bold; display: block; margin-bottom: 4px; }
+    .errors { color: #c00; font-size: 13px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>JS/TS UML Analyzer Tests</h1>
+  <p id="load-status" class="status loading">Loading TypeScript compiler...</p>
+
+  <!-- Test 1: TypeScript Classes with Relationships -->
+  <h2>1. TypeScript Classes — All Relationship Types</h2>
+  <div class="test-case">
+    <div class="test-source">
+      <label>TypeScript Source</label>
+      <textarea id="src1">
+interface Serializable {
+  serialize(): string;
+  deserialize(data: string): void;
+}
+
+abstract class Shape {
+  protected color: string;
+  abstract area(): number;
+}
+
+class Circle extends Shape implements Serializable {
+  private radius: number;
+  private logger: Logger = new Logger();
+
+  constructor(radius: number) {
+    super();
+    this.radius = radius;
+  }
+
+  area(): number {
+    return Math.PI * this.radius ** 2;
+  }
+
+  serialize(): string {
+    return JSON.stringify({ radius: this.radius });
+  }
+
+  deserialize(data: string): void {}
+}
+
+class Logger {
+  log(msg: string): void {
+    console.log(msg);
+  }
+}
+
+class Canvas {
+  private shapes: Shape[];
+
+  constructor() {
+    this.shapes = [];
+  }
+
+  addShape(shape: Shape): void {
+    this.shapes.push(shape);
+  }
+
+  render(): void {
+    for (const s of this.shapes) {
+      s.area();
+    }
+  }
+}
+      </textarea>
+    </div>
+    <div class="test-output">
+      <label>Class Diagram Syntax</label>
+      <div id="syntax1" class="test-syntax"></div>
+      <label>Rendered Diagram</label>
+      <div id="diagram1" class="test-diagram"></div>
+      <div id="errors1" class="errors"></div>
+    </div>
+  </div>
+
+  <!-- Test 2: TS Constructor Injection (Aggregation) -->
+  <h2>2. Constructor Injection — Aggregation vs Composition</h2>
+  <div class="test-case">
+    <div class="test-source">
+      <label>TypeScript Source</label>
+      <textarea id="src2">
+class Database {
+  query(sql: string): string[] { return []; }
+}
+
+class Cache {
+  get(key: string): string | null { return null; }
+  set(key: string, value: string): void {}
+}
+
+class UserRepository {
+  private db: Database;
+  private cache: Cache = new Cache();
+
+  constructor(db: Database) {
+    this.db = db;
+  }
+
+  findById(id: string): string[] {
+    return this.db.query('SELECT * FROM users WHERE id = ' + id);
+  }
+}
+
+class UserService {
+  constructor(private repo: UserRepository) {}
+
+  getUser(id: string): string[] {
+    return this.repo.findById(id);
+  }
+}
+      </textarea>
+    </div>
+    <div class="test-output">
+      <label>Class Diagram Syntax</label>
+      <div id="syntax2" class="test-syntax"></div>
+      <label>Rendered Diagram</label>
+      <div id="diagram2" class="test-diagram"></div>
+      <div id="errors2" class="errors"></div>
+    </div>
+  </div>
+
+  <!-- Test 3: Sequence Diagram -->
+  <h2>3. Sequence Diagram — Method Calls &amp; Control Flow</h2>
+  <div class="test-case">
+    <div class="test-source">
+      <label>TypeScript Source</label>
+      <textarea id="src3">
+class OrderValidator {
+  validate(order: Order): boolean {
+    return order.getTotal() > 0;
+  }
+}
+
+class PaymentGateway {
+  charge(amount: number): boolean {
+    return true;
+  }
+}
+
+class Order {
+  private items: string[] = [];
+
+  addItem(item: string): void {
+    this.items.push(item);
+  }
+
+  getTotal(): number {
+    return this.items.length * 10;
+  }
+}
+
+class OrderService {
+  private validator: OrderValidator = new OrderValidator();
+  private gateway: PaymentGateway = new PaymentGateway();
+
+  processOrder(order: Order): boolean {
+    if (this.validator.validate(order)) {
+      const total = order.getTotal();
+      return this.gateway.charge(total);
+    } else {
+      return false;
+    }
+  }
+}
+
+const order = new Order();
+order.addItem("Widget");
+const service = new OrderService();
+service.processOrder(order);
+      </textarea>
+    </div>
+    <div class="test-output">
+      <label>Sequence Diagram Syntax</label>
+      <div id="syntax3" class="test-syntax"></div>
+      <label>Rendered Diagram</label>
+      <div id="diagram3" class="test-diagram"></div>
+      <div id="errors3" class="errors"></div>
+    </div>
+  </div>
+
+  <!-- Test 4: Interface Hierarchy + Enum -->
+  <h2>4. Interfaces, Enums, and Inheritance Hierarchy</h2>
+  <div class="test-case">
+    <div class="test-source">
+      <label>TypeScript Source</label>
+      <textarea id="src4">
+enum Priority { Low, Medium, High, Critical }
+
+interface Identifiable {
+  getId(): string;
+}
+
+interface Assignable extends Identifiable {
+  assignTo(user: string): void;
+}
+
+class Task implements Assignable {
+  private id: string;
+  private priority: Priority;
+  private assignee: string = '';
+
+  constructor(id: string, priority: Priority) {
+    this.id = id;
+    this.priority = priority;
+  }
+
+  getId(): string { return this.id; }
+
+  assignTo(user: string): void {
+    this.assignee = user;
+  }
+}
+
+class Epic extends Task {
+  private subtasks: Task[] = [];
+
+  addSubtask(task: Task): void {
+    this.subtasks.push(task);
+  }
+}
+      </textarea>
+    </div>
+    <div class="test-output">
+      <label>Class Diagram Syntax</label>
+      <div id="syntax4" class="test-syntax"></div>
+      <label>Rendered Diagram</label>
+      <div id="diagram4" class="test-diagram"></div>
+      <div id="errors4" class="errors"></div>
+    </div>
+  </div>
+
+  <!-- Test 5: Plain JavaScript (no TS) -->
+  <h2>5. Plain JavaScript — ES6 Classes</h2>
+  <div class="test-case">
+    <div class="test-source">
+      <label>JavaScript Source</label>
+      <textarea id="src5">
+class EventEmitter {
+  #listeners = {};
+
+  on(event, callback) {
+    if (!this.#listeners[event]) this.#listeners[event] = [];
+    this.#listeners[event].push(callback);
+  }
+
+  emit(event, data) {
+    const cbs = this.#listeners[event] || [];
+    for (const cb of cbs) cb(data);
+  }
+}
+
+class Store extends EventEmitter {
+  #state;
+
+  constructor(initialState) {
+    super();
+    this.#state = initialState;
+  }
+
+  getState() { return this.#state; }
+
+  dispatch(action) {
+    this.#state = this.reduce(this.#state, action);
+    this.emit('change', this.#state);
+  }
+
+  reduce(state, action) {
+    return state;
+  }
+}
+      </textarea>
+    </div>
+    <div class="test-output">
+      <label>Class Diagram Syntax</label>
+      <div id="syntax5" class="test-syntax"></div>
+      <label>Rendered Diagram</label>
+      <div id="diagram5" class="test-diagram"></div>
+      <div id="errors5" class="errors"></div>
+    </div>
+  </div>
+
+  <p style="margin-top: 40px;">
+    <button id="run-all" disabled>Run All Tests</button>
+  </p>
+
+  <!-- Load dependencies -->
+  <script src="/js/uml-bundle.js"></script>
+  <script src="/js/uml-analyzer-js.js"></script>
+  <script>
+    var tsLoaded = false;
+
+    // Load TypeScript compiler from CDN
+    (function () {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/typescript@5/lib/typescript.min.js';
+      s.onload = function () {
+        tsLoaded = true;
+        document.getElementById('load-status').textContent = 'TypeScript compiler loaded. Ready.';
+        document.getElementById('load-status').className = 'status ok';
+        document.getElementById('run-all').disabled = false;
+        // Auto-run on load
+        runAll();
+      };
+      s.onerror = function () {
+        document.getElementById('load-status').textContent = 'Failed to load TypeScript compiler.';
+        document.getElementById('load-status').className = 'status error';
+      };
+      document.head.appendChild(s);
+    })();
+
+    function runTest(n, lang) {
+      var textarea = document.getElementById('src' + n);
+      var syntaxEl = document.getElementById('syntax' + n);
+      var diagramEl = document.getElementById('diagram' + n);
+      var errorsEl = document.getElementById('errors' + n);
+      var ext = (lang === 'js') ? '.js' : '.ts';
+
+      var sources = {};
+      sources['test' + ext] = textarea.value;
+
+      var result = analyzeJSSources(sources, window.ts);
+
+      // Show class diagram by default, sequence for test 3
+      var isSeq = (n === 3);
+      var syntax = isSeq ? result.sequenceDiagram : result.classDiagram;
+      syntaxEl.textContent = syntax || '(empty)';
+
+      diagramEl.innerHTML = '';
+      if (syntax) {
+        if (isSeq && window.UMLSequenceDiagram) {
+          UMLSequenceDiagram.render(diagramEl, syntax);
+        } else if (!isSeq && window.UMLClassDiagram) {
+          UMLClassDiagram.render(diagramEl, syntax);
+        }
+      }
+
+      errorsEl.textContent = result.errors.length > 0
+        ? 'Errors: ' + result.errors.join('; ') : '';
+    }
+
+    function runAll() {
+      if (!tsLoaded) return;
+      runTest(1, 'ts');
+      runTest(2, 'ts');
+      runTest(3, 'ts');
+      runTest(4, 'ts');
+      runTest(5, 'js');
+    }
+
+    document.getElementById('run-all').addEventListener('click', runAll);
+  </script>
+</body>
+</html>
