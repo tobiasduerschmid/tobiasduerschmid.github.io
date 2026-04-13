@@ -246,6 +246,7 @@ title: "SE Gym"
       options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
     correct_index: {{ q.correct_index | jsonify }},
     correct_indices: {{ q.correct_indices | jsonify }},
+    optional_indices: {{ q.optional_indices | jsonify }},
     explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
     lines: {{ q.lines | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
@@ -265,6 +266,7 @@ title: "SE Gym"
       options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
     correct_index: {{ q.correct_index | jsonify }},
     correct_indices: {{ q.correct_indices | jsonify }},
+    optional_indices: {{ q.optional_indices | jsonify }},
     explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
     lines: {{ q.lines | jsonify | default: "null" }},
     distractors: {{ q.distractors | jsonify | default: "null" }},
@@ -931,6 +933,13 @@ title: "SE Gym"
       font-weight: 800;
       font-size: 0.85em;
       display: inline-block;
+    }
+
+    .workout-quiz-card .optional-answer-note {
+      margin-left: 8px;
+      font-size: 0.9em;
+      font-weight: 700;
+      color: #666;
     }
 
     /* ── Parsons Problem Styles ─────────────────────────────────────── */
@@ -1891,9 +1900,13 @@ title: "SE Gym"
 
         // Compute correct labels after shuffle
         var correctOriginals = type === 'multiple' && q.correct_indices
-          ? q.correct_indices
+          ? q.correct_indices.slice()
           : [q.correct_index];
+        var optionalOriginals = type === 'multiple' && q.optional_indices
+          ? q.optional_indices.slice()
+          : [];
         var correctLabels = [];
+        var optionalLabels = [];
 
         var div = document.createElement('div');
         div.className = 'workout-quiz-card';
@@ -1908,8 +1921,13 @@ title: "SE Gym"
           if (correctOriginals.indexOf(opt.originalIndex) !== -1) {
             correctLabels.push(label);
           }
+          if (optionalOriginals.indexOf(opt.originalIndex) !== -1) {
+            optionalLabels.push(label);
+          }
           var checkboxHtml = '<span class="option-checkbox"></span>';
-          optionsHtml += '<button class="quiz-option" data-index="' + opt.originalIndex + '" data-label="' + label + '">' +
+          optionsHtml += '<button class="quiz-option" data-index="' + opt.originalIndex + '" data-label="' + label + '"' +
+            ' data-correct-indices="' + correctOriginals.join(',') + '"' +
+            ' data-optional-indices="' + optionalOriginals.join(',') + '">' +
             checkboxHtml +
             '<span class="option-label">' + label + '</span>' +
             '<span class="option-content">' + opt.html + '</span>' +
@@ -1924,6 +1942,10 @@ title: "SE Gym"
         var correctAnswerHtml = '<div class="quiz-correct-answers">Correct Answer' +
           (type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
           correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join(' ') +
+          (optionalLabels.length
+            ? ' <span class="optional-answer-note">Optional:</span> ' +
+              optionalLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join(' ')
+            : '') +
           '</span></div>';
 
         var explanationHtml = '<div class="quiz-explanation hidden">' +
@@ -1976,21 +1998,27 @@ title: "SE Gym"
           });
           submitBtn.addEventListener('click', function () {
             var selectedOpts = div.querySelectorAll('.quiz-option.selected');
-            var selectedIndices = Array.from(selectedOpts).map(function (o) { return parseInt(o.dataset.index); }).sort().join(',');
-            var correctIndicesSorted = correctOriginals.slice().sort().join(',');
+            var selectedIndices = Array.from(selectedOpts).map(function (o) { return parseInt(o.dataset.index, 10); });
+            var allowedOriginals = correctOriginals.concat(optionalOriginals);
             options.forEach(function (o) { o.setAttribute('disabled', 'true'); });
             submitBtn.classList.add('hidden');
-            var isMultiCorrect = (selectedIndices === correctIndicesSorted);
+            var isMultiCorrect = correctOriginals.every(function (idx) {
+              return selectedIndices.indexOf(idx) !== -1;
+            }) && selectedIndices.every(function (idx) {
+              return allowedOriginals.indexOf(idx) !== -1;
+            });
             if (isMultiCorrect) {
               selectedOpts.forEach(function (o) { o.classList.add('correct'); });
               workoutScore++;
             } else {
-              selectedOpts.forEach(function (o) {
-                var idx = parseInt(o.dataset.index);
-                o.classList.add(correctOriginals.indexOf(idx) !== -1 ? 'correct' : 'incorrect');
-              });
               options.forEach(function (o) {
-                if (correctOriginals.indexOf(parseInt(o.dataset.index)) !== -1) o.classList.add('correct');
+                var idx = parseInt(o.dataset.index, 10);
+                var isSelected = o.classList.contains('selected');
+                if (correctOriginals.indexOf(idx) !== -1 || (isSelected && optionalOriginals.indexOf(idx) !== -1)) {
+                  o.classList.add('correct');
+                } else if (isSelected && allowedOriginals.indexOf(idx) === -1) {
+                  o.classList.add('incorrect');
+                }
               });
               workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
             }

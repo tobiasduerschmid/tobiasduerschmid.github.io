@@ -103,4 +103,5 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [3, 5]
-    explanation: "This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'."
+    optional_indices: [4]
+    explanation: "This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'. Whether we consider it 'small' or not is subjective and either answer would be consdier correct."

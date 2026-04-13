@@ -3390,6 +3390,18 @@
     var minPct = Math.round((quiz.min_score !== undefined ? quiz.min_score : 0.8) * 100);
     var nextStepNum = stepIndex + 2;
 
+    function appendAnswerBadges(labels, noteText) {
+      if (!labels.length) return '';
+      var html = '';
+      if (noteText) {
+        html += '<span class="optional-answer-note">' + self._escapeHtml(noteText) + '</span>';
+      }
+      html += labels.map(function (label) {
+        return '<span class="correct-label-badge">' + label + '</span>';
+      }).join('');
+      return html;
+    }
+
     var questions = (quiz.questions || []).map(function (q) {
       if (q.type === 'parsons') {
         // Parsons problem: lines is the correct order, distractors are extra wrong lines
@@ -3408,13 +3420,21 @@
       if (doShuffle) self._shuffleArray(opts);
       var correctOriginals = q.type === 'multiple'
         ? (q.correct_indices || []).map(String).sort() : [String(q.correct_index || 0)];
+      var optionalOriginals = q.type === 'multiple'
+        ? (q.optional_indices || []).map(String).sort() : [];
       var correctLabels = [];
+      var optionalLabels = [];
       opts.forEach(function (opt, oi) {
         if (correctOriginals.indexOf(String(opt.originalIndex)) !== -1) correctLabels.push(alphabet[oi]);
+        if (optionalOriginals.indexOf(String(opt.originalIndex)) !== -1) optionalLabels.push(alphabet[oi]);
       });
       return {
         question: q.question || '', type: q.type || 'single', explanation: q.explanation || '',
-        options: opts, correctOriginals: correctOriginals, correctLabels: correctLabels
+        options: opts,
+        correctOriginals: correctOriginals,
+        optionalOriginals: optionalOriginals,
+        correctLabels: correctLabels,
+        optionalLabels: optionalLabels
       };
     });
     if (doShuffle) self._shuffleArray(questions);
@@ -3463,7 +3483,8 @@
         q.options.forEach(function (opt, oi) {
           html += '<button class="quiz-option" data-index="' + String(opt.originalIndex) + '"' +
             ' data-correct="' + q.correctOriginals[0] + '"' +
-            ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
+            ' data-correct-indices="' + q.correctOriginals.join(',') + '"' +
+            ' data-optional-indices="' + q.optionalOriginals.join(',') + '">' +
             '<span class="option-checkbox"></span><span class="option-label">' + alphabet[oi] + '</span>' +
             '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span></button>';
         });
@@ -3471,7 +3492,8 @@
         if (q.type === 'multiple') html += '<button class="submit-answer-btn" disabled>Submit Answer</button>';
         html += '<div class="quiz-correct-answers">Correct Answer' +
           (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
-          q.correctLabels.map(function (l) { return '<span class="correct-label-badge">' + l + '</span>'; }).join('') +
+          appendAnswerBadges(q.correctLabels) +
+          appendAnswerBadges(q.optionalLabels, 'Optional:') +
           '</span></div>';
       }
       html += '<div class="quiz-explanation hidden"><div class="explanation-title">Explanation</div>' +
@@ -3495,6 +3517,19 @@
     var self = this;
     var container = this.quizPanelEl && this.quizPanelEl.querySelector('.quiz-container');
     if (!container) return;
+
+    function parseIndexList(value) {
+      if (!value) return [];
+      return value.split(',').map(function (part) { return part.trim(); }).filter(Boolean);
+    }
+
+    function isAcceptedMultipleAnswer(selectedIndices, requiredIndices, optionalIndices) {
+      var selectedSet = new Set(selectedIndices);
+      var allowedSet = new Set(requiredIndices.concat(optionalIndices));
+      return requiredIndices.every(function (index) { return selectedSet.has(index); }) &&
+        selectedIndices.every(function (index) { return allowedSet.has(index); });
+    }
+
     var progressBar = container.querySelector('.progress-fill');
     var resultsArea = container.querySelector('.quiz-results');
     var scoreDisplay = container.querySelector('.current-score');
@@ -3546,16 +3581,24 @@
       var sel = card.querySelectorAll('.quiz-option.selected');
       var exp = card.querySelector('.quiz-explanation');
       var ca = card.querySelector('.quiz-correct-answers');
-      var selI = Array.prototype.map.call(sel, function (o) { return o.dataset.index; }).sort().join(',');
-      var corI = card.querySelector('.quiz-option').dataset.correctIndices.split(',').sort().join(',');
+      var selI = Array.prototype.map.call(sel, function (o) { return o.dataset.index; }).sort();
+      var firstOption = card.querySelector('.quiz-option');
+      var corI = parseIndexList(firstOption.dataset.correctIndices);
+      var optI = parseIndexList(firstOption.dataset.optionalIndices);
+      var correctSet = new Set(corI);
+      var optionalSet = new Set(optI);
+      var allowedSet = new Set(corI.concat(optI));
       opts.forEach(function (o) { o.setAttribute('disabled', 'true'); });
       e.currentTarget.classList.add('hidden');
-      if (selI === corI) { sel.forEach(function (o) { o.classList.add('correct'); }); score++; }
+      if (isAcceptedMultipleAnswer(selI, corI, optI)) { sel.forEach(function (o) { o.classList.add('correct'); }); score++; }
       else {
-        var cSet = corI.split(',');
         opts.forEach(function (o) {
-          if (cSet.indexOf(o.dataset.index) !== -1) o.classList.add('correct');
-          else if (o.classList.contains('selected')) o.classList.add('incorrect');
+          var isSelected = o.classList.contains('selected');
+          if (correctSet.has(o.dataset.index) || (isSelected && optionalSet.has(o.dataset.index))) {
+            o.classList.add('correct');
+          } else if (isSelected && !allowedSet.has(o.dataset.index)) {
+            o.classList.add('incorrect');
+          }
         });
       }
       if (ca) ca.style.display = 'flex';

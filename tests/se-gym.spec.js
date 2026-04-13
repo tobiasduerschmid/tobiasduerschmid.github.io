@@ -10,6 +10,30 @@ const GIT_PAGE_URL = '/SEBook/tools/git/';
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 const ANALYZE_TOGGLE_SLIDER = '#analyzePerformanceToggle + .slider';
 
+function parseIndices(value) {
+  if (!value) return [];
+  return value.split(',').map(part => part.trim()).filter(Boolean).map(Number);
+}
+
+async function answerWorkoutMultipleChoice(card, includeOptional = false) {
+  const firstOption = card.locator('.quiz-option').first();
+  const required = parseIndices(await firstOption.getAttribute('data-correct-indices'));
+  const optional = parseIndices(await firstOption.getAttribute('data-optional-indices'));
+  const accepted = new Set(includeOptional ? required.concat(optional) : required);
+  const options = card.locator('.quiz-option');
+  const count = await options.count();
+
+  for (let i = 0; i < count; i++) {
+    const option = options.nth(i);
+    const index = Number(await option.getAttribute('data-index'));
+    if (accepted.has(index)) {
+      await option.click();
+    }
+  }
+
+  await card.locator('.submit-answer-btn').click();
+}
+
 /**
  * Helper: clear all se-gym cookies and localStorage before each test.
  */
@@ -442,6 +466,30 @@ test.describe('Personal Gym - Workout', () => {
     // Should show results after 2 cards
     await expect(page.locator('#workout-results')).toBeVisible();
     await expect(page.locator('#workout-total')).toHaveText('2');
+  });
+
+  test('workout accepts optional quiz indices when selected', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'user_stories' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('5');
+    await page.locator('#start-workout-btn').click();
+
+    for (let i = 0; i < 5; i++) {
+      const card = page.locator('.workout-quiz-card');
+      await expect(card).toBeVisible();
+      const questionText = await card.locator('.question-text').innerText();
+      const includeOptional = questionText.includes('homepage to load blazing fast');
+
+      await answerWorkoutMultipleChoice(card, includeOptional);
+      await expect(card.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
+      await card.locator('.next-btn').click();
+    }
+
+    await expect(page.locator('#workout-results')).toBeVisible();
+    await expect(page.locator('#workout-score')).toHaveText('5');
+    await expect(page.locator('#workout-review-btn')).toBeHidden();
   });
 });
 

@@ -1,6 +1,30 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
+function parseIndices(value) {
+  if (!value) return [];
+  return value.split(',').map(part => part.trim()).filter(Boolean).map(Number);
+}
+
+async function answerVisibleMultipleChoice(card, includeOptional = false) {
+  const firstOption = card.locator('.quiz-option').first();
+  const required = parseIndices(await firstOption.getAttribute('data-correct-indices'));
+  const optional = parseIndices(await firstOption.getAttribute('data-optional-indices'));
+  const accepted = new Set(includeOptional ? required.concat(optional) : required);
+  const options = card.locator('.quiz-option');
+  const count = await options.count();
+
+  for (let i = 0; i < count; i++) {
+    const option = options.nth(i);
+    const index = Number(await option.getAttribute('data-index'));
+    if (accepted.has(index)) {
+      await option.click();
+    }
+  }
+
+  await card.locator('.submit-answer-btn').click();
+}
+
 test.describe('Interactive Quiz Verification', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the verification post
@@ -125,5 +149,25 @@ test.describe('Interactive Quiz Verification', () => {
     // Verify we are back at Question 1
     await expect(page.locator('.quiz-question-card.active .question-text')).toContainText('cognitive offloading');
     await expect(page.locator('.progress-fill')).toHaveAttribute('style', 'width: 0%;');
+  });
+
+  test('Optional indices are accepted when selected in SEBook quizzes', async ({ page }) => {
+    await page.goto('http://localhost:4000/SEBook/userstories/?noshuffle=1');
+
+    for (let i = 0; i < 4; i++) {
+      const card = page.locator('.quiz-question-card.active');
+      await answerVisibleMultipleChoice(card);
+      await card.locator('.next-btn').click();
+    }
+
+    const finalCard = page.locator('.quiz-question-card.active');
+    await expect(finalCard).toContainText('homepage to load blazing fast');
+    await answerVisibleMultipleChoice(finalCard, true);
+
+    await expect(finalCard.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
+    await finalCard.locator('.next-btn').click();
+
+    await expect(page.locator('.quiz-results:not(.hidden)')).toBeVisible();
+    await expect(page.locator('.quiz-results:not(.hidden) .current-score')).toHaveText('5');
   });
 });

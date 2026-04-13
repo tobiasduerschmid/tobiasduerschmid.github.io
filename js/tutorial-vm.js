@@ -987,6 +987,18 @@
     var minPct = Math.round((quiz.min_score !== undefined ? quiz.min_score : 0.8) * 100);
     var nextStepNum = stepIndex + 2; // steps are 1-indexed for display
 
+    function appendAnswerBadges(labels, noteText) {
+      if (!labels.length) return '';
+      var html = '';
+      if (noteText) {
+        html += '<span class="optional-answer-note">' + self._escapeHtml(noteText) + '</span>';
+      }
+      html += labels.map(function (label) {
+        return '<span class="correct-label-badge">' + label + '</span>';
+      }).join('');
+      return html;
+    }
+
     // Clone questions so originals are not mutated
     var questions = (quiz.questions || []).map(function (q) {
       var opts = (q.options || []).map(function (text, oi) {
@@ -996,11 +1008,18 @@
       var correctOriginals = q.type === 'multiple'
         ? (q.correct_indices || []).map(String).sort()
         : [String(q.correct_index || 0)];
+      var optionalOriginals = q.type === 'multiple'
+        ? (q.optional_indices || []).map(String).sort()
+        : [];
       // Compute which display labels (A/B/C…) are correct after shuffle
       var correctLabels = [];
+      var optionalLabels = [];
       opts.forEach(function (opt, oi) {
         if (correctOriginals.indexOf(String(opt.originalIndex)) !== -1) {
           correctLabels.push(alphabet[oi]);
+        }
+        if (optionalOriginals.indexOf(String(opt.originalIndex)) !== -1) {
+          optionalLabels.push(alphabet[oi]);
         }
       });
       return {
@@ -1009,7 +1028,9 @@
         explanation: q.explanation || '',
         options: opts,
         correctOriginals: correctOriginals,
-        correctLabels: correctLabels
+        optionalOriginals: optionalOriginals,
+        correctLabels: correctLabels,
+        optionalLabels: optionalLabels
       };
     });
     if (doShuffle) self._shuffleArray(questions);
@@ -1046,7 +1067,8 @@
         html += '<button class="quiz-option"' +
           ' data-index="' + origIdx + '"' +
           ' data-correct="' + q.correctOriginals[0] + '"' +
-          ' data-correct-indices="' + q.correctOriginals.join(',') + '">' +
+          ' data-correct-indices="' + q.correctOriginals.join(',') + '"' +
+          ' data-optional-indices="' + q.optionalOriginals.join(',') + '">' +
           '<span class="option-checkbox"></span>' +
           '<span class="option-label">' + alphabet[oi] + '</span>' +
           '<span class="option-content">' + self._renderMarkdown(opt.text) + '</span>' +
@@ -1062,9 +1084,8 @@
       // Correct answer badge
       html += '<div class="quiz-correct-answers">Correct Answer' +
         (q.type === 'multiple' ? 's' : '') + ': <span class="correct-labels">' +
-        q.correctLabels.map(function (l) {
-          return '<span class="correct-label-badge">' + l + '</span>';
-        }).join('') +
+        appendAnswerBadges(q.correctLabels) +
+        appendAnswerBadges(q.optionalLabels, 'Optional:') +
         '</span></div>';
 
       // Explanation + next button
@@ -1099,6 +1120,18 @@
     var self = this;
     var container = this.quizPanelEl && this.quizPanelEl.querySelector('.quiz-container');
     if (!container) return;
+
+    function parseIndexList(value) {
+      if (!value) return [];
+      return value.split(',').map(function (part) { return part.trim(); }).filter(Boolean);
+    }
+
+    function isAcceptedMultipleAnswer(selectedIndices, requiredIndices, optionalIndices) {
+      var selectedSet = new Set(selectedIndices);
+      var allowedSet = new Set(requiredIndices.concat(optionalIndices));
+      return requiredIndices.every(function (index) { return selectedSet.has(index); }) &&
+        selectedIndices.every(function (index) { return allowedSet.has(index); });
+    }
 
     var progressBar = container.querySelector('.progress-fill');
     var resultsArea = container.querySelector('.quiz-results');
@@ -1163,19 +1196,27 @@
       var explanation = card.querySelector('.quiz-explanation');
       var correctAnswersEl = card.querySelector('.quiz-correct-answers');
       var submitBtn = e.currentTarget;
-      var selectedIndices = Array.prototype.map.call(selectedOptions, function (o) { return o.dataset.index; }).sort().join(',');
-      var correctIndices = card.querySelector('.quiz-option').dataset.correctIndices.split(',').sort().join(',');
+      var selectedIndices = Array.prototype.map.call(selectedOptions, function (o) { return o.dataset.index; }).sort();
+      var firstOption = card.querySelector('.quiz-option');
+      var correctIndices = parseIndexList(firstOption.dataset.correctIndices);
+      var optionalIndices = parseIndexList(firstOption.dataset.optionalIndices);
+      var correctSet = new Set(correctIndices);
+      var optionalSet = new Set(optionalIndices);
+      var allowedSet = new Set(correctIndices.concat(optionalIndices));
       options.forEach(function (opt) { opt.setAttribute('disabled', 'true'); });
       submitBtn.classList.add('hidden');
-      var isAnswerCorrect = (selectedIndices === correctIndices);
+      var isAnswerCorrect = isAcceptedMultipleAnswer(selectedIndices, correctIndices, optionalIndices);
       if (isAnswerCorrect) {
         selectedOptions.forEach(function (o) { o.classList.add('correct'); });
         score++;
       } else {
-        var correctSet = correctIndices.split(',');
         options.forEach(function (opt) {
-          if (correctSet.indexOf(opt.dataset.index) !== -1) opt.classList.add('correct');
-          else if (opt.classList.contains('selected')) opt.classList.add('incorrect');
+          var isSelected = opt.classList.contains('selected');
+          if (correctSet.has(opt.dataset.index) || (isSelected && optionalSet.has(opt.dataset.index))) {
+            opt.classList.add('correct');
+          } else if (isSelected && !allowedSet.has(opt.dataset.index)) {
+            opt.classList.add('incorrect');
+          }
         });
       }
       if (correctAnswersEl) correctAnswersEl.style.display = 'flex';

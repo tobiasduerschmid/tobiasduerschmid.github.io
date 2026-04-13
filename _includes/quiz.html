@@ -72,7 +72,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
         {% for option in q.options %}
         <button class="quiz-option" data-index="{{ forloop.index0 }}" data-correct="{{ q.correct_index }}"
-          data-correct-indices="{{ q.correct_indices | join: ',' }}">
+          data-correct-indices="{{ q.correct_indices | join: ',' }}"
+          data-optional-indices="{{ q.optional_indices | join: ',' }}">
           <span class="option-checkbox"></span>
           <span class="option-label">{{ alphabet | slice: forloop.index0 }}</span>
           <span class="option-content">{{ option | markdownify }}</span>
@@ -328,6 +329,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .correct-labels {
     display: inline-flex;
     gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
   }
 
   .correct-label-badge {
@@ -338,6 +341,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
     font-weight: 800;
     font-size: 0.85em;
     display: inline-block;
+  }
+
+  .optional-answer-note {
+    margin-left: 8px;
+    font-size: 0.9em;
+    font-weight: 700;
+    color: #666;
   }
 
   .score-display {
@@ -483,6 +493,34 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
     }
 
+    function parseIndexList(value) {
+      if (!value) return [];
+      return value.split(',').map(part => part.trim()).filter(Boolean);
+    }
+
+    function appendAnswerBadges(containerEl, labels, noteText) {
+      if (!containerEl || !labels.length) return;
+      if (noteText) {
+        const note = document.createElement('span');
+        note.className = 'optional-answer-note';
+        note.textContent = noteText;
+        containerEl.appendChild(note);
+      }
+      labels.forEach(label => {
+        const badge = document.createElement('span');
+        badge.className = 'correct-label-badge';
+        badge.textContent = label;
+        containerEl.appendChild(badge);
+      });
+    }
+
+    function isAcceptedMultipleAnswer(selectedIndices, requiredIndices, optionalIndices) {
+      const selectedSet = new Set(selectedIndices);
+      const allowedSet = new Set(requiredIndices.concat(optionalIndices));
+      return requiredIndices.every(index => selectedSet.has(index)) &&
+        selectedIndices.every(index => allowedSet.has(index));
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const noShuffle = urlParams.get('noshuffle') === '1' || container.dataset.shuffle === 'false';
 
@@ -513,10 +551,14 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const qType = card.dataset.type;
       const correctIndices = (qType === 'multiple')
-        ? options[0].dataset.correctIndices.split(',')
+        ? parseIndexList(options[0].dataset.correctIndices)
         : [options[0].dataset.correct];
+      const optionalIndices = (qType === 'multiple')
+        ? parseIndexList(options[0].dataset.optionalIndices)
+        : [];
 
       const correctLabels = [];
+      const optionalLabels = [];
 
       options.forEach((opt, idx) => {
         optionsContainer.appendChild(opt);
@@ -527,17 +569,16 @@ Data source: _data/quizzes/{{ include.id }}.yml
         if (correctIndices.includes(opt.dataset.index)) {
           correctLabels.push(label);
         }
+        if (optionalIndices.includes(opt.dataset.index)) {
+          optionalLabels.push(label);
+        }
       });
 
       const connectAnswersElem = card.querySelector('.quiz-correct-answers .correct-labels');
       if (connectAnswersElem) {
         connectAnswersElem.innerHTML = ''; // Clear current
-        correctLabels.forEach(label => {
-          const badge = document.createElement('span');
-          badge.className = 'correct-label-badge';
-          badge.textContent = label;
-          connectAnswersElem.appendChild(badge);
-        });
+        appendAnswerBadges(connectAnswersElem, correctLabels);
+        appendAnswerBadges(connectAnswersElem, optionalLabels, 'Optional:');
       }
     });
 
@@ -665,28 +706,27 @@ Data source: _data/quizzes/{{ include.id }}.yml
       const explanation = card.querySelector('.quiz-explanation');
       const submitBtn = e.currentTarget;
 
-      const selectedIndices = Array.from(selectedOptions).map(opt => opt.dataset.index).sort().join(',');
-      // Data in correct-indices is sorted in the template
-      const correctIndices = card.querySelector('.quiz-option').dataset.correctIndices;
+      const selectedIndices = Array.from(selectedOptions).map(opt => opt.dataset.index).sort();
+      const correctIndices = parseIndexList(card.querySelector('.quiz-option').dataset.correctIndices);
+      const optionalIndices = parseIndexList(card.querySelector('.quiz-option').dataset.optionalIndices);
+      const correctSet = new Set(correctIndices);
+      const optionalSet = new Set(optionalIndices);
+      const allowedSet = new Set(correctIndices.concat(optionalIndices));
 
       options.forEach(opt => opt.setAttribute('disabled', 'true'));
       submitBtn.classList.add('hidden');
 
-      const isAnswerCorrect = (selectedIndices === correctIndices);
+      const isAnswerCorrect = isAcceptedMultipleAnswer(selectedIndices, correctIndices, optionalIndices);
       if (isAnswerCorrect) {
         selectedOptions.forEach(opt => opt.classList.add('correct'));
         score++;
       } else {
-        selectedOptions.forEach(opt => {
-          const isCorrect = correctIndices.split(',').includes(opt.dataset.index);
-          opt.classList.add(isCorrect ? 'correct' : 'incorrect');
-        });
-
-        // Highlight missed correct options
-        const correctSet = correctIndices.split(',');
         options.forEach(opt => {
-          if (correctSet.includes(opt.dataset.index)) {
+          const isSelected = opt.classList.contains('selected');
+          if (correctSet.has(opt.dataset.index) || (isSelected && optionalSet.has(opt.dataset.index))) {
             opt.classList.add('correct');
+          } else if (isSelected && !allowedSet.has(opt.dataset.index)) {
+            opt.classList.add('incorrect');
           }
         });
 

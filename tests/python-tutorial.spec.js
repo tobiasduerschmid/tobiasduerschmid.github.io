@@ -132,8 +132,50 @@ test.describe.serial('Python Tutorial', () => {
 
   test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
     await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
+    await page.evaluate(() => {
+      const quiz = window._tutorial.steps[0].quiz;
+      quiz.shuffle = false;
+      const multipleQuestion = (quiz.questions || []).find(q => q.type === 'multiple');
+      if (!multipleQuestion) {
+        throw new Error('Expected a multiple-choice quiz question on tutorial step 1');
+      }
+      multipleQuestion.optional_indices = [2];
+    });
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
+
+    const firstCard = page.locator('.tvm-quiz-panel .quiz-question-card.active');
+    const firstCardCorrectIdx = await firstCard.locator('.quiz-option').first().getAttribute('data-correct');
+    const firstCardOptions = firstCard.locator('.quiz-option');
+    const firstCardOptionCount = await firstCardOptions.count();
+    for (let i = 0; i < firstCardOptionCount; i++) {
+      const option = firstCardOptions.nth(i);
+      if (await option.getAttribute('data-index') === firstCardCorrectIdx) {
+        await option.click();
+        break;
+      }
+    }
+    await firstCard.locator('.next-btn').click();
+
+    const multipleCard = page.locator('.tvm-quiz-panel .quiz-question-card.active');
+    await expect(multipleCard).toContainText('Which of the following statements about Python are correct');
+    const firstMultipleOption = multipleCard.locator('.quiz-option').first();
+    const required = (await firstMultipleOption.getAttribute('data-correct-indices')).split(',').filter(Boolean);
+    const optional = (await firstMultipleOption.getAttribute('data-optional-indices')).split(',').filter(Boolean);
+    const accepted = new Set(required.concat(optional));
+    const multipleOptions = multipleCard.locator('.quiz-option');
+    const multipleOptionCount = await multipleOptions.count();
+    for (let i = 0; i < multipleOptionCount; i++) {
+      const option = multipleOptions.nth(i);
+      if (accepted.has(await option.getAttribute('data-index'))) {
+        await option.click();
+      }
+    }
+    await multipleCard.locator('.submit-answer-btn').click();
+    await expect(multipleCard.locator('.quiz-option.selected.incorrect')).toHaveCount(0);
+    await expect(multipleCard.locator('.optional-answer-note')).toHaveText('Optional:');
+    await multipleCard.locator('.next-btn').click();
+
     await answerQuizCorrectly(page);
     await page.locator('.tvm-quiz-continue-btn').click();
     await expect(page.locator('.tvm-step-btn').nth(1)).toHaveClass(/active/);
