@@ -3454,6 +3454,47 @@
     };
   }
 
+  function countIncomingRelationshipPressure(classes, relationships) {
+    var counts = {};
+    for (var ci = 0; ci < classes.length; ci++) {
+      counts[classes[ci].name] = 0;
+    }
+
+    for (var ri = 0; ri < relationships.length; ri++) {
+      var rel = relationships[ri];
+      if (rel.type === 'generalization' || rel.type === 'realization') continue;
+      if (counts[rel.to] === undefined) continue;
+      counts[rel.to] += 1;
+    }
+
+    return counts;
+  }
+
+  function widenBoxForIncomingRelationships(box, incomingCount) {
+    if (!incomingCount || incomingCount < 3) return box;
+
+    var extraWidth = Math.min(144, (incomingCount - 2) * 20);
+    var extraHeight = 0;
+    var nameH = box.nameH;
+    var height = box.height;
+
+    if (box.attrH === 0 && box.methH === 0) {
+      extraHeight = Math.min(120, (incomingCount - 2) * 22);
+      nameH += extraHeight;
+      height += extraHeight;
+    }
+
+    return {
+      width: Math.ceil((box.width + extraWidth) / 2) * 2,
+      height: height,
+      nameH: nameH,
+      stereotypeH: box.stereotypeH,
+      attrH: box.attrH,
+      methH: box.methH,
+      stereotypeText: box.stereotypeText,
+    };
+  }
+
   function buildMemberNoteTargets(entry) {
     if (!entry || !entry.cls || !entry.box) return {};
 
@@ -3573,11 +3614,12 @@
     var entries = {};
     var layoutNodes = [];
     var layoutEdges = [];
+    var incomingPressure = countIncomingRelationshipPressure(classes, relationships);
 
     // Measure boxes & construct layout input
     for (var i = 0; i < classes.length; i++) {
       var cls = classes[i];
-      var box = measureBox(cls);
+      var box = widenBoxForIncomingRelationships(measureBox(cls), incomingPressure[cls.name] || 0);
       entries[cls.name] = {
         cls: cls,
         box: box,
@@ -4230,15 +4272,15 @@
       // Eliminate unnecessary detours/corners by simplifying U-shaped bends
       pathPoints = eliminateUnnecessaryCorners(pathPoints, classObstacles, fromE, toE);
 
-      // Eliminate tiny H-V-H doglegs: when the middle vertical segment is ≤ 6px,
-      // snap the shorter end to the longer end's Y for a cleaner straight-through look.
+      // Eliminate tiny H-V-H doglegs: when the middle segment is small,
+      // snap the shorter end to the longer end's coordinate for a cleaner look.
       if (pathPoints.length === 4) {
         var cdg0 = pathPoints[0], cdg1 = pathPoints[1], cdg2 = pathPoints[2], cdg3 = pathPoints[3];
         var cdgH1 = Math.abs(cdg1.y - cdg0.y) < 1;
         var cdgV  = Math.abs(cdg2.x - cdg1.x) < 1;
         var cdgH2 = Math.abs(cdg3.y - cdg2.y) < 1;
         var cdgVLen = Math.abs(cdg2.y - cdg1.y);
-        if (cdgH1 && cdgV && cdgH2 && cdgVLen > 0.3 && cdgVLen <= 6) {
+        if (cdgH1 && cdgV && cdgH2 && cdgVLen > 0.3 && cdgVLen <= 8) {
           // Snap to the Y of the longer horizontal segment
           var cdgFirstLen = Math.abs(cdg1.x - cdg0.x);
           var cdgThirdLen = Math.abs(cdg3.x - cdg2.x);
@@ -4250,7 +4292,7 @@
         var cdgH  = Math.abs(cdg2.y - cdg1.y) < 1;
         var cdgV2 = Math.abs(cdg3.x - cdg2.x) < 1;
         var cdgHLen = Math.abs(cdg2.x - cdg1.x);
-        if (cdgV1 && cdgH && cdgV2 && cdgHLen > 0.3 && cdgHLen <= 6) {
+        if (cdgV1 && cdgH && cdgV2 && cdgHLen > 0.3 && cdgHLen <= 8) {
           var cdgFirstVLen = Math.abs(cdg1.y - cdg0.y);
           var cdgThirdVLen = Math.abs(cdg3.y - cdg2.y);
           var cdgSnapX = cdgFirstVLen >= cdgThirdVLen ? cdg0.x : cdg3.x;
@@ -4464,15 +4506,17 @@
 
       // Stereotype text
       var textCx = x + box.width / 2;
+      var headerContentH = box.stereotypeH + CFG.lineHeight;
+      var headerTopPad = Math.max(CFG.padY, (box.nameH - headerContentH) / 2);
       if (box.stereotypeText) {
-        var stereoY = y + CFG.padY + CFG.lineHeight * 0.75;
+        var stereoY = y + headerTopPad + CFG.lineHeight * 0.75;
         svg.push('<text x="' + textCx + '" y="' + stereoY + '" text-anchor="middle" ' +
           'font-size="' + CFG.fontSizeStereotype + '" fill="' + colors.text + '">' +
           UMLShared.escapeXml(box.stereotypeText) + '</text>');
       }
 
       // Class name
-      var nameY = y + CFG.padY + box.stereotypeH + CFG.lineHeight * 0.75;
+      var nameY = y + headerTopPad + box.stereotypeH + CFG.lineHeight * 0.75;
       var isAbstract = cls.type === 'abstract';
       svg.push('<text x="' + textCx + '" y="' + nameY + '" text-anchor="middle" ' +
         'font-weight="bold" font-size="' + CFG.fontSizeBold + '" ' +
@@ -9008,23 +9052,132 @@
       return simplifyRoute(updated);
     }
 
+    function applyStraightHorizontalLane(points, newY) {
+      if (!points || points.length < 2) return points;
+      return [
+        { x: points[0].x, y: newY },
+        { x: points[points.length - 1].x, y: newY }
+      ];
+    }
+
     function refineRouteEndpoints(conn, points, fpPos, tpPos, skipNames) {
       if (!points || points.length < 2) return points;
 
       function tryCandidate(entry, alias, targetY, applyToPoints) {
         if (!entry || !alias) return null;
-        var snapshot = movePortPositionToY(entry, alias, targetY);
-        if (!snapshot) return null;
-        var candidate = applyToPoints(points, entry.portPositions[alias].cy);
+        var pos = entry.portPositions && entry.portPositions[alias] ? entry.portPositions[alias] : null;
+        var clampedY = clampComponentPortY(entry, alias, targetY);
+        if (!pos || clampedY === null || Math.abs(clampedY - pos.cy) < 0.75) return null;
+        var candidate = applyToPoints(points, clampedY);
         // Check against box obstacles only (not occupied segments) — small port
         // movements to eliminate cosmetic doglegs should not be blocked by
         // nearby occupied lanes from other connectors.
         if (routeHitsObstacle(candidate, obstacles, skipNames, null)) {
-          restorePortPosition(entry.portPositions[alias], snapshot);
           return null;
         }
-        return candidate;
+        return {
+          points: candidate,
+          move: Math.abs(clampedY - pos.cy),
+          apply: function() { movePortPositionToY(entry, alias, clampedY); }
+        };
       }
+
+      function tryStraightLineCandidate(sourceTargetY, targetTargetY) {
+        var sourceEntry = entries[conn.from];
+        var targetEntry = entries[conn.to];
+        var sourcePos = sourceEntry && conn.fromPort && sourceEntry.portPositions ? sourceEntry.portPositions[conn.fromPort] : null;
+        var targetPos = targetEntry && conn.toPort && targetEntry.portPositions ? targetEntry.portPositions[conn.toPort] : null;
+        if (!sourcePos || !targetPos) return null;
+
+        var sourceY = sourceTargetY === null ? sourcePos.cy : clampComponentPortY(sourceEntry, conn.fromPort, sourceTargetY);
+        var targetY = targetTargetY === null ? targetPos.cy : clampComponentPortY(targetEntry, conn.toPort, targetTargetY);
+        if (sourceY === null || targetY === null || Math.abs(sourceY - targetY) > 0.75) return null;
+
+        var laneY = (sourceY + targetY) / 2;
+        var candidate = applyStraightHorizontalLane(points, laneY);
+        if (routeHitsObstacle(candidate, obstacles, skipNames, null)) return null;
+
+        var move = Math.abs(laneY - sourcePos.cy) + Math.abs(laneY - targetPos.cy);
+        var crossings = UMLShared.countRouteCrossings(candidate, occupiedSegments);
+        return {
+          points: candidate,
+          move: move,
+          score: move + crossings * 5000,
+          apply: function() {
+            if (Math.abs(laneY - sourcePos.cy) >= 0.75) movePortPositionToY(sourceEntry, conn.fromPort, laneY);
+            if (Math.abs(laneY - targetPos.cy) >= 0.75) movePortPositionToY(targetEntry, conn.toPort, laneY);
+          }
+        };
+      }
+
+      function tryStraightenNearlyHorizontalRoute() {
+        if (!fpPos || !tpPos) return null;
+        if ((fpPos.side !== 'left' && fpPos.side !== 'right') || (tpPos.side !== 'left' && tpPos.side !== 'right')) return null;
+
+        var first = points[0];
+        var last = points[points.length - 1];
+        var totalSpanX = Math.abs(last.x - first.x);
+        if (totalSpanX < 48) return null;
+
+        var longestHorizontal = null;
+        for (var pi = 0; pi < points.length - 1; pi++) {
+          var seg0 = points[pi];
+          var seg1 = points[pi + 1];
+          if (Math.abs(seg1.y - seg0.y) >= 1) continue;
+          var segLen = Math.abs(seg1.x - seg0.x);
+          if (!longestHorizontal || segLen > longestHorizontal.len) {
+            longestHorizontal = { y: seg0.y, len: segLen };
+          }
+        }
+        if (!longestHorizontal || longestHorizontal.len < Math.max(40, totalSpanX * 0.45)) return null;
+
+        var straightCandidates = [];
+        function pushStraightCandidate(candidate) {
+          if (!candidate) return;
+          straightCandidates.push(candidate);
+        }
+
+        pushStraightCandidate(tryStraightLineCandidate(tpPos.cy, null));
+        pushStraightCandidate(tryStraightLineCandidate(null, fpPos.cy));
+
+        var sourceBounds = getPortMovementBounds(entries[conn.from], conn.fromPort);
+        var targetBounds = getPortMovementBounds(entries[conn.to], conn.toPort);
+        if (sourceBounds && targetBounds) {
+          var lower = Math.max(sourceBounds.lower, targetBounds.lower);
+          var upper = Math.min(sourceBounds.upper, targetBounds.upper);
+          if (lower <= upper) {
+            var laneCandidates = [
+              Math.max(lower, Math.min(upper, longestHorizontal.y)),
+              Math.max(lower, Math.min(upper, (fpPos.cy + tpPos.cy) / 2)),
+              (lower + upper) / 2
+            ];
+            for (var lci = 0; lci < laneCandidates.length; lci++) {
+              pushStraightCandidate(tryStraightLineCandidate(laneCandidates[lci], laneCandidates[lci]));
+            }
+          }
+        }
+
+        if (!straightCandidates.length) return null;
+
+        straightCandidates.sort(function(a, b) {
+          if (a.score !== b.score) return a.score - b.score;
+          return UMLShared.measureOrthogonalRoute(a.points) - UMLShared.measureOrthogonalRoute(b.points);
+        });
+
+        var bestStraight = straightCandidates[0];
+        if (!bestStraight) return null;
+
+        var currentRouteLen = UMLShared.measureOrthogonalRoute(points);
+        if (UMLShared.measureOrthogonalRoute(bestStraight.points) + 8 > currentRouteLen && bestStraight.move > 18) {
+          return null;
+        }
+
+        bestStraight.apply();
+        return bestStraight.points;
+      }
+
+      var straightened = tryStraightenNearlyHorizontalRoute();
+      if (straightened) return straightened;
 
       // Snap nearly horizontal links to the same Y when one endpoint can move slightly.
       // Handles both direct 2-point links and 4-point H-V-H doglegs with tiny V segments.
@@ -9059,13 +9212,16 @@
         ];
         for (var dci = 0; dci < directCandidates.length; dci++) {
           var directCandidate = directCandidates[dci];
-          var directPoints = tryCandidate(directCandidate.entry, directCandidate.alias, directCandidate.targetY, directCandidate.apply);
-          if (!directPoints) continue;
-          if (!bestDirect || directCandidate.move < bestDirect.move) {
-            bestDirect = { points: directPoints, move: directCandidate.move };
+          var directResult = tryCandidate(directCandidate.entry, directCandidate.alias, directCandidate.targetY, directCandidate.apply);
+          if (!directResult) continue;
+          if (!bestDirect || directResult.move < bestDirect.move) {
+            bestDirect = directResult;
           }
         }
-        if (bestDirect) return bestDirect.points;
+        if (bestDirect) {
+          bestDirect.apply();
+          return bestDirect.points;
+        }
       }
 
       // Remove H-V-H doglegs near a source port by moving the port onto the horizontal lane.
@@ -9082,7 +9238,10 @@
         if (firstIsH && secondIsV && thirdIsH && secondLen <= 18 &&
             (secondLen <= 6 || (firstLen <= 36 && thirdLen >= 80))) {
           var sourceSmoothed = tryCandidate(entries[conn.from], conn.fromPort, p2.y, applySourceLaneSmoothing);
-          if (sourceSmoothed) return sourceSmoothed;
+          if (sourceSmoothed) {
+            sourceSmoothed.apply();
+            return sourceSmoothed.points;
+          }
         }
       }
 
@@ -9101,7 +9260,10 @@
         if (tailFirstIsH && tailSecondIsV && tailThirdIsH && tailSecondLen <= 18 &&
             (tailSecondLen <= 6 || (tailThirdLen <= 36 && tailFirstLen >= 80))) {
           var targetSmoothed = tryCandidate(entries[conn.to], conn.toPort, t2.y, applyTargetLaneSmoothing);
-          if (targetSmoothed) return targetSmoothed;
+          if (targetSmoothed) {
+            targetSmoothed.apply();
+            return targetSmoothed.points;
+          }
         }
       }
 
