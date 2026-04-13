@@ -31,8 +31,10 @@ steps:
       **Node.js** takes JavaScript out of the browser by wrapping two engines:
       - **V8** — Google's JIT compiler that turns JavaScript into machine code (like `g++` for C++).
       - **libuv** — A C library providing the **Event Loop** and non-blocking I/O access to the OS.
-
+      
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
+      Therebt, Node.js powers production backends at Netflix, LinkedIn, Uber, and many more!
+
 
       ### Predict Before You Code
 
@@ -50,7 +52,8 @@ steps:
       console.log("Hello from Node.js!");
       ```
 
-      Click **▶ Run** to execute the script and see the output.
+      Click **▶ Run** to execute the script and see the output. This excutes `node hello.js` in background.
+      In this tutorial you focus just on writing Node.js. We run these commands for you.
 
     files:
       - path: "hello.js"
@@ -98,10 +101,10 @@ steps:
       questions:
         - question: "JavaScript was originally designed to run only inside a web browser. Why can Node.js run on a server?"
           options:
-            - "Node.js is a completely different language that only looks like JavaScript"
-            - "Node.js embeds the V8 engine plus libuv, giving JavaScript access to the OS, filesystem, and networking outside the browser"
-            - "Node.js compiles JavaScript to C++ before execution, which enables server usage"
-            - "Browser vendors updated their runtimes to support server-side execution"
+            - "Node.js is a completely different language that only looks like JavaScript. A new special syntax was designed to enable server-side functionality."
+            - "Node.js embeds a special engine plus libraries, giving JavaScript access to the operating system, filesystem, and networking outside the browser."
+            - "Node.js compiles JavaScript to C++ before execution, which enables server usage just like any other program would."
+            - "Browser vendors updated their runtimes to support server-side execution."
           correct_index: 1
           explanation: "Node.js bundles Google's V8 engine (which compiles JS to machine code) with libuv (a C library for async I/O). This gives JavaScript everything it needs to work as a backend runtime — file access, TCP sockets, and a non-blocking Event Loop."
 
@@ -117,7 +120,7 @@ steps:
         - question: "A student from a C++ background says: 'JavaScript is just a browser scripting language, it cannot power a real backend.' What is the flaw in this argument?"
           options:
             - "JavaScript is a compiled language and has always been able to run anywhere"
-            - "Node.js gives JavaScript OS-level access via libuv, and it powers production backends at Netflix, LinkedIn, and Uber"
+            - "Node.js gives JavaScript OS-level access via libuv."
             - "JavaScript has better memory management than C++ for server applications"
             - "The student is correct — Node.js is only suitable for front-end tooling"
           correct_index: 1
