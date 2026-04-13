@@ -4227,6 +4227,9 @@
           pathPoints = reanchorWholePartRouteStart(pathPoints, fromE, actualExitSide);
         }
       }
+      // Eliminate unnecessary detours/corners by simplifying U-shaped bends
+      pathPoints = eliminateUnnecessaryCorners(pathPoints, classObstacles, fromE, toE);
+
       // Eliminate tiny H-V-H doglegs: when the middle vertical segment is ≤ 6px,
       // snap the shorter end to the longer end's Y for a cleaner straight-through look.
       if (pathPoints.length === 4) {
@@ -4774,10 +4777,7 @@
           sourceSide,
           avoidFromBottom && sourceSide === 'bottom'
         );
-    var useStrictTarget = (dyAbs > dxAbs * 1.2 || dxAbs > dyAbs * 1.2);
-    var targetOrder = useStrictTarget
-      ? [targetEntrySide]
-      : buildClassPreferredSideOrder(
+    var targetOrder = buildClassPreferredSideOrder(
           fromE,
           toE,
           'target',
@@ -4817,34 +4817,66 @@
         var crosses = UMLShared.countRouteCrossings(points, occupiedSegments);
         var occupiedPenalty = crosses * 5000;
 
-        // Penalize routes where intermediate segments pass through source or
-        // target boxes (the "route behind class" problem).  Skip the first
-        // and last segments which legitimately touch the box edge.
+        // Penalize routes where segments pass through source or target boxes.
+        // This prevents routes from crossing through a shape to reach the
+        // opposing side, which makes no visual sense.
         var selfHitPenalty = 0;
         if (points.length > 2) {
           var fromBox = { l: fromE.x - 2, t: fromE.y - 2, r: fromE.x + fromE.box.width + 2, b: fromE.y + fromE.box.height + 2 };
           var toBox = { l: toE.x - 2, t: toE.y - 2, r: toE.x + toE.box.width + 2, b: toE.y + toE.box.height + 2 };
+
+          // Check ALL segments (including first/last) for box pass-through
           for (var shi = 0; shi < points.length - 1; shi++) {
-            // Skip first segment (touches source) and last segment (touches target)
-            if (shi === 0 || shi === points.length - 2) continue;
-            if (segmentIntersectsBox(points[shi], points[shi + 1], fromBox)) selfHitPenalty += 50000;
-            if (segmentIntersectsBox(points[shi], points[shi + 1], toBox)) selfHitPenalty += 50000;
-          }
-          // Also penalize the first segment if it immediately enters the source box
-          // (e.g., exits left but goes right into the box)
-          if (points.length >= 3) {
-            var p0sh = points[0], p1sh = points[1];
-            var afterFirst = points[2];
-            // Check if p1 is inside source box (not just on the edge)
-            if (p1sh.x > fromBox.l + 4 && p1sh.x < fromBox.r - 4 &&
-                p1sh.y > fromBox.t + 4 && p1sh.y < fromBox.b - 4) {
-              selfHitPenalty += 50000;
+            var segP0 = points[shi], segP1 = points[shi + 1];
+            if (shi === 0) {
+              // First segment: penalize if its midpoint is deep inside source box
+              var mid0x = (segP0.x + segP1.x) / 2, mid0y = (segP0.y + segP1.y) / 2;
+              if (mid0x > fromBox.l + 6 && mid0x < fromBox.r - 6 &&
+                  mid0y > fromBox.t + 6 && mid0y < fromBox.b - 6) {
+                selfHitPenalty += 200000;
+              }
+            } else if (shi === points.length - 2) {
+              // Last segment: penalize if its midpoint is deep inside target box
+              var midLx = (segP0.x + segP1.x) / 2, midLy = (segP0.y + segP1.y) / 2;
+              if (midLx > toBox.l + 6 && midLx < toBox.r - 6 &&
+                  midLy > toBox.t + 6 && midLy < toBox.b - 6) {
+                selfHitPenalty += 200000;
+              }
+            } else {
+              // Intermediate segments: penalize any intersection with either box
+              if (segmentIntersectsBox(segP0, segP1, fromBox)) selfHitPenalty += 200000;
+              if (segmentIntersectsBox(segP0, segP1, toBox)) selfHitPenalty += 200000;
             }
-            // Check if last second-to-last point is inside target box
-            var pBeforeLast = points[points.length - 2];
-            if (pBeforeLast.x > toBox.l + 4 && pBeforeLast.x < toBox.r - 4 &&
-                pBeforeLast.y > toBox.t + 4 && pBeforeLast.y < toBox.b - 4) {
-              selfHitPenalty += 50000;
+          }
+
+          // Check if any intermediate POINT lies inside source or target box
+          for (var ipt = 1; ipt < points.length - 1; ipt++) {
+            var ip = points[ipt];
+            if (ip.x > fromBox.l + 4 && ip.x < fromBox.r - 4 &&
+                ip.y > fromBox.t + 4 && ip.y < fromBox.b - 4) {
+              selfHitPenalty += 200000;
+            }
+            if (ip.x > toBox.l + 4 && ip.x < toBox.r - 4 &&
+                ip.y > toBox.t + 4 && ip.y < toBox.b - 4) {
+              selfHitPenalty += 200000;
+            }
+          }
+
+          // Direction-consistency check: first segment should go AWAY from
+          // source box, last segment should approach FROM outside target box
+          if (points.length >= 2) {
+            var srcVec = classSideVector(sourceCandidate.side);
+            var seg1dx = points[1].x - points[0].x;
+            var seg1dy = points[1].y - points[0].y;
+            if (srcVec.x * seg1dx + srcVec.y * seg1dy < -1) {
+              selfHitPenalty += 200000; // Goes INTO box instead of away
+            }
+            var tgtVec = classSideVector(targetCandidate.side);
+            var lastI = points.length - 1;
+            var segNdx = points[lastI - 1].x - points[lastI].x;
+            var segNdy = points[lastI - 1].y - points[lastI].y;
+            if (tgtVec.x * segNdx + tgtVec.y * segNdy < -1) {
+              selfHitPenalty += 200000; // Enters FROM inside box
             }
           }
         }
@@ -4857,8 +4889,8 @@
         var detourPenalty = 0;
         if (directDist > 0) {
           var efficiency = routeLen / directDist;
-          // Penalize routes that are more than 2x the direct distance
-          if (efficiency > 2.0) detourPenalty = (efficiency - 2.0) * 200;
+          // Penalize routes that are more than 1.5x the direct distance
+          if (efficiency > 1.5) detourPenalty = (efficiency - 1.5) * 300;
         }
 
         var score = routeLen +
@@ -5041,7 +5073,6 @@
   }
 
   function routeEntrySide(fromE, toE, avoidToTop) {
-    if (avoidToTop) return 'top';
     var fromCx = fromE.x + fromE.box.width / 2;
     var fromCy = fromE.y + fromE.box.height / 2;
     var toCx = toE.x + toE.box.width / 2;
@@ -5049,7 +5080,12 @@
     if (Math.abs(toCx - fromCx) > Math.abs(toCy - fromCy) * 1.0) {
       return (fromCx > toCx) ? 'right' : 'left';
     }
-    return (fromCy > toCy) ? 'bottom' : 'top';
+    var vertSide = (fromCy > toCy) ? 'bottom' : 'top';
+    // If top is occupied by inheritance, prefer left/right instead
+    if (avoidToTop && vertSide === 'top') {
+      return (fromCx > toCx) ? 'right' : 'left';
+    }
+    return vertSide;
   }
 
   function reanchorWholePartRouteStart(points, entry, desiredSide) {
@@ -5112,6 +5148,76 @@
     if (p1.x === p2.x || p1.y === p2.y) return true;
     // For diagonal segments, do full Liang-Barsky clip test
     return true;
+  }
+
+  /**
+   * Eliminate unnecessary corners in an orthogonal route.
+   * For each 4-point U-shape subsequence (e.g., right→down→left), try replacing
+   * the 2 middle points with a single L-bend.  Validates the simplified path
+   * doesn't hit any obstacles.
+   */
+  function eliminateUnnecessaryCorners(points, classObstacles, fromE, toE) {
+    if (!points || points.length < 4) return points;
+    // Build obstacle list with ALL boxes (including source/target — no skipping)
+    var obstacles = classObstacles.slice();
+    if (fromE && fromE.box) {
+      obstacles.push({ x1: fromE.x, y1: fromE.y, x2: fromE.x + fromE.box.width, y2: fromE.y + fromE.box.height });
+    }
+    if (toE && toE.box) {
+      obstacles.push({ x1: toE.x, y1: toE.y, x2: toE.x + toE.box.width, y2: toE.y + toE.box.height });
+    }
+
+    var changed = true;
+    var maxIter = 5;
+    while (changed && maxIter-- > 0) {
+      changed = false;
+      for (var i = 0; i <= points.length - 4; i++) {
+        var p0 = points[i], p1 = points[i + 1], p2 = points[i + 2], p3 = points[i + 3];
+        // Try two L-bend options to shortcut p1-p2
+        var optA = [{ x: p0.x, y: p0.y }, { x: p3.x, y: p0.y }, { x: p3.x, y: p3.y }];
+        var optB = [{ x: p0.x, y: p0.y }, { x: p0.x, y: p3.y }, { x: p3.x, y: p3.y }];
+        var origLen = Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y) +
+                      Math.abs(p2.x - p1.x) + Math.abs(p2.y - p1.y) +
+                      Math.abs(p3.x - p2.x) + Math.abs(p3.y - p2.y);
+        var candidates = [];
+        for (var ci = 0; ci < 2; ci++) {
+          var opt = ci === 0 ? optA : optB;
+          var newLen = 0;
+          var valid = true;
+          for (var si = 0; si < opt.length - 1; si++) {
+            newLen += Math.abs(opt[si + 1].x - opt[si].x) + Math.abs(opt[si + 1].y - opt[si].y);
+          }
+          if (newLen >= origLen - 1) continue; // Must be shorter
+          // Validate ALL segments of shortcut against ALL obstacles.
+          // Use midpoint test: a segment passes THROUGH a box if its midpoint
+          // is inside the box (not just touching the edge).
+          for (var nsi = 0; nsi < opt.length - 1; nsi++) {
+            var ns0 = opt[nsi], ns1 = opt[nsi + 1];
+            var nsMidX = (ns0.x + ns1.x) / 2, nsMidY = (ns0.y + ns1.y) / 2;
+            for (var oi = 0; oi < obstacles.length; oi++) {
+              var ob = obstacles[oi];
+              // Check if segment midpoint is inside obstacle (with small margin)
+              if (nsMidX > ob.x1 + 2 && nsMidX < ob.x2 - 2 &&
+                  nsMidY > ob.y1 + 2 && nsMidY < ob.y2 - 2) {
+                valid = false; break;
+              }
+            }
+            if (!valid) break;
+          }
+          if (valid) candidates.push({ opt: opt, len: newLen });
+        }
+        if (candidates.length > 0) {
+          candidates.sort(function(a, b) { return a.len - b.len; });
+          var best = candidates[0].opt;
+          // Splice: replace points[i..i+3] with best[0..2]
+          var newPoints = points.slice(0, i).concat(best).concat(points.slice(i + 4));
+          points = UMLShared.simplifyOrthogonalPath(newPoints);
+          changed = true;
+          break; // restart after modification
+        }
+      }
+    }
+    return points;
   }
 
   /**
@@ -8674,7 +8780,7 @@
     }
 
     // Collect component bounding boxes as obstacles (with interface extensions)
-    var obstaclePad = 12;
+    var obstaclePad = 18;
     var obstacles = [];
     for (var obn in entries) {
       var obe = entries[obn];
@@ -9236,10 +9342,25 @@
         }
       }
 
-      // Skip source and target when checking obstacles
+      // Skip source and target for obstacle edge checks, but add their
+      // interiors as obstacles so routes don't pass through them.
       var skipN = {};
       skipN[conn.from] = true;
       skipN[conn.to] = true;
+      // Add source/target interiors as non-skipped obstacles (shrunk by 8px
+      // so ports on the edge are still reachable)
+      var srcInterior = { x1: fromE.x + 8, y1: fromE.y + 8,
+        x2: fromE.x + fromE.box.width - 8, y2: fromE.y + fromE.box.height - 8,
+        name: '__src_interior__' };
+      var tgtInterior = { x1: toE.x + 8, y1: toE.y + 8,
+        x2: toE.x + toE.box.width - 8, y2: toE.y + toE.box.height - 8,
+        name: '__tgt_interior__' };
+      if (srcInterior.x2 > srcInterior.x1 + 4 && srcInterior.y2 > srcInterior.y1 + 4) {
+        obstacles.push(srcInterior);
+      }
+      if (tgtInterior.x2 > tgtInterior.x1 + 4 && tgtInterior.y2 > tgtInterior.y1 + 4) {
+        obstacles.push(tgtInterior);
+      }
       var sourceCandidates = buildComponentEndpointCandidates(fromE, conn.fromPort, fpPos, exitAnchor, toE, tpPos, isJoinedAssembly, 'source');
       var targetCandidates = buildComponentEndpointCandidates(toE, conn.toPort, tpPos, entryAnchor, fromE, fpPos, isJoinedAssembly, 'target');
       if (!sourceCandidates.length) sourceCandidates.push({ x: x1, y: y1, side: dir1, stub: 20, movePenalty: 0, apply: null });
@@ -9253,7 +9374,8 @@
           var routed = UMLShared.routeOrthogonalConnector(sourceCandidate, targetCandidate, obstacles, {
             skipNames: skipN,
             occupied: occupiedSegments,
-            stub: 20,
+            stub: 24,
+            clearance: 18,
             bendPenalty: 38,
             extraXs: [fromE.x + fromE.box.width / 2, toE.x + toE.box.width / 2],
             extraYs: [fromE.y + fromE.box.height / 2, toE.y + toE.box.height / 2]
@@ -9263,9 +9385,31 @@
 
           var bends = UMLShared.countOrthogonalBends(candidatePoints);
           var crosses = UMLShared.countRouteCrossings(candidatePoints, occupiedSegments);
+
+          // Penalize routes that pass through source or target component boxes
+          var compSelfHit = 0;
+          if (candidatePoints.length > 2) {
+            var cFromBox = { l: fromE.x - 2, t: fromE.y - 2, r: fromE.x + fromE.box.width + 2, b: fromE.y + fromE.box.height + 2 };
+            var cToBox = { l: toE.x - 2, t: toE.y - 2, r: toE.x + toE.box.width + 2, b: toE.y + toE.box.height + 2 };
+            for (var cshi = 0; cshi < candidatePoints.length - 1; cshi++) {
+              var csP0 = candidatePoints[cshi], csP1 = candidatePoints[cshi + 1];
+              var csMidX = (csP0.x + csP1.x) / 2, csMidY = (csP0.y + csP1.y) / 2;
+              // Check if segment midpoint is inside source box
+              if (csMidX > cFromBox.l + 6 && csMidX < cFromBox.r - 6 &&
+                  csMidY > cFromBox.t + 6 && csMidY < cFromBox.b - 6) {
+                compSelfHit += 200000;
+              }
+              // Check if segment midpoint is inside target box
+              if (csMidX > cToBox.l + 6 && csMidX < cToBox.r - 6 &&
+                  csMidY > cToBox.t + 6 && csMidY < cToBox.b - 6) {
+                compSelfHit += 200000;
+              }
+            }
+          }
+
           var score = UMLShared.measureOrthogonalRoute(candidatePoints) + bends * 36 +
             sourceCandidate.movePenalty + targetCandidate.movePenalty +
-            crosses * 5000;
+            crosses * 5000 + compSelfHit;
           if (isJoinedAssembly && bends > 3) score += 12;
 
           if (!bestRoute || score + 0.01 < bestRoute.score) {
@@ -9359,6 +9503,13 @@
         }).points;
         points = refineRouteEndpoints(conn, points, fpPos, tpPos, skipN);
         points = UMLShared.simplifyOrthogonalPath(points);
+      }
+
+      // Remove the temporary interior obstacles added for this connection
+      for (var rmI = obstacles.length - 1; rmI >= 0; rmI--) {
+        if (obstacles[rmI] === srcInterior || obstacles[rmI] === tgtInterior) {
+          obstacles.splice(rmI, 1);
+        }
       }
 
       UMLShared.reserveOrthogonalRoute(points, occupiedSegments);
