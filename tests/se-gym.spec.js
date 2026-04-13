@@ -531,6 +531,7 @@ test.describe('Personal Gym - Toggle Button on Includes', () => {
     await page.goto(GIT_PAGE_URL);
 
     const toggleBtn = page.locator('.se-gym-toggle').first();
+    const expectedGymId = await toggleBtn.getAttribute('data-gym-id');
     await toggleBtn.click();
 
     // Verify cookie was set
@@ -544,7 +545,7 @@ test.describe('Personal Gym - Toggle Button on Includes', () => {
       return [];
     });
     expect(gym.length).toBeGreaterThan(0);
-    expect(gym[0].id).toBe('git');
+    expect(gym[0].id).toBe(expectedGymId);
   });
 
   test('clicking + again removes from gym', async ({ page, context }) => {

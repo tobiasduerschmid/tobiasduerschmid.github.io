@@ -10,7 +10,7 @@ install:
 	pipenv install
 
 build:
-	bundle exec jekyll build --incremental
+	bundle exec jekyll build
 
 check: build
 	bash ./scripts/check_references.sh
@@ -25,7 +25,7 @@ clean:
 	rm -rf _site
 
 run: check
-	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
+	bundle exec jekyll serve --port $(JEKYLL_PORT)
 
 pdf: build
 	npm run pdf

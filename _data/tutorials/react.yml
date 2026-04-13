@@ -2299,12 +2299,12 @@ steps:
             const { Card, Button, Badge, ButtonGroup } = ReactBootstrap;
 
             const products = [
-              { id: 1, name: 'Wireless Mouse',       price: 29.99,  category: 'Electronics',  onSale: false },
-              { id: 2, name: 'Mechanical Keyboard',   price: 89.99,  category: 'Electronics',  onSale: true  },
-              { id: 3, name: 'USB-C Hub',             price: 45.99,  category: 'Electronics',  onSale: false },
-              { id: 4, name: 'Laptop Stand',          price: 34.99,  category: 'Accessories',  onSale: true  },
-              { id: 5, name: 'Desk Mat',              price: 19.99,  category: 'Accessories',  onSale: false },
-              { id: 6, name: 'Cable Management Kit',  price: 14.99,  category: 'Accessories',  onSale: false },
+              { id: 1, name: 'Lo-Fi Study Beats Vinyl', price: 29.99, category: 'Music', onSale: false },
+              { id: 2, name: 'Mechanical Keyboard',    price: 89.99, category: 'Tech',  onSale: true  },
+              { id: 3, name: 'Desk LED Strip',         price: 19.99, category: 'Tech',  onSale: false },
+              { id: 4, name: 'Anime Desk Mat',         price: 24.99, category: 'Vibes', onSale: true  },
+              { id: 5, name: 'Matcha Starter Kit',     price: 34.99, category: 'Vibes', onSale: false },
+              { id: 6, name: 'Cloud Earbuds',          price: 45.99, category: 'Tech',  onSale: false },
             ];
 
             function ProductCard({ product, onAdd }) {
