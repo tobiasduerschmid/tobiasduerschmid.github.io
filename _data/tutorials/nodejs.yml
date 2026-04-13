@@ -29,11 +29,11 @@ steps:
       | I/O model | Synchronous (blocks) | Synchronous (blocks) | **Asynchronous** (non-blocking) |
 
       **Node.js** takes JavaScript out of the browser by wrapping two engines:
-      - **V8** — Google's JIT compiler that turns JavaScript into machine code (like `g++` for C++).
+      - **V8** — Google's just-in-time (JIT) compiler that turns JavaScript into machine code (like `g++` for C++) right before you execute it.
       - **libuv** — A C library providing the **Event Loop** and non-blocking I/O access to the OS.
       
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
-      Therebt, Node.js powers production backends at Netflix, LinkedIn, Uber, and many more!
+      Thereby, Node.js powers production backends at Netflix, LinkedIn, Uber, and many more!
 
 
       ### Predict Before You Code
@@ -406,11 +406,16 @@ steps:
       ```javascript
       // Vanilla JS — attaching a click handler:
       button.addEventListener('click', () => {
-          console.log('Button clicked!');
+          console.log('Button clicked!'); 
       });
 
-      // The arrow function IS the callback — the browser calls it when the event fires.
       ```
+      What does this do? Think about it first, then check your answer.
+      <details>
+      <summary><i>Reveal Answer</i></summary>
+      This call creates an "anonymous function" (a function without a name) that has no arguments (<code>()</code> is empty, no arguments) and passes it to the <code>addEventListener</code> method as an argument. The function itself is the argument. The browser will execute this function every time the button is clicked.
+      The arrow function IS the callback — the browser calls it when the event fires.
+      </details>
 
       In the React tutorial that follows this one, you will write `onClick={handler}` directly on elements. React is wiring up `addEventListener` for you behind the scenes. The mental model — *pass a function, get called back later* — is identical.
 
