@@ -13,13 +13,12 @@ install: init-submodules
 	brew install cpdf # This needs to update for other OS
 	pipenv install
 
-build: init-submodules
+build:
 	bundle exec jekyll build --incremental
 
 check: build
 	bash ./scripts/check_references.sh
 	bash ./scripts/check_quizzes.sh
-
 
 
 test: check
