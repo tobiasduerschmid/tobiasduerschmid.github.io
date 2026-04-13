@@ -4381,7 +4381,7 @@
           y: horizontalSide ? (side === 'top' ? entry.y : entry.y + entry.box.height) : pos,
           side: side,
           stub: opts.stub,
-          penalty: si * 26 + pi * 4 + Math.abs(pos - clampedPreferred) * 0.5
+          penalty: si * 12 + pi * 4 + Math.abs(pos - clampedPreferred) * 0.5
         });
       }
     }
@@ -6356,6 +6356,23 @@
       }
     }
 
+    // Assign back-edge X margins based on source Y position (not transition index)
+    // to avoid crossings. Sources higher on screen get smaller margins (closer),
+    // lower sources get larger margins (further out), creating nested routes.
+    var backEdgeMargin = {};
+    var backEdgeList = [];
+    for (var bei = 0; bei < transitions.length; bei++) {
+      var betr = transitions[bei];
+      if (!entries[betr.from] || !entries[betr.to] || betr.from === betr.to) continue;
+      var befe = entries[betr.from], bete = entries[betr.to];
+      if ((bete.y + bete.box.height / 2) < (befe.y + befe.box.height / 2) - 10) {
+        backEdgeList.push({ ti: bei, sourceY: befe.y + befe.box.height / 2 });
+      }
+    }
+    backEdgeList.sort(function(a, b) { return a.sourceY - b.sourceY; });
+    for (var bmi = 0; bmi < backEdgeList.length; bmi++) {
+      backEdgeMargin[backEdgeList[bmi].ti] = routeMarginX + (bmi * 10);
+    }
 
     // Pre-compute note positions for SVG bounds expansion
     var notePositions = UMLShared.computeAnchoredNotes(parsed.notes, entries);
@@ -6466,9 +6483,8 @@
 
       var points;
       if (isBackEdge && !customExits[ti]) {
-        // Back-edge via right margin
-        // Apply an offset based on transitioning index to avoid overlapping routes
-        var dynamicMargin = routeMarginX + (ti * 10);
+        // Back-edge via right margin — use Y-sorted margin to avoid crossings
+        var dynamicMargin = backEdgeMargin[ti] !== undefined ? backEdgeMargin[ti] : routeMarginX + (ti * 10);
         points = [
           { x: x1, y: y1 },
           { x: dynamicMargin, y: y1 },
@@ -6499,6 +6515,19 @@
         if (pp.x !== pc.x && pp.y !== pc.y) {
           points.splice(oi, 0, { x: pc.x, y: pp.y });
           oi++;
+        }
+      }
+
+      // Eliminate unnecessary Z-route jogs: if the middle segment of a
+      // 4-point route is very short, collapse to a straight line.
+      if (points.length === 4) {
+        var zp0 = points[0], zp1 = points[1], zp2 = points[2], zp3 = points[3];
+        if (Math.abs(zp1.x - zp0.x) < 1 && Math.abs(zp3.x - zp2.x) < 1 && Math.abs(zp2.x - zp1.x) < 10) {
+          var avgX = (zp0.x + zp3.x) / 2;
+          points = [{ x: avgX, y: zp0.y }, { x: avgX, y: zp3.y }];
+        } else if (Math.abs(zp1.y - zp0.y) < 1 && Math.abs(zp3.y - zp2.y) < 1 && Math.abs(zp2.y - zp1.y) < 10) {
+          var avgY = (zp0.y + zp3.y) / 2;
+          points = [{ x: zp0.x, y: avgY }, { x: zp3.x, y: avgY }];
         }
       }
 
@@ -8588,6 +8617,137 @@
 
       return points;
     }
+
+    // ── Pre-routing crossing swap ──
+    // For each pair of connectors that share a source or target port group
+    // (same component, same side), check if their port Y order matches
+    // their target endpoint Y order.  If not, swap ports to avoid crossings.
+    (function preRoutingCrossingSwap() {
+      // Build a map: "compName:side" → [{connIdx, portAlias, portY, otherEndY}]
+      var sideGroups = {};
+      for (var pci = 0; pci < connectors.length; pci++) {
+        var pc = connectors[pci];
+        var pcFromE = entries[pc.from], pcToE = entries[pc.to];
+        if (!pcFromE || !pcToE) continue;
+
+        // Check source port group
+        if (pc.fromPort && pcFromE.portPositions && pcFromE.portPositions[pc.fromPort]) {
+          var fp = pcFromE.portPositions[pc.fromPort];
+          var otherY = pc.toPort && pcToE.portPositions && pcToE.portPositions[pc.toPort]
+            ? pcToE.portPositions[pc.toPort].cy
+            : pcToE.y + pcToE.box.height / 2;
+          // When the route needs to detour vertically (target is far away
+          // or requires wrapping under/over other components), use an
+          // effective Y that reflects the actual route path direction.
+          // Heuristic: if horizontal distance > 2× component widths AND
+          // the route will go via the bottom/top margin, push otherEndY
+          // to extreme values so the port is placed at the bottom/top to
+          // avoid crossing routes that go directly to adjacent targets.
+          // Long-distance routes wrap below or above other components,
+          // so their effective Y is at the diagram edge, not the partner Y.
+          // These ports should be placed at the bottom/top of the port list
+          // so their detouring routes don't cross shorter direct routes.
+          var fpSide = fp.side;
+          var horizontalDist = Math.abs(pcToE.x - pcFromE.x);
+          var isLongRoute = horizontalDist > (pcFromE.box.width + pcToE.box.width) * 1.5;
+          if (isLongRoute) {
+            // Long routes typically go via the bottom margin (below all boxes).
+            // Push effective Y to bottom so port is placed lowest.
+            otherY = 9999;
+          }
+          var fKey = pc.from + ':' + fpSide;
+          if (!sideGroups[fKey]) sideGroups[fKey] = [];
+          sideGroups[fKey].push({ connIdx: pci, alias: pc.fromPort, portY: fp.cy, otherEndY: otherY, comp: pc.from, isSource: true });
+        }
+
+        // Check target port group
+        if (pc.toPort && pcToE.portPositions && pcToE.portPositions[pc.toPort]) {
+          var tp = pcToE.portPositions[pc.toPort];
+          var otherY2 = pc.fromPort && pcFromE.portPositions && pcFromE.portPositions[pc.fromPort]
+            ? pcFromE.portPositions[pc.fromPort].cy
+            : pcFromE.y + pcFromE.box.height / 2;
+          var tpSide = tp.side;
+          var horizontalDist2 = Math.abs(pcFromE.x - pcToE.x);
+          var isLongRoute2 = horizontalDist2 > (pcFromE.box.width + pcToE.box.width) * 1.5;
+          if (isLongRoute2) {
+            otherY2 = 9999;
+          }
+          var tKey = pc.to + ':' + tpSide;
+          if (!sideGroups[tKey]) sideGroups[tKey] = [];
+          sideGroups[tKey].push({ connIdx: pci, alias: pc.toPort, portY: tp.cy, otherEndY: otherY2, comp: pc.to, isSource: false });
+        }
+      }
+
+      // For each group with 2+ connectors, check if port Y order matches target Y order
+      for (var sgk in sideGroups) {
+        var sg = sideGroups[sgk];
+        if (sg.length < 2) continue;
+
+        // Count crossings: port i is above port j, but target i is below target j
+        function countGroupCrossings(group) {
+          var crossings = 0;
+          for (var i = 0; i < group.length; i++) {
+            for (var j = i + 1; j < group.length; j++) {
+              var portAbove = group[i].portY < group[j].portY;
+              var targetAbove = group[i].otherEndY < group[j].otherEndY;
+              if (portAbove !== targetAbove && Math.abs(group[i].otherEndY - group[j].otherEndY) > 4) {
+                crossings++;
+              }
+            }
+          }
+          return crossings;
+        }
+
+        var currentCrossings = countGroupCrossings(sg);
+        if (currentCrossings === 0) continue;
+
+        // Try all pairwise swaps to find the best improvement
+        var bestSwap = null;
+        var bestImprovement = 0;
+        for (var si = 0; si < sg.length; si++) {
+          for (var sj = si + 1; sj < sg.length; sj++) {
+            // Simulate swap
+            var tmpPortY = sg[si].portY;
+            sg[si].portY = sg[sj].portY;
+            sg[sj].portY = tmpPortY;
+            var newCrossings = countGroupCrossings(sg);
+            var improvement = currentCrossings - newCrossings;
+            if (improvement > bestImprovement) {
+              bestImprovement = improvement;
+              bestSwap = { i: si, j: sj };
+            }
+            // Undo simulation
+            tmpPortY = sg[si].portY;
+            sg[si].portY = sg[sj].portY;
+            sg[sj].portY = tmpPortY;
+          }
+        }
+
+        if (bestSwap) {
+          var a = sg[bestSwap.i], b = sg[bestSwap.j];
+          var compEntry = entries[a.comp];
+          if (!compEntry) continue;
+          var sidePorts = sgk.indexOf(':left') !== -1 ? compEntry.leftPorts : compEntry.rightPorts;
+          var idxA = sidePorts.indexOf(a.alias);
+          var idxB = sidePorts.indexOf(b.alias);
+          if (idxA >= 0 && idxB >= 0) {
+            // Swap ports in the side list
+            sidePorts[idxA] = b.alias;
+            sidePorts[idxB] = a.alias;
+
+            // Directly swap port Y positions (don't recompute — that reads
+            // stale desiredPortY and reverts the swap)
+            var posA = compEntry.portPositions[a.alias];
+            var posB = compEntry.portPositions[b.alias];
+            if (posA && posB) {
+              var savedCy = posA.cy, savedConnY = posA.connY, savedY = posA.y;
+              posA.cy = posB.cy; posA.connY = posB.connY; posA.y = posB.y;
+              posB.cy = savedCy; posB.connY = savedConnY; posB.y = savedY;
+            }
+          }
+        }
+      }
+    })();
 
     // ── Draw connectors ──
     var placedLabels = [];
@@ -11618,6 +11778,19 @@
         if (pp.x !== pc.x && pp.y !== pc.y) {
           points.splice(oi, 0, { x: pc.x, y: pp.y });
           oi++;
+        }
+      }
+
+      // Eliminate unnecessary Z-route jogs: if the middle segment of a
+      // 4-point route is very short, collapse to a straight line.
+      if (points.length === 4) {
+        var zp0 = points[0], zp1 = points[1], zp2 = points[2], zp3 = points[3];
+        if (Math.abs(zp1.x - zp0.x) < 1 && Math.abs(zp3.x - zp2.x) < 1 && Math.abs(zp2.x - zp1.x) < 10) {
+          var avgX = (zp0.x + zp3.x) / 2;
+          points = [{ x: avgX, y: zp0.y }, { x: avgX, y: zp3.y }];
+        } else if (Math.abs(zp1.y - zp0.y) < 1 && Math.abs(zp3.y - zp2.y) < 1 && Math.abs(zp2.y - zp1.y) < 10) {
+          var avgY = (zp0.y + zp3.y) / 2;
+          points = [{ x: zp0.x, y: avgY }, { x: zp3.x, y: avgY }];
         }
       }
 
