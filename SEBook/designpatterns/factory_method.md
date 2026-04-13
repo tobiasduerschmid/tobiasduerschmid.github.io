@@ -43,12 +43,12 @@ The structure involves four key roles:
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout landscape
-interface Product {
-    + use(): void
-}
 abstract class Creator {
     + operation(): void
     + createProduct(): Product
+}
+interface Product {
+    + use(): void
 }
 class ConcreteCreator
 class ConcreteProduct {
