@@ -117,6 +117,138 @@
     }
   }
 
+  function mergeSvgBounds(bounds, minX, minY, maxX, maxY) {
+    if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) return false;
+    if (minX < bounds.minX) bounds.minX = minX;
+    if (minY < bounds.minY) bounds.minY = minY;
+    if (maxX > bounds.maxX) bounds.maxX = maxX;
+    if (maxY > bounds.maxY) bounds.maxY = maxY;
+    return true;
+  }
+
+  function hasMeaningfulSvgBounds(bounds) {
+    return !!bounds && isFinite(bounds.minX) && isFinite(bounds.minY) &&
+      isFinite(bounds.maxX) && isFinite(bounds.maxY) &&
+      bounds.maxX - bounds.minX > 1 && bounds.maxY - bounds.minY > 1;
+  }
+
+  function parseSvgTranslate(transform) {
+    var match = transform && transform.match(/translate\(\s*([-+]?\d*\.?\d+(?:e[-+]?\d+)?)\s*(?:[,\s]\s*([-+]?\d*\.?\d+(?:e[-+]?\d+)?))?\s*\)/i);
+    return {
+      x: match ? Number(match[1]) : 0,
+      y: match && typeof match[2] !== 'undefined' ? Number(match[2]) : 0
+    };
+  }
+
+  function parseSvgPoints(points) {
+    if (!points) return [];
+    var nums = points.match(/[-+]?\d*\.?\d+(?:e[-+]?\d+)?/ig) || [];
+    var result = [];
+    for (var i = 0; i + 1 < nums.length; i += 2) {
+      result.push({ x: Number(nums[i]), y: Number(nums[i + 1]) });
+    }
+    return result;
+  }
+
+  function measureSvgNodeFromAttributes(node) {
+    if (!node || !node.getAttribute) return null;
+    var tag = node.tagName ? node.tagName.toLowerCase() : '';
+    var x, y, w, h, points, minX, minY, maxX, maxY;
+    if (tag === 'rect' || tag === 'image' || tag === 'foreignobject') {
+      x = Number(node.getAttribute('x') || 0);
+      y = Number(node.getAttribute('y') || 0);
+      w = Number(node.getAttribute('width') || 0);
+      h = Number(node.getAttribute('height') || 0);
+      return { minX: x, minY: y, maxX: x + w, maxY: y + h };
+    }
+    if (tag === 'line') {
+      var x1 = Number(node.getAttribute('x1') || 0);
+      var y1 = Number(node.getAttribute('y1') || 0);
+      var x2 = Number(node.getAttribute('x2') || 0);
+      var y2 = Number(node.getAttribute('y2') || 0);
+      return { minX: Math.min(x1, x2), minY: Math.min(y1, y2), maxX: Math.max(x1, x2), maxY: Math.max(y1, y2) };
+    }
+    if (tag === 'circle') {
+      var cx = Number(node.getAttribute('cx') || 0);
+      var cy = Number(node.getAttribute('cy') || 0);
+      var r = Number(node.getAttribute('r') || 0);
+      return { minX: cx - r, minY: cy - r, maxX: cx + r, maxY: cy + r };
+    }
+    if (tag === 'ellipse') {
+      var ecx = Number(node.getAttribute('cx') || 0);
+      var ecy = Number(node.getAttribute('cy') || 0);
+      var rx = Number(node.getAttribute('rx') || 0);
+      var ry = Number(node.getAttribute('ry') || 0);
+      return { minX: ecx - rx, minY: ecy - ry, maxX: ecx + rx, maxY: ecy + ry };
+    }
+    if (tag === 'polyline' || tag === 'polygon') {
+      points = parseSvgPoints(node.getAttribute('points'));
+      if (!points.length) return null;
+      minX = maxX = points[0].x;
+      minY = maxY = points[0].y;
+      for (var pi = 1; pi < points.length; pi++) {
+        if (points[pi].x < minX) minX = points[pi].x;
+        if (points[pi].y < minY) minY = points[pi].y;
+        if (points[pi].x > maxX) maxX = points[pi].x;
+        if (points[pi].y > maxY) maxY = points[pi].y;
+      }
+      return { minX: minX, minY: minY, maxX: maxX, maxY: maxY };
+    }
+    if (tag === 'text') {
+      x = Number(node.getAttribute('x') || 0);
+      y = Number(node.getAttribute('y') || 0);
+      var fontSize = Number(node.getAttribute('font-size') || BASE_CFG.fontSize);
+      var fontFamily = node.getAttribute('font-family') || BASE_CFG.fontFamily;
+      var fontWeight = (node.getAttribute('font-weight') || '').toLowerCase() === 'bold';
+      var anchor = (node.getAttribute('text-anchor') || 'start').toLowerCase();
+      var width = textWidth(node.textContent || '', fontWeight, fontSize, fontFamily);
+      var left = x;
+      if (anchor === 'middle') left -= width / 2;
+      else if (anchor === 'end') left -= width;
+      return { minX: left, minY: y - fontSize, maxX: left + width, maxY: y + 4 };
+    }
+    if (tag === 'path') {
+      var coords = parseSvgPoints(node.getAttribute('d'));
+      if (!coords.length) return null;
+      minX = maxX = coords[0].x;
+      minY = maxY = coords[0].y;
+      for (var ci = 1; ci < coords.length; ci++) {
+        if (coords[ci].x < minX) minX = coords[ci].x;
+        if (coords[ci].y < minY) minY = coords[ci].y;
+        if (coords[ci].x > maxX) maxX = coords[ci].x;
+        if (coords[ci].y > maxY) maxY = coords[ci].y;
+      }
+      return { minX: minX, minY: minY, maxX: maxX, maxY: maxY };
+    }
+    return null;
+  }
+
+  function collectSvgBoundsFromAttributes(svg, g) {
+    if (!svg || !g) return null;
+    var bounds = {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity
+    };
+    var offset = parseSvgTranslate(g.getAttribute('transform') || '');
+    var measured = false;
+    var nodes = g.querySelectorAll('*');
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var tag = node.tagName ? node.tagName.toLowerCase() : '';
+      if (!tag || tag === 'defs' || tag === 'marker' || tag === 'script' || tag === 'style' || tag === 'title' || tag === 'desc' || tag === 'g') {
+        continue;
+      }
+      var box = measureSvgNodeFromAttributes(node);
+      if (!box) continue;
+      if (mergeSvgBounds(bounds, box.minX + offset.x, box.minY + offset.y, box.maxX + offset.x, box.maxY + offset.y)) {
+        measured = true;
+      }
+    }
+    return measured ? bounds : null;
+  }
+
   function collectSvgBounds(svg, g) {
     if (!svg || !g) return null;
     var bounds = {
@@ -138,7 +270,32 @@
     if (!measured) {
       measured = expandBounds(bounds, g, svg);
     }
-    return measured ? bounds : null;
+    if (hasMeaningfulSvgBounds(bounds)) return bounds;
+    return collectSvgBoundsFromAttributes(svg, g);
+  }
+
+  var DIAGRAM_CONTAINER_CLASSES = {
+    class: 'uml-class-diagram-container',
+    sequence: 'uml-sequence-diagram-container',
+    state: 'uml-state-diagram-container',
+    component: 'uml-component-diagram-container',
+    deployment: 'uml-deployment-diagram-container',
+    usecase: 'uml-usecase-diagram-container',
+    activity: 'uml-activity-diagram-container'
+  };
+
+  function prepareDiagramContainer(container, type) {
+    if (!container) return '';
+    var targetClass = DIAGRAM_CONTAINER_CLASSES[type] || DIAGRAM_CONTAINER_CLASSES.class;
+    for (var key in DIAGRAM_CONTAINER_CLASSES) {
+      if (Object.prototype.hasOwnProperty.call(DIAGRAM_CONTAINER_CLASSES, key)) {
+        container.classList.remove(DIAGRAM_CONTAINER_CLASSES[key]);
+      }
+    }
+    container.classList.add(targetClass);
+    if (container.hidden) container.hidden = false;
+    container.style.setProperty('display', 'block', 'important');
+    return targetClass;
   }
 
   // ─── Auto-Init Factory ─────────────────────────────────────────
@@ -228,7 +385,7 @@
         var pre = codeEl.parentElement;
         var text = extractText(codeEl);
         var container = document.createElement('div');
-        container.className = 'uml-class-diagram-container';
+        prepareDiagramContainer(container, opts && opts.type);
         pre.parentElement.replaceChild(container, pre);
         renderFn(container, text);
         diagrams.push({ container: container, text: text });
@@ -1055,6 +1212,19 @@
     return segments;
   }
 
+  function buildComponentRouteSegments(routes) {
+    var segments = [];
+    for (var ri = 0; ri < routes.length; ri++) {
+      var route = routes[ri];
+      var routeSegments = buildOrthogonalSegments(route.points);
+      for (var si = 0; si < routeSegments.length; si++) {
+        routeSegments[si].routeIndex = route.routeIndex;
+        segments.push(routeSegments[si]);
+      }
+    }
+    return segments;
+  }
+
   function makeLabelRect(x, y, labelW, labelH, anchor) {
     var left = anchor === 'middle' ? x - labelW / 2 : (anchor === 'end' ? x - labelW : x);
     return {
@@ -1777,6 +1947,7 @@
     escapeXml: escapeXml,
     parseLayoutDirective: parseLayoutDirective,
     getThemeColors: getThemeColors,
+    prepareDiagramContainer: prepareDiagramContainer,
     svgOpen: svgOpen,
     svgClose: svgClose,
     createAutoInit: createAutoInit,
@@ -1901,8 +2072,10 @@
         if (!getR || !spec) continue;
         var R = getR();
         if (R) {
+          prepareDiagramContainer(el, type);
           R.render(el, spec);
           el.dataset.umlRendered = 'true';
+          el.style.setProperty('display', 'block', 'important');
         }
       }
 
@@ -4683,10 +4856,7 @@
       return;
     }
 
-    // Ensure container has the CSS class for theming
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'class');
 
     var colors = UMLShared.getThemeColors(container);
     colors.bg = window.getComputedStyle(container).getPropertyValue('--uml-bg').trim() || 'transparent';
@@ -5031,9 +5201,7 @@
       container.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">No participants to display.</div>';
       return;
     }
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'sequence');
 
     var colors = UMLShared.getThemeColors(container);
     var svg = generateSequenceSVG(parsed, colors);
@@ -6485,9 +6653,7 @@
       container.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">No states to display.</div>';
       return;
     }
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'state');
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
@@ -6990,13 +7156,53 @@
       if (portDef.direction === 'out') return 'right';
       return portSides[compName + '.' + portDef.alias] || 'right';
     }
-    function chooseInitialPortSide(entry, portDef, partnerCenterX) {
+    function collectPortPartnerSamples(compName, alias) {
+      var partners = [];
+      for (var cpi = 0; cpi < connectors.length; cpi++) {
+        var connHint = connectors[cpi];
+        if (connHint.from === compName && connHint.fromPort === alias && entries[connHint.to]) {
+          partners.push({
+            x: entries[connHint.to].x + entries[connHint.to].box.width / 2,
+            y: entries[connHint.to].y + entries[connHint.to].box.height / 2
+          });
+        }
+        if (connHint.to === compName && connHint.toPort === alias && entries[connHint.from]) {
+          partners.push({
+            x: entries[connHint.from].x + entries[connHint.from].box.width / 2,
+            y: entries[connHint.from].y + entries[connHint.from].box.height / 2
+          });
+        }
+      }
+      return partners;
+    }
+    function scoreInitialPortSide(entry, portDef, partnerSamples, side) {
       var preferred = defaultPortSide(entry.comp.name, portDef);
-      if (partnerCenterX === null || partnerCenterX === undefined) return preferred;
       var centerX = entry.x + entry.box.width / 2;
-      if (partnerCenterX < centerX - 18) return 'left';
-      if (partnerCenterX > centerX + 18) return 'right';
-      return preferred;
+      var edgeX = side === 'left' ? entry.x : entry.x + entry.box.width;
+      var score = side === preferred ? 0 : (portDef.kind ? 110 : portDef.direction ? 30 : 12);
+
+      for (var psi = 0; psi < partnerSamples.length; psi++) {
+        var sample = partnerSamples[psi];
+        var horizontalSpan = Math.abs(sample.x - edgeX);
+        score += horizontalSpan * 0.08;
+
+        if (side === 'left' && sample.x > centerX + 18) {
+          score += 32 + (sample.x - centerX) * 0.6;
+        } else if (side === 'right' && sample.x < centerX - 18) {
+          score += 32 + (centerX - sample.x) * 0.6;
+        }
+      }
+
+      return score;
+    }
+    function chooseInitialPortSide(entry, portDef, partnerSamples) {
+      var preferred = defaultPortSide(entry.comp.name, portDef);
+      if (!partnerSamples.length) return preferred;
+
+      var leftScore = scoreInitialPortSide(entry, portDef, partnerSamples, 'left');
+      var rightScore = scoreInitialPortSide(entry, portDef, partnerSamples, 'right');
+      if (Math.abs(leftScore - rightScore) <= 6) return preferred;
+      return leftScore < rightScore ? 'left' : 'right';
     }
     function rebuildDesiredPortY(useActualPartnerPorts) {
       desiredPortY = {};
@@ -7035,19 +7241,8 @@
       var newRightPorts = [];
       for (var pidx = 0; pidx < pe.comp.ports.length; pidx++) {
         var portDef = pe.comp.ports[pidx];
-        var partnerCenterX = null;
-        for (var cpi = 0; cpi < connectors.length; cpi++) {
-          var connHint = connectors[cpi];
-          if (connHint.from === pn && connHint.fromPort === portDef.alias && entries[connHint.to]) {
-            partnerCenterX = entries[connHint.to].x + entries[connHint.to].box.width / 2;
-            break;
-          }
-          if (connHint.to === pn && connHint.toPort === portDef.alias && entries[connHint.from]) {
-            partnerCenterX = entries[connHint.from].x + entries[connHint.from].box.width / 2;
-            break;
-          }
-        }
-        var side = chooseInitialPortSide(pe, portDef, partnerCenterX);
+        var partnerSamples = collectPortPartnerSamples(pn, portDef.alias);
+        var side = chooseInitialPortSide(pe, portDef, partnerSamples);
         if (side === 'left') newLeftPorts.push(portDef.alias);
         else newRightPorts.push(portDef.alias);
       }
@@ -7098,9 +7293,7 @@
     }
     function optimizePortConnectionGraphOrder() {
       var portNeighbors = {};
-      var groupPositions = {};
       var groups = [];
-      var processedGroups = {};
       var stableTieThreshold = Math.max(8, CFG.portPad * 0.35);
 
       function pushNeighbor(fromPortKey, toPortKey, toGroupKey) {
@@ -7148,17 +7341,152 @@
         }
       }
 
+      function getGroupPorts(group) {
+        var currentEntry = entries[group.compName];
+        return group.side === 'left' ? currentEntry.leftPorts.slice() : currentEntry.rightPorts.slice();
+      }
+
+      function setGroupPorts(group, orderedPorts) {
+        var currentEntry = entries[group.compName];
+        if (group.side === 'left') currentEntry.leftPorts = orderedPorts;
+        else currentEntry.rightPorts = orderedPorts;
+      }
+
+      function orderCost(entry, side, candidate, desiredYMap) {
+        var candidateCenters = computeGroupCenters(entry, side, candidate);
+        var score = 0;
+        for (var i = 0; i < candidate.length; i++) {
+          var alias = candidate[i];
+          if (desiredYMap.hasOwnProperty(alias)) {
+            score += Math.abs(candidateCenters[alias] - desiredYMap[alias]);
+          }
+          score += ((entry.portOrderIndex[alias] || 0) * 0.001);
+        }
+        for (var ai = 0; ai < candidate.length - 1; ai++) {
+          var aAlias = candidate[ai];
+          if (!desiredYMap.hasOwnProperty(aAlias)) continue;
+          for (var bi = ai + 1; bi < candidate.length; bi++) {
+            var bAlias = candidate[bi];
+            if (!desiredYMap.hasOwnProperty(bAlias)) continue;
+            if (desiredYMap[aAlias] > desiredYMap[bAlias] + stableTieThreshold) {
+              score += 500;
+            }
+            if (Math.abs(desiredYMap[aAlias] - desiredYMap[bAlias]) >= stableTieThreshold) continue;
+            if ((entry.portOrderIndex[aAlias] || 0) > (entry.portOrderIndex[bAlias] || 0)) {
+              score += stableTieThreshold * 0.75;
+            }
+          }
+        }
+        return score;
+      }
+
+      function buildDesiredYMapForGroup(group, provisionalCenters) {
+        var desiredYMap = {};
+        var desiredCount = 0;
+        var ports = getGroupPorts(group);
+        for (var pi3 = 0; pi3 < ports.length; pi3++) {
+          var alias = ports[pi3];
+          var neighbors = portNeighbors[portKey(group.compName, alias)] || [];
+          var total = 0;
+          var count = 0;
+          for (var ni = 0; ni < neighbors.length; ni++) {
+            var neighbor = neighbors[ni];
+            if (provisionalCenters[neighbor.portKey] === undefined) continue;
+            total += provisionalCenters[neighbor.portKey];
+            count++;
+          }
+          if (count > 0) {
+            desiredYMap[alias] = total / count;
+            desiredCount++;
+            continue;
+          }
+
+          var globalDesiredY = averagePortY(portKey(group.compName, alias));
+          if (globalDesiredY !== null) {
+            desiredYMap[alias] = globalDesiredY;
+            desiredCount++;
+          }
+        }
+        return { map: desiredYMap, count: desiredCount };
+      }
+
+      function optimizeGroupOrder(group, provisionalCenters) {
+        var entry = entries[group.compName];
+        var currentPorts = getGroupPorts(group);
+        if (currentPorts.length < 2) return false;
+
+        var desired = buildDesiredYMapForGroup(group, provisionalCenters);
+        var desiredYMap = desired.map;
+        if (!desired.count) return false;
+
+        var bestOrder = currentPorts.slice();
+        bestOrder.sort(function(a, b) {
+          var ay = desiredYMap.hasOwnProperty(a) ? desiredYMap[a] : Number.POSITIVE_INFINITY;
+          var by = desiredYMap.hasOwnProperty(b) ? desiredYMap[b] : Number.POSITIVE_INFINITY;
+          if (Math.abs(ay - by) > stableTieThreshold) return ay - by;
+          return (entry.portOrderIndex[a] || 0) - (entry.portOrderIndex[b] || 0);
+        });
+        var bestScore = orderCost(entry, group.side, bestOrder, desiredYMap);
+
+        if (currentPorts.length <= 6) {
+          function searchOrders(prefix, remaining) {
+            if (!remaining.length) {
+              var score = orderCost(entry, group.side, prefix, desiredYMap);
+              if (score + 0.01 < bestScore) {
+                bestOrder = prefix.slice();
+                bestScore = score;
+              }
+              return;
+            }
+            for (var ri2 = 0; ri2 < remaining.length; ri2++) {
+              var nextPrefix = prefix.concat([remaining[ri2]]);
+              var nextRemaining = remaining.slice(0, ri2).concat(remaining.slice(ri2 + 1));
+              searchOrders(nextPrefix, nextRemaining);
+            }
+          }
+
+          searchOrders([], currentPorts.slice());
+        } else {
+          var ordered = bestOrder.slice();
+          var improved = true;
+          while (improved) {
+            improved = false;
+            for (var swapIdx = 0; swapIdx < ordered.length - 1; swapIdx++) {
+              var swapped = ordered.slice();
+              var temp = swapped[swapIdx];
+              swapped[swapIdx] = swapped[swapIdx + 1];
+              swapped[swapIdx + 1] = temp;
+              var swappedScore = orderCost(entry, group.side, swapped, desiredYMap);
+              if (swappedScore + 0.01 < bestScore) {
+                ordered = swapped;
+                bestOrder = swapped;
+                bestScore = swappedScore;
+                improved = true;
+              }
+            }
+          }
+        }
+
+        var changed = false;
+        for (var oi = 0; oi < currentPorts.length; oi++) {
+          if (currentPorts[oi] !== bestOrder[oi]) {
+            changed = true;
+            break;
+          }
+        }
+        if (!changed) return false;
+        setGroupPorts(group, bestOrder);
+        updateProvisionalGroupCenters(provisionalCenters, group);
+        return true;
+      }
+
       for (var entryName in entries) {
         var entry = entries[entryName];
         if (entry.leftPorts.length) {
-          var leftKey = groupKey(entryName, 'left');
-          groupPositions[leftKey] = entry.x;
-          groups.push({ compName: entryName, side: 'left', key: leftKey, x: entry.x });
+          groups.push({ compName: entryName, side: 'left', key: groupKey(entryName, 'left'), x: entry.x });
         }
         if (entry.rightPorts.length) {
-          var rightKey = groupKey(entryName, 'right');
-          groupPositions[rightKey] = entry.x + entry.box.width;
-          groups.push({ compName: entryName, side: 'right', key: rightKey, x: entry.x + entry.box.width });
+          groups.push({ compName: entryName, side: 'right', key: groupKey(entryName, 'right'), x: entry.x + entry.box.width });
         }
       }
 
@@ -7183,140 +7511,13 @@
         return a.compName < b.compName ? -1 : 1;
       });
 
-      var provisionalCenters = buildProvisionalPortCenters();
-
-      function buildPortRankMap() {
-        var ranks = {};
-        for (var name in entries) {
-          var currentEntry = entries[name];
-          for (var li = 0; li < currentEntry.leftPorts.length; li++) {
-            ranks[portKey(name, currentEntry.leftPorts[li])] = li;
-          }
-          for (var ri = 0; ri < currentEntry.rightPorts.length; ri++) {
-            ranks[portKey(name, currentEntry.rightPorts[ri])] = ri;
-          }
+      for (var round = 0; round < 6; round++) {
+        var provisionalCenters = buildProvisionalPortCenters();
+        var anyChanged = false;
+        for (var gi = 0; gi < groups.length; gi++) {
+          if (optimizeGroupOrder(groups[gi], provisionalCenters)) anyChanged = true;
         }
-        return ranks;
-      }
-
-      function getGroupPorts(group) {
-        var currentEntry = entries[group.compName];
-        return group.side === 'left' ? currentEntry.leftPorts.slice() : currentEntry.rightPorts.slice();
-      }
-
-      function setGroupPorts(group, orderedPorts) {
-        var currentEntry = entries[group.compName];
-        if (group.side === 'left') currentEntry.leftPorts = orderedPorts;
-        else currentEntry.rightPorts = orderedPorts;
-      }
-
-      function orderCost(entry, side, candidate, desiredYMap) {
-        var candidateCenters = computeGroupCenters(entry, side, candidate);
-        var score = 0;
-        for (var i = 0; i < candidate.length; i++) {
-          var alias = candidate[i];
-          if (desiredYMap.hasOwnProperty(alias)) {
-            score += Math.abs(candidateCenters[alias] - desiredYMap[alias]);
-          }
-          score += ((entry.portOrderIndex[alias] || 0) * 0.001);
-        }
-        // Penalize crossings: if port A is above port B in the candidate order
-        // but A's desired Y is below B's desired Y, the connector lines will cross.
-        // Apply a large penalty per crossing to strongly discourage them.
-        for (var ai = 0; ai < candidate.length - 1; ai++) {
-          var aAlias = candidate[ai];
-          if (!desiredYMap.hasOwnProperty(aAlias)) continue;
-          for (var bi = ai + 1; bi < candidate.length; bi++) {
-            var bAlias = candidate[bi];
-            if (!desiredYMap.hasOwnProperty(bAlias)) continue;
-            // Crossing: port ai is above port bi in layout, but desired Y says opposite
-            if (desiredYMap[aAlias] > desiredYMap[bAlias] + stableTieThreshold) {
-              score += 500;
-            }
-            if (Math.abs(desiredYMap[aAlias] - desiredYMap[bAlias]) >= stableTieThreshold) continue;
-            if ((entry.portOrderIndex[aAlias] || 0) > (entry.portOrderIndex[bAlias] || 0)) {
-              score += stableTieThreshold * 0.75;
-            }
-          }
-        }
-        return score;
-      }
-
-      for (var gi = 0; gi < groups.length; gi++) {
-        var group = groups[gi];
-        var entry = entries[group.compName];
-        var currentPorts = getGroupPorts(group);
-        if (currentPorts.length < 2) continue;
-
-        var portRanks = buildPortRankMap();
-        var desiredYMap = {};
-        var desiredCount = 0;
-
-        for (var pi3 = 0; pi3 < currentPorts.length; pi3++) {
-          var alias = currentPorts[pi3];
-          var neighbors = portNeighbors[portKey(group.compName, alias)] || [];
-          var total = 0;
-          var count = 0;
-          for (var ni = 0; ni < neighbors.length; ni++) {
-            var neighbor = neighbors[ni];
-            if (!processedGroups[neighbor.groupKey]) continue;
-            if (provisionalCenters[neighbor.portKey] !== undefined) {
-              total += provisionalCenters[neighbor.portKey];
-              count++;
-              continue;
-            }
-            if (portRanks[neighbor.portKey] === undefined) continue;
-            var fallbackPortY = averagePortY(neighbor.portKey);
-            if (fallbackPortY === null) continue;
-            total += fallbackPortY;
-            count++;
-          }
-          if (count > 0) {
-            desiredYMap[alias] = total / count;
-            desiredCount++;
-            continue;
-          }
-
-          var globalDesiredY = averagePortY(portKey(group.compName, alias));
-          if (globalDesiredY !== null) {
-            desiredYMap[alias] = globalDesiredY;
-            desiredCount++;
-          }
-        }
-
-        if (!desiredCount) {
-          processedGroups[group.key] = true;
-          updateProvisionalGroupCenters(provisionalCenters, group);
-          continue;
-        }
-
-        var ordered = currentPorts.slice();
-        ordered.sort(function(a, b) {
-          var ay = desiredYMap.hasOwnProperty(a) ? desiredYMap[a] : Number.POSITIVE_INFINITY;
-          var by = desiredYMap.hasOwnProperty(b) ? desiredYMap[b] : Number.POSITIVE_INFINITY;
-          if (Math.abs(ay - by) > stableTieThreshold) return ay - by;
-          return (entry.portOrderIndex[a] || 0) - (entry.portOrderIndex[b] || 0);
-        });
-        var improved = true;
-        while (improved) {
-          improved = false;
-          for (var swapIdx = 0; swapIdx < ordered.length - 1; swapIdx++) {
-            var currentScore = orderCost(entry, group.side, ordered, desiredYMap);
-            var swapped = ordered.slice();
-            var temp = swapped[swapIdx];
-            swapped[swapIdx] = swapped[swapIdx + 1];
-            swapped[swapIdx + 1] = temp;
-            var swappedScore = orderCost(entry, group.side, swapped, desiredYMap);
-            if (swappedScore + 0.01 < currentScore) {
-              ordered = swapped;
-              improved = true;
-            }
-          }
-        }
-
-        setGroupPorts(group, ordered);
-        processedGroups[group.key] = true;
-        updateProvisionalGroupCenters(provisionalCenters, group);
+        if (!anyChanged) break;
       }
     }
 
@@ -7729,43 +7930,120 @@
       a.bottom + gap > b.top && a.top - gap < b.bottom;
   }
 
-  function obstacleToRect(obstacle) {
-    return {
-      left: obstacle.x1,
-      right: obstacle.x2,
-      top: obstacle.y1,
-      bottom: obstacle.y2
-    };
+  function normalizeComponentRect(rect) {
+    if (!rect) return null;
+    if (typeof rect.left === 'number' && typeof rect.top === 'number' &&
+        typeof rect.right === 'number' && typeof rect.bottom === 'number') {
+      return rect;
+    }
+    if (typeof rect.x1 === 'number' && typeof rect.y1 === 'number' &&
+        typeof rect.x2 === 'number' && typeof rect.y2 === 'number') {
+      return {
+        left: Math.min(rect.x1, rect.x2),
+        top: Math.min(rect.y1, rect.y2),
+        right: Math.max(rect.x1, rect.x2),
+        bottom: Math.max(rect.y1, rect.y2)
+      };
+    }
+    if (typeof rect.x === 'number' && typeof rect.y === 'number' &&
+        typeof rect.w === 'number' && typeof rect.h === 'number') {
+      return {
+        left: rect.x,
+        top: rect.y,
+        right: rect.x + rect.w,
+        bottom: rect.y + rect.h
+      };
+    }
+    return null;
   }
 
-  function intervalGap(a1, a2, b1, b2) {
+  function componentIntervalGap(a1, a2, b1, b2) {
     if (a2 < b1) return b1 - a2;
     if (b2 < a1) return a1 - b2;
     return 0;
   }
 
-  function rectDistance(a, b) {
-    var dx = intervalGap(a.left, a.right, b.left, b.right);
-    var dy = intervalGap(a.top, a.bottom, b.top, b.bottom);
+  function componentObstacleRect(obstacle) {
+    return normalizeComponentRect(obstacle);
+  }
+
+  function labelRectHitsObstacles(rect, obstacles, pad) {
+    for (var i = 0; i < obstacles.length; i++) {
+      var obstacleRect = componentObstacleRect(obstacles[i]);
+      if (obstacleRect && rectsOverlap(rect, obstacleRect, pad)) return true;
+    }
+    return false;
+  }
+
+  function labelRectHitsPlacedLabels(rect, placedLabels, pad) {
+    for (var i = 0; i < placedLabels.length; i++) {
+      if (rectsOverlap(rect, placedLabels[i], pad)) return true;
+    }
+    return false;
+  }
+
+  function labelRectHitsSegments(rect, routeSegments, routeIndex, segmentIndex, pad) {
+    var gap = pad || 0;
+    for (var i = 0; i < routeSegments.length; i++) {
+      var segment = routeSegments[i];
+      if (segment.routeIndex === routeIndex && segment.segmentIndex === segmentIndex) continue;
+      if (segment.isH) {
+        if (segment.y >= rect.top - gap && segment.y <= rect.bottom + gap &&
+            segment.x2 > rect.left - gap && segment.x1 < rect.right + gap) {
+          return true;
+        }
+      } else if (segment.x >= rect.left - gap && segment.x <= rect.right + gap &&
+                 segment.y2 > rect.top - gap && segment.y1 < rect.bottom + gap) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function componentRectDistance(a, b) {
+    var ra = normalizeComponentRect(a);
+    var rb = normalizeComponentRect(b);
+    if (!ra || !rb) return Infinity;
+    var dx = componentIntervalGap(ra.left, ra.right, rb.left, rb.right);
+    var dy = componentIntervalGap(ra.top, ra.bottom, rb.top, rb.bottom);
     if (dx === 0 && dy === 0) return 0;
     if (dx === 0) return dy;
     if (dy === 0) return dx;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  function segmentDistanceToRect(segment, rect) {
+  function componentSegmentDistanceToRect(segment, rect) {
+    var rr = normalizeComponentRect(rect);
+    if (!rr) return Infinity;
     var dx, dy;
     if (segment.isH) {
-      dx = intervalGap(rect.left, rect.right, segment.x1, segment.x2);
-      dy = intervalGap(rect.top, rect.bottom, segment.y, segment.y);
+      dx = componentIntervalGap(rr.left, rr.right, segment.x1, segment.x2);
+      dy = componentIntervalGap(rr.top, rr.bottom, segment.y, segment.y);
     } else {
-      dx = intervalGap(rect.left, rect.right, segment.x, segment.x);
-      dy = intervalGap(rect.top, rect.bottom, segment.y1, segment.y2);
+      dx = componentIntervalGap(rr.left, rr.right, segment.x, segment.x);
+      dy = componentIntervalGap(rr.top, rr.bottom, segment.y1, segment.y2);
     }
     if (dx === 0 && dy === 0) return 0;
     if (dx === 0) return dy;
     if (dy === 0) return dx;
     return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function minLabelClearance(rect, obstacles, placedLabels, routeSegments, routeIndex, segmentIndex) {
+    var min = Infinity;
+    for (var i = 0; i < obstacles.length; i++) {
+      var obstacleRect = componentObstacleRect(obstacles[i]);
+      if (obstacleRect) min = Math.min(min, componentRectDistance(rect, obstacleRect));
+    }
+    for (var j = 0; j < placedLabels.length; j++) {
+      min = Math.min(min, componentRectDistance(rect, placedLabels[j]));
+    }
+    for (var k = 0; k < routeSegments.length; k++) {
+      var segment = routeSegments[k];
+      if (segment.routeIndex === routeIndex && segment.segmentIndex === segmentIndex) continue;
+      min = Math.min(min, componentSegmentDistanceToRect(segment, rect));
+    }
+    return isFinite(min) ? min : 120;
   }
 
   function buildComponentRouteSegments(routes) {
@@ -7796,54 +8074,6 @@
       }
     }
     return segments;
-  }
-
-  function labelRectHitsObstacles(rect, obstacles, pad) {
-    for (var i = 0; i < obstacles.length; i++) {
-      if (rectsOverlap(rect, obstacleToRect(obstacles[i]), pad)) return true;
-    }
-    return false;
-  }
-
-  function labelRectHitsPlacedLabels(rect, placedLabels, pad) {
-    for (var i = 0; i < placedLabels.length; i++) {
-      if (rectsOverlap(rect, placedLabels[i], pad)) return true;
-    }
-    return false;
-  }
-
-  function labelRectHitsSegments(rect, routeSegments, routeIndex, segmentIndex, pad) {
-    var gap = pad || 0;
-    for (var i = 0; i < routeSegments.length; i++) {
-      var segment = routeSegments[i];
-      if (segment.routeIndex === routeIndex && segment.segmentIndex === segmentIndex) continue;
-      if (segment.isH) {
-        if (segment.y >= rect.top - gap && segment.y <= rect.bottom + gap &&
-            segment.x2 > rect.left - gap && segment.x1 < rect.right + gap) {
-          return true;
-        }
-      } else if (segment.x >= rect.left - gap && segment.x <= rect.right + gap &&
-                 segment.y2 > rect.top - gap && segment.y1 < rect.bottom + gap) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function minLabelClearance(rect, obstacles, placedLabels, routeSegments, routeIndex, segmentIndex) {
-    var min = Infinity;
-    for (var i = 0; i < obstacles.length; i++) {
-      min = Math.min(min, rectDistance(rect, obstacleToRect(obstacles[i])));
-    }
-    for (var j = 0; j < placedLabels.length; j++) {
-      min = Math.min(min, rectDistance(rect, placedLabels[j]));
-    }
-    for (var k = 0; k < routeSegments.length; k++) {
-      var segment = routeSegments[k];
-      if (segment.routeIndex === routeIndex && segment.segmentIndex === segmentIndex) continue;
-      min = Math.min(min, segmentDistanceToRect(segment, rect));
-    }
-    return isFinite(min) ? min : 120;
   }
 
   function placeComponentConnectorLabel(label, points, routeIndex, obstacles, placedLabels, routeSegments, cfg, options) {
@@ -8165,9 +8395,20 @@
         var preferredY = otherPos ? otherPos.cy : (otherEntry ? otherEntry.y + otherEntry.box.height / 2 : pos.cy);
         var desiredY = clampComponentPortY(entry, alias, preferredY);
         var candidateYs = [pos.cy];
+        var movementBounds = getPortMovementBounds(entry, alias);
         if (desiredY !== null) {
           candidateYs.push(desiredY);
           candidateYs.push((pos.cy + desiredY) / 2);
+        }
+        if (movementBounds) {
+          candidateYs.push(movementBounds.lower);
+          candidateYs.push(movementBounds.upper);
+          candidateYs.push((pos.cy + movementBounds.lower) / 2);
+          candidateYs.push((pos.cy + movementBounds.upper) / 2);
+          if (desiredY !== null) {
+            candidateYs.push((desiredY + movementBounds.lower) / 2);
+            candidateYs.push((desiredY + movementBounds.upper) / 2);
+          }
         }
 
         for (var yi = 0; yi < candidateYs.length; yi++) {
@@ -8981,9 +9222,7 @@
       container.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">No components to display.</div>';
       return;
     }
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'component');
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
@@ -9694,9 +9933,7 @@
       container.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">No nodes to display.</div>';
       return;
     }
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'deployment');
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
@@ -10620,9 +10857,7 @@
       container.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">No elements to display.</div>';
       return;
     }
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'usecase');
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
@@ -11572,9 +11807,7 @@
       container.innerHTML = '<div style="padding:20px;color:#888;text-align:center;">No activities to display.</div>';
       return;
     }
-    if (!container.classList.contains('uml-class-diagram-container')) {
-      container.classList.add('uml-class-diagram-container');
-    }
+    UMLShared.prepareDiagramContainer(container, 'activity');
     var colors = UMLShared.getThemeColors(container);
     var layout = computeLayout(parsed);
     container.innerHTML = generateSVG(layout, parsed, colors);
