@@ -36,15 +36,17 @@ steps:
 
       ### Predict Before You Code
 
-      Look at `hello.js` — it is empty. Before adding any code, predict: is the syntax for printing in JavaScript closer to Python's `print()` or C++'s `printf()`? (Hint: it is neither.)
+      Look at `hello.js` — this is our soon-to-be hello world program.
+      In C++ your hello would would be `printf("Hello from C++!\n");`
+      In Python it would be `print("Hello from Python!")`.
+      What might it be for JavaScript running in Node.js? Maybe a mix of both?
+      Not at all. JavaScript has its own syntax for printing to the console.
 
       ### Task: Your First Node.js Script
 
       Open `hello.js` in the editor. Add a line to print your greeting:
 
       ```javascript
-      // Python equivalent: print("Hello from Node.js!")
-      // C++ equivalent:    printf("Hello from Node.js!\n");
       console.log("Hello from Node.js!");
       ```
 
