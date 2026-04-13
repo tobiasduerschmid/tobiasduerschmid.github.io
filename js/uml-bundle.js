@@ -1439,6 +1439,116 @@
     return result;
   }
 
+  function simplifyOrthogonalEndpoints(points, obstacles, skipNames, occupied, options) {
+    if (!points || points.length < 4) return points || [];
+
+    var opts = options || {};
+    var tol = 1;
+    var maxOuterLen = opts.maxOuterLen != null ? opts.maxOuterLen : 30;
+    var maxMiddleLen = opts.maxMiddleLen != null ? opts.maxMiddleLen : 32;
+    var best = simplifyOrthogonalPath(points);
+
+    function cloneRoute(route) {
+      var copy = [];
+      for (var i = 0; i < route.length; i++) copy.push({ x: route[i].x, y: route[i].y });
+      return copy;
+    }
+
+    function reverseRoute(route) {
+      var reversed = [];
+      for (var i = route.length - 1; i >= 0; i--) reversed.push({ x: route[i].x, y: route[i].y });
+      return reversed;
+    }
+
+    function scoreRoute(route) {
+      return measureOrthogonalRoute(route) + countOrthogonalBends(route) * ORTHO_ROUTE_BEND_PENALTY;
+    }
+
+    function buildEndpointCandidates(route) {
+      if (!route || route.length < 4) return [];
+
+      var candidates = [];
+      var p0 = route[0], p1 = route[1], p2 = route[2], p3 = route[3];
+      var isHVH = Math.abs(p1.y - p0.y) < tol && Math.abs(p2.x - p1.x) < tol && Math.abs(p3.y - p2.y) < tol;
+      var isVHV = Math.abs(p1.x - p0.x) < tol && Math.abs(p2.y - p1.y) < tol && Math.abs(p3.x - p2.x) < tol;
+
+      if (isHVH) {
+        var firstH = Math.abs(p1.x - p0.x);
+        var middleV = Math.abs(p2.y - p1.y);
+        var lastH = Math.abs(p3.x - p2.x);
+        if (middleV > 0.5 && middleV <= maxMiddleLen) {
+          if (firstH <= maxOuterLen) {
+            candidates.push([
+              { x: p0.x, y: p0.y },
+              { x: p0.x, y: p3.y },
+              { x: p3.x, y: p3.y }
+            ].concat(cloneRoute(route.slice(4))));
+          }
+          if (lastH <= maxOuterLen) {
+            candidates.push([
+              { x: p0.x, y: p0.y },
+              { x: p3.x, y: p0.y },
+              { x: p3.x, y: p3.y }
+            ].concat(cloneRoute(route.slice(4))));
+          }
+        }
+      }
+
+      if (isVHV) {
+        var firstV = Math.abs(p1.y - p0.y);
+        var middleH = Math.abs(p2.x - p1.x);
+        var lastV = Math.abs(p3.y - p2.y);
+        if (middleH > 0.5 && middleH <= maxMiddleLen) {
+          if (firstV <= maxOuterLen) {
+            candidates.push([
+              { x: p0.x, y: p0.y },
+              { x: p3.x, y: p0.y },
+              { x: p3.x, y: p3.y }
+            ].concat(cloneRoute(route.slice(4))));
+          }
+          if (lastV <= maxOuterLen) {
+            candidates.push([
+              { x: p0.x, y: p0.y },
+              { x: p0.x, y: p3.y },
+              { x: p3.x, y: p3.y }
+            ].concat(cloneRoute(route.slice(4))));
+          }
+        }
+      }
+
+      return candidates;
+    }
+
+    var improved = true;
+    while (improved) {
+      improved = false;
+      var currentScore = scoreRoute(best);
+      var candidateRoutes = buildEndpointCandidates(best);
+      var reversed = reverseRoute(best);
+      var reversedCandidates = buildEndpointCandidates(reversed);
+      for (var ri = 0; ri < reversedCandidates.length; ri++) {
+        candidateRoutes.push(reverseRoute(reversedCandidates[ri]));
+      }
+
+      var bestCandidate = null;
+      for (var ci = 0; ci < candidateRoutes.length; ci++) {
+        var candidate = simplifyOrthogonalPath(candidateRoutes[ci]);
+        if (routeHitsObstacle(candidate, obstacles, skipNames, occupied)) continue;
+        var candidateScore = scoreRoute(candidate);
+        if (candidateScore + 0.01 < currentScore && (!bestCandidate || candidateScore < bestCandidate.score)) {
+          bestCandidate = { score: candidateScore, points: candidate };
+        }
+      }
+
+      if (bestCandidate) {
+        best = bestCandidate.points;
+        improved = true;
+      }
+    }
+
+    return best;
+  }
+
   function measureOrthogonalRoute(points) {
     var total = 0;
     if (!points) return total;
@@ -1929,6 +2039,7 @@
     points = simplifyOrthogonalPath(points);
     points = spreadRouteToFreeLanes(points, obstacles, skipNames, occupied);
     points = simplifyOrthogonalPath(points);
+    points = simplifyOrthogonalEndpoints(points, obstacles, skipNames, occupied);
 
     return {
       points: points,
@@ -1995,6 +2106,7 @@
     buildOrthogonalSegments: buildOrthogonalSegments,
     placeOrthogonalLabel: placeOrthogonalLabel,
     simplifyOrthogonalPath: simplifyOrthogonalPath,
+    simplifyOrthogonalEndpoints: simplifyOrthogonalEndpoints,
     measureOrthogonalRoute: measureOrthogonalRoute,
     countOrthogonalBends: countOrthogonalBends,
     countRouteCrossings: countRouteCrossings,
@@ -4855,6 +4967,7 @@
         });
         var points = enforceOrthogonalEndpointApproach(routed.points, fromE, toE, sourceCandidate.side, targetCandidate.side);
         points = UMLShared.simplifyOrthogonalPath(points);
+        points = UMLShared.simplifyOrthogonalEndpoints(points, obstacles, skipNames, null);
 
         if (UMLShared.routeHitsObstacle(points, obstacles, skipNames, null)) continue;
 
@@ -4967,7 +5080,14 @@
         extraYs: [fromCy, toCy]
       });
       best = {
-        points: enforceOrthogonalEndpointApproach(fallbackRoute.points, fromE, toE, fallbackSource.side, fallbackTarget.side)
+        points: UMLShared.simplifyOrthogonalEndpoints(
+          UMLShared.simplifyOrthogonalPath(
+            enforceOrthogonalEndpointApproach(fallbackRoute.points, fromE, toE, fallbackSource.side, fallbackTarget.side)
+          ),
+          obstacles,
+          skipNames,
+          null
+        )
       };
     }
 
@@ -9606,54 +9726,7 @@
 
       var points = refineRouteEndpoints(conn, bestRoute.points, fpPos, tpPos, skipN);
       points = UMLShared.simplifyOrthogonalPath(points);
-
-      // Post-process: eliminate tiny H-V-H doglegs by snapping the port with the
-      // smaller displacement directly to the other end's Y.
-      if (points.length === 4) {
-        var dg0 = points[0], dg1 = points[1], dg2 = points[2], dg3 = points[3];
-        var dgH1 = Math.abs(dg1.y - dg0.y) < 1;
-        var dgV  = Math.abs(dg2.x - dg1.x) < 1;
-        var dgH2 = Math.abs(dg3.y - dg2.y) < 1;
-        var dgVLen = Math.abs(dg2.y - dg1.y);
-        if (dgH1 && dgV && dgH2 && dgVLen > 0.3 && dgVLen <= 10) {
-          // Pick the endpoint whose port moves less
-          var moveSourceDy = Math.abs(dg3.y - dg0.y);
-          var moveToSource = moveSourceDy;  // move target to source Y
-          var moveToTarget = moveSourceDy;  // move source to target Y
-          // Try snapping source to target Y (source moves)
-          var snapY = dg3.y;
-          var snapEntry = entries[conn.from];
-          var snapAlias = conn.fromPort;
-          // Or snap target to source Y (target moves less if source is further)
-          if (fpPos && tpPos) {
-            var srcMoveDist = Math.abs(dg3.y - fpPos.cy);
-            var tgtMoveDist = Math.abs(dg0.y - tpPos.cy);
-            if (tgtMoveDist < srcMoveDist) {
-              snapY = dg0.y;
-              snapEntry = entries[conn.to];
-              snapAlias = conn.toPort;
-            }
-          }
-          if (snapEntry && snapAlias && snapEntry.portPositions && snapEntry.portPositions[snapAlias]) {
-            var snapPos = snapEntry.portPositions[snapAlias];
-            var snapBounds = getPortMovementBounds(snapEntry, snapAlias);
-            // Allow snap if within bounds OR if the dogleg is tiny (cosmetic jog ≤ 6px)
-            var canSnap = dgVLen <= 6 || (snapBounds && snapY >= snapBounds.lower && snapY <= snapBounds.upper);
-            if (canSnap) {
-              var straightLine = [{ x: dg0.x, y: snapY }, { x: dg3.x, y: snapY }];
-              if (!routeHitsObstacle(straightLine, obstacles, skipN, null)) {
-                // Directly update the port position
-                snapPos.cy = snapY;
-                snapPos.connY = snapY;
-                snapPos.y = snapY - CFG.portSize / 2;
-                points = straightLine;
-                if (conn.fromPort && fromE.portPositions[conn.fromPort]) fpPos = fromE.portPositions[conn.fromPort];
-                if (conn.toPort && toE.portPositions[conn.toPort]) tpPos = toE.portPositions[conn.toPort];
-              }
-            }
-          }
-        }
-      }
+      points = UMLShared.simplifyOrthogonalEndpoints(points, obstacles, skipN, null);
       if (UMLShared.routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
         points = UMLShared.routeOrthogonalConnector(bestRoute.source, bestRoute.target, obstacles, {
           skipNames: skipN,
@@ -9665,6 +9738,7 @@
         }).points;
         points = refineRouteEndpoints(conn, points, fpPos, tpPos, skipN);
         points = UMLShared.simplifyOrthogonalPath(points);
+        points = UMLShared.simplifyOrthogonalEndpoints(points, obstacles, skipN, null);
       }
 
       // Remove the temporary interior obstacles added for this connection
