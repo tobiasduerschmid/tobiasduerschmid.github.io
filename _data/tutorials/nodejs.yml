@@ -132,7 +132,7 @@ steps:
   #           Transfer Tutor — C++ static types vs JS dynamic, Python f-strings → template literals.
   #           Targets negative transfer risk: the == coercion landmine.
   # --------------------------------------------------------------------------
-  - title: "Variables, Types & The `===` Trap"
+  - title: "Variables, Types & The === Trap"
     instructions: |
       ## Bridging Your Mental Models
 
@@ -148,8 +148,12 @@ steps:
       let count = 0;          // Mutable — like a regular Python variable
       const MAX_SIZE = 200;   // Immutable binding — like Python's ALL_CAPS convention, but enforced
       ```
+      Mutable variables can be assigned different values afterwards. 
+      This is useful when the value is expected to change, e.g. a counter.
+      However, it also masks bugs that result from incorrect assignments.
+      Use immuatable types (`const` in JS, `final` in Java, `const` in C++) when declaring constants that are not expect to change.
 
-      > **Never use `var`** — it has "hoisting" scoping rules that violate everything you know from C++ and Python. Always use `let` or `const`.
+      > **Avoid using `var`** — it has "hoisting" scoping rules that violate everything you know from C++ and Python. Always use `let` or `const`.
 
       ### Template Literals (like Python's f-strings)
 
@@ -161,19 +165,19 @@ steps:
 
       ### The `===` Trap ⚠️
 
-      JavaScript has TWO equality operators. **Only ever use `===`:**
+      JavaScript has TWO equality operators with different semantics. To avoid surprises, **always use `===`:**
 
       ```javascript
-      // WRONG: == triggers implicit type coercion — a JS-specific danger
+      // SURPRISE: == triggers implicit type coercion — a JS-specific danger
       console.log(1 == "1");    // true  ← DANGEROUS SURPRISE
       console.log(0 == false);  // true  ← DANGEROUS SURPRISE
 
-      // RIGHT: === checks value AND type (behaves like == in Python and C++)
+      // AS EXPECTED: === checks value AND type (behaves like == in Python and C++)
       console.log(1 === "1");   // false ← correct
       console.log(0 === false); // false ← correct
       ```
 
-      This is **negative transfer**: your existing `==` intuition from C++ and Python is correct — but JavaScript's `==` does something different. Use `===` and it matches your expectation.
+      This is **negative transfer**: your existing `==` intuition from C++ and Python does not transfer to JavaScript. Use `===` and it matches your expectation.
 
       > **Feeling confused by `==` vs `===`?** That is completely normal — this trips up experienced developers too. The fact that you are learning the distinction now puts you ahead of most JavaScript beginners.
 
@@ -185,9 +189,9 @@ steps:
 
       Open `types.js`. It has **three bugs**:
 
-      1. Two `==` comparisons that produce wrong results — fix them to `===`.
-      2. A `let` declaration for a value that never changes — change it to `const`.
-      3. A messy string concatenation — replace it with a **template literal** using backticks.
+      1. Two comparisons that produce wrong results because they do not type-check — fix them!
+      2. A mutable declaration for a value that never changes — change it to be immutable.
+      3. A messy string concatenation — replace it with a **template literal**.
 
       Click **▶ Run** to check your output. It should no longer show any `[BUG]` messages.
 
@@ -196,7 +200,7 @@ steps:
         content: |
           // FIXER-UPPER: This file has three bugs. Find and fix them all.
 
-          // BUG 1: This == comparison gives a wrong (surprising) answer
+          // Does this comparison really make sense?
           let userInput = "42";
           let expectedScore = 42;
           if (userInput == expectedScore) {
@@ -205,7 +209,7 @@ steps:
               console.log("Score check: types are different, correctly rejected.");
           }
 
-          // BUG 2: Same problem with a different pair of values
+          // How about this comparison?
           let isAdmin = false;
           if (isAdmin == 0) {
               console.log("[BUG] false should NOT equal the number 0 here!");
@@ -213,10 +217,10 @@ steps:
               console.log("Admin check: false and 0 are different types, correctly rejected.");
           }
 
-          // BUG 3: This should be a constant (it never changes)
+          // What if we accidently use the same name later on in the program, how could we ensure that we always find that bug?
           let MAX_STUDENTS = 200;
 
-          // TASK: Replace this concatenation with a template literal
+          // Bruh so many + and " characters. How could we simplify this?
           // Expected output format: "Student Alex scored 95 out of 200"
           let studentName = "Alex";
           let studentGrade = 95;
