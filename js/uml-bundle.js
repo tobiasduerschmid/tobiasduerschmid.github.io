@@ -1484,6 +1484,40 @@
     return crossings;
   }
 
+  /**
+   * Count geometric crossings between two orthogonal polyline routes.
+   * A crossing occurs when an H segment from one route intersects a V segment
+   * from the other (with 2px tolerance to ignore shared endpoints).
+   */
+  function countRoutePairCrossings(pointsA, pointsB) {
+    if (!pointsA || !pointsB) return 0;
+    var crossings = 0;
+    var tol = 2;
+    for (var ai = 0; ai < pointsA.length - 1; ai++) {
+      var a0 = pointsA[ai], a1 = pointsA[ai + 1];
+      var aIsH = Math.abs(a0.y - a1.y) < 1;
+      var aIsV = Math.abs(a0.x - a1.x) < 1;
+      for (var bi = 0; bi < pointsB.length - 1; bi++) {
+        var b0 = pointsB[bi], b1 = pointsB[bi + 1];
+        var bIsH = Math.abs(b0.y - b1.y) < 1;
+        var bIsV = Math.abs(b0.x - b1.x) < 1;
+        // H segment from A crosses V segment from B
+        if (aIsH && bIsV) {
+          var hY = a0.y, hX1 = Math.min(a0.x, a1.x), hX2 = Math.max(a0.x, a1.x);
+          var vX = b0.x, vY1 = Math.min(b0.y, b1.y), vY2 = Math.max(b0.y, b1.y);
+          if (vX > hX1 + tol && vX < hX2 - tol && hY > vY1 + tol && hY < vY2 - tol) crossings++;
+        }
+        // V segment from A crosses H segment from B
+        if (aIsV && bIsH) {
+          var vX2 = a0.x, vY1b = Math.min(a0.y, a1.y), vY2b = Math.max(a0.y, a1.y);
+          var hY2 = b0.y, hX1b = Math.min(b0.x, b1.x), hX2b = Math.max(b0.x, b1.x);
+          if (vX2 > hX1b + tol && vX2 < hX2b - tol && hY2 > vY1b + tol && hY2 < vY2b - tol) crossings++;
+        }
+      }
+    }
+    return crossings;
+  }
+
   function routeHitsObstacle(points, obstacles, skipNames, occupied) {
     if (!points) return true;
     for (var i = 0; i < points.length - 1; i++) {
@@ -1964,6 +1998,7 @@
     measureOrthogonalRoute: measureOrthogonalRoute,
     countOrthogonalBends: countOrthogonalBends,
     countRouteCrossings: countRouteCrossings,
+    countRoutePairCrossings: countRoutePairCrossings,
     routeHitsObstacle: routeHitsObstacle,
     findClearX: findClearX,
     findClearY: findClearY,
@@ -3520,6 +3555,21 @@
       return rel.type === 'generalization' || rel.type === 'realization';
     });
 
+    // Build set of nodes that participate in at least one hierarchy edge.
+    // Nodes NOT in any hierarchy are "free" — edges touching them should
+    // still participate in layer assignment so they get proper placement
+    // instead of floating to layer 0.
+    var hierNodes = {};
+    if (hasHierarchyEdges) {
+      for (var hi = 0; hi < relationships.length; hi++) {
+        var hrel = relationships[hi];
+        if (hrel.type === 'generalization' || hrel.type === 'realization') {
+          hierNodes[hrel.from] = true;
+          hierNodes[hrel.to] = true;
+        }
+      }
+    }
+
     var entries = {};
     var layoutNodes = [];
     var layoutEdges = [];
@@ -3540,12 +3590,19 @@
     // Construct edge input
     for (var r = 0; r < relationships.length; r++) {
       var rel = relationships[r];
+      // An edge participates in layer assignment if:
+      // - there are no hierarchy edges at all, OR
+      // - it IS a hierarchy edge, OR
+      // - at least one endpoint is a "free" node (not in any hierarchy)
+      var participates = !hasHierarchyEdges ||
+        rel.type === 'generalization' || rel.type === 'realization' ||
+        !hierNodes[rel.from] || !hierNodes[rel.to];
       layoutEdges.push({
         source: rel.from,
         target: rel.to,
         type: rel.type,
         data: rel,
-        layerParticipates: !hasHierarchyEdges || rel.type === 'generalization' || rel.type === 'realization'
+        layerParticipates: participates
       });
     }
 
@@ -3676,17 +3733,33 @@
     // Pre-compute per-child offsets: when a child has multiple parent groups
     // (e.g. generalization AND realization), offset connection points on the
     // child's top edge so lines don't overlap.
+    // Sort by parent X position so leftmost parent → leftmost connection point,
+    // which prevents hierarchy junction routes from crossing each other.
     var childParentCount = {};  // childName -> total number of parent groups
     var childParentIdx = {};    // groupKey + ':' + childName -> index for this group
     var groupKeys = [];
     for (var gk0 in inheritGroups) groupKeys.push(gk0);
+
+    // First pass: count parents per child and collect groups
+    var childGroupsForSort = {}; // childName -> [{gk, parentCx}]
     for (var gki = 0; gki < groupKeys.length; gki++) {
       var grp = inheritGroups[groupKeys[gki]];
       for (var gci = 0; gci < grp.children.length; gci++) {
         var cname = grp.children[gci];
         if (!childParentCount[cname]) childParentCount[cname] = 0;
-        childParentIdx[groupKeys[gki] + ':' + cname] = childParentCount[cname];
         childParentCount[cname]++;
+        if (!childGroupsForSort[cname]) childGroupsForSort[cname] = [];
+        var sortParent = entries[grp.target];
+        var sortParentCx = sortParent ? sortParent.x + sortParent.box.width / 2 : 0;
+        childGroupsForSort[cname].push({ gk: groupKeys[gki], parentCx: sortParentCx });
+      }
+    }
+    // Assign indices sorted by parent X (leftmost parent → leftmost child port)
+    for (var csName in childGroupsForSort) {
+      var csGroups = childGroupsForSort[csName];
+      csGroups.sort(function(a, b) { return a.parentCx - b.parentCx; });
+      for (var csgi = 0; csgi < csGroups.length; csgi++) {
+        childParentIdx[csGroups[csgi].gk + ':' + csName] = csgi;
       }
     }
 
@@ -3707,6 +3780,243 @@
         { x: x1, y: y1 },
         { x: x2, y: y2 }
       ], classOccupiedSegments);
+    }
+
+    // Pre-compute junction Y for each hierarchy group, then adjust to avoid
+    // crossings when multiple groups share the same child.
+    var hierJunctionY = {};
+    var hierGroupKeys = [];
+    for (var gk0h in inheritGroups) hierGroupKeys.push(gk0h);
+    for (var gkh = 0; gkh < hierGroupKeys.length; gkh++) {
+      var hg = inheritGroups[hierGroupKeys[gkh]];
+      var hParent = entries[hg.target];
+      var hTriBot = hParent.y + hParent.box.height + CFG.triangleH;
+      for (var hci = 0; hci < hg.children.length; hci++) {
+        var hChild = entries[hg.children[hci]];
+        hierJunctionY[hierGroupKeys[gkh] + ':' + hg.children[hci]] = (hTriBot + hChild.y) / 2;
+      }
+    }
+    // For children with multiple parent groups, check if junction routes cross
+    // and offset junction Y values to avoid crossings.
+    for (var cname2 in childParentCount) {
+      if (childParentCount[cname2] < 2) continue;
+      var childEntry2 = entries[cname2];
+      if (!childEntry2) continue;
+      // Collect all groups targeting this child
+      var childGroups = [];
+      for (var gkc = 0; gkc < hierGroupKeys.length; gkc++) {
+        var cgr = inheritGroups[hierGroupKeys[gkc]];
+        if (cgr.children.indexOf(cname2) < 0) continue;
+        var cParent = entries[cgr.target];
+        var cTriBot = cParent.y + cParent.box.height + CFG.triangleH;
+        var cChildCx = childConnX(childEntry2, cname2, hierGroupKeys[gkc]);
+        var cParentCx = cParent.x + cParent.box.width / 2;
+        childGroups.push({
+          gk: hierGroupKeys[gkc],
+          jKey: hierGroupKeys[gkc] + ':' + cname2,
+          parentCx: cParentCx,
+          childCx: cChildCx,
+          junctionY: hierJunctionY[hierGroupKeys[gkc] + ':' + cname2],
+          triBot: cTriBot
+        });
+      }
+      if (childGroups.length < 2) continue;
+      // Sort by junction Y ascending
+      childGroups.sort(function(a, b) { return a.junctionY - b.junctionY; });
+      // Check if any pair's routes cross: a horizontal bar of group A at jA
+      // crosses the vertical stem of group B at childCxB if:
+      //   jA is between jB and childTop, and childCxB is between parentCxA and childCxA
+      var childTop = childEntry2.y;
+      var junctionGap = 8;
+      for (var cgi = 0; cgi < childGroups.length; cgi++) {
+        for (var cgj = cgi + 1; cgj < childGroups.length; cgj++) {
+          var ga = childGroups[cgi], gb = childGroups[cgj];
+          // Does ga's horizontal bar cross gb's vertical stem?
+          var gaHxMin = Math.min(ga.parentCx, ga.childCx);
+          var gaHxMax = Math.max(ga.parentCx, ga.childCx);
+          var gbVx = gb.childCx;
+          var gaCrossesGb = (gbVx > gaHxMin + 2 && gbVx < gaHxMax - 2 &&
+                             ga.junctionY > Math.min(gb.junctionY, gb.triBot) + 2 &&
+                             ga.junctionY < childTop - 2);
+          // Does gb's horizontal bar cross ga's vertical stem?
+          var gbHxMin = Math.min(gb.parentCx, gb.childCx);
+          var gbHxMax = Math.max(gb.parentCx, gb.childCx);
+          var gaVx = ga.childCx;
+          var gbCrossesGa = (gaVx > gbHxMin + 2 && gaVx < gbHxMax - 2 &&
+                             gb.junctionY > Math.min(ga.junctionY, ga.triBot) + 2 &&
+                             gb.junctionY < childTop - 2);
+          if (gaCrossesGb || gbCrossesGa) {
+            // Offset: move the junction with the wider span further from the child
+            // so its horizontal bar clears the other's vertical stem
+            var gaSpan = Math.abs(ga.parentCx - ga.childCx);
+            var gbSpan = Math.abs(gb.parentCx - gb.childCx);
+            if (gaSpan >= gbSpan) {
+              // ga has wider span — move it closer to parent (lower junctionY = higher on screen)
+              var newJa = Math.min(ga.junctionY, gb.junctionY) - junctionGap;
+              newJa = Math.max(newJa, ga.triBot + 4);
+              hierJunctionY[ga.jKey] = newJa;
+              ga.junctionY = newJa;
+            } else {
+              var newJb = Math.min(ga.junctionY, gb.junctionY) - junctionGap;
+              newJb = Math.max(newJb, gb.triBot + 4);
+              hierJunctionY[gb.jKey] = newJb;
+              gb.junctionY = newJb;
+            }
+          }
+        }
+      }
+    }
+
+    // ── General pairwise crossing detection between ALL hierarchy groups ──
+    // Build segments for each group, detect crossings, and try junction Y swaps.
+    // This handles shared-target groups crossing each other (not just same-child).
+    var hierGroupJunctionY = {}; // groupKey -> junction Y for shared-target groups
+    var hierGroupSegments = {}; // groupKey -> [{x1,y1,x2,y2,isH,isV}]
+    for (var hgs = 0; hgs < hierGroupKeys.length; hgs++) {
+      var hgr = inheritGroups[hierGroupKeys[hgs]];
+      var hgParent = entries[hgr.target];
+      var hgParentCx = hgParent.x + hgParent.box.width / 2;
+      var hgTriBot = hgParent.y + hgParent.box.height + CFG.triangleH;
+      var hgSegs = [];
+
+      if (hgr.children.length === 1) {
+        var hgChild = entries[hgr.children[0]];
+        var hgChildCx = childConnX(hgChild, hgr.children[0], hierGroupKeys[hgs]);
+        var hgJKey = hierGroupKeys[hgs] + ':' + hgr.children[0];
+        var hgJY = hierJunctionY[hgJKey] !== undefined ? hierJunctionY[hgJKey] : (hgTriBot + hgChild.y) / 2;
+        hierGroupJunctionY[hierGroupKeys[hgs]] = hgJY;
+        if (Math.abs(hgParentCx - hgChildCx) >= 1) {
+          hgSegs.push({x1: hgParentCx, y1: hgTriBot, x2: hgParentCx, y2: hgJY, isV: true});
+          hgSegs.push({x1: Math.min(hgParentCx, hgChildCx), y1: hgJY, x2: Math.max(hgParentCx, hgChildCx), y2: hgJY, isH: true});
+          hgSegs.push({x1: hgChildCx, y1: hgJY, x2: hgChildCx, y2: hgChild.y, isV: true});
+        } else {
+          hgSegs.push({x1: hgParentCx, y1: hgTriBot, x2: hgChildCx, y2: hgChild.y, isV: true});
+        }
+      } else {
+        // Shared target: compute group junction Y
+        var hgChildCxArr = [];
+        var hgMinChildTop = Infinity;
+        for (var hgci = 0; hgci < hgr.children.length; hgci++) {
+          var hgch = entries[hgr.children[hgci]];
+          hgChildCxArr.push(childConnX(hgch, hgr.children[hgci], hierGroupKeys[hgs]));
+          hgMinChildTop = Math.min(hgMinChildTop, hgch.y);
+        }
+        var hgJY = hierGroupJunctionY[hierGroupKeys[hgs]] || (hgTriBot + hgMinChildTop) / 2;
+        hierGroupJunctionY[hierGroupKeys[hgs]] = hgJY;
+        // Trunk
+        hgSegs.push({x1: hgParentCx, y1: hgTriBot, x2: hgParentCx, y2: hgJY, isV: true});
+        // Horizontal bar
+        var hgLeftCx = Math.min.apply(null, hgChildCxArr.concat([hgParentCx]));
+        var hgRightCx = Math.max.apply(null, hgChildCxArr.concat([hgParentCx]));
+        hgSegs.push({x1: hgLeftCx, y1: hgJY, x2: hgRightCx, y2: hgJY, isH: true});
+        // Vertical stems
+        for (var hgci2 = 0; hgci2 < hgr.children.length; hgci2++) {
+          hgSegs.push({x1: hgChildCxArr[hgci2], y1: hgJY, x2: hgChildCxArr[hgci2], y2: entries[hgr.children[hgci2]].y, isV: true});
+        }
+      }
+      hierGroupSegments[hierGroupKeys[hgs]] = hgSegs;
+    }
+
+    // Check pairwise crossings between different hierarchy groups
+    function countHierGroupCrossings(segsA, segsB) {
+      var cx = 0, tol = 2;
+      for (var sa = 0; sa < segsA.length; sa++) {
+        for (var sb = 0; sb < segsB.length; sb++) {
+          var a = segsA[sa], b = segsB[sb];
+          if (a.isH && b.isV) {
+            var vX = b.x1, vY1 = Math.min(b.y1, b.y2), vY2 = Math.max(b.y1, b.y2);
+            if (vX > a.x1 + tol && vX < a.x2 - tol && a.y1 > vY1 + tol && a.y1 < vY2 - tol) cx++;
+          }
+          if (a.isV && b.isH) {
+            var vX2 = a.x1, vY1b = Math.min(a.y1, a.y2), vY2b = Math.max(a.y1, a.y2);
+            if (vX2 > b.x1 + tol && vX2 < b.x2 - tol && b.y1 > vY1b + tol && b.y1 < vY2b - tol) cx++;
+          }
+        }
+      }
+      return cx;
+    }
+
+    // Try junction Y swaps between crossing groups to minimize total crossings
+    for (var hgi = 0; hgi < hierGroupKeys.length; hgi++) {
+      for (var hgj = hgi + 1; hgj < hierGroupKeys.length; hgj++) {
+        var gkI = hierGroupKeys[hgi], gkJ = hierGroupKeys[hgj];
+        var segsI = hierGroupSegments[gkI], segsJ = hierGroupSegments[gkJ];
+        var currentCrossings = countHierGroupCrossings(segsI, segsJ);
+        if (currentCrossings === 0) continue;
+
+        // Try swapping junction Y values
+        var grI = inheritGroups[gkI], grJ = inheritGroups[gkJ];
+        var jyI = hierGroupJunctionY[gkI], jyJ = hierGroupJunctionY[gkJ];
+        var triI = entries[grI.target].y + entries[grI.target].box.height + CFG.triangleH;
+        var triJ = entries[grJ.target].y + entries[grJ.target].box.height + CFG.triangleH;
+        var minChildTopI = Infinity, minChildTopJ = Infinity;
+        for (var ci3 = 0; ci3 < grI.children.length; ci3++) minChildTopI = Math.min(minChildTopI, entries[grI.children[ci3]].y);
+        for (var cj3 = 0; cj3 < grJ.children.length; cj3++) minChildTopJ = Math.min(minChildTopJ, entries[grJ.children[cj3]].y);
+
+        // Try placing I's junction just above J's (with gap)
+        var candidates = [];
+        var gap = 10;
+        if (jyJ - gap > triI + 4) candidates.push({newI: jyJ - gap, newJ: jyJ});
+        if (jyI - gap > triJ + 4) candidates.push({newI: jyI, newJ: jyI - gap});
+        // Try swapping
+        if (jyJ >= triI + 4 && jyJ < minChildTopI && jyI >= triJ + 4 && jyI < minChildTopJ) {
+          candidates.push({newI: jyJ, newJ: jyI});
+        }
+
+        var bestCrossings = currentCrossings;
+        var bestNewI = jyI, bestNewJ = jyJ;
+        for (var ci4 = 0; ci4 < candidates.length; ci4++) {
+          var cand = candidates[ci4];
+          // Rebuild segments with candidate junction Y
+          var rebuildSegs = function(gk, newJY) {
+            var gr = inheritGroups[gk];
+            var par = entries[gr.target];
+            var pCx = par.x + par.box.width / 2;
+            var tB = par.y + par.box.height + CFG.triangleH;
+            var segs = [];
+            if (gr.children.length === 1) {
+              var ch = entries[gr.children[0]];
+              var cCx = childConnX(ch, gr.children[0], gk);
+              if (Math.abs(pCx - cCx) >= 1) {
+                segs.push({x1: pCx, y1: tB, x2: pCx, y2: newJY, isV: true});
+                segs.push({x1: Math.min(pCx, cCx), y1: newJY, x2: Math.max(pCx, cCx), y2: newJY, isH: true});
+                segs.push({x1: cCx, y1: newJY, x2: cCx, y2: ch.y, isV: true});
+              } else {
+                segs.push({x1: pCx, y1: tB, x2: cCx, y2: ch.y, isV: true});
+              }
+            } else {
+              var cArr = [];
+              for (var k = 0; k < gr.children.length; k++) cArr.push(childConnX(entries[gr.children[k]], gr.children[k], gk));
+              segs.push({x1: pCx, y1: tB, x2: pCx, y2: newJY, isV: true});
+              var lCx = Math.min.apply(null, cArr.concat([pCx]));
+              var rCx = Math.max.apply(null, cArr.concat([pCx]));
+              segs.push({x1: lCx, y1: newJY, x2: rCx, y2: newJY, isH: true});
+              for (var k2 = 0; k2 < gr.children.length; k2++) {
+                segs.push({x1: cArr[k2], y1: newJY, x2: cArr[k2], y2: entries[gr.children[k2]].y, isV: true});
+              }
+            }
+            return segs;
+          };
+          var newSegsI = rebuildSegs(gkI, cand.newI);
+          var newSegsJ = rebuildSegs(gkJ, cand.newJ);
+          var newCrossings = countHierGroupCrossings(newSegsI, newSegsJ);
+          if (newCrossings < bestCrossings) {
+            bestCrossings = newCrossings;
+            bestNewI = cand.newI;
+            bestNewJ = cand.newJ;
+          }
+        }
+        if (bestNewI !== jyI || bestNewJ !== jyJ) {
+          hierGroupJunctionY[gkI] = bestNewI;
+          hierGroupJunctionY[gkJ] = bestNewJ;
+          // Update per-child junction Y for single-child groups
+          if (grI.children.length === 1) hierJunctionY[gkI + ':' + grI.children[0]] = bestNewI;
+          if (grJ.children.length === 1) hierJunctionY[gkJ + ':' + grJ.children[0]] = bestNewJ;
+          // Rebuild segments with new junction Y
+          hierGroupSegments[gkI] = rebuildSegs(gkI, bestNewI);
+          hierGroupSegments[gkJ] = rebuildSegs(gkJ, bestNewJ);
+        }
+      }
     }
 
     // Draw inheritance/realization with shared-target style
@@ -3747,7 +4057,8 @@
           reserveClassHierarchySegment(parentCx, triBot, childCx, childTop);
         } else {
           // Not aligned: vertical from triangle, horizontal jog, vertical to child
-          var junctionY = (triBot + childTop) / 2;
+          var hierJKey = gk + ':' + group.children[0];
+          var junctionY = hierJunctionY[hierJKey] !== undefined ? hierJunctionY[hierJKey] : (triBot + childTop) / 2;
           svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + parentCx + '" y2="' + junctionY +
             '" stroke="' + colors.line + '" stroke-width="' + CFG.strokeWidth + '"' + dashAttr + '/>');
           svg.push('<line x1="' + parentCx + '" y1="' + junctionY + '" x2="' + childCx + '" y2="' + junctionY +
@@ -3771,7 +4082,9 @@
           childTops.push(ch.y);
         }
         var minChildTop = Math.min.apply(null, childTops);
-        var junctionY = (triBot + minChildTop) / 2;
+        // Use pre-computed junction Y if available (may have been adjusted by
+        // the pairwise crossing detection pass above)
+        var junctionY = hierGroupJunctionY[gk] || (triBot + minChildTop) / 2;
 
         // Trunk: triangle bottom to junction
         svg.push('<line x1="' + parentCx + '" y1="' + triBot + '" x2="' + parentCx + '" y2="' + junctionY +
@@ -6357,8 +6670,11 @@
     }
 
     // Assign back-edge X margins based on source Y position (not transition index)
-    // to avoid crossings. Sources higher on screen get smaller margins (closer),
-    // lower sources get larger margins (further out), creating nested routes.
+    // to avoid crossings.  Back-edge entry points on the target's right side are
+    // sorted by source Y (higher source → higher entry).  To avoid crossings,
+    // HIGHER sources need LARGER margins (further out) so their vertical segments
+    // wrap OUTSIDE lower sources' horizontal entry segments.  This creates a
+    // proper nesting where each back-edge's vertical is outside the next one's.
     var backEdgeMargin = {};
     var backEdgeList = [];
     for (var bei = 0; bei < transitions.length; bei++) {
@@ -6369,9 +6685,77 @@
         backEdgeList.push({ ti: bei, sourceY: befe.y + befe.box.height / 2 });
       }
     }
-    backEdgeList.sort(function(a, b) { return a.sourceY - b.sourceY; });
+    // Sort descending: highest source (smallest Y) gets largest margin index
+    backEdgeList.sort(function(a, b) { return b.sourceY - a.sourceY; });
     for (var bmi = 0; bmi < backEdgeList.length; bmi++) {
       backEdgeMargin[backEdgeList[bmi].ti] = routeMarginX + (bmi * 10);
+    }
+
+    // ── Pairwise crossing detection for back-edges ──
+    // Compute hypothetical routes for all back-edges, detect pairwise crossings,
+    // and fix them by swapping entry Y + margin assignments.
+    for (var bname2 in backEdgeByTo) {
+      var bg = backEdgeByTo[bname2];
+      if (bg.length < 2) continue;
+      var btgt = entries[bname2];
+      // Build route for each back-edge in this group
+      var beRoutes = [];
+      for (var bgi2 = 0; bgi2 < bg.length; bgi2++) {
+        var bIdx = bg[bgi2];
+        var btr2 = transitions[bIdx];
+        var bfrom2 = entries[btr2.from];
+        var bEntry = customEntries[bIdx] || { x: btgt.x + btgt.box.width, y: btgt.y + btgt.box.height / 2 };
+        var bMargin = backEdgeMargin[bIdx] !== undefined ? backEdgeMargin[bIdx] : routeMarginX + (bIdx * 10);
+        beRoutes.push({
+          idx: bIdx,
+          points: [
+            { x: bfrom2.x + bfrom2.box.width, y: bfrom2.y + bfrom2.box.height / 2 },
+            { x: bMargin, y: bfrom2.y + bfrom2.box.height / 2 },
+            { x: bMargin, y: bEntry.y },
+            { x: bEntry.x, y: bEntry.y }
+          ],
+          entryY: bEntry.y,
+          margin: bMargin,
+          sourceY: bfrom2.y + bfrom2.box.height / 2
+        });
+      }
+      // Check all pairs for crossings and try swapping
+      for (var bi2 = 0; bi2 < beRoutes.length; bi2++) {
+        for (var bj2 = bi2 + 1; bj2 < beRoutes.length; bj2++) {
+          var crossCount = UMLShared.countRoutePairCrossings(beRoutes[bi2].points, beRoutes[bj2].points);
+          if (crossCount === 0) continue;
+          // Try swapping their entry Y and margin
+          var swappedA = [
+            beRoutes[bi2].points[0],
+            { x: beRoutes[bj2].margin, y: beRoutes[bi2].sourceY },
+            { x: beRoutes[bj2].margin, y: beRoutes[bj2].entryY },
+            { x: beRoutes[bj2].points[3].x, y: beRoutes[bj2].entryY }
+          ];
+          var swappedB = [
+            beRoutes[bj2].points[0],
+            { x: beRoutes[bi2].margin, y: beRoutes[bj2].sourceY },
+            { x: beRoutes[bi2].margin, y: beRoutes[bi2].entryY },
+            { x: beRoutes[bi2].points[3].x, y: beRoutes[bi2].entryY }
+          ];
+          var newCrossCount = UMLShared.countRoutePairCrossings(swappedA, swappedB);
+          if (newCrossCount < crossCount) {
+            // Apply the swap
+            var tmpMargin = backEdgeMargin[beRoutes[bi2].idx];
+            backEdgeMargin[beRoutes[bi2].idx] = backEdgeMargin[beRoutes[bj2].idx];
+            backEdgeMargin[beRoutes[bj2].idx] = tmpMargin;
+            var tmpEntry = customEntries[beRoutes[bi2].idx];
+            customEntries[beRoutes[bi2].idx] = customEntries[beRoutes[bj2].idx];
+            customEntries[beRoutes[bj2].idx] = tmpEntry;
+            // Update route data for subsequent pair checks
+            beRoutes[bi2].points = swappedA;
+            beRoutes[bi2].margin = beRoutes[bj2].margin;
+            beRoutes[bi2].entryY = beRoutes[bj2].entryY;
+            beRoutes[bj2].points = swappedB;
+            beRoutes[bj2].margin = beRoutes[bi2].margin;
+            beRoutes[bj2].entryY = beRoutes[bi2].entryY;
+          }
+        }
+      }
     }
 
     // Pre-compute note positions for SVG bounds expansion
