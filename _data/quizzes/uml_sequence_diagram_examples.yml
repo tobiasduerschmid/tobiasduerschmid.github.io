@@ -102,14 +102,16 @@ questions:
     question: >
       Which arrow style represents an **asynchronous message** where the sender does NOT wait for a response?
 
-      <div data-uml-type="sequence" data-uml-spec="participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()"></div>
     options:
       - "Solid line with filled arrowhead."
       - "Dashed line with open arrowhead."
       - "Solid line with open (stick) arrowhead."
       - "Dashed line with filled arrowhead."
     correct_index: 2
-    explanation: "An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks."
+    explanation: >
+      An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks.
+
+      <div data-uml-type='sequence' data-uml-spec='participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()'></div>
 
   - id: 9
     type: single

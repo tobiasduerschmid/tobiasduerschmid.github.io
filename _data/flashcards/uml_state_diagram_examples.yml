@@ -11,7 +11,7 @@ cards:
     question: "What do the **initial pseudostate** and **final state** look like?"
     answer: "Initial = solid black circle. Final = solid circle inside a hollow circle (bullseye)."
     explanation: >
-      The **initial pseudostate** (●) is the entry point — it must have exactly one outgoing transition with no event trigger. The **final state** (◎) indicates the object's lifecycle has ended.
+      The **initial pseudostate** (<span class="uml-sym" data-diagram="state" data-sym="[*]"></span>) is the entry point — it must have exactly one outgoing transition with no event trigger. The **final state** (◎) indicates the object's lifecycle has ended.
 
       <div data-uml-type="state" data-uml-spec="[*] --> Active : create()&#10;Active --> [*] : destroy()"></div>
 

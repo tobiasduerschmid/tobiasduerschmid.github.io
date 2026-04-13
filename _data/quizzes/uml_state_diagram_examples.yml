@@ -13,7 +13,7 @@ questions:
       - "The final state — the end of the object's lifecycle."
       - "A choice point for conditional branching."
     correct_index: 1
-    explanation: "A **solid black circle** (●) is the **initial pseudostate**. It marks where the state machine begins. There is always exactly one initial pseudostate, and it must have exactly one outgoing transition (with no trigger). The **final state** is a different symbol: a solid circle inside a hollow circle (◎)."
+    explanation: "A **solid black circle** (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) is the **initial pseudostate**. It marks where the state machine begins. There is always exactly one initial pseudostate, and it must have exactly one outgoing transition (with no trigger). The **final state** is a different symbol: a solid circle inside a hollow circle (◎)."
 
   - id: 2
     type: single
@@ -70,7 +70,7 @@ questions:
       - "The final state — the end of the object's lifecycle."
       - "A choice pseudostate — a conditional branch point."
     correct_index: 2
-    explanation: "The **bullseye symbol** (◎) is the **final state**. It indicates that the object's lifecycle has ended. This is different from the **initial pseudostate** (solid black circle ●), which marks where the state machine begins."
+    explanation: "The **bullseye symbol** (<span class='uml-sym' data-diagram='state' data-sym='final'></span>) is the **final state**. It indicates that the object's lifecycle has ended. This is different from the **initial pseudostate** (solid black circle ●), which marks where the state machine begins."
 
   - id: 6
     type: single
@@ -143,7 +143,7 @@ questions:
   - id: 11
     type: multiple
     question: >
-      Which of the following are **true** about the initial pseudostate (●) in a state machine diagram? (Select all that apply.)
+      Which of the following are **true** about the initial pseudostate (<span class="uml-sym" data-diagram="state" data-sym="[*]"></span>) in a state machine diagram? (Select all that apply.)
     options:
       - "It represents the starting point of the state machine."
       - "It can have multiple outgoing transitions."
@@ -151,7 +151,7 @@ questions:
       - "It is a regular state where the object can remain indefinitely."
       - "There must be exactly one initial pseudostate per state machine (or per region)."
     correct_indices: [0, 2, 4]
-    explanation: "The initial pseudostate (●) marks the **entry point** of the state machine. It must have **exactly one** outgoing transition, and that transition should have **no event trigger** (it fires automatically). The initial pseudostate is NOT a regular state — the object passes through it immediately."
+    explanation: "The initial pseudostate (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) marks the **entry point** of the state machine. It must have **exactly one** outgoing transition, and that transition should have **no event trigger** (it fires automatically). The initial pseudostate is NOT a regular state — the object passes through it immediately."
 
   - id: 12
     type: single

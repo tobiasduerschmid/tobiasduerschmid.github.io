@@ -652,7 +652,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       updateProgress();
-      if (window.UMLShared) window.UMLShared.renderAll();
+      if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
     }
 
     function handleOptionClick(e) {
@@ -695,7 +695,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       explanation.classList.remove('hidden');
-      if (window.UMLShared) window.UMLShared.renderAll();
+      if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -739,7 +739,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       explanation.classList.remove('hidden');
-      if (window.UMLShared) window.UMLShared.renderAll();
+      if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 

@@ -450,7 +450,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       cards.forEach(c => c.classList.remove('active'));
       cards[index].classList.add('active');
       updateProgress();
-      if (window.UMLShared) window.UMLShared.renderAll();
+      if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       scrollToTop();
     }
 
@@ -467,7 +467,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       if (!btn) return;
       const card = btn.closest('.flashcard-card');
       card.querySelector('.flashcard-answer-container').classList.remove('hidden');
-      if (window.UMLShared) window.UMLShared.renderAll();
+      if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       btn.classList.add('hidden');
       card.querySelector('.assessment-buttons').classList.remove('hidden');
     }
