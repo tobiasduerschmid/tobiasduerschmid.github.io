@@ -3652,21 +3652,24 @@
       var epSide = routeSourceSideForRelation(epFrom, epTo, epRel.type, hasInheritAtBottom[epRel.from]);
       var epKey = epRel.from + ':' + epSide;
       if (!exitGroups[epKey]) exitGroups[epKey] = [];
-      exitGroups[epKey].push({ idx: epi, targetCx: epToCx });
+      exitGroups[epKey].push({ idx: epi, targetCx: epToCx, targetCy: epToCy, sourceCx: epFromCx, sourceCy: epFromCy });
 
       var entrySide = (hasInheritAtTop[epRel.to]) ? 'top' :
         (Math.abs(epToCx - epFromCx) >
-         Math.abs(epToCy - epFromCy) * 0.6) ?
+         Math.abs(epToCy - epFromCy) * 1.0) ?
         ((epFromCx > epToCx) ? 'right' : 'left') :
         ((epFromCy > epToCy) ? 'bottom' : 'top');
       var entryKey = epRel.to + ':' + entrySide;
       if (!entryGroups[entryKey]) entryGroups[entryKey] = [];
-      entryGroups[entryKey].push({ idx: epi, sourceCx: epFromCx, sourceCy: epFromCy });
+      entryGroups[entryKey].push({ idx: epi, sourceCx: epFromCx, sourceCy: epFromCy, targetCx: epToCx, targetCy: epToCy });
     }
-    // Sort each group by target X and assign port indices
+    // Sort each group by the axis-appropriate target coordinate and assign port indices.
+    // For top/bottom exits: sort by target X (left-to-right port order).
+    // For left/right exits: sort by target Y (top-to-bottom port order).
     for (var gk in exitGroups) {
       var grp = exitGroups[gk];
-      grp.sort(function(a, b) { return a.targetCx - b.targetCx; });
+      var isVerticalExit = gk.indexOf(':left') !== -1 || gk.indexOf(':right') !== -1;
+      grp.sort(function(a, b) { return isVerticalExit ? (a.targetCy - b.targetCy) : (a.targetCx - b.targetCx); });
       exitPortCounts[gk] = grp.length;
       for (var gi = 0; gi < grp.length; gi++) {
         exitPortIdx[grp[gi].idx] = gi;
@@ -3708,8 +3711,9 @@
       var tgtCount = entryPortCounts[tgtKey] || 1;
       var tgtPortSpacing = tgtCount > 1 ? 24 : 14;
       var tgtCentered = ((entryPortIdx[oi] || 0) - (tgtCount - 1) / 2) * tgtPortSpacing;
-      var restrictSourceSide = (orel.type === 'composition' || orel.type === 'aggregation') &&
-        (sourceSide === 'top' || sourceSide === 'bottom');
+      // Don't hard-restrict composition/aggregation to a single side — let the
+      // router explore all sides so it can avoid crossings and obstacles.
+      var restrictSourceSide = false;
 
       var route = computeOrthogonalRoute(
         fromE,
@@ -3730,8 +3734,12 @@
         restrictSourceSide
       );
       var pathPoints = route.points; // array of {x,y}
-      if ((orel.type === 'composition' || orel.type === 'aggregation') && (sourceSide === 'top' || sourceSide === 'bottom')) {
-        pathPoints = reanchorWholePartRouteStart(pathPoints, fromE, sourceSide);
+      // Apply reanchor only when route actually exits from top/bottom
+      if ((orel.type === 'composition' || orel.type === 'aggregation') && pathPoints.length >= 2) {
+        var actualExitSide = classEdgeForPoint(pathPoints[0], fromE, sourceSide);
+        if (actualExitSide === 'top' || actualExitSide === 'bottom') {
+          pathPoints = reanchorWholePartRouteStart(pathPoints, fromE, actualExitSide);
+        }
       }
       var routeSegments = UMLShared.buildOrthogonalSegments(pathPoints);
 
@@ -4106,7 +4114,12 @@
     var max = horizontalSide ? entry.x + entry.box.width - 12 : entry.y + entry.box.height - 12;
     var center = horizontalSide ? entry.x + entry.box.width / 2 : entry.y + entry.box.height / 2;
     var span = Math.max(0, max - min);
-    var preferred = classClamp(preferredCoord + slotOffset * 0.28, min, max);
+    // When multiple edges share the same side (slotOffset != 0), prefer spreading
+    // around the box center rather than biasing all toward the other end's center.
+    // This prevents different endpoint decorations (arrows, × markers) from overlapping.
+    var preferred = slotOffset !== 0
+      ? classClamp(center + slotOffset, min, max)
+      : classClamp(preferredCoord, min, max);
     var biasDir = biasCoord >= center ? 1 : -1;
     if (!isFinite(biasDir) || biasDir === 0) biasDir = slotOffset >= 0 ? 1 : -1;
     var exclusion = avoidCenter ? classCenterLaneClearance(slotOffset) : 0;
@@ -4129,7 +4142,7 @@
     }
 
     push(preferred);
-    push(center + slotOffset * 0.18);
+    push(center + slotOffset * 0.9);
     push(preferred - 24);
     push(preferred + 24);
     push(min + span * 0.25);
@@ -4156,7 +4169,9 @@
       var positions = buildClassSidePositions(entry, side, preferredCoord, slotOffset, avoidCenter, biasCoord);
       var min = horizontalSide ? entry.x + 12 : entry.y + 12;
       var max = horizontalSide ? entry.x + entry.box.width - 12 : entry.y + entry.box.height - 12;
-      var clampedPreferred = classClamp(preferredCoord + slotOffset * 0.28, min, max);
+      var clampedPreferred = slotOffset !== 0
+        ? classClamp(entry[horizontalSide ? 'x' : 'y'] + (horizontalSide ? entry.box.width : entry.box.height) / 2 + slotOffset, min, max)
+        : classClamp(preferredCoord, min, max);
 
       for (var pi = 0; pi < positions.length; pi++) {
         var pos = positions[pi];
@@ -4165,7 +4180,7 @@
           y: horizontalSide ? (side === 'top' ? entry.y : entry.y + entry.box.height) : pos,
           side: side,
           stub: opts.stub,
-          penalty: si * 26 + pi * 4 + Math.abs(pos - clampedPreferred) * 0.18
+          penalty: si * 26 + pi * 4 + Math.abs(pos - clampedPreferred) * 0.5
         });
       }
     }
@@ -4245,13 +4260,16 @@
           sourceSide,
           avoidFromBottom && sourceSide === 'bottom'
         );
-    var targetOrder = buildClassPreferredSideOrder(
-      fromE,
-      toE,
-      'target',
-      targetEntrySide,
-      avoidToTop && targetEntrySide === 'top'
-    );
+    var useStrictTarget = (dyAbs > dxAbs * 1.2 || dxAbs > dyAbs * 1.2);
+    var targetOrder = useStrictTarget
+      ? [targetEntrySide]
+      : buildClassPreferredSideOrder(
+          fromE,
+          toE,
+          'target',
+          targetEntrySide,
+          avoidToTop && targetEntrySide === 'top'
+        );
 
     var sourceCandidates = buildClassAnchorCandidates(fromE, toE, sourceOrder, portOffset, {
       avoidTop: avoidFromTop,
@@ -4281,13 +4299,58 @@
         points = UMLShared.simplifyOrthogonalPath(points);
 
         if (UMLShared.routeHitsObstacle(points, obstacles, skipNames, null)) continue;
-        
+
         var crosses = UMLShared.countRouteCrossings(points, occupiedSegments);
         var occupiedPenalty = crosses * 5000;
 
-        var score = UMLShared.measureOrthogonalRoute(points) +
+        // Penalize routes where intermediate segments pass through source or
+        // target boxes (the "route behind class" problem).  Skip the first
+        // and last segments which legitimately touch the box edge.
+        var selfHitPenalty = 0;
+        if (points.length > 2) {
+          var fromBox = { l: fromE.x - 2, t: fromE.y - 2, r: fromE.x + fromE.box.width + 2, b: fromE.y + fromE.box.height + 2 };
+          var toBox = { l: toE.x - 2, t: toE.y - 2, r: toE.x + toE.box.width + 2, b: toE.y + toE.box.height + 2 };
+          for (var shi = 0; shi < points.length - 1; shi++) {
+            // Skip first segment (touches source) and last segment (touches target)
+            if (shi === 0 || shi === points.length - 2) continue;
+            if (segmentIntersectsBox(points[shi], points[shi + 1], fromBox)) selfHitPenalty += 50000;
+            if (segmentIntersectsBox(points[shi], points[shi + 1], toBox)) selfHitPenalty += 50000;
+          }
+          // Also penalize the first segment if it immediately enters the source box
+          // (e.g., exits left but goes right into the box)
+          if (points.length >= 3) {
+            var p0sh = points[0], p1sh = points[1];
+            var afterFirst = points[2];
+            // Check if p1 is inside source box (not just on the edge)
+            if (p1sh.x > fromBox.l + 4 && p1sh.x < fromBox.r - 4 &&
+                p1sh.y > fromBox.t + 4 && p1sh.y < fromBox.b - 4) {
+              selfHitPenalty += 50000;
+            }
+            // Check if last second-to-last point is inside target box
+            var pBeforeLast = points[points.length - 2];
+            if (pBeforeLast.x > toBox.l + 4 && pBeforeLast.x < toBox.r - 4 &&
+                pBeforeLast.y > toBox.t + 4 && pBeforeLast.y < toBox.b - 4) {
+              selfHitPenalty += 50000;
+            }
+          }
+        }
+
+        // Penalize detours: routes whose total length is far greater than
+        // the straight-line distance between endpoints (route efficiency).
+        var routeLen = UMLShared.measureOrthogonalRoute(points);
+        var directDist = Math.abs(points[0].x - points[points.length - 1].x) +
+                         Math.abs(points[0].y - points[points.length - 1].y);
+        var detourPenalty = 0;
+        if (directDist > 0) {
+          var efficiency = routeLen / directDist;
+          // Penalize routes that are more than 2x the direct distance
+          if (efficiency > 2.0) detourPenalty = (efficiency - 2.0) * 200;
+        }
+
+        var score = routeLen +
           UMLShared.countOrthogonalBends(points) * 48 +
-          sourceCandidate.penalty + targetCandidate.penalty + occupiedPenalty;
+          sourceCandidate.penalty + targetCandidate.penalty + occupiedPenalty +
+          selfHitPenalty + detourPenalty;
 
         if (!best || score + 0.01 < best.score) {
           best = {
@@ -4448,13 +4511,16 @@
       var targetTop = toE.y;
       var verticalGap = Math.abs(dy);
       var horizontalGap = Math.abs(dx);
-      if (targetBottom <= fromE.y + 8 && verticalGap >= horizontalGap * 0.45) return 'top';
-      if (!avoidFromBottom) {
-      if (targetTop >= fromE.y + fromE.box.height - 8) return 'bottom';
+
+      // Prefer horizontal exit when horizontal displacement is significant —
+      // this avoids unnecessary vertical detours for composition diamonds.
+      if (Math.abs(dx) > Math.abs(dy) * 0.7) {
+        return dx >= 0 ? 'right' : 'left';
       }
 
-      if (Math.abs(dx) > Math.abs(dy) * 0.8) {
-        return dx >= 0 ? 'right' : 'left';
+      if (targetBottom <= fromE.y + 8 && verticalGap >= horizontalGap * 0.6) return 'top';
+      if (!avoidFromBottom) {
+        if (targetTop >= fromE.y + fromE.box.height - 8 && verticalGap >= horizontalGap * 0.6) return 'bottom';
       }
     }
     return routeSide(fromE, toE, avoidFromBottom);
@@ -4466,7 +4532,7 @@
     var fromCy = fromE.y + fromE.box.height / 2;
     var toCx = toE.x + toE.box.width / 2;
     var toCy = toE.y + toE.box.height / 2;
-    if (Math.abs(toCx - fromCx) > Math.abs(toCy - fromCy) * 0.6) {
+    if (Math.abs(toCx - fromCx) > Math.abs(toCy - fromCy) * 1.0) {
       return (fromCx > toCx) ? 'right' : 'left';
     }
     return (fromCy > toCy) ? 'bottom' : 'top';
@@ -7126,12 +7192,19 @@
           }
           score += ((entry.portOrderIndex[alias] || 0) * 0.001);
         }
+        // Penalize crossings: if port A is above port B in the candidate order
+        // but A's desired Y is below B's desired Y, the connector lines will cross.
+        // Apply a large penalty per crossing to strongly discourage them.
         for (var ai = 0; ai < candidate.length - 1; ai++) {
           var aAlias = candidate[ai];
           if (!desiredYMap.hasOwnProperty(aAlias)) continue;
           for (var bi = ai + 1; bi < candidate.length; bi++) {
             var bAlias = candidate[bi];
             if (!desiredYMap.hasOwnProperty(bAlias)) continue;
+            // Crossing: port ai is above port bi in layout, but desired Y says opposite
+            if (desiredYMap[aAlias] > desiredYMap[bAlias] + stableTieThreshold) {
+              score += 500;
+            }
             if (Math.abs(desiredYMap[aAlias] - desiredYMap[bAlias]) >= stableTieThreshold) continue;
             if ((entry.portOrderIndex[aAlias] || 0) > (entry.portOrderIndex[bAlias] || 0)) {
               score += stableTieThreshold * 0.75;
@@ -8348,8 +8421,10 @@
           if (UMLShared.routeHitsObstacle(candidatePoints, obstacles, skipN, null)) continue;
 
           var bends = UMLShared.countOrthogonalBends(candidatePoints);
+          var crosses = UMLShared.countRouteCrossings(candidatePoints, occupiedSegments);
           var score = UMLShared.measureOrthogonalRoute(candidatePoints) + bends * 36 +
-            sourceCandidate.movePenalty + targetCandidate.movePenalty;
+            sourceCandidate.movePenalty + targetCandidate.movePenalty +
+            crosses * 5000;
           if (isJoinedAssembly && bends > 3) score += 12;
 
           if (!bestRoute || score + 0.01 < bestRoute.score) {
@@ -9344,7 +9419,8 @@
           });
           if (!routed || !routed.points || routed.points.length < 2) continue;
 
-          var score = routed.length + routed.bends * 40;
+          var crosses = UMLShared.countRouteCrossings(routed.points, occupiedSegments);
+          var score = routed.length + routed.bends * 40 + crosses * 5000;
           score += sourceCandidate.sideRank * 28 + targetCandidate.sideRank * 28;
           score += sourceCandidate.anchorRank * 6 + targetCandidate.anchorRank * 6;
 

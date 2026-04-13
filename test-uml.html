@@ -1070,7 +1070,7 @@ component Notifications {
 }
 
 g_out1 --> c_p1 : POST
-g_out2 --> u_p2 : POST
+g_out2 --> u_p2 : POSTComposition Detour Test (S
 a_out1 --> u_p1 : GET
 a_out2 --> c_p3 : GET
 c_out1 --> e_p1 : GET
@@ -1469,6 +1469,211 @@ endif
 |Customer|
 "Ship" --> "Receive"
 "Receive" --> (*)
+@enduml
+  </code></pre>
+
+  <h2>61. Composition Crossing Test (Composite Pattern)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+layout landscape
+abstract class Component {
+  + operation(): void
+  + add(child: Component): void
+  + remove(child: Component): void
+}
+class Leaf {
+  + operation(): void
+}
+class Composite {
+  - children: List&lt;Component&gt;
+  + operation(): void
+  + add(child: Component): void
+  + remove(child: Component): void
+}
+class Client
+Leaf --|> Component
+Composite --|> Component
+Composite "1" *-- "0..*" Component
+Client --> Component : treats uniformly >
+@enduml
+  </code></pre>
+
+  <h2>62. Composition Behind Class Test (Order System)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+interface Billable {
+  + processPayment(): bool
+}
+class Customer {
+  - id: int
+  - name: String
+  + placeOrder(): void
+}
+class LineItem {
+  - quantity: int
+}
+class Product {
+  - price: float
+  - name: String
+}
+class Order {
+  - date: Date
+  - status: String
+  + calcTotal(): float
+}
+class VIP
+class Guest
+Order ..|> Billable
+Customer "1" -- "0..*" Order : *
+VIP --|> Customer
+Guest --|> Customer
+Order "1..*" -- "0..*" LineItem
+LineItem "0..*" -- "1" Product
+@enduml
+  </code></pre>
+
+  <h2>63. Composition Detour Test (Shape/Color)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+abstract class Shape {
+  - color: int
+  + {abstract} area(): double
+  + setColor(r: int, g: int, b: int)
+}
+class Color {
+  - r: int
+  - g: int
+  - b: int
+}
+class Canvas {
+  + render()
+}
+class Logger {
+  + log(msg: str)
+}
+class Rectangle {
+  - width: int
+  - length: int
+  + setWidth(width: int)
+  + setHeight(height: int)
+}
+Shape *-- Color
+Rectangle --|> Shape
+Canvas ..> Logger : uses
+@enduml
+  </code></pre>
+
+  <h2>64. Component Port Crossing Test</h2>
+  <pre><code class="language-uml-component">
+component Notifications {
+  portout "out1" as n_out1
+  portout "out2" as n_out2
+  portin "/notifications/event-update" as n_evup
+}
+component Templates {
+  portin "ts/template-data/{templateId}" as t_templ
+  portout "out2" as t_out2
+}
+n_out1 --> t_templ : GET
+t_out2 --> n_evup : POST
+  </code></pre>
+
+  <h2>65. Component Port Non-Crossing Test</h2>
+  <pre><code class="language-uml-component">
+component Backend {
+  portin "httpIn" as b_in
+  portout "dbOut" as b_db
+  portout "eventOut" as b_ev
+}
+component Database {
+  portin "dbIn" as d_in
+}
+component EventBus {
+  portin "eventIn" as e_in
+}
+b_db --> d_in : SQL
+b_ev --> e_in : publish
+  </code></pre>
+
+  <h2>66. Composition Behind Class (Circle/Drawing)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+interface Serializable {
+  + serialize(): string
+  + deserialize(data: string)
+}
+abstract class Shape {
+  # color: string
+  + {abstract} area(): number
+}
+class Circle {
+  - radius: number
+  + constructor(radius: number)
+  + area(): number
+  + serialize(): string
+  + deserialize(data: string)
+}
+class Drawing
+Circle ..|> Serializable
+Circle --|> Shape
+Circle *-- Drawing
+@enduml
+  </code></pre>
+
+  <h2>67. Aggregation/Composition Vertical (UserService)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class UserService {
+  + constructor(repo: UserRepository)
+  + getUser(id: string): string[]
+}
+class UserRepository {
+  + constructor(db: Database)
+  + findById(id: string): string[]
+}
+class Database {
+  + query(sql: string): string[]
+}
+class Cache {
+  + get(key: string): string | null
+  + set(key: string, value: string)
+}
+UserService o-- UserRepository
+UserRepository o-- Database
+UserRepository *-- Cache
+@enduml
+  </code></pre>
+
+  <h2>68. Aggregation Detour (Priority/Task)</h2>
+  <pre><code class="language-uml-class">
+@startuml
+enum Priority {
+  + Low
+  + Medium
+  + High
+  + Critical
+}
+interface Identifiable {
+  + getId(): string
+}
+interface Assignable {
+  + assignTo(user: string)
+}
+class Task {
+  - id: string
+  - assignee: string
+  + constructor(id: string, priority: Priority)
+  + getId(): string
+  + assignTo(user: string)
+}
+class Epic {
+  - subtasks: Task[]
+  + addSubtask(task: Task)
+}
+Task ..|> Identifiable
+Task ..|> Assignable
+Epic --|> Task
+Task o-- Priority
 @enduml
   </code></pre>
 
