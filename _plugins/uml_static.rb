@@ -18,8 +18,8 @@ module Jekyll
           @node_path = "node"
         end
         
-        @script_path = File.join(Dir.pwd, 'scripts/uml_to_svg.js')
-        @bundle_path = File.join(Dir.pwd, 'js/uml-bundle.js')
+        @script_path = File.join(Dir.pwd, 'js/ArchUML/uml_to_svg.js')
+        @bundle_path = File.join(Dir.pwd, 'js/ArchUML/uml-bundle.js')
         @cache_dir = File.join(Dir.pwd, '.uml_cache')
         @renderer_hash = begin
           Digest::MD5.file(@bundle_path).hexdigest

@@ -1,16 +1,20 @@
-.PHONY: install build check test clean run pdf latex all vm-setup vm-build
+.PHONY: init-submodules install build check test clean run pdf latex all vm-setup vm-build
 
 JEKYLL_PORT ?= $(shell ruby -e 'require "socket"; port = 4000; loop do; begin; TCPServer.new("127.0.0.1", port).close; puts port; break; rescue Errno::EADDRINUSE; port += 1; rescue Errno::EACCES, Errno::EPERM; puts port; break; end; end')
 
-install:
+init-submodules:
+	git submodule sync --recursive
+	git submodule update --init --recursive
+
+install: init-submodules
 	bundle install
 	npm install
 	npx playwright install
 	brew install cpdf # This needs to update for other OS
 	pipenv install
 
-build:
-	bundle exec jekyll build
+build: init-submodules
+	bundle exec jekyll build --incremental
 
 check: build
 	bash ./scripts/check_references.sh
@@ -25,7 +29,7 @@ clean:
 	rm -rf _site
 
 run: check
-	bundle exec jekyll serve --port $(JEKYLL_PORT)
+	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
 
 pdf: build
 	npm run pdf
