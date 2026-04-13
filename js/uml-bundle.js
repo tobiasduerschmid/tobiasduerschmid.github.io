@@ -3741,6 +3741,34 @@
           pathPoints = reanchorWholePartRouteStart(pathPoints, fromE, actualExitSide);
         }
       }
+      // Eliminate tiny H-V-H doglegs: when the middle vertical segment is ≤ 6px,
+      // snap the shorter end to the longer end's Y for a cleaner straight-through look.
+      if (pathPoints.length === 4) {
+        var cdg0 = pathPoints[0], cdg1 = pathPoints[1], cdg2 = pathPoints[2], cdg3 = pathPoints[3];
+        var cdgH1 = Math.abs(cdg1.y - cdg0.y) < 1;
+        var cdgV  = Math.abs(cdg2.x - cdg1.x) < 1;
+        var cdgH2 = Math.abs(cdg3.y - cdg2.y) < 1;
+        var cdgVLen = Math.abs(cdg2.y - cdg1.y);
+        if (cdgH1 && cdgV && cdgH2 && cdgVLen > 0.3 && cdgVLen <= 6) {
+          // Snap to the Y of the longer horizontal segment
+          var cdgFirstLen = Math.abs(cdg1.x - cdg0.x);
+          var cdgThirdLen = Math.abs(cdg3.x - cdg2.x);
+          var cdgSnapY = cdgFirstLen >= cdgThirdLen ? cdg0.y : cdg3.y;
+          pathPoints = [{ x: cdg0.x, y: cdgSnapY }, { x: cdg3.x, y: cdgSnapY }];
+        }
+        // V-H-V pattern
+        var cdgV1 = Math.abs(cdg1.x - cdg0.x) < 1;
+        var cdgH  = Math.abs(cdg2.y - cdg1.y) < 1;
+        var cdgV2 = Math.abs(cdg3.x - cdg2.x) < 1;
+        var cdgHLen = Math.abs(cdg2.x - cdg1.x);
+        if (cdgV1 && cdgH && cdgV2 && cdgHLen > 0.3 && cdgHLen <= 6) {
+          var cdgFirstVLen = Math.abs(cdg1.y - cdg0.y);
+          var cdgThirdVLen = Math.abs(cdg3.y - cdg2.y);
+          var cdgSnapX = cdgFirstVLen >= cdgThirdVLen ? cdg0.x : cdg3.x;
+          pathPoints = [{ x: cdgSnapX, y: cdg0.y }, { x: cdgSnapX, y: cdg3.y }];
+        }
+      }
+
       var routeSegments = UMLShared.buildOrthogonalSegments(pathPoints);
 
       // Build polyline points string
@@ -8228,35 +8256,61 @@
         var snapshot = movePortPositionToY(entry, alias, targetY);
         if (!snapshot) return null;
         var candidate = applyToPoints(points, entry.portPositions[alias].cy);
-        if (routeHitsObstacle(candidate, obstacles, skipNames, occupiedSegments)) {
+        // Check against box obstacles only (not occupied segments) — small port
+        // movements to eliminate cosmetic doglegs should not be blocked by
+        // nearby occupied lanes from other connectors.
+        if (routeHitsObstacle(candidate, obstacles, skipNames, null)) {
           restorePortPosition(entry.portPositions[alias], snapshot);
           return null;
         }
         return candidate;
       }
 
-      // Snap nearly horizontal direct links to the same Y when one endpoint can move slightly.
-      if (fpPos && tpPos && points.length === 2) {
-        var directDy = points[1].y - points[0].y;
-        if (Math.abs(directDy) > 0.5 && Math.abs(directDy) <= 6 && Math.abs(points[1].x - points[0].x) > 24) {
-          var bestDirect = null;
-          var directCandidates = [
-            { entry: entries[conn.from], alias: conn.fromPort, targetY: tpPos.cy, apply: applySourceLaneSmoothing, move: Math.abs(tpPos.cy - fpPos.cy) },
-            { entry: entries[conn.to], alias: conn.toPort, targetY: fpPos.cy, apply: applyTargetLaneSmoothing, move: Math.abs(fpPos.cy - tpPos.cy) }
-          ];
-          for (var dci = 0; dci < directCandidates.length; dci++) {
-            var directCandidate = directCandidates[dci];
-            var directPoints = tryCandidate(directCandidate.entry, directCandidate.alias, directCandidate.targetY, directCandidate.apply);
-            if (!directPoints) continue;
-            if (!bestDirect || directCandidate.move < bestDirect.move) {
-              bestDirect = { points: directPoints, move: directCandidate.move };
-            }
+      // Snap nearly horizontal links to the same Y when one endpoint can move slightly.
+      // Handles both direct 2-point links and 4-point H-V-H doglegs with tiny V segments.
+      var effectiveDy = 0;
+      var isNearlyHorizontal = false;
+      if (fpPos && tpPos) {
+        if (points.length === 2) {
+          effectiveDy = points[1].y - points[0].y;
+          isNearlyHorizontal = Math.abs(effectiveDy) > 0.5 && Math.abs(effectiveDy) <= 8 &&
+            Math.abs(points[1].x - points[0].x) > 24;
+        } else if (points.length === 4) {
+          // H-V-H dogleg: check if the V segment is tiny
+          var hvhP0 = points[0], hvhP1 = points[1], hvhP2 = points[2], hvhP3 = points[3];
+          var hvhFirstH = Math.abs(hvhP1.y - hvhP0.y) < 1;
+          var hvhSecondV = Math.abs(hvhP2.x - hvhP1.x) < 1;
+          var hvhThirdH = Math.abs(hvhP3.y - hvhP2.y) < 1;
+          var hvhVLen = Math.abs(hvhP2.y - hvhP1.y);
+          if (hvhFirstH && hvhSecondV && hvhThirdH && hvhVLen > 0.5 && hvhVLen <= 8) {
+            effectiveDy = hvhP3.y - hvhP0.y;
+            isNearlyHorizontal = true;
           }
-          if (bestDirect) return bestDirect.points;
         }
       }
+      if (isNearlyHorizontal) {
+        var bestDirect = null;
+        var midY = (fpPos.cy + tpPos.cy) / 2;
+        var directCandidates = [
+          { entry: entries[conn.from], alias: conn.fromPort, targetY: tpPos.cy, apply: applySourceLaneSmoothing, move: Math.abs(tpPos.cy - fpPos.cy) },
+          { entry: entries[conn.to], alias: conn.toPort, targetY: fpPos.cy, apply: applyTargetLaneSmoothing, move: Math.abs(fpPos.cy - tpPos.cy) },
+          { entry: entries[conn.from], alias: conn.fromPort, targetY: midY, apply: applySourceLaneSmoothing, move: Math.abs(midY - fpPos.cy) },
+          { entry: entries[conn.to], alias: conn.toPort, targetY: midY, apply: applyTargetLaneSmoothing, move: Math.abs(midY - tpPos.cy) }
+        ];
+        for (var dci = 0; dci < directCandidates.length; dci++) {
+          var directCandidate = directCandidates[dci];
+          var directPoints = tryCandidate(directCandidate.entry, directCandidate.alias, directCandidate.targetY, directCandidate.apply);
+          if (!directPoints) continue;
+          if (!bestDirect || directCandidate.move < bestDirect.move) {
+            bestDirect = { points: directPoints, move: directCandidate.move };
+          }
+        }
+        if (bestDirect) return bestDirect.points;
+      }
 
-      // Remove tiny H-V-H doglegs right next to a source port by moving the port onto the horizontal lane.
+      // Remove H-V-H doglegs near a source port by moving the port onto the horizontal lane.
+      // Two tiers: very tiny vertical jogs (≤6px) are always removed regardless of
+      // surrounding segment lengths; larger ones use stricter thresholds.
       if (fpPos && points.length >= 4) {
         var p0 = points[0], p1 = points[1], p2 = points[2], p3 = points[3];
         var firstIsH = Math.abs(p1.y - p0.y) < 1;
@@ -8265,13 +8319,14 @@
         var firstLen = Math.abs(p1.x - p0.x) + Math.abs(p1.y - p0.y);
         var secondLen = Math.abs(p2.x - p1.x) + Math.abs(p2.y - p1.y);
         var thirdLen = Math.abs(p3.x - p2.x) + Math.abs(p3.y - p2.y);
-        if (firstIsH && secondIsV && thirdIsH && firstLen <= 36 && secondLen <= 18 && thirdLen >= 80) {
+        if (firstIsH && secondIsV && thirdIsH && secondLen <= 18 &&
+            (secondLen <= 6 || (firstLen <= 36 && thirdLen >= 80))) {
           var sourceSmoothed = tryCandidate(entries[conn.from], conn.fromPort, p2.y, applySourceLaneSmoothing);
           if (sourceSmoothed) return sourceSmoothed;
         }
       }
 
-      // Remove tiny H-V-H doglegs right before a target port by moving the target port onto the horizontal lane.
+      // Remove H-V-H doglegs near a target port by moving the target port onto the horizontal lane.
       if (tpPos && points.length >= 4) {
         var t3 = points[points.length - 4];
         var t2 = points[points.length - 3];
@@ -8283,7 +8338,8 @@
         var tailFirstLen = Math.abs(t2.x - t3.x) + Math.abs(t2.y - t3.y);
         var tailSecondLen = Math.abs(t1.x - t2.x) + Math.abs(t1.y - t2.y);
         var tailThirdLen = Math.abs(t0.x - t1.x) + Math.abs(t0.y - t1.y);
-        if (tailFirstIsH && tailSecondIsV && tailThirdIsH && tailThirdLen <= 36 && tailSecondLen <= 18 && tailFirstLen >= 80) {
+        if (tailFirstIsH && tailSecondIsV && tailThirdIsH && tailSecondLen <= 18 &&
+            (tailSecondLen <= 6 || (tailThirdLen <= 36 && tailFirstLen >= 80))) {
           var targetSmoothed = tryCandidate(entries[conn.to], conn.toPort, t2.y, applyTargetLaneSmoothing);
           if (targetSmoothed) return targetSmoothed;
         }
@@ -8459,6 +8515,54 @@
 
       var points = refineRouteEndpoints(conn, bestRoute.points, fpPos, tpPos, skipN);
       points = UMLShared.simplifyOrthogonalPath(points);
+
+      // Post-process: eliminate tiny H-V-H doglegs by snapping the port with the
+      // smaller displacement directly to the other end's Y.
+      if (points.length === 4) {
+        var dg0 = points[0], dg1 = points[1], dg2 = points[2], dg3 = points[3];
+        var dgH1 = Math.abs(dg1.y - dg0.y) < 1;
+        var dgV  = Math.abs(dg2.x - dg1.x) < 1;
+        var dgH2 = Math.abs(dg3.y - dg2.y) < 1;
+        var dgVLen = Math.abs(dg2.y - dg1.y);
+        if (dgH1 && dgV && dgH2 && dgVLen > 0.3 && dgVLen <= 10) {
+          // Pick the endpoint whose port moves less
+          var moveSourceDy = Math.abs(dg3.y - dg0.y);
+          var moveToSource = moveSourceDy;  // move target to source Y
+          var moveToTarget = moveSourceDy;  // move source to target Y
+          // Try snapping source to target Y (source moves)
+          var snapY = dg3.y;
+          var snapEntry = entries[conn.from];
+          var snapAlias = conn.fromPort;
+          // Or snap target to source Y (target moves less if source is further)
+          if (fpPos && tpPos) {
+            var srcMoveDist = Math.abs(dg3.y - fpPos.cy);
+            var tgtMoveDist = Math.abs(dg0.y - tpPos.cy);
+            if (tgtMoveDist < srcMoveDist) {
+              snapY = dg0.y;
+              snapEntry = entries[conn.to];
+              snapAlias = conn.toPort;
+            }
+          }
+          if (snapEntry && snapAlias && snapEntry.portPositions && snapEntry.portPositions[snapAlias]) {
+            var snapPos = snapEntry.portPositions[snapAlias];
+            var snapBounds = getPortMovementBounds(snapEntry, snapAlias);
+            // Allow snap if within bounds OR if the dogleg is tiny (cosmetic jog ≤ 6px)
+            var canSnap = dgVLen <= 6 || (snapBounds && snapY >= snapBounds.lower && snapY <= snapBounds.upper);
+            if (canSnap) {
+              var straightLine = [{ x: dg0.x, y: snapY }, { x: dg3.x, y: snapY }];
+              if (!routeHitsObstacle(straightLine, obstacles, skipN, null)) {
+                // Directly update the port position
+                snapPos.cy = snapY;
+                snapPos.connY = snapY;
+                snapPos.y = snapY - CFG.portSize / 2;
+                points = straightLine;
+                if (conn.fromPort && fromE.portPositions[conn.fromPort]) fpPos = fromE.portPositions[conn.fromPort];
+                if (conn.toPort && toE.portPositions[conn.toPort]) tpPos = toE.portPositions[conn.toPort];
+              }
+            }
+          }
+        }
+      }
       if (UMLShared.routeHitsObstacle(points, obstacles, skipN, occupiedSegments)) {
         points = UMLShared.routeOrthogonalConnector(bestRoute.source, bestRoute.target, obstacles, {
           skipNames: skipN,

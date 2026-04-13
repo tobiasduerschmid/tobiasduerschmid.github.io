@@ -1070,7 +1070,7 @@ component Notifications {
 }
 
 g_out1 --> c_p1 : POST
-g_out2 --> u_p2 : POSTComposition Detour Test (S
+g_out2 --> u_p2 : POST
 a_out1 --> u_p1 : GET
 a_out2 --> c_p3 : GET
 c_out1 --> e_p1 : GET
@@ -1477,30 +1477,30 @@ endif
 @startuml
 layout landscape
 abstract class Component {
-  + operation(): void
-  + add(child: Component): void
-  + remove(child: Component): void
+	+ operation(): void
+	+ add(child: Component): void
+	+ remove(child: Component): void
 }
 class Leaf {
-  + operation(): void
+	+ operation(): void
 }
 class Composite {
-  - children: List&lt;Component&gt;
-  + operation(): void
-  + add(child: Component): void
-  + remove(child: Component): void
+	- children: List&lt;Component&gt;
+	+ operation(): void
+	+ add(child: Component): void
+	+ remove(child: Component): void
 }
 class Client
-Leaf --|> Component
-Composite --|> Component
-Composite "1" *-- "0..*" Component
-Client --> Component : treats uniformly >
+Leaf --|&gt; Component
+Composite --|&gt; Component
+Composite &quot;1&quot; *--&gt; &quot;0..*&quot; Component
+Client --&gt; Component : treats uniformly &gt;
 @enduml
   </code></pre>
 
   <h2>62. Composition Behind Class Test (Order System)</h2>
   <pre><code class="language-uml-class">
-@startuml
+    @startuml
 interface Billable {
   + processPayment(): bool
 }
@@ -1509,6 +1509,13 @@ class Customer {
   - name: String
   + placeOrder(): void
 }
+class VIP
+class Guest
+class Order {
+  - date: Date
+  - status: String
+  + calcTotal(): float
+}
 class LineItem {
   - quantity: int
 }
@@ -1516,20 +1523,14 @@ class Product {
   - price: float
   - name: String
 }
-class Order {
-  - date: Date
-  - status: String
-  + calcTotal(): float
-}
-class VIP
-class Guest
-Order ..|> Billable
-Customer "1" -- "0..*" Order : *
 VIP --|> Customer
 Guest --|> Customer
-Order "1..*" -- "0..*" LineItem
+Order ..|> Billable
+Customer "1" -- "0..*" Order
+Order *-- "1..*" LineItem
 LineItem "0..*" -- "1" Product
 @enduml
+
   </code></pre>
 
   <h2>63. Composition Detour Test (Shape/Color)</h2>
