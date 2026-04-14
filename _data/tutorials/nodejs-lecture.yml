@@ -1,0 +1,525 @@
+title: "Node.js Lecture"
+description: "Code walkthroughs from the CS 35L Lecture 5 — Client Server & Node.js. Covers JavaScript basics, JSON, blocking vs. non-blocking I/O, the built-in http module, and Express.js routing."
+
+backend: browser
+
+require_tests: false
+autosave_type: none
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — JavaScript Basics (Slide 41)
+  # --------------------------------------------------------------------------
+  - title: "JavaScript Basics"
+    instructions: |
+      ## JavaScript (JS)
+
+      JavaScript is an **interpreted, dynamically typed** programming language — similar to Python. It can run in the browser, but with **Node.js** it can also run on the server.
+
+      ### Functions, Variables, and console.log
+
+      ```javascript
+      // A function that takes two arguments
+      function add(num1, num2) {
+        let sum = num1 + num2;
+        return sum; // Returns the result
+      }
+
+      let result = add(5, 7); // result is now 12
+      console.log(result);    // Output: 12
+      ```
+
+      - **`function`** declares a named function (similar to `def` in Python)
+      - **`let`** declares a mutable variable
+      - **`console.log()`** is the Node.js equivalent of Python's `print()`
+
+      ### Task
+
+      Run the code as-is. Then change the arguments to `add(10, 32)` and predict the output before running again.
+
+    files:
+      - path: "basics.js"
+        content: |
+          // A function that takes two arguments
+          function add(num1, num2) {
+            let sum = num1 + num2;
+            return sum; // Returns the result
+          }
+
+          let result = add(5, 7); // result is now 12
+          console.log(result);    // Output: 12
+        language: "javascript"
+
+    open_file: "basics.js"
+
+    quiz:
+      title: "JavaScript Basics — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A teammate writes this code:
+            ```javascript
+            function multiply(a, b) {
+              let result = a * b;
+              let result = a + b;
+              return result;
+            }
+            ```
+            What happens when Node.js loads this file?
+          options:
+            - "It runs and returns `a * b` — the first declaration wins"
+            - "It runs and returns `a + b` — the second assignment overwrites the first"
+            - "It throws a `SyntaxError` at load time because `result` is declared twice with `let`"
+            - "It throws a `TypeError` at call time because the return type is ambiguous"
+          correct_index: 2
+          explanation: |
+            `let` does not allow redeclaring the same variable in the same scope — the parser throws `SyntaxError: Identifier 'result' has already been declared` before any code runs. This is one advantage `let` has over `var`: `var` would silently allow the redeclaration, hiding the bug.
+
+        - question: |
+            A library module declares `let MAX_CONNECTIONS = 100` at the top. The value never changes anywhere in the 500-line file. A teammate flags this in code review and asks you to change it to `const`. Is this a valid concern?
+          options:
+            - "No — `let` and `const` are equivalent for primitive values, so there is no practical difference"
+            - "Yes — `const` prevents accidental reassignment and immediately signals to every reader that the value is intentionally fixed"
+            - "No — `const` has measurable runtime overhead because the engine must verify immutability on each read"
+            - "Yes — but only because linters will flag it; the runtime behaviour is identical and the change has no real benefit"
+          correct_index: 1
+          explanation: |
+            `const` makes intent explicit: any reader immediately knows the value will never change, reducing cognitive load. It also makes a future accidental reassignment a compile-time error rather than a silent bug. This is a meaningful code-quality flag, not merely a style preference.
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — JSON (Slide 42)
+  # --------------------------------------------------------------------------
+  - title: "JSON — JavaScript Object Notation"
+    instructions: |
+      ## JSON (JavaScript Object Notation)
+
+      JSON is a **human-readable, lightweight data-interchange format** used to transfer data between a server and a web page, or between applications.
+
+      It is the standard format for REST API responses. In JavaScript, objects look almost identical to JSON:
+
+      ```javascript
+      const person = {
+        "address-dict": {
+          "city": "New York",
+          "residential": true,
+          "postal_code": 10023
+        },
+        "phone_numbers": [
+          { "type": "home",   "number": "212 555-1234" },
+          { "type": "office", "number": "646 555-4567" }
+        ],
+        "children": ["Catherine", "Thomas", "Trevor"]
+      };
+      ```
+
+      ### Key built-ins
+
+      | Method | Purpose |
+      |---|---|
+      | `JSON.stringify(obj)` | Convert a JS object → JSON string |
+      | `JSON.parse(str)` | Parse a JSON string → JS object |
+
+      ### Task
+
+      Run the code to see JSON serialisation and parsing in action. Notice how `JSON.stringify(person, null, 2)` pretty-prints the object with 2-space indentation.
+
+    files:
+      - path: "json-demo.js"
+        content: |
+          const person = {
+            "address-dict": {
+              "city": "New York",
+              "residential": true,
+              "postal_code": 10023
+            },
+            "phone_numbers": [
+              { "type": "home",   "number": "212 555-1234" },
+              { "type": "office", "number": "646 555-4567" }
+            ],
+            "children": ["Catherine", "Thomas", "Trevor"]
+          };
+
+          // Serialize JS object → JSON string
+          const jsonString = JSON.stringify(person, null, 2);
+          console.log("=== JSON.stringify ===");
+          console.log(jsonString);
+
+          // Parse JSON string back into a JS object
+          const parsed = JSON.parse(jsonString);
+          console.log("\n=== Parsed city ===");
+          console.log(parsed["address-dict"].city); // New York
+        language: "javascript"
+
+    open_file: "json-demo.js"
+
+    quiz:
+      title: "JSON — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A developer writes the following route handler:
+            ```javascript
+            const user = { name: 'Alice', password: 'secret123', id: 42 };
+            res.send(JSON.stringify(user));
+            ```
+            What design flaw does this reveal?
+          options:
+            - "The code will crash — `JSON.stringify` cannot serialise objects that contain string values"
+            - "It exposes the `password` field to the client — sensitive fields must be omitted before serialising"
+            - "`res.send` should be `res.json` to correctly set the `Content-Type` header"
+            - "No flaw — `JSON.stringify` automatically redacts fields whose names contain 'password'"
+          correct_index: 1
+          explanation: |
+            Serialising the full object blindly sends every field — including `password` — to whoever made the request. The fix is to explicitly select safe fields: `res.json({ name: user.name, id: user.id })`. Accidentally leaking sensitive data through JSON serialisation is one of the most common REST API security mistakes.
+
+        - question: |
+            Which of the following strings is **not** valid JSON?
+          options:
+            - "`{ \"name\": \"Alice\", \"scores\": [95, 82, 78] }`"
+            - "`{ name: \"Alice\", age: 30 }`"
+            - "`{ \"active\": true, \"count\": 0, \"label\": null }`"
+            - "`[1, \"two\", false, null]`"
+          correct_index: 1
+          explanation: |
+            JSON requires all keys to be **double-quoted strings**. `{ name: "Alice" }` is valid JavaScript object-literal syntax but invalid JSON — `JSON.parse('{ name: "Alice" }')` throws a `SyntaxError`. This distinction matters whenever you receive data from an external API and try to parse it.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Blocking vs. Non-Blocking I/O (Slides 44–46)
+  # --------------------------------------------------------------------------
+  - title: "Blocking vs. Non-Blocking I/O"
+    instructions: |
+      ## Node.js & the Event Loop
+
+      Node.js is a **JavaScript runtime** for asynchronous events.
+      It is **single-threaded**, so blocking the main thread means no other requests can be handled.
+
+      ### Blocking Code
+
+      ```javascript
+      const fs = require('node:fs');
+
+      const data = fs.readFileSync('/file.md');
+      // blocks here until file is read
+      ```
+
+      `readFileSync` stops execution until the file is fully read.
+      Bad for servers — every other request waits!
+
+      ### Non-Blocking Code (callback style)
+
+      ```javascript
+      fs.readFile('/file.md', (err, data) => {
+        if (err) { /* handle error */ }
+        // use data here
+      });
+      // following code is executed instantly
+      ```
+
+      The callback `(err, data) => { ... }` is an **asynchronous callback**: it executes *after* the data has been completely stored in `data`. Meanwhile Node.js keeps processing other events.
+
+      ### Named Callbacks
+
+      For longer handlers, extract the callback into a named function — this improves readability and enables reuse:
+
+      ```javascript
+      function handleMarkdownRead(err, data) {
+        if (err) { /* handle error */ }
+        // use data
+      }
+
+      fs.readFile('/file.md', handleMarkdownRead);
+      // following code is executed instantly
+      ```
+
+      > **Node.js philosophy:** use non-blocking code for all non-instant tasks to maintain high performance and scalability.
+
+      ### Task
+
+      Run the code. Notice that `"After readFile call"` is printed *before* the file contents — that is the non-blocking nature of Node.js in action.
+
+    files:
+      - path: "message.txt"
+        content: |
+          Hello from the file system!
+          This text was read asynchronously.
+        language: "text"
+      - path: "io-demo.js"
+        content: |
+          const fs = require('node:fs');
+
+          // --- Blocking ---
+          console.log("=== Blocking readFileSync ===");
+          const dataSync = fs.readFileSync('message.txt', 'utf8');
+          console.log(dataSync);
+          console.log("(This line runs AFTER the file is read)\n");
+
+          // --- Non-Blocking (inline callback) ---
+          console.log("=== Non-Blocking readFile ===");
+          fs.readFile('message.txt', 'utf8', (err, data) => {
+            if (err) {
+              console.error("Error:", err.message);
+              return;
+            }
+            console.log("Callback fired:", data);
+          });
+          console.log("After readFile call — runs BEFORE callback fires\n");
+
+          // --- Named Callback ---
+          function handleFileRead(err, data) {
+            if (err) {
+              console.error("Error:", err.message);
+              return;
+            }
+            console.log("Named callback fired:", data);
+          }
+
+          console.log("=== Non-Blocking with named callback ===");
+          fs.readFile('message.txt', 'utf8', handleFileRead);
+          console.log("After named callback registration");
+        language: "javascript"
+
+    open_file: "io-demo.js"
+
+    quiz:
+      title: "Blocking vs. Non-Blocking I/O — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            A Node.js HTTP server handles requests using a handler that calls `fs.readFileSync('config.json')`, which takes 40 ms. The server receives 100 concurrent requests per second. What is the effective throughput?
+          options:
+            - "100 requests/second — `readFileSync` is OS-cached so it adds negligible delay"
+            - "~25 requests/second — while one request blocks for 40 ms, every other request queues behind it"
+            - "100 requests/second — Node.js spawns a new thread per request so blocking is isolated to that thread"
+            - "0 requests/second — the server crashes because `readFileSync` is not allowed in HTTP handlers"
+          correct_index: 1
+          explanation: |
+            Node.js is single-threaded. A 40 ms `readFileSync` freezes the **entire event loop** for 40 ms — no other requests can be processed during that window. Maximum throughput is 1000 ms ÷ 40 ms = 25 requests/second regardless of how many arrive. The remaining 75 queue up and time out. This is precisely why `readFile` (non-blocking) exists.
+
+        - question: |
+            A student writes a small CLI tool that reads a configuration file once at startup and then exits. They use `fs.readFileSync`. A teammate says this is always wrong and should always be `fs.readFile`. Who is right?
+          options:
+            - "The teammate — `readFileSync` must never appear in any Node.js code, CLI or server"
+            - "The student — blocking I/O is perfectly acceptable in a CLI script because there is no event loop or concurrent requests to starve"
+            - "The teammate — `readFileSync` will always be slower than `readFile` due to OS scheduling overhead"
+            - "The student — but only if the config file is under 4 KB; larger files must use `readFile`"
+          correct_index: 1
+          explanation: |
+            The danger of `readFileSync` is blocking the event loop and starving concurrent requests. In a one-shot CLI script there is no event loop running and no concurrent requests — the program starts, reads the file, acts, and exits. `readFileSync` is simpler and completely appropriate here. Node.js documentation itself recommends synchronous APIs for startup configuration in non-server contexts.
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — HTTP Server with Node's Built-in http Module (Slide 47)
+  # --------------------------------------------------------------------------
+  - title: "HTTP Server with Node's http Module"
+    http_client: true
+    http_url: "http://localhost:8080/"
+    instructions: |
+      ## Building an HTTP Server from Scratch
+
+      Node.js ships with a built-in **`http`** module. You can create a server without any third-party packages:
+
+      ```javascript
+      const http = require('http');
+      const PORT = 8080;
+
+      const server = http.createServer((req, res) => {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('Hello, World!\n');
+      });
+
+      server.listen(PORT, 'localhost', () => {
+        console.log(`Server running at http://localhost:${PORT}/`);
+      });
+      ```
+
+      | Line | What it does |
+      |---|---|
+      | `http.createServer((req, res) => { ... })` | Creates an HTTP server; the callback fires on every incoming request |
+      | `res.writeHead(200, { 'Content-Type': 'text/plain' })` | Sets HTTP status 200 (OK) and the `Content-Type` header |
+      | `res.end('Hello, World!\n')` | Writes the response body and closes the connection |
+      | `server.listen(PORT, 'localhost', callback)` | Starts listening on port 8080 |
+
+      The callback `(req, res) => { ... }` passed to `createServer` is called on **every** HTTP request — this is Node's callback pattern applied to networking.
+
+      ### Task
+
+      Click **▶ Run** to start the server, then use the **HTTP Client** on the right to send a `GET` request to `http://localhost:8080/` and observe the response.
+
+    files:
+      - path: "server.js"
+        content: |
+          const http = require('http');
+          const PORT = 8080;
+
+          const server = http.createServer((req, res) => {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Hello, World!\n');
+          });
+
+          server.listen(PORT, 'localhost', () => {
+            console.log(`Server running at http://localhost:${PORT}/`);
+          });
+        language: "javascript"
+
+    open_file: "server.js"
+
+    quiz:
+      title: "HTTP Server with Node's http Module — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            The current server responds with `Hello, World!` to **every** request regardless of URL or method. What change would you make inside the `http.createServer` callback to return a different response for `GET /status` versus all other paths?
+          options:
+            - "Call `http.createServer()` a second time with a different callback for `/status`"
+            - "Inspect `req.url` inside the callback and branch with `if`/`else` to send different responses per path"
+            - "Call `server.listen()` on a different port for each URL you want to handle"
+            - "Set `res.url` to `/status` before calling `res.end()` so the correct handler is invoked"
+          correct_index: 1
+          explanation: |
+            `req.url` holds the path of every incoming request (e.g. `'/status'`). The single callback receives **all** requests, so you branch on `req.url` (and `req.method`) to route manually. This manual branching is exactly the boilerplate that Express eliminates with `app.get('/status', ...)`.
+
+        - question: |
+            You are starting a new project: a REST API with 12 endpoints, JSON request bodies, and authentication middleware. Should you use the built-in `http` module or Express?
+          options:
+            - "The built-in `http` module — third-party packages introduce security risks and should always be avoided in production"
+            - "Express — it provides routing, middleware, and body parsing out of the box, eliminating hundreds of lines of manual boilerplate for a multi-endpoint API"
+            - "The built-in `http` module — it is always faster than Express because there is no abstraction-layer overhead"
+            - "Express — but only because the built-in `http` module does not support POST requests or JSON bodies"
+          correct_index: 1
+          explanation: |
+            For a multi-endpoint API, manually parsing URLs, matching HTTP methods, and reading request bodies in raw `http` adds hundreds of lines of repetitive, error-prone code. Express handles all of this declaratively. The performance gap between raw `http` and Express is negligible at realistic request rates. The `http` module shines for very simple use cases or when fine-grained control is needed — not for a 12-endpoint authenticated API.
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — Express.js Routing (Slide 48)
+  # Note: the slide was missing app.listen — fixed here.
+  # --------------------------------------------------------------------------
+  - title: "Express.js Routing"
+    http_client: true
+    http_url: "http://localhost:8080/about"
+    run_file: "app.js"
+    instructions: |
+      ## Express.js — URL Routing Made Easy
+
+      The built-in `http` module is powerful but low-level. **Express** is the most popular Node.js web framework. It makes routing simple:
+
+      ```
+      "When someone visits THIS URL with THIS method, call THIS function."
+      ```
+
+      ### Routes
+
+      ```javascript
+      const express = require('express');
+      const app = express();
+      const port = 8080;
+
+      // GET /users/:userId  — route parameter
+      app.get('/users/:userId', (req, res) => {
+        res.send(`GET request to user ${req.params.userId}`);
+      });
+
+      // POST /
+      app.post('/', (req, res) => {
+        res.send('POST request to the homepage');
+      });
+
+      // GET /about
+      app.get('/about', (req, res) => {
+        res.send('About page');
+      });
+
+      // Catch-all — must be LAST
+      app.all('*', (req, res) => {
+        res.status(404).send('404 - Page not found');
+      });
+
+      app.listen(port, () => {
+        console.log(`Express server listening on port ${port}`);
+      });
+      ```
+
+      | Route | Description |
+      |---|---|
+      | `app.get('/users/:userId', ...)` | `GET /users/42` — `:userId` is a **route parameter** accessed via `req.params.userId` |
+      | `app.post('/', ...)` | `POST /` — handles form submissions, data uploads, etc. |
+      | `app.get('/about', ...)` | `GET /about` — static page route |
+      | `app.all('*', ...)` | Matches **any** method and path not matched above — use for 404 |
+
+      > **`app.listen(port, callback)`** starts the server. Without this line the server never starts — this was the missing piece in the lecture slide code!
+
+      ### Task
+
+      Click **▶ Run**. The HTTP Client is pre-filled with `GET /about`. Try also:
+      - `GET http://localhost:8080/users/42`
+      - `GET http://localhost:8080/nonexistent` (should return 404)
+
+    files:
+      - path: "app.js"
+        content: |
+          const express = require('express');
+          const app = express();
+          const port = 8080;
+
+          // Route parameter: GET /users/:userId
+          app.get('/users/:userId', (req, res) => {
+            res.send(`GET request to user ${req.params.userId}`);
+          });
+
+          // POST /
+          app.post('/', (req, res) => {
+            res.send('POST request to the homepage');
+          });
+
+          // GET /about
+          app.get('/about', (req, res) => {
+            res.send('About page');
+          });
+
+          // Catch-all 404 handler — must be last
+          app.all('*', (req, res) => {
+            res.status(404).send('404 - Page not found');
+          });
+
+          // app.listen() was missing from the lecture slide — added here!
+          app.listen(port, () => {
+            console.log(`Express server listening on port ${port}`);
+          });
+        language: "javascript"
+
+    open_file: "app.js"
+
+    quiz:
+      title: "Express.js Routing — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            What happens if you move the `app.all('*', ...)` catch-all handler to the **top** of the file, before all other route definitions?
+          options:
+            - "Nothing changes — Express evaluates all routes in parallel and picks the most specific match"
+            - "Every request returns `404 - Page not found` because the catch-all matches first and Express stops checking further routes"
+            - "Express throws a configuration error at startup because `app.all('*', ...)` must always be declared last"
+            - "The specific `app.get` and `app.post` routes still win because they have higher priority than `app.all`"
+          correct_index: 1
+          explanation: |
+            Express matches routes **in the order they are registered**. If `app.all('*', ...)` is first, it matches every incoming request and sends the 404 response — none of the subsequent routes are ever reached. Route order is a fundamental Express concept: always place more specific routes before catch-alls.
+
+        - question: |
+            You need to add a `DELETE /users/:userId` route that removes a user and responds with `{ "deleted": true, "id": "<userId>" }` as JSON. Which implementation is correct?
+          options:
+            - "`app.delete('/users/:userId', (req, res) => { res.json({ deleted: true, id: req.params.userId }); })`"
+            - "`app.get('/users/delete/:userId', (req, res) => { res.json({ deleted: true, id: req.params.userId }); })`"
+            - "`app.delete('/users/:userId', (req, res) => { res.send({ deleted: true, id: req.params.userId }); })`"
+            - "`app.post('/delete/users/:userId', (req, res) => { res.json({ deleted: true }); })`"
+          correct_index: 0
+          explanation: |
+            REST convention maps the DELETE HTTP verb to `app.delete()`. The route parameter `:userId` is read from `req.params.userId`. `res.json()` serialises the object and sets `Content-Type: application/json`. Option B uses GET for a destructive operation (violates REST semantics). Option C uses `res.send()` with an object — Express serialises it, but `res.json()` is explicit and idiomatic. Option D uses POST and omits the user ID from the response body.
