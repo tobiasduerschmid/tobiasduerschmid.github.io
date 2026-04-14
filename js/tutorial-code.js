@@ -1713,7 +1713,9 @@
     if (!this.activeFileName) return;
     var backend = this.config.backend;
     var self = this;
-    var filename = this.activeFileName;
+    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
+    var filename = runFile;
 
     if (backend === 'browser') {
       var code = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
@@ -1993,7 +1995,7 @@
       '  }\n' +
       '  window.require = function(m) {\n' +
       '    if (m === "http") return {\n' +
-      '      createServer: function(h) { __server_handler = h; return { listen: function(p) { console.log("HTTP server listening on port " + p); } }; }\n' +
+      '      createServer: function(h) { __server_handler = h; return { listen: function(p, h, c) { var cb = typeof h === "function" ? h : c; console.log("HTTP server listening on port " + p); if (cb) cb(); } }; }\n' +
       '    };\n' +
       '    if (m === "express") {\n' +
       '      var ef = function() {\n' +
@@ -2003,15 +2005,21 @@
       '          post:   function(p, h) { routes.push({ m: "POST",   p: p, h: h }); },\n' +
       '          put:    function(p, h) { routes.push({ m: "PUT",    p: p, h: h }); },\n' +
       '          "delete": function(p, h) { routes.push({ m: "DELETE", p: p, h: h }); },\n' +
+      '          all: function(p, h) {\n' +
+      '            ["GET", "POST", "PUT", "DELETE"].forEach(function(m) {\n' +
+      '              routes.push({ m: m, p: p, h: h });\n' +
+      '            });\n' +
+      '          },\n' +
       '          use:    function(p, h) {\n' +
       '            if (typeof p === "function") { h = p; p = "*"; }\n' +
       '            if (!h) return;\n' +
       '            if (h.__routes) { routes.push({ m: "MOUNT", p: p, router: h.__routes }); }\n' +
       '            else { routes.push({ m: "USE", p: p, h: h }); }\n' +
       '          },\n' +
-      '          listen: function(port, cb) {\n' +
+      '          listen: function(port, host, cb) {\n' +
+      '            var actualCb = typeof host === "function" ? host : cb;\n' +
       '            console.log("Express server listening on port " + port);\n' +
-      '            if (cb) cb();\n' +
+      '            if (actualCb) actualCb();\n' +
       '            __server_handler = function(req, res) {\n' +
       '              res.status = function(s) { this._status = s; this.writeHead(s); return this; };\n' +
       '              res.json   = function(obj) { this.writeHead(this._status||200); this.end(JSON.stringify(obj, null, 2)); };\n' +

@@ -1483,6 +1483,7 @@ steps:
         language: "javascript"
 
     open_file: "studentRoutes.js"
+    run_file: "app.js"
 
     solution:
       files:
@@ -2313,6 +2314,7 @@ steps:
         language: "javascript"
 
     open_file: "app.js"
+    run_file: "app.js"
 
     solution:
       files:
