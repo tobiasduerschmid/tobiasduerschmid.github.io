@@ -1962,6 +1962,8 @@
       '    __s("stderr","UnhandledPromiseRejection: "+(e.reason?e.reason.message||String(e.reason):"Unknown")+"\\n");\n' +
       '  });\n' +
 
+      '  // Node.js globals\n' +
+      '  var module = { exports: {} }; var exports = module.exports;\n' +
       '  // Mock Node.js modules\n' +
       '  var __server_handler = null;\n' +
       '  var __jsFiles = ' + JSON.stringify(jsFiles) + ';\n' +

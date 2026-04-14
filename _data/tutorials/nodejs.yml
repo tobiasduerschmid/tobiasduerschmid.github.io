@@ -1179,7 +1179,7 @@ steps:
           // ROUTE 1: GET /students — return all (or filter by ?passing=true)
           // Scaffolding: route declaration provided. You write the handler logic.
           app.get('/students', (req, res) => {
-              // TODO: If req.query.passing === 'true', filter to grade >= 60
+              // TODO: If req.query.passing, filter to grade >= 60
               //       Otherwise, return all students
               //       Use res.json() to send the result as JSON
               res.json("Implement me!");
@@ -1188,7 +1188,7 @@ steps:
           // ROUTE 2: GET /students/:id — return one student by ID
           app.get('/students/:id', (req, res) => {
               // TODO: Find the student whose id matches Number(req.params.id)
-              //       Use .find() or .filter() with ===
+              //       Use .find() or .filter() to search the array
               //       If found, res.json(student). If not, res.json({ error: "Not found" })
               res.json("Implement me!");
           });
@@ -1271,7 +1271,7 @@ steps:
           - text: "When `req.query.passing === 'true'`, you need to select only students with grade >= 60. Which array method from Step 3 selects elements based on a condition?"
             condition: "code_missing: .filter("
       - description: "Uses strict comparison for query param"
-        command: "assert(code.includes(\"=== 'true'\") || code.includes('=== \"true\"'), 'Compare req.query.passing with strict === (it is a string!)')"
+        command: "assert(source.includes(\"=== 'true'\") || code.includes('=== \"true\"'), 'Compare req.query.passing with strict === (it is a string!)')"
         hints:
           - text: "Remember from Step 2: `req.query.passing` is a string. Using `== true` would fail due to type coercion rules. Use `=== 'true'` (strict equality with a string)."
             condition: "code_missing: === 'true'"
@@ -2251,7 +2251,7 @@ steps:
 
       4. **Error handling:** Wrap all route handlers in `try`/`catch`
 
-      **Put routes in `routes.js` (the Router), and mount them in `app.js`.**
+      **Put routes in `routes.js` (the Router), and mount them in `app.js`.** When your code looks complete, switch to the **`app.js`** tab and press **▶ Run** to start the server — `routes.js` is a module that only exports a router; running it directly does nothing.
 
       ### Hints (only if you're stuck)
 
@@ -2312,7 +2312,7 @@ steps:
           app.listen(3000, () => console.log("Grade API on port 3000"));
         language: "javascript"
 
-    open_file: "routes.js"
+    open_file: "app.js"
 
     solution:
       files:
