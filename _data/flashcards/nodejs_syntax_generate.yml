@@ -87,3 +87,36 @@ cards:
       const name = response?.data?.user?.name ?? 'Anonymous';
       ```
     explanation: "`?.` short-circuits to `undefined` if any link is null/undefined — no TypeError thrown. `??` uses the fallback only for `null`/`undefined`, so a real empty string `''` would be preserved. Using `||` instead of `??` would incorrectly replace an empty string with `'Anonymous'`."
+
+  - id: 17
+    question: "Create a JavaScript object with properties `name` (\"Alice\") and `grade` (95), then convert it to a JSON string."
+    answer: |
+      ```javascript
+      const student = { name: "Alice", grade: 95 };
+      const json = JSON.stringify(student);
+      ```
+    explanation: "Object literals use `{ key: value }` syntax. `JSON.stringify()` converts to a JSON string for sending over HTTP. `JSON.parse()` does the reverse."
+
+  - id: 18
+    question: "Given `const students = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]`, find the student with `id === 2` (return the object, not an array)."
+    answer: "`const student = students.find(s => s.id === 2);`"
+    explanation: "`.find()` returns the first matching element (or `undefined`). `.filter()` would return an array `[{ id: 2, name: 'Bob' }]` — one element, but still wrapped in an array."
+
+  - id: 19
+    question: "Declare a variable with no initial value. What is its value? Then set a different variable explicitly to 'nothing'."
+    answer: |
+      ```javascript
+      let x;          // x is undefined
+      let y = null;   // y is null (intentionally empty)
+      ```
+    explanation: "`undefined` means 'no value assigned yet'. `null` means 'intentionally empty'. JavaScript has both — unlike Python which only has `None`."
+
+  - id: 20
+    question: "Write a `for...of` loop that iterates over `const names = ['Alice', 'Bob', 'Carol']` and logs each name."
+    answer: |
+      ```javascript
+      for (const name of names) {
+          console.log(name);
+      }
+      ```
+    explanation: "`for...of` is JavaScript's equivalent of Python's `for name in names`. Use `const` (not `let`) since the loop variable isn't reassigned within the body."

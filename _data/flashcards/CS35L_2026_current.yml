@@ -10,3 +10,5 @@ decks:
   - python_syntax_explain
   - python_syntax_generate
   - git_basic
+  - nodejs_syntax_explain
+  - nodejs_syntax_generate

@@ -17,7 +17,7 @@ steps:
     instructions: |
       ## The Lay of the Land
 
-      > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser and **write** a basic Node.js script.
+      > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser, **write** `console.log()` statements, and **use** `if`/`else if`/`else` and `for...of` control flow.
 
       You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, and even parts of VS Code. Here is how it fits into your mental model:
 
@@ -44,24 +44,61 @@ steps:
       What might it be for JavaScript running in Node.js? Maybe a mix of both?
       Not at all. JavaScript has its own syntax for printing to the console.
 
-      ### Task: Your First Node.js Script
+      ### Quick Syntax Reference: Control Flow
 
-      Open `hello.js` in the editor. Add a line to print your greeting:
+      JavaScript's control flow looks like C++ (braces required), not Python (no colons/indentation):
 
       ```javascript
-      console.log("Hello from Node.js!");
+      // if/else — braces required (unlike Python's colon + indentation)
+      if (score >= 90) {
+          console.log("A");
+      } else if (score >= 60) {
+          console.log("Pass");
+      } else {
+          console.log("Fail");
+      }
+
+      // for loop — same structure as C++
+      for (let i = 0; i < 5; i++) {
+          console.log(i);
+      }
+
+      // for...of — like Python's "for x in list"
+      const names = ["Alice", "Bob", "Carol"];
+      for (const name of names) {
+          console.log(name);
+      }
       ```
+
+      > **Python students:** No colons, no `elif` (use `else if`), and braces `{}` define blocks — not indentation. **C++ students:** Almost identical, but use `let`/`const` instead of type declarations in `for` loops.
+
+      > **Semicolons:** Unlike Python, JavaScript statements conventionally end with `;` (like C++). JavaScript can usually auto-insert them, but always using semicolons avoids subtle bugs and matches the style you will see in professional codebases.
+
+      ### Task: Your First Node.js Script
+
+      Open `hello.js` in the editor. Complete the three `TODO` items:
+
+      1. **Print** `"Hello from Node.js!"` using `console.log()`.
+      2. **Write an `if`/`else` block** that checks the variable `score`: if it is >= 60, print `"Pass"`, otherwise print `"Fail"`.
+      3. **Write a `for...of` loop** that iterates over the `languages` array and prints each language name.
 
       Click **▶ Run** to execute the script and see the output. This executes `node hello.js` in background.
       In this tutorial you focus just on writing Node.js. We run these commands for you.
-
-      > **Semicolons:** Unlike Python, JavaScript statements conventionally end with `;` (like C++). JavaScript can usually auto-insert them, but always using semicolons avoids subtle bugs and matches the style you will see in professional codebases.
 
     files:
       - path: "hello.js"
         content: |
           // Your first Node.js script!
-          // Task: Add a console.log() statement below to print "Hello from Node.js!"
+
+          // TODO 1: Print "Hello from Node.js!" using console.log()
+
+
+          // TODO 2: If score >= 60 print "Pass", otherwise print "Fail"
+          const score = 85;
+
+
+          // TODO 3: Use a for...of loop to print each language in the array.
+          const languages = ["C++", "Python", "JavaScript"];
 
         language: "javascript"
 
@@ -72,29 +109,47 @@ steps:
         - path: "hello.js"
           content: |
             // Your first Node.js script!
-            // Task: Add a console.log() statement below to print "Hello from Node.js!"
+
+            // TODO 1: Print "Hello from Node.js!"
             console.log("Hello from Node.js!");
+
+            // TODO 2: Pass/Fail check
+            const score = 85;
+            if (score >= 60) {
+                console.log("Pass");
+            } else {
+                console.log("Fail");
+            }
+
+            // TODO 3: Loop over languages
+            const languages = ["C++", "Python", "JavaScript"];
+            for (const lang of languages) {
+                console.log(lang);
+            }
           language: "javascript"
       explanation: |
         **`console.log()`:** The Node.js equivalent of Python's `print()` and C++'s `printf()`. It writes to stdout with a trailing newline.
 
-        The test checks two things: (1) the source contains `console.log`, and (2) the output includes `"Hello from Node.js"`. Both are satisfied by this one line.
+        **`if`/`else`:** Same structure as C++ — braces `{}` define blocks, conditions go in parentheses. Python students: no colons, no indentation-based blocks. With `score = 85`, the condition `score >= 60` is true, so it prints `"Pass"`.
 
-        Node.js scripts run top-to-bottom like Python scripts — no `main()` function, no compilation step. V8 JIT-compiles the JavaScript at runtime.
+        **`for...of`:** JavaScript's equivalent of Python's `for x in list`. Uses `const` since the variable is not reassigned inside the body. Prints `C++`, `Python`, `JavaScript` on separate lines.
 
     tests:
-      - description: "hello.js contains a console.log statement"
-        command: "assert(code.includes('console.log('), 'Add a console.log() call to hello.js')"
-        hints:
-          - text: "JavaScript's built-in function for printing is NOT `print()` like Python or `printf()` like C++. Look at the code comment in the instructions — what object and method does JavaScript use to write to stdout?"
-            condition: "code_missing: console.log("
-          - text: "Good — you have the right function. Make sure your file isn't empty and the syntax is complete (parentheses, quotes, semicolon)."
-            condition: "code_contains: console.log("
       - description: "Output includes 'Hello from Node.js!'"
-        command: "assert(output.includes('Hello from Node.js'), 'Your console.log should print \"Hello from Node.js!\"')"
+        command: "assert(output.includes('Hello from Node.js'), 'Add console.log(\"Hello from Node.js!\") to your script')"
         hints:
-          - text: "Your code runs but the output doesn't match. The test checks for an exact string — compare your message character-by-character with the expected output in the instructions."
-            condition: "code_contains: console.log("
+          - text: "JavaScript's built-in function for printing is NOT `print()` like Python or `printf()` like C++. It is `console.log(\"your message\")`."
+            condition: "code_missing: console.log("
+      - description: "Pass/Fail check prints 'Pass' for score 85"
+        command: "assert(output.includes('Pass'), 'With score = 85, your if/else block should print Pass (>= 60)')"
+        hints:
+          - text: "You need an `if`/`else` block that checks `score >= 60`. Remember: JavaScript uses parentheses around the condition and braces `{}` around each block — `if (score >= 60) { ... } else { ... }`."
+            condition: "code_missing: if"
+      - description: "Loop prints all three languages"
+        command: "assert(output.includes('C++') && output.includes('Python') && output.includes('JavaScript'), 'Use a for...of loop to print each language in the array')"
+        hints:
+          - text: "Use `for (const lang of languages) { console.log(lang); }` to iterate over the array. This is JavaScript's equivalent of Python's `for lang in languages:`."
+            condition: "code_missing: for"
 
     quiz:
       title: "Hello, Node.js! — Knowledge Check"
@@ -127,6 +182,24 @@ steps:
             - "The student is correct — Node.js is only suitable for front-end tooling"
           correct_index: 1
           explanation: "Node.js broke JavaScript out of the browser sandbox by providing OS-level access. Its non-blocking event loop makes it highly efficient for I/O-heavy workloads. Netflix, LinkedIn, and Uber all use Node.js for production backend services."
+
+        - question: "A Python student writes this JavaScript and gets a syntax error. What is wrong?\n```javascript\nif score >= 60:\n    console.log(\"Pass\")\nelse:\n    console.log(\"Fail\")\n```"
+          options:
+            - "JavaScript requires parentheses around the condition `(score >= 60)` and braces `{}` around blocks — not colons and indentation"
+            - "JavaScript does not support `if`/`else` — use a ternary operator instead"
+            - "The only problem is the missing semicolons after each `console.log()` call"
+            - "`console.log` needs to be replaced with `print()` in JavaScript"
+          correct_index: 0
+          explanation: "Two Python → JS syntax differences: (1) conditions go in parentheses `if (score >= 60)`, (2) blocks use braces `{ }` not colons + indentation. The corrected code: `if (score >= 60) { console.log(\"Pass\"); } else { console.log(\"Fail\"); }`."
+
+        - question: "What does this code print?\n```javascript\nconst items = [\"a\", \"b\", \"c\"];\nfor (const item of items) {\n    console.log(item);\n}\n```"
+          options:
+            - "`0`, `1`, `2` (the indices)"
+            - "`a`, `b`, `c` (the values, each on a new line)"
+            - "`[\"a\", \"b\", \"c\"]` (the entire array)"
+            - "An error — `const` cannot be used in a `for` loop"
+          correct_index: 1
+          explanation: "`for...of` iterates over **values** (like Python's `for item in list`). It prints each element on a separate line. If you needed indices, you would use `for (let i = 0; i < items.length; i++)` or `items.forEach((item, i) => ...)`. Using `const` is correct here — the variable is re-declared each iteration, not reassigned."
 
   # --------------------------------------------------------------------------
   # STEP 2: Variables, Types & The === Trap
@@ -184,6 +257,31 @@ steps:
       > **Debugging tip:** When a comparison behaves unexpectedly, use `typeof` to check what type a value actually is: `console.log(typeof myVar)` prints `"string"`, `"number"`, `"boolean"`, `"undefined"`, or `"object"`. This is your first debugging tool for type-related surprises.
 
       > **Feeling confused by `==` vs `===`?** That is completely normal — this trips up experienced developers too. The fact that you are learning the distinction now puts you ahead of most JavaScript beginners.
+
+      ### JavaScript's Two "Nothings": `null` vs `undefined`
+
+      C++ has `nullptr`. Python has `None`. JavaScript has **two** values meaning "nothing" — and they are not the same:
+
+      ```javascript
+      let score;                // declared but no value → undefined
+      console.log(score);       // undefined
+      console.log(typeof score); // "undefined"
+
+      let student = null;       // explicitly set to "no value"
+      console.log(student);     // null
+      console.log(typeof student); // "object" (yes, this is a known JS quirk)
+      ```
+
+      | | `undefined` | `null` |
+      |---|---|---|
+      | **Meaning** | "no value was assigned yet" | "intentionally empty" |
+      | **When you see it** | Uninitialized variables, missing function arguments, `req.query.missing` | You (or an API) explicitly set it |
+      | **`typeof`** | `"undefined"` | `"object"` (a famous JS bug that can never be fixed) |
+      | **Python equivalent** | No direct equivalent (Python raises `NameError`) | `None` |
+
+      > **Watch out:** `null == undefined` is `true` (coercion!), but `null === undefined` is `false`. One more reason to always use `===`.
+
+      You will encounter `undefined` constantly — every time you access a property that does not exist or forget a function argument. Recognizing it instantly will save you hours of debugging.
 
       ### Predict Before You Run
 
@@ -610,6 +708,39 @@ steps:
 
       In Step 3 you learned `.filter()` — selecting elements. Now you will learn to **transform** them with `.map()` and **combine** them with `.reduce()`. These three methods — `.filter()`, `.map()`, `.reduce()` — are the workhorses of data processing in JavaScript, and you will use all three inside Express route handlers starting in Step 5.
 
+      ### Objects and JSON — What You Have Been Using All Along
+
+      Since Step 3 you have been writing `{ name: "Alice", grade: 95 }`. These are **object literals** — JavaScript's equivalent of Python dictionaries and C++ structs:
+
+      ```javascript
+      const student = { name: "Alice", grade: 95 };
+
+      // Access properties with dot notation (most common):
+      console.log(student.name);      // "Alice"
+      console.log(student.grade);     // 95
+
+      // Or bracket notation (useful when the key is a variable):
+      const key = "name";
+      console.log(student[key]);      // "Alice"
+
+      // Add or update properties:
+      student.email = "alice@school.edu";
+      student.grade = 97;
+      ```
+
+      **JSON** (JavaScript Object Notation) is the text format for sending objects over HTTP — every API you will build uses it:
+
+      ```javascript
+      // Object → JSON string (for sending in a response):
+      const jsonStr = JSON.stringify(student);  // '{"name":"Alice","grade":97}'
+
+      // JSON string → Object (for reading a request body or file):
+      const parsed = JSON.parse('{"name":"Bob","grade":42}');
+      console.log(parsed.name);  // "Bob"
+      ```
+
+      > `res.json(data)` in Express calls `JSON.stringify` for you — but when reading files (Step 8–9), you will need `JSON.parse()` yourself.
+
       ### `.map()` — Transform Every Element
 
       `.map()` creates a new array by applying a callback to each element:
@@ -914,7 +1045,7 @@ steps:
 
       ### What is Express?
 
-      Express is a web framework for Node.js. While Node.js has a built-in `http` module, almost every real project uses Express because it makes routing easy.
+      Express is a web framework for Node.js. While Node.js has a built-in `http` module, almost every real project uses Express or a similar library, because it makes routing so much easier.
 
       ```
       Express lets you say:

@@ -116,3 +116,52 @@ cards:
       const port = config.port ?? 3000;
       ```
     answer: "**Optional chaining** `?.` safely accesses nested properties — returns `undefined` instead of throwing if any link is `null`/`undefined`. **Nullish coalescing** `??` provides a default only for `null`/`undefined` (unlike `||`, which also replaces `0`, `''`, and `false`)."
+
+  - id: 17
+    question: |
+      ```javascript
+      let x;
+      console.log(x);
+      let y = null;
+      console.log(y);
+      ```
+    answer: "First prints `undefined` — a declared variable with no value assigned is `undefined`. Second prints `null` — explicitly set to 'no value'. JavaScript has two 'nothings': `undefined` (missing) and `null` (intentionally empty). `typeof undefined` is `\"undefined\"`, but `typeof null` is `\"object\"` (a famous JS bug)."
+
+  - id: 18
+    question: |
+      ```javascript
+      const student = { name: "Alice", grade: 95 };
+      console.log(student.name);
+      console.log(student["grade"]);
+      ```
+    answer: "Prints `Alice` then `95`. **Dot notation** (`student.name`) and **bracket notation** (`student[\"grade\"]`) both access object properties. Bracket notation is useful when the key is a variable: `const key = \"grade\"; student[key]`."
+
+  - id: 19
+    question: |
+      ```javascript
+      const obj = { name: "Bob", grade: 42 };
+      const json = JSON.stringify(obj);
+      const back = JSON.parse(json);
+      ```
+    answer: "`JSON.stringify(obj)` converts the object to the string `'{\"name\":\"Bob\",\"grade\":42}'`. `JSON.parse(json)` converts that string back to an object. JSON is the standard format for sending data over HTTP — `res.json()` in Express calls `JSON.stringify` for you."
+
+  - id: 20
+    question: |
+      ```javascript
+      const students = [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }];
+      const found = students.find(s => s.id === 2);
+      ```
+    answer: "`found` is `{ id: 2, name: \"Bob\" }`. **`.find()`** returns the **first** element where the callback returns `true`, or `undefined` if no match. Unlike `.filter()` which returns an array, `.find()` returns a single element."
+
+  - id: 21
+    question: |
+      ```javascript
+      if (score >= 90) {
+          console.log("A");
+      } else if (score >= 60) {
+          console.log("Pass");
+      } else {
+          console.log("Fail");
+      }
+      ```
+    answer: "JavaScript **control flow** uses C++-style braces `{}` (not Python's colon + indentation). There is no `elif` — use `else if`. Braces are required for multi-line blocks."

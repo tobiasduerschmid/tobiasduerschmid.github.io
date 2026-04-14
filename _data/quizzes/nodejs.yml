@@ -265,3 +265,59 @@ questions:
       - "Nothing is wrong — 2 seconds is an acceptable response time for game servers"
     correct_index: 1
     explanation: "This connects the Event Loop (Restaurant metaphor) to a real scenario. The Chef is stuck computing AI moves for 2 seconds — during which EVERY other player's request sits in the queue. `async/await` alone won't help because the computation is CPU-bound, not I/O-bound. Worker Threads move the heavy computation off the main thread."
+
+  - question: |
+      **Arrange** the lines to look up a student by ID from a roster array, handle the case where the student isn't found, and return their data as JSON.
+    type: parsons
+    lines:
+      - "router.get('/students/:id', async (req, res) => {"
+      - "    const roster = await fetchRoster();"
+      - "    const student = roster.find(s => s.id === Number(req.params.id));"
+      - "    if (!student) { return res.json({ error: 'Not found' }); }"
+      - "    res.json(student);"
+      - "});"
+    distractors:
+      - "    const student = roster.filter(s => s.id === req.params.id);"
+      - "    if (student === null) { return res.json({ error: 'Not found' }); }"
+    explanation: "`.find()` returns the first match or `undefined` (not `null`). The distractor uses `.filter()` which returns an array, not a single object. The second distractor checks `=== null` but `.find()` returns `undefined` when no match is found — checking `!student` correctly handles both `undefined` and `null`. Also note `Number(req.params.id)` converts the string param to match the numeric `id` property."
+
+  - question: |
+      **Arrange** the lines to create a JavaScript object, convert it to a JSON string, parse it back, and log a property.
+    type: parsons
+    lines:
+      - "const student = { name: 'Alice', grade: 95 };"
+      - "const jsonStr = JSON.stringify(student);"
+      - "const parsed = JSON.parse(jsonStr);"
+      - "console.log(parsed.name);"
+    distractors:
+      - "const jsonStr = student.toJSON();"
+      - "const parsed = JSON.decode(jsonStr);"
+    explanation: "`JSON.stringify()` converts an object to a JSON string. `JSON.parse()` converts a JSON string back to an object. There is no `.toJSON()` method on plain objects and no `JSON.decode()` — these are common confusions from other languages."
+
+  - question: |
+      What is the value of `x` after this code runs?
+      ```javascript
+      let x;
+      console.log(x);
+      console.log(typeof x);
+      ```
+    options:
+      - "`x` is `null` and `typeof x` is `\"null\"`"
+      - "`x` is `undefined` and `typeof x` is `\"undefined\"` — a declared variable with no value assigned is `undefined`, not `null`"
+      - "The code throws a `ReferenceError` because `x` has no value"
+      - "`x` is `0` — JavaScript auto-initializes numeric variables to zero"
+    correct_index: 1
+    explanation: "In JavaScript, `undefined` means 'declared but no value assigned.' This is different from Python (which raises `NameError` for uninitialized variables) and from `null` (which means 'intentionally empty'). `typeof undefined` is `\"undefined\"`. Confusingly, `typeof null` is `\"object\"` — a famous JS bug."
+
+  - question: |
+      **Arrange** the lines to safely access a nested property, provide a default, and log the result.
+    type: parsons
+    display: inline
+    lines:
+      - "const user = { profile: { address: null } };"
+      - "const city = user?.profile?.address?.city ?? 'Unknown';"
+      - "console.log(city);"
+    distractors:
+      - "const city = user.profile.address.city || 'Unknown';"
+      - "const city = user?.profile?.address?.city != null ? city : 'Unknown';"
+    explanation: "Optional chaining `?.` safely navigates: when `address` is `null`, `address?.city` returns `undefined` instead of throwing. `??` defaults only for `null`/`undefined`. The `||` distractor would also replace empty strings and `0` with the default. The ternary distractor references `city` before it's defined."
