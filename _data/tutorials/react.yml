@@ -869,9 +869,9 @@ steps:
 
       ---
 
-      ### Going Deeper (optional)
+      ### Going Deeper — Closures and Batching
 
-      > You do not need the material below for the current task. Revisit this section when you encounter unexpected state behavior in your own projects.
+      > The two patterns below come up frequently in real React code and will appear in later quizzes. Read through them now — even if you don't need them for the current task.
 
       ### ⚠️ Watch Out: Stale Closures
 
@@ -1150,6 +1150,10 @@ steps:
     instructions: |
       > **Learning objective:** After this step you will be able to **render** arrays as lists using `.map()` and **explain** why stable `key` props are essential for React's reconciliation.
 
+      ### A Note on `.map()` — A New Way to Loop
+
+      If you have always used `for` loops to iterate over arrays (as in C++ and Python), the `.map()` pattern will feel unfamiliar at first. You might think: "Why can't I just use a `for` loop?" You can — but `.map()` produces a new array without mutating the original, which is exactly what React needs. Give it a few tries and it will click.
+
       ### JavaScript Array Methods — Quick Reference
 
       This step and the next use three JavaScript array methods heavily. If any are unfamiliar, review them here before continuing:
@@ -1211,12 +1215,12 @@ steps:
       - path: "step5/App.jsx"
         content: |
           const tasks = [
-            { id: 1, text: 'Set up React development environment', done: true },
-            { id: 2, text: 'Learn about components and JSX',       done: true },
-            { id: 3, text: 'Understand props and data flow',       done: true },
-            { id: 4, text: 'Master useState for interactivity',    done: false },
-            { id: 5, text: 'Render lists with .map() and keys',    done: false },
-            { id: 6, text: 'Build a real React app',               done: false },
+            { id: 1, text: 'Set up dark mode on literally everything',     done: true },
+            { id: 2, text: 'Star mass GitHub repos to read later',         done: true },
+            { id: 3, text: 'Survive a 3-hour lab without crashing',        done: true },
+            { id: 4, text: 'Start the side project from 3 months ago',     done: false },
+            { id: 5, text: 'Actually read error messages before Googling',  done: false },
+            { id: 6, text: 'Deploy something to production',                done: false },
           ];
 
           const { ListGroup } = ReactBootstrap;
@@ -1224,7 +1228,7 @@ steps:
           function TaskList() {
             return (
               <div className="p-4 checklist-container">
-                <h2 className="h4 mb-3">React Learning Checklist</h2>
+                <h2 className="h4 mb-3">After-Lecture Side Quests</h2>
 
                 <ListGroup>
                   {/* Task: Replace this with a .map() call over tasks */}
@@ -1254,18 +1258,18 @@ steps:
             const { ListGroup } = ReactBootstrap;
 
             const tasks = [
-              { id: 1, text: 'Set up React development environment', done: true },
-              { id: 2, text: 'Learn about components and JSX',       done: true },
-              { id: 3, text: 'Understand props and data flow',       done: true },
-              { id: 4, text: 'Master useState for interactivity',    done: false },
-              { id: 5, text: 'Render lists with .map() and keys',    done: false },
-              { id: 6, text: 'Build a real React app',               done: false },
+              { id: 1, text: 'Set up dark mode on literally everything',     done: true },
+              { id: 2, text: 'Star mass GitHub repos to read later',         done: true },
+              { id: 3, text: 'Survive a 3-hour lab without crashing',        done: true },
+              { id: 4, text: 'Start the side project from 3 months ago',     done: false },
+              { id: 5, text: 'Actually read error messages before Googling',  done: false },
+              { id: 6, text: 'Deploy something to production',                done: false },
             ];
 
             function TaskList() {
               return (
                 <div className="p-4 checklist-container">
-                  <h2 className="h4 mb-3">React Learning Checklist</h2>
+                  <h2 className="h4 mb-3">After-Lecture Side Quests</h2>
 
                   <ListGroup>
                     {tasks.map(task => (
@@ -1401,6 +1405,10 @@ steps:
     instructions: |
       > **Learning objective:** After this step you will be able to **use** conditional rendering patterns (`&&`, ternary) in JSX and **implement** interactive list filtering with `useState`.
 
+      ### Combining Skills — This Is the Hard Part
+
+      This step is a turning point: you are combining `useState` (Step 4) with `.map()` and `.filter()` (Step 5) into a single interactive component. If it feels harder than previous steps, that is because it IS harder — you are integrating multiple skills simultaneously for the first time. Take it one piece at a time: get the buttons rendering first, then wire up the filter logic.
+
       ## Conditional Rendering
 
       React uses plain JavaScript conditions inside JSX:
@@ -1480,12 +1488,12 @@ steps:
       - path: "step6/App.jsx"
         content: |
           const initialTasks = [
-            { id: 1, text: 'Set up React development environment', done: true },
-            { id: 2, text: 'Learn about components and JSX',       done: true },
-            { id: 3, text: 'Understand props and data flow',       done: true },
-            { id: 4, text: 'Master useState for interactivity',    done: false },
-            { id: 5, text: 'Render lists with .map() and keys',    done: false },
-            { id: 6, text: 'Build a real React app',               done: false },
+            { id: 1, text: 'Set up dark mode on literally everything',     done: true },
+            { id: 2, text: 'Star mass GitHub repos to read later',         done: true },
+            { id: 3, text: 'Survive a 3-hour lab without crashing',        done: true },
+            { id: 4, text: 'Start the side project from 3 months ago',     done: false },
+            { id: 5, text: 'Actually read error messages before Googling',  done: false },
+            { id: 6, text: 'Deploy something to production',                done: false },
           ];
 
           const { Button, ButtonGroup, ListGroup } = ReactBootstrap;
@@ -1498,7 +1506,7 @@ steps:
 
             return (
               <div className="p-4 checklist-container">
-                <h2 className="h4 mb-3">React Learning Checklist</h2>
+                <h2 className="h4 mb-3">After-Lecture Side Quests</h2>
 
                 {/* Task: Add filter buttons — "All", "Active", "Done" */}
                 <ButtonGroup className="mb-3">
@@ -1536,12 +1544,12 @@ steps:
             const { Button, ButtonGroup, ListGroup } = ReactBootstrap;
 
             const initialTasks = [
-              { id: 1, text: 'Set up React development environment', done: true },
-              { id: 2, text: 'Learn about components and JSX',       done: true },
-              { id: 3, text: 'Understand props and data flow',       done: true },
-              { id: 4, text: 'Master useState for interactivity',    done: false },
-              { id: 5, text: 'Render lists with .map() and keys',    done: false },
-              { id: 6, text: 'Build a real React app',               done: false },
+              { id: 1, text: 'Set up dark mode on literally everything',     done: true },
+              { id: 2, text: 'Star mass GitHub repos to read later',         done: true },
+              { id: 3, text: 'Survive a 3-hour lab without crashing',        done: true },
+              { id: 4, text: 'Start the side project from 3 months ago',     done: false },
+              { id: 5, text: 'Actually read error messages before Googling',  done: false },
+              { id: 6, text: 'Deploy something to production',                done: false },
             ];
 
             function TaskList() {
@@ -1555,7 +1563,7 @@ steps:
 
               return (
                 <div className="p-4 checklist-container">
-                  <h2 className="h4 mb-3">React Learning Checklist</h2>
+                  <h2 className="h4 mb-3">After-Lecture Side Quests</h2>
 
                   <ButtonGroup className="mb-3">
                     <Button variant={filter === 'all' ? 'primary' : 'outline-secondary'} onClick={() => setFilter('all')}>All</Button>
@@ -1616,7 +1624,7 @@ steps:
               assert(items.length === 3,
                 'After clicking "Done", exactly 3 completed tasks should be visible. Found: ' + items.length + '. Wire onClick to call setFilter and use filter state in visibleTasks.');
               resolve();
-            }, 100);
+            }, 400);
           });
         hints:
           - text: "The list isn't filtering. Did you replace `const visibleTasks = initialTasks;` with a `.filter()` call that uses the `filter` state variable? Check that clicking the button actually changes `filter` via `setFilter`."
@@ -1636,7 +1644,7 @@ steps:
               assert(items.length === 3,
                 'After clicking "Active", exactly 3 incomplete tasks should be visible. Found: ' + items.length + '.');
               resolve();
-            }, 100);
+            }, 400);
           });
         hints:
           - text: "The 'Active' filter should show tasks where `task.done` is `false`. In your filter logic, what condition means 'not done'? (Hint: the `!` operator)"
@@ -1656,7 +1664,7 @@ steps:
               assert(allBtn && !allBtn.classList.contains('btn-primary'),
                 'Only the active filter button should be highlighted — "All" should not have btn-primary when "Done" is selected.');
               resolve();
-            }, 100);
+            }, 400);
           });
         hints:
           - text: "The button isn't changing color. Use a **ternary** in the `variant` prop to switch between `'primary'` and `'outline-secondary'` based on whether `filter` matches that button's value."
@@ -1866,6 +1874,10 @@ steps:
       ```
 
       Prop drilling is not a bug, but it makes code harder to maintain. If you are drilling more than 2-3 levels, consider React's **Context API** (not covered in this tutorial) to share data without threading it through every layer.
+
+      ### Multiple Files — How They Connect
+
+      This is the first step with **three separate files** (`Avatar.jsx`, `StatBadge.jsx`, `App.jsx`). In a real React project, each component lives in its own file and you use `import`/`export` to connect them. In this tutorial, all files are loaded into the same page automatically — so `App.jsx` can use `Avatar` and `StatBadge` without any imports. Just define the component in its file and use it by name in another file.
 
       ### Can You Beat the Renderer?
 
@@ -2079,7 +2091,7 @@ steps:
         - **Composition over inheritance:** `ProfileCard` is built by composing `Avatar` + `StatBadge`, not by inheriting from either.
 
     tests:
-      - description: "Two ProfileCard sections are rendered (two user cards)"
+      - description: "All ProfileCards are rendered (one avatar per user)"
         command: |
           var root = frame.contentDocument.getElementById('root');
           var cards = root.querySelectorAll('img');
@@ -2216,7 +2228,7 @@ steps:
 
       In Steps 1-7 you had scaffolding: pre-built component signatures, provided data, and step-by-step task lists. This step has **none of that**. You decide the component hierarchy, where state lives, and how data flows. No hints, no scaffolding — just you and everything you've learned.
 
-      If you feel uncertain, that's actually a good sign: you know enough to see the design space, but haven't yet internalized the patterns through unguided practice. That's exactly what this step is for. Work through "Thinking in React" below — it'll guide your decisions.
+      If you feel uncertain, that's actually a good sign: you know enough to see the design space, but haven't yet internalized the patterns through unguided practice. That's exactly what this step is for. Every professional React developer went through this exact transition — from "I can follow tutorials" to "I can build from scratch." It is supposed to feel like a stretch. Work through "Thinking in React" below — it'll guide your decisions.
 
       ### Requirements
 
@@ -2447,18 +2459,21 @@ steps:
             condition: "code_missing: useState"
       - description: "Uses at least 3 component functions"
         command: |
-          var matches = code.match(/function\s+[A-Z]\w*\s*\(/g) || [];
-          assert(matches.length >= 3,
-            'Define at least 3 components (e.g. ProductCard, CartSummary, FilterBar). Found: ' + matches.length);
+          var fns = code.match(/function\s+[A-Z]\w*\s*\(/g) || [];
+          var arrows = code.match(/(?:const|let|var)\s+[A-Z]\w*\s*=\s*(?:\(|\w+\s*=>)/g) || [];
+          var total = fns.length + arrows.length;
+          assert(total >= 3,
+            'Define at least 3 components (e.g. ProductCard, CartSummary, FilterBar). Found: ' + total);
         hints:
           - text: "Apply **Thinking in React**: break your UI into components. Each concern gets its own function — one for displaying a product, one for the cart summary, one for the filter bar. Component names must be **Capitalized**."
             condition: "code_contains: useState"
 
     quiz:
-      title: "Integration — Knowledge Check"
+      title: "Final Assessment — Everything You've Learned"
       min_score: 0.8
       shuffle: true
       questions:
+        # ---- Integration questions (from original Step 8 quiz) ----
         - question: |
             **Evaluate** this code for a mini store. What are the bugs?
             ```jsx
@@ -2537,8 +2552,6 @@ steps:
             This combines the immutability principle (Step 4) with array operations (Step 5).
 
         - question: |
-            *(Spaced review — Step 6: Conditional Rendering)*
-
             A product card should show "In Cart" only when the product is already in the cart array. Which JSX pattern is correct?
           type: single
           options:
@@ -2553,3 +2566,195 @@ steps:
             after state updates create new arrays — `[...cart, product]` creates a new array, so `cart.includes(product)` may fail).
             Option A is invalid syntax — ternary requires both branches (`? ... : ...`). Option C is invalid — `if` statements
             cannot appear inside JSX expression braces (JSX only accepts expressions, not statements).
+
+        # ---- Comprehensive review: Steps 1-7 ----
+        - question: |
+            *(Comprehensive review — Step 1: Declarative Paradigm)*
+
+            A teammate suggests using `document.getElementById('counter').textContent = newCount` inside a React component to update the display. What happens?
+          type: single
+          options:
+            - "It works perfectly — directly updating the DOM is the fastest way to change text"
+            - "It works initially, but React overwrites the change on the next re-render because React owns the DOM and rebuilds it from state — the manual update is lost"
+            - "React throws an error preventing any direct DOM access inside components"
+            - "The DOM update persists because React never touches elements it did not create"
+          correct_index: 1
+          explanation: |
+            React's declarative model means React owns the DOM. When state changes, React re-renders the
+            component and replaces the DOM content with what the JSX describes. Any manual DOM changes
+            are overwritten. This is why you update **state**, not the DOM — React handles the DOM for you.
+
+        - question: |
+            *(Comprehensive review — Step 2: JSX)*
+
+            A component renders but the event handler never fires: `<button onclick={() => setCount(count + 1)}>Click</button>`. The button appears but clicking does nothing. What is wrong?
+          type: single
+          options:
+            - "The arrow function syntax is incorrect — use a regular function instead"
+            - "JSX uses camelCase for event handlers: `onClick`, not `onclick`. Lowercase `onclick` is silently ignored by React"
+            - "You need to call `.bind(this)` on the handler for it to work in JSX"
+            - "The `setCount` function cannot be called inside an arrow function"
+          correct_index: 1
+          explanation: |
+            JSX event handlers use camelCase: `onClick`, `onChange`, `onSubmit`. The lowercase HTML
+            attribute `onclick` is not recognized by React and is silently ignored, so the button renders
+            but never responds to clicks. This is a very common "why doesn't my button work?" bug.
+
+        - question: |
+            *(Comprehensive review — Step 3: Props)*
+
+            A `ProfileCard` component accepts `user` as a prop. Inside it, you write `user.name = 'Anonymous'` to hide the real name. What is the problem?
+          type: single
+          options:
+            - "Only `ProfileCard` sees the change — props are copied when passed to children"
+            - "The mutation changes the original object in the parent, corrupting data for other components that share the same `user` object — props should be treated as read-only"
+            - "React detects the mutation and triggers a strict-mode error"
+            - "The change is ignored — React freezes all prop objects automatically"
+          correct_index: 1
+          explanation: |
+            Props are passed **by reference** in JavaScript. Mutating `user.name` changes the original object
+            the parent holds, which can corrupt data across the entire app. Props must be treated as
+            **read-only** — if you need to transform data, create a local variable:
+            `const displayName = user.name || 'Anonymous'`.
+
+        - question: |
+            *(Comprehensive review — Step 4: useState)*
+
+            What is wrong with `<button onClick={handleClick()}>Go</button>`?
+          type: single
+          options:
+            - "Nothing — this is the correct way to attach a click handler"
+            - "`handleClick()` **calls** the function immediately during render instead of passing a reference. Use `onClick={handleClick}` or `onClick={() => handleClick()}`"
+            - "Event handlers must be arrow functions — `handleClick` is not valid"
+            - "The button text 'Go' conflicts with the `onClick` attribute"
+          correct_index: 1
+          explanation: |
+            `handleClick()` with parentheses calls the function **right now**, during the render pass.
+            This usually causes an infinite loop (if `handleClick` calls a setter, which re-renders,
+            which calls `handleClick()` again). Pass a **reference**: `onClick={handleClick}` or wrap
+            in an arrow function: `onClick={() => handleClick()}`.
+
+        - question: |
+            *(Comprehensive review — Step 5: Keys)*
+
+            Two separate `<ul>` lists in the same component both have items with `key="1"`, `key="2"`, etc. Does this cause a problem?
+          type: single
+          options:
+            - "Yes — keys must be globally unique across the entire application"
+            - "No — keys only need to be unique among siblings within the same parent element. Two separate lists can reuse the same keys"
+            - "Yes — React uses a global key registry, so duplicates cause a warning and fallback to index-based reconciliation"
+            - "No — but only if the lists render different component types"
+          correct_index: 1
+          explanation: |
+            Keys only need to be unique **among siblings** — within the same `.map()` call or parent element.
+            Two separate `<ul>` lists can both have items with `key="1"`. React scopes key comparisons
+            to each parent, not globally.
+
+        - question: |
+            *(Comprehensive review — Step 7: Composition)*
+
+            You need a `WarningDialog` and an `InfoDialog` that share the same layout (title bar, close button, body area) but show different content. Which approach is most aligned with React's philosophy?
+          type: single
+          options:
+            - "Create a `Dialog` base class and extend it: `WarningDialog extends Dialog` and `InfoDialog extends Dialog`"
+            - "Create a single `Dialog` component that accepts `children` and a `variant` prop — compose specific dialogs by nesting different content inside `<Dialog>`"
+            - "Copy-paste the shared layout code into both components — duplication is simpler than abstraction"
+            - "Use a global `dialogType` state variable that switches the rendered content with an if-else chain"
+          correct_index: 1
+          explanation: |
+            React favors **composition over inheritance**. A generic `Dialog` component with `children` lets
+            you compose any specific dialog: `<Dialog variant="warning"><p>Be careful!</p></Dialog>`.
+            This avoids the fragile base class problem of inheritance and the maintenance burden of copy-paste.
+
+        - question: |
+            *(Comprehensive review — Design challenge)*
+
+            You are building a playlist app. Users can add songs, remove songs, and filter by genre. Which correctly identifies the **minimal** state?
+          type: single
+          options:
+            - "Three state variables: `songs` (array), `filteredSongs` (array), `selectedGenre` (string)"
+            - "Two state variables: `songs` (array) and `selectedGenre` (string) — `filteredSongs` is derived by filtering `songs` on each render"
+            - "One state variable: `appState` (object containing songs, filteredSongs, and selectedGenre)"
+            - "Four state variables: `songs`, `selectedGenre`, `songCount`, and `genreList`"
+          correct_index: 1
+          explanation: |
+            Store the **minimum** state: `songs` (the source of truth) and `selectedGenre` (the user's
+            current filter choice). `filteredSongs` is **derived** — computed as
+            `songs.filter(s => selectedGenre === 'All' || s.genre === selectedGenre)` on every render.
+            `songCount` is just `songs.length`. Storing derived data in state creates sync bugs.
+
+  # --------------------------------------------------------------------------
+  # STEP 9: You Made It! — Summary & Celebration
+  # Pedagogy: No tasks, no tests — just a celebration and summary of
+  #           everything learned. Reinforces the growth arc from
+  #           "Hello, React!" to a full React app.
+  # --------------------------------------------------------------------------
+  - title: "You Made It!"
+    instructions: |
+      ## You Built a React App From Scratch
+
+      Take a moment to appreciate what you just did. You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of React and modern declarative UI development.
+
+      ### Here is everything you learned:
+
+      **The Declarative Paradigm (Step 1)**
+      - The fundamental shift: describe *what* the UI should look like, not *how* to update it
+      - React's mental model: UI = f(state) — your component is a function from data to UI
+      - The Virtual DOM: React diffs old and new trees and patches only what changed
+
+      **Components & JSX (Step 2)**
+      - Components are functions that return UI — React's fundamental building block
+      - JSX is JavaScript, not HTML: `className`, self-closing tags, camelCase events, single root
+      - Babel compiles JSX to `React.createElement()` calls — it is syntactic sugar, not magic
+
+      **Props — Data Flowing Down (Step 3)**
+      - Props are function arguments for components — they parameterize behavior
+      - Props are read-only: never mutate them inside a child component
+      - Destructuring unpacks props cleanly: `function Card({ title, price }) { ... }`
+      - Conditional rendering with `&&`: show UI only when a condition is true
+
+      **State — Making Components Remember (Step 4)**
+      - `useState` gives components persistent memory that survives re-renders
+      - Calling the setter triggers a re-render — plain variables do not
+      - State updates are immutable: create new arrays/objects with spread (`...`), never mutate in place
+      - The functional update form (`setCount(prev => prev + 1)`) avoids stale closures
+
+      **Lists & Keys (Step 5)**
+      - `.map()` transforms data arrays into JSX arrays — React's list rendering pattern
+      - `key` props tell React which items are stable across re-renders
+      - Never use array index as a key for dynamic lists — use stable IDs from your data
+
+      **Conditional Rendering & Filtering (Step 6)**
+      - `&&` for show/hide, ternary for either/or — both are JSX expression patterns
+      - Store minimal state, derive everything else: `visibleItems = items.filter(...)`
+      - Watch out: `{0 && <Component />}` renders `0`, not nothing — use `{count > 0 && ...}`
+
+      **Composition — Thinking in React (Step 7)**
+      - Composition over inheritance: build complex UIs from small, generic components
+      - The `children` prop makes components into flexible containers
+      - Lifting state up: shared state belongs in the lowest common ancestor
+      - The "Thinking in React" methodology: decompose → static version → add state → add data flow
+
+      **Full Integration (Step 8)**
+      - You designed and built a complete React app with zero scaffolding
+      - You chose the component hierarchy, decided where state lives, and wired up data flow
+      - You combined every skill: components, props, state, lists, keys, filtering, composition
+
+      ### What Comes Next
+
+      You now have the foundation to build real React applications. Here are natural next steps:
+
+      - **useEffect** — Side effects like API calls, timers, and event listeners
+      - **React Router** — Multi-page navigation in single-page apps
+      - **Context API** — Sharing state without prop drilling
+      - **Custom Hooks** — Extracting reusable stateful logic
+      - **TypeScript + React** — Type safety for props and state (your C++ instincts will love this)
+      - **Testing** — React Testing Library for component tests
+
+      ### One Last Thing
+
+      Remember Step 4, when a regular variable didn't update the UI and everything felt broken? You got past that. Remember Step 8, when the scaffolding disappeared and you had to design everything yourself? You built it anyway.
+
+      Every concept that felt confusing at first — JSX syntax, the declarative paradigm, immutable state updates — is now a tool in your kit. The next time something in React doesn't click immediately, remember: you have already proven you can push through the confusion and come out the other side.
+
+      Now go build something.
