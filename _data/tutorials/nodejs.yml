@@ -103,10 +103,10 @@ steps:
       questions:
         - question: "JavaScript was originally designed to run only inside a web browser. Why can Node.js run on a server?"
           options:
-            - "Node.js is a completely different language that only looks like JavaScript. A new special syntax was designed to enable server-side functionality."
-            - "Node.js embeds a special engine plus libraries, giving JavaScript access to the operating system, filesystem, and networking outside the browser."
-            - "Node.js compiles JavaScript to C++ before execution, which enables server usage just like any other program would."
-            - "Browser vendors updated their runtimes to support server-side execution."
+            - "Node.js is a completely different language with new syntax designed specifically for server-side functionality."
+            - "Node.js embeds V8 and libuv, giving JavaScript access to the OS and networking outside the browser."
+            - "Node.js compiles JavaScript to C++ before execution, which enables server usage just like any other compiled program would."
+            - "Browser vendors updated their JavaScript runtimes to natively support server-side execution and filesystem access."
           correct_index: 1
           explanation: "Node.js bundles Google's V8 engine (which compiles JS to machine code) with libuv (a C library for async I/O). This gives JavaScript everything it needs to work as a backend runtime — file access, TCP sockets, and a non-blocking Event Loop."
 
@@ -180,6 +180,8 @@ steps:
       ```
 
       This is **negative transfer**: your existing `==` intuition from C++ and Python does not transfer to JavaScript. Use `===` and it matches your expectation.
+
+      > **Debugging tip:** When a comparison behaves unexpectedly, use `typeof` to check what type a value actually is: `console.log(typeof myVar)` prints `"string"`, `"number"`, `"boolean"`, `"undefined"`, or `"object"`. This is your first debugging tool for type-related surprises.
 
       > **Feeling confused by `==` vs `===`?** That is completely normal — this trips up experienced developers too. The fact that you are learning the distinction now puts you ahead of most JavaScript beginners.
 
@@ -305,19 +307,19 @@ steps:
       questions:
         - question: "Why does `1 == '1'` evaluate to `true` in JavaScript, when the same comparison in Python or C++ would be `false`?"
           options:
-            - "JavaScript automatically converts (coerces) the string '1' to the number 1 before comparing with =="
-            - "The string '1' and number 1 are actually the same type in JavaScript"
-            - "This is a known bug in older JavaScript engines that has since been fixed"
-            - "== in JavaScript compares memory addresses, which happen to be equal here"
+            - "JavaScript's `==` coerces the string `'1'` to the number `1` before comparing"
+            - "The string `'1'` and number `1` are actually the same type in JavaScript's type system"
+            - "This is a known bug in older JavaScript engines that has since been patched in ES6"
+            - "`==` in JavaScript compares memory addresses, which happen to be equal for small values"
           correct_index: 0
           explanation: "JavaScript's == performs *implicit type coercion* — it converts values to a common type before comparing. This creates traps: `0 == false`, `'' == false`, `null == undefined`. The === operator skips coercion and requires both value AND type to match, behaving exactly like == in Python and C++. Always use ===."
 
         - question: "A student writes `let MAX_RETRY = 3` but never reassigns it in 200 lines of code. Why is `const MAX_RETRY = 3` a better choice?"
           options:
-            - "const variables execute faster than let variables at runtime"
-            - "const prevents accidental reassignment and signals to readers that this value is intentionally fixed throughout the program"
-            - "let variables are automatically garbage collected, while const variables persist in memory"
-            - "There is no practical difference — const and let behave identically"
+            - "`const` variables are stored in a faster memory region than `let` variables, improving runtime performance"
+            - "`const` prevents accidental reassignment and signals intent to readers"
+            - "`let` variables are automatically garbage collected, while `const` variables persist across function calls"
+            - "There is no practical difference — `const` and `let` behave identically for primitive values"
           correct_index: 1
           explanation: "`const` prevents accidental reassignment and communicates intent. It is the JavaScript equivalent of C++'s `const` keyword. Unlike C++ const, JavaScript's `const` for objects and arrays prevents rebinding the variable, but does not make the contents immutable."
 
@@ -332,10 +334,10 @@ steps:
 
         - question: "The tutorial says to avoid `var` and always use `let` or `const`. Why?"
           options:
-            - "`var` is slower than `let` and `const` at runtime"
-            - "`var` ignores block scope and hoists declarations — violating the scoping rules you know from C++ and Python. `let` and `const` behave like C++/Python block-scoped variables."
-            - "`var` was removed from JavaScript in ES6 and causes syntax errors in modern engines"
-            - "`var` and `let` are identical — the advice is just a coding style preference"
+            - "`var` is slower than `let` and `const` because V8 cannot optimize hoisted declarations"
+            - "`var` ignores block scope and hoists declarations, violating the scoping rules from C++ and Python"
+            - "`var` was removed from JavaScript in ES6, so it causes syntax errors in modern Node.js versions"
+            - "`var` and `let` are identical in behavior — the advice is purely a coding style preference"
           correct_index: 1
           explanation: "In C++ and Python, a variable declared inside a `for` or `if` block stays inside that block. `var` violates this — it leaks out of blocks and can be used before its declaration line (hoisting). `let` and `const` restore the block-scoping behavior you expect. This is why modern JavaScript linters flag every use of `var`."
 
@@ -415,6 +417,11 @@ steps:
       ### Predict Before You Code
 
       What does `[10, 20, 30, 40, 50].filter(n => n > 25)` return? Write your prediction before reading on.
+
+      ### Investigate (after completing the task)
+
+      - What happens if you change `>=` to `>` in your passing filter? Which students change?
+      - What does `students.filter(s => s.grade >= 60).length` return? (Hint: not an array.)
 
       ### Task: Arrow Functions & Filtering
 
@@ -545,9 +552,9 @@ steps:
       questions:
         - question: "What does it mean that functions are 'first-class values' in JavaScript?"
           options:
-            - "Functions execute faster than other values at runtime"
-            - "Functions can be stored in variables, passed as arguments to other functions, and returned from functions"
-            - "Functions must always be declared before any other values in a file"
+            - "Functions execute faster than other value types at runtime due to JIT optimization"
+            - "Functions can be stored in variables, passed as arguments, and returned from other functions"
+            - "Functions must always be declared at the top of a file before any other values"
             - "Functions have a special protected memory region that prevents garbage collection"
           correct_index: 1
           explanation: "A first-class value is one that can be used anywhere any other value can: stored in a variable, passed as an argument, returned from a function, placed in an array. This is why `numbers.filter(n => n > 2)` works — you pass a function just like you'd pass a number. This is the key to callbacks and the Express route handlers you will write in Step 5."
@@ -572,19 +579,19 @@ steps:
 
         - question: "A student writes `numbers.filter(isEven)` where `isEven` is a function. Why does this work without calling `isEven()` with parentheses?"
           options:
-            - "JavaScript automatically adds the parentheses at runtime"
-            - "`isEven` without parentheses is a **reference to the function** — `.filter()` will call it for each element. Adding `()` would call it immediately and pass the *return value* instead"
-            - "`.filter()` accepts both function references and function calls interchangeably"
-            - "This is a bug — `isEven` without parentheses passes `undefined`"
+            - "JavaScript automatically detects when parentheses are missing and adds them at runtime"
+            - "`isEven` without `()` is a reference to the function — `.filter()` calls it for each element"
+            - "`.filter()` accepts both function references and immediate function calls interchangeably"
+            - "This is a bug — passing `isEven` without parentheses gives `.filter()` the value `undefined`"
           correct_index: 1
           explanation: "Functions are first-class values. `isEven` is the function itself; `isEven()` is the result of calling it. `.filter(isEven)` says 'here is a function — you call it.' `.filter(isEven())` says 'call isEven now and pass whatever it returns.' This distinction is fundamental to callbacks."
 
         - question: "**[Spaced Practice: Revisit Step 2]** A student declares `let API_URL = 'https://api.school.edu'` and never reassigns it. What change should they make, and why?"
           options:
-            - "Change `let` to `var` — `var` is the standard keyword for URLs"
-            - "Change `let` to `const` — the value never changes, so `const` signals that intent and prevents accidental reassignment"
-            - "No change needed — `let` and `const` are interchangeable for strings"
-            - "Wrap it in a function to protect it from modification"
+            - "Change `let` to `var` — `var` is the standard keyword for declaring constant URLs in Node.js"
+            - "Change `let` to `const` — the value never changes, so `const` prevents accidental reassignment"
+            - "No change needed — `let` and `const` are interchangeable for string values in JavaScript"
+            - "Wrap it in a function to protect it from being modified by other parts of the program"
           correct_index: 1
           explanation: "This is the same principle from Step 2: default to `const` for values that never change. `const` communicates intent to readers and catches accidental reassignment bugs at the point of the mistake, rather than causing subtle issues later. `var` should be avoided entirely due to hoisting."
 
@@ -685,18 +692,21 @@ steps:
 
       ### Task: Build a Grade Report
 
-      Open `transform.js`. The `getLetterGrade` arrow function from Step 3 is provided. Complete the three `TODO` items:
+      Open `transform.js`. The `getLetterGrade` arrow function from Step 3 is provided. Complete the four `TODO` items — **each builds on the previous one**, so do them in order:
 
-      1. **Use** `.map()` with **destructuring** `({ name, grade })` in the arrow function parameter to format each student as `"Name   | grade (Letter)"`. Use `getLetterGrade()` for the letter and `.padEnd(7)` to align names.
-      2. **Use** `.reduce()` to compute the **sum** of all grades, then divide by the number of students to get the class average.
-      3. **Print** the report and the class average formatted to 1 decimal place using `.toFixed(1)`.
+      1. **Use** `.map()` to extract just the grade numbers into a new array: `students.map(s => s.grade)` → `[95, 42, 78, 55, 88]`. This is the simplest `.map()` — transform objects into numbers.
+      2. **Use** `.reduce()` to compute the **sum** of the grade numbers, then divide by the count to get the class average.
+      3. **Use** `.map()` again, this time with **destructuring** `({ name, grade })` in the arrow function parameter, to format each student as `"Name   | grade (Letter)"`. Use `getLetterGrade()` for the letter and `.padEnd(7)` to align names.
+      4. **Print** the class average formatted to 1 decimal place using `.toFixed(1)`.
+
+      > **Why four steps instead of jumping straight to the hardest one?** The first `.map()` is simple (extract one property). The second combines `.reduce()` with division. The third `.map()` adds destructuring and template literals. Each step adds exactly one new concept.
 
       Click **▶ Run** to check your result.
 
     files:
       - path: "transform.js"
         content: |
-          // Array Transformation — complete the three TODOs below
+          // Array Transformation — complete the four TODOs in order
 
           const students = [
               { name: "Alice", grade: 95 },
@@ -715,20 +725,26 @@ steps:
               return "F";
           };
 
-          // TODO 1: Use .map() to format each student as "Name   | grade (Letter)".
-          // Use destructuring ({ name, grade }) in the arrow function parameter.
+          // TODO 1: Use .map() to extract just the grade numbers.
+          // Expected result: [95, 42, 78, 55, 88]
+          const grades = students;
+
+          // TODO 2: Use .reduce() to compute the sum of the grades array.
+          // Then divide by grades.length to get the class average.
+          // Hint: grades.reduce((acc, g) => acc + g, 0)
+          const classAverage = 0;
+
+          // TODO 3: Use .map() with destructuring ({ name, grade }) to format
+          // each student as "Name   | grade (Letter)".
           // Use getLetterGrade() for the letter and .padEnd(7) to align names.
           // Expected: "Alice   | 95 (A)"
           const report = students;
 
-          // TODO 2: Use .reduce() to compute the sum of all grades.
-          // Then divide by the number of students to get the class average.
-          // Hint: students.reduce((acc, s) => acc + s.grade, 0)
-          const classAverage = 0;
-
-          // TODO 3: Print the report and the class average.
+          // TODO 4: Print the report and the class average.
           // Format the average to 1 decimal place using .toFixed(1).
-          console.log("=== Student Report ===");
+          console.log("=== Grade Numbers ===");
+          console.log(grades);
+          console.log("\n=== Student Report ===");
           report.forEach(line => console.log(line));
           console.log(`Class average: ${classAverage}`);
         language: "javascript"
@@ -739,7 +755,7 @@ steps:
       files:
         - path: "transform.js"
           content: |
-            // Array Transformation — complete the three TODOs
+            // Array Transformation — all four TODOs complete
 
             const students = [
                 { name: "Alice", grade: 95 },
@@ -757,27 +773,32 @@ steps:
                 return "F";
             };
 
-            // TODO 1 DONE: .map() with destructuring formats each student
+            // TODO 1 DONE: Simple .map() extracts grade numbers
+            const grades = students.map(s => s.grade);
+
+            // TODO 2 DONE: .reduce() computes class average
+            const classAverage = grades.reduce((acc, g) => acc + g, 0) / grades.length;
+
+            // TODO 3 DONE: .map() with destructuring formats each student
             const report = students.map(({ name, grade }) =>
                 `${name.padEnd(7)}| ${grade} (${getLetterGrade(grade)})`
             );
 
-            // TODO 2 DONE: .reduce() computes class average
-            const classAverage = students.reduce((acc, s) => acc + s.grade, 0) / students.length;
-
-            // TODO 3 DONE: Print report and formatted average
-            console.log("=== Student Report ===");
+            // TODO 4 DONE: Print report and formatted average
+            console.log("=== Grade Numbers ===");
+            console.log(grades);
+            console.log("\n=== Student Report ===");
             report.forEach(line => console.log(line));
             console.log(`Class average: ${classAverage.toFixed(1)}`);
           language: "javascript"
       explanation: |
-        **`.map()` with destructuring:** `({ name, grade })` in the arrow function parameter extracts the two properties from each student object. `.padEnd(7)` left-aligns names to 7 characters.
+        **TODO 1 — Simple `.map()`:** `students.map(s => s.grade)` transforms each object into just its grade number: `[95, 42, 78, 55, 88]`. This is the easiest `.map()` — one property extraction.
 
-        **`getLetterGrade()` call:** The arrow function from Step 3 is provided and called inside the template literal. This reinforces that functions are values — here used as a helper inside `.map()`.
+        **TODO 2 — `.reduce()`:** `grades.reduce((acc, g) => acc + g, 0)` sums the grade numbers. The `0` initial value is critical — without it, `.reduce()` throws on empty arrays. Dividing by `grades.length` gives: (95+42+78+55+88)/5 = 71.6.
 
-        **`.reduce()`:** `students.reduce((acc, s) => acc + s.grade, 0)` sums all grades. The `0` initial value is critical — without it, `.reduce()` throws on empty arrays. Dividing by `students.length` gives the average: (95+42+78+55+88)/5 = 71.6.
+        **TODO 3 — `.map()` with destructuring:** `({ name, grade })` extracts both properties. `.padEnd(7)` left-aligns names. `getLetterGrade()` converts the number to a letter. This combines three concepts, but by this point you have already practiced `.map()` in TODO 1.
 
-        **`.toFixed(1)`:** Formats the number `71.6` to one decimal place.
+        **TODO 4 — `.toFixed(1)`:** Formats the number `71.6` to one decimal place.
 
     tests:
       - description: "Used .map() to transform the data"
@@ -817,10 +838,10 @@ steps:
       questions:
         - question: "What does `const { name, grade } = student` do if `student = { name: 'Alice', grade: 95 }`?"
           options:
-            - "Creates a new object with only the `name` and `grade` properties"
-            - "Declares two new variables, `name = 'Alice'` and `grade = 95`, extracting them from the object"
-            - "Modifies `student` so it only has `name` and `grade` properties"
-            - "Throws an error — you cannot destructure an object into two variables at once"
+            - "Creates a shallow copy of the `student` object containing only the `name` and `grade` properties"
+            - "Declares two variables: `name = 'Alice'` and `grade = 95`, extracted from the object"
+            - "Modifies the original `student` object so it only retains the `name` and `grade` properties"
+            - "Throws a TypeError — objects in JavaScript cannot be destructured into separate variables"
           correct_index: 1
           explanation: "Object destructuring extracts named properties into local variables in one step. `const { name, grade } = student` is equivalent to writing `const name = student.name; const grade = student.grade;`. The original object is unchanged."
 
@@ -835,10 +856,10 @@ steps:
 
         - question: "What is the key difference between `.map()` and `.filter()`?"
           options:
-            - "`.map()` transforms each element and returns a new array of the same length; `.filter()` selects elements and returns a shorter (or equal) array"
-            - "`.map()` modifies the original array; `.filter()` creates a copy"
-            - "`.map()` works with objects; `.filter()` only works with primitive values"
-            - "There is no difference — they are aliases for the same operation"
+            - "`.map()` transforms every element (same-length result); `.filter()` selects elements (shorter or equal result)"
+            - "`.map()` modifies the original array in place; `.filter()` creates a new copy of the entire array"
+            - "`.map()` only works with objects and arrays; `.filter()` only works with numbers and strings"
+            - "There is no meaningful difference — they are interchangeable aliases for the same operation"
           correct_index: 0
           explanation: "`.map()` applies a transformation to every element: `[1,2,3].map(n => n*2)` → `[2,4,6]` (same length). `.filter()` tests each element and keeps only those that pass: `[1,2,3].filter(n => n>1)` → `[2,3]` (shorter). Neither mutates the original array."
 
@@ -858,17 +879,17 @@ steps:
 
         - question: "**[Spaced Practice: Revisit Step 3]** A student writes `const result = students.filter(s => s.grade >= 60).map(s => s.name)`. What does this expression produce?"
           options:
-            - "An array of student objects with grade >= 60"
-            - "An array of names (strings) of students with grade >= 60 — `.filter()` selects, then `.map()` transforms"
-            - "A single string containing all passing student names"
-            - "An error — you cannot chain `.filter()` and `.map()` together"
+            - "An array of the full student objects whose grade is at least 60"
+            - "An array of name strings for students with grade >= 60"
+            - "A single comma-separated string of all passing student names"
+            - "An error — `.filter()` and `.map()` cannot be chained together on the same expression"
           correct_index: 1
           explanation: "`.filter()` returns a new array of student objects matching the condition. `.map()` then transforms each object into just its `name` string. Method chaining works because each method returns a new array. This chain combines skills from Step 3 (`.filter()`) and Step 4 (`.map()`)."
 
         - question: "**[Spaced Practice: Revisit Step 2]** A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
           options:
-            - "Yes, it works and is safe to keep — the comparison correctly identifies the admin"
-            - "Yes, it works due to type coercion, but you should change it to `===` and explicitly convert the ID to a number — relying on coercion hides a fragile assumption"
+            - "Yes, it works and is safe to keep — the comparison is correct and there is no risk"
+            - "Yes, it works via coercion, but use `===` with `Number()` to make the intent explicit"
             - "No, `==` will return `false` here because strings and numbers are never equal in JavaScript"
             - "No, the code will throw a TypeError at runtime"
           correct_index: 1
@@ -1000,7 +1021,7 @@ steps:
 
     tests:
       - description: "Response message is 'Hello from Express!'"
-        command: "assert(code.includes('Hello from Express'))"
+        command: "assert(source.includes('Hello from Express'), 'Change the response message to Hello from Express!')"
         hints:
           - text: "Find the `res.send(\"Replace me!\")` line and change the string inside to `\"Hello from Express!\"`"
             condition: "code_contains: Replace me"
@@ -1022,10 +1043,10 @@ steps:
       questions:
         - question: "In `app.get('/', (req, res) => { res.send('Hi'); })`, what is the arrow function `(req, res) => { ... }`?"
           options:
-            - "A standalone function that runs immediately when the file is loaded"
-            - "A callback — a function you provide that Express calls when someone visits the '/' URL"
-            - "A constructor that creates a new Express route object"
-            - "A middleware function that modifies the Express app configuration"
+            - "A standalone function that runs immediately when the server file is first loaded into memory"
+            - "A callback that Express calls when someone visits the `'/'` URL"
+            - "A constructor that creates and configures a new Express route object for the path"
+            - "A middleware function that modifies the global Express application configuration"
           correct_index: 1
           explanation: "The arrow function is a callback — the same pattern you used with `.filter()` in Step 3. You provide the function; Express calls it at the right time (when an HTTP GET request arrives at '/'). The `req` and `res` arguments are passed by Express, just like `.filter()` passes each array element to your callback."
 
@@ -1040,28 +1061,28 @@ steps:
 
         - question: "Why does `app.listen(3000)` need to be called?"
           options:
-            - "It compiles the route handlers into machine code for faster execution"
-            - "It starts the HTTP server and tells it to accept connections on port 3000 — without it, no requests can reach your routes"
-            - "It validates that all routes are syntactically correct before the server starts"
-            - "It is optional — Express servers start automatically when routes are defined"
+            - "It compiles all route handler functions into optimized machine code for faster HTTP processing"
+            - "It starts the server on port 3000 — without it, no requests reach your routes"
+            - "It validates that all routes are syntactically correct and have valid callbacks before starting"
+            - "It is optional — Express servers automatically begin listening when routes are first defined"
           correct_index: 1
           explanation: "`app.listen(3000)` starts the HTTP server on port 3000. Without it, your route definitions exist in memory but nothing is listening for HTTP requests. This is like defining functions but never calling them — the code exists but nothing happens."
 
         - question: "**[Spaced Practice: Revisit Step 3]** Why is the Express route handler `(req, res) => { ... }` conceptually the same as the `.filter()` callback `n => n > 2`?"
           options:
-            - "Both are arrow functions, but they serve completely different purposes"
-            - "Both are callbacks — functions you provide that someone else (Express / `.filter()`) calls at the right time with specific arguments"
+            - "Both are arrow functions, but they serve completely different purposes in practice"
+            - "Both are callbacks — you provide a function, and someone else calls it later"
             - "Both modify the original data structure (the array / the HTTP request) in place"
-            - "Both return a boolean value to determine what happens next"
+            - "Both must return a boolean value to determine what the caller does next"
           correct_index: 1
           explanation: "The core pattern is identical: you pass a function, and the caller invokes it with arguments. `.filter()` calls your function with each array element. Express calls your route handler with `req` and `res`. Understanding this *one pattern* — callbacks — unlocks both data processing and web servers."
 
         - question: "**[Spaced Practice: Revisit Step 2]** In the Express route `res.send(`Score: ${grade}`)`, what JavaScript feature makes the `${grade}` work?"
           options:
-            - "Regular string concatenation with the `+` operator"
-            - "Template literals — backtick strings that allow `${expression}` interpolation, JavaScript's equivalent of Python f-strings"
-            - "A special Express templating engine that processes `${}` syntax"
-            - "Object destructuring that extracts the `grade` property"
+            - "Regular string concatenation using the `+` operator applied automatically by V8"
+            - "Template literals — backtick strings with `${expression}` interpolation"
+            - "A special Express templating engine that detects and processes `${}` syntax at runtime"
+            - "Object destructuring that extracts the `grade` property from the enclosing scope"
           correct_index: 1
           explanation: "Template literals (backtick strings) enable `${expression}` interpolation. This is the same feature from Step 2 — JavaScript's equivalent of Python's f-strings. Express doesn't process the string specially; it is a core JavaScript feature."
 
@@ -1289,7 +1310,7 @@ steps:
           - text: "When `req.query.passing === 'true'`, you need to select only students with grade >= 60. Which array method from Step 3 selects elements based on a condition?"
             condition: "code_missing: .filter("
       - description: "Uses strict comparison for query param"
-        command: "assert(source.includes(\"=== 'true'\") || code.includes('=== \"true\"'), 'Compare req.query.passing with strict === (it is a string!)')"
+        command: "assert(source.includes(\"=== 'true'\") || source.includes('=== \"true\"'), 'Compare req.query.passing with strict === (it is a string!)')"
         hints:
           - text: "Remember from Step 2: `req.query.passing` is a string. Using `== true` would fail due to type coercion rules. Use `=== 'true'` (strict equality with a string)."
             condition: "code_missing: === 'true'"
@@ -1303,11 +1324,11 @@ steps:
         hints:
           - text: "In a POST request, the data sent by the client is available in `req.body`. You need to access it and add it to the students array."
             condition: "code_missing: req.body"
-      - description: "Uses res.json() to send responses"
-        command: "assert(code.includes('res.json('), 'Use res.json() to send JSON responses')"
+      - description: "No placeholder responses remain"
+        command: "assert(!source.includes('Implement me'), 'Replace all \"Implement me!\" placeholders with real logic')"
         hints:
           - text: "Replace `res.json(\"Implement me!\")` with `res.json(yourData)` in each route. `res.json()` serializes JavaScript objects/arrays to JSON and sets the correct Content-Type header automatically."
-            condition: "code_contains: Implement me"
+            condition: "source_contains: Implement me"
 
     quiz:
       title: "Dynamic Routes — Knowledge Check"
@@ -1316,10 +1337,10 @@ steps:
       questions:
         - question: "A developer has a route `app.get('/students/:id', handler)` and a student sends `GET /students/3`. Inside `handler`, they write `if (req.query.id === '3')`. What is wrong with their code and what should they write instead?"
           options:
-            - "Nothing is wrong — `req.query.id` and `req.params.id` are equivalent for this URL"
-            - "`req.query` holds parameters from the URL query string (`?key=value`), but `/students/3` has no query string. The `3` is a route parameter — they should use `req.params.id`"
-            - "They should use `req.body.id` because POST requests are more secure"
-            - "The condition should use `==` instead of `===` for route parameter comparisons"
+            - "Nothing is wrong — `req.query.id` and `req.params.id` are equivalent for URL path segments"
+            - "The `3` is a route parameter, so it lives in `req.params.id`, not `req.query.id`"
+            - "They should use `req.body.id` instead, because request bodies are more reliable than URLs"
+            - "The condition should use `==` instead of `===` when comparing route parameter strings"
           correct_index: 1
           explanation: "Route parameters (`:id` placeholder in the path) are captured in `req.params`. Query parameters (`?id=3` appended to the URL) live in `req.query`. Since the route is `/students/:id`, the value `3` is in `req.params.id`. `req.query.id` would be `undefined` for this URL — the condition would silently never match."
 
@@ -1334,19 +1355,19 @@ steps:
 
         - question: "When should you use POST instead of GET?"
           options:
-            - "When you want the request to run faster"
-            - "When you are sending data that creates or modifies a resource, or when the data is sensitive (passwords, large payloads)"
-            - "When the server is running on HTTPS instead of HTTP"
-            - "POST and GET are interchangeable — the distinction is purely cosmetic"
+            - "When you want the request to be processed faster by the Express event loop"
+            - "When sending data that creates/modifies a resource or is sensitive"
+            - "When the server is running on HTTPS instead of HTTP, since POST is required for encryption"
+            - "POST and GET are interchangeable — the distinction is purely a cosmetic convention"
           correct_index: 1
           explanation: "GET is for *reading* data — parameters are visible in the URL. POST is for *sending* data that creates or modifies resources — data is hidden in the request body. GET requests can also be bookmarked and cached; POST cannot. These are HTTP conventions used by every web API."
 
         - question: "**[Spaced Practice: Revisit Step 3]** In `app.get('/students', (req, res) => { ... })`, if a student writes `app.get('/students', handler())` with parentheses on `handler`, what goes wrong?"
           options:
-            - "Nothing — both forms are equivalent in JavaScript"
-            - "`handler()` calls the function immediately and passes its *return value* to `app.get()` — Express gets the result, not the function itself"
-            - "Express will throw an error because route handlers cannot be named functions"
-            - "The parentheses cause the route to match POST requests instead of GET"
+            - "Nothing — JavaScript treats `handler` and `handler()` identically in this context"
+            - "`handler()` calls the function now and passes the return value, not the function"
+            - "Express throws a TypeError because route handlers cannot be named function declarations"
+            - "The parentheses cause the route to match POST requests instead of GET requests"
           correct_index: 1
           explanation: "This is the same function reference vs. function call distinction from Step 3. `handler` is the function itself — Express stores it and calls it later. `handler()` calls it *now* and passes the return value. Express needs the function, not its result. This mistake causes routes to fail."
 
@@ -1619,14 +1640,14 @@ steps:
           correct_index: 1
           explanation: "Routes on a router are *relative* to the mount path. `app.use('/api/books', router)` prepends `/api/books` to every route on that router. So `router.get('/:id')` becomes `/api/books/:id`."
 
-        - question: "What does `module.exports = router` do in a Node.js file?"
+        - question: "**[Evaluate]** A student forgets `module.exports = router` in `studentRoutes.js` but writes correct routes. When they send `GET /api/students`, they get `Cannot GET /api/students`. Why?"
           options:
-            - "It registers the router with Express's internal route registry"
-            - "It makes the router available to other files that `require()` this module"
-            - "It starts the router listening for HTTP requests"
-            - "It converts the router to a JSON configuration file"
+            - "The routes are syntactically invalid without the export statement at the bottom"
+            - "Without `module.exports`, `require()` returns an empty object — `app.use()` mounts nothing, so no routes match"
+            - "Express requires a special `registerRouter()` call instead of `module.exports`"
+            - "The missing export causes a runtime crash in `app.js` before the server starts"
           correct_index: 1
-          explanation: "`module.exports` is Node.js's way of sharing code between files. When another file calls `require('./studentRoutes')`, it gets whatever `studentRoutes.js` assigned to `module.exports`. This is the import/export system for Node.js — similar to Python's `import` or C++'s `#include`."
+          explanation: "Without `module.exports = router`, `require('./studentRoutes')` returns `{}` (an empty object). `app.use('/api/students', {})` silently mounts nothing. The server starts fine but no routes are registered, so every request gets 404. This is a common debugging scenario — the error is silent."
 
         - question: "**[Spaced Practice: Revisit Step 6]** In a route handler, how do you access a query parameter `?sort=name` vs. a URL parameter `/students/42`?"
           options:
@@ -1773,6 +1794,11 @@ steps:
 
       > **If your prediction was wrong, that is exactly the point.** The event loop violates the top-to-bottom ordering intuition from every other language you know.
 
+      ### Investigate (try these after your first Run)
+
+      - Change `'utf8'` to `'utf-8'` in the first `fs.readFile` — does it still work?
+      - What happens if you change `'students.json'` to `'missing.json'`?
+
       ### Task: Add a Second File Read
 
       1. Click **▶ Run** and note the actual output order.
@@ -1874,10 +1900,10 @@ steps:
       questions:
         - question: "A developer writes `setTimeout(sendEmail, 0)` and expects `sendEmail` to fire instantly. Immediately after, a `for` loop runs 10 million iterations. What actually happens?"
           options:
-            - "sendEmail runs immediately because the delay is 0 milliseconds"
-            - "sendEmail runs in a separate thread while the for-loop continues in parallel"
-            - "sendEmail waits in the Task Queue until the for-loop finishes and the call stack empties, then runs"
-            - "The for-loop is paused so sendEmail can execute first"
+            - "sendEmail runs immediately because the delay parameter specifies exactly 0 milliseconds of wait time"
+            - "sendEmail runs in a separate worker thread while the for-loop continues in the main thread"
+            - "sendEmail waits in the Task Queue until the for-loop finishes and the call stack empties"
+            - "The for-loop is paused mid-iteration so the Event Loop can execute sendEmail first"
           correct_index: 2
           explanation: "setTimeout's delay is a *minimum* delay, not a guaranteed time. The Event Loop only dequeues callbacks when the call stack is completely empty. The 10-million-iteration for-loop occupies the call stack the entire time — the Chef is busy."
 
@@ -1892,20 +1918,20 @@ steps:
 
         - question: "Two Express route handlers are registered: (A) `app.get('/slow', ...)` runs a 3-second synchronous loop. (B) `app.get('/fast', ...)` just calls `res.send('ok')`. A user hits `/slow`, and 0.5 seconds later another user hits `/fast`. **Analyze** what happens — when does the `/fast` user get their response?"
           options:
-            - "The `/fast` user gets an instant response — Express handles each request in a separate thread"
-            - "The `/fast` user waits the remaining ~2.5 seconds — the synchronous loop occupies the Call Stack, so the Event Loop cannot deliver the `/fast` callback until the loop finishes"
-            - "Express detects the slow route and switches to the `/fast` handler after 100ms"
-            - "The `/fast` user gets their response immediately because `/fast`'s callback is registered before `/slow`'s"
+            - "The `/fast` user gets an instant response — Express handles requests in separate threads"
+            - "The `/fast` user waits ~2.5s — the sync loop blocks the Call Stack"
+            - "Express detects the blocked route and automatically switches to the `/fast` handler"
+            - "The `/fast` user responds immediately because `/fast` was registered before `/slow`"
           correct_index: 1
           explanation: "This is the Event Loop in action. The 3-second loop holds the Call Stack. The Event Loop only processes queued callbacks (like the `/fast` handler) when the stack empties. The `/fast` user is stuck waiting ~2.5 seconds for a response that should take microseconds — demonstrating exactly why blocking operations in route handlers are catastrophic in Node.js."
           type: single
 
         - question: "**[Spaced Practice: Revisit Step 5]** An Express route handler has a 5-second synchronous loop. During those 5 seconds, 100 other requests arrive. What happens to them?"
           options:
-            - "Express creates new threads to handle the other requests in parallel"
-            - "All 100 requests wait — the single-threaded call stack is occupied by the slow handler, so no other route callbacks can execute"
-            - "Express drops the 100 requests and returns 503 errors automatically"
-            - "The other requests execute inside the slow handler's loop, interleaved between iterations"
+            - "Express spawns new worker threads to handle each of the 100 incoming requests in parallel"
+            - "All 100 requests wait — the call stack is occupied and no callbacks can run"
+            - "Express automatically drops stale requests and returns 503 Service Unavailable errors"
+            - "The other requests execute interleaved between iterations of the slow handler's loop"
           correct_index: 1
           explanation: "Node.js is single-threaded. While the slow synchronous loop runs, the Call Stack is occupied. The Event Loop cannot hand any other callbacks (including route handlers for the 100 waiting requests) to the Chef until the loop finishes. This is why blocking the event loop is catastrophic for Express servers."
 
@@ -2237,15 +2263,15 @@ steps:
   #           Express Router, route params, query params, POST, async/await.
   #           Bloom's level: Create (exercise) / Evaluate + Analyze (quiz).
   # --------------------------------------------------------------------------
-  - title: "Capstone: Student Grade API"
+  - title: "Capstone: Deploy the Student Grade API"
     http_client: true
-    http_url: "http://localhost:3000/api/dashboard"
+    http_url: "http://CS35L-nodejs.org/api/dashboard"
     instructions: |
       > **Learning objective:** After this step you will be able to **design and implement** a complete Express API using the Router pattern, async data fetching, and all JavaScript skills from this tutorial.
 
-      ## Putting It All Together — No Scaffolding
+      ## Ship It — Your API Goes Live
 
-      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. This capstone integrates them into one Express API — with **no scaffolding**. You decide how to structure the code.
+      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. Now you are building a real API and deploying it to `CS35L-nodejs.org` — with **no scaffolding**. You decide how to structure the code.
 
       > **Growth mindset moment:** This capstone has no scaffolding — and that is intentional. If you feel stuck, it does not mean you are missing something fundamental. It means you are doing the hard work of *integrating* skills that you practiced in isolation. Go back to the specific step that covers the concept you are stuck on. Every professional developer references prior work when building something new.
 
@@ -2291,7 +2317,14 @@ steps:
 
       4. **Error handling:** Wrap all route handlers in `try`/`catch`
 
-      **Put routes in `routes.js` (the Router), and mount them in `app.js`.** When your code looks complete, switch to the **`app.js`** tab and press **▶ Run** to start the server — `routes.js` is a module that only exports a router; running it directly does nothing.
+      **Put routes in `routes.js` (the Router), and mount them in `app.js`.** When your code looks complete, switch to the **`app.js`** tab and press **▶ Run** to deploy your API to `CS35L-nodejs.org` — then use the HTTP Client to hit your live endpoints. (`routes.js` is a module that only exports a router; running it directly does nothing.)
+
+      ### Suggested Order (if you are unsure where to start)
+
+      1. **Start with the skeleton:** In `routes.js`, add `const express = require('express')`, create a router, and export it. In `app.js`, import and mount it at `/api`. Run — you should see no errors.
+      2. **Add the POST route first** — it is the simplest (just read `req.body` and respond).
+      3. **Add `GET /api/students/:id`** — fetch data, find one student, respond.
+      4. **Add `GET /api/dashboard` last** — it is the most complex (merge, compute, format).
 
       ### Hints (only if you're stuck)
 
@@ -2349,7 +2382,7 @@ steps:
 
           // Your code here
 
-          app.listen(3000, () => console.log("Grade API on port 3000"));
+          app.listen(3000, () => console.log("Grade API deployed to CS35L-nodejs.org"));
         language: "javascript"
 
     open_file: "app.js"
@@ -2458,7 +2491,7 @@ steps:
             const routes = require('./routes');
             app.use('/api', routes);
 
-            app.listen(3000, () => console.log("Grade API on port 3000"));
+            app.listen(3000, () => console.log("Grade API deployed to CS35L-nodejs.org"));
           language: "javascript"
       explanation: |
         **Express Router:** `express.Router()` in `routes.js`, exported with `module.exports`, and mounted at `/api` in `app.js`. This is the professional pattern from Step 7.
@@ -2526,19 +2559,20 @@ steps:
             condition: "code_missing: ==="
 
     quiz:
-      title: "Capstone — Knowledge Check"
-      min_score: 0.8
+      title: "Capstone — Comprehensive Knowledge Check"
+      min_score: 0.7
       shuffle: true
       questions:
+        # --- Capstone-specific questions ---
         - question: "Why is `Promise.all([fetchRoster(), fetchGrades()])` faster than awaiting each one sequentially?"
           type: single
           options:
             - "`Promise.all` spawns a separate thread for each Promise"
-            - "`Promise.all` starts both Promises immediately; the Event Loop handles both concurrently, so total time is the max of the two"
+            - "`Promise.all` starts both Promises immediately; total time is the max of the two"
             - "`Promise.all` bypasses the Event Loop and runs both synchronously"
             - "It is not faster — `Promise.all` is syntactic sugar"
           correct_index: 1
-          explanation: "Both timers start immediately. `Promise.all` waits for both to resolve. Since both are 50ms, total wait is ~50ms, not ~100ms. No extra threads — the Event Loop manages both."
+          explanation: "Both operations start immediately. `Promise.all` waits for both to resolve. Since both are ~50ms, total wait is ~50ms, not ~100ms. No extra threads — the Event Loop manages both."
 
         - question: |
             **Evaluate** this code for computing a student's average grade. What is the bug?
@@ -2550,90 +2584,24 @@ steps:
             ```
           type: single
           options:
-            - "`.reduce()` needs an initial value of `0`, and division should use the filtered array's length, not `grades.length`. Also `==` should be `===`."
+            - "`.reduce()` needs initial value `0`, division should use filtered length, and `==` should be `===`"
             - "`.filter()` should use `.find()` instead"
             - "The `==` operator will crash because types differ"
             - "There is no bug"
           correct_index: 0
           explanation: "Three bugs: (1) `.reduce()` without an initial value throws on empty arrays. (2) Dividing by `grades.length` (all grades) instead of filtered length gives wrong averages. (3) `==` should be `===` for strict comparison (Step 2)."
 
-        - question: "**[Spaced Practice: Revisit Step 7]** What URL pattern does `router.get('/dashboard')` match when the router is mounted with `app.use('/api', router)`?"
-          type: single
-          options:
-            - "`/dashboard`"
-            - "`/api/dashboard`"
-            - "`/api`"
-            - "`/router/dashboard`"
-          correct_index: 1
-          explanation: "Routes on a Router are relative to the mount path. `app.use('/api', router)` means `router.get('/dashboard')` handles `GET /api/dashboard`."
-
-        - question: "**[Technique Selection — Interleaving]** A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist fetch its tracks, (3) display all track names. Which combination is most appropriate?"
+        - question: "**[Technique Selection]** A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist fetch its tracks, (3) display all track names. Which combination is most appropriate?"
           type: single
           options:
             - "`.filter()` to select playlists, then `await` each track fetch sequentially"
-            - "`.map()` to transform playlists into fetch Promises, then `Promise.all()` to fetch concurrently, then `.flat()` to merge results"
+            - "`.map()` into Promises, then `Promise.all()` concurrently, then `.flat()` to merge"
             - "`.reduce()` to accumulate all tracks, with `await` inside the reducer"
             - "A `for` loop with `setTimeout` to space out requests"
           correct_index: 1
-          explanation: "`.map()` transforms each playlist into a Promise. `Promise.all()` fires all fetches concurrently. `.flat()` merges nested arrays. This combines Step 3 (`.map()`), Step 9 (`Promise.all`), and Step 8 (Event Loop concurrency)."
+          explanation: "`.map()` transforms each playlist into a Promise. `Promise.all()` fires all fetches concurrently. `.flat()` merges nested arrays. This combines `.map()` (Step 3), `Promise.all` (Step 9), and Event Loop concurrency (Step 8)."
 
-        - question: "**[Spaced Practice: Revisit Step 8]** A student's async Express route handler fetches data with `await`. During the `await`, can the server handle other incoming requests?"
-          type: single
-          options:
-            - "No — `await` blocks the entire Node.js process until the data arrives"
-            - "Yes — `await` suspends only this handler and frees the call stack, allowing the Event Loop to process other requests"
-            - "Only if the server has multiple CPU cores available"
-            - "Only if the handler uses `Promise.all` instead of a single `await`"
-          correct_index: 1
-          explanation: "`await` suspends the current async function, not the entire process. The call stack is freed, so the Event Loop can execute other route handlers. This is the key insight: `async`/`await` gives you synchronous-looking code with non-blocking behavior."
-
-        - question: "**[Spaced Practice: Revisit Step 2]** In a route parameter handler, `req.params.id` is always a string. A student writes `students.find(s => s.id == req.params.id)`. It works. Why should they change it anyway?"
-          type: single
-          options:
-            - "There is no reason to change it — `==` is fine for id comparisons"
-            - "`==` relies on type coercion (string `'3'` coerced to number `3`). Using `===` with `Number(req.params.id)` makes the intent explicit and prevents subtle bugs when IDs change format"
-            - "`==` is slower than `===` and will cause performance issues at scale"
-            - "`==` will throw a TypeError in strict mode"
-          correct_index: 1
-          explanation: "This is the same lesson from Step 2: `==` coerces silently, which *works* here but hides a fragile assumption. If IDs become UUIDs (strings), the coercion fails silently. `===` with explicit `Number()` conversion makes the code's intent clear to every reader."
-
-  # --------------------------------------------------------------------------
-  # STEP 11: Comprehensive Final Quiz
-  # Pedagogy: Cumulative assessment covering ALL major concepts from
-  #           Steps 1–10. Tests at multiple Bloom's levels (Remember,
-  #           Understand, Apply, Analyze, Evaluate). Implements spaced
-  #           retrieval across the entire tutorial. No new content.
-  # --------------------------------------------------------------------------
-  - title: "Final Knowledge Check"
-    instructions: |
-      ## Comprehensive Review
-
-      > Congratulations — you have completed the entire tutorial! This final quiz checks your understanding of **all** the key concepts from Steps 1–10. There is no coding task — just the quiz below.
-
-      > Before you begin, take a moment to reflect on everything you have learned: JavaScript fundamentals, arrow functions and callbacks, array methods, Express routing, the Event Loop, and async/await. You started this tutorial knowing C++ and Python. You are now equipped to build real Node.js backend applications.
-
-      > **Growth mindset moment:** If you get a question wrong, that is valuable information — it tells you exactly which concept to revisit. Use the step references in each explanation to go back and review.
-
-    files:
-      - path: "review.js"
-        content: |
-          // Congratulations on completing the tutorial!
-          // This step is a quiz-only review — no coding required.
-          console.log("You completed the Node.js Essentials tutorial!");
-        language: "javascript"
-
-    open_file: "review.js"
-
-    tests:
-      - description: "File runs without errors"
-        command: "assert(output.includes('completed'), 'The review file should run successfully')"
-
-    quiz:
-      title: "Comprehensive Final Quiz — All Concepts"
-      min_score: 0.7
-      shuffle: true
-      questions:
-        # --- Step 1: Node.js Fundamentals ---
+        # --- Comprehensive review: Steps 1–9 ---
         - question: "What two components does Node.js bundle to let JavaScript run outside the browser?"
           options:
             - "React and Webpack"
@@ -2641,9 +2609,8 @@ steps:
             - "npm and Express"
             - "TypeScript and Babel"
           correct_index: 1
-          explanation: "[Step 1] V8 compiles JavaScript to machine code. libuv provides the Event Loop and OS-level I/O access. Together they give JavaScript everything it needs for backend development."
+          explanation: "[Step 1] V8 compiles JavaScript to machine code. libuv provides the Event Loop and OS-level I/O access."
 
-        # --- Step 2: Variables and Types ---
         - question: "What is the output of `console.log('' == false)` in JavaScript?"
           options:
             - "`true` — the empty string is coerced to `false` by `==`"
@@ -2651,29 +2618,17 @@ steps:
             - "A TypeError at runtime"
             - "`undefined`"
           correct_index: 0
-          explanation: "[Step 2] JavaScript's `==` performs type coercion. The empty string `''` is a 'falsy' value, so `'' == false` is `true`. This is exactly why you should always use `===`, which would correctly return `false` since a string and a boolean are different types."
+          explanation: "[Step 2] JavaScript's `==` coerces types. The empty string is 'falsy', so `'' == false` is `true`. Use `===` to avoid this."
 
-        # --- Step 3: Arrow Functions & Callbacks ---
-        - question: "Convert this to an arrow function: `function square(n) { return n * n; }`"
+        - question: "A student writes `setTimeout(console.log('hello'), 1000)`. Why does 'hello' print immediately?"
           options:
-            - "`const square = n -> n * n;`"
-            - "`const square = n => n * n;`"
-            - "`const square = (n) -> { return n * n; }`"
-            - "`const square = function(n) => n * n;`"
+            - "`setTimeout` ignores the delay parameter when passed a built-in function like `console.log`"
+            - "`console.log('hello')` executes now; its return value (`undefined`) is what gets passed"
+            - "The delay of 1000 is interpreted as microseconds, not milliseconds, so it fires instantly"
+            - "`setTimeout` only accepts arrow functions — `console.log` is silently rejected as invalid"
           correct_index: 1
-          explanation: "[Step 3] Arrow functions use `=>` (not `->`). For a single parameter and single expression, parentheses and braces are optional: `n => n * n`. The `return` is implicit for single-expression arrow functions without braces."
+          explanation: "[Step 3] `console.log('hello')` *calls* the function now. `() => console.log('hello')` *passes* a function for later. The most common callback mistake."
 
-        # --- Step 3: Callbacks (deeper) ---
-        - question: "A student writes `setTimeout(console.log('hello'), 1000)`. Why does 'hello' print immediately instead of after 1 second?"
-          options:
-            - "`setTimeout` ignores the delay for `console.log` calls"
-            - "`console.log('hello')` is called immediately (with parentheses), and its return value (`undefined`) is passed to `setTimeout` — not the function itself"
-            - "The delay of 1000 is in microseconds, not milliseconds"
-            - "`setTimeout` only works with arrow functions, not `console.log`"
-          correct_index: 1
-          explanation: "[Step 3] This is the function reference vs. function call distinction. `console.log('hello')` *calls* the function now. `() => console.log('hello')` *passes* a function for `setTimeout` to call later. This is the most common callback mistake."
-
-        # --- Step 4: Array Methods ---
         - question: "What does `[5, 10, 15, 20].filter(n => n > 10).map(n => n * 2)` return?"
           options:
             - "`[10, 20, 30, 40]`"
@@ -2681,103 +2636,55 @@ steps:
             - "`[15, 20]`"
             - "`60`"
           correct_index: 1
-          explanation: "[Steps 3–4] `.filter(n => n > 10)` selects `[15, 20]`. `.map(n => n * 2)` transforms each: `[30, 40]`. Chaining these methods is a core JavaScript pattern. `.filter()` reduces the count; `.map()` transforms each element."
+          explanation: "[Steps 3–4] `.filter(n => n > 10)` selects `[15, 20]`. `.map(n => n * 2)` transforms each: `[30, 40]`."
 
-        # --- Step 4: Destructuring ---
-        - question: "What does `const [first, , third] = ['a', 'b', 'c']` assign to `third`?"
-          options:
-            - "`undefined` — the gap causes an error"
-            - "`'b'`"
-            - "`'c'` — the comma skips the second element"
-            - "`['c']` — an array containing 'c'"
-          correct_index: 2
-          explanation: "[Step 4] Array destructuring assigns by position. The empty slot (`, ,`) skips the second element. So `first = 'a'`, the second element is skipped, and `third = 'c'`. This is useful when you only need certain positions."
-
-        # --- Step 5: Express Basics ---
         - question: "In Express, what is the difference between `res.send('hello')` and `res.json({ message: 'hello' })`?"
           options:
-            - "They are identical — both send text"
-            - "`res.send()` sends plain text or HTML; `res.json()` serializes a JavaScript object to JSON and sets the Content-Type header to `application/json`"
-            - "`res.json()` is faster because it skips header processing"
-            - "`res.send()` only works with GET requests; `res.json()` works with all methods"
+            - "They are functionally identical — both serialize data and send it as plain text to the client"
+            - "`res.send()` sends text/HTML; `res.json()` serializes to JSON with the correct Content-Type"
+            - "`res.json()` is faster because it bypasses Express's header processing and middleware pipeline"
+            - "`res.send()` only works with GET requests; `res.json()` works with all HTTP methods"
           correct_index: 1
-          explanation: "[Step 5] `res.send()` sends the data as-is (text/HTML). `res.json()` converts a JavaScript object or array to a JSON string and sets the `Content-Type: application/json` header. Use `res.json()` when your API returns structured data."
+          explanation: "[Step 5] `res.send()` sends text/HTML as-is. `res.json()` converts to JSON and sets `Content-Type: application/json`."
 
-        # --- Step 6: Dynamic Routes ---
-        - question: "A route is `app.get('/products/:category/:id', handler)`. For the URL `/products/electronics/42`, what does `req.params` contain?"
+        - question: "A route is `app.get('/products/:category/:id', handler)`. For `/products/electronics/42`, what does `req.params` contain?"
           options:
             - "`{ category: 'electronics', id: 42 }` (string and number)"
             - "`{ category: 'electronics', id: '42' }` (both strings)"
             - "`{ 0: 'electronics', 1: '42' }`"
             - "`{ product: 'electronics/42' }`"
           correct_index: 1
-          explanation: "[Step 6] Route parameters are always strings — Express captures URL segments as text. Both `category` and `id` are strings. To use `id` as a number, you must explicitly convert: `Number(req.params.id)`."
+          explanation: "[Step 6] Route parameters are always strings. To use as a number: `Number(req.params.id)`."
 
-        # --- Step 7: Express Router ---
-        - question: "A team has `userRoutes.js` and `orderRoutes.js`, each exporting an Express Router. In `app.js`, they mount both. Which code is correct?"
-          options:
-            - "`app.use('/api/users', userRoutes); app.use('/api/orders', orderRoutes);`"
-            - "`app.get('/api/users', userRoutes); app.get('/api/orders', orderRoutes);`"
-            - "`app.use(userRoutes, '/api/users'); app.use(orderRoutes, '/api/orders');`"
-            - "`app.route('/api/users', userRoutes); app.route('/api/orders', orderRoutes);`"
-          correct_index: 0
-          explanation: "[Step 7] `app.use(prefix, router)` mounts a Router at a URL prefix. The prefix comes first, then the imported router. `app.get()` is for individual routes, not mounting routers. This pattern lets each file handle its own domain independently."
-
-        # --- Step 8: Event Loop ---
-        - question: "**Analyze** the output order:\n```javascript\nfs.readFile('data.json', 'utf8', (err, data) => {\n    console.log('A');\n});\nconsole.log('B');\nsetTimeout(() => console.log('C'), 0);\nconsole.log('D');\n```"
+        - question: "**Analyze** the output order:\n```javascript\nfs.readFile('data.json', 'utf8', (err, data) => console.log('A'));\nconsole.log('B');\nsetTimeout(() => console.log('C'), 0);\nconsole.log('D');\n```"
           options:
             - "A, B, C, D"
             - "B, D, A, C (or B, D, C, A)"
             - "B, A, D, C"
             - "A, B, D, C"
           correct_index: 1
-          explanation: "[Step 8] `B` and `D` are synchronous — they execute immediately in order. `fs.readFile` and `setTimeout` are async — their callbacks enter the Task Queue and only fire after the call stack empties. The relative order of `A` and `C` depends on whether the file read or the timer resolves first, but both come after `B` and `D`."
+          explanation: "[Step 8] `B` and `D` are synchronous — they run first. `A` and `C` are async callbacks that fire only after the call stack empties."
 
-        # --- Step 9: async/await ---
-        - question: "What happens if you forget the `await` keyword: `const data = fs.promises.readFile('file.json', 'utf8');`?"
+        - question: "What happens if you forget `await`: `const data = fs.promises.readFile('file.json', 'utf8');`?"
           options:
-            - "`data` contains the file contents as a string, same as with `await`"
-            - "`data` is a Promise object, not the file contents — you get `[object Promise]` when you try to use it"
-            - "The code throws a TypeError immediately"
-            - "The file is never read at all"
+            - "`data` contains the file contents as a string, exactly the same as with `await`"
+            - "`data` is a Promise object, not the file contents"
+            - "The code throws a TypeError immediately because `await` is required by the function signature"
+            - "The file is never read — `fs.promises.readFile` requires `await` to start the I/O operation"
           correct_index: 1
-          explanation: "[Step 9] Without `await`, `fs.promises.readFile` returns a Promise object immediately. The variable `data` holds that Promise, not the resolved string. This is the most common async/await mistake — especially for Python developers who expect blocking file reads."
+          explanation: "[Step 9] Without `await`, `data` holds a Promise, not the resolved string. The most common async/await mistake."
 
-        # --- Cross-cutting: Technique Selection ---
-        - question: "**[Technique Selection]** Match each task to the correct Express data source:\n- A: Search products by price range\n- B: View a specific order by its number\n- C: Submit a new customer registration form\n- D: Sort results by a user-selected column"
+        - question: "**[Evaluate]** Review this route. Identify ALL the problems:\n```javascript\napp.get('/students', (req, res) => {\n    const data = fs.readFileSync('students.json', 'utf8');\n    const students = JSON.parse(data);\n    const passing = students.filter(s => s.grade == 60);\n    res.json(passing);\n});\n```"
           options:
-            - "A: `req.query`, B: `req.params`, C: `req.body`, D: `req.query`"
-            - "A: `req.params`, B: `req.query`, C: `req.body`, D: `req.params`"
-            - "A: `req.body`, B: `req.params`, C: `req.query`, D: `req.body`"
-            - "A: `req.query`, B: `req.body`, C: `req.params`, D: `req.query`"
-          correct_index: 0
-          explanation: "[Step 6] Filtering/searching/sorting uses query parameters (`?minPrice=10&maxPrice=50&sort=name`). Identifying one specific resource uses route parameters (`/orders/12345`). Submitting new data uses the request body (POST). Knowing which data source to use is a key discrimination skill."
-
-        # --- Cross-cutting: Architecture ---
-        - question: "**[Evaluate]** A student puts all 15 routes in `app.js`, arguing 'it is simpler with one file.' What are two problems with this as the app grows?"
-          options:
-            - "Performance degrades — Express runs routes faster when they are in separate files"
-            - "Maintainability: the file becomes hard to navigate, and multiple developers cannot work on different features without merge conflicts. Testability: you cannot test route groups in isolation."
-            - "Security: Express disables HTTPS when too many routes are in one file"
-            - "There are no problems — Express recommends putting all routes in one file"
-          correct_index: 1
-          explanation: "[Step 7] `express.Router()` solves both problems by grouping related routes into modules. Each module handles one domain (users, orders, products), can be worked on independently, and can be tested in isolation. This follows the single-responsibility principle."
-
-        # --- Cross-cutting: Synthesis ---
-        - question: "**[Evaluate]** Review this Express route. Identify ALL the problems:\n```javascript\napp.get('/students', (req, res) => {\n    const data = fs.readFileSync('students.json', 'utf8');\n    const students = JSON.parse(data);\n    const passing = students.filter(s => s.grade == 60);\n    res.json(passing);\n});\n```"
-          options:
-            - "No problems — this is a correct and complete Express route"
-            - "Only one problem: `==` should be `===`"
-            - "`readFileSync` blocks the Event Loop (use async); `== 60` should be `>= 60` with `===`; the handler should be `async` with `try`/`catch`"
-            - "`readFileSync` is fine for small files; the only problem is the missing `try`/`catch`"
+            - "No problems — this is a correct, production-ready Express route handler"
+            - "Only one problem: the `==` loose comparison should be `===` for strict equality"
+            - "Three: `readFileSync` blocks; `== 60` should be `>= 60` with `===`; no `try`/`catch`"
+            - "`readFileSync` is acceptable for small files; the only real issue is the missing error handling"
           correct_index: 2
-          explanation: "[Steps 2, 8, 9] Three problems: (1) `readFileSync` blocks the entire server — use `await fs.promises.readFile` instead. (2) `== 60` uses loose equality and checks for *exactly* 60, not >= 60 for passing — should be `>= 60` with `===`. (3) No `try`/`catch` — if the file is missing, the server crashes. This question integrates lessons from Steps 2 (===), 8 (blocking), and 9 (async + error handling)."
+          explanation: "[Steps 2, 8, 9] (1) `readFileSync` blocks the server. (2) `== 60` should be `>= 60` with `===`. (3) No `try`/`catch` — the server crashes if the file is missing."
 
   # --------------------------------------------------------------------------
-  # STEP 12: You Made It! — Summary & Celebration
-  # Pedagogy: No tasks, no tests — just a celebration and summary of
-  #           everything learned. Reinforces the growth arc from
-  #           "Hello, Node.js!" to a full Express API.
+  # STEP 11: You Made It! — Summary & Celebration (no tasks, no tests)
   # --------------------------------------------------------------------------
   - title: "You Made It!"
     instructions: |
