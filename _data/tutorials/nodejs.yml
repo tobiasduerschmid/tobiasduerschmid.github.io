@@ -1146,7 +1146,7 @@ steps:
           // This route handles GET requests to "/"
           // The arrow function is a CALLBACK — the same pattern from Step 3
           app.get('/', (req, res) => {
-              // TODO: Change "Replace me!" to "Hello from Express!"
+              // TODO: Look what happens when you change this!
               res.send("Replace me!");
           });
 
