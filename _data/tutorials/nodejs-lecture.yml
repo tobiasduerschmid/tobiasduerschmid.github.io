@@ -3,6 +3,7 @@ description: "Code walkthroughs from the CS 35L Lecture 5 — Client Server & No
 
 backend: browser
 
+instructor_mode: true
 require_tests: false
 autosave_type: none
 
