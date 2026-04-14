@@ -19,7 +19,7 @@ steps:
 
       > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser and **write** a basic Node.js script.
 
-      You already know two languages. JavaScript powers everything from Discord and Spotify's web player to Netflix's backend. Here is how it fits into your mental model:
+      You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, and even parts of VS Code. Here is how it fits into your mental model:
 
       | | C++ | Python | JavaScript (Node.js) |
       |---|---|---|---|
@@ -33,13 +33,13 @@ steps:
       - **libuv** — A C library providing the **Event Loop** and non-blocking I/O access to the OS.
       
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
-      Thereby, Node.js powers production backends at Netflix, LinkedIn, Uber, and many more!
+      Node.js powers the backend of apps you probably used today: Netflix, Discord, Spotify, Twitch, and many more.
 
 
       ### Predict Before You Code
 
       Look at `hello.js` — this is our soon-to-be hello world program.
-      In C++ your hello would would be `printf("Hello from C++!\n");`
+      In C++ your hello world would be `printf("Hello from C++!\n");`
       In Python it would be `print("Hello from Python!")`.
       What might it be for JavaScript running in Node.js? Maybe a mix of both?
       Not at all. JavaScript has its own syntax for printing to the console.
@@ -52,8 +52,10 @@ steps:
       console.log("Hello from Node.js!");
       ```
 
-      Click **▶ Run** to execute the script and see the output. This excutes `node hello.js` in background.
+      Click **▶ Run** to execute the script and see the output. This executes `node hello.js` in background.
       In this tutorial you focus just on writing Node.js. We run these commands for you.
+
+      > **Semicolons:** Unlike Python, JavaScript statements conventionally end with `;` (like C++). JavaScript can usually auto-insert them, but always using semicolons avoids subtle bugs and matches the style you will see in professional codebases.
 
     files:
       - path: "hello.js"
@@ -151,7 +153,7 @@ steps:
       Mutable variables can be assigned different values afterwards. 
       This is useful when the value is expected to change, e.g. a counter.
       However, it also masks bugs that result from incorrect assignments.
-      Use immuatable types (`const` in JS, `final` in Java, `const` in C++) when declaring constants that are not expect to change.
+      Use immutable bindings (`const` in JS, `final` in Java, `const` in C++) when declaring constants that are not expected to change.
 
       > **Avoid using `var`** — it has "hoisting" scoping rules that violate everything you know from C++ and Python. Always use `let` or `const`.
 
@@ -328,20 +330,16 @@ steps:
           correct_index: 2
           explanation: "Template literals use backticks (`` ` ``) and `${expression}` for interpolation — a direct equivalent of Python's f-strings. Single or double quotes create plain strings with no interpolation. Note: `'Welcome, ${name}!'` in single quotes prints the literal text `${name}`, not the variable's value."
 
-        - question: "Which behaviors of `var` violate the scoping rules you learned in C++ and Python? (Select all that apply)"
-          type: multiple
+        - question: "The tutorial says to avoid `var` and always use `let` or `const`. Why?"
           options:
-            - "`var` declarations are hoisted to the top of their function, so they can be referenced before the line where they are declared"
-            - "`var` ignores block scope (`if`, `for`, `while` blocks) and leaks into the enclosing function"
-            - "`var` cannot hold string values — only numbers and booleans"
-            - "`var` allows re-declaring the same variable name multiple times without any error"
-          correct_indices:
-            - 0
-            - 1
-            - 3
-          explanation: "All three of these behaviors break the mental model from C++ and Python. C++ block scope (`{}`) strictly contains variables. Python raises a NameError if you use a variable before assignment. `var` violates both. `let` and `const` behave like C++/Python block-scoped variables — use them exclusively."
+            - "`var` is slower than `let` and `const` at runtime"
+            - "`var` ignores block scope and hoists declarations — violating the scoping rules you know from C++ and Python. `let` and `const` behave like C++/Python block-scoped variables."
+            - "`var` was removed from JavaScript in ES6 and causes syntax errors in modern engines"
+            - "`var` and `let` are identical — the advice is just a coding style preference"
+          correct_index: 1
+          explanation: "In C++ and Python, a variable declared inside a `for` or `if` block stays inside that block. `var` violates this — it leaks out of blocks and can be used before its declaration line (hoisting). `let` and `const` restore the block-scoping behavior you expect. This is why modern JavaScript linters flag every use of `var`."
 
-        - question: "A teammate's code has `if (userRole == 'admin')` and it works in all their tests. Should you flag this in code review? Why or why not?"
+        - question: "Your teammate's Discord bot code has `if (userRole == 'admin')` and it works in all their tests. Should you flag this in code review? Why or why not?"
           options:
             - "No — both sides are strings so `==` and `===` behave identically, and there is no risk to flag"
             - "Yes — using `==` hides a habit of relying on coercion, and a future change to a numeric role ID would silently introduce a bug"
@@ -581,14 +579,14 @@ steps:
           correct_index: 1
           explanation: "Functions are first-class values. `isEven` is the function itself; `isEven()` is the result of calling it. `.filter(isEven)` says 'here is a function — you call it.' `.filter(isEven())` says 'call isEven now and pass whatever it returns.' This distinction is fundamental to callbacks."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
+        - question: "**[Spaced Practice: Revisit Step 2]** A student declares `let API_URL = 'https://api.school.edu'` and never reassigns it. What change should they make, and why?"
           options:
-            - "Yes, it works and is safe to keep — the comparison correctly identifies the admin"
-            - "Yes, it works due to type coercion, but you should change it to `===` and explicitly convert the ID to a number — relying on coercion hides a fragile assumption"
-            - "No, `==` will return `false` here because strings and numbers are never equal in JavaScript"
-            - "No, the code will throw a TypeError at runtime"
+            - "Change `let` to `var` — `var` is the standard keyword for URLs"
+            - "Change `let` to `const` — the value never changes, so `const` signals that intent and prevents accidental reassignment"
+            - "No change needed — `let` and `const` are interchangeable for strings"
+            - "Wrap it in a function to protect it from modification"
           correct_index: 1
-          explanation: "JavaScript's `==` coerces `'42'` to `42`, so the check works — but it is fragile. If the ID format changes (e.g., UUID strings), the coercion silently breaks. Using `===` with explicit conversion (`Number(userId) === 42`) makes the intent clear and safe."
+          explanation: "This is the same principle from Step 2: default to `const` for values that never change. `const` communicates intent to readers and catches accidental reassignment bugs at the point of the mistake, rather than causing subtle issues later. `var` should be avoided entirely due to hoisting."
 
   # --------------------------------------------------------------------------
   # STEP 4: Array Transformation & Destructuring
@@ -856,16 +854,16 @@ steps:
           distractors:
             - "const grades = students.filter(({ grade }) => grade);"
             - "const sum = grades.reduce((acc, g) => acc + g);"
-          explanation: "`.map()` with destructuring extracts just the grades. `.reduce()` sums them — the `0` initial value is critical (the distractor without it throws on empty arrays). `.filter()` selects elements, not transforms — wrong method for extracting grades."
+          explanation: "`.map()` with destructuring extracts just the grades. `.reduce()` sums them — the `0` initial value is critical because without it, `.reduce()` uses the first element as the initial accumulator (which happens to work for non-empty arrays but throws a TypeError on empty arrays — a silent bug waiting to happen). `.filter()` selects elements, not transforms — wrong method for extracting grades."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** A student writes `numbers.filter(isEven)` where `isEven` is a function. Why does this work without calling `isEven()` with parentheses?"
+        - question: "**[Spaced Practice: Revisit Step 3]** A student writes `const result = students.filter(s => s.grade >= 60).map(s => s.name)`. What does this expression produce?"
           options:
-            - "JavaScript automatically adds the parentheses at runtime"
-            - "`isEven` without parentheses is a **reference to the function** — `.filter()` will call it for each element. Adding `()` would call it immediately and pass the *return value* instead"
-            - "`.filter()` accepts both function references and function calls interchangeably"
-            - "This is a bug — `isEven` without parentheses passes `undefined`"
+            - "An array of student objects with grade >= 60"
+            - "An array of names (strings) of students with grade >= 60 — `.filter()` selects, then `.map()` transforms"
+            - "A single string containing all passing student names"
+            - "An error — you cannot chain `.filter()` and `.map()` together"
           correct_index: 1
-          explanation: "Functions are first-class values. `isEven` is the function itself; `isEven()` is the result of calling it. `.filter(isEven)` says 'here is a function — you call it.' `.filter(isEven())` says 'call isEven now and pass whatever it returns.' This distinction is fundamental to callbacks."
+          explanation: "`.filter()` returns a new array of student objects matching the condition. `.map()` then transforms each object into just its `name` string. Method chaining works because each method returns a new array. This chain combines skills from Step 3 (`.filter()`) and Step 4 (`.map()`)."
 
         - question: "**[Spaced Practice: Revisit Step 2]** A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
           options:
@@ -1135,11 +1133,29 @@ steps:
       });
       ```
 
+      > **What is `app.use(express.json())`?** Express does not read request bodies by default — they arrive as raw bytes. `express.json()` is **middleware**: a function that runs *before* your route handler and converts the raw JSON bytes into a JavaScript object. Without it, `req.body` would be `undefined`. Think of it as a translator that runs between the incoming HTTP request and your handler callback.
+
       | | GET + Query Params | GET + Route Params | POST + Body |
       |---|---|---|---|
       | **Data in** | URL: `?key=value` | URL: `/path/:param` | Request body (hidden) |
       | **Use for** | Filtering, searching | Identifying ONE resource | Creating/modifying data |
       | **Example** | `/students?passing=true` | `/students/3` | `POST /students` with JSON |
+
+      ### New Array Method: `.find()`
+
+      You already know `.filter()` returns **all** matching elements. Often you need just **one**. That is what `.find()` does:
+
+      ```javascript
+      const students = [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }];
+
+      // .filter() returns an array (possibly empty):
+      students.filter(s => s.id === 2);   // [{ id: 2, name: "Bob" }]
+
+      // .find() returns the FIRST match (or undefined if none):
+      students.find(s => s.id === 2);     // { id: 2, name: "Bob" }
+      ```
+
+      Use `.find()` when you are looking for **one specific item** (like a student by ID). Use `.filter()` when you want **all items** matching a condition.
 
       ### Task: Build a Dynamic Student API
 
@@ -1157,9 +1173,11 @@ steps:
 
       1. If you send `GET /students?passing=true` right now (with `res.json("Implement me!")` unchanged), what will the HTTP client show?
       2. What is the data type of `req.query.passing` — a boolean or a string?
-      3. Will `req.params.id === 3` (comparing to the number `3`) ever be `true`? Why?
+      3. Will `req.params.id === 3` (comparing to the number `3`) ever be `true`? Why not? (Hint: revisit Step 2's lesson about types.)
 
       > **Expect at least one route to return wrong results on your first attempt** — that is not failure, it is the normal debugging loop. Read the response body; it usually tells you exactly what went wrong.
+
+      > **Note:** The starter code includes `app.use(express.json())` at the top. This middleware is required for POST routes — without it, `req.body` would be `undefined`.
 
     files:
       - path: "server.js"
@@ -1342,10 +1360,10 @@ steps:
           correct_index: 1
           explanation: "Filtering/searching uses query parameters (`?category=electronics`). Identifying one specific resource uses route parameters (`/users/42`). Submitting new data uses the request body (POST). This discrimination — knowing *which* data source applies — is the key skill."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** `req.query.maxPrice` contains the string `'500'`. A developer writes `if (product.price < req.query.maxPrice)`. Will this comparison work correctly?"
+        - question: "**[Spaced Practice: Revisit Step 2]** A Twitch-like streaming API has `req.query.maxViewers` as the string `'500'`. A developer writes `if (stream.viewers < req.query.maxViewers)`. Will this comparison work correctly?"
           options:
             - "Yes — JavaScript automatically converts the string to a number for the `<` comparison"
-            - "It works for most cases due to type coercion, but it is fragile. Convert explicitly with `Number(req.query.maxPrice)` to be safe and clear."
+            - "It works for most cases due to type coercion, but it is fragile. Convert explicitly with `Number(req.query.maxViewers)` to be safe and clear."
             - "No — comparing a number to a string always returns `false` in JavaScript"
             - "No — this will throw a TypeError at runtime"
           correct_index: 1
@@ -1442,6 +1460,8 @@ steps:
       2. If you define `router.get('/api/students', ...)` instead of `router.get('/', ...)`, and mount at `/api/students`, what URL will actually match?
 
       > **Two-file apps are harder to debug** because errors often appear in `app.js` but originate in `studentRoutes.js`. If you see `"Cannot GET /api/students"`, the most likely cause is a missing export or wrong mount path — not a syntax error in the route handler itself.
+
+      > **Growth mindset moment:** This step is a significant jump — you are now writing routes *and* organizing them across files. If it takes multiple attempts, that is normal. Professional developers debug module import issues regularly. Each error you fix here builds a mental model that will save you hours in the capstone.
 
     files:
       - path: "studentRoutes.js"
@@ -1652,6 +1672,8 @@ steps:
       This is the paradigm shift that trips up every C++ and Python developer. Read carefully — and expect to be surprised.
 
       > **Before you begin:** Rate your confidence: *"I understand how code execution order works"* — 1 (not sure) to 5 (very confident). Revisit this rating after completing the step.
+
+      > **Growth mindset moment:** This step is the hardest concept in the entire tutorial. Professional developers with years of experience still get tripped up by the Event Loop. If you feel confused or frustrated, that is a sign your brain is building a fundamentally new mental model — not a sign that something is wrong with you. Every Node.js developer went through this exact struggle. Take your time, re-read the metaphor, and trust the process.
 
       **JavaScript is single-threaded.** There is only one "chef" in the kitchen. This is how your Express server handles thousands of requests — and why a single slow route handler can block everything.
 
@@ -1914,11 +1936,11 @@ steps:
   #           Uses the SAME students.json from Step 8 — spiraling curriculum.
   #           Critical caveat: sequential await vs Promise.all().
   # --------------------------------------------------------------------------
-  - title: "async/await in Express Routes"
+  - title: "From Callbacks to async/await"
     instructions: |
       ## From Callbacks to Clean Code
 
-      > You just conquered the Event Loop — the single hardest concept in Node.js. If it clicked, you are ahead of most JavaScript beginners. If it's still fuzzy, revisit the Restaurant Metaphor whenever async code surprises you.
+      > You just conquered the Event Loop — the single hardest concept in Node.js. If it clicked, you are ahead of most JavaScript beginners. If it is still fuzzy, revisit the Restaurant Metaphor whenever async code surprises you — that is completely normal and the metaphor becomes clearer with practice.
 
       > **Learning objective:** After this step you will be able to **refactor** `fs.readFile` callback-style code to use `async`/`await` with `fs.promises.readFile`, **explain** what a Promise represents, and **use** `try`/`catch` for async error handling.
 
@@ -1942,17 +1964,32 @@ steps:
 
       ### What is a Promise?
 
-      A **Promise** is an object representing a value that does not exist yet. `fs.promises.readFile` returns one:
+      A **Promise** is an object representing a value that does not exist *yet* — like a receipt for food you ordered. The food is not ready, but the receipt guarantees you will get it (or be told if something went wrong).
+
+      A Promise has three possible states:
+      - **Pending** — the operation is still in progress (your food is cooking)
+      - **Fulfilled** — the operation succeeded and the result is available (food is ready)
+      - **Rejected** — the operation failed (the kitchen is out of that dish)
+
+      ### Generation 2: Promises with `.then()`
+
+      `fs.promises.readFile` returns a Promise instead of taking a callback:
 
       ```javascript
       const fs = require('fs');
 
-      // fs.promises.readFile returns a Promise — the file content arrives later
+      // Returns a Promise — the file content arrives later
       const promise = fs.promises.readFile('students.json', 'utf8');
       // 'promise' is a Promise object right now — the data isn't here yet
 
+      // .then() registers what to do when the Promise fulfills
       promise.then(data => console.log('Got data:', data.length, 'bytes'));
+
+      // .catch() handles errors (similar to except in Python)
+      promise.catch(err => console.error('Failed:', err.message));
       ```
+
+      This is already better than callbacks — no nesting! But `async`/`await` makes it even cleaner.
 
       ### Generation 3: async/await — Looks like Python/C++
 
@@ -2209,6 +2246,8 @@ steps:
       ## Putting It All Together — No Scaffolding
 
       You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. This capstone integrates them into one Express API — with **no scaffolding**. You decide how to structure the code.
+
+      > **Growth mindset moment:** This capstone has no scaffolding — and that is intentional. If you feel stuck, it does not mean you are missing something fundamental. It means you are doing the hard work of *integrating* skills that you practiced in isolation. Go back to the specific step that covers the concept you are stuck on. Every professional developer references prior work when building something new.
 
       ### Design Before You Code
 
@@ -2557,3 +2596,269 @@ steps:
             - "`==` will throw a TypeError in strict mode"
           correct_index: 1
           explanation: "This is the same lesson from Step 2: `==` coerces silently, which *works* here but hides a fragile assumption. If IDs become UUIDs (strings), the coercion fails silently. `===` with explicit `Number()` conversion makes the code's intent clear to every reader."
+
+  # --------------------------------------------------------------------------
+  # STEP 11: Comprehensive Final Quiz
+  # Pedagogy: Cumulative assessment covering ALL major concepts from
+  #           Steps 1–10. Tests at multiple Bloom's levels (Remember,
+  #           Understand, Apply, Analyze, Evaluate). Implements spaced
+  #           retrieval across the entire tutorial. No new content.
+  # --------------------------------------------------------------------------
+  - title: "Final Knowledge Check"
+    instructions: |
+      ## Comprehensive Review
+
+      > Congratulations — you have completed the entire tutorial! This final quiz checks your understanding of **all** the key concepts from Steps 1–10. There is no coding task — just the quiz below.
+
+      > Before you begin, take a moment to reflect on everything you have learned: JavaScript fundamentals, arrow functions and callbacks, array methods, Express routing, the Event Loop, and async/await. You started this tutorial knowing C++ and Python. You are now equipped to build real Node.js backend applications.
+
+      > **Growth mindset moment:** If you get a question wrong, that is valuable information — it tells you exactly which concept to revisit. Use the step references in each explanation to go back and review.
+
+    files:
+      - path: "review.js"
+        content: |
+          // Congratulations on completing the tutorial!
+          // This step is a quiz-only review — no coding required.
+          console.log("You completed the Node.js Essentials tutorial!");
+        language: "javascript"
+
+    open_file: "review.js"
+
+    tests:
+      - description: "File runs without errors"
+        command: "assert(output.includes('completed'), 'The review file should run successfully')"
+
+    quiz:
+      title: "Comprehensive Final Quiz — All Concepts"
+      min_score: 0.7
+      shuffle: true
+      questions:
+        # --- Step 1: Node.js Fundamentals ---
+        - question: "What two components does Node.js bundle to let JavaScript run outside the browser?"
+          options:
+            - "React and Webpack"
+            - "V8 (JIT compiler) and libuv (async I/O and Event Loop)"
+            - "npm and Express"
+            - "TypeScript and Babel"
+          correct_index: 1
+          explanation: "[Step 1] V8 compiles JavaScript to machine code. libuv provides the Event Loop and OS-level I/O access. Together they give JavaScript everything it needs for backend development."
+
+        # --- Step 2: Variables and Types ---
+        - question: "What is the output of `console.log('' == false)` in JavaScript?"
+          options:
+            - "`true` — the empty string is coerced to `false` by `==`"
+            - "`false` — strings and booleans cannot be compared"
+            - "A TypeError at runtime"
+            - "`undefined`"
+          correct_index: 0
+          explanation: "[Step 2] JavaScript's `==` performs type coercion. The empty string `''` is a 'falsy' value, so `'' == false` is `true`. This is exactly why you should always use `===`, which would correctly return `false` since a string and a boolean are different types."
+
+        # --- Step 3: Arrow Functions & Callbacks ---
+        - question: "Convert this to an arrow function: `function square(n) { return n * n; }`"
+          options:
+            - "`const square = n -> n * n;`"
+            - "`const square = n => n * n;`"
+            - "`const square = (n) -> { return n * n; }`"
+            - "`const square = function(n) => n * n;`"
+          correct_index: 1
+          explanation: "[Step 3] Arrow functions use `=>` (not `->`). For a single parameter and single expression, parentheses and braces are optional: `n => n * n`. The `return` is implicit for single-expression arrow functions without braces."
+
+        # --- Step 3: Callbacks (deeper) ---
+        - question: "A student writes `setTimeout(console.log('hello'), 1000)`. Why does 'hello' print immediately instead of after 1 second?"
+          options:
+            - "`setTimeout` ignores the delay for `console.log` calls"
+            - "`console.log('hello')` is called immediately (with parentheses), and its return value (`undefined`) is passed to `setTimeout` — not the function itself"
+            - "The delay of 1000 is in microseconds, not milliseconds"
+            - "`setTimeout` only works with arrow functions, not `console.log`"
+          correct_index: 1
+          explanation: "[Step 3] This is the function reference vs. function call distinction. `console.log('hello')` *calls* the function now. `() => console.log('hello')` *passes* a function for `setTimeout` to call later. This is the most common callback mistake."
+
+        # --- Step 4: Array Methods ---
+        - question: "What does `[5, 10, 15, 20].filter(n => n > 10).map(n => n * 2)` return?"
+          options:
+            - "`[10, 20, 30, 40]`"
+            - "`[30, 40]`"
+            - "`[15, 20]`"
+            - "`60`"
+          correct_index: 1
+          explanation: "[Steps 3–4] `.filter(n => n > 10)` selects `[15, 20]`. `.map(n => n * 2)` transforms each: `[30, 40]`. Chaining these methods is a core JavaScript pattern. `.filter()` reduces the count; `.map()` transforms each element."
+
+        # --- Step 4: Destructuring ---
+        - question: "What does `const [first, , third] = ['a', 'b', 'c']` assign to `third`?"
+          options:
+            - "`undefined` — the gap causes an error"
+            - "`'b'`"
+            - "`'c'` — the comma skips the second element"
+            - "`['c']` — an array containing 'c'"
+          correct_index: 2
+          explanation: "[Step 4] Array destructuring assigns by position. The empty slot (`, ,`) skips the second element. So `first = 'a'`, the second element is skipped, and `third = 'c'`. This is useful when you only need certain positions."
+
+        # --- Step 5: Express Basics ---
+        - question: "In Express, what is the difference between `res.send('hello')` and `res.json({ message: 'hello' })`?"
+          options:
+            - "They are identical — both send text"
+            - "`res.send()` sends plain text or HTML; `res.json()` serializes a JavaScript object to JSON and sets the Content-Type header to `application/json`"
+            - "`res.json()` is faster because it skips header processing"
+            - "`res.send()` only works with GET requests; `res.json()` works with all methods"
+          correct_index: 1
+          explanation: "[Step 5] `res.send()` sends the data as-is (text/HTML). `res.json()` converts a JavaScript object or array to a JSON string and sets the `Content-Type: application/json` header. Use `res.json()` when your API returns structured data."
+
+        # --- Step 6: Dynamic Routes ---
+        - question: "A route is `app.get('/products/:category/:id', handler)`. For the URL `/products/electronics/42`, what does `req.params` contain?"
+          options:
+            - "`{ category: 'electronics', id: 42 }` (string and number)"
+            - "`{ category: 'electronics', id: '42' }` (both strings)"
+            - "`{ 0: 'electronics', 1: '42' }`"
+            - "`{ product: 'electronics/42' }`"
+          correct_index: 1
+          explanation: "[Step 6] Route parameters are always strings — Express captures URL segments as text. Both `category` and `id` are strings. To use `id` as a number, you must explicitly convert: `Number(req.params.id)`."
+
+        # --- Step 7: Express Router ---
+        - question: "A team has `userRoutes.js` and `orderRoutes.js`, each exporting an Express Router. In `app.js`, they mount both. Which code is correct?"
+          options:
+            - "`app.use('/api/users', userRoutes); app.use('/api/orders', orderRoutes);`"
+            - "`app.get('/api/users', userRoutes); app.get('/api/orders', orderRoutes);`"
+            - "`app.use(userRoutes, '/api/users'); app.use(orderRoutes, '/api/orders');`"
+            - "`app.route('/api/users', userRoutes); app.route('/api/orders', orderRoutes);`"
+          correct_index: 0
+          explanation: "[Step 7] `app.use(prefix, router)` mounts a Router at a URL prefix. The prefix comes first, then the imported router. `app.get()` is for individual routes, not mounting routers. This pattern lets each file handle its own domain independently."
+
+        # --- Step 8: Event Loop ---
+        - question: "**Analyze** the output order:\n```javascript\nfs.readFile('data.json', 'utf8', (err, data) => {\n    console.log('A');\n});\nconsole.log('B');\nsetTimeout(() => console.log('C'), 0);\nconsole.log('D');\n```"
+          options:
+            - "A, B, C, D"
+            - "B, D, A, C (or B, D, C, A)"
+            - "B, A, D, C"
+            - "A, B, D, C"
+          correct_index: 1
+          explanation: "[Step 8] `B` and `D` are synchronous — they execute immediately in order. `fs.readFile` and `setTimeout` are async — their callbacks enter the Task Queue and only fire after the call stack empties. The relative order of `A` and `C` depends on whether the file read or the timer resolves first, but both come after `B` and `D`."
+
+        # --- Step 9: async/await ---
+        - question: "What happens if you forget the `await` keyword: `const data = fs.promises.readFile('file.json', 'utf8');`?"
+          options:
+            - "`data` contains the file contents as a string, same as with `await`"
+            - "`data` is a Promise object, not the file contents — you get `[object Promise]` when you try to use it"
+            - "The code throws a TypeError immediately"
+            - "The file is never read at all"
+          correct_index: 1
+          explanation: "[Step 9] Without `await`, `fs.promises.readFile` returns a Promise object immediately. The variable `data` holds that Promise, not the resolved string. This is the most common async/await mistake — especially for Python developers who expect blocking file reads."
+
+        # --- Cross-cutting: Technique Selection ---
+        - question: "**[Technique Selection]** Match each task to the correct Express data source:\n- A: Search products by price range\n- B: View a specific order by its number\n- C: Submit a new customer registration form\n- D: Sort results by a user-selected column"
+          options:
+            - "A: `req.query`, B: `req.params`, C: `req.body`, D: `req.query`"
+            - "A: `req.params`, B: `req.query`, C: `req.body`, D: `req.params`"
+            - "A: `req.body`, B: `req.params`, C: `req.query`, D: `req.body`"
+            - "A: `req.query`, B: `req.body`, C: `req.params`, D: `req.query`"
+          correct_index: 0
+          explanation: "[Step 6] Filtering/searching/sorting uses query parameters (`?minPrice=10&maxPrice=50&sort=name`). Identifying one specific resource uses route parameters (`/orders/12345`). Submitting new data uses the request body (POST). Knowing which data source to use is a key discrimination skill."
+
+        # --- Cross-cutting: Architecture ---
+        - question: "**[Evaluate]** A student puts all 15 routes in `app.js`, arguing 'it is simpler with one file.' What are two problems with this as the app grows?"
+          options:
+            - "Performance degrades — Express runs routes faster when they are in separate files"
+            - "Maintainability: the file becomes hard to navigate, and multiple developers cannot work on different features without merge conflicts. Testability: you cannot test route groups in isolation."
+            - "Security: Express disables HTTPS when too many routes are in one file"
+            - "There are no problems — Express recommends putting all routes in one file"
+          correct_index: 1
+          explanation: "[Step 7] `express.Router()` solves both problems by grouping related routes into modules. Each module handles one domain (users, orders, products), can be worked on independently, and can be tested in isolation. This follows the single-responsibility principle."
+
+        # --- Cross-cutting: Synthesis ---
+        - question: "**[Evaluate]** Review this Express route. Identify ALL the problems:\n```javascript\napp.get('/students', (req, res) => {\n    const data = fs.readFileSync('students.json', 'utf8');\n    const students = JSON.parse(data);\n    const passing = students.filter(s => s.grade == 60);\n    res.json(passing);\n});\n```"
+          options:
+            - "No problems — this is a correct and complete Express route"
+            - "Only one problem: `==` should be `===`"
+            - "`readFileSync` blocks the Event Loop (use async); `== 60` should be `>= 60` with `===`; the handler should be `async` with `try`/`catch`"
+            - "`readFileSync` is fine for small files; the only problem is the missing `try`/`catch`"
+          correct_index: 2
+          explanation: "[Steps 2, 8, 9] Three problems: (1) `readFileSync` blocks the entire server — use `await fs.promises.readFile` instead. (2) `== 60` uses loose equality and checks for *exactly* 60, not >= 60 for passing — should be `>= 60` with `===`. (3) No `try`/`catch` — if the file is missing, the server crashes. This question integrates lessons from Steps 2 (===), 8 (blocking), and 9 (async + error handling)."
+
+  # --------------------------------------------------------------------------
+  # STEP 12: You Made It! — Summary & Celebration
+  # Pedagogy: No tasks, no tests — just a celebration and summary of
+  #           everything learned. Reinforces the growth arc from
+  #           "Hello, Node.js!" to a full Express API.
+  # --------------------------------------------------------------------------
+  - title: "You Made It!"
+    instructions: |
+      ## You Built a Backend From Scratch
+
+      Take a moment to appreciate what you just did. You walked into this tutorial knowing C++ and Python. You are walking out with a working knowledge of JavaScript and Node.js backend development.
+
+      ### Here is everything you learned:
+
+      **JavaScript Fundamentals (Steps 1–2)**
+      - How Node.js uses V8 and libuv to run JavaScript outside the browser
+      - `let` vs `const` — and why `var` is banished
+      - Template literals — JavaScript's answer to Python's f-strings
+      - The `===` trap — why JavaScript's `==` is a landmine and strict equality is your friend
+
+      **Functions & Data Processing (Steps 3–4)**
+      - Arrow functions — the modern way to write functions in JavaScript
+      - Callbacks — the single most important pattern in JavaScript: pass a function, get called back later
+      - `.filter()`, `.map()`, `.reduce()` — the three array methods that power everything
+      - Destructuring — unpacking objects and arrays in one clean line
+
+      **Express & Backend Development (Steps 5–7)**
+      - How Express turns URLs into function calls (routes are just callbacks!)
+      - `req.query`, `req.params`, `req.body` — three ways to receive data from users
+      - GET for reading, POST for creating — the HTTP verbs
+      - `express.Router()` — organizing routes into professional, modular code
+      - `module.exports` and `require()` — sharing code between files
+
+      **Async JavaScript (Steps 8–9)**
+      - The Event Loop — the single-threaded Chef that makes Node.js powerful
+      - Why blocking the Event Loop is catastrophic for a server
+      - Promises — objects representing future values
+      - `async`/`await` — writing non-blocking code that reads like Python
+      - `Promise.all()` — running multiple async operations concurrently
+      - `try`/`catch` — handling errors gracefully in async code
+
+      **Full Integration (Step 10)**
+      - Designing and building a complete Express API with zero scaffolding
+      - Combining every skill: Router + async file reads + array processing + error handling
+
+      ### What Comes Next
+
+      You now have the foundation to:
+      - **Add a database** — replace JSON files with MongoDB or PostgreSQL
+      - **Build a frontend** — connect a React or Next.js app to your Express API
+      - **Add authentication** — protect routes with JWT tokens or OAuth
+      - **Build real-time features** — add WebSockets for live chat or notifications
+      - **Deploy** — put your API on the internet with services like Railway, Vercel, or Render
+
+      The patterns you learned — callbacks, async/await, the Event Loop, modular code — are the exact same patterns running behind Discord's real-time messaging, Spotify's playlist API, Netflix's content delivery, and Twitch's stream management.
+
+      ### One Last Thing
+
+      Remember that moment in Step 8 when the Event Loop broke your mental model? Or when Step 10 asked you to build an entire API with no scaffolding? Those moments of struggle were not setbacks — they were the moments your brain was building new neural pathways. Every professional developer went through the same learning curve. The difference is that you pushed through it.
+
+      You are ready.
+
+    files:
+      - path: "done.js"
+        content: |
+          // You completed the Node.js Essentials tutorial!
+          // No tasks here — just celebration.
+
+          const skills = [
+              "JavaScript fundamentals",
+              "Arrow functions & callbacks",
+              "Array methods: .filter(), .map(), .reduce()",
+              "Destructuring",
+              "Express routing",
+              "Query params, route params, POST bodies",
+              "Express Router & modular code",
+              "The Event Loop",
+              "async/await & Promises",
+              "Promise.all() for concurrency",
+              "Error handling with try/catch",
+              "Full API design & integration",
+          ];
+
+          console.log("Skills unlocked:");
+          skills.forEach((skill, i) => console.log(`  ${i + 1}. ${skill}`));
+          console.log(`\nTotal: ${skills.length} skills. You are ready.`);
+        language: "javascript"
+
+    open_file: "done.js"
