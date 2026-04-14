@@ -97,15 +97,12 @@ interface Payable {
 
 Software is never just one class working in isolation. Classes interact. We represent these interactions with different types of lines and arrows. 
 
-*(Pedagogical Note: We are segmenting relationships into two categories to manage cognitive load: "Is-A" relationships and "Has-A" relationships).*
+### Generalization --- "Is-A" Relationships
 
-### Category 1: "Is-A" Relationships (Inheritance)
-
-**1. Generalization (Inheritance)**
 Generalization connects a subclass to a superclass. It means the subclass inherits attributes and behaviors from the parent. 
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> A solid line with a hollow, closed arrow pointing to the parent.
 
-**2. Interface Realization**
+### Interface Realization
 When a class agrees to implement the methods defined in an interface, it "realizes" the interface.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> A dashed line with a hollow, closed arrow pointing to the interface.
 
@@ -124,9 +121,38 @@ Sedan --|> Car
 SUV --|> Car
 @enduml'></div>
 
-### Category 2: "Has-A" / "Knows-A" Relationships
+### Dependency (Weakest Relationship)
 
-**1. Association**
+A dependency indicates that one class *uses* another, but does not hold a permanent reference to it. For example, a class might use another class as a method parameter, local variable, or return type. Dependency is the weakest relationship in a class diagram.
+* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> A **dashed line** with an open arrowhead.
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+layout landscape
+class Train {
+  # addStop(stop: ButtonPressedEvent): void
+  + startTrain(velocity: double): void
+}
+class ButtonPressedEvent
+Train ..> ButtonPressedEvent
+@enduml'></div>
+
+In this example, `Train` depends on `ButtonPressedEvent` because it uses it as a parameter type in `addStop()`. However, `Train` does not store a permanent reference to `ButtonPressedEvent`---the dependency exists only for the duration of the method call.
+
+Here is another example where a class depends on an exception it throws:
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class ChecksumValidator {
+  + execute(): bool
+  + validate(): void
+}
+class InvalidChecksumException
+ChecksumValidator ..> InvalidChecksumException
+@enduml'></div>
+
+
+### Association --- "Has-A" / "Knows-A" Relationships
+
 A basic structural relationship indicating that objects of one class are connected to objects of another (e.g., a "Teacher" knows about a "Student"). Attributes can also be represented as association lines: a line is drawn between the owning class and the target attribute's class, providing a quick visual indication of which classes are related.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="--"></span> A simple solid line.
 * You can also **name** associations and make them **directional** using an arrowhead to indicate navigability (which class holds a reference to the other).
@@ -143,7 +169,8 @@ class Course {
 Student "0..*" -- "1..*" Course : enrolled in
 @enduml'></div>
 
-**2. Multiplicities**
+#### Multiplicities
+
 Along association lines, we use numbers to define *how many* objects are involved. Always show multiplicity on **both** ends of an association.
 
 | Notation | Meaning |
@@ -161,7 +188,7 @@ class Book
 Author "1" -- "1..*" Book : writes
 @enduml'></div>
 
-**3. Navigability**
+#### Navigability
 
 By default, an association is **bidirectional**---both classes know about each other. In practice, the relationship is often one-way: only one class holds a reference to the other. UML uses arrowheads and X marks to show this **navigability**.
 
@@ -220,7 +247,8 @@ An X on both ends of `Account`<span class="uml-sym" data-diagram="class" data-sy
 
 **When to use navigability:** Navigability is a design-level detail. In analysis/domain models, plain associations (no arrowheads) are preferred because you haven't decided which class holds the reference yet. Once you move into detailed design, add navigability to show which class stores the reference---this maps directly to code (a field/attribute in the class at the arrow tail).
 
-**4. Aggregation (Weak "Has-A")**
+#### Aggregation ("Owns-A")
+
 A specialized association where one class belongs to a collection, but the parts can exist independently of the whole. If a University closes down, the Professors still exist. Think of aggregation as a long-term, whole-part association.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> A solid line with an **empty diamond** at the "whole" end.
 
@@ -232,7 +260,8 @@ class Professor
 University "1" o-- "0..*" Professor
 @enduml'></div>
 
-**4. Composition (Strong "Has-A")**
+#### Composition ("Is-Made-Up-Of")
+
 A strict relationship where the parts *cannot* exist without the whole. If you destroy a House, the Rooms inside it are also destroyed. A part may belong to **only one** composite at a time (exclusive ownership), and the composite has sole responsibility for the lifetime of its parts.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> A solid line with a **filled diamond** at the "whole" end.
 * Per the UML spec, the multiplicity on the composite end must be `1` or `0..1`.
@@ -249,36 +278,6 @@ House "1" *-- "1..*" Room
 
 > 🧠 **Concept Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
-
-### Category 3: "Uses" Relationships
-
-**5. Dependency (Weakest Relationship)**
-A dependency indicates that one class *uses* another, but does not hold a permanent reference to it. For example, a class might use another class as a method parameter, local variable, or return type. Dependency is the weakest relationship in a class diagram.
-* **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> A **dashed line** with an open arrowhead.
-
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout horizontal
-layout landscape
-class Train {
-  # addStop(stop: ButtonPressedEvent): void
-  + startTrain(velocity: double): void
-}
-class ButtonPressedEvent
-Train ..> ButtonPressedEvent
-@enduml'></div>
-
-In this example, `Train` depends on `ButtonPressedEvent` because it uses it as a parameter type in `addStop()`. However, `Train` does not store a permanent reference to `ButtonPressedEvent`---the dependency exists only for the duration of the method call.
-
-Here is another example where a class depends on an exception it throws:
-
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-class ChecksumValidator {
-  + execute(): bool
-  + validate(): void
-}
-class InvalidChecksumException
-ChecksumValidator ..> InvalidChecksumException
-@enduml'></div>
 
 ### Relationship Strength Summary
 
@@ -298,7 +297,6 @@ From weakest to strongest, the class relationships are:
 </tbody>
 </table>
 
----
 
 ## Advanced Class Notation
 
@@ -340,7 +338,6 @@ class MathUtils {
 }
 @enduml'></div>
 
----
 
 ## From Code to Diagram: Worked Examples
 
@@ -470,9 +467,8 @@ The inner class pattern in Java typically indicates composition---the `IDEBus` i
 > The <code>List&lt;Employee&gt;</code> field suggests aggregation (the collection can grow dynamically, employees can exist independently). The array with a fixed size of 10 is a direct association with a specific multiplicity.
 > </details>
 
----
 
-## 4. Putting It All Together: The E-Commerce System
+## Putting It All Together: The E-Commerce System
 
 *Pedagogical Note: We are now combining isolated concepts into a complex schema. This reflects how you will encounter UML in the real world.*
 
@@ -516,13 +512,11 @@ LineItem "0..*" -- "1" Product
 4. **Composition:** An `Order` strongly contains `1..*` (one or more) `LineItem`s. If the order is deleted, the line items are deleted.
 5. **Association:** Each `LineItem` points to exactly `1` `Product`.
 
----
 
 ## Real-World Examples
 
 The following examples apply everything from this chapter to systems you interact with every day. Try reading each diagram yourself before the walkthrough — this is retrieval practice in action.
 
----
 
 ### Example 1: Spotify — Music Streaming Domain Model
 
@@ -563,7 +557,6 @@ Track "0..*" -- "1..*" Artist : performedBy
 
 > **Analysis vs. design level:** This diagram has no visibility modifiers (`+`, `-`). That is intentional — at the analysis level we model *what things are and do*, not encapsulation decisions. Visibility is a design-level concern added in a later phase.
 
----
 
 ### Example 2: GitHub — Pull Request Design Model
 
@@ -608,7 +601,6 @@ PullRequest ..> CICheck
 3. **Composition (PullRequest → Review):** A review only exists in the context of one PR. `1 *-- 0..*` reads: one PR can have zero or more reviews; each review belongs to exactly one PR.
 4. **Dependency (dashed open arrow, PullRequest → CICheck):** `PullRequest` *uses* `CICheck` temporarily — perhaps receiving it as a method parameter. It does not hold a permanent field reference, so this is a dependency, not an association.
 
----
 
 ### Example 3: Uber Eats — Food Delivery Domain Model
 
@@ -654,7 +646,6 @@ Driver "0..1" -- "0..1" Order : delivers
 3. **`OrderItem "0..*" -- "1" MenuItem`:** Each item references exactly one menu item. Many orders can reference the same menu item — deleting an order does **not** remove the menu item from the restaurant's catalogue.
 4. **`Driver "0..1" -- "0..1" Order`:** A driver handles at most one active delivery at a time; an order has at most one assigned driver. Before dispatch, both sides satisfy `0` — neither requires the other to exist yet. This captures a real business constraint in two characters.
 
----
 
 ### Example 4: Netflix — Content Catalogue Model
 
@@ -698,7 +689,6 @@ Content "0..*" -- "1..*" Genre : classifiedBy
 3. **Nested composition (`TVShow → Season → Episode`):** A `TVShow` is composed of seasons; each season is composed of episodes. Delete a show and the seasons disappear; delete a season and the episodes disappear. The chain of filled diamonds models this cascade.
 4. **Association with multiplicity (`Content → Genre`):** A movie or show belongs to `1..*` genres (at least one — e.g., Action). A genre classifies `0..*` content items. This is a plain association — deleting a genre does not delete the content.
 
----
 
 ### Example 5: Strategy Pattern — Pluggable Payment Processing
 
@@ -746,7 +736,6 @@ ShoppingCart --> PaymentStrategy : uses
 
 > **Connection to practice:** This is the same pattern behind Java's `Comparator`, Python's `sort(key=...)`, and every payment SDK you will ever integrate in your career. Class diagrams let you see the shape of the pattern independent of any language.
 
----
 
 ## 5. Chapter Review & Spaced Practice
 
@@ -760,7 +749,6 @@ Grab a blank piece of paper. Without looking at this chapter, try to draw the UM
 4. The **Employee** class has a private attribute `salary` and a public method `getDetails()`.
 
 *Review your drawing against the rules in sections 2 and 3. How did you do? Identifying your own gaps in knowledge is the most powerful step in the learning process!*
-
 
 
 ## 6. Interactive Practice
