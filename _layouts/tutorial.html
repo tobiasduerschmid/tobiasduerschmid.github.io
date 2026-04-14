@@ -62,6 +62,27 @@
   </nav>
 
   <script>
+    // Hide "SE Book" + tutorial title when the navbar wraps to multiple lines
+    (function () {
+      var nav = document.getElementById('navnav');
+      if (!nav) return;
+      var SINGLE_LINE = 45;
+      function check() {
+        nav.classList.remove('tutorial-nav-compact');
+        if (nav.offsetHeight > SINGLE_LINE) {
+          nav.classList.add('tutorial-nav-compact');
+        }
+      }
+      if (window.ResizeObserver) {
+        new ResizeObserver(check).observe(nav);
+      } else {
+        window.addEventListener('resize', check);
+      }
+      check();
+    })();
+  </script>
+
+  <script>
     (function () {
       function setCookie(name, value, days) {
         var d = new Date();

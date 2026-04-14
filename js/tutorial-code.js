@@ -503,6 +503,7 @@
       this._httpUrlEl = this._httpViewEl.querySelector('.tvm-http-url-input');
       this._httpSendBtn = this._httpViewEl.querySelector('.tvm-http-send-btn');
       this._httpBodyContainerEl = this._httpViewEl.querySelector('.tvm-http-body-editor');
+      this._httpBodyHeaderEl = this._httpViewEl.querySelector('.tvm-http-content > .tvm-http-section-header');
       this._httpResponseMetaEl = this._httpViewEl.querySelector('.tvm-http-response-meta');
       this._httpResponseBodyEl = this._httpViewEl.querySelector('.tvm-http-response-body');
       this._httpEmptyEl = this._httpViewEl.querySelector('.tvm-http-empty-state');
@@ -3552,7 +3553,10 @@
         this._httpSplitterEl.style.display = step.http_client ? 'block' : 'none';
       }
       if (step.http_client) {
-        this._initHttpBodyEditor();
+        var showBody = step.http_show_body !== false;
+        if (showBody) this._initHttpBodyEditor();
+        if (this._httpBodyHeaderEl) this._httpBodyHeaderEl.style.display = showBody ? '' : 'none';
+        if (this._httpBodyContainerEl) this._httpBodyContainerEl.style.display = showBody ? '' : 'none';
         // Pre-fill URL and method if specified in the step
         if (this._httpUrlEl) this._httpUrlEl.value = step.http_url || 'http://localhost:3000/';
         if (this._httpMethodEl) this._httpMethodEl.value = step.http_method || 'GET';

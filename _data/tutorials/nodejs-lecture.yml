@@ -319,6 +319,7 @@ steps:
   # --------------------------------------------------------------------------
   - title: "HTTP Server with Node's http Module"
     http_client: true
+    http_show_body: false
     http_url: "http://localhost:8080/"
     instructions: |
       ## Building an HTTP Server from Scratch
@@ -404,6 +405,7 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Express.js Routing"
     http_client: true
+    http_show_body: false
     http_url: "http://localhost:8080/about"
     run_file: "app.js"
     instructions: |

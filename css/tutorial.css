@@ -1874,6 +1874,13 @@ html:not(.dark-mode) .tvm-http-empty-state {
 .tvm-error button:hover { background: #1a8ae6; }
 
 /* ───────────────────────────────────────────
+   Tutorial navbar: hide title when compact
+─────────────────────────────────────────── */
+#navnav.tutorial-nav-compact .navbar-header {
+  display: none !important;
+}
+
+/* ───────────────────────────────────────────
    Responsive
 ─────────────────────────────────────────── */
 @media (max-width: 900px) {
