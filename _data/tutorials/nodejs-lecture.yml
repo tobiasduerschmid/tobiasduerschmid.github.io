@@ -202,7 +202,7 @@ steps:
       ### Blocking Code
 
       ```javascript
-      const fs = require('node:fs');
+      const fs = require('fs');
 
       const data = fs.readFileSync('/file.md');
       // blocks here until file is read
@@ -251,7 +251,7 @@ steps:
         language: "text"
       - path: "io-demo.js"
         content: |
-          const fs = require('node:fs');
+          const fs = require('fs');
 
           // --- Blocking ---
           console.log("=== Blocking readFileSync ===");
