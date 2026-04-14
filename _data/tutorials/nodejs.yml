@@ -514,6 +514,9 @@ steps:
     tests:
       - description: "Converted getLetterGrade to an arrow function"
         command: "assert(!code.includes('function getLetterGrade'), 'Convert getLetterGrade to an arrow function assigned to const')"
+        hints:
+          - text: "Replace `function getLetterGrade(grade) { ... }` with the arrow form: `const getLetterGrade = (grade) => { ... }`. The body stays the same — only the declaration syntax changes."
+            condition: "code_contains: function getLetterGrade"
       - description: "Used an arrow function (=> syntax)"
         command: "assert(code.includes('=>'), 'Use arrow function syntax (=>) in your solution')"
         hints:
@@ -1005,8 +1008,14 @@ steps:
             condition: "code_contains: Replace me"
       - description: "Using Express (require statement present)"
         command: "assert(code.includes('require') && code.includes('express'), 'Keep the Express require statement')"
+        hints:
+          - text: "Make sure the line `const express = require('express');` is still at the top of your file. This loads the Express module — without it the rest of the file cannot use Express."
+            condition: "code_missing: require"
       - description: "Server listens on port 3000"
         command: "assert(code.includes('.listen(3000'), 'Keep app.listen(3000) — the server needs to start')"
+        hints:
+          - text: "Make sure `app.listen(3000, () => { ... })` is still at the bottom of your file. Without it, no HTTP requests can reach your routes."
+            condition: "code_missing: .listen(3000"
 
     quiz:
       title: "Your First Express Route — Knowledge Check"
@@ -1278,6 +1287,9 @@ steps:
             condition: "code_missing: req.body"
       - description: "Uses res.json() to send responses"
         command: "assert(code.includes('res.json('), 'Use res.json() to send JSON responses')"
+        hints:
+          - text: "Replace `res.json(\"Implement me!\")` with `res.json(yourData)` in each route. `res.json()` serializes JavaScript objects/arrays to JSON and sets the correct Content-Type header automatically."
+            condition: "code_contains: Implement me"
 
     quiz:
       title: "Dynamic Routes — Knowledge Check"
@@ -1559,6 +1571,9 @@ steps:
             condition: "code_missing: /api/students"
       - description: "app.js imports the studentRoutes module"
         command: "assert(files['app.js'] && files['app.js'].includes('require') && files['app.js'].includes('studentRoutes'), 'Import the studentRoutes module in app.js')"
+        hints:
+          - text: "At the top of app.js, add `const studentRoutes = require('./studentRoutes');`. The `./` prefix means \"look for studentRoutes.js in the same folder as this file\"."
+            condition: "code_missing: studentRoutes"
 
     quiz:
       title: "The Express Router — Knowledge Check"
@@ -1986,6 +2001,15 @@ steps:
       > ```
       > If two file reads are independent, always prefer `Promise.all()`.
 
+      ### Predict Before You Refactor
+
+      Look at the existing `readStudentsCallback()` function in `async.js`. **Before writing your async version**, predict:
+
+      1. If you define `async function displayStudents()` but forget to call it at the bottom, what will the output be?
+      2. What is the output order: does `console.log('Loading...')` (if you add one after the function call) print before or after `=== Student Roster ===`?
+
+      > The second prediction tests whether you have internalized the Event Loop from Step 8. An `async` function that `await`s is still non-blocking — code after the function call runs synchronously before the `await` resolves.
+
       ### Task: Refactor to async/await
 
       Open `async.js`. It reads `students.json` using the old **callback style** — the same `fs.readFile` pattern from Step 8.
@@ -2185,12 +2209,23 @@ steps:
 
       You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. This capstone integrates them into one Express API — with **no scaffolding**. You decide how to structure the code.
 
+      ### Design Before You Code
+
+      Before opening `routes.js`, sketch your design on paper (or mentally):
+
+      1. What is the file structure? What goes in `routes.js` vs `app.js`?
+      2. Write the `app.use()` call you'll need in `app.js` before you type it.
+      3. For `GET /api/dashboard`: what is the order of operations? List the steps (fetch, merge, compute, respond) before coding.
+      4. Which tests will be hardest to pass? Which component skill from Steps 3–9 does each test exercise?
+
+      > Designing before coding is a professional habit. It surfaces structural decisions (like forgetting `module.exports`) before you've written 50 lines. If you skip this and get stuck, come back to this list and check each step.
+
       ### The Scenario
 
-      You are building a Student Grade API with two async data sources (provided as helper functions):
+      You are building a Student Grade API backed by two JSON files (`roster.json` and `grades.json`). Two async helper functions are provided at the top of `routes.js` that read these files using `fs.promises.readFile` — the same pattern from Step 9:
 
-      - `fetchRoster()` — returns a Promise that resolves with `[{ name, id }]`
-      - `fetchGrades()` — returns a Promise that resolves with `[{ studentId, course, grade }]`
+      - `fetchRoster()` — reads `roster.json` and resolves with `[{ name, id }]`
+      - `fetchGrades()` — reads `grades.json` and resolves with `[{ studentId, course, grade }]`
 
       ### Requirements
 
@@ -2226,33 +2261,41 @@ steps:
       - Use `express.Router()` and `module.exports`
 
     files:
+      - path: "roster.json"
+        content: |
+          [
+            { "name": "Alice", "id": 1 },
+            { "name": "Bob",   "id": 2 },
+            { "name": "Clara", "id": 3 }
+          ]
+        language: "json"
+      - path: "grades.json"
+        content: |
+          [
+            { "studentId": 1, "course": "Math",    "grade": 92 },
+            { "studentId": 1, "course": "English", "grade": 88 },
+            { "studentId": 1, "course": "Science", "grade": 83 },
+            { "studentId": 2, "course": "Math",    "grade": 45 },
+            { "studentId": 2, "course": "English", "grade": 61 },
+            { "studentId": 2, "course": "Science", "grade": 57 },
+            { "studentId": 3, "course": "Math",    "grade": 95 },
+            { "studentId": 3, "course": "English", "grade": 89 },
+            { "studentId": 3, "course": "Science", "grade": 89 }
+          ]
+        language: "json"
       - path: "routes.js"
         content: |
-          // === Simulated API data sources (do not modify) ===
-          function fetchRoster() {
-              return new Promise(resolve => {
-                  setTimeout(() => resolve([
-                      { name: "Alice", id: 1 },
-                      { name: "Bob",   id: 2 },
-                      { name: "Clara", id: 3 }
-                  ]), 50);
-              });
+          // === Data helpers — read JSON files with fs.promises.readFile (do not modify) ===
+          const fs = require('fs');
+
+          async function fetchRoster() {
+              const data = await fs.promises.readFile('roster.json', 'utf8');
+              return JSON.parse(data);
           }
 
-          function fetchGrades() {
-              return new Promise(resolve => {
-                  setTimeout(() => resolve([
-                      { studentId: 1, course: "Math",    grade: 92 },
-                      { studentId: 1, course: "English", grade: 88 },
-                      { studentId: 1, course: "Science", grade: 83 },
-                      { studentId: 2, course: "Math",    grade: 45 },
-                      { studentId: 2, course: "English", grade: 61 },
-                      { studentId: 2, course: "Science", grade: 57 },
-                      { studentId: 3, course: "Math",    grade: 95 },
-                      { studentId: 3, course: "English", grade: 89 },
-                      { studentId: 3, course: "Science", grade: 89 }
-                  ]), 50);
-              });
+          async function fetchGrades() {
+              const data = await fs.promises.readFile('grades.json', 'utf8');
+              return JSON.parse(data);
           }
 
           // === Your Router code below — no scaffolding! ===
@@ -2273,33 +2316,41 @@ steps:
 
     solution:
       files:
+        - path: "roster.json"
+          content: |
+            [
+              { "name": "Alice", "id": 1 },
+              { "name": "Bob",   "id": 2 },
+              { "name": "Clara", "id": 3 }
+            ]
+          language: "json"
+        - path: "grades.json"
+          content: |
+            [
+              { "studentId": 1, "course": "Math",    "grade": 92 },
+              { "studentId": 1, "course": "English", "grade": 88 },
+              { "studentId": 1, "course": "Science", "grade": 83 },
+              { "studentId": 2, "course": "Math",    "grade": 45 },
+              { "studentId": 2, "course": "English", "grade": 61 },
+              { "studentId": 2, "course": "Science", "grade": 57 },
+              { "studentId": 3, "course": "Math",    "grade": 95 },
+              { "studentId": 3, "course": "English", "grade": 89 },
+              { "studentId": 3, "course": "Science", "grade": 89 }
+            ]
+          language: "json"
         - path: "routes.js"
           content: |
-            // === Simulated API data sources (do not modify) ===
-            function fetchRoster() {
-                return new Promise(resolve => {
-                    setTimeout(() => resolve([
-                        { name: "Alice", id: 1 },
-                        { name: "Bob",   id: 2 },
-                        { name: "Clara", id: 3 }
-                    ]), 50);
-                });
+            // === Data helpers — read JSON files with fs.promises.readFile (do not modify) ===
+            const fs = require('fs');
+
+            async function fetchRoster() {
+                const data = await fs.promises.readFile('roster.json', 'utf8');
+                return JSON.parse(data);
             }
 
-            function fetchGrades() {
-                return new Promise(resolve => {
-                    setTimeout(() => resolve([
-                        { studentId: 1, course: "Math",    grade: 92 },
-                        { studentId: 1, course: "English", grade: 88 },
-                        { studentId: 1, course: "Science", grade: 83 },
-                        { studentId: 2, course: "Math",    grade: 45 },
-                        { studentId: 2, course: "English", grade: 61 },
-                        { studentId: 2, course: "Science", grade: 57 },
-                        { studentId: 3, course: "Math",    grade: 95 },
-                        { studentId: 3, course: "English", grade: 89 },
-                        { studentId: 3, course: "Science", grade: 89 }
-                    ]), 50);
-                });
+            async function fetchGrades() {
+                const data = await fs.promises.readFile('grades.json', 'utf8');
+                return JSON.parse(data);
             }
 
             // === Student Grade API Router ===
@@ -2371,7 +2422,9 @@ steps:
       explanation: |
         **Express Router:** `express.Router()` in `routes.js`, exported with `module.exports`, and mounted at `/api` in `app.js`. This is the professional pattern from Step 7.
 
-        **`Promise.all([fetchRoster(), fetchGrades()])`:** Both Promises start concurrently — total wait ~50ms, not ~100ms. This is the `Promise.all` technique from Step 9.
+        **`fs.promises.readFile`:** The helper functions read `roster.json` and `grades.json` from the file system using the same `async`/`await` + `fs.promises` pattern from Step 9.
+
+        **`Promise.all([fetchRoster(), fetchGrades()])`:** Both file reads start concurrently — the Event Loop queues both I/O operations at once so total wait is roughly the max of the two, not the sum. This is the `Promise.all` technique from Step 9.
 
         **Data merging:** `grades.filter(g => g.studentId === student.id)` uses `===` (Step 2) and `.filter()` (Step 3). `.map(g => g.grade)` extracts grades (Step 4). `.reduce()` computes averages (Step 4).
 
@@ -2420,6 +2473,11 @@ steps:
         hints:
           - text: "Once you have an array of grade numbers, use `.reduce((sum, g) => sum + g, 0)` to sum them, then divide by the array's `.length`. Don't forget the initial value `0` — `.reduce()` without it throws on empty arrays."
             condition: "code_missing: .reduce("
+      - description: "Uses fs.promises.readFile in helpers"
+        command: "assert(files['routes.js'] && files['routes.js'].includes('fs.promises.readFile'), 'The data helpers should use fs.promises.readFile to read the JSON files')"
+        hints:
+          - text: "The `fetchRoster` and `fetchGrades` helpers at the top of `routes.js` use `fs.promises.readFile('roster.json', 'utf8')` to read the data files. Do not replace them with `new Promise(resolve => setTimeout(...))`."
+            condition: "code_missing: fs.promises"
       - description: "Uses strict equality ==="
         command: "assert(files['routes.js'] && files['routes.js'].includes('==='), 'Use === for strict comparisons')"
         hints:
