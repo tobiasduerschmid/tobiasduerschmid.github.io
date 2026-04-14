@@ -114,6 +114,7 @@
     this.autoSaveEnabled = this.allowAutosave;             // toggled from navbar
     this._originalContent = {};           // tracks original file content for dirty detection
     this.booted = false;
+    this._httpEnabled = this.steps.some(function (s) { return s.http_client; });
 
     // v86 state
     this.emulator = null;
@@ -304,7 +305,7 @@
         '<iframe class="tvm-preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>' +
         '</div></div>';
     } else if (this._umlPositionRight && this._umlDiagramEnabled) {
-      // Right-positioned UML layout: output + UML diagram share a tabbed bottom panel
+      // Right-positioned UML: output + UML share a tabbed bottom panel
       var umlRightToolbar =
         '<div class="tvm-diagram-toolbar">' +
         '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
@@ -318,6 +319,7 @@
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
         '</div>';
+
       terminalHtml =
         '<div class="tvm-output-panel tvm-right-tabbed-panel">' +
         '<div class="tvm-right-tab-bar">' +
@@ -335,6 +337,7 @@
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
+        '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
@@ -357,6 +360,7 @@
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
         '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; Run</button>' +
+        '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
         '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
         '</div></div>' +
         '<div class="tvm-output-container"><pre class="tvm-output-pre"></pre></div>' +
@@ -380,6 +384,22 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar"><div class="tvm-step-nav"></div></div>' +
       '<div class="tvm-step-content-wrap"><div class="tvm-step-content"></div></div>' +
+      '<div class="tvm-http-splitter" style="display:none"></div>' +
+      '<div class="tvm-http-sidebar-view" style="display:none">' +
+      '<div class="tvm-http-toolbar">' +
+      '<select class="tvm-http-method-select"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select>' +
+      '<input type="text" class="tvm-http-url-input" placeholder="http://localhost:3000/" value="/">' +
+      '<button class="tvm-http-send-btn"><i class="fa fa-paper-plane"></i> Send</button>' +
+      '</div>' +
+      '<div class="tvm-http-content">' +
+      '<div class="tvm-http-section-header">Request Body</div>' +
+      '<div class="tvm-http-body-editor"></div>' +
+      '<div class="tvm-http-response-area">' +
+      '<div class="tvm-http-section-header"><span>Response</span><div class="tvm-http-response-meta"></div></div>' +
+      '<pre class="tvm-http-response-body"></pre>' +
+      '<div class="tvm-http-empty-state"><i class="fa fa-bolt"></i><span>Send a request to see the response</span></div>' +
+      '</div>' +
+      '</div></div>' +
       '<div class="tvm-quiz-panel" style="display:none"></div>' +
       '<div class="tvm-step-controls-bar"><div class="tvm-step-controls"></div></div>' +
       '</div>' +
@@ -471,6 +491,41 @@
     this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
     this._stepsViewEl = this.root.querySelector('.tvm-steps-view');
     this._leftTabBarEl = this.root.querySelector('.tvm-left-tab-bar');
+    this._rightTabBarEl = this.root.querySelector('.tvm-right-tab-bar');
+    this._httpViewEl = this.root.querySelector('.tvm-http-sidebar-view');
+    this._outputViewEl = this.root.querySelector('.tvm-output-view');
+
+    var self = this;
+
+    // HTTP Client initialization
+    if (this._httpViewEl) {
+      this._httpMethodEl = this._httpViewEl.querySelector('.tvm-http-method-select');
+      this._httpUrlEl = this._httpViewEl.querySelector('.tvm-http-url-input');
+      this._httpSendBtn = this._httpViewEl.querySelector('.tvm-http-send-btn');
+      this._httpBodyContainerEl = this._httpViewEl.querySelector('.tvm-http-body-editor');
+      this._httpResponseMetaEl = this._httpViewEl.querySelector('.tvm-http-response-meta');
+      this._httpResponseBodyEl = this._httpViewEl.querySelector('.tvm-http-response-body');
+      this._httpEmptyEl = this._httpViewEl.querySelector('.tvm-http-empty-state');
+
+      this._httpSendBtn.addEventListener('click', function () { self._sendHttpRequest(); });
+
+      this._httpSplitterEl = this._stepsViewEl.querySelector('.tvm-http-splitter');
+      // HTTP splitter is horizontal (splits top/bottom)
+      this._makeDraggable(this._httpSplitterEl, 'horizontal', this.stepContentWrapEl, this._httpViewEl);
+
+      // Tab bar events
+      if (this._rightTabBarEl) {
+        var rtabs = this._rightTabBarEl.querySelectorAll('.tvm-right-tab');
+        for (var ri = 0; ri < rtabs.length; ri++) {
+          (function (btn) {
+            btn.addEventListener('click', function () {
+              var panel = btn.getAttribute('data-panel');
+              self._showRightPanel(panel);
+            });
+          })(rtabs[ri]);
+        }
+      }
+    }
 
     var self = this;
 
@@ -659,8 +714,10 @@
       this.outputPre = this.root.querySelector('.tvm-output-pre');
       this.outputPanel = this.root.querySelector('.tvm-output-panel');
       var runBtn = this.root.querySelector('.tvm-run-btn');
+      var stopBtn = this.root.querySelector('.tvm-stop-btn');
       var clearBtn = this.root.querySelector('.tvm-clear-btn');
       if (runBtn) runBtn.addEventListener('click', function () { self._runCurrentFile(); });
+      if (stopBtn) stopBtn.addEventListener('click', function () { self._stopExecution(); });
       if (clearBtn) clearBtn.addEventListener('click', function () { self._clearOutput(); });
 
       var filterSel = this.root.querySelector('.tvm-stream-filter');
@@ -737,9 +794,27 @@
     }
     function onMouseMove(e) {
       var cur = direction === 'vertical' ? e.clientX : e.clientY;
-      var sz = Math.max(80, startSizeBefore + (cur - startPos));
+      var parent = beforeEl.parentElement;
+      var parentRect = parent.getBoundingClientRect();
+      
+      // Calculate total occupied space by other elements in the flex container
+      var otherSpace = 0;
+      Array.prototype.forEach.call(parent.children, function(child) {
+        if (child !== beforeEl && child !== afterEl && 
+            window.getComputedStyle(child).display !== 'none' &&
+            window.getComputedStyle(child).position !== 'absolute') {
+          otherSpace += (direction === 'vertical' ? child.offsetWidth : child.offsetHeight);
+        }
+      });
+
+      var totalAvailable = (direction === 'vertical' ? parentRect.width : parentRect.height) - otherSpace;
+      var minSZ = 80;
+      var maxSZ = totalAvailable - 100; // Guarantee at least 100px for the afterEl
+      
+      var sz = Math.min(maxSZ, Math.max(minSZ, startSizeBefore + (cur - startPos)));
       beforeEl.style.flex = '0 0 ' + sz + 'px';
       afterEl.style.flex = '1 1 0';
+      
       if (self.fitAddon) self.fitAddon.fit();
       if (self.editor) self.editor.layout();
     }
@@ -1645,11 +1720,14 @@
       self._clearOutput();
       self._appendOutput('\u25b6 ' + filename + '\n', 'info');
       var runBtn = self.root.querySelector('.tvm-run-btn');
+      var stopBtn = self.root.querySelector('.tvm-stop-btn');
       if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
+      if (stopBtn) { stopBtn.style.display = 'inline-block'; }
       self._runBrowserCode(code, function (text, kind) {
         self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
       }, function () {
         if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+        if (stopBtn) { stopBtn.style.display = 'none'; }
       });
       return;
     }
@@ -1787,8 +1865,22 @@
    * `onOutput(text, 'stdout'|'stderr')` is called for each line.
    * `onDone()` fires 1.5 s after the iframe loads (enough for short async code).
    */
-  TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone) {
-    // Tear down any previous runner
+  TutorialCode.prototype._stopExecution = function () {
+    if (this._jsFinish) {
+      this._jsFinish();
+      this._jsFinish = null;
+    }
+    if (this._jsRunnerFrame) {
+      try { document.body.removeChild(this._jsRunnerFrame); } catch (e) { }
+      this._jsRunnerFrame = null;
+    }
+  };
+
+  TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone, timeoutOverride) {
+    var self = this;
+    if (this._jsFinish) {
+      this._jsFinish();
+    }
     if (this._jsRunnerFrame) {
       try { document.body.removeChild(this._jsRunnerFrame); } catch (e) { }
       this._jsRunnerFrame = null;
@@ -1801,51 +1893,141 @@
     this._jsRunnerFrame = frame;
 
     var runId = ++this._jsRunnerMsgId;
+    var rid = runId;
     var done = false;
 
     function finish() {
       if (done) return;
       done = true;
+      if (self._jsSafetyTimer) { clearTimeout(self._jsSafetyTimer); self._jsSafetyTimer = null; }
       window.removeEventListener('message', msgListener);
       if (onDone) onDone();
     }
+    this._jsFinish = finish;
 
-    var safetyTimer = setTimeout(finish, 6000);
+    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    var isServerStep = step && (step.http_client === true || step.terminal === true);
+    var safetyTimeoutVal = timeoutOverride || (isServerStep ? 3600000 : 5000);
+    var sandboxTimeoutVal = timeoutOverride || (isServerStep ? 3600000 : 5500);
+
+    var safetyTimer = setTimeout(finish, safetyTimeoutVal);
+    this._jsSafetyTimer = safetyTimer;
 
     function msgListener(e) {
       if (!e.data || e.data.__jsrun !== true || e.data.__rid !== runId) return;
-      if (e.data.type === 'done') { clearTimeout(safetyTimer); finish(); return; }
+      if (e.data.type === 'done') { finish(); return; }
+      if (e.data.type === 'sync_done') {
+        if (!isServerStep) {
+          // Give a short grace period (200ms) for any pending console logs
+          // or setTimeout(0) calls to finish before we kill the frame.
+          setTimeout(finish, 200);
+        }
+        return;
+      }
+      if (e.data.type === 'http_response') {
+        self._handleHttpResponse(e.data);
+        return;
+      }
       if (onOutput) onOutput(e.data.text || '', e.data.type === 'stderr' ? 'stderr' : 'stdout');
     }
     window.addEventListener('message', msgListener);
 
-    var rid = runId;
     var escaped = code.split('<\/script>').join('<\\/script>');
 
-    frame.srcdoc = '<!DOCTYPE html><html><head><script>\n' +
+    var sandboxScript = 
       '(function(){\n' +
-      'var rid=' + rid + ';\n' +
-      'function __s(t,x){parent.postMessage({__jsrun:true,__rid:rid,type:t,text:x},"*");}\n' +
-      'function __f(a){return Array.from(a).map(function(v){\n' +
-      '  return typeof v==="object"&&v!==null?JSON.stringify(v,null,2):String(v);\n' +
-      '}).join(" ");}\n' +
-      'console.log =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
-      'console.info =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
-      'console.warn =function(){__s("stdout","[warn] "+__f(arguments)+"\\n");};\n' +
-      'console.error=function(){__s("stderr",__f(arguments)+"\\n");};\n' +
-      'window.onerror=function(m,src,l,c,e){\n' +
-      '  __s("stderr",(e&&(e.stack||e.message)?e.stack||e.message:m)+"\\n");\n' +
-      '  return true;\n' +
-      '};\n' +
-      'window.addEventListener("unhandledrejection",function(e){\n' +
-      '  __s("stderr","UnhandledPromiseRejection: "+(e.reason?e.reason.message||String(e.reason):"Unknown")+"\\n");\n' +
-      '});\n' +
-      '})();\n' +
-      '<\/script></head><body><script>\n' +
-      'try{\n' +
-      escaped + '\n' +
-      '}catch(e){console.error(e.stack||e.message);}\n' +
-      'setTimeout(function(){parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"done"},"*");},1500);\n' +
+      '  var rid=' + rid + ';\n' +
+      '  function __s(t,x){parent.postMessage({__jsrun:true,__rid:rid,type:t,text:x},"*");}\n' +
+      '  function __f(a){return Array.from(a).map(function(v){\n' +
+      '    return typeof v==="object"&&v!==null?JSON.stringify(v,null,2):String(v);\n' +
+      '  }).join(" ");}\n' +
+      '  console.log =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
+      '  console.info =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
+      '  console.warn =function(){__s("stdout","[warn] "+__f(arguments)+"\\n");};\n' +
+      '  console.error=function(){__s("stderr",__f(arguments)+"\\n");};\n' +
+      '  window.onerror=function(m,src,l,c,e){\n' +
+      '    __s("stderr",(e&&(e.stack||e.message)?e.stack||e.message:m)+"\\n");\n' +
+      '    return true;\n' +
+      '  };\n' +
+      '  window.addEventListener("unhandledrejection",function(e){\n' +
+      '    __s("stderr","UnhandledPromiseRejection: "+(e.reason?e.reason.message||String(e.reason):"Unknown")+"\\n");\n' +
+      '  });\n' +
+
+      '  // Mock Node.js modules\n' +
+      '  var __server_handler = null;\n' +
+      '  window.require = function(m) {\n' +
+      '    if (m === "http") return {\n' +
+      '      createServer: function(h) { __server_handler = h; return { listen: function(p) { console.log("HTTP server listening on port " + p); } }; }\n' +
+      '    };\n' +
+      '    if (m === "express") {\n' +
+      '      return function() {\n' +
+      '        var routes = [];\n' +
+      '        var app = {\n' +
+      '          get:    function(p, h) { routes.push({ m: "GET",    p: p, h: h }); },\n' +
+      '          post:   function(p, h) { routes.push({ m: "POST",   p: p, h: h }); },\n' +
+      '          put:    function(p, h) { routes.push({ m: "PUT",    p: p, h: h }); },\n' +
+      '          delete: function(p, h) { routes.push({ m: "DELETE", p: p, h: h }); },\n' +
+      '          use:    function(h)    { routes.push({ m: "USE",    p: "*", h: h }); },\n' +
+      '          listen: function(port) {\n' +
+      '            console.log("Express server listening on port " + port);\n' +
+      '            __server_handler = function(req, res) {\n' +
+      '              res.status = function(s) { this._status = s; this.writeHead(s); return this; };\n' +
+      '              res.json   = function(obj) { this.writeHead(200); this.end(JSON.stringify(obj, null, 2)); };\n' +
+      '              res.send   = function(body) {\n' +
+      '                if (typeof body === "object") return this.json(body);\n' +
+      '                this.end(String(body)); \n' +
+      '              };\n' +
+      '              var route = routes.find(function(r) {\n' +
+      '                return (r.m === req.method || r.m === "USE") && (r.p === req.url || r.p === "*");\n' +
+      '              });\n' +
+      '              if (route) route.h(req, res);\n' +
+      '              else { res.status(404).send("404 Not Found"); }\n' +
+      '            };\n' +
+      '          }\n' +
+      '        };\n' +
+      '        return app;\n' +
+      '      };\n' +
+      '    }\n' +
+      '    throw new Error("Module not found: " + m);\n' +
+      '  };\n' +
+
+      '  window.addEventListener("message", function(e) {\n' +
+      '    if (!e.data || e.data.type !== "http_request" || !__server_handler) return;\n' +
+      '    var rawUrl = e.data.url;\n' +
+      '    if (rawUrl.indexOf("http") === 0) {\n' +
+      '      try { var u = new URL(rawUrl); rawUrl = u.pathname + u.search; } catch(err) { }\n' +
+      '    }\n' +
+      '    var urlParts = rawUrl.split("?");\n' +
+      '    var query = {};\n' +
+      '    if (urlParts[1]) {\n' +
+      '      urlParts[1].split("&").forEach(function(p) {\n' +
+      '        var pair = p.split("=");\n' +
+      '        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || "");\n' +
+      '      });\n' +
+      '    }\n' +
+      '    var body = e.data.body;\n' +
+      '    try {\n' +
+      '      if (typeof body === "string" && (body.trim().indexOf("{") === 0 || body.trim().indexOf("[") === 0)) {\n' +
+      '        body = JSON.parse(body);\n' +
+      '      }\n' +
+      '    } catch(err) { }\n' +
+      '    var req = { method: e.data.method, url: urlParts[0], query: query, params: {}, body: body, headers: {} };\n' +
+      '    var res = {\n' +
+      '      _body: "", _status: 200, \n' +
+      '      writeHead: function(s) { this._status = s; },\n' +
+      '      end: function(b) {\n' +
+      '        this._body = b || this._body;\n' +
+      '        parent.postMessage({__jsrun:true,__rid:rid,type:"http_response",status:this._status,body:this._body},"*");\n' +
+      '      }\n' +
+      '    };\n' +
+      '    try { __server_handler(req, res); } catch(err) { res.status(500).send(err.stack || err.message); }\n' +
+      '  });\n' +
+      '})();';
+
+    frame.srcdoc = '<!DOCTYPE html><html><head><script>' + sandboxScript + '<\/script></head><body><script>' +
+      'try{\n' + escaped + '\n}catch(e){console.error(e.stack||e.message);}\n' +
+      'parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"sync_done"},"*");\n' +
+      'setTimeout(function(){parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"done"},"*");},' + sandboxTimeoutVal + ');' +
       '<\/script></body></html>';
   };
 
@@ -3249,6 +3431,20 @@
       setTimeout(function () { stepSelf._rebuildReactPreview(); }, 400);
     }
 
+    // Configure HTTP client visibility (persistent sidebar panel)
+    if (this._httpViewEl) {
+      this._httpViewEl.style.display = step.http_client ? 'flex' : 'none';
+      if (this._httpSplitterEl) {
+        this._httpSplitterEl.style.display = step.http_client ? 'block' : 'none';
+      }
+      if (step.http_client) {
+        this._initHttpBodyEditor();
+        // Pre-fill URL and method if specified in the step
+        if (this._httpUrlEl) this._httpUrlEl.value = step.http_url || 'http://localhost:3000/';
+        if (this._httpMethodEl) this._httpMethodEl.value = step.http_method || 'GET';
+      }
+    }
+
     // Update UML watched files for this step
     if (this._umlDiagramEnabled) {
       if (step.uml_files && step.uml_files.length > 0) {
@@ -4130,7 +4326,7 @@
         runNext(i + 1);
       }
       runNext(0);
-    });
+    }, 3500);
   };
 
   // Shared helper: strips JS/JSX string literals and comments so keyword
@@ -4439,6 +4635,83 @@
         self._lightRefreshGitGraph();
       }, 300);
     }
+  };
+
+  // ---------------------------------------------------------------------------
+  // HTTP Client Methods
+  // ---------------------------------------------------------------------------
+  TutorialCode.prototype._showRightPanel = function (panel) {
+    if (!this._rightTabBarEl) return;
+    var tabs = this._rightTabBarEl.querySelectorAll('.tvm-right-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle('active', tabs[i].getAttribute('data-panel') === panel);
+    }
+    if (this._outputViewEl) this._outputViewEl.style.display = (panel === 'output' ? 'flex' : 'none');
+    if (this._umlContainer && !this._leftTabBarEl) {
+      // only toggle if it's actually in the right panel
+      this._umlContainer.style.display = (panel === 'uml' ? 'flex' : 'none');
+    }
+    if (this._httpViewEl) this._httpViewEl.style.display = (panel === 'http' ? 'flex' : 'none');
+
+    if (panel === 'http' && this._httpBodyEditor) {
+      this._httpBodyEditor.layout();
+    }
+  };
+
+  TutorialCode.prototype._initHttpBodyEditor = function () {
+    if (this._httpBodyEditor || !this._httpBodyContainerEl) return;
+    this._httpBodyEditor = monaco.editor.create(this._httpBodyContainerEl, {
+      value: '{\n  "message": "Hello Server"\n}',
+      language: 'json',
+      theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
+      fontSize: 12,
+      minimap: { enabled: false },
+      lineNumbers: 'off',
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      tabSize: 2,
+      wordWrap: 'on',
+    });
+  };
+
+  TutorialCode.prototype._sendHttpRequest = function () {
+    var self = this;
+    var method = this._httpMethodEl.value;
+    var url = this._httpUrlEl.value;
+    var body = this._httpBodyEditor ? this._httpBodyEditor.getValue() : '';
+
+    this._httpResponseBodyEl.textContent = 'Sending ' + method + ' request...';
+    this._httpResponseBodyEl.style.display = 'block';
+    this._httpResponseMetaEl.innerHTML = '';
+    this._httpEmptyEl.style.display = 'none';
+
+    if (this._jsRunnerFrame && this._jsRunnerFrame.contentWindow) {
+      this._jsRunnerFrame.contentWindow.postMessage({
+        type: 'http_request',
+        method: method,
+        url: url,
+        body: body
+      }, '*');
+    } else {
+      this._httpResponseBodyEl.textContent = 'Error: Server is not running. Click "\u25b6 Run" first to start the Node.js process.';
+      this._httpResponseBodyEl.style.color = '#e55';
+    }
+  };
+
+  TutorialCode.prototype._handleHttpResponse = function (data) {
+    var status = data.status || 200;
+    var body = data.body || '';
+    var statusClass = (status >= 200 && status < 300) ? 'tvm-http-status-2xx' : 'tvm-http-status-4xx';
+
+    this._httpResponseMetaEl.innerHTML =
+      '<span class="tvm-http-status-badge ' + statusClass + '">' + status + '</span>' +
+      '<span class="tvm-http-meta-sep"></span>' +
+      '<span>' + body.length + ' bytes</span>';
+
+    this._httpResponseBodyEl.textContent = body;
+    this._httpResponseBodyEl.style.display = 'block';
+    this._httpResponseBodyEl.style.color = '';
+    this._httpEmptyEl.style.display = 'none';
   };
 
   // ---------------------------------------------------------------------------

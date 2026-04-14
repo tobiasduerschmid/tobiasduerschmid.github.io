@@ -163,6 +163,7 @@ html, body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .tvm-uml-left-view {
@@ -1111,6 +1112,7 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 }
 
 .tvm-run-btn,
+.tvm-stop-btn,
 .tvm-clear-btn {
   padding: 3px 10px;
   border: 1px solid #3a3a44;
@@ -1129,6 +1131,14 @@ html:not(.dark-mode) .tvm-diagram-fs-close:hover {
 }
 .tvm-run-btn:hover:not(:disabled) { background: #005fa3; border-color: #005fa3; }
 .tvm-run-btn:disabled { background: #004a80; opacity: 0.6; cursor: not-allowed; }
+
+.tvm-stop-btn {
+  background: #c62828;
+  color: #fff;
+  border-color: #c62828;
+  margin-right: 4px;
+}
+.tvm-stop-btn:hover { background: #d32f2f; border-color: #d32f2f; }
 
 .tvm-clear-btn {
   background: transparent;
@@ -1423,6 +1433,200 @@ html:not(.dark-mode) .tvm-right-tab:hover { color: #445; }
 html:not(.dark-mode) .tvm-right-tab.active {
   color: #1a3a5a;
   border-bottom-color: #2774AE;
+}
+
+/* ───────────────────────────────────────────
+   Interactive HTTP Client (Postman-like)
+   Initially designed for tabbed panel, now optimized for sidebar
+   ─────────────────────────────────────────── */
+.tvm-http-sidebar-view {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e22;
+  border-top: 1px solid #2d2d34;
+  height: 40%; /* Reduced from 55% as per user request */
+  min-height: 200px;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+}
+
+.tvm-http-splitter {
+  height: 6px;
+  background: #161618;
+  border-top: 1px solid #2a2a2e;
+  border-bottom: 1px solid #141416;
+  cursor: row-resize;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  z-index: 11;
+}
+.tvm-http-splitter:hover, .tvm-http-splitter.active { background: #2774AE; }
+
+.tvm-http-toolbar {
+  padding: 10px 14px;
+  background: #141416;
+  border-bottom: 1px solid #2d2d34;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tvm-http-method-select {
+  background: #2a2a38;
+  color: #7ec8e3;
+  border: 1px solid #3a3a48;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 6px;
+  outline: none;
+}
+
+.tvm-http-url-input {
+  flex: 1;
+  background: #141416;
+  color: #e8e8f0;
+  border: 1px solid #3a3a48;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: var(--tvm-font-mono);
+  padding: 4px 8px;
+  outline: none;
+}
+.tvm-http-url-input:focus { border-color: #2774AE; }
+
+.tvm-http-send-btn {
+  background: #2774AE;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+.tvm-http-send-btn:hover { background: #1e5a8a; }
+
+.tvm-http-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  gap: 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3e transparent;
+}
+.tvm-http-content::-webkit-scrollbar { width: 6px; }
+.tvm-http-content::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+.tvm-http-section-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6a6a75;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tvm-http-body-editor {
+  height: 100px;
+  border: 1px solid #2d2d34;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #1e1e22;
+  flex-shrink: 0;
+}
+
+.tvm-http-response-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 150px;
+}
+
+.tvm-http-response-body {
+  flex: 1;
+  background: #141416;
+  color: #9fe2bf;
+  font-family: var(--tvm-font-mono);
+  font-size: 12px;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid #2d2d34;
+  white-space: pre-wrap;
+  word-break: break-all;
+  display: none;
+}
+
+.tvm-http-status {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.tvm-http-status.success { background: #2e4d3b; color: #a9dfbf; }
+.tvm-http-status.error { background: #4d2e2e; color: #dfa9a9; }
+
+.tvm-http-empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #555566;
+  font-size: 11px;
+  gap: 8px;
+  border: 1px dashed #2d2d34;
+  border-radius: 4px;
+}
+.tvm-http-empty-state i { font-size: 20px; opacity: 0.5; }
+
+/* Light mode overrides for sidebar client */
+html:not(.dark-mode) .tvm-http-sidebar-view {
+  background: #fdfdfd;
+  border-top-color: #dde1e8;
+}
+html:not(.dark-mode) .tvm-http-toolbar {
+  background: #f3f4f6;
+  border-bottom-color: #dde1e8;
+}
+html:not(.dark-mode) .tvm-http-url-input {
+  background: #fff;
+  border-color: #ccd0d8;
+  color: #333;
+}
+html:not(.dark-mode) .tvm-http-method-select {
+  background: #fff;
+  color: #2774AE;
+  border-color: #ccd0d8;
+}
+html:not(.dark-mode) .tvm-http-section-header {
+  color: #889;
+}
+html:not(.dark-mode) .tvm-http-body-editor {
+  border-color: #dde1e8;
+}
+html:not(.dark-mode) .tvm-http-response-body {
+  background: #f9fafb;
+  color: #111;
+  border-color: #dde1e8;
+}
+html:not(.dark-mode) .tvm-http-empty-state {
+  background: #f9fafb;
+  border-color: #dde1e8;
+  color: #99a;
 }
 
 /* ───────────────────────────────────────────
@@ -2474,4 +2678,21 @@ html:not(.dark-mode) .tvm-quiz-status { color: #555; }
 }
 html:not(.dark-mode) .tvm-step-btn.locked {
   opacity: 0.35;
+}
+
+.tvm-http-response-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.tvm-http-meta-sep {
+  width: 1px;
+  height: 12px;
+  background: #39393e;
+}
+
+html:not(.dark-mode) .tvm-http-meta-sep {
+  background: #ccd0d8;
 }
