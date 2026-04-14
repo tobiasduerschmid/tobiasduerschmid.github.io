@@ -3,3 +3,8 @@ description: "Includes all quizzes taught until today"
 decks:
   - user_stories
   - requirements
+  - uml_class_diagram_examples
+  - uml_component_diagram_examples
+  - uml_sequence_diagram_examples
+  - uml_state_diagram_examples
+  - uml_use_case_diagram_examples

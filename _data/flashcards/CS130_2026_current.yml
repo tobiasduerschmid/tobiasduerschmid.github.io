@@ -2,3 +2,7 @@ title: "Current CS 130 Flashcards"
 description: "Includes all flash cards taught until today"
 decks:
   - user_stories
+  - uml_class_diagram_examples
+  - uml_sequence_diagram_examples
+  - uml_state_diagram_examples
+  - uml_use_case_diagram_examples

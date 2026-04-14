@@ -46,15 +46,15 @@ questions:
   - id: 4
     type: single
     question: >
-      In this diagram, which direction does the `<<extend>>` arrow point?
+      In this diagram, what does the `<<extend>>` arrow mean?
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Place Order&quot; as UC1&#10;usecase &quot;Apply Coupon&quot; as UC2&#10;rectangle &quot;Shop&quot; {&#10;  UC1&#10;  UC2&#10;}&#10;User -- UC1&#10;UC2 ..> UC1 : <<extend>>&#10;@enduml"></div>
     options:
-      - "From Place Order to Apply Coupon."
-      - "From Apply Coupon to Place Order."
-      - "Both directions (bidirectional)."
-      - "There is no arrow --- extend uses a plain line."
-    correct_index: 1
+      - "Apply Coupon is optional behavior that may supplement the basic Place Order flow."
+      - "Apply Coupon is a specialized version of Place Order."
+      - "Apply Coupon always occurs as part of Place Order."
+      - "Place Order is optional behavior that may supplement the basic Apply Coupon flow."
+    correct_index: 0
     explanation: "The `<<extend>>` arrow points **from the extending use case to the base use case** --- from 'Apply Coupon' to 'Place Order.' This indicates that 'Apply Coupon' is optional behavior that may extend the 'Place Order' flow."
 
   - id: 5
@@ -106,9 +106,9 @@ questions:
 
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor Student&#10;usecase &quot;Enroll in Course&quot; as UC1&#10;usecase &quot;Drop Course&quot; as UC2&#10;usecase &quot;Verify Identity&quot; as UC3&#10;rectangle &quot;University System&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;Student -- UC1&#10;Student -- UC2&#10;UC1 ..> UC3 : <<include>>&#10;UC2 ..> UC3 : <<include>>&#10;@enduml"></div>
     options:
-      - "Verify Identity `<<extend>>` both Enroll and Drop (optional behavior)."
-      - "Both Enroll and Drop `<<include>>` Verify Identity (mandatory shared behavior)."
-      - "Verify Identity generalizes both Enroll and Drop."
+      - "Verify Identity can sometimes include both Enroll and Drop (optional behavior)."
+      - "Both Enroll in Course and Drop Course always need to verify identity (mandatory shared behavior)."
+      - "Verify Identity is a specialized version of both Enroll and Drop."
       - "No relationship needed --- just connect the actor to all three use cases."
     correct_index: 1
     explanation: "Since identity verification **always** happens (mandatory), this is an `<<include>>` relationship. Both 'Enroll in Course' and 'Drop Course' include 'Verify Identity.' The include arrows point from the including use cases toward Verify Identity."
