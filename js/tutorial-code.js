@@ -224,12 +224,15 @@
         }
         self._hideLoading();
         if (self.steps.length > 0) {
+          // URL hash (e.g. #express-routing) is explicit user intent — always honour it
+          var hashStep = self._resolveStepFromHash();
+
           // Respect the user's navbar toggle preference (persisted as 'tutorial-autosave').
           // Default is on; only skip restore when the user has explicitly set it to 'false'.
           var userAutosavePref = localStorage.getItem('tutorial-autosave');
           var userAutosaveOn = userAutosavePref !== 'false';
           if (!userAutosaveOn) self.autoSaveEnabled = false; // keep in sync before navbar wires up
-          var saved = (self.allowAutosave && userAutosaveOn) ? self._loadSavedProgress() : null;
+          var saved = (hashStep < 0 && self.allowAutosave && userAutosaveOn) ? self._loadSavedProgress() : null;
           if (saved) {
             if (saved.stepsUnlocked) self._stepsUnlocked = new Set(saved.stepsUnlocked);
             // Always ensure all steps up to the saved step are unlocked
@@ -258,13 +261,11 @@
               self._refreshPrompt();
             }
           } else {
-            // Check URL hash for a step key (e.g. #express-routing)
-            var hashStep = self._resolveStepFromHash();
-            if (hashStep > 0) {
+            if (hashStep >= 0) {
               // Unlock all steps up to the hash target so loadStep doesn't reject
               for (var hi = 0; hi <= hashStep; hi++) self._stepsUnlocked.add(hi);
             }
-            self.loadStep(hashStep > 0 ? hashStep : 0);
+            self.loadStep(hashStep >= 0 ? hashStep : 0);
             self._refreshPrompt();
           }
         }
