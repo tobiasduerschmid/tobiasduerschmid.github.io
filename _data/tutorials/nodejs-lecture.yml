@@ -13,6 +13,7 @@ steps:
   # STEP 1 — JavaScript Basics (Slide 41)
   # --------------------------------------------------------------------------
   - title: "JavaScript Basics"
+    key: javascript-basics
     instructions: |
       ## JavaScript (JS)
 
@@ -94,6 +95,7 @@ steps:
   # STEP 2 — JSON (Slide 42)
   # --------------------------------------------------------------------------
   - title: "JSON — JavaScript Object Notation"
+    key: json
     instructions: |
       ## JSON (JavaScript Object Notation)
 
@@ -193,6 +195,7 @@ steps:
   # STEP 3 — Blocking vs. Non-Blocking I/O (Slides 44–46)
   # --------------------------------------------------------------------------
   - title: "Blocking vs. Non-Blocking I/O"
+    key: blocking-vs-nonblocking
     instructions: |
       ## Node.js & the Event Loop
 
@@ -318,6 +321,7 @@ steps:
   # STEP 4 — HTTP Server with Node's Built-in http Module (Slide 47)
   # --------------------------------------------------------------------------
   - title: "HTTP Server with Node's http Module"
+    key: http-server
     http_client: true
     http_show_body: false
     http_url: "http://localhost:8080/"
@@ -404,6 +408,7 @@ steps:
   # Note: the slide was missing app.listen — fixed here.
   # --------------------------------------------------------------------------
   - title: "Express.js Routing"
+    key: express-routing
     http_client: true
     http_show_body: false
     http_url: "http://localhost:8080/about"

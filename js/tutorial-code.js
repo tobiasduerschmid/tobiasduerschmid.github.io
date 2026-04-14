@@ -258,7 +258,13 @@
               self._refreshPrompt();
             }
           } else {
-            self.loadStep(0);
+            // Check URL hash for a step key (e.g. #express-routing)
+            var hashStep = self._resolveStepFromHash();
+            if (hashStep > 0) {
+              // Unlock all steps up to the hash target so loadStep doesn't reject
+              for (var hi = 0; hi <= hashStep; hi++) self._stepsUnlocked.add(hi);
+            }
+            self.loadStep(hashStep > 0 ? hashStep : 0);
             self._refreshPrompt();
           }
         }
@@ -3596,8 +3602,31 @@
       this._refreshUMLDiagram();
     }
 
+    // Update URL hash to reflect current step key (if defined)
+    this._updateStepHash(index);
+
     // Auto-save progress when navigating to a new step
     if (this.autoSaveEnabled) this._autoSaveProgress();
+  };
+
+  // Update the URL hash to the current step's key (or clear it for step 0 without a key)
+  TutorialCode.prototype._updateStepHash = function (index) {
+    var step = this.steps[index];
+    var hash = (step && step.key) ? '#' + encodeURIComponent(step.key) : '';
+    if (window.location.hash !== hash) {
+      history.replaceState(null, '', hash || window.location.pathname + window.location.search);
+    }
+  };
+
+  // Resolve a URL hash to a step index. Returns -1 if no match.
+  TutorialCode.prototype._resolveStepFromHash = function () {
+    var hash = window.location.hash;
+    if (!hash || hash.length < 2) return -1;
+    var key = decodeURIComponent(hash.substring(1));
+    for (var i = 0; i < this.steps.length; i++) {
+      if (this.steps[i].key === key) return i;
+    }
+    return -1;
   };
 
   TutorialCode.prototype._renderStepNav = function () {
