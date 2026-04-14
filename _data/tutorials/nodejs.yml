@@ -2265,13 +2265,13 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Capstone: Deploy the Student Grade API"
     http_client: true
-    http_url: "http://CS35L-nodejs.org/api/dashboard"
+    http_url: "http://CS35L-nodejs.edu/api/dashboard"
     instructions: |
       > **Learning objective:** After this step you will be able to **design and implement** a complete Express API using the Router pattern, async data fetching, and all JavaScript skills from this tutorial.
 
       ## Ship It — Your API Goes Live
 
-      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. Now you are building a real API and deploying it to `CS35L-nodejs.org` — with **no scaffolding**. You decide how to structure the code.
+      You have unlocked every component skill: arrow functions, `.filter()`, `.map()`, `.reduce()`, destructuring, Express routes, the Router, query parameters, route parameters, POST, the Event Loop, and `async`/`await`. Now you are building a real API and deploying it to `CS35L-nodejs.edu` — with **no scaffolding**. You decide how to structure the code.
 
       > **Growth mindset moment:** This capstone has no scaffolding — and that is intentional. If you feel stuck, it does not mean you are missing something fundamental. It means you are doing the hard work of *integrating* skills that you practiced in isolation. Go back to the specific step that covers the concept you are stuck on. Every professional developer references prior work when building something new.
 
@@ -2317,7 +2317,7 @@ steps:
 
       4. **Error handling:** Wrap all route handlers in `try`/`catch`
 
-      **Put routes in `routes.js` (the Router), and mount them in `app.js`.** When your code looks complete, switch to the **`app.js`** tab and press **▶ Run** to deploy your API to `CS35L-nodejs.org` — then use the HTTP Client to hit your live endpoints. (`routes.js` is a module that only exports a router; running it directly does nothing.)
+      **Put routes in `routes.js` (the Router), and mount them in `app.js`.** When your code looks complete, switch to the **`app.js`** tab and press **▶ Run** to deploy your API to `CS35L-nodejs.edu` — then use the HTTP Client to hit your live endpoints. (`routes.js` is a module that only exports a router; running it directly does nothing.)
 
       ### Suggested Order (if you are unsure where to start)
 
@@ -2382,7 +2382,7 @@ steps:
 
           // Your code here
 
-          app.listen(3000, () => console.log("Grade API deployed to CS35L-nodejs.org"));
+          app.listen(3000, () => console.log("Grade API deployed to CS35L-nodejs.edu"));
         language: "javascript"
 
     open_file: "app.js"
@@ -2491,7 +2491,7 @@ steps:
             const routes = require('./routes');
             app.use('/api', routes);
 
-            app.listen(3000, () => console.log("Grade API deployed to CS35L-nodejs.org"));
+            app.listen(3000, () => console.log("Grade API deployed to CS35L-nodejs.edu"));
           language: "javascript"
       explanation: |
         **Express Router:** `express.Router()` in `routes.js`, exported with `module.exports`, and mounted at `/api` in `app.js`. This is the professional pattern from Step 7.
