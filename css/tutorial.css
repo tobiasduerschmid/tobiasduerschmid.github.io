@@ -1453,10 +1453,8 @@ html:not(.dark-mode) .tvm-right-tab.active {
 }
 
 .tvm-http-splitter {
-  height: 6px;
-  background: #161618;
-  border-top: 1px solid #2a2a2e;
-  border-bottom: 1px solid #141416;
+  height: 4px;
+  background: #2a2a2e;
   cursor: row-resize;
   flex-shrink: 0;
   transition: background 0.15s;
