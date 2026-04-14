@@ -295,6 +295,8 @@ steps:
       2. A mutable declaration for a value that never changes — change it to be immutable.
       3. A messy string concatenation — replace it with a **template literal**.
 
+      **Before you click Run**, add a brief comment above each fix explaining *why* your change is correct — for example, `// Fixed: === checks type + value, prevents coercion`. Explaining your reasoning strengthens understanding far more than just making the code pass.
+
       Click **▶ Run** to check your output. It should no longer show any `[BUG]` messages.
 
     files:
@@ -410,7 +412,7 @@ steps:
             - "This is a known bug in older JavaScript engines that has since been patched in ES6"
             - "`==` in JavaScript compares memory addresses, which happen to be equal for small values"
           correct_index: 0
-          explanation: "JavaScript's == performs *implicit type coercion* — it converts values to a common type before comparing. This creates traps: `0 == false`, `'' == false`, `null == undefined`. The === operator skips coercion and requires both value AND type to match, behaving exactly like == in Python and C++. Always use ===."
+          explanation: "JavaScript's == performs *implicit type coercion* — it converts values to a common type before comparing. This creates traps: `0 == false`, `'' == false`, `null == undefined`. The === operator skips coercion and requires both value AND type to match, behaving exactly like == in Python and C++. Always use ===. Why the other options are wrong: strings and numbers are NOT the same type (B) — `typeof '1'` is `'string'`, `typeof 1` is `'number'`. This is not a patched bug (C) — `==` coercion is by design and will never change. And `==` compares values, not memory addresses (D) — that misconception comes from Java/C++ reference equality."
 
         - question: "A student writes `let MAX_RETRY = 3` but never reassigns it in 200 lines of code. Why is `const MAX_RETRY = 3` a better choice?"
           options:
@@ -829,8 +831,9 @@ steps:
       2. **Use** `.reduce()` to compute the **sum** of the grade numbers, then divide by the count to get the class average.
       3. **Use** `.map()` again, this time with **destructuring** `({ name, grade })` in the arrow function parameter, to format each student as `"Name   | grade (Letter)"`. Use `getLetterGrade()` for the letter and `.padEnd(7)` to align names.
       4. **Print** the class average formatted to 1 decimal place using `.toFixed(1)`.
+      5. **Create** an array containing only the **names** of students who are failing (grade < 60). Which array methods should you chain? The instructions above cover everything you need — choose the right ones yourself.
 
-      > **Why four steps instead of jumping straight to the hardest one?** The first `.map()` is simple (extract one property). The second combines `.reduce()` with division. The third `.map()` adds destructuring and template literals. Each step adds exactly one new concept.
+      > **Why this progression?** TODOs 1–4 each introduce one new concept with the method named for you. TODO 5 is different — it describes the *outcome* without telling you which methods to use. Choosing the right tool is a distinct skill from knowing how to use it.
 
       Click **▶ Run** to check your result.
 
@@ -878,6 +881,13 @@ steps:
           console.log("\n=== Student Report ===");
           report.forEach(line => console.log(line));
           console.log(`Class average: ${classAverage}`);
+
+          // TODO 5: Create an array of ONLY the names of failing students (grade < 60).
+          // Which array methods do you need? Choose and chain them yourself.
+          const failingNames = students;
+
+          console.log("\n=== Failing Students ===");
+          console.log(failingNames);
         language: "javascript"
 
     open_file: "transform.js"
@@ -921,6 +931,14 @@ steps:
             console.log("\n=== Student Report ===");
             report.forEach(line => console.log(line));
             console.log(`Class average: ${classAverage.toFixed(1)}`);
+
+            // TODO 5 DONE: .filter() selects failing, .map() extracts names
+            const failingNames = students
+                .filter(s => s.grade < 60)
+                .map(s => s.name);
+
+            console.log("\n=== Failing Students ===");
+            console.log(failingNames);
           language: "javascript"
       explanation: |
         **TODO 1 — Simple `.map()`:** `students.map(s => s.grade)` transforms each object into just its grade number: `[95, 42, 78, 55, 88]`. This is the easiest `.map()` — one property extraction.
@@ -930,6 +948,8 @@ steps:
         **TODO 3 — `.map()` with destructuring:** `({ name, grade })` extracts both properties. `.padEnd(7)` left-aligns names. `getLetterGrade()` converts the number to a letter. This combines three concepts, but by this point you have already practiced `.map()` in TODO 1.
 
         **TODO 4 — `.toFixed(1)`:** Formats the number `71.6` to one decimal place.
+
+        **TODO 5 — Discrimination challenge:** The task described an *outcome* ("names of failing students") without naming the methods. The solution chains `.filter(s => s.grade < 60)` to select failing students, then `.map(s => s.name)` to extract just the name strings. Knowing *which* method to reach for — not just how each works — is what this exercise builds.
 
     tests:
       - description: "Used .map() to transform the data"
@@ -961,6 +981,13 @@ steps:
         hints:
           - text: "The average needs to display exactly one decimal place. JavaScript numbers have a method for this — check the 'Formatting Output' section."
             condition: "code_missing: .toFixed("
+      - description: "Failing students list contains only Bob and Dave"
+        command: "assert(output.includes('Failing') && output.split('Failing')[1].includes('Bob') && output.split('Failing')[1].includes('Dave') && !output.split('Failing')[1].includes('Alice'), 'Create an array containing only the names of students who are failing (grade < 60)')"
+        hints:
+          - text: "You need to combine two operations: first select students below a threshold, then extract a specific property from each. Which two array methods from this step and Step 3 accomplish those tasks?"
+            condition: "code_missing: .filter("
+          - text: "Good — you are filtering. Now you also need to transform each surviving student object into just their name string. Which array method transforms every element into something new?"
+            condition: "code_missing: .map("
 
     quiz:
       title: "Array Transformation & Destructuring — Knowledge Check"
@@ -1040,6 +1067,8 @@ steps:
       ## From Callbacks to Web Servers
 
       > **Learning objective:** After this step you will be able to **explain** how Express uses callbacks to handle HTTP requests and **create** a basic Express GET route.
+
+      > **Quick review before you start:** Spend 2–3 minutes with the [Node.js Syntax Flashcards](/SEBook/tools/nodejs-flashcards) to refresh arrow functions, `===`, and template literals. This retrieval practice strengthens the skills you will use in every Express route.
 
       You have been building callback skills for two steps. Now you will see why: **an Express route handler is a callback**. The entire Express framework is built on the pattern you already know.
 
@@ -1179,7 +1208,7 @@ steps:
             - "A constructor that creates and configures a new Express route object for the path"
             - "A middleware function that modifies the global Express application configuration"
           correct_index: 1
-          explanation: "The arrow function is a callback — the same pattern you used with `.filter()` in Step 3. You provide the function; Express calls it at the right time (when an HTTP GET request arrives at '/'). The `req` and `res` arguments are passed by Express, just like `.filter()` passes each array element to your callback."
+          explanation: "The arrow function is a callback — the same pattern you used with `.filter()` in Step 3. You provide the function; Express calls it at the right time (when an HTTP GET request arrives at '/'). The `req` and `res` arguments are passed by Express, just like `.filter()` passes each array element to your callback. Why the other options are wrong: the function does NOT run when the file loads (A) — it runs later, when a request arrives (that is the whole point of callbacks). It is not a constructor (C) — constructors create objects with `new`. And middleware (D) is a different concept — middleware runs on ALL requests before route handlers."
 
         - question: "What do `req` and `res` represent in an Express route handler?"
           options:
@@ -1330,6 +1359,8 @@ steps:
       > **Expect at least one route to return wrong results on your first attempt** — that is not failure, it is the normal debugging loop. Read the response body; it usually tells you exactly what went wrong.
 
       > **Note:** The starter code includes `app.use(express.json())` at the top. This middleware is required for POST routes — without it, `req.body` would be `undefined`.
+
+      **After implementing each route**, add a one-line comment above it explaining your approach — e.g., `// Filter by query param, convert with Number() + ===`. Articulating *why* your code works catches bugs before you run and deepens your understanding.
 
     files:
       - path: "server.js"
@@ -1808,6 +1839,15 @@ steps:
           correct_index: 1
           explanation: "The arrow function is a callback — the same pattern from Step 3's `.filter()`. You pass a function, Express stores it, and calls it later when a request matches the route. The first argument (route path) says *when* to call it; the second argument (the callback) says *what* to do."
 
+        - question: "**[Evaluate]** A teammate is building a quick 3-route prototype for a hackathon demo. They put all routes in `app.js` without using `express.Router()`. Should you ask them to refactor into a Router? Why or why not?"
+          options:
+            - "Yes — routes must always use `express.Router()` or Express cannot process them correctly"
+            - "No — for a 3-route prototype, the organizational overhead of a Router is unnecessary. Routers pay off when the codebase grows to many routes across multiple domains"
+            - "Yes — `app.get()` is deprecated in modern Express and only `router.get()` is supported"
+            - "No — Routers are slower than `app.get()` because they add an extra layer of middleware processing"
+          correct_index: 1
+          explanation: "Routers are a code organization tool, not a correctness requirement. For a small prototype, putting 3 routes in one file is perfectly fine. The Router pattern becomes valuable when you have many routes across multiple domains (students, courses, auth) and need modular, maintainable code. Knowing *when* to apply a pattern — not just *how* — is an engineering judgment skill."
+
   # --------------------------------------------------------------------------
   # STEP 8: The Blocked Chef — The Event Loop
   # Pedagogy: Paradigm shift using real fs.readFile (async) vs
@@ -1937,6 +1977,14 @@ steps:
 
       Click **▶ Run** again. Predict the order of `[3]` and `[4]` before you look.
 
+      ### Reflect
+
+      > **Re-rate your confidence:** *"I understand how code execution order works"* — 1 to 5. Did your rating change from the start of this step? If so, write one sentence about what shifted in your understanding.
+
+      ### Before You Move On
+
+      > **Stop here and take a break.** The Event Loop is the most important concept in this tutorial — and cognitive science shows that your brain consolidates new mental models during rest, not during continuous study. Come back to Step 9 after at least 30 minutes (a day is even better). The `async`/`await` syntax you will learn next builds directly on this mental model, and it will click faster if the Event Loop has time to settle.
+
     files:
       - path: "students.json"
         content: |
@@ -2036,7 +2084,7 @@ steps:
             - "sendEmail waits in the Task Queue until the for-loop finishes and the call stack empties"
             - "The for-loop is paused mid-iteration so the Event Loop can execute sendEmail first"
           correct_index: 2
-          explanation: "setTimeout's delay is a *minimum* delay, not a guaranteed time. The Event Loop only dequeues callbacks when the call stack is completely empty. The 10-million-iteration for-loop occupies the call stack the entire time — the Chef is busy."
+          explanation: "setTimeout's delay is a *minimum* delay, not a guaranteed time. The Event Loop only dequeues callbacks when the call stack is completely empty. The 10-million-iteration for-loop occupies the call stack the entire time — the Chef is busy. Why the other options are wrong: `sendEmail` does NOT run immediately (A) — the 0ms delay means 'as soon as possible', not 'now'. Node.js does NOT put `setTimeout` on a separate thread (B) — it is single-threaded; the callback waits in the Task Queue. And the Event Loop never pauses a for-loop mid-iteration (D) — synchronous code always runs to completion."
 
         - question: "What is the output order of this code?\n```javascript\nconsole.log('A');\nsetTimeout(() => console.log('B'), 0);\nconsole.log('C');\n```"
           options:
@@ -2100,6 +2148,15 @@ steps:
       > You just conquered the Event Loop — the single hardest concept in Node.js. If it clicked, you are ahead of most JavaScript beginners. If it is still fuzzy, revisit the Restaurant Metaphor whenever async code surprises you — that is completely normal and the metaphor becomes clearer with practice.
 
       > **Learning objective:** After this step you will be able to **refactor** `fs.readFile` callback-style code to use `async`/`await` with `fs.promises.readFile`, **explain** what a Promise represents, and **use** `try`/`catch` for async error handling.
+
+      ### Quick Retrieval: Event Loop Check
+
+      Before learning new syntax, verify that the Event Loop model is solid. **Without looking back at Step 8**, answer these two questions on paper or in your head:
+
+      1. `fs.readFile('data.json', 'utf8', callback)` — does this line block the Chef, or does the Chef move on immediately?
+      2. If you write `console.log('A')` immediately after an `fs.readFile` call, and the callback logs `'B'` — which prints first?
+
+      > **Answers:** (1) The Chef moves on immediately — `fs.readFile` delegates to the OS and returns. (2) `'A'` prints first — it is synchronous. `'B'` prints later when the Event Loop delivers the callback. If you got both right without looking, the model has stuck. If not, re-read the Restaurant Metaphor in Step 8 before continuing.
 
       ### The Problem with Callbacks
 
@@ -2215,6 +2272,7 @@ steps:
       - Logs each student's name and grade
       - Handles errors with `try`/`catch`
       - Is called at the bottom of the file
+      - **Includes a comment** above the `await` line explaining: does `await` block the entire program or just this function? (Use your Event Loop knowledge from Step 8.)
 
       Click **▶ Run** to check your output.
 
@@ -2872,6 +2930,12 @@ steps:
       Remember that moment in Step 8 when the Event Loop broke your mental model? Or when Step 10 asked you to build an entire API with no scaffolding? Those moments of struggle were not setbacks — they were the moments your brain was building new neural pathways. Every professional developer went through the same learning curve. The difference is that you pushed through it.
 
       You are ready.
+
+      ### Strengthen Your Memory
+
+      > **Tomorrow, take the [Node.js Concepts Quiz](/SEBook/tools/nodejs-quiz).** It covers async reasoning, type traps, and technique selection across all 10 steps. Taking it after a gap — not immediately — is deliberate: the spacing effect means your brain consolidates knowledge between sessions, making retrieval stronger and more durable.
+
+      > **Keep the [Node.js Syntax Flashcards](/SEBook/tools/nodejs-flashcards) handy.** A few minutes of flashcard practice before your next coding session reinforces the syntax patterns you learned here.
 
     files:
       - path: "done.js"
