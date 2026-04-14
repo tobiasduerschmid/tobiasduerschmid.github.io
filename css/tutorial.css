@@ -1445,8 +1445,8 @@ html:not(.dark-mode) .tvm-right-tab.active {
   flex-direction: column;
   background: #1e1e22;
   border-top: 1px solid #2d2d34;
-  height: 40%; /* Reduced from 55% as per user request */
-  min-height: 200px;
+  height: 32%;
+  min-height: 160px;
   overflow: hidden;
   position: relative;
   z-index: 10;
@@ -1463,7 +1463,7 @@ html:not(.dark-mode) .tvm-right-tab.active {
 .tvm-http-splitter:hover, .tvm-http-splitter.active { background: #2774AE; }
 
 .tvm-http-toolbar {
-  padding: 10px 14px;
+  padding: 6px 14px;
   background: #141416;
   border-bottom: 1px solid #2d2d34;
   display: flex;
@@ -1515,8 +1515,8 @@ html:not(.dark-mode) .tvm-right-tab.active {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 12px 14px;
-  gap: 12px;
+  padding: 6px 14px;
+  gap: 6px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #3a3a3e transparent;
@@ -1536,7 +1536,7 @@ html:not(.dark-mode) .tvm-right-tab.active {
 }
 
 .tvm-http-body-editor {
-  height: 100px;
+  height: 58px;
   border: 1px solid #2d2d34;
   border-radius: 4px;
   overflow: hidden;
