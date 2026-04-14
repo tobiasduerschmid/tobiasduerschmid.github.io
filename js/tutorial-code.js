@@ -1932,6 +1932,15 @@
     }
     window.addEventListener('message', msgListener);
 
+    // Build file maps for the sandbox module system and fs mock
+    var jsFiles = {}, fsFiles = {};
+    for (var fn in self.editorModels) {
+      if (self.editorModels.hasOwnProperty(fn)) {
+        var fc = self.editorModels[fn].model.getValue();
+        if (/\.js$/.test(fn)) { jsFiles[fn] = fc; } else { fsFiles[fn] = fc; }
+      }
+    }
+
     var escaped = code.split('<\/script>').join('<\\/script>');
 
     var sandboxScript = 
@@ -1955,38 +1964,133 @@
 
       '  // Mock Node.js modules\n' +
       '  var __server_handler = null;\n' +
+      '  var __jsFiles = ' + JSON.stringify(jsFiles) + ';\n' +
+      '  var __fsFiles = ' + JSON.stringify(fsFiles) + ';\n' +
+      '  var __moduleCache = {};\n' +
+      '  function __matchRoute(pat, url) {\n' +
+      '    if (!pat || pat === "*") return {};\n' +
+      '    var pp = pat.split("/"), up = url.split("/");\n' +
+      '    if (pp.length !== up.length) return null;\n' +
+      '    var prms = {};\n' +
+      '    for (var i = 0; i < pp.length; i++) {\n' +
+      '      if (pp[i] && pp[i][0] === ":") { prms[pp[i].slice(1)] = decodeURIComponent(up[i]); }\n' +
+      '      else if (pp[i] !== up[i]) return null;\n' +
+      '    }\n' +
+      '    return prms;\n' +
+      '  }\n' +
+      '  function __makeRouter() {\n' +
+      '    var rr = [];\n' +
+      '    return {\n' +
+      '      get:    function(p,h){rr.push({m:"GET",p:p,h:h});},\n' +
+      '      post:   function(p,h){rr.push({m:"POST",p:p,h:h});},\n' +
+      '      put:    function(p,h){rr.push({m:"PUT",p:p,h:h});},\n' +
+      '      "delete": function(p,h){rr.push({m:"DELETE",p:p,h:h});},\n' +
+      '      use:    function(p,h){if(typeof p==="function"){h=p;p="*";}if(h)rr.push({m:"USE",p:p,h:h});},\n' +
+      '      __routes: rr\n' +
+      '    };\n' +
+      '  }\n' +
       '  window.require = function(m) {\n' +
       '    if (m === "http") return {\n' +
       '      createServer: function(h) { __server_handler = h; return { listen: function(p) { console.log("HTTP server listening on port " + p); } }; }\n' +
       '    };\n' +
       '    if (m === "express") {\n' +
-      '      return function() {\n' +
+      '      var ef = function() {\n' +
       '        var routes = [];\n' +
       '        var app = {\n' +
       '          get:    function(p, h) { routes.push({ m: "GET",    p: p, h: h }); },\n' +
       '          post:   function(p, h) { routes.push({ m: "POST",   p: p, h: h }); },\n' +
       '          put:    function(p, h) { routes.push({ m: "PUT",    p: p, h: h }); },\n' +
-      '          delete: function(p, h) { routes.push({ m: "DELETE", p: p, h: h }); },\n' +
-      '          use:    function(h)    { routes.push({ m: "USE",    p: "*", h: h }); },\n' +
-      '          listen: function(port) {\n' +
+      '          "delete": function(p, h) { routes.push({ m: "DELETE", p: p, h: h }); },\n' +
+      '          use:    function(p, h) {\n' +
+      '            if (typeof p === "function") { h = p; p = "*"; }\n' +
+      '            if (!h) return;\n' +
+      '            if (h.__routes) { routes.push({ m: "MOUNT", p: p, router: h.__routes }); }\n' +
+      '            else { routes.push({ m: "USE", p: p, h: h }); }\n' +
+      '          },\n' +
+      '          listen: function(port, cb) {\n' +
       '            console.log("Express server listening on port " + port);\n' +
+      '            if (cb) cb();\n' +
       '            __server_handler = function(req, res) {\n' +
       '              res.status = function(s) { this._status = s; this.writeHead(s); return this; };\n' +
-      '              res.json   = function(obj) { this.writeHead(200); this.end(JSON.stringify(obj, null, 2)); };\n' +
+      '              res.json   = function(obj) { this.writeHead(this._status||200); this.end(JSON.stringify(obj, null, 2)); };\n' +
       '              res.send   = function(body) {\n' +
       '                if (typeof body === "object") return this.json(body);\n' +
-      '                this.end(String(body)); \n' +
+      '                this.end(String(body));\n' +
       '              };\n' +
-      '              var route = routes.find(function(r) {\n' +
-      '                return (r.m === req.method || r.m === "USE") && (r.p === req.url || r.p === "*");\n' +
-      '              });\n' +
-      '              if (route) route.h(req, res);\n' +
-      '              else { res.status(404).send("404 Not Found"); }\n' +
+      '              var found = null, foundParams = {};\n' +
+      '              outer: for (var ri = 0; ri < routes.length; ri++) {\n' +
+      '                var r = routes[ri];\n' +
+      '                if (r.m === "MOUNT") {\n' +
+      '                  var pfx = r.p, sub = req.url;\n' +
+      '                  if (sub === pfx) sub = "/";\n' +
+      '                  else if (sub.indexOf(pfx + "/") === 0) sub = sub.slice(pfx.length);\n' +
+      '                  else continue;\n' +
+      '                  for (var rj = 0; rj < r.router.length; rj++) {\n' +
+      '                    var sr = r.router[rj];\n' +
+      '                    if (sr.m === req.method || sr.m === "USE") {\n' +
+      '                      var sp = __matchRoute(sr.p, sub);\n' +
+      '                      if (sp !== null) { found = sr.h; foundParams = sp; break outer; }\n' +
+      '                    }\n' +
+      '                  }\n' +
+      '                } else if (r.m === req.method || r.m === "USE") {\n' +
+      '                  var rp = __matchRoute(r.p, req.url);\n' +
+      '                  if (rp !== null) { found = r.h; foundParams = rp; break; }\n' +
+      '                }\n' +
+      '              }\n' +
+      '              if (found) { req.params = foundParams; found(req, res); }\n' +
+      '              else { res.writeHead(404); res.end("404 Not Found"); }\n' +
       '            };\n' +
       '          }\n' +
       '        };\n' +
       '        return app;\n' +
       '      };\n' +
+      '      ef.Router = __makeRouter;\n' +
+      '      ef.json = function() { return function(req, res, next) { if (next) next(); }; };\n' +
+      '      return ef;\n' +
+      '    }\n' +
+      '    if (m === "fs") {\n' +
+      '      return {\n' +
+      '        readFile: function(p, e, cb) {\n' +
+      '          if (typeof e === "function") { cb = e; }\n' +
+      '          setTimeout(function() {\n' +
+      '            var d = __fsFiles[p];\n' +
+      '            if (d === undefined) cb(new Error("ENOENT: no such file or directory, open \'" + p + "\'"), null);\n' +
+      '            else cb(null, d);\n' +
+      '          }, 0);\n' +
+      '        },\n' +
+      '        readFileSync: function(p, e) {\n' +
+      '          var d = __fsFiles[p];\n' +
+      '          if (d === undefined) throw new Error("ENOENT: no such file: \'" + p + "\'");\n' +
+      '          return d;\n' +
+      '        },\n' +
+      '        writeFile: function(p, data, e, cb) {\n' +
+      '          if (typeof e === "function") { cb = e; }\n' +
+      '          __fsFiles[p] = String(data);\n' +
+      '          setTimeout(function() { if (cb) cb(null); }, 0);\n' +
+      '        },\n' +
+      '        promises: {\n' +
+      '          readFile: function(p, e) {\n' +
+      '            return new Promise(function(ok, err) {\n' +
+      '              setTimeout(function() {\n' +
+      '                var d = __fsFiles[p];\n' +
+      '                if (d === undefined) err(new Error("ENOENT: no such file or directory, open \'" + p + "\'"));\n' +
+      '                else ok(d);\n' +
+      '              }, 0);\n' +
+      '            });\n' +
+      '          }\n' +
+      '        }\n' +
+      '      };\n' +
+      '    }\n' +
+      '    if (typeof m === "string" && m.indexOf("./") === 0) {\n' +
+      '      var mkey = m.replace(/^\\.\\//,"").replace(/\\.js$/,"");\n' +
+      '      if (__moduleCache.hasOwnProperty(mkey)) return __moduleCache[mkey];\n' +
+      '      var msrc = __jsFiles[mkey + ".js"] || __jsFiles[mkey];\n' +
+      '      if (msrc === undefined) throw new Error("Cannot find module: " + m);\n' +
+      '      var mod = { exports: {} };\n' +
+      '      __moduleCache[mkey] = mod.exports;\n' +
+      '      (new Function("require","module","exports", msrc))(window.require, mod, mod.exports);\n' +
+      '      __moduleCache[mkey] = mod.exports;\n' +
+      '      return mod.exports;\n' +
       '    }\n' +
       '    throw new Error("Module not found: " + m);\n' +
       '  };\n' +
