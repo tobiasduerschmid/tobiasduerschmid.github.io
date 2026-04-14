@@ -114,6 +114,55 @@ console.log(0 === false); // false ← correct
 
 This is **negative transfer**: your `==` intuition from C++ and Python is correct — but JavaScript's `==` does something different. Use `===` and it matches your expectation.
 
+### JavaScript's Two "Nothings": `null` vs `undefined`
+
+C++ has `nullptr`. Python has `None`. JavaScript has **two** distinct values meaning "nothing":
+
+```javascript
+let score;                // declared but no value assigned → undefined
+console.log(score);       // undefined
+console.log(typeof score); // "undefined"
+
+let student = null;       // explicitly set to "no value"
+console.log(student);     // null
+console.log(typeof student); // "object" (a famous JS bug that can never be fixed)
+```
+
+| | `undefined` | `null` |
+|---|---|---|
+| **Meaning** | "no value was assigned yet" | "intentionally empty" |
+| **When you see it** | Uninitialized variables, missing function args, `req.query.missing` | You (or an API) explicitly set it |
+| **`typeof`** | `"undefined"` | `"object"` (a historical JS bug) |
+| **Python equivalent** | No direct equivalent (`NameError`) | `None` |
+
+**Watch out:** `null == undefined` is `true` (coercion!), but `null === undefined` is `false`. One more reason to always use `===`.
+
+### Control Flow Syntax
+
+JavaScript's control flow looks like C++ (braces required), not Python (no colons/indentation):
+
+```javascript
+// if/else — braces required (no colons like Python, no elif — use else if)
+if (score >= 90) {
+    console.log("A");
+} else if (score >= 60) {
+    console.log("Pass");
+} else {
+    console.log("Fail");
+}
+
+// for loop — same structure as C++
+for (let i = 0; i < 5; i++) {
+    console.log(i);
+}
+
+// for...of — like Python's "for x in list"
+const names = ["Alice", "Bob", "Carol"];
+for (const name of names) {
+    console.log(name);
+}
+```
+
 ### Functions as First-Class Values
 
 In C++ you've encountered function pointers. In Python, you've passed functions to `sorted(key=...)`. JavaScript takes this further: **functions are just values**, exactly like numbers or strings.
@@ -139,6 +188,14 @@ const numbers = [1, 2, 3, 4, 5];
 const doubled = numbers.map(n => n * 2);              // [2, 4, 6, 8, 10]
 const evens   = numbers.filter(n => n % 2 === 0);     // [2, 4]
 const sum     = numbers.reduce((acc, n) => acc + n, 0); // 15
+```
+
+`.find()` returns the **first** matching element (or `undefined` if none match) — use it when you need one specific item:
+
+```javascript
+const students = [{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }];
+const alice = students.find(s => s.id === 1);   // { id: 1, name: "Alice" }
+const missing = students.find(s => s.id === 99); // undefined
 ```
 
 Understanding callbacks is essential — all of Node.js's async operations notify you they are finished by calling a function you provided.
