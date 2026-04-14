@@ -4405,7 +4405,8 @@
   };
 
   // Browser — runs user code, collects output, then evaluates JS assertions
-  // test.command receives: output (string), source (string), assert(cond, msg)
+  // test.command receives: output (string), source (string), code (string),
+  //   assert(cond, msg), files (object mapping filename -> source)
   TutorialCode.prototype._runTestsBrowser = function () {
     var self = this;
     var step = this.steps[this.currentStep];
@@ -4413,9 +4414,21 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
 
-    var filename = this.activeFileName || (step.files && step.files[0] && step.files[0].path) || '';
+    // Use run_file if specified (multi-file steps), otherwise the active editor file
+    var runFile = (step && step.run_file) ? step.run_file : this.activeFileName;
+    var filename = runFile || (step.files && step.files[0] && step.files[0].path) || '';
     var source = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
     var outputLines = [];
+
+    // Build a files object mapping each open filename -> its editor content.
+    // This lets multi-file tests inspect files other than the active one,
+    // e.g. assert(files['app.js'].includes('require'))
+    var files = {};
+    for (var key in this.editorModels) {
+      if (this.editorModels.hasOwnProperty(key)) {
+        files[key] = this.editorModels[key].model.getValue();
+      }
+    }
 
     this._runBrowserCode(source, function (text) {
       outputLines.push(text);
@@ -4428,10 +4441,10 @@
         try {
           var code = self._stripCode(source);
           /* jshint evil:true */
-          var fn = new Function('output', 'source', 'code', 'assert', tests[i].command);
+          var fn = new Function('output', 'source', 'code', 'assert', 'files', tests[i].command);
           fn(output, source, code, function assertFn(cond, msg) {
             if (!cond) throw new Error(msg || 'Assertion failed');
-          });
+          }, files);
           results[i] = true;
         } catch (e) {
           results[i] = false;
