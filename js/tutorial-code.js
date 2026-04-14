@@ -2029,12 +2029,12 @@
       '                  else continue;\n' +
       '                  for (var rj = 0; rj < r.router.length; rj++) {\n' +
       '                    var sr = r.router[rj];\n' +
-      '                    if (sr.m === req.method || sr.m === "USE") {\n' +
+      '                    if (sr.m === req.method) {\n' +
       '                      var sp = __matchRoute(sr.p, sub);\n' +
       '                      if (sp !== null) { found = sr.h; foundParams = sp; break outer; }\n' +
       '                    }\n' +
       '                  }\n' +
-      '                } else if (r.m === req.method || r.m === "USE") {\n' +
+      '                } else if (r.m === req.method) {\n' +
       '                  var rp = __matchRoute(r.p, req.url);\n' +
       '                  if (rp !== null) { found = r.h; foundParams = rp; break; }\n' +
       '                }\n' +
