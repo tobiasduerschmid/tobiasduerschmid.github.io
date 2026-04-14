@@ -19,7 +19,7 @@ steps:
 
       > **Learning objective:** After this step you will be able to **explain** how Node.js uses V8 and libuv to run JavaScript outside the browser, **write** `console.log()` statements, and **use** `if`/`else if`/`else` and `for...of` control flow.
 
-      You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, and even parts of VS Code. Here is how it fits into your mental model:
+      You already know two languages. JavaScript powers the apps you use every day — Discord, Spotify, Netflix, TikTok's web player, Twitch, and even parts of VS Code. Here is how it fits into your mental model:
 
       | | C++ | Python | JavaScript (Node.js) |
       |---|---|---|---|
@@ -33,7 +33,7 @@ steps:
       - **libuv** — A C library providing the **Event Loop** and non-blocking I/O access to the OS.
       
       Together, they let JavaScript write backend servers, CLI tools, and scripts — just like Python or C++.
-      Node.js powers the backend of apps you probably used today: Netflix, Discord, Spotify, Twitch, and many more.
+      Node.js powers the backend of apps you probably used today, so learning it gives you superpowers to build your own web apps and tools.
 
 
       ### Predict Before You Code
