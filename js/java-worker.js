@@ -1261,6 +1261,7 @@ var JavaCompiler = (function () {
     this.classes = {};         // className → class info
     this.currentClass = null;
     this.staticInits = [];
+    this.localNames = {};      // set of parameter/local variable names in current method scope
   }
 
   CodeGen.prototype.emit = function (s) { this.output += s; };
@@ -1466,6 +1467,91 @@ var JavaCompiler = (function () {
    *   { node: 'methodCall', object: expr, method: 'name', args: [...] }
    *   { node: 'call', name: 'name', args: [...] }  (same-class unqualified call)
    */
+  /**
+   * Resolve an unqualified method call (e.g. getYear()) to its qualified form
+   * (e.g. this.getYear() for instance methods, ClassName.method() for static).
+   * Walks the superclass chain to find inherited methods.
+   * Returns the qualified name, or null if not a class method (e.g. println).
+   */
+  /**
+   * Check if a name is a field of the current class or any superclass.
+   */
+  /**
+   * Check if a name is a field of the current class (or superclass) AND not
+   * shadowed by a local variable or parameter in the current method scope.
+   */
+  /**
+   * Collect all local variable names declared in a block (for shadowing checks).
+   * Also collects for-each loop variables and for-loop inits.
+   */
+  CodeGen.prototype._collectLocalVars = function (block, nameSet) {
+    if (!block) return;
+    var stmts = block.statements || (Array.isArray(block) ? block : []);
+    for (var i = 0; i < stmts.length; i++) {
+      var s = stmts[i];
+      if (!s) continue;
+      if (s.node === 'localVar' && s.declarations) {
+        for (var j = 0; j < s.declarations.length; j++) {
+          nameSet[s.declarations[j].name] = true;
+        }
+      }
+      if (s.node === 'forEach' && s.name) {
+        nameSet[s.name] = true;
+      }
+      if (s.node === 'for' && s.init && s.init.node === 'localVar' && s.init.declarations) {
+        for (var j = 0; j < s.init.declarations.length; j++) {
+          nameSet[s.init.declarations[j].name] = true;
+        }
+      }
+      // Recurse into sub-blocks
+      if (s.body) this._collectLocalVars(s.body, nameSet);
+      if (s.then) this._collectLocalVars(s.then, nameSet);
+      if (s['else']) this._collectLocalVars(s['else'], nameSet);
+      if (s.elseBody) this._collectLocalVars(s.elseBody, nameSet);
+    }
+  };
+
+  CodeGen.prototype._isClassField = function (name) {
+    // If shadowed by a local/parameter, it's the local — don't qualify
+    if (this.localNames[name]) return false;
+    var className = this.currentClass;
+    while (className && this.classes[className]) {
+      var cls = this.classes[className];
+      var members = cls.members || [];
+      for (var i = 0; i < members.length; i++) {
+        var m = members[i];
+        if (m.node === 'field') {
+          for (var j = 0; j < m.fields.length; j++) {
+            if (m.fields[j].name === name) return true;
+          }
+        }
+      }
+      className = cls.superClass || null;
+    }
+    return false;
+  };
+
+  CodeGen.prototype._resolveUnqualifiedCall = function (name) {
+    var className = this.currentClass;
+    // Walk up the class hierarchy
+    while (className && this.classes[className]) {
+      var cls = this.classes[className];
+      var members = cls.members || [];
+      for (var i = 0; i < members.length; i++) {
+        var m = members[i];
+        if (m.node === 'method' && m.name === name) {
+          if (m.modifiers && m.modifiers.indexOf('static') !== -1) {
+            return this.currentClass + '.' + name;
+          } else {
+            return 'this.' + name;
+          }
+        }
+      }
+      className = cls.superClass || null;
+    }
+    return null; // not a class method — leave unqualified (e.g. built-in functions)
+  };
+
   CodeGen.prototype._findCallsInNode = function (node, callback) {
     if (!node || typeof node !== 'object') return;
     var self = this;
@@ -1921,6 +2007,13 @@ var JavaCompiler = (function () {
     this.emitLine('function ' + className + '(' + ctorParams.join(', ') + ') {');
     this.indent++;
 
+    // Track constructor parameter names so field qualification doesn't shadow them
+    this.localNames = {};
+    if (ctor) {
+      for (var pi = 0; pi < ctor.params.length; pi++) this.localNames[ctor.params[pi].name] = true;
+      this._collectLocalVars(ctor.body, this.localNames);
+    }
+
     // Call super constructor — use explicit super(args) from body if present
     if (superClass) {
       var superCallEmitted = false;
@@ -1962,6 +2055,7 @@ var JavaCompiler = (function () {
 
     this.indent--;
     this.emitLine('}');
+    this.localNames = {};
 
     // Inheritance
     if (superClass) {
@@ -1974,7 +2068,12 @@ var JavaCompiler = (function () {
       var m = instanceMethods[i];
       if (!m.body) continue;
       var params = m.params.map(function (p) { return p.name; });
+      // Track parameter names so field qualification doesn't shadow them
+      this.localNames = {};
+      for (var pi = 0; pi < m.params.length; pi++) this.localNames[m.params[pi].name] = true;
+      this._collectLocalVars(m.body, this.localNames);
       this.emitLine(className + '.prototype.' + m.name + ' = function(' + params.join(', ') + ') ' + this.generateBlock(m.body) + ';');
+      this.localNames = {};
     }
 
     // Static fields
@@ -1992,7 +2091,11 @@ var JavaCompiler = (function () {
       var m = staticMethods[i];
       if (!m.body) continue;
       var params = m.params.map(function (p) { return p.name; });
+      this.localNames = {};
+      for (var pi = 0; pi < m.params.length; pi++) this.localNames[m.params[pi].name] = true;
+      this._collectLocalVars(m.body, this.localNames);
       this.emitLine(className + '.' + m.name + ' = function(' + params.join(', ') + ') ' + this.generateBlock(m.body) + ';');
+      this.localNames = {};
     }
 
     // Inner classes
@@ -2106,7 +2209,11 @@ var JavaCompiler = (function () {
       var m = staticMethods[i];
       if (!m.body) continue;
       var params = m.params.map(function (p) { return p.name; });
+      this.localNames = {};
+      for (var pi = 0; pi < m.params.length; pi++) this.localNames[m.params[pi].name] = true;
+      this._collectLocalVars(m.body, this.localNames);
       this.emitLine(className + '.' + m.name + ' = function(' + params.join(', ') + ') ' + this.generateBlock(m.body) + ';');
+      this.localNames = {};
     }
 
     this.emitLine('');
@@ -2243,6 +2350,10 @@ var JavaCompiler = (function () {
         var num = expr.value.replace(/[LlFfDd]$/, '');
         return num;
       case 'identifier':
+        // Qualify field references: bare 'make' → 'this.make' if 'make' is a class field
+        if (this.currentClass && this._isClassField(expr.name)) {
+          return 'this.' + expr.name;
+        }
         return expr.name;
       case 'this':
         return 'this';
@@ -2291,7 +2402,16 @@ var JavaCompiler = (function () {
       case 'paren':
         return '(' + this.generateExpr(expr.expr) + ')';
       case 'call':
-        return expr.name + '(' + expr.args.map(this.generateExpr.bind(this)).join(', ') + ')';
+        // Qualify unqualified method calls within a class context:
+        //   static method:   calculateAverage(x) → Welcome.calculateAverage(x)
+        //   instance method: getYear() → this.getYear()
+        //   inherited method: also checked via superClass chain
+        var callName = expr.name;
+        if (this.currentClass) {
+          var _resolved = this._resolveUnqualifiedCall(callName);
+          if (_resolved) callName = _resolved;
+        }
+        return callName + '(' + expr.args.map(this.generateExpr.bind(this)).join(', ') + ')';
       case 'methodCall':
         return this.generateMethodCall(expr);
       case 'fieldAccess':
@@ -2409,7 +2529,25 @@ var JavaCompiler = (function () {
         var gen = new CodeGen();
         gen.skipRuntime = !!options.skipRuntime;
         var js = gen.generate(ast);
-        return { success: true, code: js, error: null };
+
+        // Find which class has public static void main(String[] args)
+        var mainClass = null;
+        for (var ci = 0; ci < ast.classes.length; ci++) {
+          var cls = ast.classes[ci];
+          if (cls.kind === 'interface') continue;
+          for (var mi = 0; mi < cls.members.length; mi++) {
+            var m = cls.members[mi];
+            if (m.node === 'method' && m.name === 'main' && m.type === 'void' &&
+                m.modifiers && m.modifiers.indexOf('static') !== -1 &&
+                m.params && m.params.length === 1 && m.params[0].type === 'String[]') {
+              mainClass = cls.name;
+              break;
+            }
+          }
+          if (mainClass) break;
+        }
+
+        return { success: true, code: js, error: null, mainClass: mainClass };
       } catch (e) {
         return { success: false, code: null, error: e.message || String(e) };
       }
@@ -2533,12 +2671,10 @@ function runCode(id, code, silent) {
       fullCode = result.code + '\n' + additionalCode;
     }
 
-    // Find the main class and invoke main()
-    var mainClassName = null;
-    var mainClassMatch = sourceToCompile.match(/(?:public\s+)?class\s+(\w+)\s*[^{]*\{[^]*?public\s+static\s+void\s+main\s*\(\s*String\s*\[\s*\]\s+\w+\s*\)/);
-    if (mainClassMatch) {
-      mainClassName = mainClassMatch[1];
-    } else if (isSnippet) {
+    // Find the main class — use the AST result (not regex) to avoid matching
+    // the wrong class in multi-class files (e.g. Vehicle vs Vehicles)
+    var mainClassName = result.mainClass || null;
+    if (!mainClassName && isSnippet) {
       mainClassName = '__Snippet';
     }
 

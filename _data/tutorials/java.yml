@@ -10,6 +10,7 @@ uml_diagram: true
 uml_position: right
 uml_class_layout: landscape
 uml_default_view: true
+instructor_mode: true
 
 steps:
 
@@ -19,9 +20,8 @@ steps:
   #           Guide-and-Release — brief explanation, immediate practice
   #           Bloom's: Apply (use Java syntax for a familiar task)
   # --------------------------------------------------------------------------
-  - title: "From C++/Python to Java"
+  - title: "From C++/Python to Java: Your First Class"
     instructions: |
-      ## From C++/Python to Java: Your First Class
 
       > **Learning objective:** Map your existing C++ and Python knowledge to Java syntax and understand the "everything is a class" rule.
 
@@ -252,7 +252,6 @@ steps:
   # --------------------------------------------------------------------------
   - title: "The Identity Trap: == vs .equals()"
     instructions: |
-      ## The Identity Trap: `==` vs `.equals()`
 
       > **Learning objective:** Understand why `==` behaves differently for objects in Java than in Python or C++, and use `.equals()` for value comparison.
 
@@ -459,9 +458,8 @@ steps:
   #           Component Skill Isolation — focus on types alone
   #           Bloom's: Understand + Apply
   # --------------------------------------------------------------------------
-  - title: "Java's Dual Type System"
+  - title: "Java's Dual Type System: Primitives & Wrappers"
     instructions: |
-      ## Java's Dual Type System: Primitives & Wrappers
 
       > **Learning objective:** Understand why Java has both primitives and wrapper objects, and recognize the traps of autoboxing.
 
@@ -726,7 +724,6 @@ steps:
       - BankAccount.java
     view: uml_diagram
     instructions: |
-      ## Classes & Encapsulation
 
       > **Learning objective:** Implement a Java class from a UML class diagram, using proper encapsulation with access modifiers.
 
@@ -975,7 +972,6 @@ steps:
       - GradeReport.java
     view: uml_diagram
     instructions: |
-      ## Information Hiding: Beyond Encapsulation
 
       > **Learning objective:** Distinguish information hiding from encapsulation, identify "leaked secrets" in encapsulated code, and refactor a system so that a requirement change touches only one class instead of many.
 
@@ -1282,7 +1278,6 @@ steps:
       - ShapeDemo.java
     view: uml_diagram
     instructions: |
-      ## Interfaces: Design by Contract
 
       > **Learning objective:** Define and implement Java interfaces, understanding them as contracts that separate *what* from *how*.
 
@@ -1592,7 +1587,6 @@ steps:
       - Vehicles.java
     view: uml_diagram
     instructions: |
-      ## Inheritance & Polymorphism
 
       > **Learning objective:** Use `extends`, `abstract` classes, and `@Override` to build class hierarchies with polymorphic behavior.
 
@@ -1930,7 +1924,6 @@ steps:
       - Pair.java
     view: uml_diagram
     instructions: |
-      ## Generics: Not C++ Templates
 
       > **Learning objective:** Write generic classes and methods in Java, understanding type erasure and its consequences.
 
@@ -2221,7 +2214,6 @@ steps:
     uml_files:
       - WordCounter.java
     instructions: |
-      ## The Collections Framework
 
       > **Learning objective:** Choose and use the right Java collection (List, Set, Map) for each task, understanding the interface-implementation pattern.
 
@@ -2558,11 +2550,10 @@ steps:
   #           UML — exception hierarchy
   #           Bloom's: Analyze + Apply
   # --------------------------------------------------------------------------
-  - title: "Exception Handling"
+  - title: "Exception Handling: Checked vs Unchecked"
     uml_files:
       - SafeCalculator.java
     instructions: |
-      ## Exception Handling: Checked vs Unchecked
 
       > **Learning objective:** Understand Java's checked/unchecked exception model and write proper try-catch-finally blocks.
 
@@ -2868,7 +2859,6 @@ steps:
       - EnrollmentDemo.java
     view: uml_diagram
     instructions: |
-      ## Design Challenge: Course Enrollment System
 
       > **Learning objective:** Integrate interfaces, inheritance, generics, collections, and exceptions to implement a system from a UML specification.
 
