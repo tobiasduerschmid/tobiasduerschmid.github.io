@@ -10,7 +10,7 @@
   <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
     <div class="container-fluid">
       <div class="navbar-header page-scroll" style="display: flex; align-items: center; height: 45px;">
-        <a class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
+        <a id="seBookBtn" class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
           <i class="fa fa-arrow-left" style="margin-right: 10px; font-size: 18px;"></i> SE Book
         </a>
         <span class="navbar-brand" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; color: #fff; font-size: 20px; font-weight: 600; margin-left: 5px;">
@@ -48,7 +48,7 @@
                  font-size:13px; font-weight:600; display:flex; align-items:center; gap:5px;">
           <i class="fa fa-volume-up"></i> Read Aloud
         </button>
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;">
+        <label id="darkModeLabel" style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:0; color:#fff; font-size:13px; font-weight:600;">
           Dark mode
           <span class="tvm-dark-toggle-wrap">
             <input type="checkbox" id="darkModeToggle" style="display:none;">
@@ -240,6 +240,7 @@
 
       var params = new URLSearchParams(window.location.search);
       var instructorMode = params.get('instructor-mode') === 'true' || {{ tutorial_data.instructor_mode | default: false | jsonify }};
+      var lectureMode = params.get('lecture') === 'true';
 
       // Resolve autosave: URL ?autosave=true overrides site/tutorial config
       var configAutosaveType = {{ tutorial_autosave_type | jsonify }};
@@ -258,6 +259,7 @@
         autosaveType: effectiveAutosaveType,
         resetType: '{{ tutorial_reset_type }}',
         instructorMode: instructorMode,
+        lectureMode: lectureMode,
         disableQuiz: {{ tutorial_data.disable_quiz | default: false | jsonify }},
         v86Path:  '{{ page.v86_path  | default: "/assets/v86" }}',
         vmPath:   '{{ page.vm_path   | default: "/vm/dist" }}',
@@ -342,6 +344,14 @@
         if (printBtn) {
           printBtn.href += '?instructor-mode=true';
         }
+      }
+
+      // Lecture mode: hide navbar controls not relevant during a live lecture
+      if (lectureMode) {
+        ['seBookBtn', 'printBtn', 'autoSaveLabel', 'tts-read-btn', 'darkModeLabel'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
       }
     });
   </script>
