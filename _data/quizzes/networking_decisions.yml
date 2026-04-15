@@ -1,0 +1,87 @@
+title: "Networking: Making Decisions"
+description: "Given real-world application scenarios, choose the right network architecture, transport protocol, and application protocol. These questions test your ability to analyze trade-offs and justify design decisions."
+questions:
+  - question: "You are building a **text messaging app** like Slack where messages must arrive in order and none can be lost. Which transport layer protocol should you use?"
+    options:
+      - "UDP — because messaging apps need to be fast and real-time."
+      - "TCP — because message ordering and guaranteed delivery are critical for text messaging."
+      - "Either TCP or UDP — it doesn't matter for text messaging."
+      - "UDP with a custom reliability layer that you implement yourself."
+    correct_index: 1
+    explanation: "Text messages must arrive in the correct order and none can be lost — if a friend sends 'Are you coming?' followed by 'Never mind, plans changed,' receiving them out of order or losing one could cause real confusion. TCP guarantees both ordering and delivery, making it the right choice here. The latency overhead of TCP is negligible for text."
+
+  - question: "You are building a **live video streaming** platform (like a webcam feed). Which transport layer protocol is most appropriate?"
+    options:
+      - "TCP — because you cannot afford to lose any video frames."
+      - "UDP — because low latency matters more than perfect delivery for live video."
+      - "TCP — because TCP is always better since it is more reliable."
+      - "Neither — video streaming does not use the transport layer."
+    correct_index: 1
+    explanation: "For live video, a dropped frame is barely noticeable — the next frame arrives in milliseconds and replaces it. But TCP's retransmission would cause *visible stuttering* as the video pauses to wait for a lost packet that's already outdated. UDP's fire-and-forget approach keeps the stream smooth. Recorded video (like YouTube) is different — it uses TCP because you're downloading a file."
+
+  - question: "A team is designing a **multiplayer online game**. Player position updates happen 60 times per second, but the game also has a chat system and an inventory/trading system. What protocol strategy makes the most sense?"
+    options:
+      - "Use TCP for everything — reliability is always more important."
+      - "Use UDP for everything — speed is always more important for games."
+      - "Use UDP for real-time position updates using absolute coordinates and TCP for chat, inventory updates, and login."
+      - "Use HTTP for all game communication since it's the standard web protocol."
+    correct_index: 2
+    explanation: "This is a hybrid approach. Position updates happen 60 times per second and include absolute positions, so losing one update doesn't matter — the next one arrives 16ms later with fresh data (UDP is perfect). But chat messages must not be lost or reordered, and inventory transactions must be reliable (TCP is essential). This is how most real-world online games work."
+
+  - question: "You are building a new **file sharing** service where users upload and download documents. Which transport protocol should you use?"
+    options:
+      - "UDP — to maximize transfer speed for large files."
+      - "TCP — because every byte of a file must arrive correctly and in order."
+      - "UDP — because file transfers don't need error checking."
+      - "It depends on the file size — use UDP for small files and TCP for large ones."
+    correct_index: 1
+    explanation: "Files must arrive completely intact — a single corrupted or missing byte can make a document unreadable, crash an application, or corrupt a database. TCP's guaranteed delivery, ordering, and error detection are essential. The overhead is a small price to pay compared to delivering a broken file."
+
+  - question: "A startup is building a **ride-sharing app** (like Uber). Should the core system use a client-server or peer-to-peer architecture?"
+    options:
+      - "Peer-to-peer — so drivers and riders can communicate directly without a middleman."
+      - "Client-server — because a central server is needed to match riders with drivers, process payments, and maintain trust."
+      - "Peer-to-peer — to avoid the cost of running servers."
+      - "It doesn't matter — either architecture works equally well for ride-sharing."
+    correct_index: 1
+    explanation: "A ride-sharing app needs a central authority to match riders with nearby drivers, process payments securely, track trip history, handle disputes, and verify driver identities. P2P would make all of these features extremely difficult or impossible. Nearly all commercial services that involve matching, payments, or trust require a central server."
+
+  - question: "A team wants to build a **cryptocurrency** system where no single entity controls the network and transactions are verified by consensus. Which architecture is most appropriate?"
+    options:
+      - "Client-server — because a central server provides the most security."
+      - "Client-server — because it's simpler to implement and maintain."
+      - "Peer-to-peer — because decentralization is a core requirement and there should be no single point of control."
+      - "Hybrid — using a central server for transaction validation and P2P for data storage."
+    correct_index: 2
+    explanation: "The entire purpose of a cryptocurrency is decentralization — no single entity should control the network. P2P is the only architecture that satisfies this requirement, as every node participates equally in transaction validation through consensus mechanisms. Bitcoin is one of the few real-world examples of a true P2P architecture."
+
+  - question: "You are designing a **real-time voice chat** feature (like a Discord voice channel). Which transport protocol should you use?"
+    options:
+      - "TCP — because you don't want to lose any audio data."
+      - "UDP — because a tiny gap in audio is far less noticeable than the delay caused by TCP's retransmission."
+      - "TCP — because TCP's ordering guarantees prevent audio glitches."
+      - "Neither — voice chat uses the Application Layer directly."
+    correct_index: 1
+    explanation: "In real-time voice, a retransmitted packet arrives too late to be useful — the conversation has already moved on. A brief moment of silence (from a lost UDP packet) is far preferable to the stuttering and delay caused by TCP waiting for retransmission. The human ear is very tolerant of tiny audio gaps but very sensitive to delay and jitter."
+
+  - question: "A company is building an **internal dashboard** that employees use to view real-time sales data. The dashboard polls the server every 5 seconds for updates. Which architecture pattern is this?"
+    options:
+      - "Peer-to-peer — because the dashboard and server are both sending and receiving data."
+      - "Hybrid — because it combines polling with server responses."
+      - "Client-server — the dashboard (client) sends requests to the data server, which responds with the latest sales data."
+      - "P2P — because each employee's dashboard shares data with other dashboards."
+    correct_index: 2
+    explanation: "This is a classic client-server setup. The dashboard is the client that initiates requests (polling every 5 seconds), and the server responds with the current data. The fact that the client polls periodically doesn't change the architecture — the client still initiates every interaction, and the server still only responds to requests."
+
+  - type: multiple
+    question: "For which of the following applications would TCP be the better choice over UDP? (Select all that apply)"
+    options:
+      - "Sending an email with an important attachment"
+      - "A live video call between two people"
+      - "Downloading a software update"
+      - "Submitting an online form with payment information"
+    correct_indices:
+      - 0
+      - 2
+      - 3
+    explanation: "Email attachments, software updates, and payment forms all require **complete, accurate delivery** — a missing byte in a software update could corrupt the installation, and a lost payment transaction could charge a customer without recording it. Live video calls prioritize low latency over perfect delivery, making UDP the better fit."
