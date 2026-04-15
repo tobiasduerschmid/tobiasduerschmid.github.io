@@ -1338,19 +1338,29 @@ var JavaCompiler = (function () {
         var m = cls.members[j];
         if ((m.node === 'method' || m.node === 'constructor') && m.body) {
           var callerThrows = (m.throws || []).slice();
+          var bodyStmts = m.body.statements || m.body;
+          if (!Array.isArray(bodyStmts)) bodyStmts = [bodyStmts];
           self._checkBodyForUncaughtExceptions(
-            cls.name, m.name || '<init>', m.body, methodThrows, callerThrows, false
+            cls.name, m.name || '<init>', bodyStmts, methodThrows, callerThrows, false
           );
         }
       }
     }
   };
 
+  /** Extract statement array from a block node or raw array */
+  CodeGen.prototype._stmtsOf = function (block) {
+    if (!block) return [];
+    if (Array.isArray(block)) return block;
+    if (block.node === 'block' && block.statements) return block.statements;
+    return [block];
+  };
+
   /**
    * Recursively walk a block of statements checking for unhandled checked exceptions.
    * @param {string} className - class containing the method being checked
    * @param {string} methodName - method being checked (for error messages)
-   * @param {Array} stmts - statement list (block body)
+   * @param {Array} stmts - statement list
    * @param {Object} methodThrows - map of "Class.method" → [exception types]
    * @param {Array} callerThrows - exception types the caller declares
    * @param {boolean} insideTry - true if we're inside a try block with relevant catches
@@ -1371,36 +1381,52 @@ var JavaCompiler = (function () {
         if (stmt.catches) {
           for (var c = 0; c < stmt.catches.length; c++) {
             var ct = stmt.catches[c];
-            if (ct.type) caughtTypes.push(ct.type);
-            // Also accept "Exception" as catching everything
+            // catch clause has 'types' array (for multi-catch: catch (A | B e))
+            if (ct.types) {
+              for (var t = 0; t < ct.types.length; t++) {
+                caughtTypes.push(ct.types[t]);
+              }
+            }
           }
         }
         // Inside the try body, these types are caught
         self._checkBodyForUncaughtExceptions(
-          className, methodName, stmt.body, methodThrows, callerThrows.concat(caughtTypes), true
+          className, methodName, self._stmtsOf(stmt.body),
+          methodThrows, callerThrows.concat(caughtTypes), true
         );
         // Catch/finally bodies checked normally
         if (stmt.catches) {
           for (var c = 0; c < stmt.catches.length; c++) {
-            if (stmt.catches[c].body) {
-              self._checkBodyForUncaughtExceptions(
-                className, methodName, stmt.catches[c].body, methodThrows, callerThrows, insideTry
-              );
-            }
+            self._checkBodyForUncaughtExceptions(
+              className, methodName, self._stmtsOf(stmt.catches[c].body),
+              methodThrows, callerThrows, insideTry
+            );
           }
         }
-        if (stmt.finally) {
+        if (stmt['finally']) {
           self._checkBodyForUncaughtExceptions(
-            className, methodName, stmt.finally, methodThrows, callerThrows, insideTry
+            className, methodName, self._stmtsOf(stmt['finally']),
+            methodThrows, callerThrows, insideTry
           );
         }
         continue;
       }
 
       // Check for method calls in this statement
-      self._findCallsInNode(stmt, function (callClassName, callMethodName) {
-        var key = callClassName + '.' + callMethodName;
-        var exTypes = methodThrows[key];
+      self._findCallsInNode(stmt, function (objName, callMethodName) {
+        // Try exact match: ClassName.method
+        var exTypes = methodThrows[objName + '.' + callMethodName];
+        // If no exact match, the object might be an instance variable —
+        // search all classes for a method with this name that throws
+        if (!exTypes) {
+          var allKeys = Object.keys(methodThrows);
+          for (var k = 0; k < allKeys.length; k++) {
+            if (allKeys[k].indexOf('.' + callMethodName) !== -1) {
+              exTypes = methodThrows[allKeys[k]];
+              break;
+            }
+          }
+        }
         if (!exTypes) return;
 
         for (var e = 0; e < exTypes.length; e++) {
@@ -1420,48 +1446,47 @@ var JavaCompiler = (function () {
 
       // Recurse into sub-blocks (if, while, for, etc.)
       if (stmt.body) {
-        var subBody = Array.isArray(stmt.body) ? stmt.body : [stmt.body];
         self._checkBodyForUncaughtExceptions(
-          className, methodName, subBody, methodThrows, callerThrows, insideTry
+          className, methodName, self._stmtsOf(stmt.body),
+          methodThrows, callerThrows, insideTry
         );
       }
       if (stmt.elseBody) {
-        var subElse = Array.isArray(stmt.elseBody) ? stmt.elseBody : [stmt.elseBody];
         self._checkBodyForUncaughtExceptions(
-          className, methodName, subElse, methodThrows, callerThrows, insideTry
+          className, methodName, self._stmtsOf(stmt.elseBody),
+          methodThrows, callerThrows, insideTry
         );
       }
     }
   };
 
   /**
-   * Find method calls in an AST node and invoke callback(className, methodName).
-   * Handles: expr.method(...) and ClassName.method(...) patterns.
+   * Find method calls in an AST node and invoke callback(objectName, methodName).
+   * AST shapes:
+   *   { node: 'methodCall', object: expr, method: 'name', args: [...] }
+   *   { node: 'call', name: 'name', args: [...] }  (same-class unqualified call)
    */
   CodeGen.prototype._findCallsInNode = function (node, callback) {
     if (!node || typeof node !== 'object') return;
     var self = this;
 
-    if (node.node === 'call') {
-      // node.object.method(args) or method(args)
-      var target = node.target || node.callee;
-      if (target && target.node === 'memberAccess') {
-        var objName = null;
-        if (target.object && target.object.node === 'identifier') {
-          objName = target.object.name;
-        }
-        if (objName && target.property) {
-          // Could be instance.method() or ClassName.method()
-          // Check both — the first character uppercase heuristic for class names
-          callback(objName, target.property);
-        }
+    if (node.node === 'methodCall' && node.object && node.method) {
+      // obj.method(args) — obj could be an instance variable or a class name
+      if (node.object.node === 'identifier') {
+        callback(node.object.name, node.method);
       }
     }
+    // Unqualified call: method(args) within same class — skip for now;
+    // same-class calls would need to check currentClass.method which is
+    // complex and not needed for the tutorial's SafeCalculator scenario
+    // (which always uses calc.divide() / calc.sqrt() qualified calls).
 
     // Recurse into all properties that could contain sub-expressions
     var keys = Object.keys(node);
     for (var i = 0; i < keys.length; i++) {
-      var val = node[keys[i]];
+      var k = keys[i];
+      if (k === 'node') continue;  // skip the type tag
+      var val = node[k];
       if (Array.isArray(val)) {
         for (var j = 0; j < val.length; j++) {
           if (val[j] && typeof val[j] === 'object') {
@@ -1475,6 +1500,7 @@ var JavaCompiler = (function () {
   };
 
   CodeGen.prototype.emitRuntime = function () {
+    if (this.skipRuntime) return;
     this.emit([
       '// ---- Java Runtime Support ------------------------------------------------',
       'var __javaOut = [];',
@@ -1895,9 +1921,24 @@ var JavaCompiler = (function () {
     this.emitLine('function ' + className + '(' + ctorParams.join(', ') + ') {');
     this.indent++;
 
-    // Call super constructor
+    // Call super constructor — use explicit super(args) from body if present
     if (superClass) {
-      this.emitLine(superClass + '.call(this);');
+      var superCallEmitted = false;
+      if (ctor && ctor.body) {
+        var ctorStmts = ctor.body.statements || [];
+        for (var si = 0; si < ctorStmts.length; si++) {
+          var s = ctorStmts[si];
+          if (s.node === 'exprStmt' && s.expr && s.expr.node === 'superCall') {
+            var superArgs = s.expr.args.map(this.generateExpr.bind(this)).join(', ');
+            this.emitLine(superClass + '.call(this' + (superArgs ? ', ' + superArgs : '') + ');');
+            superCallEmitted = true;
+            break;
+          }
+        }
+      }
+      if (!superCallEmitted) {
+        this.emitLine(superClass + '.call(this);');
+      }
     }
 
     // Initialize instance fields
@@ -1910,11 +1951,10 @@ var JavaCompiler = (function () {
       }
     }
 
-    // Constructor body
+    // Constructor body (skip super() calls — already handled above)
     if (ctor && ctor.body) {
       var stmts = ctor.body.statements || [];
       for (var i = 0; i < stmts.length; i++) {
-        // Skip super() calls — already handled
         if (stmts[i].node === 'exprStmt' && stmts[i].expr && stmts[i].expr.node === 'superCall') continue;
         this.emitLine(this.generateStmt(stmts[i]));
       }
@@ -2367,6 +2407,7 @@ var JavaCompiler = (function () {
         var parser = new Parser(tokens);
         var ast = parser.parseCompilationUnit();
         var gen = new CodeGen();
+        gen.skipRuntime = !!options.skipRuntime;
         var js = gen.generate(ast);
         return { success: true, code: js, error: null };
       } catch (e) {
@@ -2458,10 +2499,11 @@ function runCode(id, code, silent) {
   }
 
   // Also compile other .java files (for multi-file support)
+  // Use skipRuntime to avoid re-emitting stdlib (which breaks prototype chains)
   var additionalCode = '';
   for (var p in allSources) {
     if (allSources[p] !== code) {
-      var r2 = JavaCompiler.compile(allSources[p]);
+      var r2 = JavaCompiler.compile(allSources[p], { skipRuntime: true });
       if (r2.success) {
         additionalCode += r2.code + '\n';
       }
@@ -2470,11 +2512,28 @@ function runCode(id, code, silent) {
 
   // Execute the compiled JavaScript
   try {
-    // Build execution context
-    var fullCode = additionalCode + result.code;
+    // Build execution context with correct ordering:
+    //   1. Runtime (stdlib)
+    //   2. Additional files (support classes like custom exceptions)
+    //   3. Main file's classes
+    //   4. main() invocation
+    // This ensures support classes (e.g. CalculatorException) have their
+    // prototypes set up BEFORE main file classes reference them.
+    var runtimeMarker = '// ---- End Java Runtime Support';
+    var markerIdx = result.code.indexOf(runtimeMarker);
+    var fullCode;
+    if (markerIdx !== -1 && additionalCode) {
+      // Find end of marker line
+      var endOfMarker = result.code.indexOf('\n', markerIdx);
+      if (endOfMarker === -1) endOfMarker = result.code.length;
+      var runtimePart = result.code.substring(0, endOfMarker + 1);
+      var classesPart = result.code.substring(endOfMarker + 1);
+      fullCode = runtimePart + '\n' + additionalCode + '\n' + classesPart;
+    } else {
+      fullCode = result.code + '\n' + additionalCode;
+    }
 
     // Find the main class and invoke main()
-    // Look for a class with a static main(String[] args) method
     var mainClassName = null;
     var mainClassMatch = sourceToCompile.match(/(?:public\s+)?class\s+(\w+)\s*[^{]*\{[^]*?public\s+static\s+void\s+main\s*\(\s*String\s*\[\s*\]\s+\w+\s*\)/);
     if (mainClassMatch) {

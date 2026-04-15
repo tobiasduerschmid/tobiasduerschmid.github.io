@@ -578,7 +578,7 @@
   ClassExtractor.prototype.generatePlantUML = function () {
     if (this.classMap.size === 0) return '';
 
-    var lines = ['@startuml'];
+    var lines = ['@startuml', 'layout landscape', 'layout compact'];
     var sorted = this._topologicalSort();
 
     for (var idx = 0; idx < sorted.length; idx++) {
@@ -747,7 +747,7 @@
 
   SequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
-    var out = ['@startuml'];
+    var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       out.push('participant ' + p.id + ': ' + p.label);

@@ -8,7 +8,8 @@ autosave_type: files
 
 uml_diagram: true
 uml_position: right
-uml_class_layout: portrait
+uml_class_layout: landscape
+uml_default_view: true
 
 steps:
 
@@ -77,13 +78,13 @@ steps:
 
       ### Task
 
-      Edit `Welcome.java` to complete the `main` method. It should:
+      Edit `Welcome.java` to implement two static methods and call them from `main`:
 
-      1. Create an `int` array called `grades` with values `{88, 95, 72, 91, 84}`
-      2. Calculate and print the average as a `double`
-      3. Print each grade that is above the average, one per line
+      1. **`calculateAverage(int[] grades)`** — returns the average as a `double`
+         - Hint: `sum / (double) grades.length` — the cast prevents integer division
+      2. **`gradesAbove(int[] grades, double threshold)`** — returns an `int[]` of grades strictly above the threshold
 
-      **Expected output format:**
+      Then in `main`, call both methods on `{88, 95, 72, 91, 84}` and print:
       ```
       Average: 86.0
       88
@@ -95,14 +96,31 @@ steps:
       - path: "Welcome.java"
         content: |
           public class Welcome {
+
+              // Return the average of the grades array as a double
+              public static double calculateAverage(int[] grades) {
+                  // TODO: sum all grades, then divide by grades.length
+                  // Remember: sum / (double) grades.length to avoid integer division
+                  return 0.0;
+              }
+
+              // Return a new array containing only grades above the threshold
+              public static int[] gradesAbove(int[] grades, double threshold) {
+                  // TODO: count how many grades are above threshold
+                  // Then create a new int[] of that size and fill it
+                  return new int[0];
+              }
+
               public static void main(String[] args) {
-                  // TODO: Create an int array 'grades' with {88, 95, 72, 91, 84}
+                  int[] grades = {88, 95, 72, 91, 84};
 
-                  // TODO: Calculate the average (hint: sum / (double) grades.length)
+                  double avg = calculateAverage(grades);
+                  System.out.println("Average: " + avg);
 
-                  // TODO: Print "Average: " + average
-
-                  // TODO: Print each grade above the average, one per line
+                  int[] above = gradesAbove(grades, avg);
+                  for (int g : above) {
+                      System.out.println(g);
+                  }
               }
           }
         language: "java"
@@ -114,21 +132,40 @@ steps:
         - path: "Welcome.java"
           content: |
             public class Welcome {
-                public static void main(String[] args) {
-                    int[] grades = {88, 95, 72, 91, 84};
 
+                public static double calculateAverage(int[] grades) {
                     int sum = 0;
                     for (int g : grades) {
                         sum += g;
                     }
-                    double average = sum / (double) grades.length;
+                    return sum / (double) grades.length;
+                }
 
-                    System.out.println("Average: " + average);
-
+                public static int[] gradesAbove(int[] grades, double threshold) {
+                    int count = 0;
                     for (int g : grades) {
-                        if (g > average) {
-                            System.out.println(g);
+                        if (g > threshold) count++;
+                    }
+                    int[] result = new int[count];
+                    int idx = 0;
+                    for (int g : grades) {
+                        if (g > threshold) {
+                            result[idx] = g;
+                            idx++;
                         }
+                    }
+                    return result;
+                }
+
+                public static void main(String[] args) {
+                    int[] grades = {88, 95, 72, 91, 84};
+
+                    double avg = calculateAverage(grades);
+                    System.out.println("Average: " + avg);
+
+                    int[] above = gradesAbove(grades, avg);
+                    for (int g : above) {
+                        System.out.println(g);
                     }
                 }
             }
@@ -138,19 +175,72 @@ steps:
 
         The enhanced for loop `for (int g : grades)` is Java's equivalent of Python's `for g in grades` or C++17's range-based for.
 
+        We used a two-pass approach for `gradesAbove`: first count, then allocate the exact-size array and fill it. In Python you'd use a list comprehension; in C++ you might use `std::vector` and `push_back`. Java arrays are fixed-size, so you need the count first.
+
     tests:
-      - description: "Prints the correct average"
+      - description: "calculateAverage returns correct result"
         command: |
           public class __Test {
               public static void main(String[] args) {
-                  Welcome.main(new String[]{});
+                  double avg = Welcome.calculateAverage(new int[]{88, 95, 72, 91, 84});
+                  if (Math.abs(avg - 86.0) > 0.001) {
+                      throw new RuntimeException("Expected 86.0, got " + avg);
+                  }
+                  double avg2 = Welcome.calculateAverage(new int[]{100, 50});
+                  if (Math.abs(avg2 - 75.0) > 0.001) {
+                      throw new RuntimeException("Expected 75.0, got " + avg2);
+                  }
               }
           }
         hints:
-          - text: "Remember to cast to double before dividing: sum / (double) grades.length"
+          - text: "Sum all grades in a loop, then divide: sum / (double) grades.length"
             condition: "code_missing: (double)"
-          - text: "Use System.out.println to print each line"
-            condition: "code_missing: System.out.println"
+      - description: "gradesAbove filters correctly"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  int[] above = Welcome.gradesAbove(new int[]{88, 95, 72, 91, 84}, 86.0);
+                  if (above.length != 3) {
+                      throw new RuntimeException("Expected 3 grades above 86.0, got " + above.length);
+                  }
+                  if (above[0] != 88 || above[1] != 95 || above[2] != 91) {
+                      throw new RuntimeException("Expected {88, 95, 91}, got wrong values");
+                  }
+              }
+          }
+        hints:
+          - text: "First count how many grades are above threshold, then create an array of that size and fill it"
+            condition: "code_missing: new int["
+
+    quiz:
+      title: "Java Syntax Mapping"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "Why does Java's `main` method signature include `static`?"
+          options:
+            - "So the JVM can call it without creating an instance of the class"
+            - "To make the method run faster"
+            - "Because all Java methods must be static"
+            - "To prevent the method from being overridden"
+          correct_index: 0
+          explanation: "The JVM needs to call `main` as the program entry point. Since no object exists yet when the program starts, `main` must be `static` — callable on the class itself, not on an instance."
+        - question: "What does `int[] grades = {88, 95, 72};` create in Java?"
+          options:
+            - "An array of 3 int primitives on the stack/heap (like C++ `int[]`)"
+            - "An ArrayList of Integer objects"
+            - "A Python-style list that can grow dynamically"
+            - "A pointer to an uninitialized array"
+          correct_index: 0
+          explanation: "Java arrays are fixed-size, typed containers — similar to C++ arrays. Unlike Python lists, they cannot grow after creation. For a resizable collection, use `ArrayList<Integer>`."
+        - question: "In Java, `scores.length` has no parentheses but `name.length()` does. Why?"
+          options:
+            - "`length` on arrays is a field; `length()` on Strings is a method"
+            - "They're interchangeable — both work either way"
+            - "Arrays don't have methods in Java"
+            - "`length()` is deprecated in favor of `length`"
+          correct_index: 0
+          explanation: "This is a well-known Java inconsistency. Arrays have a `length` field (no parentheses). Strings have a `length()` method. Collections use `size()`. You'll memorize this quickly."
 
 
   # --------------------------------------------------------------------------
@@ -230,33 +320,32 @@ steps:
       - path: "IdentityTrap.java"
         content: |
           public class IdentityTrap {
+
+              // Fix these three methods — they use == instead of .equals()
+
+              public static boolean findStudent(String input, String stored) {
+                  return input == stored;  // BUG: should use .equals()
+              }
+
+              public static boolean sameCourse(Integer a, Integer b) {
+                  return a == b;           // BUG: should use .equals()
+              }
+
               public static void main(String[] args) {
-                  // Bug 1: String comparison with ==
+                  // Bug 1: String comparison
                   String input = new String("Alice");
                   String stored = new String("Alice");
-                  if (input == stored) {                  // BUG: should use .equals()
-                      System.out.println("Found: Alice");
-                  } else {
-                      System.out.println("Not found: Alice");
-                  }
+                  System.out.println("Found Alice: " + findStudent(input, stored));
 
                   // Bug 2: Another string comparison
                   String name1 = "B" + "ob";
                   String name2 = new String("Bob");
-                  if (name1 == name2) {                   // BUG: should use .equals()
-                      System.out.println("Found: Bob");
-                  } else {
-                      System.out.println("Not found: Bob");
-                  }
+                  System.out.println("Found Bob: " + findStudent(name1, name2));
 
-                  // Bug 3: Integer comparison with ==
+                  // Bug 3: Integer comparison (200 is outside the cache range!)
                   Integer courseA = 200;
                   Integer courseB = 200;
-                  if (courseA == courseB) {                 // BUG: should use .equals()
-                      System.out.println("Same course: true");
-                  } else {
-                      System.out.println("Same course: false");
-                  }
+                  System.out.println("Same course: " + sameCourse(courseA, courseB));
               }
           }
         language: "java"
@@ -268,76 +357,69 @@ steps:
         - path: "IdentityTrap.java"
           content: |
             public class IdentityTrap {
+
+                public static boolean findStudent(String input, String stored) {
+                    return input.equals(stored);  // FIXED: .equals() for value comparison
+                }
+
+                public static boolean sameCourse(Integer a, Integer b) {
+                    return a.equals(b);           // FIXED: .equals() for wrapper types
+                }
+
                 public static void main(String[] args) {
-                    // Fixed: Use .equals() for String comparison
                     String input = new String("Alice");
                     String stored = new String("Alice");
-                    if (input.equals(stored)) {
-                        System.out.println("Found: Alice");
-                    } else {
-                        System.out.println("Not found: Alice");
-                    }
+                    System.out.println("Found Alice: " + findStudent(input, stored));
 
-                    // Fixed: Use .equals() for String comparison
                     String name1 = "B" + "ob";
                     String name2 = new String("Bob");
-                    if (name1.equals(name2)) {
-                        System.out.println("Found: Bob");
-                    } else {
-                        System.out.println("Not found: Bob");
-                    }
+                    System.out.println("Found Bob: " + findStudent(name1, name2));
 
-                    // Fixed: Use .equals() for Integer comparison
                     Integer courseA = 200;
                     Integer courseB = 200;
-                    if (courseA.equals(courseB)) {
-                        System.out.println("Same course: true");
-                    } else {
-                        System.out.println("Same course: false");
-                    }
+                    System.out.println("Same course: " + sameCourse(courseA, courseB));
                 }
             }
           language: "java"
       explanation: |
-        All three bugs used `==` on objects. In Java, `==` checks **reference identity** (same object in memory), not value equality:
+        Both methods needed `==` replaced with `.equals()`:
 
-        - **Strings:** `new String("Alice")` creates a fresh object each time, so `==` returns `false` even though the content is identical. Use `.equals()`.
-        - **Integers above 127:** Java caches `Integer` values -128 to 127, so `==` works for small numbers by accident. For 200, it fails. Always use `.equals()` for wrapper types.
+        - **`findStudent`:** `new String("Alice")` creates a fresh object each time, so `==` returns `false` even though the content is identical. `.equals()` compares the characters.
+        - **`sameCourse`:** Java caches `Integer` values -128 to 127, so `==` works for small numbers *by accident*. For 200, it fails. `.equals()` always compares values.
 
         **The golden rule:** Use `==` for primitives (`int`, `double`, `char`, `boolean`). Use `.equals()` for everything else.
 
     tests:
-      - description: "Finds Alice using .equals()"
+      - description: "findStudent uses .equals() for Strings"
         command: |
           public class __Test {
               public static void main(String[] args) {
-                  String input = new String("Alice");
-                  String stored = new String("Alice");
-                  if (!input.equals(stored)) {
-                      throw new RuntimeException("Alice comparison failed");
+                  if (!IdentityTrap.findStudent(new String("Alice"), new String("Alice"))) {
+                      throw new RuntimeException("findStudent should return true for equal strings");
                   }
-                  IdentityTrap.main(new String[]{});
+                  if (IdentityTrap.findStudent(new String("Alice"), new String("Bob"))) {
+                      throw new RuntimeException("findStudent should return false for different strings");
+                  }
               }
           }
         hints:
-          - text: "Replace == with .equals() when comparing String objects"
+          - text: "Replace == with .equals() in findStudent: return input.equals(stored)"
             condition: "code_contains: input == stored"
-          - text: "Replace == with .equals() when comparing the second pair of strings too"
-            condition: "code_contains: name1 == name2"
-      - description: "Compares Integers using .equals()"
+      - description: "sameCourse uses .equals() for Integers"
         command: |
           public class __Test {
               public static void main(String[] args) {
-                  Integer a = 200;
-                  Integer b = 200;
-                  if (!a.equals(b)) {
-                      throw new RuntimeException("Integer comparison failed");
+                  if (!IdentityTrap.sameCourse(200, 200)) {
+                      throw new RuntimeException("sameCourse(200, 200) should be true — values above 127 need .equals()");
+                  }
+                  if (IdentityTrap.sameCourse(200, 300)) {
+                      throw new RuntimeException("sameCourse(200, 300) should be false");
                   }
               }
           }
         hints:
           - text: "Integer values > 127 are NOT cached. Use .equals() instead of == for Integer comparison"
-            condition: "code_contains: courseA == courseB"
+            condition: "code_contains: a == b"
 
     quiz:
       title: "Identity vs Equality"
@@ -414,6 +496,33 @@ steps:
       int first = numbers.get(0);  // unboxing: Integer → int
       ```
 
+      ### Predict Before You Code
+
+      **Before reading further**, predict what each snippet does:
+
+      ```java
+      // Snippet 1
+      Integer count = null;
+      int n = count;
+      // What happens? ____
+      ```
+
+      ```java
+      // Snippet 2
+      Integer sum = 0;
+      for (int i = 0; i < 5; i++) {
+          sum += i;  // What's happening behind the scenes? ____
+      }
+      ```
+
+      <details>
+      <summary>Reveal the answers</summary>
+
+      - **Snippet 1:** `NullPointerException`! Java tries to unbox `null` to `int`, which is impossible.
+      - **Snippet 2:** Every iteration unboxes `sum` to `int`, adds `i`, then boxes the result back to `Integer` — creating a new object each time. Use `int sum = 0` instead.
+
+      </details>
+
       ### The Autoboxing Traps
 
       **Trap 1: Null unboxing causes NullPointerException**
@@ -439,12 +548,11 @@ steps:
 
       ### Task
 
-      Complete `TypeSystem.java`:
+      The `TypeSystem.java` file has a working `countAbove` method (read it to understand `ArrayList<Integer>`). Your job:
 
-      1. Create an `ArrayList<Integer>` called `scores` and add the values 95, 87, 42, 73, 61
-      2. Write a method `countAbove` that takes an `ArrayList<Integer>` and an `int` threshold, returning the count of values above the threshold
-      3. In `main`, call `countAbove(scores, 70)` and print the result as `"Above 70: " + count`
-      4. Also print the sum of all scores as `"Sum: " + sum` (use a primitive `int` for the sum — avoid the autoboxing trap!)
+      1. Read the provided `countAbove` — understand how it uses `ArrayList<Integer>` with an `int` threshold
+      2. Implement `sumScores(ArrayList<Integer> list)` — return the sum using a **primitive `int`** accumulator (avoid the autoboxing trap!)
+      3. Complete `main`: create the ArrayList, add scores, and call both methods
 
     files:
       - path: "TypeSystem.java"
@@ -453,18 +561,28 @@ steps:
 
           public class TypeSystem {
 
-              // TODO: Write a static method countAbove(ArrayList<Integer> list, int threshold)
-              // that returns the number of elements strictly above the threshold.
+              public static int countAbove(ArrayList<Integer> list, int threshold) {
+                  int count = 0;
+                  for (int val : list) {   // auto-unboxing: Integer → int
+                      if (val > threshold) {
+                          count++;
+                      }
+                  }
+                  return count;
+              }
 
+              // Implement this: return the sum of all elements
+              // Use a primitive int accumulator, NOT Integer!
+              public static int sumScores(ArrayList<Integer> list) {
+                  return 0; // fix this
+              }
 
               public static void main(String[] args) {
-                  // TODO: Create an ArrayList<Integer> called scores
+                  // Create an ArrayList<Integer> called scores
                   // and add: 95, 87, 42, 73, 61
 
-                  // TODO: Call countAbove(scores, 70) and print "Above 70: " + result
-
-                  // TODO: Calculate sum of all scores using a primitive int
-                  // and print "Sum: " + sum
+                  // Print "Above 70: " + countAbove(scores, 70)
+                  // Print "Sum: " + sumScores(scores)
               }
           }
         language: "java"
@@ -489,6 +607,14 @@ steps:
                     return count;
                 }
 
+                public static int sumScores(ArrayList<Integer> list) {
+                    int sum = 0;
+                    for (int s : list) {
+                        sum += s;
+                    }
+                    return sum;
+                }
+
                 public static void main(String[] args) {
                     ArrayList<Integer> scores = new ArrayList<>();
                     scores.add(95);
@@ -497,14 +623,8 @@ steps:
                     scores.add(73);
                     scores.add(61);
 
-                    int above = countAbove(scores, 70);
-                    System.out.println("Above 70: " + above);
-
-                    int sum = 0;
-                    for (int s : scores) {
-                        sum += s;
-                    }
-                    System.out.println("Sum: " + sum);
+                    System.out.println("Above 70: " + countAbove(scores, 70));
+                    System.out.println("Sum: " + sumScores(scores));
                 }
             }
           language: "java"
@@ -532,20 +652,66 @@ steps:
               }
           }
         hints:
-          - text: "countAbove should count elements STRICTLY above the threshold (>, not >=)"
+          - text: "Don't modify countAbove — it's provided and working. Focus on sumScores and main."
             condition: "code_missing: countAbove"
-      - description: "Prints the correct sum"
+      - description: "sumScores returns correct sum"
         command: |
+          import java.util.ArrayList;
           public class __Test {
               public static void main(String[] args) {
-                  TypeSystem.main(new String[]{});
+                  ArrayList<Integer> test = new ArrayList<>();
+                  test.add(95);
+                  test.add(87);
+                  test.add(42);
+                  test.add(73);
+                  test.add(61);
+                  int result = TypeSystem.sumScores(test);
+                  if (result != 358) {
+                      throw new RuntimeException("sumScores should return 358, got " + result);
+                  }
+                  ArrayList<Integer> empty = new ArrayList<>();
+                  empty.add(10);
+                  empty.add(20);
+                  if (TypeSystem.sumScores(empty) != 30) {
+                      throw new RuntimeException("sumScores({10,20}) should return 30");
+                  }
               }
           }
         hints:
-          - text: "Use a primitive int for the sum variable to avoid the autoboxing performance trap"
+          - text: "Use a primitive int for the sum variable: int sum = 0; (NOT Integer sum = 0;)"
             condition: "code_contains: Integer sum"
-          - text: "Create an ArrayList<Integer> and add each score with scores.add(value)"
-            condition: "code_missing: ArrayList"
+          - text: "Loop through the list with for (int s : list) and add each to sum"
+            condition: "code_missing: sum +="
+
+    quiz:
+      title: "Primitives & Wrappers"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "What happens when you run: `Integer x = null; int y = x;`?"
+          options:
+            - "y is assigned 0 (the default for int)"
+            - "NullPointerException — Java cannot unbox null to a primitive"
+            - "Compile error — you can't assign Integer to int"
+            - "y is assigned null"
+          correct_index: 1
+          explanation: "Auto-unboxing calls `.intValue()` on the Integer object. If the object is null, this throws NullPointerException. This is a common production bug."
+        - question: "Why is `Integer sum = 0;` in a loop slower than `int sum = 0;`?"
+          options:
+            - "Integer uses more memory because it's 64-bit"
+            - "Each `sum += i` unboxes, adds, then creates a new Integer object — every iteration"
+            - "Integer arithmetic uses BigDecimal internally"
+            - "There is no performance difference"
+          correct_index: 1
+          explanation: "Auto-boxing/unboxing creates temporary wrapper objects on every iteration. With `int`, the operation is pure arithmetic on the stack — no object allocation."
+        - question: "**[Spaced Practice: Step 2]** You need to check if two `Integer` variables hold the same value. Which approach is always correct?"
+          options:
+            - "`a == b` — works for all integer values"
+            - "`a.equals(b)` — compares values regardless of caching"
+            - "`a == b` works for values -128 to 127, so it's fine for most cases"
+            - "`Integer.compare(a, b)` is the only safe way"
+          correct_index: 1
+          explanation: "As we learned in Step 2, `==` on objects checks reference identity. The Integer cache makes `==` work for -128 to 127, but `.equals()` is the only approach that's always correct."
 
 
   # --------------------------------------------------------------------------
@@ -601,47 +767,51 @@ steps:
       - `deposit` should ignore non-positive amounts
       - `toString` should return `"BankAccount[owner=Alice, balance=1000.0]"`
 
-      ### Task
+      ### Task — Refactor for Encapsulation
 
-      Implement the `BankAccount` class according to the UML diagram above. The `main` method is provided for testing.
+      The `BankAccount.java` file has a **working but poorly designed** class: fields are `public`, there's no validation, and anyone can set the balance directly. Refactor it to match the UML diagram:
+
+      1. Make fields `private`
+      2. Add getter methods `getBalance()` and `getOwner()`
+      3. Add validation: `deposit` should ignore non-positive amounts; `withdraw` should return `false` if insufficient funds (balance cannot go negative)
+      4. Add `toString()` returning `"BankAccount[owner=Alice, balance=1000.0]"`
+      5. Update `main` to use getters instead of direct field access
 
     files:
       - path: "BankAccount.java"
         content: |
           public class BankAccount {
-              // TODO: Declare private fields: owner (String) and balance (double)
+              public String owner;     // BAD: should be private
+              public double balance;   // BAD: should be private
 
+              public BankAccount(String owner, double initialBalance) {
+                  this.owner = owner;
+                  this.balance = initialBalance;
+              }
 
-              // TODO: Constructor taking owner and initialBalance
+              public void deposit(double amount) {
+                  balance += amount;   // BAD: no validation — what if amount is negative?
+              }
 
+              public boolean withdraw(double amount) {
+                  balance -= amount;   // BAD: allows overdraft!
+                  return true;         // BAD: always returns true
+              }
 
-              // TODO: deposit(double amount) — add to balance if amount > 0
-
-
-              // TODO: withdraw(double amount) — subtract if sufficient funds, return success
-
-
-              // TODO: getBalance() — return current balance
-
-
-              // TODO: getOwner() — return owner name
-
-
-              // TODO: toString() — return "BankAccount[owner=..., balance=...]"
-
+              // Missing: getBalance(), getOwner(), toString()
 
               public static void main(String[] args) {
                   BankAccount acct = new BankAccount("Alice", 1000.0);
-                  System.out.println(acct);
+                  System.out.println("Owner: " + acct.owner);  // Direct field access — fix this!
 
                   acct.deposit(500.0);
-                  System.out.println("After deposit: " + acct.getBalance());
+                  System.out.println("After deposit: " + acct.balance);  // Fix this too
 
                   boolean ok = acct.withdraw(200.0);
-                  System.out.println("Withdraw 200: " + ok + ", balance: " + acct.getBalance());
+                  System.out.println("Withdraw 200: " + ok + ", balance: " + acct.balance);
 
                   boolean fail = acct.withdraw(5000.0);
-                  System.out.println("Withdraw 5000: " + fail + ", balance: " + acct.getBalance());
+                  System.out.println("Withdraw 5000: " + fail + ", balance: " + acct.balance);
               }
           }
         language: "java"
@@ -762,9 +932,343 @@ steps:
           - text: "Declare fields with the private keyword: private String owner; private double balance;"
             condition: "code_missing: private"
 
+    quiz:
+      title: "Encapsulation"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "What is the main benefit of making fields `private` with getter/setter methods, compared to `public` fields?"
+          options:
+            - "You can add validation logic (e.g., prevent negative balance) without changing calling code"
+            - "Private fields use less memory"
+            - "It makes the code run faster"
+            - "Java requires all fields to be private"
+          correct_index: 0
+          explanation: "Encapsulation's power is controlling access: you can validate inputs, compute derived values, or change internal representation — all without breaking code that uses your class. If `balance` were public, any code could set it to -999."
+        - question: "**[Spaced Practice: Step 2]** Why does the test use `a.getOwner().equals(\"Test\")` instead of `a.getOwner() == \"Test\"`?"
+          options:
+            - "Because `==` on String objects checks reference identity, not value equality"
+            - "Because `.equals()` is faster than `==`"
+            - "Because `==` only works on primitives in Java"
+            - "They're equivalent — either would work"
+          correct_index: 0
+          explanation: "As we learned in Step 2, `==` on objects checks if they're the same object in memory. `getOwner()` returns a String object, so we must use `.equals()` to compare its value."
+        - question: "In Java, what is the default access level if you omit an access modifier on a field?"
+          options:
+            - "private — only accessible within the class"
+            - "package-private — accessible to any class in the same package"
+            - "public — accessible from anywhere"
+            - "protected — accessible to subclasses"
+          correct_index: 1
+          explanation: "Unlike C++ where the default is `private`, Java's default is package-private. This is a common source of bugs when transitioning from C++. Always be explicit with access modifiers."
+
 
   # --------------------------------------------------------------------------
-  # STEP 5 — Interfaces: Design by Contract (with UML)
+  # STEP 5 — Information Hiding: Beyond Encapsulation
+  # Pedagogy: Fixer Upper — diagnose a "Getter/Setter Fallacy" (Fleury 2001)
+  #           Parnas's "secret" concept — hiding design decisions likely to change
+  #           Deep vs Shallow modules (Ousterhout 2018)
+  #           Bloom's: Evaluate (judge whether design hides information) + Apply
+  # --------------------------------------------------------------------------
+  - title: "Information Hiding: Beyond Encapsulation"
+    uml_files:
+      - GradeReport.java
+    view: uml_diagram
+    instructions: |
+      ## Information Hiding: Beyond Encapsulation
+
+      > **Learning objective:** Distinguish information hiding from encapsulation, identify "leaked secrets" in encapsulated code, and refactor a system so that a requirement change touches only one class instead of many.
+
+      > **⚠ Common misconception:** "If my fields are `private` and I have getters/setters, I've achieved information hiding." **This is wrong.** Encapsulation and information hiding are orthogonal concepts (Parnas, 1972; Fleury, 2001).
+
+      ### What is Information Hiding?
+
+      In 1972, David Parnas proposed a radical idea: software modules should not be organized around steps in a flowchart. Instead, each module should hide a **"secret"** — a design decision that is likely to change. The secret isn't just data; it's any volatile decision:
+
+      | Secret to Hide | Example | Why Hide It? |
+      |---|---|---|
+      | **Data representation** | `int[]` vs `ArrayList` vs database | Storage format may change |
+      | **Algorithm** | Bubble sort vs quicksort | Optimization may change |
+      | **Business rules** | Grading thresholds, capacity limits | Policy may change |
+      | **Output format** | CSV vs JSON vs text | Reporting needs may change |
+      | **External dependency** | Which API or library to call | Vendor may change |
+
+      When a secret is properly hidden, changing that decision modifies **exactly one module**. When a secret leaks, changing it causes **cascading modifications** across the entire system.
+
+      ### Encapsulation ≠ Information Hiding
+
+      | | Encapsulation | Information Hiding |
+      |---|---|---|
+      | **What it is** | A language technique — bundling data and methods with access modifiers | A design principle — hiding *decisions likely to change* behind stable interfaces |
+      | **Mechanism** | `private`, `protected`, `public` keywords | Interface design that exposes *what*, not *how* |
+      | **Can exist without the other?** | Yes — private fields + public getters leak data types | Yes — a C function with a clean API hides information without access modifiers |
+
+      ### The Getter/Setter Fallacy
+
+      ```java
+      class Book {
+          private int isbn;
+          public int getIsbn() { return isbn; }
+          public void setIsbn(int isbn) { this.isbn = isbn; }
+      }
+      ```
+
+      The field is `private` — full encapsulation. But the return type `int` **leaks the design decision** that ISBN is an integer. When the spec changes to support international ISBNs with hyphens (`String`), every caller of `getIsbn()` breaks. The module is encapsulated but hides nothing.
+
+      ### Task — Find and Fix the Leaked Secret
+
+      `GradeReport.java` contains a grading system. All fields are `private`, getters are present — it looks well-designed. But **three design decisions have leaked** across the code:
+
+      1. **The grading scale** (A/B/C/D/F thresholds) is hardcoded in `main`, not in `GradeReport`. If the professor changes the scale, `main` must change.
+      2. **The report format** (how grades are printed) is built in `main` by manually iterating the internal structure. If the format changes, `main` must change.
+      3. **The data representation** is leaked through `getScores()` — callers depend on `ArrayList<Integer>`.
+
+      **Your job — refactor so that `GradeReport` hides all three decisions:**
+
+      1. Move the grading logic into `GradeReport` by implementing `getLetterGrade(int score)` — the grading *policy* is the module's secret
+      2. Move the formatting into `GradeReport` by implementing `formatReport()` — the output *format* is the module's secret
+      3. Remove `getScores()` — the *data representation* is the module's secret
+      4. Simplify `main` so it calls high-level methods and knows nothing about thresholds, formats, or storage
+
+      After your refactoring, a change to the grading scale, the output format, OR the storage structure should require editing **only `GradeReport`** — never `main`.
+
+    files:
+      - path: "GradeReport.java"
+        content: |
+          import java.util.ArrayList;
+
+          public class GradeReport {
+              private String studentName;
+              private ArrayList<Integer> scores;
+
+              public GradeReport(String name) {
+                  this.studentName = name;
+                  this.scores = new ArrayList<>();
+              }
+
+              public void addScore(int score) {
+                  scores.add(score);
+              }
+
+              public String getStudentName() {
+                  return studentName;
+              }
+
+              // LEAKED SECRET #3: Exposes data representation.
+              // Callers depend on ArrayList<Integer>.
+              public ArrayList<Integer> getScores() {
+                  return scores;
+              }
+
+              // Add these methods to HIDE the three secrets:
+              //   getLetterGrade(int score) — hides the grading POLICY
+              //   getAverage() — hides the data REPRESENTATION
+              //   formatReport() — hides the output FORMAT
+
+              public static void main(String[] args) {
+                  GradeReport report = new GradeReport("Alice");
+                  report.addScore(92);
+                  report.addScore(85);
+                  report.addScore(78);
+                  report.addScore(95);
+
+                  // LEAKED SECRET #1: Grading policy is here, not in GradeReport.
+                  // If the professor changes thresholds, main must change.
+                  ArrayList<Integer> scores = report.getScores();
+                  System.out.println("Grade Report: " + report.getStudentName());
+                  for (int s : scores) {
+                      String letter;
+                      if (s >= 90) letter = "A";
+                      else if (s >= 80) letter = "B";
+                      else if (s >= 70) letter = "C";
+                      else if (s >= 60) letter = "D";
+                      else letter = "F";
+                      System.out.println("  " + s + " (" + letter + ")");
+                  }
+
+                  // LEAKED SECRET #2: Report format is here, not in GradeReport.
+                  // If the format changes (e.g., to CSV), main must change.
+                  int sum = 0;
+                  for (int s : scores) { sum += s; }
+                  double avg = sum / (double) scores.size();
+                  System.out.println("Average: " + avg);
+              }
+          }
+        language: "java"
+
+    open_file: "GradeReport.java"
+
+    solution:
+      files:
+        - path: "GradeReport.java"
+          content: |
+            import java.util.ArrayList;
+
+            public class GradeReport {
+                private String studentName;
+                private ArrayList<Integer> scores;
+
+                public GradeReport(String name) {
+                    this.studentName = name;
+                    this.scores = new ArrayList<>();
+                }
+
+                public void addScore(int score) {
+                    scores.add(score);
+                }
+
+                public String getStudentName() {
+                    return studentName;
+                }
+
+                // SECRET #1 HIDDEN: Grading policy is inside the module.
+                // Change thresholds here — no caller needs to know.
+                public String getLetterGrade(int score) {
+                    if (score >= 90) return "A";
+                    if (score >= 80) return "B";
+                    if (score >= 70) return "C";
+                    if (score >= 60) return "D";
+                    return "F";
+                }
+
+                // SECRET #3 HIDDEN: Data representation stays internal.
+                public double getAverage() {
+                    int sum = 0;
+                    for (int s : scores) { sum += s; }
+                    return sum / (double) scores.size();
+                }
+
+                // SECRET #2 HIDDEN: Output format is inside the module.
+                // Change to CSV, JSON, or HTML here — no caller needs to know.
+                public String formatReport() {
+                    String result = "Grade Report: " + studentName + "\n";
+                    for (int s : scores) {
+                        result += "  " + s + " (" + getLetterGrade(s) + ")\n";
+                    }
+                    result += "Average: " + getAverage();
+                    return result;
+                }
+
+                public static void main(String[] args) {
+                    GradeReport report = new GradeReport("Alice");
+                    report.addScore(92);
+                    report.addScore(85);
+                    report.addScore(78);
+                    report.addScore(95);
+
+                    // main knows NOTHING about thresholds, formats, or storage
+                    System.out.println(report.formatReport());
+                }
+            }
+          language: "java"
+      explanation: |
+        **Three secrets, one module:**
+
+        1. **Grading policy** (the A/B/C/D/F thresholds): Hidden inside `getLetterGrade()`. A professor can change "A ≥ 90" to "A ≥ 93" by editing one method — no caller changes.
+        2. **Output format** (text layout): Hidden inside `formatReport()`. Switching to CSV output changes one method — no caller changes.
+        3. **Data representation** (`ArrayList<Integer>`): Hidden by removing `getScores()`. The module could switch to `int[]`, a database, or a linked list — no caller changes.
+
+        **The test:** For each secret, ask "if this decision changes, how many classes must I edit?" If the answer is more than one, the secret has leaked. After refactoring, every answer is "one" — that's Parnas's principle.
+
+        Notice this has nothing to do with `private` vs `public`. The original code was fully encapsulated (all fields private). The problem was that the *interface design* — `getScores()` and the grading logic in `main` — exposed decisions that belong inside the module.
+
+    tests:
+      - description: "getLetterGrade returns correct grades"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  GradeReport r = new GradeReport("Test");
+                  if (!r.getLetterGrade(95).equals("A")) throw new RuntimeException("95 should be A");
+                  if (!r.getLetterGrade(85).equals("B")) throw new RuntimeException("85 should be B");
+                  if (!r.getLetterGrade(75).equals("C")) throw new RuntimeException("75 should be C");
+                  if (!r.getLetterGrade(65).equals("D")) throw new RuntimeException("65 should be D");
+                  if (!r.getLetterGrade(55).equals("F")) throw new RuntimeException("55 should be F");
+              }
+          }
+        hints:
+          - text: "Implement getLetterGrade(int score) inside GradeReport — move the grading thresholds out of main"
+            condition: "code_missing: getLetterGrade"
+      - description: "getAverage returns correct result"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  GradeReport r = new GradeReport("Test");
+                  r.addScore(80);
+                  r.addScore(90);
+                  double avg = r.getAverage();
+                  if (Math.abs(avg - 85.0) > 0.001) {
+                      throw new RuntimeException("Average of 80,90 should be 85.0, got " + avg);
+                  }
+              }
+          }
+        hints:
+          - text: "Implement getAverage() — sum all scores and divide by scores.size()"
+            condition: "code_missing: getAverage"
+      - description: "formatReport contains grades and average"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  GradeReport r = new GradeReport("Bob");
+                  r.addScore(92);
+                  r.addScore(65);
+                  String report = r.formatReport();
+                  if (!report.contains("Bob")) throw new RuntimeException("Report should contain student name, got: " + report);
+                  if (!report.contains("(A)")) throw new RuntimeException("Report should contain letter grade (A) for 92, got: " + report);
+                  if (!report.contains("(D)")) throw new RuntimeException("Report should contain letter grade (D) for 65, got: " + report);
+                  if (!report.contains("Average")) throw new RuntimeException("Report should contain Average, got: " + report);
+              }
+          }
+        hints:
+          - text: "Implement formatReport() that builds a string with the student name, each score with its letter grade, and the average"
+            condition: "code_missing: formatReport"
+      - description: "getScores is removed — data representation hidden"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  GradeReport r = new GradeReport("Test");
+                  r.addScore(90);
+                  // Verify the module works through its behavior-oriented interface
+                  r.getAverage();
+                  r.getLetterGrade(90);
+                  r.formatReport();
+              }
+          }
+        hints:
+          - text: "Remove getScores() — callers should use getAverage(), getLetterGrade(), and formatReport() instead"
+            condition: "code_contains: getScores"
+
+    quiz:
+      title: "Information Hiding"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "A GradeReport class has private fields and a `getScores()` method returning `ArrayList<Integer>`. The grading thresholds (A ≥ 90, B ≥ 80...) are in the calling code. How many design decisions are leaked?"
+          options:
+            - "Two — the data representation (ArrayList<Integer>) and the grading policy (thresholds)"
+            - "Zero — the fields are private, so everything is hidden"
+            - "One — only the data representation is leaked"
+            - "Three — data, policy, and the student's name"
+          correct_index: 0
+          explanation: "Two secrets are leaked: (1) The return type `ArrayList<Integer>` reveals the storage format — callers break if you switch to `int[]`. (2) The grading thresholds live outside the module — if the professor changes the scale, calling code must change. Private fields alone don't achieve information hiding."
+        - question: "According to Parnas (1972), which of these is NOT a 'secret' that a module should hide?"
+          options:
+            - "The module's public interface (method signatures)"
+            - "The algorithm used internally (e.g., sort strategy)"
+            - "The data format used for storage"
+            - "Business rules that may change (e.g., pricing tiers)"
+          correct_index: 0
+          explanation: "The public interface is precisely what should be VISIBLE — it's the stable contract other modules depend on. Everything behind that interface (algorithms, data formats, business rules, external dependencies) should be hidden, because those decisions are likely to change."
+        - question: "You refactored a system so that changing the grading scale requires editing only one class. What design principle have you applied?"
+          options:
+            - "Information Hiding — the grading policy is the module's 'secret', hidden behind a stable interface"
+            - "Encapsulation — you made the threshold fields private"
+            - "Inheritance — you created a GradingPolicy superclass"
+            - "Polymorphism — you used dynamic dispatch for grading"
+          correct_index: 0
+          explanation: "This is Information Hiding in action. The 'secret' (grading policy) is isolated in one module. Changing it requires exactly one edit. This goes beyond encapsulation — even with public fields, if the policy logic is in one place, the decision is hidden. Conversely, private fields with grading logic scattered everywhere provide encapsulation without information hiding."
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — Interfaces: Design by Contract (with UML)
   # Pedagogy: Interfaces-First — teach contracts before inheritance
   #           UML Diagram — show interface notation
   #           Transfer Tutor — contrast with C++ pure virtual, Python ABCs
@@ -847,55 +1351,53 @@ steps:
 
       ### Task
 
-      Implement the UML diagram above across three files:
-      1. **`Shape.java`** — the interface with three methods
-      2. **`Circle.java`** — implements Shape using a radius
-      3. **`Rectangle.java`** — implements Shape using width and height
+      Study the provided `Shape` interface and `Circle` implementation — they're complete and working. Then:
 
-      The `describe()` method should return `"Circle(r=5.0)"` or `"Rectangle(w=4.0, h=6.0)"`.
+      1. **Read `Circle.java`** to see how a class implements the `Shape` interface
+      2. **Implement `Rectangle.java`** following the same pattern, using width and height
+      3. `describe()` should return `"Rectangle(w=4.0, h=6.0)"`
 
-      The provided `ShapeDemo.java` tests your implementations using the **interface type** — notice how it works with `Shape` references, not `Circle` or `Rectangle` directly. That's the power of programming to an interface.
+      The provided `ShapeDemo.java` tests your implementation using the **interface type** — notice how it works with `Shape` references, not `Circle` or `Rectangle` directly. That's the power of programming to an interface.
 
     files:
       - path: "Shape.java"
         content: |
-          // TODO: Define the Shape interface with three methods:
-          //   double getArea()
-          //   double getPerimeter()
-          //   String describe()
           public interface Shape {
-
+              double getArea();
+              double getPerimeter();
+              String describe();
           }
         language: "java"
 
       - path: "Circle.java"
         content: |
+          // COMPLETE EXAMPLE — study this, then implement Rectangle
           public class Circle implements Shape {
-              // TODO: private field radius (double)
+              private double radius;
 
-              // TODO: Constructor taking radius
+              public Circle(double radius) {
+                  this.radius = radius;
+              }
 
-              // TODO: Implement getArea() — PI * r^2
+              public double getArea() {
+                  return Math.PI * radius * radius;
+              }
 
-              // TODO: Implement getPerimeter() — 2 * PI * r
+              public double getPerimeter() {
+                  return 2 * Math.PI * radius;
+              }
 
-              // TODO: Implement describe() — "Circle(r=...)"
-
+              public String describe() {
+                  return "Circle(r=" + radius + ")";
+              }
           }
         language: "java"
 
       - path: "Rectangle.java"
         content: |
           public class Rectangle implements Shape {
-              // TODO: private fields width and height (double)
-
-              // TODO: Constructor taking width and height
-
-              // TODO: Implement getArea() — width * height
-
-              // TODO: Implement getPerimeter() — 2 * (width + height)
-
-              // TODO: Implement describe() — "Rectangle(w=..., h=...)"
+              // Follow the same pattern as Circle:
+              // private fields, constructor, then implement all three interface methods
 
           }
         language: "java"
@@ -1048,6 +1550,36 @@ steps:
           - text: "Rectangle area = width * height; perimeter = 2 * (width + height)"
             condition: "code_missing: getPerimeter"
 
+    quiz:
+      title: "Interfaces & Polymorphism"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "In `ShapeDemo`, the method `printShape(Shape s)` works with both Circle and Rectangle. What makes this possible?"
+          options:
+            - "Both Circle and Rectangle implement the Shape interface, so they fulfill the same contract"
+            - "Java automatically converts Circle to Rectangle"
+            - "printShape uses reflection to discover methods at runtime"
+            - "Shape is an abstract class that Circle and Rectangle extend"
+          correct_index: 0
+          explanation: "This is polymorphism through interfaces. `printShape` only knows about the `Shape` contract (getArea, getPerimeter, describe). Any class that `implements Shape` can be passed in — the correct implementation is called at runtime."
+        - question: "What happens if you add a new method `getColor()` to the Shape interface?"
+          options:
+            - "Circle and Rectangle will fail to compile until they implement getColor()"
+            - "Circle and Rectangle will automatically get a default getColor() that returns null"
+            - "Nothing — interfaces don't affect implementing classes"
+            - "Only new classes need to implement it"
+          correct_index: 0
+          explanation: "The compiler enforces the contract. Adding a method to an interface breaks all implementing classes until they provide an implementation. This is the power of `implements` — compile-time safety that Python's duck typing can't provide."
+        - question: "**[Spaced Practice: Step 4]** Why declare `Shape c = new Circle(5.0)` instead of `Circle c = new Circle(5.0)`?"
+          options:
+            - "Programming to the interface — you can later swap Circle for any Shape implementation without changing the variable type"
+            - "Shape uses less memory than Circle"
+            - "There's no difference — they're equivalent"
+            - "Circle is not a valid type in Java"
+          correct_index: 0
+          explanation: "Declaring with the interface type signals intent: 'I only need Shape behavior here.' This enables flexibility — you could change `new Circle(5.0)` to `new Triangle(3, 4, 5)` without modifying any code that uses `c`."
+
 
   # --------------------------------------------------------------------------
   # STEP 6 — Inheritance & Polymorphism (with UML)
@@ -1144,45 +1676,60 @@ steps:
 
       > **`super` vs C++:** Java uses `super(args)` as the first line of a constructor to call the parent constructor. C++ uses initializer lists: `Car(...) : Vehicle(make, year) { }`.
 
+      > **Note:** In real Java, each class would be in its own file. We combine them here to focus on the inheritance concepts without file-switching overhead.
+
       ### Task
 
-      Implement the UML hierarchy above in `Vehicles.java`:
+      The `Vehicle` abstract class and `Car` subclass are provided and working. Your job:
 
-      - `Vehicle` is abstract with `describe()` and `startEngine()` as abstract methods
-      - `Car.describe()` returns `"2024 Toyota Car (4 doors)"`
-      - `Car.startEngine()` returns `"Vroom!"`
-      - `Motorcycle.describe()` returns `"2023 Harley Motorcycle (with sidecar)"` or `"2023 Harley Motorcycle"`
-      - `Motorcycle.startEngine()` returns `"BRAP BRAP!"`
+      1. **Read `Vehicle` and `Car`** to understand the `abstract`/`extends`/`super` pattern
+      2. **Implement `Motorcycle`** following the same pattern as `Car`
+      3. `Motorcycle.describe()` returns `"2023 Harley Motorcycle (with sidecar)"` or `"2023 Harley Motorcycle"` depending on the flag
+      4. `Motorcycle.startEngine()` returns `"BRAP BRAP!"`
 
       The `main` method demonstrates **polymorphism** — a `Vehicle` reference can point to either a `Car` or `Motorcycle`, and the correct `describe()` is called at runtime (dynamic dispatch).
 
     files:
       - path: "Vehicles.java"
         content: |
-          // TODO: Define abstract class Vehicle with:
-          //   - private fields: make (String), year (int)
-          //   - constructor taking make and year
-          //   - public getMake() and getYear() getters
-          //   - abstract methods: describe() and startEngine() returning String
+          // COMPLETE — study this abstract class
           abstract class Vehicle {
+              private String make;
+              private int year;
 
+              public Vehicle(String make, int year) {
+                  this.make = make;
+                  this.year = year;
+              }
+
+              public String getMake() { return make; }
+              public int getYear() { return year; }
+
+              public abstract String describe();
+              public abstract String startEngine();
           }
 
-          // TODO: Define Car extending Vehicle with:
-          //   - private field: numDoors (int)
-          //   - constructor taking make, year, numDoors (call super!)
-          //   - describe() returns "YEAR MAKE Car (N doors)"
-          //   - startEngine() returns "Vroom!"
+          // COMPLETE EXAMPLE — study this, then implement Motorcycle
           class Car extends Vehicle {
+              private int numDoors;
 
+              public Car(String make, int year, int numDoors) {
+                  super(make, year);   // MUST call parent constructor first
+                  this.numDoors = numDoors;
+              }
+
+              @Override
+              public String describe() {
+                  return getYear() + " " + getMake() + " Car (" + numDoors + " doors)";
+              }
+
+              @Override
+              public String startEngine() {
+                  return "Vroom!";
+              }
           }
 
-          // TODO: Define Motorcycle extending Vehicle with:
-          //   - private field: hasSidecar (boolean)
-          //   - constructor taking make, year, hasSidecar (call super!)
-          //   - describe() returns "YEAR MAKE Motorcycle (with sidecar)" or
-          //     "YEAR MAKE Motorcycle" if no sidecar
-          //   - startEngine() returns "BRAP BRAP!"
+          // YOUR TURN — implement Motorcycle following Car's pattern
           class Motorcycle extends Vehicle {
 
           }
@@ -1389,6 +1936,10 @@ steps:
 
       > **⚠ False Friend from C++:** Java's `List<String>` looks exactly like C++'s `vector<string>`, but the underlying mechanism is completely different. C++ templates generate separate code for each type. Java generics are a **compile-time fiction** — erased at runtime.
 
+      ### Why Type Erasure?
+
+      When Java 5 added generics in 2004, billions of lines of pre-generics Java code already existed. To maintain **binary compatibility** — so old `.class` files could work with new generic code without recompilation — the designers chose to erase generic types after compilation. The result: generics are a compile-time safety net, not a runtime feature.
+
       ### C++ Templates vs Java Generics
 
       | Feature | C++ Templates | Java Generics |
@@ -1398,6 +1949,25 @@ steps:
       | Primitive types | Yes — `vector<int>` works | **No** — must use `List<Integer>` |
       | `new T()` | Yes | **No** — type unknown at runtime |
       | Code bloat | Yes (separate code per type) | No (single shared implementation) |
+
+      ### Predict Before You Code
+
+      **Before reading further**, predict whether each line compiles:
+
+      ```java
+      ArrayList<int> nums;              // Compiles? ____
+      ArrayList<Integer> nums;          // Compiles? ____
+      if (list instanceof ArrayList<String>) {}  // Compiles? ____
+      ```
+
+      <details>
+      <summary>Reveal the answers</summary>
+
+      - `ArrayList<int>` — **No.** Generics only work with objects. Use `ArrayList<Integer>`.
+      - `ArrayList<Integer>` — **Yes.** Wrapper classes work with generics.
+      - `instanceof ArrayList<String>` — **No.** Generic types are erased at runtime, so Java can't check them. `instanceof ArrayList` (raw type) would work, but that defeats the purpose.
+
+      </details>
 
       ### Type Erasure: The Compiler's Magic Act
 
@@ -1453,9 +2023,9 @@ steps:
 
       > **C++ equivalent:** This is like C++20 concepts or pre-concepts SFINAE — constraining template parameters. Java's syntax is simpler: `<T extends SomeType>`.
 
-      ### Task
+      ### Task — Refactor to Generics
 
-      Implement a generic `Pair<A, B>` class in `Pair.java`:
+      The `Pair.java` file has a working but **non-generic** `StringIntPair` class — it only works for `(String, int)` pairs. Your job is to **generify** it into a `Pair<A, B>` that works for any two types:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
       class "Pair<A, B>" as Pair {
@@ -1469,32 +2039,34 @@ steps:
       }
       @enduml'></div>
 
-      Then write a static generic method `swap` that takes a `Pair<A, B>` and returns a new `Pair<B, A>` with the elements reversed.
-
-      `toString()` should return `"(first, second)"`, e.g., `"(Alice, 95)"`.
+      1. Replace the concrete types (`String`, `int`) with type parameters `A` and `B`
+      2. Rename the class from `StringIntPair` to `Pair<A, B>`
+      3. Add a static generic method `swap` that returns a new `Pair<B, A>` with elements reversed
+      4. `toString()` should return `"(first, second)"`, e.g., `"(Alice, 95)"`
 
     files:
       - path: "Pair.java"
         content: |
-          public class Pair<A, B> {
-              // TODO: Private fields first (type A) and second (type B)
+          // REFACTOR THIS: Replace concrete types with generics <A, B>
+          // Rename class to Pair<A, B>
+          public class StringIntPair {
+              private String first;
+              private int second;
 
+              public StringIntPair(String first, int second) {
+                  this.first = first;
+                  this.second = second;
+              }
 
-              // TODO: Constructor taking A first, B second
+              public String getFirst() { return first; }
+              public int getSecond() { return second; }
 
+              public String toString() {
+                  return "(" + first + ", " + second + ")";
+              }
 
-              // TODO: getFirst() returning A
-
-
-              // TODO: getSecond() returning B
-
-
-              // TODO: toString() returning "(first, second)"
-
-
-              // TODO: Static generic method:
+              // Add a static generic method:
               //   public static <X, Y> Pair<Y, X> swap(Pair<X, Y> pair)
-              // that returns a new Pair with the elements swapped
 
 
               public static void main(String[] args) {
@@ -1608,6 +2180,36 @@ steps:
           - text: "toString should return \"(\" + first + \", \" + second + \")\""
             condition: "code_missing: toString"
 
+    quiz:
+      title: "Generics & Type Erasure"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "Why did Java's designers choose type erasure instead of reified generics (like C++ templates)?"
+          options:
+            - "To maintain binary compatibility with pre-generics Java code"
+            - "Because type erasure is faster at runtime"
+            - "Because Java's JVM cannot handle type parameters"
+            - "To reduce memory usage compared to C++ templates"
+          correct_index: 0
+          explanation: "When generics were added in Java 5, billions of lines of pre-generics code existed. Type erasure ensures old .class files work with new generic code without recompilation — backwards compatibility was the driving constraint."
+        - question: "Which of these is ILLEGAL in Java due to type erasure?"
+          options:
+            - "`List<String> names = new ArrayList<>();`"
+            - "`new T()` inside a generic class"
+            - "`Pair<String, Integer> p = new Pair<>(\"a\", 1);`"
+            - "`public static <T> T identity(T x) { return x; }`"
+          correct_index: 1
+          explanation: "After type erasure, `T` becomes `Object` at runtime — Java doesn't know which constructor to call. `new T()` is illegal. All other options work because the compiler inserts the right casts."
+        - question: "**[Spaced Practice: Step 3]** Why can't you write `ArrayList<int>` in Java?"
+          options:
+            - "Because `int` is not an object — generics require wrapper types like `Integer`"
+            - "Because ArrayList is only for strings"
+            - "Because int arrays are faster and should always be used instead"
+            - "Because Java doesn't support generic types"
+          correct_index: 0
+          explanation: "Java generics use type erasure, erasing to `Object` at runtime. Primitives like `int` are not objects and can't be cast to `Object`. Use the wrapper class `Integer` instead."
+
 
   # --------------------------------------------------------------------------
   # STEP 8 — Collections Framework
@@ -1686,40 +2288,81 @@ steps:
 
       > **⚠ Size inconsistency:** Arrays use `.length` (field). Strings use `.length()` (method). Collections use `.size()` (method). This is a well-known Java wart.
 
-      ### Task
+      ### Task — Refactor with Better Collections
 
-      Build a `WordCounter` class that:
-      1. Takes a `String[]` of words
-      2. Counts how many times each word appears using a `HashMap<String, Integer>`
-      3. Stores unique words in a `HashSet<String>`
-      4. Has methods to get the count of a word, list all unique words, and find the most frequent word
+      The `WordCounter.java` file has a working implementation, but it uses **the wrong collection types**. It uses `ArrayList` for everything — which is inefficient and misses the strengths of Java's collections framework.
+
+      **Your job:** Identify which collection type is best for each use case and refactor:
+
+      1. **Word counting** (word → frequency): Which collection maps keys to values? Replace the parallel `ArrayList`s with a single `HashMap<String, Integer>`
+      2. **Unique words**: Which collection automatically prevents duplicates? Replace `ArrayList<String>` with a `HashSet<String>`
+      3. **Fix `getCount`** to use HashMap's lookup instead of linear search
+      4. **Fix `getMostFrequent`** to iterate the HashMap instead of parallel arrays
+      5. **Add `getCounts()`** returning your `HashMap<String, Integer>` — used by the test suite
+
+      > **Think first:** Before changing any code, decide: should each field be a `List`, `Set`, or `Map`? Why?
 
     files:
       - path: "WordCounter.java"
         content: |
+          import java.util.ArrayList;
           import java.util.HashMap;
           import java.util.HashSet;
-          import java.util.ArrayList;
 
           public class WordCounter {
-              // TODO: Private fields:
-              //   - counts: HashMap<String, Integer>
-              //   - uniqueWords: HashSet<String>
+              // BAD CHOICE: ArrayList is wrong for both of these.
+              // What collection type should counts be? (hint: key → value)
+              // What collection type should uniqueWords be? (hint: no duplicates)
+              private ArrayList<String> countKeys;
+              private ArrayList<Integer> countValues;
+              private ArrayList<String> uniqueWords;
 
+              public WordCounter(String[] words) {
+                  countKeys = new ArrayList<>();
+                  countValues = new ArrayList<>();
+                  uniqueWords = new ArrayList<>();
 
-              // TODO: Constructor taking String[] words
-              //   - Populate counts map (word → frequency)
-              //   - Populate uniqueWords set
+                  for (String word : words) {
+                      // Duplicate tracking is manual and verbose with ArrayList
+                      if (!uniqueWords.contains(word)) {
+                          uniqueWords.add(word);
+                      }
 
+                      // Parallel arrays for counting — fragile and slow
+                      int idx = countKeys.indexOf(word);
+                      if (idx >= 0) {
+                          countValues.set(idx, countValues.get(idx) + 1);
+                      } else {
+                          countKeys.add(word);
+                          countValues.add(1);
+                      }
+                  }
+              }
 
-              // TODO: getCount(String word) — return count for that word (0 if not found)
+              public int getCount(String word) {
+                  // Linear search — O(n) instead of O(1)
+                  int idx = countKeys.indexOf(word);
+                  if (idx >= 0) {
+                      return countValues.get(idx);
+                  }
+                  return 0;
+              }
 
+              public int getUniqueCount() {
+                  return uniqueWords.size();
+              }
 
-              // TODO: getUniqueCount() — return number of unique words
-
-
-              // TODO: getMostFrequent() — return the word with highest count
-
+              public String getMostFrequent() {
+                  String maxWord = "";
+                  int maxCount = 0;
+                  for (int i = 0; i < countKeys.size(); i++) {
+                      if (countValues.get(i) > maxCount) {
+                          maxCount = countValues.get(i);
+                          maxWord = countKeys.get(i);
+                      }
+                  }
+                  return maxWord;
+              }
 
               public static void main(String[] args) {
                   String[] words = {"java", "python", "java", "cpp", "java", "python", "go"};
@@ -1784,6 +2427,10 @@ steps:
                     return maxWord;
                 }
 
+                public HashMap<String, Integer> getCounts() {
+                    return counts;
+                }
+
                 public static void main(String[] args) {
                     String[] words = {"java", "python", "java", "cpp", "java", "python", "go"};
                     WordCounter wc = new WordCounter(words);
@@ -1797,9 +2444,12 @@ steps:
             }
           language: "java"
       explanation: |
-        **`HashMap<String, Integer>`** maps each word to its frequency — like Python's `Counter` or a `defaultdict(int)`.
+        **The right refactoring:** Replace the parallel `ArrayList` pair with a single `HashMap<String, Integer>` — it maps keys to values directly. Replace the `ArrayList<String>` for unique words with a `HashSet<String>` — it automatically prevents duplicates.
 
-        **`HashSet<String>`** automatically deduplicates — `add("java")` twice still results in one entry, just like Python's `set`.
+        **Why this matters:**
+        - `HashMap.get(word)` is O(1) — the old `indexOf` was O(n)
+        - `HashSet.add(word)` automatically deduplicates — no manual `contains` check needed
+        - The code is shorter, clearer, and more performant
 
         Note `counts.get(word)` returns `Integer` (the wrapper), which gets auto-unboxed to `int` for the `>` comparison. If the key doesn't exist, `get()` returns `null` — and unboxing `null` would throw `NullPointerException`. That's why we check `containsKey()` first.
 
@@ -1813,21 +2463,21 @@ steps:
                   String[] words = {"a", "b", "a", "c", "a"};
                   WordCounter wc = new WordCounter(words);
                   if (wc.getCount("a") != 3) {
-                      throw new RuntimeException("Expected count of 'a' to be 3");
+                      throw new RuntimeException("Expected count of 'a' to be 3, got " + wc.getCount("a"));
                   }
                   if (wc.getCount("b") != 1) {
-                      throw new RuntimeException("Expected count of 'b' to be 1");
+                      throw new RuntimeException("Expected count of 'b' to be 1, got " + wc.getCount("b"));
                   }
                   if (wc.getCount("z") != 0) {
-                      throw new RuntimeException("Missing word should return 0");
+                      throw new RuntimeException("Missing word should return 0, got " + wc.getCount("z"));
                   }
               }
           }
         hints:
-          - text: "Use HashMap.containsKey() to check if a word exists, then put(word, get(word) + 1) to increment"
-            condition: "code_missing: containsKey"
-          - text: "getCount should return 0 for words not in the map, not throw an exception"
-            condition: "code_missing: return 0"
+          - text: "Use a HashMap<String, Integer> for counts. Use containsKey() to check existence, then put(word, get(word) + 1) to increment"
+            condition: "code_missing: HashMap"
+          - text: "getCount should return 0 for words not in the map — use containsKey() or getOrDefault()"
+            condition: "code_contains: indexOf"
       - description: "Unique count and most frequent work"
         command: |
           public class __Test {
@@ -1835,16 +2485,70 @@ steps:
                   String[] words = {"x", "y", "x", "z", "x"};
                   WordCounter wc = new WordCounter(words);
                   if (wc.getUniqueCount() != 3) {
-                      throw new RuntimeException("Expected 3 unique words");
+                      throw new RuntimeException("Expected 3 unique words, got " + wc.getUniqueCount());
                   }
                   if (!wc.getMostFrequent().equals("x")) {
-                      throw new RuntimeException("Most frequent should be 'x'");
+                      throw new RuntimeException("Most frequent should be 'x', got " + wc.getMostFrequent());
                   }
               }
           }
         hints:
-          - text: "Use uniqueWords.size() to get the number of unique words"
-            condition: "code_missing: size()"
+          - text: "Use a HashSet<String> for uniqueWords — it automatically prevents duplicates"
+            condition: "code_missing: HashSet"
+          - text: "Iterate over the HashMap's keySet() to find the most frequent word"
+            condition: "code_contains: countKeys"
+      - description: "getCounts returns a HashMap with correct entries"
+        command: |
+          import java.util.HashMap;
+          public class __Test {
+              public static void main(String[] args) {
+                  String[] words = {"a", "b", "a"};
+                  WordCounter wc = new WordCounter(words);
+                  HashMap<String, Integer> map = wc.getCounts();
+                  if (map == null) {
+                      throw new RuntimeException("getCounts() returned null — implement it returning your HashMap");
+                  }
+                  if (!map.containsKey("a") || map.get("a") != 2) {
+                      throw new RuntimeException("getCounts should map 'a' to 2");
+                  }
+                  if (!map.containsKey("b") || map.get("b") != 1) {
+                      throw new RuntimeException("getCounts should map 'b' to 1");
+                  }
+              }
+          }
+        hints:
+          - text: "Add a getCounts() method that returns your HashMap<String, Integer> field"
+            condition: "code_missing: getCounts"
+
+    quiz:
+      title: "Collections Choices"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "You need to store student IDs and quickly check if a given ID exists. Which collection is best?"
+          options:
+            - "`HashSet<Integer>` — O(1) lookup for existence checks"
+            - "`ArrayList<Integer>` — can use contains() to search"
+            - "`HashMap<Integer, Integer>` — maps IDs to themselves"
+            - "`LinkedList<Integer>` — efficient iteration"
+          correct_index: 0
+          explanation: "When you only need to check membership (not retrieve associated values), a `HashSet` is ideal: O(1) `contains()` vs ArrayList's O(n). HashMap would work but is overkill when you don't need key-value mapping."
+        - question: "What's wrong with: `Map<String, Integer> m = new HashMap<>(); int val = m.get(\"missing\");`?"
+          options:
+            - "Nothing — val will be 0 (the default for int)"
+            - "NullPointerException — get() returns null for missing keys, and unboxing null crashes"
+            - "Compile error — HashMap doesn't have a get() method"
+            - "ClassCastException — String keys can't return Integer values"
+          correct_index: 1
+          explanation: "HashMap.get() returns null when a key is missing. Auto-unboxing null to int throws NullPointerException. Use containsKey() first, or getOrDefault(key, 0)."
+        - question: "**[Technique Selection]** Match each scenario to the best collection: (A) Counting word frequencies. (B) Removing duplicate email addresses. (C) Maintaining an ordered list of recent commands."
+          options:
+            - "A: HashMap, B: HashSet, C: ArrayList"
+            - "A: HashSet, B: HashMap, C: ArrayList"
+            - "A: ArrayList, B: HashSet, C: HashMap"
+            - "A: HashMap, B: ArrayList, C: HashSet"
+          correct_index: 0
+          explanation: "HashMap maps keys to values (word→count). HashSet stores unique elements (emails without duplicates). ArrayList maintains insertion order with index access (command history)."
 
 
   # --------------------------------------------------------------------------
@@ -1946,43 +2650,51 @@ steps:
       }
       ```
 
-      ### Task
+      ### Task — Add Exception Safety
 
-      Complete `SafeCalculator.java`:
+      The `SafeCalculator.java` has working `divide` and `sqrt` methods, but they **crash on bad input** instead of handling errors gracefully. Your job:
 
-      1. Define an `CalculatorException` (checked, extends `Exception`) with a message
-      2. Implement `divide(int a, int b)` that throws `CalculatorException` if `b` is 0
-      3. Implement `sqrt(double x)` that throws `CalculatorException` if `x` is negative
-      4. In `main`, use try-catch to handle errors gracefully, printing the error messages
+      1. Define a `CalculatorException` class (checked — extends `Exception`) with a constructor taking a message
+      2. Modify `divide` to throw `CalculatorException` when `b` is 0 (instead of crashing with `ArithmeticException`)
+      3. Modify `sqrt` to throw `CalculatorException` when `x` is negative (instead of returning `NaN`)
+      4. Update `main` to wrap each call in try-catch and print errors gracefully
+
+      The compiler will **force** you to handle the checked exceptions — try removing a catch block and see what happens.
 
     files:
       - path: "SafeCalculator.java"
         content: |
-          // TODO: Define a checked exception class CalculatorException
-          //       that extends Exception and has a constructor taking a String message
+          // Step 1: Define CalculatorException extending Exception
+          //         with a constructor that takes a String message
           class CalculatorException extends Exception {
 
           }
 
           public class SafeCalculator {
 
-              // TODO: divide(int a, int b) throws CalculatorException
-              //   - If b is 0, throw new CalculatorException("Division by zero")
-              //   - Otherwise return a / b as a double (use casting!)
+              // Step 2: Add "throws CalculatorException" and validation
+              public double divide(int a, int b) {
+                  // Currently crashes with ArithmeticException on b=0
+                  // Add: if b is 0, throw CalculatorException("Division by zero")
+                  return (double) a / b;
+              }
 
-
-              // TODO: sqrt(double x) throws CalculatorException
-              //   - If x < 0, throw new CalculatorException("Cannot take square root of negative number")
-              //   - Otherwise return Math.sqrt(x)
-
+              // Step 3: Add "throws CalculatorException" and validation
+              public double sqrt(double x) {
+                  // Currently returns NaN for negative input
+                  // Add: if x < 0, throw CalculatorException("Cannot take square root of negative number")
+                  return Math.sqrt(x);
+              }
 
               public static void main(String[] args) {
                   SafeCalculator calc = new SafeCalculator();
 
-                  // TODO: Try dividing 10 by 3 — print the result
-                  // TODO: Try dividing 10 by 0 — catch and print the error message
-                  // TODO: Try sqrt(16) — print the result
-                  // TODO: Try sqrt(-4) — catch and print the error message
+                  // Step 4: Wrap each call in try-catch
+                  // The compiler will tell you these need handling once you add "throws"
+                  System.out.println("10 / 3 = " + calc.divide(10, 3));
+                  System.out.println("10 / 0 = " + calc.divide(10, 0));
+                  System.out.println("sqrt(16) = " + calc.sqrt(16));
+                  System.out.println("sqrt(-4) = " + calc.sqrt(-4));
               }
           }
         language: "java"
@@ -2215,6 +2927,13 @@ steps:
          - `drop()` removes a student by name, returns `true` if found
          - `isEnrolled()` checks if a student with that name is enrolled
          - `getRoster()` returns an `ArrayList<String>` of enrolled student names
+
+      ### Before You Code — Plan Your Approach
+
+      Before writing any code, answer these questions mentally:
+      1. Which concepts from **earlier steps** does each class use? (interfaces, encapsulation, exceptions, collections, `.equals()`)
+      2. What is the "secret" each class hides? (What could change without affecting other classes?)
+      3. Where will you use `ArrayList<Student>` vs `ArrayList<String>`, and why?
 
       ### Investigate
 
@@ -2525,6 +3244,15 @@ steps:
         - **Generics** (Step 7): `ArrayList<Student>` and `ArrayList<String>` are parameterized collections
 
         **UML to code:** Notice how the UML diagram mapped directly to the implementation — each box became a class/interface, each arrow became `implements` or a field reference, and each method signature transferred directly.
+
+        ### Where Next?
+
+        You've covered Java's core OOP model. To continue building expertise:
+        - **Streams & Lambdas** (Java 8+): Functional-style collection processing — `students.stream().filter(s -> ...).collect(...)`
+        - **Records** (Java 16+): Immutable data classes with less boilerplate — `record Student(String name, int id) {}`
+        - **Sealed Classes** (Java 17+): Restricting class hierarchies for exhaustive pattern matching
+        - **Build Tools**: Maven or Gradle for real-world project structure
+        - **Testing**: JUnit for unit testing, Mockito for mocking
 
     tests:
       - description: "Student class works"

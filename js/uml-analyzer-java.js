@@ -1150,7 +1150,7 @@
   JavaClassExtractor.prototype.generatePlantUML = function () {
     if (this.classMap.size === 0) return '';
 
-    var lines = ['@startuml'];
+    var lines = ['@startuml', 'layout landscape', 'layout compact'];
     var sorted = this._topologicalSort();
 
     for (var idx = 0; idx < sorted.length; idx++) {
@@ -1344,7 +1344,7 @@
 
   JavaSequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
-    var out = ['@startuml'];
+    var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       out.push('participant ' + p.id + ': ' + p.label);
@@ -1503,7 +1503,9 @@
               this._ensureParticipant(varName, clsName);
               this.lines.push('create ' + varName);
               this.lines.push(caller + ' --> ' + varName + ': <<create>>');
+              this.lines.push('activate ' + varName);
               this._maybeFollow(clsName, 'constructor', varName, depth);
+              this.lines.push('deactivate ' + varName);
             }
             i++;
             // Skip generic args
@@ -1963,15 +1965,19 @@
     label += ')';
 
     if (calleeId === caller) {
+      // Self-call — nested activation on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
       this._maybeFollow(clsName, method, calleeId, depth);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      // Activation bar (JIVE: Jayaraman et al. 2016, CPP2XMI: Korshunova et al. 2006)
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
       var retType = this._getReturnType(clsName, method);
       if (retType) this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
+      this.lines.push('deactivate ' + calleeId);
     }
   };
 

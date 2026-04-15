@@ -1543,7 +1543,7 @@
 
   PythonClassExtractor.prototype.generatePlantUML = function () {
     if (this.classes.length === 0) return '';
-    var lines = ['@startuml'];
+    var lines = ['@startuml', 'layout landscape', 'layout compact'];
     var sorted = _topoSortClasses(this.classes);
 
     for (var i = 0; i < sorted.length; i++) {
@@ -1853,7 +1853,7 @@
 
   PythonSequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
-    var out = ['@startuml'];
+    var out = ['@startuml', 'layout landscape', 'layout compact'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       out.push('participant ' + p.id + ': ' + p.label);
@@ -1968,6 +1968,12 @@
         }
         return;
       }
+    }
+    // PyCG-inspired assignment graph (Salis et al. 2021): propagate types through
+    // variable-to-variable assignments (y = x → y gets x's type)
+    if (value && value.type === 'Name' && targets.length === 1 && targets[0].type === 'Name') {
+      var srcType = this.varTypes[value.id];
+      if (srcType) this.varTypes[targets[0].id] = srcType;
     }
     this._scanExprForCalls(value, caller, depth);
   };
@@ -2155,19 +2161,27 @@
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
       this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
+      // Activation bar for constructor body (JIVE: Jayaraman et al. 2016)
+      this.lines.push('activate ' + calleeId);
+      this._maybeFollow(clsName, '__init__', calleeId, depth);
+      this.lines.push('deactivate ' + calleeId);
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
+      this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
-      // Self-call — no return message needed
+      // Self-call — nested activation bar on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
       this._maybeFollow(clsName, method, calleeId, depth);
     } else {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
+      // Activation bar: top at incoming message, bottom at return (JIVE/CPP2XMI pattern)
+      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
       // Return/reply message — only when return value is captured AND method has
       // a non-void return type (Cheers & Lin 2020 + Ambler G172: "Label return
@@ -2178,6 +2192,7 @@
           this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
         }
       }
+      this.lines.push('deactivate ' + calleeId);
     }
   };
 
@@ -2274,7 +2289,12 @@
         var cc = this._classOf(caller);
         if (cc) return [cc, method];
       } else if (this.varTypes[varName]) {
-        return [this.varTypes[varName], method];
+        var resolvedCls = this.varTypes[varName];
+        // Single-implementor resolution (Rountev 2005): if the resolved class
+        // is an interface/abstract with one concrete subclass, use that instead
+        var concrete = this._resolveSingleImplementor(resolvedCls, method);
+        if (concrete) return [concrete, method];
+        return [resolvedCls, method];
       }
       // ClassName.static_method() — static/class method call on a known type
       if (this.allTypeNames.has(varName)) {
@@ -2465,6 +2485,33 @@
         }
       }
     }
+    return null;
+  };
+
+  /**
+   * Single-implementor resolution (Rountev 2005, Tonella & Potrich 2004):
+   * When a variable is typed as an interface/abstract class and exactly one
+   * concrete subclass exists in scope that implements the called method,
+   * resolve to that concrete class. This allows following into the real
+   * method body instead of hitting a stub.
+   */
+  PythonSequenceDiagramGenerator.prototype._resolveSingleImplementor = function (clsName, methodName) {
+    // Only apply when the target class has a stub method (abstract/interface)
+    var meths = this.classMethods[clsName] || {};
+    if (meths[methodName] && !this._isStubMethod(meths[methodName])) return null;
+
+    // Find all subclasses that have a concrete implementation
+    var candidates = [];
+    for (var cname in this.classBases) {
+      var bases = this.classBases[cname];
+      if (bases.indexOf(clsName) === -1) continue;
+      var cMeths = this.classMethods[cname] || {};
+      if (cMeths[methodName] && !this._isStubMethod(cMeths[methodName])) {
+        candidates.push(cname);
+      }
+    }
+    // Only resolve if exactly one concrete implementor
+    if (candidates.length === 1) return candidates[0];
     return null;
   };
 
