@@ -60,15 +60,18 @@ ConcreteObserver ..|> Observer
 Subject "1" -- "0..*" Observer : observers
 ConcreteObserver --> ConcreteSubject : subject
 note right of Subject.notifyObservers
-	for each o in observers {
-		o.update()
+	```java
+	for (Observer o : observers) {
+	    o.update();
 	}
+	```
 end note
 note bottom of ConcreteObserver.update
-	observerState =
-	subject.getState()
+	```java
+	observerState = subject.getState();
+	```
 end note
-note bottom of ConcreteSubject.getState: getState() returns subjectState
+note left of ConcreteSubject.getState: return subjectState
 @enduml'></div>
 
 ## UML Example Diagram
@@ -76,36 +79,41 @@ note bottom of ConcreteSubject.getState: getState() returns subjectState
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
 class NewsChannel {
-	- latestPost: String
-	- subscribers: List<Subscriber>
-	+ follow(subscriber: Subscriber): void
-	+ unfollow(subscriber: Subscriber): void
-	+ publishPost(text: String): void
-	+ getLatestPost(): String
+	- _subscribers: list[Subscriber]
+	- _latest_post: str
+	+ follow(subscriber: Subscriber)
+	+ unfollow(subscriber: Subscriber)
+	+ publish_post(text: str)
+	+ get_latest_post(): str
+	- _notify_subscribers()
 }
-interface Subscriber {
-	+ update(): void
+abstract class Subscriber <<ABC>> {
+	+ {abstract} update()
 }
 class MobileApp {
-	- channel: NewsChannel
-	+ update(): void
+	- _channel: NewsChannel
+	+ update()
 }
 class EmailDigest {
-	- channel: NewsChannel
-	+ update(): void
+	- _channel: NewsChannel
+	+ update()
 }
-NewsChannel "1" -- "0..*" Subscriber : subscribers
-MobileApp ..|> Subscriber
-EmailDigest ..|> Subscriber
-MobileApp --> NewsChannel : channel
-EmailDigest --> NewsChannel : channel
-note right of NewsChannel.publishPost
-	publishPost() updates
-	all subscribers
+NewsChannel "1" -- "0..*" Subscriber : _subscribers
+MobileApp --|> Subscriber
+EmailDigest --|> Subscriber
+MobileApp --> NewsChannel : _channel
+EmailDigest --> NewsChannel : _channel
+note right of NewsChannel._notify_subscribers
+	```python
+	for subscriber in self._subscribers:
+	    subscriber.update()
+	```
 end note
-note bottom of EmailDigest.update
-	Concrete subscribers pull only
-	the state they need
+note bottom of MobileApp.update
+	```python
+	post = self._channel.get_latest_post()
+	print(f"[MobileApp] Push notification: {post}")
+	```
 end note
 @enduml'></div>
 
@@ -114,28 +122,41 @@ end note
 This pattern is fundamentally about runtime collaboration, so a sequence diagram is helpful here.
 
 <div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant creator: ContentCreator
+participant client: Client
 participant channel: NewsChannel
 participant app: MobileApp
 participant email: EmailDigest
-creator -> channel: publishPost("New video")
+client -> channel: follow(app)
+client -> channel: follow(email)
+client -> channel: publish_post("New video uploaded!")
 activate channel
+channel -> channel: _notify_subscribers()
 channel -> app: update()
 activate app
-app -> channel: getLatestPost()
-channel --> app: latestPost
+app -> channel: get_latest_post()
+channel --> app: "New video uploaded!"
 deactivate app
 channel -> email: update()
 activate email
-email -> channel: getLatestPost()
-channel --> email: latestPost
+email -> channel: get_latest_post()
+channel --> email: "New video uploaded!"
 deactivate email
+deactivate channel
+client -> channel: unfollow(email)
+client -> channel: publish_post("Live stream starting!")
+activate channel
+channel -> channel: _notify_subscribers()
+channel -> app: update()
+activate app
+app -> channel: get_latest_post()
+channel --> app: "Live stream starting!"
+deactivate app
 deactivate channel
 @enduml'></div>
 
 # Sample Code
 
-This sample code implements the Observer pattern using the News Channel example from the UML diagram above:
+This sample code implements the Observer pattern using the News Channel example from the UML diagrams above:
 
 ```python
 from abc import ABC, abstractmethod
@@ -222,80 +243,6 @@ channel.unfollow(email)
 channel.publish_post("Live stream starting!")
 # [MobileApp] Push notification: Live stream starting!
 ```
-
-## Class Diagram
-
-<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-layout horizontal
-class NewsChannel {
-	- _subscribers: list[Subscriber]
-	- _latest_post: str
-	+ follow(subscriber: Subscriber)
-	+ unfollow(subscriber: Subscriber)
-	+ publish_post(text: str)
-	+ get_latest_post(): str
-	- _notify_subscribers()
-}
-abstract class Subscriber <<ABC>> {
-	+ {abstract} update()
-}
-class MobileApp {
-	- _channel: NewsChannel
-	+ update()
-}
-class EmailDigest {
-	- _channel: NewsChannel
-	+ update()
-}
-NewsChannel "1" -- "0..*" Subscriber : _subscribers
-MobileApp --|> Subscriber
-EmailDigest --|> Subscriber
-MobileApp --> NewsChannel : _channel
-EmailDigest --> NewsChannel : _channel
-note right of NewsChannel._notify_subscribers
-	for subscriber in self._subscribers:
-	    subscriber.update()
-end note
-note bottom of MobileApp.update
-	post = self._channel.get_latest_post()
-	print(f"[MobileApp] Push notification: {post}")
-end note
-@enduml'></div>
-
-## Sequence Diagram
-
-<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
-participant client: Client
-participant channel: NewsChannel
-participant app: MobileApp
-participant email: EmailDigest
-client -> channel: follow(app)
-client -> channel: follow(email)
-client -> channel: publish_post("New video uploaded!")
-activate channel
-channel -> channel: _notify_subscribers()
-channel -> app: update()
-activate app
-app -> channel: get_latest_post()
-channel --> app: "New video uploaded!"
-deactivate app
-channel -> email: update()
-activate email
-email -> channel: get_latest_post()
-channel --> email: "New video uploaded!"
-deactivate email
-deactivate channel
-client -> channel: unfollow(email)
-client -> channel: publish_post("Live stream starting!")
-activate channel
-channel -> channel: _notify_subscribers()
-channel -> app: update()
-activate app
-app -> channel: get_latest_post()
-channel --> app: "Live stream starting!"
-deactivate app
-deactivate channel
-@enduml'></div>
 
 # Design Decisions
 
