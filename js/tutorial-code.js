@@ -98,6 +98,7 @@
     this.requireTests = options.requireTests || false;
     this.instructorMode = options.instructorMode || false;
     this.disableQuiz = options.disableQuiz || false;
+    this.lectureMode = options.lectureMode || false;
     this.tutorialId = options.tutorialId || 'default';
     this._stepsPassed = new Set();
     this._quizPassed = new Set();
@@ -501,6 +502,14 @@
     this._rightTabBarEl = this.root.querySelector('.tvm-right-tab-bar');
     this._httpViewEl = this.root.querySelector('.tvm-http-sidebar-view');
     this._outputViewEl = this.root.querySelector('.tvm-output-view');
+
+    // Lecture mode: hide step number nav bar and step controls bar entirely
+    if (this.lectureMode) {
+      var stepNavBar = this.root.querySelector('.tvm-step-nav-bar');
+      if (stepNavBar) stepNavBar.style.display = 'none';
+      var stepControlsBar = this.root.querySelector('.tvm-step-controls-bar');
+      if (stepControlsBar) stepControlsBar.style.display = 'none';
+    }
 
     var self = this;
 
