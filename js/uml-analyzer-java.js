@@ -807,7 +807,7 @@
     var impls = (decl.implements || []).map(_simpleTypeName);
 
     var info = new ClassInfo(name, { isAbstract: isAbstract, bases: bases, implements: impls });
-    var methods = {}, aTypes = {}, pTypes = {}, mParams = {};
+    var methods = Object.create(null), aTypes = Object.create(null), pTypes = Object.create(null), mParams = Object.create(null);
 
     for (var i = 0; i < decl.members.length; i++) {
       var member = decl.members[i];
@@ -1006,7 +1006,7 @@
     var ext = (decl.extends || []).map(_simpleTypeName);
 
     var info = new ClassInfo(name, { isInterface: true, implements: ext });
-    var methods = {}, pTypes = {}, mParamsMap = {};
+    var methods = Object.create(null), pTypes = Object.create(null), mParamsMap = Object.create(null);
 
     for (var i = 0; i < decl.members.length; i++) {
       var member = decl.members[i];
@@ -1049,7 +1049,7 @@
       info.attributes.push({ name: decl.constants[i], type: '', visibility: '+' });
     }
 
-    var methods = {}, pTypes = {}, mParamsMap = {};
+    var methods = Object.create(null), pTypes = Object.create(null), mParamsMap = Object.create(null);
     for (var i = 0; i < (decl.members || []).length; i++) {
       var member = decl.members[i];
       if (member.kind === 'method') {

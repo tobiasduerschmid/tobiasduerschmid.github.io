@@ -4471,9 +4471,52 @@
     var results = [];
     var testTimeout;
 
+    // Gather all editor source code for source_must_contain / source_must_not_contain checks
+    var editorCode = '';
+    var models = self.editorModels;
+    for (var fname in models) {
+      if (models.hasOwnProperty(fname)) {
+        editorCode += models[fname].model.getValue() + '\n';
+      }
+    }
+
+    function checkSource(test) {
+      var mc = test.source_must_contain;
+      if (mc) {
+        var patterns = Array.isArray(mc) ? mc : [mc];
+        for (var p = 0; p < patterns.length; p++) {
+          if (editorCode.indexOf(patterns[p]) === -1) return false;
+        }
+      }
+      var mnc = test.source_must_not_contain;
+      if (mnc) {
+        var patterns = Array.isArray(mnc) ? mnc : [mnc];
+        for (var p = 0; p < patterns.length; p++) {
+          if (editorCode.indexOf(patterns[p]) !== -1) return false;
+        }
+      }
+      return true;
+    }
+
     function runNext(i) {
       clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+
+      var test = tests[i];
+
+      // Source-code assertions: fail immediately if patterns don't match
+      if ((test.source_must_contain || test.source_must_not_contain) && !checkSource(test)) {
+        results[i] = false;
+        runNext(i + 1);
+        return;
+      }
+
+      // No runtime command — pass on source check alone
+      if (!test.command) {
+        results[i] = true;
+        runNext(i + 1);
+        return;
+      }
 
       testTimeout = setTimeout(function () {
         console.warn('Java test execution timed out.');
@@ -4481,7 +4524,7 @@
       }, 30000);
 
       self._postWorker(
-        { type: 'runCode', code: tests[i].command, silent: true },
+        { type: 'runCode', code: test.command, silent: true },
         function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
       );
     }

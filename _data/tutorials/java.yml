@@ -390,6 +390,7 @@ steps:
 
     tests:
       - description: "findStudent uses .equals() for Strings"
+        source_must_not_contain: "input == stored"
         command: |
           public class __Test {
               public static void main(String[] args) {
@@ -405,6 +406,7 @@ steps:
           - text: "Replace == with .equals() in findStudent: return input.equals(stored)"
             condition: "code_contains: input == stored"
       - description: "sameCourse uses .equals() for Integers"
+        source_must_not_contain: "a == b"
         command: |
           public class __Test {
               public static void main(String[] args) {
@@ -915,7 +917,10 @@ steps:
         hints:
           - text: "withdraw should return false if the amount exceeds the current balance"
             condition: "code_missing: return false"
-      - description: "Fields are private"
+      - description: "Fields are private and toString is implemented"
+        source_must_contain:
+          - "private String owner"
+          - "private double balance"
         command: |
           public class __Test {
               public static void main(String[] args) {

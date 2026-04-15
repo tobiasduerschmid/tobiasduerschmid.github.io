@@ -2328,9 +2328,21 @@ var JavaCompiler = (function () {
       s += 'try ';
     }
     s += this.generateBlock(stmt.body);
-    for (var i = 0; i < stmt.catches.length; i++) {
-      var c = stmt.catches[i];
-      s += ' catch (' + c.name + ') ' + this.generateBlock(c.body);
+    // Java allows multiple typed catch blocks; JS allows one untyped catch.
+    // Merge into a single catch with instanceof checks + else-if chain.
+    if (stmt.catches.length > 0) {
+      var catchVar = '__ex';
+      s += ' catch (' + catchVar + ') {\n';
+      for (var i = 0; i < stmt.catches.length; i++) {
+        var c = stmt.catches[i];
+        var typeChecks = c.types.map(function (t) { return catchVar + ' instanceof ' + t; }).join(' || ');
+        s += (i === 0 ? 'if' : 'else if') + ' (' + typeChecks + ') ';
+        // Inject the catch variable name as an alias
+        var bodyCode = this.generateBlock(c.body);
+        s += '{ var ' + c.name + ' = ' + catchVar + '; ' + bodyCode.replace(/^\{/, '').replace(/\}$/, '') + '}';
+        s += '\n';
+      }
+      s += 'else { throw ' + catchVar + '; }\n}';
     }
     if (stmt.finally) {
       s += ' finally ' + this.generateBlock(stmt.finally);
@@ -2381,9 +2393,15 @@ var JavaCompiler = (function () {
       case 'binary':
         var left = this.generateExpr(expr.left);
         var right = this.generateExpr(expr.right);
-        // Java integer division
+        // Java integer division — only truncate when neither operand is float/double
         if (expr.op === '/') {
-          return '((' + left + ' / ' + right + ') | 0)';
+          var isFloatDiv = false;
+          if (expr.left.node === 'cast' && (expr.left.type === 'double' || expr.left.type === 'float')) isFloatDiv = true;
+          if (expr.right.node === 'cast' && (expr.right.type === 'double' || expr.right.type === 'float')) isFloatDiv = true;
+          if (expr.left.node === 'number' && String(expr.left.value).indexOf('.') !== -1) isFloatDiv = true;
+          if (expr.right.node === 'number' && String(expr.right.value).indexOf('.') !== -1) isFloatDiv = true;
+          if (!isFloatDiv) return '((' + left + ' / ' + right + ') | 0)';
+          return '(' + left + ' / ' + right + ')';
         }
         return '(' + left + ' ' + expr.op + ' ' + right + ')';
       case 'unary':
@@ -2491,7 +2509,7 @@ var JavaCompiler = (function () {
       'join': { js: null }, // handled specially
     };
 
-    var sm = stringMethods[method];
+    var sm = stringMethods.hasOwnProperty(method) ? stringMethods[method] : null;
     if (sm) {
       if (method === 'format' || method === 'valueOf' || method === 'join') {
         if (method === 'format') return '__javaFormat(' + args.join(', ') + ')';
