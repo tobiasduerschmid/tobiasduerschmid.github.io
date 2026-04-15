@@ -55,7 +55,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       </div>
       <div class="parsons-correct-data hidden"
         data-correct="{{ q.lines | jsonify | escape }}"
-        data-distractors="{{ q.distractors | default: '' | jsonify | escape }}"
+        data-distractors="{% if q.distractors %}{{ q.distractors | jsonify | escape }}{% else %}[]{% endif %}"
         data-display="{{ q.display | default: 'block' }}"></div>
       <div class="quiz-correct-answers">
         Correct order:<br>
@@ -589,7 +589,11 @@ Data source: _data/quizzes/{{ include.id }}.yml
       if (!correctDataEl) return;
       const correctLines = JSON.parse(correctDataEl.dataset.correct);
       const distractorRaw = correctDataEl.dataset.distractors;
-      const distractors = (distractorRaw && distractorRaw !== '') ? JSON.parse(distractorRaw) : [];
+      let distractors = [];
+      try {
+        const parsed = JSON.parse(distractorRaw || '[]');
+        distractors = Array.isArray(parsed) ? parsed : [];
+      } catch (e) { distractors = []; }
       const display = correctDataEl.dataset.display || 'block';
       // Build elements with correct-position metadata to avoid string comparison issues
       const correctEls = correctLines.map((line, i) => {

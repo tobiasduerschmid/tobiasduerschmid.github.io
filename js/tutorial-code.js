@@ -3956,11 +3956,16 @@
         var allLines = (q.lines || []).slice();
         var distractors = (q.distractors || []);
         var correctOrder = allLines.slice(); // preserve correct order
-        var shuffled = allLines.concat(distractors).slice();
-        self._shuffleArray(shuffled);
+        // Build items with position metadata BEFORE shuffling so correctPos stays stable
+        var items = allLines.map(function (line, i) {
+          return { line: line, correctPos: i, isDistractor: false };
+        }).concat(distractors.map(function (line) {
+          return { line: line, correctPos: -1, isDistractor: true };
+        }));
+        self._shuffleArray(items);
         return {
           question: q.question || '', type: 'parsons', explanation: q.explanation || '',
-          shuffledLines: shuffled, correctOrder: correctOrder, distractors: distractors,
+          shuffledItems: items, correctOrder: correctOrder, distractors: distractors,
           options: [], correctOriginals: [], correctLabels: []
         };
       }
@@ -4006,12 +4011,12 @@
         html += '<div class="parsons-label">Drag lines into the solution area in the correct order' +
           (q.distractors.length ? ' (some lines are distractors that should not be used)' : '') + ':</div>';
         html += '<div class="parsons-bank" data-qi="' + qi + '">';
-        q.shuffledLines.forEach(function (line, li) {
-          var isDistractor = q.distractors.indexOf(line) !== -1;
+        q.shuffledItems.forEach(function (item) {
           html += '<div class="parsons-line" draggable="true" data-line="' +
-            self._escapeHtml(line) + '" data-distractor="' + isDistractor + '">' +
+            self._escapeHtml(item.line) + '" data-distractor="' + item.isDistractor +
+            '" data-correct-pos="' + item.correctPos + '">' +
             '<span class="parsons-grip">&#8942;&#8942;</span>' +
-            '<code>' + self._escapeHtml(line) + '</code></div>';
+            '<code>' + self._escapeHtml(item.line) + '</code></div>';
         });
         html += '</div>';
         html += '<div class="parsons-separator"><span>&#8595; Drop here &#8595;</span></div>';
@@ -4294,15 +4299,20 @@
         var correctData = card.querySelector('.parsons-correct-data');
         if (!target || !correctData) return;
         var correct = JSON.parse(correctData.dataset.correct);
-        var placed = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'))
-          .map(function (el) { return el.dataset.line; });
-        var isCorrect = placed.length === correct.length &&
-          placed.every(function (line, i) { return line === correct[i]; });
+        var placedEls = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'));
+        // Use correctPos index to avoid string comparison issues with special chars
+        var isCorrect = placedEls.length === correct.length &&
+          placedEls.every(function (el, i) {
+            return el.dataset.correctPos === String(i) || el.dataset.line === correct[i];
+          });
         // Mark lines
-        target.querySelectorAll('.parsons-line').forEach(function (el, i) {
+        placedEls.forEach(function (el, i) {
           el.classList.remove('parsons-correct', 'parsons-incorrect');
-          if (i < correct.length && el.dataset.line === correct[i]) el.classList.add('parsons-correct');
-          else el.classList.add('parsons-incorrect');
+          if (i < correct.length && (el.dataset.correctPos === String(i) || el.dataset.line === correct[i])) {
+            el.classList.add('parsons-correct');
+          } else {
+            el.classList.add('parsons-incorrect');
+          }
         });
         // Mark distractors left in bank as correct (they should stay in bank)
         card.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
