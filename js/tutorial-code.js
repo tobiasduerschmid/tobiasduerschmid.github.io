@@ -3031,8 +3031,9 @@
    * Schedule a debounced UML refresh when a watched file changes.
    * Called from the editor onDidChangeContent handler.
    */
-  TutorialCode.prototype._scheduleUMLRefresh = function () {
-    if (!this._umlDiagramEnabled || !this._umlViewActive) return;
+  TutorialCode.prototype._scheduleUMLRefresh = function (force) {
+    if (!this._umlDiagramEnabled) return;
+    if (!force && !this._umlViewActive) return;
     var self = this;
     clearTimeout(this._umlRefreshTimer);
     this._umlRefreshTimer = setTimeout(function () {
@@ -3049,6 +3050,12 @@
     var content = entry.model.getValue();
     entry.lastSyncContent = content;
     var self = this;
+
+    // Refresh UML diagram whenever a watched file is saved (force=true bypasses
+    // the _umlViewActive guard so the diagram is ready even if the tab is hidden)
+    if (this._umlWatchedFiles.indexOf(filename) !== -1) {
+      this._scheduleUMLRefresh(true);
+    }
 
     return new Promise(function (resolve) {
       var done = function () { if (callback) callback(); resolve(); };
