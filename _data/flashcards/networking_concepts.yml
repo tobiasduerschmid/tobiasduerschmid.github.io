@@ -11,11 +11,11 @@ cards:
 
   - id: 3
     question: "What is a **hybrid architecture**? Give a real-world example."
-    answer: "A hybrid combines client-server and P2P. **Zoom** uses hybrid: for 1-on-1 calls it attempts P2P for lower latency, but falls back to client-server if P2P fails or when there are more than 2 participants (to avoid each peer sending their stream N times)."
+    answer: "A hybrid combines client-server and P2P. **Apple FaceTime** uses hybrid: for 1-on-1 calls it attempts a direct P2P connection for lower latency, falling back to Apple's relay servers if NAT or firewalls block the direct path. Group FaceTime routes all participants through Apple's servers to prevent each device from uploading a separate video stream to every other participant."
 
   - id: 4
     question: "Explain the difference between **throughput** and **latency**."
-    answer: "**Throughput** = volume of requests processed per unit time (e.g., 100 req/sec). **Latency** = time for a single request to complete (e.g., 10ms). They are *not* always correlated: adding more servers increases throughput but doesn't reduce per-request latency. Caching reduces latency."
+    answer: "**Throughput** = volume of requests processed per unit time (e.g., an API handling 500 req/sec during peak load). **Latency** = time for a single request to complete (e.g., a database query returning in 40ms). They are *not* always correlated: adding more servers increases throughput but doesn't reduce per-request latency. Caching reduces latency and may also increase throughput."
 
   - id: 5
     question: "Name the four layers of the **TCP/IP stack** from bottom to top and what each layer does."
@@ -23,7 +23,7 @@ cards:
 
   - id: 6
     question: "What is **encapsulation** (package wrapping) in the TCP/IP stack?"
-    answer: "Each layer wraps the higher-layer message as its **payload** and adds its own **header** — like Russian nesting dolls. An HTTP message gets wrapped in a TCP header, which gets wrapped in an IP header, which gets wrapped in an Ethernet header. Each header contains layer-specific metadata."
+    answer: "Each layer wraps the higher-layer message as its **payload** and adds its own **header** — like sealing a letter inside successively larger envelopes. An HTTP message (the letter) is placed inside a TCP envelope (labelled with port numbers), which is placed inside an IP envelope (labelled with IP addresses), which is placed inside an Ethernet envelope (labelled with MAC addresses). Each envelope carries only the addressing information needed for that one delivery step."
 
   - id: 7
     question: "What is the **TCP three-way handshake** and why is it needed?"
@@ -47,11 +47,11 @@ cards:
 
   - id: 12
     question: "What is `127.0.0.1` and what is it commonly called?"
-    answer: "**Localhost** — it is a special IP address that always refers to *your own machine*. When developing web apps, you run a server on localhost so your browser (also on your machine) can connect to it for testing without needing the internet."
+    answer: "**Localhost** — a special reserved IP address that always refers to *your own machine*. During development you might run your Express backend on `localhost:5000` and your React frontend on `localhost:3000`; both processes are on the same machine and communicate without ever touching the public internet."
 
   - id: 13
     question: "What is a **URL** and what are its components?"
-    answer: "`{protocol}://{domain}(:{port})(/{resource})`. Example: `http://localhost:8080/users/1`. **Protocol** (http/https), **domain** (the server's address), **port** (which application on the server — optional, defaults to 80/443), **resource path** (which resource to access — optional, defaults to `/`)."
+    answer: "`{protocol}://{domain}(:{port})(/{resource})`. Example: `http://localhost:5000/courses/cs101`. **Protocol** (http/https), **domain** (the server's address), **port** (which application on the server — optional, defaults to 80/443), **resource path** (which resource to access — optional, defaults to `/`)."
 
   - id: 14
     question: "What does **HTTPS** add on top of HTTP, and why is it important?"

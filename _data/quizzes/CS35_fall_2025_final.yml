@@ -1,7 +1,8 @@
 title: "CS 35L Final Exam Fall 2025 MCQs"
 description: "Test your knowledge on software construction principles, design patterns, testing, security, and Git based on the CS 35L Final Exam."
 questions:
-  - question: "What is the primary goal of implementing information hiding in a program?"
+  - id: 1
+    question: "What is the primary goal of implementing information hiding in a program?"
     options:
       - "To expose only the executable logic while hiding personally-identifiable user data for security purposes."
       - "To maximize execution speed by placing all related components into a single file"
@@ -10,7 +11,8 @@ questions:
     correct_index: 2
     explanation: "Information hiding limits the impact of changes. By defining a stable interface and concealing implementation details, a program ensures that modifying the internal logic of one module does not necessitate changes in other modules that depend on it."
 
-  - question: "Which software construction practice does NOT increase the bus factor?"
+  - id: 2
+    question: "Which software construction practice does NOT increase the bus factor?"
     options:
       - "Always conducting a code review before merging changes into main"
       - "Following all clean code guidelines taught in this course"
@@ -19,7 +21,8 @@ questions:
     correct_index: 3
     explanation: "The bus factor represents the number of team members who would need to suddenly leave the project before it stalls. Practices like code reviews and clean code distribute knowledge among the team. Generating code with AI does not inherently share project-specific architectural understanding among developers."
 
-  - question: "How does Test-Driven Development (TDD) relate to information hiding?"
+  - id: 3
+    question: "How does Test-Driven Development (TDD) relate to information hiding?"
     options:
       - "When precisely following all TDD steps, information hiding is always guaranteed"
       - "TDD results in larger and more complex interfaces of methods & classes"
@@ -28,7 +31,8 @@ questions:
     correct_index: 2
     explanation: "Test-Driven Development naturally encourages creating small, decoupled interfaces to make testing easier. However, strictly writing tests and code incrementally without upfront planning can neglect the large-scale architecture. To achieve proper information hiding across complex systems, developers must engage in deliberate architectural design beyond localized refactoring."
 
-  - question: "The UNIX philosophy emphasizes writing programs to handle text streams (stdin, stdout, stderr) as a universal interface. This design choice primarily supports which concept of software construction? Check the one that is most appropriate."
+  - id: 4
+    question: "The UNIX philosophy emphasizes writing programs to handle text streams (stdin, stdout, stderr) as a universal interface. This design choice primarily supports which concept of software construction? Check the one that is most appropriate."
     options:
       - "Single Responsibility Principle, because each tool focuses on one task"
       - "Interface Segregation Principle, because they are three separate streams instead of one"
@@ -37,7 +41,8 @@ questions:
     correct_index: 2
     explanation: "By standardizing on text streams, UNIX programs hide the underlying hardware or file system details from the application logic. Programs interact via standard inputs and outputs, meaning they do not need to make assumptions about the specific devices providing or receiving the data."
 
-  - question: "What is the most effective way to prevent SQL Injection attacks?"
+  - id: 5
+    question: "What is the most effective way to prevent SQL Injection attacks?"
     options:
       - "Using prepared statements and parameterized queries"
       - "Using f-strings for efficient string concatenation"
@@ -46,7 +51,8 @@ questions:
     correct_index: 0
     explanation: "Prepared statements and parameterized queries separate the SQL code structure from the user-provided data. This ensures that the database engine treats all inputs strictly as literal values rather than executable commands, neutralizing attempts to inject malicious SQL logic."
 
-  - question: "What does a test stub do?"
+  - id: 6
+    question: "What does a test stub do?"
     options:
       - "Verifying indirect outputs by adding assertions"
       - "Verifying the order of indirect outputs by recording all events"
@@ -55,7 +61,8 @@ questions:
     correct_index: 2
     explanation: "A test stub acts as a controlled replacement for a system component. It is used to supply predetermined indirect inputs (such as hardcoded responses) to the system under test, ensuring that specific behaviors or edge cases can be reliably verified without depending on external systems."
 
-  - question: "What is the necessary first step in the systematic process of debugging a bug reported by a user?"
+  - id: 7
+    question: "What is the necessary first step in the systematic process of debugging a bug reported by a user?"
     options:
       - "Determining the root cause of the bug."
       - "Implementing a temporary fix and deploying it."
@@ -64,7 +71,8 @@ questions:
     correct_index: 2
     explanation: "Before attempting to find the root cause or implement a fix, a bug must be reliably reproduced. Consistent reproduction confirms the exact conditions under which the failure occurs and provides a definitive way to verify if the subsequent fix is actually successful."
 
-  - question: "The Single Choice Principle is a software modularity guideline proposed to handle systems that must support a set of alternatives (e.g., different DBMS, network protocols, or payment types). What does this principle mandate?"
+  - id: 8
+    question: "The Single Choice Principle is a software modularity guideline proposed to handle systems that must support a set of alternatives (e.g., different DBMS, network protocols, or payment types). What does this principle mandate?"
     options:
       - "The system must delay the choice until runtime (e.g., using the Strategy design pattern)"
       - "The choice will be made by the user based on the most important user story."
@@ -73,7 +81,8 @@ questions:
     correct_index: 2
     explanation: "The Single Choice Principle dictates that whenever a software system must support a set of alternatives, one and only one module should know the exhaustive list of those alternatives. This isolates the knowledge so that adding a new alternative requires changes in only that single location."
 
-  - question: "When integrating LLM-based generative AI into the development workflow for complex tasks, which approach is specifically recommended to improve the quality of the generated code?"
+  - id: 9
+    question: "When integrating LLM-based generative AI into the development workflow for complex tasks, which approach is specifically recommended to improve the quality of the generated code?"
     options:
       - "Minimize the number of design decisions you share with the AI to keep the prompt concise"
       - "Rely on the AI to solve the complex design problem entirely, since its context window is large enough for most programs"
@@ -82,7 +91,8 @@ questions:
     correct_index: 3
     explanation: "Large Language Models perform best when complex problems are decomposed. Instead of relying on the AI to solve a massive design problem all at once, developers should break the task into small, bounded instructions and provide continuous, incremental guidance."
 
-  - question: "For which use case is Python a better programming language choice than C?"
+  - id: 10
+    question: "For which use case is Python a better programming language choice than C?"
     options:
       - "Developing an operating system (like Linux or Windows)"
       - "Creating a scientific data analysis"
@@ -91,7 +101,8 @@ questions:
     correct_index: 1
     explanation: "Python features an extensive ecosystem of libraries for data processing and scientific computing, making it highly effective for data analysis. Conversely, C provides fine-grained control over hardware and memory, making it the standard for low-level firmware, operating systems, and performance-critical database engines."
 
-  - question: "In the TCP/IP model, which layer is responsible for breaking down Application Layer messages into smaller, reliable segments and ensuring they are delivered in the correct order?"
+  - id: 11
+    question: "In the TCP/IP model, which layer is responsible for breaking down Application Layer messages into smaller, reliable segments and ensuring they are delivered in the correct order?"
     options:
       - "The network layer"
       - "The application layer"
@@ -100,7 +111,8 @@ questions:
     correct_index: 3
     explanation: "The transport layer handles end-to-end communication by breaking application data into smaller segments, ensuring reliable, ordered delivery, and managing error recovery during transmission."
 
-  - question: "Which answer best describes a framework, as opposed to a library?"
+  - id: 12
+    question: "Which answer best describes a framework, as opposed to a library?"
     options:
       - "A framework consists of multiple libraries bundled together"
       - "A framework is maintained by a large company and requires a commercial license"
@@ -109,7 +121,8 @@ questions:
     correct_index: 2
     explanation: "The defining characteristic of a framework is the Inversion of Control. While a developer's code calls functions from a library, a framework dictates the overall application flow and architecture, making calls to the custom code plugged into it."
 
-  - question: "What is a direct implication of the CAP theorem?"
+  - id: 13
+    question: "What is a direct implication of the CAP theorem?"
     options:
       - "MySQL is more suitable for data-intense systems than MongoDB"
       - "When designing distributed systems, there are inherent trade-offs between important data management properties"
@@ -118,7 +131,8 @@ questions:
     correct_index: 1
     explanation: "In distributed data stores, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Systems must make architectural trade-offs, often sacrificing either consistency or availability during network partitions."
 
-  - question: "Which of these systems is most prone to cross-site scripting attacks?"
+  - id: 14
+    question: "Which of these systems is most prone to cross-site scripting attacks?"
     options:
       - "A web app that allows users to book flights"
       - "A web app that allows users to upload photos (without any meta data) to a shared drive"
@@ -127,7 +141,8 @@ questions:
     correct_index: 3
     explanation: "Cross-Site Scripting (XSS) occurs when untrusted user input is rendered directly in a web application without proper sanitization. Applications that display user-generated text to other users are highly vulnerable, as malicious scripts can be injected and executed in victims' browsers."
 
-  - question: "What is a primary benefit of employing rational decision making (as opposed to intuitive decision making) in software engineering?"
+  - id: 15
+    question: "What is a primary benefit of employing rational decision making (as opposed to intuitive decision making) in software engineering?"
     options:
       - "It enables quicker decision-making when the problem is ill-defined or highly uncertain"
       - "It results in better decisions, because it uses UML diagrams to visualize the architecture"
@@ -136,7 +151,8 @@ questions:
     correct_index: 2
     explanation: "Rational decision making uses structured, logical processes rather than relying solely on intuition. This systematic approach documents the reasoning behind architectural choices, making the design process transparent and helping non-experts achieve robust design outcomes."
 
-  - type: multiple
+  - id: 16
+    type: multiple
     question: "Which of these git commands might create major challenges in team projects? Check all that apply!"
     options:
       - "`git rebase -i`"
@@ -146,7 +162,8 @@ questions:
     correct_indices: [0, 3]
     explanation: "Commands that rewrite history, such as force pushing (`git push -f`) or interactive rebasing (`git rebase -i`), overwrite the existing sequence of commits. If applied to shared branches, they can permanently erase the contributions of other team members and cause repository inconsistencies."
 
-  - type: multiple
+  - id: 17
+    type: multiple
     question: "In which situations would an agile software process be most appropriate (as compared to a plan-driven approach)? Check all that apply"
     options:
       - "Developing the software for a radiation therapy machine"
