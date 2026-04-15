@@ -2476,7 +2476,6 @@ var JavaCompiler = (function () {
       'split': { js: 'split' },
       'toCharArray': { js: 'split("")', isRaw: true },
       'isEmpty': { js: 'length === 0', isRaw: true },
-      'equals': { js: '=== ' + (args[0] || '""'), isRaw: true },
       'equalsIgnoreCase': { js: 'toLowerCase() === ' + (args[0] || '""') + '.toLowerCase()', isRaw: true },
       'compareTo': { js: 'localeCompare(' + (args[0] || '""') + ')', isRaw: true },
       'matches': { js: 'match(new RegExp(' + (args[0] || '""') + '))', isRaw: true },
