@@ -61,6 +61,7 @@
     css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
+    java: 'java',
   };
 
   function detectLanguage(filename) {
@@ -88,6 +89,7 @@
       workerPath: options.workerPath || '/js/pyodide-worker.js',
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
+      javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview: (backend === 'react'),    // live iframe preview for React tutorials
@@ -1257,6 +1259,7 @@
     if (backend === 'browser') return this._initBrowserBackend();
     if (backend === 'sql') return this._initSQL();
     if (backend === 'prolog') return this._initProlog();
+    if (backend === 'java') return this._initJava();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -1642,6 +1645,45 @@
     });
   };
 
+  // ---- Java backend (Java-to-JS transpiler via Web Worker) ------------------
+  TutorialCode.prototype._initJava = function () {
+    var self = this;
+    this._showLoading('Loading Java runtime… (first load may take a moment)');
+    return new Promise(function (resolve, reject) {
+      self._worker = new Worker(self.config.javaWorkerPath);
+
+      self._worker.onmessage = function (e) {
+        var msg = e.data;
+        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
+        if (msg.type === 'ready') {
+          self.booted = true;
+          var setupCmds = self.setupCommands;
+          if (setupCmds && setupCmds.length > 0) {
+            self._postWorker(
+              { type: 'runCode', code: setupCmds.join('\n'), silent: true },
+              function () { resolve(); }
+            );
+          } else {
+            resolve();
+          }
+          return;
+        }
+        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
+        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
+        if (msg.type === 'error') { reject(new Error(msg.message)); return; }
+        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
+          var cb = self._workerCallbacks[msg.id];
+          delete self._workerCallbacks[msg.id];
+          cb(msg);
+        }
+      };
+
+      self._worker.onerror = function (err) {
+        reject(new Error('Java worker error: ' + (err.message || err)));
+      };
+    });
+  };
+
   /** Render a SQL result set as a table inside the output panel. */
   TutorialCode.prototype._appendTable = function (columns, rows) {
     if (!this.outputPre) return;
@@ -1779,6 +1821,31 @@
         self._postWorker({ type: 'run', path: plPath, query: query }, function (msg) {
           if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
           if (msg.exitCode !== 0 && !query) self._appendOutput('\n\u2717 Error\n', 'err');
+        });
+      });
+      return;
+    }
+
+    if (backend === 'java') {
+      var javaPath = '/tutorial/' + filename;
+      // Sync ALL files first (Java may need multiple .java files compiled together)
+      var allFiles = Object.keys(self.editorModels);
+      var syncChain = Promise.resolve();
+      allFiles.forEach(function (f) {
+        syncChain = syncChain.then(function () { return self._syncFileToBackend(f); });
+      });
+      syncChain.then(function () {
+        self._clearOutput();
+        self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+        var runBtn = self.root.querySelector('.tvm-run-btn');
+        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Compiling…'; }
+        self._postWorker({ type: 'run', path: javaPath }, function (msg) {
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 Run'; }
+          if (msg.exitCode === 0) {
+            self._appendOutput('\n\u2713 Done\n', 'info');
+          } else {
+            self._appendOutput('\n\u2717 Exited with error\n', 'err');
+          }
         });
       });
       return;
@@ -2264,7 +2331,8 @@
       language: this.config.backend === 'pyodide' ? 'python' :
         this.config.backend === 'react' ? 'javascript' :
           this.config.backend === 'browser' ? 'javascript' :
-            this.config.backend === 'prolog' ? 'prolog' : 'shell-sebook',
+            this.config.backend === 'prolog' ? 'prolog' :
+              this.config.backend === 'java' ? 'java' : 'shell-sebook',
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -2283,8 +2351,8 @@
       function () { self._saveCurrentFile(); }
     );
 
-    // Ctrl/Cmd+Enter — run (Python and browser JS)
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser') {
+    // Ctrl/Cmd+Enter — run (Python, browser JS, and Java)
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java') {
       this.editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -2490,11 +2558,13 @@
     document.head.appendChild(script);
   };
 
-  /** Detect whether watched files are JS/TS or Python */
+  /** Detect whether watched files are JS/TS, Java, or Python */
   TutorialCode.prototype._detectUMLLanguage = function () {
     var jsExts = /\.(js|jsx|ts|tsx)$/;
+    var javaExts = /\.java$/;
     var hasJS = this._umlWatchedFiles.some(function (f) { return jsExts.test(f); });
-    this._umlLanguage = hasJS ? 'js' : 'python';
+    var hasJava = this._umlWatchedFiles.some(function (f) { return javaExts.test(f); });
+    this._umlLanguage = hasJS ? 'js' : hasJava ? 'java' : 'python';
     return this._umlLanguage;
   };
 
@@ -2521,6 +2591,8 @@
     function onSourcesReady() {
       if (lang === 'js') {
         self._runJSUMLAnalysis(sources);
+      } else if (lang === 'java') {
+        self._runJavaUMLAnalysis(sources);
       } else {
         self._runUMLAnalysis(sources);
       }
@@ -2533,8 +2605,8 @@
         sources[filename] = entry.model.getValue();
         pending--;
         if (pending === 0) onSourcesReady();
-      } else if (lang === 'python' && self._worker) {
-        // Python files: fallback to Pyodide FS
+      } else if ((lang === 'python' || lang === 'java') && self._worker) {
+        // Python/Java files: fallback to worker FS
         self._postWorker({ type: 'read', path: '/tutorial/' + filename }, function (msg) {
           if (msg.type === 'read_ok') {
             sources[filename] = msg.content;
@@ -2608,6 +2680,39 @@
         }
       });
     });
+  };
+
+  /** Run the Java analyzer directly in the browser (no worker round-trip) */
+  TutorialCode.prototype._runJavaUMLAnalysis = function (sources) {
+    var self = this;
+    this._loadJavaAnalyzer(function () {
+      try {
+        var result = window.analyzeJavaSources(sources);
+        self._umlLastDiagrams = result;
+        self._renderCurrentUMLDiagram();
+        if (result.errors && result.errors.length > 0) {
+          console.warn('Java UML analysis warnings:', result.errors);
+        }
+      } catch (err) {
+        console.error('Java UML analysis error:', err);
+        self._showUMLError('Java analysis failed: ' + err.message);
+      }
+    });
+  };
+
+  /** Lazily load the Java UML analyzer */
+  TutorialCode.prototype._loadJavaAnalyzer = function (callback) {
+    if (typeof window !== 'undefined' && window.analyzeJavaSources) { callback(); return; }
+    var self = this;
+    var path = this.config.javaAnalyzerPath || '/js/uml-analyzer-java.js';
+    var script = document.createElement('script');
+    script.src = path;
+    script.onload = callback;
+    script.onerror = function () {
+      console.error('Failed to load Java UML analyzer:', path);
+      self._showUMLError('Failed to load Java UML analyzer script.');
+    };
+    document.head.appendChild(script);
   };
 
   /** Render whichever diagram type is currently selected */
@@ -2886,7 +2991,7 @@
       if (self.config.backend === 'v86') {
         self._syncFileToV86(filename, content).then(done).catch(done);
 
-      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog') {
+      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog' || self.config.backend === 'java') {
         self._postWorker(
           { type: 'write', path: '/tutorial/' + filename, content: content },
           done
@@ -3016,7 +3121,7 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql') {
+      } else if (this.config.backend === 'prolog' || this.config.backend === 'sql' || this.config.backend === 'java') {
         p = p.then(function () {
           return new Promise(function (resolve) {
             self._postWorker({
@@ -3475,6 +3580,9 @@
     this.stepContentEl.innerHTML = html;
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
 
+    // Render any inline UML diagrams embedded in the instructions markdown
+    if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
+
     this._renderStepControls(index);
 
     // On first visit: load all files from step definition.
@@ -3509,6 +3617,8 @@
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       } else if (this.config.backend === 'prolog') {
         this._postWorker({ type: 'runProlog', code: step.setup_commands.join('\n'), silent: true });
+      } else if (this.config.backend === 'java') {
+        this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
       }
     }
 
@@ -3555,7 +3665,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'prolog') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'prolog' || this.config.backend === 'java') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -4168,6 +4278,7 @@
     else if (backend === 'browser') this._runTestsBrowser();
     else if (backend === 'sql') this._runTestsSQL();
     else if (backend === 'prolog') this._runTestsProlog();
+    else if (backend === 'java') this._runTestsJava();
   };
 
   // v86 — same marker approach as original tutorial-vm.js
@@ -4263,6 +4374,33 @@
         }
         self._renderTestResults(tests, new Array(tests.length).fill(null));
       }, 15000);
+
+      self._postWorker(
+        { type: 'runCode', code: tests[i].command, silent: true },
+        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
+      );
+    }
+    runNext(0);
+  };
+
+  // Java — each test.command is run as Java code; exit 0 if no exception
+  TutorialCode.prototype._runTestsJava = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+    var results = [];
+    var testTimeout;
+
+    function runNext(i) {
+      clearTimeout(testTimeout);
+      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+
+      testTimeout = setTimeout(function () {
+        console.warn('Java test execution timed out.');
+        self._renderTestResults(tests, new Array(tests.length).fill(null));
+      }, 30000);
 
       self._postWorker(
         { type: 'runCode', code: tests[i].command, silent: true },

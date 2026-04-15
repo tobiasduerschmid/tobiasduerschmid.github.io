@@ -1,0 +1,2621 @@
+title: "Java for C++ and Python Developers"
+description: "A fast-paced, hands-on Java tutorial for senior CS students who already know C++ and Python. Master Java's type system, OOP model, and design idioms — with UML diagrams to guide your thinking."
+
+backend: java
+
+require_tests: true
+autosave_type: files
+
+uml_diagram: true
+uml_position: right
+uml_class_layout: portrait
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — From C++/Python to Java: Your First Class
+  # Pedagogy: Transfer Tutor — explicit mapping from known languages
+  #           Guide-and-Release — brief explanation, immediate practice
+  #           Bloom's: Apply (use Java syntax for a familiar task)
+  # --------------------------------------------------------------------------
+  - title: "From C++/Python to Java"
+    instructions: |
+      ## From C++/Python to Java: Your First Class
+
+      > **Learning objective:** Map your existing C++ and Python knowledge to Java syntax and understand the "everything is a class" rule.
+
+      You already know how to program. This tutorial won't re-teach loops or variables — instead, it focuses on **what's different** about Java and **why** Java made those choices.
+
+      ### The Big Picture
+
+      | Feature | Python | C++ | Java |
+      |---------|--------|-----|------|
+      | Entry point | `if __name__ == "__main__":` | `int main()` (free function) | `public static void main(String[] args)` (method in a class) |
+      | Typing | Dynamic (`x = 42`) | Static (`int x = 42;`) | Static (`int x = 42;`) |
+      | Memory | GC + reference counting | Manual (`new`/`delete`) or RAII | GC (generational) |
+      | Free functions | Yes | Yes | **No** — everything lives in a class |
+      | Multiple inheritance | Yes (MRO) | Yes | **No** — single class inheritance + interfaces |
+
+      ### Decoding `public static void main(String[] args)`
+
+      Every word in Java's entry point has a purpose:
+
+      - **`public`** — accessible from outside the class (the JVM needs to call it)
+      - **`static`** — no instance of the class is needed (the JVM won't `new` your class)
+      - **`void`** — returns nothing (exit codes go through `System.exit()`)
+      - **`main`** — the name the JVM looks for (by convention, like C's `main`)
+      - **`String[] args`** — command-line arguments (like C++'s `argv`)
+
+      > **Why so verbose?** Java was designed for large-scale, multi-team systems. Explicit declarations make code self-documenting and enable powerful IDE tooling. The verbosity is a tradeoff for safety and readability at scale.
+
+      ### Quick Syntax Mapping
+
+      ```java
+      // Variables — like C++, you declare the type
+      int count = 10;
+      double pi = 3.14159;
+      String name = "Alice";     // String is a class, not a primitive
+      boolean done = false;      // not 'bool' (C++) or True/False (Python)
+
+      // Printing — not cout, not print()
+      System.out.println("Count: " + count);  // + concatenates with strings
+
+      // Arrays — similar to C++, but .length is a field (no parentheses!)
+      int[] scores = {90, 85, 92};
+      System.out.println(scores.length);  // 3 — NOT .length() or len()
+
+      // For loop — identical to C++
+      for (int i = 0; i < scores.length; i++) {
+          System.out.println(scores[i]);
+      }
+
+      // Enhanced for — like Python's "for x in list" or C++'s range-for
+      for (int s : scores) {
+          System.out.println(s);
+      }
+      ```
+
+      ### Task
+
+      Edit `Welcome.java` to complete the `main` method. It should:
+
+      1. Create an `int` array called `grades` with values `{88, 95, 72, 91, 84}`
+      2. Calculate and print the average as a `double`
+      3. Print each grade that is above the average, one per line
+
+      **Expected output format:**
+      ```
+      Average: 86.0
+      88
+      95
+      91
+      ```
+
+    files:
+      - path: "Welcome.java"
+        content: |
+          public class Welcome {
+              public static void main(String[] args) {
+                  // TODO: Create an int array 'grades' with {88, 95, 72, 91, 84}
+
+                  // TODO: Calculate the average (hint: sum / (double) grades.length)
+
+                  // TODO: Print "Average: " + average
+
+                  // TODO: Print each grade above the average, one per line
+              }
+          }
+        language: "java"
+
+    open_file: "Welcome.java"
+
+    solution:
+      files:
+        - path: "Welcome.java"
+          content: |
+            public class Welcome {
+                public static void main(String[] args) {
+                    int[] grades = {88, 95, 72, 91, 84};
+
+                    int sum = 0;
+                    for (int g : grades) {
+                        sum += g;
+                    }
+                    double average = sum / (double) grades.length;
+
+                    System.out.println("Average: " + average);
+
+                    for (int g : grades) {
+                        if (g > average) {
+                            System.out.println(g);
+                        }
+                    }
+                }
+            }
+          language: "java"
+      explanation: |
+        Notice `sum / (double) grades.length` — without the cast, Java performs **integer division** (like C++), truncating the result. This is the same behavior you know from C++ but different from Python 3's `/` which always returns a float.
+
+        The enhanced for loop `for (int g : grades)` is Java's equivalent of Python's `for g in grades` or C++17's range-based for.
+
+    tests:
+      - description: "Prints the correct average"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Welcome.main(new String[]{});
+              }
+          }
+        hints:
+          - text: "Remember to cast to double before dividing: sum / (double) grades.length"
+            condition: "code_missing: (double)"
+          - text: "Use System.out.println to print each line"
+            condition: "code_missing: System.out.println"
+
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — The Identity Trap: == vs .equals()
+  # Pedagogy: PRIMM — Predict (wrong), Run, Investigate, Modify, Make
+  #           Fixer Upper — debug existing buggy code
+  #           False Friend — highest priority misconception
+  #           Bloom's: Analyze (identify why code produces wrong results)
+  # --------------------------------------------------------------------------
+  - title: "The Identity Trap: == vs .equals()"
+    instructions: |
+      ## The Identity Trap: `==` vs `.equals()`
+
+      > **Learning objective:** Understand why `==` behaves differently for objects in Java than in Python or C++, and use `.equals()` for value comparison.
+
+      > **⚠ False Friend — Unlearn This:** In Python, `==` compares values. In C++, `operator==` can be overloaded for value equality. In Java, `==` on objects compares **identity** (are these the exact same object in memory?), NOT value equality.
+
+      ### Predict Before You Code
+
+      **Before running the code**, predict the output of each comparison:
+
+      ```java
+      String a = "hello";
+      String b = "hello";
+      System.out.println(a == b);        // Prediction: ____
+
+      String c = new String("hello");
+      String d = new String("hello");
+      System.out.println(c == d);        // Prediction: ____
+      System.out.println(c.equals(d));   // Prediction: ____
+      ```
+
+      <details>
+      <summary>Reveal the answers</summary>
+
+      - `a == b` → `true` — but only because Java **interns** string literals (puts them in a pool). Don't rely on this!
+      - `c == d` → `false` — `new` creates separate objects. `==` checks identity, not content.
+      - `c.equals(d)` → `true` — `.equals()` checks value equality.
+
+      </details>
+
+      ### The Rule
+
+      **Always use `.equals()` for object comparison in Java.** Use `==` only for primitives (`int`, `double`, `boolean`, `char`).
+
+      ### The Integer Cache Trap
+
+      Java caches `Integer` objects for values -128 to 127. This means `==` on boxed integers **sometimes works and sometimes doesn't**:
+
+      ```java
+      Integer x = 127;
+      Integer y = 127;
+      System.out.println(x == y);     // true (cached — same object!)
+
+      Integer p = 128;
+      Integer q = 128;
+      System.out.println(p == q);     // false (not cached — different objects!)
+      System.out.println(p.equals(q)); // true (value equality)
+      ```
+
+      This is one of the most dangerous bugs in Java — it works in testing (small numbers) and fails in production (large numbers).
+
+      ### Task — Fix the Bug
+
+      The `IdentityTrap.java` file contains a student registry that uses `==` to compare strings and integers. It has **three bugs** caused by using `==` instead of `.equals()`. Find and fix all three.
+
+      The program should output:
+      ```
+      Found: Alice
+      Found: Bob
+      Same course: true
+      ```
+
+      But currently it prints wrong results because of identity comparison.
+
+    files:
+      - path: "IdentityTrap.java"
+        content: |
+          public class IdentityTrap {
+              public static void main(String[] args) {
+                  // Bug 1: String comparison with ==
+                  String input = new String("Alice");
+                  String stored = new String("Alice");
+                  if (input == stored) {                  // BUG: should use .equals()
+                      System.out.println("Found: Alice");
+                  } else {
+                      System.out.println("Not found: Alice");
+                  }
+
+                  // Bug 2: Another string comparison
+                  String name1 = "B" + "ob";
+                  String name2 = new String("Bob");
+                  if (name1 == name2) {                   // BUG: should use .equals()
+                      System.out.println("Found: Bob");
+                  } else {
+                      System.out.println("Not found: Bob");
+                  }
+
+                  // Bug 3: Integer comparison with ==
+                  Integer courseA = 200;
+                  Integer courseB = 200;
+                  if (courseA == courseB) {                 // BUG: should use .equals()
+                      System.out.println("Same course: true");
+                  } else {
+                      System.out.println("Same course: false");
+                  }
+              }
+          }
+        language: "java"
+
+    open_file: "IdentityTrap.java"
+
+    solution:
+      files:
+        - path: "IdentityTrap.java"
+          content: |
+            public class IdentityTrap {
+                public static void main(String[] args) {
+                    // Fixed: Use .equals() for String comparison
+                    String input = new String("Alice");
+                    String stored = new String("Alice");
+                    if (input.equals(stored)) {
+                        System.out.println("Found: Alice");
+                    } else {
+                        System.out.println("Not found: Alice");
+                    }
+
+                    // Fixed: Use .equals() for String comparison
+                    String name1 = "B" + "ob";
+                    String name2 = new String("Bob");
+                    if (name1.equals(name2)) {
+                        System.out.println("Found: Bob");
+                    } else {
+                        System.out.println("Not found: Bob");
+                    }
+
+                    // Fixed: Use .equals() for Integer comparison
+                    Integer courseA = 200;
+                    Integer courseB = 200;
+                    if (courseA.equals(courseB)) {
+                        System.out.println("Same course: true");
+                    } else {
+                        System.out.println("Same course: false");
+                    }
+                }
+            }
+          language: "java"
+      explanation: |
+        All three bugs used `==` on objects. In Java, `==` checks **reference identity** (same object in memory), not value equality:
+
+        - **Strings:** `new String("Alice")` creates a fresh object each time, so `==` returns `false` even though the content is identical. Use `.equals()`.
+        - **Integers above 127:** Java caches `Integer` values -128 to 127, so `==` works for small numbers by accident. For 200, it fails. Always use `.equals()` for wrapper types.
+
+        **The golden rule:** Use `==` for primitives (`int`, `double`, `char`, `boolean`). Use `.equals()` for everything else.
+
+    tests:
+      - description: "Finds Alice using .equals()"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  String input = new String("Alice");
+                  String stored = new String("Alice");
+                  if (!input.equals(stored)) {
+                      throw new RuntimeException("Alice comparison failed");
+                  }
+                  IdentityTrap.main(new String[]{});
+              }
+          }
+        hints:
+          - text: "Replace == with .equals() when comparing String objects"
+            condition: "code_contains: input == stored"
+          - text: "Replace == with .equals() when comparing the second pair of strings too"
+            condition: "code_contains: name1 == name2"
+      - description: "Compares Integers using .equals()"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Integer a = 200;
+                  Integer b = 200;
+                  if (!a.equals(b)) {
+                      throw new RuntimeException("Integer comparison failed");
+                  }
+              }
+          }
+        hints:
+          - text: "Integer values > 127 are NOT cached. Use .equals() instead of == for Integer comparison"
+            condition: "code_contains: courseA == courseB"
+
+    quiz:
+      title: "Identity vs Equality"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "What does `==` do when applied to two `String` objects in Java?"
+          options:
+            - "Compares their character content (value equality)"
+            - "Checks if they are the exact same object in memory (reference equality)"
+            - "Calls the .equals() method automatically"
+            - "Compares their hash codes"
+          correct_index: 1
+          explanation: "In Java, `==` on objects always checks reference identity — whether two variables point to the same object. Use `.equals()` for value comparison."
+        - question: "`Integer x = 100; Integer y = 100; System.out.println(x == y);` prints `true`. What happens if you change 100 to 200?"
+          options:
+            - "Still prints true — integers are always compared by value"
+            - "Prints false — Java only caches Integer objects for -128 to 127"
+            - "Compile error — you can't use == on Integer"
+            - "Throws NullPointerException"
+          correct_index: 1
+          explanation: "Java caches Integer objects for -128 to 127 (the Integer cache). Outside this range, `new` objects are created, so `==` returns false. This is why you must always use `.equals()` for wrapper types."
+        - question: "In Python, `'hello' == 'hello'` compares values. Which Java expression achieves the same thing?"
+          options:
+            - "`\"hello\" == \"hello\"`"
+            - "`\"hello\".equals(\"hello\")`"
+            - "`String.compare(\"hello\", \"hello\")`"
+            - "`\"hello\".compareTo(\"hello\") == 0`"
+          correct_index: 1
+          explanation: "`.equals()` is the standard way to compare object values in Java. While `compareTo` also works for strings, `.equals()` is the idiomatic choice for equality checks."
+
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Java's Dual Type System
+  # Pedagogy: Transfer Tutor — contrast with Python (everything is object)
+  #           and C++ (value types but no autoboxing)
+  #           Component Skill Isolation — focus on types alone
+  #           Bloom's: Understand + Apply
+  # --------------------------------------------------------------------------
+  - title: "Java's Dual Type System"
+    instructions: |
+      ## Java's Dual Type System: Primitives & Wrappers
+
+      > **Learning objective:** Understand why Java has both primitives and wrapper objects, and recognize the traps of autoboxing.
+
+      > **Partial Transfer:** C++ has primitives but no autoboxing. Python has only objects (everything is an object). Java has **both** — and automatically converts between them, sometimes dangerously.
+
+      ### Two Worlds of Types
+
+      Java has **8 primitive types** that live on the stack (like C++ value types):
+
+      | Primitive | Size | Default | Wrapper Class |
+      |-----------|------|---------|---------------|
+      | `byte` | 8-bit | 0 | `Byte` |
+      | `short` | 16-bit | 0 | `Short` |
+      | `int` | 32-bit | 0 | `Integer` |
+      | `long` | 64-bit | 0L | `Long` |
+      | `float` | 32-bit | 0.0f | `Float` |
+      | `double` | 64-bit | 0.0 | `Double` |
+      | `char` | 16-bit | '\u0000' | `Character` |
+      | `boolean` | 1-bit | false | `Boolean` |
+
+      ### Why Wrappers Exist
+
+      Java generics use **type erasure** (more in Step 7), which means they only work with objects, not primitives. You **cannot** write `ArrayList<int>` — you must write `ArrayList<Integer>`.
+
+      ```java
+      // ILLEGAL — generics don't accept primitives
+      // ArrayList<int> numbers = new ArrayList<>();
+
+      // LEGAL — use the wrapper class
+      ArrayList<Integer> numbers = new ArrayList<>();
+      numbers.add(42);         // autoboxing: int 42 → Integer.valueOf(42)
+      int first = numbers.get(0);  // unboxing: Integer → int
+      ```
+
+      ### The Autoboxing Traps
+
+      **Trap 1: Null unboxing causes NullPointerException**
+      ```java
+      Integer count = null;
+      int n = count;    // NullPointerException! Can't unbox null.
+      ```
+
+      **Trap 2: Performance in loops**
+      ```java
+      // BAD — creates millions of Integer objects
+      Integer sum = 0;
+      for (int i = 0; i < 1_000_000; i++) {
+          sum += i;  // unbox sum, add i, box result — every iteration!
+      }
+
+      // GOOD — use primitive type for accumulation
+      int sum = 0;
+      for (int i = 0; i < 1_000_000; i++) {
+          sum += i;  // pure arithmetic, no boxing
+      }
+      ```
+
+      ### Task
+
+      Complete `TypeSystem.java`:
+
+      1. Create an `ArrayList<Integer>` called `scores` and add the values 95, 87, 42, 73, 61
+      2. Write a method `countAbove` that takes an `ArrayList<Integer>` and an `int` threshold, returning the count of values above the threshold
+      3. In `main`, call `countAbove(scores, 70)` and print the result as `"Above 70: " + count`
+      4. Also print the sum of all scores as `"Sum: " + sum` (use a primitive `int` for the sum — avoid the autoboxing trap!)
+
+    files:
+      - path: "TypeSystem.java"
+        content: |
+          import java.util.ArrayList;
+
+          public class TypeSystem {
+
+              // TODO: Write a static method countAbove(ArrayList<Integer> list, int threshold)
+              // that returns the number of elements strictly above the threshold.
+
+
+              public static void main(String[] args) {
+                  // TODO: Create an ArrayList<Integer> called scores
+                  // and add: 95, 87, 42, 73, 61
+
+                  // TODO: Call countAbove(scores, 70) and print "Above 70: " + result
+
+                  // TODO: Calculate sum of all scores using a primitive int
+                  // and print "Sum: " + sum
+              }
+          }
+        language: "java"
+
+    open_file: "TypeSystem.java"
+
+    solution:
+      files:
+        - path: "TypeSystem.java"
+          content: |
+            import java.util.ArrayList;
+
+            public class TypeSystem {
+
+                public static int countAbove(ArrayList<Integer> list, int threshold) {
+                    int count = 0;
+                    for (int val : list) {
+                        if (val > threshold) {
+                            count++;
+                        }
+                    }
+                    return count;
+                }
+
+                public static void main(String[] args) {
+                    ArrayList<Integer> scores = new ArrayList<>();
+                    scores.add(95);
+                    scores.add(87);
+                    scores.add(42);
+                    scores.add(73);
+                    scores.add(61);
+
+                    int above = countAbove(scores, 70);
+                    System.out.println("Above 70: " + above);
+
+                    int sum = 0;
+                    for (int s : scores) {
+                        sum += s;
+                    }
+                    System.out.println("Sum: " + sum);
+                }
+            }
+          language: "java"
+      explanation: |
+        Notice how the enhanced for loop `for (int val : list)` automatically **unboxes** each `Integer` to `int`. We use a primitive `int` for `sum` to avoid creating a new `Integer` object on every iteration.
+
+        The `countAbove` method takes `ArrayList<Integer>` (not `ArrayList<int>`) because Java generics require wrapper types. The `int threshold` parameter stays primitive since it's not in a generic context.
+
+    tests:
+      - description: "countAbove returns correct count"
+        command: |
+          import java.util.ArrayList;
+          public class __Test {
+              public static void main(String[] args) {
+                  ArrayList<Integer> test = new ArrayList<>();
+                  test.add(95);
+                  test.add(87);
+                  test.add(42);
+                  test.add(73);
+                  test.add(61);
+                  int result = TypeSystem.countAbove(test, 70);
+                  if (result != 3) {
+                      throw new RuntimeException("countAbove(scores, 70) should return 3, got " + result);
+                  }
+              }
+          }
+        hints:
+          - text: "countAbove should count elements STRICTLY above the threshold (>, not >=)"
+            condition: "code_missing: countAbove"
+      - description: "Prints the correct sum"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  TypeSystem.main(new String[]{});
+              }
+          }
+        hints:
+          - text: "Use a primitive int for the sum variable to avoid the autoboxing performance trap"
+            condition: "code_contains: Integer sum"
+          - text: "Create an ArrayList<Integer> and add each score with scores.add(value)"
+            condition: "code_missing: ArrayList"
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — Classes & Encapsulation (with UML)
+  # Pedagogy: UML-First Design — read the UML, then implement
+  #           Behavior-First — emphasize methods over fields
+  #           Transfer Tutor — Java vs C++ access modifiers
+  #           Bloom's: Apply (implement from specification)
+  # --------------------------------------------------------------------------
+  - title: "Classes & Encapsulation"
+    uml_files:
+      - BankAccount.java
+    view: uml_diagram
+    instructions: |
+      ## Classes & Encapsulation
+
+      > **Learning objective:** Implement a Java class from a UML class diagram, using proper encapsulation with access modifiers.
+
+      > **Partial Transfer from C++:** Java classes look similar to C++ but differ in key ways: no header files, no destructors (GC handles memory), default access is **package-private** (not private like C++), and there are **four** access levels (not three).
+
+      > **Transfer from Python:** Python has no real access control — just `_` naming conventions. Java enforces access at compile time.
+
+      ### Java's Four Access Levels
+
+      | Modifier | Class | Package | Subclass | World |
+      |----------|-------|---------|----------|-------|
+      | `private` | ✓ | ✗ | ✗ | ✗ |
+      | *(none)* = package-private | ✓ | ✓ | ✗ | ✗ |
+      | `protected` | ✓ | ✓ | ✓ | ✗ |
+      | `public` | ✓ | ✓ | ✓ | ✓ |
+
+      > **⚠ False Friend from C++:** In C++, the default access in a `class` is `private`. In Java, the default is **package-private** — accessible to any class in the same package. Always be explicit.
+
+      ### UML Class Diagram
+
+      Implement the following `BankAccount` class. In UML, `-` means private, `+` means public:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class BankAccount {
+        - owner: String
+        - balance: double
+        + BankAccount(owner: String, initialBalance: double)
+        + deposit(amount: double): void
+        + withdraw(amount: double): boolean
+        + getBalance(): double
+        + getOwner(): String
+        + toString(): String
+      }
+      @enduml'></div>
+
+      **Design notes:**
+      - `withdraw` returns `boolean`: `true` if successful, `false` if insufficient funds (balance cannot go negative)
+      - `deposit` should ignore non-positive amounts
+      - `toString` should return `"BankAccount[owner=Alice, balance=1000.0]"`
+
+      ### Task
+
+      Implement the `BankAccount` class according to the UML diagram above. The `main` method is provided for testing.
+
+    files:
+      - path: "BankAccount.java"
+        content: |
+          public class BankAccount {
+              // TODO: Declare private fields: owner (String) and balance (double)
+
+
+              // TODO: Constructor taking owner and initialBalance
+
+
+              // TODO: deposit(double amount) — add to balance if amount > 0
+
+
+              // TODO: withdraw(double amount) — subtract if sufficient funds, return success
+
+
+              // TODO: getBalance() — return current balance
+
+
+              // TODO: getOwner() — return owner name
+
+
+              // TODO: toString() — return "BankAccount[owner=..., balance=...]"
+
+
+              public static void main(String[] args) {
+                  BankAccount acct = new BankAccount("Alice", 1000.0);
+                  System.out.println(acct);
+
+                  acct.deposit(500.0);
+                  System.out.println("After deposit: " + acct.getBalance());
+
+                  boolean ok = acct.withdraw(200.0);
+                  System.out.println("Withdraw 200: " + ok + ", balance: " + acct.getBalance());
+
+                  boolean fail = acct.withdraw(5000.0);
+                  System.out.println("Withdraw 5000: " + fail + ", balance: " + acct.getBalance());
+              }
+          }
+        language: "java"
+
+    open_file: "BankAccount.java"
+
+    solution:
+      files:
+        - path: "BankAccount.java"
+          content: |
+            public class BankAccount {
+                private String owner;
+                private double balance;
+
+                public BankAccount(String owner, double initialBalance) {
+                    this.owner = owner;
+                    this.balance = initialBalance;
+                }
+
+                public void deposit(double amount) {
+                    if (amount > 0) {
+                        balance += amount;
+                    }
+                }
+
+                public boolean withdraw(double amount) {
+                    if (amount > 0 && balance >= amount) {
+                        balance -= amount;
+                        return true;
+                    }
+                    return false;
+                }
+
+                public double getBalance() {
+                    return balance;
+                }
+
+                public String getOwner() {
+                    return owner;
+                }
+
+                public String toString() {
+                    return "BankAccount[owner=" + owner + ", balance=" + balance + "]";
+                }
+
+                public static void main(String[] args) {
+                    BankAccount acct = new BankAccount("Alice", 1000.0);
+                    System.out.println(acct);
+
+                    acct.deposit(500.0);
+                    System.out.println("After deposit: " + acct.getBalance());
+
+                    boolean ok = acct.withdraw(200.0);
+                    System.out.println("Withdraw 200: " + ok + ", balance: " + acct.getBalance());
+
+                    boolean fail = acct.withdraw(5000.0);
+                    System.out.println("Withdraw 5000: " + fail + ", balance: " + acct.getBalance());
+                }
+            }
+          language: "java"
+      explanation: |
+        **Encapsulation in action:** Fields are `private`, accessed only through `public` methods. This is Java's standard pattern — unlike Python where `self.balance` is directly accessible.
+
+        The `this` keyword disambiguates `this.owner` (the field) from `owner` (the constructor parameter) — identical to C++'s `this->owner`.
+
+        Note that `toString()` is called automatically by `System.out.println(acct)` — similar to Python's `__str__` or C++'s `operator<<`.
+
+    tests:
+      - description: "BankAccount constructor and getters work"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  BankAccount a = new BankAccount("Test", 500.0);
+                  if (a.getBalance() != 500.0) {
+                      throw new RuntimeException("Initial balance wrong");
+                  }
+                  if (!a.getOwner().equals("Test")) {
+                      throw new RuntimeException("Owner wrong");
+                  }
+              }
+          }
+        hints:
+          - text: "Make sure the constructor stores both owner and initialBalance in the private fields using this.fieldName = parameter"
+            condition: "code_missing: this.owner"
+      - description: "deposit and withdraw work correctly"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  BankAccount a = new BankAccount("Test", 100.0);
+                  a.deposit(50.0);
+                  if (a.getBalance() != 150.0) {
+                      throw new RuntimeException("Deposit failed: expected 150, got " + a.getBalance());
+                  }
+                  boolean ok = a.withdraw(30.0);
+                  if (!ok || a.getBalance() != 120.0) {
+                      throw new RuntimeException("Withdraw failed");
+                  }
+                  boolean fail = a.withdraw(999.0);
+                  if (fail) {
+                      throw new RuntimeException("Withdraw should fail for insufficient funds");
+                  }
+              }
+          }
+        hints:
+          - text: "withdraw should return false if the amount exceeds the current balance"
+            condition: "code_missing: return false"
+      - description: "Fields are private"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  BankAccount a = new BankAccount("X", 1.0);
+                  if (a.toString() == null) {
+                      throw new RuntimeException("toString not implemented");
+                  }
+              }
+          }
+        hints:
+          - text: "Declare fields with the private keyword: private String owner; private double balance;"
+            condition: "code_missing: private"
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — Interfaces: Design by Contract (with UML)
+  # Pedagogy: Interfaces-First — teach contracts before inheritance
+  #           UML Diagram — show interface notation
+  #           Transfer Tutor — contrast with C++ pure virtual, Python ABCs
+  #           Bloom's: Apply + Create
+  # --------------------------------------------------------------------------
+  - title: "Interfaces: Design by Contract"
+    uml_files:
+      - Shape.java
+      - Circle.java
+      - Rectangle.java
+      - ShapeDemo.java
+    view: uml_diagram
+    instructions: |
+      ## Interfaces: Design by Contract
+
+      > **Learning objective:** Define and implement Java interfaces, understanding them as contracts that separate *what* from *how*.
+
+      > **Partial Transfer from C++:** Java interfaces are like C++ abstract classes with only pure virtual functions — but with key differences: a class can `implement` multiple interfaces, and Java 8+ interfaces can have `default` methods with implementations.
+
+      > **Transfer from Python:** Python uses duck typing ("if it quacks like a duck..."). Java requires explicit `implements` — the compiler enforces the contract at compile time, not runtime.
+
+      ### Why Interfaces First?
+
+      In professional Java, you encounter interfaces *constantly*: `List`, `Map`, `Comparable`, `Iterable`, `Runnable`. Java's design philosophy is:
+
+      > **Program to an interface, not an implementation.**
+
+      This means: declare variables and parameters as the *interface* type, not the concrete class. This enables flexibility and testability.
+
+      ### UML Interface Notation
+
+      In UML, interfaces are shown with `<<interface>>` above the name. A dashed line with an open triangle means "implements":
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      interface Shape {
+        + getArea(): double
+        + getPerimeter(): double
+        + describe(): String
+      }
+      class Circle {
+        - radius: double
+        + Circle(radius: double)
+        + getArea(): double
+        + getPerimeter(): double
+        + describe(): String
+      }
+      class Rectangle {
+        - width: double
+        - height: double
+        + Rectangle(width: double, height: double)
+        + getArea(): double
+        + getPerimeter(): double
+        + describe(): String
+      }
+      Circle ..|> Shape
+      Rectangle ..|> Shape
+      @enduml'></div>
+
+      ### Interface Syntax
+
+      ```java
+      // Defining an interface — only method signatures, no implementation
+      public interface Shape {
+          double getArea();           // implicitly public and abstract
+          double getPerimeter();
+          String describe();
+      }
+
+      // Implementing an interface — must provide ALL methods
+      public class Circle implements Shape {
+          private double radius;
+
+          public Circle(double radius) { this.radius = radius; }
+
+          public double getArea() { return Math.PI * radius * radius; }
+          public double getPerimeter() { return 2 * Math.PI * radius; }
+          public String describe() { return "Circle(r=" + radius + ")"; }
+      }
+      ```
+
+      ### Task
+
+      Implement the UML diagram above across three files:
+      1. **`Shape.java`** — the interface with three methods
+      2. **`Circle.java`** — implements Shape using a radius
+      3. **`Rectangle.java`** — implements Shape using width and height
+
+      The `describe()` method should return `"Circle(r=5.0)"` or `"Rectangle(w=4.0, h=6.0)"`.
+
+      The provided `ShapeDemo.java` tests your implementations using the **interface type** — notice how it works with `Shape` references, not `Circle` or `Rectangle` directly. That's the power of programming to an interface.
+
+    files:
+      - path: "Shape.java"
+        content: |
+          // TODO: Define the Shape interface with three methods:
+          //   double getArea()
+          //   double getPerimeter()
+          //   String describe()
+          public interface Shape {
+
+          }
+        language: "java"
+
+      - path: "Circle.java"
+        content: |
+          public class Circle implements Shape {
+              // TODO: private field radius (double)
+
+              // TODO: Constructor taking radius
+
+              // TODO: Implement getArea() — PI * r^2
+
+              // TODO: Implement getPerimeter() — 2 * PI * r
+
+              // TODO: Implement describe() — "Circle(r=...)"
+
+          }
+        language: "java"
+
+      - path: "Rectangle.java"
+        content: |
+          public class Rectangle implements Shape {
+              // TODO: private fields width and height (double)
+
+              // TODO: Constructor taking width and height
+
+              // TODO: Implement getArea() — width * height
+
+              // TODO: Implement getPerimeter() — 2 * (width + height)
+
+              // TODO: Implement describe() — "Rectangle(w=..., h=...)"
+
+          }
+        language: "java"
+
+      - path: "ShapeDemo.java"
+        content: |
+          public class ShapeDemo {
+              // This method works with ANY Shape — polymorphism via interface
+              public static void printShape(Shape s) {
+                  System.out.println(s.describe());
+                  System.out.println("  Area: " + s.getArea());
+                  System.out.println("  Perimeter: " + s.getPerimeter());
+              }
+
+              public static void main(String[] args) {
+                  Shape c = new Circle(5.0);
+                  Shape r = new Rectangle(4.0, 6.0);
+
+                  printShape(c);
+                  printShape(r);
+              }
+          }
+        language: "java"
+
+    open_file: "Shape.java"
+
+    solution:
+      files:
+        - path: "Shape.java"
+          content: |
+            public interface Shape {
+                double getArea();
+                double getPerimeter();
+                String describe();
+            }
+          language: "java"
+        - path: "Circle.java"
+          content: |
+            public class Circle implements Shape {
+                private double radius;
+
+                public Circle(double radius) {
+                    this.radius = radius;
+                }
+
+                public double getArea() {
+                    return Math.PI * radius * radius;
+                }
+
+                public double getPerimeter() {
+                    return 2 * Math.PI * radius;
+                }
+
+                public String describe() {
+                    return "Circle(r=" + radius + ")";
+                }
+            }
+          language: "java"
+        - path: "Rectangle.java"
+          content: |
+            public class Rectangle implements Shape {
+                private double width;
+                private double height;
+
+                public Rectangle(double width, double height) {
+                    this.width = width;
+                    this.height = height;
+                }
+
+                public double getArea() {
+                    return width * height;
+                }
+
+                public double getPerimeter() {
+                    return 2 * (width + height);
+                }
+
+                public String describe() {
+                    return "Rectangle(w=" + width + ", h=" + height + ")";
+                }
+            }
+          language: "java"
+        - path: "ShapeDemo.java"
+          content: |
+            public class ShapeDemo {
+                public static void printShape(Shape s) {
+                    System.out.println(s.describe());
+                    System.out.println("  Area: " + s.getArea());
+                    System.out.println("  Perimeter: " + s.getPerimeter());
+                }
+
+                public static void main(String[] args) {
+                    Shape c = new Circle(5.0);
+                    Shape r = new Rectangle(4.0, 6.0);
+
+                    printShape(c);
+                    printShape(r);
+                }
+            }
+          language: "java"
+      explanation: |
+        **Key insight:** `ShapeDemo.printShape()` takes a `Shape` parameter — it doesn't know or care whether it receives a `Circle` or `Rectangle`. This is **polymorphism through interfaces**, and it's the foundation of flexible Java design.
+
+        In C++, you'd achieve this with a pure virtual base class and pointers. In Python, duck typing would let any object with `get_area()` work without declaring an interface. Java requires the explicit `implements` declaration — more verbose, but the compiler catches mismatches at compile time rather than crashing at runtime.
+
+    tests:
+      - description: "Shape interface is properly defined"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Shape c = new Circle(1.0);
+                  Shape r = new Rectangle(1.0, 1.0);
+                  c.getArea();
+                  c.getPerimeter();
+                  c.describe();
+              }
+          }
+        hints:
+          - text: "The Shape interface needs three method signatures: double getArea(), double getPerimeter(), and String describe()"
+            condition: "code_missing: getArea"
+      - description: "Circle calculations are correct"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Circle c = new Circle(5.0);
+                  double area = c.getArea();
+                  double expected = Math.PI * 25.0;
+                  if (Math.abs(area - expected) > 0.001) {
+                      throw new RuntimeException("Circle area wrong: expected " + expected + ", got " + area);
+                  }
+              }
+          }
+        hints:
+          - text: "Circle area = Math.PI * radius * radius"
+            condition: "code_missing: Math.PI"
+      - description: "Rectangle calculations are correct"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Rectangle r = new Rectangle(4.0, 6.0);
+                  if (r.getArea() != 24.0) {
+                      throw new RuntimeException("Rectangle area wrong");
+                  }
+                  if (r.getPerimeter() != 20.0) {
+                      throw new RuntimeException("Rectangle perimeter wrong");
+                  }
+              }
+          }
+        hints:
+          - text: "Rectangle area = width * height; perimeter = 2 * (width + height)"
+            condition: "code_missing: getPerimeter"
+
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — Inheritance & Polymorphism (with UML)
+  # Pedagogy: Transfer Tutor — single inheritance vs C++ multiple inheritance
+  #           UML inheritance diagram
+  #           Bloom's: Analyze (static vs dynamic dispatch) + Apply
+  # --------------------------------------------------------------------------
+  - title: "Inheritance & Polymorphism"
+    uml_files:
+      - Vehicles.java
+    view: uml_diagram
+    instructions: |
+      ## Inheritance & Polymorphism
+
+      > **Learning objective:** Use `extends`, `abstract` classes, and `@Override` to build class hierarchies with polymorphic behavior.
+
+      > **⚠ Key difference from C++:** Java supports only **single class inheritance** — a class can `extends` exactly one parent. Java's answer to multiple inheritance is **interfaces** (from Step 5). There is no diamond problem.
+
+      > **Transfer from Python:** Python supports multiple inheritance with Method Resolution Order (MRO). Java's single inheritance is simpler but more restrictive.
+
+      ### Abstract Classes vs Interfaces
+
+      | Feature | Interface | Abstract Class |
+      |---------|-----------|----------------|
+      | Methods | Abstract (+ default in Java 8+) | Abstract AND concrete |
+      | Fields | Only `static final` constants | Instance fields allowed |
+      | Constructor | No | Yes |
+      | Inheritance | `implements` (multiple OK) | `extends` (single only) |
+      | Use when... | Defining a **contract** | Sharing **implementation** |
+
+      > **Rule of thumb:** Use an interface when unrelated classes share behavior. Use an abstract class when classes share both behavior AND state.
+
+      ### UML Class Hierarchy
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      abstract class Vehicle {
+        - make: String
+        - year: int
+        + Vehicle(make: String, year: int)
+        + getMake(): String
+        + getYear(): int
+        + {abstract} describe(): String
+        + {abstract} startEngine(): String
+      }
+      class Car {
+        - numDoors: int
+        + Car(make: String, year: int, numDoors: int)
+        + describe(): String
+        + startEngine(): String
+      }
+      class Motorcycle {
+        - hasSidecar: boolean
+        + Motorcycle(make: String, year: int, hasSidecar: boolean)
+        + describe(): String
+        + startEngine(): String
+      }
+      Car --|> Vehicle
+      Motorcycle --|> Vehicle
+      @enduml'></div>
+
+      ### Key Syntax
+
+      ```java
+      // Abstract class — cannot be instantiated directly
+      public abstract class Vehicle {
+          private String make;
+          private int year;
+
+          public Vehicle(String make, int year) {  // constructors in abstract classes!
+              this.make = make;
+              this.year = year;
+          }
+
+          public String getMake() { return make; }
+          public int getYear() { return year; }
+
+          // Abstract methods — subclasses MUST implement these
+          public abstract String describe();
+          public abstract String startEngine();
+      }
+
+      // Concrete subclass
+      public class Car extends Vehicle {
+          // ...
+          public Car(String make, int year, int numDoors) {
+              super(make, year);  // MUST call parent constructor first
+              this.numDoors = numDoors;
+          }
+
+          @Override  // annotation — compiler checks you're actually overriding
+          public String describe() { ... }
+      }
+      ```
+
+      > **`super` vs C++:** Java uses `super(args)` as the first line of a constructor to call the parent constructor. C++ uses initializer lists: `Car(...) : Vehicle(make, year) { }`.
+
+      ### Task
+
+      Implement the UML hierarchy above in `Vehicles.java`:
+
+      - `Vehicle` is abstract with `describe()` and `startEngine()` as abstract methods
+      - `Car.describe()` returns `"2024 Toyota Car (4 doors)"`
+      - `Car.startEngine()` returns `"Vroom!"`
+      - `Motorcycle.describe()` returns `"2023 Harley Motorcycle (with sidecar)"` or `"2023 Harley Motorcycle"`
+      - `Motorcycle.startEngine()` returns `"BRAP BRAP!"`
+
+      The `main` method demonstrates **polymorphism** — a `Vehicle` reference can point to either a `Car` or `Motorcycle`, and the correct `describe()` is called at runtime (dynamic dispatch).
+
+    files:
+      - path: "Vehicles.java"
+        content: |
+          // TODO: Define abstract class Vehicle with:
+          //   - private fields: make (String), year (int)
+          //   - constructor taking make and year
+          //   - public getMake() and getYear() getters
+          //   - abstract methods: describe() and startEngine() returning String
+          abstract class Vehicle {
+
+          }
+
+          // TODO: Define Car extending Vehicle with:
+          //   - private field: numDoors (int)
+          //   - constructor taking make, year, numDoors (call super!)
+          //   - describe() returns "YEAR MAKE Car (N doors)"
+          //   - startEngine() returns "Vroom!"
+          class Car extends Vehicle {
+
+          }
+
+          // TODO: Define Motorcycle extending Vehicle with:
+          //   - private field: hasSidecar (boolean)
+          //   - constructor taking make, year, hasSidecar (call super!)
+          //   - describe() returns "YEAR MAKE Motorcycle (with sidecar)" or
+          //     "YEAR MAKE Motorcycle" if no sidecar
+          //   - startEngine() returns "BRAP BRAP!"
+          class Motorcycle extends Vehicle {
+
+          }
+
+          public class Vehicles {
+              public static void main(String[] args) {
+                  Vehicle[] fleet = {
+                      new Car("Toyota", 2024, 4),
+                      new Motorcycle("Harley", 2023, true),
+                      new Car("Honda", 2022, 2),
+                      new Motorcycle("Ducati", 2025, false)
+                  };
+
+                  for (Vehicle v : fleet) {
+                      System.out.println(v.describe() + " — " + v.startEngine());
+                  }
+              }
+          }
+        language: "java"
+
+    open_file: "Vehicles.java"
+
+    solution:
+      files:
+        - path: "Vehicles.java"
+          content: |
+            abstract class Vehicle {
+                private String make;
+                private int year;
+
+                public Vehicle(String make, int year) {
+                    this.make = make;
+                    this.year = year;
+                }
+
+                public String getMake() { return make; }
+                public int getYear() { return year; }
+
+                public abstract String describe();
+                public abstract String startEngine();
+            }
+
+            class Car extends Vehicle {
+                private int numDoors;
+
+                public Car(String make, int year, int numDoors) {
+                    super(make, year);
+                    this.numDoors = numDoors;
+                }
+
+                public String describe() {
+                    return getYear() + " " + getMake() + " Car (" + numDoors + " doors)";
+                }
+
+                public String startEngine() {
+                    return "Vroom!";
+                }
+            }
+
+            class Motorcycle extends Vehicle {
+                private boolean hasSidecar;
+
+                public Motorcycle(String make, int year, boolean hasSidecar) {
+                    super(make, year);
+                    this.hasSidecar = hasSidecar;
+                }
+
+                public String describe() {
+                    String desc = getYear() + " " + getMake() + " Motorcycle";
+                    if (hasSidecar) {
+                        desc += " (with sidecar)";
+                    }
+                    return desc;
+                }
+
+                public String startEngine() {
+                    return "BRAP BRAP!";
+                }
+            }
+
+            public class Vehicles {
+                public static void main(String[] args) {
+                    Vehicle[] fleet = {
+                        new Car("Toyota", 2024, 4),
+                        new Motorcycle("Harley", 2023, true),
+                        new Car("Honda", 2022, 2),
+                        new Motorcycle("Ducati", 2025, false)
+                    };
+
+                    for (Vehicle v : fleet) {
+                        System.out.println(v.describe() + " — " + v.startEngine());
+                    }
+                }
+            }
+          language: "java"
+      explanation: |
+        **Polymorphism in action:** The `fleet` array holds `Vehicle` references, but each element is either a `Car` or `Motorcycle`. When `v.describe()` is called, Java uses **dynamic dispatch** to invoke the correct version at runtime — exactly like C++ virtual functions.
+
+        Key differences from C++:
+        - Java methods are virtual by default (C++ requires `virtual` keyword)
+        - `@Override` is optional but recommended — the compiler checks you're actually overriding a parent method, catching typos
+        - `super(make, year)` must be the **first statement** in the constructor (C++ uses initializer lists)
+
+    tests:
+      - description: "Car describe() returns correct format"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Car c = new Car("Toyota", 2024, 4);
+                  String d = c.describe();
+                  if (!d.contains("Toyota") || !d.contains("2024") || !d.contains("4")) {
+                      throw new RuntimeException("Car.describe() wrong: " + d);
+                  }
+              }
+          }
+        hints:
+          - text: "Use getYear() and getMake() to access parent fields (they're private). Format: \"YEAR MAKE Car (N doors)\""
+            condition: "code_missing: getMake()"
+          - text: "Call super(make, year) as the first line of the Car constructor"
+            condition: "code_missing: super("
+      - description: "Motorcycle handles sidecar flag"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Motorcycle m1 = new Motorcycle("Harley", 2023, true);
+                  if (!m1.describe().contains("sidecar")) {
+                      throw new RuntimeException("Should mention sidecar when hasSidecar is true");
+                  }
+                  Motorcycle m2 = new Motorcycle("Ducati", 2025, false);
+                  if (m2.describe().contains("sidecar")) {
+                      throw new RuntimeException("Should NOT mention sidecar when hasSidecar is false");
+                  }
+              }
+          }
+        hints:
+          - text: "Use an if statement to conditionally add \" (with sidecar)\" to the description"
+            condition: "code_missing: hasSidecar"
+      - description: "Polymorphism works through Vehicle references"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Vehicle v = new Car("Test", 2020, 4);
+                  v.describe();
+                  v.startEngine();
+                  Vehicle m = new Motorcycle("Test", 2020, false);
+                  m.describe();
+                  m.startEngine();
+              }
+          }
+
+    quiz:
+      title: "OOP Concepts Review"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "**[Spaced Practice: Step 2]** What does `==` do when comparing two String objects in Java?"
+          options:
+            - "Compares their text content character by character"
+            - "Checks if they refer to the same object in memory"
+            - "Calls .equals() automatically"
+            - "Compares their lengths"
+          correct_index: 1
+          explanation: "As we learned in Step 2, `==` on objects checks reference identity, not value equality. Always use `.equals()` for value comparison."
+        - question: "In Java, which keyword makes a method virtual (overridable by subclasses)?"
+          options:
+            - "No keyword needed — all Java methods are virtual by default"
+            - "The `virtual` keyword (like C++)"
+            - "The `override` keyword"
+            - "The `dynamic` keyword"
+          correct_index: 0
+          explanation: "Unlike C++, where you must mark methods `virtual`, Java methods are virtual by default. Only `final` methods cannot be overridden. `@Override` is an annotation that asks the compiler to verify you're actually overriding a parent method."
+        - question: "When should you use an abstract class instead of an interface?"
+          options:
+            - "When you need to define a contract with no implementation"
+            - "When classes need to share both state (fields) and some default behavior"
+            - "When you want to allow multiple inheritance"
+            - "Always — abstract classes are superior to interfaces"
+          correct_index: 1
+          explanation: "Abstract classes can have instance fields and constructors, making them ideal for sharing state across subclasses. Interfaces define contracts (behavior) without state. Use interfaces for unrelated classes that share behavior; abstract classes for related classes that share implementation."
+        - question: "**[Spaced Practice: Step 4]** In the UML class diagram notation, what does a `-` prefix on a field mean?"
+          options:
+            - "The field is private"
+            - "The field is protected"
+            - "The field is static"
+            - "The field is optional"
+          correct_index: 0
+          explanation: "In UML: `-` means private, `+` means public, `#` means protected, `~` means package-private. This matches Java's access modifiers."
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — Generics: Not C++ Templates
+  # Pedagogy: False Friend — C++ templates vs Java generics
+  #           Mistake Pattern — show what DOESN'T work and why
+  #           Bloom's: Understand + Apply
+  # --------------------------------------------------------------------------
+  - title: "Generics: Not C++ Templates"
+    uml_files:
+      - Pair.java
+    view: uml_diagram
+    instructions: |
+      ## Generics: Not C++ Templates
+
+      > **Learning objective:** Write generic classes and methods in Java, understanding type erasure and its consequences.
+
+      > **⚠ False Friend from C++:** Java's `List<String>` looks exactly like C++'s `vector<string>`, but the underlying mechanism is completely different. C++ templates generate separate code for each type. Java generics are a **compile-time fiction** — erased at runtime.
+
+      ### C++ Templates vs Java Generics
+
+      | Feature | C++ Templates | Java Generics |
+      |---------|--------------|---------------|
+      | Mechanism | Code generation (monomorphization) | Type erasure (single shared code) |
+      | Runtime type info | Yes — `vector<int>` ≠ `vector<string>` | No — `List<String>` = `List<Integer>` at runtime |
+      | Primitive types | Yes — `vector<int>` works | **No** — must use `List<Integer>` |
+      | `new T()` | Yes | **No** — type unknown at runtime |
+      | Code bloat | Yes (separate code per type) | No (single shared implementation) |
+
+      ### Type Erasure: The Compiler's Magic Act
+
+      When you write:
+      ```java
+      List<String> names = new ArrayList<>();
+      names.add("Alice");
+      String first = names.get(0);
+      ```
+
+      The compiler transforms it to (roughly):
+      ```java
+      List names = new ArrayList();       // raw type
+      names.add("Alice");
+      String first = (String) names.get(0);  // inserted cast
+      ```
+
+      The generic `<String>` vanishes after compilation. This is why you **cannot**:
+      - Use primitives: `List<int>` → use `List<Integer>` instead
+      - Create generic instances: `new T()` is illegal
+      - Check generic type at runtime: `if (list instanceof List<String>)` is illegal
+
+      ### Writing a Generic Class
+
+      ```java
+      // A simple generic class — T is a type parameter
+      public class Box<T> {
+          private T item;
+
+          public Box(T item) { this.item = item; }
+          public T getItem() { return item; }
+          public void setItem(T item) { this.item = item; }
+      }
+
+      // Using it — the compiler ensures type safety
+      Box<String> nameBox = new Box<>("Alice");
+      String name = nameBox.getItem();  // no cast needed — compiler knows it's String
+
+      Box<Integer> numBox = new Box<>(42);
+      int num = numBox.getItem();       // unboxing Integer → int
+      ```
+
+      ### Bounded Type Parameters
+
+      You can restrict what types are allowed:
+
+      ```java
+      // T must implement Comparable<T>
+      public static <T extends Comparable<T>> T findMax(T a, T b) {
+          return a.compareTo(b) >= 0 ? a : b;
+      }
+      ```
+
+      > **C++ equivalent:** This is like C++20 concepts or pre-concepts SFINAE — constraining template parameters. Java's syntax is simpler: `<T extends SomeType>`.
+
+      ### Task
+
+      Implement a generic `Pair<A, B>` class in `Pair.java`:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class "Pair<A, B>" as Pair {
+        - first: A
+        - second: B
+        + Pair(first: A, second: B)
+        + getFirst(): A
+        + getSecond(): B
+        + toString(): String
+        + {static} swap(pair: Pair): Pair
+      }
+      @enduml'></div>
+
+      Then write a static generic method `swap` that takes a `Pair<A, B>` and returns a new `Pair<B, A>` with the elements reversed.
+
+      `toString()` should return `"(first, second)"`, e.g., `"(Alice, 95)"`.
+
+    files:
+      - path: "Pair.java"
+        content: |
+          public class Pair<A, B> {
+              // TODO: Private fields first (type A) and second (type B)
+
+
+              // TODO: Constructor taking A first, B second
+
+
+              // TODO: getFirst() returning A
+
+
+              // TODO: getSecond() returning B
+
+
+              // TODO: toString() returning "(first, second)"
+
+
+              // TODO: Static generic method:
+              //   public static <X, Y> Pair<Y, X> swap(Pair<X, Y> pair)
+              // that returns a new Pair with the elements swapped
+
+
+              public static void main(String[] args) {
+                  Pair<String, Integer> student = new Pair<>("Alice", 95);
+                  System.out.println(student);
+
+                  Pair<Integer, String> swapped = Pair.swap(student);
+                  System.out.println("Swapped: " + swapped);
+
+                  Pair<String, String> coords = new Pair<>("lat", "long");
+                  System.out.println(coords);
+              }
+          }
+        language: "java"
+
+    open_file: "Pair.java"
+
+    solution:
+      files:
+        - path: "Pair.java"
+          content: |
+            public class Pair<A, B> {
+                private A first;
+                private B second;
+
+                public Pair(A first, B second) {
+                    this.first = first;
+                    this.second = second;
+                }
+
+                public A getFirst() {
+                    return first;
+                }
+
+                public B getSecond() {
+                    return second;
+                }
+
+                public String toString() {
+                    return "(" + first + ", " + second + ")";
+                }
+
+                public static <X, Y> Pair<Y, X> swap(Pair<X, Y> pair) {
+                    return new Pair<>(pair.getSecond(), pair.getFirst());
+                }
+
+                public static void main(String[] args) {
+                    Pair<String, Integer> student = new Pair<>("Alice", 95);
+                    System.out.println(student);
+
+                    Pair<Integer, String> swapped = Pair.swap(student);
+                    System.out.println("Swapped: " + swapped);
+
+                    Pair<String, String> coords = new Pair<>("lat", "long");
+                    System.out.println(coords);
+                }
+            }
+          language: "java"
+      explanation: |
+        **Generic class:** `Pair<A, B>` has two type parameters. When you create `new Pair<>("Alice", 95)`, the compiler infers `A = String`, `B = Integer` (autoboxing `int` → `Integer`).
+
+        **Generic method:** The `swap` method introduces its own type parameters `<X, Y>` independent of the class's `<A, B>`. The syntax `public static <X, Y> Pair<Y, X> swap(...)` declares the type parameters before the return type.
+
+        In C++, this would be a function template. The key difference: in Java, there's only ONE compiled version of `swap` that works for all types (type erasure). In C++, the compiler generates separate code for each combination of types used.
+
+    tests:
+      - description: "Pair stores and retrieves values correctly"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Pair<String, Integer> p = new Pair<>("Alice", 95);
+                  if (!p.getFirst().equals("Alice")) {
+                      throw new RuntimeException("getFirst() wrong");
+                  }
+                  if (!p.getSecond().equals(95)) {
+                      throw new RuntimeException("getSecond() wrong");
+                  }
+              }
+          }
+        hints:
+          - text: "Declare fields as: private A first; private B second;"
+            condition: "code_missing: private A first"
+      - description: "swap returns a reversed Pair"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Pair<String, Integer> p = new Pair<>("Hello", 42);
+                  Pair<Integer, String> s = Pair.swap(p);
+                  if (!s.getFirst().equals(42)) {
+                      throw new RuntimeException("Swapped first should be 42");
+                  }
+                  if (!s.getSecond().equals("Hello")) {
+                      throw new RuntimeException("Swapped second should be Hello");
+                  }
+              }
+          }
+        hints:
+          - text: "The swap method signature is: public static <X, Y> Pair<Y, X> swap(Pair<X, Y> pair)"
+            condition: "code_missing: static"
+      - description: "toString formats correctly"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Pair<String, Integer> p = new Pair<>("A", 1);
+                  if (!p.toString().equals("(A, 1)")) {
+                      throw new RuntimeException("toString should return (A, 1), got: " + p.toString());
+                  }
+              }
+          }
+        hints:
+          - text: "toString should return \"(\" + first + \", \" + second + \")\""
+            condition: "code_missing: toString"
+
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — Collections Framework
+  # Pedagogy: UML interface hierarchy — visualize the framework
+  #           Transfer Tutor — map to Python dicts/lists, C++ STL
+  #           Bloom's: Apply + Evaluate (choose correct collection)
+  # --------------------------------------------------------------------------
+  - title: "Collections Framework"
+    uml_files:
+      - WordCounter.java
+    instructions: |
+      ## The Collections Framework
+
+      > **Learning objective:** Choose and use the right Java collection (List, Set, Map) for each task, understanding the interface-implementation pattern.
+
+      > **Transfer from Python:** `list` → `ArrayList`, `dict` → `HashMap`, `set` → `HashSet`. Similar semantics, different API.
+
+      > **Transfer from C++:** `vector` → `ArrayList`, `unordered_map` → `HashMap`, `map` → `TreeMap`, `unordered_set` → `HashSet`.
+
+      ### The Interface Hierarchy (simplified UML)
+
+      Java Collections are organized by **interfaces** — you program to the interface and choose the implementation:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      interface Collection
+      interface List
+      interface Set
+      interface Map
+      class ArrayList
+      class LinkedList
+      class HashSet
+      class HashMap
+      class TreeMap
+      List --|> Collection
+      Set --|> Collection
+      ArrayList ..|> List
+      LinkedList ..|> List
+      HashSet ..|> Set
+      HashMap ..|> Map
+      TreeMap ..|> Map
+      @enduml'></div>
+
+      ### Choosing the Right Collection
+
+      | Need | Interface | Implementation | Python Equivalent |
+      |------|-----------|---------------|-------------------|
+      | Ordered sequence, access by index | `List<T>` | `ArrayList<T>` | `list` |
+      | Unique elements, fast lookup | `Set<T>` | `HashSet<T>` | `set` |
+      | Key-value pairs | `Map<K,V>` | `HashMap<K,V>` | `dict` |
+      | Sorted unique elements | `Set<T>` | `TreeSet<T>` | `sorted(set)` |
+      | Sorted key-value pairs | `Map<K,V>` | `TreeMap<K,V>` | `dict` + sorting |
+
+      ### Common Operations
+
+      ```java
+      // List — like Python list or C++ vector
+      List<String> names = new ArrayList<>();
+      names.add("Alice");              // append
+      names.add(0, "Bob");             // insert at index
+      String first = names.get(0);     // index access
+      names.size();                    // NOT .length — that's arrays!
+
+      // Map — like Python dict or C++ unordered_map
+      Map<String, Integer> scores = new HashMap<>();
+      scores.put("Alice", 95);         // insert/update
+      int grade = scores.get("Alice"); // lookup (returns null if missing!)
+      scores.containsKey("Alice");     // check existence
+
+      // Set — like Python set or C++ unordered_set
+      Set<String> unique = new HashSet<>();
+      unique.add("Alice");
+      unique.add("Alice");             // ignored — already present
+      unique.contains("Alice");        // true
+      unique.size();                   // 1
+      ```
+
+      > **⚠ Size inconsistency:** Arrays use `.length` (field). Strings use `.length()` (method). Collections use `.size()` (method). This is a well-known Java wart.
+
+      ### Task
+
+      Build a `WordCounter` class that:
+      1. Takes a `String[]` of words
+      2. Counts how many times each word appears using a `HashMap<String, Integer>`
+      3. Stores unique words in a `HashSet<String>`
+      4. Has methods to get the count of a word, list all unique words, and find the most frequent word
+
+    files:
+      - path: "WordCounter.java"
+        content: |
+          import java.util.HashMap;
+          import java.util.HashSet;
+          import java.util.ArrayList;
+
+          public class WordCounter {
+              // TODO: Private fields:
+              //   - counts: HashMap<String, Integer>
+              //   - uniqueWords: HashSet<String>
+
+
+              // TODO: Constructor taking String[] words
+              //   - Populate counts map (word → frequency)
+              //   - Populate uniqueWords set
+
+
+              // TODO: getCount(String word) — return count for that word (0 if not found)
+
+
+              // TODO: getUniqueCount() — return number of unique words
+
+
+              // TODO: getMostFrequent() — return the word with highest count
+
+
+              public static void main(String[] args) {
+                  String[] words = {"java", "python", "java", "cpp", "java", "python", "go"};
+                  WordCounter wc = new WordCounter(words);
+
+                  System.out.println("java: " + wc.getCount("java"));
+                  System.out.println("python: " + wc.getCount("python"));
+                  System.out.println("rust: " + wc.getCount("rust"));
+                  System.out.println("Unique: " + wc.getUniqueCount());
+                  System.out.println("Most frequent: " + wc.getMostFrequent());
+              }
+          }
+        language: "java"
+
+    open_file: "WordCounter.java"
+
+    solution:
+      files:
+        - path: "WordCounter.java"
+          content: |
+            import java.util.HashMap;
+            import java.util.HashSet;
+            import java.util.ArrayList;
+
+            public class WordCounter {
+                private HashMap<String, Integer> counts;
+                private HashSet<String> uniqueWords;
+
+                public WordCounter(String[] words) {
+                    counts = new HashMap<>();
+                    uniqueWords = new HashSet<>();
+                    for (String word : words) {
+                        uniqueWords.add(word);
+                        if (counts.containsKey(word)) {
+                            counts.put(word, counts.get(word) + 1);
+                        } else {
+                            counts.put(word, 1);
+                        }
+                    }
+                }
+
+                public int getCount(String word) {
+                    if (counts.containsKey(word)) {
+                        return counts.get(word);
+                    }
+                    return 0;
+                }
+
+                public int getUniqueCount() {
+                    return uniqueWords.size();
+                }
+
+                public String getMostFrequent() {
+                    String maxWord = "";
+                    int maxCount = 0;
+                    for (String word : counts.keySet()) {
+                        if (counts.get(word) > maxCount) {
+                            maxCount = counts.get(word);
+                            maxWord = word;
+                        }
+                    }
+                    return maxWord;
+                }
+
+                public static void main(String[] args) {
+                    String[] words = {"java", "python", "java", "cpp", "java", "python", "go"};
+                    WordCounter wc = new WordCounter(words);
+
+                    System.out.println("java: " + wc.getCount("java"));
+                    System.out.println("python: " + wc.getCount("python"));
+                    System.out.println("rust: " + wc.getCount("rust"));
+                    System.out.println("Unique: " + wc.getUniqueCount());
+                    System.out.println("Most frequent: " + wc.getMostFrequent());
+                }
+            }
+          language: "java"
+      explanation: |
+        **`HashMap<String, Integer>`** maps each word to its frequency — like Python's `Counter` or a `defaultdict(int)`.
+
+        **`HashSet<String>`** automatically deduplicates — `add("java")` twice still results in one entry, just like Python's `set`.
+
+        Note `counts.get(word)` returns `Integer` (the wrapper), which gets auto-unboxed to `int` for the `>` comparison. If the key doesn't exist, `get()` returns `null` — and unboxing `null` would throw `NullPointerException`. That's why we check `containsKey()` first.
+
+        **Programming to the interface:** In production, you'd declare `Map<String, Integer>` instead of `HashMap<String, Integer>` — this lets you swap to `TreeMap` later without changing the rest of the code.
+
+    tests:
+      - description: "Counts words correctly"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  String[] words = {"a", "b", "a", "c", "a"};
+                  WordCounter wc = new WordCounter(words);
+                  if (wc.getCount("a") != 3) {
+                      throw new RuntimeException("Expected count of 'a' to be 3");
+                  }
+                  if (wc.getCount("b") != 1) {
+                      throw new RuntimeException("Expected count of 'b' to be 1");
+                  }
+                  if (wc.getCount("z") != 0) {
+                      throw new RuntimeException("Missing word should return 0");
+                  }
+              }
+          }
+        hints:
+          - text: "Use HashMap.containsKey() to check if a word exists, then put(word, get(word) + 1) to increment"
+            condition: "code_missing: containsKey"
+          - text: "getCount should return 0 for words not in the map, not throw an exception"
+            condition: "code_missing: return 0"
+      - description: "Unique count and most frequent work"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  String[] words = {"x", "y", "x", "z", "x"};
+                  WordCounter wc = new WordCounter(words);
+                  if (wc.getUniqueCount() != 3) {
+                      throw new RuntimeException("Expected 3 unique words");
+                  }
+                  if (!wc.getMostFrequent().equals("x")) {
+                      throw new RuntimeException("Most frequent should be 'x'");
+                  }
+              }
+          }
+        hints:
+          - text: "Use uniqueWords.size() to get the number of unique words"
+            condition: "code_missing: size()"
+
+
+  # --------------------------------------------------------------------------
+  # STEP 9 — Exception Handling: The Bureaucratic Contract
+  # Pedagogy: Transfer Tutor — Python EAFP vs Java checked exceptions
+  #           Mistake Pattern — show what happens without handling
+  #           UML — exception hierarchy
+  #           Bloom's: Analyze + Apply
+  # --------------------------------------------------------------------------
+  - title: "Exception Handling"
+    uml_files:
+      - SafeCalculator.java
+    instructions: |
+      ## Exception Handling: Checked vs Unchecked
+
+      > **Learning objective:** Understand Java's checked/unchecked exception model and write proper try-catch-finally blocks.
+
+      > **⚠ New concept — no analogue in Python or C++:** Java uniquely divides exceptions into **checked** (compiler-enforced handling) and **unchecked** (runtime errors). Neither Python nor C++ has this distinction.
+
+      ### The Three Philosophies
+
+      | Language | Philosophy | Approach |
+      |----------|-----------|----------|
+      | **Python** | EAFP ("Easier to Ask Forgiveness than Permission") | Catch exceptions freely; use try/except as control flow |
+      | **C++** | Exceptions are expensive | Prefer error codes; use exceptions sparingly |
+      | **Java** | The Bureaucratic Contract | Checked exceptions force you to handle or declare every possible failure |
+
+      ### Exception Hierarchy
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Throwable
+      class Error
+      class Exception
+      class RuntimeException
+      class OutOfMemoryError
+      class StackOverflowError
+      class IOException
+      class SQLException
+      class NullPointerException
+      class IllegalArgumentException
+      class ArithmeticException
+      Error --|> Throwable
+      Exception --|> Throwable
+      OutOfMemoryError --|> Error
+      StackOverflowError --|> Error
+      IOException --|> Exception
+      SQLException --|> Exception
+      RuntimeException --|> Exception
+      NullPointerException --|> RuntimeException
+      IllegalArgumentException --|> RuntimeException
+      ArithmeticException --|> RuntimeException
+      note right of Error: Do not catch -- JVM failures
+      note right of IOException: CHECKED\n(compiler enforces handling)
+      note right of RuntimeException: UNCHECKED\n(no enforcement)
+      @enduml'></div>
+
+      ### The Rules
+
+      **Checked exceptions** (`Exception` but not `RuntimeException`):
+      - You **must** either `catch` them or declare them with `throws` in the method signature
+      - Used for **recoverable** external failures (file not found, network error)
+
+      **Unchecked exceptions** (`RuntimeException` and subclasses):
+      - No compiler enforcement — same as Python/C++
+      - Used for **programming errors** (null pointer, bad index, bad argument)
+
+      ```java
+      // Checked: compiler FORCES you to handle this
+      public String readFile(String path) throws IOException {
+          // ...might throw IOException
+      }
+
+      // Calling code MUST handle it:
+      try {
+          String content = readFile("data.txt");
+      } catch (IOException e) {
+          System.err.println("File error: " + e.getMessage());
+      }
+
+      // Unchecked: no compiler enforcement
+      public int divide(int a, int b) {
+          return a / b;  // might throw ArithmeticException — but compiler won't complain
+      }
+      ```
+
+      ### Custom Exceptions
+
+      ```java
+      // Checked custom exception
+      public class InsufficientFundsException extends Exception {
+          private double deficit;
+
+          public InsufficientFundsException(double deficit) {
+              super("Insufficient funds: need " + deficit + " more");
+              this.deficit = deficit;
+          }
+
+          public double getDeficit() { return deficit; }
+      }
+      ```
+
+      ### Task
+
+      Complete `SafeCalculator.java`:
+
+      1. Define an `CalculatorException` (checked, extends `Exception`) with a message
+      2. Implement `divide(int a, int b)` that throws `CalculatorException` if `b` is 0
+      3. Implement `sqrt(double x)` that throws `CalculatorException` if `x` is negative
+      4. In `main`, use try-catch to handle errors gracefully, printing the error messages
+
+    files:
+      - path: "SafeCalculator.java"
+        content: |
+          // TODO: Define a checked exception class CalculatorException
+          //       that extends Exception and has a constructor taking a String message
+          class CalculatorException extends Exception {
+
+          }
+
+          public class SafeCalculator {
+
+              // TODO: divide(int a, int b) throws CalculatorException
+              //   - If b is 0, throw new CalculatorException("Division by zero")
+              //   - Otherwise return a / b as a double (use casting!)
+
+
+              // TODO: sqrt(double x) throws CalculatorException
+              //   - If x < 0, throw new CalculatorException("Cannot take square root of negative number")
+              //   - Otherwise return Math.sqrt(x)
+
+
+              public static void main(String[] args) {
+                  SafeCalculator calc = new SafeCalculator();
+
+                  // TODO: Try dividing 10 by 3 — print the result
+                  // TODO: Try dividing 10 by 0 — catch and print the error message
+                  // TODO: Try sqrt(16) — print the result
+                  // TODO: Try sqrt(-4) — catch and print the error message
+              }
+          }
+        language: "java"
+
+    open_file: "SafeCalculator.java"
+
+    solution:
+      files:
+        - path: "SafeCalculator.java"
+          content: |
+            class CalculatorException extends Exception {
+                public CalculatorException(String message) {
+                    super(message);
+                }
+            }
+
+            public class SafeCalculator {
+
+                public double divide(int a, int b) throws CalculatorException {
+                    if (b == 0) {
+                        throw new CalculatorException("Division by zero");
+                    }
+                    return (double) a / b;
+                }
+
+                public double sqrt(double x) throws CalculatorException {
+                    if (x < 0) {
+                        throw new CalculatorException("Cannot take square root of negative number");
+                    }
+                    return Math.sqrt(x);
+                }
+
+                public static void main(String[] args) {
+                    SafeCalculator calc = new SafeCalculator();
+
+                    try {
+                        System.out.println("10 / 3 = " + calc.divide(10, 3));
+                    } catch (CalculatorException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
+
+                    try {
+                        System.out.println("10 / 0 = " + calc.divide(10, 0));
+                    } catch (CalculatorException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
+
+                    try {
+                        System.out.println("sqrt(16) = " + calc.sqrt(16));
+                    } catch (CalculatorException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
+
+                    try {
+                        System.out.println("sqrt(-4) = " + calc.sqrt(-4));
+                    } catch (CalculatorException e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
+                }
+            }
+          language: "java"
+      explanation: |
+        **Checked exceptions as contracts:** The `throws CalculatorException` in the method signature is part of the API — it tells callers "this method can fail, and you must handle it." The compiler enforces this.
+
+        **In Python**, you'd write `try: ... except ValueError:` with no compiler help — you discover unhandled exceptions at runtime. **In C++**, `noexcept` exists but isn't enforced by most compilers.
+
+        **The `super(message)` call** passes the message to `Exception`'s constructor, making it available via `getMessage()`. This is like calling `Exception.__init__(self, message)` in Python.
+
+        **Design debate:** Many Java developers think checked exceptions are over-used. Modern Java libraries often prefer unchecked exceptions with good documentation. But understanding the mechanism is essential for working with the standard library.
+
+    tests:
+      - description: "divide returns correct result for valid input"
+        command: |
+          public class __Test {
+              public static void main(String[] args) throws Exception {
+                  SafeCalculator calc = new SafeCalculator();
+                  double result = calc.divide(10, 3);
+                  if (Math.abs(result - 3.333) > 0.01) {
+                      throw new RuntimeException("10/3 should be ~3.333, got " + result);
+                  }
+              }
+          }
+        hints:
+          - text: "Cast to double before dividing: return (double) a / b"
+            condition: "code_missing: (double)"
+      - description: "divide throws CalculatorException for zero divisor"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  SafeCalculator calc = new SafeCalculator();
+                  try {
+                      calc.divide(1, 0);
+                      throw new RuntimeException("Should have thrown CalculatorException");
+                  } catch (CalculatorException e) {
+                      // Good — exception was thrown
+                  }
+              }
+          }
+        hints:
+          - text: "Add: if (b == 0) { throw new CalculatorException(\"Division by zero\"); }"
+            condition: "code_missing: throw new CalculatorException"
+      - description: "sqrt throws for negative input"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  SafeCalculator calc = new SafeCalculator();
+                  try {
+                      calc.sqrt(-1);
+                      throw new RuntimeException("Should have thrown CalculatorException");
+                  } catch (CalculatorException e) {
+                      // Good
+                  }
+              }
+          }
+        hints:
+          - text: "Add: if (x < 0) { throw new CalculatorException(...); }"
+            condition: "code_missing: x < 0"
+
+    quiz:
+      title: "Comprehensive Review"
+      min_score: 0.75
+      shuffle: true
+      questions:
+        - question: "Which type of exception does the Java compiler force you to handle?"
+          options:
+            - "RuntimeException and its subclasses"
+            - "Exception subclasses that are NOT RuntimeException (checked exceptions)"
+            - "All exceptions"
+            - "Only NullPointerException"
+          correct_index: 1
+          explanation: "Checked exceptions (subclasses of Exception but NOT RuntimeException) must be caught or declared with `throws`. Unchecked exceptions (RuntimeException and its subclasses) have no compiler enforcement."
+        - question: "**[Spaced Practice: Step 5]** What keyword does a Java class use to declare that it fulfills an interface contract?"
+          options:
+            - "extends"
+            - "implements"
+            - "inherits"
+            - "interface"
+          correct_index: 1
+          explanation: "`implements` declares that a class fulfills an interface contract. `extends` is for class inheritance. A class can implement multiple interfaces but can only extend one class."
+        - question: "**[Spaced Practice: Step 7]** Why can't you write `ArrayList<int>` in Java?"
+          options:
+            - "Because int is too small for ArrayList"
+            - "Because Java generics use type erasure, which only works with objects — use `ArrayList<Integer>` instead"
+            - "Because ArrayList only accepts strings"
+            - "Because you should use int[] arrays instead"
+          correct_index: 1
+          explanation: "Java generics are erased at compile time — they become raw types operating on `Object`. Primitives like `int` are not objects, so they can't participate in generics. The wrapper class `Integer` is used instead."
+        - question: "**[Technique Selection]** Match each scenario to the correct Java construct: (A) Multiple unrelated classes need a `serialize()` method. (B) Dog and Cat share `name`, `age` fields and `eat()` behavior. (C) You need a type-safe list that works for any element type."
+          options:
+            - "A: interface, B: abstract class, C: generics"
+            - "A: abstract class, B: interface, C: generics"
+            - "A: generics, B: abstract class, C: interface"
+            - "A: interface, B: generics, C: abstract class"
+          correct_index: 0
+          explanation: "Interfaces define contracts for unrelated classes (A). Abstract classes share state and behavior among related classes (B). Generics provide type-safe parameterization (C)."
+
+
+  # --------------------------------------------------------------------------
+  # STEP 10 — Design Challenge: Course Enrollment System (Full UML)
+  # Pedagogy: Integration — combine all prior concepts
+  #           Design-First — UML before code
+  #           Multi-file — realistic project structure
+  #           Bloom's: Create + Evaluate
+  # --------------------------------------------------------------------------
+  - title: "Design Challenge: Course Enrollment"
+    uml_files:
+      - Student.java
+      - EnrollmentException.java
+      - Enrollable.java
+      - Course.java
+      - EnrollmentDemo.java
+    view: uml_diagram
+    instructions: |
+      ## Design Challenge: Course Enrollment System
+
+      > **Learning objective:** Integrate interfaces, inheritance, generics, collections, and exceptions to implement a system from a UML specification.
+
+      This is your integration challenge. You'll implement a small course enrollment system using everything you've learned. Read the UML diagram carefully before writing any code.
+
+      ### Full UML Class Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      interface Enrollable {
+        + enroll(student: Student): void
+        + drop(name: String): boolean
+        + isEnrolled(name: String): boolean
+        + getRoster(): ArrayList
+      }
+      class Course {
+        - name: String
+        - capacity: int
+        - students: ArrayList
+        + Course(name: String, capacity: int)
+        + getName(): String
+        + getCapacity(): int
+        + getEnrollmentCount(): int
+        + enroll(student: Student): void
+        + drop(name: String): boolean
+        + isEnrolled(name: String): boolean
+        + getRoster(): ArrayList
+        + toString(): String
+      }
+      class Student {
+        - name: String
+        - id: int
+        + Student(name: String, id: int)
+        + getName(): String
+        + getId(): int
+        + toString(): String
+      }
+      class EnrollmentException {
+        + EnrollmentException(message: String)
+      }
+      EnrollmentException --|> Exception
+      Course ..|> Enrollable
+      Course "1" o-- "0..*" Student
+      Course ..> EnrollmentException : throws
+      @enduml'></div>
+
+      ### Requirements
+
+      1. **`Student`**: Simple data class with name and id. `toString()` returns `"Student(name, id)"`.
+
+      2. **`EnrollmentException`**: A checked exception (extends `Exception`).
+
+      3. **`Enrollable`**: Interface defining the enrollment contract.
+
+      4. **`Course`**: Implements `Enrollable`.
+         - `enroll()` throws `EnrollmentException` if the course is full OR if the student is already enrolled
+         - `drop()` removes a student by name, returns `true` if found
+         - `isEnrolled()` checks if a student with that name is enrolled
+         - `getRoster()` returns an `ArrayList<String>` of enrolled student names
+
+      ### Investigate
+
+      Look at the `EnrollmentDemo.java` main method (provided, read-only). It exercises every feature of your system. Your implementations must make it run correctly.
+
+    files:
+      - path: "Student.java"
+        content: |
+          public class Student {
+              // TODO: Private fields: name (String), id (int)
+
+              // TODO: Constructor
+
+              // TODO: getName(), getId()
+
+              // TODO: toString() returning "Student(name, id)"
+
+          }
+        language: "java"
+
+      - path: "EnrollmentException.java"
+        content: |
+          // TODO: Define EnrollmentException extending Exception
+          // with a constructor that takes a String message
+          public class EnrollmentException extends Exception {
+
+          }
+        language: "java"
+
+      - path: "Enrollable.java"
+        content: |
+          import java.util.ArrayList;
+
+          // TODO: Define the Enrollable interface with methods:
+          //   void enroll(Student student) throws EnrollmentException
+          //   boolean drop(String name)
+          //   boolean isEnrolled(String name)
+          //   ArrayList<String> getRoster()
+          public interface Enrollable {
+
+          }
+        language: "java"
+
+      - path: "Course.java"
+        content: |
+          import java.util.ArrayList;
+
+          public class Course implements Enrollable {
+              // TODO: Private fields: name (String), capacity (int),
+              //       students (ArrayList<Student>)
+
+              // TODO: Constructor taking name and capacity
+              //       Initialize students as empty ArrayList
+
+              // TODO: getName(), getCapacity(), getEnrollmentCount()
+
+              // TODO: enroll(Student student) throws EnrollmentException
+              //   - Throw if course is full: "Course COURSENAME is full"
+              //   - Throw if already enrolled: "STUDENTNAME is already enrolled"
+              //   - Otherwise add to students list
+
+              // TODO: drop(String name)
+              //   - Remove student with matching name, return true
+              //   - Return false if not found
+
+              // TODO: isEnrolled(String name)
+              //   - Check if any student has the given name
+
+              // TODO: getRoster()
+              //   - Return ArrayList<String> of student names
+
+              // TODO: toString() returning "Course(name, enrolled/capacity)"
+
+          }
+        language: "java"
+
+      - path: "EnrollmentDemo.java"
+        content: |
+          public class EnrollmentDemo {
+              public static void main(String[] args) {
+                  Course cs101 = new Course("CS101", 3);
+
+                  Student alice = new Student("Alice", 1001);
+                  Student bob = new Student("Bob", 1002);
+                  Student carol = new Student("Carol", 1003);
+                  Student dave = new Student("Dave", 1004);
+
+                  // Enroll three students
+                  try {
+                      cs101.enroll(alice);
+                      cs101.enroll(bob);
+                      cs101.enroll(carol);
+                      System.out.println("Enrolled 3 students: " + cs101);
+                  } catch (EnrollmentException e) {
+                      System.out.println("Unexpected: " + e.getMessage());
+                  }
+
+                  // Try to enroll a 4th — course is full
+                  try {
+                      cs101.enroll(dave);
+                      System.out.println("ERROR: Should not reach here");
+                  } catch (EnrollmentException e) {
+                      System.out.println("Expected: " + e.getMessage());
+                  }
+
+                  // Try to enroll duplicate
+                  try {
+                      cs101.enroll(alice);
+                      System.out.println("ERROR: Should not reach here");
+                  } catch (EnrollmentException e) {
+                      System.out.println("Expected: " + e.getMessage());
+                  }
+
+                  // Check roster
+                  System.out.println("Roster: " + cs101.getRoster());
+                  System.out.println("Alice enrolled: " + cs101.isEnrolled("Alice"));
+
+                  // Drop Bob
+                  boolean dropped = cs101.drop("Bob");
+                  System.out.println("Dropped Bob: " + dropped);
+                  System.out.println("After drop: " + cs101);
+
+                  // Now Dave can enroll
+                  try {
+                      cs101.enroll(dave);
+                      System.out.println("Dave enrolled: " + cs101);
+                  } catch (EnrollmentException e) {
+                      System.out.println("Unexpected: " + e.getMessage());
+                  }
+              }
+          }
+        language: "java"
+
+    open_file: "Course.java"
+
+    solution:
+      files:
+        - path: "Student.java"
+          content: |
+            public class Student {
+                private String name;
+                private int id;
+
+                public Student(String name, int id) {
+                    this.name = name;
+                    this.id = id;
+                }
+
+                public String getName() {
+                    return name;
+                }
+
+                public int getId() {
+                    return id;
+                }
+
+                public String toString() {
+                    return "Student(" + name + ", " + id + ")";
+                }
+            }
+          language: "java"
+        - path: "EnrollmentException.java"
+          content: |
+            public class EnrollmentException extends Exception {
+                public EnrollmentException(String message) {
+                    super(message);
+                }
+            }
+          language: "java"
+        - path: "Enrollable.java"
+          content: |
+            import java.util.ArrayList;
+
+            public interface Enrollable {
+                void enroll(Student student) throws EnrollmentException;
+                boolean drop(String name);
+                boolean isEnrolled(String name);
+                ArrayList<String> getRoster();
+            }
+          language: "java"
+        - path: "Course.java"
+          content: |
+            import java.util.ArrayList;
+
+            public class Course implements Enrollable {
+                private String name;
+                private int capacity;
+                private ArrayList<Student> students;
+
+                public Course(String name, int capacity) {
+                    this.name = name;
+                    this.capacity = capacity;
+                    this.students = new ArrayList<>();
+                }
+
+                public String getName() {
+                    return name;
+                }
+
+                public int getCapacity() {
+                    return capacity;
+                }
+
+                public int getEnrollmentCount() {
+                    return students.size();
+                }
+
+                public void enroll(Student student) throws EnrollmentException {
+                    if (students.size() >= capacity) {
+                        throw new EnrollmentException("Course " + name + " is full");
+                    }
+                    if (isEnrolled(student.getName())) {
+                        throw new EnrollmentException(student.getName() + " is already enrolled");
+                    }
+                    students.add(student);
+                }
+
+                public boolean drop(String studentName) {
+                    for (int i = 0; i < students.size(); i++) {
+                        if (students.get(i).getName().equals(studentName)) {
+                            students.remove(i);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                public boolean isEnrolled(String studentName) {
+                    for (Student s : students) {
+                        if (s.getName().equals(studentName)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                public ArrayList<String> getRoster() {
+                    ArrayList<String> names = new ArrayList<>();
+                    for (Student s : students) {
+                        names.add(s.getName());
+                    }
+                    return names;
+                }
+
+                public String toString() {
+                    return "Course(" + name + ", " + getEnrollmentCount() + "/" + capacity + ")";
+                }
+            }
+          language: "java"
+        - path: "EnrollmentDemo.java"
+          content: |
+            public class EnrollmentDemo {
+                public static void main(String[] args) {
+                    Course cs101 = new Course("CS101", 3);
+
+                    Student alice = new Student("Alice", 1001);
+                    Student bob = new Student("Bob", 1002);
+                    Student carol = new Student("Carol", 1003);
+                    Student dave = new Student("Dave", 1004);
+
+                    try {
+                        cs101.enroll(alice);
+                        cs101.enroll(bob);
+                        cs101.enroll(carol);
+                        System.out.println("Enrolled 3 students: " + cs101);
+                    } catch (EnrollmentException e) {
+                        System.out.println("Unexpected: " + e.getMessage());
+                    }
+
+                    try {
+                        cs101.enroll(dave);
+                        System.out.println("ERROR: Should not reach here");
+                    } catch (EnrollmentException e) {
+                        System.out.println("Expected: " + e.getMessage());
+                    }
+
+                    try {
+                        cs101.enroll(alice);
+                        System.out.println("ERROR: Should not reach here");
+                    } catch (EnrollmentException e) {
+                        System.out.println("Expected: " + e.getMessage());
+                    }
+
+                    System.out.println("Roster: " + cs101.getRoster());
+                    System.out.println("Alice enrolled: " + cs101.isEnrolled("Alice"));
+
+                    boolean dropped = cs101.drop("Bob");
+                    System.out.println("Dropped Bob: " + dropped);
+                    System.out.println("After drop: " + cs101);
+
+                    try {
+                        cs101.enroll(dave);
+                        System.out.println("Dave enrolled: " + cs101);
+                    } catch (EnrollmentException e) {
+                        System.out.println("Unexpected: " + e.getMessage());
+                    }
+                }
+            }
+          language: "java"
+      explanation: |
+        This design integrates every concept from the tutorial:
+
+        - **Interfaces** (Step 5): `Enrollable` defines the enrollment contract
+        - **Classes & Encapsulation** (Step 4): `Student` and `Course` with private fields and public methods
+        - **Checked Exceptions** (Step 9): `EnrollmentException` forces callers to handle enrollment failures
+        - **Collections** (Step 8): `ArrayList<Student>` stores enrolled students, `ArrayList<String>` for the roster
+        - **`.equals()` not `==`** (Step 2): String comparisons use `.equals()` throughout
+        - **Generics** (Step 7): `ArrayList<Student>` and `ArrayList<String>` are parameterized collections
+
+        **UML to code:** Notice how the UML diagram mapped directly to the implementation — each box became a class/interface, each arrow became `implements` or a field reference, and each method signature transferred directly.
+
+    tests:
+      - description: "Student class works"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Student s = new Student("Test", 42);
+                  if (!s.getName().equals("Test")) {
+                      throw new RuntimeException("getName failed");
+                  }
+                  if (s.getId() != 42) {
+                      throw new RuntimeException("getId failed");
+                  }
+              }
+          }
+        hints:
+          - text: "Student needs private fields name (String) and id (int), a constructor, getName(), and getId()"
+            condition: "code_missing: getName"
+      - description: "Course enrollment works"
+        command: |
+          public class __Test {
+              public static void main(String[] args) throws Exception {
+                  Course c = new Course("Test", 2);
+                  Student s1 = new Student("A", 1);
+                  Student s2 = new Student("B", 2);
+                  c.enroll(s1);
+                  c.enroll(s2);
+                  if (c.getEnrollmentCount() != 2) {
+                      throw new RuntimeException("Should have 2 students");
+                  }
+                  if (!c.isEnrolled("A")) {
+                      throw new RuntimeException("A should be enrolled");
+                  }
+              }
+          }
+        hints:
+          - text: "Initialize students as new ArrayList<>() in the constructor"
+            condition: "code_missing: new ArrayList"
+      - description: "Course rejects when full"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Course c = new Course("Test", 1);
+                  try {
+                      c.enroll(new Student("A", 1));
+                      c.enroll(new Student("B", 2));
+                      throw new RuntimeException("Should have thrown EnrollmentException");
+                  } catch (EnrollmentException e) {
+                      // Expected
+                  }
+              }
+          }
+        hints:
+          - text: "Check if students.size() >= capacity before enrolling. If full, throw new EnrollmentException(...)"
+            condition: "code_missing: capacity"
+      - description: "Course rejects duplicates"
+        command: |
+          public class __Test {
+              public static void main(String[] args) {
+                  Course c = new Course("Test", 5);
+                  try {
+                      c.enroll(new Student("Alice", 1));
+                      c.enroll(new Student("Alice", 2));
+                      throw new RuntimeException("Should have thrown for duplicate");
+                  } catch (EnrollmentException e) {
+                      // Expected
+                  }
+              }
+          }
+        hints:
+          - text: "Use isEnrolled(student.getName()) to check for duplicates before adding"
+            condition: "code_missing: isEnrolled"
+      - description: "Drop removes a student"
+        command: |
+          public class __Test {
+              public static void main(String[] args) throws Exception {
+                  Course c = new Course("Test", 5);
+                  c.enroll(new Student("Alice", 1));
+                  c.enroll(new Student("Bob", 2));
+                  boolean ok = c.drop("Alice");
+                  if (!ok) {
+                      throw new RuntimeException("drop should return true");
+                  }
+                  if (c.isEnrolled("Alice")) {
+                      throw new RuntimeException("Alice should no longer be enrolled");
+                  }
+                  if (c.getEnrollmentCount() != 1) {
+                      throw new RuntimeException("Should have 1 student left");
+                  }
+              }
+          }
+        hints:
+          - text: "Use .equals() to compare student names when searching for the one to drop"
+            condition: "code_missing: .equals("
