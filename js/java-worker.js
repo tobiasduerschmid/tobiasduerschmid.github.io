@@ -488,14 +488,15 @@ var JavaCompiler = (function () {
         this.peek(1) && this.peek(1).value === '(') {
       var cname = this.next().value;
       var params = this.parseParamList();
-      // throws clause
+      // throws clause — store for checked exception enforcement
+      var throwsTypes = [];
       if (this.is(TOKEN_TYPES.KEYWORD, 'throws')) {
         this.next();
-        this.parseTypeName();
-        while (this.match(TOKEN_TYPES.DELIMITER, ',')) this.parseTypeName();
+        throwsTypes.push(this.parseTypeName());
+        while (this.match(TOKEN_TYPES.DELIMITER, ',')) throwsTypes.push(this.parseTypeName());
       }
       var cbody = this.parseBlock();
-      return { node: 'constructor', name: cname, modifiers: mods, params: params, body: cbody };
+      return { node: 'constructor', name: cname, modifiers: mods, params: params, body: cbody, throws: throwsTypes };
     }
 
     // Type parameters on methods (e.g., <T> T foo())
@@ -517,11 +518,12 @@ var JavaCompiler = (function () {
     if (this.is(TOKEN_TYPES.DELIMITER, '(')) {
       // Method
       var params = this.parseParamList();
-      // throws clause
+      // throws clause — store for checked exception enforcement
+      var throwsTypes = [];
       if (this.is(TOKEN_TYPES.KEYWORD, 'throws')) {
         this.next();
-        this.parseTypeName();
-        while (this.match(TOKEN_TYPES.DELIMITER, ',')) this.parseTypeName();
+        throwsTypes.push(this.parseTypeName());
+        while (this.match(TOKEN_TYPES.DELIMITER, ',')) throwsTypes.push(this.parseTypeName());
       }
       var body = null;
       if (this.is(TOKEN_TYPES.DELIMITER, '{')) {
@@ -529,7 +531,7 @@ var JavaCompiler = (function () {
       } else {
         this.expect(TOKEN_TYPES.DELIMITER, ';');
       }
-      return { node: 'method', name: name, type: type, modifiers: mods, params: params, body: body };
+      return { node: 'method', name: name, type: type, modifiers: mods, params: params, body: body, throws: throwsTypes };
     } else {
       // Field(s) — possibly with initializer
       var fields = [];
@@ -1267,6 +1269,9 @@ var JavaCompiler = (function () {
   };
 
   CodeGen.prototype.generate = function (unit) {
+    // Checked exception validation — run before codegen so errors are reported early
+    this._validateCheckedExceptions(unit);
+
     // Emit Java runtime support (stdlib stubs)
     this.emitRuntime();
 
@@ -1281,6 +1286,192 @@ var JavaCompiler = (function () {
     }
 
     return this.output;
+  };
+
+  // ---- Checked Exception Enforcement ----------------------------------------
+  // Mirrors javac's behavior: if method A declares "throws FooException" and
+  // FooException is a checked exception (not a RuntimeException subclass),
+  // then any call to A must be inside a try/catch or the caller must also
+  // declare "throws FooException".
+
+  /** Known unchecked (RuntimeException) hierarchy — never require handling */
+  var UNCHECKED_EXCEPTIONS = [
+    'RuntimeException', 'NullPointerException', 'IllegalArgumentException',
+    'ArithmeticException', 'ArrayIndexOutOfBoundsException',
+    'IndexOutOfBoundsException', 'ClassCastException',
+    'UnsupportedOperationException', 'NumberFormatException',
+    'IllegalStateException', 'ConcurrentModificationException',
+    'StackOverflowError', 'OutOfMemoryError', 'Error',
+  ];
+
+  CodeGen.prototype._validateCheckedExceptions = function (unit) {
+    var self = this;
+
+    // 1. Build map: className → { methodName → [checkedExceptionTypes] }
+    var methodThrows = {};   // "ClassName.methodName" → ["ExType", ...]
+    var classParents = {};   // className → superClass name (for extends Exception detection)
+
+    for (var i = 0; i < unit.classes.length; i++) {
+      var cls = unit.classes[i];
+      classParents[cls.name] = cls.superClass || null;
+      for (var j = 0; j < cls.members.length; j++) {
+        var m = cls.members[j];
+        if ((m.node === 'method' || m.node === 'constructor') && m.throws && m.throws.length > 0) {
+          var checked = m.throws.filter(function (t) {
+            return UNCHECKED_EXCEPTIONS.indexOf(t) === -1;
+          });
+          if (checked.length > 0) {
+            var key = cls.name + '.' + (m.node === 'constructor' ? '<init>' : m.name);
+            methodThrows[key] = checked;
+          }
+        }
+      }
+    }
+
+    // No checked exceptions declared anywhere — nothing to enforce
+    if (Object.keys(methodThrows).length === 0) return;
+
+    // 2. For each method body, check that calls to throws-methods are handled
+    for (var i = 0; i < unit.classes.length; i++) {
+      var cls = unit.classes[i];
+      for (var j = 0; j < cls.members.length; j++) {
+        var m = cls.members[j];
+        if ((m.node === 'method' || m.node === 'constructor') && m.body) {
+          var callerThrows = (m.throws || []).slice();
+          self._checkBodyForUncaughtExceptions(
+            cls.name, m.name || '<init>', m.body, methodThrows, callerThrows, false
+          );
+        }
+      }
+    }
+  };
+
+  /**
+   * Recursively walk a block of statements checking for unhandled checked exceptions.
+   * @param {string} className - class containing the method being checked
+   * @param {string} methodName - method being checked (for error messages)
+   * @param {Array} stmts - statement list (block body)
+   * @param {Object} methodThrows - map of "Class.method" → [exception types]
+   * @param {Array} callerThrows - exception types the caller declares
+   * @param {boolean} insideTry - true if we're inside a try block with relevant catches
+   */
+  CodeGen.prototype._checkBodyForUncaughtExceptions = function (
+    className, methodName, stmts, methodThrows, callerThrows, insideTry
+  ) {
+    if (!stmts || !stmts.length) return;
+    var self = this;
+
+    for (var i = 0; i < stmts.length; i++) {
+      var stmt = stmts[i];
+      if (!stmt) continue;
+
+      // try/catch — check if the catch clauses handle the required types
+      if (stmt.node === 'try') {
+        var caughtTypes = [];
+        if (stmt.catches) {
+          for (var c = 0; c < stmt.catches.length; c++) {
+            var ct = stmt.catches[c];
+            if (ct.type) caughtTypes.push(ct.type);
+            // Also accept "Exception" as catching everything
+          }
+        }
+        // Inside the try body, these types are caught
+        self._checkBodyForUncaughtExceptions(
+          className, methodName, stmt.body, methodThrows, callerThrows.concat(caughtTypes), true
+        );
+        // Catch/finally bodies checked normally
+        if (stmt.catches) {
+          for (var c = 0; c < stmt.catches.length; c++) {
+            if (stmt.catches[c].body) {
+              self._checkBodyForUncaughtExceptions(
+                className, methodName, stmt.catches[c].body, methodThrows, callerThrows, insideTry
+              );
+            }
+          }
+        }
+        if (stmt.finally) {
+          self._checkBodyForUncaughtExceptions(
+            className, methodName, stmt.finally, methodThrows, callerThrows, insideTry
+          );
+        }
+        continue;
+      }
+
+      // Check for method calls in this statement
+      self._findCallsInNode(stmt, function (callClassName, callMethodName) {
+        var key = callClassName + '.' + callMethodName;
+        var exTypes = methodThrows[key];
+        if (!exTypes) return;
+
+        for (var e = 0; e < exTypes.length; e++) {
+          var exType = exTypes[e];
+          // Is it handled by caller's throws clause or a surrounding catch?
+          var handled = callerThrows.indexOf(exType) !== -1 ||
+                        callerThrows.indexOf('Exception') !== -1;
+          if (!handled) {
+            throw new Error(
+              'error: unreported exception ' + exType +
+              '; must be caught or declared to be thrown\n' +
+              '  in method ' + className + '.' + methodName
+            );
+          }
+        }
+      });
+
+      // Recurse into sub-blocks (if, while, for, etc.)
+      if (stmt.body) {
+        var subBody = Array.isArray(stmt.body) ? stmt.body : [stmt.body];
+        self._checkBodyForUncaughtExceptions(
+          className, methodName, subBody, methodThrows, callerThrows, insideTry
+        );
+      }
+      if (stmt.elseBody) {
+        var subElse = Array.isArray(stmt.elseBody) ? stmt.elseBody : [stmt.elseBody];
+        self._checkBodyForUncaughtExceptions(
+          className, methodName, subElse, methodThrows, callerThrows, insideTry
+        );
+      }
+    }
+  };
+
+  /**
+   * Find method calls in an AST node and invoke callback(className, methodName).
+   * Handles: expr.method(...) and ClassName.method(...) patterns.
+   */
+  CodeGen.prototype._findCallsInNode = function (node, callback) {
+    if (!node || typeof node !== 'object') return;
+    var self = this;
+
+    if (node.node === 'call') {
+      // node.object.method(args) or method(args)
+      var target = node.target || node.callee;
+      if (target && target.node === 'memberAccess') {
+        var objName = null;
+        if (target.object && target.object.node === 'identifier') {
+          objName = target.object.name;
+        }
+        if (objName && target.property) {
+          // Could be instance.method() or ClassName.method()
+          // Check both — the first character uppercase heuristic for class names
+          callback(objName, target.property);
+        }
+      }
+    }
+
+    // Recurse into all properties that could contain sub-expressions
+    var keys = Object.keys(node);
+    for (var i = 0; i < keys.length; i++) {
+      var val = node[keys[i]];
+      if (Array.isArray(val)) {
+        for (var j = 0; j < val.length; j++) {
+          if (val[j] && typeof val[j] === 'object') {
+            self._findCallsInNode(val[j], callback);
+          }
+        }
+      } else if (val && typeof val === 'object' && val.node) {
+        self._findCallsInNode(val, callback);
+      }
+    }
   };
 
   CodeGen.prototype.emitRuntime = function () {

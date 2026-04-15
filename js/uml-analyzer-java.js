@@ -323,6 +323,18 @@
       return params;
     }
 
+    // Parse throws clause: throws ExceptionType, AnotherException
+    function parseThrowsClause() {
+      var types = [];
+      if (!consume('keyword', 'throws')) return types;
+      while (pos < tokens.length && !at('punct', '{') && !at('punct', ';')) {
+        var t = parseType();
+        if (t) types.push(t);
+        if (!consume('punct', ',')) break;
+      }
+      return types;
+    }
+
     // Skip a balanced brace block and return an array of raw tokens inside
     function parseBlock() {
       if (!consume('punct', '{')) return [];
@@ -418,12 +430,9 @@
         var name = advance().value;
         var params = parseParams();
         // throws clause
-        if (at('keyword', 'throws')) {
-          advance();
-          while (pos < tokens.length && !at('punct', '{') && !at('punct', ';')) advance();
-        }
+        var throwsTypes = parseThrowsClause();
         var body = at('punct', '{') ? parseBlock() : [];
-        return { kind: 'constructor', name: name, params: params, modifiers: mods, body: body };
+        return { kind: 'constructor', name: name, params: params, modifiers: mods, body: body, throwsTypes: throwsTypes };
       }
 
       // Method or field: Type name(...) or Type name;
@@ -448,10 +457,7 @@
         // Method
         var params = parseParams();
         // throws clause
-        if (at('keyword', 'throws')) {
-          advance();
-          while (pos < tokens.length && !at('punct', '{') && !at('punct', ';')) advance();
-        }
+        var throwsTypes = parseThrowsClause();
         var body = [];
         if (at('punct', '{')) {
           body = parseBlock();
@@ -460,17 +466,24 @@
         }
         return {
           kind: 'method', name: memberName, returnType: type,
-          params: params, modifiers: mods, body: body
+          params: params, modifiers: mods, body: body, throwsTypes: throwsTypes
         };
       } else {
         // Field — may have initializer and multiple declarators
-        // Handle first declarator's initializer
+        // Capture whether initializer starts with 'new' for composition inference
+        var initHasNew = false;
+        var initNewType = '';
         if (at('punct', '=')) {
           advance();
+          if (at('keyword', 'new') && peek(1) && peek(1).type === 'ident') {
+            initHasNew = true;
+            initNewType = peek(1).value;
+          }
           skipFieldInit();
         }
         var firstField = {
-          kind: 'field', name: memberName, type: type, modifiers: mods
+          kind: 'field', name: memberName, type: type, modifiers: mods,
+          initHasNew: initHasNew, initNewType: initNewType
         };
         var fields = [firstField];
 
@@ -699,6 +712,21 @@
     return args;
   }
 
+  /** Check if a type string is a collection (List<X>, Set<X>, Map<K,V>, etc.) or array X[] */
+  function _isCollectionType(typeStr) {
+    if (!typeStr) return false;
+    if (/\[\]/.test(typeStr)) return true;
+    var match = typeStr.match(/^(\w+)</);
+    if (!match) return false;
+    return CONTAINER_TYPES.has(match[1]) || MAPPING_TYPES.has(match[1]);
+  }
+
+  /** Infer multiplicity from a type string: "1" for single, "*" for collection/array */
+  function _inferMultiplicity(typeStr) {
+    if (!typeStr) return '1';
+    return _isCollectionType(typeStr) ? '*' : '1';
+  }
+
   function _getVisibility(modifiers) {
     if (modifiers.indexOf('private') !== -1) return '-';
     if (modifiers.indexOf('protected') !== -1) return '#';
@@ -727,11 +755,12 @@
     this.implements  = opts.implements  || [];
     this.attributes  = [];
     this.methods     = [];
-    this.compositions = [];
-    this.aggregations = [];
-    this.associations = [];
-    this.dependencies = [];
+    this.compositions = [];   // [className]
+    this.aggregations = [];   // [className]
+    this.associations = [];   // [className]
+    this.dependencies = [];   // [className]
     this._relAttrs    = new Set();
+    this._relMult     = {};   // {targetClass: {srcMult, tgtMult}} — multiplicity metadata
   }
 
   /* ===================================================================
@@ -817,6 +846,14 @@
       isStatic: isStatic, isFinal: isFinal, isAbstract: isAbstract
     });
 
+    // Field initializer: x = new ClassName() → composition
+    if (field.initHasNew && field.initNewType && this.allTypeNames.has(field.initNewType)) {
+      _addUnique(info.compositions, field.initNewType);
+      info._relAttrs.add(field.name);
+      aTypes[field.name] = field.initNewType;
+      return;
+    }
+
     var resolved = _extractBaseTypeName(field.type, this.allTypeNames);
     if (resolved) aTypes[field.name] = resolved;
   };
@@ -850,9 +887,8 @@
   };
 
   JavaClassExtractor.prototype._scanConstructorBody = function (bodyTokens, info, aTypes, paramTypeMap) {
-    // Look for patterns: this.fieldName = new ClassName(...) or this.fieldName = paramName
     for (var i = 0; i < bodyTokens.length - 4; i++) {
-      // this . fieldName = ...
+      // Pattern: this . fieldName = ...
       if (bodyTokens[i].value === 'this' &&
           bodyTokens[i + 1] && bodyTokens[i + 1].value === '.' &&
           bodyTokens[i + 2] && bodyTokens[i + 2].type === 'ident' &&
@@ -861,7 +897,7 @@
         var rhsStart = i + 4;
 
         if (rhsStart < bodyTokens.length) {
-          // this.x = new ClassName(...) → composition
+          // this.x = new ClassName(...) → composition (direct known type)
           if (bodyTokens[rhsStart].value === 'new' &&
               rhsStart + 1 < bodyTokens.length &&
               bodyTokens[rhsStart + 1].type === 'ident') {
@@ -871,8 +907,11 @@
               info._relAttrs.add(fieldName);
               aTypes[fieldName] = typeName;
             }
+            // this.x = new ArrayList<>() — container created internally
+            // The element type relationship is left to _classifyRelationships
+            // (it will be association since elements aren't created here)
           }
-          // this.x = paramName → aggregation if param is typed
+          // this.x = paramName → aggregation if param is typed as known class
           else if (bodyTokens[rhsStart].type === 'ident') {
             var paramCls = paramTypeMap[bodyTokens[rhsStart].value];
             if (paramCls) {
@@ -880,6 +919,25 @@
               info._relAttrs.add(fieldName);
               aTypes[fieldName] = paramCls;
             }
+          }
+        }
+      }
+
+      // Pattern: this . collection . add ( new ClassName ( ) ) → composition via collection
+      if (i + 6 < bodyTokens.length &&
+          bodyTokens[i].value === 'this' &&
+          bodyTokens[i + 1].value === '.' &&
+          bodyTokens[i + 2].type === 'ident' &&
+          bodyTokens[i + 3].value === '.' &&
+          bodyTokens[i + 4].type === 'ident' &&
+          (bodyTokens[i + 4].value === 'add' || bodyTokens[i + 4].value === 'put') &&
+          bodyTokens[i + 5].value === '(') {
+        // Scan inside parens for 'new ClassName'
+        for (var j = i + 6; j < bodyTokens.length && bodyTokens[j].value !== ')'; j++) {
+          if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
+              bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value)) {
+            _addUnique(info.compositions, bodyTokens[j + 1].value);
+            break;
           }
         }
       }
@@ -908,11 +966,37 @@
         return { name: p.name, type: _simpleTypeName(p.type) };
       }),
       returnType: _simpleTypeName(member.returnType),
-      visibility: vis, isStatic: isStatic, isAbstract: isAbstract
+      visibility: vis, isStatic: isStatic, isAbstract: isAbstract,
+      throwsTypes: (member.throwsTypes || []).map(_simpleTypeName)
     });
 
     methods[member.name] = member.body;
     mParamsMap[member.name] = params;
+
+    // Scan method body for this.collection.add(new X()) → composition
+    this._scanMethodBodyForCompositions(member.body, info);
+  };
+
+  /** Scan a method body for this.field.add(new KnownClass()) patterns → composition */
+  JavaClassExtractor.prototype._scanMethodBodyForCompositions = function (bodyTokens, info) {
+    if (!bodyTokens) return;
+    for (var i = 0; i + 6 < bodyTokens.length; i++) {
+      if (bodyTokens[i].value === 'this' &&
+          bodyTokens[i + 1].value === '.' &&
+          bodyTokens[i + 2].type === 'ident' &&
+          bodyTokens[i + 3].value === '.' &&
+          bodyTokens[i + 4].type === 'ident' &&
+          (bodyTokens[i + 4].value === 'add' || bodyTokens[i + 4].value === 'put') &&
+          bodyTokens[i + 5].value === '(') {
+        for (var j = i + 6; j < bodyTokens.length && bodyTokens[j].value !== ')'; j++) {
+          if (bodyTokens[j].value === 'new' && j + 1 < bodyTokens.length &&
+              bodyTokens[j + 1].type === 'ident' && this.allTypeNames.has(bodyTokens[j + 1].value)) {
+            _addUnique(info.compositions, bodyTokens[j + 1].value);
+            break;
+          }
+        }
+      }
+    }
   };
 
   /* ── Interface ──────────────────────────────────────────────── */
@@ -991,15 +1075,44 @@
     info.compositions.forEach(function (c) { structural.add(c); });
     info.aggregations.forEach(function (a) { structural.add(a); });
 
-    // Remaining typed attributes → association
+    // Remaining typed attributes → association or aggregation
     for (var i = 0; i < info.attributes.length; i++) {
       var attr = info.attributes[i];
       var resolved = _extractBaseTypeName(attr.type, this.allTypeNames);
       if (resolved && resolved !== info.name &&
           !structural.has(resolved) && !info._relAttrs.has(attr.name)) {
-        _addUnique(info.associations, resolved);
+        var tgtMult = _inferMultiplicity(attr.type);
+        // Collection-typed field (List<X>, Set<X>, etc.) → aggregation (1-to-many)
+        if (_isCollectionType(attr.type)) {
+          _addUnique(info.aggregations, resolved);
+        } else {
+          _addUnique(info.associations, resolved);
+        }
+        info._relMult[resolved] = { srcMult: '1', tgtMult: tgtMult };
         info._relAttrs.add(attr.name);
         structural.add(resolved);
+      }
+    }
+
+    // Record multiplicity for compositions/aggregations by checking field types
+    var self = this;
+    function _findFieldMult(target) {
+      for (var fi = 0; fi < info.attributes.length; fi++) {
+        var attrResolved = _extractBaseTypeName(info.attributes[fi].type, self.allTypeNames);
+        if (attrResolved === target) {
+          return _isCollectionType(info.attributes[fi].type) ? '*' : '1';
+        }
+      }
+      return '1';
+    }
+    for (var ci = 0; ci < info.compositions.length; ci++) {
+      if (!info._relMult[info.compositions[ci]]) {
+        info._relMult[info.compositions[ci]] = { srcMult: '1', tgtMult: _findFieldMult(info.compositions[ci]) };
+      }
+    }
+    for (var ai = 0; ai < info.aggregations.length; ai++) {
+      if (!info._relMult[info.aggregations[ai]]) {
+        info._relMult[info.aggregations[ai]] = { srcMult: '1', tgtMult: _findFieldMult(info.aggregations[ai]) };
       }
     }
 
@@ -1016,6 +1129,15 @@
         if (paramResolved && paramResolved !== info.name && !structural.has(paramResolved)) {
           _addUnique(info.dependencies, paramResolved);
           structural.add(paramResolved);
+        }
+      }
+      // throws clause types → dependency
+      var throwsList = method.throwsTypes || [];
+      for (var t = 0; t < throwsList.length; t++) {
+        var throwsResolved = _extractBaseTypeName(throwsList[t], this.allTypeNames);
+        if (throwsResolved && throwsResolved !== info.name && !structural.has(throwsResolved)) {
+          _addUnique(info.dependencies, throwsResolved);
+          structural.add(throwsResolved);
         }
       }
     }
@@ -1071,6 +1193,22 @@
       lines.push('}');
     }
 
+    // Build bidirectional association set for navigability
+    var bidir = new Set();
+    for (var bi = 0; bi < sorted.length; bi++) {
+      var biCls = sorted[bi];
+      for (var bj = 0; bj < biCls.associations.length; bj++) {
+        var target = biCls.associations[bj];
+        var targetInfo = this.classMap.get(target);
+        if (targetInfo && targetInfo.associations.indexOf(biCls.name) !== -1) {
+          // Both reference each other — bidirectional
+          var key = [biCls.name, target].sort().join('::');
+          bidir.add(key);
+        }
+      }
+    }
+    var emittedBidir = new Set();
+
     // Relationships
     for (var r = 0; r < sorted.length; r++) {
       var cls = sorted[r];
@@ -1086,13 +1224,36 @@
         }
       }
       for (var c = 0; c < cls.compositions.length; c++) {
-        lines.push(cls.name + ' *-- ' + cls.compositions[c]);
+        var compTarget = cls.compositions[c];
+        var compMult = cls._relMult[compTarget];
+        var compLabel = compMult ? ' "' + compMult.srcMult + '" *-- "' + compMult.tgtMult + '" ' : ' *-- ';
+        lines.push(cls.name + compLabel + compTarget);
       }
       for (var ag = 0; ag < cls.aggregations.length; ag++) {
-        lines.push(cls.name + ' o-- ' + cls.aggregations[ag]);
+        var aggTarget = cls.aggregations[ag];
+        var aggMult = cls._relMult[aggTarget];
+        var aggLabel = aggMult ? ' "' + aggMult.srcMult + '" o-- "' + aggMult.tgtMult + '" ' : ' o-- ';
+        lines.push(cls.name + aggLabel + aggTarget);
       }
       for (var as = 0; as < cls.associations.length; as++) {
-        lines.push(cls.name + ' --> ' + cls.associations[as]);
+        var assocTarget = cls.associations[as];
+        var bdKey = [cls.name, assocTarget].sort().join('::');
+        if (bidir.has(bdKey)) {
+          // Bidirectional — emit once with undirected arrow
+          if (!emittedBidir.has(bdKey)) {
+            emittedBidir.add(bdKey);
+            var m1 = cls._relMult[assocTarget];
+            var m2 = this.classMap.get(assocTarget)._relMult[cls.name];
+            var srcM = m1 ? m1.srcMult : '1';
+            var tgtM = m1 ? m1.tgtMult : '1';
+            lines.push(cls.name + ' "' + srcM + '" -- "' + tgtM + '" ' + assocTarget);
+          }
+        } else {
+          // Unidirectional — directed arrow
+          var assocMult = cls._relMult[assocTarget];
+          var assocLabel = assocMult ? ' "' + assocMult.srcMult + '" --> "' + assocMult.tgtMult + '" ' : ' --> ';
+          lines.push(cls.name + assocLabel + assocTarget);
+        }
       }
       for (var d = 0; d < cls.dependencies.length; d++) {
         lines.push(cls.name + ' ..> ' + cls.dependencies[d]);
@@ -1556,18 +1717,25 @@
     }
     var tryResult = this._extractBlock(tokens, i);
     i = tryResult.endIdx;
-    this._processTokenBlock(tryResult.tokens, caller, depth);
+    var tryLines = this._collectFragmentLines(tryResult.tokens, caller, depth);
 
+    var catchBranches = [];
     while (i < tokens.length && tokens[i].value === 'catch') {
       i++;
+      var excType = 'Exception';
       if (i < tokens.length && tokens[i].value === '(') {
         var catchParens = this._extractParenContents(tokens, i);
+        // Extract exception type from catch params (e.g., "IOException e")
+        var catchTokens = catchParens.tokens;
+        for (var ct = 0; ct < catchTokens.length; ct++) {
+          if (catchTokens[ct].type === 'identifier') { excType = catchTokens[ct].value; break; }
+        }
         i = catchParens.endIdx;
       }
       var catchResult = this._extractBlock(tokens, i);
       i = catchResult.endIdx;
-      // Process catch body too
-      this._processTokenBlock(catchResult.tokens, caller, depth);
+      var catchLines = this._collectFragmentLines(catchResult.tokens, caller, depth);
+      catchBranches.push({ excType: excType, lines: catchLines });
     }
 
     if (i < tokens.length && tokens[i].value === 'finally') {
@@ -1575,6 +1743,27 @@
       var finallyResult = this._extractBlock(tokens, i);
       i = finallyResult.endIdx;
       this._processTokenBlock(finallyResult.tokens, caller, depth);
+    }
+
+    // Emit as alt/else combined fragment (same pattern as Python try/except)
+    var hasTryMsgs = this._anyMessages(tryLines);
+    var hasCatchMsgs = false;
+    for (var cb = 0; cb < catchBranches.length; cb++) {
+      if (this._anyMessages(catchBranches[cb].lines)) { hasCatchMsgs = true; break; }
+    }
+    if (hasTryMsgs || hasCatchMsgs) {
+      this.lines.push('alt [try]');
+      for (var tl = 0; tl < tryLines.length; tl++) this.lines.push(tryLines[tl]);
+      for (var cb = 0; cb < catchBranches.length; cb++) {
+        this.lines.push('else [catch ' + catchBranches[cb].excType + ']');
+        for (var cl = 0; cl < catchBranches[cb].lines.length; cl++) this.lines.push(catchBranches[cb].lines[cl]);
+      }
+      this.lines.push('end');
+    } else {
+      for (var tl = 0; tl < tryLines.length; tl++) this.lines.push(tryLines[tl]);
+      for (var cb = 0; cb < catchBranches.length; cb++) {
+        for (var cl = 0; cl < catchBranches[cb].lines.length; cl++) this.lines.push(catchBranches[cb].lines[cl]);
+      }
     }
 
     return i;
@@ -1828,10 +2017,39 @@
     while (current && !visited.has(current)) {
       visited.add(current);
       var meths = this.classMethods[current];
-      if (meths && meths[methodName] && meths[methodName].length > 0) return meths[methodName];
+      if (meths && meths[methodName] && meths[methodName].length > 0) {
+        // Check if the body is a stub (abstract/placeholder patterns)
+        if (!this._isStubBody(meths[methodName])) return meths[methodName];
+        // Stub body — try concrete override before falling through
+        var concrete = this._findConcreteOverride(current, methodName);
+        if (concrete) return concrete.body;
+        return meths[methodName]; // return stub as fallback
+      }
       current = this._findParent(current);
     }
     return null;
+  };
+
+  /** Check if a method body is a stub (throw UnsupportedOperationException, return null/0, etc.) */
+  JavaSequenceDiagramGenerator.prototype._isStubBody = function (tokens) {
+    if (!tokens || tokens.length === 0) return true;
+    // Filter out whitespace-like tokens
+    var meaningful = [];
+    for (var i = 0; i < tokens.length; i++) {
+      if (tokens[i].type !== 'whitespace' && tokens[i].type !== 'newline') {
+        meaningful.push(tokens[i]);
+      }
+    }
+    if (meaningful.length === 0) return true;
+    // Single statement: throw new ...Exception(...)
+    if (meaningful.length >= 2 && meaningful[0].value === 'throw' && meaningful[1].value === 'new') return true;
+    // Single statement: return null; or return 0; or return false;
+    if (meaningful.length === 2 && meaningful[0].value === 'return'
+        && (meaningful[1].value === 'null' || meaningful[1].value === '0'
+            || meaningful[1].value === 'false' || meaningful[1].value === 'true')) return true;
+    // Single return; (void)
+    if (meaningful.length === 1 && meaningful[0].value === 'return') return true;
+    return false;
   };
 
   JavaSequenceDiagramGenerator.prototype._findMethodInHierarchy = function (clsName, methodName) {

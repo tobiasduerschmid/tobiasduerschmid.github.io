@@ -171,6 +171,8 @@
     // UML diagram state
     this._umlDiagramEnabled = options.uml_diagram || false;
     this._umlPositionRight = options.uml_position === 'right'; // diagram in right bottom tab
+    this._umlPositionBelow = options.uml_position === 'below'; // diagram below instructions (always visible)
+    this._umlDefaultView = options.uml_default_view || false; // UML tab shown by default instead of Output
     this._umlContainer = null;
     this._umlContentEl = null;
     this._umlRefreshTimer = null;
@@ -377,7 +379,8 @@
         '</div>';
     }
 
-    var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight;
+    var useLeftUml = this._umlDiagramEnabled && !this._umlPositionRight && !this._umlPositionBelow;
+    var useBelowUml = this._umlDiagramEnabled && this._umlPositionBelow;
     this.root.innerHTML =
       '<div class="tvm-loading">' +
       '<div class="tvm-loading-spinner"></div>' +
@@ -394,6 +397,23 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar"><div class="tvm-step-nav"></div></div>' +
       '<div class="tvm-step-content-wrap"><div class="tvm-step-content"></div></div>' +
+      (useBelowUml
+        ? '<div class="tvm-uml-below-view">' +
+          '<div class="tvm-diagram-toolbar">' +
+          '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+          '<div class="tvm-diagram-zoom-controls">' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+          '<span class="tvm-diagram-zoom-label">100%</span>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+          '</div>' +
+          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+          '</div>' +
+          '<div class="tvm-diagram-content"></div>' +
+          '</div>'
+        : '') +
       '<div class="tvm-http-splitter" style="display:none"></div>' +
       '<div class="tvm-http-sidebar-view" style="display:none">' +
       '<div class="tvm-http-toolbar">' +
@@ -495,7 +515,9 @@
     this.gitGraphContainerEl = this.root.querySelector('.tvm-git-graph-container');
     this._umlContainer = this._umlPositionRight
       ? this.root.querySelector('.tvm-uml-right-view')
-      : this.root.querySelector('.tvm-uml-left-view');
+      : this._umlPositionBelow
+        ? this.root.querySelector('.tvm-uml-below-view')
+        : this.root.querySelector('.tvm-uml-left-view');
     this._umlContentEl = this.root.querySelector('.tvm-diagram-content');
     this._umlFullscreenEl = this.root.querySelector('.tvm-diagram-fullscreen-overlay');
     this._umlFsContentEl = this.root.querySelector('.tvm-diagram-fs-content');
@@ -2416,6 +2438,16 @@
       }
     }
 
+    // Update below-instructions UML view visibility (uml_position: below)
+    if (this._umlPositionBelow && this._umlContainer) {
+      var hasFiles = this._umlWatchedFiles.length > 0;
+      this._umlContainer.style.display = hasFiles ? '' : 'none';
+      if (hasFiles) {
+        this._umlViewActive = true;
+        this._scheduleUMLRefresh();
+      }
+    }
+
     // Update right-panel UML tab visibility (uml_position: right)
     var rightTabBar = this.root ? this.root.querySelector('.tvm-right-tab-bar') : null;
     if (rightTabBar) {
@@ -2458,6 +2490,8 @@
 
   /** Show UML diagram — switches left tab (default) or right tab (uml_position: right) */
   TutorialCode.prototype._showDiagramHideEditor = function () {
+    // Below mode: diagram is always visible inside instructions — nothing to toggle
+    if (this._umlPositionBelow) return;
     if (this._umlPositionRight) {
       // Right mode: switch bottom-right tab to UML; steps panel stays visible
       var outputView = this.root.querySelector('.tvm-output-view');
@@ -2514,7 +2548,7 @@
     }
   };
 
-  /** Lazily load the Python UML analyzer source code */
+  /** Lazily load the Python UML analyzer source code (legacy Pyodide fallback) */
   TutorialCode.prototype._loadUMLAnalyzer = function (callback) {
     if (this._umlAnalyzerCode) { callback(this._umlAnalyzerCode); return; }
     var self = this;
@@ -2529,6 +2563,21 @@
         console.error('Failed to load UML analyzer:', err);
         self._showUMLError('Failed to load UML analyzer script.');
       });
+  };
+
+  /** Lazily load the JS-based Python UML analyzer (fast, no Pyodide needed) */
+  TutorialCode.prototype._loadPythonJSAnalyzer = function (callback) {
+    if (typeof window !== 'undefined' && window.analyzePythonSources) { callback(); return; }
+    var self = this;
+    var path = this.config.pythonJSAnalyzerPath || '/js/uml-analyzer-python.js';
+    var script = document.createElement('script');
+    script.src = path;
+    script.onload = callback;
+    script.onerror = function () {
+      console.error('Failed to load Python JS analyzer:', path);
+      self._showUMLError('Failed to load Python UML analyzer script.');
+    };
+    document.head.appendChild(script);
   };
 
   /** Lazily load the TypeScript compiler (for JS/TS UML analysis) */
@@ -2577,9 +2626,6 @@
     var self = this;
     var lang = this._detectUMLLanguage();
 
-    // Python analysis needs the Pyodide worker
-    if (lang === 'python' && !this._worker) return;
-
     // Collect sources from watched files
     var sources = {};
     var pending = this._umlWatchedFiles.length;
@@ -2594,7 +2640,7 @@
       } else if (lang === 'java') {
         self._runJavaUMLAnalysis(sources);
       } else {
-        self._runUMLAnalysis(sources);
+        self._runPythonJSUMLAnalysis(sources);
       }
     }
 
@@ -2622,7 +2668,25 @@
     });
   };
 
-  /** Run the Python analyzer in Pyodide with the collected sources */
+  /** Run the Python analyzer directly in the browser (no Pyodide needed) */
+  TutorialCode.prototype._runPythonJSUMLAnalysis = function (sources) {
+    var self = this;
+    this._loadPythonJSAnalyzer(function () {
+      try {
+        var result = window.analyzePythonSources(sources);
+        self._umlLastDiagrams = result;
+        self._renderCurrentUMLDiagram();
+        if (result.errors && result.errors.length > 0) {
+          console.warn('Python UML analysis warnings:', result.errors);
+        }
+      } catch (err) {
+        console.error('Python UML analysis error:', err);
+        self._showUMLError('Python analysis failed: ' + err.message);
+      }
+    });
+  };
+
+  /** Run the Python analyzer in Pyodide with the collected sources (legacy fallback) */
   TutorialCode.prototype._runUMLAnalysis = function (sources) {
     var self = this;
     this._loadUMLAnalyzer(function (analyzerCode) {
@@ -3708,7 +3772,9 @@
     // Switch view between editor, git graph, or UML diagram based on step config.
     // If the step explicitly sets `view:`, auto-switch + update toggle.
     // If not, keep whichever view the user was on (manual toggle persists).
-    if (step.view === 'uml_diagram' && this._umlDiagramEnabled) {
+    var shouldShowUml = (step.view === 'uml_diagram' && this._umlDiagramEnabled) ||
+      (this._umlDefaultView && this._umlDiagramEnabled && this._umlWatchedFiles.length > 0 && !step.view);
+    if (shouldShowUml) {
       this._umlViewActive = true;
       this._showDiagramHideEditor();
       this._refreshUMLDiagram();
@@ -3717,6 +3783,10 @@
       this._umlViewActive = false;
       this._showEditorHideDiagram();
       this._setView(step.view);
+    } else if (this._umlDefaultView && this._umlDiagramEnabled && this._umlWatchedFiles.length === 0) {
+      // Step has no UML files — fall back to output
+      this._umlViewActive = false;
+      this._showEditorHideDiagram();
     } else if (this._umlViewActive && this._umlDiagramEnabled) {
       // UML view persists across steps — refresh with new watched files
       this._refreshUMLDiagram();
