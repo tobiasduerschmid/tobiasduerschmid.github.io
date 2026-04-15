@@ -1,0 +1,389 @@
+title: "Java — What Does This Code Do?"
+description: "You are shown Java code. Go beyond naming what it does — explain *why* it behaves that way, what design choice it reflects, or what would break if it changed."
+cards:
+
+  - id: 1
+    question: |
+      ```java
+      String a = new String("hello");
+      String b = new String("hello");
+      System.out.println(a == b);        // Line A
+      System.out.println(a.equals(b));   // Line B
+      ```
+      Predict each output. Then explain *why* Line A and Line B differ — what does each operator actually check?
+    answer: |
+      **Line A:** `false`. **Line B:** `true`.
+
+      `==` checks **reference identity** — are `a` and `b` the same object in memory? `new String(...)` forces a fresh heap allocation each time, so `a` and `b` are two different objects.
+
+      `.equals()` checks **value equality** — do the two Strings contain the same characters? They do, so it returns `true`.
+
+      **Key insight:** Java's `==` is *always* a reference comparison for objects. Unlike Python's `==` (value comparison) and C++'s `==` (overloadable per class), Java's `==` never examines content.
+
+  - id: 2
+    question: |
+      ```java
+      Integer x = 127;
+      Integer y = 127;
+      System.out.println(x == y);   // true
+
+      Integer p = 128;
+      Integer q = 128;
+      System.out.println(p == q);   // false
+      ```
+      The only change is 127 → 128. What mechanism in the JVM causes this flip, and why is this dangerous in production code?
+    answer: |
+      Java pre-creates and caches `Integer` objects for values **−128 to 127** at JVM startup. Autoboxing `Integer x = 127` hands back the *same cached object* every time, so `x == y` is `true` (same reference).
+
+      Outside the cache range, `Integer.valueOf(128)` creates a **new heap object** each call. `p` and `q` point to different objects — `==` returns `false`.
+
+      **Why dangerous:** Tests usually use small values (IDs, counts) that fall in the cache range. `==` appears to work. In production, large IDs or counts fall outside the cache and `==` silently returns `false`. The fix is always `.equals()` for wrapper types.
+
+  - id: 3
+    question: |
+      ```java
+      Integer count = null;
+      int n = count;  // what happens here?
+      ```
+      Describe exactly what the JVM does on the second line and what error results.
+    answer: |
+      Auto-unboxing is syntactic sugar. The second line expands to:
+      ```java
+      int n = count.intValue();
+      ```
+      Calling `.intValue()` on `null` throws a **NullPointerException** — the JVM cannot dereference a null reference.
+
+      This is a common production bug because `Integer` fields default to `null` (not `0`), and database queries returning no row often produce `null` wrapper values.
+
+  - id: 4
+    question: |
+      ```java
+      // Version A
+      Integer sum = 0;
+      for (int i = 0; i < 1_000_000; i++) {
+          sum += i;
+      }
+
+      // Version B
+      int sum = 0;
+      for (int i = 0; i < 1_000_000; i++) {
+          sum += i;
+      }
+      ```
+      Both produce the same final value. Analyze what the JVM does differently in Version A on every iteration. Which version should you use?
+    answer: |
+      Version A expands `sum += i` to:
+      ```java
+      sum = Integer.valueOf(sum.intValue() + i);
+      ```
+      That is two method calls and **one new `Integer` object allocation** per iteration — one million short-lived objects in total, generating garbage-collector pressure.
+
+      Version B performs pure stack arithmetic — no objects created, no method calls.
+
+      **Use Version B.** Use primitive types for accumulators and counters. Use wrapper types only when generics (`List<Integer>`), nullable values, or object methods (`.compareTo()`) require them.
+
+  - id: 5
+    question: |
+      ```java
+      public class BankAccount {
+          public String owner;
+          public double balance;
+          ...
+      }
+      ```
+      The fields are `public`. Explain what specific harm this causes compared to making them `private` with a `withdraw()` method that validates before mutating.
+    answer: |
+      With public fields, **any class can set `balance` to any value** — including negative amounts or values that bypass business rules. There is no enforcement point.
+
+      ```java
+      account.balance = -999.0;  // completely legal — no way to prevent this
+      ```
+
+      With `private double balance` and a `withdraw()` method, **all mutations go through one gate** where you can enforce invariants:
+      ```java
+      public boolean withdraw(double amount) {
+          if (amount > 0 && balance >= amount) { balance -= amount; return true; }
+          return false;
+      }
+      ```
+
+      This is the core value of encapsulation: **validation cannot be bypassed** because callers have no path to the field directly.
+
+  - id: 6
+    question: |
+      ```java
+      class GradeReport {
+          private ArrayList<Integer> scores;
+
+          public ArrayList<Integer> getScores() { return scores; }
+      }
+      ```
+      The field is `private`. A colleague says "information hiding is achieved." Are they right? What would break if you later switch `scores` to `int[]`?
+    answer: |
+      **Wrong.** The field is *encapsulated* (private), but information hiding is not achieved.
+
+      The return type `ArrayList<Integer>` **exposes the storage decision** as part of the public API. Every caller of `getScores()` now depends on `ArrayList`. If you switch to `int[]`:
+
+      ```java
+      // These callers break immediately:
+      ArrayList<Integer> s = report.getScores();
+      s.iterator();    // int[] has no iterator()
+      ```
+
+      Proper information hiding exposes **behavior**, not data structure:
+      - `getAverage()` — hides that you store an ArrayList
+      - `getLetterGrade(int score)` — hides the grading policy
+      - `formatReport()` — hides the output format
+
+      After this refactoring, switching from `ArrayList` to `int[]` changes exactly one class.
+
+  - id: 7
+    question: |
+      ```java
+      public interface Shape {
+          double getArea();
+          double getPerimeter();
+      }
+
+      public class Circle implements Shape {
+          private double radius;
+          public Circle(double r) { this.radius = r; }
+
+          @Override
+          public double getArea() { return Math.PI * radius * radius; }
+
+          @Override
+          public double getPerimeter() { return 2 * Math.PI * radius; }
+      }
+
+      Shape s = new Circle(5.0);
+      System.out.println(s.getArea());
+      ```
+      Explain what `@Override` buys you here. Give an example of the specific bug it prevents.
+    answer: |
+      `@Override` instructs the compiler to **verify that the annotated method actually overrides something** in the parent class or interface.
+
+      Without it, a typo silently creates a new method instead of overriding:
+
+      ```java
+      // Without @Override — compiles, but never called polymorphically
+      public double getArae() { return Math.PI * radius * radius; }  // typo!
+      ```
+
+      With `@Override`:
+      ```java
+      @Override
+      public double getArae() { ... }  // COMPILE ERROR: method does not override
+      ```
+
+      It also catches the case where an interface method is renamed — the override becomes a dead method silently if `@Override` is absent.
+
+  - id: 8
+    question: |
+      ```java
+      abstract class Vehicle {
+          private String make;
+          public Vehicle(String make) { this.make = make; }
+          public String getMake() { return make; }
+          public abstract String describe();
+      }
+
+      class Car extends Vehicle {
+          public Car(String make) {
+              super(make);       // ← this line
+          }
+          @Override
+          public String describe() { return getMake() + " Car"; }
+      }
+      ```
+      Why must `super(make)` be the **first** statement in `Car`'s constructor? What would happen if it were moved after `getMake()`?
+    answer: |
+      Java requires the parent's constructor to run **before any subclass code**, because the subclass may depend on state initialized by the parent. If `super()` is not the first statement, a partially-constructed `Vehicle` could be accessed.
+
+      If you tried to move `super(make)` below a `getMake()` call:
+      ```java
+      public Car(String make) {
+          getMake();    // compile error — super() must come first
+          super(make);
+      }
+      ```
+      The compiler enforces this: if no explicit `super()` or `this()` is the first line, Java implicitly inserts `super()` (the no-arg parent constructor). If the parent has no no-arg constructor, compilation fails.
+
+      In C++, the equivalent constraint is enforced through initializer lists: `Car(String make) : Vehicle(make) { }`.
+
+  - id: 9
+    question: |
+      ```java
+      Vehicle[] fleet = {
+          new Car("Toyota", 2024),
+          new Motorcycle("Harley", 2023),
+      };
+      for (Vehicle v : fleet) {
+          System.out.println(v.describe());
+      }
+      ```
+      The reference type is `Vehicle`, but `describe()` is abstract. Describe precisely what happens at **compile time** and at **runtime** when `v.describe()` is called.
+    answer: |
+      **Compile time:** The compiler checks that `describe()` is declared in the static type of `v`, which is `Vehicle`. Since `Vehicle` declares `abstract String describe()`, the call is legal. The compiler does **not** know which implementation will run.
+
+      **Runtime:** The JVM uses **dynamic dispatch** (virtual method table lookup). It examines the *actual* type of the object — `Car` or `Motorcycle` — and calls that class's `describe()` implementation. The reference type `Vehicle` is irrelevant at this point.
+
+      This is Java's default behavior for all non-static, non-final methods. Unlike C++, where virtual dispatch requires the `virtual` keyword, every Java method is effectively virtual.
+
+  - id: 10
+    question: |
+      ```java
+      public class Pair<A, B> {
+          private A first;
+          private B second;
+
+          public static <X, Y> Pair<Y, X> swap(Pair<X, Y> p) {
+              return new Pair<>(p.getSecond(), p.getFirst());
+          }
+      }
+      ```
+      Why does `swap` declare its own type parameters `<X, Y>` instead of reusing the class's `<A, B>`?
+    answer: |
+      `swap` is `static` — it has **no access to the instance's type parameters** `A` and `B`, because statics exist on the class, not on any particular `Pair<A, B>` instance.
+
+      `<X, Y>` are fresh parameters scoped to this method call, letting the compiler infer types from the argument:
+
+      ```java
+      Pair<String, Integer> p = new Pair<>("Alice", 95);
+      Pair<Integer, String> swapped = Pair.swap(p);
+      // Compiler infers: X=String, Y=Integer → returns Pair<Integer, String>
+      ```
+
+      If `swap` used `A` and `B` directly, a static method would need to belong to a specific `Pair<A, B>`, which is impossible. The method-level parameters `<X, Y>` make `swap` work for *any* `Pair`, not just one with a specific concrete type.
+
+  - id: 11
+    question: |
+      ```java
+      Map<String, Integer> scores = new HashMap<>();
+      scores.put("Alice", 95);
+      int grade = scores.get("Bob");  // Bob not in map
+      ```
+      This compiles without warnings. Predict what happens at runtime and explain the chain of events.
+    answer: |
+      **Runtime:** `NullPointerException`.
+
+      Step-by-step:
+      1. `scores.get("Bob")` — `"Bob"` is not a key, so `HashMap.get()` returns **`null`** (not `0`, not an exception)
+      2. `int grade = null` — auto-unboxing expands this to `null.intValue()`
+      3. Calling `.intValue()` on a null reference throws `NullPointerException`
+
+      **Fixes:**
+      ```java
+      int grade = scores.getOrDefault("Bob", 0);     // concise
+      // or
+      if (scores.containsKey("Bob")) { grade = scores.get("Bob"); }
+      ```
+
+      This is one of the most common Java production bugs: HashMap silently returns null, and the NPE appears at the *unboxing site*, which is often far from where the missing key was introduced.
+
+  - id: 12
+    question: |
+      ```java
+      public class SafeCalculator {
+          public double divide(int a, int b) throws CalculatorException {
+              if (b == 0) throw new CalculatorException("Division by zero");
+              return (double) a / b;
+          }
+      }
+
+      class CalculatorException extends Exception {
+          public CalculatorException(String msg) { super(msg); }
+      }
+      ```
+      `CalculatorException` extends `Exception`, not `RuntimeException`. What concrete difference does this choice produce for **callers** of `divide()`?
+    answer: |
+      Because `CalculatorException` is **checked** (extends `Exception`), the compiler forces every caller to either:
+      1. Catch it: `try { calc.divide(10, 0); } catch (CalculatorException e) { ... }`
+      2. Or propagate it: `public void run() throws CalculatorException { ... }`
+
+      If `CalculatorException` extended `RuntimeException`, callers could ignore it entirely — the exception would propagate silently until it crashed the program at runtime.
+
+      The design choice says: *"Division by zero is a recoverable situation the caller should explicitly decide how to handle"* — not a programmer error. This is appropriate for library APIs where you want to force callers to think about failure modes.
+
+  - id: 13
+    question: |
+      ```java
+      // Version A
+      public double average(ArrayList<Integer> scores) { ... }
+
+      // Version B
+      public double average(List<Integer> scores) { ... }
+      ```
+      Both compile. Analyze the practical difference when other code calls `average()`.
+    answer: |
+      **Version A** forces callers to pass an `ArrayList` specifically:
+      ```java
+      average(new ArrayList<>(...));   // works
+      average(new LinkedList<>(...));  // compile error!
+      ```
+
+      **Version B** accepts any `List` implementation:
+      ```java
+      average(new ArrayList<>(...));   // works
+      average(new LinkedList<>(...));  // works
+      average(Arrays.asList(1,2,3));   // works — Arrays.asList returns a List, not ArrayList
+      ```
+
+      **Version B is correct.** The parameter should be the **narrowest interface** that expresses what the method actually needs. `average()` only needs to iterate — that's a `List` contract, not an `ArrayList` one. Using `ArrayList` couples callers to an implementation detail the method doesn't actually require.
+
+  - id: 14
+    question: |
+      ```java
+      Set<String> submitted = new HashSet<>();
+      List<String> roster = new ArrayList<>();
+
+      submitted.add("Alice");
+      submitted.add("Alice");  // duplicate
+
+      roster.add("Alice");
+      roster.add("Alice");     // duplicate
+
+      System.out.println(submitted.size());  // ?
+      System.out.println(roster.size());     // ?
+      ```
+      Predict each output and explain what design principle drives the difference between `HashSet` and `ArrayList`.
+    answer: |
+      - `submitted.size()` → **1**
+      - `roster.size()` → **2**
+
+      `HashSet` implements the `Set` contract: **a collection with no duplicate elements**. `add()` silently ignores values already present.
+
+      `ArrayList` implements the `List` contract: **an ordered sequence** that allows duplicates. Each `add()` appends unconditionally.
+
+      **Design principle:** The collection type encodes your **invariant** — what the data is allowed to contain. Choosing `HashSet` for submitted assignments is not just a performance choice; it's a semantic declaration that *"a student can only submit once."* `ArrayList` gives you no such guarantee.
+
+  - id: 15
+    question: |
+      ```java
+      public class Course implements Enrollable {
+          private ArrayList<Student> students = new ArrayList<>();
+
+          public boolean isEnrolled(String name) {
+              for (Student s : students) {
+                  if (s.getName().equals(name)) return true;
+              }
+              return false;
+          }
+      }
+      ```
+      This works correctly. Evaluate it for performance and explain what would change if you swapped `ArrayList<Student>` for `HashMap<String, Student>`.
+    answer: |
+      **Current:** `isEnrolled()` is **O(n)** — it scans every student linearly until a match is found. For a large course (or many `isEnrolled` calls), this is slow.
+
+      **With `HashMap<String, Student>`** keyed by name:
+      ```java
+      private HashMap<String, Student> students = new HashMap<>();
+
+      public boolean isEnrolled(String name) {
+          return students.containsKey(name);  // O(1) hash lookup
+      }
+      ```
+
+      The tradeoff: `HashMap` loses insertion order (use `LinkedHashMap` to preserve it), but gains O(1) lookup. For a `Course.isEnrolled()` called frequently (e.g., every time someone tries to enroll), the O(1) version is significantly better.
+
+      **Information-hiding perspective:** Because `students` is `private`, this switch only modifies one class — no callers break. This is the payoff of information hiding.

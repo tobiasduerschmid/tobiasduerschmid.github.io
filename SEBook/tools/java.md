@@ -711,4 +711,8 @@ if (score >= 90) letter = "A";  // in main, not in GradeReport
 | Sorted elements | `TreeSet<T>` or `TreeMap<K,V>` |
 | Deduplication | `HashSet<T>` — add freely, duplicates are ignored |
 
+{% include flashcards.html id="java_syntax_explain" %}
+
+{% include flashcards.html id="java_syntax_generate" %}
+
 {% include quiz.html id="java" %}

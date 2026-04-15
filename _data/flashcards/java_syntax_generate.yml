@@ -1,0 +1,385 @@
+title: "Java — Write the Code"
+description: "You are given a scenario or design problem. Write Java code that solves it. Questions target Apply, Evaluate, and Create levels — not just syntax recall."
+cards:
+
+  - id: 1
+    question: |
+      **[Apply]** Two `String` variables `input` and `stored` may or may not point to the same object. Write a boolean expression that checks whether they contain the same characters, guaranteed to be correct regardless of how they were created.
+    answer: "`input.equals(stored)`"
+    explanation: "`.equals()` compares character content regardless of object identity. `==` would fail whenever `input` and `stored` are separate objects with identical content — for example, when `stored` came from a database query and `input` came from user input."
+
+  - id: 2
+    question: |
+      **[Evaluate + Apply]** A HashMap lookup is crashing in production with a `NullPointerException`. The code is:
+      ```java
+      Map<String, Integer> grades = loadFromDB();
+      int g = grades.get(studentId);
+      ```
+      Fix it in **one line**, defaulting to `0` for missing students.
+    answer: "`int g = grades.getOrDefault(studentId, 0);`"
+    explanation: "`HashMap.get()` returns `null` for missing keys. Auto-unboxing `null` to `int` throws NPE. `getOrDefault(key, fallback)` returns the value if present, or the fallback safely — no null, no NPE. Alternatively: `grades.containsKey(studentId) ? grades.get(studentId) : 0`, but `getOrDefault` is more idiomatic."
+
+  - id: 3
+    question: |
+      **[Create]** Design a `BankAccount` class that:
+      - Stores `owner` (String) and `balance` (double) — neither directly accessible from outside
+      - Provides a constructor, `getOwner()`, `getBalance()`
+      - `deposit(double amount)` — only accepts positive amounts
+      - `withdraw(double amount)` — returns `false` if insufficient funds; `true` on success
+      - `toString()` returns `"BankAccount[owner=Alice, balance=100.0]"`
+    answer: |
+      ```java
+      public class BankAccount {
+          private String owner;
+          private double balance;
+
+          public BankAccount(String owner, double initial) {
+              this.owner = owner;
+              this.balance = initial;
+          }
+
+          public String getOwner()   { return owner; }
+          public double getBalance() { return balance; }
+
+          public void deposit(double amount) {
+              if (amount > 0) balance += amount;
+          }
+
+          public boolean withdraw(double amount) {
+              if (amount > 0 && balance >= amount) {
+                  balance -= amount;
+                  return true;
+              }
+              return false;
+          }
+
+          @Override
+          public String toString() {
+              return "BankAccount[owner=" + owner + ", balance=" + balance + "]";
+          }
+      }
+      ```
+    explanation: "Private fields + validated methods = encapsulation. The `withdraw` boolean return avoids throwing an exception for an expected condition (insufficient funds isn't a programming error). `toString()` is annotated `@Override` — the compiler verifies we're overriding `Object.toString()`."
+
+  - id: 4
+    question: |
+      **[Evaluate + Create]** This class has a design problem. Identify it, then rewrite `GradeReport` so that changing the grading thresholds (A ≥ 90, B ≥ 80…) requires editing **only one method**:
+      ```java
+      class GradeReport {
+          private List<Integer> scores;
+          public List<Integer> getScores() { return scores; }
+      }
+
+      // In main:
+      for (int s : report.getScores()) {
+          if (s >= 90) System.out.println("A");
+          else if (s >= 80) System.out.println("B");
+      }
+      ```
+    answer: |
+      **Problem:** The grading policy leaks into `main`. Changing thresholds requires editing every call site.
+
+      ```java
+      class GradeReport {
+          private List<Integer> scores = new ArrayList<>();
+
+          public void addScore(int score) { scores.add(score); }
+
+          // Hides the grading policy — change thresholds in ONE place
+          public String getLetterGrade(int score) {
+              if (score >= 90) return "A";
+              if (score >= 80) return "B";
+              if (score >= 70) return "C";
+              if (score >= 60) return "D";
+              return "F";
+          }
+
+          // Hides the data representation — callers never see ArrayList
+          public double getAverage() {
+              int sum = 0;
+              for (int s : scores) sum += s;
+              return sum / (double) scores.size();
+          }
+
+          // Hides the output format — change to CSV here, nothing else changes
+          public String formatReport(String name) {
+              StringBuilder sb = new StringBuilder("Report: " + name + "\n");
+              for (int s : scores)
+                  sb.append("  ").append(s).append(" (").append(getLetterGrade(s)).append(")\n");
+              sb.append("Average: ").append(getAverage());
+              return sb.toString();
+          }
+      }
+      ```
+    explanation: "This is Parnas's information hiding principle in action. Three secrets are now hidden: grading policy (in `getLetterGrade`), data representation (no `getScores()` exposed), output format (in `formatReport`). Changing any of them touches exactly one method."
+
+  - id: 5
+    question: |
+      **[Apply]** Define a `Drawable` interface with one method: `String draw()`. Then write a `Square` class that implements it — `draw()` returns `"Square(side=5.0)"`.
+    answer: |
+      ```java
+      public interface Drawable {
+          String draw();
+      }
+
+      public class Square implements Drawable {
+          private double side;
+
+          public Square(double side) { this.side = side; }
+
+          @Override
+          public String draw() {
+              return "Square(side=" + side + ")";
+          }
+      }
+      ```
+    explanation: "Interface methods are implicitly `public abstract`. The implementing class uses `implements` (not `extends`). Every method declared in the interface must be implemented — the compiler enforces this. `@Override` confirms the method matches the interface signature."
+
+  - id: 6
+    question: |
+      **[Create]** Design an abstract class `Animal` with:
+      - A `private String name` and a constructor
+      - A concrete `getName()` getter
+      - An abstract method `makeSound()` that returns a `String`
+
+      Then write a `Dog` subclass that calls the parent constructor and returns `"Woof!"` from `makeSound()`.
+    answer: |
+      ```java
+      public abstract class Animal {
+          private String name;
+
+          public Animal(String name) { this.name = name; }
+
+          public String getName() { return name; }
+
+          public abstract String makeSound();
+      }
+
+      public class Dog extends Animal {
+          public Dog(String name) {
+              super(name);   // must be first — initializes parent's private field
+          }
+
+          @Override
+          public String makeSound() { return "Woof!"; }
+      }
+      ```
+    explanation: "`super(name)` must be the first statement — it runs the parent constructor before any Dog-specific code. Because `name` is `private` in `Animal`, `Dog` cannot access it directly — it uses `getName()`. The `abstract` keyword on `makeSound()` forces every concrete subclass to provide an implementation."
+
+  - id: 7
+    question: |
+      **[Apply]** Write a generic class `Box<T>` that holds one item of any type. Include a constructor, a `getItem()` method, and a `setItem()` method.
+    answer: |
+      ```java
+      public class Box<T> {
+          private T item;
+
+          public Box(T item) { this.item = item; }
+
+          public T getItem()           { return item; }
+          public void setItem(T item)  { this.item = item; }
+      }
+
+      // Usage:
+      Box<String> nameBox = new Box<>("Alice");
+      String name = nameBox.getItem();   // no cast needed — compiler knows it's String
+
+      Box<Integer> numBox = new Box<>(42);
+      int n = numBox.getItem();          // auto-unboxing Integer → int
+      ```
+    explanation: "`<T>` is a type parameter — a placeholder filled in at the call site. The compiler uses it to insert correct types and casts, catching mismatches at compile time instead of runtime. `Box<int>` is illegal — use `Box<Integer>` since generics require object types (due to type erasure)."
+
+  - id: 8
+    question: |
+      **[Apply + Analyze]** Write a generic static method `findMax` that takes two arguments of any type and returns the larger one. The type must be **constrained** to types that can be compared.
+    answer: |
+      ```java
+      public static <T extends Comparable<T>> T findMax(T a, T b) {
+          return a.compareTo(b) >= 0 ? a : b;
+      }
+
+      // Usage:
+      System.out.println(findMax("apple", "banana"));  // "banana"
+      System.out.println(findMax(3, 7));               // 7
+      ```
+    explanation: "`<T extends Comparable<T>>` is a **bounded type parameter** — it restricts `T` to types that implement `Comparable`. This is the Java equivalent of C++20 concepts. Without the bound, the compiler would reject `a.compareTo(b)` because it can't guarantee `T` has that method. `String`, `Integer`, `Double` all implement `Comparable`."
+
+  - id: 9
+    question: |
+      **[Create]** Write a `WordCounter` class that takes a `String[]` in its constructor and provides:
+      - `int getCount(String word)` — returns 0 for unknown words, no NPE
+      - `int getUniqueCount()` — number of distinct words
+
+      Use the most appropriate collection for each responsibility.
+    answer: |
+      ```java
+      import java.util.HashMap;
+      import java.util.HashSet;
+
+      public class WordCounter {
+          private HashMap<String, Integer> counts   = new HashMap<>();
+          private HashSet<String>         unique    = new HashSet<>();
+
+          public WordCounter(String[] words) {
+              for (String w : words) {
+                  unique.add(w);                                // HashSet deduplicates
+                  counts.put(w, counts.getOrDefault(w, 0) + 1); // HashMap counts
+              }
+          }
+
+          public int getCount(String word) {
+              return counts.getOrDefault(word, 0);  // safe — no NPE on missing key
+          }
+
+          public int getUniqueCount() {
+              return unique.size();
+          }
+      }
+      ```
+    explanation: "`HashMap<String, Integer>` maps each word to its frequency — O(1) insert and lookup. `HashSet<String>` tracks distinct words — O(1) add with automatic deduplication. `getOrDefault(word, 0)` avoids the NPE that `get()` followed by auto-unboxing would cause for missing keys."
+
+  - id: 10
+    question: |
+      **[Apply]** Define a checked exception `EnrollmentException` and a `Course.enroll(Student s)` method that throws it when the course is full (`capacity` exceeded). Write both the class definition and the calling code that handles the exception.
+    answer: |
+      ```java
+      public class EnrollmentException extends Exception {
+          public EnrollmentException(String message) {
+              super(message);   // passes message to Exception's constructor
+          }
+      }
+
+      public class Course {
+          private int capacity;
+          private List<Student> students = new ArrayList<>();
+
+          public Course(int capacity) { this.capacity = capacity; }
+
+          public void enroll(Student s) throws EnrollmentException {
+              if (students.size() >= capacity) {
+                  throw new EnrollmentException("Course is full");
+              }
+              students.add(s);
+          }
+      }
+
+      // Calling code — compiler forces handling
+      try {
+          course.enroll(new Student("Alice", 1001));
+      } catch (EnrollmentException e) {
+          System.out.println("Could not enroll: " + e.getMessage());
+      }
+      ```
+    explanation: "Extending `Exception` (not `RuntimeException`) makes it **checked** — callers must catch or re-throw it. The `throws EnrollmentException` in the method signature is part of the contract and required by the compiler. `super(message)` stores the message in `Exception`, making it available via `getMessage()`."
+
+  - id: 11
+    question: |
+      **[Apply]** Write a `try-catch-finally` block that: opens a file (throws `IOException`), reads its content, and prints an error if it fails. The `finally` block should always print `"Done."`.
+    answer: |
+      ```java
+      try {
+          String content = readFile("data.txt");   // throws IOException
+          System.out.println(content);
+      } catch (IOException e) {
+          System.err.println("File error: " + e.getMessage());
+      } finally {
+          System.out.println("Done.");   // always runs — exception or not
+      }
+      ```
+    explanation: "`catch (IOException e)` handles `IOException` and all its subclasses (e.g., `FileNotFoundException`). `finally` runs whether or not an exception was thrown — use it for cleanup (closing streams, releasing locks). Even if the `catch` block re-throws, `finally` still runs."
+
+  - id: 12
+    question: |
+      **[Evaluate + Apply]** You need to store course enrollments. Two options:
+      - `List<Student>` with a manual duplicate check in `enroll()`
+      - `LinkedHashSet<Student>` that handles duplicates automatically
+
+      Implement `enroll(Student s)` using each approach, then state which is preferable and why.
+    answer: |
+      ```java
+      // Option A: List — manual duplicate check
+      private List<Student> students = new ArrayList<>();
+      public void enroll(Student s) {
+          if (!students.contains(s)) students.add(s);
+      }
+
+      // Option B: LinkedHashSet — automatic deduplication, insertion order preserved
+      private LinkedHashSet<Student> students = new LinkedHashSet<>();
+      public void enroll(Student s) {
+          students.add(s);   // ignored if already present — no check needed
+      }
+      ```
+
+      **Option B is preferable.** `LinkedHashSet.add()` is O(1) and the "no duplicates" invariant is **enforced by the type** — you cannot accidentally skip the check. `List.contains()` is O(n) and the invariant is only enforced if every `enroll()` caller remembers to check. Choose a collection whose contract matches your invariant.
+    explanation: "Choosing the right collection encodes intent. `Set` means 'unique elements' — the type enforces the invariant. `List` means 'ordered sequence with possible duplicates' — you must enforce uniqueness manually, which is fragile. `LinkedHashSet` adds insertion-order iteration over plain `HashSet`."
+
+  - id: 13
+    question: |
+      **[Apply]** Write a method `printAll(List<String> items)` that iterates the list with an enhanced for-loop, printing each item. Then call it with an `ArrayList<String>` **and** a `LinkedList<String>`. Explain why both calls compile.
+    answer: |
+      ```java
+      public void printAll(List<String> items) {
+          for (String item : items) {
+              System.out.println(item);
+          }
+      }
+
+      // Both compile because both implement List<String>
+      List<String> array  = new ArrayList<>(Arrays.asList("a", "b"));
+      List<String> linked = new LinkedList<>(Arrays.asList("c", "d"));
+
+      printAll(array);   // fine
+      printAll(linked);  // fine
+      ```
+    explanation: "Declaring the parameter as `List<String>` (the interface) rather than `ArrayList<String>` (the concrete class) allows any `List` implementation to be passed. This is 'program to an interface, not an implementation.' The enhanced for-loop works on any `Iterable`, which both `ArrayList` and `LinkedList` implement through `List`."
+
+  - id: 14
+    question: |
+      **[Create]** You are building a course registration system. Design the method signature (interface method + throws) for an `Enrollable` interface that:
+      - Adds a student (can fail if course is full or duplicate)
+      - Removes a student by name (returns whether it succeeded)
+      - Checks enrollment by name
+      - Returns a list of enrolled student names
+    answer: |
+      ```java
+      import java.util.ArrayList;
+
+      public interface Enrollable {
+          // Throws checked exception — caller must handle enrollment failures
+          void enroll(Student student) throws EnrollmentException;
+
+          // Returns false if student not found — boolean, not exception (expected condition)
+          boolean drop(String name);
+
+          // Pure lookup — no side effects, no exception
+          boolean isEnrolled(String name);
+
+          // Returns names only — hides Student objects from caller
+          ArrayList<String> getRoster();
+      }
+      ```
+    explanation: "`enroll()` throws a checked exception because a full course is an external condition the caller should handle. `drop()` returns `boolean` because dropping a non-existent student is a non-exceptional expected case. `getRoster()` returns `ArrayList<String>` (names) rather than exposing `Student` objects — this hides the internal `Student` type from consumers of the interface."
+
+  - id: 15
+    question: |
+      **[Evaluate + Create]** A teammate wrote this accumulator. Find the performance issue, explain the root cause, and write the corrected version.
+      ```java
+      Integer total = 0;
+      for (String word : words) {
+          if (word.length() > 5) total++;
+      }
+      ```
+    answer: |
+      **Issue:** `total++` expands to `total = Integer.valueOf(total.intValue() + 1)` — an **object allocation on every iteration** for an `Integer` that is immediately discarded.
+
+      **Root cause:** `Integer` is a wrapper (heap object). Using it as an accumulator creates one new object per loop iteration, generating garbage-collector pressure.
+
+      ```java
+      // Corrected — use primitive int for the counter
+      int total = 0;
+      for (String word : words) {
+          if (word.length() > 5) total++;
+      }
+      ```
+
+      Use `Integer` only when the type system requires it: generic containers (`List<Integer>`), nullable fields, or calling methods like `.compareTo()`. For local counters and accumulators, always use `int`.

@@ -1271,6 +1271,7 @@ steps:
   #           Bloom's: Apply + Create
   # --------------------------------------------------------------------------
   - title: "Interfaces: Design by Contract"
+    uml_class_layout: compact
     uml_files:
       - Shape.java
       - Circle.java
