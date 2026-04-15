@@ -1944,6 +1944,13 @@ var JavaCompiler = (function () {
       '  if (typeof a === "string" && typeof b === "string") return a < b ? -1 : a > b ? 1 : 0;',
       '  return 0;',
       '}',
+      'function __javaEquals(a, b) {',
+      '  if (a === b) return true;',
+      '  if (a == null || b == null) return false;',
+      '  var av = typeof a.valueOf === "function" ? a.valueOf() : a;',
+      '  var bv = typeof b.valueOf === "function" ? b.valueOf() : b;',
+      '  return av === bv;',
+      '}',
       '',
       '// Functional interface helpers — lambdas are plain JS functions, these',
       '// adapters let Java code call .apply(), .test(), .accept(), .run(), .get()',
@@ -2499,7 +2506,7 @@ var JavaCompiler = (function () {
     // toString()
     if (method === 'toString') return 'String(' + obj + ')';
     if (method === 'hashCode') return '(typeof ' + obj + ' === "string" ? ' + obj + '.split("").reduce(function(h,c){return((h<<5)-h)+c.charCodeAt(0)|0;},0) : ' + obj + ')';
-    if (method === 'equals') return '(' + obj + ' === ' + args[0] + ')';
+    if (method === 'equals') return '__javaEquals(' + obj + ', ' + args[0] + ')';
     if (method === 'compareTo') return '__javaCompare(' + obj + ', ' + args[0] + ')';
     if (method === 'getClass') return '(' + obj + '.constructor.name || "Object")';
 

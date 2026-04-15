@@ -181,6 +181,7 @@
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
     this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
     this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
+    this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
     this._umlViewActive = false;        // true when UML tab is selected
     this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
@@ -3751,6 +3752,13 @@
         if (this._httpUrlEl) this._httpUrlEl.value = step.http_url || 'http://localhost:3000/';
         if (this._httpMethodEl) this._httpMethodEl.value = step.http_method || 'GET';
       }
+    }
+
+    // Per-step UML class layout override (falls back to global setting)
+    if (step.uml_class_layout) {
+      this._umlClassLayoutPreference = step.uml_class_layout;
+    } else {
+      this._umlClassLayoutPreference = this._umlClassLayoutDefault;
     }
 
     // Update UML watched files for this step
