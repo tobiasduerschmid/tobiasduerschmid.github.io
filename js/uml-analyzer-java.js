@@ -436,6 +436,15 @@
       }
 
       // Method or field: Type name(...) or Type name;
+      // Skip method-level type parameters: e.g. <X, Y> in `public static <X, Y> Pair<Y,X> swap(...)`
+      if (at('punct', '<')) {
+        var depth = 1; advance();
+        while (pos < tokens.length && depth > 0) {
+          var t = advance();
+          if (t.value === '<') depth++;
+          else if (t.value === '>') depth--;
+        }
+      }
       var savedPos = pos;
       var type = parseType();
       if (!type) {
@@ -1019,7 +1028,7 @@
             return { name: p.name, type: _simpleTypeName(p.type) };
           }),
           returnType: _simpleTypeName(member.returnType),
-          visibility: '+', isAbstract: !_hasMod(member.modifiers, 'default')
+          visibility: '+'
         });
         methods[member.name] = member.body;
         mParamsMap[member.name] = params;
@@ -1163,10 +1172,11 @@
 
       lines.push(keyword + ' ' + info.name + ' {');
 
-      // Attributes (filter out those promoted to relationship arrows)
+      // Attributes (filter out those promoted to relationship arrows,
+      // but keep collection-typed fields since their generic type is informative)
       for (var a = 0; a < info.attributes.length; a++) {
         var attr = info.attributes[a];
-        if (info._relAttrs.has(attr.name)) continue;
+        if (info._relAttrs.has(attr.name) && !_isCollectionType(attr.type)) continue;
         var aPrefix = '';
         if (attr.isStatic)   aPrefix += '{static} ';
         if (attr.isAbstract) aPrefix += '{abstract} ';

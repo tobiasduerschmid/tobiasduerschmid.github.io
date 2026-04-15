@@ -2876,7 +2876,7 @@ steps:
         + enroll(student: Student): void
         + drop(name: String): boolean
         + isEnrolled(name: String): boolean
-        + getRoster(): ArrayList
+        + getRoster(): ArrayList<String>
       }
       class Course {
         - name: String
@@ -2889,7 +2889,7 @@ steps:
         + enroll(student: Student): void
         + drop(name: String): boolean
         + isEnrolled(name: String): boolean
-        + getRoster(): ArrayList
+        + getRoster(): ArrayList<String>
         + toString(): String
       }
       class Student {
