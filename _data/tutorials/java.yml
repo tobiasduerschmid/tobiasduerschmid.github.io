@@ -272,7 +272,7 @@ steps:
       System.out.println(c.equals(d));   // Prediction: ____
       ```
 
-      <details>
+      <details markdown="1">
       <summary>Reveal the answers</summary>
 
       - `a == b` → `true` — but only because Java **interns** string literals (puts them in a pool). Don't rely on this!
@@ -513,7 +513,7 @@ steps:
       }
       ```
 
-      <details>
+      <details markdown="1">
       <summary>Reveal the answers</summary>
 
       - **Snippet 1:** `NullPointerException`! Java tries to unbox `null` to `int`, which is impossible.
@@ -975,7 +975,7 @@ steps:
 
       > **Learning objective:** Distinguish information hiding from encapsulation, identify "leaked secrets" in encapsulated code, and refactor a system so that a requirement change touches only one class instead of many.
 
-      > **⚠ Common misconception:** "If my fields are `private` and I have getters/setters, I've achieved information hiding." **This is wrong.** Encapsulation and information hiding are orthogonal concepts (Parnas, 1972; Fleury, 2001).
+      > **⚠ Common misconception:** "If my fields are `private` and I have getters/setters, I've achieved information hiding." **This is wrong.** Encapsulation and information hiding are orthogonal concepts ([Parnas 1972](https://dl.acm.org/doi/10.1145/361598.361623)).
 
       ### What is Information Hiding?
 
@@ -1953,7 +1953,7 @@ steps:
       if (list instanceof ArrayList<String>) {}  // Compiles? ____
       ```
 
-      <details>
+      <details markdown="1">
       <summary>Reveal the answers</summary>
 
       - `ArrayList<int>` — **No.** Generics only work with objects. Use `ArrayList<Integer>`.
