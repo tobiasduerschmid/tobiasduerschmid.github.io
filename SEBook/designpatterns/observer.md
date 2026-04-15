@@ -133,6 +133,170 @@ deactivate email
 deactivate channel
 @enduml'></div>
 
+# Sample Code
+
+This sample code implements the Observer pattern using the News Channel example from the UML diagram above:
+
+```python
+from abc import ABC, abstractmethod
+
+
+# ==========================================
+# OBSERVER INTERFACE
+# ==========================================
+class Subscriber(ABC):
+    """The Observer interface."""
+    @abstractmethod
+    def update(self):
+        pass
+
+
+# ==========================================
+# SUBJECT
+# ==========================================
+class NewsChannel:
+    """The Subject that maintains a list of subscribers and notifies them."""
+    def __init__(self):
+        self._subscribers: list[Subscriber] = []
+        self._latest_post: str = ""
+
+    def follow(self, subscriber: Subscriber):
+        if subscriber not in self._subscribers:
+            self._subscribers.append(subscriber)
+
+    def unfollow(self, subscriber: Subscriber):
+        self._subscribers.remove(subscriber)
+
+    def publish_post(self, text: str):
+        self._latest_post = text
+        self._notify_subscribers()
+
+    def get_latest_post(self) -> str:
+        return self._latest_post
+
+    def _notify_subscribers(self):
+        for subscriber in self._subscribers:
+            subscriber.update()
+
+
+# ==========================================
+# CONCRETE OBSERVERS
+# ==========================================
+class MobileApp(Subscriber):
+    """A concrete observer that pulls state from the channel on update."""
+    def __init__(self, channel: NewsChannel):
+        self._channel = channel
+
+    def update(self):
+        post = self._channel.get_latest_post()
+        print(f"[MobileApp] Push notification: {post}")
+
+
+class EmailDigest(Subscriber):
+    """Another concrete observer with different behavior."""
+    def __init__(self, channel: NewsChannel):
+        self._channel = channel
+
+    def update(self):
+        post = self._channel.get_latest_post()
+        print(f"[EmailDigest] New email queued: {post}")
+
+
+# ==========================================
+# CLIENT CODE
+# ==========================================
+channel = NewsChannel()
+
+app = MobileApp(channel)
+email = EmailDigest(channel)
+
+channel.follow(app)
+channel.follow(email)
+
+channel.publish_post("New video uploaded!")
+# [MobileApp] Push notification: New video uploaded!
+# [EmailDigest] New email queued: New video uploaded!
+
+channel.unfollow(email)
+
+channel.publish_post("Live stream starting!")
+# [MobileApp] Push notification: Live stream starting!
+```
+
+## Class Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+layout horizontal
+class NewsChannel {
+	- _subscribers: list[Subscriber]
+	- _latest_post: str
+	+ follow(subscriber: Subscriber)
+	+ unfollow(subscriber: Subscriber)
+	+ publish_post(text: str)
+	+ get_latest_post(): str
+	- _notify_subscribers()
+}
+abstract class Subscriber <<ABC>> {
+	+ {abstract} update()
+}
+class MobileApp {
+	- _channel: NewsChannel
+	+ update()
+}
+class EmailDigest {
+	- _channel: NewsChannel
+	+ update()
+}
+NewsChannel "1" -- "0..*" Subscriber : _subscribers
+MobileApp --|> Subscriber
+EmailDigest --|> Subscriber
+MobileApp --> NewsChannel : _channel
+EmailDigest --> NewsChannel : _channel
+note right of NewsChannel._notify_subscribers
+	for subscriber in self._subscribers:
+	    subscriber.update()
+end note
+note bottom of MobileApp.update
+	post = self._channel.get_latest_post()
+	print(f"[MobileApp] Push notification: {post}")
+end note
+@enduml'></div>
+
+## Sequence Diagram
+
+<div class="uml-class-diagram-container" data-uml-type="sequence" data-uml-spec='@startuml
+participant client: Client
+participant channel: NewsChannel
+participant app: MobileApp
+participant email: EmailDigest
+client -> channel: follow(app)
+client -> channel: follow(email)
+client -> channel: publish_post("New video uploaded!")
+activate channel
+channel -> channel: _notify_subscribers()
+channel -> app: update()
+activate app
+app -> channel: get_latest_post()
+channel --> app: "New video uploaded!"
+deactivate app
+channel -> email: update()
+activate email
+email -> channel: get_latest_post()
+channel --> email: "New video uploaded!"
+deactivate email
+deactivate channel
+client -> channel: unfollow(email)
+client -> channel: publish_post("Live stream starting!")
+activate channel
+channel -> channel: _notify_subscribers()
+channel -> app: update()
+activate app
+app -> channel: get_latest_post()
+channel --> app: "Live stream starting!"
+deactivate app
+deactivate channel
+@enduml'></div>
+
 # Design Decisions
 
 ## Push vs. Pull Model
