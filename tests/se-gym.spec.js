@@ -610,10 +610,10 @@ test.describe('Personal Gym - Performance Tracking', () => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
       var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
       var question = firstQuiz.questions[0];
-      var h = PersonalGym.hashQuestion(question.question);
+      var key = quizIds[0] + ':' + question.id;
       // 10 seen, 3 correct = 70% failure rate
       var stats = {};
-      stats[h] = { seen: 10, correct: 3 };
+      stats[key] = { seen: 10, correct: 3 };
       PersonalGym.saveStats(stats);
     });
 
@@ -634,9 +634,9 @@ test.describe('Personal Gym - Performance Tracking', () => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
       var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
       var question = firstQuiz.questions[0];
-      var h = PersonalGym.hashQuestion(question.question);
+      var key = quizIds[0] + ':' + question.id;
       var stats = {};
-      stats[h] = { seen: 10, correct: 2 };
+      stats[key] = { seen: 10, correct: 2 };
       PersonalGym.saveStats(stats);
     });
     await page.reload();
@@ -734,9 +734,9 @@ test.describe('Personal Gym - Performance Tracking', () => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
       var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
       var question = firstQuiz.questions[0];
-      var h = PersonalGym.hashQuestion(question.question);
+      var key = quizIds[0] + ':' + question.id;
       var stats = {};
-      stats[h] = { seen: 10, correct: 7 };
+      stats[key] = { seen: 10, correct: 7 };
       PersonalGym.saveStats(stats);
     });
     await page.reload();
@@ -755,9 +755,9 @@ test.describe('Personal Gym - Performance Tracking', () => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
       var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
       var question = firstQuiz.questions[0];
-      var h = PersonalGym.hashQuestion(question.question);
+      var key = quizIds[0] + ':' + question.id;
       var stats = {};
-      stats[h] = { seen: 10, correct: 1 };
+      stats[key] = { seen: 10, correct: 1 };
       PersonalGym.saveStats(stats);
 
       // Now get difficult cards count - the same question hash should only appear once

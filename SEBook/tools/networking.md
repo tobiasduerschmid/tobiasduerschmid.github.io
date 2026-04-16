@@ -36,13 +36,13 @@ Key characteristics:
 * Peers are **equally privileged** participants
 * Each peer is both a **supplier and consumer** of resources
 
-P2P is rare in pure form. **Bitcoin and blockchain** systems are notable examples of true P2P architectures.
+P2P is rare in pure form. **BitTorrent** is a well-known example: when you download a file via BitTorrent, your client receives chunks directly from other peers who already have parts of the file — no central file server is involved.
 
 ## Hybrid Architectures
 
 In practice, most systems that need P2P benefits use a **hybrid** approach: some communication goes through a central server, while some happens directly between peers.
 
-**Example — Zoom:** For 1-on-1 video calls, Zoom attempts peer-to-peer communication for lower latency. If that fails (e.g., due to firewall restrictions), it falls back to routing through a server. For group calls with more than 2 participants, Zoom uses client-server to avoid overloading each peer's network (since each peer would otherwise have to send their video stream N times).
+**Example — Apple FaceTime:** For 1-on-1 calls, FaceTime attempts a direct peer-to-peer connection between devices for the lowest possible latency. If that fails (e.g., due to NAT or firewall restrictions), it routes communication through Apple's relay servers. For **Group FaceTime** calls, all participants connect to Apple's servers, since each device sending a separate video stream to every other participant would overwhelm its upload bandwidth.
 
 ### Comparing Architectures
 
@@ -51,17 +51,17 @@ In practice, most systems that need P2P benefits use a **hybrid** approach: some
 | **Structure** | Centralized | Decentralized | Mixed |
 | **Single point of failure** | Yes (the server) | No | Partial |
 | **Scalability** | Add more servers | Scales with peers | Flexible |
-| **Use case** | Web apps, APIs, databases | Blockchain, file sharing | Video calls, gaming |
+| **Use case** | Web apps, APIs, databases | File sharing, distributed backup | Video calls, gaming |
 
 ## Throughput and Latency
 
 Two critical **quality attributes** for any networked system:
 
 **Throughput** measures the *volume* of work processed per unit of time.
-*Example: "The system processes 100 requests per second."*
+*Example: "The API server handles 500 requests per second during peak load."*
 
 **Latency** (response time) measures how long a *single* request takes to receive a reply.
-*Example: "The average response time is 10ms."*
+*Example: "Each database query returns results in 40ms."*
 
 These are related but **not the same**:
 * **Duplicating servers** increases throughput (more requests handled in parallel) without necessarily reducing latency.
@@ -82,7 +82,7 @@ The internet uses a **layered architecture** called the TCP/IP stack. Each layer
 
 ## Encapsulation (Package Wrapping)
 
-Higher-layer protocols use the protocols directly below them to send messages. Each layer **wraps** the higher-layer message as its payload and adds its own header — like Russian nesting dolls (matryoshka):
+Higher-layer protocols use the protocols directly below them to send messages. Each layer **wraps** the higher-layer message as its payload and adds its own header — like sealing a letter inside successively larger envelopes, each addressed for a different step of the journey:
 
 ```
 ┌──────────────┬───────────┬────────────┬─────────────┬─────────┐
@@ -108,7 +108,7 @@ A single device can run many networked applications simultaneously. **Ports** id
 
 * Port numbers range from 0 to 65535
 * Well-known ports: **80** (HTTP), **443** (HTTPS), **22** (SSH)
-* When developing locally, you often use ports like **3000** or **8080**
+* When developing locally, you often use ports like **3000** or **5000**
 
 # Transport Layer Protocols: TCP vs. UDP
 
@@ -123,7 +123,7 @@ UDP simply "throws" messages at the receiver without establishing a connection f
 * **Does not guarantee** delivery, order, or error checking
 * If a message is lost, it is simply gone
 
-**UDP is ideal when speed matters more than reliability:** live video streaming, real-time voice chat, online game state updates (player positions, physics).
+**UDP is ideal when speed matters more than reliability:** DNS name resolution (a fast, independent lookup where a retry is cheap), live GPS position broadcasts in navigation apps, and real-time game state updates (player positions and bullet trajectories in FPS games).
 
 ## TCP (Transmission Control Protocol)
 
@@ -162,10 +162,10 @@ TCP is more complex but provides **reliable**, ordered delivery. It uses a three
 
 | Protocol | Best For | Examples |
 |----------|----------|----------|
-| **TCP** | Data that must arrive completely and in order | Web browsing, file transfer, text messaging (Slack, Discord), email |
-| **UDP** | Real-time data where speed beats reliability | Live video streaming, voice chat, online game state updates |
+| **TCP** | Data that must arrive completely and in order | SSH sessions, pushing code to a Git repository, online banking, web browsing |
+| **UDP** | Real-time data where speed beats reliability | DNS queries, live GPS updates, video streaming, multiplayer game state |
 
-**Online gaming** often uses a hybrid: **TCP** for reliable, non-time-sensitive data (chat messages, login, inventory, scoring) and **UDP** for high-speed real-time events (player positions, physics). Game updates sent via UDP include **absolute positions** of all objects, so missing a single update doesn't break the game state.
+**Competitive online games** (e.g., CS2, Valorant) use a hybrid: **UDP** for high-frequency movement and bullet trajectory updates (often 64–128 snapshots per second), since a missed snapshot is harmless — the next one arrives milliseconds later. **TCP** handles match-making, round results, inventory changes, and in-game purchases, where a lost or reordered message would corrupt game state. UDP snapshots include **absolute positions** of all objects, so a single dropped packet never causes lasting inconsistency.
 
 # HTTP (Hypertext Transfer Protocol)
 
@@ -192,7 +192,7 @@ A URL is the web address of a resource:
 ```
 {protocol}://{domain}(:{port})(/{resource})
 
-http://localhost:8080/users/1
+http://localhost:5000/courses/cs101
 https://myapp.com/about.html
 ```
 
@@ -200,8 +200,8 @@ https://myapp.com/about.html
 |-----------|---------|-----------|
 | Protocol | `http://`, `https://` | Yes |
 | Domain | `localhost`, `myapp.com` | Yes |
-| Port | `:8080`, `:3000` | No (defaults: 80 for HTTP, 443 for HTTPS) |
-| Resource path | `/users/1`, `/about.html` | No (defaults to `/`) |
+| Port | `:5000`, `:3000` | No (defaults: 80 for HTTP, 443 for HTTPS) |
+| Resource path | `/courses/cs101`, `/about.html` | No (defaults to `/`) |
 
 ## HTTP Status Codes
 
@@ -254,16 +254,16 @@ For real applications, the **Express** framework provides much cleaner routing:
 ```javascript
 const express = require('express');
 const app = express();
-const port = 8080;
+const port = 5000;
 
-// GET /users/:userId — route parameter
-app.get('/users/:userId', (req, res) => {
-  res.send(`GET request to user ${req.params.userId}`);
+// GET /courses/:courseId — route parameter
+app.get('/courses/:courseId', (req, res) => {
+  res.send(`GET request for course ${req.params.courseId}`);
 });
 
-// POST /
-app.post('/', (req, res) => {
-  res.send('POST request to the homepage');
+// POST /enrollments — create a new enrollment
+app.post('/enrollments', (req, res) => {
+  res.send('POST request to enroll in a course');
 });
 
 // Catch-all 404 handler — must be last

@@ -40,7 +40,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
   <div class="quiz-questions">
     {% for q in all_questions %}
     <div class="quiz-question-card" data-question-index="{{ forloop.index0 }}"
-      id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}">
+      id="q-{{ include.id }}-{{ forloop.index0 }}" data-type="{{ q.type | default: 'single' }}"
+      data-question-id="{{ q.id }}">
       <div class="question-text">{{ q.question | markdownify }}</div>
       {% if q.type == 'parsons' %}
       <div class="parsons-container{% if q.display == 'inline' %} parsons-inline{% endif %}">
@@ -695,7 +696,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       // Track performance
       if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-        PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
+        var perfKey = container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
+        PersonalGym.recordResult(perfKey, isCorrect);
       }
 
       explanation.classList.remove('hidden');
@@ -739,7 +741,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       // Track performance
       if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-        PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isAnswerCorrect);
+        var perfKey = container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
+        PersonalGym.recordResult(perfKey, isAnswerCorrect);
       }
 
       explanation.classList.remove('hidden');
@@ -974,7 +977,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
         // Track performance
         if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-          PersonalGym.recordResult(card.querySelector('.question-text').innerHTML, isCorrect);
+          var perfKey = container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
+          PersonalGym.recordResult(perfKey, isCorrect);
         }
 
         const ca = card.querySelector('.quiz-correct-answers');
