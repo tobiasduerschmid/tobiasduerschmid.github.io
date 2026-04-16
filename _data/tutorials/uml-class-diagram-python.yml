@@ -1903,38 +1903,39 @@ steps:
       Refactor the monolithic `OnlineStore` into this well-structured system:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-      class Product {
-        + name: str
-        + price: float
-        + stock: int
-        + __init__(name: str, price: float, stock: int): None
-        + is_available(): bool
-        + reduce_stock(): None
-      }
-      class Customer {
-        + name: str
-        + email: str
-        + __init__(name: str, email: str): None
-      }
-      class Order {
-        + customer: Customer
-        + items: list
-        + total: float
-        + __init__(customer: Customer): None
-        + add_item(product: Product): None
-      }
-      class OnlineStore {
-        + products: list
-        + orders: list
-        + __init__(): None
-        + add_product(product: Product): None
-        + place_order(customer: Customer, product_names: list): Order
-      }
-      OnlineStore *-- Order
-      Order --> Customer
-      Order --> Product
-      OnlineStore --> Product
-      @enduml'></div>
+        class Product {
+          +name: str
+          +price: float
+          +stock: int
+          +__init__(name: str, price: float, stock: int): None
+          +is_available(): bool
+          +reduce_stock(): None
+        }
+        class Customer {
+          +name: str
+          +email: str
+          +__init__(name: str, email: str): None
+        }
+        class Order {
+          +items: list[Product]
+          +total: float
+          +__init__(customer: Customer): None
+          +add_item(product: Product): None
+        }
+        class OnlineStore {
+          +products: list[Product]
+          +orders: list[Order]
+          +__init__(): None
+          +add_product(product: Product): None
+          +place_order(customer: Customer, product_names: list): Order
+        }
+        Order o--> "*" Product
+        Order --> "1" Customer
+        OnlineStore *--> "*" Order
+        OnlineStore o--> "*" Product
+        OnlineStore ..> Customer
+        @enduml
+      '></div>
 
       ### Your Task
 
