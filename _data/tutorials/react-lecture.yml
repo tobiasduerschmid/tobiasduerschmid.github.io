@@ -1,0 +1,679 @@
+title: "React Lecture"
+description: "Code walkthroughs from CS 35L Lecture 6 — UI Development & React. Covers JSX, the map function, components & props, state with useState, and the Virtual DOM."
+
+backend: react
+
+instructor_mode: true
+require_tests: false
+autosave_type: none
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — JSX: JavaScript XML (Slides 1–2)
+  # --------------------------------------------------------------------------
+  - title: "JSX — JavaScript XML"
+    key: jsx
+    instructions: |
+      ## React and JSX
+
+      **React** is a free, open-source front-end JavaScript library maintained by Meta (formerly Facebook) for building user interfaces.
+
+      React has a **declarative nature**: you describe *what* you want the UI to look like, and React handles the steps to achieve that UI and keep it updated efficiently when state changes. This is in contrast to **imperative** programming (plain JavaScript), which focuses on *how* to achieve a result by manually manipulating UI elements.
+
+      ### JSX — JavaScript XML
+
+      **JSX** is a syntax extension that allows developers to write HTML-like code within JavaScript. This makes it easier to define the structure and content of UI components.
+
+      ```jsx
+      const name = "Lisa"
+      // [...]
+      return <h1>Hello, {name}!</h1>;
+      ```
+
+      - Use **curly braces** `{ }` to embed any JavaScript expression inside JSX
+      - Babel compiles this JSX to plain JavaScript:
+        ```javascript
+        React.createElement('h1', null, 'Hello, ', name, '!')
+        ```
+      - The result is a lightweight **Virtual DOM** object — not a real DOM node yet
+
+      ### Task
+
+      Run the code and observe the preview. Try changing the `name` variable to your own name.
+
+    files:
+      - path: "step1/App.jsx"
+        content: |
+          // JSX: write HTML-like syntax directly in JavaScript
+          // Babel compiles <h1>Hello, {name}!</h1>
+          // to: React.createElement('h1', null, 'Hello, ', name, '!')
+
+          const name = "Lisa";
+
+          function App() {
+            return (
+              <div className="p-4">
+                <h1>Hello, {name}!</h1>
+                <p className="text-muted">
+                  JSX embeds JavaScript via curly braces { }.
+                  Babel compiles this to React.createElement(...).
+                </p>
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step1/App.jsx"
+
+    open_file: "step1/App.jsx"
+
+    quiz:
+      title: "JSX — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What does Babel compile `<h1>Hello, {name}!</h1>` into?"
+          type: single
+          options:
+            - "A raw HTML string inserted into the page via `innerHTML`"
+            - "`React.createElement('h1', null, 'Hello, ', name, '!')` — a plain JavaScript object describing the UI node"
+            - "A direct `document.createElement('h1')` call that creates a real DOM node immediately"
+            - "A WebAssembly instruction that the browser renders natively"
+          correct_index: 1
+          explanation: |
+            JSX is syntactic sugar. Babel transforms it to `React.createElement(type, props, ...children)` calls, which return plain JavaScript objects — the **Virtual DOM**. No real DOM nodes are created at this stage. React's reconciler does that later, applying only the minimal set of real DOM changes needed.
+
+        - question: "What does the `{ }` curly-brace syntax do inside JSX?"
+          type: single
+          options:
+            - "It defines a CSS class to style the content inside the element"
+            - "It escapes the `{` and `}` characters as HTML entities"
+            - "It switches from JSX mode back to JavaScript — any expression inside is evaluated and its result is inserted into the UI"
+            - "It creates a new JavaScript object stored in the DOM"
+          correct_index: 2
+          explanation: |
+            In JSX, `{ expression }` switches from JSX mode to JavaScript mode. Any valid JavaScript expression can appear inside the braces: variables, function calls, ternary operators, and so on. The result is converted to a string (or rendered as a child element) and inserted into the Virtual DOM.
+
+        - question: "React has a **declarative** nature. What does this mean?"
+          type: single
+          options:
+            - "You write step-by-step instructions telling the browser exactly how to update each DOM element"
+            - "You describe what the UI should look like for a given state, and React figures out the minimal DOM updates needed"
+            - "React generates HTML on the server and sends it to the client before any JavaScript runs"
+            - "You declare global variables that React automatically synchronizes with the DOM"
+          correct_index: 1
+          explanation: |
+            Declarative programming means describing the *desired outcome* (what the UI should look like), not the *procedure* to get there. React compares the new description with the previous one (via the Virtual DOM) and applies only the minimal set of real DOM changes needed. This is the opposite of imperative manipulation like `element.textContent = ...`.
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — The Map Function (Slide 3)
+  # --------------------------------------------------------------------------
+  - title: "The Map Function — Rendering Lists"
+    key: map-function
+    instructions: |
+      ## Rendering Lists with `.map()`
+
+      In React, you render lists by using JavaScript's built-in `.map()` function directly inside JSX.
+
+      ```jsx
+      const names = ["Lisa", "Seoyoung", "Mengjun"]
+      // [...]
+      return (<ul>
+        {names.map((name, index) => (
+          <li key={index}>{name}</li>
+        ))}
+      </ul>);
+      ```
+
+      - `names.map(...)` returns an **array of JSX elements** — React renders all of them as children of `<ul>`
+      - The **`key` prop** is required on each list element so React can efficiently track which items changed, were added, or were removed
+      - `key` must be **unique** within the list — here we use the array index, but in production prefer a stable ID from your data
+
+      ### Task
+
+      Run the code to see the list rendered from the array. Then add a fourth name to the `names` array and observe the preview update automatically.
+
+    files:
+      - path: "step2/App.jsx"
+        content: |
+          function App() {
+            const names = ["Lisa", "Seoyoung", "Mengjun"];
+
+            return (<ul>
+              {names.map((name, index) => (
+                <li key={index}>{name}</li>
+              ))}
+            </ul>);
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step2/App.jsx"
+
+    open_file: "step2/App.jsx"
+
+    quiz:
+      title: "Map Function — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "Why does React require a `key` prop on each element rendered inside `.map()`?"
+          type: single
+          options:
+            - "It is used as the CSS class for the element"
+            - "React uses the key to uniquely identify list items and efficiently determine which ones changed, were added, or removed during re-renders"
+            - "The key is sent to the server to cache the rendered HTML"
+            - "It is required by JavaScript — arrays cannot be rendered without a key attribute"
+          correct_index: 1
+          explanation: |
+            React's reconciler uses `key` to match elements between renders. Without a stable key, React must assume every item may have changed and re-renders all of them. With a key, it can skip unchanged items. Using the array index as key is fine for static lists, but use a stable unique ID for lists that can be reordered or filtered.
+
+        - question: |
+            A student writes this to render a list:
+            ```jsx
+            return (
+              <ul>
+                {names.map(name => <li>{name}</li>)}
+              </ul>
+            );
+            ```
+            The code works, but React logs a warning. What is missing?
+          type: single
+          options:
+            - "The `return` keyword inside the arrow function"
+            - "A `key` prop on each `<li>` element"
+            - "An `import` statement for the `map` function"
+            - "Parentheses around the JSX inside the arrow function"
+          correct_index: 1
+          explanation: |
+            React warns: *Each child in a list should have a unique "key" prop.* The fix: `<li key={index}>{name}</li>` or, better, `<li key={id}>{name}</li>` using a stable ID. Without keys, React cannot efficiently reconcile list changes and may produce incorrect rendering during updates.
+
+        - question: "What does `names.map((name, index) => <li key={index}>{name}</li>)` return?"
+          type: single
+          options:
+            - "A single concatenated string of all names"
+            - "An array of JSX elements (Virtual DOM objects) that React renders as children"
+            - "A new real DOM `<ul>` element containing all list items"
+            - "A JavaScript generator that yields one list item at a time"
+          correct_index: 1
+          explanation: |
+            `.map()` always returns an array. When JSX encounters an array of React elements as children, it renders each one in order. So `{names.map(...)}` is equivalent to listing each `<li>` element individually in the JSX — `.map()` just generates them programmatically from the data.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Components & Props (Slide 4)
+  # --------------------------------------------------------------------------
+  - title: "Components & Props"
+    key: components-props
+    instructions: |
+      ## React Components
+
+      Components are **self-contained, reusable pieces of UI** that manage their own rendering logic. This modularity promotes code **reusability**, simplifies development, and improves maintainability.
+
+      React components are **defined as functions** with a **single return element**. Inputs to the function are called **props**:
+
+      ```jsx
+      function WelcomeMessage(props) {
+        return <h2>Hello, {props.name}!</h2>;
+      }
+      export default WelcomeMessage;
+      ```
+
+      You use a component like an HTML tag, passing props as attributes:
+
+      ```jsx
+      <WelcomeMessage name="Lisa" />
+      ```
+
+      - Component names **must be capitalized** — React distinguishes components from HTML tags by capitalization
+      - `export default` makes the component importable from other files
+      - **Props are read-only** — a component must never modify its own props
+
+      ### Destructuring Props
+
+      You can **destructure** the props object directly in the parameter list:
+
+      ```jsx
+      function WelcomeMessage({ name }) {   // unwrap props directly
+        return <h2>Hello, {name}!</h2>;
+      }
+      ```
+
+      ### Task
+
+      Run the code and observe how the same `WelcomeMessage` component renders with three different names. Then add a fourth `<WelcomeMessage>` with your own name.
+
+    files:
+      - path: "step3/App.jsx"
+        content: |
+          // Component defined as a function — props are the inputs
+          // Can be referenced as: <WelcomeMessage name="Lisa" />
+          function WelcomeMessage(props) {
+            return <h2>Hello, {props.name}!</h2>;
+          }
+
+          function App() {
+            return (
+              <div className="p-4">
+                <WelcomeMessage name="Lisa" />
+                <WelcomeMessage name="Seoyoung" />
+                <WelcomeMessage name="Mengjun" />
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step3/App.jsx"
+
+    open_file: "step3/App.jsx"
+
+    quiz:
+      title: "Components & Props — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What are **props** in a React component?"
+          type: single
+          options:
+            - "Internal variables that the component manages itself and can change over time"
+            - "Read-only inputs passed from a parent component to a child — analogous to function arguments"
+            - "CSS properties attached to a component's root element"
+            - "Reserved keywords that React uses to configure component behavior internally"
+          correct_index: 1
+          explanation: |
+            Props (short for *properties*) are read-only inputs passed from a parent to a child, just like arguments to a function. They allow the same component to render different content based on what is passed in. A `WelcomeMessage` component that takes a `name` prop can greet anyone without duplicating rendering logic.
+
+        - question: "Why must React component names start with a capital letter?"
+          type: single
+          options:
+            - "JavaScript class syntax requires capital letters — components follow the same convention"
+            - "React uses capitalization to distinguish custom components from native HTML elements: lowercase → HTML tag, uppercase → React component"
+            - "Browser security policies prevent JavaScript from creating elements with lowercase names"
+            - "It is purely a style convention with no functional effect on rendering"
+          correct_index: 1
+          explanation: |
+            In JSX, `<card />` is treated as an unknown HTML element (passed to the browser's DOM), while `<Card />` calls your `Card` function. This is enforced by Babel at compile time. If you define a component with a lowercase name and use it as a lowercase tag, it silently renders as an unknown HTML element — nothing appears.
+
+        - question: |
+            A component is defined as:
+            ```jsx
+            function Badge({ label, color }) {
+              return <span style={{ background: color }}>{label}</span>;
+            }
+            ```
+            What does `{ label, color }` in the parameter list do?
+          type: single
+          options:
+            - "It declares two new state variables named `label` and `color`"
+            - "It destructures the props object — instead of `props.label` and `props.color`, you access them directly as `label` and `color`"
+            - "It restricts the component to only accept exactly two props and throws an error for any others"
+            - "It defines default values of `undefined` for `label` and `color` when they are not passed"
+          correct_index: 1
+          explanation: |
+            `{ label, color }` is JavaScript **object destructuring** applied to the props parameter. It is equivalent to writing `function Badge(props) { const label = props.label; const color = props.color; ... }`. Destructuring is idiomatic React style — it makes the expected props explicit and reduces repetition.
+
+        - question: |
+            **Evaluate** this code:
+            ```jsx
+            function Counter(props) {
+              props.count = props.count + 1; // increment on render
+              return <p>{props.count}</p>;
+            }
+            ```
+            What is the problem?
+          type: single
+          options:
+            - "Nothing — props can be freely modified inside the component that receives them"
+            - "Props are read-only. Mutating them breaks React's unidirectional data-flow model and causes unpredictable bugs"
+            - "The component must use `this.props.count` instead of `props.count`"
+            - "You cannot use arithmetic operators inside a React component"
+          correct_index: 1
+          explanation: |
+            Props are **immutable** from the perspective of the receiving component. Mutating props breaks React's unidirectional data flow — the parent still holds the original value and the mutation is invisible outside this component. To track changing values, use **state** (`useState`) — that is the next step.
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — State & useState (Slides 5–7)
+  # --------------------------------------------------------------------------
+  - title: "State & useState — Interactive Counter"
+    key: state-usestate
+    instructions: |
+      ## State — Components That Remember
+
+      Props are read-only. But what if a component needs to track something that **changes over time** — like a click count? That is what **state** is for.
+
+      React provides the `useState` hook:
+
+      ```jsx
+      import React, { useState } from 'react';
+
+      function Counter(props) {
+        const [count, setCount] = useState(props.initialCount);
+        // ↑ state variable  ↑ setter    ↑ initial value
+      ```
+
+      - `useState(initialValue)` returns a **pair**: `[currentValue, setter]`
+      - Calling the setter — `setCount(count + 1)` — updates the value and triggers a **re-render**
+      - `{count}` in JSX always reflects the current state after every re-render
+
+      ### Event Handlers
+
+      ```jsx
+        const increment = () => {
+          setCount(count + 1);
+        };
+        return (
+          <>
+            <p>Current Count: {count}</p>
+            <button onClick={increment}>   {/* click event handler */}
+              Increment
+            </button>
+          </>
+        );
+      }
+      export default Counter;
+      ```
+
+      `onClick={increment}` passes the **function reference** — React calls it when the user clicks. Do not write `onClick={increment()}` — that calls the function immediately during render.
+
+      ### Unwrapping Props & Adding More Props
+
+      You can destructure props and add as many as needed:
+
+      ```jsx
+      function Counter({initialCount, countName}) {
+        const [count, setCount] = useState(initialCount);
+        // ...
+        return (
+          <>
+            <p>{countName}: {count}</p>
+            <button onClick={increment}>Increment</button>
+          </>
+        );
+      }
+      ```
+
+      ### Task
+
+      Run the code and click **Increment**. Observe that React updates only the counter text — not the entire page. Then add a second `<Counter>` below the first with different `initialCount` and `countName` props to see two fully independent counters.
+
+    files:
+      - path: "step4/App.jsx"
+        content: |
+          const { useState } = React;
+
+          // Counter component with initialCount and countName props (Slide 7)
+          function Counter({initialCount, countName}) {
+            const [count, setCount] = useState(initialCount);
+
+            const increment = () => {
+              setCount(count + 1);
+            };
+
+            return (
+              <>
+                <p>{countName}: {count}</p>
+                <button onClick={increment}>
+                  Increment
+                </button>
+              </>
+            );
+          }
+
+          function App() {
+            return (
+              <div className="p-4">
+                <Counter initialCount={0} countName="Current Count" />
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step4/App.jsx"
+
+    open_file: "step4/App.jsx"
+
+    quiz:
+      title: "State & useState — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What does `const [count, setCount] = useState(0)` do?"
+          type: single
+          options:
+            - "Declares a CSS variable named `count` with an initial display value of 0"
+            - "Creates a state variable `count` initialized to 0, and a setter `setCount` — calling `setCount(n)` updates the value and triggers a re-render"
+            - "Declares two constants that persist between page reloads in localStorage"
+            - "Creates an HTML input element bound to a variable named `count`"
+          correct_index: 1
+          explanation: |
+            `useState(0)` returns an array `[currentValue, setter]`. Destructuring binds them to `count` and `setCount`. When `setCount(newValue)` is called, React re-runs the component function with the new `count` value, builds a new Virtual DOM, diffs it against the previous one, and patches only what changed in the real DOM.
+
+        - question: "A student writes `<button onClick={increment()}>`. What is wrong?"
+          type: single
+          options:
+            - "Nothing — `increment()` and `increment` are equivalent when used in event handlers"
+            - "`increment()` **calls** the function immediately during render. The correct syntax is `onClick={increment}` to pass the function reference for React to call on click"
+            - "The `onClick` prop must receive a string — use `onClick='increment'` instead"
+            - "Arrow functions cannot be used as React event handlers"
+          correct_index: 1
+          explanation: |
+            `onClick={increment()}` evaluates `increment()` during render — it runs immediately and passes its *return value* (probably `undefined`) to `onClick`. `onClick={increment}` passes the function *reference* — React calls it only when the user actually clicks. This is one of the most common beginner mistakes in React.
+
+        - question: |
+            Two separate `<Counter>` components are rendered on the same page. A user clicks Counter A ten times. What happens to Counter B?
+          type: single
+          options:
+            - "Counter B also increments — components share state by default"
+            - "Counter B resets to 0 because React re-renders the entire tree"
+            - "Counter B is unaffected — each component instance has its own independent state"
+            - "Counter B throws an error because two counters cannot use the same hook"
+          correct_index: 2
+          explanation: |
+            Each React component instance has its own **isolated state**. The `count` in Counter A has no connection to the `count` in Counter B — they are separate variables maintained by React's fiber tree. This isolation is a key benefit of component-based UI: components are self-contained and predictable.
+
+        - question: |
+            **Evaluate** this code:
+            ```jsx
+            function Counter() {
+              let count = 0;
+              const increment = () => { count = count + 1; };
+              return (
+                <>
+                  <p>Count: {count}</p>
+                  <button onClick={increment}>+</button>
+                </>
+              );
+            }
+            ```
+            A student says the counter will work. Are they correct?
+          type: single
+          options:
+            - "Yes — `count` changes when `increment` is called, so the `<p>` will update"
+            - "No — modifying a plain `let` variable does not trigger a re-render. The display will always show 0"
+            - "No — `let` cannot be used inside a React component; only `const` is allowed"
+            - "Yes — React automatically watches all variables inside component functions for changes"
+          correct_index: 1
+          explanation: |
+            React re-renders a component only when `useState`'s setter is called. A plain `let` variable is local to the function: incrementing it does *not* trigger a re-render, so the displayed value never changes. And when React does re-run the function for any other reason, `count` resets to 0 again. You must use `useState`.
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — Virtual DOM, SPA & SSR (Slides 8–10)
+  # --------------------------------------------------------------------------
+  - title: "Virtual DOM, SPA & SSR"
+    key: virtual-dom-spa-ssr
+    instructions: |
+      ## The Virtual DOM
+
+      React employs a **Virtual DOM** — a lightweight JavaScript representation of the actual DOM.
+
+      When data changes, React:
+      1. First updates the **Virtual DOM** (fast — it is just a JavaScript object tree)
+      2. **Calculates the differences** between the new and previous Virtual DOM
+      3. Applies **only the necessary changes** to the real DOM
+
+      This minimizes direct DOM manipulation and **improves performance**.
+
+      The demo below shows component isolation: each `Counter` has its own state. Clicking one updates only that counter's DOM node — the others remain untouched.
+
+      ## Single Page Application (SPA)
+
+      SPAs are structured as a **single HTML page** with no preloaded content. Content is loaded **dynamically via JavaScript**:
+
+      <pre><code class="language-uml-sequence">
+      @startuml
+      participant c: Client
+      participant s: Server
+
+      c -> s: GET '/'
+      s --> c: Single Page App (contains all pages)
+      c -> s: GET /current_news
+      s --> c: JSON data
+      c -> s: GET /about
+      s --> c: JSON data
+      @enduml
+      </code></pre>
+
+      React is the most common technology for building SPAs. Navigation happens client-side — no full page reloads.
+
+      ## Server-Side Rendering (SSR)
+
+      Frameworks like **Next.js** (which uses React) do SSR. Clients receive a fully rendered page from the server:
+
+      <pre><code class="language-uml-sequence">
+      @startuml
+      participant c: Client
+      participant s: Server
+
+      c -> s: GET '/'
+      s --> c: Main page (fully rendered)
+      c -> s: GET /current_news
+      s --> c: Current news page
+      @enduml
+      </code></pre>
+
+      | | SPA | SSR |
+      |---|---|---|
+      | **Server compute** | Low | High |
+      | **Initial load time** | Slow (JS must download first) | Fast (pre-rendered HTML) |
+      | **User interaction** | Fast (client-side) | Slower (server round-trip) |
+      | **SEO** | Harder | Better |
+
+      ### Task
+
+      Run the demo and click each counter independently. Each one is completely isolated — that is the Virtual DOM and component isolation in action. Then add a third `<Counter>` to the page.
+
+    files:
+      - path: "step5/App.jsx"
+        content: |
+          const { useState } = React;
+
+          // Each Counter instance has its own isolated state.
+          // React only updates the DOM node for the counter you click.
+          function Counter({ label, initialCount }) {
+            const [count, setCount] = useState(initialCount);
+            return (
+              <div className="border rounded p-3 mb-3" style={{ maxWidth: '260px' }}>
+                <p className="mb-1"><strong>{label}</strong></p>
+                <p className="h4 mb-2">{count}</p>
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => setCount(count + 1)}
+                >
+                  Increment
+                </button>
+              </div>
+            );
+          }
+
+          function App() {
+            return (
+              <div className="p-4">
+                <h2>Virtual DOM Demo</h2>
+                <p className="text-muted mb-3">
+                  Each counter has its own state. React only re-renders the counter you click.
+                </p>
+                <Counter label="Page Views" initialCount={42} />
+                <Counter label="Likes" initialCount={7} />
+                {/* Task: Add a third Counter here */}
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step5/App.jsx"
+
+    open_file: "step5/App.jsx"
+
+    quiz:
+      title: "Virtual DOM, SPA & SSR — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What is the Virtual DOM and why does React use it?"
+          type: single
+          options:
+            - "A backup copy of the DOM stored on the server to recover from browser crashes"
+            - "A lightweight JavaScript object tree that mirrors the real DOM; React diffs the new vs. previous version to find the minimal set of real DOM changes needed"
+            - "A browser API that speeds up DOM updates by batching them"
+            - "A CSS-in-JS solution that generates stylesheets without touching the DOM"
+          correct_index: 1
+          explanation: |
+            The Virtual DOM is a plain JavaScript object tree. When state changes, React builds a *new* Virtual DOM, diffs it against the *previous* one (reconciliation), and applies only the changed parts to the real DOM. Real DOM manipulation is slow; diffing JavaScript objects is fast. This lets React optimize updates automatically without developers manually tracking what changed.
+
+        - question: "What is the key difference between a Single Page Application (SPA) and Server-Side Rendering (SSR)?"
+          type: single
+          options:
+            - "SPAs use React; SSR uses only plain HTML — they are incompatible technologies"
+            - "In SPAs, all content is loaded by JavaScript on the client after a single HTML shell is delivered. In SSR, the server renders fully-formed HTML for each page request"
+            - "SPAs are faster in all scenarios; SSR is only used for legacy systems"
+            - "SSR requires a database connection; SPAs work without any backend"
+          correct_index: 1
+          explanation: |
+            SPAs ship a minimal HTML shell plus a JavaScript bundle; the browser runs the JS to build and update the UI. Navigation happens client-side — no full page reload. SSR pre-renders HTML on the server for each request; the browser gets ready-to-display HTML immediately. SPAs excel at interaction speed after load; SSR excels at initial load time and SEO. Frameworks like Next.js mix both per-route.
+
+        - question: "Which of the following is an advantage of SSR over SPA for a public news website?"
+          type: single
+          options:
+            - "SSR requires less server compute because the client does all rendering"
+            - "SSR pages load faster initially and are better indexed by search engines because the HTML content is pre-rendered on the server"
+            - "SSR eliminates the need for a backend API entirely"
+            - "SSR gives faster user interaction because all navigation happens client-side"
+          correct_index: 1
+          explanation: |
+            For a public news site, SEO and fast initial load are critical. SSR pre-renders HTML with article content already present — search engine crawlers can index it immediately, and users see content before JavaScript loads. The trade-off is higher server compute. SPAs excel at *interaction speed after the initial load*, not initial load or SEO. This is why Next.js (SSR-capable) is popular for content-heavy sites.
+
+        - question: |
+            You are developing a web browser (similar to Chrome, Firefox, or Edge). Browsers have **multiple tabs**, each displaying a webpage. Would the **Model-View-Controller (MVC)** pattern be a good solution for managing the tab system? Explain.
+          type: single
+          options:
+            - "Yes — MVC is always the correct pattern for any interactive UI regardless of context"
+            - "No — MVC does not apply to browser features; only React components can manage multiple tabs"
+            - "It depends — MVC fits reasonably well (Model = tab state, View = tab bar + page content, Controller = tab events like open/close/switch), but a component-based approach could also work. The key trade-off is that MVC centralizes control while components encapsulate state per tab"
+            - "No — MVC requires a server; a browser tab system is entirely client-side so MVC cannot apply"
+          correct_index: 2
+          explanation: |
+            MVC is a reasonable fit: the **Model** holds tab state (URL, title, active flag), the **View** renders the tab bar and page frame, and the **Controller** handles events (open, switch, close tab). A component-based architecture (each tab as a React component with its own state) is also viable and arguably more modular. This exit-ticket question from the lecture tests whether you can reason about pattern trade-offs — there is not one universally correct answer, and good engineers justify their choice with trade-offs.
