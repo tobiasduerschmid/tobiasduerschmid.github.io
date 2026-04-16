@@ -3567,7 +3567,12 @@
       });
     }
 
-    // 5. Show explanation if present
+    // 5. UML: force refresh after solution files are applied
+    p = p.then(function () {
+      self._scheduleUMLRefresh(true);
+    });
+
+    // 6. Show explanation if present
     p = p.then(function () {
       if (solution.explanationHTML) {
         self._showSolutionExplanation(solution.explanationHTML);
@@ -3727,6 +3732,8 @@
     self._suppressAutoSave = false;
     if (step.open_file) { self._setActiveFile(step.open_file); }
     self._renderTabs();
+    // UML: force refresh after resetting files
+    self._scheduleUMLRefresh(true);
   };
 
   /**
