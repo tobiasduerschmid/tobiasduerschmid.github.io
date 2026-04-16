@@ -182,6 +182,7 @@
     this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
     this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
+    this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
     this._umlViewActive = false;        // true when UML tab is selected
     this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
@@ -2674,7 +2675,11 @@
     var self = this;
     this._loadPythonJSAnalyzer(function () {
       try {
-        var result = window.analyzePythonSources(sources);
+        var umlOptions = {
+          hideVisibility: self._umlHideFlags.indexOf('visibility') !== -1,
+          hideMultiplicity: self._umlHideFlags.indexOf('multiplicity') !== -1
+        };
+        var result = window.analyzePythonSources(sources, umlOptions);
         self._umlLastDiagrams = result;
         self._renderCurrentUMLDiagram();
         if (result.errors && result.errors.length > 0) {
@@ -3767,6 +3772,9 @@
     } else {
       this._umlClassLayoutPreference = this._umlClassLayoutDefault;
     }
+
+    // Per-step UML hide flags (e.g. ['visibility', 'multiplicity'])
+    this._umlHideFlags = step.uml_hide || [];
 
     // Update UML watched files for this step
     if (this._umlDiagramEnabled) {
