@@ -1,5 +1,5 @@
 title: "React Lecture"
-description: "Code walkthroughs from CS 35L Lecture 6 — UI Development & React. Covers JSX, the map function, components & props, state with useState, and the Virtual DOM."
+description: "Build a UCLA Monopoly game step by step — covering JSX, the map function, components & props, state with useState, and the Virtual DOM."
 
 backend: react
 
@@ -8,6 +8,7 @@ require_tests: false
 autosave_type: none
 
 steps:
+
 
   # --------------------------------------------------------------------------
   # STEP 1 — JSX: JavaScript XML (Slides 1–2)
@@ -26,39 +27,39 @@ steps:
       **JSX** is a syntax extension that allows developers to write HTML-like code within JavaScript. This makes it easier to define the structure and content of UI components.
 
       ```jsx
-      const name = "Lisa"
+      const propertyName = "Royce Hall";
       // [...]
-      return <h1>Hello, {name}!</h1>;
+      return <h1>Welcome to {propertyName}!</h1>;
       ```
 
       - Use **curly braces** `{ }` to embed any JavaScript expression inside JSX
       - Babel compiles this JSX to plain JavaScript:
         ```javascript
-        React.createElement('h1', null, 'Hello, ', name, '!')
+        React.createElement('h1', null, 'Welcome to ', propertyName, '!')
         ```
       - The result is a lightweight **Virtual DOM** object — not a real DOM node yet
 
       ### Task
 
-      Run the code and observe the preview. Try changing the `name` variable to your own name.
+      The property name and price are hard-coded strings. Create variables `propertyName` and `price`, then use `{ }` curly braces to embed them in the JSX instead.
 
     files:
       - path: "step1/App.jsx"
         content: |
           // JSX: write HTML-like syntax directly in JavaScript
-          // Babel compiles <h1>Hello, {name}!</h1>
-          // to: React.createElement('h1', null, 'Hello, ', name, '!')
+          // Use { } curly braces to embed JavaScript expressions
 
-          const name = "Lisa";
+          const gameName = "UCLA Monopoly";
+          // TODO: Create a propertyName variable set to "Royce Hall"
+          // TODO: Create a price variable set to 1000
+          // TODO: Replace the hard-coded text below with {propertyName} and ${price}
 
           function App() {
             return (
-              <div className="p-4">
-                <h1>Hello, {name}!</h1>
-                <p className="text-muted">
-                  JSX embeds JavaScript via curly braces { }.
-                  Babel compiles this to React.createElement(...).
-                </p>
+              <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                <h1>Welcome to UCLA Monopoly!</h1>
+                <p>Most expensive property: Royce Hall</p>
+                <p>Price: $1000</p>
               </div>
             );
           }
@@ -71,6 +72,33 @@ steps:
       - "step1/App.jsx"
 
     open_file: "step1/App.jsx"
+
+    solution:
+      files:
+        - path: "step1/App.jsx"
+          content: |
+            // JSX: write HTML-like syntax directly in JavaScript
+            // Use { } curly braces to embed JavaScript expressions
+
+            const gameName = "UCLA Monopoly";
+            const propertyName = "Royce Hall";
+            const price = 1000;
+
+            function App() {
+              return (
+                <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                  <h1>Welcome to {gameName}!</h1>
+                  <p>Most expensive property: <strong>{propertyName}</strong></p>
+                  <p>Price: <strong>${price}</strong></p>
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We created `propertyName` and `price` variables, then embedded them in JSX using `{ }` curly braces. `{gameName}` inserts the game title, `{propertyName}` inserts the property name, and `${price}` outputs the dollar sign followed by the evaluated price. Babel compiles all of this into `React.createElement(...)` calls.
 
     quiz:
       title: "JSX — Knowledge Check"
@@ -122,34 +150,46 @@ steps:
       In React, you render lists by using JavaScript's built-in `.map()` function directly inside JSX.
 
       ```jsx
-      const names = ["Lisa", "Seoyoung", "Mengjun"]
+      const properties = [
+        { name: "Royce Hall", price: 1000 },
+        { name: "Powell Library", price: 500 },
+      ];
       // [...]
       return (<ul>
-        {names.map((name, index) => (
-          <li key={index}>{name}</li>
+        {properties.map((prop, index) => (
+          <li key={index}>{prop.name} — ${prop.price}</li>
         ))}
       </ul>);
       ```
 
-      - `names.map(...)` returns an **array of JSX elements** — React renders all of them as children of `<ul>`
+      - `properties.map(...)` returns an **array of JSX elements** — React renders all of them as children of `<ul>`
       - The **`key` prop** is required on each list element so React can efficiently track which items changed, were added, or were removed
       - `key` must be **unique** within the list — here we use the array index, but in production prefer a stable ID from your data
 
       ### Task
 
-      Run the code to see the list rendered from the array. Then add a fourth name to the `names` array and observe the preview update automatically.
+      The properties array is defined but the list is empty. Use `properties.map()` to render each property as a `<li>` element showing its name and price. Don't forget the `key` prop!
 
     files:
       - path: "step2/App.jsx"
         content: |
           function App() {
-            const names = ["Lisa", "Seoyoung", "Mengjun"];
+            const properties = [
+              { name: "Royce Hall", price: 1000 },
+              { name: "Powell Library", price: 500 },
+              { name: "Kerckhoff Hall", price: 60 },
+            ];
 
-            return (<ul>
-              {names.map((name, index) => (
-                <li key={index}>{name}</li>
-              ))}
-            </ul>);
+            return (
+              <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                <h2>UCLA Monopoly — Property Listing</h2>
+                <ul>
+                  {/* TODO: Use properties.map() to render each property */}
+                  {/* Each <li> should show: name — $price */}
+                  {/* Don't forget the key prop! */}
+                </ul>
+              </div>
+            );
           }
 
           const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -160,6 +200,35 @@ steps:
       - "step2/App.jsx"
 
     open_file: "step2/App.jsx"
+
+    solution:
+      files:
+        - path: "step2/App.jsx"
+          content: |
+            function App() {
+              const properties = [
+                { name: "Royce Hall", price: 1000 },
+                { name: "Powell Library", price: 500 },
+                { name: "Kerckhoff Hall", price: 60 },
+              ];
+
+              return (
+                <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                  <h2>UCLA Monopoly — Property Listing</h2>
+                  <ul>
+                    {properties.map((prop, index) => (
+                      <li key={index}>{prop.name} — ${prop.price}</li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We used `properties.map((prop, index) => ...)` to transform the array of property objects into an array of `<li>` JSX elements. Each `<li>` gets a unique `key={index}` prop so React can efficiently track list changes. The `{prop.name}` and `${prop.price}` expressions embed the property data into the rendered output.
 
     quiz:
       title: "Map Function — Knowledge Check"
@@ -179,11 +248,11 @@ steps:
             React's reconciler uses `key` to match elements between renders. Without a stable key, React must assume every item may have changed and re-renders all of them. With a key, it can skip unchanged items. Using the array index as key is fine for static lists, but use a stable unique ID for lists that can be reordered or filtered.
 
         - question: |
-            A student writes this to render a list:
+            A student writes this to render the property list:
             ```jsx
             return (
               <ul>
-                {names.map(name => <li>{name}</li>)}
+                {properties.map(prop => <li>{prop.name}</li>)}
               </ul>
             );
             ```
@@ -196,18 +265,18 @@ steps:
             - "Parentheses around the JSX inside the arrow function"
           correct_index: 1
           explanation: |
-            React warns: *Each child in a list should have a unique "key" prop.* The fix: `<li key={index}>{name}</li>` or, better, `<li key={id}>{name}</li>` using a stable ID. Without keys, React cannot efficiently reconcile list changes and may produce incorrect rendering during updates.
+            React warns: *Each child in a list should have a unique "key" prop.* The fix: `<li key={index}>{prop.name}</li>` or, better, `<li key={prop.id}>{prop.name}</li>` using a stable ID. Without keys, React cannot efficiently reconcile list changes and may produce incorrect rendering during updates.
 
-        - question: "What does `names.map((name, index) => <li key={index}>{name}</li>)` return?"
+        - question: "What does `properties.map((prop, index) => <li key={index}>{prop.name}</li>)` return?"
           type: single
           options:
-            - "A single concatenated string of all names"
+            - "A single concatenated string of all property names"
             - "An array of JSX elements (Virtual DOM objects) that React renders as children"
             - "A new real DOM `<ul>` element containing all list items"
             - "A JavaScript generator that yields one list item at a time"
           correct_index: 1
           explanation: |
-            `.map()` always returns an array. When JSX encounters an array of React elements as children, it renders each one in order. So `{names.map(...)}` is equivalent to listing each `<li>` element individually in the JSX — `.map()` just generates them programmatically from the data.
+            `.map()` always returns an array. When JSX encounters an array of React elements as children, it renders each one in order. So `{properties.map(...)}` is equivalent to listing each `<li>` element individually in the JSX — `.map()` just generates them programmatically from the data.
 
   # --------------------------------------------------------------------------
   # STEP 3 — Components & Props (Slide 4)
@@ -221,23 +290,7 @@ steps:
 
       ### The Problem: Hard-Coded Cards
 
-      Open `starter.jsx` to see a single hard-coded Royce Hall card:
-
-      ```jsx
-      function App() {
-        return (
-          <div style={cardStyle}>
-            <div style={getHeaderStyle("ucla-blue")}></div>
-            <div style={bodyStyle}>
-              <h4>Royce Hall</h4>
-              <p><strong>$1000</strong></p>
-            </div>
-          </div>
-        );
-      }
-      ```
-
-      Want three cards? You'd have to copy-paste and change every value by hand.
+      The current code has a single hard-coded card for Royce Hall. Want three cards? You'd have to copy-paste and change every value by hand.
 
       ### The Solution: A Reusable Component with Props
 
@@ -270,7 +323,7 @@ steps:
 
       ### Task
 
-      The code renders three UCLA property cards from a single reusable component. Add a fourth `<MonopolyProperty>` with your own building name, price, and color group (`"ucla-blue"` or `"ucla-gold"`).
+      Extract a reusable `MonopolyProperty` component that takes `name`, `price`, and `colorGroup` as props. Then render three different UCLA property cards side by side.
 
     files:
       - path: "step3/styles.js"
@@ -290,6 +343,7 @@ steps:
             margin: "8px",
             fontFamily: "'Georgia', serif",
             background: "#F5F0E1",
+            color: "#333",
             boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
           };
 
@@ -307,13 +361,15 @@ steps:
           };
         language: "javascript"
 
-      - path: "step3/starter.jsx"
+      - path: "step3/App.jsx"
         content: |
-          // Hard-coded property card — NOT reusable!
-          // What if we need three different properties?
+          // This card is hard-coded for Royce Hall — NOT reusable!
+          // TODO: Extract a MonopolyProperty component with props:
+          //       name, price, colorGroup
+          // TODO: Render three property cards with different data
           function App() {
             return (
-              <div style={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
                 <div style={cardStyle}>
                   <div style={getHeaderStyle("ucla-blue")}></div>
                   <div style={bodyStyle}>
@@ -329,43 +385,47 @@ steps:
           root.render(<App />);
         language: "javascript"
 
-      - path: "step3/App.jsx"
-        content: |
-          // A reusable component — props make it render any property
-          const MonopolyProperty = ({ name, price, colorGroup }) => {
-            return (
-              <div style={cardStyle}>
-                <div style={getHeaderStyle(colorGroup)}>
-                  {/* colorGroup dictates the banner color */}
-                </div>
-                <div style={bodyStyle}>
-                  <h4>{name}</h4>
-                  <p><strong>${price}</strong></p>
-                </div>
-              </div>
-            );
-          };
-
-          // Render reusable components side-by-side with different props
-          function App() {
-            return (
-              <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
-                <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
-                <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
-                <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
-              </div>
-            );
-          }
-
-          const root = ReactDOM.createRoot(document.getElementById('root'));
-          root.render(<App />);
-        language: "javascript"
-
     react_files:
       - "step3/styles.js"
       - "step3/App.jsx"
 
     open_file: "step3/App.jsx"
+
+    solution:
+      files:
+        - path: "step3/App.jsx"
+          content: |
+            // A reusable component — props make it render any property
+            const MonopolyProperty = ({ name, price, colorGroup }) => {
+              return (
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle(colorGroup)}>
+                    {/* colorGroup dictates the banner color */}
+                  </div>
+                  <div style={bodyStyle}>
+                    <h4>{name}</h4>
+                    <p><strong>${price}</strong></p>
+                  </div>
+                </div>
+              );
+            };
+
+            // Render reusable components side-by-side with different props
+            function App() {
+              return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                  <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We extracted a `MonopolyProperty` component that takes `name`, `price`, and `colorGroup` as props via destructuring. The same component renders three different cards — each with different data. The styles (`cardStyle`, `getHeaderStyle`, `bodyStyle`) are defined in `styles.js` and shared across all cards.
 
     quiz:
       title: "Components & Props — Knowledge Check"
@@ -475,7 +535,7 @@ steps:
 
       ### Task
 
-      Click **Buy House** on each property card. Watch the houses appear one by one — and see what happens at the fifth purchase! Notice that each card tracks its own houses independently.
+      The property cards are static — clicking the button does nothing. Add a `[houses, setHouses]` state variable with `useState(0)`, implement the `buyHouse` handler that increments houses up to `MAX_HOUSES + 1`, and display the buildings with `renderBuildings(houses)`.
 
     files:
       - path: "step4/styles.js"
@@ -494,6 +554,7 @@ steps:
             margin: "8px",
             fontFamily: "'Georgia', serif",
             background: "#F5F0E1",
+            color: "#333",
             boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
           };
 
@@ -538,18 +599,11 @@ steps:
         content: |
           const { useState } = React;
 
+          // TODO: Add state: const [houses, setHouses] = useState(0);
+          // TODO: Add buyHouse handler that increments houses (up to MAX_HOUSES + 1)
+          // TODO: Use renderBuildings(houses) to display buildings
+          // TODO: Wire up onClick={buyHouse} on the button
           const MonopolyProperty = ({ name, price, colorGroup }) => {
-            // State: number of houses on this property (starts at 0)
-            const [houses, setHouses] = useState(0);
-
-            const buyHouse = () => {
-              if (houses <= MAX_HOUSES) {
-                setHouses(houses + 1);
-              }
-            };
-
-            const isMaxed = houses > MAX_HOUSES;
-
             return (
               <div style={cardStyle}>
                 <div style={getHeaderStyle(colorGroup)}></div>
@@ -557,17 +611,10 @@ steps:
                   <h4>{name}</h4>
                   <p><strong>${price}</strong></p>
                   <div style={{ fontSize: "24px", minHeight: "36px" }}>
-                    {renderBuildings(houses)}
+                    No buildings
                   </div>
-                  <button
-                    onClick={buyHouse}
-                    disabled={isMaxed}
-                    style={{
-                      ...buttonStyle,
-                      ...(isMaxed ? { background: "#999", cursor: "default" } : {}),
-                    }}
-                  >
-                    {isMaxed ? "Fully Upgraded!" : "Buy House ($50)"}
+                  <button style={buttonStyle}>
+                    Buy House ($50)
                   </button>
                 </div>
               </div>
@@ -593,6 +640,63 @@ steps:
       - "step4/App.jsx"
 
     open_file: "step4/App.jsx"
+
+    solution:
+      files:
+        - path: "step4/App.jsx"
+          content: |
+            const { useState } = React;
+
+            const MonopolyProperty = ({ name, price, colorGroup }) => {
+              const [houses, setHouses] = useState(0);
+
+              const buyHouse = () => {
+                if (houses <= MAX_HOUSES) {
+                  setHouses(houses + 1);
+                }
+              };
+
+              const isMaxed = houses > MAX_HOUSES;
+
+              return (
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle(colorGroup)}></div>
+                  <div style={bodyStyle}>
+                    <h4>{name}</h4>
+                    <p><strong>${price}</strong></p>
+                    <div style={{ fontSize: "24px", minHeight: "36px" }}>
+                      {renderBuildings(houses)}
+                    </div>
+                    <button
+                      onClick={buyHouse}
+                      disabled={isMaxed}
+                      style={{
+                        ...buttonStyle,
+                        ...(isMaxed ? { background: "#999", cursor: "default" } : {}),
+                      }}
+                    >
+                      {isMaxed ? "Fully Upgraded!" : "Buy House ($50)"}
+                    </button>
+                  </div>
+                </div>
+              );
+            };
+
+            function App() {
+              return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                  <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We added `const [houses, setHouses] = useState(0)` to track the number of houses. The `buyHouse` handler increments houses up to `MAX_HOUSES + 1` (5 total — triggering the hotel upgrade). `renderBuildings(houses)` from `styles.js` converts the count into visual icons. The button is disabled once fully upgraded, and each card maintains its own independent state.
 
     quiz:
       title: "State & useState — Knowledge Check"
@@ -660,9 +764,9 @@ steps:
             React only re-renders when `useState`'s setter is called. A plain `let` variable is local to the function — incrementing it does *not* trigger a re-render, so the displayed house count never changes. And when React re-runs the function for any other reason, `houses` resets to 0. You must use `useState`.
 
   # --------------------------------------------------------------------------
-  # STEP 5 — Virtual DOM, SPA & SSR (Slides 8–10)
+  # STEP 5 — Virtual DOM & Complete Monopoly Game (Slides 8–10)
   # --------------------------------------------------------------------------
-  - title: "Virtual DOM, SPA & SSR"
+  - title: "Virtual DOM — Complete UCLA Monopoly"
     key: virtual-dom-spa-ssr
     instructions: |
       ## The Virtual DOM
@@ -676,7 +780,7 @@ steps:
 
       This minimizes direct DOM manipulation and **improves performance**.
 
-      The demo below shows component isolation: each `Counter` has its own state. Clicking one updates only that counter's DOM node — the others remain untouched.
+      The game below puts everything together: JSX, `.map()`, components, props, and `useState`. When you buy a property or build a house, React only updates the specific card and wallet — not the entire page. That is the Virtual DOM in action.
 
       ## Single Page Application (SPA)
 
@@ -723,41 +827,207 @@ steps:
 
       ### Task
 
-      Run the demo and click each counter independently. Each one is completely isolated — that is the Virtual DOM and component isolation in action. Then add a third `<Counter>` to the page.
+      The game is almost complete — you can buy properties and build houses. But the **Collect Rent** button doesn't work yet. Implement `collectRent` so it adds `totalRent` to the wallet using `setWallet`.
 
     files:
+      - path: "step5/styles.js"
+        content: |
+          // Monopoly color groups
+          const colorGroups = {
+            "ucla-blue":  "#2774AE",
+            "ucla-gold":  "#FFD100",
+          };
+
+          const cardStyle = {
+            width: "180px",
+            border: "3px solid #333",
+            borderRadius: "12px",
+            overflow: "hidden",
+            margin: "8px",
+            fontFamily: "'Georgia', serif",
+            background: "#F5F0E1",
+            color: "#333",
+            boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
+          };
+
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "40px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
+          }
+
+          const bodyStyle = {
+            padding: "10px",
+            textAlign: "center",
+            fontSize: "14px",
+          };
+
+          const buttonStyle = {
+            padding: "5px 12px",
+            border: "2px solid #333",
+            borderRadius: "6px",
+            background: "#4CAF50",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            marginTop: "6px",
+            fontSize: "12px",
+          };
+
+          const HOUSE_EMOJI = "\uD83C\uDFE0";
+          const HOTEL_EMOJI = "\uD83C\uDFE8";
+          const MAX_HOUSES = 4;
+          const HOUSE_COST = 50;
+
+          function renderBuildings(houses) {
+            if (houses === 0) return "No buildings";
+            if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+            return HOUSE_EMOJI.repeat(houses);
+          }
+
+          const walletBarStyle = {
+            display: "flex",
+            gap: "16px",
+            alignItems: "center",
+            background: "#F5F0E1",
+            color: "#333",
+            padding: "10px 16px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            border: "2px solid #333",
+            flexWrap: "wrap",
+            fontFamily: "'Georgia', serif",
+          };
+        language: "javascript"
+
       - path: "step5/App.jsx"
         content: |
           const { useState } = React;
 
-          // Each Counter instance has its own isolated state.
-          // React only updates the DOM node for the counter you click.
-          function Counter({ label, initialCount }) {
-            const [count, setCount] = useState(initialCount);
+          const INITIAL_PROPERTIES = [
+            { name: "Royce Hall",       price: 400, colorGroup: "ucla-blue",  rent: 50 },
+            { name: "Powell Library",   price: 350, colorGroup: "ucla-blue",  rent: 35 },
+            { name: "Kerckhoff Hall",   price: 200, colorGroup: "ucla-gold",  rent: 25 },
+            { name: "Janss Steps",      price: 150, colorGroup: "ucla-gold",  rent: 20 },
+            { name: "Bruin Bear",       price: 100, colorGroup: "ucla-blue",  rent: 10 },
+            { name: "Sculpture Garden", price: 60,  colorGroup: "ucla-gold",  rent: 6 },
+          ];
+
+          function PropertyCard({ property, wallet, onBuy, onBuildHouse }) {
+            const { name, price, colorGroup, rent, owned, houses } = property;
+            const isMaxed = houses > MAX_HOUSES;
+            const rentNow = rent + houses * 10;
+
             return (
-              <div className="border rounded p-3 mb-3" style={{ maxWidth: '260px' }}>
-                <p className="mb-1"><strong>{label}</strong></p>
-                <p className="h4 mb-2">{count}</p>
-                <button
-                  className="btn btn-outline-primary btn-sm"
-                  onClick={() => setCount(count + 1)}
-                >
-                  Increment
-                </button>
+              <div style={cardStyle}>
+                <div style={getHeaderStyle(colorGroup)}></div>
+                <div style={bodyStyle}>
+                  <h4 style={{ margin: "4px 0" }}>{name}</h4>
+                  <p style={{ margin: "2px 0" }}><strong>${price}</strong></p>
+                  {owned ? (
+                    <>
+                      <p style={{ margin: "2px 0", fontSize: "11px", color: "#666" }}>
+                        Rent: ${rentNow}
+                      </p>
+                      <div style={{ fontSize: "20px", minHeight: "28px" }}>
+                        {renderBuildings(houses)}
+                      </div>
+                      <button
+                        onClick={onBuildHouse}
+                        disabled={isMaxed || wallet < HOUSE_COST}
+                        style={{
+                          ...buttonStyle,
+                          ...((isMaxed || wallet < HOUSE_COST)
+                            ? { background: "#999", cursor: "default" } : {}),
+                        }}
+                      >
+                        {isMaxed ? "Fully Upgraded!" : "Build House ($" + HOUSE_COST + ")"}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={onBuy}
+                      disabled={wallet < price}
+                      style={{
+                        ...buttonStyle,
+                        background: wallet >= price ? "#2774AE" : "#999",
+                      }}
+                    >
+                      Buy (${price})
+                    </button>
+                  )}
+                </div>
               </div>
             );
           }
 
           function App() {
+            const [wallet, setWallet] = useState(1500);
+            const [properties, setProperties] = useState(
+              INITIAL_PROPERTIES.map(p => ({ ...p, owned: false, houses: 0 }))
+            );
+
+            const buyProperty = (index) => {
+              const prop = properties[index];
+              if (!prop.owned && wallet >= prop.price) {
+                setWallet(wallet - prop.price);
+                const updated = [...properties];
+                updated[index] = { ...prop, owned: true };
+                setProperties(updated);
+              }
+            };
+
+            const buildHouse = (index) => {
+              const prop = properties[index];
+              if (prop.owned && prop.houses <= MAX_HOUSES && wallet >= HOUSE_COST) {
+                setWallet(wallet - HOUSE_COST);
+                const updated = [...properties];
+                updated[index] = { ...prop, houses: prop.houses + 1 };
+                setProperties(updated);
+              }
+            };
+
+            const totalRent = properties
+              .filter(p => p.owned)
+              .reduce((sum, p) => sum + p.rent + p.houses * 10, 0);
+
+            const collectRent = () => {
+              // TODO: Add totalRent to the wallet using setWallet
+            };
+
+            const ownedCount = properties.filter(p => p.owned).length;
+
             return (
-              <div className="p-4">
-                <h2>Virtual DOM Demo</h2>
-                <p className="text-muted mb-3">
-                  Each counter has its own state. React only re-renders the counter you click.
-                </p>
-                <Counter label="Page Views" initialCount={42} />
-                <Counter label="Likes" initialCount={7} />
-                {/* Task: Add a third Counter here */}
+              <div style={{ padding: "16px", fontFamily: "'Georgia', serif" }}>
+                <h2 style={{ marginBottom: "4px" }}>UCLA Monopoly</h2>
+                <div style={walletBarStyle}>
+                  <span><strong>Wallet:</strong> ${wallet}</span>
+                  <span><strong>Properties:</strong> {ownedCount}/{properties.length}</span>
+                  <span><strong>Rent/turn:</strong> ${totalRent}</span>
+                  <button
+                    onClick={collectRent}
+                    disabled={totalRent === 0}
+                    style={{
+                      ...buttonStyle,
+                      background: totalRent > 0 ? "#2774AE" : "#999",
+                      marginTop: 0,
+                    }}
+                  >
+                    Collect Rent
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap" }}>
+                  {properties.map((prop, index) => (
+                    <PropertyCard
+                      key={index}
+                      property={prop}
+                      wallet={wallet}
+                      onBuy={() => buyProperty(index)}
+                      onBuildHouse={() => buildHouse(index)}
+                    />
+                  ))}
+                </div>
               </div>
             );
           }
@@ -767,9 +1037,149 @@ steps:
         language: "javascript"
 
     react_files:
+      - "step5/styles.js"
       - "step5/App.jsx"
 
     open_file: "step5/App.jsx"
+
+    solution:
+      files:
+        - path: "step5/App.jsx"
+          content: |
+            const { useState } = React;
+
+            const INITIAL_PROPERTIES = [
+              { name: "Royce Hall",       price: 400, colorGroup: "ucla-blue",  rent: 50 },
+              { name: "Powell Library",   price: 350, colorGroup: "ucla-blue",  rent: 35 },
+              { name: "Kerckhoff Hall",   price: 200, colorGroup: "ucla-gold",  rent: 25 },
+              { name: "Janss Steps",      price: 150, colorGroup: "ucla-gold",  rent: 20 },
+              { name: "Bruin Bear",       price: 100, colorGroup: "ucla-blue",  rent: 10 },
+              { name: "Sculpture Garden", price: 60,  colorGroup: "ucla-gold",  rent: 6 },
+            ];
+
+            function PropertyCard({ property, wallet, onBuy, onBuildHouse }) {
+              const { name, price, colorGroup, rent, owned, houses } = property;
+              const isMaxed = houses > MAX_HOUSES;
+              const rentNow = rent + houses * 10;
+
+              return (
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle(colorGroup)}></div>
+                  <div style={bodyStyle}>
+                    <h4 style={{ margin: "4px 0" }}>{name}</h4>
+                    <p style={{ margin: "2px 0" }}><strong>${price}</strong></p>
+                    {owned ? (
+                      <>
+                        <p style={{ margin: "2px 0", fontSize: "11px", color: "#666" }}>
+                          Rent: ${rentNow}
+                        </p>
+                        <div style={{ fontSize: "20px", minHeight: "28px" }}>
+                          {renderBuildings(houses)}
+                        </div>
+                        <button
+                          onClick={onBuildHouse}
+                          disabled={isMaxed || wallet < HOUSE_COST}
+                          style={{
+                            ...buttonStyle,
+                            ...((isMaxed || wallet < HOUSE_COST)
+                              ? { background: "#999", cursor: "default" } : {}),
+                          }}
+                        >
+                          {isMaxed ? "Fully Upgraded!" : "Build House ($" + HOUSE_COST + ")"}
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={onBuy}
+                        disabled={wallet < price}
+                        style={{
+                          ...buttonStyle,
+                          background: wallet >= price ? "#2774AE" : "#999",
+                        }}
+                      >
+                        Buy (${price})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            function App() {
+              const [wallet, setWallet] = useState(1500);
+              const [properties, setProperties] = useState(
+                INITIAL_PROPERTIES.map(p => ({ ...p, owned: false, houses: 0 }))
+              );
+
+              const buyProperty = (index) => {
+                const prop = properties[index];
+                if (!prop.owned && wallet >= prop.price) {
+                  setWallet(wallet - prop.price);
+                  const updated = [...properties];
+                  updated[index] = { ...prop, owned: true };
+                  setProperties(updated);
+                }
+              };
+
+              const buildHouse = (index) => {
+                const prop = properties[index];
+                if (prop.owned && prop.houses <= MAX_HOUSES && wallet >= HOUSE_COST) {
+                  setWallet(wallet - HOUSE_COST);
+                  const updated = [...properties];
+                  updated[index] = { ...prop, houses: prop.houses + 1 };
+                  setProperties(updated);
+                }
+              };
+
+              const totalRent = properties
+                .filter(p => p.owned)
+                .reduce((sum, p) => sum + p.rent + p.houses * 10, 0);
+
+              const collectRent = () => {
+                if (totalRent > 0) setWallet(wallet + totalRent);
+              };
+
+              const ownedCount = properties.filter(p => p.owned).length;
+
+              return (
+                <div style={{ padding: "16px", fontFamily: "'Georgia', serif" }}>
+                  <h2 style={{ marginBottom: "4px" }}>UCLA Monopoly</h2>
+                  <div style={walletBarStyle}>
+                    <span><strong>Wallet:</strong> ${wallet}</span>
+                    <span><strong>Properties:</strong> {ownedCount}/{properties.length}</span>
+                    <span><strong>Rent/turn:</strong> ${totalRent}</span>
+                    <button
+                      onClick={collectRent}
+                      disabled={totalRent === 0}
+                      style={{
+                        ...buttonStyle,
+                        background: totalRent > 0 ? "#2774AE" : "#999",
+                        marginTop: 0,
+                      }}
+                    >
+                      Collect Rent
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap" }}>
+                    {properties.map((prop, index) => (
+                      <PropertyCard
+                        key={index}
+                        property={prop}
+                        wallet={wallet}
+                        onBuy={() => buyProperty(index)}
+                        onBuildHouse={() => buildHouse(index)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        The fix is one line: `if (totalRent > 0) setWallet(wallet + totalRent);`. Calling `setWallet` updates the wallet state and triggers a re-render. React's Virtual DOM then diffs the new UI against the previous one and only updates the wallet display — the property cards remain untouched because their props didn't change. This is the efficiency of the Virtual DOM: minimal real DOM updates.
 
     quiz:
       title: "Virtual DOM, SPA & SSR — Knowledge Check"
@@ -811,13 +1221,13 @@ steps:
             For a public news site, SEO and fast initial load are critical. SSR pre-renders HTML with article content already present — search engine crawlers can index it immediately, and users see content before JavaScript loads. The trade-off is higher server compute. SPAs excel at *interaction speed after the initial load*, not initial load or SEO. This is why Next.js (SSR-capable) is popular for content-heavy sites.
 
         - question: |
-            You are developing a web browser (similar to Chrome, Firefox, or Edge). Browsers have **multiple tabs**, each displaying a webpage. Would the **Model-View-Controller (MVC)** pattern be a good solution for managing the tab system? Explain.
+            In the UCLA Monopoly game, you click "Collect Rent" which calls `setWallet(wallet + totalRent)`. What does React update in the real DOM?
           type: single
           options:
-            - "Yes — MVC is always the correct pattern for any interactive UI regardless of context"
-            - "No — MVC does not apply to browser features; only React components can manage multiple tabs"
-            - "It depends — MVC fits reasonably well (Model = tab state, View = tab bar + page content, Controller = tab events like open/close/switch), but a component-based approach could also work. The key trade-off is that MVC centralizes control while components encapsulate state per tab"
-            - "No — MVC requires a server; a browser tab system is entirely client-side so MVC cannot apply"
-          correct_index: 2
+            - "The entire page re-renders from scratch — React replaces all DOM nodes"
+            - "Only the wallet display updates — React diffs the Virtual DOM and patches only the changed text node"
+            - "Nothing updates — `setWallet` only changes a JavaScript variable without affecting the DOM"
+            - "All six property cards re-render because they are children of the same parent component"
+          correct_index: 1
           explanation: |
-            MVC is a reasonable fit: the **Model** holds tab state (URL, title, active flag), the **View** renders the tab bar and page frame, and the **Controller** handles events (open, switch, close tab). A component-based architecture (each tab as a React component with its own state) is also viable and arguably more modular. This exit-ticket question from the lecture tests whether you can reason about pattern trade-offs — there is not one universally correct answer, and good engineers justify their choice with trade-offs.
+            When `setWallet` is called, React re-runs the `App` function with the new wallet value. It builds a new Virtual DOM tree, compares it with the previous one, and finds that only the wallet text changed. React patches just that one text node in the real DOM — the property cards and everything else remain untouched. This selective update is the core benefit of the Virtual DOM.
