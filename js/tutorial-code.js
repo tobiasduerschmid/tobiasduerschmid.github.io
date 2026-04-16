@@ -3705,6 +3705,8 @@
       self._setActiveFile(activeFile);
     }
     self._renderTabs();
+    // UML: force refresh after restoring autosaved files
+    self._scheduleUMLRefresh(true);
   };
 
   /**
