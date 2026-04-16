@@ -3707,6 +3707,8 @@
     self._renderTabs();
     // UML: force refresh after restoring autosaved files
     self._scheduleUMLRefresh(true);
+    // React: rebuild preview after restoring autosaved files
+    if (self.config.backend === 'react') self._rebuildReactPreview();
   };
 
   /**
@@ -3736,6 +3738,8 @@
     self._renderTabs();
     // UML: force refresh after resetting files
     self._scheduleUMLRefresh(true);
+    // React: rebuild preview after resetting files
+    if (self.config.backend === 'react') self._rebuildReactPreview();
   };
 
   /**
