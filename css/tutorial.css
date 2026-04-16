@@ -761,6 +761,46 @@ html:not(.dark-mode) {
   color: #c8d4e4;
   border-color: #5a5a78;
 }
+.tvm-diagram-color-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #252538;
+  cursor: pointer;
+  margin-left: 3px;
+  padding: 2px;
+  flex-shrink: 0;
+  transition: border-color 0.1s;
+}
+.tvm-diagram-color-btn:hover {
+  border-color: #5a5a78;
+}
+.tvm-diagram-color-input {
+  width: 18px;
+  height: 18px;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.tvm-diagram-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.tvm-diagram-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+.tvm-diagram-color-input::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
 
 /* Fullscreen overlay */
 .tvm-diagram-fullscreen-overlay {
@@ -953,6 +993,13 @@ html:not(.dark-mode) .tvm-diagram-refresh-btn {
 html:not(.dark-mode) .tvm-diagram-refresh-btn:hover {
   background: #d8dce6;
   color: #222;
+  border-color: #b0b6c4;
+}
+html:not(.dark-mode) .tvm-diagram-color-btn {
+  background: #eaecf0;
+  border-color: #cdd0d8;
+}
+html:not(.dark-mode) .tvm-diagram-color-btn:hover {
   border-color: #b0b6c4;
 }
 html:not(.dark-mode) .tvm-diagram-empty {

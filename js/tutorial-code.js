@@ -190,6 +190,7 @@
     this._umlFsZoom = 1;               // current zoom level (fullscreen view)
     this._umlFullscreenEl = null;       // fullscreen overlay element
     this._umlFsContentEl = null;        // fullscreen diagram content element
+    this._umlCustomColor = this._loadUMLColorCookie(); // user-chosen accent color (null = default)
 
     // React preview state
     this._previewFrame = null;
@@ -297,6 +298,66 @@
   };
 
   // ---------------------------------------------------------------------------
+  // UML Color Cookie Helpers
+  // ---------------------------------------------------------------------------
+  TutorialCode.prototype._loadUMLColorCookie = function () {
+    try {
+      var match = document.cookie.match(/(?:^|;\s*)uml-accent-color=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    } catch (e) { return null; }
+  };
+
+  TutorialCode.prototype._saveUMLColorCookie = function (color) {
+    try {
+      var maxAge = 60 * 60 * 24 * 365; // 1 year
+      document.cookie = 'uml-accent-color=' + encodeURIComponent(color) +
+        '; max-age=' + maxAge + '; path=/; SameSite=Lax';
+    } catch (e) { }
+  };
+
+  /**
+   * Apply the current custom color (or default) to a diagram container by setting
+   * CSS custom properties, then re-render by calling the given render function.
+   */
+  TutorialCode.prototype._applyUMLColors = function (containerEl) {
+    if (!containerEl) return;
+    var color = this._umlCustomColor;
+    if (color) {
+      // Derive lighter shades from the chosen hex color for fill / header
+      var r = parseInt(color.slice(1, 3), 16);
+      var g = parseInt(color.slice(3, 5), 16);
+      var b = parseInt(color.slice(5, 7), 16);
+      var headerFill = 'rgba(' + r + ',' + g + ',' + b + ',0.18)';
+      var secondaryFill = 'rgba(' + r + ',' + g + ',' + b + ',0.09)';
+      var labelBg = 'rgba(255,255,255,0.94)';
+      var labelStroke = 'rgba(' + r + ',' + g + ',' + b + ',0.25)';
+      containerEl.style.setProperty('--uml-stroke', color);
+      containerEl.style.setProperty('--uml-line', color);
+      containerEl.style.setProperty('--uml-header-fill', headerFill);
+      containerEl.style.setProperty('--uml-secondary-fill', secondaryFill);
+      containerEl.style.setProperty('--uml-label-stroke', labelStroke);
+      containerEl.style.setProperty('--uml-label-fill', labelBg);
+    } else {
+      containerEl.style.removeProperty('--uml-stroke');
+      containerEl.style.removeProperty('--uml-line');
+      containerEl.style.removeProperty('--uml-header-fill');
+      containerEl.style.removeProperty('--uml-secondary-fill');
+      containerEl.style.removeProperty('--uml-label-stroke');
+      containerEl.style.removeProperty('--uml-label-fill');
+    }
+  };
+
+  /** Sync all color inputs in the UI to the current color value */
+  TutorialCode.prototype._syncColorInputs = function () {
+    var inputs = this.root ? this.root.querySelectorAll('.tvm-diagram-color-input') : [];
+    var val = this._umlCustomColor || '#4060a0';
+    for (var i = 0; i < inputs.length; i++) inputs[i].value = val;
+    // Also sync any that escaped to body (fullscreen overlay)
+    var fsInputs = document.querySelectorAll('.tvm-diagram-fs-color-input');
+    for (var j = 0; j < fsInputs.length; j++) fsInputs[j].value = val;
+  };
+
+  // ---------------------------------------------------------------------------
   // UI Construction
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._buildUI = function () {
@@ -332,6 +393,7 @@
         '</div>' +
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
         '</div>';
 
       terminalHtml =
@@ -412,6 +474,7 @@
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -448,6 +511,7 @@
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -487,6 +551,7 @@
       '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
       '</div>' +
       '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
+      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input"></label>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
       '</div>' +
@@ -678,6 +743,35 @@
           self._closeUMLFullscreen();
         }
       });
+    }
+
+    // Wire all color pickers (inline + fullscreen share a single handler via event delegation)
+    if (this._umlDiagramEnabled) {
+      var self2 = self;
+      function onColorChange(e) {
+        if (!e.target || e.target.className.indexOf('tvm-diagram-color-input') === -1) return;
+        self2._umlCustomColor = e.target.value;
+        self2._saveUMLColorCookie(e.target.value);
+        self2._syncColorInputs();
+        self2._renderCurrentUMLDiagram();
+        if (self2._umlFullscreenEl && self2._umlFullscreenEl.style.display !== 'none') {
+          self2._renderUMLInFullscreen();
+        }
+      }
+      if (this.root) this.root.addEventListener('change', onColorChange);
+      // Also catch the fs overlay once it's moved to body
+      document.addEventListener('change', function (e) {
+        if (!e.target || e.target.className.indexOf('tvm-diagram-color-input') === -1) return;
+        // Only handle if the input is outside our root (i.e. moved fullscreen overlay)
+        if (self2.root && self2.root.contains(e.target)) return;
+        self2._umlCustomColor = e.target.value;
+        self2._saveUMLColorCookie(e.target.value);
+        self2._syncColorInputs();
+        self2._renderCurrentUMLDiagram();
+        self2._renderUMLInFullscreen();
+      });
+      // Set initial value from cookie
+      this._syncColorInputs();
     }
 
     // Left-panel tab switcher (Steps ↔ UML Diagram)
@@ -2839,6 +2933,7 @@
       return;
     }
     this._umlContentEl.innerHTML = '';
+    this._applyUMLColors(this._umlContentEl);
     UMLClassDiagram.render(this._umlContentEl, this._applyTutorialClassLayout(syntax));
     var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
     this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
@@ -2851,6 +2946,7 @@
       return;
     }
     this._umlContentEl.innerHTML = '';
+    this._applyUMLColors(this._umlContentEl);
     UMLSequenceDiagram.render(this._umlContentEl, syntax);
     var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
     this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
@@ -2977,6 +3073,7 @@
       this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No diagram data yet. Refresh first.</div>';
       return;
     }
+    this._applyUMLColors(this._umlFsContentEl);
     try {
       if (this._umlActiveType === 'sequence') {
         var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
@@ -3019,6 +3116,7 @@
       document.body.appendChild(this._umlFullscreenEl);
     }
 
+    this._syncColorInputs();
     this._renderUMLInFullscreen();
     this._umlFullscreenEl.style.display = 'flex';
     document.body.style.overflow = 'hidden';
