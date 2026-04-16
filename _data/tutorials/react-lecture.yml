@@ -582,9 +582,15 @@ steps:
             fontSize: "13px",
           };
 
-          // Building icons and rules
+          // Building icons
           const HOUSE_EMOJI = "\uD83C\uDFE0";
           const HOTEL_EMOJI = "\uD83C\uDFE8";
+        language: "javascript"
+
+      - path: "step4/App.jsx"
+        content: |
+          const { useState } = React;
+
           const MAX_HOUSES = 4;
 
           // Converts house count to visual building icons
@@ -593,11 +599,6 @@ steps:
             if (houses > MAX_HOUSES) return HOTEL_EMOJI;
             return HOUSE_EMOJI.repeat(houses);
           }
-        language: "javascript"
-
-      - path: "step4/App.jsx"
-        content: |
-          const { useState } = React;
 
           // TODO: Add state: const [houses, setHouses] = useState(0);
           // TODO: Add buyHouse handler that increments houses (up to MAX_HOUSES + 1)
@@ -646,6 +647,15 @@ steps:
         - path: "step4/App.jsx"
           content: |
             const { useState } = React;
+
+            const MAX_HOUSES = 4;
+
+            // Converts house count to visual building icons
+            function renderBuildings(houses) {
+              if (houses === 0) return "No buildings";
+              if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+              return HOUSE_EMOJI.repeat(houses);
+            }
 
             const MonopolyProperty = ({ name, price, colorGroup }) => {
               const [houses, setHouses] = useState(0);
@@ -696,7 +706,7 @@ steps:
             root.render(<App />);
           language: "javascript"
       explanation: |
-        We added `const [houses, setHouses] = useState(0)` to track the number of houses. The `buyHouse` handler increments houses up to `MAX_HOUSES + 1` (5 total — triggering the hotel upgrade). `renderBuildings(houses)` from `styles.js` converts the count into visual icons. The button is disabled once fully upgraded, and each card maintains its own independent state.
+        We added `const [houses, setHouses] = useState(0)` to track the number of houses. The `buyHouse` handler increments houses up to `MAX_HOUSES + 1` (5 total — triggering the hotel upgrade). `renderBuildings(houses)` in `App.jsx` converts the count into visual icons. The button is disabled once fully upgraded, and each card maintains its own independent state.
 
     quiz:
       title: "State & useState — Knowledge Check"
@@ -877,14 +887,7 @@ steps:
 
           const HOUSE_EMOJI = "\uD83C\uDFE0";
           const HOTEL_EMOJI = "\uD83C\uDFE8";
-          const MAX_HOUSES = 4;
           const HOUSE_COST = 50;
-
-          function renderBuildings(houses) {
-            if (houses === 0) return "No buildings";
-            if (houses > MAX_HOUSES) return HOTEL_EMOJI;
-            return HOUSE_EMOJI.repeat(houses);
-          }
 
           const walletBarStyle = {
             display: "flex",
@@ -904,6 +907,15 @@ steps:
       - path: "step5/App.jsx"
         content: |
           const { useState } = React;
+
+          const MAX_HOUSES = 4;
+
+          // Converts house count to visual building icons
+          function renderBuildings(houses) {
+            if (houses === 0) return "No buildings";
+            if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+            return HOUSE_EMOJI.repeat(houses);
+          }
 
           const INITIAL_PROPERTIES = [
             { name: "Royce Hall",       price: 400, colorGroup: "ucla-blue",  rent: 50 },
@@ -1047,6 +1059,15 @@ steps:
         - path: "step5/App.jsx"
           content: |
             const { useState } = React;
+
+            const MAX_HOUSES = 4;
+
+            // Converts house count to visual building icons
+            function renderBuildings(houses) {
+              if (houses === 0) return "No buildings";
+              if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+              return HOUSE_EMOJI.repeat(houses);
+            }
 
             const INITIAL_PROPERTIES = [
               { name: "Royce Hall",       price: 400, colorGroup: "ucla-blue",  rent: 50 },
