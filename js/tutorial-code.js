@@ -2578,6 +2578,7 @@
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
     if (this.autoSaveEnabled) this._saveFile(this.activeFileName);
+    if (this.config.backend === 'react') this._rebuildReactPreview();
   };
 
   // ---------------------------------------------------------------------------
@@ -3186,11 +3187,9 @@
         }
 
       } else if (self.config.backend === 'react') {
-        clearTimeout(self._reactRebuildTimer);
-        self._reactRebuildTimer = setTimeout(function () {
-          self._rebuildReactPreview();
-          done();
-        }, 400);
+        // Preview only rebuilds on explicit save (Ctrl+S / save button),
+        // not on every keystroke — see _saveCurrentFile.
+        done();
 
       } else {
         done();
