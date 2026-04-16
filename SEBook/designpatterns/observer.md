@@ -279,10 +279,3 @@ Applying the Observer pattern yields several important consequences:
 * **Unexpected Updates:** Because observers have no knowledge of each other, a change triggered by one observer can cascade through the system in unexpected ways. A notification chain where observer A's update triggers subject B's notification, which updates observer C, can be very difficult to debug.
 * **Inverted Dependency Flow:** An empirical study on reactive programming found that the Observer pattern *inverts the natural dependency flow* in code. Conceptually, data flows from subject to observer, but in the code, observers call the subject to register themselves. This means that when a reader encounters an observer for the first time, there is no sign in the code near the observer of *what* it depends on. This inversion makes program comprehension harder—a critical insight for anyone debugging Observer-based systems.
 
-# Flashcards
-
-{% include flashcards.html id="design_pattern_observer" %}
-
-# Quiz
-
-{% include quiz.html id="design_pattern_observer" %}

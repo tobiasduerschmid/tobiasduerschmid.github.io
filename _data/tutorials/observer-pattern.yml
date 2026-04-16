@@ -3,6 +3,8 @@ description: "Learn the most widely used behavioral design pattern by experienci
 
 backend: pyodide
 uml_diagram: true
+uml_position: right
+uml_default_view: true
 require_tests: true
 autosave_type: files
 
@@ -23,6 +25,8 @@ steps:
   - title: "When One Display Breaks the Whole System"
     instructions: |
       ## The Scenario
+
+      > **Prerequisites:** This tutorial assumes you are comfortable with Python **classes**, **inheritance**, **abstract base classes** (`ABC`, `@abstractmethod`), and **`@property` decorators**. If any of these are unfamiliar, review them first — you will need all four.
 
       > **Learning objective:** After this step you will be able to **identify** the symptoms of tightly coupled code and **explain** why direct dependencies create maintenance headaches.
 
@@ -60,7 +64,11 @@ steps:
       WeatherStation --> CurrentDisplay : creates and calls
       WeatherStation --> StatisticsDisplay : creates and calls
       WeatherStation --> ForecastDisplay : creates and calls
-      note right of WeatherStation : Every display is a\ndirect dependency.\nAdding one = editing this class.
+      note right of WeatherStation
+        Every display is a
+        direct dependency.
+        Adding one = editing this class.
+      end note
       @enduml'></div>
 
       The code works. Ship it, right? Not so fast. Your manager just dropped a new requirement:
@@ -429,26 +437,43 @@ steps:
       ConcreteSubject --|> Subject
       ConcreteObserverA ..|> Observer
       ConcreteObserverB ..|> Observer
-      note bottom of Subject : Only knows the Observer\ninterface — NOT concrete types
-      note bottom of Observer : Dashed arrows = implements.\nAny class can become an observer.
+      note bottom of Subject
+        Only knows the Observer
+        interface — NOT concrete types
+      end note
+      note bottom of Observer
+        Dashed arrows = implements.
+        Any class can become an observer.
+      end note
       @enduml'></div>
 
       **Key UML relationships:**
-      - **Solid line with open triangle** (`--|>`) = inheritance ("is-a")
-      - **Dashed line with open triangle** (`..|>`) = implements interface
-      - **Diamond arrow** (`o-->`) = aggregation ("has-a", loosely owned)
+      - **Generalization** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> = inheritance ("is-a")
+      - **Realization** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> = implements interface
+      - **Aggregation** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> = "has-a" (loosely owned)
 
       ### Polling vs. Notification
 
       An alternative to Observer is **polling** — each display repeatedly asks the station "has anything changed?" This is like refreshing a web page over and over instead of getting push notifications. It works, but wastes resources and introduces delays.
 
-      ### Predict Before You Run
+      ### PRIMM Exercise: Predict, Run, Investigate, Modify
 
-      Look at `pattern_preview.py`. Before running it, **predict**:
-      1. How many times will "Data changed!" print?
-      2. Will `DashboardA` always print before `DashboardB`?
+      #### 1. Predict
+      Look at `pattern_preview.py`. **Before running it**, predict:
+      - How many times will "Data changed!" print?
+      - Will `DashboardA` always print before `DashboardB`?
 
-      Run it to check your predictions.
+      #### 2. Run
+      Run it and compare the output to your prediction.
+
+      #### 3. Investigate
+      Try these modifications and observe what changes:
+      - **Remove** the line `source.attach(DashboardB())`. What happens to Dashboard B? Why?
+      - **Add** a third `source.set_value(30)` at the bottom. How many total lines print?
+      - **Move** `source.attach(DashboardA())` to *after* the first `set_value(10)`. Does Dashboard A see the value 10?
+
+      #### 4. Modify
+      **Add a `DashboardC`** class that prints the value squared (e.g., `"Dashboard C sees: 100 (squared)"`). Attach it and verify it works. Then **undo your changes** — the tests check the original output.
 
     files:
       - path: "pattern_preview.py"
@@ -558,7 +583,7 @@ steps:
             - "ConcreteObserverA deletes Observer objects"
           correct_index: 1
           explanation: |
-            In UML, a **dashed arrow with an open triangle** (`..|>`) means "implements" or "realizes" an interface. `ConcreteObserverA` promises to provide the `update()` method declared in the `Observer` abstract class. A **solid** arrow with open triangle (`--|>`) means direct inheritance.
+            In UML, a **dashed arrow with an open triangle** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> means "implements" or "realizes" an interface. `ConcreteObserverA` promises to provide the `update()` method declared in the `Observer` abstract class. A **solid** arrow with open triangle <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> means direct inheritance.
 
         - question: |
             Which category of GoF design patterns does the Observer belong to?
@@ -587,6 +612,23 @@ steps:
       ## Constructing the Observer Pattern
 
       > **Learning objective:** After this step you will be able to **implement** the Observer pattern from scratch, identify each UML role in your code, and watch the class diagram update live.
+
+      ### Quick Recall
+
+      Before we start coding, answer these in your head (from Step 2):
+      - What are the two main roles in the Observer pattern?
+      - What three methods does a Subject provide?
+      - What happens when a Subject's state changes?
+
+      If you are unsure, revisit Step 2 before continuing.
+
+      ### Try First (Generation Challenge)
+
+      Before looking at the blueprint below, **try this on paper or in your head** for 2 minutes:
+
+      > *If you had to build an Observer pattern from scratch for a `TemperatureSensor` that notifies a `TemperatureLogger`, what classes would you create? What methods would each class need?*
+
+      Jot down your answer, then compare it to the blueprint. The goal is not to get it right — the attempt itself deepens your understanding of the solution.
 
       ### The Blueprint
 
@@ -981,7 +1023,7 @@ steps:
             - "TemperatureSensor calls methods on Subject"
           correct_index: 1
           explanation: |
-            In UML, a **solid line with an open triangle** (`--|>`) means **inheritance** (generalization). `TemperatureSensor` *is a* `Subject` — it inherits `attach()`, `detach()`, and `notify()`. Compare with the **dashed** line (`..|>`) used by `TemperatureLogger ..|> Observer`, which means "implements interface."
+            In UML, a **solid line with an open triangle** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> means **inheritance** (generalization). `TemperatureSensor` *is a* `Subject` — it inherits `attach()`, `detach()`, and `notify()`. Compare with the **dashed** line <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> used by `TemperatureLogger ..|> Observer`, which means "implements interface."
 
 
   # --------------------------------------------------------------------------
@@ -998,6 +1040,13 @@ steps:
       ## Applying Observer to the Weather Station
 
       > **Learning objective:** After this step you will be able to **refactor** tightly coupled code into the Observer pattern, **demonstrate** dynamic attach/detach, and **compare** the two architectures using UML diagrams.
+
+      ### Quick Recall
+
+      Think back to Steps 1 and 3:
+      - In Step 1, how many places did you change in `WeatherStation` to add one display?
+      - In Step 3, what method did the `TemperatureSensor` call to broadcast changes?
+      - What is the difference between `attach()` and `detach()`?
 
       ### Before vs. After
 
@@ -1043,7 +1092,10 @@ steps:
       StatisticsDisplay ..|> Observer
       ForecastDisplay ..|> Observer
       HeatIndexDisplay ..|> Observer
-      note right of WeatherStation : ZERO references to\nany specific display!
+      note right of WeatherStation
+        ZERO references to
+        any specific display!
+      end note
       @enduml'></div>
 
       Notice: `WeatherStation` has **zero** arrows to any display. It only connects to `Observer` (abstract) through `Subject`. Any class that implements `Observer` can plug in — no changes to the station needed.
@@ -1073,10 +1125,112 @@ steps:
 
       How many lines of `WeatherStation` did you change to add `HeatIndexDisplay`? Check the UML diagram — the station's connections do not change.
 
+      ### Bug Hunt: Debug a Broken Observer
+
+      After completing the main task, open `bug_hunt.py`. This file contains an Observer implementation with **three bugs** — common mistakes that real developers make. Each bug has a comment marking it. Find and fix all three, then run the tests.
+
+      **Hint:** The three most common Observer bugs are:
+      1. Notification timing (when does `notify()` get called relative to the state change?)
+      2. Observer registration (is the observer actually attached?)
+      3. Data flow (is the observer reading the right data?)
+
     uml_files:
       - weather_observer.py
 
     files:
+      - path: "bug_hunt.py"
+        content: |
+          from abc import ABC, abstractmethod
+
+
+          class Subject:
+              def __init__(self) -> None:
+                  self._observers: list = []
+
+              def attach(self, observer: 'Observer') -> None:
+                  if observer not in self._observers:
+                      self._observers.append(observer)
+
+              def detach(self, observer: 'Observer') -> None:
+                  self._observers.remove(observer)
+
+              def notify(self) -> None:
+                  for observer in self._observers:
+                      observer.update(self)
+
+
+          class Observer(ABC):
+              @abstractmethod
+              def update(self, subject: Subject) -> None:
+                  pass
+
+
+          class ScoreBoard(Subject):
+              """Tracks a game score and notifies observers."""
+
+              def __init__(self) -> None:
+                  super().__init__()
+                  self._home: int = 0
+                  self._away: int = 0
+
+              @property
+              def home(self) -> int:
+                  return self._home
+
+              @property
+              def away(self) -> int:
+                  return self._away
+
+              def update_score(self, home: int, away: int) -> None:
+                  # BUG 1: Something is wrong with the notification timing.
+                  self.notify()
+                  self._home = home
+                  self._away = away
+
+
+          class TVOverlay(Observer):
+              """Shows the score on a TV broadcast overlay."""
+
+              def __init__(self) -> None:
+                  self.last_display: str = ""
+
+              def update(self, subject: Subject) -> None:
+                  self.last_display = f"HOME {subject.home} - {subject.away} AWAY"
+                  print(f"[TV] {self.last_display}")
+
+
+          class MobileAlert(Observer):
+              """Sends push notifications to mobile devices."""
+
+              def __init__(self) -> None:
+                  self.alerts: list[str] = []
+
+              def update(self, subject: Subject) -> None:
+                  # BUG 2: This observer reads hardcoded values instead
+                  #         of querying the subject.
+                  msg = f"Score update: 0-0"
+                  self.alerts.append(msg)
+                  print(f"[Mobile] {msg}")
+
+
+          def main() -> None:
+              board = ScoreBoard()
+              tv = TVOverlay()
+              mobile = MobileAlert()
+
+              # BUG 3: One observer is not receiving updates.
+              #         Is it attached?
+              board.attach(tv)
+
+              board.update_score(1, 0)
+              board.update_score(1, 1)
+              board.update_score(2, 1)
+
+
+          if __name__ == "__main__":
+              main()
+        language: "python"
+
       - path: "weather_observer.py"
         content: |
           from abc import ABC, abstractmethod
@@ -1434,6 +1588,55 @@ steps:
           - text: "In `main()`, after the first three measurements, call `station.detach(forecast)` before the final measurement. The forecast display should stop receiving updates."
             condition: "default"
 
+      - description: "Bug Hunt: BUG 1 fixed — notify() called AFTER state update"
+        command: |
+          source = open('/tutorial/bug_hunt.py').read()
+          ns = {}
+          exec(source, ns)
+          board = ns['ScoreBoard']()
+          tv = ns['TVOverlay']()
+          board.attach(tv)
+          import io, contextlib
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              board.update_score(3, 1)
+          assert "3" in tv.last_display and "1" in tv.last_display, \
+              "BUG 1: notify() is called BEFORE the state is updated. Move self.notify() to AFTER self._home and self._away are set."
+        hints:
+          - text: "In `update_score()`, the `self.notify()` call happens BEFORE `self._home` and `self._away` are updated. Observers read stale data. Move `self.notify()` to the end of the method, after the assignments."
+            condition: "default"
+
+      - description: "Bug Hunt: BUG 2 fixed — MobileAlert reads from subject"
+        command: |
+          source = open('/tutorial/bug_hunt.py').read()
+          ns = {}
+          exec(source, ns)
+          board = ns['ScoreBoard']()
+          mobile = ns['MobileAlert']()
+          board.attach(mobile)
+          board.update_score(2, 1)
+          assert "2" in mobile.alerts[-1] and "1" in mobile.alerts[-1], \
+              "BUG 2: MobileAlert.update() uses hardcoded values instead of reading subject.home and subject.away"
+        hints:
+          - text: "In `MobileAlert.update()`, replace the hardcoded `'Score update: 0-0'` with `f'Score update: {subject.home}-{subject.away}'`. Observers must read data from the subject, not use hardcoded values."
+            condition: "default"
+
+      - description: "Bug Hunt: BUG 3 fixed — MobileAlert is attached"
+        command: |
+          source = open('/tutorial/bug_hunt.py').read()
+          ns = {}
+          exec(source, ns)
+          import io, contextlib
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              ns['main']()
+          out = buf.getvalue()
+          assert "[Mobile]" in out, \
+              "BUG 3: MobileAlert is never attached to the board in main(). Add board.attach(mobile) so it receives updates."
+        hints:
+          - text: "In `main()`, the `mobile` observer is created but never attached. Add `board.attach(mobile)` after creating it."
+            condition: "default"
+
     quiz:
       title: "The Refactoring — Knowledge Check"
       min_score: 0.6
@@ -1486,7 +1689,7 @@ steps:
             - "Subject deletes 0 or more Observer objects"
           correct_index: 1
           explanation: |
-            The open diamond (`o-->`) represents **aggregation**: the Subject *has* a collection of Observers, but the Observers can exist independently of the Subject. The `"0..*"` multiplicity means "zero or more." A *filled* diamond would be **composition** (stronger ownership). Observers are loosely associated — they can be attached to or detached from the Subject freely.
+            The open diamond <span class="uml-sym" data-diagram="class" data-sym="o--"></span> represents **aggregation**: the Subject *has* a collection of Observers, but the Observers can exist independently of the Subject. The `"0..*"` multiplicity means "zero or more." A *filled* diamond <span class="uml-sym" data-diagram="class" data-sym="*--"></span> would be **composition** (stronger ownership). Observers are loosely associated — they can be attached to or detached from the Subject freely.
 
 
   # --------------------------------------------------------------------------
@@ -1502,6 +1705,13 @@ steps:
       ## When Observer Is the Right Tool — and When It Is Not
 
       > **Learning objective:** After this step you will be able to **evaluate** whether the Observer pattern is appropriate for a given scenario, **explain** the Push vs. Pull trade-off, and **recognize** the danger of over-engineering.
+
+      ### Quick Recall
+
+      Before learning when to use Observer, recall what it costs:
+      - How many **more** classes did the Observer version have compared to Step 1?
+      - What was the hardest part of debugging in Step 4's Bug Hunt?
+      - What is the main **benefit** that justified that extra complexity?
 
       ### The Danger of Over-Engineering
 
@@ -1538,7 +1748,11 @@ steps:
           + update(subject)
         }
         Subject_Pull o--> Observer_Pull
-        note bottom of Observer_Pull : Observer calls\nsubject.get_state()\nto fetch data
+        note bottom of Observer_Pull
+          Observer calls
+          subject.get_state()
+          to fetch data
+        end note
       }
       package "Push Model" {
         class Subject_Push {
@@ -1548,7 +1762,11 @@ steps:
           + update(data)
         }
         Subject_Push o--> Observer_Push
-        note bottom of Observer_Push : Subject sends data\ndirectly as arguments.\nObserver is simpler.
+        note bottom of Observer_Push
+          Subject sends data
+          directly as arguments.
+          Observer is simpler.
+        end note
       }
       @enduml'></div>
 
@@ -1557,9 +1775,17 @@ steps:
       | **Pull** | `update(subject)` — observer queries what it needs | Flexible; observers choose their data | More coupling to subject API |
       | **Push** | `update(temp=80, humidity=65)` — subject sends everything | Observers are simpler and independent | Subject must guess what observers need |
 
+      ### Generate Your Own Heuristic First
+
+      Before looking at the scenarios, **write down your own rule** for when Observer is worth the complexity. Try to complete this sentence:
+
+      > *"Use the Observer pattern when ______, but skip it when ______."*
+
+      Hold onto your answer — you will test it against five scenarios and refine it.
+
       ### Your Task — Scenario Analysis
 
-      Open `design_judgment.py`. For each scenario, decide whether Observer is a good fit (`True`) or overkill (`False`). Set the variable and run to check.
+      Open `design_judgment.py`. For each scenario, **apply your heuristic first**, then set the answer to `True` or `False` and run to check. If your heuristic gets one wrong, revise it.
 
     files:
       - path: "design_judgment.py"
@@ -1767,6 +1993,27 @@ steps:
             Our implementation uses a Python list, which preserves insertion order. But the **Observer pattern itself** does not guarantee order — different implementations might use sets, priority queues, or async dispatch. Your code should **never depend on notification order** between observers, because a future refactoring could change it.
 
         - question: |
+            *(Interleaved — Implementation recall)*
+
+            Trace this code mentally. What does it print?
+            ```python
+            sensor = TemperatureSensor()
+            logger = TemperatureLogger()
+            sensor.temperature = 50
+            sensor.attach(logger)
+            sensor.temperature = 70
+            ```
+          type: single
+          options:
+            - "Logger records both 50 and 70"
+            - "Logger records only 70 — it was not attached when the sensor was set to 50"
+            - "Logger records only 50 — attach() triggers a retroactive update"
+            - "Nothing prints — the logger has no readings"
+          correct_index: 1
+          explanation: |
+            The logger is attached **after** the first temperature change. Since `notify()` only fires during `sensor.temperature = ...`, and the logger was not yet in the observer list when 50 was set, it only sees 70. This is a common source of bugs: **observers only receive notifications from the point of attachment onward** — they do not get historical state.
+
+        - question: |
             Looking at the UML diagrams from this tutorial, what is the most significant structural difference between the Step 1 (tightly coupled) and Step 4 (Observer) architectures?
           type: single
           options:
@@ -1777,3 +2024,298 @@ steps:
           correct_index: 1
           explanation: |
             The critical UML difference: in Step 1, `WeatherStation` has a concrete dependency arrow to every display class. In Step 4, it connects only to the abstract `Observer` interface (via aggregation from `Subject`). The concrete displays implement `Observer` independently. This means you can add, remove, or change displays without touching the station. The UML makes this architectural improvement visually obvious.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — "Comprehensive Assessment"
+  # Pedagogy:
+  #   Retrieval Practice — cumulative quiz across all steps.
+  #   Interleaving — questions mix concepts from different tutorial phases.
+  #   Bloom's levels — Remember through Evaluate, emphasizing Apply and Analyze.
+  # --------------------------------------------------------------------------
+  - title: "Comprehensive Assessment"
+    instructions: |
+      ## Test Your Understanding
+
+      > **Learning objective:** Demonstrate mastery of the Observer pattern by answering questions that span **all** concepts from this tutorial — from tight coupling to design judgment.
+
+      This is a cumulative quiz. The questions are drawn from every step and require you to synthesize what you have learned. You need at least 70% to pass.
+
+      Take your time. If a question stumps you, think about which step covered that concept and what you learned there.
+
+    quiz:
+      title: "Observer Pattern — Comprehensive Assessment"
+      min_score: 0.7
+      shuffle: true
+      questions:
+
+        # ---- Retrieval from Step 1: Tight Coupling ----
+        - question: |
+            *(Tight Coupling — Step 1)*
+
+            In the original tightly coupled `WeatherStation`, adding a new display required modifying the station in two places. Which **design principle** does this violate?
+          type: single
+          options:
+            - "Single Responsibility Principle — the station does too many things"
+            - "Open/Closed Principle — the station should be open for extension but closed for modification"
+            - "Liskov Substitution Principle — displays cannot substitute for each other"
+            - "Interface Segregation Principle — the station interface is too large"
+          correct_index: 1
+          explanation: |
+            The **Open/Closed Principle** states that software entities should be open for extension but closed for modification. The tightly coupled station forces you to **modify** its code every time you extend the system with a new display. The Observer pattern fixes this: new displays extend the system by implementing the Observer interface — no station modification needed.
+
+        # ---- Retrieval from Step 2: Concepts ----
+        - question: |
+            *(Observer Concepts — Step 2)*
+
+            In the YouTube analogy, a subscriber clicks "Unsubscribe." Which Observer pattern method does this correspond to?
+          type: single
+          options:
+            - "`attach()` — registering interest"
+            - "`detach()` — removing the subscription"
+            - "`notify()` — broadcasting a change"
+            - "`update()` — reacting to a change"
+          correct_index: 1
+          explanation: |
+            Unsubscribing corresponds to `detach()` — removing the observer from the subject's notification list. After detaching, the observer no longer receives `update()` calls when the subject's state changes. This is one of the key advantages of Observer: subscriptions are dynamic.
+
+        # ---- Retrieval from Step 3: Implementation ----
+        - question: |
+            *(Implementation — Step 3)*
+
+            You implement a `TemperatureSensor` that inherits from `Subject`. The `temperature` property setter stores the new value but you **forget** to call `self.notify()`. What symptom will you observe?
+          type: single
+          options:
+            - "A `TypeError` because `notify()` is abstract and must be called"
+            - "The temperature updates internally, but all attached observers still show the old value — they are never told about the change"
+            - "The program crashes with a `RecursionError`"
+            - "Nothing — Python's `@property` decorator automatically notifies observers"
+          correct_index: 1
+          explanation: |
+            Without `self.notify()`, the state changes silently. Observers are never called, so they never learn about the new temperature. This is one of the most common Observer bugs. The `@property` decorator is just syntactic sugar for getters and setters — it has no notification mechanism built in.
+
+        # ---- Retrieval from Step 4: Refactoring ----
+        - question: |
+            *(Refactoring — Step 4)*
+
+            After refactoring the weather station to use Observer, you need to add a `UVIndexDisplay`. How many lines of `WeatherStation` do you change?
+          type: single
+          options:
+            - "0 — create the new class and attach it externally"
+            - "1 — add a reference in `__init__`"
+            - "2 — add a reference in `__init__` and a call in `new_measurement()`"
+            - "3 or more"
+          correct_index: 0
+          explanation: |
+            **Zero.** This is the core benefit. You create `class UVIndexDisplay(Observer)` with its own `update()` method, then call `station.attach(uv_display)` from client code. The station class is never touched. Compare this to Step 1 where every new display required editing the station in two places.
+
+        # ---- Retrieval from Step 5: Design Judgment ----
+        - question: |
+            *(Design Judgment — Step 5)*
+
+            A logging system writes every application event to a single log file. There is exactly one log writer, and it will never change. A teammate suggests using the Observer pattern. What is the best response?
+          type: single
+          options:
+            - "Good idea — Observer makes the logging more flexible"
+            - "Overkill — with a single, fixed receiver, a direct method call is simpler and more debuggable"
+            - "Observer is required any time events are involved"
+            - "Use Observer now to future-proof the system"
+          correct_index: 1
+          explanation: |
+            Observer solves the problem of **dynamic, one-to-many** dependencies. With exactly one fixed log writer that never changes, a direct call is simpler, clearer, and easier to debug. Adding Observer here would be over-engineering — adding indirection and complexity without addressing a real architectural need.
+
+        # ---- Cross-step synthesis: UML ----
+        - question: |
+            *(UML Synthesis)*
+
+            In the Step 4 UML diagram, `WeatherStation --|> Subject` and `CurrentDisplay ..|> Observer`. Why are the arrow styles **different**?
+          type: single
+          options:
+            - "They are the same — just rendered differently due to diagram layout"
+            - "Solid arrow <span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"--|>\"></span> means inheritance (WeatherStation IS-A Subject). Dashed arrow <span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..|>\"></span> means interface implementation (CurrentDisplay IMPLEMENTS Observer)"
+            - "Solid means composition, dashed means aggregation"
+            - "Solid means the relationship is required, dashed means it is optional"
+          correct_index: 1
+          explanation: |
+            In UML class diagrams, a **solid line with hollow triangle** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> denotes **generalization** (inheritance). A **dashed line with hollow triangle** <span class="uml-sym" data-diagram="class" data-sym="..|>"></span> denotes **realization** (implementing an interface or abstract class). WeatherStation inherits concrete behavior from Subject. CurrentDisplay implements the abstract Observer contract.
+
+        # ---- Cross-step synthesis: Push vs Pull ----
+        - question: |
+            *(Architecture Synthesis)*
+
+            Your tutorial implementation uses the Pull model: `update(self, subject)` where observers call `subject.temperature`. A colleague proposes switching to Push: `update(self, temp, humidity, pressure)`. What trade-off does this introduce?
+          type: single
+          options:
+            - "Push is strictly better — it eliminates coupling between observer and subject"
+            - "Push decouples observers from the subject's API, but the subject must now guess what data all observers need — adding a new data field requires changing the notification signature"
+            - "There is no difference — both models produce identical architectures"
+            - "Pull is strictly better — it is always more efficient"
+          correct_index: 1
+          explanation: |
+            **Push** decouples observers from the subject's getter API (they don't need a reference back). But it couples the **notification signature** to whatever the subject decides to push. If observers have diverse data needs, the subject either pushes too much data or must maintain multiple notification methods. The **Hybrid** model (push an event type, let observers pull selectively) is the most common real-world approach.
+
+        # ---- Cross-step synthesis: Debugging ----
+        - question: |
+            *(Debugging Synthesis)*
+
+            A weather display shows stale data. You verify the display is attached and `update()` looks correct. The `new_measurement()` method stores new values but the display still shows old data. What is the most likely cause?
+          type: single
+          options:
+            - "The display was detached without you realizing"
+            - "`new_measurement()` stores the new values **after** calling `self.notify()` — observers read the old state because notification happens before the update"
+            - "Python's garbage collector destroyed the display object"
+            - "The Observer pattern does not support multiple state fields"
+          correct_index: 1
+          explanation: |
+            If `self.notify()` is called **before** updating the internal state, observers pull stale values. The correct order is: (1) update state, (2) call `self.notify()`. This is a subtle but critical bug — the notification must happen **after** the state change, not before.
+
+        # ---- Comprehensive review: Steps 1-5 ----
+        - question: |
+            *(Comprehensive review)*
+
+            Rank these three architectures from **most** to **least** coupled:
+            (A) WeatherStation directly calls all display `.show()` methods
+            (B) WeatherStation uses Observer with Pull model (`update(subject)`)
+            (C) WeatherStation uses Observer with Push model (`update(temp, humidity, pressure)`)
+          type: single
+          options:
+            - "A > B > C (A most coupled, C least coupled)"
+            - "C > B > A (C most coupled, A least coupled)"
+            - "A > C > B (direct calls most coupled, then Push, then Pull)"
+            - "B > A > C (Pull most coupled, then direct, then Push)"
+          correct_index: 0
+          explanation: |
+            **(A)** is the most coupled — the station knows every concrete display by name. **(B) Pull** is less coupled — the station only knows the Observer interface, but observers hold a reference back to the subject. **(C) Push** is the least coupled — observers receive data directly and need no reference to the subject at all. However, Push has its own trade-off: the subject must anticipate what data observers need.
+
+        - question: |
+            *(Comprehensive review)*
+
+            Which of the following are **consequences** of the Observer pattern described by the GoF? (Select all that apply)
+          type: multiple
+          options:
+            - "Loose coupling between subject and observers"
+            - "Observers can be added and removed at runtime"
+            - "Unexpected cascading updates can be hard to debug"
+            - "The pattern guarantees observers are notified in a specific order"
+          correct_indices: [0, 1, 2]
+          explanation: |
+            The first three are all documented consequences. **Loose coupling** is the primary benefit. **Dynamic relationships** enable runtime flexibility. **Unexpected cascading updates** are the main drawback — observer A's update can trigger subject B, which notifies observer C, creating hard-to-trace chains. The pattern does **not** guarantee notification order — that is implementation-dependent.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — "Summary and Key Takeaways"
+  # Pedagogy:
+  #   Metacognitive reflection — students review what they learned.
+  #   Spacing cue — pointers to future practice and revisitation.
+  #   Schema consolidation — summary reinforces the mental model.
+  # --------------------------------------------------------------------------
+  - title: "Summary and Key Takeaways"
+    instructions: |
+      ## What You Learned
+
+      Congratulations — you have completed the Observer Design Pattern tutorial. Here is a summary of your journey:
+
+      ### Step-by-Step Recap
+
+      | Step | What You Did | Key Insight |
+      |---|---|---|
+      | **1. Tight Coupling** | Added a display to a hard-coded weather station | Every new display forced changes to the station — violating the Open/Closed Principle |
+      | **2. Concepts** | Learned pattern vocabulary and the YouTube analogy | Observer = Subject + Observers + dynamic subscribe/unsubscribe |
+      | **3. Build It** | Implemented Observer from scratch with a temperature sensor | The Subject never imports or names concrete observers — it only knows the interface |
+      | **4. Refactor** | Applied Observer to the original weather station | Adding `HeatIndexDisplay` required **zero** changes to `WeatherStation` |
+      | **5. Design Judgment** | Evaluated when Observer helps and when it is overkill | Use Observer for dynamic, one-to-many relationships — not for every function call |
+      | **6. Assessment** | Proved your understanding across all concepts | Synthesis across tight coupling, UML, implementation, refactoring, and trade-offs |
+
+      ### The Observer Pattern at a Glance
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      skinparam classAttributeIconSize 0
+      abstract class Subject {
+        - _observers: list
+        + attach(observer: Observer)
+        + detach(observer: Observer)
+        + notify()
+      }
+      abstract class Observer {
+        + {abstract} update(subject: Subject)
+      }
+      Subject o--> "0..*" Observer : notifies
+      note bottom of Subject
+        Maintains observer list.
+        Calls update() on all
+        registered observers
+        when state changes.
+      end note
+      note bottom of Observer
+        Any class implementing
+        this interface can
+        observe any Subject.
+      end note
+      @enduml'></div>
+
+      ### Key Design Decisions
+
+      | Decision | Options | When to Use |
+      |---|---|---|
+      | **Data flow** | Pull (observers query subject) vs. Push (subject sends data) vs. Hybrid | Pull for diverse observers; Push for uniform data needs; Hybrid for real-world frameworks |
+      | **Notification trigger** | Automatic (in setter) vs. Client-triggered vs. Batched | Automatic for simplicity; Batched for performance with frequent updates |
+      | **Observer lifecycle** | Explicit detach vs. Weak references vs. Scoped subscriptions | Explicit for simple cases; Weak refs for long-lived subjects; Scoped for UI frameworks |
+
+      ### Common Pitfalls to Watch For
+
+      1. **Forgetting `notify()`** — State changes silently; observers show stale data
+      2. **Forgetting `attach()`** — Observer exists but never receives updates
+      3. **Notification before state update** — Observers pull old values
+      4. **Cascading notifications** — Observer A triggers Subject B, which notifies Observer C — hard to debug
+      5. **Lapsed listener problem** — Observers that are never detached cause memory leaks
+      6. **Over-engineering** — Using Observer where a simple direct call would suffice
+
+      ### What to Explore Next
+
+      - **Strategy Pattern** — Another behavioral pattern that uses interfaces to swap algorithms at runtime
+      - **Mediator Pattern** — Centralizes complex communication between multiple objects (reduces many-to-many to many-to-one)
+      - **Event-driven frameworks** — Python's `asyncio`, JavaScript's `EventEmitter`, and reactive programming (RxPy) all build on Observer concepts
+      - **Real-world Observer** — Study how MVC frameworks (Django, React) implement the Observer pattern under the hood
+
+    files:
+      - path: "congratulations.py"
+        content: |
+          # You completed the Observer Design Pattern tutorial!
+          #
+          # Key takeaway: The Observer pattern creates loose coupling
+          # by letting objects subscribe to state changes through
+          # a common interface — without the subject knowing the
+          # concrete types of its observers.
+          #
+          # Run this file to see your summary.
+
+          print("=" * 55)
+          print("  Observer Design Pattern — Tutorial Complete!")
+          print("=" * 55)
+          print()
+          print("  You can now:")
+          print("  [x] Identify tight coupling and its maintenance cost")
+          print("  [x] Explain the Observer pattern using real-world analogies")
+          print("  [x] Implement Subject, Observer, attach, detach, notify")
+          print("  [x] Refactor tightly coupled code into Observer architecture")
+          print("  [x] Judge when Observer is appropriate vs. overkill")
+          print("  [x] Distinguish Push vs. Pull notification models")
+          print("  [x] Read Observer relationships in UML class diagrams")
+          print()
+          print("  Next patterns to explore: Strategy, Mediator, Decorator")
+          print("=" * 55)
+        language: "python"
+
+    open_file: "congratulations.py"
+
+    tests:
+      - description: "You ran the summary"
+        command: |
+          source = open('/tutorial/congratulations.py').read()
+          ns = {}
+          import io, contextlib
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              exec(source, ns)
+          out = buf.getvalue()
+          assert "Complete" in out or "complete" in out, "Run congratulations.py to see your summary!"
