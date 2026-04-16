@@ -2748,3 +2748,32 @@ html:not(.dark-mode) .tvm-step-btn.locked {
 html:not(.dark-mode) .tvm-http-meta-sep {
   background: #ccd0d8;
 }
+
+/* ───────────────────────────────────────────
+   Lecture mode — compact navbar (~half height)
+─────────────────────────────────────────── */
+body.lecture-mode #navnav {
+  min-height: 0;
+}
+body.lecture-mode #navnav .navbar-header,
+body.lecture-mode #navnav .navbar-right {
+  height: 23px !important;
+}
+body.lecture-mode #navnav .navbar-brand {
+  font-size: 13px !important;
+  padding-left: 10px !important;
+  line-height: 23px;
+}
+body.lecture-mode #navnav .navbar-right {
+  padding-right: 10px !important;
+  gap: 10px !important;
+  font-size: 11px !important;
+}
+body.lecture-mode #navnav .navbar-right a,
+body.lecture-mode #navnav .navbar-right button,
+body.lecture-mode #navnav .navbar-right label {
+  font-size: 11px !important;
+}
+body.lecture-mode .tutorial-page {
+  top: 23px !important;
+}
