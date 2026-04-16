@@ -212,61 +212,147 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 3 — Components & Props (Slide 4)
   # --------------------------------------------------------------------------
-  - title: "Components & Props"
+  - title: "Components & Props — Monopoly Properties"
     key: components-props
     instructions: |
-      ## React Components
+      ## Components & Props
 
-      Components are **self-contained, reusable pieces of UI** that manage their own rendering logic. This modularity promotes code **reusability**, simplifies development, and improves maintainability.
+      Components are **self-contained, reusable pieces of UI**. In our UCLA Monopoly game, every property card has the same structure — a colored banner, a name, and a price — but the *data* differs.
 
-      React components are **defined as functions** with a **single return element**. Inputs to the function are called **props**:
+      ### The Problem: Hard-Coded Cards
+
+      Open `starter.jsx` to see a single hard-coded Royce Hall card:
 
       ```jsx
-      function WelcomeMessage(props) {
-        return <h2>Hello, {props.name}!</h2>;
+      function App() {
+        return (
+          <div style={cardStyle}>
+            <div style={getHeaderStyle("ucla-blue")}></div>
+            <div style={bodyStyle}>
+              <h4>Royce Hall</h4>
+              <p><strong>$1000</strong></p>
+            </div>
+          </div>
+        );
       }
-      export default WelcomeMessage;
       ```
 
-      You use a component like an HTML tag, passing props as attributes:
+      Want three cards? You'd have to copy-paste and change every value by hand.
+
+      ### The Solution: A Reusable Component with Props
+
+      **Props** (short for *properties*) are read-only inputs passed to a component — just like function arguments. Extract the card into a **component** and make the varying parts props:
 
       ```jsx
-      <WelcomeMessage name="Lisa" />
+      const MonopolyProperty = ({ name, price, colorGroup }) => {
+        return (
+          <div style={cardStyle}>
+            <div style={getHeaderStyle(colorGroup)}></div>
+            <div style={bodyStyle}>
+              <h4>{name}</h4>
+              <p><strong>${price}</strong></p>
+            </div>
+          </div>
+        );
+      };
       ```
 
-      - Component names **must be capitalized** — React distinguishes components from HTML tags by capitalization
-      - `export default` makes the component importable from other files
+      Now rendering three properties is clean — same component, different data:
+
+      ```jsx
+      <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+      <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+      ```
+
+      - **`{ name, price, colorGroup }`** destructures the props object
       - **Props are read-only** — a component must never modify its own props
-
-      ### Destructuring Props
-
-      You can **destructure** the props object directly in the parameter list:
-
-      ```jsx
-      function WelcomeMessage({ name }) {   // unwrap props directly
-        return <h2>Hello, {name}!</h2>;
-      }
-      ```
+      - The **styles live in `styles.js`** — the component only handles structure and data
 
       ### Task
 
-      Run the code and observe how the same `WelcomeMessage` component renders with three different names. Then add a fourth `<WelcomeMessage>` with your own name.
+      The code renders three UCLA property cards from a single reusable component. Add a fourth `<MonopolyProperty>` with your own building name, price, and color group (`"ucla-blue"` or `"ucla-gold"`).
 
     files:
-      - path: "step3/App.jsx"
+      - path: "step3/styles.js"
         content: |
-          // Component defined as a function — props are the inputs
-          // Can be referenced as: <WelcomeMessage name="Lisa" />
-          function WelcomeMessage(props) {
-            return <h2>Hello, {props.name}!</h2>;
+          // Monopoly color groups — maps a group name to its banner color
+          const colorGroups = {
+            "ucla-blue":  "#2774AE",
+            "ucla-gold":  "#FFD100",
+          };
+
+          // Shared card styles for every property tile
+          const cardStyle = {
+            width: "180px",
+            border: "3px solid #333",
+            borderRadius: "12px",
+            overflow: "hidden",
+            margin: "8px",
+            fontFamily: "'Georgia', serif",
+            background: "#F5F0E1",
+            boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
+          };
+
+          // Returns the colored header banner for a given color group
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "45px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
           }
 
+          const bodyStyle = {
+            padding: "12px",
+            textAlign: "center",
+          };
+        language: "javascript"
+
+      - path: "step3/starter.jsx"
+        content: |
+          // Hard-coded property card — NOT reusable!
+          // What if we need three different properties?
           function App() {
             return (
-              <div className="p-4">
-                <WelcomeMessage name="Lisa" />
-                <WelcomeMessage name="Seoyoung" />
-                <WelcomeMessage name="Mengjun" />
+              <div style={{ padding: '16px' }}>
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle("ucla-blue")}></div>
+                  <div style={bodyStyle}>
+                    <h4>Royce Hall</h4>
+                    <p><strong>$1000</strong></p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+      - path: "step3/App.jsx"
+        content: |
+          // A reusable component — props make it render any property
+          const MonopolyProperty = ({ name, price, colorGroup }) => {
+            return (
+              <div style={cardStyle}>
+                <div style={getHeaderStyle(colorGroup)}>
+                  {/* colorGroup dictates the banner color */}
+                </div>
+                <div style={bodyStyle}>
+                  <h4>{name}</h4>
+                  <p><strong>${price}</strong></p>
+                </div>
+              </div>
+            );
+          };
+
+          // Render reusable components side-by-side with different props
+          function App() {
+            return (
+              <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
               </div>
             );
           }
@@ -276,6 +362,7 @@ steps:
         language: "javascript"
 
     react_files:
+      - "step3/styles.js"
       - "step3/App.jsx"
 
     open_file: "step3/App.jsx"
@@ -295,7 +382,7 @@ steps:
             - "Reserved keywords that React uses to configure component behavior internally"
           correct_index: 1
           explanation: |
-            Props (short for *properties*) are read-only inputs passed from a parent to a child, just like arguments to a function. They allow the same component to render different content based on what is passed in. A `WelcomeMessage` component that takes a `name` prop can greet anyone without duplicating rendering logic.
+            Props (short for *properties*) are read-only inputs passed from a parent to a child, just like arguments to a function. The `MonopolyProperty` component takes `name`, `price`, and `colorGroup` as props — this lets the same component render Royce Hall, Powell Library, or any other property without duplicating code.
 
         - question: "Why must React component names start with a capital letter?"
           type: single
@@ -306,32 +393,30 @@ steps:
             - "It is purely a style convention with no functional effect on rendering"
           correct_index: 1
           explanation: |
-            In JSX, `<card />` is treated as an unknown HTML element (passed to the browser's DOM), while `<Card />` calls your `Card` function. This is enforced by Babel at compile time. If you define a component with a lowercase name and use it as a lowercase tag, it silently renders as an unknown HTML element — nothing appears.
+            In JSX, `<card />` is treated as an unknown HTML element, while `<Card />` calls your `Card` function. If you wrote `<monopolyProperty />` in lowercase, React would try to create an HTML element called `monopolyproperty` — nothing would render.
 
         - question: |
             A component is defined as:
             ```jsx
-            function Badge({ label, color }) {
-              return <span style={{ background: color }}>{label}</span>;
-            }
+            const MonopolyProperty = ({ name, price, colorGroup }) => { ... };
             ```
-            What does `{ label, color }` in the parameter list do?
+            What does `{ name, price, colorGroup }` in the parameter list do?
           type: single
           options:
-            - "It declares two new state variables named `label` and `color`"
-            - "It destructures the props object — instead of `props.label` and `props.color`, you access them directly as `label` and `color`"
-            - "It restricts the component to only accept exactly two props and throws an error for any others"
-            - "It defines default values of `undefined` for `label` and `color` when they are not passed"
+            - "It declares three new state variables"
+            - "It destructures the props object — instead of `props.name`, `props.price`, `props.colorGroup`, you access them directly"
+            - "It restricts the component to only accept exactly three props and throws an error for any others"
+            - "It defines default values of `undefined` for each prop when they are not passed"
           correct_index: 1
           explanation: |
-            `{ label, color }` is JavaScript **object destructuring** applied to the props parameter. It is equivalent to writing `function Badge(props) { const label = props.label; const color = props.color; ... }`. Destructuring is idiomatic React style — it makes the expected props explicit and reduces repetition.
+            `{ name, price, colorGroup }` is JavaScript **object destructuring** applied to the props parameter. It is equivalent to writing `(props) => { const name = props.name; ... }`. Destructuring is idiomatic React — it makes the expected props explicit and keeps the component body concise.
 
         - question: |
             **Evaluate** this code:
             ```jsx
-            function Counter(props) {
-              props.count = props.count + 1; // increment on render
-              return <p>{props.count}</p>;
+            function MonopolyProperty(props) {
+              props.price = props.price * 2; // double the price
+              return <p>{props.price}</p>;
             }
             ```
             What is the problem?
@@ -339,104 +424,162 @@ steps:
           options:
             - "Nothing — props can be freely modified inside the component that receives them"
             - "Props are read-only. Mutating them breaks React's unidirectional data-flow model and causes unpredictable bugs"
-            - "The component must use `this.props.count` instead of `props.count`"
+            - "The component must use `this.props.price` instead of `props.price`"
             - "You cannot use arithmetic operators inside a React component"
           correct_index: 1
           explanation: |
-            Props are **immutable** from the perspective of the receiving component. Mutating props breaks React's unidirectional data flow — the parent still holds the original value and the mutation is invisible outside this component. To track changing values, use **state** (`useState`) — that is the next step.
+            Props are **immutable** from the receiving component's perspective. Mutating props breaks React's unidirectional data flow — the parent still holds the original value, and the mutation is invisible outside this component. To track values that change over time, use **state** (`useState`) — that is the next step.
 
   # --------------------------------------------------------------------------
   # STEP 4 — State & useState (Slides 5–7)
   # --------------------------------------------------------------------------
-  - title: "State & useState — Interactive Counter"
+  - title: "State & useState — Buying Houses"
     key: state-usestate
     instructions: |
       ## State — Components That Remember
 
-      Props are read-only. But what if a component needs to track something that **changes over time** — like a click count? That is what **state** is for.
+      Props are read-only inputs. But what if a component needs to track something that **changes over time**? In Monopoly, players buy **houses** to upgrade their properties — the number of houses changes with each purchase.
 
       React provides the `useState` hook:
 
       ```jsx
-      import React, { useState } from 'react';
-
-      function Counter(props) {
-        const [count, setCount] = useState(props.initialCount);
-        // ↑ state variable  ↑ setter    ↑ initial value
+      const [houses, setHouses] = useState(0);
+      //      ↑ current value    ↑ setter   ↑ initial value
       ```
 
-      - `useState(initialValue)` returns a **pair**: `[currentValue, setter]`
-      - Calling the setter — `setCount(count + 1)` — updates the value and triggers a **re-render**
-      - `{count}` in JSX always reflects the current state after every re-render
+      - `useState(0)` returns a **pair**: `[currentValue, setter]`
+      - Calling the setter — `setHouses(houses + 1)` — updates the value and triggers a **re-render**
+      - When `houses` reaches **5**, the houses upgrade to a **hotel**!
 
       ### Event Handlers
 
-      ```jsx
-        const increment = () => {
-          setCount(count + 1);
-        };
-        return (
-          <>
-            <p>Current Count: {count}</p>
-            <button onClick={increment}>   {/* click event handler */}
-              Increment
-            </button>
-          </>
-        );
-      }
-      export default Counter;
-      ```
-
-      `onClick={increment}` passes the **function reference** — React calls it when the user clicks. Do not write `onClick={increment()}` — that calls the function immediately during render.
-
-      ### Unwrapping Props & Adding More Props
-
-      You can destructure props and add as many as needed:
+      A button triggers `buyHouse` when clicked:
 
       ```jsx
-      function Counter({initialCount, countName}) {
-        const [count, setCount] = useState(initialCount);
-        // ...
-        return (
-          <>
-            <p>{countName}: {count}</p>
-            <button onClick={increment}>Increment</button>
-          </>
-        );
-      }
+      const buyHouse = () => {
+        setHouses(houses + 1);
+      };
+      // ...
+      <button onClick={buyHouse}>Buy House</button>
       ```
+
+      `onClick={buyHouse}` passes the **function reference** — React calls it when the user clicks. Do **not** write `onClick={buyHouse()}` — that calls the function immediately during render.
+
+      ### Visual Feedback
+
+      The `renderBuildings(houses)` helper converts the house count into icons:
+
+      - 0 houses → "No buildings"
+      - 1–4 houses → house icons
+      - 5 houses → hotel icon (upgrade!)
 
       ### Task
 
-      Run the code and click **Increment**. Observe that React updates only the counter text — not the entire page. Then add a second `<Counter>` below the first with different `initialCount` and `countName` props to see two fully independent counters.
+      Click **Buy House** on each property card. Watch the houses appear one by one — and see what happens at the fifth purchase! Notice that each card tracks its own houses independently.
 
     files:
+      - path: "step4/styles.js"
+        content: |
+          // Monopoly color groups
+          const colorGroups = {
+            "ucla-blue":  "#2774AE",
+            "ucla-gold":  "#FFD100",
+          };
+
+          const cardStyle = {
+            width: "200px",
+            border: "3px solid #333",
+            borderRadius: "12px",
+            overflow: "hidden",
+            margin: "8px",
+            fontFamily: "'Georgia', serif",
+            background: "#F5F0E1",
+            boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
+          };
+
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "45px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
+          }
+
+          const bodyStyle = {
+            padding: "12px",
+            textAlign: "center",
+          };
+
+          const buttonStyle = {
+            padding: "6px 14px",
+            border: "2px solid #333",
+            borderRadius: "6px",
+            background: "#4CAF50",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            marginTop: "8px",
+            fontSize: "13px",
+          };
+
+          // Building icons and rules
+          const HOUSE_EMOJI = "\uD83C\uDFE0";
+          const HOTEL_EMOJI = "\uD83C\uDFE8";
+          const MAX_HOUSES = 4;
+
+          // Converts house count to visual building icons
+          function renderBuildings(houses) {
+            if (houses === 0) return "No buildings";
+            if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+            return HOUSE_EMOJI.repeat(houses);
+          }
+        language: "javascript"
+
       - path: "step4/App.jsx"
         content: |
           const { useState } = React;
 
-          // Counter component with initialCount and countName props (Slide 7)
-          function Counter({initialCount, countName}) {
-            const [count, setCount] = useState(initialCount);
+          const MonopolyProperty = ({ name, price, colorGroup }) => {
+            // State: number of houses on this property (starts at 0)
+            const [houses, setHouses] = useState(0);
 
-            const increment = () => {
-              setCount(count + 1);
+            const buyHouse = () => {
+              if (houses <= MAX_HOUSES) {
+                setHouses(houses + 1);
+              }
             };
 
+            const isMaxed = houses > MAX_HOUSES;
+
             return (
-              <>
-                <p>{countName}: {count}</p>
-                <button onClick={increment}>
-                  Increment
-                </button>
-              </>
+              <div style={cardStyle}>
+                <div style={getHeaderStyle(colorGroup)}></div>
+                <div style={bodyStyle}>
+                  <h4>{name}</h4>
+                  <p><strong>${price}</strong></p>
+                  <div style={{ fontSize: "24px", minHeight: "36px" }}>
+                    {renderBuildings(houses)}
+                  </div>
+                  <button
+                    onClick={buyHouse}
+                    disabled={isMaxed}
+                    style={{
+                      ...buttonStyle,
+                      ...(isMaxed ? { background: "#999", cursor: "default" } : {}),
+                    }}
+                  >
+                    {isMaxed ? "Fully Upgraded!" : "Buy House ($50)"}
+                  </button>
+                </div>
+              </div>
             );
-          }
+          };
 
           function App() {
             return (
-              <div className="p-4">
-                <Counter initialCount={0} countName="Current Count" />
+              <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
               </div>
             );
           }
@@ -446,6 +589,7 @@ steps:
         language: "javascript"
 
     react_files:
+      - "step4/styles.js"
       - "step4/App.jsx"
 
     open_file: "step4/App.jsx"
@@ -456,64 +600,64 @@ steps:
       shuffle: true
       questions:
 
-        - question: "What does `const [count, setCount] = useState(0)` do?"
+        - question: "What does `const [houses, setHouses] = useState(0)` do?"
           type: single
           options:
-            - "Declares a CSS variable named `count` with an initial display value of 0"
-            - "Creates a state variable `count` initialized to 0, and a setter `setCount` — calling `setCount(n)` updates the value and triggers a re-render"
+            - "Declares a CSS variable named `houses` with an initial display value of 0"
+            - "Creates a state variable `houses` initialized to 0, and a setter `setHouses` — calling `setHouses(n)` updates the value and triggers a re-render"
             - "Declares two constants that persist between page reloads in localStorage"
-            - "Creates an HTML input element bound to a variable named `count`"
+            - "Creates an HTML input element bound to a variable named `houses`"
           correct_index: 1
           explanation: |
-            `useState(0)` returns an array `[currentValue, setter]`. Destructuring binds them to `count` and `setCount`. When `setCount(newValue)` is called, React re-runs the component function with the new `count` value, builds a new Virtual DOM, diffs it against the previous one, and patches only what changed in the real DOM.
+            `useState(0)` returns `[currentValue, setter]`. Destructuring binds them to `houses` and `setHouses`. When `setHouses(newValue)` is called, React re-runs the component with the new `houses` value, builds a new Virtual DOM, diffs it, and patches only what changed — like adding a new house icon.
 
-        - question: "A student writes `<button onClick={increment()}>`. What is wrong?"
+        - question: "A student writes `<button onClick={buyHouse()}>`. What is wrong?"
           type: single
           options:
-            - "Nothing — `increment()` and `increment` are equivalent when used in event handlers"
-            - "`increment()` **calls** the function immediately during render. The correct syntax is `onClick={increment}` to pass the function reference for React to call on click"
-            - "The `onClick` prop must receive a string — use `onClick='increment'` instead"
+            - "Nothing — `buyHouse()` and `buyHouse` are equivalent when used in event handlers"
+            - "`buyHouse()` **calls** the function immediately during render. The correct syntax is `onClick={buyHouse}` to pass the function reference for React to call on click"
+            - "The `onClick` prop must receive a string — use `onClick='buyHouse'` instead"
             - "Arrow functions cannot be used as React event handlers"
           correct_index: 1
           explanation: |
-            `onClick={increment()}` evaluates `increment()` during render — it runs immediately and passes its *return value* (probably `undefined`) to `onClick`. `onClick={increment}` passes the function *reference* — React calls it only when the user actually clicks. This is one of the most common beginner mistakes in React.
+            `onClick={buyHouse()}` evaluates `buyHouse()` during render — it runs immediately and passes its return value (probably `undefined`) to `onClick`. `onClick={buyHouse}` passes the function *reference* — React calls it only when the user actually clicks the button.
 
         - question: |
-            Two separate `<Counter>` components are rendered on the same page. A user clicks Counter A ten times. What happens to Counter B?
+            Two `<MonopolyProperty>` cards are on the board. A player buys 3 houses on Royce Hall. What happens to Powell Library's houses?
           type: single
           options:
-            - "Counter B also increments — components share state by default"
-            - "Counter B resets to 0 because React re-renders the entire tree"
-            - "Counter B is unaffected — each component instance has its own independent state"
-            - "Counter B throws an error because two counters cannot use the same hook"
+            - "Powell Library also gets 3 houses — components share state by default"
+            - "Powell Library resets to 0 because React re-renders the entire tree"
+            - "Powell Library is unaffected — each component instance has its own independent state"
+            - "Powell Library throws an error because two components cannot use the same hook"
           correct_index: 2
           explanation: |
-            Each React component instance has its own **isolated state**. The `count` in Counter A has no connection to the `count` in Counter B — they are separate variables maintained by React's fiber tree. This isolation is a key benefit of component-based UI: components are self-contained and predictable.
+            Each component instance has its own **isolated state**. The `houses` in Royce Hall's card has no connection to the `houses` in Powell Library's card. This isolation is a key benefit of component-based UI — each property card is self-contained and predictable.
 
         - question: |
             **Evaluate** this code:
             ```jsx
-            function Counter() {
-              let count = 0;
-              const increment = () => { count = count + 1; };
+            function MonopolyProperty({ name }) {
+              let houses = 0;
+              const buyHouse = () => { houses = houses + 1; };
               return (
                 <>
-                  <p>Count: {count}</p>
-                  <button onClick={increment}>+</button>
+                  <p>{name}: {houses} houses</p>
+                  <button onClick={buyHouse}>Buy</button>
                 </>
               );
             }
             ```
-            A student says the counter will work. Are they correct?
+            A student says clicking "Buy" will add houses. Are they correct?
           type: single
           options:
-            - "Yes — `count` changes when `increment` is called, so the `<p>` will update"
-            - "No — modifying a plain `let` variable does not trigger a re-render. The display will always show 0"
+            - "Yes — `houses` changes when `buyHouse` is called, so the display will update"
+            - "No — modifying a plain `let` variable does not trigger a re-render. The display will always show 0 houses"
             - "No — `let` cannot be used inside a React component; only `const` is allowed"
             - "Yes — React automatically watches all variables inside component functions for changes"
           correct_index: 1
           explanation: |
-            React re-renders a component only when `useState`'s setter is called. A plain `let` variable is local to the function: incrementing it does *not* trigger a re-render, so the displayed value never changes. And when React does re-run the function for any other reason, `count` resets to 0 again. You must use `useState`.
+            React only re-renders when `useState`'s setter is called. A plain `let` variable is local to the function — incrementing it does *not* trigger a re-render, so the displayed house count never changes. And when React re-runs the function for any other reason, `houses` resets to 0. You must use `useState`.
 
   # --------------------------------------------------------------------------
   # STEP 5 — Virtual DOM, SPA & SSR (Slides 8–10)
