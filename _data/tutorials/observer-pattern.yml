@@ -1,0 +1,1779 @@
+title: "The Observer Pattern: Stop Hard-Coding Your Dependencies"
+description: "Learn the most widely used behavioral design pattern by experiencing the pain of tightly coupled code first, then discovering how the Observer pattern makes your systems flexible and extensible. You will refactor a broken weather station into clean, decoupled architecture — guided by UML diagrams that update live as you code."
+
+backend: pyodide
+uml_diagram: true
+require_tests: true
+autosave_type: files
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial'); import abc"
+
+steps:
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — "When One Display Breaks the Whole System"
+  # Pedagogy:
+  #   Productive Failure (DIRR: Design-Implement phase) — students struggle
+  #     with tightly coupled code on purpose.
+  #   Growth Mindset — errors are expected and the point of the exercise.
+  #   UML Inference — students see tight coupling visualized in the diagram.
+  #   Bloom's level — Apply (add a class), Analyze (quiz on coupling).
+  # --------------------------------------------------------------------------
+  - title: "When One Display Breaks the Whole System"
+    instructions: |
+      ## The Scenario
+
+      > **Learning objective:** After this step you will be able to **identify** the symptoms of tightly coupled code and **explain** why direct dependencies create maintenance headaches.
+
+      You work at a weather company. Your `WeatherStation` collects temperature, humidity, and pressure data from sensors, and updates three displays:
+
+      | Display | What it shows |
+      |---|---|
+      | **CurrentDisplay** | Current temperature and humidity |
+      | **StatisticsDisplay** | Average, min, and max temperature |
+      | **ForecastDisplay** | Weather forecast based on pressure |
+
+      ### The Architecture Problem
+
+      Look at the **UML Diagram** tab (bottom-right). Notice how `WeatherStation` has direct arrows to every single display. That means the station **hard-codes** every display it talks to:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      skinparam classAttributeIconSize 0
+      class WeatherStation {
+        + current: CurrentDisplay
+        + stats: StatisticsDisplay
+        + forecast: ForecastDisplay
+        + new_measurement(temp, humidity, pressure)
+      }
+      class CurrentDisplay {
+        + show(temp, humidity, pressure)
+      }
+      class StatisticsDisplay {
+        - _temps: list
+        + show(temp, humidity, pressure)
+      }
+      class ForecastDisplay {
+        - _last_pressure: float
+        + show(temp, humidity, pressure)
+      }
+      WeatherStation --> CurrentDisplay : creates and calls
+      WeatherStation --> StatisticsDisplay : creates and calls
+      WeatherStation --> ForecastDisplay : creates and calls
+      note right of WeatherStation : Every display is a\ndirect dependency.\nAdding one = editing this class.
+      @enduml'></div>
+
+      The code works. Ship it, right? Not so fast. Your manager just dropped a new requirement:
+
+      > **"Add a Heat Index Display that shows the computed heat index based on temperature and humidity."**
+
+      ### Your Task
+
+      Open `weather_station.py` and:
+
+      1. **Create a `HeatIndexDisplay` class** with a `show(self, temp, humidity, pressure)` method. Use this simplified formula:
+         ```
+         heat_index = temp - 0.55 * (1 - humidity/100) * (temp - 58)
+         ```
+         Print: `[Heat]     Heat Index: {value:.1f}°F`
+
+      2. **Integrate it into `WeatherStation`** so it gets called whenever new data arrives.
+
+      3. **Run the code** and verify all four displays update.
+
+      ### What to Notice
+
+      Pay attention to **how many places you had to change** just to add one new display. Count them. Then check the **UML Diagram** tab — watch the new dependency arrow appear. That observation is the entire point of this exercise.
+
+      ### Errors Are Expected
+
+      If something breaks, good — that is the lesson. Tightly coupled code resists change. Read the error messages and fix them.
+
+    uml_files:
+      - weather_station.py
+
+    files:
+      - path: "weather_station.py"
+        content: |
+          class CurrentDisplay:
+              """Shows current temperature and humidity."""
+
+              def show(self, temp: float, humidity: float, pressure: float) -> None:
+                  print(f"[Current]  {temp}°F, {humidity}% humidity")
+
+
+          class StatisticsDisplay:
+              """Shows average, min, max temperature."""
+
+              def __init__(self) -> None:
+                  self._temps: list[float] = []
+
+              def show(self, temp: float, humidity: float, pressure: float) -> None:
+                  self._temps.append(temp)
+                  avg = sum(self._temps) / len(self._temps)
+                  lo, hi = min(self._temps), max(self._temps)
+                  print(f"[Stats]    Avg={avg:.1f}°F  Min={lo}°F  Max={hi}°F")
+
+
+          class ForecastDisplay:
+              """Shows forecast based on pressure changes."""
+
+              def __init__(self) -> None:
+                  self._last_pressure: float = 0.0
+
+              def show(self, temp: float, humidity: float, pressure: float) -> None:
+                  if pressure > self._last_pressure:
+                      outlook = "Improving weather!"
+                  elif pressure < self._last_pressure:
+                      outlook = "Cooler, rainy weather"
+                  else:
+                      outlook = "More of the same"
+                  self._last_pressure = pressure
+                  print(f"[Forecast] {outlook}")
+
+
+          class WeatherStation:
+              """Collects weather data and updates all displays.
+
+              NOTICE: This class directly creates and calls every display.
+              To add a new display, you must modify THIS class."""
+
+              def __init__(self) -> None:
+                  self.current: CurrentDisplay = CurrentDisplay()
+                  self.stats: StatisticsDisplay = StatisticsDisplay()
+                  self.forecast: ForecastDisplay = ForecastDisplay()
+
+              def new_measurement(self, temp: float, humidity: float, pressure: float) -> None:
+                  """Called when sensors report new weather data."""
+                  print(f"\n--- Measurement: {temp}°F, {humidity}%, {pressure} hPa ---")
+                  self.current.show(temp, humidity, pressure)
+                  self.stats.show(temp, humidity, pressure)
+                  self.forecast.show(temp, humidity, pressure)
+
+
+          # --- Demo ---
+          if __name__ == "__main__":
+              station = WeatherStation()
+              station.new_measurement(80, 65, 1013.25)
+              station.new_measurement(82, 70, 1012.50)
+              station.new_measurement(78, 90, 1015.00)
+        language: "python"
+
+    open_file: "weather_station.py"
+
+    solution:
+      files:
+        - path: "weather_station.py"
+          content: |
+            class CurrentDisplay:
+                """Shows current temperature and humidity."""
+
+                def show(self, temp: float, humidity: float, pressure: float) -> None:
+                    print(f"[Current]  {temp}°F, {humidity}% humidity")
+
+
+            class StatisticsDisplay:
+                """Shows average, min, max temperature."""
+
+                def __init__(self) -> None:
+                    self._temps: list[float] = []
+
+                def show(self, temp: float, humidity: float, pressure: float) -> None:
+                    self._temps.append(temp)
+                    avg = sum(self._temps) / len(self._temps)
+                    lo, hi = min(self._temps), max(self._temps)
+                    print(f"[Stats]    Avg={avg:.1f}°F  Min={lo}°F  Max={hi}°F")
+
+
+            class ForecastDisplay:
+                """Shows forecast based on pressure changes."""
+
+                def __init__(self) -> None:
+                    self._last_pressure: float = 0.0
+
+                def show(self, temp: float, humidity: float, pressure: float) -> None:
+                    if pressure > self._last_pressure:
+                        outlook = "Improving weather!"
+                    elif pressure < self._last_pressure:
+                        outlook = "Cooler, rainy weather"
+                    else:
+                        outlook = "More of the same"
+                    self._last_pressure = pressure
+                    print(f"[Forecast] {outlook}")
+
+
+            class HeatIndexDisplay:
+                """Shows the computed heat index."""
+
+                def show(self, temp: float, humidity: float, pressure: float) -> None:
+                    heat_index = temp - 0.55 * (1 - humidity / 100) * (temp - 58)
+                    print(f"[Heat]     Heat Index: {heat_index:.1f}°F")
+
+
+            class WeatherStation:
+                """Collects weather data and updates all displays."""
+
+                def __init__(self) -> None:
+                    self.current: CurrentDisplay = CurrentDisplay()
+                    self.stats: StatisticsDisplay = StatisticsDisplay()
+                    self.forecast: ForecastDisplay = ForecastDisplay()
+                    self.heat_index: HeatIndexDisplay = HeatIndexDisplay()
+
+                def new_measurement(self, temp: float, humidity: float, pressure: float) -> None:
+                    """Called when sensors report new weather data."""
+                    print(f"\n--- Measurement: {temp}°F, {humidity}%, {pressure} hPa ---")
+                    self.current.show(temp, humidity, pressure)
+                    self.stats.show(temp, humidity, pressure)
+                    self.forecast.show(temp, humidity, pressure)
+                    self.heat_index.show(temp, humidity, pressure)
+
+
+            # --- Demo ---
+            if __name__ == "__main__":
+                station = WeatherStation()
+                station.new_measurement(80, 65, 1013.25)
+                station.new_measurement(82, 70, 1012.50)
+                station.new_measurement(78, 90, 1015.00)
+          language: "python"
+      explanation: |
+        **Why this matters:**
+
+        To add ONE display, you changed `WeatherStation` in **two** places:
+        1. `__init__` — create the new display
+        2. `new_measurement` — call its `show()` method
+
+        Check the UML diagram: there are now **four** dependency arrows from `WeatherStation`. Each one is a hard-coded coupling. Imagine 20 displays, or needing to add/remove displays at runtime. This design does not scale.
+
+    tests:
+      - description: "HeatIndexDisplay class exists with a show() method"
+        command: |
+          source = open('/tutorial/weather_station.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'HeatIndexDisplay' in ns, \
+              "Create a HeatIndexDisplay class in weather_station.py"
+          display = ns['HeatIndexDisplay']()
+          assert hasattr(display, 'show'), \
+              "HeatIndexDisplay needs a show(self, temp, humidity, pressure) method"
+        hints:
+          - text: "Create a new class called `HeatIndexDisplay` with a `show(self, temp, humidity, pressure)` method. Use the formula: `heat_index = temp - 0.55 * (1 - humidity/100) * (temp - 58)`"
+            condition: "default"
+
+      - description: "HeatIndexDisplay computes the heat index correctly"
+        command: |
+          source = open('/tutorial/weather_station.py').read()
+          ns = {}
+          exec(source, ns)
+          import io, contextlib
+          d = ns['HeatIndexDisplay']()
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              d.show(80, 65, 1013.25)
+          out = buf.getvalue()
+          assert "Heat Index" in out, \
+              "show() should print something containing 'Heat Index'"
+          expected = 80 - 0.55 * (1 - 65/100) * (80 - 58)
+          assert f"{expected:.1f}" in out, \
+              f"Expected heat index of {expected:.1f}°F for temp=80, humidity=65"
+        hints:
+          - text: "The formula is: `heat_index = temp - 0.55 * (1 - humidity/100) * (temp - 58)`. Print with: `print(f'[Heat]     Heat Index: {heat_index:.1f}°F')`"
+            condition: "default"
+
+      - description: "WeatherStation calls HeatIndexDisplay on new measurements"
+        command: |
+          source = open('/tutorial/weather_station.py').read()
+          ns = {}
+          exec(source, ns)
+          import io, contextlib
+          station = ns['WeatherStation']()
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              station.new_measurement(80, 65, 1013.25)
+          out = buf.getvalue()
+          assert "Heat Index" in out, \
+              "WeatherStation.new_measurement() should also update HeatIndexDisplay. Did you add it to __init__ AND new_measurement()?"
+        hints:
+          - text: "You need to modify WeatherStation in TWO places: (1) create a `HeatIndexDisplay` in `__init__`, and (2) call its `show()` method in `new_measurement()`. That is the pain point — notice how adding one display forces you to edit the station itself."
+            condition: "default"
+
+    quiz:
+      title: "Tight Coupling — What Went Wrong?"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            How many places in `WeatherStation` did you have to modify to add the HeatIndexDisplay?
+          type: single
+          options:
+            - "0 — I just created the new class"
+            - "1 — I only changed new_measurement()"
+            - "2 — I changed both __init__() and new_measurement()"
+            - "3 — I changed __init__(), new_measurement(), and added a new method"
+          correct_index: 2
+          explanation: |
+            You had to modify `WeatherStation` in **two** places: creating the display in `__init__()` and calling it in `new_measurement()`. This means the station is **tightly coupled** to every display it serves. Look at the UML diagram — every arrow from WeatherStation is a dependency that makes the system harder to change.
+
+        - question: |
+            What is **tight coupling** in software design?
+          type: single
+          options:
+            - "When classes are defined in the same file"
+            - "When one class directly depends on the specific identity and interface of another class"
+            - "When you use too many classes in your program"
+            - "When your code has too many comments"
+          correct_index: 1
+          explanation: |
+            Tight coupling means a class directly depends on the concrete details of other classes. In our weather station, the station *directly knows* about `CurrentDisplay`, `StatisticsDisplay`, `ForecastDisplay`, and now `HeatIndexDisplay` — by name, by type, by how they work. Change or remove any display, and you must edit the station.
+
+        - question: |
+            If a product manager asks you to remove the ForecastDisplay from the current version, what do you have to change?
+          type: single
+          options:
+            - "Just delete the ForecastDisplay class — nothing else"
+            - "Delete the class AND remove two lines from WeatherStation (__init__ and new_measurement)"
+            - "You cannot remove it without rewriting the whole program"
+            - "Just set forecast = None in __init__"
+          correct_index: 1
+          explanation: |
+            Because the station directly references the forecast display, you cannot just delete the class — you would get a `NameError`. You must also clean up the two references in `WeatherStation`. This is the maintenance tax of tight coupling: every addition or removal forces you to edit the core class.
+
+        - question: |
+            Imagine the weather station needs to support 50 different display types, and users can enable or disable them while the program is running. What fundamental problem does the current design have?
+          type: single
+          options:
+            - "Python can only handle up to 10 objects at once"
+            - "The station would need 50 explicit references and 50 explicit method calls, and you cannot add or remove them at runtime"
+            - "Each display would need its own weather station instance"
+            - "The current design would actually work fine for 50 displays"
+          correct_index: 1
+          explanation: |
+            With 50 displays, the station's `__init__` would have 50 lines creating displays, and `new_measurement` would have 50 lines calling them. Worse, you cannot add or remove displays while the program is running — everything is hard-coded at construction time. The station *should not care* how many displays exist or what they do.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — "Design Patterns: A Shared Vocabulary"
+  # Pedagogy:
+  #   Constructivism — anchor abstract pattern in YouTube subscription schema.
+  #   PRIMM: Predict-Run — students predict output before running.
+  #   Cognitive scaffolding — conceptual before procedural.
+  #   Bloom's level — Remember (vocabulary), Understand (analogy).
+  # --------------------------------------------------------------------------
+  - title: "Design Patterns: A Shared Vocabulary"
+    instructions: |
+      ## What Are Design Patterns?
+
+      > **Learning objective:** After this step you will be able to **define** what a design pattern is and **describe** the Observer pattern using a real-world analogy and its UML structure.
+
+      ### The YouTube Analogy
+
+      Think about how YouTube notifications work:
+
+      1. A **creator** (like MrBeast) uploads a new video
+      2. All **subscribers** automatically get notified
+      3. The creator does not need to know who the subscribers are or what they will do
+      4. Subscribers can **subscribe** or **unsubscribe** at any time without the creator changing anything
+
+      This is exactly the **Observer Design Pattern**:
+
+      | YouTube | Observer Pattern | Weather Station |
+      |---|---|---|
+      | Channel (MrBeast) | **Subject** | WeatherStation |
+      | "Upload" event | **State change** | `new_measurement()` |
+      | Subscribers | **Observers** | Display objects |
+      | Subscribe button | **`attach()`** | Register a display |
+      | Unsubscribe | **`detach()`** | Remove a display |
+      | Push notification | **`notify()`** | Call `update()` on all displays |
+
+      ### What Is a "Design Pattern"?
+
+      A **design pattern** is a proven, reusable solution to a common software design problem. Design patterns are not code you copy-paste — they are **blueprints** for structuring your classes and objects to solve specific types of architectural problems.
+
+      The most famous catalog comes from the 1994 book *Design Patterns* by Gamma, Helm, Johnson, and Vlissides — the **Gang of Four (GoF)**. They cataloged 23 patterns in three categories:
+
+      | Category | What It Solves | Examples |
+      |---|---|---|
+      | **Creational** | How objects are created | Factory, Singleton, Builder |
+      | **Structural** | How objects are composed | Adapter, Decorator, Facade |
+      | **Behavioral** | How objects communicate | **Observer**, Strategy, State |
+
+      The Observer is a **behavioral** pattern — it defines how objects talk to each other in a loosely coupled way.
+
+      ### The Observer Pattern in UML
+
+      Here is the formal structure. Compare this to the tightly coupled diagram from Step 1 — notice how `Subject` no longer points to specific concrete observers:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      skinparam classAttributeIconSize 0
+      abstract class Subject {
+        - _observers: list
+        + attach(observer: Observer)
+        + detach(observer: Observer)
+        + notify()
+      }
+      abstract class Observer {
+        + {abstract} update(subject: Subject)
+      }
+      class ConcreteSubject {
+        - _state
+        + get_state()
+        + set_state(value)
+      }
+      class ConcreteObserverA {
+        + update(subject: Subject)
+      }
+      class ConcreteObserverB {
+        + update(subject: Subject)
+      }
+      Subject o--> "0..*" Observer : notifies
+      ConcreteSubject --|> Subject
+      ConcreteObserverA ..|> Observer
+      ConcreteObserverB ..|> Observer
+      note bottom of Subject : Only knows the Observer\ninterface — NOT concrete types
+      note bottom of Observer : Dashed arrows = implements.\nAny class can become an observer.
+      @enduml'></div>
+
+      **Key UML relationships:**
+      - **Solid line with open triangle** (`--|>`) = inheritance ("is-a")
+      - **Dashed line with open triangle** (`..|>`) = implements interface
+      - **Diamond arrow** (`o-->`) = aggregation ("has-a", loosely owned)
+
+      ### Polling vs. Notification
+
+      An alternative to Observer is **polling** — each display repeatedly asks the station "has anything changed?" This is like refreshing a web page over and over instead of getting push notifications. It works, but wastes resources and introduces delays.
+
+      ### Predict Before You Run
+
+      Look at `pattern_preview.py`. Before running it, **predict**:
+      1. How many times will "Data changed!" print?
+      2. Will `DashboardA` always print before `DashboardB`?
+
+      Run it to check your predictions.
+
+    files:
+      - path: "pattern_preview.py"
+        content: |
+          # A tiny preview of the Observer pattern in action.
+          # PREDICT: What will this print? In what order?
+
+          class DataSource:
+              """A simple Subject that notifies observers."""
+
+              def __init__(self) -> None:
+                  self._observers: list = []
+                  self._value: int = 0
+
+              def attach(self, observer) -> None:
+                  self._observers.append(observer)
+
+              def set_value(self, new_value: int) -> None:
+                  self._value = new_value
+                  print(f"Data changed! New value: {self._value}")
+                  for obs in self._observers:
+                      obs.update(self._value)
+
+
+          class DashboardA:
+              def update(self, value: int) -> None:
+                  print(f"  Dashboard A sees: {value}")
+
+
+          class DashboardB:
+              def update(self, value: int) -> None:
+                  print(f"  Dashboard B sees: {value * 2} (doubled)")
+
+
+          source = DataSource()
+          source.attach(DashboardA())
+          source.attach(DashboardB())
+
+          source.set_value(10)
+          source.set_value(20)
+        language: "python"
+
+    open_file: "pattern_preview.py"
+
+    tests:
+      - description: "You ran the preview and observed the output"
+        command: |
+          import io, contextlib
+          source = open('/tutorial/pattern_preview.py').read()
+          ns = {}
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              exec(source, ns)
+          out = buf.getvalue()
+          assert "Dashboard A sees: 10" in out, "Run pattern_preview.py to see the Observer pattern in action"
+          assert "Dashboard B sees: 40" in out, "DashboardB should double the value: 20 * 2 = 40"
+
+    quiz:
+      title: "Observer Concepts — Knowledge Check"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            In the Observer pattern, the **Subject** is:
+          type: single
+          options:
+            - "The object that watches for changes and reacts to them"
+            - "The object that holds state and notifies others when it changes"
+            - "A base class that all patterns must inherit from"
+            - "The main() function that starts the program"
+          correct_index: 1
+          explanation: |
+            The **Subject** holds state. When its state changes, it notifies all registered observers. In the YouTube analogy, it is the channel creator. In the UML diagram, the Subject has `attach()`, `detach()`, and `notify()` methods and maintains a list of Observer references.
+
+        - question: |
+            Why is the Observer pattern better than **polling** (each display repeatedly checking the station for changes)?
+          type: single
+          options:
+            - "Polling is actually better because it is simpler"
+            - "Observer uses less memory"
+            - "Observer eliminates wasted checks — displays react only when data actually changes"
+            - "Polling does not work in Python"
+          correct_index: 2
+          explanation: |
+            Polling wastes CPU cycles checking for changes that have not happened yet. With Observer, the Subject pushes notifications exactly when state changes — no wasted work. This is like getting a push notification vs. manually refreshing your feed every 5 seconds.
+
+        - question: |
+            A design pattern is:
+          type: single
+          options:
+            - "A specific block of code you copy-paste into every project"
+            - "A proven blueprint for solving a common design problem, adapted to your specific context"
+            - "A Python library you install with pip"
+            - "A type of unit test"
+          correct_index: 1
+          explanation: |
+            Design patterns are **not** copy-paste code or libraries. They are reusable solution blueprints — named, documented approaches to recurring design problems. You adapt them to your specific context. The GoF catalog describes 23 such patterns.
+
+        - question: |
+            In the UML diagram shown above, what does the **dashed line with an open triangle** from `ConcreteObserverA` to `Observer` mean?
+          type: single
+          options:
+            - "ConcreteObserverA creates Observer objects"
+            - "ConcreteObserverA implements the Observer interface"
+            - "ConcreteObserverA contains an Observer"
+            - "ConcreteObserverA deletes Observer objects"
+          correct_index: 1
+          explanation: |
+            In UML, a **dashed arrow with an open triangle** (`..|>`) means "implements" or "realizes" an interface. `ConcreteObserverA` promises to provide the `update()` method declared in the `Observer` abstract class. A **solid** arrow with open triangle (`--|>`) means direct inheritance.
+
+        - question: |
+            Which category of GoF design patterns does the Observer belong to?
+          type: single
+          options:
+            - "Creational — it creates objects"
+            - "Structural — it composes objects"
+            - "Behavioral — it defines how objects communicate"
+            - "Architectural — it structures the entire application"
+          correct_index: 2
+          explanation: |
+            Observer is a **behavioral** pattern because it defines how objects communicate: the Subject broadcasts state changes to registered Observers. Creational patterns (Factory, Builder) handle object creation. Structural patterns (Adapter, Decorator) handle object composition.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — "Building Observer: Step by Step"
+  # Pedagogy:
+  #   Faded Worked Example — Subject is complete, students fill in observers.
+  #   Sub-goal Labeling — numbered TODOs guide each sub-task.
+  #   UML Inference — students see the class diagram build up as they code.
+  #   Bloom's level — Understand (roles), Apply (implement).
+  # --------------------------------------------------------------------------
+  - title: "Building Observer: Step by Step"
+    view: uml_diagram
+    instructions: |
+      ## Constructing the Observer Pattern
+
+      > **Learning objective:** After this step you will be able to **implement** the Observer pattern from scratch, identify each UML role in your code, and watch the class diagram update live.
+
+      ### The Blueprint
+
+      The Observer pattern has four roles. Here is the UML for what you are about to build:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      skinparam classAttributeIconSize 0
+      abstract class Subject {
+        - _observers: list
+        + attach(observer: Observer)
+        + detach(observer: Observer)
+        + notify()
+      }
+      abstract class Observer {
+        + {abstract} update(subject: Subject)
+      }
+      class TemperatureSensor {
+        - _temperature: float
+        + temperature: float
+      }
+      class TemperatureLogger {
+        + readings: list
+        + update(subject: Subject)
+      }
+      class TemperatureAlert {
+        + threshold: float
+        + update(subject: Subject)
+      }
+      Subject o--> "0..*" Observer : notifies
+      TemperatureSensor --|> Subject
+      TemperatureLogger ..|> Observer
+      TemperatureAlert ..|> Observer
+      @enduml'></div>
+
+      | Role | Class | Responsibility |
+      |---|---|---|
+      | **Subject** (base) | `Subject` | Maintains observer list; provides `attach()`, `detach()`, `notify()` |
+      | **ConcreteSubject** | `TemperatureSensor` | Holds temperature state; calls `notify()` when it changes |
+      | **Observer** (interface) | `Observer` | Declares the `update()` method all observers must implement |
+      | **ConcreteObserver** | `TemperatureLogger`, `TemperatureAlert` | Implement `update()` to react to changes |
+
+      ### Your Task — Faded Implementation
+
+      Open `observer_basics.py`. The `Subject` and `Observer` base classes are **fully implemented** for you. Your job:
+
+      1. **Complete `TemperatureSensor`** (TODO 1): The `temperature` property setter should store the new value AND call `self.notify()`
+
+      2. **Complete `TemperatureLogger`** (TODO 2): Its `update()` should read `subject.temperature`, append it to `self.readings`, and print it
+
+      3. **Complete `TemperatureAlert`** (TODO 3): Its `update()` should check if temperature exceeds the threshold
+
+      4. **Complete `main()`** (TODOs 4-7): Create a sensor, attach both observers, then set the temperature to 72, 95, and 68
+
+      ### Watch the UML
+
+      As you add classes and methods, check the **UML Diagram** tab — the class diagram updates live to show your inheritance hierarchy and relationships. Compare it to the target diagram above.
+
+    uml_files:
+      - observer_basics.py
+
+    files:
+      - path: "observer_basics.py"
+        content: |
+          from abc import ABC, abstractmethod
+
+
+          # ── Sub-goal 1: Subject base class (COMPLETE — study this) ─────
+
+          class Subject:
+              """Base class for observable objects."""
+
+              def __init__(self) -> None:
+                  self._observers: list = []
+
+              def attach(self, observer: 'Observer') -> None:
+                  """Register an observer."""
+                  if observer not in self._observers:
+                      self._observers.append(observer)
+                      print(f"  Attached: {type(observer).__name__}")
+
+              def detach(self, observer: 'Observer') -> None:
+                  """Unregister an observer."""
+                  self._observers.remove(observer)
+                  print(f"  Detached: {type(observer).__name__}")
+
+              def notify(self) -> None:
+                  """Notify all registered observers."""
+                  for observer in self._observers:
+                      observer.update(self)
+
+
+          # ── Sub-goal 2: Observer interface (COMPLETE — study this) ─────
+
+          class Observer(ABC):
+              """Interface that all observers must implement."""
+
+              @abstractmethod
+              def update(self, subject: Subject) -> None:
+                  """Called by the Subject when state changes."""
+                  pass
+
+
+          # ── Sub-goal 3: ConcreteSubject — YOUR TURN ───────────────────
+
+          class TemperatureSensor(Subject):
+              """A sensor that tracks temperature and notifies observers."""
+
+              def __init__(self) -> None:
+                  super().__init__()
+                  self._temperature: float = 0.0
+
+              @property
+              def temperature(self) -> float:
+                  return self._temperature
+
+              @temperature.setter
+              def temperature(self, value: float) -> None:
+                  self._temperature = value
+                  print(f"\nSensor: Temperature set to {value}°F")
+                  # TODO 1: Notify all observers that the state changed.
+                  #         (Hint: which inherited method broadcasts changes?)
+
+
+          # ── Sub-goal 4: ConcreteObservers — YOUR TURN ─────────────────
+
+          class TemperatureLogger(Observer):
+              """Records every temperature reading."""
+
+              def __init__(self) -> None:
+                  self.readings: list[float] = []
+
+              def update(self, subject: Subject) -> None:
+                  # TODO 2: Read subject.temperature, append to self.readings,
+                  #         and print: f"Logger: Recorded {temp}°F"
+                  pass
+
+
+          class TemperatureAlert(Observer):
+              """Alerts when temperature exceeds a threshold."""
+
+              def __init__(self, threshold: float = 90.0) -> None:
+                  self.threshold: float = threshold
+
+              def update(self, subject: Subject) -> None:
+                  # TODO 3: Read subject.temperature.
+                  #   If temp > self.threshold:
+                  #     print(f"ALERT: Temperature {temp}°F exceeds {self.threshold}°F!")
+                  #   Else:
+                  #     print(f"Alert: {temp}°F is within safe range")
+                  pass
+
+
+          # ── Sub-goal 5: Wire it up — YOUR TURN ────────────────────────
+
+          def main() -> None:
+              # TODO 4: Create a TemperatureSensor
+              # TODO 5: Create a TemperatureLogger and a TemperatureAlert(threshold=90)
+              # TODO 6: Attach both observers to the sensor
+              # TODO 7: Set sensor.temperature to 72, then 95, then 68
+              pass
+
+
+          if __name__ == "__main__":
+              main()
+        language: "python"
+
+    open_file: "observer_basics.py"
+
+    solution:
+      files:
+        - path: "observer_basics.py"
+          content: |
+            from abc import ABC, abstractmethod
+
+
+            class Subject:
+                """Base class for observable objects."""
+
+                def __init__(self) -> None:
+                    self._observers: list = []
+
+                def attach(self, observer: 'Observer') -> None:
+                    if observer not in self._observers:
+                        self._observers.append(observer)
+                        print(f"  Attached: {type(observer).__name__}")
+
+                def detach(self, observer: 'Observer') -> None:
+                    self._observers.remove(observer)
+                    print(f"  Detached: {type(observer).__name__}")
+
+                def notify(self) -> None:
+                    for observer in self._observers:
+                        observer.update(self)
+
+
+            class Observer(ABC):
+                @abstractmethod
+                def update(self, subject: Subject) -> None:
+                    pass
+
+
+            class TemperatureSensor(Subject):
+                def __init__(self) -> None:
+                    super().__init__()
+                    self._temperature: float = 0.0
+
+                @property
+                def temperature(self) -> float:
+                    return self._temperature
+
+                @temperature.setter
+                def temperature(self, value: float) -> None:
+                    self._temperature = value
+                    print(f"\nSensor: Temperature set to {value}°F")
+                    self.notify()
+
+
+            class TemperatureLogger(Observer):
+                def __init__(self) -> None:
+                    self.readings: list[float] = []
+
+                def update(self, subject: Subject) -> None:
+                    temp = subject.temperature
+                    self.readings.append(temp)
+                    print(f"Logger: Recorded {temp}°F")
+
+
+            class TemperatureAlert(Observer):
+                def __init__(self, threshold: float = 90.0) -> None:
+                    self.threshold: float = threshold
+
+                def update(self, subject: Subject) -> None:
+                    temp = subject.temperature
+                    if temp > self.threshold:
+                        print(f"ALERT: Temperature {temp}°F exceeds {self.threshold}°F!")
+                    else:
+                        print(f"Alert: {temp}°F is within safe range")
+
+
+            def main() -> None:
+                sensor = TemperatureSensor()
+                logger = TemperatureLogger()
+                alert = TemperatureAlert(threshold=90)
+
+                sensor.attach(logger)
+                sensor.attach(alert)
+
+                sensor.temperature = 72
+                sensor.temperature = 95
+                sensor.temperature = 68
+
+
+            if __name__ == "__main__":
+                main()
+          language: "python"
+      explanation: |
+        **How the Observer pattern works here:**
+
+        1. `TemperatureSensor` inherits from `Subject`, gaining `attach()`, `detach()`, and `notify()`
+        2. When you set `sensor.temperature = 72`, the property setter stores the value and calls `self.notify()`
+        3. `notify()` iterates through all registered observers and calls `update(self)` on each
+        4. Each observer's `update()` reads `subject.temperature` — this is the **Pull model** (observers pull data they need)
+
+        **Key insight:** The sensor never imports, creates, or names `TemperatureLogger` or `TemperatureAlert`. It only knows the `Observer` interface. Check the UML diagram: the sensor connects to `Observer` (abstract), not to concrete classes.
+
+    tests:
+      - description: "TemperatureSensor.temperature setter calls notify()"
+        command: |
+          source = open('/tutorial/observer_basics.py').read()
+          ns = {}
+          exec(source, ns)
+          sensor = ns['TemperatureSensor']()
+          notified = []
+          class Spy(ns['Observer']):
+              def update(self, subject):
+                  notified.append(subject.temperature)
+          sensor.attach(Spy())
+          sensor.temperature = 42
+          assert notified == [42], \
+              "Setting sensor.temperature should call self.notify(), which calls update() on observers. Did you add self.notify() in the temperature setter?"
+        hints:
+          - text: "In the temperature setter (the `@temperature.setter` method), add `self.notify()` after storing the new value. This broadcasts the change to all registered observers."
+            condition: "default"
+
+      - description: "TemperatureLogger records readings"
+        command: |
+          source = open('/tutorial/observer_basics.py').read()
+          ns = {}
+          exec(source, ns)
+          sensor = ns['TemperatureSensor']()
+          logger = ns['TemperatureLogger']()
+          sensor.attach(logger)
+          import io, contextlib
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              sensor.temperature = 72
+              sensor.temperature = 95
+          assert logger.readings == [72, 95], \
+              f"Logger should have readings [72, 95] but has {logger.readings}. Make sure update() appends subject.temperature to self.readings."
+        hints:
+          - text: "In `TemperatureLogger.update()`, read the temperature with `temp = subject.temperature`, then `self.readings.append(temp)` and print it."
+            condition: "default"
+
+      - description: "TemperatureAlert detects high temperatures"
+        command: |
+          source = open('/tutorial/observer_basics.py').read()
+          ns = {}
+          exec(source, ns)
+          import io, contextlib
+          sensor = ns['TemperatureSensor']()
+          alert = ns['TemperatureAlert'](threshold=90)
+          sensor.attach(alert)
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              sensor.temperature = 95
+          out = buf.getvalue()
+          assert "ALERT" in out, \
+              "When temperature (95) exceeds threshold (90), update() should print an ALERT message"
+        hints:
+          - text: "In `TemperatureAlert.update()`, get `temp = subject.temperature`, then check `if temp > self.threshold` and print the appropriate message."
+            condition: "default"
+
+      - description: "main() wires everything together correctly"
+        command: |
+          source = open('/tutorial/observer_basics.py').read()
+          ns = {}
+          import io, contextlib
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              exec(source, ns)
+              ns['main']()
+          out = buf.getvalue()
+          assert "72" in out and "95" in out and "68" in out, \
+              "main() should create a sensor, attach a logger and alert, then set temperature to 72, 95, and 68"
+          assert "ALERT" in out, \
+              "Temperature 95 exceeds threshold 90 — there should be an ALERT in the output"
+          assert "Recorded" in out, \
+              "The logger should print 'Recorded' for each temperature reading"
+        hints:
+          - text: "Create a `TemperatureSensor`, a `TemperatureLogger`, and a `TemperatureAlert(threshold=90)`. Attach both observers with `sensor.attach(...)`. Then set `sensor.temperature` to 72, 95, and 68."
+            condition: "default"
+
+    quiz:
+      title: "Observer Mechanics — Knowledge Check"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            In your implementation, `TemperatureSensor` never imports or references `TemperatureLogger` or `TemperatureAlert` by name. How does it communicate with them?
+          type: single
+          options:
+            - "Through global variables"
+            - "Through the Observer interface — it calls update() on objects in its list without knowing their concrete types"
+            - "Through return values from the temperature setter"
+            - "It does not — the observers poll the sensor"
+          correct_index: 1
+          explanation: |
+            The sensor only knows the abstract `Observer` interface. It calls `update()` on each object in `self._observers` without knowing whether it is a logger, an alert, or something entirely new. In the UML diagram, the aggregation arrow goes from Subject to Observer (abstract) — **not** to any concrete class. This is **loose coupling**.
+
+        - question: |
+            In the code you wrote, observers get data by calling `subject.temperature` inside their `update()` method. This is called the **Pull model**. What is the alternative?
+          type: single
+          options:
+            - "The **Push model**, where the subject sends the data directly as arguments to update()"
+            - "The **Poll model**, where observers check for changes on a timer"
+            - "The **Callback model**, where observers return data to the subject"
+            - "There is no alternative — Pull is the only way"
+          correct_index: 0
+          explanation: |
+            In the **Push model**, the subject passes changed data directly: `observer.update(temperature=72)`. In the **Pull model** (what you built), the subject passes itself: `observer.update(self)`, and observers query what they need. Pull is more flexible when observers need different subsets of data.
+
+        - question: |
+            What would happen if you call `sensor.temperature = 80` but forget to add `self.notify()` in the setter?
+          type: single
+          options:
+            - "The program crashes with an error"
+            - "The temperature changes internally, but no observers are notified — they still see the old value"
+            - "The observers are notified automatically because of the @property decorator"
+            - "The temperature does not change at all"
+          correct_index: 1
+          explanation: |
+            Without `self.notify()`, the setter silently updates `self._temperature` but never tells observers. This is a common Observer bug: the state changes, but the world does not know. The `@property` decorator is just syntactic sugar for getters/setters — it does NOT trigger notifications automatically.
+
+        - question: |
+            In the UML diagram for this step, `TemperatureSensor --|> Subject` uses a **solid** line with an open triangle. What does this relationship mean?
+          type: single
+          options:
+            - "TemperatureSensor creates Subject objects"
+            - "TemperatureSensor inherits from Subject (is-a relationship)"
+            - "TemperatureSensor contains a Subject"
+            - "TemperatureSensor calls methods on Subject"
+          correct_index: 1
+          explanation: |
+            In UML, a **solid line with an open triangle** (`--|>`) means **inheritance** (generalization). `TemperatureSensor` *is a* `Subject` — it inherits `attach()`, `detach()`, and `notify()`. Compare with the **dashed** line (`..|>`) used by `TemperatureLogger ..|> Observer`, which means "implements interface."
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — "The Big Refactor: Observer-Powered Weather Station"
+  # Pedagogy:
+  #   DIRR: Redesign-Reimplement — apply pattern to the Step 1 problem.
+  #   UML Inference — live diagram shows the clean Observer architecture.
+  #   Contrast Principle — compare with Step 1 to crystallize the benefit.
+  #   Bloom's level — Apply (refactor), Analyze (compare), Evaluate (judge).
+  # --------------------------------------------------------------------------
+  - title: "The Big Refactor: Observer-Powered Weather Station"
+    view: uml_diagram
+    instructions: |
+      ## Applying Observer to the Weather Station
+
+      > **Learning objective:** After this step you will be able to **refactor** tightly coupled code into the Observer pattern, **demonstrate** dynamic attach/detach, and **compare** the two architectures using UML diagrams.
+
+      ### Before vs. After
+
+      Here is what the architecture looks like **after** the refactoring. Compare this to Step 1:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      skinparam classAttributeIconSize 0
+      abstract class Subject {
+        - _observers: list
+        + attach(observer: Observer)
+        + detach(observer: Observer)
+        + notify()
+      }
+      abstract class Observer {
+        + {abstract} update(subject: Subject)
+      }
+      class WeatherStation {
+        - _temperature: float
+        - _humidity: float
+        - _pressure: float
+        + new_measurement(temp, humidity, pressure)
+        + temperature: float
+        + humidity: float
+        + pressure: float
+      }
+      class CurrentDisplay {
+        + update(station)
+      }
+      class StatisticsDisplay {
+        - _temps: list
+        + update(station)
+      }
+      class ForecastDisplay {
+        - _last_pressure: float
+        + update(station)
+      }
+      class HeatIndexDisplay {
+        + update(station)
+      }
+      Subject o--> "0..*" Observer : notifies
+      WeatherStation --|> Subject
+      CurrentDisplay ..|> Observer
+      StatisticsDisplay ..|> Observer
+      ForecastDisplay ..|> Observer
+      HeatIndexDisplay ..|> Observer
+      note right of WeatherStation : ZERO references to\nany specific display!
+      @enduml'></div>
+
+      Notice: `WeatherStation` has **zero** arrows to any display. It only connects to `Observer` (abstract) through `Subject`. Any class that implements `Observer` can plug in — no changes to the station needed.
+
+      ### The Transformation
+
+      Open `weather_observer.py`. The `WeatherStation` has been refactored to inherit from `Subject`. Study it and notice:
+      - It calls `self.notify()` in `new_measurement()` — that is it
+      - It has **zero** references to any specific display class
+      - `CurrentDisplay` and `StatisticsDisplay` are already implemented as Observers
+
+      ### Your Task
+
+      1. **Complete `ForecastDisplay.update()`** (TODO 1): Read `station.pressure`, compare to `self._last_pressure`, print the outlook.
+
+      2. **Create `HeatIndexDisplay`** (TODO 2): A brand-new observer.
+         - Formula: `heat_index = temp - 0.55 * (1 - humidity/100) * (temp - 58)`
+         - Print: `[Heat]     Heat Index: {heat_index:.1f}°F`
+
+      3. **Complete `main()`** (TODOs 3-6):
+         - Attach all four displays to the station
+         - Run three measurements: `(80, 65, 1013.25)`, `(82, 70, 1012.50)`, `(78, 90, 1015.00)`
+         - Then **detach** the ForecastDisplay and run one more: `(75, 60, 1011.00)`
+         - Verify: the forecast should NOT appear in the last measurement
+
+      ### The Key Question
+
+      How many lines of `WeatherStation` did you change to add `HeatIndexDisplay`? Check the UML diagram — the station's connections do not change.
+
+    uml_files:
+      - weather_observer.py
+
+    files:
+      - path: "weather_observer.py"
+        content: |
+          from abc import ABC, abstractmethod
+
+
+          # ── Reusable Subject/Observer base classes ─────────────────────
+
+          class Subject:
+              """Base class for any observable object."""
+
+              def __init__(self) -> None:
+                  self._observers: list = []
+
+              def attach(self, observer: 'Observer') -> None:
+                  if observer not in self._observers:
+                      self._observers.append(observer)
+
+              def detach(self, observer: 'Observer') -> None:
+                  self._observers.remove(observer)
+
+              def notify(self) -> None:
+                  for observer in self._observers:
+                      observer.update(self)
+
+
+          class Observer(ABC):
+              """Interface for all observers."""
+
+              @abstractmethod
+              def update(self, subject: Subject) -> None:
+                  pass
+
+
+          # ── The Refactored Weather Station (Subject) ───────────────────
+
+          class WeatherStation(Subject):
+              """Collects weather data and notifies observers.
+
+              COMPARE TO STEP 1: This class knows NOTHING about displays.
+              It only knows it has observers with an update() method."""
+
+              def __init__(self) -> None:
+                  super().__init__()
+                  self._temperature: float = 0.0
+                  self._humidity: float = 0.0
+                  self._pressure: float = 0.0
+
+              def new_measurement(self, temp: float, humidity: float,
+                                  pressure: float) -> None:
+                  print(f"\n--- Measurement: {temp}°F, {humidity}%, "
+                        f"{pressure} hPa ---")
+                  self._temperature = temp
+                  self._humidity = humidity
+                  self._pressure = pressure
+                  self.notify()
+
+              @property
+              def temperature(self) -> float:
+                  return self._temperature
+
+              @property
+              def humidity(self) -> float:
+                  return self._humidity
+
+              @property
+              def pressure(self) -> float:
+                  return self._pressure
+
+
+          # ── Concrete Observers (Displays) ──────────────────────────────
+
+          class CurrentDisplay(Observer):
+              """Shows current conditions."""
+
+              def update(self, station: Subject) -> None:
+                  print(f"[Current]  {station.temperature}°F, "
+                        f"{station.humidity}% humidity")
+
+
+          class StatisticsDisplay(Observer):
+              """Shows temperature statistics."""
+
+              def __init__(self) -> None:
+                  self._temps: list[float] = []
+
+              def update(self, station: Subject) -> None:
+                  self._temps.append(station.temperature)
+                  avg = sum(self._temps) / len(self._temps)
+                  lo, hi = min(self._temps), max(self._temps)
+                  print(f"[Stats]    Avg={avg:.1f}°F  Min={lo}°F  Max={hi}°F")
+
+
+          class ForecastDisplay(Observer):
+              """Shows forecast based on pressure changes."""
+
+              def __init__(self) -> None:
+                  self._last_pressure: float = 0.0
+
+              def update(self, station: Subject) -> None:
+                  # TODO 1: Read station.pressure. Compare to self._last_pressure.
+                  #   If pressure > self._last_pressure: outlook = "Improving weather!"
+                  #   Elif pressure < self._last_pressure: outlook = "Cooler, rainy weather"
+                  #   Else: outlook = "More of the same"
+                  #   Update self._last_pressure. Print: f"[Forecast] {outlook}"
+                  pass
+
+
+          # TODO 2: Create HeatIndexDisplay(Observer) here.
+          #   update() should compute:
+          #     heat_index = temp - 0.55 * (1 - humidity/100) * (temp - 58)
+          #   Print: f"[Heat]     Heat Index: {heat_index:.1f}°F"
+
+
+          def main() -> None:
+              station = WeatherStation()
+
+              # TODO 3: Create all four display instances
+
+              # TODO 4: Attach all four to the station
+
+              # TODO 5: Run three measurements:
+              #   station.new_measurement(80, 65, 1013.25)
+              #   station.new_measurement(82, 70, 1012.50)
+              #   station.new_measurement(78, 90, 1015.00)
+
+              # TODO 6: Detach the ForecastDisplay, then run one more:
+              #   print("\n>>> Detaching ForecastDisplay...")
+              #   station.detach(forecast)
+              #   station.new_measurement(75, 60, 1011.00)
+              #   (The forecast should NOT appear in this last measurement!)
+              pass
+
+
+          if __name__ == "__main__":
+              main()
+        language: "python"
+
+    open_file: "weather_observer.py"
+
+    solution:
+      files:
+        - path: "weather_observer.py"
+          content: |
+            from abc import ABC, abstractmethod
+
+
+            class Subject:
+                def __init__(self) -> None:
+                    self._observers: list = []
+
+                def attach(self, observer: 'Observer') -> None:
+                    if observer not in self._observers:
+                        self._observers.append(observer)
+
+                def detach(self, observer: 'Observer') -> None:
+                    self._observers.remove(observer)
+
+                def notify(self) -> None:
+                    for observer in self._observers:
+                        observer.update(self)
+
+
+            class Observer(ABC):
+                @abstractmethod
+                def update(self, subject: Subject) -> None:
+                    pass
+
+
+            class WeatherStation(Subject):
+                """Collects weather data and notifies observers."""
+
+                def __init__(self) -> None:
+                    super().__init__()
+                    self._temperature: float = 0.0
+                    self._humidity: float = 0.0
+                    self._pressure: float = 0.0
+
+                def new_measurement(self, temp: float, humidity: float,
+                                    pressure: float) -> None:
+                    print(f"\n--- Measurement: {temp}°F, {humidity}%, "
+                          f"{pressure} hPa ---")
+                    self._temperature = temp
+                    self._humidity = humidity
+                    self._pressure = pressure
+                    self.notify()
+
+                @property
+                def temperature(self) -> float:
+                    return self._temperature
+
+                @property
+                def humidity(self) -> float:
+                    return self._humidity
+
+                @property
+                def pressure(self) -> float:
+                    return self._pressure
+
+
+            class CurrentDisplay(Observer):
+                def update(self, station: Subject) -> None:
+                    print(f"[Current]  {station.temperature}°F, "
+                          f"{station.humidity}% humidity")
+
+
+            class StatisticsDisplay(Observer):
+                def __init__(self) -> None:
+                    self._temps: list[float] = []
+
+                def update(self, station: Subject) -> None:
+                    self._temps.append(station.temperature)
+                    avg = sum(self._temps) / len(self._temps)
+                    lo, hi = min(self._temps), max(self._temps)
+                    print(f"[Stats]    Avg={avg:.1f}°F  Min={lo}°F  Max={hi}°F")
+
+
+            class ForecastDisplay(Observer):
+                def __init__(self) -> None:
+                    self._last_pressure: float = 0.0
+
+                def update(self, station: Subject) -> None:
+                    pressure = station.pressure
+                    if pressure > self._last_pressure:
+                        outlook = "Improving weather!"
+                    elif pressure < self._last_pressure:
+                        outlook = "Cooler, rainy weather"
+                    else:
+                        outlook = "More of the same"
+                    self._last_pressure = pressure
+                    print(f"[Forecast] {outlook}")
+
+
+            class HeatIndexDisplay(Observer):
+                def update(self, station: Subject) -> None:
+                    temp = station.temperature
+                    humidity = station.humidity
+                    heat_index = temp - 0.55 * (1 - humidity / 100) * (temp - 58)
+                    print(f"[Heat]     Heat Index: {heat_index:.1f}°F")
+
+
+            def main() -> None:
+                station = WeatherStation()
+
+                current = CurrentDisplay()
+                stats = StatisticsDisplay()
+                forecast = ForecastDisplay()
+                heat = HeatIndexDisplay()
+
+                station.attach(current)
+                station.attach(stats)
+                station.attach(forecast)
+                station.attach(heat)
+
+                station.new_measurement(80, 65, 1013.25)
+                station.new_measurement(82, 70, 1012.50)
+                station.new_measurement(78, 90, 1015.00)
+
+                print("\n>>> Detaching ForecastDisplay...")
+                station.detach(forecast)
+                station.new_measurement(75, 60, 1011.00)
+
+
+            if __name__ == "__main__":
+                main()
+          language: "python"
+      explanation: |
+        **The transformation:**
+
+        - **Step 1:** Adding `HeatIndexDisplay` required modifying `WeatherStation` in **2 places**
+        - **Step 4:** Adding `HeatIndexDisplay` required modifying `WeatherStation` in **0 places**
+
+        Check the UML diagram: `WeatherStation` connects only to the abstract `Observer` through `Subject`. All four concrete displays independently implement the `Observer` interface. The station does not know or care about any specific display. This is the power of **loose coupling** through the Observer pattern.
+
+    tests:
+      - description: "ForecastDisplay.update() works correctly"
+        command: |
+          source = open('/tutorial/weather_observer.py').read()
+          ns = {}
+          exec(source, ns)
+          import io, contextlib
+          station = ns['WeatherStation']()
+          forecast = ns['ForecastDisplay']()
+          station.attach(forecast)
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              station.new_measurement(80, 65, 1013.25)
+              station.new_measurement(82, 70, 1012.50)
+          out = buf.getvalue()
+          assert "[Forecast]" in out, \
+              "ForecastDisplay.update() should print a line starting with [Forecast]"
+          assert "Improving" in out or "rainy" in out or "same" in out, \
+              "ForecastDisplay should show a weather outlook based on pressure changes"
+        hints:
+          - text: "Read `station.pressure`, compare it to `self._last_pressure`, set the outlook string, update `self._last_pressure`, and print with the `[Forecast]` prefix."
+            condition: "default"
+
+      - description: "HeatIndexDisplay exists and computes correctly"
+        command: |
+          source = open('/tutorial/weather_observer.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'HeatIndexDisplay' in ns, \
+              "Create a HeatIndexDisplay class that inherits from Observer"
+          import io, contextlib
+          station = ns['WeatherStation']()
+          heat = ns['HeatIndexDisplay']()
+          station.attach(heat)
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              station.new_measurement(80, 65, 1013.25)
+          out = buf.getvalue()
+          expected = 80 - 0.55 * (1 - 65/100) * (80 - 58)
+          assert f"{expected:.1f}" in out, \
+              f"Expected heat index of {expected:.1f}°F in output"
+        hints:
+          - text: "Create `class HeatIndexDisplay(Observer)` with `update(self, station)`. Read `station.temperature` and `station.humidity`, compute the heat index, and print it."
+            condition: "default"
+
+      - description: "main() runs all four displays"
+        command: |
+          source = open('/tutorial/weather_observer.py').read()
+          ns = {}
+          import io, contextlib
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              exec(source, ns)
+              ns['main']()
+          out = buf.getvalue()
+          assert "[Current]" in out, "main() should show CurrentDisplay output"
+          assert "[Stats]" in out, "main() should show StatisticsDisplay output"
+          assert "[Forecast]" in out, "main() should show ForecastDisplay output"
+          assert "Heat Index" in out, "main() should show HeatIndexDisplay output"
+        hints:
+          - text: "Create all four displays, `attach()` each to the station, then call `station.new_measurement(...)` three times."
+            condition: "default"
+
+      - description: "Detaching ForecastDisplay stops its updates"
+        command: |
+          source = open('/tutorial/weather_observer.py').read()
+          ns = {}
+          exec(source, ns)
+          import io, contextlib
+          station = ns['WeatherStation']()
+          forecast = ns['ForecastDisplay']()
+          station.attach(forecast)
+          station.new_measurement(80, 65, 1013.25)
+          station.detach(forecast)
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              station.new_measurement(75, 60, 1011.00)
+          out = buf.getvalue()
+          assert "[Forecast]" not in out, \
+              "After detaching ForecastDisplay, it should not appear in subsequent measurements. Call station.detach(forecast) before the last measurement."
+        hints:
+          - text: "In `main()`, after the first three measurements, call `station.detach(forecast)` before the final measurement. The forecast display should stop receiving updates."
+            condition: "default"
+
+    quiz:
+      title: "The Refactoring — Knowledge Check"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            How many lines of the `WeatherStation` class did you change to add `HeatIndexDisplay`?
+          type: single
+          options:
+            - "0 — I did not touch WeatherStation at all"
+            - "1 — I added one line in new_measurement()"
+            - "2 — I added it in __init__ and new_measurement()"
+            - "3 or more"
+          correct_index: 0
+          explanation: |
+            **Zero.** That is the entire point. In Step 1, you had to modify `WeatherStation` in 2 places. With the Observer pattern, you create a new class that implements `Observer` and call `station.attach()`. The station never needs to know about `HeatIndexDisplay` by name. Check the UML: WeatherStation's connections did not change.
+
+        - question: |
+            Which of the following are **advantages** of the Observer pattern compared to the tightly coupled version? (Select all that apply)
+          type: multiple
+          options:
+            - "New observers can be added without modifying the Subject"
+            - "Observers can be added and removed at runtime"
+            - "The Subject and Observers can be developed and tested independently"
+            - "The code is always shorter and simpler"
+          correct_indices: [0, 1, 2]
+          explanation: |
+            The first three are genuine advantages. However, the code is **not** always shorter — the Observer version has more classes and lines of code. The benefit is **flexibility and maintainability**, not brevity. Look at the UML diagrams: the Observer version has more boxes, but the arrows tell a cleaner story.
+
+        - question: |
+            A teammate says: *"Why do we need abstract classes? I can just call display methods directly — it is simpler."* What is the best response?
+          type: single
+          options:
+            - "They are right — always prefer the simpler approach"
+            - "Direct calls work for small, stable systems, but break down when you need dynamic add/remove or when multiple teams work on the codebase independently"
+            - "The GoF book says to always use Observer, so we must follow it"
+            - "Abstract classes make the code faster"
+          correct_index: 1
+          explanation: |
+            Both approaches have their place. For a simple program with 2-3 displays that never change, direct calls *are* simpler. But Observer shines when: (1) the set of observers changes at runtime, (2) new types are added frequently, or (3) the subject and observers evolve independently. Patterns are tools for specific situations, not universal requirements.
+
+        - question: |
+            In the Observer UML diagram, `Subject o--> "0..*" Observer` uses a **diamond arrow** with a multiplicity label. What does this mean?
+          type: single
+          options:
+            - "Subject creates 0 or more Observer objects"
+            - "Subject has an aggregation relationship with 0 or more Observers — it holds references to them but does not own their lifecycle"
+            - "Subject inherits from 0 or more Observer classes"
+            - "Subject deletes 0 or more Observer objects"
+          correct_index: 1
+          explanation: |
+            The open diamond (`o-->`) represents **aggregation**: the Subject *has* a collection of Observers, but the Observers can exist independently of the Subject. The `"0..*"` multiplicity means "zero or more." A *filled* diamond would be **composition** (stronger ownership). Observers are loosely associated — they can be attached to or detached from the Subject freely.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — "Know When to Hold 'Em: Design Judgment"
+  # Pedagogy:
+  #   Interleaved scenario analysis — students discriminate use cases.
+  #   Over-engineering awareness (from Sommerlad research).
+  #   Push vs. Pull design decision — architectural trade-off analysis.
+  #   Bloom's level — Evaluate, Analyze.
+  # --------------------------------------------------------------------------
+  - title: "Design Judgment: When and When Not"
+    instructions: |
+      ## When Observer Is the Right Tool — and When It Is Not
+
+      > **Learning objective:** After this step you will be able to **evaluate** whether the Observer pattern is appropriate for a given scenario, **explain** the Push vs. Pull trade-off, and **recognize** the danger of over-engineering.
+
+      ### The Danger of Over-Engineering
+
+      Design patterns are powerful, but they are not free. Every pattern adds:
+      - More classes and interfaces (look at how many UML boxes we added)
+      - Indirection that makes debugging harder (you cannot "follow" a method call from Subject to Observer by reading the code linearly)
+      - Cognitive overhead for anyone reading the code
+
+      The worst mistake after learning design patterns is applying them **everywhere**:
+
+      > *"The best engineers focus on solving problems simply, not memorizing existing solutions."*
+
+      ### When Observer Is Worth It
+
+      | Use Observer when... | Skip Observer when... |
+      |---|---|
+      | One state change triggers updates in **multiple** objects | There is only **one** receiver that will never change |
+      | Observers need to be added/removed **at runtime** | The relationship is **fixed** at design time |
+      | Subject and observers should evolve **independently** | **Debugging** is critical and traceability matters most |
+      | You expect **new observer types** over time | A simple direct method call would suffice |
+
+      ### Push vs. Pull: A Design Decision
+
+      You have used the **Pull model** (observers call `subject.temperature`). Here is the alternative:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      skinparam classAttributeIconSize 0
+      package "Pull Model" {
+        class Subject_Pull {
+          + notify()
+          + get_state()
+        }
+        abstract class Observer_Pull {
+          + update(subject)
+        }
+        Subject_Pull o--> Observer_Pull
+        note bottom of Observer_Pull : Observer calls\nsubject.get_state()\nto fetch data
+      }
+      package "Push Model" {
+        class Subject_Push {
+          + notify()
+        }
+        abstract class Observer_Push {
+          + update(data)
+        }
+        Subject_Push o--> Observer_Push
+        note bottom of Observer_Push : Subject sends data\ndirectly as arguments.\nObserver is simpler.
+      }
+      @enduml'></div>
+
+      | Model | How it works | Pros | Cons |
+      |---|---|---|---|
+      | **Pull** | `update(subject)` — observer queries what it needs | Flexible; observers choose their data | More coupling to subject API |
+      | **Push** | `update(temp=80, humidity=65)` — subject sends everything | Observers are simpler and independent | Subject must guess what observers need |
+
+      ### Your Task — Scenario Analysis
+
+      Open `design_judgment.py`. For each scenario, decide whether Observer is a good fit (`True`) or overkill (`False`). Set the variable and run to check.
+
+    files:
+      - path: "design_judgment.py"
+        content: |
+          # For each scenario, set the answer to True or False.
+          # True  = Observer IS a good fit
+          # False = Observer is OVERKILL or wrong for this case
+
+          # --- Scenario 1 ---
+          # A stock trading app shows live prices on a chart, a portfolio
+          # summary, a news ticker, and push notifications. New display
+          # widgets are added every sprint. Users configure their dashboard
+          # dynamically.
+          scenario_1 = None  # TODO: True or False?
+
+          # --- Scenario 2 ---
+          # A simple calculator app has one display that shows the result.
+          # There will never be a second display. The display is created
+          # once when the app starts and never changes.
+          scenario_2 = None  # TODO: True or False?
+
+          # --- Scenario 3 ---
+          # A game engine physics system detects collisions. Multiple
+          # systems react: sound effects, particles, damage, achievements.
+          # Game modders should add collision handlers without editing
+          # the physics engine source code.
+          scenario_3 = None  # TODO: True or False?
+
+          # --- Scenario 4 ---
+          # A script reads a config file once at startup and passes the
+          # values to three functions. The config never changes during
+          # execution.
+          scenario_4 = None  # TODO: True or False?
+
+          # --- Scenario 5 ---
+          # A chat application notifies all connected users when a new
+          # message arrives. Users join and leave the chat dynamically
+          # throughout the session.
+          scenario_5 = None  # TODO: True or False?
+
+
+          # --- Verification (do not edit below) ---
+          answers = {
+              "Scenario 1 (Stock trading dashboard)": (scenario_1, True),
+              "Scenario 2 (Simple calculator)": (scenario_2, False),
+              "Scenario 3 (Game collision events)": (scenario_3, True),
+              "Scenario 4 (One-time config read)": (scenario_4, False),
+              "Scenario 5 (Chat notifications)": (scenario_5, True),
+          }
+          correct = 0
+          for name, (student, expected) in answers.items():
+              if student is None:
+                  print(f"  [ ] {name} -- not answered yet")
+              elif student == expected:
+                  print(f"  [+] {name} -- Correct!")
+                  correct += 1
+              else:
+                  why = "Observer fits here" if expected else "Too simple for Observer"
+                  print(f"  [X] {name} -- Incorrect. {why}.")
+          print(f"\nScore: {correct}/{len(answers)}")
+        language: "python"
+
+    open_file: "design_judgment.py"
+
+    solution:
+      files:
+        - path: "design_judgment.py"
+          content: |
+            scenario_1 = True   # Multiple dynamic displays, new widgets each sprint
+            scenario_2 = False  # Single display, never changes -- direct call is fine
+            scenario_3 = True   # Multiple systems react, modders add handlers
+            scenario_4 = False  # Config read once, no runtime changes, no notifications
+            scenario_5 = True   # Dynamic set of users, one-to-many notifications
+
+
+            answers = {
+                "Scenario 1 (Stock trading dashboard)": (scenario_1, True),
+                "Scenario 2 (Simple calculator)": (scenario_2, False),
+                "Scenario 3 (Game collision events)": (scenario_3, True),
+                "Scenario 4 (One-time config read)": (scenario_4, False),
+                "Scenario 5 (Chat notifications)": (scenario_5, True),
+            }
+            correct = 0
+            for name, (student, expected) in answers.items():
+                if student is None:
+                    print(f"  [ ] {name} -- not answered yet")
+                elif student == expected:
+                    print(f"  [+] {name} -- Correct!")
+                    correct += 1
+                else:
+                    why = "Observer fits here" if expected else "Too simple for Observer"
+                    print(f"  [X] {name} -- Incorrect. {why}.")
+            print(f"\nScore: {correct}/{len(answers)}")
+          language: "python"
+      explanation: |
+        **The decision heuristic:**
+
+        Observer is justified when: (1) **multiple** dependents exist, (2) the set changes **dynamically**, and (3) subject and observers should be **independent**.
+
+        - **Scenario 1 (True):** Multiple displays, added each sprint, user-configured = classic Observer
+        - **Scenario 2 (False):** One display, never changes = just call the method directly
+        - **Scenario 3 (True):** Multiple game systems + modder extensibility = Observer (Game Programming Patterns approach)
+        - **Scenario 4 (False):** One-time config read = no ongoing notifications needed
+        - **Scenario 5 (True):** Users join/leave dynamically, one message notifies all = textbook Observer
+
+    tests:
+      - description: "All scenarios answered (no None values)"
+        command: |
+          source = open('/tutorial/design_judgment.py').read()
+          ns = {}
+          exec(source, ns)
+          for key in ['scenario_1', 'scenario_2', 'scenario_3', 'scenario_4', 'scenario_5']:
+              assert ns[key] is not None, \
+                  f"{key} is still None -- set it to True or False"
+        hints:
+          - text: "Replace `None` with `True` (Observer is a good fit) or `False` (overkill). Ask yourself: Are there MULTIPLE things that react? Do they change DYNAMICALLY? Should new types be addable WITHOUT modifying the source?"
+            condition: "default"
+
+      - description: "At least 4 out of 5 scenarios correct"
+        command: |
+          source = open('/tutorial/design_judgment.py').read()
+          ns = {}
+          exec(source, ns)
+          expected = {
+              'scenario_1': True, 'scenario_2': False,
+              'scenario_3': True, 'scenario_4': False, 'scenario_5': True
+          }
+          correct = sum(1 for k, v in expected.items() if ns.get(k) == v)
+          assert correct >= 4, \
+              f"Got {correct}/5 correct. Observer is for one-to-many DYNAMIC relationships. If there is only one receiver or the set never changes, direct calls are simpler."
+        hints:
+          - text: "Key questions: (1) Are there MULTIPLE things that react? (2) Can they change at RUNTIME? (3) Should new types be addable WITHOUT modifying the source? If yes to all = Observer. If no = probably overkill."
+            condition: "default"
+
+    quiz:
+      title: "Design Judgment — Final Knowledge Check"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            A developer learns Observer and starts using it for every function call. What is this anti-pattern called?
+          type: single
+          options:
+            - "Premature optimization"
+            - "Over-engineering — applying patterns where simple direct calls would suffice"
+            - "Spaghetti code"
+            - "This is actually good practice — patterns should be used everywhere"
+          correct_index: 1
+          explanation: |
+            This is **over-engineering**, one of the most common mistakes after learning design patterns. Patterns add complexity (more classes, more indirection, harder debugging). They are worth it when the problem genuinely needs flexibility — but using Observer for a simple one-to-one method call is like using a sledgehammer to hang a picture frame.
+
+        - question: |
+            What is the **main trade-off** of the Observer pattern compared to direct method calls?
+          type: single
+          options:
+            - "Observer is always slower"
+            - "Observer makes the code shorter"
+            - "Observer adds flexibility and decoupling, but makes control flow harder to trace and debug"
+            - "Observer requires a database"
+          correct_index: 2
+          explanation: |
+            The Observer pattern trades **traceability** for **flexibility**. You gain loose coupling (subject and observers evolve independently) and dynamic attach/detach. But you lose the ability to "follow the function call" from subject to observer — the indirection through the observer list makes control flow implicit. This matters during debugging.
+
+        - question: |
+            In the Pull model, `update(subject)` passes the entire subject. In the Push model, `update(temp=80, humidity=65)` passes data directly. Which statement is **correct**?
+          type: single
+          options:
+            - "Push is always better because it is more efficient"
+            - "Pull is always better because it is more flexible"
+            - "Pull gives observers more flexibility (they choose what data to read), but creates more coupling to the subject API"
+            - "There is no practical difference between Push and Pull"
+          correct_index: 2
+          explanation: |
+            Both models have trade-offs. **Pull** is flexible (observers pick what they need) but couples them to the subject's getters. **Push** decouples observers from the subject (they just receive data) but the subject must guess what observers need. The choice depends on observer diversity — see the UML diagram comparing both approaches.
+
+        - question: |
+            You are debugging a bug where a UI widget shows stale data. The widget is an Observer of a data model. What is the MOST likely cause?
+          type: single
+          options:
+            - "The widget was never attached to the subject"
+            - "Python garbage collector deleted the observer"
+            - "The Subject.notify() method calls observers in the wrong order"
+            - "The Observer pattern does not support UI widgets"
+          correct_index: 0
+          explanation: |
+            The most common Observer bug is forgetting to `attach()` the observer. If the widget was never registered, it never receives `update()` calls. Other common issues: (1) the widget was `detach()`-ed unintentionally, (2) the subject changed state but `notify()` was not called, or (3) the `update()` method has a bug.
+
+        - question: |
+            Consider this code:
+            ```python
+            station.attach(current_display)
+            station.attach(stats_display)
+            station.new_measurement(80, 65, 1013)
+            ```
+            Is `current_display` guaranteed to receive the update BEFORE `stats_display`?
+          type: single
+          options:
+            - "Yes — observers are always notified in attachment order"
+            - "No — the Observer pattern does NOT guarantee notification order"
+            - "Yes — Python lists are always ordered, so it is guaranteed"
+            - "It depends on the implementation — our list-based version preserves order, but the pattern itself makes no such guarantee"
+          correct_index: 3
+          explanation: |
+            Our implementation uses a Python list, which preserves insertion order. But the **Observer pattern itself** does not guarantee order — different implementations might use sets, priority queues, or async dispatch. Your code should **never depend on notification order** between observers, because a future refactoring could change it.
+
+        - question: |
+            Looking at the UML diagrams from this tutorial, what is the most significant structural difference between the Step 1 (tightly coupled) and Step 4 (Observer) architectures?
+          type: single
+          options:
+            - "Step 4 has more classes, which means it is more complex and worse"
+            - "In Step 1, WeatherStation has direct arrows to every display. In Step 4, WeatherStation only connects to the abstract Observer interface through Subject — it has zero arrows to concrete displays"
+            - "The diagrams look identical"
+            - "Step 4 removes the inheritance hierarchy entirely"
+          correct_index: 1
+          explanation: |
+            The critical UML difference: in Step 1, `WeatherStation` has a concrete dependency arrow to every display class. In Step 4, it connects only to the abstract `Observer` interface (via aggregation from `Subject`). The concrete displays implement `Observer` independently. This means you can add, remove, or change displays without touching the station. The UML makes this architectural improvement visually obvious.
