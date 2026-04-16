@@ -3392,9 +3392,13 @@
     if (!force && !this._umlViewActive) return;
     var self = this;
     clearTimeout(this._umlRefreshTimer);
-    this._umlRefreshTimer = setTimeout(function () {
+    if (force) {
       self._refreshUMLDiagram();
-    }, 1500);
+    } else {
+      this._umlRefreshTimer = setTimeout(function () {
+        self._refreshUMLDiagram();
+      }, 1500);
+    }
   };
 
   // ---------------------------------------------------------------------------
