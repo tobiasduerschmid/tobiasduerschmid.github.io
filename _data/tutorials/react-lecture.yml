@@ -792,6 +792,21 @@ steps:
 
       The game below puts everything together: JSX, `.map()`, components, props, and `useState`. When you buy a property or build a house, React only updates the specific card and wallet — not the entire page. That is the Virtual DOM in action.
 
+      ## Separation of Concerns
+
+      Notice how the code is organized into **three separate modules**:
+
+      | Module | Layer | Responsibility |
+      |---|---|---|
+      | `monopoly-game.js` | **Application** | Game data, rules, and state transitions — pure JavaScript, no React |
+      | `PropertyCard.jsx` | **Presentation** | Renders a single property card from props — pure UI, no game logic |
+      | `App.jsx` | **Wiring** | Connects game logic to UI via React state |
+
+      This is the **Separation of Concerns** principle: each module has a single, well-defined responsibility. The game logic knows nothing about React or the DOM. The UI component knows nothing about game rules. Benefits:
+      - **Testability** — `monopoly-game.js` can be unit-tested without rendering any UI
+      - **Reusability** — `PropertyCard` can display any property data, from any source
+      - **Maintainability** — changing a game rule doesn't require touching UI code, and vice versa
+
       ## Single Page Application (SPA)
 
       SPAs are structured as a **single HTML page** with no preloaded content. Content is loaded **dynamically via JavaScript**:
@@ -837,16 +852,23 @@ steps:
 
       ### Task
 
-      The game is almost complete — you can buy properties and build houses. But the **Collect Rent** button doesn't work yet. Implement `collectRent` so it adds `totalRent` to the wallet using `setWallet`.
+      The game is almost complete — you can buy properties and build houses. But the **Collect Rent** button doesn't work yet. Implement `collectRent` in `App.jsx` so it adds `totalRent` to the wallet using `setWallet`. Notice how the game logic in `monopoly-game.js` already provides `calculateTotalRent` — your `App.jsx` only needs to call `setWallet`.
 
     files:
       - path: "step5/styles.js"
         content: |
-          // Monopoly color groups
+          // Color group palette — maps abstract group names to banner colors
           const colorGroups = {
             "ucla-blue":  "#2774AE",
             "ucla-gold":  "#FFD100",
           };
+
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "40px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
+          }
 
           const cardStyle = {
             width: "180px",
@@ -859,13 +881,6 @@ steps:
             color: "#333",
             boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
           };
-
-          function getHeaderStyle(colorGroup) {
-            return {
-              height: "40px",
-              background: colorGroups[colorGroup] || "#ccc",
-            };
-          }
 
           const bodyStyle = {
             padding: "10px",
@@ -904,11 +919,91 @@ steps:
           };
         language: "javascript"
 
-      - path: "step5/App.jsx"
+      - path: "step5/monopoly-game.js"
         content: |
-          const { useState } = React;
+          // ── Application Layer ─────────────────────────────────────
+          // Pure game logic — no React, no JSX, no DOM.
+          // This module can be unit-tested without rendering any UI.
 
           const MAX_HOUSES = 4;
+
+          const INITIAL_PROPERTIES = [
+            { name: "Royce Hall",       price: 400, street: "Westwood Plaza", rent: 50 },
+            { name: "Powell Library",   price: 350, street: "Westwood Plaza", rent: 35 },
+            { name: "Kerckhoff Hall",   price: 200, street: "Bruin Walk",    rent: 25 },
+            { name: "Janss Steps",      price: 150, street: "Bruin Walk",    rent: 20 },
+            { name: "Bruin Bear",       price: 100, street: "Westwood Plaza", rent: 10 },
+            { name: "Sculpture Garden", price: 60,  street: "Bruin Walk",    rent: 6 },
+          ];
+
+          // Create the initial game state from the property definitions
+          function createInitialGameState() {
+            return INITIAL_PROPERTIES.map(p => ({ ...p, owned: false, houses: 0 }));
+          }
+
+          // Game action: buy a property.
+          // Returns updated { properties, wallet } or null if invalid.
+          function handleBuy(properties, wallet, index) {
+            const prop = properties[index];
+            if (!prop.owned && wallet >= prop.price) {
+              const updated = [...properties];
+              updated[index] = { ...prop, owned: true };
+              return { properties: updated, wallet: wallet - prop.price };
+            }
+            return null;
+          }
+
+          // Game action: build a house on an owned property.
+          // Returns updated { properties, wallet } or null if invalid.
+          function handleBuildHouse(properties, wallet, index) {
+            const prop = properties[index];
+            if (prop.owned && prop.houses <= MAX_HOUSES && wallet >= HOUSE_COST) {
+              const updated = [...properties];
+              updated[index] = { ...prop, houses: prop.houses + 1 };
+              return { properties: updated, wallet: wallet - HOUSE_COST };
+            }
+            return null;
+          }
+
+          // Calculate current rent for a property (base rent + house bonus)
+          function currentRent(property) {
+            return property.rent + property.houses * 10;
+          }
+
+          // Is the property fully upgraded (hotel)?
+          function isFullyUpgraded(property) {
+            return property.houses > MAX_HOUSES;
+          }
+
+          // Can the player afford a given cost?
+          function canAfford(wallet, cost) {
+            return wallet >= cost;
+          }
+
+          // Count how many properties the player owns
+          function ownedCount(properties) {
+            return properties.filter(p => p.owned).length;
+          }
+
+          // Calculate total rent from all owned properties
+          function calculateTotalRent(properties) {
+            return properties
+              .filter(p => p.owned)
+              .reduce((sum, p) => sum + currentRent(p), 0);
+          }
+        language: "javascript"
+
+      - path: "step5/PropertyCard.jsx"
+        content: |
+          // ── Presentation Layer ────────────────────────────────────
+          // Pure UI component — renders a property card from props.
+          // Contains no game logic; all actions come via callbacks.
+
+          // Maps street names (game data) to color groups (style data)
+          const streetToColorGroup = {
+            "Westwood Plaza": "ucla-blue",
+            "Bruin Walk":     "ucla-gold",
+          };
 
           // Converts house count to visual building icons
           function renderBuildings(houses) {
@@ -917,23 +1012,16 @@ steps:
             return HOUSE_EMOJI.repeat(houses);
           }
 
-          const INITIAL_PROPERTIES = [
-            { name: "Royce Hall",       price: 400, colorGroup: "ucla-blue",  rent: 50 },
-            { name: "Powell Library",   price: 350, colorGroup: "ucla-blue",  rent: 35 },
-            { name: "Kerckhoff Hall",   price: 200, colorGroup: "ucla-gold",  rent: 25 },
-            { name: "Janss Steps",      price: 150, colorGroup: "ucla-gold",  rent: 20 },
-            { name: "Bruin Bear",       price: 100, colorGroup: "ucla-blue",  rent: 10 },
-            { name: "Sculpture Garden", price: 60,  colorGroup: "ucla-gold",  rent: 6 },
-          ];
-
           function PropertyCard({ property, wallet, onBuy, onBuildHouse }) {
-            const { name, price, colorGroup, rent, owned, houses } = property;
-            const isMaxed = houses > MAX_HOUSES;
-            const rentNow = rent + houses * 10;
+            const { name, price, street, owned, houses } = property;
+            const isMaxed = isFullyUpgraded(property);
+            const rentNow = currentRent(property);
+            const canBuy = canAfford(wallet, price);
+            const canBuild = !isMaxed && canAfford(wallet, HOUSE_COST);
 
             return (
               <div style={cardStyle}>
-                <div style={getHeaderStyle(colorGroup)}></div>
+                <div style={getHeaderStyle(streetToColorGroup[street])}></div>
                 <div style={bodyStyle}>
                   <h4 style={{ margin: "4px 0" }}>{name}</h4>
                   <p style={{ margin: "2px 0" }}><strong>${price}</strong></p>
@@ -947,10 +1035,10 @@ steps:
                       </div>
                       <button
                         onClick={onBuildHouse}
-                        disabled={isMaxed || wallet < HOUSE_COST}
+                        disabled={!canBuild}
                         style={{
                           ...buttonStyle,
-                          ...((isMaxed || wallet < HOUSE_COST)
+                          ...(!canBuild
                             ? { background: "#999", cursor: "default" } : {}),
                         }}
                       >
@@ -960,10 +1048,10 @@ steps:
                   ) : (
                     <button
                       onClick={onBuy}
-                      disabled={wallet < price}
+                      disabled={!canBuy}
                       style={{
                         ...buttonStyle,
-                        background: wallet >= price ? "#2774AE" : "#999",
+                        background: canBuy ? "#2774AE" : "#999",
                       }}
                     >
                       Buy (${price})
@@ -973,49 +1061,39 @@ steps:
               </div>
             );
           }
+        language: "javascript"
+
+      - path: "step5/App.jsx"
+        content: |
+          const { useState } = React;
+
+          // App wires the application layer (monopoly-game.js)
+          // to the presentation layer (PropertyCard.jsx) via React state.
 
           function App() {
             const [wallet, setWallet] = useState(1500);
-            const [properties, setProperties] = useState(
-              INITIAL_PROPERTIES.map(p => ({ ...p, owned: false, houses: 0 }))
-            );
+            const [properties, setProperties] = useState(createInitialGameState());
 
-            const buyProperty = (index) => {
-              const prop = properties[index];
-              if (!prop.owned && wallet >= prop.price) {
-                setWallet(wallet - prop.price);
-                const updated = [...properties];
-                updated[index] = { ...prop, owned: true };
-                setProperties(updated);
+            // Apply a game action result to React state
+            const applyAction = (result) => {
+              if (result) {
+                setWallet(result.wallet);
+                setProperties(result.properties);
               }
             };
 
-            const buildHouse = (index) => {
-              const prop = properties[index];
-              if (prop.owned && prop.houses <= MAX_HOUSES && wallet >= HOUSE_COST) {
-                setWallet(wallet - HOUSE_COST);
-                const updated = [...properties];
-                updated[index] = { ...prop, houses: prop.houses + 1 };
-                setProperties(updated);
-              }
-            };
-
-            const totalRent = properties
-              .filter(p => p.owned)
-              .reduce((sum, p) => sum + p.rent + p.houses * 10, 0);
+            const totalRent = calculateTotalRent(properties);
 
             const collectRent = () => {
               // TODO: Add totalRent to the wallet using setWallet
             };
-
-            const ownedCount = properties.filter(p => p.owned).length;
 
             return (
               <div style={{ padding: "16px", fontFamily: "'Georgia', serif" }}>
                 <h2 style={{ marginBottom: "4px" }}>UCLA Monopoly</h2>
                 <div style={walletBarStyle}>
                   <span><strong>Wallet:</strong> ${wallet}</span>
-                  <span><strong>Properties:</strong> {ownedCount}/{properties.length}</span>
+                  <span><strong>Properties:</strong> {ownedCount(properties)}/{properties.length}</span>
                   <span><strong>Rent/turn:</strong> ${totalRent}</span>
                   <button
                     onClick={collectRent}
@@ -1035,8 +1113,8 @@ steps:
                       key={index}
                       property={prop}
                       wallet={wallet}
-                      onBuy={() => buyProperty(index)}
-                      onBuildHouse={() => buildHouse(index)}
+                      onBuy={() => applyAction(handleBuy(properties, wallet, index))}
+                      onBuildHouse={() => applyAction(handleBuildHouse(properties, wallet, index))}
                     />
                   ))}
                 </div>
@@ -1050,6 +1128,8 @@ steps:
 
     react_files:
       - "step5/styles.js"
+      - "step5/monopoly-game.js"
+      - "step5/PropertyCard.jsx"
       - "step5/App.jsx"
 
     open_file: "step5/App.jsx"
@@ -1060,114 +1140,33 @@ steps:
           content: |
             const { useState } = React;
 
-            const MAX_HOUSES = 4;
-
-            // Converts house count to visual building icons
-            function renderBuildings(houses) {
-              if (houses === 0) return "No buildings";
-              if (houses > MAX_HOUSES) return HOTEL_EMOJI;
-              return HOUSE_EMOJI.repeat(houses);
-            }
-
-            const INITIAL_PROPERTIES = [
-              { name: "Royce Hall",       price: 400, colorGroup: "ucla-blue",  rent: 50 },
-              { name: "Powell Library",   price: 350, colorGroup: "ucla-blue",  rent: 35 },
-              { name: "Kerckhoff Hall",   price: 200, colorGroup: "ucla-gold",  rent: 25 },
-              { name: "Janss Steps",      price: 150, colorGroup: "ucla-gold",  rent: 20 },
-              { name: "Bruin Bear",       price: 100, colorGroup: "ucla-blue",  rent: 10 },
-              { name: "Sculpture Garden", price: 60,  colorGroup: "ucla-gold",  rent: 6 },
-            ];
-
-            function PropertyCard({ property, wallet, onBuy, onBuildHouse }) {
-              const { name, price, colorGroup, rent, owned, houses } = property;
-              const isMaxed = houses > MAX_HOUSES;
-              const rentNow = rent + houses * 10;
-
-              return (
-                <div style={cardStyle}>
-                  <div style={getHeaderStyle(colorGroup)}></div>
-                  <div style={bodyStyle}>
-                    <h4 style={{ margin: "4px 0" }}>{name}</h4>
-                    <p style={{ margin: "2px 0" }}><strong>${price}</strong></p>
-                    {owned ? (
-                      <>
-                        <p style={{ margin: "2px 0", fontSize: "11px", color: "#666" }}>
-                          Rent: ${rentNow}
-                        </p>
-                        <div style={{ fontSize: "20px", minHeight: "28px" }}>
-                          {renderBuildings(houses)}
-                        </div>
-                        <button
-                          onClick={onBuildHouse}
-                          disabled={isMaxed || wallet < HOUSE_COST}
-                          style={{
-                            ...buttonStyle,
-                            ...((isMaxed || wallet < HOUSE_COST)
-                              ? { background: "#999", cursor: "default" } : {}),
-                          }}
-                        >
-                          {isMaxed ? "Fully Upgraded!" : "Build House ($" + HOUSE_COST + ")"}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={onBuy}
-                        disabled={wallet < price}
-                        style={{
-                          ...buttonStyle,
-                          background: wallet >= price ? "#2774AE" : "#999",
-                        }}
-                      >
-                        Buy (${price})
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            }
+            // App wires the application layer (monopoly-game.js)
+            // to the presentation layer (PropertyCard.jsx) via React state.
 
             function App() {
               const [wallet, setWallet] = useState(1500);
-              const [properties, setProperties] = useState(
-                INITIAL_PROPERTIES.map(p => ({ ...p, owned: false, houses: 0 }))
-              );
+              const [properties, setProperties] = useState(createInitialGameState());
 
-              const buyProperty = (index) => {
-                const prop = properties[index];
-                if (!prop.owned && wallet >= prop.price) {
-                  setWallet(wallet - prop.price);
-                  const updated = [...properties];
-                  updated[index] = { ...prop, owned: true };
-                  setProperties(updated);
+              // Apply a game action result to React state
+              const applyAction = (result) => {
+                if (result) {
+                  setWallet(result.wallet);
+                  setProperties(result.properties);
                 }
               };
 
-              const buildHouse = (index) => {
-                const prop = properties[index];
-                if (prop.owned && prop.houses <= MAX_HOUSES && wallet >= HOUSE_COST) {
-                  setWallet(wallet - HOUSE_COST);
-                  const updated = [...properties];
-                  updated[index] = { ...prop, houses: prop.houses + 1 };
-                  setProperties(updated);
-                }
-              };
-
-              const totalRent = properties
-                .filter(p => p.owned)
-                .reduce((sum, p) => sum + p.rent + p.houses * 10, 0);
+              const totalRent = calculateTotalRent(properties);
 
               const collectRent = () => {
                 if (totalRent > 0) setWallet(wallet + totalRent);
               };
-
-              const ownedCount = properties.filter(p => p.owned).length;
 
               return (
                 <div style={{ padding: "16px", fontFamily: "'Georgia', serif" }}>
                   <h2 style={{ marginBottom: "4px" }}>UCLA Monopoly</h2>
                   <div style={walletBarStyle}>
                     <span><strong>Wallet:</strong> ${wallet}</span>
-                    <span><strong>Properties:</strong> {ownedCount}/{properties.length}</span>
+                    <span><strong>Properties:</strong> {ownedCount(properties)}/{properties.length}</span>
                     <span><strong>Rent/turn:</strong> ${totalRent}</span>
                     <button
                       onClick={collectRent}
@@ -1187,8 +1186,8 @@ steps:
                         key={index}
                         property={prop}
                         wallet={wallet}
-                        onBuy={() => buyProperty(index)}
-                        onBuildHouse={() => buildHouse(index)}
+                        onBuy={() => applyAction(handleBuy(properties, wallet, index))}
+                        onBuildHouse={() => applyAction(handleBuildHouse(properties, wallet, index))}
                       />
                     ))}
                   </div>
@@ -1200,7 +1199,7 @@ steps:
             root.render(<App />);
           language: "javascript"
       explanation: |
-        The fix is one line: `if (totalRent > 0) setWallet(wallet + totalRent);`. Calling `setWallet` updates the wallet state and triggers a re-render. React's Virtual DOM then diffs the new UI against the previous one and only updates the wallet display — the property cards remain untouched because their props didn't change. This is the efficiency of the Virtual DOM: minimal real DOM updates.
+        The fix is one line: `if (totalRent > 0) setWallet(wallet + totalRent);`. Notice how `App.jsx` doesn't compute rent itself — it calls `calculateTotalRent()` from `monopoly-game.js` (application layer) and passes the result to `setWallet` (React state). The presentation layer (`PropertyCard`) is completely untouched. This is separation of concerns in action: changing game logic doesn't require editing UI code.
 
     quiz:
       title: "Virtual DOM, SPA & SSR — Knowledge Check"
@@ -1252,3 +1251,15 @@ steps:
           correct_index: 1
           explanation: |
             When `setWallet` is called, React re-runs the `App` function with the new wallet value. It builds a new Virtual DOM tree, compares it with the previous one, and finds that only the wallet text changed. React patches just that one text node in the real DOM — the property cards and everything else remain untouched. This selective update is the core benefit of the Virtual DOM.
+
+        - question: |
+            The UCLA Monopoly code separates `monopoly-game.js` (application layer) from `PropertyCard.jsx` (presentation layer). What is the main benefit of this separation?
+          type: single
+          options:
+            - "It makes the code run faster because the browser can load files in parallel"
+            - "The game logic can be unit-tested without rendering any UI, and UI changes don't require touching game rules"
+            - "React requires all components to be in separate files — it will not compile otherwise"
+            - "It reduces the total number of lines of code by eliminating duplication"
+          correct_index: 1
+          explanation: |
+            Separation of concerns means each module has one job. `monopoly-game.js` contains pure functions — you can test `gameBuyProperty()` with plain assertions, no DOM needed. `PropertyCard.jsx` is a pure UI component — it renders whatever data it receives. If you change the rent formula, only `monopoly-game.js` changes. If you redesign the card layout, only `PropertyCard.jsx` changes. Neither module needs to know about the other's internals.
