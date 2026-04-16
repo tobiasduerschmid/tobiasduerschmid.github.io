@@ -1226,7 +1226,8 @@
     this.associations = [];  // [className]
     this.dependencies = [];  // [className]
     this._relAttrs = {};     // attribute names promoted to relationship arrows
-    this._relMult = {};      // {targetClass: {srcMult, tgtMult}} — multiplicity metadata
+    this._relMult = {};      // {targetClass: {tgtMult}} — multiplicity metadata
+    this._pendingCollections = {}; // {targetClass: {annNode, attrName}} — deferred from list[T] = []
     this.decorators = [];    // decorator names on the class
   }
 
@@ -1266,6 +1267,23 @@
       }
     }
 
+    // Reconcile pending collections: any list[T] = [] that was NOT resolved by
+    // an append/add call falls back to an association using the annotation type.
+    for (var pendingCls in info._pendingCollections) {
+      if (!info._pendingCollections.hasOwnProperty(pendingCls)) continue;
+      // Only add if not already covered by composition/aggregation/association
+      if (info.compositions.indexOf(pendingCls) === -1 &&
+          info.aggregations.indexOf(pendingCls) === -1 &&
+          info.associations.indexOf(pendingCls) === -1) {
+        var pending = info._pendingCollections[pendingCls];
+        _addUnique(info.associations, pendingCls);
+        if (!info._relMult[pendingCls]) {
+          var tgtMult = inferMultiplicity(pending.annNode);
+          info._relMult[pendingCls] = { tgtMult: tgtMult };
+        }
+      }
+    }
+
     // Collect dependency relationships
     this._collectDependencies(node, info);
   };
@@ -1286,6 +1304,11 @@
     var isStatic = (node.decorators || []).indexOf('staticmethod') !== -1;
     var isClassMethod = (node.decorators || []).indexOf('classmethod') !== -1;
     var isProperty = (node.decorators || []).indexOf('property') !== -1;
+    var isSetter = (node.decorators || []).indexOf('setter') !== -1;
+    var isDeleter = (node.decorators || []).indexOf('deleter') !== -1;
+
+    // Skip property setters/deleters — the @property getter already shows the attribute
+    if (isSetter || isDeleter) return;
 
     // Get return type
     var returnType = node.returns ? annotationStr(node.returns) : null;
@@ -1354,6 +1377,10 @@
       if (annCls) {
         _addUnique(classInfo.associations, annCls);
         classInfo._relAttrs[attrName] = true;
+        if (!classInfo._relMult[annCls]) {
+          var tgtMult = inferMultiplicity(node.annotation);
+          classInfo._relMult[annCls] = { tgtMult: tgtMult };
+        }
       }
     }
   };
@@ -1459,8 +1486,10 @@
         // self.x: List[T] = [] → defer relationship classification.
         // The relationship type (composition vs aggregation) is determined by
         // how items are added: append(local_created) = composition,
-        // append(param) = aggregation.  No append found = no relationship arrow.
+        // append(param) = aggregation.  If no append is found, the annotation
+        // type is used as a fallback association (reconciled after all methods).
         if (annCls && _isEmptyCollection(node.value)) {
+          classInfo._pendingCollections[annCls] = { annNode: node.annotation, attrName: attrName };
           return;
         }
         // self.x: T = <other expr> → association from annotation
@@ -1482,24 +1511,23 @@
           isSelfAttr(func.value) &&
           call.args && call.args.length >= 1) {
         var arg = call.args[0];
-        if (arg.type === 'Name') {
-          var attrName = func.value.attr;
+        var attrName = func.value.attr;
+        var resolvedCls = null;
 
+        if (arg.type === 'Name') {
           // Check if arg is a locally-created object: v = ClassName(...)
           // Pattern: dept = Department(...); self.departments.append(dept) → composition
           var createdCls = localCreations ? localCreations[arg.id] : null;
           if (createdCls) {
-            // Upgrade from aggregation to composition if already classified
             var aggIdx = classInfo.aggregations.indexOf(createdCls);
-            if (aggIdx !== -1) {
-              classInfo.aggregations.splice(aggIdx, 1);
-            }
+            if (aggIdx !== -1) classInfo.aggregations.splice(aggIdx, 1);
             _addUnique(classInfo.compositions, createdCls);
             if (!classInfo._relMult[createdCls]) {
               classInfo._relMult[createdCls] = { tgtMult: '*' };
             }
+            resolvedCls = createdCls;
           } else {
-            // Check if arg is a method parameter → aggregation (externally provided, added to collection)
+            // Check if arg is a method parameter → aggregation
             var paramCls = initParamTypes[arg.id];
             if (paramCls &&
                 classInfo.compositions.indexOf(paramCls) === -1 &&
@@ -1509,8 +1537,26 @@
               if (!classInfo._relMult[paramCls]) {
                 classInfo._relMult[paramCls] = { tgtMult: '*' };
               }
+              resolvedCls = paramCls;
             }
           }
+        } else if (arg.type === 'Call') {
+          // self.items.append(Task()) → inline constructor → composition
+          var inlineCls = callName(arg);
+          if (inlineCls && self.allTypeNames.has(inlineCls)) {
+            var aggIdx = classInfo.aggregations.indexOf(inlineCls);
+            if (aggIdx !== -1) classInfo.aggregations.splice(aggIdx, 1);
+            _addUnique(classInfo.compositions, inlineCls);
+            if (!classInfo._relMult[inlineCls]) {
+              classInfo._relMult[inlineCls] = { tgtMult: '*' };
+            }
+            resolvedCls = inlineCls;
+          }
+        }
+
+        // Clear pending collection entry if the append resolved the type
+        if (resolvedCls && classInfo._pendingCollections[resolvedCls]) {
+          delete classInfo._pendingCollections[resolvedCls];
         }
       }
     }
@@ -2655,7 +2701,9 @@
   function _isEnum(cls) {
     return cls.bases.indexOf('Enum') !== -1
         || cls.bases.indexOf('IntEnum') !== -1
-        || cls.bases.indexOf('StrEnum') !== -1;
+        || cls.bases.indexOf('StrEnum') !== -1
+        || cls.bases.indexOf('Flag') !== -1
+        || cls.bases.indexOf('IntFlag') !== -1;
   }
 
   /* ===================================================================

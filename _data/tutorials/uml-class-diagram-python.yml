@@ -1438,7 +1438,7 @@ steps:
       |---|---|
       | `1` | Exactly one |
       | `0..1` | Zero or one (optional) |
-      | `*` or `0..*` | Zero or more |
+      | `*` | Zero or more |
       | `1..*` | One or more |
 
       ### Reading Multiplicity as a Sentence
@@ -2169,7 +2169,7 @@ steps:
             condition: "default"
 
     quiz:
-      title: "The God Class"
+      title: "God Class & Comprehensive Review"
       min_score: 0.6
       shuffle: true
       questions:
@@ -2198,295 +2198,6 @@ steps:
           explanation: |
             UML makes architecture **visible**. A God Class is invisible in 500 lines of Python — you might not notice the bloat. But in a UML diagram, one enormous box surrounded by nothing is immediately obvious. UML is a thinking tool, not just documentation.
 
-
-  # --------------------------------------------------------------------------
-  # STEP 10 — "From Diagram to Code: Build a System"
-  # Pedagogy:
-  #   Scaffold fully faded — no step-by-step guidance.
-  #   Full Integration — combines all learned concepts.
-  #   Bloom's level — Create (design from specification).
-  # --------------------------------------------------------------------------
-  - title: "From Diagram to Code: Build a System"
-    instructions: |
-      ## The Final Challenge
-
-      > **Learning objective:** Given a complete UML class diagram, you will **implement** a multi-class system that uses inheritance, abstraction, composition, association, visibility, types, and multiplicity.
-
-      ### Your Mission
-
-      You have learned to read every element of a UML class diagram. Now prove it: implement an entire system from a UML specification alone. No step-by-step guidance — just the diagram and your skills.
-
-      ### Your Target Diagram
-
-      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
-      class User {
-        + name: str
-        - __email: str
-        + __init__(name: str, email: str): None
-        + get_email(): str
-      }
-      abstract class Task {
-        + title: str
-        + description: str
-        + assignee: User
-        + status: str
-        + __init__(title: str, description: str, assignee: User, status: str): None
-        + {abstract} priority(): str
-        + get_summary(): str
-      }
-      class Bug {
-        + severity: str
-        + __init__(title: str, description: str, assignee: User, severity: str): None
-        + priority(): str
-      }
-      class Feature {
-        + business_value: int
-        + __init__(title: str, description: str, assignee: User, business_value: int): None
-        + priority(): str
-      }
-      class TaskManager {
-        + tasks: list
-        + __init__(): None
-        + add_task(task: Task): None
-        + get_tasks_by_assignee(user: User): list
-        + get_high_priority(): list
-      }
-      Bug --|> Task
-      Feature --|> Task
-      TaskManager o-- "*" Task
-      Task --> User
-      @enduml'></div>
-
-      ### Reading the Diagram
-
-      This diagram uses every concept from this tutorial:
-
-      - **Visibility:** `User.__email` is private (`-`), most other attributes are public (`+`)
-      - **Types:** All attributes and methods show explicit types
-      - **Inheritance:** `Bug` and `Feature` extend `Task`
-      - **Abstract:** `Task` is abstract with an abstract `priority()` method
-      - **Composition:** `TaskManager` owns `Task` objects (filled diamond, `0..*`)
-      - **Association:** Each `Task` references a `User` (its assignee)
-
-      ### Implementation Notes
-
-      - `Bug.priority()`: return `"high"` if severity is `"critical"`, else `"medium"`
-      - `Feature.priority()`: return `"high"` if business_value > 7, else `"low"`
-      - `Task.get_summary()`: return `"[priority] title (assignee: user.name)"`
-      - `TaskManager.get_high_priority()`: return all tasks where `priority()` is `"high"`
-
-      Build it. Watch the diagram grow. Match the target.
-
-    uml_files:
-      - task_manager.py
-
-    files:
-      - path: task_manager.py
-        content: |
-          from abc import ABC, abstractmethod
-
-          # Implement the entire system from the UML diagram.
-          #
-          # Classes needed:
-          #   User         — name (public), __email (private), get_email()
-          #   Task (ABC)   — title, description, assignee (User), status,
-          #                  abstract priority(), get_summary()
-          #   Bug(Task)    — severity, implements priority()
-          #   Feature(Task)— business_value, implements priority()
-          #   TaskManager  — tasks (list), add_task(), get_tasks_by_assignee(),
-          #                  get_high_priority()
-          #
-          # Relationships:
-          #   Bug --|> Task          (inheritance)
-          #   Feature --|> Task      (inheritance)
-          #   TaskManager *-- Task   (composition, 0..*)
-          #   Task --> User          (association)
-        language: python
-
-    open_file: task_manager.py
-
-    solution:
-      files:
-        - path: task_manager.py
-          content: |
-            from abc import ABC, abstractmethod
-
-
-            class User:
-                def __init__(self, name: str, email: str) -> None:
-                    self.name: str = name
-                    self.__email: str = email
-
-                def get_email(self) -> str:
-                    return self.__email
-
-
-            class Task(ABC):
-                def __init__(self, title: str, description: str,
-                             assignee: User, status: str = "open") -> None:
-                    self.title: str = title
-                    self.description: str = description
-                    self.assignee: User = assignee
-                    self.status: str = status
-
-                @abstractmethod
-                def priority(self) -> str:
-                    pass
-
-                def get_summary(self) -> str:
-                    return f"[{self.priority()}] {self.title} (assignee: {self.assignee.name})"
-
-
-            class Bug(Task):
-                def __init__(self, title: str, description: str,
-                             assignee: User, severity: str) -> None:
-                    super().__init__(title, description, assignee)
-                    self.severity: str = severity
-
-                def priority(self) -> str:
-                    return "high" if self.severity == "critical" else "medium"
-
-
-            class Feature(Task):
-                def __init__(self, title: str, description: str,
-                             assignee: User, business_value: int) -> None:
-                    super().__init__(title, description, assignee)
-                    self.business_value: int = business_value
-
-                def priority(self) -> str:
-                    return "high" if self.business_value > 7 else "low"
-
-
-            class TaskManager:
-                def __init__(self) -> None:
-                    self.tasks: list[Task] = []
-
-                def add_task(self, task: Task) -> None:
-                    self.tasks.append(task)
-
-                def get_tasks_by_assignee(self, user: User) -> list:
-                    return [t for t in self.tasks if t.assignee is user]
-
-                def get_high_priority(self) -> list:
-                    return [t for t in self.tasks if t.priority() == "high"]
-
-
-            if __name__ == "__main__":
-                alice = User("Alice", "alice@company.com")
-                bob = User("Bob", "bob@company.com")
-
-                mgr = TaskManager()
-                mgr.add_task(Bug("Login crash", "App crashes on login", alice, "critical"))
-                mgr.add_task(Bug("Typo in footer", "Minor text error", bob, "minor"))
-                mgr.add_task(Feature("Dark mode", "Add dark theme", alice, 9))
-                mgr.add_task(Feature("Export CSV", "Export data as CSV", bob, 4))
-
-                print("All tasks:")
-                for t in mgr.tasks:
-                    print(f"  {t.get_summary()}")
-
-                print(f"\nHigh priority: {len(mgr.get_high_priority())}")
-                print(f"Alice's tasks: {len(mgr.get_tasks_by_assignee(alice))}")
-          language: python
-      explanation: |
-        Congratulations — you just implemented a complete system from a UML specification!
-
-        This diagram used **every concept** from this tutorial:
-        - **Three compartments** — class name, attributes, methods
-        - **Visibility** — User's `__email` is private (`-`)
-        - **Type hints** — all attributes and methods are explicitly typed
-        - **Inheritance** — Bug and Feature extend Task
-        - **Abstract classes** — Task is abstract with `priority()` as `@abstractmethod`
-        - **Composition** — TaskManager creates and owns Task objects
-        - **Association** — Task holds a reference to User
-        - **Multiplicity** — TaskManager has 0 or more Tasks
-
-        UML class diagrams are a **communication tool**. You just proved you can both *read* a diagram and *implement* one. In professional software engineering, this skill lets you understand and discuss system architecture before writing a single line of code.
-
-    tests:
-      - description: "Task is abstract and Bug/Feature are concrete subclasses"
-        command: |
-          source = open('/tutorial/task_manager.py').read()
-          ns = {}
-          exec(source, ns)
-          assert 'Task' in ns, "Create an abstract Task class"
-          assert 'Bug' in ns, "Create a Bug class"
-          assert 'Feature' in ns, "Create a Feature class"
-          try:
-              ns['Task']('t', 'd', ns['User']('x', 'x@x.com'))
-              assert False, "Task should be abstract — it should raise TypeError"
-          except TypeError:
-              pass
-          assert issubclass(ns['Bug'], ns['Task']), "Bug must inherit from Task"
-          assert issubclass(ns['Feature'], ns['Task']), "Feature must inherit from Task"
-        hints:
-          - text: "Make Task inherit from ABC, mark `priority()` with `@abstractmethod`, then make Bug and Feature inherit from Task with `class Bug(Task):`."
-            condition: "default"
-
-      - description: "User has private email with getter"
-        command: |
-          source = open('/tutorial/task_manager.py').read()
-          ns = {}
-          exec(source, ns)
-          u = ns['User']('Alice', 'a@b.com')
-          assert u.name == 'Alice', "User needs a public 'name' attribute"
-          assert u.get_email() == 'a@b.com', \
-              "get_email() should return the private email"
-          assert hasattr(u, '_User__email'), \
-              "email should be private: use self.__email"
-        hints:
-          - text: "Store email as `self.__email: str = email` (private) and add `def get_email(self) -> str:` returning `self.__email`."
-            condition: "default"
-
-      - description: "Bug and Feature implement priority() correctly"
-        command: |
-          source = open('/tutorial/task_manager.py').read()
-          ns = {}
-          exec(source, ns)
-          u = ns['User']('X', 'x@x.com')
-          bug_crit = ns['Bug']('b1', 'd', u, 'critical')
-          bug_minor = ns['Bug']('b2', 'd', u, 'minor')
-          feat_high = ns['Feature']('f1', 'd', u, 9)
-          feat_low = ns['Feature']('f2', 'd', u, 4)
-          assert bug_crit.priority() == 'high', \
-              "Critical bugs should have 'high' priority"
-          assert bug_minor.priority() == 'medium', \
-              "Non-critical bugs should have 'medium' priority"
-          assert feat_high.priority() == 'high', \
-              "Features with business_value > 7 should have 'high' priority"
-          assert feat_low.priority() == 'low', \
-              "Features with business_value <= 7 should have 'low' priority"
-        hints:
-          - text: "Bug.priority(): return `'high'` if `self.severity == 'critical'` else `'medium'`. Feature.priority(): return `'high'` if `self.business_value > 7` else `'low'`."
-            condition: "default"
-
-      - description: "TaskManager works with composition and filtering"
-        command: |
-          source = open('/tutorial/task_manager.py').read()
-          ns = {}
-          exec(source, ns)
-          u = ns['User']('Alice', 'a@b.com')
-          mgr = ns['TaskManager']()
-          mgr.add_task(ns['Bug']('b1', 'd', u, 'critical'))
-          mgr.add_task(ns['Feature']('f1', 'd', u, 3))
-          assert len(mgr.tasks) == 2, \
-              "After adding 2 tasks, TaskManager should have 2 tasks"
-          high = mgr.get_high_priority()
-          assert len(high) == 1, \
-              f"Should have 1 high-priority task (the critical bug), got {len(high)}"
-          by_user = mgr.get_tasks_by_assignee(u)
-          assert len(by_user) == 2, \
-              "Both tasks are assigned to the same user"
-        hints:
-          - text: "TaskManager needs `add_task(self, task: Task)` appending to `self.tasks`, `get_high_priority()` filtering by `t.priority() == 'high'`, and `get_tasks_by_assignee(user)` filtering by `t.assignee is user`."
-            condition: "default"
-
-    quiz:
-      title: "UML Comprehensive Review"
-      min_score: 0.6
-      shuffle: true
-      questions:
-
         - question: |
             Match the UML notation to its meaning: a **solid line with a filled diamond** on one end.
           type: single
@@ -2500,16 +2211,40 @@ steps:
             A filled diamond means **composition** — the whole exclusively owns the part, and the part is destroyed when the whole is destroyed. A hollow diamond would mean aggregation (independent lifecycle).
 
         - question: |
-            Looking at the TaskManager diagram, why is `Task --> User` an **association** rather than composition?
+            A `Course` class stores `self.instructor: Instructor = instructor` where the instructor is passed in from outside. Why is this an **association** rather than composition?
           type: single
           options:
-            - "Because Task and User are in different files"
-            - "Because a User exists independently of any Task — deleting a Task does not destroy the User"
-            - "Because User is abstract"
+            - "Because Course and Instructor are in different files"
+            - "Because the Instructor exists independently — deleting the Course does not destroy the Instructor"
+            - "Because Instructor is abstract"
             - "Because there is no multiplicity notation"
           correct_index: 1
           explanation: |
-            A `User` exists independently — they are created outside of `Task` and passed in. Deleting a task does not delete the user. This is a reference, not ownership, so it is an **association** (plain arrow) rather than composition (filled diamond).
+            The `Instructor` exists independently — it was created outside of `Course` and passed in. Deleting a course does not delete the instructor. This is a reference, not ownership, so it is an **association** (plain arrow) rather than composition (filled diamond).
+
+        - question: |
+            What does italic text on a class name in a UML diagram indicate?
+          type: single
+          options:
+            - "The class is deprecated and should not be used"
+            - "The class is abstract — it cannot be instantiated directly"
+            - "The class is private to the module"
+            - "The class is a utility class with only static methods"
+          correct_index: 1
+          explanation: |
+            Italic text in UML indicates **abstract** — the class cannot be instantiated and must be subclassed. In Python, this is achieved with `class Name(ABC):` and `@abstractmethod`.
+
+        - question: |
+            In UML, `Department "1" --> "*" Employee` — what does `*` next to Employee mean?
+          type: single
+          options:
+            - "Each employee belongs to zero or more departments"
+            - "A department has zero or more employees"
+            - "There are zero or more departments"
+            - "Employees are optional in the system"
+          correct_index: 1
+          explanation: |
+            The multiplicity `*` is placed next to `Employee` because it quantifies how many employees a department can have: **zero or more**. Read it as a sentence: "One Department has zero or more Employees."
 
         - question: |
             What is the most important purpose of a UML class diagram?
@@ -2522,3 +2257,123 @@ steps:
           correct_index: 2
           explanation: |
             The primary purpose of UML is **communication**. A class diagram lets developers understand and discuss the architecture of a system — what classes exist, how they relate, and what contracts they define — without reading every line of code. It is a thinking and communication tool, not a replacement for code.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 10 — "UML Class Diagram Reference"
+  # Pedagogy:
+  #   Summary / Retrieval Practice — consolidates all notation learned.
+  #   Serves as a reference card students can revisit.
+  # --------------------------------------------------------------------------
+  - title: "UML Class Diagram Reference"
+    instructions: |
+      ## Congratulations!
+
+      You have learned to read and create UML class diagrams. This final page summarizes every notation element covered in this tutorial — use it as a quick reference.
+
+      ---
+
+      ### The Class Box
+
+      Every class is drawn as a box with three compartments:
+
+      | Compartment | Contains | Python |
+      |---|---|---|
+      | **Top** | Class name | `class ClassName:` |
+      | **Middle** | Attributes | `self.x = value` |
+      | **Bottom** | Methods | `def method(self):` |
+
+      ---
+
+      ### Visibility
+
+      | UML | Meaning | Python Convention |
+      |---|---|---|
+      | `+` | **Public** | `self.name` (no prefix) |
+      | `-` | **Private** | `self.__name` (double underscore) |
+      | `#` | **Protected** | `self._name` (single underscore) |
+
+      ---
+
+      ### Types
+
+      | UML | Python |
+      |---|---|
+      | `name: str` | `self.name: str = name` |
+      | `get_price(): float` | `def get_price(self) -> float:` |
+      | `process(amount: float): bool` | `def process(self, amount: float) -> bool:` |
+
+      ---
+
+      ### Relationships
+
+      | Symbol | Name | Meaning | Python Pattern |
+      |---|---|---|---|
+      | <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> | **Inheritance** | "is-a" — child extends parent | `class Child(Parent):` |
+      | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other: OtherClass = other` |
+      | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> | **Composition** | "owns" — part destroyed with whole | `self.part = Part(...)` (created inside) |
+      | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> | **Aggregation** | "uses" — part survives independently | `self.parts.append(part)` (passed in) |
+      | <span class="uml-sym" data-diagram="class" data-sym="..>"></span> | **Dependency** | "temporarily uses" — weakest link | Uses a class inside a method body only |
+
+      ---
+
+      ### Dependency — The Relationship We Did Not Cover
+
+      A **dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> is the weakest relationship between classes. It means one class *temporarily uses* another — typically as a local variable or parameter inside a single method — without storing a persistent reference.
+
+      ```python
+      class ReportGenerator:
+          def generate(self, data: list) -> str:
+              formatter = HTMLFormatter()   # Used locally, not stored
+              return formatter.format(data)
+      ```
+
+      In UML, this is drawn as a **dashed arrow** from `ReportGenerator` to `HTMLFormatter`. The key difference from association: the `ReportGenerator` does NOT have an `HTMLFormatter` attribute — it only creates and uses one temporarily inside `generate()`.
+
+      **Rule of thumb:**
+      - `self.x = OtherClass(...)` → **association** or **composition** (persistent reference)
+      - `local_var = OtherClass(...)` inside a method → **dependency** (temporary use)
+
+      ---
+
+      ### Multiplicity
+
+      | Notation | Meaning |
+      |---|---|
+      | `1` | Exactly one |
+      | `0..1` | Zero or one (optional) |
+      | `*` | Zero or more |
+      | `1..*` | One or more |
+
+      Placement: the number goes next to the class it quantifies.
+
+      ---
+
+      ### Abstract Classes
+
+      | UML | Meaning | Python |
+      |---|---|---|
+      | *Italic class name* | Abstract class — cannot be instantiated | `class Name(ABC):` |
+      | *Italic method name* / `{abstract}` | Abstract method — must be overridden | `@abstractmethod` |
+
+      ---
+
+      ### What You Learned
+
+      UML class diagrams are a **communication tool**. They make invisible design decisions visible — turning implicit code relationships into explicit, communicable blueprints. You can now:
+
+      1. **Read** a UML class diagram and understand its structure
+      2. **Write** Python code that matches a given diagram
+      3. **Identify** anti-patterns like the God Class
+      4. **Distinguish** between association, composition, and aggregation
+      5. **Communicate** software architecture without showing code
+
+    uml_files:
+      - store.py
+
+    files:
+      - path: store.py
+        content: |
+          # This is the reference page — no coding task here.
+          # Review the summary above and use it as a quick reference!
+        language: python
