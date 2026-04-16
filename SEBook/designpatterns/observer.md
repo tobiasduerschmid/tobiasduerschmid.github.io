@@ -3,6 +3,8 @@ title: Observer Design Pattern
 layout: sebook
 ---
 
+> **Want hands-on practice?** Try the [Interactive Observer Pattern Tutorial](/SEBook/designpatterns/observer-tutorial.html) — experience the pain of tight coupling first, then refactor into Observer step by step with live UML diagrams, debugging challenges, and quizzes.
+
 # Problem 
 
 In software design, you frequently encounter situations where one object's state changes, and several other objects need to be notified of this change so they can update themselves accordingly.
