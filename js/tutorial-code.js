@@ -1340,7 +1340,7 @@
           [/([\w\-]+)(\s*)(=)/, ['attribute.name', '', 'delimiter']],
           [/"[^"]*"/, 'attribute.value'],
           [/'[^']*'/, 'attribute.value'],
-          [/\{/, { token: 'delimiter.bracket', next: '@jsxExpr', nextEmbedded: '' }],
+          [/\{/, { token: 'delimiter.bracket', next: '@jsxExpr' }],
           [/\/?>/, { token: 'delimiter.tag', next: '@pop' }],
           [/[\w\-]+/, 'attribute.name'],
         ],
@@ -2725,6 +2725,10 @@
   };
 
   TutorialCode.prototype.openFile = function (filename, content, language) {
+    // If a JSX/TSX file is explicitly tagged "javascript"/"typescript", use the
+    // JSX Monarch tokenizer so tags like <div> get proper syntax highlighting.
+    if (language === 'javascript' && /\.jsx$/i.test(filename)) language = 'jsx';
+    if ((language === 'javascript' || language === 'typescript') && /\.tsx$/i.test(filename)) language = 'jsx';
     language = language || detectLanguage(filename);
     if (!this.editorModels[filename]) {
       var uri = monaco.Uri.parse('file:///' + filename);
