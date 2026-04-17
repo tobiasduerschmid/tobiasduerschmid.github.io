@@ -93,22 +93,31 @@ steps:
 
       Before clicking **Run**, predict the output of each query. How many rows will `SELECT * FROM students` return? How many columns? Write your prediction down, then run and compare. Predicting before running builds stronger mental models than passively reading output.
 
-      ### Task
+      ### Task — review, fix, improve
 
-      Write two queries in `query.sql`:
+      You will spend most of this tutorial **reading, critiquing, and repairing** queries rather than writing them from scratch. Research shows this matches how professional SQL work actually happens (you inherit queries more often than you author them) and it targets the real skill gap: diagnosing *why* a query is wrong, not remembering syntax.
 
-      1. `SELECT *` to retrieve **all columns** from the `students` table
-      2. A `SELECT` that retrieves **only** the `name` and `major` columns
+      Open `query.sql`. It contains two working queries. Both run; neither is wrong in the sense that it errors out. But each is the *wrong tool for its stated job*. Your work is to read, reason, and improve.
 
-      After running both, try one more experiment: write `SELECT major, name FROM students` (columns reversed). Does the output change? This kind of tinkering builds intuition faster than reading.
+      **Query 1 — the exploration query.** `SELECT *` is the right call here (you are exploring the table for the first time). Before you run it, predict the row count and column count and write your prediction as a comment under the query. Then run and verify.
+
+      **Query 2 — the production query.** It returns correct data, but it fetches more columns than the caller needs. Tighten it so it retrieves **only** the `name` and `major` columns, and add a one-line comment explaining *why* specific-column selects are safer than `SELECT *` when the schema might change.
+
+      **Bonus investigation (optional).** Once both queries pass, append `SELECT major, name FROM students` (columns reversed). Does the output order change? This tinkering builds intuition faster than reading.
 
     files:
       - path: "query.sql"
         content: |
-          -- TODO 1: Select all columns from students
-          -- Predict first: how many rows and columns will you see?
+          -- Query 1: exploration query. Runs correctly.
+          -- Predict the row count and column count, then run to verify.
+          -- Write your prediction as a comment on the next line.
+          SELECT * FROM students;
 
-          -- TODO 2: Select only the name and major columns
+          -- Query 2: works, but not production-quality.
+          -- It fetches more columns than the caller needs.
+          -- Tighten it to return only name and major, and add a one-line
+          -- comment explaining why specific columns are safer than SELECT *.
+          SELECT id, name, year, major, gpa FROM students;
         language: "sql"
 
     open_file: "query.sql"
@@ -315,29 +324,38 @@ steps:
 
       This is why you cannot use a `SELECT` alias inside a `WHERE` clause — the alias doesn't exist yet when `WHERE` is evaluated.
 
-      ### Task
+      ### Task — diagnose and repair three queries
 
-      Write three queries in `filter.sql` against the `students` table:
+      `filter.sql` contains **three broken queries**. Each one was written by a well-intentioned beginner, and each fails in a different way. For each query:
 
-      1. All CS students with a GPA above 3.5, ordered by GPA descending
-      2. All students in year 1 or year 2
-      3. All students whose major is **not** `'CS'` — one student has a NULL major! Write a NULL-safe predicate.
+      1. **Predict** what the query will actually return (or what error it will raise) *before* you run it.
+      2. **Classify** the bug — is it a **syntax error** (grammar violation), a **semantic error** (valid SQL, wrong reference), or a **logical error** (runs fine but returns the wrong rows)? Write your classification as a comment.
+      3. **Fix** the query so it answers the intended question. The intended behavior is stated above each query.
 
-      After finishing, try one **investigation**: change Query 3 to `WHERE major != 'CS'` (without the IS NULL part) and re-run. How many rows do you get? Where did Iris go?
+      Logical errors — the third category — are what research identifies as the hardest and most persistent class of SQL mistakes. Expect Query 3 to feel deceptively easy; the bug is invisible until you reason about NULL carefully.
+
+      After finishing, **investigate**: re-run your fixed Query 3, then comment out your `IS NULL` branch and run again. How many rows do you get? Where did Iris go? This "one-line toggle" is a fast way to make the NULL trap concrete.
 
     files:
       - path: "filter.sql"
         content: |
-          -- Query 1: CS students with GPA > 3.5, highest GPA first
-          -- TODO
+          -- Query 1. Intended: CS students with GPA above 3.5, highest GPA first.
+          -- Runs without error, but returns the wrong rows in the wrong order.
+          -- Two independent bugs hide here. Find both, classify them, then fix.
+          SELECT * FROM students
+          WHERE major = 'CS' OR gpa > 3.5
+          ORDER BY gpa ASC;
 
-          -- Query 2: Students in year 1 or year 2
-          -- TODO
+          -- Query 2. Intended: students in year 1 or year 2.
+          -- Runs without error. Why does it return zero rows?
+          SELECT * FROM students
+          WHERE year = 1 AND year = 2;
 
-          -- Query 3: Students NOT in CS (NULL-safe — include NULL majors)
-          -- Think: what happens when major has no value?
-          -- How does SQL's three-valued logic treat comparisons with unknown values?
-          -- TODO
+          -- Query 3. Intended: students whose major is NOT 'CS'.
+          -- Runs without error, but quietly drops a student. Who, and why?
+          -- Hint: one student has a NULL major. Reason about 3VL before fixing.
+          SELECT * FROM students
+          WHERE major != 'CS';
         language: "sql"
 
     open_file: "filter.sql"
@@ -579,22 +597,34 @@ steps:
       - `COUNT(*)` — counts every row in the group, including rows with NULL in other columns
       - `COUNT(gpa)` — counts only rows where `gpa` is **not NULL**
 
-      ### Task
+      ### Task — diagnose and repair two aggregation queries
 
-      Write two aggregate queries in `aggregate.sql`:
+      `aggregate.sql` contains **two pre-written queries**, each exhibiting one of the two most-common aggregation mistakes documented in the research literature (illegal grouping, and WHERE-with-aggregate). For each query:
 
-      1. Count students per major, ordered by count descending
-      2. The average GPA per major — but only include majors where the average GPA is above 3.3
+      1. **Predict** what happens when you run it — a crash, a silent wrong answer, or a confusing result from SQLite's lenient mode.
+      2. **Explain** in a one-line comment *why* it is wrong. Name the rule it violates.
+      3. **Fix** it to answer the intended question (stated in the comment above each query).
 
-      After finishing, **investigate**: modify Query 2 to use `WHERE AVG(gpa) > 3.3` instead of `HAVING`. What error do you get? This is the single most common aggregation mistake.
+      Notice that SQLite is unusually permissive: it silently accepts queries that PostgreSQL or strict-mode MySQL would reject outright. Treat SQLite's quiet acceptance as a trap, not a blessing — the fix is still required.
+
+      **Investigation after you pass.** Temporarily change your fixed Query 2 back to `WHERE AVG(gpa) > 3.3`. Read the exact error message. You want to recognize it instantly the next time it appears in a code review.
 
     files:
       - path: "aggregate.sql"
         content: |
-          -- Query 1: count students per major, most students first
+          -- Query 1. Intended: count students per major, most students first.
+          -- Violates the grouping rule — why? What does SQLite do about it?
+          SELECT major, name, COUNT(*) AS student_count
+          FROM students
+          GROUP BY major
+          ORDER BY student_count DESC;
 
-          -- Query 2: average GPA per major, only majors with avg GPA > 3.3
-          -- Use GROUP BY, AVG(), and HAVING
+          -- Query 2. Intended: average GPA per major, only majors with avg GPA > 3.3.
+          -- Uses the wrong clause for an aggregate condition. Fix it.
+          SELECT major, AVG(gpa) AS avg_gpa
+          FROM students
+          WHERE AVG(gpa) > 3.3
+          GROUP BY major;
         language: "sql"
 
     open_file: "aggregate.sql"
@@ -824,34 +854,59 @@ steps:
 
       The NULL trap from Step 2 is a classic logical error. Research shows that semantic and logical errors together account for roughly 2 out of every 3 student mistakes — far more than syntax errors (Presler-Marshall et al., 2021).
 
-      ### Task
+      ### Task — strengthen a weak schema and repair bad inserts
 
-      This step has two files:
+      A teammate has given you two files. Neither was reviewed. Your job is to bring them up to production quality.
 
-      1. **`schema.sql`** — Create a `courses` table with four columns: `id` (integer, primary key), `code` (text, not null), `name` (text, not null), `credits` (integer, nullable).
-      2. **`populate.sql`** — Insert at least **3 courses**, then verify with a SELECT.
+      **1. `schema.sql` — review and strengthen.** The schema *works* (it creates a table) but it is missing the constraints that protect the data's integrity. Compare what is there against the intended columns below, then **add the missing type declarations and constraints**.
+
+      | Column   | Type    | Constraints         |
+      |----------|---------|---------------------|
+      | `id`     | INTEGER | PRIMARY KEY         |
+      | `code`   | TEXT    | NOT NULL            |
+      | `name`   | TEXT    | NOT NULL            |
+      | `credits`| INTEGER | (nullable — leave as is) |
+
+      Write a one-line comment above each constraint you add explaining *what bug it prevents* (e.g., "prevents duplicate course IDs"). Naming the failure mode is how schema review is actually done on a real team.
+
+      **2. `populate.sql` — classify and repair.** It contains three `INSERT` statements. Two of them will fail against a correctly-constrained schema. For each failing insert, decide: is this a **syntax**, **semantic**, or **logical** error? Fix it, or — if the row itself is invalid — delete the offending insert and replace it with a valid one so the table ends up with at least 3 rows. End the file with a `SELECT * FROM courses;` to verify.
 
     files:
       - path: "schema.sql"
         content: |
-          -- Create a courses table.
-          -- DROP IF EXISTS makes this safe to re-run.
+          -- Review this schema. It runs, but it does not protect the data.
+          -- Add the missing type declarations and constraints from the table above.
+          -- For each constraint you add, leave a one-line comment naming the bug it prevents.
           DROP TABLE IF EXISTS courses;
 
-          -- Write your CREATE TABLE statement below.
+          CREATE TABLE courses (
+            id,
+            code,
+            name,
+            credits
+          );
         language: "sql"
       - path: "populate.sql"
         content: |
-          -- Clear previous data so this is safe to re-run.
+          -- Three inserts. Two are broken against the strengthened schema.
+          -- Classify each (syntax / semantic / logical) and fix.
           DELETE FROM courses;
 
-          -- Insert at least 3 courses.
+          -- Insert A
           INSERT INTO courses (id, code, name, credits) VALUES
             (1, 'CS 35L', 'Software Construction', 4);
 
-          -- Add 2+ more ...
+          -- Insert B — predict what breaks when the schema enforces NOT NULL
+          INSERT INTO courses (id, code, credits) VALUES
+            (2, 'CS 111', 4);
 
-          -- Verify your data.
+          -- Insert C — all values look plausible. Why does a strengthened schema
+          -- reject this row? Compare it carefully against Insert A.
+          INSERT INTO courses (id, code, name, credits) VALUES
+            (1, 'MATH 61', 'Discrete Structures', 4);
+
+          -- Verify your data. Leave this line as the last statement.
+          SELECT * FROM courses;
         language: "sql"
 
     open_file: "schema.sql"
@@ -1077,24 +1132,40 @@ steps:
 
       Notice that SQL modifies data **in place** — the table is permanently changed. pandas operations often produce new DataFrames (unless you use `inplace=True`). In SQL, `UPDATE` and `DELETE` without `WHERE` are permanent and dangerous. In pandas, you can always re-read the original CSV.
 
-      ### Task
+      ### Task — review three dangerous queries and make them safe
 
-      Complete `cleanup.sql`:
+      A teammate has pushed `cleanup.sql` to a pull request. It is scheduled to run on the production database in an hour. **Do not approve it as-is.** Each statement has a problem that would cause data loss or incorrect data in production.
 
-      1. Update Eve's GPA from 3.50 to 3.60
-      2. Delete all year-4 students
-      3. Drop the `courses` table you created in Step 4
+      For each statement:
 
-      How confident are you that your WHERE clauses are correct? If you are not sure, run the equivalent SELECT first to preview which rows will be affected — that is the professional workflow.
+      1. **Predict** what it actually does when executed — not what the comment above it claims it does.
+      2. **Write the preview SELECT** that would reveal the impact. Leave this SELECT in the file as a comment, above the fixed statement, so the next reviewer can see your reasoning.
+      3. **Fix** the statement to match its stated intent.
+
+      This matches the professional review workflow: read the claim, verify with a SELECT, then confirm the destructive statement matches what the SELECT returned. Destructive SQL should never be approved without this trail.
+
+      The three stated intents (re-check each one against what the code actually does):
+
+      1. Update Eve's GPA from 3.50 to 3.60.
+      2. Delete all year-4 students.
+      3. Drop the `courses` table you created in Step 4.
 
     files:
       - path: "cleanup.sql"
         content: |
-          -- 1. Update Eve's GPA to 3.6
+          -- 1. Intended: raise Eve's GPA to 3.6.
+          --    This actually updates the wrong student AND leaves a second time bomb:
+          --    remove the WHERE and every student in the table ends up at 3.6.
+          --    Identify both issues, then fix.
+          UPDATE students SET gpa = 3.6 WHERE name = 'Alice';
 
-          -- 2. Delete all year-4 students
+          -- 2. Intended: delete all year-4 students.
+          --    Wrong column referenced. Would this even run? If yes, what does it delete?
+          DELETE FROM students WHERE gpa = 4;
 
-          -- 3. Drop the courses table
+          -- 3. Intended: drop the courses table.
+          --    Works most of the time. When would this statement crash the deploy, and how do you make it safe to re-run?
+          DROP TABLE courses;
         language: "sql"
 
     open_file: "cleanup.sql"
