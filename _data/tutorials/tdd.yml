@@ -1064,6 +1064,28 @@ steps:
 
       The brittle test will break if you rename `_sorted_list` or change the sort algorithm (even to a faster one). The robust test only cares about the result.
 
+      ### Structuring Robust Tests: The AAA Pattern
+
+      Behavior-focused tests almost always fall into a clean three-part structure called **Arrange-Act-Assert (AAA)** — a convention used in industrial Python testing and recognized by test-smell detectors like PyNose:
+
+      ```python
+      def test_total_sums_prices():
+          # Arrange — set up the world the test needs
+          cart = ShoppingCart()
+          cart.add("Apple", 1.50)
+          cart.add("Bread", 2.00)
+
+          # Act — invoke the ONE behavior under test
+          result = cart.total()
+
+          # Assert — verify the observable outcome
+          assert result == 3.50
+      ```
+
+      AAA is more than tidiness. It is a **diagnostic structure**: if you cannot cleanly separate Arrange from Act, the function under test probably has too many responsibilities (a Single Responsibility Principle violation). If your Arrange section is gigantic, that is the *Excessive Setup* test smell — refactor the production code, not the test.
+
+      A test with two unrelated Acts is an *Eager Test* (it tests too many behaviors). Split it.
+
       ### The Refactoring Litmus Test
 
       Here is a simple rule: **if you refactor the internals of a function and all tests still pass, your tests are robust.** If tests break after a pure refactoring (no behavior change), they are testing implementation.
@@ -1295,13 +1317,31 @@ steps:
             The key: all tests still pass before and after. RED (failing test) → GREEN (pass) →
             REFACTOR (clean up, tests still pass). She completed GREEN and is now in REFACTOR.
 
+        - question: |
+            A test you wrote needs **40 lines of setup code** before the single `assert` statement. What is this test telling you?
+          type: single
+          options:
+            - "Nothing — large setups are fine as long as the assertion verifies the right thing in the end"
+            - "The Arrange section is too big — this is the *Excessive Setup* smell, signaling that the production code has too many dependencies. Refactor the design"
+            - "You should move the setup into a helper function so the test file looks shorter; the underlying design is fine"
+            - "You should add more assertions to make the heavy setup feel justified — one assert is not enough for 40 lines of arrangement"
+          correct_index: 1
+          explanation: |
+            *Excessive Setup* is a documented test smell. When Arrange dominates a test, the
+            function under test is usually too tightly coupled to its dependencies. The fix is
+            to refactor the production code (e.g., dependency injection, smaller classes), not
+            to hide the pain inside a helper. The test is acting as architectural feedback —
+            "listen to the test."
+
 
   # --------------------------------------------------------------------------
   # STEP 6 — TDD Kata: Password Validator
   # Pedagogy:
-  #   Production phase   — PPP framework, full scaffolding removal.
+  #   Production phase    — PPP framework, full scaffolding removal.
   #   Generation Effect   — desirable difficulty, blank slate.
-  #   Bloom's level       — Apply / Create (quiz).
+  #   Anti-pattern fix    — copy-paste tests → @pytest.mark.parametrize.
+  #   "Listen to the test" — duplication in tests reveals refactoring opportunity.
+  #   Bloom's level       — Apply / Create / Evaluate (quiz).
   # --------------------------------------------------------------------------
   - title: "TDD Kata: Password Validator"
     instructions: |
@@ -1339,6 +1379,26 @@ steps:
       That is completely normal. Writing tests for something that does not exist yet feels backward at first. Every TDD practitioner felt this way initially. Focus on what the function *should return* for each input — that is all a test needs to express.
 
       **Remember:** Write the tests *before* the implementation. This forces you to design the interface (function name, parameters, return type) before writing any logic.
+
+      ### Bonus Refactor: Listen to the Test
+
+      Once your 4+ tests pass, look at them. Do they all look nearly identical — same shape, only the input string and expected outcome differ? That **duplication in your test file is itself diagnostic feedback**: it is the *Copy-Paste Programming* anti-pattern, and pytest gives you a one-liner fix called `@pytest.mark.parametrize`:
+
+      ```python
+      @pytest.mark.parametrize("password, expected_valid", [
+          ("SecureP1",   True),   # happy path
+          ("Short1",     False),  # too short
+          ("password1",  False),  # missing uppercase
+          ("Password",   False),  # missing digit
+      ])
+      def test_validate_password(password, expected_valid):
+          is_valid, _ = validate_password(password)
+          assert is_valid is expected_valid
+      ```
+
+      One test function now covers four cases, each one reported separately by pytest. Adding a fifth rule means adding *one row*, not copy-pasting an entire function. **This is a refactor of the test code — the production code does not change, and your existing tests should still pass after the rewrite.**
+
+      Try it once your hand-written tests pass. If both versions assert the same behavior, you have just experienced the *Refactoring Litmus Test* applied to test code itself.
 
     files:
       - path: "password.py"
@@ -1540,18 +1600,387 @@ steps:
             necessary but not sufficient condition for quality. This connects to Step 1:
             tests show the presence of bugs, never their absence.
 
+        - question: |
+            A student has six tests for `validate_password` that look like this:
+            ```python
+            def test_short():        assert validate_password("Short1")[0]   is False
+            def test_no_upper():     assert validate_password("password1")[0] is False
+            def test_no_digit():     assert validate_password("Password")[0]  is False
+            def test_too_long():     assert validate_password("A1" * 50)[0]   is False
+            def test_only_symbols(): assert validate_password("!@#$%^&*")[0]  is False
+            def test_empty():        assert validate_password("")[0]          is False
+            ```
+            What is the **best** refactor?
+          type: single
+          options:
+            - "Combine all six tests into one function with six asserts — the file becomes shorter and pytest only has to call setup once"
+            - "Use `@pytest.mark.parametrize` to drive a single test function with six rows — keeps each case isolated in pytest reports while removing duplication"
+            - "Leave it as is — six separate tests is the cleanest possible expression of six independent behaviors and any change adds complexity"
+            - "Move the strings into a module-level list and write a `for` loop inside one test function that asserts each one in sequence"
+          correct_index: 1
+          explanation: |
+            `@pytest.mark.parametrize` is the idiomatic Python solution to *Copy-Paste*
+            test code. Each row still produces a separate pytest result, so a failure on row 3
+            tells you exactly which input broke — unlike a single test with a `for` loop, where
+            the first failure stops the rest. Combining into one giant function reintroduces the
+            *Eager Test* / *Assertion Roulette* smell you learned to avoid in Step 5.
+
 
   # --------------------------------------------------------------------------
-  # STEP 7 — The Big Picture
+  # STEP 7 — TDD with AI Assistants
   # Pedagogy:
-  #   Metacognitive reflection — evaluate when to use TDD.
-  #   Anti-pattern identification — recognize code smells.
-  #   Spaced review — questions from earlier steps.
-  #   Bloom's level — Evaluate (quiz).
+  #   AI-Critical Pedagogy — students must AUDIT, not accept, AI-generated tests.
+  #   Generation Effect    — analyze flawed code before being told what is wrong.
+  #   Anti-pattern naming  — Liar test, Modify-the-Test, Mockery, tautology.
+  #   Prompt Problem       — write a clear test specification that constrains the AI.
+  #   Bloom's level        — Analyze / Evaluate / Create.
+  # --------------------------------------------------------------------------
+  - title: "TDD with AI Assistants"
+    instructions: |
+      > **Learning objective:** After this step you will be able to **audit** AI-generated tests for common anti-patterns, **refactor** them into robust tests, and **explain** why test-first thinking is *more* important when working with an AI, not less.
+
+      ## Why This Step Matters
+
+      You will use AI coding assistants in your career. Empirical research on novice developers using GenAI for testing reports a worrying pattern: novices ran AI-generated tests on average **2 times** before moving on, while running their own manual tests **6 times** — a sign that they trusted the AI's output without verifying it. The same study found novices spent **21.5 minutes** refactoring AI-generated tests vs. **3.3 minutes** for experienced developers, because the underlying understanding gap remained.
+
+      The lesson: **AI accelerates typing, not thinking.** TDD is the discipline that keeps the thinking yours.
+
+      ## The Two AI-Specific Anti-Patterns
+
+      ### 1. The "Modify the Test" Anti-Pattern
+
+      When an AI agent runs a failing test and is told to make it pass, it has *two* ways to do that:
+      - Fix the production code (correct)
+      - **Change the test** so it asserts whatever the broken code happens to return (wrong)
+
+      A 2025 industrial case study explicitly warned: when an AI was given autonomy over both test and implementation, it sometimes *"optimized the test result by modifying the test instead of fixing the implementation code."* Novices trusted this and shipped broken behavior.
+
+      **Your defense:** *You* write the test. The AI may write the implementation, but the test is the contract — you must own it.
+
+      ### 2. The Liar Test (Tautology)
+
+      An AI under pressure to "make it pass" will sometimes generate tests that are *vacuously true*:
+      ```python
+      def test_calculate_tax():
+          tax = calculate_tax(100, 0.10)
+          assert tax == tax            # tautology — always True
+          assert isinstance(tax, (int, float))  # type check, not behavior
+      ```
+      This passes. It tests nothing. The fix is the same as Step 5: assert on the **observable behavior** (`assert tax == 10.0`), not on shape or self-equality.
+
+      ## Your Task: Audit and Refactor
+
+      A junior developer used a generative AI to scaffold tests for a `BankAccount` class. The tests all *pass* — but several are dangerously broken. Open `test_bank_account.py`. For each test:
+
+      1. **Read** the test and the code it claims to verify
+      2. **Identify** the anti-pattern (the comment above each test names a category to consider)
+      3. **Refactor** the test to actually verify the intended behavior
+
+      You must keep **at least four** test functions in the file, and your refactored suite must:
+      - Catch the bug planted in `bank_account.py`'s `withdraw()` method (when you fix the bug, your tests should go GREEN; before fixing, they should reveal the bug)
+      - Not contain any tautological assertions (`assert x == x`, `assert True`, `assert isinstance(...)` as the *only* assertion)
+      - Not access private attributes (no `account._balance`)
+
+      **Workflow:** Refactor the tests first. Run them — they should now FAIL because of the planted bug. Then fix `bank_account.py`. Run again — GREEN.
+
+      ## The Prompt Problem (Optional Reflection)
+
+      Researchers Denny et al. propose a new exercise type: writing a *prompt* so precisely that an AI generates the right test for you. After you finish the audit, write a one-paragraph "prompt" in a comment at the top of `test_bank_account.py` that — given to an AI — would have produced your refactored test suite directly. This is the new core skill: **specifying behavior is now more valuable than typing it.**
+
+    files:
+      - path: "bank_account.py"
+        content: |
+          class BankAccount:
+              """A simple bank account. Contains ONE planted bug — find it via tests."""
+
+              def __init__(self, opening_balance=0):
+                  if opening_balance < 0:
+                      raise ValueError("Opening balance cannot be negative")
+                  self._balance = opening_balance
+
+              def deposit(self, amount):
+                  if amount <= 0:
+                      raise ValueError("Deposit amount must be positive")
+                  self._balance += amount
+
+              def withdraw(self, amount):
+                  if amount <= 0:
+                      raise ValueError("Withdrawal amount must be positive")
+                  # BUG: missing overdraft check — silently allows negative balance
+                  self._balance -= amount
+
+              def balance(self):
+                  return self._balance
+        language: "python"
+
+      - path: "test_bank_account.py"
+        content: |
+          """AUDIT: AI-generated tests for BankAccount. Several are broken.
+
+          Your job: refactor each test to actually verify behavior, then use the
+          refactored suite to find and fix the bug planted in bank_account.py.
+          """
+          import pytest
+          from bank_account import BankAccount
+
+
+          # --- Test 1: AI tautology — passes for any int return value ---
+          # ANTI-PATTERN: The Liar (asserts shape, not behavior)
+          def test_deposit_increases_balance():
+              account = BankAccount(100)
+              account.deposit(50)
+              result = account.balance()
+              assert isinstance(result, int)   # vacuous — does not check value
+
+
+          # --- Test 2: AI accessed private state instead of the public API ---
+          # ANTI-PATTERN: Nitpicker (couples test to implementation)
+          def test_withdraw_reduces_balance():
+              account = BankAccount(100)
+              account.withdraw(30)
+              assert account._balance == 70    # touches private attribute
+
+
+          # --- Test 3: AI "fixed" the failing test by softening the assertion ---
+          # ANTI-PATTERN: Modify-the-Test (test rewritten to match buggy code)
+          def test_cannot_overdraft():
+              account = BankAccount(100)
+              account.withdraw(150)
+              # Original failing assertion was: account.balance() == 100 (rejected)
+              # AI weakened it to this — which always passes:
+              assert account.balance() != 999999
+
+
+          # --- Test 4: AI asserted on its own mock instead of real behavior ---
+          # ANTI-PATTERN: The Mockery (verifies the test setup, not the system)
+          def test_opening_balance():
+              expected = 250
+              account = BankAccount(expected)
+              assert expected == 250          # checks the local variable, not the account
+
+
+          if __name__ == "__main__":
+              pytest.main(["-v"])
+        language: "python"
+
+    open_file: "test_bank_account.py"
+
+    solution:
+      files:
+        - path: "bank_account.py"
+          content: |
+            class BankAccount:
+                """A simple bank account — overdraft bug fixed."""
+
+                def __init__(self, opening_balance=0):
+                    if opening_balance < 0:
+                        raise ValueError("Opening balance cannot be negative")
+                    self._balance = opening_balance
+
+                def deposit(self, amount):
+                    if amount <= 0:
+                        raise ValueError("Deposit amount must be positive")
+                    self._balance += amount
+
+                def withdraw(self, amount):
+                    if amount <= 0:
+                        raise ValueError("Withdrawal amount must be positive")
+                    if amount > self._balance:
+                        raise ValueError("Insufficient funds")
+                    self._balance -= amount
+
+                def balance(self):
+                    return self._balance
+          language: "python"
+
+        - path: "test_bank_account.py"
+          content: |
+            """Refactored: each test now verifies real behavior via the public API."""
+            import pytest
+            from bank_account import BankAccount
+
+
+            def test_deposit_increases_balance():
+                # Arrange-Act-Assert: assert on observable balance, not type
+                account = BankAccount(100)
+                account.deposit(50)
+                assert account.balance() == 150
+
+
+            def test_withdraw_reduces_balance():
+                # Use balance() public method instead of _balance private attribute
+                account = BankAccount(100)
+                account.withdraw(30)
+                assert account.balance() == 70
+
+
+            def test_cannot_overdraft():
+                # Real assertion: overdraft must raise OR balance must be unchanged
+                account = BankAccount(100)
+                with pytest.raises(ValueError):
+                    account.withdraw(150)
+                assert account.balance() == 100
+
+
+            def test_opening_balance():
+                # Assert against the account, not the local input variable
+                account = BankAccount(250)
+                assert account.balance() == 250
+
+
+            if __name__ == "__main__":
+                pytest.main(["-v"])
+          language: "python"
+
+      explanation: |
+        Each refactored test now (a) uses only the public API, (b) asserts on observable
+        balance instead of types or local variables, and (c) actually exercises the bug.
+        Adding the overdraft guard in withdraw() is what makes test_cannot_overdraft pass.
+
+    tests:
+      - description: "Refactored test file does not access private attributes"
+        command: |
+          source = open('/tutorial/test_bank_account.py').read()
+          assert '._balance' not in source, \
+              "Test 2 still accesses account._balance directly — refactor it to use account.balance() instead"
+      - description: "Refactored tests do not contain tautological assertions"
+        command: |
+          source = open('/tutorial/test_bank_account.py').read()
+          assert 'isinstance(result, int)' not in source, \
+              "Test 1 still uses isinstance() as the only assertion — assert on the actual balance value instead"
+          assert 'expected == 250' not in source, \
+              "Test 4 still asserts on the local variable 'expected' — assert on account.balance() instead"
+          assert '!= 999999' not in source, \
+              "Test 3's assertion is still a Liar (always true) — assert that the overdraft was either prevented OR raised an error"
+      - description: "Test file still contains at least 4 test functions"
+        command: |
+          source = open('/tutorial/test_bank_account.py').read()
+          test_count = source.count('def test_')
+          assert test_count >= 4, \
+              f"Keep at least 4 test functions (found {test_count}) — refactor each, do not delete them"
+      - description: "BankAccount.withdraw() rejects overdrafts (bug fixed)"
+        command: |
+          exec(open('/tutorial/bank_account.py').read())
+          account = BankAccount(100)
+          import pytest as _pt
+          try:
+              account.withdraw(150)
+              raised = False
+          except (ValueError, Exception):
+              raised = True
+          assert raised or account.balance() == 100, \
+              "withdraw(150) on a balance of 100 must either raise an error or leave the balance unchanged — the overdraft bug is still present"
+      - description: "All refactored tests pass after the bug fix"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout; sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_bank_account.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old; output = buf.getvalue(); print(output)
+          assert code == 0, f"Some tests failed:\n{output}"
+
+    quiz:
+      title: "AI-Critical TDD — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: |
+            An AI agent is told *"make this failing test pass"* and runs autonomously. What is the most dangerous failure mode the human reviewer must guard against?
+          type: single
+          options:
+            - "The AI generates code that is too long, exceeding the project's style guide for line length"
+            - "The AI rewrites the test so its assertion matches the buggy code's actual output, instead of fixing the production code"
+            - "The AI generates code in a different style than the rest of the codebase, requiring formatting cleanup"
+            - "The AI hallucinates an import that does not exist, causing the test to fail to load"
+          correct_index: 1
+          explanation: |
+            This is the *Modify-the-Test* anti-pattern documented in industrial case studies of
+            agentic AI. Both the implementation AND the test are now produced by the AI, so the
+            "passing" signal is meaningless — the AI has rewritten the contract instead of meeting
+            it. The human's job is to own the test specification: the AI may write code, but the
+            test must originate from a human-defined behavior.
+
+        - question: |
+            Which of these AI-generated tests is **least useful** as a behavior check?
+          type: single
+          options:
+            - |
+              ```python
+              def test_add():
+                  result = add(2, 3)
+                  assert result == 5
+              ```
+            - |
+              ```python
+              def test_add():
+                  result = add(2, 3)
+                  assert isinstance(result, int)
+              ```
+            - |
+              ```python
+              def test_add():
+                  result = add(2, 3)
+                  assert result > 0 and result < 10
+              ```
+            - |
+              ```python
+              def test_add():
+                  with pytest.raises(TypeError):
+                      add("a", "b")
+              ```
+          correct_index: 1
+          explanation: |
+            Asserting only `isinstance(result, int)` is a *Liar test*: `add(2, 3)` returning
+            `0`, `99`, or even `5` would all pass. AI assistants sometimes default to type
+            checks because they always succeed — making the AI look productive while testing
+            nothing. The other three express real behavioral expectations.
+
+        - question: |
+            **Evaluate:** Why does the empirical evidence suggest TDD becomes *more* important when working with AI, not less?
+          type: single
+          options:
+            - "TDD slows down AI tools, which gives the developer time to type at a more comfortable pace and reduces fatigue over the workday"
+            - "Studies show novices accept AI output with minimal verification — TDD enforces a discipline where you must SEE the test fail and SEE it pass, restoring real verification"
+            - "AI tools cannot generate tests at all, so the developer must write every test by hand to compensate for that limitation in the toolchain"
+            - "TDD is a legacy practice from before AI tools existed, but it must be retained to satisfy compliance and audit requirements in regulated industries"
+          correct_index: 1
+          explanation: |
+            Observational research on undergraduates using GenAI for testing found novices ran
+            AI-generated tests roughly *one third* as often as their own manual tests, with
+            documented concerns about an *illusion of competence*. TDD's strict Red-Green
+            discipline (see it fail, then see it pass) re-introduces the verification step the
+            AI workflow tends to skip. The human becomes the *navigator*; the AI becomes the
+            implementer.
+
+        - question: |
+            **(Spaced review — Step 5)** You ask an AI to generate tests and it produces a test where Arrange takes 30 lines, Act takes 1 line, and Assert takes 1 line. What is the most likely diagnosis?
+          type: single
+          options:
+            - "The AI is correctly mocking every dependency to keep the test isolated — this is the recommended modern practice"
+            - "The AI has masked the *Excessive Setup* test smell — and likely the *Mockery* anti-pattern. The production code is too tightly coupled, and the test is verifying mock behavior instead of real behavior"
+            - "The AI has chosen a verbose style for readability — copy it as-is, since modern AI tools follow industry best practices by default"
+            - "Nothing is wrong — long Arrange sections are normal for any test that involves objects, regardless of how the production code is structured"
+          correct_index: 1
+          explanation: |
+            *Excessive Setup* and *Mockery* both signal architectural problems in the production
+            code, not the test. AI assistants will happily generate hundreds of lines of mock
+            scaffolding to make a test pass — but the test then verifies the mocks, not the
+            system. The fix is the same as in Step 5: listen to the test. Refactor the
+            production code to reduce coupling, and the test will shrink naturally.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — The Big Picture
+  # Pedagogy:
+  #   Empirical grounding — concrete citations replace vague "research shows".
+  #   Anti-pattern taxonomy — Level I-IV maturity model (Aniche, Codurance).
+  #   Metaphor pair        — Ratchet + Boiled Frog for psychological scaffolding.
+  #   Spaced review        — questions from earlier steps including AI-Critical.
+  #   Bloom's level        — Evaluate / Create.
   # --------------------------------------------------------------------------
   - title: "The Big Picture"
     instructions: |
-      > **Learning objective:** After this step you will be able to **evaluate** when TDD is appropriate, **identify** common TDD anti-patterns, and **articulate** the key principles you learned.
+      > **Learning objective:** After this step you will be able to **evaluate** when TDD is appropriate, **classify** common TDD anti-patterns by maturity level, and **articulate** the empirical evidence for the practice.
 
       ## When TDD Shines
 
@@ -1567,32 +1996,70 @@ steps:
       - **One-off scripts** — quick data transformations you will use once
       - **Exploratory prototyping** — when you are still figuring out the problem
       - **UI layout code** — visual correctness is hard to assert programmatically
+      - **Non-binary outcomes** — ML models, image recognition, or anything where "correct" is a confidence interval, not a true/false
 
       Even in these cases, *some* tests are almost always valuable. The question is whether to write them *first*.
 
-      ## The Residual Effect
+      ## The Empirical Case for TDD
 
-      Research shows that students who learn TDD properly continue to write **significantly more tests** in future projects, even when not explicitly asked to. TDD doesn't just teach testing — it permanently shifts how you think about code quality.
+      Industrial case studies provide concrete numbers:
+
+      | Study | Finding |
+      |---|---|
+      | Microsoft & IBM (Williams et al.) | TDD teams achieved a **39%–91% decrease in pre-release defect density** vs. comparable non-TDD teams |
+      | Same studies | TDD took **15%–35% longer** in initial development time, offset by reduced debugging and maintenance |
+      | Erdogmus (2005) | Students using test-first wrote **more tests** AND were **more productive** per test |
+      | Williams et al. | Teams writing tests on a **minute-by-minute basis** had dramatically higher defect reductions than teams writing tests every few days |
+      | Janzen & Saiedian (ICSE 2007) | Mature programmers exposed to TDD were significantly more likely to *prefer* TDD for future projects — the **Residual Effect** |
+
+      The Residual Effect is what makes TDD worth the initial discomfort: even when explicitly told to switch to test-last on a later project, students who learned TDD properly continue to write significantly more tests than peers who never learned it. The discipline rewires how you think about code quality.
+
+      ⚠️ The evidence is not unanimous — Müller and Hagner (2002) found "little or no advantage to test-first programming in either productivity or reliability" for solo programmers. The current consensus is that TDD's benefits are **context-dependent**: they show up most strongly in team settings, with continuous integration, on systems requiring long-term maintenance.
+
+      ## Two Metaphors That Matter
+
+      You met the **Ratchet** in Step 1: each passing test locks in progress; you can never accidentally slip backward. Its companion is the **Boiled Frog**:
+
+      > Software complexity sneaks up gradually. You add a small mock here, an `if` branch there, a global flag. No single change feels alarming — but six months later the codebase is unmaintainable. By writing tiny tests from the very first feature, TDD plants psychological *placeholders* that lower the barrier to adding more tests as the project grows. The frog notices the water heating because the thermometer is always running.
+
+      Together: the Ratchet preserves what works; the Boiled Frog metaphor warns about what slowly stops working.
+
+      ## TDD Anti-Pattern Taxonomy
+
+      Drawing on the maturity model from Aniche et al. (arXiv 2307.11534) and Codurance's TDD Anti-Patterns catalog, anti-patterns cluster by what they reveal about the developer's understanding:
+
+      | Level | Anti-Pattern | What it looks like | What it really means |
+      |---|---|---|---|
+      | **I — Basics** | *The Nitpicker* | Asserts on private fields or exact internal representation | The student has not separated interface from implementation |
+      | **II — TDD Cycle** | *Success Against All Odds* | A new test passes the first time it runs (no Red phase) | The cycle is being skipped; the test may not be testing anything |
+      | **II — TDD Cycle** | *Hidden Dependency* | Tests pass or fail based on test ordering, environment, or external state | Production code has hidden global coupling |
+      | **III — Design** | *The Giant* (God Object test) | One test function with hundreds of lines and dozens of assertions | The class under test violates the Single Responsibility Principle |
+      | **III — Design** | *Excessive Setup* | 30+ lines of Arrange before a single Act/Assert | Production code is too tightly coupled to its dependencies |
+      | **III — Design** | *The Liar* | Test passes but does not actually verify the intended behavior (tautology, type-only check) | Often introduced by AI assistants or copy-paste; see Step 7 |
+      | **IV — Advanced** | *The Mockery* | More mock setup than test logic; the test verifies the mocks, not the system | Business logic is tangled with infrastructure; redraw the abstraction boundaries |
+
+      Notice the pattern: the higher the level, the more the test smell is really an *architectural* smell. **Listen to the test** — when a test is hard to write, the production code is usually the problem.
 
       ## Key Takeaways
 
       1. **TDD is a design technique**, not a testing technique — tests are a valuable byproduct
       2. **Red-Green-Refactor** — one test at a time, in short iterations
-      3. **Test behavior, not implementation** — if refactoring breaks tests, the tests are brittle
-      4. **Listen to the test** — difficulty writing a test is diagnostic feedback about your design
-      5. **The ratchet** — each passing test locks in progress permanently
+      3. **Test behavior via the public API**, structured as Arrange-Act-Assert (Step 5)
+      4. **Use parametrize** to kill copy-paste duplication (Step 6)
+      5. **Audit AI-generated tests** — the AI may modify the test instead of fixing the code (Step 7)
+      6. **Listen to the test** — difficulty writing a test is diagnostic feedback about your design
+      7. **The Ratchet preserves; the Boiled Frog warns**
 
       ## What's Next
 
       This tutorial covered the fundamentals. In more advanced TDD work, you will encounter:
-      - **`@pytest.mark.parametrize`** — test multiple inputs without duplicate test functions
-      - **Fixtures** — reusable test setup with `@pytest.fixture`
-      - **Mocking** — isolate code from external dependencies (databases, APIs)
-      - **The Double Loop** — outer acceptance tests + inner unit tests (from "Obey the Testing Goat")
+      - **Fixtures** — reusable test setup with `@pytest.fixture` (yields a context manager)
+      - **Mocking** — isolate code from external dependencies (databases, APIs) — but watch for *The Mockery*
+      - **The Double Loop** (Percival, *Obey the Testing Goat*) — an outer acceptance test (e.g., a Selenium browser test) drives the development of inner unit tests, ensuring every line of code traces back to a user-visible requirement
 
       ### Final Exercise: Diagnose This Test Suite
 
-      Open `test_diagnose.py`. It contains a test suite written by a junior developer. Read each test and identify which TDD principle it violates (if any). Add a `# VERDICT:` comment to each test function explaining your analysis. This is not graded — it is a reflection exercise.
+      Open `test_diagnose.py`. It contains a test suite written by a junior developer. Read each test and identify which **anti-pattern from the taxonomy table above** it exhibits (if any). Add a `# VERDICT:` comment to each test function explaining your analysis. This is not graded — it is a reflection exercise.
 
     files:
       - path: "test_diagnose.py"
@@ -1706,3 +2173,35 @@ steps:
             parameters, and return value BEFORE writing any implementation. This forces you to
             think as a *caller* (API consumer) rather than an *implementer*. Research shows
             TDD code tends to be more modular with smaller, more cohesive functions.
+
+        - question: |
+            **(Anti-pattern taxonomy)** A test method has a single line: `account.transfer_and_log_and_email_and_audit(...)` followed by 25 assertions checking every side effect. Which anti-pattern is this?
+          type: single
+          options:
+            - "*Excessive Setup* — the Arrange section has too much fixture data"
+            - "*The Giant* (God Object test) — the test reflects a class that violates the Single Responsibility Principle, attempting too many behaviors at once"
+            - "*Hidden Dependency* — the test relies on external state that is not visible from its name"
+            - "*The Mockery* — the test verifies mocks instead of real behavior"
+          correct_index: 1
+          explanation: |
+            *The Giant* is the test-side fingerprint of a *God Object*. When one method does
+            transfer + log + email + audit, the only way to test it is a giant test. The fix
+            is in the production code: split the responsibilities into separate classes or
+            methods, each tested independently. The test smell is architectural feedback.
+
+        - question: |
+            **(Spaced review — Step 7)** A teammate brags: *"I have Copilot generate every test for me — I get 100% coverage in minutes."* Based on the empirical evidence you saw in this tutorial, what is the most accurate response?
+          type: single
+          options:
+            - "Excellent — AI-generated tests are objectively higher quality than hand-written ones, and 100% coverage proves the suite is complete"
+            - "Coverage measures lines executed, not behavior verified. Studies show novices accept AI tests with minimal review and ship Liar/Mockery anti-patterns. You still need to OWN the test specifications"
+            - "AI tools cannot generate any tests, so your teammate must be lying about how the tests were produced or how coverage was measured"
+            - "100% coverage is unsafe regardless of who wrote it — modern testing has moved away from coverage as a metric, in favor of mutation testing exclusively"
+          correct_index: 1
+          explanation: |
+            This combines two earlier lessons. From Step 6: coverage ≠ behavior verification.
+            From Step 7: empirical research shows novices run AI tests one-third as often as
+            their own and miss subtle anti-patterns (Liar, Mockery, Modify-the-Test). The right
+            workflow is *collaborative*: human writes the test as a behavioral specification, AI
+            implements the production code, human verifies that the test still represents real
+            behavior after the AI's edits.
