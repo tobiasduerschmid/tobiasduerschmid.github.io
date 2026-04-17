@@ -389,7 +389,12 @@ Hub --> CoffeeMaker
         return true;
       });
 
-      const tipTol = 1.5;
+      // Arrow tips are intentionally offset from the polyline endpoint by
+      // ~1.725px (= strokeWidth * 0.75 + 0.6) so the arrow body sits on
+      // the polyline instead of extending beyond the box edge. Both
+      // tolerances below accommodate that shift.
+      const tipAxialTol = 2.5;       // along the arrow's axial direction
+      const tipLateralTol = 0.75;    // perpendicular to the arrow (should be exact)
       let matchedCount = 0;
       let orthogonalMatches = 0;
       for (const marker of openArrows) {
@@ -399,11 +404,11 @@ Hub --> CoffeeMaker
           const endPoint = route.points[route.points.length - 1];
           const startPoint = route.points[0];
           const matchEnd = isVerticalArrow
-            ? Math.abs(endPoint.x - tip.x) <= 0.75 && Math.abs(endPoint.y - tip.y) <= tipTol
-            : Math.abs(endPoint.y - tip.y) <= 0.75 && Math.abs(endPoint.x - tip.x) <= tipTol;
+            ? Math.abs(endPoint.x - tip.x) <= tipLateralTol && Math.abs(endPoint.y - tip.y) <= tipAxialTol
+            : Math.abs(endPoint.y - tip.y) <= tipLateralTol && Math.abs(endPoint.x - tip.x) <= tipAxialTol;
           const matchStart = isVerticalArrow
-            ? Math.abs(startPoint.x - tip.x) <= 0.75 && Math.abs(startPoint.y - tip.y) <= tipTol
-            : Math.abs(startPoint.y - tip.y) <= 0.75 && Math.abs(startPoint.x - tip.x) <= tipTol;
+            ? Math.abs(startPoint.x - tip.x) <= tipLateralTol && Math.abs(startPoint.y - tip.y) <= tipAxialTol
+            : Math.abs(startPoint.y - tip.y) <= tipLateralTol && Math.abs(startPoint.x - tip.x) <= tipAxialTol;
           const matchPoint = matchEnd || matchStart;
           return matchPoint;
         });
