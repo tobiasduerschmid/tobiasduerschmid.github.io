@@ -761,6 +761,46 @@ html:not(.dark-mode) {
   color: #c8d4e4;
   border-color: #5a5a78;
 }
+.tvm-diagram-color-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #252538;
+  cursor: pointer;
+  margin-left: 3px;
+  padding: 2px;
+  flex-shrink: 0;
+  transition: border-color 0.1s;
+}
+.tvm-diagram-color-btn:hover {
+  border-color: #5a5a78;
+}
+.tvm-diagram-color-input {
+  width: 18px;
+  height: 18px;
+  border: none;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.tvm-diagram-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.tvm-diagram-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+.tvm-diagram-color-input::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
 
 /* Fullscreen overlay */
 .tvm-diagram-fullscreen-overlay {
@@ -953,6 +993,13 @@ html:not(.dark-mode) .tvm-diagram-refresh-btn {
 html:not(.dark-mode) .tvm-diagram-refresh-btn:hover {
   background: #d8dce6;
   color: #222;
+  border-color: #b0b6c4;
+}
+html:not(.dark-mode) .tvm-diagram-color-btn {
+  background: #eaecf0;
+  border-color: #cdd0d8;
+}
+html:not(.dark-mode) .tvm-diagram-color-btn:hover {
   border-color: #b0b6c4;
 }
 html:not(.dark-mode) .tvm-diagram-empty {
@@ -1282,18 +1329,18 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
 .tvm-preview-header {
   background: #161618;
   color: #888;
-  padding: 4px 14px;
-  font-size: 12px;
+  padding: 2px 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   border-bottom: 1px solid #2a2a2e;
-  min-height: 34px;
+  min-height: 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  gap: 8px;
+  gap: 6px;
 }
 
 .tvm-preview-header::before {
@@ -2700,4 +2747,33 @@ html:not(.dark-mode) .tvm-step-btn.locked {
 
 html:not(.dark-mode) .tvm-http-meta-sep {
   background: #ccd0d8;
+}
+
+/* ───────────────────────────────────────────
+   Lecture mode — compact navbar (~half height)
+─────────────────────────────────────────── */
+body.lecture-mode #navnav {
+  min-height: 0;
+}
+body.lecture-mode #navnav .navbar-header,
+body.lecture-mode #navnav .navbar-right {
+  height: 23px !important;
+}
+body.lecture-mode #navnav .navbar-brand {
+  font-size: 13px !important;
+  padding-left: 10px !important;
+  line-height: 23px;
+}
+body.lecture-mode #navnav .navbar-right {
+  padding-right: 10px !important;
+  gap: 10px !important;
+  font-size: 11px !important;
+}
+body.lecture-mode #navnav .navbar-right a,
+body.lecture-mode #navnav .navbar-right button,
+body.lecture-mode #navnav .navbar-right label {
+  font-size: 11px !important;
+}
+body.lecture-mode .tutorial-page {
+  top: 23px !important;
 }

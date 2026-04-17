@@ -2063,8 +2063,12 @@ title: "SE Gym"
         var correctOrder = q.lines || [];
         var distractors = q.distractors || [];
         var display = q.display || 'block';
-        var allLines = correctOrder.concat(distractors).slice();
-        shuffleArray(allLines);
+        var items = correctOrder.map(function (line, i) {
+          return { line: line, correctPos: i, isDistractor: false };
+        }).concat(distractors.map(function (line) {
+          return { line: line, correctPos: -1, isDistractor: true };
+        }));
+        shuffleArray(items);
 
         var div = document.createElement('div');
         div.className = 'workout-quiz-card';
@@ -2077,11 +2081,10 @@ title: "SE Gym"
         var containerClass = 'parsons-container' + (isInline ? ' parsons-inline' : '');
 
         var bankHtml = '<div class="parsons-bank">';
-        allLines.forEach(function (line) {
-          var isDist = distractors.indexOf(line) !== -1;
-          bankHtml += '<div class="parsons-line" draggable="true" data-line="' + escapeHtml(line) +
-            '" data-distractor="' + isDist + '">' +
-            '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code></div>';
+        items.forEach(function (item) {
+          bankHtml += '<div class="parsons-line" draggable="true" data-line="' + escapeHtml(item.line) +
+            '" data-distractor="' + item.isDistractor + '" data-correct-pos="' + item.correctPos + '">' +
+            '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(item.line) + '</code></div>';
         });
         bankHtml += '</div>';
 
@@ -2165,14 +2168,15 @@ title: "SE Gym"
         // Check button
         div.querySelector('.parsons-check-btn').addEventListener('click', function () {
           var target = div.querySelector('.parsons-target');
-          var placed = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'))
-            .map(function (el) { return el.dataset.line; });
-          var isCorrect = placed.length === correctOrder.length &&
-            placed.every(function (line, i) { return line === correctOrder[i]; });
+          var placedEls = Array.prototype.slice.call(target.querySelectorAll('.parsons-line'));
+          var isCorrect = placedEls.length === correctOrder.length &&
+            placedEls.every(function (el, i) {
+              return el.dataset.correctPos === String(i) || el.dataset.line === correctOrder[i];
+            });
 
-          target.querySelectorAll('.parsons-line').forEach(function (el, i) {
+          placedEls.forEach(function (el, i) {
             el.classList.remove('parsons-correct', 'parsons-incorrect');
-            if (i < correctOrder.length && el.dataset.line === correctOrder[i]) el.classList.add('parsons-correct');
+            if (i < correctOrder.length && (el.dataset.correctPos === String(i) || el.dataset.line === correctOrder[i])) el.classList.add('parsons-correct');
             else el.classList.add('parsons-incorrect');
           });
           div.querySelectorAll('.parsons-bank .parsons-line').forEach(function (el) {
@@ -2341,7 +2345,7 @@ title: "SE Gym"
       function escapeHtml(str) {
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
+        return div.innerHTML.replace(/"/g, '&quot;');
       }
 
       // ==================== EVENT BINDINGS ====================

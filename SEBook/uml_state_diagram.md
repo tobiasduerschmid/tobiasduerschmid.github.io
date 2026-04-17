@@ -83,6 +83,20 @@ Internal activities are particularly useful for modeling embedded systems, UI co
 
 > **Concept Check (Retrieval Practice):** What is the difference between an `entry/` action and an effect on a transition (the `/ action` part of `Event [Guard] / Effect`)? Think about *when* each executes. The entry action runs every time the state is entered regardless of which transition was taken, while the transition effect runs only during that specific transition.
 
+### 2.4 Composite States (Advanced)
+
+A **composite state** is a state that contains a nested state machine inside it. UML 2 introduced composite states to avoid the "spaghetti" of a flat state machine with dozens of transitions. When an object is in a composite state, it is simultaneously in *exactly one* of the nested substates.
+
+**Example:** A downloadable video has a high-level `Active` state that contains substates `Buffering`, `Playing`, and `Paused`. From any substate, a `stop()` event exits the entire composite state.
+
+This avoids drawing `stop` transitions from every leaf state separately — one transition at the composite level covers all of them. The UML 2 Reference Manual (Rumbaugh et al.) describes composite states as the primary tool for managing state-machine complexity.
+
+### 2.5 Choice Pseudostate (Advanced)
+
+A **choice pseudostate** (drawn as a small diamond, `<>`) is a branch point where the next state depends on a runtime condition evaluated *inside the transition*. Use it when a single event could lead to several outcomes and the decision belongs on the transition rather than in the state itself.
+
+**Compare to guards:** A guard is evaluated *before* the transition fires; a choice pseudostate is evaluated *during* the transition, after some computation has happened. In most introductory models, guards are sufficient — reach for the choice pseudostate only when the branching logic is non-trivial.
+
 ---
 
 ## 3. Case Study: Modeling an Advanced Exosuit
@@ -187,6 +201,16 @@ Cancelled --> [*]
 4. **Two terminal states:** `Delivered` and `Cancelled` both lead to `[*]`. An order always ends — there is no indefinitely running lifecycle for a delivery order, unlike a server or a music player.
 
 ---
+
+## ⚠ Common Mistakes in State Machines
+
+| # | Mistake | Fix |
+|---|---|---|
+| 1 | **Conflating event and guard** — writing `powerLow` as a state or as a guard instead of as an event trigger | An *event* is something that happens externally (`powerLow()` was received); a *guard* is a condition evaluated when the event fires (`[battery < 5%]`). The label syntax is `Event [Guard] / Effect` — in that order. |
+| 2 | **No initial state** — forgetting the solid black circle and entry transition | Every state machine must have a clear starting point. Omit it and the diagram is ambiguous about how the object begins its life. |
+| 3 | **Dangling states** — states that cannot be reached or cannot be left | Trace every state: is there a path from the initial transition to it? Is there a way out (or is it a final state)? Both directions must be answered. |
+| 4 | **Overlapping guards** — two transitions on the same event with guards that can be simultaneously true | Guards on the same event must be mutually exclusive (e.g., `[x > 0]` and `[x <= 0]`). Otherwise the machine is non-deterministic. |
+| 5 | **Using a state machine for something that is not stateful** — modeling a sequence of steps with no branching based on past events | If the object reacts the same way to the same input regardless of history, it does not need a state machine — use an activity or sequence diagram instead. |
 
 ## 🛠️ Retrieval Practice
 

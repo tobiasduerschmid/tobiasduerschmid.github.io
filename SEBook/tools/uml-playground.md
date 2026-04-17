@@ -531,3 +531,12 @@ body.dark-mode #uml-pg-status {
   }
 })();
 </script>
+
+---
+
+<div style="margin:1.5em 0;padding:1em 1.2em;background:#eef4fb;border:1px solid #c0d4ec;border-radius:6px;display:flex;align-items:center;gap:1em;flex-wrap:wrap;">
+  <div style="flex:1;min-width:200px;">
+    <strong>Need syntax help?</strong> The full ArchUML syntax reference with live rendered examples is available on a dedicated page.
+  </div>
+  <a href="/SEBook/tools/uml-reference" target="_blank" style="white-space:nowrap;padding:7px 16px;background:#2774AE;color:#fff;border-radius:4px;text-decoration:none;font-weight:600;font-size:0.9em;">Open Syntax Reference ↗</a>
+</div>

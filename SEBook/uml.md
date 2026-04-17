@@ -24,15 +24,17 @@ A model describes a system at a **high level of abstraction**. Models are abstra
 
 ## A Brief History of UML
 
-In the 1980s, the rise of Object-Oriented Programming spawned dozens of competing modeling notations. By the early 1990s, there were over 50 OO modeling languages. In the 1990s, the three leading notation designers---Grady Booch (BOOCH), Jim Rumbaugh (OML: Object Modeling Language), and Ivar Jacobson (OOSE: Object Oriented Software Engineering)---decided to combine their approaches. Their natural convergence, combined with an industry push to standardize, produced the **Unified Modeling Language (UML)**, now maintained by the Object Management Group (OMG).
+In the 1980s, the rise of Object-Oriented Programming spawned dozens of competing modeling notations. By the early 1990s, there were over 50 OO modeling languages. In the mid-1990s, the three leading notation designers —- Grady Booch (*Booch method*), Jim Rumbaugh (*OMT — Object Modeling Technique*), and Ivar Jacobson (*OOSE — Object-Oriented Software Engineering*) —- converged at Rational Software and combined their approaches. This convergence, standardized by the Object Management Group (OMG) in 1997, produced **UML 1.0**. UML 2.0 followed in 2005 with significant revisions (see Rumbaugh, Jacobson & Booch, *The UML Reference Manual*). The current version (UML 2.5.1, 2017) is maintained by the OMG.
 
-UML is an enormous language (796 pages of specification), with many loosely related diagram types under one roof. But it provides a **common, simple, graphical** representation of software design and implementation, and it remains the most commonly used modeling language in practice.
+UML is a large language — the UML 2 specification spans nearly 800 pages — but in practice only a small fraction of its notation is widely used. Martin Fowler (*UML Distilled*) argues that "20% of UML does 80% of the work" — and recommends learning *sketching-level* UML over exhaustive coverage of every symbol. This textbook follows that philosophy.
 
 ### Modeling Guidelines
 
-- Nearly everything in UML is optional---you choose how much detail to show.
-- Models are rarely complete. They capture the aspects relevant to the question you are trying to answer.
-- UML is "open to interpretation" and designed to be extended.
+- **Purpose first.** Before drawing, decide *why* the diagram exists: requirements gathering, analysis, design, or documentation. Each level shows different detail (Ambler, *The Elements of UML 2.0 Style*, G87–G88).
+- **Nearly everything in UML is optional** — you choose how much detail to show.
+- **Models are rarely complete.** They capture only the aspects relevant to the question at hand (Fowler's "Depict Models Simply" principle).
+- **UML is open to interpretation** and designed to be extended via profiles and stereotypes.
+- **7±2 rule:** Keep a single diagram to roughly 9 elements or fewer. If a diagram grows past that, split it — the cognitive load of reading it exceeds working memory.
 
 ## UML Diagram Types
 

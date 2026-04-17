@@ -30,7 +30,7 @@
    * Main entry point
    * =================================================================== */
 
-  function analyzePythonSources(sources) {
+  function analyzePythonSources(sources, options) {
     var errors = [];
     var allTypeNames = new Set();
     var parsedFiles = {};
@@ -53,7 +53,7 @@
     // Extract class diagram
     var extractor = new PythonClassExtractor(parsedFiles, allTypeNames, errors);
     extractor.analyze();
-    var classDiagram = extractor.generatePlantUML();
+    var classDiagram = extractor.generatePlantUML(options || {});
 
     // Extract sequence diagram
     var seqGen = new PythonSequenceDiagramGenerator(parsedFiles, extractor, allTypeNames);
@@ -1226,7 +1226,8 @@
     this.associations = [];  // [className]
     this.dependencies = [];  // [className]
     this._relAttrs = {};     // attribute names promoted to relationship arrows
-    this._relMult = {};      // {targetClass: {srcMult, tgtMult}} — multiplicity metadata
+    this._relMult = {};      // {targetClass: {tgtMult}} — multiplicity metadata
+    this._pendingCollections = {}; // {targetClass: {annNode, attrName}} — deferred from list[T] = []
     this.decorators = [];    // decorator names on the class
   }
 
@@ -1266,6 +1267,23 @@
       }
     }
 
+    // Reconcile pending collections: any list[T] = [] that was NOT resolved by
+    // an append/add call falls back to an association using the annotation type.
+    for (var pendingCls in info._pendingCollections) {
+      if (!info._pendingCollections.hasOwnProperty(pendingCls)) continue;
+      // Only add if not already covered by composition/aggregation/association
+      if (info.compositions.indexOf(pendingCls) === -1 &&
+          info.aggregations.indexOf(pendingCls) === -1 &&
+          info.associations.indexOf(pendingCls) === -1) {
+        var pending = info._pendingCollections[pendingCls];
+        _addUnique(info.associations, pendingCls);
+        if (!info._relMult[pendingCls]) {
+          var tgtMult = inferMultiplicity(pending.annNode);
+          info._relMult[pendingCls] = { tgtMult: tgtMult };
+        }
+      }
+    }
+
     // Collect dependency relationships
     this._collectDependencies(node, info);
   };
@@ -1286,6 +1304,11 @@
     var isStatic = (node.decorators || []).indexOf('staticmethod') !== -1;
     var isClassMethod = (node.decorators || []).indexOf('classmethod') !== -1;
     var isProperty = (node.decorators || []).indexOf('property') !== -1;
+    var isSetter = (node.decorators || []).indexOf('setter') !== -1;
+    var isDeleter = (node.decorators || []).indexOf('deleter') !== -1;
+
+    // Skip property setters/deleters — the @property getter already shows the attribute
+    if (isSetter || isDeleter) return;
 
     // Get return type
     var returnType = node.returns ? annotationStr(node.returns) : null;
@@ -1314,11 +1337,26 @@
       }
     }
 
-    // Walk method body for self.x assignments and relationships
+    // Pre-scan method body for local constructor calls: name = ClassName(...)
+    // This detects composition patterns like: dept = Department(...); self.departments.append(dept)
+    var localCreations = {};
     var self = this;
     astWalk({ type: '_wrap', body: node.body }, function (child) {
+      if (child.type === 'Assign' && child.targets && child.targets.length === 1) {
+        var tgt = child.targets[0];
+        if (tgt.type === 'Name' && child.value && child.value.type === 'Call') {
+          var callee = callName(child.value);
+          if (callee && self.allTypeNames.has(callee)) {
+            localCreations[tgt.id] = callee;
+          }
+        }
+      }
+    });
+
+    // Walk method body for self.x assignments and relationships
+    astWalk({ type: '_wrap', body: node.body }, function (child) {
       self._checkAttribute(child, classInfo);
-      self._checkFieldRelationship(child, classInfo, initParamTypes, node.name);
+      self._checkFieldRelationship(child, classInfo, initParamTypes, localCreations, node.name);
     });
   };
 
@@ -1339,6 +1377,10 @@
       if (annCls) {
         _addUnique(classInfo.associations, annCls);
         classInfo._relAttrs[attrName] = true;
+        if (!classInfo._relMult[annCls]) {
+          var tgtMult = inferMultiplicity(node.annotation);
+          classInfo._relMult[annCls] = { tgtMult: tgtMult };
+        }
       }
     }
   };
@@ -1366,7 +1408,7 @@
     classInfo.attributes.push({ name: attrName, typeHint: typeHint });
   };
 
-  PythonClassExtractor.prototype._checkFieldRelationship = function (node, classInfo, initParamTypes, methodName) {
+  PythonClassExtractor.prototype._checkFieldRelationship = function (node, classInfo, initParamTypes, localCreations, methodName) {
     var self = this;
 
     /** Store a relationship with multiplicity inferred from an annotation node. */
@@ -1375,7 +1417,7 @@
       classInfo._relAttrs[attrName] = true;
       if (annNode && !classInfo._relMult[target]) {
         var tgtMult = inferMultiplicity(annNode);
-        classInfo._relMult[target] = { srcMult: '1', tgtMult: tgtMult };
+        classInfo._relMult[target] = { tgtMult: tgtMult };
       }
     }
 
@@ -1394,11 +1436,11 @@
             continue;
           }
         }
-        // self.x = param → aggregation if param is a typed method arg
+        // self.x = param → association if param is a typed method arg
         if (node.value && node.value.type === 'Name') {
           var paramCls = initParamTypes[node.value.id];
           if (paramCls) {
-            addRel(classInfo.aggregations, paramCls, null, attrName);
+            addRel(classInfo.associations, paramCls, null, attrName);
             continue;
           }
         }
@@ -1412,7 +1454,7 @@
                 _addUnique(classInfo.compositions, c);
                 classInfo._relAttrs[attrName] = true;
                 if (!classInfo._relMult[c]) {
-                  classInfo._relMult[c] = { srcMult: '1', tgtMult: '*' };
+                  classInfo._relMult[c] = { tgtMult: '*' };
                 }
               }
             }
@@ -1433,17 +1475,21 @@
             return;
           }
         }
-        // self.x: T = param → aggregation
+        // self.x: T = param → association
         if (node.value.type === 'Name') {
           var paramCls = initParamTypes[node.value.id];
           if (paramCls) {
-            addRel(classInfo.aggregations, paramCls, node.annotation, attrName);
+            addRel(classInfo.associations, paramCls, node.annotation, attrName);
             return;
           }
         }
-        // self.x: List[T] = [] → composition (empty container, annotation gives element type)
+        // self.x: List[T] = [] → defer relationship classification.
+        // The relationship type (composition vs aggregation) is determined by
+        // how items are added: append(local_created) = composition,
+        // append(param) = aggregation.  If no append is found, the annotation
+        // type is used as a fallback association (reconciled after all methods).
         if (annCls && _isEmptyCollection(node.value)) {
-          addRel(classInfo.compositions, annCls, node.annotation, attrName);
+          classInfo._pendingCollections[annCls] = { annNode: node.annotation, attrName: attrName };
           return;
         }
         // self.x: T = <other expr> → association from annotation
@@ -1454,6 +1500,63 @@
         // self.x: ClassName (no value) → association
         if (annCls) {
           addRel(classInfo.associations, annCls, node.annotation, attrName);
+        }
+      }
+    } else if (node.type === 'Expr' && node.value && node.value.type === 'Call') {
+      // self.x.append(v) / self.x.add(v) → relationship with * multiplicity
+      var call = node.value;
+      var func = call.func;
+      if (func && func.type === 'Attribute' &&
+          (func.attr === 'append' || func.attr === 'add') &&
+          isSelfAttr(func.value) &&
+          call.args && call.args.length >= 1) {
+        var arg = call.args[0];
+        var attrName = func.value.attr;
+        var resolvedCls = null;
+
+        if (arg.type === 'Name') {
+          // Check if arg is a locally-created object: v = ClassName(...)
+          // Pattern: dept = Department(...); self.departments.append(dept) → composition
+          var createdCls = localCreations ? localCreations[arg.id] : null;
+          if (createdCls) {
+            var aggIdx = classInfo.aggregations.indexOf(createdCls);
+            if (aggIdx !== -1) classInfo.aggregations.splice(aggIdx, 1);
+            _addUnique(classInfo.compositions, createdCls);
+            if (!classInfo._relMult[createdCls]) {
+              classInfo._relMult[createdCls] = { tgtMult: '*' };
+            }
+            resolvedCls = createdCls;
+          } else {
+            // Check if arg is a method parameter → aggregation
+            var paramCls = initParamTypes[arg.id];
+            if (paramCls &&
+                classInfo.compositions.indexOf(paramCls) === -1 &&
+                classInfo.aggregations.indexOf(paramCls) === -1 &&
+                classInfo.associations.indexOf(paramCls) === -1) {
+              _addUnique(classInfo.aggregations, paramCls);
+              if (!classInfo._relMult[paramCls]) {
+                classInfo._relMult[paramCls] = { tgtMult: '*' };
+              }
+              resolvedCls = paramCls;
+            }
+          }
+        } else if (arg.type === 'Call') {
+          // self.items.append(Task()) → inline constructor → composition
+          var inlineCls = callName(arg);
+          if (inlineCls && self.allTypeNames.has(inlineCls)) {
+            var aggIdx = classInfo.aggregations.indexOf(inlineCls);
+            if (aggIdx !== -1) classInfo.aggregations.splice(aggIdx, 1);
+            _addUnique(classInfo.compositions, inlineCls);
+            if (!classInfo._relMult[inlineCls]) {
+              classInfo._relMult[inlineCls] = { tgtMult: '*' };
+            }
+            resolvedCls = inlineCls;
+          }
+        }
+
+        // Clear pending collection entry if the append resolved the type
+        if (resolvedCls && classInfo._pendingCollections[resolvedCls]) {
+          delete classInfo._pendingCollections[resolvedCls];
         }
       }
     }
@@ -1541,8 +1644,10 @@
     }
   };
 
-  PythonClassExtractor.prototype.generatePlantUML = function () {
+  PythonClassExtractor.prototype.generatePlantUML = function (options) {
     if (this.classes.length === 0) return '';
+    var hideVis = options && options.hideVisibility;
+    var hideMult = options && options.hideMultiplicity;
     var lines = ['@startuml', 'layout landscape', 'layout compact'];
     var sorted = _topoSortClasses(this.classes);
 
@@ -1567,9 +1672,15 @@
         if (cls._relAttrs[attr.name]) continue;
         // Visibility: __ → private, _ → protected, else → public
         var prefix;
-        if (attr.name.startsWith('__') && !attr.name.endsWith('__')) prefix = '-';
-        else if (attr.name.startsWith('_')) prefix = '#';
-        else prefix = '+';
+        if (hideVis) {
+          prefix = '';
+        } else if (attr.name.startsWith('__') && !attr.name.endsWith('__')) {
+          prefix = '-';
+        } else if (attr.name.startsWith('_')) {
+          prefix = '#';
+        } else {
+          prefix = '+';
+        }
         var line = '  ' + prefix + attr.name;
         if (attr.typeHint) line += ': ' + attr.typeHint;
         lines.push(line);
@@ -1579,7 +1690,7 @@
       for (var j = 0; j < cls.methods.length; j++) {
         var m = cls.methods[j];
         if (m.isProperty) {
-          var prefix = m.isPrivate ? '#' : '+';
+          var prefix = hideVis ? '' : (m.isPrivate ? '#' : '+');
           var line = '  ' + prefix + m.name;
           if (m.returnType) line += ': ' + m.returnType;
           lines.push(line);
@@ -1594,10 +1705,14 @@
         if (m.isAbstract) prefix += '{abstract} ';
         if (m.isStatic) prefix += '{static} ';
         // Visibility
-        if (m.name.startsWith('__') && !m.name.endsWith('__')) prefix += '-';
-        else if (m.isPrivate) prefix += '#';
-        else prefix += '+';
-        lines.push('  ' + prefix + m.name + '(' + m.params.join(', ') + ')');
+        if (!hideVis) {
+          if (m.name.startsWith('__') && !m.name.endsWith('__')) prefix += '-';
+          else if (m.isPrivate) prefix += '#';
+          else prefix += '+';
+        }
+        var methodLine = '  ' + prefix + m.name + '(' + m.params.join(', ') + ')';
+        if (m.returnType) methodLine += ': ' + m.returnType;
+        lines.push(methodLine);
       }
 
       lines.push('}');
@@ -1633,23 +1748,23 @@
         }
       }
 
-      // Composition — with multiplicity
+      // Composition — navigable, with multiplicity (only target side is inferrable)
       for (var j = 0; j < cls.compositions.length; j++) {
         var compTarget = cls.compositions[j];
         var compMult = cls._relMult[compTarget];
-        var compLabel = compMult
-          ? ' "' + compMult.srcMult + '" *-- "' + compMult.tgtMult + '" '
-          : ' *-- ';
+        var compLabel = (compMult && !hideMult)
+          ? ' *--> "' + compMult.tgtMult + '" '
+          : ' *--> ';
         lines.push(cls.name + compLabel + compTarget);
       }
 
-      // Aggregation — with multiplicity
+      // Aggregation — with multiplicity (only target side is inferrable)
       for (var j = 0; j < cls.aggregations.length; j++) {
         var aggTarget = cls.aggregations[j];
         var aggMult = cls._relMult[aggTarget];
-        var aggLabel = aggMult
-          ? ' "' + aggMult.srcMult + '" o-- "' + aggMult.tgtMult + '" '
-          : ' o-- ';
+        var aggLabel = (aggMult && !hideMult)
+          ? ' o--> "' + aggMult.tgtMult + '" '
+          : ' o--> ';
         lines.push(cls.name + aggLabel + aggTarget);
       }
 
@@ -1661,16 +1776,24 @@
           // Bidirectional — emit once with undirected arrow
           if (!emittedBidir[bdKey]) {
             emittedBidir[bdKey] = true;
-            var m1 = cls._relMult[assocTarget];
-            var srcM = m1 ? m1.srcMult : '1';
-            var tgtM = m1 ? m1.tgtMult : '1';
-            lines.push(cls.name + ' "' + srcM + '" -- "' + tgtM + '" ' + assocTarget);
+            if (hideMult) {
+              lines.push(cls.name + ' -- ' + assocTarget);
+            } else {
+              var m1 = cls._relMult[assocTarget];
+              var m2 = this.classMap[assocTarget] ? this.classMap[assocTarget]._relMult[cls.name] : null;
+              var tgtM = m1 ? m1.tgtMult : '';
+              var srcM = m2 ? m2.tgtMult : '';
+              var label = srcM ? ' "' + srcM + '"' : '';
+              label += ' -- ';
+              label += tgtM ? '"' + tgtM + '" ' : '';
+              lines.push(cls.name + label + assocTarget);
+            }
           }
         } else {
           // Unidirectional — directed arrow with multiplicity
           var assocMult = cls._relMult[assocTarget];
-          var assocLabel = assocMult
-            ? ' "' + assocMult.srcMult + '" --> "' + assocMult.tgtMult + '" '
+          var assocLabel = (assocMult && !hideMult)
+            ? ' --> "' + assocMult.tgtMult + '" '
             : ' --> ';
           lines.push(cls.name + assocLabel + assocTarget);
         }
@@ -2570,22 +2693,17 @@
   }
 
   function _isInterface(cls, allTypeNames) {
-    // Protocol base → interface
-    if (cls.bases.indexOf('Protocol') !== -1) return true;
-    if (!_isAbstractClass(cls)) return false;
-    // All abstract, no attributes → interface
-    if (cls.attributes.length > 0) return false;
-    for (var i = 0; i < cls.methods.length; i++) {
-      if (cls.methods[i].name === '__init__') continue;
-      if (!cls.methods[i].isAbstract) return false;
-    }
-    return true;
+    // Only Protocol base → interface.
+    // ABC/ABCMeta are abstract classes, not interfaces.
+    return cls.bases.indexOf('Protocol') !== -1;
   }
 
   function _isEnum(cls) {
     return cls.bases.indexOf('Enum') !== -1
         || cls.bases.indexOf('IntEnum') !== -1
-        || cls.bases.indexOf('StrEnum') !== -1;
+        || cls.bases.indexOf('StrEnum') !== -1
+        || cls.bases.indexOf('Flag') !== -1
+        || cls.bases.indexOf('IntFlag') !== -1;
   }
 
   /* ===================================================================

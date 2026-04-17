@@ -56,7 +56,8 @@
 
   var LANG_MAP = {
     sh: 'shell-sebook', bash: 'shell-sebook', zsh: 'shell-sebook',
-    py: 'python', js: 'javascript', json: 'json',
+    py: 'python', js: 'javascript', jsx: 'jsx', json: 'json',
+    ts: 'typescript', tsx: 'jsx',
     yml: 'yaml', yaml: 'yaml', md: 'markdown',
     css: 'css', txt: 'plaintext', c: 'c', h: 'c', cpp: 'cpp',
     makefile: 'makefile', Makefile: 'makefile',
@@ -182,6 +183,7 @@
     this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
     this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
     this._umlClassLayoutDefault = this._umlClassLayoutPreference; // global fallback for per-step overrides
+    this._umlHideFlags = [];             // Per-step hide flags: ['visibility'], ['multiplicity'], etc.
     this._umlLastDiagrams = null;       // {classDiagram, sequenceDiagram}
     this._umlViewActive = false;        // true when UML tab is selected
     this._umlMermaidCounter = 0;        // unique id for mermaid.render calls
@@ -189,6 +191,7 @@
     this._umlFsZoom = 1;               // current zoom level (fullscreen view)
     this._umlFullscreenEl = null;       // fullscreen overlay element
     this._umlFsContentEl = null;        // fullscreen diagram content element
+    this._umlCustomColor = this._loadUMLColorCookie(); // user-chosen accent color (null = default)
 
     // React preview state
     this._previewFrame = null;
@@ -296,6 +299,66 @@
   };
 
   // ---------------------------------------------------------------------------
+  // UML Color Cookie Helpers
+  // ---------------------------------------------------------------------------
+  TutorialCode.prototype._loadUMLColorCookie = function () {
+    try {
+      var match = document.cookie.match(/(?:^|;\s*)uml-accent-color=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+    } catch (e) { return null; }
+  };
+
+  TutorialCode.prototype._saveUMLColorCookie = function (color) {
+    try {
+      var maxAge = 60 * 60 * 24 * 365; // 1 year
+      document.cookie = 'uml-accent-color=' + encodeURIComponent(color) +
+        '; max-age=' + maxAge + '; path=/; SameSite=Lax';
+    } catch (e) { }
+  };
+
+  /**
+   * Apply the current custom color (or default) to a diagram container by setting
+   * CSS custom properties, then re-render by calling the given render function.
+   */
+  TutorialCode.prototype._applyUMLColors = function (containerEl) {
+    if (!containerEl) return;
+    var color = this._umlCustomColor;
+    if (color) {
+      // Derive lighter shades from the chosen hex color for fill / header
+      var r = parseInt(color.slice(1, 3), 16);
+      var g = parseInt(color.slice(3, 5), 16);
+      var b = parseInt(color.slice(5, 7), 16);
+      var headerFill = 'rgba(' + r + ',' + g + ',' + b + ',0.18)';
+      var secondaryFill = 'rgba(' + r + ',' + g + ',' + b + ',0.09)';
+      var labelBg = 'rgba(255,255,255,0.94)';
+      var labelStroke = 'rgba(' + r + ',' + g + ',' + b + ',0.25)';
+      containerEl.style.setProperty('--uml-stroke', color);
+      containerEl.style.setProperty('--uml-line', color);
+      containerEl.style.setProperty('--uml-header-fill', headerFill);
+      containerEl.style.setProperty('--uml-secondary-fill', secondaryFill);
+      containerEl.style.setProperty('--uml-label-stroke', labelStroke);
+      containerEl.style.setProperty('--uml-label-fill', labelBg);
+    } else {
+      containerEl.style.removeProperty('--uml-stroke');
+      containerEl.style.removeProperty('--uml-line');
+      containerEl.style.removeProperty('--uml-header-fill');
+      containerEl.style.removeProperty('--uml-secondary-fill');
+      containerEl.style.removeProperty('--uml-label-stroke');
+      containerEl.style.removeProperty('--uml-label-fill');
+    }
+  };
+
+  /** Sync all color inputs in the UI to the current color value */
+  TutorialCode.prototype._syncColorInputs = function () {
+    var inputs = this.root ? this.root.querySelectorAll('.tvm-diagram-color-input') : [];
+    var val = this._umlCustomColor || '#4060a0';
+    for (var i = 0; i < inputs.length; i++) inputs[i].value = val;
+    // Also sync any that escaped to body (fullscreen overlay)
+    var fsInputs = document.querySelectorAll('.tvm-diagram-fs-color-input');
+    for (var j = 0; j < fsInputs.length; j++) fsInputs[j].value = val;
+  };
+
+  // ---------------------------------------------------------------------------
   // UI Construction
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._buildUI = function () {
@@ -331,6 +394,7 @@
         '</div>' +
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
         '</div>';
 
       terminalHtml =
@@ -411,6 +475,7 @@
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -447,6 +512,7 @@
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
           '</div>' +
           '<div class="tvm-diagram-content"></div>' +
           '</div>'
@@ -486,6 +552,7 @@
       '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
       '</div>' +
       '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
+      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input"></label>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
       '</div>' +
@@ -677,6 +744,35 @@
           self._closeUMLFullscreen();
         }
       });
+    }
+
+    // Wire all color pickers (inline + fullscreen share a single handler via event delegation)
+    if (this._umlDiagramEnabled) {
+      var self2 = self;
+      function onColorChange(e) {
+        if (!e.target || e.target.className.indexOf('tvm-diagram-color-input') === -1) return;
+        self2._umlCustomColor = e.target.value;
+        self2._saveUMLColorCookie(e.target.value);
+        self2._syncColorInputs();
+        self2._renderCurrentUMLDiagram();
+        if (self2._umlFullscreenEl && self2._umlFullscreenEl.style.display !== 'none') {
+          self2._renderUMLInFullscreen();
+        }
+      }
+      if (this.root) this.root.addEventListener('change', onColorChange);
+      // Also catch the fs overlay once it's moved to body
+      document.addEventListener('change', function (e) {
+        if (!e.target || e.target.className.indexOf('tvm-diagram-color-input') === -1) return;
+        // Only handle if the input is outside our root (i.e. moved fullscreen overlay)
+        if (self2.root && self2.root.contains(e.target)) return;
+        self2._umlCustomColor = e.target.value;
+        self2._saveUMLColorCookie(e.target.value);
+        self2._syncColorInputs();
+        self2._renderCurrentUMLDiagram();
+        self2._renderUMLInFullscreen();
+      });
+      // Set initial value from cookie
+      this._syncColorInputs();
     }
 
     // Left-panel tab switcher (Steps ↔ UML Diagram)
@@ -1149,6 +1245,155 @@
       },
     });
 
+    // JSX / TSX — custom Monarch tokenizer for JavaScript + JSX syntax
+    monaco.languages.register({ id: 'jsx' });
+    monaco.languages.setLanguageConfiguration('jsx', {
+      comments: { lineComment: '//', blockComment: ['/*', '*/'] },
+      brackets: [['{', '}'], ['[', ']'], ['(', ')'], ['<', '>']],
+      autoClosingPairs: [
+        { open: '{', close: '}' }, { open: '[', close: ']' },
+        { open: '(', close: ')' }, { open: '"', close: '"' },
+        { open: "'", close: "'" }, { open: '`', close: '`' },
+      ],
+      surroundingPairs: [
+        { open: '{', close: '}' }, { open: '[', close: ']' },
+        { open: '(', close: ')' }, { open: '"', close: '"' },
+        { open: "'", close: "'" }, { open: '`', close: '`' },
+        { open: '<', close: '>' },
+      ],
+      indentationRules: {
+        increaseIndentPattern: /^.*(\{[^}"']*|\([^)"']*)$/,
+        decreaseIndentPattern: /^\s*[}\)]/,
+      },
+    });
+    monaco.languages.setMonarchTokensProvider('jsx', {
+      defaultToken: '',
+      tokenPostfix: '.jsx',
+      keywords: [
+        'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger',
+        'default', 'delete', 'do', 'else', 'enum', 'export', 'extends',
+        'false', 'finally', 'for', 'from', 'function', 'get', 'if',
+        'implements', 'import', 'in', 'instanceof', 'interface', 'let',
+        'new', 'null', 'of', 'package', 'private', 'protected', 'public',
+        'return', 'set', 'static', 'super', 'switch', 'this', 'throw',
+        'true', 'try', 'typeof', 'undefined', 'var', 'void', 'while',
+        'with', 'yield', 'async', 'await',
+      ],
+      typeKeywords: ['any', 'boolean', 'number', 'object', 'string', 'symbol'],
+      operators: [
+        '<=', '>=', '==', '!=', '===', '!==', '=>', '+', '-', '**',
+        '*', '/', '%', '++', '--', '<<', '>>', '>>>', '&', '|', '^',
+        '!', '~', '&&', '||', '??', '?', ':', '=', '+=', '-=', '*=',
+        '**=', '/=', '%=', '<<=', '>>=', '>>>=', '&=', '|=', '^=',
+        '&&=', '||=', '??=', '...', '?.', 'as',
+      ],
+      symbols: /[=><!~?:&|+\-*\/\^%]+/,
+      escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+      digits: /\d+(_+\d+)*/,
+
+      tokenizer: {
+        root: [
+          // JSX self-closing: <Component ... />
+          [/(<)(\/?)([A-Z][a-zA-Z0-9.]*)/, ['delimiter.tag', 'delimiter.tag', { token: 'type.identifier.tag', next: '@jsxTag' }]],
+          // JSX HTML tags: <div ...>
+          [/(<)(\/?)([a-z][a-zA-Z0-9\-]*)/, ['delimiter.tag', 'delimiter.tag', { token: 'tag', next: '@jsxTag' }]],
+          // JSX fragment: <> or </>
+          [/<\/>/, 'delimiter.tag'],
+          [/<>/, 'delimiter.tag'],
+          // identifiers and keywords
+          [/[a-zA-Z_$][\w$]*/, {
+            cases: {
+              '@keywords': 'keyword',
+              '@typeKeywords': 'type',
+              '@default': 'identifier',
+            },
+          }],
+          // whitespace & comments
+          { include: '@whitespace' },
+          // numbers
+          [/(@digits)[eE]([\-+]?(@digits))?/, 'number.float'],
+          [/(@digits)\.(@digits)([eE][\-+]?(@digits))?/, 'number.float'],
+          [/0[xX][\da-fA-F]+/, 'number.hex'],
+          [/0[oO][0-7]+/, 'number.octal'],
+          [/0[bB][01]+/, 'number.binary'],
+          [/@digits/, 'number'],
+          // strings
+          [/"([^"\\]|\\.)*$/, 'string.invalid'],
+          [/'([^'\\]|\\.)*$/, 'string.invalid'],
+          [/"/, 'string', '@string_dq'],
+          [/'/, 'string', '@string_sq'],
+          [/`/, 'string.template', '@string_bt'],
+          // delimiter/operators
+          [/[{}()\[\]]/, '@brackets'],
+          [/@symbols/, {
+            cases: {
+              '@operators': 'operator',
+              '@default': '',
+            },
+          }],
+          [/[;,.]/, 'delimiter'],
+        ],
+
+        // Inside a JSX tag (attributes)
+        jsxTag: [
+          [/\s+/, ''],
+          [/([\w\-]+)(\s*)(=)/, ['attribute.name', '', 'delimiter']],
+          [/"[^"]*"/, 'attribute.value'],
+          [/'[^']*'/, 'attribute.value'],
+          [/\{/, { token: 'delimiter.bracket', next: '@jsxExpr' }],
+          [/\/?>/, { token: 'delimiter.tag', next: '@pop' }],
+          [/[\w\-]+/, 'attribute.name'],
+        ],
+
+        // JSX expression { ... } inside tags
+        jsxExpr: [
+          [/\{/, 'delimiter.bracket', '@push'],
+          [/\}/, 'delimiter.bracket', '@pop'],
+          { include: 'root' },
+        ],
+
+        whitespace: [
+          [/[ \t\r\n]+/, ''],
+          [/\/\*/, 'comment', '@comment'],
+          [/\/\/.*$/, 'comment'],
+        ],
+
+        comment: [
+          [/[^\/*]+/, 'comment'],
+          [/\*\//, 'comment', '@pop'],
+          [/[\/*]/, 'comment'],
+        ],
+
+        string_dq: [
+          [/[^\\"]+/, 'string'],
+          [/@escapes/, 'string.escape'],
+          [/\\./, 'string.escape.invalid'],
+          [/"/, 'string', '@pop'],
+        ],
+
+        string_sq: [
+          [/[^\\']+/, 'string'],
+          [/@escapes/, 'string.escape'],
+          [/\\./, 'string.escape.invalid'],
+          [/'/, 'string', '@pop'],
+        ],
+
+        string_bt: [
+          [/\$\{/, { token: 'string.template.delimiter', next: '@templateExpr' }],
+          [/[^\\`$]+/, 'string.template'],
+          [/@escapes/, 'string.escape'],
+          [/\\./, 'string.escape.invalid'],
+          [/`/, 'string.template', '@pop'],
+        ],
+
+        templateExpr: [
+          [/\{/, 'delimiter.bracket', '@push'],
+          [/\}/, { token: 'string.template.delimiter', next: '@pop' }],
+          { include: 'root' },
+        ],
+      },
+    });
+
     monaco.editor.defineTheme('sebook-light', {
       base: 'vs', inherit: true,
       rules: [
@@ -1162,6 +1407,12 @@
         { token: 'string.fstring.delimiter', foreground: '0451a5' },
         // Prolog tokens
         { token: 'atom', foreground: 'a31515' },
+        // JSX tokens
+        { token: 'tag.jsx', foreground: '800000' },
+        { token: 'type.identifier.tag.jsx', foreground: '267f99' },
+        { token: 'delimiter.tag.jsx', foreground: '800000' },
+        { token: 'attribute.name.jsx', foreground: 'e50000' },
+        { token: 'attribute.value.jsx', foreground: '0451a5' },
       ],
       colors: {},
     });
@@ -1178,6 +1429,12 @@
         { token: 'string.fstring.delimiter', foreground: '569cd6' },
         // Prolog tokens
         { token: 'atom', foreground: 'ce9178' },
+        // JSX tokens
+        { token: 'tag.jsx', foreground: '569cd6' },
+        { token: 'type.identifier.tag.jsx', foreground: '4ec9b0' },
+        { token: 'delimiter.tag.jsx', foreground: '808080' },
+        { token: 'attribute.name.jsx', foreground: '9cdcfe' },
+        { token: 'attribute.value.jsx', foreground: 'ce9178' },
       ],
       colors: { 'editor.background': '#1e1e1e' },
     });
@@ -2270,6 +2527,56 @@
     this._previewFrame.srcdoc = srcdoc;
   };
 
+  /**
+   * Hot-patch the live preview via postMessage instead of replacing srcdoc.
+   * Falls back to a full rebuild if the frame isn't ready (Babel not loaded yet).
+   */
+  TutorialCode.prototype._patchReactPreview = function () {
+    if (!this._previewFrame) return;
+    // Check if Babel is available in the frame — if not, fall back to full rebuild
+    var fw;
+    try { fw = this._previewFrame.contentWindow; } catch (e) { fw = null; }
+    if (!fw || !fw.Babel) { return this._rebuildReactPreview(); }
+
+    var self = this;
+    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    var fileOrder;
+    if (step && step.react_files) {
+      fileOrder = step.react_files;
+    } else if (step && step.files) {
+      fileOrder = step.files.map(function (f) { return f.path; });
+    } else {
+      fileOrder = Object.keys(self.editorModels);
+    }
+
+    var stepIdx = this.currentStep >= 0 ? this.currentStep : 0;
+    var appAlias = 'App_s' + stepIdx;
+
+    var userCss = [];
+    var files = fileOrder.map(function (filename) {
+      var entry = self.editorModels[filename];
+      if (!entry) return null;
+      var content = entry.model.getValue();
+      if (filename.endsWith('.css')) { userCss.push(content); return null; }
+      content = content.replace(/^\s*import\s+.*$/gm, '');
+      content = content.replace(/^\s*export\s+\{[^}]*\};?\s*$/gm, '');
+      content = content.replace(/^\s*export\s+(?:default\s+)?/gm, '');
+      content = content.replace(/\bApp\b/g, appAlias);
+      return content;
+    }).filter(Boolean);
+
+    var isDark = this._isDarkMode();
+    var bodyBg = isDark ? '#1e1e1e' : '#fff';
+    var bodyColor = isDark ? '#d4d4d4' : '#333';
+    var customStyles = ((step && step.preview_styles) || '') + '\n' + userCss.join('\n');
+    var css = '* { box-sizing: border-box; }\n' +
+      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;' +
+      ' padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
+      customStyles;
+
+    fw.postMessage({ type: 'react-hot-reload', files: files, css: css, appAlias: appAlias }, '*');
+  };
+
   TutorialCode.prototype._buildReactSrcdoc = function (step) {
     var self = this;
     var fileOrder;
@@ -2334,10 +2641,42 @@
       '<\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
       '<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>\n' +
+      '<script>\n' +
+      '/* Hot-reload: cache createRoot + listen for file patches from the tutorial host */\n' +
+      '(function(){\n' +
+      '  if(window.ReactDOM&&typeof ReactDOM.createRoot==="function"){\n' +
+      '    var _oCR=ReactDOM.createRoot.bind(ReactDOM);\n' +
+      '    ReactDOM.createRoot=function(el){if(!window.__rr)window.__rr=_oCR(el);return window.__rr;};\n' +
+      '  }\n' +
+      '  window.addEventListener("message",function(e){\n' +
+      '    if(!e.data||e.data.type!=="react-hot-reload")return;\n' +
+      '    if(!window.Babel)return;\n' +
+      '    var s=document.getElementById("__user-styles__");\n' +
+      '    if(s&&e.data.css!==undefined)s.textContent=e.data.css;\n' +
+      '    var files=e.data.files||[];\n' +
+      '    var alias=e.data.appAlias;\n' +
+      '    var rootEl=document.getElementById("root");\n' +
+      '    try{\n' +
+      '      for(var i=0;i<files.length;i++){\n' +
+      '        var t=Babel.transform(files[i],{presets:["react"],filename:"hot.jsx"}).code;\n' +
+      '        (0,eval)(t);\n' +
+      '      }\n' +
+      '      if(window.__rr&&alias&&window[alias]){\n' +
+      '        window.__rr.render(React.createElement(window[alias],null));\n' +
+      '      }\n' +
+      '    }catch(err){\n' +
+      '      var m=(err.message||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");\n' +
+      '      rootEl.innerHTML=\'<div style="color:#c0392b;background:#fdf2f2;border-left:4px solid \'+\n' +
+      '        \'#c0392b;padding:16px;margin:16px;font-family:monospace;font-size:13px;\'+\n' +
+      '        \'border-radius:4px;white-space:pre-wrap"><strong>Error:</strong><br>\'+m+\'</div>\';\n' +
+      '    }\n' +
+      '  });\n' +
+      '})();\n' +
+      '<\/script>\n' +
       '<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>\n' +
       '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n' +
       '<script src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
-      '<style>\n* { box-sizing: border-box; }\n' +
+      '<style id="__user-styles__">\n* { box-sizing: border-box; }\n' +
       'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;\n' +
       '       padding: 0; margin: 0; background: ' + bodyBg + '; color: ' + bodyColor + '; }\n' +
       customStyles + '\n</style>\n</head>\n<body>\n<div id="root"></div>\n' +
@@ -2352,7 +2691,7 @@
     this.editor = monaco.editor.create(this.editorContainerEl, {
       value: '// Follow the tutorial steps on the left.\n',
       language: this.config.backend === 'pyodide' ? 'python' :
-        this.config.backend === 'react' ? 'javascript' :
+        this.config.backend === 'react' ? 'jsx' :
           this.config.backend === 'browser' ? 'javascript' :
             this.config.backend === 'prolog' ? 'prolog' :
               this.config.backend === 'java' ? 'java' : 'shell-sebook',
@@ -2386,9 +2725,16 @@
   };
 
   TutorialCode.prototype.openFile = function (filename, content, language) {
+    // If a JSX/TSX file is explicitly tagged "javascript"/"typescript", use the
+    // JSX Monarch tokenizer so tags like <div> get proper syntax highlighting.
+    if (language === 'javascript' && /\.jsx$/i.test(filename)) language = 'jsx';
+    if ((language === 'javascript' || language === 'typescript') && /\.tsx$/i.test(filename)) language = 'jsx';
     language = language || detectLanguage(filename);
     if (!this.editorModels[filename]) {
-      var model = monaco.editor.createModel(content || '', language);
+      var uri = monaco.Uri.parse('file:///' + filename);
+      var existing = monaco.editor.getModel(uri);
+      if (existing) existing.dispose();
+      var model = monaco.editor.createModel(content || '', language, uri);
       this.editorModels[filename] = { model: model, filename: filename, lastSyncContent: content || '' };
       var self = this;
       var saveTimer;
@@ -2396,10 +2742,7 @@
         if (self._suppressAutoSave) return;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () { self._syncFileToBackend(filename); }, 800);
-        // Trigger UML refresh if this file is in the watched list
-        if (self._umlWatchedFiles.indexOf(filename) !== -1) {
-          self._scheduleUMLRefresh();
-        }
+        // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke
       });
     } else if (content !== undefined) {
       this.editorModels[filename].model.setValue(content);
@@ -2483,6 +2826,11 @@
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
     if (this.autoSaveEnabled) this._saveFile(this.activeFileName);
+    if (this.config.backend === 'react') this._patchReactPreview();
+    // UML: refresh on explicit save if this file is watched
+    if (this._umlWatchedFiles.indexOf(this.activeFileName) !== -1) {
+      this._scheduleUMLRefresh(true);
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -2674,7 +3022,11 @@
     var self = this;
     this._loadPythonJSAnalyzer(function () {
       try {
-        var result = window.analyzePythonSources(sources);
+        var umlOptions = {
+          hideVisibility: self._umlHideFlags.indexOf('visibility') !== -1,
+          hideMultiplicity: self._umlHideFlags.indexOf('multiplicity') !== -1
+        };
+        var result = window.analyzePythonSources(sources, umlOptions);
         self._umlLastDiagrams = result;
         self._renderCurrentUMLDiagram();
         if (result.errors && result.errors.length > 0) {
@@ -2834,6 +3186,7 @@
       return;
     }
     this._umlContentEl.innerHTML = '';
+    this._applyUMLColors(this._umlContentEl);
     UMLClassDiagram.render(this._umlContentEl, this._applyTutorialClassLayout(syntax));
     var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
     this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
@@ -2846,6 +3199,7 @@
       return;
     }
     this._umlContentEl.innerHTML = '';
+    this._applyUMLColors(this._umlContentEl);
     UMLSequenceDiagram.render(this._umlContentEl, syntax);
     var zoomLabel = this._umlContainer ? this._umlContainer.querySelector('.tvm-diagram-zoom-label') : null;
     this._applyUMLZoom(this._umlContentEl, this._umlZoom, zoomLabel);
@@ -2972,6 +3326,7 @@
       this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No diagram data yet. Refresh first.</div>';
       return;
     }
+    this._applyUMLColors(this._umlFsContentEl);
     try {
       if (this._umlActiveType === 'sequence') {
         var seqSyntax = this._umlLastDiagrams.sequenceDiagram;
@@ -3014,6 +3369,7 @@
       document.body.appendChild(this._umlFullscreenEl);
     }
 
+    this._syncColorInputs();
     this._renderUMLInFullscreen();
     this._umlFullscreenEl.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -3036,9 +3392,13 @@
     if (!force && !this._umlViewActive) return;
     var self = this;
     clearTimeout(this._umlRefreshTimer);
-    this._umlRefreshTimer = setTimeout(function () {
+    if (force) {
       self._refreshUMLDiagram();
-    }, 1500);
+    } else {
+      this._umlRefreshTimer = setTimeout(function () {
+        self._refreshUMLDiagram();
+      }, 1500);
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -3051,11 +3411,7 @@
     entry.lastSyncContent = content;
     var self = this;
 
-    // Refresh UML diagram whenever a watched file is saved (force=true bypasses
-    // the _umlViewActive guard so the diagram is ready even if the tab is hidden)
-    if (this._umlWatchedFiles.indexOf(filename) !== -1) {
-      this._scheduleUMLRefresh(true);
-    }
+    // UML refresh is triggered from _saveCurrentFile (explicit save only), not here.
 
     return new Promise(function (resolve) {
       var done = function () { if (callback) callback(); resolve(); };
@@ -3083,11 +3439,9 @@
         }
 
       } else if (self.config.backend === 'react') {
-        clearTimeout(self._reactRebuildTimer);
-        self._reactRebuildTimer = setTimeout(function () {
-          self._rebuildReactPreview();
-          done();
-        }, 400);
+        // Preview only rebuilds on explicit save (Ctrl+S / save button),
+        // not on every keystroke — see _saveCurrentFile.
+        done();
 
       } else {
         done();
@@ -3213,7 +3567,12 @@
       });
     }
 
-    // 5. Show explanation if present
+    // 5. UML: force refresh after solution files are applied
+    p = p.then(function () {
+      self._scheduleUMLRefresh(true);
+    });
+
+    // 6. Show explanation if present
     p = p.then(function () {
       if (solution.explanationHTML) {
         self._showSolutionExplanation(solution.explanationHTML);
@@ -3346,6 +3705,10 @@
       self._setActiveFile(activeFile);
     }
     self._renderTabs();
+    // UML: force refresh after restoring autosaved files
+    self._scheduleUMLRefresh(true);
+    // React: rebuild preview after restoring autosaved files
+    if (self.config.backend === 'react') self._rebuildReactPreview();
   };
 
   /**
@@ -3373,6 +3736,10 @@
     self._suppressAutoSave = false;
     if (step.open_file) { self._setActiveFile(step.open_file); }
     self._renderTabs();
+    // UML: force refresh after resetting files
+    self._scheduleUMLRefresh(true);
+    // React: rebuild preview after resetting files
+    if (self.config.backend === 'react') self._rebuildReactPreview();
   };
 
   /**
@@ -3767,6 +4134,9 @@
     } else {
       this._umlClassLayoutPreference = this._umlClassLayoutDefault;
     }
+
+    // Per-step UML hide flags (e.g. ['visibility', 'multiplicity'])
+    this._umlHideFlags = step.uml_hide || [];
 
     // Update UML watched files for this step
     if (this._umlDiagramEnabled) {

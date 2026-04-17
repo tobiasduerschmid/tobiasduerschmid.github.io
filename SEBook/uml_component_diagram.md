@@ -223,6 +223,18 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 
 **Rule of thumb:** If you can deploy it, containerize it, or replace it independently, it belongs in a component diagram. If it is an internal implementation detail (a class, a method), it belongs in a class diagram.
 
+> **Note on UML 2 changes:** Before UML 2, components were distinct from classes and often modelled physical artifacts (DLLs, JARs). UML 2 redefined components as **modular units with contractually specified interfaces** — essentially abstract units of the design, not physical files. Physical files became *artifacts*, shown on deployment diagrams. Older textbooks and diagrams you encounter in the wild may still mix the two — be aware of the distinction when reading legacy UML.
+
+## ⚠ Common Component Diagram Mistakes
+
+| # | Mistake | Fix |
+|---|---|---|
+| 1 | **Drawing internal classes as components** — putting every class in a rectangle with the component icon | Components are *architectural modules* (services, libraries, subsystems). Classes belong in class diagrams. A rule of thumb: if you'd never deploy it separately, it's not a component. |
+| 2 | **Confusing lollipop and socket** — putting the ball on the consumer and the socket on the provider | Ball (lollipop) = **provided** ("I offer this"). Socket (half-circle) = **required** ("I need this"). The ball fits *into* the socket. |
+| 3 | **Omitting protocol labels** on connectors | Labels like `HTTPS`, `gRPC`, `SQL` turn a generic "arrow" into a concrete architectural statement — a reviewer can spot sync-vs-async and firewall concerns at a glance. |
+| 4 | **Mixing deployment nodes with components** | Components live on nodes; they are not the same thing. Use a deployment diagram when you want to show *where* things run. |
+| 5 | **Too many components on one diagram** | Apply the 7±2 rule (Fowler, *UML Distilled*). If you need more than ~9 components, split into multiple diagrams by subsystem. Architecture diagrams are for overview — not exhaustive cataloguing. |
+
 ---
 
 ## 6. Dependencies Between Components

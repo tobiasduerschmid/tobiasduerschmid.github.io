@@ -1,0 +1,1265 @@
+title: "React Lecture"
+description: "Build a UCLA Monopoly game step by step — covering JSX, the map function, components & props, state with useState, and the Virtual DOM."
+
+backend: react
+
+instructor_mode: true
+require_tests: false
+autosave_type: none
+
+steps:
+
+
+  # --------------------------------------------------------------------------
+  # STEP 1 — JSX: JavaScript XML (Slides 1–2)
+  # --------------------------------------------------------------------------
+  - title: "JSX — JavaScript XML"
+    key: jsx
+    instructions: |
+      ## React and JSX
+
+      **React** is a free, open-source front-end JavaScript library maintained by Meta (formerly Facebook) for building user interfaces.
+
+      React has a **declarative nature**: you describe *what* you want the UI to look like, and React handles the steps to achieve that UI and keep it updated efficiently when state changes. This is in contrast to **imperative** programming (plain JavaScript), which focuses on *how* to achieve a result by manually manipulating UI elements.
+
+      ### JSX — JavaScript XML
+
+      **JSX** is a syntax extension that allows developers to write HTML-like code within JavaScript. This makes it easier to define the structure and content of UI components.
+
+      ```jsx
+      const propertyName = "Royce Hall";
+      // [...]
+      return <h1>Welcome to {propertyName}!</h1>;
+      ```
+
+      - Use **curly braces** `{ }` to embed any JavaScript expression inside JSX
+      - Babel compiles this JSX to plain JavaScript:
+        ```javascript
+        React.createElement('h1', null, 'Welcome to ', propertyName, '!')
+        ```
+      - The result is a lightweight **Virtual DOM** object — not a real DOM node yet
+
+      ### Task
+
+      The property name and price are hard-coded strings. Create variables `propertyName` and `price`, then use `{ }` curly braces to embed them in the JSX instead.
+
+    files:
+      - path: "step1/App.jsx"
+        content: |
+          // JSX: write HTML-like syntax directly in JavaScript
+          // Use { } curly braces to embed JavaScript expressions
+
+          const gameName = "UCLA Monopoly";
+          // TODO: Create a propertyName variable set to "Royce Hall"
+          // TODO: Create a price variable set to 1000
+          // TODO: Replace the hard-coded text below with {propertyName} and ${price}
+
+          function App() {
+            return (
+              <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                <h1>Welcome to UCLA Monopoly!</h1>
+                <p>Most expensive property: Royce Hall</p>
+                <p>Price: $1000</p>
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step1/App.jsx"
+
+    open_file: "step1/App.jsx"
+
+    solution:
+      files:
+        - path: "step1/App.jsx"
+          content: |
+            // JSX: write HTML-like syntax directly in JavaScript
+            // Use { } curly braces to embed JavaScript expressions
+
+            const gameName = "UCLA Monopoly";
+            const propertyName = "Royce Hall";
+            const price = 1000;
+
+            function App() {
+              return (
+                <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                  <h1>Welcome to {gameName}!</h1>
+                  <p>Most expensive property: <strong>{propertyName}</strong></p>
+                  <p>Price: <strong>${price}</strong></p>
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We created `propertyName` and `price` variables, then embedded them in JSX using `{ }` curly braces. `{gameName}` inserts the game title, `{propertyName}` inserts the property name, and `${price}` outputs the dollar sign followed by the evaluated price. Babel compiles all of this into `React.createElement(...)` calls.
+
+    quiz:
+      title: "JSX — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What does Babel compile `<h1>Hello, {name}!</h1>` into?"
+          type: single
+          options:
+            - "A raw HTML string inserted into the page via `innerHTML`"
+            - "`React.createElement('h1', null, 'Hello, ', name, '!')` — a plain JavaScript object describing the UI node"
+            - "A direct `document.createElement('h1')` call that creates a real DOM node immediately"
+            - "A WebAssembly instruction that the browser renders natively"
+          correct_index: 1
+          explanation: |
+            JSX is syntactic sugar. Babel transforms it to `React.createElement(type, props, ...children)` calls, which return plain JavaScript objects — the **Virtual DOM**. No real DOM nodes are created at this stage. React's reconciler does that later, applying only the minimal set of real DOM changes needed.
+
+        - question: "What does the `{ }` curly-brace syntax do inside JSX?"
+          type: single
+          options:
+            - "It defines a CSS class to style the content inside the element"
+            - "It escapes the `{` and `}` characters as HTML entities"
+            - "It switches from JSX mode back to JavaScript — any expression inside is evaluated and its result is inserted into the UI"
+            - "It creates a new JavaScript object stored in the DOM"
+          correct_index: 2
+          explanation: |
+            In JSX, `{ expression }` switches from JSX mode to JavaScript mode. Any valid JavaScript expression can appear inside the braces: variables, function calls, ternary operators, and so on. The result is converted to a string (or rendered as a child element) and inserted into the Virtual DOM.
+
+        - question: "React has a **declarative** nature. What does this mean?"
+          type: single
+          options:
+            - "You write step-by-step instructions telling the browser exactly how to update each DOM element"
+            - "You describe what the UI should look like for a given state, and React figures out the minimal DOM updates needed"
+            - "React generates HTML on the server and sends it to the client before any JavaScript runs"
+            - "You declare global variables that React automatically synchronizes with the DOM"
+          correct_index: 1
+          explanation: |
+            Declarative programming means describing the *desired outcome* (what the UI should look like), not the *procedure* to get there. React compares the new description with the previous one (via the Virtual DOM) and applies only the minimal set of real DOM changes needed. This is the opposite of imperative manipulation like `element.textContent = ...`.
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — The Map Function (Slide 3)
+  # --------------------------------------------------------------------------
+  - title: "The Map Function — Rendering Lists"
+    key: map-function
+    instructions: |
+      ## Rendering Lists with `.map()`
+
+      In React, you render lists by using JavaScript's built-in `.map()` function directly inside JSX.
+
+      ```jsx
+      const properties = [
+        { name: "Royce Hall", price: 1000 },
+        { name: "Powell Library", price: 500 },
+      ];
+      // [...]
+      return (<ul>
+        {properties.map((prop, index) => (
+          <li key={index}>{prop.name} — ${prop.price}</li>
+        ))}
+      </ul>);
+      ```
+
+      - `properties.map(...)` returns an **array of JSX elements** — React renders all of them as children of `<ul>`
+      - The **`key` prop** is required on each list element so React can efficiently track which items changed, were added, or were removed
+      - `key` must be **unique** within the list — here we use the array index, but in production prefer a stable ID from your data
+
+      ### Task
+
+      The properties array is defined but the list is empty. Use `properties.map()` to render each property as a `<li>` element showing its name and price. Don't forget the `key` prop!
+
+    files:
+      - path: "step2/App.jsx"
+        content: |
+          function App() {
+            const properties = [
+              { name: "Royce Hall", price: 1000 },
+              { name: "Powell Library", price: 500 },
+              { name: "Kerckhoff Hall", price: 60 },
+            ];
+
+            return (
+              <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                <h2>UCLA Monopoly — Property Listing</h2>
+                <ul>
+                  {/* TODO: Use properties.map() to render each property */}
+                  {/* Each <li> should show: name — $price */}
+                  {/* Don't forget the key prop! */}
+                </ul>
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step2/App.jsx"
+
+    open_file: "step2/App.jsx"
+
+    solution:
+      files:
+        - path: "step2/App.jsx"
+          content: |
+            function App() {
+              const properties = [
+                { name: "Royce Hall", price: 1000 },
+                { name: "Powell Library", price: 500 },
+                { name: "Kerckhoff Hall", price: 60 },
+              ];
+
+              return (
+                <div style={{ padding: '16px', fontFamily: "'Georgia', serif" }}>
+                  <h2>UCLA Monopoly — Property Listing</h2>
+                  <ul>
+                    {properties.map((prop, index) => (
+                      <li key={index}>{prop.name} — ${prop.price}</li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We used `properties.map((prop, index) => ...)` to transform the array of property objects into an array of `<li>` JSX elements. Each `<li>` gets a unique `key={index}` prop so React can efficiently track list changes. The `{prop.name}` and `${prop.price}` expressions embed the property data into the rendered output.
+
+    quiz:
+      title: "Map Function — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "Why does React require a `key` prop on each element rendered inside `.map()`?"
+          type: single
+          options:
+            - "It is used as the CSS class for the element"
+            - "React uses the key to uniquely identify list items and efficiently determine which ones changed, were added, or removed during re-renders"
+            - "The key is sent to the server to cache the rendered HTML"
+            - "It is required by JavaScript — arrays cannot be rendered without a key attribute"
+          correct_index: 1
+          explanation: |
+            React's reconciler uses `key` to match elements between renders. Without a stable key, React must assume every item may have changed and re-renders all of them. With a key, it can skip unchanged items. Using the array index as key is fine for static lists, but use a stable unique ID for lists that can be reordered or filtered.
+
+        - question: |
+            A student writes this to render the property list:
+            ```jsx
+            return (
+              <ul>
+                {properties.map(prop => <li>{prop.name}</li>)}
+              </ul>
+            );
+            ```
+            The code works, but React logs a warning. What is missing?
+          type: single
+          options:
+            - "The `return` keyword inside the arrow function"
+            - "A `key` prop on each `<li>` element"
+            - "An `import` statement for the `map` function"
+            - "Parentheses around the JSX inside the arrow function"
+          correct_index: 1
+          explanation: |
+            React warns: *Each child in a list should have a unique "key" prop.* The fix: `<li key={index}>{prop.name}</li>` or, better, `<li key={prop.id}>{prop.name}</li>` using a stable ID. Without keys, React cannot efficiently reconcile list changes and may produce incorrect rendering during updates.
+
+        - question: "What does `properties.map((prop, index) => <li key={index}>{prop.name}</li>)` return?"
+          type: single
+          options:
+            - "A single concatenated string of all property names"
+            - "An array of JSX elements (Virtual DOM objects) that React renders as children"
+            - "A new real DOM `<ul>` element containing all list items"
+            - "A JavaScript generator that yields one list item at a time"
+          correct_index: 1
+          explanation: |
+            `.map()` always returns an array. When JSX encounters an array of React elements as children, it renders each one in order. So `{properties.map(...)}` is equivalent to listing each `<li>` element individually in the JSX — `.map()` just generates them programmatically from the data.
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — Components & Props (Slide 4)
+  # --------------------------------------------------------------------------
+  - title: "Components & Props — Monopoly Properties"
+    key: components-props
+    instructions: |
+      ## Components & Props
+
+      Components are **self-contained, reusable pieces of UI**. In our UCLA Monopoly game, every property card has the same structure — a colored banner, a name, and a price — but the *data* differs.
+
+      ### The Problem: Hard-Coded Cards
+
+      The current code has a single hard-coded card for Royce Hall. Want three cards? You'd have to copy-paste and change every value by hand.
+
+      ### The Solution: A Reusable Component with Props
+
+      **Props** (short for *properties*) are read-only inputs passed to a component — just like function arguments. Extract the card into a **component** and make the varying parts props:
+
+      ```jsx
+      const MonopolyProperty = ({ name, price, colorGroup }) => {
+        return (
+          <div style={cardStyle}>
+            <div style={getHeaderStyle(colorGroup)}></div>
+            <div style={bodyStyle}>
+              <h4>{name}</h4>
+              <p><strong>${price}</strong></p>
+            </div>
+          </div>
+        );
+      };
+      ```
+
+      Now rendering three properties is clean — same component, different data:
+
+      ```jsx
+      <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+      <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+      ```
+
+      - **`{ name, price, colorGroup }`** destructures the props object
+      - **Props are read-only** — a component must never modify its own props
+      - The **styles live in `styles.js`** — the component only handles structure and data
+
+      ### Task
+
+      Extract a reusable `MonopolyProperty` component that takes `name`, `price`, and `colorGroup` as props. Then render three different UCLA property cards side by side.
+
+    files:
+      - path: "step3/styles.js"
+        content: |
+          // Monopoly color groups — maps a group name to its banner color
+          const colorGroups = {
+            "ucla-blue":  "#2774AE",
+            "ucla-gold":  "#FFD100",
+          };
+
+          // Shared card styles for every property tile
+          const cardStyle = {
+            width: "180px",
+            border: "3px solid #333",
+            borderRadius: "12px",
+            overflow: "hidden",
+            margin: "8px",
+            fontFamily: "'Georgia', serif",
+            background: "#F5F0E1",
+            color: "#333",
+            boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
+          };
+
+          // Returns the colored header banner for a given color group
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "45px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
+          }
+
+          const bodyStyle = {
+            padding: "12px",
+            textAlign: "center",
+          };
+        language: "javascript"
+
+      - path: "step3/App.jsx"
+        content: |
+          // This card is hard-coded for Royce Hall — NOT reusable!
+          // TODO: Extract a MonopolyProperty component with props:
+          //       name, price, colorGroup
+          // TODO: Render three property cards with different data
+          function App() {
+            return (
+              <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle("ucla-blue")}></div>
+                  <div style={bodyStyle}>
+                    <h4>Royce Hall</h4>
+                    <p><strong>$1000</strong></p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step3/styles.js"
+      - "step3/App.jsx"
+
+    open_file: "step3/App.jsx"
+
+    solution:
+      files:
+        - path: "step3/App.jsx"
+          content: |
+            // A reusable component — props make it render any property
+            const MonopolyProperty = ({ name, price, colorGroup }) => {
+              return (
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle(colorGroup)}>
+                    {/* colorGroup dictates the banner color */}
+                  </div>
+                  <div style={bodyStyle}>
+                    <h4>{name}</h4>
+                    <p><strong>${price}</strong></p>
+                  </div>
+                </div>
+              );
+            };
+
+            // Render reusable components side-by-side with different props
+            function App() {
+              return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                  <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We extracted a `MonopolyProperty` component that takes `name`, `price`, and `colorGroup` as props via destructuring. The same component renders three different cards — each with different data. The styles (`cardStyle`, `getHeaderStyle`, `bodyStyle`) are defined in `styles.js` and shared across all cards.
+
+    quiz:
+      title: "Components & Props — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What are **props** in a React component?"
+          type: single
+          options:
+            - "Internal variables that the component manages itself and can change over time"
+            - "Read-only inputs passed from a parent component to a child — analogous to function arguments"
+            - "CSS properties attached to a component's root element"
+            - "Reserved keywords that React uses to configure component behavior internally"
+          correct_index: 1
+          explanation: |
+            Props (short for *properties*) are read-only inputs passed from a parent to a child, just like arguments to a function. The `MonopolyProperty` component takes `name`, `price`, and `colorGroup` as props — this lets the same component render Royce Hall, Powell Library, or any other property without duplicating code.
+
+        - question: "Why must React component names start with a capital letter?"
+          type: single
+          options:
+            - "JavaScript class syntax requires capital letters — components follow the same convention"
+            - "React uses capitalization to distinguish custom components from native HTML elements: lowercase → HTML tag, uppercase → React component"
+            - "Browser security policies prevent JavaScript from creating elements with lowercase names"
+            - "It is purely a style convention with no functional effect on rendering"
+          correct_index: 1
+          explanation: |
+            In JSX, `<card />` is treated as an unknown HTML element, while `<Card />` calls your `Card` function. If you wrote `<monopolyProperty />` in lowercase, React would try to create an HTML element called `monopolyproperty` — nothing would render.
+
+        - question: |
+            A component is defined as:
+            ```jsx
+            const MonopolyProperty = ({ name, price, colorGroup }) => { ... };
+            ```
+            What does `{ name, price, colorGroup }` in the parameter list do?
+          type: single
+          options:
+            - "It declares three new state variables"
+            - "It destructures the props object — instead of `props.name`, `props.price`, `props.colorGroup`, you access them directly"
+            - "It restricts the component to only accept exactly three props and throws an error for any others"
+            - "It defines default values of `undefined` for each prop when they are not passed"
+          correct_index: 1
+          explanation: |
+            `{ name, price, colorGroup }` is JavaScript **object destructuring** applied to the props parameter. It is equivalent to writing `(props) => { const name = props.name; ... }`. Destructuring is idiomatic React — it makes the expected props explicit and keeps the component body concise.
+
+        - question: |
+            **Evaluate** this code:
+            ```jsx
+            function MonopolyProperty(props) {
+              props.price = props.price * 2; // double the price
+              return <p>{props.price}</p>;
+            }
+            ```
+            What is the problem?
+          type: single
+          options:
+            - "Nothing — props can be freely modified inside the component that receives them"
+            - "Props are read-only. Mutating them breaks React's unidirectional data-flow model and causes unpredictable bugs"
+            - "The component must use `this.props.price` instead of `props.price`"
+            - "You cannot use arithmetic operators inside a React component"
+          correct_index: 1
+          explanation: |
+            Props are **immutable** from the receiving component's perspective. Mutating props breaks React's unidirectional data flow — the parent still holds the original value, and the mutation is invisible outside this component. To track values that change over time, use **state** (`useState`) — that is the next step.
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — State & useState (Slides 5–7)
+  # --------------------------------------------------------------------------
+  - title: "State & useState — Buying Houses"
+    key: state-usestate
+    instructions: |
+      ## State — Components That Remember
+
+      Props are read-only inputs. But what if a component needs to track something that **changes over time**? In Monopoly, players buy **houses** to upgrade their properties — the number of houses changes with each purchase.
+
+      React provides the `useState` hook:
+
+      ```jsx
+      const [houses, setHouses] = useState(0);
+      //      ↑ current value    ↑ setter   ↑ initial value
+      ```
+
+      - `useState(0)` returns a **pair**: `[currentValue, setter]`
+      - Calling the setter — `setHouses(houses + 1)` — updates the value and triggers a **re-render**
+      - When `houses` reaches **5**, the houses upgrade to a **hotel**!
+
+      ### Event Handlers
+
+      A button triggers `buyHouse` when clicked:
+
+      ```jsx
+      const buyHouse = () => {
+        setHouses(houses + 1);
+      };
+      // ...
+      <button onClick={buyHouse}>Buy House</button>
+      ```
+
+      `onClick={buyHouse}` passes the **function reference** — React calls it when the user clicks. Do **not** write `onClick={buyHouse()}` — that calls the function immediately during render.
+
+      ### Visual Feedback
+
+      The `renderBuildings(houses)` helper converts the house count into icons:
+
+      - 0 houses → "No buildings"
+      - 1–4 houses → house icons
+      - 5 houses → hotel icon (upgrade!)
+
+      ### Task
+
+      The property cards are static — clicking the button does nothing. Add a `[houses, setHouses]` state variable with `useState(0)`, implement the `buyHouse` handler that increments houses up to `MAX_HOUSES + 1`, and display the buildings with `renderBuildings(houses)`.
+
+    files:
+      - path: "step4/styles.js"
+        content: |
+          // Monopoly color groups
+          const colorGroups = {
+            "ucla-blue":  "#2774AE",
+            "ucla-gold":  "#FFD100",
+          };
+
+          const cardStyle = {
+            width: "200px",
+            border: "3px solid #333",
+            borderRadius: "12px",
+            overflow: "hidden",
+            margin: "8px",
+            fontFamily: "'Georgia', serif",
+            background: "#F5F0E1",
+            color: "#333",
+            boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
+          };
+
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "45px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
+          }
+
+          const bodyStyle = {
+            padding: "12px",
+            textAlign: "center",
+          };
+
+          const buttonStyle = {
+            padding: "6px 14px",
+            border: "2px solid #333",
+            borderRadius: "6px",
+            background: "#4CAF50",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            marginTop: "8px",
+            fontSize: "13px",
+          };
+
+          // Building icons
+          const HOUSE_EMOJI = "\uD83C\uDFE0";
+          const HOTEL_EMOJI = "\uD83C\uDFE8";
+        language: "javascript"
+
+      - path: "step4/App.jsx"
+        content: |
+          const { useState } = React;
+
+          const MAX_HOUSES = 4;
+
+          // Converts house count to visual building icons
+          function renderBuildings(houses) {
+            if (houses === 0) return "No buildings";
+            if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+            return HOUSE_EMOJI.repeat(houses);
+          }
+
+          // TODO: Add state: const [houses, setHouses] = useState(0);
+          // TODO: Add buyHouse handler that increments houses (up to MAX_HOUSES + 1)
+          // TODO: Use renderBuildings(houses) to display buildings
+          // TODO: Wire up onClick={buyHouse} on the button
+          const MonopolyProperty = ({ name, price, colorGroup }) => {
+            return (
+              <div style={cardStyle}>
+                <div style={getHeaderStyle(colorGroup)}></div>
+                <div style={bodyStyle}>
+                  <h4>{name}</h4>
+                  <p><strong>${price}</strong></p>
+                  <div style={{ fontSize: "24px", minHeight: "36px" }}>
+                    No buildings
+                  </div>
+                  <button style={buttonStyle}>
+                    Buy House ($50)
+                  </button>
+                </div>
+              </div>
+            );
+          };
+
+          function App() {
+            return (
+              <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step4/styles.js"
+      - "step4/App.jsx"
+
+    open_file: "step4/App.jsx"
+
+    solution:
+      files:
+        - path: "step4/App.jsx"
+          content: |
+            const { useState } = React;
+
+            const MAX_HOUSES = 4;
+
+            // Converts house count to visual building icons
+            function renderBuildings(houses) {
+              if (houses === 0) return "No buildings";
+              if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+              return HOUSE_EMOJI.repeat(houses);
+            }
+
+            const MonopolyProperty = ({ name, price, colorGroup }) => {
+              const [houses, setHouses] = useState(0);
+
+              const buyHouse = () => {
+                if (houses <= MAX_HOUSES) {
+                  setHouses(houses + 1);
+                }
+              };
+
+              const isMaxed = houses > MAX_HOUSES;
+
+              return (
+                <div style={cardStyle}>
+                  <div style={getHeaderStyle(colorGroup)}></div>
+                  <div style={bodyStyle}>
+                    <h4>{name}</h4>
+                    <p><strong>${price}</strong></p>
+                    <div style={{ fontSize: "24px", minHeight: "36px" }}>
+                      {renderBuildings(houses)}
+                    </div>
+                    <button
+                      onClick={buyHouse}
+                      disabled={isMaxed}
+                      style={{
+                        ...buttonStyle,
+                        ...(isMaxed ? { background: "#999", cursor: "default" } : {}),
+                      }}
+                    >
+                      {isMaxed ? "Fully Upgraded!" : "Buy House ($50)"}
+                    </button>
+                  </div>
+                </div>
+              );
+            };
+
+            function App() {
+              return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', padding: '16px' }}>
+                  <MonopolyProperty name="Royce Hall" price={1000} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Powell Library" price={500} colorGroup="ucla-blue" />
+                  <MonopolyProperty name="Kerckhoff Hall" price={60} colorGroup="ucla-gold" />
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        We added `const [houses, setHouses] = useState(0)` to track the number of houses. The `buyHouse` handler increments houses up to `MAX_HOUSES + 1` (5 total — triggering the hotel upgrade). `renderBuildings(houses)` in `App.jsx` converts the count into visual icons. The button is disabled once fully upgraded, and each card maintains its own independent state.
+
+    quiz:
+      title: "State & useState — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What does `const [houses, setHouses] = useState(0)` do?"
+          type: single
+          options:
+            - "Declares a CSS variable named `houses` with an initial display value of 0"
+            - "Creates a state variable `houses` initialized to 0, and a setter `setHouses` — calling `setHouses(n)` updates the value and triggers a re-render"
+            - "Declares two constants that persist between page reloads in localStorage"
+            - "Creates an HTML input element bound to a variable named `houses`"
+          correct_index: 1
+          explanation: |
+            `useState(0)` returns `[currentValue, setter]`. Destructuring binds them to `houses` and `setHouses`. When `setHouses(newValue)` is called, React re-runs the component with the new `houses` value, builds a new Virtual DOM, diffs it, and patches only what changed — like adding a new house icon.
+
+        - question: "A student writes `<button onClick={buyHouse()}>`. What is wrong?"
+          type: single
+          options:
+            - "Nothing — `buyHouse()` and `buyHouse` are equivalent when used in event handlers"
+            - "`buyHouse()` **calls** the function immediately during render. The correct syntax is `onClick={buyHouse}` to pass the function reference for React to call on click"
+            - "The `onClick` prop must receive a string — use `onClick='buyHouse'` instead"
+            - "Arrow functions cannot be used as React event handlers"
+          correct_index: 1
+          explanation: |
+            `onClick={buyHouse()}` evaluates `buyHouse()` during render — it runs immediately and passes its return value (probably `undefined`) to `onClick`. `onClick={buyHouse}` passes the function *reference* — React calls it only when the user actually clicks the button.
+
+        - question: |
+            Two `<MonopolyProperty>` cards are on the board. A player buys 3 houses on Royce Hall. What happens to Powell Library's houses?
+          type: single
+          options:
+            - "Powell Library also gets 3 houses — components share state by default"
+            - "Powell Library resets to 0 because React re-renders the entire tree"
+            - "Powell Library is unaffected — each component instance has its own independent state"
+            - "Powell Library throws an error because two components cannot use the same hook"
+          correct_index: 2
+          explanation: |
+            Each component instance has its own **isolated state**. The `houses` in Royce Hall's card has no connection to the `houses` in Powell Library's card. This isolation is a key benefit of component-based UI — each property card is self-contained and predictable.
+
+        - question: |
+            **Evaluate** this code:
+            ```jsx
+            function MonopolyProperty({ name }) {
+              let houses = 0;
+              const buyHouse = () => { houses = houses + 1; };
+              return (
+                <>
+                  <p>{name}: {houses} houses</p>
+                  <button onClick={buyHouse}>Buy</button>
+                </>
+              );
+            }
+            ```
+            A student says clicking "Buy" will add houses. Are they correct?
+          type: single
+          options:
+            - "Yes — `houses` changes when `buyHouse` is called, so the display will update"
+            - "No — modifying a plain `let` variable does not trigger a re-render. The display will always show 0 houses"
+            - "No — `let` cannot be used inside a React component; only `const` is allowed"
+            - "Yes — React automatically watches all variables inside component functions for changes"
+          correct_index: 1
+          explanation: |
+            React only re-renders when `useState`'s setter is called. A plain `let` variable is local to the function — incrementing it does *not* trigger a re-render, so the displayed house count never changes. And when React re-runs the function for any other reason, `houses` resets to 0. You must use `useState`.
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — Virtual DOM & Complete Monopoly Game (Slides 8–10)
+  # --------------------------------------------------------------------------
+  - title: "Virtual DOM — Complete UCLA Monopoly"
+    key: virtual-dom-spa-ssr
+    instructions: |
+      ## The Virtual DOM
+
+      React employs a **Virtual DOM** — a lightweight JavaScript representation of the actual DOM.
+
+      When data changes, React:
+      1. First updates the **Virtual DOM** (fast — it is just a JavaScript object tree)
+      2. **Calculates the differences** between the new and previous Virtual DOM
+      3. Applies **only the necessary changes** to the real DOM
+
+      This minimizes direct DOM manipulation and **improves performance**.
+
+      The game below puts everything together: JSX, `.map()`, components, props, and `useState`. When you buy a property or build a house, React only updates the specific card and wallet — not the entire page. That is the Virtual DOM in action.
+
+      ## Separation of Concerns
+
+      Notice how the code is organized into **three separate modules**:
+
+      | Module | Layer | Responsibility |
+      |---|---|---|
+      | `monopoly-game.js` | **Application** | Game data, rules, and state transitions — pure JavaScript, no React |
+      | `PropertyCard.jsx` | **Presentation** | Renders a single property card from props — pure UI, no game logic |
+      | `App.jsx` | **Wiring** | Connects game logic to UI via React state |
+
+      This is the **Separation of Concerns** principle: each module has a single, well-defined responsibility. The game logic knows nothing about React or the DOM. The UI component knows nothing about game rules. Benefits:
+      - **Testability** — `monopoly-game.js` can be unit-tested without rendering any UI
+      - **Reusability** — `PropertyCard` can display any property data, from any source
+      - **Maintainability** — changing a game rule doesn't require touching UI code, and vice versa
+
+      ## Single Page Application (SPA)
+
+      SPAs are structured as a **single HTML page** with no preloaded content. Content is loaded **dynamically via JavaScript**:
+
+      <pre><code class="language-uml-sequence">
+      @startuml
+      participant c: Client
+      participant s: Server
+
+      c -> s: GET '/'
+      s --> c: Single Page App (contains all pages)
+      c -> s: GET /current_news
+      s --> c: JSON data
+      c -> s: GET /about
+      s --> c: JSON data
+      @enduml
+      </code></pre>
+
+      React is the most common technology for building SPAs. Navigation happens client-side — no full page reloads.
+
+      ## Server-Side Rendering (SSR)
+
+      Frameworks like **Next.js** (which uses React) do SSR. Clients receive a fully rendered page from the server:
+
+      <pre><code class="language-uml-sequence">
+      @startuml
+      participant c: Client
+      participant s: Server
+
+      c -> s: GET '/'
+      s --> c: Main page (fully rendered)
+      c -> s: GET /current_news
+      s --> c: Current news page
+      @enduml
+      </code></pre>
+
+      | | SPA | SSR |
+      |---|---|---|
+      | **Server compute** | Low | High |
+      | **Initial load time** | Slow (JS must download first) | Fast (pre-rendered HTML) |
+      | **User interaction** | Fast (client-side) | Slower (server round-trip) |
+      | **SEO** | Harder | Better |
+
+      ### Task
+
+      The game is almost complete — you can buy properties and build houses. But the **Collect Rent** button doesn't work yet. Implement `collectRent` in `App.jsx` so it adds `totalRent` to the wallet using `setWallet`. Notice how the game logic in `monopoly-game.js` already provides `calculateTotalRent` — your `App.jsx` only needs to call `setWallet`.
+
+    files:
+      - path: "step5/styles.js"
+        content: |
+          // Color group palette — maps abstract group names to banner colors
+          const colorGroups = {
+            "ucla-blue":  "#2774AE",
+            "ucla-gold":  "#FFD100",
+          };
+
+          function getHeaderStyle(colorGroup) {
+            return {
+              height: "40px",
+              background: colorGroups[colorGroup] || "#ccc",
+            };
+          }
+
+          const cardStyle = {
+            width: "180px",
+            border: "3px solid #333",
+            borderRadius: "12px",
+            overflow: "hidden",
+            margin: "8px",
+            fontFamily: "'Georgia', serif",
+            background: "#F5F0E1",
+            color: "#333",
+            boxShadow: "2px 4px 10px rgba(0,0,0,0.2)",
+          };
+
+          const bodyStyle = {
+            padding: "10px",
+            textAlign: "center",
+            fontSize: "14px",
+          };
+
+          const buttonStyle = {
+            padding: "5px 12px",
+            border: "2px solid #333",
+            borderRadius: "6px",
+            background: "#4CAF50",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+            marginTop: "6px",
+            fontSize: "12px",
+          };
+
+          const HOUSE_EMOJI = "\uD83C\uDFE0";
+          const HOTEL_EMOJI = "\uD83C\uDFE8";
+          const HOUSE_COST = 50;
+
+          const walletBarStyle = {
+            display: "flex",
+            gap: "16px",
+            alignItems: "center",
+            background: "#F5F0E1",
+            color: "#333",
+            padding: "10px 16px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            border: "2px solid #333",
+            flexWrap: "wrap",
+            fontFamily: "'Georgia', serif",
+          };
+        language: "javascript"
+
+      - path: "step5/monopoly-game.js"
+        content: |
+          // ── Application Layer ─────────────────────────────────────
+          // Pure game logic — no React, no JSX, no DOM.
+          // This module can be unit-tested without rendering any UI.
+
+          const MAX_HOUSES = 4;
+
+          const INITIAL_PROPERTIES = [
+            { name: "Royce Hall",       price: 400, street: "Westwood Plaza", rent: 50 },
+            { name: "Powell Library",   price: 350, street: "Westwood Plaza", rent: 35 },
+            { name: "Kerckhoff Hall",   price: 200, street: "Bruin Walk",    rent: 25 },
+            { name: "Janss Steps",      price: 150, street: "Bruin Walk",    rent: 20 },
+            { name: "Bruin Bear",       price: 100, street: "Westwood Plaza", rent: 10 },
+            { name: "Sculpture Garden", price: 60,  street: "Bruin Walk",    rent: 6 },
+          ];
+
+          // Create the initial game state from the property definitions
+          function createInitialGameState() {
+            return INITIAL_PROPERTIES.map(p => ({ ...p, owned: false, houses: 0 }));
+          }
+
+          // Game action: buy a property.
+          // Returns updated { properties, wallet } or null if invalid.
+          function handleBuy(properties, wallet, index) {
+            const prop = properties[index];
+            if (!prop.owned && wallet >= prop.price) {
+              const updated = [...properties];
+              updated[index] = { ...prop, owned: true };
+              return { properties: updated, wallet: wallet - prop.price };
+            }
+            return null;
+          }
+
+          // Game action: build a house on an owned property.
+          // Returns updated { properties, wallet } or null if invalid.
+          function handleBuildHouse(properties, wallet, index) {
+            const prop = properties[index];
+            if (prop.owned && prop.houses <= MAX_HOUSES && wallet >= HOUSE_COST) {
+              const updated = [...properties];
+              updated[index] = { ...prop, houses: prop.houses + 1 };
+              return { properties: updated, wallet: wallet - HOUSE_COST };
+            }
+            return null;
+          }
+
+          // Calculate current rent for a property (base rent + house bonus)
+          function currentRent(property) {
+            return property.rent + property.houses * 10;
+          }
+
+          // Is the property fully upgraded (hotel)?
+          function isFullyUpgraded(property) {
+            return property.houses > MAX_HOUSES;
+          }
+
+          // Can the player afford a given cost?
+          function canAfford(wallet, cost) {
+            return wallet >= cost;
+          }
+
+          // Count how many properties the player owns
+          function ownedCount(properties) {
+            return properties.filter(p => p.owned).length;
+          }
+
+          // Calculate total rent from all owned properties
+          function calculateTotalRent(properties) {
+            return properties
+              .filter(p => p.owned)
+              .reduce((sum, p) => sum + currentRent(p), 0);
+          }
+        language: "javascript"
+
+      - path: "step5/PropertyCard.jsx"
+        content: |
+          // ── Presentation Layer ────────────────────────────────────
+          // Pure UI component — renders a property card from props.
+          // Contains no game logic; all actions come via callbacks.
+
+          // Maps street names (game data) to color groups (style data)
+          const streetToColorGroup = {
+            "Westwood Plaza": "ucla-blue",
+            "Bruin Walk":     "ucla-gold",
+          };
+
+          // Converts house count to visual building icons
+          function renderBuildings(houses) {
+            if (houses === 0) return "No buildings";
+            if (houses > MAX_HOUSES) return HOTEL_EMOJI;
+            return HOUSE_EMOJI.repeat(houses);
+          }
+
+          function PropertyCard({ property, wallet, onBuy, onBuildHouse }) {
+            const { name, price, street, owned, houses } = property;
+            const isMaxed = isFullyUpgraded(property);
+            const rentNow = currentRent(property);
+            const canBuy = canAfford(wallet, price);
+            const canBuild = !isMaxed && canAfford(wallet, HOUSE_COST);
+
+            return (
+              <div style={cardStyle}>
+                <div style={getHeaderStyle(streetToColorGroup[street])}></div>
+                <div style={bodyStyle}>
+                  <h4 style={{ margin: "4px 0" }}>{name}</h4>
+                  <p style={{ margin: "2px 0" }}><strong>${price}</strong></p>
+                  {owned ? (
+                    <>
+                      <p style={{ margin: "2px 0", fontSize: "11px", color: "#666" }}>
+                        Rent: ${rentNow}
+                      </p>
+                      <div style={{ fontSize: "20px", minHeight: "28px" }}>
+                        {renderBuildings(houses)}
+                      </div>
+                      <button
+                        onClick={onBuildHouse}
+                        disabled={!canBuild}
+                        style={{
+                          ...buttonStyle,
+                          ...(!canBuild
+                            ? { background: "#999", cursor: "default" } : {}),
+                        }}
+                      >
+                        {isMaxed ? "Fully Upgraded!" : "Build House ($" + HOUSE_COST + ")"}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={onBuy}
+                      disabled={!canBuy}
+                      style={{
+                        ...buttonStyle,
+                        background: canBuy ? "#2774AE" : "#999",
+                      }}
+                    >
+                      Buy (${price})
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          }
+        language: "javascript"
+
+      - path: "step5/App.jsx"
+        content: |
+          const { useState } = React;
+
+          // App wires the application layer (monopoly-game.js)
+          // to the presentation layer (PropertyCard.jsx) via React state.
+
+          function App() {
+            const [wallet, setWallet] = useState(1500);
+            const [properties, setProperties] = useState(createInitialGameState());
+
+            // Apply a game action result to React state
+            const applyAction = (result) => {
+              if (result) {
+                setWallet(result.wallet);
+                setProperties(result.properties);
+              }
+            };
+
+            const totalRent = calculateTotalRent(properties);
+
+            const collectRent = () => {
+              // TODO: Add totalRent to the wallet using setWallet
+            };
+
+            return (
+              <div style={{ padding: "16px", fontFamily: "'Georgia', serif" }}>
+                <h2 style={{ marginBottom: "4px" }}>UCLA Monopoly</h2>
+                <div style={walletBarStyle}>
+                  <span><strong>Wallet:</strong> ${wallet}</span>
+                  <span><strong>Properties:</strong> {ownedCount(properties)}/{properties.length}</span>
+                  <span><strong>Rent/turn:</strong> ${totalRent}</span>
+                  <button
+                    onClick={collectRent}
+                    disabled={totalRent === 0}
+                    style={{
+                      ...buttonStyle,
+                      background: totalRent > 0 ? "#2774AE" : "#999",
+                      marginTop: 0,
+                    }}
+                  >
+                    Collect Rent
+                  </button>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap" }}>
+                  {properties.map((prop, index) => (
+                    <PropertyCard
+                      key={index}
+                      property={prop}
+                      wallet={wallet}
+                      onBuy={() => applyAction(handleBuy(properties, wallet, index))}
+                      onBuildHouse={() => applyAction(handleBuildHouse(properties, wallet, index))}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "javascript"
+
+    react_files:
+      - "step5/styles.js"
+      - "step5/monopoly-game.js"
+      - "step5/PropertyCard.jsx"
+      - "step5/App.jsx"
+
+    open_file: "step5/App.jsx"
+
+    solution:
+      files:
+        - path: "step5/App.jsx"
+          content: |
+            const { useState } = React;
+
+            // App wires the application layer (monopoly-game.js)
+            // to the presentation layer (PropertyCard.jsx) via React state.
+
+            function App() {
+              const [wallet, setWallet] = useState(1500);
+              const [properties, setProperties] = useState(createInitialGameState());
+
+              // Apply a game action result to React state
+              const applyAction = (result) => {
+                if (result) {
+                  setWallet(result.wallet);
+                  setProperties(result.properties);
+                }
+              };
+
+              const totalRent = calculateTotalRent(properties);
+
+              const collectRent = () => {
+                if (totalRent > 0) setWallet(wallet + totalRent);
+              };
+
+              return (
+                <div style={{ padding: "16px", fontFamily: "'Georgia', serif" }}>
+                  <h2 style={{ marginBottom: "4px" }}>UCLA Monopoly</h2>
+                  <div style={walletBarStyle}>
+                    <span><strong>Wallet:</strong> ${wallet}</span>
+                    <span><strong>Properties:</strong> {ownedCount(properties)}/{properties.length}</span>
+                    <span><strong>Rent/turn:</strong> ${totalRent}</span>
+                    <button
+                      onClick={collectRent}
+                      disabled={totalRent === 0}
+                      style={{
+                        ...buttonStyle,
+                        background: totalRent > 0 ? "#2774AE" : "#999",
+                        marginTop: 0,
+                      }}
+                    >
+                      Collect Rent
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap" }}>
+                    {properties.map((prop, index) => (
+                      <PropertyCard
+                        key={index}
+                        property={prop}
+                        wallet={wallet}
+                        onBuy={() => applyAction(handleBuy(properties, wallet, index))}
+                        onBuildHouse={() => applyAction(handleBuildHouse(properties, wallet, index))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(<App />);
+          language: "javascript"
+      explanation: |
+        The fix is one line: `if (totalRent > 0) setWallet(wallet + totalRent);`. Notice how `App.jsx` doesn't compute rent itself — it calls `calculateTotalRent()` from `monopoly-game.js` (application layer) and passes the result to `setWallet` (React state). The presentation layer (`PropertyCard`) is completely untouched. This is separation of concerns in action: changing game logic doesn't require editing UI code.
+
+    quiz:
+      title: "Virtual DOM, SPA & SSR — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - question: "What is the Virtual DOM and why does React use it?"
+          type: single
+          options:
+            - "A backup copy of the DOM stored on the server to recover from browser crashes"
+            - "A lightweight JavaScript object tree that mirrors the real DOM; React diffs the new vs. previous version to find the minimal set of real DOM changes needed"
+            - "A browser API that speeds up DOM updates by batching them"
+            - "A CSS-in-JS solution that generates stylesheets without touching the DOM"
+          correct_index: 1
+          explanation: |
+            The Virtual DOM is a plain JavaScript object tree. When state changes, React builds a *new* Virtual DOM, diffs it against the *previous* one (reconciliation), and applies only the changed parts to the real DOM. Real DOM manipulation is slow; diffing JavaScript objects is fast. This lets React optimize updates automatically without developers manually tracking what changed.
+
+        - question: "What is the key difference between a Single Page Application (SPA) and Server-Side Rendering (SSR)?"
+          type: single
+          options:
+            - "SPAs use React; SSR uses only plain HTML — they are incompatible technologies"
+            - "In SPAs, all content is loaded by JavaScript on the client after a single HTML shell is delivered. In SSR, the server renders fully-formed HTML for each page request"
+            - "SPAs are faster in all scenarios; SSR is only used for legacy systems"
+            - "SSR requires a database connection; SPAs work without any backend"
+          correct_index: 1
+          explanation: |
+            SPAs ship a minimal HTML shell plus a JavaScript bundle; the browser runs the JS to build and update the UI. Navigation happens client-side — no full page reload. SSR pre-renders HTML on the server for each request; the browser gets ready-to-display HTML immediately. SPAs excel at interaction speed after load; SSR excels at initial load time and SEO. Frameworks like Next.js mix both per-route.
+
+        - question: "Which of the following is an advantage of SSR over SPA for a public news website?"
+          type: single
+          options:
+            - "SSR requires less server compute because the client does all rendering"
+            - "SSR pages load faster initially and are better indexed by search engines because the HTML content is pre-rendered on the server"
+            - "SSR eliminates the need for a backend API entirely"
+            - "SSR gives faster user interaction because all navigation happens client-side"
+          correct_index: 1
+          explanation: |
+            For a public news site, SEO and fast initial load are critical. SSR pre-renders HTML with article content already present — search engine crawlers can index it immediately, and users see content before JavaScript loads. The trade-off is higher server compute. SPAs excel at *interaction speed after the initial load*, not initial load or SEO. This is why Next.js (SSR-capable) is popular for content-heavy sites.
+
+        - question: |
+            In the UCLA Monopoly game, you click "Collect Rent" which calls `setWallet(wallet + totalRent)`. What does React update in the real DOM?
+          type: single
+          options:
+            - "The entire page re-renders from scratch — React replaces all DOM nodes"
+            - "Only the wallet display updates — React diffs the Virtual DOM and patches only the changed text node"
+            - "Nothing updates — `setWallet` only changes a JavaScript variable without affecting the DOM"
+            - "All six property cards re-render because they are children of the same parent component"
+          correct_index: 1
+          explanation: |
+            When `setWallet` is called, React re-runs the `App` function with the new wallet value. It builds a new Virtual DOM tree, compares it with the previous one, and finds that only the wallet text changed. React patches just that one text node in the real DOM — the property cards and everything else remain untouched. This selective update is the core benefit of the Virtual DOM.
+
+        - question: |
+            The UCLA Monopoly code separates `monopoly-game.js` (application layer) from `PropertyCard.jsx` (presentation layer). What is the main benefit of this separation?
+          type: single
+          options:
+            - "It makes the code run faster because the browser can load files in parallel"
+            - "The game logic can be unit-tested without rendering any UI, and UI changes don't require touching game rules"
+            - "React requires all components to be in separate files — it will not compile otherwise"
+            - "It reduces the total number of lines of code by eliminating duplication"
+          correct_index: 1
+          explanation: |
+            Separation of concerns means each module has one job. `monopoly-game.js` contains pure functions — you can test `gameBuyProperty()` with plain assertions, no DOM needed. `PropertyCard.jsx` is a pure UI component — it renders whatever data it receives. If you change the rent formula, only `monopoly-game.js` changes. If you redesign the card layout, only `PropertyCard.jsx` changes. Neither module needs to know about the other's internals.

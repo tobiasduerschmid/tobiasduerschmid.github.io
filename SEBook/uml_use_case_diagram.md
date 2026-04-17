@@ -35,7 +35,11 @@ An **actor** represents a role that a user takes when interacting with the syste
 Key points about actors:
 - An actor is a **role**, not a specific person. One person can play multiple roles (e.g., a university professor might be both an "Instructor" and a "Student" in a course system).
 - A single user may be represented by **multiple actors** if they interact with different parts of the system in different capacities.
-- Actors are always **external** to the system---they interact with it but are not part of it.
+- Actors are always **external** to the system — they interact with it but are not part of it.
+
+> **⚠ Roles, not job titles (Ambler G65).** Name actors for the *role* they play in this system, not for their position in a company. *"Customer"*, *"Instructor"*, *"Support Agent"* — good. *"Senior VP of Sales"*, *"Junior CSR"* — bad. Job titles change when HR reorganises; roles describe what the system cares about. The same rule applies to our auto-memory guidance: **user-story actors must always be real users, never "As a system."**
+
+> **Non-human actors exist.** An actor can be an *external system* (a payment gateway, an email provider) or even *Time itself* — Ambler and Seidl et al. both recommend introducing a *Time* actor for use cases triggered on a schedule (payroll, monthly statements, nightly batch jobs). The actor convention keeps the diagram honest: *something* initiates every use case.
 
 ### 2.2 Use Cases
 
@@ -139,6 +143,8 @@ Reading this diagram: Whenever a customer **Purchases an Item**, they **always**
 ### 4.2 Extension (`<<extend>>`)
 
 A use case extension encapsulates a **distinct flow of events** that is **not** part of the normal or basic flow but **may optionally** extend an existing use case. Think of it as an optional, exceptional, or conditional behavior.
+
+**Extension points (optional).** A base use case can declare specific named *points* inside its flow where extensions may plug in — the `<<extend>>` relationship can name which point it attaches to, and an optional `{condition}` note on a dashed comment line states when the extension fires. Ambler (G83) advises skipping extension points on diagrams unless the flow is genuinely ambiguous — the detail usually fits better inside the textual use case description than on the picture.
 
 <div class="uml-class-diagram-container" data-uml-type="usecase" data-uml-spec='@startuml
 actor Customer
@@ -347,6 +353,16 @@ UC6 ..> UC4 : <<extend>>
 4. **`Authenticate` has no actor association:** `Authenticate` is never triggered directly by an actor — it is always triggered by another use case (`<<include>>`). This is correct — actors initiate top-level use cases, not shared sub-behaviors.
 
 ---
+
+## ⚠ Common Use Case Diagram Mistakes
+
+| # | Mistake | Fix |
+|---|---|---|
+| 1 | **`<<include>>` and `<<extend>>` arrows pointing the wrong way** | Remember: `<<include>>` points *from base → included*; `<<extend>>` points *from extension → base*. They are opposite directions. |
+| 2 | **Actors named with job titles instead of roles** (*"VP of Sales"*) | Name the *role* (*"Sales Rep"*). Roles describe what the system cares about; titles change with HR. |
+| 3 | **Missing actor on use cases** — a use case with no initiator | Every top-level use case must be triggered *by someone* (actor, external system, or `Time`). If nobody triggers it, why is it in the diagram? |
+| 4 | **Functional decomposition via `<<include>>`** — breaking every internal step into its own use case | Use cases are *user-visible goals*, not functions. If your diagram contains "validate input" or "query database" as use cases, you have slipped into design. |
+| 5 | **Modeling the GUI** — use cases like *"Click Save button"* or *"Open menu"* | Use cases describe *what* the user wants to achieve, not *how* they click through the UI. "Save draft" is a use case; "click the floppy-disk icon" is not. |
 
 ## 7. Active Recall Challenge
 

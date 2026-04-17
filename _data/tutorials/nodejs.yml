@@ -1068,8 +1068,6 @@ steps:
 
       > **Learning objective:** After this step you will be able to **explain** how Express uses callbacks to handle HTTP requests and **create** a basic Express GET route.
 
-      > **Quick review before you start:** Spend 2–3 minutes with the [Node.js Syntax Flashcards](/SEBook/tools/nodejs-flashcards) to refresh arrow functions, `===`, and template literals. This retrieval practice strengthens the skills you will use in every Express route.
-
       You have been building callback skills for two steps. Now you will see why: **an Express route handler is a callback**. The entire Express framework is built on the pattern you already know.
 
       ### What is Express?
@@ -2934,8 +2932,6 @@ steps:
       ### Strengthen Your Memory
 
       > **Tomorrow, take the [Node.js Concepts Quiz](/SEBook/tools/nodejs-quiz).** It covers async reasoning, type traps, and technique selection across all 10 steps. Taking it after a gap — not immediately — is deliberate: the spacing effect means your brain consolidates knowledge between sessions, making retrieval stronger and more durable.
-
-      > **Keep the [Node.js Syntax Flashcards](/SEBook/tools/nodejs-flashcards) handy.** A few minutes of flashcard practice before your next coding session reinforces the syntax patterns you learned here.
 
     files:
       - path: "done.js"

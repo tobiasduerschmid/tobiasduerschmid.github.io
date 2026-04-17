@@ -1,67 +1,739 @@
 title: "UML Class Diagrams in Python"
-description: "Learn UML class diagrams using Python with type annotations."
+description: "Learn to read and create UML class diagrams by writing Python code that matches target diagrams. Starting from single classes and building to full system architectures, you will discover how UML makes invisible design decisions visible."
 
 backend: pyodide
 uml_diagram: true
 uml_position: right
-require_tests: false
+uml_default_view: true
+uml_class_layout: landscape
+require_tests: true
+autosave_type: files
 
 setup_commands:
-  - "import sys; sys.path.insert(0, '/tutorial')"
+  - "import sys; sys.path.insert(0, '/tutorial'); import abc"
 
 steps:
 
-  - title: "Placeholder Step 1"
+  # --------------------------------------------------------------------------
+  # STEP 1 — "Your First Class Diagram"
+  # Pedagogy:
+  #   Worked Example — walk through the mapping from UML to Python.
+  #   Component Skill Isolation (CLT) — only the class box, nothing else.
+  #   Bloom's level — Remember (identify compartments), Apply (write class).
+  # --------------------------------------------------------------------------
+  - title: "Your First Class Diagram"
+    uml_hide:
+      - visibility
     instructions: |
-      ## Step 1: Placeholder
+      ## Welcome to UML Class Diagrams
 
-      This is placeholder content. Real tutorial steps will go here.
+      > **Learning objective:** After this step you will be able to **identify** the three compartments of a UML class box and **write** a Python class that matches a given diagram.
 
-      The **UML Diagram** tab at the bottom right shows the class diagram
-      for the current code. Click it to see the diagram!
+      ### What Is a UML Class Diagram?
+
+      A UML class diagram is a visual blueprint of your software's structure. It shows what classes exist, what data they hold, what behavior they provide, and how they relate to each other. Think of it as a floor plan — you can understand the building without inspecting every brick.
+
+      ### The Three Compartments
+
+      Every class in UML is drawn as a box with three sections:
+
+      | Compartment | Contains | Python Equivalent |
+      |---|---|---|
+      | **Top** | Class name | `class ClassName:` |
+      | **Middle** | Attributes (data) | Instance variables in `__init__` |
+      | **Bottom** | Methods (behavior) | Method definitions |
+
+      ### Your Target Diagram
+
+      Write Python code until the live diagram below matches this target:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Student {
+        name
+        student_id
+        __init__(name, student_id)
+        get_info()
+      }
+      @enduml'></div>
+
+      ### Reading the Diagram
+
+      - **Top:** The class name is `Student` → `class Student:`
+      - **Middle:** Two attributes `name` and `student_id` → instance variables set in `__init__`
+      - **Bottom:** One method `get_info()` → a method definition
+
+      That is all there is to it — the diagram is a visual summary of the class.
+
+      > **Note:** You may see symbols like `+`, `-`, and types like `: str` in other UML diagrams. We will cover those in the next steps. For now, focus on the three compartments.
+
+      ### Your Task
+
+      Open `student.py` and create a `Student` class that:
+
+      1. Accepts `name` and `student_id` in `__init__`
+      2. Stores both as instance attributes (`self.name = name`)
+      3. Has a `get_info()` method returning `"name (student_id)"` — for example `"Alice (S001)"`
+
+      Watch the **UML Diagram** panel — it updates live as you type!
 
     uml_files:
-      - main.py
+      - student.py
 
     files:
-      - path: main.py
+      - path: student.py
         content: |
-          # Placeholder — real code goes here
-          class Animal:
-              def __init__(self, name: str) -> None:
-                  self.name: str = name
-
-              def speak(self) -> str:
-                  return "..."
-
-          class Dog(Animal):
-              def __init__(self, name: str, breed: str) -> None:
-                  super().__init__(name)
-                  self.breed: str = breed
-
-              def speak(self) -> str:
-                  return "Woof!"
-
-          if __name__ == "__main__":
-              dog = Dog("Rex", "Labrador")
-              print(dog.speak())
+          # Your task: create a Student class that matches the target diagram.
+          #
+          # The class needs:
+          #   - An __init__ that accepts name and student_id
+          #   - Both stored as instance attributes
+          #   - A get_info() method returning "name (student_id)"
         language: python
 
-    open_file: main.py
+    open_file: student.py
 
-  - title: "Placeholder Step 2"
+    solution:
+      files:
+        - path: student.py
+          content: |
+            class Student:
+                def __init__(self, name, student_id):
+                    self.name = name
+                    self.student_id = student_id
+
+                def get_info(self):
+                    return f"{self.name} ({self.student_id})"
+
+
+            if __name__ == "__main__":
+                s = Student("Alice", "S001")
+                print(s.get_info())
+          language: python
+      explanation: |
+        Each section of the UML box maps directly to Python:
+
+        - **Top (class name):** `Student` → `class Student:`
+        - **Middle (attributes):** `name`, `student_id` → `self.name = name`, `self.student_id = student_id`
+        - **Bottom (methods):** `get_info()` → `def get_info(self):`
+
+        The diagram is simply a visual summary of the class structure. In the next steps we will add visibility markers (who can access what) and type annotations (what kind of data flows where).
+
+    tests:
+      - description: "Student class exists"
+        command: |
+          source = open('/tutorial/student.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'Student' in ns, \
+              "Define a class called Student"
+        hints:
+          - text: "Start with `class Student:` and add an `__init__` method."
+            condition: "default"
+
+      - description: "Student has name and student_id attributes"
+        command: |
+          source = open('/tutorial/student.py').read()
+          ns = {}
+          exec(source, ns)
+          s = ns['Student']('Alice', 'S001')
+          assert hasattr(s, 'name'), \
+              "Student needs a 'name' attribute — use self.name = name in __init__"
+          assert s.name == 'Alice', \
+              "self.name should store the name passed to __init__"
+          assert hasattr(s, 'student_id'), \
+              "Student needs a 'student_id' attribute — use self.student_id = student_id"
+          assert s.student_id == 'S001', \
+              "self.student_id should store the student_id passed to __init__"
+        hints:
+          - text: "In `__init__`, store both parameters as instance attributes: `self.name = name` and `self.student_id = student_id`"
+            condition: "default"
+
+      - description: "get_info() returns the correct format"
+        command: |
+          source = open('/tutorial/student.py').read()
+          ns = {}
+          exec(source, ns)
+          s = ns['Student']('Alice', 'S001')
+          assert hasattr(s, 'get_info'), \
+              "Student needs a get_info() method"
+          result = s.get_info()
+          assert result == 'Alice (S001)', \
+              f"get_info() should return 'Alice (S001)' but got '{result}'"
+        hints:
+          - text: "Use an f-string: `return f\"{self.name} ({self.student_id})\"`"
+            condition: "default"
+
+    quiz:
+      title: "The Class Box"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            What does the **middle** compartment of a UML class box show?
+          type: single
+          options:
+            - "The class name"
+            - "The attributes (data) of the class"
+            - "The methods (behavior) of the class"
+            - "The relationships to other classes"
+          correct_index: 1
+          explanation: |
+            The three compartments are: **top** = class name, **middle** = attributes, **bottom** = methods. Relationships are shown as arrows *between* class boxes, not inside them.
+
+        - question: |
+            A Python class has `self.x = 10` in `__init__` and a `def calculate(self)` method. How many items appear in the UML class box?
+          type: single
+          options:
+            - "1 — just the class name"
+            - "2 — the class name and the method"
+            - "3 — the class name, one attribute, and one method"
+            - "4 — the class name, self, the attribute, and the method"
+          correct_index: 2
+          explanation: |
+            The UML box has three compartments: the class name at the top, `x` in the attributes section (middle), and `calculate()` in the methods section (bottom). `self` is not shown in UML — it is implicit.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 2 — "Visibility: Who Can See What?"
+  # Pedagogy:
+  #   Constructivism — bridge Python _ and __ conventions to UML symbols.
+  #   Negative Transfer — Python devs think visibility doesn't matter;
+  #     UML forces explicit design decisions about encapsulation.
+  #   Bloom's level — Understand (explain mapping), Apply (rename attrs).
+  # --------------------------------------------------------------------------
+  - title: "Visibility: Who Can See What?"
     instructions: |
-      ## Step 2: Placeholder
+      ## Visibility Markers
 
-      More placeholder content. Real tutorial content will replace this.
+      > **Learning objective:** After this step you will be able to **map** UML visibility symbols to Python naming conventions and **explain** why encapsulation is a design decision.
+
+      ### The Four Visibility Levels
+
+      UML uses symbols to show *who* can access each attribute or method:
+
+      | UML Symbol | Meaning | Python Convention |
+      |---|---|---|
+      | `+` | **Public** — accessible to all | `self.name` (no prefix) |
+      | `-` | **Private** — only this class | `self.__name` (double underscore) |
+      | `#` | **Protected** — this class and subclasses | `self._name` (single underscore) |
+      | `~` | **Package** — same module | (no standard Python equivalent) |
+
+      ### Python Naming Conventions in Detail
+
+      Unlike C++ or Java, Python does not have `private` or `protected` keywords. Instead, it uses **naming conventions** — prefixes that signal intent to other developers:
+
+      **No prefix → Public (`+`)**
+      ```python
+      self.name = "Alice"       # Anyone can read and write this
+      ```
+      This is the default. Any code anywhere can access `obj.name`.
+
+      **Single underscore `_` → Protected (`#`)**
+      ```python
+      self._internal_cache = []  # "Hey, this is internal — use at your own risk"
+      ```
+      The underscore is a **social contract**: it says "this is an implementation detail, not part of the public interface." Python does not prevent access — it is a polite warning. Subclasses are expected to use `_` attributes, but external code should not.
+
+      **Double underscore `__` → Private (`-`)**
+      ```python
+      self.__password = "secret"  # Python actively discourages outside access
+      ```
+      Python applies **name mangling**: it renames `__password` internally to `_ClassName__password`. This makes accidental access from outside the class difficult (though not impossible). It is the closest Python gets to true private access.
+
+      ```python
+      account = BankAccount(100)
+      account.__balance         # AttributeError! (mangled name)
+      account._BankAccount__balance  # Works, but you should never do this
+      ```
+
+      ### Why This Matters
+
+      Python does not *enforce* visibility — but UML forces you to **decide** what *should* be accessible. This is a design decision, not a language feature. When you model a class in UML, you are making a deliberate architectural choice about which parts are the public interface and which are internal implementation details that could change without warning.
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class BankAccount {
+        - __balance: float
+        + __init__(initial_balance: float): None
+        + deposit(amount: float): None
+        + withdraw(amount: float): bool
+        + get_balance(): float
+        # _validate_amount(amount: float): bool
+      }
+      @enduml'></div>
+
+      ### Your Task
+
+      The starter code has a `BankAccount` where everything is public. Refactor it:
+
+      1. Make `balance` **private** → rename to `__balance` (matches `-` in UML)
+      2. Make `validate_amount` **protected** → rename to `_validate_amount` (matches `#`)
+      3. Keep `deposit`, `withdraw`, and `get_balance` **public** (they stay as-is)
+      4. Update all internal references to use the new names
+
+      Watch the UML diagram update — the visibility markers should change from `+` to `-` and `#`.
 
     uml_files:
-      - main.py
+      - bank_account.py
 
     files:
-      - path: main.py
+      - path: bank_account.py
         content: |
-          # Placeholder — real code goes here
+          class BankAccount:
+              """A bank account — but everything is public!
+              Your job: apply proper visibility using Python naming conventions."""
+
+              def __init__(self, initial_balance: float) -> None:
+                  self.balance: float = initial_balance  # Should be private (-)
+
+              def deposit(self, amount: float) -> None:
+                  if self.validate_amount(amount):       # Update reference
+                      self.balance += amount              # Update reference
+
+              def withdraw(self, amount: float) -> bool:
+                  if self.validate_amount(amount) and self.balance >= amount:
+                      self.balance -= amount              # Update reference
+                      return True
+                  return False
+
+              def get_balance(self) -> float:
+                  return self.balance                     # Update reference
+
+              def validate_amount(self, amount: float) -> bool:  # Should be protected (#)
+                  return amount > 0
+
+
+          if __name__ == "__main__":
+              account = BankAccount(100.0)
+              account.deposit(50.0)
+              print(f"Balance: ${account.get_balance():.2f}")
+              account.withdraw(30.0)
+              print(f"Balance: ${account.get_balance():.2f}")
+        language: python
+
+    open_file: bank_account.py
+
+    solution:
+      files:
+        - path: bank_account.py
+          content: |
+            class BankAccount:
+                """A bank account with proper visibility."""
+
+                def __init__(self, initial_balance: float) -> None:
+                    self.__balance: float = initial_balance
+
+                def deposit(self, amount: float) -> None:
+                    if self._validate_amount(amount):
+                        self.__balance += amount
+
+                def withdraw(self, amount: float) -> bool:
+                    if self._validate_amount(amount) and self.__balance >= amount:
+                        self.__balance -= amount
+                        return True
+                    return False
+
+                def get_balance(self) -> float:
+                    return self.__balance
+
+                def _validate_amount(self, amount: float) -> bool:
+                    return amount > 0
+
+
+            if __name__ == "__main__":
+                account = BankAccount(100.0)
+                account.deposit(50.0)
+                print(f"Balance: ${account.get_balance():.2f}")
+                account.withdraw(30.0)
+                print(f"Balance: ${account.get_balance():.2f}")
+          language: python
+      explanation: |
+        The renaming maps directly to UML visibility:
+
+        - `self.balance` → `self.__balance` makes the UML show `-` (private)
+        - `self.validate_amount` → `self._validate_amount` makes the UML show `#` (protected)
+        - Public methods keep their names → UML shows `+`
+
+        **Key insight:** Python lets you access *anything*, but that does not mean you *should*. The UML diagram documents your **design intent** — which parts are the public interface and which are internal implementation details.
+
+    tests:
+      - description: "balance is private (uses __ prefix)"
+        command: |
+          source = open('/tutorial/bank_account.py').read()
+          ns = {}
+          exec(source, ns)
+          account = ns['BankAccount'](100.0)
+          assert hasattr(account, '_BankAccount__balance'), \
+              "Rename self.balance to self.__balance to make it private"
+          assert not hasattr(account, 'balance'), \
+              "Remove the public self.balance — use self.__balance instead"
+        hints:
+          - text: "Replace every `self.balance` with `self.__balance` — the double underscore triggers Python name mangling, which maps to UML private (`-`)."
+            condition: "default"
+
+      - description: "validate_amount is protected (uses _ prefix)"
+        command: |
+          source = open('/tutorial/bank_account.py').read()
+          ns = {}
+          exec(source, ns)
+          account = ns['BankAccount'](100.0)
+          assert hasattr(account, '_validate_amount'), \
+              "Rename validate_amount to _validate_amount (single underscore = protected)"
+        hints:
+          - text: "Rename `def validate_amount` to `def _validate_amount` and update all calls to it."
+            condition: "default"
+
+      - description: "Public methods still work correctly"
+        command: |
+          source = open('/tutorial/bank_account.py').read()
+          ns = {}
+          exec(source, ns)
+          account = ns['BankAccount'](100.0)
+          account.deposit(50.0)
+          assert account.get_balance() == 150.0, \
+              f"After depositing 50 into 100, balance should be 150 but got {account.get_balance()}"
+          result = account.withdraw(200.0)
+          assert result == False, \
+              "Withdrawing more than the balance should return False"
+          assert account.get_balance() == 150.0, \
+              "Balance should not change after a failed withdrawal"
+        hints:
+          - text: "Make sure you updated ALL references to `self.balance` and `self.validate_amount` inside the methods too — not just the definitions."
+            condition: "default"
+
+    quiz:
+      title: "Visibility Notation"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            In UML, what does the `-` symbol before an attribute mean?
+          type: single
+          options:
+            - "The attribute is public"
+            - "The attribute is private"
+            - "The attribute is static"
+            - "The attribute is optional"
+          correct_index: 1
+          explanation: |
+            `-` means **private** — only accessible within the class itself. In Python, this maps to the double-underscore prefix (`__`), which triggers name mangling.
+
+        - question: |
+            A Python method named `_calculate_tax` would appear in UML with which visibility marker?
+          type: single
+          options:
+            - "`+` (public)"
+            - "`-` (private)"
+            - "`#` (protected)"
+            - "`~` (package)"
+          correct_index: 2
+          explanation: |
+            A single leading underscore (`_`) is the Python convention for **protected** members, which maps to `#` in UML. Double underscores (`__`) map to private (`-`).
+
+
+  # --------------------------------------------------------------------------
+  # STEP 3 — "Types Matter: Explicit Contracts"
+  # Pedagogy:
+  #   Constructivism — bridge duck typing to explicit UML types.
+  #   Desirable Difficulty (Generation) — students must infer types.
+  #   Bloom's level — Understand (why types matter), Apply (add hints).
+  # --------------------------------------------------------------------------
+  - title: "Types Matter: Explicit Contracts"
+    instructions: |
+      ## Explicit Types in UML
+
+      > **Learning objective:** After this step you will be able to **add** Python type hints that make UML diagrams show complete type information and **explain** why explicit types improve software design.
+
+      ### What Are Type Hints?
+
+      You may not have seen Python **type hints** before. They are optional annotations that tell both humans and tools what type a variable or return value should be:
+
+      ```python
+      # Without type hints (what you are used to):
+      def __init__(self, name, price):
+          self.name = name
+
+      # With type hints:
+      def __init__(self, name: str, price: float) -> None:
+          self.name: str = name
+      ```
+
+      | Syntax | Meaning | Example |
+      |---|---|---|
+      | `param: Type` | Parameter has this type | `name: str` |
+      | `self.x: Type = value` | Attribute has this type | `self.name: str = name` |
+      | `-> Type` | Method returns this type | `def get_price(self) -> float:` |
+      | `-> None` | Method returns nothing | `def __init__(self, ...) -> None:` |
+
+      Type hints do **not** change how Python runs your code — Python ignores them at runtime. But they serve two critical purposes:
+
+      1. **UML diagrams** — the live diagram renderer reads type hints to show types. Without them, the diagram only shows names.
+      2. **Communication** — type hints document the contracts of your class for other developers.
+
+      > **Advanced:** In professional projects, you can enforce type hints using tools like **mypy** (a static type checker). Running `mypy your_file.py` catches type errors without running the code — similar to a compiler in C++ or Java. You can integrate mypy into your build pipeline using **tox** (`tox -e mypy`) to automatically check types across your entire project.
+
+      ### The Problem with Duck Typing
+
+      Python is dynamically typed — you can write `def get_price(self)` without ever specifying that it returns a `float`. This flexibility is convenient, but it hides the **contracts** between components. Another developer reading your code has to trace through the logic to figure out what types flow where.
+
+      UML does not allow this ambiguity. Every attribute must show its type, and every method must show its parameter types and return type.
+
+      ### UML Type Notation
+
+      | UML | Python |
+      |---|---|
+      | `- name: str` | `self.__name: str = name` |
+      | `+ get_price(): float` | `def get_price(self) -> float:` |
+      | `+ apply_discount(percent: float): float` | `def apply_discount(self, percent: float) -> float:` |
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Product {
+        - __name: str
+        - __price: float
+        - __in_stock: bool
+        + __init__(name: str, price: float, in_stock: bool): None
+        + get_name(): str
+        + get_price(): float
+        + is_available(): bool
+        + apply_discount(percent: float): float
+      }
+      @enduml'></div>
+
+      ### Your Task
+
+      The starter code works perfectly — but has **zero type hints**. The UML diagram shows the class without any type information. Add type hints to:
+
+      1. All `__init__` parameters
+      2. All instance attributes (e.g., `self.__name: str = name`)
+      3. All method return types (e.g., `-> float`)
+      4. All method parameters (e.g., `percent: float`)
+
+      Watch the UML diagram fill in with types as you add annotations.
+
+    uml_files:
+      - product.py
+
+    files:
+      - path: product.py
+        content: |
+          class Product:
+              """A product in an online store.
+              Everything works — but there are no type hints!
+              Add type annotations so the UML diagram shows types."""
+
+              def __init__(self, name, price, in_stock):
+                  self.__name = name
+                  self.__price = price
+                  self.__in_stock = in_stock
+
+              def get_name(self):
+                  return self.__name
+
+              def get_price(self):
+                  return self.__price
+
+              def is_available(self):
+                  return self.__in_stock
+
+              def apply_discount(self, percent):
+                  discount = self.__price * (percent / 100)
+                  return self.__price - discount
+
+
+          if __name__ == "__main__":
+              p = Product("Laptop", 999.99, True)
+              print(f"{p.get_name()}: ${p.get_price():.2f}")
+              print(f"After 10% off: ${p.apply_discount(10):.2f}")
+              print(f"In stock: {p.is_available()}")
+        language: python
+
+    open_file: product.py
+
+    solution:
+      files:
+        - path: product.py
+          content: |
+            class Product:
+                """A product in an online store — now with full type hints."""
+
+                def __init__(self, name: str, price: float, in_stock: bool) -> None:
+                    self.__name: str = name
+                    self.__price: float = price
+                    self.__in_stock: bool = in_stock
+
+                def get_name(self) -> str:
+                    return self.__name
+
+                def get_price(self) -> float:
+                    return self.__price
+
+                def is_available(self) -> bool:
+                    return self.__in_stock
+
+                def apply_discount(self, percent: float) -> float:
+                    discount = self.__price * (percent / 100)
+                    return self.__price - discount
+
+
+            if __name__ == "__main__":
+                p = Product("Laptop", 999.99, True)
+                print(f"{p.get_name()}: ${p.get_price():.2f}")
+                print(f"After 10% off: ${p.apply_discount(10):.2f}")
+                print(f"In stock: {p.is_available()}")
+          language: python
+      explanation: |
+        Type hints serve double duty:
+        1. They make the UML diagram complete — every attribute and method shows its type.
+        2. They document the **contracts** of your class — what goes in and what comes out.
+
+        Without type hints, another developer must read your implementation to know that `apply_discount` expects a percentage as a float and returns a float. With type hints (and the corresponding UML), this is immediately visible.
+
+    tests:
+      - description: "Instance attributes have type hints"
+        command: |
+          source = open('/tutorial/product.py').read()
+          assert 'self.__name: str' in source, \
+              "Add a type hint to __name: self.__name: str = name"
+          assert 'self.__price: float' in source, \
+              "Add a type hint to __price: self.__price: float = price"
+          assert 'self.__in_stock: bool' in source, \
+              "Add a type hint to __in_stock: self.__in_stock: bool = in_stock"
+        hints:
+          - text: "Change `self.__name = name` to `self.__name: str = name` — add `: Type` before the `=`."
+            condition: "default"
+
+      - description: "Methods have return type hints"
+        command: |
+          source = open('/tutorial/product.py').read()
+          assert '-> str' in source, \
+              "Add return type hints like -> str to get_name()"
+          assert '-> float' in source, \
+              "Add return type hints like -> float to get_price() and apply_discount()"
+          assert '-> bool' in source, \
+              "Add return type hint -> bool to is_available()"
+        hints:
+          - text: "Add `-> ReturnType` before the colon in method definitions: `def get_name(self) -> str:`"
+            condition: "default"
+
+      - description: "apply_discount parameter has type hint"
+        command: |
+          source = open('/tutorial/product.py').read()
+          ns = {}
+          exec(source, ns)
+          import inspect
+          sig = inspect.signature(ns['Product'].apply_discount)
+          params = sig.parameters
+          assert 'percent' in params, \
+              "apply_discount should have a 'percent' parameter"
+          assert params['percent'].annotation == float, \
+              "The percent parameter needs a type hint: percent: float"
+        hints:
+          - text: "Change `def apply_discount(self, percent)` to `def apply_discount(self, percent: float) -> float:`"
+            condition: "default"
+
+    quiz:
+      title: "Types in UML"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            Why does UML require explicit types on all attributes and methods?
+          type: single
+          options:
+            - "Because UML only works with statically typed languages"
+            - "To make diagrams look more professional"
+            - "To make the contracts between components explicit and unambiguous"
+            - "Because Python requires type hints to run"
+          correct_index: 2
+          explanation: |
+            UML forces explicit types to document the **contracts** — what data flows between components and in what form. This is a design decision that improves communication, regardless of whether the language enforces it.
+
+        - question: |
+            How does the UML notation `+ apply_discount(percent: float): float` map to Python?
+          type: single
+          options:
+            - "`def apply_discount(percent: float) -> float:`"
+            - "`def apply_discount(self, percent: float) -> float:`"
+            - "`def apply_discount(self, percent) -> float:`"
+            - "`float apply_discount(float percent)`"
+          correct_index: 1
+          explanation: |
+            Python methods always include `self` as the first parameter, but UML omits it (it is implied). The return type goes after `->` in Python, and after `:` in UML. Both `percent: float` parameter annotations match directly.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — "Inheritance: Is-A Relationships"
+  # Pedagogy:
+  #   Desirable Difficulty (Generation) — refactor duplicated code.
+  #   Common Mistake — arrow direction (Chren et al., 2019).
+  #   Bloom's level — Apply (refactor), Analyze (quiz on arrow direction).
+  # --------------------------------------------------------------------------
+  - title: "Inheritance: Is-A Relationships"
+    instructions: |
+      ## The Generalization Arrow
+
+      > **Learning objective:** After this step you will be able to **refactor** duplicated classes into an inheritance hierarchy and **draw** the correct generalization arrow direction.
+
+      ### Inheritance in UML
+
+      When a class **extends** another class (an "is-a" relationship), UML draws a solid line with a **hollow triangle** pointing at the **parent** (superclass):
+
+      Child <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> Parent
+
+      **Common mistake:** Students often draw the arrow pointing *away* from the parent. Remember: the triangle is like an arrowhead — it points at the thing being extended.
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Shape {
+        + color: str
+        + __init__(color: str): None
+        + area(): float
+        + describe(): str
+      }
+      class Circle {
+        + radius: float
+        + __init__(color: str, radius: float): None
+        + area(): float
+      }
+      class Rectangle {
+        + width: float
+        + height: float
+        + __init__(color: str, width: float, height: float): None
+        + area(): float
+      }
+      Circle --|> Shape
+      Rectangle --|> Shape
+      @enduml'></div>
+
+      Notice: `Circle` and `Rectangle` only list their **own** attributes. They inherit `color` and `describe()` from `Shape` — they do not repeat them.
+
+      ### Your Task
+
+      The starter code has three **independent** classes with duplicated `color` and `describe()`. Refactor them:
+
+      1. Make `Shape` the base class with `color`, `area()`, and `describe()`
+      2. Make `Circle` and `Rectangle` **inherit** from `Shape` using `class Circle(Shape):`
+      3. Remove the duplicated `color` attribute and `describe()` method from the subclasses
+      4. Each subclass should call `super().__init__(color)` and override `area()`
+
+      Watch the inheritance arrows appear in the live diagram.
+
+    uml_files:
+      - shapes.py
+
+    files:
+      - path: shapes.py
+        content: |
+          import math
+
+
           class Shape:
               def __init__(self, color: str) -> None:
                   self.color: str = color
@@ -69,68 +741,1639 @@ steps:
               def area(self) -> float:
                   return 0.0
 
-          class Circle(Shape):
+              def describe(self) -> str:
+                  return f"{self.color} shape with area {self.area():.2f}"
+
+
+          class Circle:
+              """Independent class — duplicates color and describe from Shape!"""
+
               def __init__(self, color: str, radius: float) -> None:
-                  super().__init__(color)
+                  self.color: str = color          # Duplicated!
                   self.radius: float = radius
 
               def area(self) -> float:
-                  return 3.14159 * self.radius ** 2
+                  return math.pi * self.radius ** 2
 
-          class Rectangle(Shape):
+              def describe(self) -> str:            # Duplicated!
+                  return f"{self.color} shape with area {self.area():.2f}"
+
+
+          class Rectangle:
+              """Independent class — duplicates color and describe from Shape!"""
+
               def __init__(self, color: str, width: float, height: float) -> None:
-                  super().__init__(color)
+                  self.color: str = color          # Duplicated!
                   self.width: float = width
                   self.height: float = height
 
               def area(self) -> float:
                   return self.width * self.height
 
+              def describe(self) -> str:            # Duplicated!
+                  return f"{self.color} shape with area {self.area():.2f}"
+
+
           if __name__ == "__main__":
               c = Circle("red", 5.0)
               r = Rectangle("blue", 3.0, 4.0)
-              print(f"Circle area: {c.area():.2f}")
-              print(f"Rectangle area: {r.area():.2f}")
+              print(c.describe())
+              print(r.describe())
         language: python
 
-    open_file: main.py
+    open_file: shapes.py
 
-  - title: "Placeholder Step 3"
+    solution:
+      files:
+        - path: shapes.py
+          content: |
+            import math
+
+
+            class Shape:
+                def __init__(self, color: str) -> None:
+                    self.color: str = color
+
+                def area(self) -> float:
+                    return 0.0
+
+                def describe(self) -> str:
+                    return f"{self.color} shape with area {self.area():.2f}"
+
+
+            class Circle(Shape):
+                def __init__(self, color: str, radius: float) -> None:
+                    super().__init__(color)
+                    self.radius: float = radius
+
+                def area(self) -> float:
+                    return math.pi * self.radius ** 2
+
+
+            class Rectangle(Shape):
+                def __init__(self, color: str, width: float, height: float) -> None:
+                    super().__init__(color)
+                    self.width: float = width
+                    self.height: float = height
+
+                def area(self) -> float:
+                    return self.width * self.height
+
+
+            if __name__ == "__main__":
+                c = Circle("red", 5.0)
+                r = Rectangle("blue", 3.0, 4.0)
+                print(c.describe())
+                print(r.describe())
+          language: python
+      explanation: |
+        By using `class Circle(Shape):` and calling `super().__init__(color)`, the subclasses **inherit** `color` and `describe()` from `Shape`. The UML diagram now shows generalization arrows pointing from each subclass up to `Shape`.
+
+        Notice that `describe()` is NOT listed in `Circle` or `Rectangle` in the diagram — they inherit it. Only `area()` appears because they **override** it with their own implementation.
+
+    tests:
+      - description: "Circle inherits from Shape"
+        command: |
+          source = open('/tutorial/shapes.py').read()
+          ns = {}
+          exec(source, ns)
+          assert issubclass(ns['Circle'], ns['Shape']), \
+              "Circle should inherit from Shape: class Circle(Shape):"
+        hints:
+          - text: "Change `class Circle:` to `class Circle(Shape):` and replace `self.color: str = color` with `super().__init__(color)`."
+            condition: "default"
+
+      - description: "Rectangle inherits from Shape"
+        command: |
+          source = open('/tutorial/shapes.py').read()
+          ns = {}
+          exec(source, ns)
+          assert issubclass(ns['Rectangle'], ns['Shape']), \
+              "Rectangle should inherit from Shape: class Rectangle(Shape):"
+        hints:
+          - text: "Change `class Rectangle:` to `class Rectangle(Shape):` and replace `self.color: str = color` with `super().__init__(color)`."
+            condition: "default"
+
+      - description: "Inherited describe() still works via polymorphism"
+        command: |
+          source = open('/tutorial/shapes.py').read()
+          ns = {}
+          exec(source, ns)
+          c = ns['Circle']('red', 5.0)
+          result = c.describe()
+          assert 'red' in result, \
+              "describe() should include the color — make sure you call super().__init__(color)"
+          assert '78.5' in result, \
+              f"Circle area should be about 78.54 but describe() returned: {result}"
+        hints:
+          - text: "Remove the duplicated `describe()` from `Circle` — it should inherit it from `Shape`. The inherited `describe()` calls `self.area()` which uses `Circle`'s override."
+            condition: "default"
+
+      - description: "Duplicated describe() and color removed from subclasses"
+        command: |
+          source = open('/tutorial/shapes.py').read()
+          import re
+          # Find class bodies for Circle and Rectangle
+          # Check that describe is not redefined in subclasses
+          circle_match = re.search(r'class Circle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
+          rect_match = re.search(r'class Rectangle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
+          if circle_match:
+              circle_body = circle_match.group()
+              assert 'def describe' not in circle_body, \
+                  "Remove describe() from Circle — it should inherit this method from Shape"
+              assert 'self.color' not in circle_body, \
+                  "Remove self.color from Circle — it should inherit this attribute from Shape via super().__init__()"
+          if rect_match:
+              rect_body = rect_match.group()
+              assert 'def describe' not in rect_body, \
+                  "Remove describe() from Rectangle — it should inherit this method from Shape"
+              assert 'self.color' not in rect_body, \
+                  "Remove self.color from Rectangle — it should inherit this attribute from Shape via super().__init__()"
+        hints:
+          - text: "Delete the entire `describe()` method from both `Circle` and `Rectangle`. Also delete `self.color: str = color` from their `__init__` — they get `color` from `Shape` via `super().__init__(color)`."
+            condition: "default"
+
+      - description: "Subclasses use super().__init__() to initialize the parent"
+        command: |
+          source = open('/tutorial/shapes.py').read()
+          import re
+          circle_match = re.search(r'class Circle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
+          rect_match = re.search(r'class Rectangle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
+          if circle_match:
+              assert 'super().__init__' in circle_match.group() or 'super(Circle' in circle_match.group(), \
+                  "Circle.__init__ should call super().__init__(color) to initialize Shape"
+          if rect_match:
+              assert 'super().__init__' in rect_match.group() or 'super(Rectangle' in rect_match.group(), \
+                  "Rectangle.__init__ should call super().__init__(color) to initialize Shape"
+        hints:
+          - text: "In Circle.__init__ and Rectangle.__init__, replace `self.color: str = color` with `super().__init__(color)`. This calls Shape.__init__ which sets self.color for you."
+            condition: "default"
+
+    quiz:
+      title: "Inheritance Arrows"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            In a UML class diagram, which direction does the inheritance arrow point?
+          type: single
+          options:
+            - "From the parent to the child"
+            - "From the child to the parent"
+            - "Both directions (bidirectional)"
+            - "It depends on the programming language"
+          correct_index: 1
+          explanation: |
+            The generalization arrow always points **from the child to the parent** — the hollow triangle is at the parent end. Think of it as the child "reaching up" to the thing it extends.
+
+        - question: |
+            If `Circle` inherits `describe()` from `Shape`, where does `describe()` appear in the UML diagram?
+          type: single
+          options:
+            - "In both the Shape and Circle boxes"
+            - "Only in the Shape box"
+            - "Only in the Circle box"
+            - "Nowhere — inherited methods are not shown"
+          correct_index: 1
+          explanation: |
+            Inherited members appear only in the **parent** class box. The child class only lists members it **adds** or **overrides**. The inheritance arrow tells you that everything in the parent is available in the child.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 5 — "Association: Classes That Know Each Other"
+  # Pedagogy:
+  #   Key Insight — UML makes implicit references explicit.
+  #   Constructivism — bridge from "storing a string" to "storing an object."
+  #   Bloom's level — Understand (when associations arise), Apply (refactor).
+  # --------------------------------------------------------------------------
+  - title: "Association: Classes That Know Each Other"
+    uml_hide:
+      - multiplicity
     instructions: |
-      ## Step 3: Placeholder
+      ## Association Arrows
 
-      Final placeholder step. Real tutorial content will go here.
+      > **Learning objective:** After this step you will be able to **identify** when a UML association exists between two classes and **refactor** string-based references into proper object associations.
+
+      ### What Is an Association?
+
+      An association means one class **stores a reference** to another class as an instance variable. In UML, this is drawn as a solid arrow <span class="uml-sym" data-diagram="class" data-sym="-->"></span> from the class that holds the reference to the class it references.
+
+      **The key rule:** If a class stores another object as a persistent instance variable (`self.instructor: Instructor`), that is an **association**. If it only uses another class temporarily inside a method, that is a weaker relationship (a dependency, which we will skip for now).
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Instructor {
+        + name: str
+        + department: str
+        + __init__(name: str, department: str): None
+        + get_title(): str
+      }
+      class Course {
+        + name: str
+        + instructor: Instructor
+        + __init__(name: str, instructor: Instructor): None
+        + get_instructor_name(): str
+      }
+      Course --> Instructor
+      @enduml'></div>
+
+      Notice the association arrow from `Course` to `Instructor` — it appears because `Course` has an `instructor: Instructor` attribute.
+
+      ### Your Task
+
+      The starter code stores the instructor as a plain string (`instructor_name: str`). This hides the relationship — the UML shows no connection between the classes.
+
+      1. **Create an `Instructor` class** with `name: str`, `department: str`, and a `get_title()` method returning `"name (department)"`
+      2. **Refactor `Course`** to accept and store an `Instructor` object instead of a string
+      3. **Update `get_instructor_name()`** to return `self.instructor.name`
+
+      Watch the association arrow appear in the UML diagram!
 
     uml_files:
-      - main.py
+      - enrollment.py
 
     files:
-      - path: main.py
+      - path: enrollment.py
         content: |
-          # Placeholder — real code goes here
-          from typing import List
+          class Course:
+              """A course — but the instructor is just a string!
+              There is no Instructor class, so the UML shows no relationship."""
 
-          class Engine:
-              def __init__(self, horsepower: int) -> None:
-                  self.horsepower: int = horsepower
+              def __init__(self, name: str, instructor_name: str) -> None:
+                  self.name: str = name
+                  self.instructor_name: str = instructor_name  # Just a string!
 
-              def start(self) -> str:
-                  return f"Engine with {self.horsepower}hp started"
+              def get_instructor_name(self) -> str:
+                  return self.instructor_name
 
-          class Car:
-              def __init__(self, make: str, model: str, engine: Engine) -> None:
-                  self.make: str = make
-                  self.model: str = model
-                  self.engine: Engine = engine
 
-              def drive(self) -> str:
-                  return f"{self.make} {self.model} is driving"
+          # TODO: Create an Instructor class with name, department, and get_title()
+          # TODO: Refactor Course to store an Instructor object instead of a string
+
 
           if __name__ == "__main__":
-              engine = Engine(200)
-              car = Car("Toyota", "Camry", engine)
-              print(car.drive())
-              print(engine.start())
+              # After your refactoring, this code should work:
+              # instructor = Instructor("Dr. Smith", "Computer Science")
+              # course = Course("CS 101", instructor)
+              # print(f"{course.name} taught by {course.get_instructor_name()}")
+
+              course = Course("CS 101", "Dr. Smith")
+              print(f"{course.name} taught by {course.get_instructor_name()}")
         language: python
 
-    open_file: main.py
+    open_file: enrollment.py
+
+    solution:
+      files:
+        - path: enrollment.py
+          content: |
+            class Instructor:
+                def __init__(self, name: str, department: str) -> None:
+                    self.name: str = name
+                    self.department: str = department
+
+                def get_title(self) -> str:
+                    return f"{self.name} ({self.department})"
+
+
+            class Course:
+                def __init__(self, name: str, instructor: Instructor) -> None:
+                    self.name: str = name
+                    self.instructor: Instructor = instructor
+
+                def get_instructor_name(self) -> str:
+                    return self.instructor.name
+
+
+            if __name__ == "__main__":
+                instructor = Instructor("Dr. Smith", "Computer Science")
+                course = Course("CS 101", instructor)
+                print(f"{course.name} taught by {course.get_instructor_name()}")
+                print(f"Instructor: {instructor.get_title()}")
+          language: python
+      explanation: |
+        **Before:** `Course` stored `instructor_name: str` — the UML showed two isolated boxes with no connection. The relationship was invisible.
+
+        **After:** `Course` stores `instructor: Instructor` — the UML shows an association arrow. The structural relationship is now explicit and visible to anyone reading the diagram.
+
+        This is the core value of UML: **making invisible relationships visible**. In a large codebase, you would have to trace through constructor code to discover that Course depends on Instructor. The UML diagram shows this at a glance.
+
+    tests:
+      - description: "Instructor class exists with name and department"
+        command: |
+          source = open('/tutorial/enrollment.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'Instructor' in ns, \
+              "Create an Instructor class"
+          i = ns['Instructor']('Dr. Smith', 'Computer Science')
+          assert i.name == 'Dr. Smith', \
+              "Instructor needs a 'name' attribute"
+          assert i.department == 'Computer Science', \
+              "Instructor needs a 'department' attribute"
+        hints:
+          - text: "Create a class: `class Instructor:` with `__init__(self, name: str, department: str)` storing both as typed attributes."
+            condition: "default"
+
+      - description: "Course stores an Instructor object (not a string)"
+        command: |
+          source = open('/tutorial/enrollment.py').read()
+          ns = {}
+          exec(source, ns)
+          i = ns['Instructor']('Dr. Smith', 'CS')
+          c = ns['Course']('CS 101', i)
+          assert hasattr(c, 'instructor'), \
+              "Course needs an 'instructor' attribute (not 'instructor_name')"
+          assert isinstance(c.instructor, ns['Instructor']), \
+              "Course.instructor should be an Instructor object, not a string"
+        hints:
+          - text: "Change `__init__(self, name: str, instructor_name: str)` to `__init__(self, name: str, instructor: Instructor)` and store it as `self.instructor: Instructor = instructor`."
+            condition: "default"
+
+      - description: "get_instructor_name() returns the instructor's name"
+        command: |
+          source = open('/tutorial/enrollment.py').read()
+          ns = {}
+          exec(source, ns)
+          i = ns['Instructor']('Dr. Smith', 'CS')
+          c = ns['Course']('CS 101', i)
+          result = c.get_instructor_name()
+          assert result == 'Dr. Smith', \
+              f"get_instructor_name() should return 'Dr. Smith' but got '{result}'"
+        hints:
+          - text: "Update `get_instructor_name()` to return `self.instructor.name` instead of `self.instructor_name`."
+            condition: "default"
+
+    quiz:
+      title: "Associations"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            When does an association arrow appear between two classes in a UML diagram?
+          type: single
+          options:
+            - "When one class imports another"
+            - "When one class stores a reference to another as an instance variable"
+            - "When two classes are in the same file"
+            - "When one class calls a method on another"
+          correct_index: 1
+          explanation: |
+            An association arrow appears when a class **stores** another object as a **persistent instance variable** (e.g., `self.instructor: Instructor`). Simply importing or calling a method creates a weaker *dependency*, not an association.
+
+        - question: |
+            Why is storing `instructor_name: str` worse than `instructor: Instructor` from a design perspective?
+          type: single
+          options:
+            - "Strings use more memory than objects"
+            - "The structural relationship is hidden — UML cannot show the connection"
+            - "Python does not allow storing strings as attributes"
+            - "Strings cannot be printed"
+          correct_index: 1
+          explanation: |
+            When you use a string, the **relationship between Course and Instructor is invisible** — both in the code and in the UML diagram. Using an `Instructor` object makes the dependency explicit, allowing UML to show the arrow and helping other developers understand the system structure at a glance.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 6 — "Composition vs Aggregation"
+  # Pedagogy:
+  #   Metaphor — rm -rf (composition) vs symlinks (aggregation).
+  #   C++ Bridge — unique_ptr vs raw pointer.
+  #   Bloom's level — Analyze (distinguish lifecycle dependency).
+  #   Note: multiplicity hidden — introduced in the next step.
+  # --------------------------------------------------------------------------
+  - title: "Composition vs Aggregation"
+    uml_hide:
+      - multiplicity
+    instructions: |
+      ## Ownership and Lifecycle
+
+      > **Learning objective:** After this step you will be able to **distinguish** composition from aggregation and **implement** both patterns correctly in Python.
+
+      ### Two Kinds of "Has-A"
+
+      Both composition and aggregation model a "whole-part" relationship. The difference is **ownership and lifecycle**:
+
+      | | Composition (filled diamond) | Aggregation (hollow diamond) |
+      |---|---|---|
+      | **Symbol** | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> filled diamond | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> hollow diamond |
+      | **Ownership** | Whole **owns** the part exclusively | Whole **references** the part |
+      | **Lifecycle** | Part is destroyed with the whole | Part survives independently |
+      | **Python pattern** | Part created **inside** `__init__` | Part **passed in** from outside |
+
+      ### The File System Metaphor
+
+      - **Composition** = a directory and its files. If you run `rm -rf directory/`, the files inside are destroyed. Their lifecycle is bound to the directory.
+      - **Aggregation** = a directory containing symbolic links. If you delete the directory, the symlinks vanish but the original files they pointed to survive.
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Professor {
+        + name: str
+        + field: str
+        + __init__(name: str, field: str): None
+      }
+      class Department {
+        + name: str
+        + professors: list[Professor]
+        + __init__(name: str): None
+        + add_professor(prof: Professor): None
+      }
+      class University {
+        + name: str
+        + departments: list[Department] 
+        + __init__(name: str): None
+        + add_department(dept_name: str): None
+        + get_department(name: str): Department
+      }
+      University *--> Department
+      Department o--> Professor
+      @enduml'></div>
+
+      Notice the two different diamonds:
+      - **Filled diamond** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> between University and Department → composition. The university creates its departments. If the university ceases to exist, so do its departments.
+      - **Hollow diamond** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> between Department and Professor → aggregation. Professors are independent people who are assigned to departments. If a department is dissolved, the professors still exist.
+
+      > **Note:** You may notice that the live diagram does not show *how many* departments or professors participate. Those numbers (called **multiplicity**) are covered in the next step.
+
+      ### Your Task
+
+      Complete the starter code:
+
+      1. **`University.add_department(dept_name)`** should **create** a new `Department` internally (composition — the part is born inside the whole)
+      2. **`Department.add_professor(prof)`** should **receive** an existing `Professor` from outside (aggregation — the part exists independently)
+
+    uml_files:
+      - university.py
+
+    files:
+      - path: university.py
+        content: |
+          class Professor:
+              def __init__(self, name: str, field: str) -> None:
+                  self.name: str = name
+                  self.field: str = field
+
+
+          class Department:
+              def __init__(self, name: str) -> None:
+                  self.name: str = name
+                  self.professors: list[Professor] = []
+
+              def add_professor(self, prof: Professor) -> None:
+                  # TODO: Store the professor (aggregation — received from outside)
+                  pass
+
+
+          class University:
+              def __init__(self, name: str) -> None:
+                  self.name: str = name
+                  self.departments: list[Department] = []
+
+              def add_department(self, dept_name: str) -> None:
+                  # TODO: Create a new Department and add it (composition — created inside)
+                  pass
+
+              def get_department(self, name: str) -> Department:
+                  for dept in self.departments:
+                      if dept.name == name:
+                          return dept
+                  raise ValueError(f"Department '{name}' not found")
+
+
+          if __name__ == "__main__":
+              # Professors exist independently — they are created outside
+              prof_alice = Professor("Dr. Alice", "AI")
+              prof_bob = Professor("Dr. Bob", "Systems")
+
+              # University creates its own departments (composition)
+              uni = University("State University")
+              uni.add_department("Computer Science")
+              uni.add_department("Mathematics")
+
+              # Professors are assigned to departments (aggregation)
+              cs = uni.get_department("Computer Science")
+              cs.add_professor(prof_alice)
+              cs.add_professor(prof_bob)
+
+              print(f"{uni.name} has {len(uni.departments)} departments")
+              print(f"CS has {len(cs.professors)} professors")
+        language: python
+
+    open_file: university.py
+
+    solution:
+      files:
+        - path: university.py
+          content: |
+            class Professor:
+                def __init__(self, name: str, field: str) -> None:
+                    self.name: str = name
+                    self.field: str = field
+
+
+            class Department:
+                def __init__(self, name: str) -> None:
+                    self.name: str = name
+                    self.professors: list[Professor] = []
+
+                def add_professor(self, prof: Professor) -> None:
+                    self.professors.append(prof)
+
+
+            class University:
+                def __init__(self, name: str) -> None:
+                    self.name: str = name
+                    self.departments: list[Department] = []
+
+                def add_department(self, dept_name: str) -> None:
+                    dept = Department(dept_name)
+                    self.departments.append(dept)
+
+                def get_department(self, name: str) -> Department:
+                    for dept in self.departments:
+                        if dept.name == name:
+                            return dept
+                    raise ValueError(f"Department '{name}' not found")
+
+
+            if __name__ == "__main__":
+                prof_alice = Professor("Dr. Alice", "AI")
+                prof_bob = Professor("Dr. Bob", "Systems")
+
+                uni = University("State University")
+                uni.add_department("Computer Science")
+                uni.add_department("Mathematics")
+
+                cs = uni.get_department("Computer Science")
+                cs.add_professor(prof_alice)
+                cs.add_professor(prof_bob)
+
+                print(f"{uni.name} has {len(uni.departments)} departments")
+                print(f"CS has {len(cs.professors)} professors")
+          language: python
+      explanation: |
+        The critical difference is **where the object is created**:
+
+        - **Composition:** `add_department` creates `Department(dept_name)` *inside* the method. The University controls the lifecycle — departments cannot exist without a university.
+        - **Aggregation:** `add_professor` receives a `Professor` that was created *outside*. The Department only holds a reference — the professor existed before and survives after.
+
+        **Code pattern to remember:**
+        - Composition: `self.parts.append(Part(...))` — created internally
+        - Aggregation: `self.parts.append(part)` — passed in from outside
+
+    tests:
+      - description: "University creates departments internally (composition)"
+        command: |
+          source = open('/tutorial/university.py').read()
+          ns = {}
+          exec(source, ns)
+          uni = ns['University']('Test U')
+          uni.add_department('CS')
+          assert len(uni.departments) == 1, \
+              "After add_department('CS'), university should have 1 department"
+          assert uni.departments[0].name == 'CS', \
+              "The created department should have the name 'CS'"
+        hints:
+          - text: "In `add_department`, create a new Department: `dept = Department(dept_name)` then `self.departments.append(dept)`."
+            condition: "default"
+
+      - description: "Department receives professors from outside (aggregation)"
+        command: |
+          source = open('/tutorial/university.py').read()
+          ns = {}
+          exec(source, ns)
+          prof = ns['Professor']('Dr. Test', 'AI')
+          dept = ns['Department']('CS')
+          dept.add_professor(prof)
+          assert len(dept.professors) == 1, \
+              "After add_professor(), department should have 1 professor"
+          assert dept.professors[0] is prof, \
+              "The professor in the department should be the SAME object that was passed in (not a copy)"
+        hints:
+          - text: "In `add_professor`, just append the received professor: `self.professors.append(prof)`."
+            condition: "default"
+
+      - description: "Full system works end-to-end"
+        command: |
+          source = open('/tutorial/university.py').read()
+          ns = {}
+          exec(source, ns)
+          prof = ns['Professor']('Dr. Alice', 'AI')
+          uni = ns['University']('State U')
+          uni.add_department('CS')
+          cs = uni.get_department('CS')
+          cs.add_professor(prof)
+          assert len(cs.professors) == 1
+          assert cs.professors[0].name == 'Dr. Alice'
+        hints:
+          - text: "Make sure both `add_department` and `add_professor` append to their respective lists."
+            condition: "default"
+
+    quiz:
+      title: "Composition vs Aggregation"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            A `Car` creates its own `Engine` in `__init__`. If the car is scrapped, the engine goes with it. What UML relationship is this?
+          type: single
+          options:
+            - "Association (plain arrow)"
+            - "Aggregation (hollow diamond)"
+            - "Composition (filled diamond)"
+            - "Inheritance (hollow triangle)"
+          correct_index: 2
+          explanation: |
+            This is **composition** (filled diamond). The engine is created *inside* the car and its lifecycle is bound to the car. If the car is destroyed, the engine is too. The key indicator: the part is created internally, not passed in.
+
+        - question: |
+            A `Team` holds references to `Player` objects that were created outside the team. Players can be traded to other teams. What UML relationship is this?
+          type: single
+          options:
+            - "Composition (filled diamond)"
+            - "Aggregation (hollow diamond)"
+            - "Dependency (dashed arrow)"
+            - "Inheritance (hollow triangle)"
+          correct_index: 1
+          explanation: |
+            This is **aggregation** (hollow diamond). Players exist independently of any team — they were created outside, passed in, and can move to another team. The team holds a reference but does not control the player's lifecycle.
+
+        - question: |
+            What Python code pattern signals **composition**?
+          type: single
+          options:
+            - "`def __init__(self, part: Part)` — receiving the part as a parameter"
+            - "`def add(self, part: Part)` — receiving an existing object"
+            - "`self.part = Part(...)` — creating the part inside the class"
+            - "`import Part` — importing the part's module"
+          correct_index: 2
+          explanation: |
+            Composition means the whole **creates** the part internally: `self.part = Part(...)`. The part's lifecycle is tied to the whole. Aggregation means the part is **passed in** from outside: `def __init__(self, part: Part)`.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — "Multiplicity: How Many?"
+  # Pedagogy:
+  #   Reading heuristic — "read it as a sentence."
+  #   Common Mistake — reversed multiplicity placement (Chren et al.).
+  #   Bloom's level — Understand (read notation), Apply (implement list).
+  # --------------------------------------------------------------------------
+  - title: "Multiplicity: How Many?"
+    instructions: |
+      ## Multiplicity Notation
+
+      > **Learning objective:** After this step you will be able to **read** multiplicity notation on UML associations and **implement** one-to-many relationships using Python lists.
+
+      ### What Is Multiplicity?
+
+      Multiplicity tells you **how many** instances participate in a relationship. It is written as a number or range next to each end of an association line.
+
+      | Notation | Meaning |
+      |---|---|
+      | `1` | Exactly one |
+      | `0..1` | Zero or one (optional) |
+      | `*` | Zero or more |
+      | `1..*` | One or more |
+
+      ### Reading Multiplicity as a Sentence
+
+      Read from each end toward the other. The arrow <span class="uml-sym" data-diagram="class" data-sym="-->"></span> connects the two classes, with numbers on each side:
+
+      Playlist <span class="uml-sym" data-diagram="class" data-sym="-->"></span> **"*"** Song
+
+      - Left to right: "One Playlist contains zero or more Songs"
+      - Right to left: "Each Song belongs to one Playlist"
+
+      **Placement rule:** The number is placed next to the class it **quantifies**. The `*` goes next to `Song` because there are many songs, not many playlists.
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      class Song {
+        + title: str
+        + artist: str
+        + duration_sec: int
+        + __init__(title: str, artist: str, duration_sec: int): None
+      }
+      class Playlist {
+        + name: str
+        + songs: list[Song]
+        + __init__(name: str): None
+        + add_song(song: Song): None
+        + get_total_duration(): int
+        + get_song_count(): int
+      }
+      Playlist  o--> "*" Song
+      @enduml'></div>
+
+      ### Your Task
+
+      The starter code has a `Playlist` that holds a single `Song`. Refactor it to hold **many** songs:
+
+      1. Change `self.song` to `self.songs: list[Song] = []` (a list of songs)
+      2. Add an `add_song(song: Song)` method that appends to the list
+      3. Add `get_total_duration()` returning the sum of all song durations
+      4. Add `get_song_count()` returning the number of songs
+
+      The `*` multiplicity means the playlist can have zero or more songs.
+
+    uml_files:
+      - playlist.py
+
+    files:
+      - path: playlist.py
+        content: |
+          class Song:
+              def __init__(self, title: str, artist: str, duration_sec: int) -> None:
+                  self.title: str = title
+                  self.artist: str = artist
+                  self.duration_sec: int = duration_sec
+
+
+          class Playlist:
+              """Currently holds a single song. Refactor to hold many songs!"""
+
+              def __init__(self, name: str, song: Song) -> None:
+                  self.name: str = name
+                  self.song: Song = song  # Only ONE song — change to a list!
+
+
+          if __name__ == "__main__":
+              s1 = Song("Bohemian Rhapsody", "Queen", 354)
+              p = Playlist("Road Trip", s1)
+              print(f"Playlist: {p.name}")
+        language: python
+
+    open_file: playlist.py
+
+    solution:
+      files:
+        - path: playlist.py
+          content: |
+            class Song:
+                def __init__(self, title: str, artist: str, duration_sec: int) -> None:
+                    self.title: str = title
+                    self.artist: str = artist
+                    self.duration_sec: int = duration_sec
+
+
+            class Playlist:
+                def __init__(self, name: str) -> None:
+                    self.name: str = name
+                    self.songs: list[Song] = []
+
+                def add_song(self, song: Song) -> None:
+                    self.songs.append(song)
+
+                def get_total_duration(self) -> int:
+                    return sum(s.duration_sec for s in self.songs)
+
+                def get_song_count(self) -> int:
+                    return len(self.songs)
+
+
+            if __name__ == "__main__":
+                p = Playlist("Road Trip")
+                p.add_song(Song("Bohemian Rhapsody", "Queen", 354))
+                p.add_song(Song("Hotel California", "Eagles", 391))
+                p.add_song(Song("Stairway to Heaven", "Led Zeppelin", 482))
+                print(f"Playlist: {p.name}")
+                print(f"Songs: {p.get_song_count()}")
+                print(f"Total duration: {p.get_total_duration()}s")
+          language: python
+      explanation: |
+        The multiplicity `*` maps directly to Python's `list`:
+        - `add_song()` allows adding any number of songs (the `*`)
+        - The `Song` objects exist independently — they are not created inside Playlist
+
+        **Heuristic:** When you see a `list` attribute in Python code, that is a strong signal of a `*` multiplicity in the UML diagram. Conversely, when you see `*` in a UML diagram, implement it as a list in Python.
+
+    tests:
+      - description: "Playlist stores a list of songs (not a single song)"
+        command: |
+          source = open('/tutorial/playlist.py').read()
+          ns = {}
+          exec(source, ns)
+          p = ns['Playlist']('Test')
+          assert hasattr(p, 'songs'), \
+              "Playlist needs a 'songs' attribute (a list) instead of 'song'"
+          assert isinstance(p.songs, list), \
+              "songs should be a list, not a single Song object"
+        hints:
+          - text: "Replace `self.song: Song = song` with `self.songs: list = []` and remove `song` from the constructor parameters."
+            condition: "default"
+
+      - description: "add_song() works and get_song_count() is correct"
+        command: |
+          source = open('/tutorial/playlist.py').read()
+          ns = {}
+          exec(source, ns)
+          p = ns['Playlist']('Test')
+          s1 = ns['Song']('A', 'B', 100)
+          s2 = ns['Song']('C', 'D', 200)
+          p.add_song(s1)
+          p.add_song(s2)
+          assert p.get_song_count() == 2, \
+              f"After adding 2 songs, get_song_count() should return 2 but got {p.get_song_count()}"
+        hints:
+          - text: "Add `def add_song(self, song: Song) -> None:` that calls `self.songs.append(song)`, and `def get_song_count(self) -> int:` returning `len(self.songs)`."
+            condition: "default"
+
+      - description: "get_total_duration() sums all song durations"
+        command: |
+          source = open('/tutorial/playlist.py').read()
+          ns = {}
+          exec(source, ns)
+          p = ns['Playlist']('Test')
+          p.add_song(ns['Song']('A', 'B', 100))
+          p.add_song(ns['Song']('C', 'D', 250))
+          total = p.get_total_duration()
+          assert total == 350, \
+              f"Total duration of 100 + 250 should be 350, got {total}"
+        hints:
+          - text: "Use `sum(s.duration_sec for s in self.songs)` to compute the total duration."
+            condition: "default"
+
+    quiz:
+      title: "Multiplicity"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            In UML, `Department "1" --> "1..*" Employee` — where is the `*` placed and why?
+          type: single
+          options:
+            - "Next to Department, because one department has many employees"
+            - "Next to Employee, because there are many employees per department"
+            - "In the middle of the line"
+            - "Above the arrow"
+          correct_index: 1
+          explanation: |
+            The multiplicity is placed **next to the class it quantifies**. There are many **employees** per department, so `1..*` goes next to `Employee`. There is one **department** per group, so `1` goes next to `Department`.
+
+        - question: |
+            What does the multiplicity `0..1` mean?
+          type: single
+          options:
+            - "Exactly zero"
+            - "Exactly one"
+            - "Zero or one (optional)"
+            - "Zero or more"
+          correct_index: 2
+          explanation: |
+            `0..1` means the relationship is **optional** — there can be zero or one instance. For example, a `Person` might have `0..1` `Passport` — not everyone has a passport, but no one has two.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — "Abstract Classes: Designing for Extension"
+  # Pedagogy:
+  #   Constructivism — bridge Python abc to UML italic notation.
+  #   Bloom's level — Understand (abstract meaning), Apply (use abc).
+  # --------------------------------------------------------------------------
+  - title: "Abstract Classes: Designing for Extension"
+    instructions: |
+      ## Abstract Classes in UML
+
+      > **Learning objective:** After this step you will be able to **implement** abstract classes using Python's `abc` module and **recognize** italic notation in UML diagrams.
+
+      ### What Is an Abstract Class?
+
+      An abstract class is a class that **cannot be instantiated directly** — it serves as a blueprint that subclasses must complete. In UML, abstract classes and abstract methods are shown in *italics*.
+
+      ### Python's `abc` Module
+
+      Python does not have an `abstract` keyword like Java or C++. Instead, you use the `abc` (Abstract Base Classes) module:
+
+      ```python
+      from abc import ABC, abstractmethod
+
+      class Shape(ABC):                    # Inherit from ABC
+          @abstractmethod                  # Mark as abstract
+          def area(self) -> float:
+              pass                         # No implementation
+      ```
+
+      Trying to instantiate `Shape()` directly will raise a `TypeError`.
+
+      ### Your Target Diagram
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      abstract class PaymentMethod {
+        + {abstract} process(amount: float): bool
+        + {abstract} get_name(): str
+      }
+      class CreditCard {
+        + card_number: str
+        + __init__(card_number: str): None
+        + process(amount: float): bool
+        + get_name(): str
+      }
+      class BankTransfer {
+        + account_number: str
+        + __init__(account_number: str): None
+        + process(amount: float): bool
+        + get_name(): str
+      }
+      CreditCard --|> PaymentMethod
+      BankTransfer --|> PaymentMethod
+      @enduml'></div>
+
+      Notice: `PaymentMethod` and its methods appear in *italics* — this signals they are abstract.
+
+      ### Your Task
+
+      The starter code has a concrete `PaymentMethod` base class. Make it abstract:
+
+      1. Import `ABC` and `abstractmethod` from the `abc` module
+      2. Make `PaymentMethod` inherit from `ABC`
+      3. Mark `process()` and `get_name()` with `@abstractmethod`
+      4. Complete the `CreditCard` and `BankTransfer` subclasses
+
+    uml_files:
+      - payments.py
+
+    files:
+      - path: payments.py
+        content: |
+          # TODO: Import ABC and abstractmethod from the abc module
+
+
+          class PaymentMethod:
+              """This should be abstract — you should NOT be able to create
+              a plain PaymentMethod(). Make it inherit from ABC."""
+
+              def process(self, amount: float) -> bool:
+                  # This should be abstract — mark with @abstractmethod
+                  return False
+
+              def get_name(self) -> str:
+                  # This should be abstract — mark with @abstractmethod
+                  return "Unknown"
+
+
+          class CreditCard(PaymentMethod):
+              def __init__(self, card_number: str) -> None:
+                  self.card_number: str = card_number
+
+              # TODO: Implement process() — print and return True
+              # TODO: Implement get_name() — return "Credit Card"
+
+
+          class BankTransfer(PaymentMethod):
+              def __init__(self, account_number: str) -> None:
+                  self.account_number: str = account_number
+
+              # TODO: Implement process() — print and return True
+              # TODO: Implement get_name() — return "Bank Transfer"
+
+
+          if __name__ == "__main__":
+              cc = CreditCard("4111-1111-1111-1111")
+              bt = BankTransfer("DE89370400440532013000")
+              print(f"Paying with {cc.get_name()}: {cc.process(49.99)}")
+              print(f"Paying with {bt.get_name()}: {bt.process(150.00)}")
+        language: python
+
+    open_file: payments.py
+
+    solution:
+      files:
+        - path: payments.py
+          content: |
+            from abc import ABC, abstractmethod
+
+
+            class PaymentMethod(ABC):
+                @abstractmethod
+                def process(self, amount: float) -> bool:
+                    pass
+
+                @abstractmethod
+                def get_name(self) -> str:
+                    pass
+
+
+            class CreditCard(PaymentMethod):
+                def __init__(self, card_number: str) -> None:
+                    self.card_number: str = card_number
+
+                def process(self, amount: float) -> bool:
+                    print(f"Charging ${amount:.2f} to card {self.card_number[-4:]}")
+                    return True
+
+                def get_name(self) -> str:
+                    return "Credit Card"
+
+
+            class BankTransfer(PaymentMethod):
+                def __init__(self, account_number: str) -> None:
+                    self.account_number: str = account_number
+
+                def process(self, amount: float) -> bool:
+                    print(f"Transferring ${amount:.2f} from account {self.account_number[-4:]}")
+                    return True
+
+                def get_name(self) -> str:
+                    return "Bank Transfer"
+
+
+            if __name__ == "__main__":
+                cc = CreditCard("4111-1111-1111-1111")
+                bt = BankTransfer("DE89370400440532013000")
+                print(f"Paying with {cc.get_name()}: {cc.process(49.99)}")
+                print(f"Paying with {bt.get_name()}: {bt.process(150.00)}")
+          language: python
+      explanation: |
+        By making `PaymentMethod` abstract:
+        - It **cannot be instantiated** — `PaymentMethod()` raises `TypeError`
+        - It **defines a contract** — any subclass MUST implement `process()` and `get_name()`
+        - The UML shows this with **italics** on the class name and abstract methods
+
+        This is a powerful design tool: you can write code that works with *any* `PaymentMethod` without knowing the specific type. You could add `PayPal`, `CryptoCurrency`, or `ApplePay` later without changing any code that uses the `PaymentMethod` interface.
+
+    tests:
+      - description: "PaymentMethod is abstract (cannot be instantiated)"
+        command: |
+          source = open('/tutorial/payments.py').read()
+          ns = {}
+          exec(source, ns)
+          try:
+              ns['PaymentMethod']()
+              assert False, \
+                  "PaymentMethod() should raise TypeError — make it inherit from ABC and mark methods with @abstractmethod"
+          except TypeError:
+              pass  # Good — abstract class cannot be instantiated
+        hints:
+          - text: "Add `from abc import ABC, abstractmethod` at the top, change `class PaymentMethod:` to `class PaymentMethod(ABC):`, and add `@abstractmethod` above both `process()` and `get_name()`."
+            condition: "default"
+
+      - description: "CreditCard implements all abstract methods"
+        command: |
+          source = open('/tutorial/payments.py').read()
+          ns = {}
+          exec(source, ns)
+          cc = ns['CreditCard']('4111-1111-1111-1111')
+          assert cc.get_name() == 'Credit Card', \
+              f"CreditCard.get_name() should return 'Credit Card' but got '{cc.get_name()}'"
+          result = cc.process(49.99)
+          assert result == True, \
+              "CreditCard.process() should return True"
+        hints:
+          - text: "Implement `def process(self, amount: float) -> bool:` in CreditCard that prints a message and returns `True`, and `def get_name(self) -> str:` returning `'Credit Card'`."
+            condition: "default"
+
+      - description: "BankTransfer implements all abstract methods"
+        command: |
+          source = open('/tutorial/payments.py').read()
+          ns = {}
+          exec(source, ns)
+          bt = ns['BankTransfer']('DE89370400440532013000')
+          assert bt.get_name() == 'Bank Transfer', \
+              f"BankTransfer.get_name() should return 'Bank Transfer' but got '{bt.get_name()}'"
+          result = bt.process(150.00)
+          assert result == True, \
+              "BankTransfer.process() should return True"
+        hints:
+          - text: "Implement `process()` and `get_name()` in BankTransfer, similar to CreditCard but returning `'Bank Transfer'`."
+            condition: "default"
+
+    quiz:
+      title: "Abstract Classes"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            What does italic text on a class name in UML indicate?
+          type: single
+          options:
+            - "The class is deprecated"
+            - "The class is abstract — it cannot be instantiated directly"
+            - "The class is private"
+            - "The class is a singleton"
+          correct_index: 1
+          explanation: |
+            Italic text in UML indicates **abstract** — the class (or method) cannot be used directly and must be implemented by a subclass. In Python, this is achieved using `ABC` and `@abstractmethod`.
+
+        - question: |
+            What happens if a Python class inherits from an abstract class but does NOT implement all abstract methods?
+          type: single
+          options:
+            - "The code runs normally with default behavior"
+            - "Python prints a warning but allows instantiation"
+            - "Python raises a TypeError when you try to instantiate the class"
+            - "The methods are automatically implemented as empty"
+          correct_index: 2
+          explanation: |
+            Python raises a `TypeError` at instantiation time if any `@abstractmethod` is not implemented. This enforces the contract defined by the abstract class — you cannot create an incomplete implementation.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 9 — "The Fixer-Upper: Diagnose a Bad Design"
+  # Pedagogy:
+  #   Fixer Upper Pattern — find and fix flaws in existing architecture.
+  #   ICAP Interactive — refactoring forces architectural analysis.
+  #   Bloom's level — Analyze (identify anti-pattern), Create (refactor).
+  # --------------------------------------------------------------------------
+  - title: "The Fixer-Upper: Diagnose a Bad Design"
+    instructions: |
+      ## The God Class Anti-Pattern
+
+      > **Learning objective:** After this step you will be able to **identify** the God Class anti-pattern in a UML diagram and **refactor** a monolithic class into cohesive, collaborating classes.
+
+      ### Spotting the Problem
+
+      Look at the UML diagram for the starter code. You will see ONE massive class with dozens of attributes and methods, and no other classes at all. This is called a **God Class** (also known as "The Blot") — a single class that tries to do everything.
+
+      In a UML diagram, the God Class is easy to spot: one huge box surrounded by nothing. No relationships, no collaboration, no distribution of responsibility.
+
+      ### Why It Matters
+
+      A God Class is invisible in 500 lines of Python — you might not realize how bloated it is until you try to modify it. But in a UML diagram, the problem **screams at you**. This is one of the most valuable uses of UML: making bad architecture visible before it becomes a maintenance nightmare.
+
+      ### Your Target Diagram
+
+      Refactor the monolithic `OnlineStore` into this well-structured system:
+
+      <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+        class Product {
+          +name: str
+          +price: float
+          +stock: int
+          +__init__(name: str, price: float, stock: int): None
+          +is_available(): bool
+          +reduce_stock(): None
+        }
+        class Customer {
+          +name: str
+          +email: str
+          +__init__(name: str, email: str): None
+        }
+        class Order {
+          +items: list[Product]
+          +total: float
+          +__init__(customer: Customer): None
+          +add_item(product: Product): None
+        }
+        class OnlineStore {
+          +products: list[Product]
+          +orders: list[Order]
+          +__init__(): None
+          +add_product(product: Product): None
+          +place_order(customer: Customer, product_names: list): Order
+        }
+        Order o--> "*" Product
+        Order --> "1" Customer
+        OnlineStore *--> "*" Order
+        OnlineStore o--> "*" Product
+        OnlineStore ..> Customer
+        @enduml
+      '></div>
+
+      ### Your Task
+
+      The starter code is a single `OnlineStore` class that manages products, customers, orders, and notifications all by itself. Refactor it:
+
+      1. **Extract `Product`** — name, price, stock, `is_available()`, `reduce_stock()`
+      2. **Extract `Customer`** — name, email
+      3. **Extract `Order`** — stores customer and items, calculates total
+      4. **Slim down `OnlineStore`** — coordinates the other classes
+
+      Watch the UML diagram transform from a single blob into an interconnected network.
+
+    uml_files:
+      - store.py
+
+    files:
+      - path: store.py
+        content: |
+          class OnlineStore:
+              """THE GOD CLASS — does everything, knows everything, fears nothing.
+              Look at the UML diagram: one giant box, no collaborators.
+
+              Your mission: extract Product, Customer, and Order classes."""
+
+              def __init__(self) -> None:
+                  # Product data (should be its own class)
+                  self._product_names: list[str] = []
+                  self._product_prices: list[float] = []
+                  self._product_stocks: list[int] = []
+
+                  # Order data (should be its own class)
+                  self._order_customer_names: list[str] = []
+                  self._order_customer_emails: list[str] = []
+                  self._order_items: list[Product] = []
+                  self._order_totals: list[float] = []
+
+              # ── Product management ──────────────────────────────────
+              def add_product(self, name: str, price: float, stock: int) -> None:
+                  self._product_names.append(name)
+                  self._product_prices.append(price)
+                  self._product_stocks.append(stock)
+
+              def is_product_available(self, name: str) -> bool:
+                  idx = self._product_names.index(name)
+                  return self._product_stocks[idx] > 0
+
+              def get_product_price(self, name: str) -> float:
+                  idx = self._product_names.index(name)
+                  return self._product_prices[idx]
+
+              def reduce_product_stock(self, name: str) -> None:
+                  idx = self._product_names.index(name)
+                  self._product_stocks[idx] -= 1
+
+              # ── Order management ────────────────────────────────────
+              def place_order(self, customer_name: str, customer_email: str,
+                              product_names: list) -> int:
+                  total = 0.0
+                  for pname in product_names:
+                      total += self.get_product_price(pname)
+                      self.reduce_product_stock(pname)
+
+                  self._order_customer_names.append(customer_name)
+                  self._order_customer_emails.append(customer_email)
+                  self._order_items.append(product_names)
+                  self._order_totals.append(total)
+
+                  order_id = len(self._order_totals) - 1
+                  print(f"[EMAIL] To: {customer_email} | Order #{order_id} confirmed: ${total:.2f}")
+                  return order_id
+
+              def get_order_total(self, order_id: int) -> float:
+                  return self._order_totals[order_id]
+
+
+          if __name__ == "__main__":
+              store = OnlineStore()
+              store.add_product("Laptop", 999.99, 5)
+              store.add_product("Mouse", 29.99, 50)
+              store.add_product("Keyboard", 79.99, 30)
+
+              order_id = store.place_order("Alice", "alice@example.com",
+                                           ["Laptop", "Mouse"])
+              print(f"Order total: ${store.get_order_total(order_id):.2f}")
+        language: python
+
+    open_file: store.py
+
+    solution:
+      files:
+        - path: store.py
+          content: |
+            class Product:
+                def __init__(self, name: str, price: float, stock: int) -> None:
+                    self.name: str = name
+                    self.price: float = price
+                    self.stock: int = stock
+
+                def is_available(self) -> bool:
+                    return self.stock > 0
+
+                def reduce_stock(self) -> None:
+                    self.stock -= 1
+
+
+            class Customer:
+                def __init__(self, name: str, email: str) -> None:
+                    self.name: str = name
+                    self.email: str = email
+
+
+            class Order:
+                def __init__(self, customer: Customer) -> None:
+                    self.customer: Customer = customer
+                    self.items: list[Product] = []
+                    self.total: float = 0.0
+
+                def add_item(self, product: Product) -> None:
+                    self.items.append(product)
+                    self.total += product.price
+                    product.reduce_stock()
+
+
+            class OnlineStore:
+                def __init__(self) -> None:
+                    self.products: list[Product] = []
+                    self.orders: list[Order] = []
+
+                def add_product(self, product: Product) -> None:
+                    self.products.append(product)
+
+                def place_order(self, customer: Customer, product_names: list) -> Order:
+                    order = Order(customer)
+                    for name in product_names:
+                        for p in self.products:
+                            if p.name == name and p.is_available():
+                                order.add_item(p)
+                                break
+                    self.orders.append(order)
+                    print(f"[EMAIL] To: {customer.email} | Order confirmed: ${order.total:.2f}")
+                    return order
+
+
+            if __name__ == "__main__":
+                store = OnlineStore()
+                store.add_product(Product("Laptop", 999.99, 5))
+                store.add_product(Product("Mouse", 29.99, 50))
+                store.add_product(Product("Keyboard", 79.99, 30))
+
+                customer = Customer("Alice", "alice@example.com")
+                order = store.place_order(customer, ["Laptop", "Mouse"])
+                print(f"Order total: ${order.total:.2f}")
+          language: python
+      explanation: |
+        **Before:** One God Class with 10+ attributes stored as parallel lists — the UML showed a single massive box with no structure.
+
+        **After:** Four cohesive classes with clear responsibilities:
+        - `Product` knows about itself (name, price, stock)
+        - `Customer` holds identity data
+        - `Order` manages a collection of products for a customer
+        - `OnlineStore` coordinates the system
+
+        The UML diagram now shows a network of relationships — composition (`*--`), associations (`-->`), and clear data flow. This is the power of UML: it makes the difference between good and bad architecture **immediately visible**.
+
+    tests:
+      - description: "Product class exists with is_available() and reduce_stock()"
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'Product' in ns, \
+              "Extract a Product class from the God Class"
+          p = ns['Product']('Test', 10.0, 3)
+          assert p.is_available() == True, \
+              "Product with stock > 0 should be available"
+          p.reduce_stock()
+          assert p.stock == 2, \
+              "reduce_stock() should decrease stock by 1"
+        hints:
+          - text: "Create `class Product:` with `__init__(self, name: str, price: float, stock: int)`, an `is_available()` returning `self.stock > 0`, and `reduce_stock()` doing `self.stock -= 1`."
+            condition: "default"
+
+      - description: "Customer class exists with name and email"
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'Customer' in ns, \
+              "Extract a Customer class"
+          c = ns['Customer']('Alice', 'alice@example.com')
+          assert c.name == 'Alice'
+          assert c.email == 'alice@example.com'
+        hints:
+          - text: "Create `class Customer:` with `__init__(self, name: str, email: str)` storing both as typed attributes."
+            condition: "default"
+
+      - description: "Order class exists and uses Product and Customer"
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          assert 'Order' in ns, \
+              "Extract an Order class"
+          c = ns['Customer']('Alice', 'a@b.com')
+          o = ns['Order'](c)
+          p = ns['Product']('Widget', 25.0, 10)
+          o.add_item(p)
+          assert o.total == 25.0, \
+              f"After adding a $25 product, order total should be 25.0, got {o.total}"
+          assert o.customer is c, \
+              "Order should store the Customer object"
+        hints:
+          - text: "Create `class Order:` with `__init__(self, customer: Customer)` and an `add_item(self, product: Product)` that appends to `self.items` and adds to `self.total`."
+            condition: "default"
+
+      - description: "OnlineStore uses the extracted classes"
+        command: |
+          source = open('/tutorial/store.py').read()
+          ns = {}
+          exec(source, ns)
+          store = ns['OnlineStore']()
+          store.add_product(ns['Product']('Laptop', 999.99, 5))
+          customer = ns['Customer']('Alice', 'alice@example.com')
+          order = store.place_order(customer, ['Laptop'])
+          assert hasattr(order, 'total'), \
+              "place_order should return an Order object"
+          assert order.total == 999.99, \
+              f"Order total should be 999.99, got {order.total}"
+        hints:
+          - text: "Refactor `OnlineStore` to accept `Product` objects via `add_product(self, product: Product)` and create `Order` objects in `place_order()`."
+            condition: "default"
+
+    quiz:
+      title: "God Class & Comprehensive Review"
+      min_score: 0.6
+      shuffle: true
+      questions:
+
+        - question: |
+            How can you spot a God Class in a UML diagram?
+          type: single
+          options:
+            - "It has too many arrows pointing to other classes"
+            - "It is one large box with many attributes and methods, surrounded by few or no other classes"
+            - "It has abstract methods"
+            - "It uses private visibility on all attributes"
+          correct_index: 1
+          explanation: |
+            A God Class appears as a **single massive box** with dozens of attributes and methods, with few or no collaborating classes around it. The lack of relationships in the diagram signals that one class is doing everything — the opposite of good object-oriented design.
+
+        - question: |
+            How does UML help you detect design problems that are hard to see in code?
+          type: single
+          options:
+            - "UML runs the code and finds bugs automatically"
+            - "UML shows the visual structure — bloated classes and missing relationships become obvious at a glance"
+            - "UML translates the code into a different programming language"
+            - "UML counts the lines of code in each class"
+          correct_index: 1
+          explanation: |
+            UML makes architecture **visible**. A God Class is invisible in 500 lines of Python — you might not notice the bloat. But in a UML diagram, one enormous box surrounded by nothing is immediately obvious. UML is a thinking tool, not just documentation.
+
+        - question: |
+            Match the UML notation to its meaning: a **solid line with a filled diamond** on one end.
+          type: single
+          options:
+            - "Inheritance — one class extends another"
+            - "Aggregation — the part can exist independently"
+            - "Composition — the part's lifecycle is bound to the whole"
+            - "Dependency — one class temporarily uses another"
+          correct_index: 2
+          explanation: |
+            A filled diamond means **composition** — the whole exclusively owns the part, and the part is destroyed when the whole is destroyed. A hollow diamond would mean aggregation (independent lifecycle).
+
+        - question: |
+            A `Course` class stores `self.instructor: Instructor = instructor` where the instructor is passed in from outside. Why is this an **association** rather than composition?
+          type: single
+          options:
+            - "Because Course and Instructor are in different files"
+            - "Because the Instructor exists independently — deleting the Course does not destroy the Instructor"
+            - "Because Instructor is abstract"
+            - "Because there is no multiplicity notation"
+          correct_index: 1
+          explanation: |
+            The `Instructor` exists independently — it was created outside of `Course` and passed in. Deleting a course does not delete the instructor. This is a reference, not ownership, so it is an **association** (plain arrow) rather than composition (filled diamond).
+
+        - question: |
+            What does italic text on a class name in a UML diagram indicate?
+          type: single
+          options:
+            - "The class is deprecated and should not be used"
+            - "The class is abstract — it cannot be instantiated directly"
+            - "The class is private to the module"
+            - "The class is a utility class with only static methods"
+          correct_index: 1
+          explanation: |
+            Italic text in UML indicates **abstract** — the class cannot be instantiated and must be subclassed. In Python, this is achieved with `class Name(ABC):` and `@abstractmethod`.
+
+        - question: |
+            In UML, `Department "1" --> "*" Employee` — what does `*` next to Employee mean?
+          type: single
+          options:
+            - "Each employee belongs to zero or more departments"
+            - "A department has zero or more employees"
+            - "There are zero or more departments"
+            - "Employees are optional in the system"
+          correct_index: 1
+          explanation: |
+            The multiplicity `*` is placed next to `Employee` because it quantifies how many employees a department can have: **zero or more**. Read it as a sentence: "One Department has zero or more Employees."
+
+        - question: |
+            What is the most important purpose of a UML class diagram?
+          type: single
+          options:
+            - "To generate code automatically"
+            - "To replace code documentation"
+            - "To communicate the structure and relationships of a system visually"
+            - "To test the code for bugs"
+          correct_index: 2
+          explanation: |
+            The primary purpose of UML is **communication**. A class diagram lets developers understand and discuss the architecture of a system — what classes exist, how they relate, and what contracts they define — without reading every line of code. It is a thinking and communication tool, not a replacement for code.
+
+
+  # --------------------------------------------------------------------------
+  # STEP 10 — "UML Class Diagram Reference"
+  # Pedagogy:
+  #   Summary / Retrieval Practice — consolidates all notation learned.
+  #   Serves as a reference card students can revisit.
+  # --------------------------------------------------------------------------
+  - title: "UML Class Diagram Reference"
+    instructions: |
+      ## Congratulations!
+
+      You have learned to read and create UML class diagrams. This final page summarizes every notation element covered in this tutorial — use it as a quick reference.
+
+      ---
+
+      ### The Class Box
+
+      Every class is drawn as a box with three compartments:
+
+      | Compartment | Contains | Python |
+      |---|---|---|
+      | **Top** | Class name | `class ClassName:` |
+      | **Middle** | Attributes | `self.x = value` |
+      | **Bottom** | Methods | `def method(self):` |
+
+      ---
+
+      ### Visibility
+
+      | UML | Meaning | Python Convention |
+      |---|---|---|
+      | `+` | **Public** | `self.name` (no prefix) |
+      | `-` | **Private** | `self.__name` (double underscore) |
+      | `#` | **Protected** | `self._name` (single underscore) |
+
+      ---
+
+      ### Types
+
+      | UML | Python |
+      |---|---|
+      | `name: str` | `self.name: str = name` |
+      | `get_price(): float` | `def get_price(self) -> float:` |
+      | `process(amount: float): bool` | `def process(self, amount: float) -> bool:` |
+
+      ---
+
+      ### Relationships
+
+      | Symbol | Name | Meaning | Python Pattern |
+      |---|---|---|---|
+      | <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> | **Inheritance** | "is-a" — child extends parent | `class Child(Parent):` |
+      | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other: OtherClass = other` |
+      | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> | **Composition** | "owns" — part destroyed with whole | `self.part = Part(...)` (created inside) |
+      | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> | **Aggregation** | "uses" — part survives independently | `self.parts.append(part)` (passed in) |
+      | <span class="uml-sym" data-diagram="class" data-sym="..>"></span> | **Dependency** | "temporarily uses" — weakest link | Uses a class inside a method body only |
+
+      ---
+
+      ### Dependency — The Relationship We Did Not Cover
+
+      A **dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> is the weakest relationship between classes. It means one class *temporarily uses* another — typically as a local variable or parameter inside a single method — without storing a persistent reference.
+
+      ```python
+      class ReportGenerator:
+          def generate(self, data: list) -> str:
+              formatter = HTMLFormatter()   # Used locally, not stored
+              return formatter.format(data)
+      ```
+
+      In UML, this is drawn as a **dashed arrow** from `ReportGenerator` to `HTMLFormatter`. The key difference from association: the `ReportGenerator` does NOT have an `HTMLFormatter` attribute — it only creates and uses one temporarily inside `generate()`.
+
+      **Rule of thumb:**
+      - `self.x = OtherClass(...)` → **association** or **composition** (persistent reference)
+      - `local_var = OtherClass(...)` inside a method → **dependency** (temporary use)
+
+      ---
+
+      ### Multiplicity
+
+      | Notation | Meaning |
+      |---|---|
+      | `1` | Exactly one |
+      | `0..1` | Zero or one (optional) |
+      | `*` | Zero or more |
+      | `1..*` | One or more |
+
+      Placement: the number goes next to the class it quantifies.
+
+      ---
+
+      ### Abstract Classes
+
+      | UML | Meaning | Python |
+      |---|---|---|
+      | *Italic class name* | Abstract class — cannot be instantiated | `class Name(ABC):` |
+      | *Italic method name* / `{abstract}` | Abstract method — must be overridden | `@abstractmethod` |
+
+      ---
+
+      ### What You Learned
+
+      UML class diagrams are a **communication tool**. They make invisible design decisions visible — turning implicit code relationships into explicit, communicable blueprints. You can now:
+
+      1. **Read** a UML class diagram and understand its structure
+      2. **Write** Python code that matches a given diagram
+      3. **Identify** anti-patterns like the God Class
+      4. **Distinguish** between association, composition, and aggregation
+      5. **Communicate** software architecture without showing code
+
+    uml_files:
+      - store.py
+
+    files:
+      - path: store.py
+        content: |
+          # This is the reference page — no coding task here.
+          # Review the summary above and use it as a quick reference!
+        language: python

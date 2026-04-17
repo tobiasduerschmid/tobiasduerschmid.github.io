@@ -350,6 +350,7 @@
 
       // Lecture mode: hide navbar controls not relevant during a live lecture
       if (lectureMode) {
+        document.body.classList.add('lecture-mode');
         ['seBookBtn', 'printBtn', 'autoSaveLabel', 'tts-read-btn', 'darkModeLabel'].forEach(function (id) {
           var el = document.getElementById(id);
           if (el) el.style.display = 'none';
