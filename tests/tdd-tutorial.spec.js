@@ -17,8 +17,11 @@ const {
  * Block 2 – YAML-driven: applies each step's solution, verifies test count,
  *           answers the quiz, and advances to the next step.
  *
- * Note: Step 7 ("The Big Picture") has no tests — it is a reflection step
- * with no automated verification. No YAML-driven test is generated for it.
+ * Note: The final step ("The Big Picture") has no tests — it is a reflection
+ * step with no automated verification. No YAML-driven test is generated for it.
+ * Tutorial has 8 steps: 1-Why Test, 2-pytest, 3-Red-Green-Refactor,
+ * 4-FizzBuzz Kata, 5-Behavior vs. Implementation (+ AAA), 6-Password Validator
+ * (+ parametrize), 7-TDD with AI Assistants, 8-Big Picture.
  */
 
 const TUTORIAL_URL     = '/SEBook/tools/tdd-tutorial';
