@@ -434,13 +434,29 @@ String first = (String) names.get(0);  // cast inserted by compiler
 
 Java Collections are organized by **interfaces**. Declare variables as the interface type:
 
-```
-Collection
-├── List        → ArrayList (resizable array), LinkedList (doubly-linked)
-└── Set         → HashSet (unordered, fast), TreeSet (sorted)
+<pre><code class="language-uml-class">
+@startuml
+interface Collection
+interface List
+interface Set
+interface Map
+class ArrayList <<resizable array>>
+class LinkedList <<doubly-linked>>
+class HashSet <<unordered, fast>>
+class TreeSet <<sorted>>
+class HashMap <<unordered, fast>>
+class TreeMap <<sorted by key>>
 
-Map             → HashMap (unordered, fast), TreeMap (sorted by key)
-```
+List --|> Collection
+Set --|> Collection
+ArrayList ..|> List
+LinkedList ..|> List
+HashSet ..|> Set
+TreeSet ..|> Set
+HashMap ..|> Map
+TreeMap ..|> Map
+@enduml
+</code></pre>
 
 | Need | Interface | Implementation | Python Equivalent |
 |------|-----------|---------------|-------------------|

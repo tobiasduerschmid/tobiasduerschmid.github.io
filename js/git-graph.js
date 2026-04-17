@@ -373,21 +373,17 @@
   // ---------------------------------------------------------------------------
   // SVG Rendering
   // ---------------------------------------------------------------------------
-  GitGraph.prototype.render = function (data) {
-    this._data = data;
-    if (!data || data.commits.length === 0) {
-      // Only show the empty placeholder if the container has no prior graph.
-      // This avoids flashing "No commits yet" when a full refresh is pending.
-      if (!this.container.querySelector('.git-graph-svg')) {
-        this.container.innerHTML =
-          '<div class="git-graph-empty">' +
-          '<div style="text-align:center">' +
-          '<div style="font-size:48px;margin-bottom:12px;">&#x1f333;</div>' +
-          '<div>No commits yet.<br>Run <code>git commit</code> to see the graph.</div>' +
-          '</div></div>';
-      }
-      return;
-    }
+
+  /**
+   * Produce the SVG markup for a data set without touching any container.
+   * Returns '' for empty data so callers can decide what to show.
+   *
+   * Useful for reuse outside the live-git-state flow — e.g. a static-spec
+   * renderer that builds the data structure from a text DSL and wants to
+   * drop the resulting SVG anywhere.
+   */
+  GitGraph.prototype.toSVG = function (data) {
+    if (!data || !data.commits || data.commits.length === 0) return '';
 
     this._layout(data);
 
@@ -398,7 +394,12 @@
     var width = PADDING_LEFT + (this._colCount) * COL_WIDTH + (this._rightLabelSpace || 0) + 480; // 480px ≈ 50 chars × 8px + buffer for commit messages
     var height = PADDING_TOP + commits.length * ROW_HEIGHT + PADDING_BOTTOM;
 
+    // viewBox is essential — without it, `max-width: 100%; height: auto`
+    // (from uml-diagram.css) can't preserve aspect ratio when the container
+    // is narrower than the intrinsic width, and the bottom of the graph
+    // gets clipped.
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" ' +
+      'viewBox="0 0 ' + width + ' ' + height + '" ' +
       'class="git-graph-svg" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
 
     // Draw edges first (behind nodes)
@@ -411,7 +412,34 @@
     svg += this._renderBranchLabels(branches, data.commitMap, head);
 
     svg += '</svg>';
-    this.container.innerHTML = svg;
+    return svg;
+  };
+
+  GitGraph.prototype.render = function (data) {
+    this._data = data;
+    if (!data || !data.commits || data.commits.length === 0) {
+      // Only show the empty placeholder if the container has no prior graph.
+      // This avoids flashing "No commits yet" when a full refresh is pending.
+      if (this.container && !this.container.querySelector('.git-graph-svg')) {
+        this.container.innerHTML =
+          '<div class="git-graph-empty">' +
+          '<div style="text-align:center">' +
+          '<div style="font-size:48px;margin-bottom:12px;">&#x1f333;</div>' +
+          '<div>No commits yet.<br>Run <code>git commit</code> to see the graph.</div>' +
+          '</div></div>';
+      }
+      return;
+    }
+
+    this.container.innerHTML = this.toSVG(data);
+  };
+
+  /**
+   * Static convenience: render data to an SVG string without allocating
+   * a real container. Useful for embedding inside other renderers.
+   */
+  GitGraph.renderToSVG = function (data) {
+    return new GitGraph(null).toSVG(data);
   };
 
   GitGraph.prototype._cx = function (col) {

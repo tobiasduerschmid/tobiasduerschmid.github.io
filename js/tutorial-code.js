@@ -3721,7 +3721,7 @@
     if (!step) return;
     var self = this;
 
-    if (self.resetType === 'commands' && self.currentStep > 0) {
+    if (self.resetType === 'commands') {
       return self._resetStepWithCommands();
     }
 

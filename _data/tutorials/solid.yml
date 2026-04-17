@@ -297,6 +297,10 @@ steps:
 
       > **Struggle is the lesson.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
 
+      ### Reflect → Explain in Your Own Words
+
+      Before you run the code: take 90 seconds. In three sentences or fewer, finish this prompt — *"The `EmployeeManager` class is hard to change because..."* Don't answer "SRP violation" — aim for the concrete mechanism: *which actor's request breaks which other actor's output, and why*. This short self-explanation is the difference between reading about SRP and building the mental model you'll reuse in code review for the rest of your career.
+
     files:
       - path: "employee_manager.py"
         content: |
@@ -1571,6 +1575,12 @@ steps:
 
       This is the pain the Open/Closed Principle is trying to save you from. We'll fix it properly in the next step.
 
+      > **Struggling is the lesson.** OCP feels counter-intuitive at first — your instinct says "just add another `elif`, the code works, ship it." The point of this step is to *feel* what happens when that instinct scales to 20 channels, so that polymorphism in Step 5 arrives as relief, not academic theory.
+
+      ### Reflect → Explain in Your Own Words
+
+      Before moving on, take 90 seconds. Close the code. In three sentences or fewer, finish this prompt: *"This `send_notification()` method becomes painful to change because..."* Don't answer "OCP violation" — aim for the concrete mechanism: what breaks when, who feels it, which line of the if/elif chain a junior would accidentally edit. This short self-explanation is what turns reading into schema-building (Chi & Wylie's ICAP framework — Constructive mode).
+
     files:
       - path: "notification_router.py"
         content: |
@@ -2637,6 +2647,22 @@ steps:
 
       > **Struggling is the lesson.** LSP is the deepest SOLID principle — every senior developer has been burned by it at least once. If "strengthening vs. weakening" feels abstract, that's normal. The exercises below make it mechanically observable.
 
+      ### The Happy / Sad Visual Mnemonic
+
+      Students routinely forget which of pre- and post-conditions can be weakened and which can be strengthened. Baniassad (ICSE-SEET 2018) developed a visual cue that sticks in memory: a *substitutable* method is **happy** — a smile, wider at the top and narrower at the bottom. A *violating* method is **sad** — a frown, narrow at the top and wide at the bottom.
+
+      ```
+      Happy  ⌣   — substitutable (LSP-compliant)
+         TOP  wide    → preconditions  WEAKER    (accept more inputs than parent)
+         BOT  narrow  → postconditions STRONGER  (guarantee more than parent)
+
+      Sad    ⌢   — LSP violation
+         TOP  narrow  → preconditions  STRONGER  (reject inputs parent accepts)
+         BOT  wide    → postconditions WEAKER    (promise less than parent)
+      ```
+
+      Keep this picture in your head. Every LSP judgment reduces to the same question: *is the subclass's contract shaped like a smile relative to the parent's, or like a frown?*
+
       ### Code Smell: *Refused Bequest*
 
       The most common LSP violation has a name: **Refused Bequest**. It looks like a subclass that inherits a method it cannot meaningfully implement, so it either throws `NotImplementedError` *or* returns a "success: false" sentinel. Both are violations — and the second is worse because it fails silently.
@@ -2690,6 +2716,10 @@ steps:
       The postcondition of `refund()` isn't just "return a dict." It's **"actually refund the transaction and return the refunded amount."** Callers depend on that guarantee. A function that silently fails while wearing the same interface is *more dangerous* than one that crashes — because the caller has zero reason to suspect anything went wrong. Money has already moved. The customer is gone. You'll find out next Tuesday during reconciliation.
 
       **The fix is structural** — splitting the hierarchy so `GiftCardProcessor` never inherits a `refund()` method it can't honor. That's the next step.
+
+      ### Reflect → Explain in Your Own Words
+
+      Before moving on, take 90 seconds. Close the code. In three sentences or fewer, explain to an imaginary teammate: *"Why is silently returning `success=False` worse than crashing with `NotImplementedError`?"* Use the Happy/Sad mnemonic if it helps — is the subclass's refund contract shaped like a smile or a frown? This self-explanation is what moves "LSP knowledge" from "something I read" to "something I can wield in code review".
 
     files:
       - path: "payments.py"
@@ -4074,6 +4104,8 @@ steps:
 
       When an interface gets too bloated, implementers that only need a few of its methods are forced to write stub implementations — methods that do nothing or raise errors. This wastes effort, confuses anyone reading the code, and creates **latent bugs**: code that looks fine but crashes at runtime.
 
+      > **Struggling is the lesson.** ISP violations don't crash the compiler — they quietly plant `NotImplementedError` land mines that blow up at runtime, often far from the class that planted them. If the problem feels subtle, that's because it *is* subtle. The exercise below makes the latent crashes observable.
+
       ### Code Smell: *Fat Interface*
 
       A bloated interface with too many unrelated methods is called a **Fat Interface**. Close cousin: the *Refused Bequest* smell you met in the LSP step — when a fat interface forces a subclass to stub methods it cannot honor, you get LSP violations for free. ISP and LSP work together: segregating interfaces eliminates whole categories of LSP bugs before they can happen.
@@ -4111,31 +4143,68 @@ steps:
 
       Compare the fat interface approach with a segregated design:
 
-      **Fat interface (current — problematic):**
-      ```
-      CloudStorage
-      ├── upload()
-      ├── download()
-      ├── sync()
-      ├── share()
-      ├── encrypt()
-      └── get_version_history()
+      **Fat interface (current — problematic).** `FreeStorage` is forced to implement methods it cannot support:
 
-      FreeStorage(CloudStorage)  ← must stub 4 methods
-      PremiumStorage(CloudStorage)
+      ```uml-class
+      @startuml
+      class CloudStorage {
+        + upload()
+        + download()
+        + sync()
+        + share()
+        + encrypt()
+        + get_version_history()
+      }
+      class FreeStorage {
+        + upload()
+        + download()
+      }
+      class PremiumStorage {
+        + upload()
+        + download()
+        + sync()
+        + share()
+        + encrypt()
+        + get_version_history()
+      }
+      FreeStorage --|> CloudStorage
+      PremiumStorage --|> CloudStorage
+      @enduml
       ```
 
-      **Segregated interfaces (ISP-compliant):**
-      ```
-      Uploadable          ← upload()
-      Downloadable        ← download()
-      Syncable            ← sync()
-      Shareable           ← share()
-      Encryptable         ← encrypt()
-      Versionable         ← get_version_history()
+      **Segregated interfaces (ISP-compliant).** Each capability is its own interface; classes only implement what they can actually support:
 
-      FreeStorage(Uploadable, Downloadable)
-      PremiumStorage(Uploadable, Downloadable, Syncable, Shareable, Encryptable, Versionable)
+      ```uml-class
+      @startuml
+      interface Uploadable {
+        + upload()
+      }
+      interface Downloadable {
+        + download()
+      }
+      interface Syncable {
+        + sync()
+      }
+      interface Shareable {
+        + share()
+      }
+      interface Encryptable {
+        + encrypt()
+      }
+      interface Versionable {
+        + get_version_history()
+      }
+      class FreeStorage
+      class PremiumStorage
+      FreeStorage ..|> Uploadable
+      FreeStorage ..|> Downloadable
+      PremiumStorage ..|> Uploadable
+      PremiumStorage ..|> Downloadable
+      PremiumStorage ..|> Syncable
+      PremiumStorage ..|> Shareable
+      PremiumStorage ..|> Encryptable
+      PremiumStorage ..|> Versionable
+      @enduml
       ```
 
       With segregated interfaces, `FreeStorage` never inherits `sync()`, so `backup_service()` would require `Syncable` — and the type system (or a simple `isinstance` check) would catch the mismatch **before** runtime.
@@ -5084,6 +5153,18 @@ steps:
       This is the part that trips people up. "Depend on abstractions" doesn't mean "wrap every class in a generic interface." It means the **high-level policy** defines the abstraction in terms of **its own needs**, and the low-level detail bends to fit.
 
       Example: `OrderService` needs to save orders. It does **not** need to know whether the store is SQL, NoSQL, or an in-memory dict. So the abstraction `OrderRepository` — owned by the order service's module — has a method like `save_order(order_id, items, total)`, shaped by what an order needs, not by what Postgres provides. Then `PostgresOrderRepository` implements that interface. If the interface started looking like `execute_sql(query)`, you'd know the low-level details were leaking up.
+
+      ### Apply DIP to Volatile Dependencies, Not Everything
+
+      Not every concrete type needs an abstraction. `int`, `str`, `datetime`, `list` are *stable* — they don't change often, and depending on them is completely fine. DIP targets **volatile** dependencies — the ones that:
+
+      - **Reach the network** (APIs, databases, message queues, file systems)
+      - **Change frequently** (3rd-party libraries on active releases, business rules you own)
+      - **Block testing** (slow, flaky, expensive, or stateful)
+
+      Wrapping every class in an ABC is the DIP equivalent of OCP's "speculative extensibility" trap — it adds indirection without buying you anything. The right question is always: *"If this collaborator had to be swapped tomorrow — for a test, a migration, or a cost cut — would I want it behind an abstraction?"* If yes, apply DIP. If no (`datetime.now()`, `math.sqrt`), don't.
+
+      > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will crystallize it in code.
 
       ### The Scenario — Feel the Friction
 
