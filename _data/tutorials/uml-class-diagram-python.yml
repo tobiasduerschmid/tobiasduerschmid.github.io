@@ -29,6 +29,8 @@ steps:
 
       > **Learning objective:** After this step you will be able to **identify** the three compartments of a UML class box and **write** a Python class that matches a given diagram.
 
+      > **Heads up — learning UML feels weird at first.** You are about to map two things that look very different: boxes with symbols on one side, Python code on the other. The first few connections take effort to see. If a notation feels arbitrary, that's normal — keep going. By Step 4 you'll be reading diagrams as fluently as you read code.
+
       ### What Is a UML Class Diagram?
 
       A UML class diagram is a visual blueprint of your software's structure. It shows what classes exist, what data they hold, what behavior they provide, and how they relate to each other. Think of it as a floor plan — you can understand the building without inspecting every brick.
@@ -193,6 +195,31 @@ steps:
           explanation: |
             The UML box has three compartments: the class name at the top, `x` in the attributes section (middle), and `calculate()` in the methods section (bottom). `self` is not shown in UML — it is implicit.
 
+        - question: |
+            **Predict before you run.** Given this Python code, *how many items* will appear in the **bottom** (methods) compartment of the UML box?
+
+            ```python
+            class Timer:
+                def __init__(self, seconds):
+                    self.seconds = seconds
+                    self.running = False
+
+                def start(self):
+                    self.running = True
+
+                def stop(self):
+                    self.running = False
+            ```
+          type: single
+          options:
+            - "2 — only start() and stop()"
+            - "3 — __init__(), start(), and stop()"
+            - "4 — __init__(), start(), stop(), and seconds"
+            - "0 — none, because methods aren't shown yet"
+          correct_index: 1
+          explanation: |
+            The bottom compartment lists **methods**. `Timer` defines three: `__init__`, `start`, and `stop`. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom. Predicting before you run is a powerful way to test your mental model — you either confirm it or you find the gap.
+
 
   # --------------------------------------------------------------------------
   # STEP 2 — "Visibility: Who Can See What?"
@@ -208,48 +235,56 @@ steps:
 
       > **Learning objective:** After this step you will be able to **map** UML visibility symbols to Python naming conventions and **explain** why encapsulation is a design decision.
 
-      ### The Four Visibility Levels
+      ### The Four UML Visibility Levels
 
-      UML uses symbols to show *who* can access each attribute or method:
+      UML uses symbols to show *who* can access each attribute or method (source: *UML@Classroom*, Seidl et al., Table 4.1):
 
-      | UML Symbol | Meaning | Python Convention |
+      | UML Symbol | Meaning | Access Scope |
       |---|---|---|
-      | `+` | **Public** — accessible to all | `self.name` (no prefix) |
-      | `-` | **Private** — only this class | `self.__name` (double underscore) |
-      | `#` | **Protected** — this class and subclasses | `self._name` (single underscore) |
-      | `~` | **Package** — same module | (no standard Python equivalent) |
+      | `+` | **Public** | Any object in the system |
+      | `-` | **Private** | Only the implementing class itself |
+      | `#` | **Protected** | The class and its subclasses |
+      | `~` | **Package** | Classes in the same package |
 
-      ### Python Naming Conventions in Detail
+      ### Python Is Different — and That's Part of the Lesson
 
-      Unlike C++ or Java, Python does not have `private` or `protected` keywords. Instead, it uses **naming conventions** — prefixes that signal intent to other developers:
+      Unlike Java or C++, **Python has no `private` or `protected` keywords**. Access control in Python is entirely convention-based. This tutorial uses the following Python-to-UML mapping that the live diagram renderer recognises:
 
-      **No prefix → Public (`+`)**
+      | UML | Python (as read by this renderer) |
+      |---|---|
+      | `+` Public | `self.name` (no prefix) |
+      | `#` Protected | `self._name` (single leading underscore) |
+      | `-` Private | `self.__name` (double leading underscore) |
+
+      ### What `_` and `__` Really Mean in Python
+
+      **Single underscore `_` — the "internal use" signal (PEP 8)**
       ```python
-      self.name = "Alice"       # Anyone can read and write this
+      self._internal_cache = []   # "Implementation detail — don't rely on this"
       ```
-      This is the default. Any code anywhere can access `obj.name`.
+      A leading `_` is a **social contract**. Python does nothing to enforce it; tools like `from module import *` skip these names, and the broader community treats them as non-public. *Most Pythonistas use `_` to mean "non-public" whether the intent is protected or private.*
 
-      **Single underscore `_` → Protected (`#`)**
+      **Double underscore `__` — name mangling, NOT privacy**
       ```python
-      self._internal_cache = []  # "Hey, this is internal — use at your own risk"
+      self.__balance = 100
       ```
-      The underscore is a **social contract**: it says "this is an implementation detail, not part of the public interface." Python does not prevent access — it is a polite warning. Subclasses are expected to use `_` attributes, but external code should not.
+      Python rewrites `__balance` to `_BankAccount__balance`. Per the official Python tutorial:
 
-      **Double underscore `__` → Private (`-`)**
-      ```python
-      self.__password = "secret"  # Python actively discourages outside access
-      ```
-      Python applies **name mangling**: it renames `__password` internally to `_ClassName__password`. This makes accidental access from outside the class difficult (though not impossible). It is the closest Python gets to true private access.
+      > *"Name mangling is intended to give classes an easy way to define 'private' instance variables... without having to worry about instance variables defined by derived classes."*
+
+      The **primary purpose** of `__` is **avoiding name clashes in deep inheritance hierarchies** (PEP 8), not privacy. It happens to make accidental external access harder, which is why many tools (and this renderer) treat it as the closest Python analogue of UML `-`. But don't reach for `__` just to "make something private" — idiomatic Python rarely uses it.
 
       ```python
       account = BankAccount(100)
-      account.__balance         # AttributeError! (mangled name)
-      account._BankAccount__balance  # Works, but you should never do this
+      account.__balance              # AttributeError (mangled)
+      account._BankAccount__balance  # Works — a determined caller can always get in
       ```
+
+      > **Key takeaway:** UML visibility expresses **design intent**; Python conventions express that intent through naming, not enforcement. In this tutorial we use `__` for private so the UML renderer displays `-`, but in real Python code many teams standardise on `_` for anything non-public.
 
       ### Why This Matters
 
-      Python does not *enforce* visibility — but UML forces you to **decide** what *should* be accessible. This is a design decision, not a language feature. When you model a class in UML, you are making a deliberate architectural choice about which parts are the public interface and which are internal implementation details that could change without warning.
+      Python does not *enforce* visibility — but UML forces you to **decide** what *should* be accessible. When you model a class in UML, you make a deliberate architectural choice about which parts are the public interface and which are internal implementation details that could change without warning.
 
       ### Your Target Diagram
 
@@ -686,7 +721,11 @@ steps:
 
       Child <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> Parent
 
-      **Common mistake:** Students often draw the arrow pointing *away* from the parent. Remember: the triangle is like an arrowhead — it points at the thing being extended.
+      > **⚠ Common mistake (documented in CS education research):** Students often draw the triangle pointing **away** from the parent, from superclass down to subclass. The correct direction is the opposite: the **child points up** to the parent.
+      >
+      > **Memory aid:** Think of the child *reaching up* to say "I am like you." The triangle rests at the parent's door, like a visitor.
+      >
+      > **"Is-a" test:** Before drawing, check the sentence *"A [Child] is a [Parent]"* makes sense. *"A Dog is an Animal"* → yes. *"An Animal is a Dog"* → no. The inheriting class is the subject; the triangle points at the parent.
 
       ### Your Target Diagram
 
@@ -939,6 +978,18 @@ steps:
           explanation: |
             Inherited members appear only in the **parent** class box. The child class only lists members it **adds** or **overrides**. The inheritance arrow tells you that everything in the parent is available in the child.
 
+        - question: |
+            **Review of Step 2.** Given the Shape class `+ color: str` and an inherited subclass `Circle` that needs to read `color` in its `area()` method, which access level is most appropriate for `color` if we want subclasses to read it but external code not to?
+          type: single
+          options:
+            - "Public (`+`) — let everyone see it"
+            - "Protected (`#`) — accessible to Shape and its subclasses"
+            - "Private (`-`) — only Shape itself can see it"
+            - "Package (`~`) — only same-module access"
+          correct_index: 1
+          explanation: |
+            `#` **protected** is the classic "I need subclasses to see this, but not arbitrary outside code" visibility. If `color` were private (`-`), `Circle` could not access it directly. This question reconnects Step 2's visibility markers with Step 4's inheritance — UML concepts are not independent; they interact.
+
 
   # --------------------------------------------------------------------------
   # STEP 5 — "Association: Classes That Know Each Other"
@@ -1160,9 +1211,11 @@ steps:
       | | Composition (filled diamond) | Aggregation (hollow diamond) |
       |---|---|---|
       | **Symbol** | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> filled diamond | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> hollow diamond |
-      | **Ownership** | Whole **owns** the part exclusively | Whole **references** the part |
+      | **Ownership** | Whole **owns** the part exclusively (no sharing) | Whole **references** the part (can be shared) |
       | **Lifecycle** | Part is destroyed with the whole | Part survives independently |
       | **Python pattern** | Part created **inside** `__init__` | Part **passed in** from outside |
+
+      > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **exactly one** composite at a time, and is deleted with it. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal." Martin Fowler (*UML Distilled*) even recommends ignoring aggregation entirely: *"Aggregation is strictly meaningless; different authors use it for very different purposes."* For this tutorial we'll use the common textbook interpretation (lifecycle-based), but in the field, if you're unsure between aggregation and plain association, prefer association.
 
       ### The File System Metaphor
 
@@ -1434,23 +1487,29 @@ steps:
 
       Multiplicity tells you **how many** instances participate in a relationship. It is written as a number or range next to each end of an association line.
 
-      | Notation | Meaning |
-      |---|---|
-      | `1` | Exactly one |
-      | `0..1` | Zero or one (optional) |
-      | `*` | Zero or more |
-      | `1..*` | One or more |
+      | Notation | Meaning | Equivalent |
+      |---|---|---|
+      | `1` | Exactly one | |
+      | `0..1` | Zero or one (optional) | |
+      | `0..*` or `*` | Zero or more | a collection that may be empty |
+      | `1..*` | One or more | a collection that must have at least one element |
+
+      > **Style tip (Ambler G118):** Prefer `0..*` over bare `*`. Both mean the same thing, but `0..*` is explicit — a reader never has to wonder whether you meant "any number" or "one or more."
 
       ### Reading Multiplicity as a Sentence
 
-      Read from each end toward the other. The arrow <span class="uml-sym" data-diagram="class" data-sym="-->"></span> connects the two classes, with numbers on each side:
+      Read from each end toward the other. Multiplicity sits next to the class end it quantifies:
 
-      Playlist <span class="uml-sym" data-diagram="class" data-sym="-->"></span> **"*"** Song
+      Playlist <span class="uml-sym" data-diagram="class" data-sym="-->"></span> **"0..\*"** Song
 
-      - Left to right: "One Playlist contains zero or more Songs"
-      - Right to left: "Each Song belongs to one Playlist"
+      - Left-to-right: "One `Playlist` contains **zero or more** `Song`s."
+      - Right-to-left: "Each `Song` belongs to **some** `Playlist`" — but we can't say how many from a diagram with only *one* multiplicity shown.
 
-      **Placement rule:** The number is placed next to the class it **quantifies**. The `*` goes next to `Song` because there are many songs, not many playlists.
+      > **⚠ Unidirectional diagrams only tell half the story.** When the Playlist end is blank, the Song-to-Playlist multiplicity is **unspecified**, not "1." In a real music app a song typically lives on many playlists — modeling that requires a multiplicity at the Playlist end too (e.g., `Playlist "0..*" <-- "*" Song`). This tutorial keeps one end hidden to teach one idea at a time; real designs usually show both.
+
+      **Placement rule:** The number sits next to the class it **quantifies**. The `0..*` goes next to `Song` because *one playlist has many songs*, not because there are "many songs in general."
+
+      > **⚠ Common mistake (Chren et al., 2019):** Beginners flip the multiplicities — putting `*` next to the playlist end to mean "there are many playlists." That is **wrong**. Multiplicity always answers: *"For one instance of the opposite class, how many of **this** class participate?"*
 
       ### Your Target Diagram
 
@@ -1873,6 +1932,18 @@ steps:
           correct_index: 2
           explanation: |
             Python raises a `TypeError` at instantiation time if any `@abstractmethod` is not implemented. This enforces the contract defined by the abstract class — you cannot create an incomplete implementation.
+
+        - question: |
+            **Review of Step 4.** In the target diagram for this step, which direction does the triangle point between `CreditCard` and `PaymentMethod`?
+          type: single
+          options:
+            - "From `PaymentMethod` down to `CreditCard`"
+            - "From `CreditCard` up to `PaymentMethod`"
+            - "Both directions — it is bidirectional"
+            - "Sideways — direction is not significant in UML"
+          correct_index: 1
+          explanation: |
+            The hollow triangle of a generalisation arrow **always** points at the parent/superclass — here, `PaymentMethod`. The child class (`CreditCard`) is at the non-triangle end. This is one of the most commonly reversed notations in student diagrams (Chren et al., 2019). "*A CreditCard is a PaymentMethod*" — the sentence order mirrors the arrow direction.
 
 
   # --------------------------------------------------------------------------
@@ -2342,10 +2413,13 @@ steps:
       |---|---|
       | `1` | Exactly one |
       | `0..1` | Zero or one (optional) |
-      | `*` | Zero or more |
+      | `0..*` *(preferred over bare `*`)* | Zero or more |
       | `1..*` | One or more |
+      | `n..m` | Between n and m |
 
-      Placement: the number goes next to the class it quantifies.
+      **Placement:** the number sits next to the class it *quantifies* — it answers "for *one* of the opposite class, how many of **this** class?"
+
+      **Style (Ambler G117/G118):** Show multiplicity on **both ends** of every relationship; prefer `0..*` to bare `*` for clarity.
 
       ---
 
@@ -2358,6 +2432,22 @@ steps:
 
       ---
 
+      ### Choosing the Right Relationship — a Decision Flowchart
+
+      When you're writing a class, ask these questions in order:
+
+      1. **Does this class's `__init__` *create* the other object internally, and the other object makes no sense outside this one?**
+         → **Composition** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> *(e.g., `Invoice` → `LineItem`)*
+      2. **Does a persistent `self.x: Other` store an object that was created outside, and survives this object being destroyed?**
+         → **Aggregation** <span class="uml-sym" data-diagram="class" data-sym="o--"></span> *(e.g., `Team` → `Player`)*
+         → *If aggregation feels contested, a plain **Association** <span class="uml-sym" data-diagram="class" data-sym="-->"></span> is always safer.*
+      3. **Is this class *a kind of* the other, sharing its interface and some behavior?**
+         → **Inheritance** <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> *(apply the "Is-a" test first)*
+      4. **Does the class only mention the other inside a method body, with no persistent reference?**
+         → **Dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span>
+
+      If *none* of these apply, there is no relationship — don't draw one.
+
       ### What You Learned
 
       UML class diagrams are a **communication tool**. They make invisible design decisions visible — turning implicit code relationships into explicit, communicable blueprints. You can now:
@@ -2367,6 +2457,7 @@ steps:
       3. **Identify** anti-patterns like the God Class
       4. **Distinguish** between association, composition, and aggregation
       5. **Communicate** software architecture without showing code
+      6. **Recognise the limits of UML** — aggregation's fuzzy semantics, the language-specific gap between Python's `_`/`__` and UML `-`/`#`, and when to leave notation off rather than force it
 
     uml_files:
       - store.py
