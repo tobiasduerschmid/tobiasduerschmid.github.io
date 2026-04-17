@@ -1,0 +1,77 @@
+title: "Separation of Concerns Flashcards"
+description: "Key definitions, examples, trade-offs, and misconceptions of Separation of Concerns (SoC)."
+cards:
+  - id: 1
+    question: "What is the Separation of Concerns (SoC) design principle?"
+    answer: "Systems should be divided into distinct sections, or **concerns**, where each section addresses a separate, specific goal, purpose, or responsibility — so the system is easier to develop, maintain, and evolve."
+    explanation: "SoC is the most general design principle in software engineering. Most other principles (modularity, information hiding, SOLID, MVC, layered architecture, microservices) are specific refinements of this one idea."
+
+  - id: 2
+    question: "Who coined the term 'separation of concerns', and when?"
+    answer: "**Edsger W. Dijkstra**, in his 1974 note *On the Role of Scientific Thought* (EWD 447)."
+    explanation: "Dijkstra originally framed SoC as a general *thinking* technique — the ability to focus on one aspect of a subject at a time. He called it 'the only available technique for effective ordering of one's thoughts'. The software-engineering usage grew out of that framing."
+
+  - id: 3
+    question: "Define a **concern** in the phrase 'Separation of Concerns'."
+    answer: "A single aspect of a system — a unit of reasoning or change — that a developer might want to design, modify, or test independently of others."
+    explanation: "Examples of concerns: rendering, validation, authorization, caching, logging, database access, a specific business rule. SoC asks each to have its own place in the code."
+
+  - id: 4
+    question: "Name five practical benefits of applying SoC."
+    answer: "(1) **Local reasoning** — understand one piece without loading the rest; (2) **Parallel work** — teammates edit different concerns without colliding; (3) **Independent evolution** — swap a database or UI without rewriting everything; (4) **Testability** — isolate a concern with fakes/stubs; (5) **Reusability** — extract and reuse cleanly-separated concerns."
+    explanation: "Notice that all five benefits are about how the code behaves *over time* and *across people* — not how it runs. SoC is programming integrated over time."
+
+  - id: 5
+    question: "What is the difference between SoC and Information Hiding?"
+    answer: "**SoC** decides *which* aspects belong in separate modules. **Information Hiding** decides *how* each module protects its internal design decisions behind a stable interface."
+    explanation: "They are complementary: SoC splits the problem; Information Hiding protects each split piece from leaking its implementation. SoC without Information Hiding gives you separate modules that still break when details change."
+
+  - id: 6
+    question: "How does SoC relate to the SOLID Single Responsibility Principle (SRP)?"
+    answer: "SRP is SoC applied at the **class** level — one class should answer to one actor / have one reason to change."
+    explanation: "SoC is broader: it applies at every scale (functions, classes, modules, services, architectures, even organizations). SRP is a class-scoped specialization."
+
+  - id: 7
+    question: "What are the two layers in the lecture's Monopoly example, and who knows about whom?"
+    answer: "**Presentation Layer** (UI: terminal, web, 3D casino) and **Application Layer** (game rules, board, turns). The Application Layer has **no idea** a UI exists; it only exposes getters, commands, and change-callbacks. The Presentation Layer depends on the Application Layer, not the other way around."
+    explanation: "This one-way dependency is exactly what lets three different UIs drive the same game engine. The game logic is reusable and testable in isolation."
+
+  - id: 8
+    question: "What is a **crosscutting concern**, and why is it special?"
+    answer: "A concern that naturally touches many modules — logging, security, transactions, caching. It's special because it does not fit cleanly into any single module in the main decomposition."
+    explanation: "Traditional OO can't express these without **tangling** (mixed with business code) and **scattering** (duplicated everywhere). Mechanisms like decorators, middleware, and aspect-oriented programming (AOP) exist precisely to handle them."
+
+  - id: 9
+    question: "Name the three concerns separated by HTML, CSS, and JavaScript."
+    answer: "**HTML → structure / content**; **CSS → presentation / style**; **JavaScript → behavior / interaction**."
+    explanation: "This is the web's most famous SoC story. Violations (inline styles, inline `onclick` handlers, `<font>` tags) collapse the three back into one and undo most of the benefit."
+
+  - id: 10
+    question: "What is the **Massive View Controller** anti-pattern, and what principle does it violate?"
+    answer: "An iOS/UIKit anti-pattern where `UIViewController` subclasses grow into 2,000-line monsters doing networking, parsing, caching, validation, navigation, *and* view layout. It violates **Separation of Concerns** — multiple unrelated concerns collapse into one module."
+    explanation: "Identified as a common architectural smell *(Dobrean & Dioşan, 2019)*. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern, communicating through narrow interfaces."
+
+  - id: 11
+    question: "Give a five-step method to apply SoC when structuring (or restructuring) a piece of code."
+    answer: "(1) Enumerate all concerns; (2) Identify axes of change; (3) Draw narrow seams between concerns; (4) Name each boundary clearly; (5) Verify by simulating change — ask 'if X changes, how many files must I touch?'"
+    explanation: "The last step is the most important — SoC is validated by how change actually flows through the system, not by how pretty the module list looks."
+
+  - id: 12
+    question: "When is applying SoC a BAD idea?"
+    answer: "For throwaway scripts, single-variant systems that will never evolve, premature abstractions of a domain you don't yet understand, and hot inner loops where indirection has measurable cost."
+    explanation: "The right number of abstractions is the smallest number that lets the system change gracefully. Beyond that, every extra seam is tax — it slows changes and obscures intent without adding value."
+
+  - id: 13
+    question: "What's the relationship between SoC and the metrics 'cohesion' and 'coupling'?"
+    answer: "SoC is the **principle**; cohesion (high, good) and coupling (low, good) are the **metrics** that measure whether you achieved it. A well-separated concern is internally cohesive and externally loosely coupled."
+    explanation: "Useful to say out loud: 'SoC drives you toward high cohesion and low coupling.' If your decomposition hurts those metrics, you've split on the wrong axis."
+
+  - id: 14
+    question: "In layered architecture, which way do dependencies flow?"
+    answer: "Downward only. Presentation depends on Business Logic; Business Logic depends on Data Access; Data Access depends on the Database. Lower layers must not depend on higher ones."
+    explanation: "The downward-only rule is what lets you swap layers — e.g., replace Postgres with MongoDB by rewriting only the Data Access Layer — without touching the layers above."
+
+  - id: 15
+    question: "True or false: 'Separation of Concerns means making everything private.'"
+    answer: "**False.** Visibility modifiers are one small tool. Private fields inside a God Class still give you a God Class. SoC is about *decomposition* of aspects, not about access keywords."
+    explanation: "Similarly, 'one class per file' is not SoC. File count is not a proxy for separation — a folder of 50 tightly-coupled classes is still one giant tangle."
