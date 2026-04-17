@@ -31,11 +31,13 @@ A lifeline represents an individual participant in the interaction. It is drawn 
 
 ### 2\. Messages (The "What")
 
-Messages are the communications between lifelines. They are drawn as horizontal arrows.
+Messages are the communications between lifelines. They are drawn as horizontal arrows. UML 2 distinguishes three main arrow styles (sources: Fowler, *UML Distilled*, ch. 4; Rumbaugh, Jacobson & Booch, *The Unified Modeling Language Reference Manual*):
 
-  * **Synchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->"></span> The sender waits for a response before doing anything else (like calling someone on the phone and waiting for them to answer).
-  * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> The sender sends the message and immediately moves on to other tasks (like sending a text message).
-  * **Return Message** <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span> The response to a previous message.
+  * **Synchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->"></span> — solid line with **filled (triangular) arrowhead**. The sender blocks until the receiver responds, like calling a method and waiting for it to return.
+  * **Asynchronous Message** <span class="uml-sym" data-diagram="sequence" data-sym="->>"></span> — solid line with **open (stick) arrowhead**. The sender fires the message and continues immediately, like putting an event on a queue or sending an HTTP POST without awaiting the response.
+  * **Return Message** <span class="uml-sym" data-diagram="sequence" data-sym="-->"></span> — **dashed** line with open arrowhead. Represents control (and often a value) returning to the original caller. Return arrows are optional in UML 2: include them when the returned value is important, omit them when a synchronous call obviously returns.
+
+> **⚠ Common mistake:** Students often confuse the filled vs. open arrowhead, treating both as synchronous. The rule: **filled = blocks, open = fires-and-forgets**. Remember it as "filled is full commitment; open lets go."
 
 ### Visualizing the Basics: A Simple ATM Login
 
@@ -227,6 +229,10 @@ The three fragments above (opt, alt, loop) are the most common, but UML defines 
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-loop"></span> **LOOP** | Repeat while guard is true | `while` / `for` loop |
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-par"></span> **PAR** | Parallel execution of fragments | Concurrent threads |
 | <span class="uml-sym" data-diagram="sequence" data-sym="frag-critical"></span> **CRITICAL** | Critical region (only one thread at a time) | `synchronized` block |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-break"></span> **BREAK** | Early exit from the enclosing interaction | `break` / early return |
+| <span class="uml-sym" data-diagram="sequence" data-sym="frag-ref"></span> **REF** | Reference to another sequence diagram by name | Function / subroutine call |
+
+> **When to use `ref`:** When a shared interaction (e.g., login, authentication, checkout) appears in many sequence diagrams, draw it *once* as its own diagram and reference it from others with a `ref` frame. This is the sequence-diagram equivalent of factoring out a function.
 
 ---
 

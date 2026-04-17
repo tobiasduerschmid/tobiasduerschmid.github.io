@@ -274,7 +274,9 @@ class Room
 House "1" *-- "1..*" Room
 @enduml'></div>
 
-**A helpful way to think about the difference:** In C++, aggregation is usually defined by pointers/references (the part can exist separately), while composition is defined by containing instances (the part's lifetime is tied to the whole). In Java, composition is often indicative of an inner class relationship.
+**A helpful way to think about the difference:** In C++, aggregation is usually expressed through pointers/references (the part can exist separately), while composition is expressed by containing instances by value (the part's lifetime is tied to the whole). In Java and Python, every object reference is effectively a pointer — the distinction between aggregation and composition is communicated through *design intent* (who created the part? who destroys it?) rather than through language syntax. Inner classes in Java are *one* indicator of composition but are not required.
+
+> **⚠ Honest caveat on aggregation.** Aggregation has *intentionally informal* semantics in the UML 2 specification. Martin Fowler (*UML Distilled*) observes: *"Aggregation is strictly meaningless; I recommend that you ignore it in your own diagrams."* When you aren't sure whether something is aggregation or plain association, use **association** — it is always safe. Reserve the hollow diamond for the cases where part-whole semantics clearly add communicative value.
 
 > 🧠 **Concept Check 2 (Self-Explanation)**
 > *In your own words, explain the difference between the empty diamond (Aggregation) and the filled diamond (Composition). Give a real-world example of each that is not mentioned in this text.*
@@ -297,6 +299,20 @@ From weakest to strongest, the class relationships are:
 </tbody>
 </table>
 
+
+## ⚠ The Five Most Common UML Class Diagram Mistakes
+
+Empirical studies of student diagrams (Chren et al., 2019) identify these recurring errors. Watch for them in your own work:
+
+| # | Mistake | Fix |
+|---|---|---|
+| 1 | **Generalization arrow pointed the wrong way** — triangle at the child instead of the parent | The triangle *always* rests at the **parent**. Sanity-check with the "is-a" sentence: *"A [child] is a [parent]"*. |
+| 2 | **Multiplicity on the wrong end** — e.g., `*` placed next to the "one" side | Multiplicity answers *"for one of the opposite class, how many of **this** class?"* Place it next to the class being quantified. |
+| 3 | **Missing multiplicity on one end** | Per Ambler (G117), always show multiplicity on **both** ends of every relationship. An unlabeled end is ambiguous, not "just 1." |
+| 4 | **Confusing aggregation and composition** — using the filled diamond when parts are actually shared | Composition = exclusive ownership *and* lifecycle dependency. If the part can exist without the whole, use aggregation (or plain association). |
+| 5 | **Bare `*` for multiplicity** | Per Ambler (G118), prefer `0..*` or `1..*` to the bare `*`. The explicit form removes all doubt about whether zero is allowed. |
+
+> **Pedagogy tip:** Before turning in any class diagram, run this five-item checklist over every relationship. Catching these five mistakes catches the majority of grading-level errors.
 
 ## Advanced Class Notation
 
