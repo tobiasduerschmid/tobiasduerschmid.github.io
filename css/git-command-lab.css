@@ -251,7 +251,6 @@ html.dark-mode .git-command-lab__rebase-file code {
 
 /* ----- Dark mode ----- */
 html.dark-mode .git-command-lab {
-  background-color: #1c2533;
   border-color: #2f3a4a;
   color: #e6edf3;
 }

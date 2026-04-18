@@ -447,7 +447,7 @@ Two commands remove the effect of a commit, with fundamentally different graph c
 <div data-git-command-lab>
 <script type="application/json">
 {
-  "command": "git cherry-pick hhhh",
+  "command": "git cherry-pick H",
   "description": "Copies the changes from a single commit onto the current branch as a brand-new commit.\n\nHere we grab a specific fix (H) from a short `hotfix` branch *without merging the whole branch*.\n\nThe copy gets a new hash **H\u2032** because its parent is different, but it contains the same changes. Useful for backporting a bug fix to a release branch.",
   "before": {
     "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nH000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Security patch|hotfix\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Feature B|\nA000000000000000000000000000000000000000||Initial commit|",
@@ -476,6 +476,12 @@ A **remote** is a named URL pointing to another copy of the repository — typic
 * **`git fetch`** — downloads new commits and branches from a remote *without* modifying your working directory or current branch. Useful for reviewing before deciding how to integrate.
 * **`git pull`** — shorthand for `git fetch` followed by `git merge`. Fetches and immediately merges into your current branch.
 * **`git push`** — uploads your local commits to a remote. `git push -u origin <branch>` pushes and sets up **upstream tracking**, so future `git push` and `git pull` on this branch can omit the remote name.
+
+### Remote-Tracking Branches
+
+A **remote-tracking branch** (e.g. `origin/main`) is a read-only local reference stored in `.git/refs/remotes/`. It records the last known position of a branch on the remote — not where the remote is *right now*, but where it was the last time you communicated with it. In the graphs below it appears with a **dashed label** and grey color to distinguish it from your local branch pointer.
+
+You cannot commit to a remote-tracking branch directly. It moves only when you run `git fetch`, `git pull`, or `git push`. This design lets you inspect and compare what is on the remote (`git log origin/main`, `git diff main..origin/main`) before deciding how to integrate.
 
 The key distinction between `fetch` and `pull` is worth animating. The remote-tracking branch `origin/main` (shown with a dashed label) records the last known state of the remote — `fetch` advances it without touching your local branch; `pull` goes one step further and merges it in:
 

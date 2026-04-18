@@ -284,9 +284,12 @@
     // Assign branch colors to each commit via first-parent chain propagation
     // -------------------------------------------------------------------------
     var commitBranch = {};
-    // Seed: branch tips
+    // Seed remote branches first, then local — local always wins for shared hashes.
     for (var bt = 0; bt < branches.length; bt++) {
-      commitBranch[branches[bt].hash] = branches[bt].name;
+      if (branches[bt].remote) commitBranch[branches[bt].hash] = branches[bt].name;
+    }
+    for (var bt2 = 0; bt2 < branches.length; bt2++) {
+      if (!branches[bt2].remote) commitBranch[branches[bt2].hash] = branches[bt2].name;
     }
     // Propagate: a commit inherits the branch of its first child that knows its branch
     for (var ci = 0; ci < commits.length; ci++) {
