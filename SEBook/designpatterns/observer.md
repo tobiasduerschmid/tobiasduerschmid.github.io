@@ -59,7 +59,7 @@ class ConcreteObserver {
 }
 ConcreteSubject ..|> Subject
 ConcreteObserver ..|> Observer
-Subject "1" -- "0..*" Observer : observers
+Subject "1" -- "*" Observer : observers
 ConcreteObserver --> ConcreteSubject : subject
 note right of Subject.notifyObservers
 	```java
@@ -100,7 +100,7 @@ class EmailDigest {
 	- _channel: NewsChannel
 	+ update()
 }
-NewsChannel "1" -- "0..*" Subscriber : _subscribers
+NewsChannel "1" -- "*" Subscriber : _subscribers
 MobileApp --|> Subscriber
 EmailDigest --|> Subscriber
 MobileApp --> NewsChannel : _channel

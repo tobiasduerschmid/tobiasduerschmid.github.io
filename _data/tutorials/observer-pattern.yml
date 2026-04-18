@@ -433,7 +433,7 @@ steps:
       class ConcreteObserverB {
         + update(subject: Subject)
       }
-      Subject o--> "0..*" Observer : notifies
+      Subject o--> "*" Observer : notifies
       ConcreteSubject --|> Subject
       ConcreteObserverA ..|> Observer
       ConcreteObserverB ..|> Observer
@@ -657,7 +657,7 @@ steps:
         + threshold: float
         + update(subject: Subject)
       }
-      Subject o--> "0..*" Observer : notifies
+      Subject o--> "*" Observer : notifies
       TemperatureSensor --|> Subject
       TemperatureLogger ..|> Observer
       TemperatureAlert ..|> Observer
@@ -1086,7 +1086,7 @@ steps:
       class HeatIndexDisplay {
         + update(station)
       }
-      Subject o--> "0..*" Observer : notifies
+      Subject o--> "*" Observer : notifies
       WeatherStation --|> Subject
       CurrentDisplay ..|> Observer
       StatisticsDisplay ..|> Observer
@@ -1680,7 +1680,7 @@ steps:
             Both approaches have their place. For a simple program with 2-3 displays that never change, direct calls *are* simpler. But Observer shines when: (1) the set of observers changes at runtime, (2) new types are added frequently, or (3) the subject and observers evolve independently. Patterns are tools for specific situations, not universal requirements.
 
         - question: |
-            In the Observer UML diagram, `Subject o--> "0..*" Observer` uses a **diamond arrow** with a multiplicity label. What does this mean?
+            In the Observer UML diagram, `Subject o--> "*" Observer` uses a **diamond arrow** with a multiplicity label. What does this mean?
           type: single
           options:
             - "Subject creates 0 or more Observer objects"
@@ -1689,7 +1689,7 @@ steps:
             - "Subject deletes 0 or more Observer objects"
           correct_index: 1
           explanation: |
-            The open diamond <span class="uml-sym" data-diagram="class" data-sym="o--"></span> represents **aggregation**: the Subject *has* a collection of Observers, but the Observers can exist independently of the Subject. The `"0..*"` multiplicity means "zero or more." A *filled* diamond <span class="uml-sym" data-diagram="class" data-sym="*--"></span> would be **composition** (stronger ownership). Observers are loosely associated — they can be attached to or detached from the Subject freely.
+            The open diamond <span class="uml-sym" data-diagram="class" data-sym="o--"></span> represents **aggregation**: the Subject *has* a collection of Observers, but the Observers can exist independently of the Subject. The `"*"` multiplicity means "zero or more." A *filled* diamond <span class="uml-sym" data-diagram="class" data-sym="*--"></span> would be **composition** (stronger ownership). Observers are loosely associated — they can be attached to or detached from the Subject freely.
 
 
   # --------------------------------------------------------------------------
@@ -2239,7 +2239,7 @@ steps:
       abstract class Observer {
         + {abstract} update(subject: Subject)
       }
-      Subject o--> "0..*" Observer : notifies
+      Subject o--> "*" Observer : notifies
       note bottom of Subject
         Maintains observer list.
         Calls update() on all

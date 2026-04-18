@@ -29,9 +29,9 @@ class Product {
 VIP --|> Customer
 Guest --|> Customer
 Order ..|> Billable
-Customer "1" -- "0..*" Order
+Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
-LineItem "0..*" -- "1" Product
+LineItem "*" -- "1" Product
 @enduml'></div>
 
 # Introduction
@@ -166,7 +166,7 @@ class Student {
 class Course {
   - title: String
 }
-Student "0..*" -- "1..*" Course : enrolled in
+Student "*" -- "1..*" Course : enrolled in
 @enduml'></div>
 
 #### Multiplicities
@@ -177,7 +177,7 @@ Along association lines, we use numbers to define *how many* objects are involve
 |----------|---------|
 | `1` | Exactly one |
 | `0..1` | Zero or one (optional) |
-| `*` or `0..*` | Zero to many |
+| `*` or `*` | Zero to many |
 | `1..*` | One to many (at least one required) |
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
@@ -257,7 +257,7 @@ layout horizontal
 layout landscape
 class University
 class Professor
-University "1" o-- "0..*" Professor
+University "1" o-- "*" Professor
 @enduml'></div>
 
 #### Composition ("Is-Made-Up-Of")
@@ -310,7 +310,7 @@ Empirical studies of student diagrams (Chren et al., 2019) identify these recurr
 | 2 | **Multiplicity on the wrong end** — e.g., `*` placed next to the "one" side | Multiplicity answers *"for one of the opposite class, how many of **this** class?"* Place it next to the class being quantified. |
 | 3 | **Missing multiplicity on one end** | Per Ambler (G117), always show multiplicity on **both** ends of every relationship. An unlabeled end is ambiguous, not "just 1." |
 | 4 | **Confusing aggregation and composition** — using the filled diamond when parts are actually shared | Composition = exclusive ownership *and* lifecycle dependency. If the part can exist without the whole, use aggregation (or plain association). |
-| 5 | **Bare `*` for multiplicity** | Per Ambler (G118), prefer `0..*` or `1..*` to the bare `*`. The explicit form removes all doubt about whether zero is allowed. |
+| 5 | **Verbose `0..*` when `*` suffices** | Use the shorthand `*` for zero-or-more; reserve the explicit lower bound only when it adds clarity (e.g., `1..*`). |
 
 > **Pedagogy tip:** Before turning in any class diagram, run this five-item checklist over every relationship. Catching these five mistakes catches the majority of grading-level errors.
 
@@ -476,7 +476,7 @@ The inner class pattern in Java typically indicates composition---the `IDEBus` i
 >   - employees: Employee[]
 > }
 > class Employee
-> Division o-- "0..*" Employee
+> Division o-- "*" Employee
 > Division -- "10" Employee
 > @enduml'></div>
 >
@@ -516,14 +516,14 @@ class Product {
 VIP --|> Customer
 Guest --|> Customer
 Order ..|> Billable
-Customer "1" -- "0..*" Order
+Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
-LineItem "0..*" -- "1" Product
+LineItem "*" -- "1" Product
 @enduml'></div>
 
 ### System Walkthrough:
 1. **Generalization:** `VIP` and `Guest` are specific types of `Customer`.
-2. **Association (Multiplicity):** `1` Customer can have `0..*` (zero to many) Orders.
+2. **Association (Multiplicity):** `1` Customer can have `*` (zero to many) Orders.
 3. **Interface Realization:** `Order` implements the `Billable` interface.
 4. **Composition:** An `Order` strongly contains `1..*` (one or more) `LineItem`s. If the order is deleted, the line items are deleted.
 5. **Association:** Each `LineItem` points to exactly `1` `Product`.
@@ -559,9 +559,9 @@ class Artist {
 }
 FreeUser --|> User
 PremiumUser --|> User
-User "1" *-- "0..*" Playlist : owns
-Playlist "0..*" o-- "0..*" Track : contains
-Track "0..*" -- "1..*" Artist : performedBy
+User "1" *-- "*" Playlist : owns
+Playlist "*" o-- "*" Track : contains
+Track "*" -- "1..*" Artist : performedBy
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -605,8 +605,8 @@ class CICheck {
   + getResult(): bool
 }
 PullRequest ..|> Mergeable
-Repository "1" *-- "0..*" PullRequest
-PullRequest "1" *-- "0..*" Review
+Repository "1" *-- "*" PullRequest
+PullRequest "1" *-- "*" Review
 PullRequest ..> CICheck
 @enduml'></div>
 
@@ -614,13 +614,13 @@ PullRequest ..> CICheck
 
 1. **Interface Realization (dashed hollow arrow):** `PullRequest` implements `Mergeable` — a contract committing the class to provide `canMerge()` and `merge()`. A merge pipeline can work with any `Mergeable` object without knowing the concrete type.
 2. **Composition (Repository → PullRequest):** A PR cannot exist without its repository. Delete the repo, and all its PRs are deleted — the filled diamond on `Repository`'s side shows ownership.
-3. **Composition (PullRequest → Review):** A review only exists in the context of one PR. `1 *-- 0..*` reads: one PR can have zero or more reviews; each review belongs to exactly one PR.
+3. **Composition (PullRequest → Review):** A review only exists in the context of one PR. `1 *-- *` reads: one PR can have zero or more reviews; each review belongs to exactly one PR.
 4. **Dependency (dashed open arrow, PullRequest → CICheck):** `PullRequest` *uses* `CICheck` temporarily — perhaps receiving it as a method parameter. It does not hold a permanent field reference, so this is a dependency, not an association.
 
 
 ### Example 3: Uber Eats — Food Delivery Domain Model
 
-**Scenario:** The domain model for a food delivery platform. This example is excellent for practicing multiplicity — every `0..1`, `1`, and `0..*` encodes a real business rule the engineering team must enforce.
+**Scenario:** The domain model for a food delivery platform. This example is excellent for practicing multiplicity — every `0..1`, `1`, and `*` encodes a real business rule the engineering team must enforce.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 class Customer {
@@ -648,18 +648,18 @@ class Driver {
   - name: String
   - vehicleType: String
 }
-Customer "1" -- "0..*" Order : places
+Customer "1" -- "*" Order : places
 Order *-- "1..*" OrderItem : contains
-OrderItem "0..*" -- "1" MenuItem : references
+OrderItem "*" -- "1" MenuItem : references
 Restaurant "1" -- "1..*" MenuItem : offers
 Driver "0..1" -- "0..1" Order : delivers
 @enduml'></div>
 
 **What the UML notation captures:**
 
-1. **`Customer "1" -- "0..*" Order`:** One customer can have zero orders (a new account) or many. The navigability arrow shows `Customer` holds the reference — in code, a `Customer` would have an `orders` collection field.
+1. **`Customer "1" -- "*" Order`:** One customer can have zero orders (a new account) or many. The navigability arrow shows `Customer` holds the reference — in code, a `Customer` would have an `orders` collection field.
 2. **Composition (Order → OrderItem):** Order items only exist within an order. Cancelling the order destroys the items. The `1..*` on `OrderItem` enforces that every order must have at least one item.
-3. **`OrderItem "0..*" -- "1" MenuItem`:** Each item references exactly one menu item. Many orders can reference the same menu item — deleting an order does **not** remove the menu item from the restaurant's catalogue.
+3. **`OrderItem "*" -- "1" MenuItem`:** Each item references exactly one menu item. Many orders can reference the same menu item — deleting an order does **not** remove the menu item from the restaurant's catalogue.
 4. **`Driver "0..1" -- "0..1" Order`:** A driver handles at most one active delivery at a time; an order has at most one assigned driver. Before dispatch, both sides satisfy `0` — neither requires the other to exist yet. This captures a real business constraint in two characters.
 
 
@@ -695,7 +695,7 @@ Movie --|> Content
 TVShow --|> Content
 TVShow "1" *-- "1..*" Season : contains
 Season "1" *-- "1..*" Episode : contains
-Content "0..*" -- "1..*" Genre : classifiedBy
+Content "*" -- "1..*" Genre : classifiedBy
 @enduml'></div>
 
 **What the UML notation captures:**
@@ -703,7 +703,7 @@ Content "0..*" -- "1..*" Genre : classifiedBy
 1. **Abstract class (`abstract class Content`):** The italicised class name and `{abstract}` on `play()` signal that `Content` is never instantiated directly — you never watch a "content", only a `Movie` or `TVShow`. Both subclasses override `play()` with their own implementation.
 2. **Generalization hierarchy:** Both `Movie` and `TVShow` extend `Content`, inheriting `title` and `rating`. A `Movie` adds `duration` directly; a `TVShow` delegates duration implicitly through its episodes.
 3. **Nested composition (`TVShow → Season → Episode`):** A `TVShow` is composed of seasons; each season is composed of episodes. Delete a show and the seasons disappear; delete a season and the episodes disappear. The chain of filled diamonds models this cascade.
-4. **Association with multiplicity (`Content → Genre`):** A movie or show belongs to `1..*` genres (at least one — e.g., Action). A genre classifies `0..*` content items. This is a plain association — deleting a genre does not delete the content.
+4. **Association with multiplicity (`Content → Genre`):** A movie or show belongs to `1..*` genres (at least one — e.g., Action). A genre classifies `*` content items. This is a plain association — deleting a genre does not delete the content.
 
 
 ### Example 5: Strategy Pattern — Pluggable Payment Processing
