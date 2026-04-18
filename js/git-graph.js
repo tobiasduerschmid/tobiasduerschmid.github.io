@@ -486,6 +486,18 @@
       }
     }
     self._dimAnim = requestAnimationFrame(frame);
+
+    // Fallback: when the tab is hidden (e.g. headless preview, background tab)
+    // requestAnimationFrame is throttled and may not fire, leaving the SVG at
+    // its initial dimensions. Snap to the final size after the duration so the
+    // graph is correct even without animation.
+    setTimeout(function () {
+      if (self._dimAnim) cancelAnimationFrame(self._dimAnim);
+      self._dimAnim = null;
+      svg.setAttribute('width',  endW);
+      svg.setAttribute('height', endH);
+      svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
+    }, DURATION + 30);
   };
 
   // ---------------------------------------------------------------------------
@@ -618,35 +630,70 @@
   // ---- Edges ----------------------------------------------------------------
 
   GitGraph.prototype._diffEdges = function (commits, commitMap) {
-    var newKeys = {};
+    var required = [];
     for (var i = 0; i < commits.length; i++) {
       var cm = commits[i];
-      var x1 = this._cx(cm.col);
-      var y1 = this._cy(cm.row);
       for (var p = 0; p < cm.parents.length; p++) {
         var parent = commitMap[cm.parents[p]];
         if (!parent) continue;
-        var x2 = this._cx(parent.col);
-        var y2 = this._cy(parent.row);
-        var key = cm.hash + '__' + cm.parents[p];
-        newKeys[key] = true;
-
-        var entry = this._edgeEls[key];
-        if (!entry) {
-          entry = this._createEdge(key, x1, y1, x2, y2, cm.branchColor);
-          this._edgesLayer.appendChild(entry.el);
-          this._animateEdgeIn(entry);
-          this._edgeEls[key] = entry;
-        } else {
-          if (entry._removalTimer) {
-            clearTimeout(entry._removalTimer);
-            entry._removalTimer = null;
-            entry.el.classList.remove('exiting');
-          }
-          this._updateEdge(entry, x1, y1, x2, y2, cm.branchColor);
-        }
+        required.push({
+          cm: cm, parent: parent,
+          key: cm.hash + '__' + cm.parents[p],
+          x1: this._cx(cm.col), y1: this._cy(cm.row),
+          x2: this._cx(parent.col), y2: this._cy(parent.row),
+          color: cm.branchColor,
+          satisfied: false,
+        });
       }
     }
+
+    var newKeys = {};
+
+    // Pass 1: direct key match (steady state).
+    for (var r1 = 0; r1 < required.length; r1++) {
+      var req = required[r1];
+      var entry = this._edgeEls[req.key];
+      if (!entry || entry._removalTimer) continue;
+      req.satisfied = true;
+      newKeys[req.key] = true;
+      this._updateEdge(entry, req.x1, req.y1, req.x2, req.y2, req.color);
+    }
+
+    // Pass 2: rebase reparenting — an unsatisfied requirement shares its
+    // child with a now-orphaned edge. Reuse the DOM element and morph its
+    // `d` attribute so the edge re-attaches to the new parent via the
+    // existing `d` transition, instead of retract + fresh-draw.
+    for (var r2 = 0; r2 < required.length; r2++) {
+      var req2 = required[r2];
+      if (req2.satisfied) continue;
+      for (var oldKey in this._edgeEls) {
+        if (!this._edgeEls.hasOwnProperty(oldKey)) continue;
+        if (newKeys[oldKey]) continue;
+        var oldEntry = this._edgeEls[oldKey];
+        if (oldEntry._removalTimer) continue;
+        if (oldKey.split('__')[0] !== req2.cm.hash) continue;
+        delete this._edgeEls[oldKey];
+        this._edgeEls[req2.key] = oldEntry;
+        oldEntry.el.setAttribute('data-edge-key', req2.key);
+        req2.satisfied = true;
+        newKeys[req2.key] = true;
+        this._updateEdge(oldEntry, req2.x1, req2.y1, req2.x2, req2.y2, req2.color);
+        break;
+      }
+    }
+
+    // Pass 3: create brand-new edges for the remaining requirements.
+    for (var r3 = 0; r3 < required.length; r3++) {
+      var req3 = required[r3];
+      if (req3.satisfied) continue;
+      var fresh = this._createEdge(req3.key, req3.x1, req3.y1, req3.x2, req3.y2, req3.color);
+      this._edgesLayer.appendChild(fresh.el);
+      this._animateEdgeIn(fresh);
+      this._edgeEls[req3.key] = fresh;
+      newKeys[req3.key] = true;
+    }
+
+    // Cleanup — remove any edge not claimed by a requirement.
     for (var k in this._edgeEls) {
       if (this._edgeEls.hasOwnProperty(k) && !newKeys[k] && !this._edgeEls[k]._removalTimer) {
         this._removeEdge(this._edgeEls[k], k);
@@ -655,24 +702,16 @@
   };
 
   GitGraph.prototype._createEdge = function (key, x1, y1, x2, y2, color) {
-    var el;
-    if (x1 === x2) {
-      el = this._svgEl('line', {
-        x1: x1, y1: y1, x2: x2, y2: y2,
-        stroke: color, 'stroke-width': 3, 'stroke-opacity': 0.7,
-        'class': 'git-graph-edge git-graph-edge--line',
-        'data-edge-key': key,
-      });
-    } else {
-      var midY = (y1 + y2) / 2;
-      var d = 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' + x2 + ' ' + midY + ', ' + x2 + ' ' + y2;
-      el = this._svgEl('path', {
-        d: d,
-        fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-opacity': 0.7,
-        'class': 'git-graph-edge git-graph-edge--curve',
-        'data-edge-key': key,
-      });
-    }
+    // Always use <path> (even for same-column straight lines). That way an
+    // edge that switches between straight and curved during a layout shift
+    // can smoothly morph via CSS `d` transition instead of being destroyed
+    // and recreated (which caused the visible flash the user reported).
+    var el = this._svgEl('path', {
+      d: this._edgePathD(x1, y1, x2, y2),
+      fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-opacity': 0.7,
+      'class': 'git-graph-edge',
+      'data-edge-key': key,
+    });
     return { el: el, x1: x1, y1: y1, x2: x2, y2: y2, color: color };
   };
 
@@ -703,28 +742,23 @@
     setTimeout(function () {
       el.style.strokeDasharray = '';
       el.style.strokeDashoffset = '';
-    }, 800);
+    }, 900);
+  };
+
+  // Every edge uses a cubic Bezier (C command). For same-column "straight"
+  // segments the two control points collapse onto the straight line so the
+  // rendered path is visually straight — but the command structure stays
+  // identical to curved edges. This lets CSS interpolate the `d` attribute
+  // smoothly when a rebase morphs an edge between straight↔curved
+  // (otherwise L↔C is a command-structure mismatch and the browser snaps).
+  GitGraph.prototype._edgePathD = function (x1, y1, x2, y2) {
+    var midY = (y1 + y2) / 2;
+    return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' + x2 + ' ' + midY + ', ' + x2 + ' ' + y2;
   };
 
   GitGraph.prototype._updateEdge = function (entry, x1, y1, x2, y2, color) {
     if (entry.x1 === x1 && entry.y1 === y1 && entry.x2 === x2 && entry.y2 === y2 && entry.color === color) return;
-    var wantsLine = (x1 === x2);
-    var isLine = (entry.el.tagName.toLowerCase() === 'line');
-    if (wantsLine !== isLine) {
-      var parent = entry.el.parentNode;
-      var key = entry.el.getAttribute('data-edge-key');
-      var fresh = this._createEdge(key, x1, y1, x2, y2, color);
-      parent.replaceChild(fresh.el, entry.el);
-      entry.el = fresh.el;
-    } else if (wantsLine) {
-      entry.el.setAttribute('x1', x1);
-      entry.el.setAttribute('y1', y1);
-      entry.el.setAttribute('x2', x2);
-      entry.el.setAttribute('y2', y2);
-    } else {
-      var midY = (y1 + y2) / 2;
-      entry.el.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' + x2 + ' ' + midY + ', ' + x2 + ' ' + y2);
-    }
+    entry.el.setAttribute('d', this._edgePathD(x1, y1, x2, y2));
     if (entry.el.style.strokeDasharray) {
       entry.el.style.strokeDasharray = '';
       entry.el.style.strokeDashoffset = '';
@@ -733,14 +767,34 @@
     entry.x1 = x1; entry.y1 = y1; entry.x2 = x2; entry.y2 = y2; entry.color = color;
   };
 
+  // Retract-then-remove: mirror of _animateEdgeIn so merge-undo / reset /
+  // rebase feels natural. We set strokeDasharray to the path length and
+  // tween strokeDashoffset back to the length — the line gracefully un-draws
+  // from parent toward child over the same 720ms used for position slides.
   GitGraph.prototype._removeEdge = function (entry, key) {
     if (entry._removalTimer) return;
     var self = this;
-    entry.el.classList.add('exiting');
+    var el = entry.el;
+    var len;
+    try {
+      len = el.getTotalLength ? el.getTotalLength() : Math.hypot(entry.x2 - entry.x1, entry.y2 - entry.y1);
+    } catch (e) {
+      len = Math.hypot(entry.x2 - entry.x1, entry.y2 - entry.y1);
+    }
+    if (len && isFinite(len)) {
+      el.style.strokeDasharray = len + 'px';
+      el.style.strokeDashoffset = '0px';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          el.style.strokeDashoffset = len + 'px';
+        });
+      });
+    }
+    el.classList.add('exiting');
     entry._removalTimer = setTimeout(function () {
-      if (entry.el.parentNode) entry.el.parentNode.removeChild(entry.el);
+      if (el.parentNode) el.parentNode.removeChild(el);
       delete self._edgeEls[key];
-    }, 350);
+    }, 720);
   };
 
   // ---- Nodes ----------------------------------------------------------------

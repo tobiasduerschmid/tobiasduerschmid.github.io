@@ -45,37 +45,35 @@
 /* Synchronised motion: nodes, branch labels, HEAD, edges, and chip colors
    all share the exact same duration + ease-in-out curve so the commit circle,
    its branch label, the HEAD chip, and the connecting edges glide together
-   as one cohesive unit when the layout shifts. */
-.git-graph-svg .git-graph-node-g,
-.git-graph-svg .git-graph-label-g,
-.git-graph-svg .git-graph-label-g--head,
-.git-graph-svg .git-graph-head-chip,
-.git-graph-svg .git-graph-head-text {
-  transition-duration: 720ms;
-  transition-timing-function: cubic-bezier(.7,0,.3,1);
-}
+   as one cohesive unit when the layout shifts.
 
+   `will-change: transform` promotes each moving element to its own compositor
+   layer so the browser animates all of them on the GPU with locked-step
+   timing — without this hint, SVG elements can tick at slightly different
+   rates and visibly desync during a shared slide. */
 .git-graph-svg .git-graph-node-g,
 .git-graph-svg .git-graph-label-g,
 .git-graph-svg .git-graph-label-g--head {
-  transition-property: transform;
+  transition: transform 720ms cubic-bezier(.7,0,.3,1);
+  will-change: transform;
 }
 
 .git-graph-svg .git-graph-head-chip {
-  transition-property: fill, stroke, fill-opacity;
+  transition: fill 720ms cubic-bezier(.7,0,.3,1),
+              stroke 720ms cubic-bezier(.7,0,.3,1),
+              fill-opacity 720ms cubic-bezier(.7,0,.3,1);
 }
 .git-graph-svg .git-graph-head-text {
-  transition-property: fill;
+  transition: fill 720ms cubic-bezier(.7,0,.3,1);
 }
 
+/* Edges only need `d` to transition — every edge is a <path> now, whether
+   straight or curved, so CSS `d` interpolation morphs them smoothly when
+   endpoints move or an edge switches between straight and curved. */
 .git-graph-svg .git-graph-edge {
-  transition: stroke-dashoffset 800ms cubic-bezier(.5,.1,.5,1),
-              opacity 300ms ease-out,
+  transition: stroke-dashoffset 720ms cubic-bezier(.7,0,.3,1),
+              opacity 720ms cubic-bezier(.7,0,.3,1),
               stroke 720ms cubic-bezier(.7,0,.3,1),
-              x1 720ms cubic-bezier(.7,0,.3,1),
-              y1 720ms cubic-bezier(.7,0,.3,1),
-              x2 720ms cubic-bezier(.7,0,.3,1),
-              y2 720ms cubic-bezier(.7,0,.3,1),
               d 720ms cubic-bezier(.7,0,.3,1);
 }
 
