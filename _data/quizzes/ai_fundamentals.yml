@@ -18,7 +18,7 @@ questions:
       - "Skilled developers with strong foundational knowledge."
       - "Everyone benefits equally regardless of skill level."
     correct_index: 2
-    explanation: "Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
+    explanation: "**Skilled developers benefit more from AI because it amplifies their existing ability to guide and verify outputs.** Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
   - id: 3
     question: "Which of these is an example of **'Beneficial Offloading'** for a CS student?"
     options:
@@ -46,4 +46,4 @@ questions:
       - "Mixing up different topics within a single session."
       - "Studying in a quiet, familiar environment every time."
     correct_indices: [0, 1, 2]
-    explanation: "Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context."
+    explanation: "**Testing, spacing, and interleaving are the validated desirable difficulties; familiar-environment studying is not.** Testing (retrieval practice), spacing, and interleaving (mixing topics) are all empirically validated 'desirable difficulties' that enhance long-term learning. Studying in the exact same environment is actually less effective than varying your study context."

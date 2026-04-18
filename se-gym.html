@@ -1631,7 +1631,7 @@ title: "SE Gym"
           var quizData = ALL_CARD_DATA.quizzes[qid];
           for (var i = 0; i < quizData.questions.length; i++) {
             var q = quizData.questions[i];
-            var h = PersonalGym.hashQuestion(q.question);
+            var h = q.id ? (qid + ':' + q.id) : PersonalGym.hashQuestion(q.question);
             if (seenHashes[h]) continue;
             var s = stats[h];
             if (s && s.seen > 0 && (s.seen - s.correct) / s.seen > DIFFICULTY_THRESHOLD) {
@@ -1639,6 +1639,7 @@ title: "SE Gym"
               cards.push({
                 cardType: 'quiz',
                 source: quizData.title,
+                deckId: qid,
                 data: q,
                 stats: s
               });
@@ -1653,7 +1654,7 @@ title: "SE Gym"
           var fcData = ALL_CARD_DATA.flashcards[fcid];
           for (var j = 0; j < fcData.cards.length; j++) {
             var c = fcData.cards[j];
-            var h2 = PersonalGym.hashQuestion(c.question);
+            var h2 = c.id ? (fcid + ':' + c.id) : PersonalGym.hashQuestion(c.question);
             if (seenHashes[h2]) continue;
             var s2 = stats[h2];
             if (s2 && s2.seen > 0 && (s2.seen - s2.correct) / s2.seen > DIFFICULTY_THRESHOLD) {
@@ -1661,6 +1662,7 @@ title: "SE Gym"
               cards.push({
                 cardType: 'flashcard',
                 source: fcData.title,
+                deckId: fcid,
                 data: c,
                 stats: s2
               });
@@ -1713,7 +1715,7 @@ title: "SE Gym"
 
         shuffleArray(difficultCards);
         workoutCards = difficultCards.map(function (dc) {
-          return { cardType: dc.cardType, source: dc.source + ' (Difficult)', data: dc.data };
+          return { cardType: dc.cardType, source: dc.source + ' (Difficult)', deckId: dc.deckId, data: dc.data };
         });
 
         workoutCurrentStep = 0;
@@ -1806,6 +1808,7 @@ title: "SE Gym"
                 cards.push({
                   cardType: dc.cardType,
                   source: dc.source + ' (Difficult)',
+                  deckId: dc.deckId,
                   data: dc.data
                 });
               }
@@ -1819,6 +1822,7 @@ title: "SE Gym"
                 cards.push({
                   cardType: 'quiz',
                   source: quizData.title,
+                  deckId: entry.id,
                   data: q
                 });
               }
@@ -1832,6 +1836,7 @@ title: "SE Gym"
                 cards.push({
                   cardType: 'flashcard',
                   source: fcData.title,
+                  deckId: entry.id,
                   data: c
                 });
               }
@@ -1997,7 +2002,7 @@ title: "SE Gym"
                 });
                 workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
               }
-              PersonalGym.recordResult(q.question, isCorrect);
+              PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
               correctAnswersEl.style.display = 'flex';
               explanationEl.classList.remove('hidden');
               if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
@@ -2040,7 +2045,7 @@ title: "SE Gym"
               });
               workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
             }
-            PersonalGym.recordResult(q.question, isMultiCorrect);
+            PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isMultiCorrect);
             correctAnswersEl.style.display = 'flex';
             explanationEl.classList.remove('hidden');
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
@@ -2186,7 +2191,7 @@ title: "SE Gym"
           if (isCorrect) workoutScore++;
           else workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
 
-          PersonalGym.recordResult(q.question, isCorrect);
+          PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
           var ca = div.querySelector('.quiz-correct-answers');
           var exp = div.querySelector('.quiz-explanation');
           if (ca) ca.style.display = 'flex';
@@ -2258,13 +2263,13 @@ title: "SE Gym"
 
         div.querySelector('.correct-btn').addEventListener('click', function () {
           workoutScore++;
-          PersonalGym.recordResult(c.question, true);
+          PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), true);
           nextWorkoutCard();
         });
 
         div.querySelector('.incorrect-btn').addEventListener('click', function () {
           workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
-          PersonalGym.recordResult(c.question, false);
+          PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), false);
           nextWorkoutCard();
         });
       }

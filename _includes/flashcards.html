@@ -481,7 +481,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
       // Track performance
       if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-        PersonalGym.recordResult(card.querySelector('.flashcard-question').innerHTML, correct);
+        var perfKey = container.dataset.quizId + ':' + (card.dataset.cardId || PersonalGym.hashQuestion(card.querySelector('.flashcard-question').innerHTML));
+        PersonalGym.recordResult(perfKey, correct);
       }
 
       nextCard();

@@ -109,20 +109,18 @@
     try { localStorage.removeItem(STATS_KEY); } catch (e) { /* ignore */ }
   }
 
-  function recordResult(questionHtml, correct) {
+  function recordResult(key, correct) {
     if (!isAnalyzePerformance()) return;
-    var h = hashQuestion(questionHtml);
     var stats = getStats();
-    if (!stats[h]) stats[h] = { seen: 0, correct: 0 };
-    stats[h].seen++;
-    if (correct) stats[h].correct++;
+    if (!stats[key]) stats[key] = { seen: 0, correct: 0 };
+    stats[key].seen++;
+    if (correct) stats[key].correct++;
     saveStats(stats);
   }
 
-  function getQuestionStats(questionHtml) {
-    var h = hashQuestion(questionHtml);
+  function getQuestionStats(key) {
     var stats = getStats();
-    return stats[h] || null;
+    return stats[key] || null;
   }
 
   window.PersonalGym = {

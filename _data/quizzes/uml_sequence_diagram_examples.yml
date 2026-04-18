@@ -13,7 +13,7 @@ questions:
       - "Return message — the response to a previous call."
       - "Create message — a new object is being instantiated."
     correct_index: 1
-    explanation: "A solid line with a **filled arrowhead** represents a **synchronous message**. The sender blocks and waits for the receiver to finish processing before continuing. An asynchronous message uses an **open (stick) arrowhead** instead."
+    explanation: "**A solid line with a filled arrowhead is a synchronous message — the sender blocks until the receiver finishes processing.** A solid line with a **filled arrowhead** represents a **synchronous message**. The sender blocks and waits for the receiver to finish processing before continuing. An asynchronous message uses an **open (stick) arrowhead** instead."
 
   - id: 2
     type: single
@@ -27,7 +27,7 @@ questions:
       - "A return message carrying a response back to the caller."
       - "A synchronous callback from Server to Client."
     correct_index: 2
-    explanation: "A **dashed line with an open arrowhead** represents a **return message** — the response flowing back from a called method. Return messages are optional in sequence diagrams but are shown when the return value is important to understand the interaction."
+    explanation: "**A dashed line with an open arrowhead is a return message, carrying the response back to the caller.** A **dashed line with an open arrowhead** represents a **return message** — the response flowing back from a called method. Return messages are optional in sequence diagrams but are shown when the return value is important to understand the interaction."
 
   - id: 3
     type: single
@@ -41,7 +41,7 @@ questions:
       - "`alt` — selects one of multiple branches based on guard conditions."
       - "`par` — executes messages in parallel."
     correct_index: 2
-    explanation: "The **`alt`** (alternatives) fragment models if-else logic. It contains two or more regions separated by dashed lines, each with a guard condition. Only one region executes. The **`opt`** fragment is for a simple if-without-else."
+    explanation: "**`alt` models if-else logic by selecting one of multiple guarded branches — `opt` handles a simple if-without-else.** The **`alt`** (alternatives) fragment models if-else logic. It contains two or more regions separated by dashed lines, each with a guard condition. Only one region executes. The **`opt`** fragment is for a simple if-without-else."
 
   - id: 4
     type: single
@@ -55,7 +55,7 @@ questions:
       - "Zero or more times."
       - "Exactly once."
     correct_index: 1
-    explanation: "The `loop [1, 5]` fragment specifies a **minimum of 1** and **maximum of 5** iterations. The messages inside will execute between 1 and 5 times depending on conditions at runtime."
+    explanation: "**`loop [1, 5]` means the enclosed messages execute between 1 and 5 times — the minimum and maximum iteration bounds.** The `loop [1, 5]` fragment specifies a **minimum of 1** and **maximum of 5** iterations. The messages inside will execute between 1 and 5 times depending on conditions at runtime."
 
   - id: 5
     type: multiple
@@ -69,7 +69,7 @@ questions:
       - "`try` — exception handling"
       - "`par` — parallel execution"
     correct_indices: [0, 1, 3, 5]
-    explanation: "The valid UML combined fragment operators include **`alt`**, **`opt`**, **`loop`**, and **`par`**. There is no `if` or `try` fragment in UML — conditional logic uses `alt`/`opt`, and exception-like behavior uses the `break` fragment."
+    explanation: "**`alt`, `opt`, `loop`, and `par` are valid UML combined fragments — there is no `if` or `try` fragment in UML.** The valid UML combined fragment operators include **`alt`**, **`opt`**, **`loop`**, and **`par`**. There is no `if` or `try` fragment in UML — conditional logic uses `alt`/`opt`, and exception-like behavior uses the `break` fragment."
 
   - id: 6
     type: single
@@ -83,7 +83,7 @@ questions:
       - "The system chooses between applying the discount or returning the final total."
       - "The discount is applied repeatedly until the promo code expires."
     correct_index: 1
-    explanation: "An **`opt` fragment** is equivalent to an `if` statement **without** an `else`. The enclosed messages execute only when the guard condition is true. If the guard is false, the entire fragment is skipped and execution continues after it."
+    explanation: "**`opt` is an if-without-else — the discount messages execute only if `hasPromoCode` is true, otherwise the entire fragment is skipped.** An **`opt` fragment** is equivalent to an `if` statement **without** an `else`. The enclosed messages execute only when the guard condition is true. If the guard is false, the entire fragment is skipped and execution continues after it."
 
   - id: 7
     type: single
@@ -95,7 +95,7 @@ questions:
       - "Time is not represented; messages can occur in any order."
       - "Time flows right-to-left, with the most recent message on the left."
     correct_index: 1
-    explanation: "In sequence diagrams, **time flows top-to-bottom** along the vertical axis. Messages higher in the diagram occur before messages lower in the diagram. The horizontal axis shows the different participants (lifelines)."
+    explanation: "**Time flows top-to-bottom along the vertical axis — messages higher in the diagram happen first.** In sequence diagrams, **time flows top-to-bottom** along the vertical axis. Messages higher in the diagram occur before messages lower in the diagram. The horizontal axis shows the different participants (lifelines)."
 
   - id: 8
     type: single
@@ -109,7 +109,7 @@ questions:
       - "Dashed line with filled arrowhead."
     correct_index: 2
     explanation: >
-      An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks.
+      **An asynchronous message uses a solid line with an open (stick) arrowhead — the sender fires and continues without waiting.** An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks.
 
       <div data-uml-type='sequence' data-uml-spec='participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()'></div>
 
@@ -125,7 +125,7 @@ questions:
       - "The object has been destroyed."
       - "The object is in a suspended state."
     correct_index: 1
-    explanation: "An **activation bar** (execution specification) shows the period during which an object is **actively processing** — executing a method, performing computation, or waiting for a sub-call to return. Activation bars can nest when one method calls another."
+    explanation: "**An activation bar shows the period during which an object is actively executing — it can nest when one method call triggers another.** An **activation bar** (execution specification) shows the period during which an object is **actively processing** — executing a method, performing computation, or waiting for a sub-call to return. Activation bars can nest when one method calls another."
 
   - id: 10
     type: single
@@ -139,7 +139,7 @@ questions:
       - "`cart: ShoppingCart`"
       - "`class ShoppingCart`"
     correct_index: 1
-    explanation: "The standard UML format is `objectName : ClassName`. When the specific object name is irrelevant, you omit the name and write `: ShoppingCart` (with the colon). Sequence diagrams model interactions between **specific object instances**, not classes in general."
+    explanation: "**An unnamed instance is written `: ClassName` with the colon — sequence diagrams model specific instances, not classes.** The standard UML format is `objectName : ClassName`. When the specific object name is irrelevant, you omit the name and write `: ShoppingCart` (with the colon). Sequence diagrams model interactions between **specific object instances**, not classes in general."
 
   - id: 11
     type: single
@@ -160,7 +160,7 @@ questions:
       - "A return message from Payment back to the caller."
       - "A loop fragment containing the Payment creation."
     correct_index: 1
-    explanation: "Constructor calls (`new`) in code become **create messages** in sequence diagrams. The new object's lifeline starts at the point in time when it is created (placed at that vertical position), rather than appearing at the top of the diagram like pre-existing objects."
+    explanation: "**`new Payment(amount)` becomes a create message — the Payment lifeline starts at the point of creation, not at the top of the diagram.** Constructor calls (`new`) in code become **create messages** in sequence diagrams. The new object's lifeline starts at the point in time when it is created (placed at that vertical position), rather than appearing at the top of the diagram like pre-existing objects."
 
   - id: 12
     type: single
@@ -172,4 +172,4 @@ questions:
       - "Inventory must be an interface that Order realizes."
       - "Order must have an attribute of type Inventory."
     correct_index: 0
-    explanation: "Sequence diagrams and class diagrams must be **consistent**. Every message in a sequence diagram must correspond to a method defined in the receiving object's class (or a superclass). The `Inventory` class must have a `checkStock` method that accepts the appropriate parameter type."
+    explanation: "**The sequence diagram message requires a corresponding `checkStock(itemId)` method on the `Inventory` class because both diagrams must be consistent.** Sequence diagrams and class diagrams must be **consistent**. Every message in a sequence diagram must correspond to a method defined in the receiving object's class (or a superclass). The `Inventory` class must have a `checkStock` method that accepts the appropriate parameter type."

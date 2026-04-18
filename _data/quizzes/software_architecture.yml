@@ -1,56 +1,62 @@
 title: "Software Architecture Quiz"
 description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding of structural paradigms, decision-making, and architectural degradation."
 questions:
-  - question: "Which paradigm views software architecture primarily as 'The set of principal design decisions governing a system'?"
+  - id: 1
+    question: "Which paradigm views software architecture primarily as 'The set of principal design decisions governing a system'?"
     options:
       - "The Structural Paradigm"
       - "The Decision-Based Paradigm"
       - "The Allocation Paradigm"
       - "The Module Paradigm"
     correct_index: 1
-    explanation: "The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
+    explanation: "**The decision-based paradigm defines architecture as the set of principal design decisions, not just structural elements — championed by Taylor et al. as an alternative to the box-and-line view.** The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
 
-  - question: "What formula did Perry and Wolf propose to define software architecture?"
+  - id: 2
+    question: "What formula did Perry and Wolf propose to define software architecture?"
     options:
       - "Architecture = {Components, Connectors, Style}"
       - "Architecture = {Elements, Form, Rationale}"
       - "Architecture = {Modules, Layers, Interfaces}"
       - "Architecture = {Structure, Behavior, Constraints}"
     correct_index: 1
-    explanation: "Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
+    explanation: "**Perry and Wolf's 1992 formula defines architecture as Elements + Form + Rationale — not components/connectors (Bass) or modules/layers alone.** Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
 
-  - question: "What is the key difference between 'Architectural Drift' and 'Architectural Erosion'?"
+  - id: 3
+    question: "What is the key difference between 'Architectural Drift' and 'Architectural Erosion'?"
     options:
       - "Drift is intentional, while erosion is accidental."
       - "Drift occurs in the prescriptive architecture, while erosion occurs in the descriptive."
       - "Drift involves new decisions that don't violate rules; erosion involves direct violations of the intended architecture."
       - "Drift is structural, whereas erosion is decision-based."
     correct_index: 2
-    explanation: "**Drift** adds decisions that aren't in the plan but don't break it; **erosion** explicitly violates the rules and constraints of the **prescriptive architecture**."
+    explanation: "**Drift adds decisions not in the plan without breaking it, while erosion explicitly violates the intended architectural rules — erosion is more damaging because it creates direct contradictions.** **Drift** adds decisions that aren't in the plan but don't break it; **erosion** explicitly violates the rules and constraints of the **prescriptive architecture**."
 
-  - question: "Which term refers to the architecture as it is 'realized' in the source code and physical build artifacts?"
+  - id: 4
+    question: "Which term refers to the architecture as it is 'realized' in the source code and physical build artifacts?"
     options:
       - "Prescriptive Architecture"
       - "Target Architecture"
       - "Descriptive Architecture"
       - "Conceptual Architecture"
     correct_index: 2
-    explanation: "**Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
+    explanation: "**Descriptive architecture is the 'as-realized' structure found in the actual source code and artifacts — it describes what was built, not what was intended.** **Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
 
-  - question: "According to the literature, what happens when a system's descriptive and prescriptive architectures diverge completely?"
+  - id: 5
+    question: "According to the literature, what happens when a system's descriptive and prescriptive architectures diverge completely?"
     options:
       - "The system becomes more flexible."
       - "It achieves 'Big Ball of Mud' status and loses conceptual integrity."
       - "The descriptive architecture becomes the new prescription."
       - "The system's performance improves through ad-hoc optimizations."
     correct_index: 1
-    explanation: "Complete divergence leads to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
+    explanation: "**When descriptive and prescriptive architectures diverge completely, the system loses conceptual integrity and accumulates technical debt until it becomes a 'Big Ball of Mud' — unmaintainable and unstructured.** Complete divergence leads to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
 
-  - question: "In the context of the JackTrip project, what was identified as a primary driver of 'link overload smells' and erosion?"
+  - id: 6
+    question: "In the context of the JackTrip project, what was identified as a primary driver of 'link overload smells' and erosion?"
     options:
       - "Using too many descriptive diagrams."
       - "Lack of research funding and recurring unmanaged changes."
       - "Strict adherence to layered architecture."
       - "Switching from structural to decision-based modeling."
     correct_index: 1
-    explanation: "The JackTrip case study showed that time constraints, funding issues, and undocumented changes drove architectural erosion symptoms like link overload."
+    explanation: "**In JackTrip, time constraints and recurring unmanaged changes were the primary drivers of architectural erosion and link overload smells — not diagramming choices or adherence to a layered style.** The JackTrip case study showed that time constraints, funding issues, and undocumented changes drove architectural erosion symptoms like link overload."

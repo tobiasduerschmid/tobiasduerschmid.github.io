@@ -11,7 +11,7 @@ questions:
       - "Client-driven transitions — the client selects which state to switch to"
       - "Null-state transitions — transitions are handled by the Null Object pattern"
     correct_index: 1
-    explanation: "This is **state-driven transitions**: each Concrete State knows its successor(s) and calls `context.setState()` to trigger the transition. The advantage is that each state encapsulates its own transition logic. The disadvantage is that it's harder to see the complete state machine at a glance, and state classes become coupled to each other."
+    explanation: "**This is state-driven transitions — each state knows its successors and triggers the transition itself, encapsulating its own logic at the cost of inter-state coupling.** This is **state-driven transitions**: each Concrete State knows its successor(s) and calls `context.setState()` to trigger the transition. The advantage is that each state encapsulates its own transition logic. The disadvantage is that it's harder to see the complete state machine at a glance, and state classes become coupled to each other."
 
   - id: 2
     type: single
@@ -23,7 +23,7 @@ questions:
       - "Information Hiding — use the Facade pattern to wrap the boolean matrix"
       - "Don't Repeat Yourself — use the Template Method pattern"
     correct_index: 1
-    explanation: "The boolean representation forces **conditional logic** everywhere a cell's behavior differs based on its state. The State pattern replaces this with **polymorphism**: `AliveState` and `DeadState` each implement the behavior for their respective states. Adding a new state (e.g., `DyingState`) becomes a matter of adding a new class, not modifying every conditional throughout the codebase."
+    explanation: "**This violates polymorphism over conditions — the State pattern replaces the boolean-driven if/else with `AliveState` and `DeadState` objects that each carry their own behavior.** The boolean representation forces **conditional logic** everywhere a cell's behavior differs based on its state. The State pattern replaces this with **polymorphism**: `AliveState` and `DeadState` each implement the behavior for their respective states. Adding a new state (e.g., `DyingState`) becomes a matter of adding a new class, not modifying every conditional throughout the codebase."
 
   - id: 3
     type: single
@@ -35,7 +35,7 @@ questions:
       - "Strategy supports more concrete implementations than State"
       - "State is only for GUI applications; Strategy is general-purpose"
     correct_index: 1
-    explanation: "The difference is entirely in **intent and behavior**. In State, the concrete implementations **transition between each other** based on internal logic — the client doesn't choose which state is active. In Strategy, the client **explicitly selects** which algorithm to use, and there are no automatic transitions. Same structure, fundamentally different dynamics."
+    explanation: "**State involves implicit internal transitions that the client does not control; Strategy involves the client explicitly selecting which algorithm to use — same structure, different intent.** The difference is entirely in **intent and behavior**. In State, the concrete implementations **transition between each other** based on internal logic — the client doesn't choose which state is active. In Strategy, the client **explicitly selects** which algorithm to use, and there are no automatic transitions. Same structure, fundamentally different dynamics."
 
   - id: 4
     type: single
@@ -47,7 +47,7 @@ questions:
       - "Neither — the State pattern cannot accommodate new states without major refactoring"
       - "Both handle it equally well"
     correct_index: 1
-    explanation: "With **state-driven transitions**, you only need to: (1) create the new `RejectedState` class, and (2) modify `ReviewState` to add a transition to `RejectedState`. The `RejectedState` itself transitions back to `DraftState`. No other states need to change. With context-driven transitions, you'd modify the Context's centralized logic — potentially touching code for all states."
+    explanation: "**State-driven transitions handle the new Rejected state more gracefully because only the ReviewState and the new class need to change — not the Context or all other states.** With **state-driven transitions**, you only need to: (1) create the new `RejectedState` class, and (2) modify `ReviewState` to add a transition to `RejectedState`. The `RejectedState` itself transitions back to `DraftState`. No other states need to change. With context-driven transitions, you'd modify the Context's centralized logic — potentially touching code for all states."
 
   - id: 5
     type: single
@@ -59,4 +59,4 @@ questions:
       - "It makes state transitions slower due to synchronization overhead"
       - "The Null Object pattern cannot be combined with Singleton"
     correct_index: 1
-    explanation: "If states are Singletons, they cannot store a reference back to their Context (because many contexts would share the same state instance). This **permanently couples the design** by removing the ability to ever add per-context state data in the future. This is an example of a **Singleton State** compound — memory-efficient but inflexible. It's only safe if you are certain the states will remain purely behavioral."
+    explanation: "**Singleton states permanently remove the ability to add per-context data in the future because all contexts would share the same instance.** If states are Singletons, they cannot store a reference back to their Context (because many contexts would share the same state instance). This **permanently couples the design** by removing the ability to ever add per-context state data in the future. This is an example of a **Singleton State** compound — memory-efficient but inflexible. It's only safe if you are certain the states will remain purely behavioral."

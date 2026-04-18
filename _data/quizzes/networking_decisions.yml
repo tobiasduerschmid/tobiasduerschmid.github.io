@@ -1,0 +1,96 @@
+title: "Networking: Making Decisions"
+description: "Given real-world application scenarios, choose the right network architecture, transport protocol, and application protocol. These questions test your ability to analyze trade-offs and justify design decisions."
+questions:
+  - id: 1
+    question: "You are building a **group chat app** similar to WhatsApp. A user sends 'Meet me at the library' immediately followed by 'Actually cancel that — plans changed.' If these two messages arrive out of order, the recipient gets the opposite impression. Which transport protocol should you use?"
+    options:
+      - "UDP — messaging apps need to feel fast and real-time."
+      - "TCP — message ordering and guaranteed delivery are critical for text chat."
+      - "Either TCP or UDP — the app can re-sort messages by timestamp."
+      - "UDP with custom sequence numbers added to your own message headers."
+    correct_index: 1
+    explanation: "**TCP is required because out-of-order or missing messages cause real misunderstandings.** While you *could* bolt reliability onto UDP yourself (option D), that means re-implementing TCP, which is error-prone and wasteful. TCP's overhead is negligible for the small payloads of a text message, making it the right tool here."
+
+  - id: 2
+    question: "You are building a **live video conferencing platform** similar to Zoom or Discord, where participants send real-time video to each other. Which transport protocol is most appropriate for the video data?"
+    options:
+      - "TCP — because you cannot afford to drop any video frames."
+      - "UDP — because continuous flow and low latency matter more than delivering every frame perfectly."
+      - "TCP — because TCP is always preferable since it guarantees reliability."
+      - "Neither — live video bypasses the transport layer entirely."
+    correct_index: 1
+    explanation: "**UDP is correct because a late packet is worse than no packet.** A single dropped frame is virtually unnoticeable — the decoder skips ahead to the next frame, which arrives within milliseconds. TCP's retransmission mechanism would cause visible stutter: the stream pauses to wait for a stale packet that describes video the viewer has already missed. This is why platforms like Zoom and Discord use UDP (via WebRTC) for video calls."
+
+  - id: 3
+    question: "A team is designing a **real-time strategy game** similar to StarCraft II. Unit positions and health bars update 30 times per second. The game also supports build commands, technology upgrades, and a final 'game over' event that must be recorded in the match history. What protocol strategy makes the most sense?"
+    options:
+      - "TCP for everything — reliability is always more important in games."
+      - "UDP for everything — speed is always the top priority."
+      - "UDP for unit position and health updates; TCP for build commands, tech upgrades, and game-over events."
+      - "HTTP for all game communication, since it is the standard application-layer protocol."
+    correct_index: 2
+    explanation: "**A hybrid is correct because the two data types have opposite requirements.** Unit positions update 30 times per second with absolute values, so a missed snapshot is replaced within 33ms — UDP is ideal. But a dropped 'tech upgrade' or 'game over' event would corrupt match state — TCP is essential for those. This hybrid approach mirrors how real-time strategy games actually implement their networking."
+
+  - id: 4
+    question: "You are building a **code hosting service** similar to GitHub where developers push Git repositories over the network. A single `git push` can transfer thousands of source files. Which transport protocol should you use?"
+    options:
+      - "UDP — to maximize raw transfer speed for large repositories."
+      - "TCP — because every byte of source code must arrive correctly and in the right order."
+      - "UDP — source code is just text, so a few missing characters are acceptable."
+      - "It depends on repository size — use UDP for small repos and TCP for large ones."
+    correct_index: 1
+    explanation: "**TCP is required because source code cannot tolerate missing or corrupted data.** A single flipped byte can make a file unparseable, cause a silent build failure, or introduce a subtle bug. TCP's guarantees (delivery, ordering, error detection) are non-negotiable here, and the overhead is trivial compared to the cost of pushing corrupted code. This is why Git uses HTTPS (TCP port 443) and SSH (TCP port 22)."
+
+  - id: 5
+    question: "A startup is building a **food delivery app** similar to DoorDash. The app must match customer orders to nearby drivers, process credit card payments, and provide live GPS tracking of the driver. Should the core backend use a client-server or peer-to-peer architecture?"
+    options:
+      - "Peer-to-peer — so customers and drivers can negotiate orders directly without a middleman."
+      - "Client-server — a central server is required to match orders, process payments, and maintain accountability."
+      - "Peer-to-peer — to eliminate the cost of running backend servers."
+      - "It doesn't matter — either architecture works equally well for this use case."
+    correct_index: 1
+    explanation: "**Client-server is required because the platform needs a central authority for trust and accountability.** A food delivery app must match orders, process payments, verify identities, and resolve disputes — none of which are possible without a trusted coordinator. P2P would make payments and accountability nearly impossible to implement reliably."
+
+  - id: 6
+    question: "An open-source team wants to build a **cooperative cloud backup system** where volunteers donate unused disk space to store other users' encrypted files. There should be no single company owning the infrastructure, and the system should keep working even if many nodes go offline. Which architecture fits best?"
+    options:
+      - "Client-server — a central index server provides the most reliable chunk tracking."
+      - "Client-server — it is simpler to implement and scale incrementally."
+      - "Peer-to-peer — decentralization is a core requirement; every participant is both a storage provider and a consumer."
+      - "Hybrid — use a single central server for the chunk index and P2P only for raw data transfer."
+    correct_index: 2
+    explanation: "**P2P is correct because decentralization is an explicit design requirement, not just a preference.** Any central server (options A and D) creates a single point of control or failure, violating the requirements. True P2P systems like IPFS use a Distributed Hash Table (DHT) so peers discover each other without any central coordinator — the same principle behind BitTorrent's trackerless mode."
+
+  - id: 7
+    question: "You are adding a **voice call feature** to a mobile messaging app, similar to WhatsApp Calls or FaceTime audio. Which transport protocol should handle the audio stream?"
+    options:
+      - "TCP — because losing audio data degrades call quality."
+      - "UDP — because a brief audio gap is far less noticeable than the stutter caused by TCP's retransmission delay."
+      - "TCP — because TCP's ordering guarantees prevent audio from sounding garbled."
+      - "Neither — voice data operates at the Application Layer without using the Transport Layer."
+    correct_index: 1
+    explanation: "**UDP is correct because in real-time voice, a retransmitted packet arrives too late to be useful.** TCP's retransmission delay causes audible jitter — the stream stalls waiting for a packet describing audio the listener has already missed. A tiny gap from a dropped UDP packet lasts only milliseconds and is largely imperceptible. This is why all major VoIP systems (WhatsApp, FaceTime, Skype) use UDP, or protocols like RTP built on top of UDP."
+
+  - id: 8
+    question: "A hospital deploys a **patient vital-signs monitoring system**: nurses' stations display each patient's heart rate, blood pressure, and SpO₂, refreshed every 2 seconds from bedside sensors via a central data server. Which architecture pattern is this?"
+    options:
+      - "Peer-to-peer — because the bedside sensor and the nurses' station both send and receive data."
+      - "Hybrid — because it combines periodic polling with server responses."
+      - "Client-server — the nurses' station (client) requests updated readings from the central server, which responds with the latest sensor data."
+      - "P2P — because bedside sensors share readings directly with every nurses' station."
+    correct_index: 2
+    explanation: "**Client-server is correct — polling does not change the architecture.** The nurses' station (client) initiates every request; the central server responds. The 2-second interval is just polling frequency, not a P2P arrangement. The client always initiates; the server always only responds."
+
+  - id: 9
+    type: multiple
+    question: "For which of the following applications would **TCP** be the better choice over UDP? (Select all that apply)"
+    options:
+      - "An SSH session to remotely administer a Linux server"
+      - "Streaming live GPS coordinates from a fleet of delivery vans to a dispatch dashboard"
+      - "Submitting a bank wire transfer from a mobile banking app"
+      - "Downloading a software package with `apt-get install`"
+    correct_indices:
+      - 0
+      - 2
+      - 3
+    explanation: "**SSH** requires every keystroke and every line of output to arrive in order — a dropped character would produce a garbled or dangerous command. **Bank transfers** must not be lost or corrupted — a missing confirmation message could charge a customer without recording it. **`apt-get`** downloads binary packages where a single corrupted byte can break the installation. By contrast, **live GPS coordinates** are real-time positional data: a missed reading is harmless since the next one arrives a second later with a fresh position, making UDP the better fit."

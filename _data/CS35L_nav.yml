@@ -40,6 +40,8 @@ topics:
         url: /SEBook/tools/make.html
       - name: Make Tutorial
         url: /SEBook/tools/makefile-tutorial.html
+      - name: Networking
+        url: /SEBook/tools/networking.html
 
   - name: Design Patterns
     icon: null

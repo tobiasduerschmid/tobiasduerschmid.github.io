@@ -1,0 +1,54 @@
+title: "Networking Concepts"
+description: "Review key networking concepts: architectures, protocols, HTTP, and the TCP/IP stack."
+cards:
+  - id: 1
+    question: "What are the two roles in a **client-server architecture**, and who initiates the connection?"
+    answer: "The **client** consumes resources and always **initiates** the connection. The **server** provides resources and passively listens for incoming requests. Multiple clients can connect to the same server simultaneously."
+
+  - id: 2
+    question: "How does a **peer-to-peer (P2P)** architecture differ from client-server?"
+    answer: "In P2P, there is **no central server**. Every node is **equally privileged** and acts as both a supplier and consumer of resources. It is **decentralized**, so there is no single point of failure — but if a peer goes offline, its unique resources become unavailable."
+
+  - id: 3
+    question: "What is a **hybrid architecture**? Give a real-world example."
+    answer: "A hybrid combines client-server and P2P. **Apple FaceTime** uses hybrid: for 1-on-1 calls it attempts a direct P2P connection for lower latency, falling back to Apple's relay servers if NAT or firewalls block the direct path. Group FaceTime routes all participants through Apple's servers to prevent each device from uploading a separate video stream to every other participant."
+
+  - id: 4
+    question: "Explain the difference between **throughput** and **latency**."
+    answer: "**Throughput** = volume of requests processed per unit time (e.g., an API handling 500 req/sec during peak load). **Latency** = time for a single request to complete (e.g., a database query returning in 40ms). They are *not* always correlated: adding more servers increases throughput but doesn't reduce per-request latency. Caching reduces latency and may also increase throughput."
+
+  - id: 5
+    question: "You type a URL into your browser and press Enter. Trace the journey of that HTTP request **down** the four layers of the TCP/IP stack — name each layer and describe what it contributes."
+    answer: "1. **Application Layer** — your browser constructs the HTTP request (verb, URL, headers). 2. **Transport Layer** — TCP wraps it in a segment with port numbers and sequence info for reliable delivery. 3. **Internet Layer** — IP wraps it in a packet with source and destination IP addresses for routing between networks. 4. **Link Layer** — Ethernet/Wi-Fi wraps it in a frame with MAC addresses and physically transmits it to the next hop."
+
+  - id: 6
+    question: "What is **encapsulation** (package wrapping) in the TCP/IP stack?"
+    answer: "Each layer wraps the higher-layer message as its **payload** and adds its own **header** — like sealing a letter inside successively larger envelopes. An HTTP message (the letter) is placed inside a TCP envelope (labelled with port numbers), which is placed inside an IP envelope (labelled with IP addresses), which is placed inside an Ethernet envelope (labelled with MAC addresses). Each envelope carries only the addressing information needed for that one delivery step."
+
+  - id: 7
+    question: "What is the **TCP three-way handshake** and why is it needed?"
+    answer: "**SYN** → **SYN-ACK** → **ACK**. The client sends SYN ('I want to connect'), the server replies SYN-ACK ('OK, I'm ready'), the client confirms with ACK ('let's go'). It ensures both parties are ready to send and receive data before any data is transmitted."
+
+  - id: 8
+    question: "How does TCP guarantee reliable delivery during data transfer?"
+    answer: "TCP sends data in **ordered** segments with **checksums** for error detection. The receiver sends **ACKs** to confirm receipt (a single ACK can cover multiple segments). If the sender doesn't receive an ACK within a **timeout**, it **retransmits** the missing data. This guarantees delivery, order, and integrity — at the cost of additional overhead."
+
+  - id: 10
+    question: "What does it mean that HTTP is **stateless**?"
+    answer: "Each HTTP request is **independent** — the server does not remember any information about previous requests from the same client. Every request must contain all the information the server needs to respond. Web apps use cookies/sessions to maintain state across requests."
+
+  - id: 11
+    question: "Name at least three main **HTTP verbs** and what each does."
+    answer: "**GET** — retrieve a resource. **POST** — send data to create/update a resource. **PUT** — update an existing resource. **DELETE** — delete a resource. **HEAD** — retrieve only the headers of a resource (not the body)."
+
+  - id: 12
+    question: "What is `127.0.0.1` and what is it commonly called?"
+    answer: "**Localhost** — a special reserved IP address that always refers to *your own machine*. During development you might run your Express backend on `localhost:5000` and your React frontend on `localhost:3000`; both processes are on the same machine and communicate without ever touching the public internet."
+
+  - id: 13
+    question: "What is a **URL** and what are its components?"
+    answer: "`{protocol}://{domain}(:{port})(/{resource})`. Example: `http://localhost:5000/courses/cs101`. **Protocol** (http/https), **domain** (the server's address), **port** (which application on the server — optional, defaults to 80/443), **resource path** (which resource to access — optional, defaults to `/`)."
+
+  - id: 14
+    question: "What does **HTTPS** add on top of HTTP, and why is it important?"
+    answer: "HTTPS adds **SSL/TLS encryption** to HTTP. It protects sensitive data (passwords, personal info) from being intercepted in transit. It has become the **default for all public web pages**, even those without sensitive data, because it also prevents tampering and ensures you're talking to the real server."

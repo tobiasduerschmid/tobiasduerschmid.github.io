@@ -9,7 +9,7 @@ questions:
       - "It queries the git commit history to see if any tracked files were modified." 
       - "It recompiles everything by default unless explicitly told to skip a file." 
     correct_index: 1 
-    explanation: "`make` looks at the file modification timestamps. If a prerequisite (like a .c file) has a newer timestamp than the target (like a .o file), `make` knows the source code has changed and recompiles the target. This enables efficient incremental builds." 
+    explanation: "**`make` rebuilds targets by comparing file modification timestamps, not hashes.** `make` looks at the file modification timestamps. If a prerequisite (like a .c file) has a newer timestamp than the target (like a .o file), `make` knows the source code has changed and recompiles the target. This enables efficient incremental builds."
   
   - id: 2 
     question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?" 
@@ -19,7 +19,7 @@ questions:
       - "A Tab character" 
       - "A newline character followed by a colon" 
     correct_index: 2 
-    explanation: "Makefile syntax strictly requires command lines (recipes) to be indented with a single Tab character. Using spaces will result in a 'missing separator' error." 
+    explanation: "**A Tab character is strictly required; spaces cause a 'missing separator' error.** Makefile syntax strictly requires command lines (recipes) to be indented with a single Tab character. Using spaces will result in a 'missing separator' error."
   
   - id: 3 
     question: "What does the automatic variable `$@` represent in a Makefile rule?" 
@@ -29,7 +29,7 @@ questions:
       - "The name of the target of the rule." 
       - "The default compiler (e.g., gcc or clang)." 
     correct_index: 2 
-    explanation: "`$@` evaluates to the target name. It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to dynamically specify the output file name." 
+    explanation: "**`$@` represents the target name of the current rule.** `$@` evaluates to the target name. It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to dynamically specify the output file name."
   
   - id: 4 
     question: "Why is the `.PHONY` directive used in Makefiles (e.g., `.PHONY: clean`)?" 
@@ -39,7 +39,7 @@ questions:
       - "To tell the compiler to ignore syntax errors during the build step." 
       - "To automatically generate a list of object files from source files." 
     correct_index: 1 
-    explanation: "If you have a rule named `clean`, and a file literally named `clean` is accidentally created in the directory, `make clean` will say 'clean is up to date' and do nothing. `.PHONY: clean` forces `make` to execute the recipe regardless of whether a file named `clean` exists." 
+    explanation: "**`.PHONY` declares a target as a command, not a file, so `make` always runs its recipe.** If you have a rule named `clean`, and a file literally named `clean` is accidentally created in the directory, `make clean` will say 'clean is up to date' and do nothing. `.PHONY: clean` forces `make` to execute the recipe regardless of whether a file named `clean` exists."
 
   - id: 5 
     question: "If a user runs the `make` command in their terminal without specifying a target, what will `make` do?" 
@@ -49,7 +49,7 @@ questions:
       - "It will automatically build the very first target defined in the Makefile." 
       - "It will throw an error asking the user to specify a target." 
     correct_index: 2 
-    explanation: "By default, `make` begins execution with the first target it encounters in the file. By convention, developers often make the first target `all` (which depends on the main executables) so that running `make` builds the entire project." 
+    explanation: "**`make` without arguments builds the very first target defined in the Makefile.** By default, `make` begins execution with the first target it encounters in the file. By convention, developers often make the first target `all` (which depends on the main executables) so that running `make` builds the entire project."
 
   - id: 6 
     question: "You have a pattern rule: `%.o: %.c`. What does the `%` symbol do?" 
@@ -59,7 +59,7 @@ questions:
       - "It substitutes the current working directory path into the command." 
       - "It performs an integer modulo operation on the file timestamps." 
     correct_index: 0 
-    explanation: "The `%` symbol is a wildcard in pattern rules. `%.o: %.c` acts as a generic template, avoiding the need to write individual rules for every single source file in a project." 
+    explanation: "**`%` is a wildcard that creates a generic pattern rule matching any `.c` file to its corresponding `.o` file.** The `%` symbol is a wildcard in pattern rules. `%.o: %.c` acts as a generic template, avoiding the need to write individual rules for every single source file in a project."
 
   - id: 7 
     type: multiple 
@@ -71,7 +71,7 @@ questions:
       - "Makefiles standardize workflows across teams (e.g., `make test`, `make clean`)." 
       - "Makefiles automatically write the correct C code if dependencies are missing." 
     correct_indices: [0, 2, 3] 
-    explanation: "Makefiles save time via incremental compilation, manage complex dependency graphs automatically (declarative vs procedural), and provide standardized commands. They do not run the compiler faster, nor do they write code for you." 
+    explanation: "**Makefiles win over shell scripts by providing incremental builds, automatic dependency ordering, and standardized commands.** Makefiles save time via incremental compilation, manage complex dependency graphs automatically (declarative vs procedural), and provide standardized commands. They do not run the compiler faster, nor do they write code for you."
 
   - id: 8 
     type: multiple 
@@ -83,7 +83,7 @@ questions:
       - "`$^` (All prerequisites, space-separated)" 
       - "`$$` (The process ID of the make instance)" 
     correct_indices: [0, 1, 3] 
-    explanation: "`$@`, `$<`, and `$^` are standard automatic variables used to make Makefile rules concise and dynamic. `$#` and `$$` are Bash variables, not Make automatic variables." 
+    explanation: "**`$@`, `$<`, and `$^` are valid Make automatic variables; `$#` and `$$` are Bash constructs, not Make.** `$@`, `$<`, and `$^` are standard automatic variables used to make Makefile rules concise and dynamic. `$#` and `$$` are Bash variables, not Make automatic variables."
 
   - id: 9 
     type: multiple 
@@ -94,7 +94,7 @@ questions:
       - "`LDFLAGS` (To define linker flags)" 
       - "`MAKE_IT_FAST` (To automatically apply the `-O3` optimization flag globally)" 
     correct_indices: [0, 1, 2] 
-    explanation: "`CC`, `CFLAGS`, and `LDFLAGS` are universal conventions in Makefiles. Using them allows developers to easily swap compilers or add flags via command line arguments (e.g., `make CC=clang`) without editing the actual Makefile. `MAKE_IT_FAST` is not a standard convention." 
+    explanation: "**`CC`, `CFLAGS`, and `LDFLAGS` are standard Makefile conventions; `MAKE_IT_FAST` is not.** `CC`, `CFLAGS`, and `LDFLAGS` are universal conventions in Makefiles. Using them allows developers to easily swap compilers or add flags via command line arguments (e.g., `make CC=clang`) without editing the actual Makefile. `MAKE_IT_FAST` is not a standard convention."
 
   - id: 10 
     type: multiple 
@@ -105,4 +105,4 @@ questions:
       - "Makefiles use top-down planning to build a dependency graph, and then execute commands bottom-up." 
       - "`make` evaluates all rules blindly, even if the target is already up to date." 
     correct_indices: [0, 2] 
-    explanation: "Makefiles are declarative, not procedural. They do not execute top-to-bottom sequentially, nor do they execute blindly. They build a dependency graph from the top-down (starting at the target), and then execute the necessary commands from the bottom-up, skipping anything that is already up to date."
+    explanation: "**Makefiles are declarative and build a dependency graph top-down, executing only necessary commands bottom-up.** Makefiles are declarative, not procedural. They do not execute top-to-bottom sequentially, nor do they execute blindly. They build a dependency graph from the top-down (starting at the target), and then execute the necessary commands from the bottom-up, skipping anything that is already up to date."

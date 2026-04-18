@@ -11,7 +11,7 @@ questions:
       - "In the Calendar — it would filter notifications"
       - "Nowhere — Observer cannot implement conditional rules"
     correct_index: 1
-    explanation: "With Observer, each observer **independently decides** how to react. The CoffeeMaker would need to check the Calendar itself to know if it's a weekday — meaning the CoffeeMaker now **depends on** the Calendar, creating exactly the tight coupling that the Mediator was meant to prevent. The Mediator **centralizes** this rule: the Hub checks the calendar and commands the coffee maker, keeping each device independent."
+    explanation: "**With Observer, the CoffeeMaker would have to check the Calendar itself, creating the tight coupling that Mediator was designed to prevent.** With Observer, each observer **independently decides** how to react. The CoffeeMaker would need to check the Calendar itself to know if it's a weekday — meaning the CoffeeMaker now **depends on** the Calendar, creating exactly the tight coupling that the Mediator was meant to prevent. The Mediator **centralizes** this rule: the Hub checks the calendar and commands the coffee maker, keeping each device independent."
 
   - id: 2
     type: single
@@ -23,7 +23,7 @@ questions:
       - "Observer uses interfaces; Mediator uses abstract classes"
       - "Observer is for UI patterns; Mediator is for backend patterns"
     correct_index: 1
-    explanation: "The key distinction is **where the intelligence lives**. In Observer, intelligence is **distributed**: each observer contains its own reaction logic, and observers are independent of each other. In Mediator, intelligence is **centralized**: the mediator contains all coordination rules and tells objects how to respond. Observer excels at **extensibility** (adding observers); Mediator excels at **changeability** (modifying coordination rules)."
+    explanation: "**Observer distributes intelligence across independent observers; Mediator centralizes all coordination rules in one place.** The key distinction is **where the intelligence lives**. In Observer, intelligence is **distributed**: each observer contains its own reaction logic, and observers are independent of each other. In Mediator, intelligence is **centralized**: the mediator contains all coordination rules and tells objects how to respond. Observer excels at **extensibility** (adding observers); Mediator excels at **changeability** (modifying coordination rules)."
 
   - id: 3
     type: single
@@ -35,7 +35,7 @@ questions:
       - "Replace the Mediator with a Facade"
       - "Replace the Mediator with Observer to distribute the logic"
     correct_index: 0
-    explanation: "The Mediator does not **remove** complexity — it **displaces** it into a central location. If the coordination logic is genuinely complex, the Mediator becomes a genuinely complex **god class**. The remedy is to split it into multiple focused mediators, each handling a different aspect of coordination (e.g., a `MorningRoutineMediator` and a `SecurityMediator`). Simply replacing with Observer would scatter the logic without reducing complexity."
+    explanation: "**A 2,000-line Mediator has become a god class — split it into multiple focused mediators for different subsystem concerns.** The Mediator does not **remove** complexity — it **displaces** it into a central location. If the coordination logic is genuinely complex, the Mediator becomes a genuinely complex **god class**. The remedy is to split it into multiple focused mediators, each handling a different aspect of coordination (e.g., a `MorningRoutineMediator` and a `SecurityMediator`). Simply replacing with Observer would scatter the logic without reducing complexity."
 
   - id: 4
     type: single
@@ -47,7 +47,7 @@ questions:
       - "It makes the Mediator unnecessary"
       - "It allows observers to communicate with each other directly"
     correct_index: 1
-    explanation: "In a Managed Observer, colleagues use **Observer-style notifications** to inform the mediator ('I changed'), and the mediator uses **direct method calls** to coordinate the response ('You should update'). This gives you the **loose coupling** of Observer (colleagues don't know about each other) combined with the **centralized intelligence** of Mediator (complex rules live in one place). Neither pattern alone provides both properties."
+    explanation: "**The Managed Observer compound provides both loose coupling (Observer-style notifications) and centralized coordination (Mediator-style rules) — neither pattern alone offers both.** In a Managed Observer, colleagues use **Observer-style notifications** to inform the mediator ('I changed'), and the mediator uses **direct method calls** to coordinate the response ('You should update'). This gives you the **loose coupling** of Observer (colleagues don't know about each other) combined with the **centralized intelligence** of Mediator (complex rules live in one place). Neither pattern alone provides both properties."
 
   - id: 5
     type: single
@@ -59,4 +59,4 @@ questions:
       - "Because the Mediator introduces new dependencies between colleagues"
       - "Because N-to-1 creates more coupling than N-to-N"
     correct_index: 1
-    explanation: "This is the principle of **complexity displacement**. If five objects each have complex interactions, that complexity exists regardless of the pattern. Without Mediator, it's **scattered** across five classes (hard to find, but each piece is small). With Mediator, it's **concentrated** in one class (easy to find, but potentially overwhelming). The Mediator provides **structure** for managing the complexity, but it cannot make inherent complexity disappear."
+    explanation: "**Mediator displaces complexity into one central location rather than eliminating it — the same logic still exists, just concentrated instead of scattered.** This is the principle of **complexity displacement**. If five objects each have complex interactions, that complexity exists regardless of the pattern. Without Mediator, it's **scattered** across five classes (hard to find, but each piece is small). With Mediator, it's **concentrated** in one class (easy to find, but potentially overwhelming). The Mediator provides **structure** for managing the complexity, but it cannot make inherent complexity disappear."

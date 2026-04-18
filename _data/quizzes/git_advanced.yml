@@ -1,43 +1,48 @@
 title: "Advanced Git Quiz"
 description: "Test your knowledge of advanced Git commands, debugging tools, and integration strategies."
 questions:
-  - question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
+  - id: 1
+    question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
     options:
       - "`git cherry-pick`"
       - "`git bisect`"
       - "`git revert`"
       - "`git stash`"
     correct_index: 3
-    explanation: "`git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+    explanation: "**`git stash` is the right tool here because it temporarily shelves incomplete changes so you can switch branches without committing messy work.** `git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
 
-  - question: "What happens when you enter a 'Detached HEAD' state in Git?"
+  - id: 2
+    question: "What happens when you enter a 'Detached HEAD' state in Git?"
     options:
       - "A merge conflict occurs that Git cannot resolve automatically."
       - "The HEAD pointer is attached directly to a specific commit rather than a branch name."
       - "You accidentally delete the main branch of your repository."
       - "The remote server goes offline, and your local repository can no longer push updates."
     correct_index: 1
-    explanation: "Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
+    explanation: "**Detached HEAD means HEAD points directly to a commit hash rather than a branch, so new commits are not anchored to any branch and can be lost.** Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
 
-  - question: "Which Git command utilizes a binary search through your commit history to help you pinpoint the exact commit that introduced a bug?"
+  - id: 3
+    question: "Which Git command utilizes a binary search through your commit history to help you pinpoint the exact commit that introduced a bug?"
     options:
       - "`git blame`"
       - "`git bisect`"
       - "`git diff`"
       - "`git cherry-pick`"
     correct_index: 1
-    explanation: "`git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
+    explanation: "**`git bisect` uses binary search through commit history to efficiently pinpoint the exact commit that introduced a bug.** `git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
 
-  - question: "What is the primary purpose of Git Submodules?"
+  - id: 4
+    question: "What is the primary purpose of Git Submodules?"
     options:
       - "To break a single, massive file into smaller, trackable pieces to improve performance."
       - "To include an external Git repository as a subdirectory of your project while maintaining its independent history."
       - "To securely store passwords, API keys, and private credentials outside of the main repository."
       - "To automatically squash a long sequence of commits into a single bugfix."
     correct_index: 1
-    explanation: "Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
+    explanation: "**Git Submodules let you embed an external repository as a subdirectory, pinned to a specific commit, while keeping its history independent.** Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
 
-  - type: multiple
+  - id: 5
+    type: multiple
     question: "In which of the following scenarios would using `git stash` be considered an appropriate and helpful practice? (Select all that apply)"
     options:
       - "You have uncommitted, incomplete changes but need to switch branches urgently to fix a bug."
@@ -45,9 +50,10 @@ questions:
       - "You want to permanently delete unneeded code files from your project's history."
       - "You want to permanently apply a completed commit from a completely different branch."
     correct_indices: [0, 1]
-    explanation: "`git stash` temporarily shelves your local modifications (both staged and unstaged), leaving you with a clean working directory. This is perfect for quick context switches or pulling updates without committing messy, incomplete work. It is not used for permanent deletion or applying commits (which would be `git cherry-pick`)."
+    explanation: "**`git stash` is appropriate for temporary context switches and clean pulls — it is not for permanent deletion or applying commits from other branches.** `git stash` temporarily shelves your local modifications (both staged and unstaged), leaving you with a clean working directory. This is perfect for quick context switches or pulling updates without committing messy, incomplete work. It is not used for permanent deletion or applying commits (which would be `git cherry-pick`)."
 
-  - type: multiple
+  - id: 6
+    type: multiple
     question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase? (Select all that apply)"
     options:
       - "`git merge`"
@@ -56,18 +62,20 @@ questions:
       - "`git bisect`"
       - "`git blame`"
     correct_indices: [0, 1, 2]
-    explanation: "Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
+    explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
 
-  - question: "What does the file `.git/HEAD` contain when you are checked out on a branch, compared to when you are in a detached HEAD state?"
+  - id: 7
+    question: "What does the file `.git/HEAD` contain when you are checked out on a branch, compared to when you are in a detached HEAD state?"
     options:
       - "On a branch, it contains an exact commit hash; in detached HEAD, it contains a symbolic reference to a branch."
       - "Both states contain the same exact commit hash, but the detached HEAD state also includes a warning string."
       - "On a branch, it contains a symbolic reference (e.g., `ref: refs/heads/main`); in detached HEAD, it contains a raw commit hash."
       - "Both states contain `ref: refs/heads/main`, but detached HEAD additionally points to the staging area index."
     correct_index: 2
-    explanation: "Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
+    explanation: "**On a branch, `.git/HEAD` holds a symbolic reference to the branch; in detached HEAD state it holds a raw commit hash because HEAD is no longer anchored to any branch.** Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
 
-  - question: |
+  - id: 8
+    question: |
       **Arrange** the commands to safely stash your work, pull remote changes, and restore your stashed work.
     type: parsons
     display: inline
@@ -80,9 +88,10 @@ questions:
     distractors:
       - "git stash drop"
       - "git reset --hard"
-    explanation: "`git stash` saves uncommitted changes temporarily, `git pull` fetches and merges remote changes onto a clean working directory, and `git stash pop` re-applies the stashed changes on top. `git stash drop` would *discard* the stash without applying it. `git reset --hard` would destroy all local changes — dangerous!"
+    explanation: "**The correct order is stash → pull → pop: shelve local changes first, then pull onto a clean working directory, then restore — drop discards the stash and reset --hard destroys local work.** `git stash` saves uncommitted changes temporarily, `git pull` fetches and merges remote changes onto a clean working directory, and `git stash pop` re-applies the stashed changes on top. `git stash drop` would *discard* the stash without applying it. `git reset --hard` would destroy all local changes — dangerous!"
 
-  - question: |
+  - id: 9
+    question: |
       **Arrange** the commands to stage a forgotten file and fold it into the last commit without changing the commit message.
     type: parsons
     display: inline
@@ -93,4 +102,4 @@ questions:
     distractors:
       - "git reset --hard HEAD~1"
       - "git commit -m 'Add forgotten file'"
-    explanation: "`git add forgotten.py` stages the missing file, and `git commit --amend --no-edit` rewrites the previous commit to include it while keeping the original message. `git reset --hard HEAD~1` would *destroy* the previous commit entirely. Creating a brand-new commit (`-m 'Add forgotten file'`) is valid but pollutes history with a fixup commit — amend is cleaner when the previous commit hasn't been pushed."
+    explanation: "**The correct order is add → amend --no-edit: stage the forgotten file, then fold it into the last commit without changing its message — reset --hard destroys the commit and a new commit pollutes history.** `git add forgotten.py` stages the missing file, and `git commit --amend --no-edit` rewrites the previous commit to include it while keeping the original message. `git reset --hard HEAD~1` would *destroy* the previous commit entirely. Creating a brand-new commit (`-m 'Add forgotten file'`) is valid but pollutes history with a fixup commit — amend is cleaner when the previous commit hasn't been pushed."

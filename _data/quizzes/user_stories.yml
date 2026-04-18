@@ -21,7 +21,7 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [0]
-    explanation: "This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
+    explanation: "**This violates Independent because the payment story cannot be completed without the unimplemented user registration and cart management stories.** This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
   - id: 2
     type: multiple
     question: |
@@ -41,7 +41,7 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [1, 2]
-    explanation: "This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable**, because the end-user generally derives no direct business value from the specific tech stack being used; their value comes solely from being able to view their profile."
+    explanation: "**This violates Negotiable (by dictating a specific tech stack) and Valuable (because the tech stack choice provides no direct business value to the user).** This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable**, because the end-user generally derives no direct business value from the specific tech stack being used; their value comes solely from being able to view their profile."
   - id: 3
     type: multiple
     question: |
@@ -61,7 +61,7 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [1, 2]
-    explanation: "This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
+    explanation: "**This violates Valuable (work with no utility produces no return on investment) and Negotiable (it prescribes a specific database change rather than expressing a user need).** This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
   - id: 4
     type: multiple
     question: |
@@ -83,7 +83,7 @@ questions:
       - "Small"
       - "Testable"
     correct_indices: [4]
-    explanation: "This violates **Small** because it is a massive 'Epic' (with many user stories combined into one) that would take months or years to build. Even though 'run the entire hospital effectively' is broad and subjective it is not part of the requirement (since it is in the 'so that' clause) so it does not impact testable or estimable."
+    explanation: "**This violates Small because it is a massive Epic combining patient records, payroll, inventory, and scheduling into one story that would take months to build.** This violates **Small** because it is a massive 'Epic' (with many user stories combined into one) that would take months or years to build. Even though 'run the entire hospital effectively' is broad and subjective it is not part of the requirement (since it is in the 'so that' clause) so it does not impact testable or estimable."
   - id: 5
     type: multiple
     question: |
@@ -104,4 +104,4 @@ questions:
       - "Testable"
     correct_indices: [3, 5]
     optional_indices: [4]
-    explanation: "This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'. Whether we consider it 'small' or not is subjective and either answer would be consdier correct."
+    explanation: "**This violates Testable (subjective terms like 'blazing fast' and 'extremely modern' cannot be verified) and consequently Estimable (you cannot estimate effort for undefined standards).** This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'. Whether we consider it 'small' or not is subjective and either answer would be consdier correct."
