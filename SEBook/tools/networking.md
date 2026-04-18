@@ -86,13 +86,26 @@ The internet uses a **layered architecture** called the TCP/IP stack. Each layer
 
 Higher-layer protocols use the protocols directly below them to send messages. Each layer **wraps** the higher-layer message as its payload and adds its own header — like sealing a letter inside successively larger envelopes, each addressed for a different step of the journey:
 
-```
-┌──────────────┬───────────┬────────────┬─────────────┬─────────┐
-│  Ethernet    │    IP     │    TCP     │    HTTP     │ Payload │
-│  Header      │  Header   │   Header   │   Header    │ (data)  │
-└──────────────┴───────────┴────────────┴─────────────┴─────────┘
-← Link Layer → ← Internet → ← Transport → ← Application →
-```
+<table class="encapsulation-diagram">
+  <thead>
+    <tr>
+      <th>Ethernet<br>Header</th>
+      <th>IP<br>Header</th>
+      <th>TCP<br>Header</th>
+      <th>HTTP<br>Header</th>
+      <th>Payload<br>(data)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Link Layer</td>
+      <td>Internet</td>
+      <td>Transport</td>
+      <td>Application</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
 
 Each message consists of a **header** (meta information like destination, origin, content type, checksums) and a **payload** (the actual content of the message).
 
@@ -185,7 +198,7 @@ sender ->> receiver: Datagram [3]
 sender ->> receiver: Datagram [4]
 note right of receiver: packet lost — never arrives
 sender ->> receiver: Datagram [5]
-note over sender: sender never knows about\nthe lost or corrupted packets
+note over sender: sender never knows about the lost or corrupted packets
 @enduml
 ```
 
