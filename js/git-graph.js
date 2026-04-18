@@ -33,7 +33,7 @@
   var COL_WIDTH = 80;
   var PADDING_TOP = 50;
   var PADDING_LEFT = 185;  // extra space for branch labels + HEAD pointer on the left
-  var PADDING_BOTTOM = 40;
+  var PADDING_BOTTOM = 4;
   var LABEL_OFFSET_X = 34;
   var LABEL_HEIGHT = 24;
   var LABEL_GAP = 4;
@@ -78,10 +78,12 @@
       var parents = parentStr ? parentStr.split(/\s+/) : [];
 
       // Short synthetic hashes used by the SEBook command-lab ("A0000…0",
-      // "C'0000…0") are displayed verbatim — strip the zero padding. Real
-      // git hashes get the traditional first-4-chars-plus-ellipsis treatment.
+      // "C'0000…0", "B+C+D0000…0") are displayed verbatim — strip the zero
+      // padding. Real git hashes get the traditional first-4-chars-plus-
+      // ellipsis treatment. The 8-char cap on the trimmed form is generous
+      // enough to fit concatenations like "B+C+D" from squash demos.
       var trimmed = hash.replace(/0+$/, '');
-      var shortHash = (trimmed.length > 0 && trimmed.length <= 4)
+      var shortHash = (trimmed.length > 0 && trimmed.length <= 8)
         ? trimmed
         : hash.substring(0, 4) + '\u2026';
 

@@ -30,12 +30,92 @@
     return GitGraph.parseGitState(s.log, s.branches, s.head);
   }
 
+  // Minimal markdown → HTML for lab-card descriptions. Supports **bold**,
+  // *italic*, `code`, and blank-line paragraph breaks. Single newlines inside
+  // a paragraph collapse to a space (standard markdown behaviour).
+  function mdToHtml(md) {
+    var safe = String(md)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    // Inline formatting — apply `code` first so ** and * inside a code span
+    // are left alone.
+    safe = safe
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s.,;:)!?]|$)/g, '$1<em>$2</em>');
+    return safe
+      .split(/\n\s*\n/)
+      .map(function (p) { return '<p>' + p.replace(/\n/g, ' ').trim() + '</p>'; })
+      .join('');
+  }
+
+  // Minimal markdown → HTML converter for card descriptions. Supports
+  //   **bold**, *italic*, `code`, and paragraph breaks (blank line).
+  // Existing HTML tags are preserved so authors can mix markdown with
+  // inline HTML when they need to. Not user-supplied content.
+  function escapeHtml(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function mdToHtml(md) {
+    if (!md) return '';
+    // Split on blank lines to paragraphs, but DON'T escape HTML because
+    // descriptions may intentionally include tags. Authors who want literal
+    // angle brackets can use HTML entities themselves.
+    var paragraphs = md.split(/\n\s*\n/);
+    return paragraphs.map(function (para) {
+      var html = para
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      return '<p>' + html + '</p>';
+    }).join('');
+  }
+
   function makeCard(container, spec) {
     container.innerHTML = '';
     container.classList.add('git-command-lab');
 
-    var header = document.createElement('div');
-    header.className = 'git-command-lab__header';
+    // Two-column layout: caption (description + optional rebase-file) on the
+    // left, action column (button + graph) on the right. The button lives
+    // with the graph so they're always adjacent — even when the row wraps to
+    // a single column on narrow screens, the vertical order reads:
+    // description → rebase-file → button → graph.
+    var row = document.createElement('div');
+    row.className = 'git-command-lab__row';
+    container.appendChild(row);
+
+    var caption = document.createElement('div');
+    caption.className = 'git-command-lab__caption';
+
+    if (spec.description) {
+      var desc = document.createElement('div');
+      desc.className = 'git-command-lab__desc';
+      // Descriptions are authored markdown — we render a small subset
+      // (**bold**, *italic*, `code`, and paragraph breaks from blank lines).
+      desc.innerHTML = mdToHtml(spec.description);
+      caption.appendChild(desc);
+    }
+
+    if (spec.rebaseFile) {
+      var file = document.createElement('pre');
+      file.className = 'git-command-lab__rebase-file';
+      var fileHeader = document.createElement('div');
+      fileHeader.className = 'git-command-lab__rebase-file-header';
+      fileHeader.textContent = '~/.git/rebase-merge/git-rebase-todo';
+      var fileBody = document.createElement('code');
+      fileBody.textContent = spec.rebaseFile;
+      file.appendChild(fileHeader);
+      file.appendChild(fileBody);
+      caption.appendChild(file);
+    }
+
+    // Only attach the caption column if there's something to show in it.
+    if (caption.children.length) row.appendChild(caption);
+
+    var action = document.createElement('div');
+    action.className = 'git-command-lab__action';
+    row.appendChild(action);
 
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -49,32 +129,26 @@
     cmdEl.textContent = spec.command;
     btn.appendChild(icon);
     btn.appendChild(cmdEl);
-    header.appendChild(btn);
-    container.appendChild(header);
+    action.appendChild(btn);
 
-    if (spec.description) {
-      var desc = document.createElement('p');
-      desc.className = 'git-command-lab__desc';
-      desc.textContent = spec.description;
-      container.appendChild(desc);
-    }
-
-    if (spec.rebaseFile) {
-      var file = document.createElement('pre');
-      file.className = 'git-command-lab__rebase-file';
-      var header = document.createElement('div');
-      header.className = 'git-command-lab__rebase-file-header';
-      header.textContent = '~/.git/rebase-merge/git-rebase-todo';
-      var body = document.createElement('code');
-      body.textContent = spec.rebaseFile;
-      file.appendChild(header);
-      file.appendChild(body);
-      container.appendChild(file);
-    }
+    // Pair of graph slots: the interactive one shows "before" initially and
+    // animates to "after" when the button is clicked; the second one is a
+    // static render of the "after" state that is hidden on screen but
+    // revealed in print media (so printouts show before + after side by side).
+    var graphs = document.createElement('div');
+    graphs.className = 'git-command-lab__graphs';
+    action.appendChild(graphs);
 
     var graphHost = document.createElement('div');
     graphHost.className = 'git-command-lab__graph';
-    container.appendChild(graphHost);
+    graphHost.setAttribute('data-state-label', 'Before');
+    graphs.appendChild(graphHost);
+
+    var afterHost = document.createElement('div');
+    afterHost.className = 'git-command-lab__graph-after';
+    afterHost.setAttribute('data-state-label', 'After');
+    afterHost.innerHTML = GitGraph.renderToSVG(buildState(spec.after));
+    graphs.appendChild(afterHost);
 
     var beforeData = buildState(spec.before);
     var afterData  = buildState(spec.after);
@@ -87,7 +161,7 @@
       if (applied) {
         graph.render(buildState(spec.after));
         icon.textContent = '\u21BA';
-        cmdEl.textContent = 'Undo';
+        cmdEl.textContent = 'Undo ' + spec.command;
         btn.classList.add('git-command-lab__btn--undo');
       } else {
         graph.render(buildState(spec.before));
@@ -102,11 +176,26 @@
       update();
     });
 
-    return {
+    var controller = {
       graph: graph,
       button: btn,
       reset: function () { applied = false; update(); },
     };
+    // Expose for the beforeprint hook so every card can be reset to its
+    // "before" state before printing — otherwise cards the user has clicked
+    // would print the "after" state where we want the "Before" panel.
+    container._gcl = controller;
+    return controller;
+  }
+
+  // Reset any cards that have been toggled so the printout's "Before" column
+  // actually shows the before state.
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeprint', function () {
+      document.querySelectorAll('.git-command-lab').forEach(function (el) {
+        if (el._gcl && el._gcl.reset) el._gcl.reset();
+      });
+    });
   }
 
   function readSpec(el) {
