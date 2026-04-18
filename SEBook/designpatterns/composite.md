@@ -36,7 +36,7 @@ class Composite {
 class Client
 Leaf --|> Component
 Composite --|> Component
-Composite "1" *--> "0..*" Component
+Composite "1" *--> "*" Component
 Client --> Component : treats uniformly >
 @enduml'></div>
 
@@ -61,7 +61,7 @@ class Waitress {
 }
 Menu --|> MenuComponent
 MenuItem --|> MenuComponent
-Menu "1" *-- "0..*" MenuComponent
+Menu "1" *-- "*" MenuComponent
 Waitress --> MenuComponent : traverses
 @enduml'></div>
 

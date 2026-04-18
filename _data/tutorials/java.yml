@@ -2905,7 +2905,7 @@ steps:
       }
       EnrollmentException --|> Exception
       Course ..|> Enrollable
-      Course "1" o-- "0..*" Student
+      Course "1" o-- "*" Student
       Course ..> EnrollmentException : throws
       @enduml'></div>
 

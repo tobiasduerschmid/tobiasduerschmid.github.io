@@ -95,9 +95,9 @@ class Product {
 VIP --|> Customer
 Guest --|> Customer
 Order ..|> Billable
-Customer "1" -- "0..*" Order
+Customer "1" -- "*" Order
 Order *-- "1..*" LineItem
-LineItem "0..*" -- "1" Product
+LineItem "*" -- "1" Product
 @enduml'></div>
 
 ### Sequence Diagram

@@ -44,7 +44,7 @@ class View {
 class Controller {
     + handleInput(): void
 }
-Model "1" -- "0..*" Observer : notifies >
+Model "1" -- "*" Observer : notifies >
 View ..|> Observer
 View --> Model : reads
 View --> Controller : delegates input
@@ -69,7 +69,7 @@ class TaskView {
 class TaskController {
     + addNewTask(task: String): void
 }
-TaskModel "1" -- "0..*" Observer : notifies >
+TaskModel "1" -- "*" Observer : notifies >
 TaskView ..|> Observer
 TaskView --> TaskModel : reads tasks
 TaskController --> TaskModel : changes state
