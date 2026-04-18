@@ -3,6 +3,36 @@ title: Version Control with Git
 layout: sebook
 ---
 
+<script src="/js/git-graph.js"></script>
+<style>
+.git-graph-svg { display: block; }
+.git-graph-svg .git-graph-node { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+.git-graph-example { margin: 1em 0; }
+.git-graph-example p { margin: 0 0 6px; }
+.git-graph-canvas svg { max-width: 100%; height: auto; display: block; }
+.git-diagram-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 1em 0; }
+.git-diagram-row .git-graph-example { flex: 1; min-width: 260px; margin: 0; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  (function tryInit() {
+    if (!window.GitGraph) { setTimeout(tryInit, 30); return; }
+    document.querySelectorAll('.git-graph-canvas').forEach(function (el) {
+      if (el.querySelector('svg')) return;
+      var s = el.querySelector('script[type="application/json"]');
+      if (!s) return;
+      var d = JSON.parse(s.textContent);
+      el.innerHTML = GitGraph.renderToSVG(GitGraph.parseGitState(d.log, d.branches, d.head));
+      var svg = el.querySelector('svg');
+      if (svg) {
+        svg.setAttribute('width',  Math.round(parseFloat(svg.getAttribute('width'))  * 1.15));
+        svg.setAttribute('height', Math.round(parseFloat(svg.getAttribute('height')) * 1.15));
+      }
+    });
+  })();
+});
+</script>
+
 > **Want to practice?** Try the [Interactive Git Tutorial](/SEBook/tools/git-tutorial.html) — hands-on exercises in a real Linux system right in the browser!
 
 In modern software construction, version control is not just a convenience—it is a foundational practice, solving several major challenges associated with managing code. 
@@ -61,6 +91,12 @@ A typical Git workflow follows these steps:
 4.  **Check Status**: Use `git status` to see which files are modified, staged, or untracked.
 5.  **Review History**: Use `git log` to see the sequence of past commits.
 
+<div class="git-graph-example">
+<p>Each <code>git commit</code> creates a new snapshot — the history grows linearly, with each commit pointing to its parent.</p>
+<div class="git-graph-canvas"><script type="application/json">
+{"log":"dddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Release v1.0|HEAD -> main\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Fix bug|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add feature|\naaaa000000000000000000000000000000000000||Initial commit|","branches":"* main","head":"refs/heads/main"}
+</script></div></div>
+
 ### Inspecting Differences
 `git diff` is used to compare different versions of your code:
 * **`git diff`**: Compares the working directory to the staging area.
@@ -80,11 +116,37 @@ When you want to bring changes from a feature branch back into the main codebase
 * **Fast-Forward Merge**: When the target branch (`main`) has received no new commits since the feature branch was created, Git simply advances the `main` pointer to the tip of the feature branch. No merge commit is created; the history stays perfectly linear. Use `git merge --no-ff` to force Git to create a merge commit even when a fast-forward is possible — this preserves a record that a feature branch existed.
 * **Three-Way Merge**: When both branches have diverged — each has commits the other doesn't — Git compares both tips against their common ancestor and creates a new **merge commit** with two parents. The commit graph forms a diamond shape where the two diverging paths converge.
 
+<div class="git-diagram-row">
+<div class="git-graph-example">
+<p><strong>Fast-forward merge</strong> — <code>main</code> had no new commits, so its pointer simply advances to the tip of <code>feature</code>. No merge commit is created.</p>
+<div class="git-graph-canvas"><script type="application/json">
+{"log":"dddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Add tests|HEAD -> main, feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Add login|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|","branches":"* main\n  feature","head":"refs/heads/main"}
+</script></div></div>
+<div class="git-graph-example">
+<p><strong>Three-way merge</strong> — both branches diverged, so Git creates a new <em>merge commit</em> with two parents, forming a diamond in the graph.</p>
+<div class="git-graph-canvas"><script type="application/json">
+{"log":"mmmm000000000000000000000000000000000000|eeee000000000000000000000000000000000000 dddd000000000000000000000000000000000000|Merge feature into main|HEAD -> main\neeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|","branches":"* main\n  feature","head":"refs/heads/main"}
+</script></div></div>
+</div>
+
 ### Alternative Integration Workflows
 For more control over your project's history, you can use these manual techniques:
 
 * **Rebasing**: Re-applies commits from one branch onto a new base, producing new commit objects with new SHA hashes. Creates a linear history but must **never** be used on shared branches, as it rewrites history that collaborators may already have.
 * **Squashing**: `git merge --squash` collapses all commits from a feature branch into a single commit on the target branch, keeping the main history tidy.
+
+<div class="git-diagram-row">
+<div class="git-graph-example">
+<p><strong>Before rebase</strong> — <code>feature</code> branched from <code>main</code>, which has since moved on with a new commit (<code>Hotfix</code>).</p>
+<div class="git-graph-canvas"><script type="application/json">
+{"log":"eeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|HEAD -> main\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|","branches":"* main\n  feature","head":"refs/heads/main"}
+</script></div></div>
+<div class="git-graph-example">
+<p><strong>After <code>git rebase main</code></strong> — the two feature commits are replayed on top of <code>Hotfix</code>, producing new hashes (<code>c2c2…</code>, <code>d2d2…</code>) and a clean linear history.</p>
+<div class="git-graph-canvas"><script type="application/json">
+{"log":"d2d2000000000000000000000000000000000000|c2c2000000000000000000000000000000000000|Feature B|HEAD -> feature\nc2c2000000000000000000000000000000000000|eeee000000000000000000000000000000000000|Feature A|\neeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|main\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|","branches":"  main\n* feature","head":"refs/heads/feature"}
+</script></div></div>
+</div>
 
 ### Complications
 * **Merge Conflict**: Happens when Git cannot automatically reconcile differences — usually when the same lines of code were changed in both branches. Git marks the conflicting sections directly in the file using conflict markers:
