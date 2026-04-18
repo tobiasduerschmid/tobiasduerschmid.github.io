@@ -74,7 +74,7 @@ Git operates across three areas that every file passes through:
 2. **Staging Area (Index)** — a middle ground where you stage the exact changes you want in your next snapshot.
 3. **Local Repository** — the `.git/` directory, where Git stores compressed snapshots (commits) of project history.
 
-A **commit** is a permanent snapshot: an immutable object identified by a 40-character SHA-1 hash, pointing to its parent commit(s). The chain of parents is what we call *history*, and the visual form of that chain is the **commit graph** you'll animate below.
+A **commit** is a permanent snapshot: an immutable object identified by a 40-character SHA-1 hash, with pointers to its parent commit(s) and to a **tree** object that records the project's directory structure at that moment. The chain of parents is what we call *history*, and the visual form of that chain is the **commit graph** you'll animate below.
 
 # Building History
 
@@ -469,7 +469,7 @@ Git really shines once you're sharing work with other people. This section cover
 
 ## Remotes
 
-A **remote** is a named URL pointing to another copy of the repository — typically on GitHub, GitLab, or a self-hosted server. Remote servers use **bare repositories** (`git init --bare`) which contain only Git metadata, no working directory.
+A **remote** is a named URL pointing to another copy of the repository — typically on GitHub, GitLab, or a self-hosted server. Remote servers typically host **bare repositories** (`git init --bare`) — repositories with no working tree; they store the object database, refs, and config (the contents of a regular `.git/` directory) but no checked-out files.
 
 * **`git clone <url>`** — creates a local copy of a remote repository.
 * **`git remote`** — lists configured remotes. `git remote add origin <url>` registers a remote named `origin` (the conventional primary remote name).
@@ -645,7 +645,7 @@ For very large projects, **Git submodules** let you include another Git reposito
   
   Note: `.gitignore` has **no retroactive effect** — files already tracked must be explicitly removed with `git rm --cached <file>` before the ignore pattern applies. Commit the `.gitignore` itself so the whole team benefits.
 * **Pull frequently.** Regularly pull the latest changes from the main branch to catch merge conflicts early.
-* **Use `git switch` instead of `git checkout`.** The legacy `checkout` command does too many things (branch navigation *and* file restoration). Prefer the split replacements `git switch` (navigate branches) and `git restore` (undo file changes).
+* **Prefer `git switch` and `git restore` over `git checkout`.** The `checkout` command is overloaded — it does both branch navigation *and* file restoration. The split replacements `git switch` (navigate branches) and `git restore` (undo file changes), introduced in Git 2.23, make intent clearer. `git checkout` is still fully supported.
 
 # Quiz
 

@@ -38,6 +38,23 @@
   var LABEL_HEIGHT = 24;
   var LABEL_GAP = 4;
 
+  // Lateral separation (in user pixels) between arrow landing points when
+  // multiple children share a parent. Wide enough that the 13×12 filled
+  // arrowheads (markerWidth × markerHeight) don't overlap.
+  var ARROW_FAN_SEPARATION = 14;
+  // Maximum lateral offset as a fraction of NODE_RADIUS — keeps landing
+  // points well within the upper arc so the arrow still reads as "pointing
+  // at the parent" rather than glancing off the side.
+  var ARROW_MAX_FAN_FRAC = 0.72;
+  // Arrow marker length (must match markerWidth). The path is shortened by
+  // this amount so the stroke terminates at the arrow's BASE rather than
+  // running through the chevron's interior.
+  var ARROW_LENGTH = 13;
+
+  // Each GitGraph gets a unique arrow-marker id so multiple graphs on the
+  // same page (e.g. the 7-step print grid) don't collide on element ids.
+  var _instanceCounter = 0;
+
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
@@ -46,6 +63,7 @@
     this.svg = null;
     this._data = null;
     this._animating = false;
+    this._arrowId = 'git-graph-arrow-' + (++_instanceCounter);
   }
 
   // ---------------------------------------------------------------------------
@@ -329,13 +347,13 @@
     var rightLabelSpace = 0;
     var lastColX = PADDING_LEFT + colCount * COL_WIDTH;
     var PTR_D    = LABEL_HEIGHT / 2;   // 12
-    var HEAD_W   = (4 * 7.5 + 16) + PTR_D; // "HEAD" label full width
+    var HEAD_W   = (4 * 8.5 + 18) + PTR_D; // "HEAD" label full width
     for (var rb = 0; rb < branches.length; rb++) {
       var rbName   = branches[rb].name;
       var rbCommit = commitMap[branches[rb].hash];
       if (!rbCommit || rbCommit.col === 0) continue;
       var brTipX  = PADDING_LEFT + rbCommit.col * COL_WIDTH + NODE_RADIUS + 10; // TIP_TO_NODE=10
-      var brW     = rbName.length * 7.5 + 16 + PTR_D;
+      var brW     = rbName.length * 8.5 + 18 + PTR_D;
       var rEdge   = brTipX + brW;
       // Add HEAD label width only when this branch actually carries HEAD
       if (!data.head.detached && data.head.ref === rbName) {
@@ -381,6 +399,51 @@
     ].join(' ');
   };
 
+  // ---------------------------------------------------------------------------
+  // Arrow marker — pointing from child toward parent.
+  //
+  // We rely on SVG2's `context-stroke` keyword so a single marker inherits
+  // each edge's stroke color. Supported in Firefox, Safari 16.4+, and Chrome
+  // 130+ (late 2024) — fine for this project's audience.
+  // ---------------------------------------------------------------------------
+  // Closed, filled arrowhead. Each wing is a quadratic curve for a slim
+  // feather silhouette, and the back edge has a subtle concave notch
+  // (control point pulled toward the tip) so the arrow reads as a classic
+  // pointed glyph rather than a flat-backed triangle — the shape design
+  // systems reach for when they want an arrow that feels decisive and
+  // refined. Fill uses `context-stroke` so each edge's branch color shows
+  // through automatically.
+  var ARROW_PATH = 'M 0 0 Q 6.5 4, 13 6 Q 6.5 8, 0 12 Q 2.8 6, 0 0 Z';
+
+  GitGraph.prototype._arrowDefsMarkup = function () {
+    return '<defs><marker id="' + this._arrowId + '" ' +
+      'viewBox="0 0 13 12" refX="0" refY="6" ' +
+      'markerWidth="13" markerHeight="12" orient="auto" ' +
+      'markerUnits="userSpaceOnUse">' +
+      '<path d="' + ARROW_PATH + '" fill="context-stroke" stroke="none"/>' +
+      '</marker></defs>';
+  };
+
+  GitGraph.prototype._appendArrowDefs = function (svgRoot) {
+    var defs = this._svgEl('defs');
+    var marker = this._svgEl('marker', {
+      id: this._arrowId,
+      viewBox: '0 0 13 12',
+      refX: 0, refY: 6,
+      markerWidth: 13, markerHeight: 12,
+      orient: 'auto',
+      markerUnits: 'userSpaceOnUse',
+    });
+    var arrowPath = this._svgEl('path', {
+      d: ARROW_PATH,
+      fill: 'context-stroke',
+      stroke: 'none',
+    });
+    marker.appendChild(arrowPath);
+    defs.appendChild(marker);
+    svgRoot.appendChild(defs);
+  };
+
   GitGraph.prototype._hashString = function (str) {
     var hash = 0;
     for (var i = 0; i < str.length; i++) {
@@ -421,6 +484,8 @@
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" ' +
       'viewBox="0 0 ' + width + ' ' + height + '" ' +
       'class="git-graph-svg" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
+
+    svg += this._arrowDefsMarkup();
 
     // Draw edges first (behind nodes)
     svg += this._renderEdges(commits, data.commitMap);
@@ -550,7 +615,7 @@
       var len = Math.min(commits[i].message.length, 50);
       if (len > max) max = len;
     }
-    return Math.ceil(max * 7);
+    return Math.ceil(max * 8);
   };
 
   GitGraph.prototype._buildInitialSvg = function (dims) {
@@ -564,6 +629,7 @@
       'class': 'git-graph-svg',
       style: "font-family:'Fira Code','Cascadia Code',Menlo,monospace;",
     });
+    this._appendArrowDefs(this._svgRoot);
     this._edgesLayer = this._svgEl('g', { 'class': 'git-graph-edges-layer' });
     this._nodesLayer = this._svgEl('g', { 'class': 'git-graph-nodes-layer' });
     this._labelsLayer = this._svgEl('g', { 'class': 'git-graph-labels-layer' });
@@ -656,11 +722,12 @@
       for (var p = 0; p < cm.parents.length; p++) {
         var parent = commitMap[cm.parents[p]];
         if (!parent) continue;
+        var ep = this._edgeEndpoint(cm, parent, commitMap);
         required.push({
           cm: cm, parent: parent,
           key: cm.hash + '__' + cm.parents[p],
           x1: this._cx(cm.col), y1: this._cy(cm.row),
-          x2: this._cx(parent.col), y2: this._cy(parent.row),
+          x2: ep.x, y2: ep.y,
           color: cm.branchColor,
           satisfied: false,
         });
@@ -729,6 +796,7 @@
     var el = this._svgEl('path', {
       d: this._edgePathD(x1, y1, x2, y2),
       fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-opacity': 0.7,
+      'marker-end': 'url(#' + this._arrowId + ')',
       'class': 'git-graph-edge',
       'data-edge-key': key,
     });
@@ -771,7 +839,50 @@
   // identical to curved edges. This lets CSS interpolate the `d` attribute
   // smoothly when a rebase morphs an edge between straight↔curved
   // (otherwise L↔C is a command-structure mismatch and the browser snaps).
+  // Compute the edge's actual path endpoint — already adjusted so the
+  // arrow tip lands ON the parent node's border (not short of it) and, when
+  // multiple children share a parent, each edge lands at a distinct point
+  // on the parent's upper (or lower) arc so the arrowheads don't collide.
+  GitGraph.prototype._edgeEndpoint = function (cm, parent, commitMap) {
+    var px = this._cx(parent.col);
+    var py = this._cy(parent.row);
+    var cy = this._cy(cm.row);
+    var dir = py >= cy ? 1 : -1;
+
+    // Lateral offset across the arc when siblings share this parent.
+    var siblings = (parent.children || [])
+      .map(function (h) { return commitMap[h]; })
+      .filter(function (c) { return !!c; })
+      .sort(function (a, b) {
+        if (a.col !== b.col) return a.col - b.col;
+        return a.row - b.row;
+      });
+    var N = siblings.length;
+    var slot = 0;
+    for (var i = 0; i < N; i++) {
+      if (siblings[i].hash === cm.hash) { slot = i; break; }
+    }
+    var offsetX = 0;
+    if (N > 1) {
+      offsetX = (slot - (N - 1) / 2) * ARROW_FAN_SEPARATION;
+      var maxOff = NODE_RADIUS * ARROW_MAX_FAN_FRAC;
+      if (offsetX >  maxOff) offsetX =  maxOff;
+      if (offsetX < -maxOff) offsetX = -maxOff;
+    }
+
+    // Arrow tip position — on the circle's arc at x = px + offsetX.
+    var arcDy = Math.sqrt(Math.max(0, NODE_RADIUS * NODE_RADIUS - offsetX * offsetX));
+    var tipY  = py - dir * arcDy;
+    // Path endpoint = arrow base, ARROW_LENGTH upstream of the tip along
+    // the direction of travel. Keeping a vertical final tangent (same x)
+    // means the filled chevron points straight at the parent.
+    return { x: px + offsetX, y: tipY - dir * ARROW_LENGTH };
+  };
+
   GitGraph.prototype._edgePathD = function (x1, y1, x2, y2) {
+    // Cubic Bézier with vertical tangent at both ends. The endpoint
+    // (x2, y2) is already pre-adjusted by _edgeEndpoint so the arrow tip
+    // lands precisely on the parent's circumference.
     var midY = (y1 + y2) / 2;
     return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' + x2 + ' ' + midY + ', ' + x2 + ' ' + y2;
   };
@@ -876,16 +987,16 @@
     g.appendChild(circle);
 
     var hashText = this._svgEl('text', {
-      x: 0, y: 4, 'text-anchor': 'middle',
-      fill: '#fff', 'font-size': 10, 'font-weight': 600,
+      x: 0, y: 5, 'text-anchor': 'middle',
+      fill: '#fff', 'font-size': 14, 'font-weight': 600,
       'class': 'git-graph-hash',
     });
     hashText.textContent = cm.shortHash;
     g.appendChild(hashText);
 
     var msgText = this._svgEl('text', {
-      x: NODE_RADIUS + 24, y: 4,
-      fill: 'var(--git-graph-text, #ccc)', 'font-size': 12,
+      x: NODE_RADIUS + 24, y: 5,
+      fill: 'var(--git-graph-text, #ccc)', 'font-size': 16,
       'class': 'git-graph-message',
     });
     msgText.textContent = this._truncate(cm.message, 50);
@@ -1029,7 +1140,7 @@
           if (siblings[sb].name === head.ref) { headBranchPos = sb; break; }
         }
         var stackIdxA = (headBranchPos >= 0) ? (siblings.length - 1 - headBranchPos) : 0;
-        var brW = (head.ref || '').length * 7.5 + 16 + PTR_DEPTH_H;
+        var brW = (head.ref || '').length * 8.5 + 18 + PTR_DEPTH_H;
         wrapperX = hcx - NODE_RADIUS - TIP_TO_NODE_H - brW - HEAD_GAP_H;
         wrapperY = hcy - stackIdxA * (LABEL_HEIGHT + LABEL_GAP);
       }
@@ -1104,7 +1215,7 @@
 
     var labelY = -LABEL_HEIGHT / 2;
     var labelMidY = 0;
-    var textW = name.length * 7.5 + 16;
+    var textW = name.length * 8.5 + 18;
     var brW = textW + PTR_DEPTH;
 
     var tipXL = -NODE_RADIUS - TIP_TO_NODE;
@@ -1124,7 +1235,7 @@
     g.appendChild(this._svgEl('path', borderAttrs));
     var tL = this._svgEl('text', {
       x: brXL + textW / 2, y: labelMidY + 4,
-      'text-anchor': 'middle', fill: color, 'font-size': 11,
+      'text-anchor': 'middle', fill: color, 'font-size': 13,
       'font-weight': isRemote ? 400 : 700, 'font-style': isRemote ? 'italic' : 'normal',
       'class': 'git-graph-branch-label',
     });
@@ -1135,7 +1246,7 @@
 
   GitGraph.prototype._buildHeadContent = function (g, isDetached, color, commitRelX, commitRelY) {
     var PTR_DEPTH = LABEL_HEIGHT / 2;
-    var headTextW = 4 * 7.5 + 16;
+    var headTextW = 4 * 8.5 + 18;
     var headW = headTextW + PTR_DEPTH;
     var fillColor = isDetached ? color : '#ffffff';
     var fillOpacity = isDetached ? 0.25 : 0.95;
@@ -1157,7 +1268,7 @@
     var t = this._svgEl('text', {
       x: -PTR_DEPTH - headTextW / 2, y: 4,
       'text-anchor': 'middle', fill: textColor,
-      'font-size': 11, 'font-weight': 700,
+      'font-size': 13, 'font-weight': 700,
       'class': 'git-graph-head-text',
     });
     t.textContent = 'HEAD';
@@ -1226,20 +1337,22 @@
       for (var p = 0; p < cm.parents.length; p++) {
         var parent = commitMap[cm.parents[p]];
         if (!parent) continue;
-        var x2 = this._cx(parent.col);
-        var y2 = this._cy(parent.row);
+        var ep = this._edgeEndpoint(cm, parent, commitMap);
+        var x2 = ep.x;
+        var y2 = ep.y;
         var color = cm.branchColor;
+        var marker = ' marker-end="url(#' + this._arrowId + ')"';
 
         if (x1 === x2) {
           // Straight line (same column)
           svg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' +
-            'stroke="' + color + '" stroke-width="3" stroke-opacity="0.7"/>';
+            'stroke="' + color + '" stroke-width="3" stroke-opacity="0.7"' + marker + '/>';
         } else {
           // Curved line (cross-column merge/branch)
           var midY = (y1 + y2) / 2;
           svg += '<path d="M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' +
             x2 + ' ' + midY + ', ' + x2 + ' ' + y2 + '" ' +
-            'fill="none" stroke="' + color + '" stroke-width="3" stroke-opacity="0.7"/>';
+            'fill="none" stroke="' + color + '" stroke-width="3" stroke-opacity="0.7"' + marker + '/>';
         }
       }
     }
@@ -1267,16 +1380,16 @@
         'fill="' + color + '" stroke="#fff" stroke-width="2.5" class="git-graph-node"/>';
 
       var shortName = cm.hash.length === 1;
-      var hashFont = shortName ? 18 : 10;
-      var hashY    = shortName ? 6  : 4;
+      var hashFont = shortName ? 22 : 14;
+      var hashY    = shortName ? 7  : 5;
       var hashStr  = shortName ? cm.hash : cm.shortHash;
       svg += '<text x="' + cx + '" y="' + (cy + hashY) + '" text-anchor="middle" ' +
         'fill="#fff" font-size="' + hashFont + '" font-weight="700" class="git-graph-hash">' +
         this._escapeXml(hashStr) + '</text>';
 
       var msgX = cx + NODE_RADIUS + 24;
-      svg += '<text x="' + msgX + '" y="' + (cy + 4) + '" ' +
-        'fill="var(--git-graph-text, #ccc)" font-size="12" class="git-graph-message">' +
+      svg += '<text x="' + msgX + '" y="' + (cy + 5) + '" ' +
+        'fill="var(--git-graph-text, #ccc)" font-size="16" class="git-graph-message">' +
         this._escapeXml(this._truncate(cm.message, 50)) + '</text>';
     }
     return svg;
@@ -1331,7 +1444,7 @@
         var color       = this._branchColors[br.name] || BRANCH_COLORS[0];
         var labelY      = cy - LABEL_HEIGHT / 2 - (labels.length - 1 - l) * (LABEL_HEIGHT + LABEL_GAP);
         var labelMidY   = labelY + LABEL_HEIGHT / 2;
-        var textW       = br.name.length * 7.5 + 16;
+        var textW       = br.name.length * 8.5 + 18;
         var brW         = textW + PTR_DEPTH;
         var tipX        = cx - NODE_RADIUS - TIP_TO_NODE;
         var brX         = tipX - brW;
@@ -1341,12 +1454,12 @@
         svg += '<path d="' + brD + '" ' +
           'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
         svg += '<text x="' + (brX + textW / 2) + '" y="' + (labelMidY + 4) + '" ' +
-          'text-anchor="middle" fill="' + color + '" font-size="11" font-weight="700" ' +
+          'text-anchor="middle" fill="' + color + '" font-size="13" font-weight="700" ' +
           'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
         svg += lConnector(tipX, labelMidY, cx - NODE_RADIUS - 2, cy, color, true);
 
         if (isHeadBr) {
-          var headTextW = 4 * 7.5 + 16;
+          var headTextW = 4 * 8.5 + 18;
           var headW     = headTextW + PTR_DEPTH;
           var headTipX  = brX - HEAD_GAP;
           var headX     = headTipX - headW;
@@ -1356,7 +1469,7 @@
           svg += '<path d="' + headD + '" ' +
             'fill="' + HEAD_COLOR + '" fill-opacity="0.95" stroke="' + color + '" stroke-width="1.5"/>';
           svg += '<text x="' + (headX + headTextW / 2) + '" y="' + (labelMidY + 4) + '" ' +
-            'text-anchor="middle" fill="#1a1a1a" font-size="11" font-weight="700">HEAD</text>';
+            'text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">HEAD</text>';
           svg += '<line x1="' + headTipX + '" y1="' + labelMidY + '" ' +
             'x2="' + brX + '" y2="' + labelMidY + '" stroke="' + color + '" stroke-width="1.5"/>';
         }
@@ -1368,7 +1481,7 @@
       var hcx        = this._cx(hCommit.col);
       var hcy        = this._cy(hCommit.row);
       var DC         = HEAD_DETACHED_COLOR;
-      var htextW     = 4 * 7.5 + 16;
+      var htextW     = 4 * 8.5 + 18;
       var hW         = htextW + PTR_DEPTH;
       var hlabelY    = hcy - LABEL_HEIGHT / 2;
       var hlabelMidY = hcy;
@@ -1385,7 +1498,7 @@
       svg += '<path d="' + hD + '" ' +
         'fill="' + DC + '" fill-opacity="0.25" stroke="' + DC + '" stroke-width="1.5"/>';
       svg += '<text x="' + (hX + htextW / 2) + '" y="' + (hlabelMidY + 4) + '" ' +
-        'text-anchor="middle" fill="' + DC + '" font-size="11" font-weight="700">HEAD</text>';
+        'text-anchor="middle" fill="' + DC + '" font-size="13" font-weight="700">HEAD</text>';
       svg += lConnector(htipX, hlabelMidY, hcx - NODE_RADIUS - 2, hcy, DC, true);
     }
 
