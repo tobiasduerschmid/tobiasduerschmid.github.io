@@ -5,6 +5,7 @@
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("git-graph.css");
 
 /* ───────────────────────────────────────────
    Tutorial navbar button hover/focus colours
@@ -562,10 +563,8 @@ html:not(.dark-mode) .tvm-left-tab.active {
   padding: 10px;
 }
 
-/* Core GitGraph widget styles (empty state, SVG styling, delta animations)
-   live in git-graph.css so the SEBook command-lab can reuse them without
-   pulling in the full tutorial stylesheet. */
-@import url("git-graph.css");
+/* git-graph.css (imported at the top of this file) holds the core widget
+   styles and delta animations, shared with the SEBook command-lab. */
 
 /* The interactive tutorial graph has no SVG-inversion filter, so override the
    defaults from uml-diagram.css to give explicit dark-mode colors here. */

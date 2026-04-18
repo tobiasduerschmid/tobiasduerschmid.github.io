@@ -148,26 +148,26 @@
              git-graph-pulse 2s ease-in-out infinite;
 }
 
-/* HEAD pulse burst — fires on the glow when HEAD lands on a new commit.
-   420ms delay waits until the HEAD label has arrived at the destination
-   before bursting, so the emphasis lines up with the landing. */
+/* HEAD pulse burst — the glow's scale/opacity pop. Shares duration + peak
+   timing (750ms @ 35%) with the yellow commit/label burst so when HEAD
+   lands and the commit/label flashes, the halo rings out at the exact
+   same beat. */
 @keyframes git-graph-head-pulse {
   0%, 100% { transform: scale(1);   stroke-opacity: 0.4; stroke-width: 2; }
-  40%      { transform: scale(1.5); stroke-opacity: 1;   stroke-width: 5; }
+  35%      { transform: scale(1.5); stroke-opacity: 1;   stroke-width: 5; }
 }
 .git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow:not(.glow-entering):not(.glow-exiting) {
   transform-origin: 0 0;
-  animation: git-graph-head-pulse 480ms cubic-bezier(.4,0,.2,1) 420ms;
+  animation: git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1);
 }
 
 /* When the glow is both entering (HEAD just arrived at a new commit) AND
-   the parent has head-pulse, stack both effects: the opacity fade reveals
-   the glow in the second half of the slide, then the scale burst fires
-   as HEAD lands. */
+   the parent has head-pulse, stack both effects on one declaration. The
+   scale burst still peaks at the merge-burst 35% mark for sync. */
 .git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow.glow-entering {
   transform-origin: 0 0;
   animation: git-graph-glow-enter 720ms cubic-bezier(.7,0,.3,1) forwards,
-             git-graph-head-pulse 480ms cubic-bezier(.4,0,.2,1) 420ms,
+             git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1),
              git-graph-pulse 2s ease-in-out infinite 900ms;
 }
 
