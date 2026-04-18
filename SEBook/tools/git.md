@@ -584,6 +584,45 @@ Click each command button to **animate** the transformation it performs on the c
 </script>
 </div>
 
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git fetch",
+  "description": "Downloads new commits from the remote into the remote-tracking branch (origin/main) without touching your local branch or working directory.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull",
+  "description": "Shorthand for git fetch + git merge — downloads remote commits and immediately fast-forwards the local branch to match origin/main.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
 </div>
 
 # Quiz

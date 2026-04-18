@@ -129,6 +129,7 @@
     }
 
     // Also extract branches from decorations directly (more reliable)
+    var remoteSet = {};
     for (var d = 0; d < commits.length; d++) {
       var dec = commits[d].decorations;
       if (!dec) continue;
@@ -138,10 +139,11 @@
         var decPart = decParts[dp].trim();
         // Remove "HEAD -> " prefix
         decPart = decPart.replace(/^HEAD\s*->\s*/, '');
-        // Skip origin/ remotes and tag: prefixes
-        if (decPart.startsWith('origin/') || decPart.startsWith('tag:')) continue;
+        // Skip tag: prefixes; include origin/ remotes as remote-tracking labels
+        if (decPart.startsWith('tag:')) continue;
         if (decPart && decPart !== 'HEAD') {
           branchMap[decPart] = commits[d].hash;
+          if (decPart.startsWith('origin/')) remoteSet[decPart] = true;
         }
       }
     }
@@ -168,7 +170,7 @@
     var branches = [];
     for (var name in branchMap) {
       if (branchMap.hasOwnProperty(name)) {
-        branches.push({ name: name, hash: branchMap[name] });
+        branches.push({ name: name, hash: branchMap[name], remote: !!remoteSet[name] });
       }
     }
 
@@ -186,11 +188,16 @@
     if (commits.length === 0) return;
 
     // Assign colors to branches by consistent hashing
+    var REMOTE_COLOR = '#8b949e'; // grey for remote-tracking branches (origin/*)
     var branchColors = {};
     for (var bi = 0; bi < branches.length; bi++) {
       var bname = branches[bi].name;
-      var colorIdx = this._hashString(bname) % BRANCH_COLORS.length;
-      branchColors[bname] = BRANCH_COLORS[colorIdx];
+      if (branches[bi].remote) {
+        branchColors[bname] = REMOTE_COLOR;
+      } else {
+        var colorIdx = this._hashString(bname) % BRANCH_COLORS.length;
+        branchColors[bname] = BRANCH_COLORS[colorIdx];
+      }
     }
     // Ensure 'main' and 'master' get UCLA Blue
     if (branchColors['main']) branchColors['main'] = BRANCH_COLORS[0];
@@ -985,7 +992,7 @@
         var wrapperY = cy - stackIdx * (LABEL_HEIGHT + LABEL_GAP);
         var commitRelY = cy - wrapperY;
         this._renderLabelGroup(key, cx, wrapperY, function (g, gThis) {
-          gThis._buildBranchLabelContent(g, br2.name, gThis._branchColors[br2.name] || BRANCH_COLORS[0], commitRelY);
+          gThis._buildBranchLabelContent(g, br2.name, gThis._branchColors[br2.name] || BRANCH_COLORS[0], commitRelY, br2.remote);
         });
       }
     }
@@ -1071,7 +1078,7 @@
   // commitRelY is the commit's y in wrapper-local coords — used by the
   // dashed L-connector to route from the label tip (y=0) down/up to the
   // actual commit position.
-  GitGraph.prototype._buildBranchLabelContent = function (g, name, color, commitRelY) {
+  GitGraph.prototype._buildBranchLabelContent = function (g, name, color, commitRelY, isRemote) {
     var PTR_DEPTH = LABEL_HEIGHT / 2;
     var TIP_TO_NODE = 4;
 
@@ -1088,13 +1095,17 @@
       fill: 'var(--git-graph-bg, #fafbfc)', stroke: 'none',
       'class': 'git-graph-label-bg',
     }));
-    g.appendChild(this._svgEl('path', {
+    var borderAttrs = {
       d: brD,
-      fill: color, 'fill-opacity': 0.22, stroke: color, 'stroke-width': 1.5,
-    }));
+      fill: color, 'fill-opacity': isRemote ? 0.10 : 0.22,
+      stroke: color, 'stroke-width': 1.5,
+    };
+    if (isRemote) borderAttrs['stroke-dasharray'] = '4 3';
+    g.appendChild(this._svgEl('path', borderAttrs));
     var tL = this._svgEl('text', {
       x: brXL + textW / 2, y: labelMidY + 4,
-      'text-anchor': 'middle', fill: color, 'font-size': 11, 'font-weight': 700,
+      'text-anchor': 'middle', fill: color, 'font-size': 11,
+      'font-weight': isRemote ? 400 : 700, 'font-style': isRemote ? 'italic' : 'normal',
       'class': 'git-graph-branch-label',
     });
     tL.textContent = name;
