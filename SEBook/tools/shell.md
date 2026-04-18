@@ -132,6 +132,26 @@ Play each card to see the command's effect; click again to undo. The description
 </script>
 </div>
 
+#### `mkdir` without `-p` — missing parent
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "mkdir docs/api",
+  "description": "Without **`-p`**, every parent must already exist. Here `docs/` has not been created yet, so `mkdir` refuses to create `docs/api` — it errors out and the filesystem is unchanged. The fix is `mkdir -p docs/api` or first running `mkdir docs`.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project",
+    "output": "mkdir: cannot create directory 'docs/api': No such file or directory"
+  }
+}
+</script>
+</div>
+
 #### `cp` — copy files and directories
 
 <div data-fs-command-lab>
@@ -146,6 +166,26 @@ Play each card to see the command's effect; click again to undo. The description
   "after": {
     "tree": "project/\n  README.md\n  backup/\n    app.js\n    utils.js\n  src/\n    app.js\n    utils.js",
     "cwd": "project"
+  }
+}
+</script>
+</div>
+
+#### `cp` without `-r` — directory requires the flag
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "cp src/ backup/",
+  "description": "**`-r`** is mandatory when the source is a directory. Without it, `cp` refuses to copy `src/` and prints an error — the filesystem is left unchanged. Add `-r` (or `-R`) to copy the directory and all its contents.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+    "cwd": "project",
+    "output": "cp: -r not specified; omitting directory 'src/'"
   }
 }
 </script>
@@ -203,6 +243,26 @@ Play each card to see the command's effect; click again to undo. The description
   "after": {
     "tree": "project/\n  README.md\n  src/\n    app.js",
     "cwd": "project"
+  }
+}
+</script>
+</div>
+
+#### `rmdir` on a non-empty directory
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "rmdir src/",
+  "description": "`rmdir` only removes *empty* directories. `src/` still contains `app.js`, so the command refuses and prints an error — the filesystem is left unchanged. Use `rm -r src/` to remove a directory and all its contents.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project",
+    "output": "rmdir: failed to remove 'src/': Directory not empty"
   }
 }
 </script>

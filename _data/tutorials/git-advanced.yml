@@ -771,7 +771,7 @@ steps:
     - git switch main
     - grep -q 'def safe_divide' calculator.py || git merge hotfix-divide-zero --no-edit
     - git branch -D hotfix-divide-zero 2>/dev/null; true
-    - if git stash list | grep -q '.'; then git stash pop; fi
+    - git stash pop
     - git add calculator.py
     - git diff --cached --quiet || git commit -m 'Add power function with input validation'
     explanation: |
@@ -2664,11 +2664,13 @@ steps:
     @startuml
     main-repo/
       .git/
+        modules/
+          math-utils/  ← submodule's actual git data (objects, refs, HEAD…)
       .gitmodules  ← tells Git where to fetch each submodule
       src/
       vendor/
         math-utils/  ← a whole nested Git repo (just nested)
-          .git/  ← its own object database
+          .git  ← gitfile: "gitdir: ../../.git/modules/math-utils"
           utils.py
     @enduml
     ```
@@ -2844,7 +2846,7 @@ steps:
       - Nothing — submodules are purely a runtime concept
       - A symbolic link to the submodule's directory
       correct_index: 1
-      explanation: The outer repo stores ONE SHA per submodule (the pinned commit) plus a `.gitmodules` entry for the URL. The submodule's file contents live in its own `.git/` directory — they are NOT duplicated into the outer repo's object database.
+      explanation: The outer repo stores ONE SHA per submodule (the pinned commit) plus a `.gitmodules` entry for the URL. The submodule's working files are checked out in the submodule path; its git data (objects, refs, HEAD) lives in the outer repo's `.git/modules/<name>/` — the submodule directory itself contains only a `.git` text file (a "gitfile") pointing there, NOT a full `.git/` directory.
     - question: A teammate clones your repo normally with `git clone <url>`. What do they see at the submodule path?
       options:
       - The submodule's full contents, checked out automatically
@@ -2880,7 +2882,7 @@ steps:
       - A commit object — in the submodule's separate repository's object database
       - A tag object
       correct_index: 2
-      explanation: A gitlink pins a *commit* SHA — which (via the commit's tree and blobs) uniquely determines the submodule's entire file state. The commit lives in the submodule's `.git/objects/`, not the outer repo's. This is exactly the same commit-SHA-as-snapshot-identity property rebase relies on (Step 7) and that makes the whole object model coherent.
+      explanation: A gitlink pins a *commit* SHA — which (via the commit's tree and blobs) uniquely determines the submodule's entire file state. The commit lives in the outer repo's `.git/modules/<name>/objects/` — the submodule folder has only a `.git` gitfile pointing there, not a full `.git/` directory of its own. This is exactly the same commit-SHA-as-snapshot-identity property rebase relies on (Step 7) and that makes the whole object model coherent.
   watch_files:
   - myproject/.gitmodules
   open_file: myproject/.gitmodules

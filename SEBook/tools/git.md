@@ -234,7 +234,7 @@ Typing `git add <file>` for every modified file gets tedious. Two shortcuts stag
 
 ## Branching
 
-A **branch** in Git is just a **lightweight pointer** to a commit — literally a 41-byte text file in `.git/refs/heads/` containing a commit's SHA. Creating or deleting a branch is nearly instantaneous. The `HEAD` pointer (stored in `.git/HEAD`) usually contains a symbolic reference to the current branch, such as `ref: refs/heads/main`.
+A **branch** in Git is just a **lightweight pointer** to a commit — literally a text file in `.git/refs/heads/` containing a commit's SHA. Creating or deleting a branch is nearly instantaneous. The `HEAD` pointer (stored in `.git/HEAD`) usually contains a symbolic reference to the current branch, such as `ref: refs/heads/main`.
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -1105,7 +1105,7 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
 
 ## Submodules
 
-For very large projects, **Git submodules** let you include another Git repository as a subdirectory while keeping its history independent. Internally a submodule is just a file pointing to a specific commit hash in the external repo — pulling always brings in that exact revision, which makes submodule updates explicit rather than automatic.
+For very large projects, **Git submodules** let you include another Git repository as a subdirectory while keeping its history independent. Internally a submodule is just a "gitlink" entry — a pinned commit SHA — in the superproject, alongside a `.gitmodules` config file with the URL. Each populated submodule directory contains a small `.git` text file (a "gitfile"), not a full `.git/` directory; the submodule's actual git data (objects, refs, HEAD) is stored in the parent repo's `.git/modules/<name>/` directory. Pulling always brings in the pinned revision, which makes submodule updates explicit rather than automatic.
 
 The walk-through below covers the commands you'll meet most: adding submodules, cloning a parent repo that uses them, and updating submodules to new commits. Each step mutates the directory tree on the left; changed rows get a yellow burst so you can see exactly what the command touched.
 

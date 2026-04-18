@@ -231,3 +231,49 @@ questions:
       - "||"
       - "sh script.sh"
     explanation: "**`chmod +x` makes the file executable, `&&` ensures it only runs on success, and `./script.sh` uses the shebang — `||` would run it only on failure.** `chmod +x script.sh` adds the execute bit, making the file runnable as a program. `&&` ensures the script only runs if `chmod` succeeded. `./script.sh` executes it using the shebang to select the interpreter. Using `||` instead of `&&` would run the script only when `chmod` *fails* — the opposite of the intent. `sh script.sh` works but bypasses the shebang, hardcoding the interpreter to `sh` regardless of what the script specifies."
+
+  - id: 21
+    question: |
+      You are working inside `project/` which currently has this structure:
+
+      ```folder-tree
+      project/
+        README.md
+        src/
+          app.js
+          utils.js
+      ```
+
+      You run `mkdir src/components/ui`. What is the result?
+    options:
+      - "Creates both `src/components/` and `src/components/ui/` successfully."
+      - "Creates only `src/components/` since `mkdir` stops at the first missing parent."
+      - "Fails with an error — `src/components/` does not exist, and no directories are created."
+      - "Creates `src/components/ui/` directly, skipping the intermediate `components/` directory."
+    correct_index: 2
+    explanation: "**Without `-p`, `mkdir` requires every parent to already exist — `src/components/` is missing so the whole command errors out and nothing is created.** `mkdir` only creates the *final* segment of the path; all intermediate parents must already exist. Since `src/components/` is absent, the shell prints `mkdir: cannot create directory 'src/components/ui': No such file or directory` and leaves the filesystem unchanged. Adding `-p` (`mkdir -p src/components/ui`) creates all missing parents in one idempotent operation."
+
+  - id: 22
+    question: |
+      You are working inside `project/` which currently has this structure:
+
+      ```folder-tree
+      project/
+        README.md
+        build/
+          main.o
+          helper.o
+          output/
+            app
+        src/
+          app.c
+      ```
+
+      You run `rm build/` from inside `project/`. What is the result?
+    options:
+      - "Removes `build/` and everything inside it recursively."
+      - "Removes only the files directly inside `build/`, leaving the `output/` subdirectory."
+      - "Fails with an error — `rm` requires `-r` (or `-rf`) to remove a directory."
+      - "Moves `build/` to `/tmp` as a safety measure instead of deleting it."
+    correct_index: 2
+    explanation: "**`rm` without `-r` refuses to remove directories — it only deletes regular files.** Passing a directory path to plain `rm` causes it to print `rm: cannot remove 'build/': Is a directory` and exit without touching the filesystem. To remove a directory and all its contents you need `rm -r build/`. Adding `-f` (`rm -rf build/`) additionally suppresses any prompts and ignores missing-file errors — making it the silent, forceful variant used in scripts."
