@@ -550,7 +550,78 @@ The key distinction between `fetch` and `pull` is worth animating. The remote-tr
 ## Rescue and Debugging Tools
 
 * **`git stash` / `git stash pop`** — temporarily save uncommitted changes (staged and unstaged) so you can switch contexts without making a messy commit. `pop` re-applies the stashed changes later.
-* **`git bisect`** — binary search through commit history to find the exact commit that introduced a bug. You mark known-good and known-bad commits, then Git checks out the midpoint repeatedly.
+* **`git bisect`** — binary search through commit history to find the exact commit that introduced a bug. You mark known-good and known-bad commits, then Git checks out the midpoint repeatedly. With 1,000 commits in the range, it finds the culprit in at most **10 tests**.
+The workflow for `git bisect` is always the same six-step ritual — start a session, mark bad, mark good, then let Git drive. Click through the demo below to see each command and its effect on the graph.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "Our repository has 6 commits on `main`. A bug appeared recently — we know commit **B** (`Initial setup`) was clean. We'll use `git bisect` to binary-search the history and pinpoint the exact bad commit.\n\n`git bisect` eliminates *half* the remaining candidates on each step, so even a repo with 1,000 commits needs at most **10 tests**.",
+  "initialState": {
+    "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "steps": [
+    {
+      "command": "git bisect start",
+      "description": "`git bisect start` initialises the bisect session. Git creates `.git/BISECT_LOG` to record progress. No visible change to the graph — this just puts Git into bisect mode.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git bisect bad",
+      "description": "`git bisect bad` marks the current commit (`HEAD`, F — `Add analytics`) as **bad**: the bug is present here. Git stores this as `refs/bisect/bad`.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git bisect good B",
+      "description": "`git bisect good B` marks B (`Initial setup`) as the last known-good commit. The search range is now [C, D, E] — 3 commits. Git picks the **midpoint (D)** and checks it out automatically. HEAD is now detached at D.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main",
+        "head": "detached"
+      }
+    },
+    {
+      "command": "git bisect bad",
+      "description": "`git bisect bad` marks D (`Add auth`) as bad — you tested it and the bug is present. The search range narrows to [C] (the single commit between B-good and D-bad). Git checks out **C** for your next test.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main",
+        "head": "detached"
+      }
+    },
+    {
+      "command": "git bisect good",
+      "description": "`git bisect good` marks C (`Add login`) as good — you tested it and the bug is absent. Git now knows the answer: C is good and D is bad, and they are adjacent, so **`Add auth` (D) is the first bad commit**.\n\nGit prints the full commit details. Run `git show D` or `git diff C D` to see exactly what changed.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD, bisect/good\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main",
+        "head": "detached"
+      }
+    },
+    {
+      "command": "git bisect reset",
+      "description": "`git bisect reset` ends the bisect session and returns `HEAD` back to `main`. All `bisect/*` refs are deleted and the working directory is clean again.\n\nThe culprit was **D** (`Add auth`) — now you know exactly where to look for the fix.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    }
+  ]
+}
+</script>
+</div>
+
 * **`git blame <file>`** — annotates each line with the author and commit hash of the last person to modify it.
 * **`git reflog`** — chronological log of every position `HEAD` has been at. Your safety net for recovering "lost" commits after an accidental reset or a detached-HEAD detour: `git reflog` shows the hash, and `git switch -c <name> <hash>` brings it back.
 * **`git show <commit>`** — displays detailed information about a specific commit or other Git object.

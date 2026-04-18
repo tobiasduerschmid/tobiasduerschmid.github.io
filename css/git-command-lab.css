@@ -249,6 +249,162 @@ html.dark-mode .git-command-lab__rebase-file code {
 }
 .git-command-lab__graph .git-graph-svg { max-width: 100%; height: auto; }
 
+/* ----- Multi-step button group (Back + Forward/Restart) ----- */
+.git-command-lab__btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-self: flex-end;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 100%;
+}
+.git-command-lab--multi .git-command-lab__action > .git-command-lab__btn-group {
+  align-self: flex-end;
+}
+
+.git-command-lab__btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: transparent;
+  color: #5a6573;
+  border: 1px solid #c4cbd3;
+  border-radius: 999px;
+  padding: 6px 14px 6px 11px;
+  cursor: pointer;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+.git-command-lab__btn-back:hover:not(:disabled) {
+  background-color: #f1f3f5;
+  border-color: #9aa6b2;
+  color: #1f2d3d;
+}
+.git-command-lab__btn-back:focus-visible {
+  outline: 2px solid #9aa6b2;
+  outline-offset: 2px;
+}
+.git-command-lab__btn-back:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.git-command-lab__btn-back .git-command-lab__icon { font-size: 11px; }
+.git-command-lab__btn-back-label { font: inherit; }
+
+html.dark-mode .git-command-lab__btn-back {
+  color: #9aa6b2;
+  border-color: #3a4556;
+}
+html.dark-mode .git-command-lab__btn-back:hover:not(:disabled) {
+  background-color: rgba(154,166,178,0.1);
+  border-color: #5a6573;
+  color: #e6edf3;
+}
+
+@media print {
+  .git-command-lab__btn-back { display: none !important; }
+}
+
+/* ----- Restart button (multi-step final state) ----- */
+.git-command-lab__btn--restart {
+  background-color: transparent;
+  color: #1a7d5a;
+  border-color: #1a7d5a;
+  box-shadow: none;
+}
+.git-command-lab__btn--restart:hover {
+  background-color: rgba(26,125,90,0.08);
+  border-color: #1a7d5a;
+  box-shadow: 0 2px 6px rgba(26,125,90,0.14);
+}
+html.dark-mode .git-command-lab__btn--restart {
+  color: #4ade80;
+  border-color: #4ade80;
+}
+html.dark-mode .git-command-lab__btn--restart:hover {
+  background-color: rgba(74,222,128,0.12);
+}
+
+/* ----- Step progress indicator (multi-step) ----- */
+.git-command-lab__step-progress {
+  margin-top: 10px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 11.5px;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+}
+html.dark-mode .git-command-lab__step-progress { color: #9aa6b2; }
+
+/* ----- Print steps grid (hidden on screen, shown in print) ----- */
+.git-command-lab__print-steps { display: none; }
+
+.git-command-lab__graph-static svg { max-width: 100%; height: auto; display: block; }
+
+@media print {
+  /* Multi-step: hide the interactive row, show the static steps grid */
+  .git-command-lab--multi > .git-command-lab__row { display: none !important; }
+
+  .git-command-lab__print-steps {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px 18px;
+    margin-top: 8px;
+  }
+
+  .git-command-lab__print-step {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .git-command-lab__print-step-label {
+    font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace !important;
+    font-size: 9pt !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+    color: #1f2d3d !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .git-command-lab__print-step-label--initial {
+    color: #5a6573 !important;
+  }
+  .git-command-lab__print-step-label code {
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 700 !important;
+    color: #1f2d3d !important;
+    font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace !important;
+  }
+
+  .git-command-lab__print-step-desc,
+  .git-command-lab__print-step-desc p {
+    font-size: 8pt !important;
+    line-height: 1.35 !important;
+    color: #374151 !important;
+  }
+  .git-command-lab__print-step-desc code {
+    font-size: 8pt !important;
+    padding: 0 2px !important;
+    font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace !important;
+  }
+  .git-command-lab__print-step-desc p { margin: 0 0 3px; }
+  .git-command-lab__print-step-desc p:last-child { margin-bottom: 0; }
+
+  .git-command-lab__graph-static svg { max-width: 100% !important; height: auto !important; }
+  .git-command-lab__step-progress { display: none !important; }
+}
+
 /* ----- Dark mode ----- */
 html.dark-mode .git-command-lab {
   border-color: #2f3a4a;

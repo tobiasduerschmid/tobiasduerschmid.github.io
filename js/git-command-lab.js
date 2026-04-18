@@ -264,15 +264,233 @@
     return { close: close };
   }
 
+  // ---------------------------------------------------------------------------
+  // Multi-step card — walks through a sequence of commands, each with its own
+  // resulting graph state.  The button always shows the *next* command; after
+  // the last step it becomes "↺ Restart".
+  //
+  // Spec format:
+  //   {
+  //     description:  "Optional intro shown before any steps.",
+  //     initialState: { log, branches, head },
+  //     steps: [
+  //       { command, description?, state: { log, branches, head } },
+  //       ...
+  //     ]
+  //   }
+  //
+  // Descriptions are optional per-step.  If a step has no description the
+  // previous description stays visible (so you only need to write text when
+  // something meaningful changes).
+  // ---------------------------------------------------------------------------
+
+  function makeMultiCard(container, spec) {
+    container.innerHTML = '';
+    container.classList.add('git-command-lab', 'git-command-lab--multi');
+
+    var steps = spec.steps;
+    var stepIdx = -1;           // -1 = initial state (before any command)
+
+    // ----- Caption + action row (interactive) -----
+    var row = document.createElement('div');
+    row.className = 'git-command-lab__row';
+    container.appendChild(row);
+
+    var caption = document.createElement('div');
+    caption.className = 'git-command-lab__caption';
+    row.appendChild(caption);
+
+    var descEl = document.createElement('div');
+    descEl.className = 'git-command-lab__desc';
+    caption.appendChild(descEl);
+
+    var progressEl = document.createElement('div');
+    progressEl.className = 'git-command-lab__step-progress';
+    caption.appendChild(progressEl);
+
+    var action = document.createElement('div');
+    action.className = 'git-command-lab__action';
+    row.appendChild(action);
+
+    // Button group: Back button + Forward/Restart button, right-aligned.
+    var btnGroup = document.createElement('div');
+    btnGroup.className = 'git-command-lab__btn-group';
+    action.appendChild(btnGroup);
+
+    var backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'git-command-lab__btn-back';
+    backBtn.setAttribute('aria-label', 'Previous step');
+    var backIcon = document.createElement('span');
+    backIcon.className = 'git-command-lab__icon';
+    backIcon.setAttribute('aria-hidden', 'true');
+    backIcon.textContent = '\u2190';   // ←
+    var backLabel = document.createElement('span');
+    backLabel.className = 'git-command-lab__btn-back-label';
+    backLabel.textContent = 'Back';
+    backBtn.appendChild(backIcon);
+    backBtn.appendChild(backLabel);
+    btnGroup.appendChild(backBtn);
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'git-command-lab__btn';
+    var icon = document.createElement('span');
+    icon.className = 'git-command-lab__icon';
+    icon.setAttribute('aria-hidden', 'true');
+    var cmdEl = document.createElement('code');
+    cmdEl.className = 'git-command-lab__cmd';
+    btn.appendChild(icon);
+    btn.appendChild(cmdEl);
+    btnGroup.appendChild(btn);
+
+    var graphHost = document.createElement('div');
+    graphHost.className = 'git-command-lab__graph';
+    action.appendChild(graphHost);
+
+    var graph = new GitGraph(graphHost);
+
+    // ----- Print section: all steps pre-rendered as static SVGs -----
+    // Hidden on screen; revealed by @media print.  Each cell shows the
+    // command label, the effective description, and a static SVG graph.
+    var printSection = document.createElement('div');
+    printSection.className = 'git-command-lab__print-steps';
+    container.appendChild(printSection);
+
+    // Pre-compute effective descriptions for each cell (inherit last value
+    // when a step has no description of its own).
+    var effectiveDescs = [];
+    var runningDesc = spec.description || '';
+    effectiveDescs.push(runningDesc);                // cell 0 = initial state
+    for (var pi = 0; pi < steps.length; pi++) {
+      if (steps[pi].description) runningDesc = steps[pi].description;
+      effectiveDescs.push(runningDesc);
+    }
+
+    function addPrintStep(label, stateData, descText, isInitial) {
+      var stepEl = document.createElement('div');
+      stepEl.className = 'git-command-lab__print-step';
+
+      var labelEl = document.createElement('div');
+      labelEl.className = 'git-command-lab__print-step-label' +
+        (isInitial ? ' git-command-lab__print-step-label--initial' : '');
+      if (isInitial) {
+        labelEl.textContent = label;
+      } else {
+        var codeEl = document.createElement('code');
+        codeEl.textContent = label;
+        labelEl.appendChild(codeEl);
+      }
+      stepEl.appendChild(labelEl);
+
+      if (descText) {
+        var descDiv = document.createElement('div');
+        descDiv.className = 'git-command-lab__print-step-desc';
+        descDiv.innerHTML = mdToHtml(descText);
+        stepEl.appendChild(descDiv);
+      }
+
+      var graphDiv = document.createElement('div');
+      graphDiv.className = 'git-command-lab__graph-static';
+      graphDiv.innerHTML = GitGraph.renderToSVG(stateData);
+      stepEl.appendChild(graphDiv);
+
+      printSection.appendChild(stepEl);
+    }
+
+    addPrintStep('Initial state', buildState(spec.initialState), effectiveDescs[0], true);
+    for (var si = 0; si < steps.length; si++) {
+      addPrintStep(steps[si].command, buildState(steps[si].state), effectiveDescs[si + 1], false);
+    }
+
+    // ----- State update -----
+    function update() {
+      var isInitial = (stepIdx === -1);
+      var isLast    = (stepIdx === steps.length - 1);
+
+      // Description is the pre-computed "effective" value for this state —
+      // the inherit-last-description behaviour lives in effectiveDescs so
+      // Back and Forward stay consistent.
+      descEl.innerHTML = mdToHtml(effectiveDescs[stepIdx + 1]);
+
+      progressEl.textContent =
+        'Step\u00A0' + (isInitial ? 0 : stepIdx + 1) + '\u00A0of\u00A0' + steps.length;
+
+      if (isLast) {
+        icon.textContent = '\u21BA';  // ↺
+        cmdEl.textContent = 'Restart';
+        btn.classList.add('git-command-lab__btn--restart');
+      } else {
+        icon.textContent = '\u25B6';  // ▶
+        cmdEl.textContent = steps[stepIdx + 1].command;
+        btn.classList.remove('git-command-lab__btn--restart');
+      }
+
+      backBtn.disabled = isInitial;
+
+      var st = isInitial ? buildState(spec.initialState) : buildState(steps[stepIdx].state);
+      graph.render(st);
+    }
+
+    btn.addEventListener('click', function () {
+      stepIdx = (stepIdx === steps.length - 1) ? -1 : stepIdx + 1;
+      update();
+    });
+
+    backBtn.addEventListener('click', function () {
+      if (stepIdx > -1) {
+        stepIdx--;
+        update();
+      }
+    });
+
+    update();
+
+    var controller = {
+      graph: graph,
+      button: btn,
+      reset: function () { stepIdx = -1; update(); },
+    };
+    container._gcl = controller;
+    return controller;
+  }
+
+  function initFromMulti(root) {
+    if (!window.GitGraph) {
+      setTimeout(function () { initFromMulti(root); }, 30);
+      return;
+    }
+    var nodes = (root || document).querySelectorAll('[data-git-command-lab-multi]');
+    Array.prototype.forEach.call(nodes, function (el) {
+      if (el.getAttribute('data-gcl-multi-init')) return;
+      el.setAttribute('data-gcl-multi-init', '1');
+      try {
+        var attr = el.getAttribute('data-git-command-lab-multi');
+        var spec = (attr && attr.trim() && attr.trim()[0] === '{')
+          ? JSON.parse(attr)
+          : JSON.parse(el.querySelector('script[type="application/json"]').textContent);
+        makeMultiCard(el, spec);
+      } catch (e) {
+        console.error('GitCommandLab multi-step init failed:', e, el);
+      }
+    });
+  }
+
   window.GitCommandLab = {
-    create:    makeCard,
-    initFrom:  initFrom,
-    openModal: openModal,
+    create:          makeCard,
+    initFrom:        initFrom,
+    openModal:       openModal,
+    createMulti:     makeMultiCard,
+    initFromMulti:   initFromMulti,
   };
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { initFrom(document); });
+    document.addEventListener('DOMContentLoaded', function () {
+      initFrom(document);
+      initFromMulti(document);
+    });
   } else {
     initFrom(document);
+    initFromMulti(document);
   }
 })();
