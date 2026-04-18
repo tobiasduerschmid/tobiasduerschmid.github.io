@@ -2882,7 +2882,7 @@ steps:
       - A commit object — in the submodule's separate repository's object database
       - A tag object
       correct_index: 2
-      explanation: A gitlink pins a *commit* SHA — which (via the commit's tree and blobs) uniquely determines the submodule's entire file state. The commit lives in the outer repo's `.git/modules/<name>/objects/` — the submodule folder has only a `.git` gitfile pointing there, not a full `.git/` directory of its own. This is exactly the same commit-SHA-as-snapshot-identity property rebase relies on (Step 7) and that makes the whole object model coherent.
+      explanation: A gitlink pins a *commit* SHA — which (via the commit's tree and blobs) uniquely determines the submodule's entire file state. The commit lives in the submodule's `.git/objects/`, not the outer repo's. This is exactly the same commit-SHA-as-snapshot-identity property rebase relies on (Step 7) and that makes the whole object model coherent.
   watch_files:
   - myproject/.gitmodules
   open_file: myproject/.gitmodules

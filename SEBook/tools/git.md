@@ -396,7 +396,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
 <script type="application/json">
 {
   "command": "git merge feature",
-  "description": "**Three-way merge.** Both branches have commits the other doesn't: `main` added E; `feature` added C and D.\n\nGit compares both tips against their **common ancestor** (B) and creates a new merge commit **M** with *two parents* \u2014 one per branch.\n\nThe resulting diamond shape in the graph is the hallmark of a three-way merge.",
+  "description": "**Three-way merge.** Both branches have commits the other doesn't: `main` added E; `feature` added C and D.\n\nGit compares both tips against their **common ancestor** (B) and creates a new merge commit **M** with *two parents* \u2014 one per branch.\n\nThe resulting diamond shape in the graph is the hallmark of a three-way merge.\n\n*The strategy name shown in the output is* `ort` *(default since Git 2.33, Aug 2021); older versions and Pro Git show `recursive` \u2014 the algorithm is equivalent for this case.*",
+  "output": "Merge made by the 'ort' strategy.\n greeting.txt | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)",
   "before": {
     "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature B|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature A|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main\n  feature",
@@ -1119,36 +1120,36 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
   "steps": [
     {
       "command": "git submodule add https://github.com/acme/libfoo libs/foo",
-      "description": "`git submodule add` clones the remote into `libs/foo` *and* writes a new top-level `.gitmodules` file recording the mapping. The submodule is pinned to the remote's current HEAD (shown as the annotation hash).",
+      "description": "`git submodule add` clones the remote into `libs/foo` *and* writes a new top-level `.gitmodules` file recording the mapping. The submodule is pinned to the remote's current HEAD (shown as the annotation hash).\n\n**Where the submodule's git data actually lives:** its real `.git/` directory (objects, refs, HEAD) is stored inside the *superproject* at `.git/modules/foo/`. Inside `libs/foo/` there is only a small `.git` **text file** (a \"gitfile\") containing `gitdir: ../../.git/modules/foo`. This keeps every submodule's history inside the parent repo, which is why cloning the superproject is self-contained.",
       "state": {
-        "tree": "myproject/\n  .git/\n  .gitmodules\n  libs/\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+        "tree": "myproject/\n  .git/\n    modules/\n      foo/ ← submodule's real .git directory\n  .gitmodules\n  libs/\n    foo/ ← submodule @ abc123\n      .git ← gitfile → ../../.git/modules/foo\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
       }
     },
     {
       "command": "git submodule add https://github.com/acme/libbar libs/bar",
-      "description": "A second submodule. `.gitmodules` now records two mappings; both pinned folders are part of the superproject's working tree.",
+      "description": "A second submodule. `.gitmodules` now records two mappings; both pinned folders are part of the superproject's working tree. Each submodule's real `.git/` is again stored inside the superproject's `.git/modules/<name>/`, and each working-tree directory holds just a thin `.git` gitfile pointing there.",
       "state": {
-        "tree": "myproject/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+        "tree": "myproject/\n  .git/\n    modules/\n      bar/ ← submodule's real .git directory\n      foo/ ← submodule's real .git directory\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      .git ← gitfile → ../../.git/modules/bar\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      .git ← gitfile → ../../.git/modules/foo\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
       }
     },
     {
       "command": "git commit -m \"Add libfoo and libbar as submodules\"",
-      "description": "The superproject commit records **three** things: the new `.gitmodules` file, the `libs/foo` pin, and the `libs/bar` pin. No files change; the commit metadata below is what Git prints.",
+      "description": "The superproject commit records **three** things: the new `.gitmodules` file, the `libs/foo` pin, and the `libs/bar` pin (each stored as a tree entry with **mode 160000** \u2014 a *gitlink* pointing at a commit SHA). No files change; the commit metadata below is what Git prints.",
       "state": {
-        "tree": "myproject/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js",
-        "output": "[main a1b2c3d] Add libfoo and libbar as submodules\n 3 files changed, 6 insertions(+)\n create mode 100644 .gitmodules"
+        "tree": "myproject/\n  .git/\n    modules/\n      bar/\n      foo/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      .git ← gitfile\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      .git ← gitfile\n      README.md\n      src/\n        foo.js\n  src/\n    app.js",
+        "output": "[main a1b2c3d] Add libfoo and libbar as submodules\n 3 files changed, 6 insertions(+)\n create mode 100644 .gitmodules\n create mode 160000 libs/bar\n create mode 160000 libs/foo"
       }
     },
     {
       "command": "git clone https://example.com/myproject.git cloned",
-      "description": "On a fresh machine, a **plain** clone brings down `.gitmodules` but leaves the submodule directories *empty*. The pins exist in Git's config, but the trees aren't populated yet.",
+      "description": "On a fresh machine, a **plain** clone brings down `.gitmodules` but leaves the submodule directories *empty*. The pins exist in the superproject tree, but neither `.git/modules/<name>/` nor the submodule files have been fetched yet.",
       "state": {
         "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← empty — not initialised\n    foo/ ← empty — not initialised\n  src/\n    app.js"
       }
     },
     {
       "command": "git submodule init",
-      "description": "`init` reads `.gitmodules` and registers each submodule in `.git/config`. Still no files appear — it's a local bookkeeping step.",
+      "description": "`init` reads `.gitmodules` and registers each submodule's URL in `.git/config` (under a `[submodule \"libs/foo\"]` stanza). No `.git/modules/` is created and no files appear — it's a local bookkeeping step.",
       "state": {
         "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← empty — not initialised\n    foo/ ← empty — not initialised\n  src/\n    app.js",
         "output": "Submodule 'libs/bar' (https://github.com/acme/libbar) registered for path 'libs/bar'\nSubmodule 'libs/foo' (https://github.com/acme/libfoo) registered for path 'libs/foo'"
@@ -1156,23 +1157,23 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
     },
     {
       "command": "git submodule update",
-      "description": "`update` fetches each registered submodule and checks out the pinned commit. Previously-empty folders now contain the submodule's files at the exact revision the superproject recorded.",
+      "description": "`update` fetches each registered submodule into `.git/modules/<name>/` and checks out the pinned commit into its working-tree directory. Each submodule directory now also contains a thin `.git` gitfile pointing back to the real `.git/` under `.git/modules/<name>/`.",
       "state": {
-        "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+        "tree": "cloned/\n  .git/\n    modules/\n      bar/ ← fetched submodule .git\n      foo/ ← fetched submodule .git\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      .git ← gitfile → ../../.git/modules/bar\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      .git ← gitfile → ../../.git/modules/foo\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
       }
     },
     {
       "command": "git submodule update --remote libs/foo",
-      "description": "`--remote` advances one submodule to the latest commit on its tracking branch. The annotation flips to a newer hash and the superproject is now dirty — you'd commit the updated pin next.",
+      "description": "`--remote` advances one submodule to the latest commit on its tracking branch. The annotation flips to a newer hash and the superproject is now dirty — you'd commit the updated pin next. Only the submodule's working tree and its `.git/modules/foo/` objects change; the gitfile and the directory layout stay the same.",
       "state": {
-        "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ de4f71\n      CHANGELOG.md\n      README.md\n      src/\n        foo.js\n        helpers.js\n  src/\n    app.js"
+        "tree": "cloned/\n  .git/\n    modules/\n      bar/\n      foo/ ← new objects fetched\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      .git ← gitfile\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ de4f71\n      .git ← gitfile\n      CHANGELOG.md\n      README.md\n      src/\n        foo.js\n        helpers.js\n  src/\n    app.js"
       }
     },
     {
       "command": "git clone --recurse-submodules https://example.com/myproject.git sibling",
-      "description": "The shortcut: clone + init + update in one go. A brand-new working copy comes down fully populated. Use this whenever you know a repo uses submodules.",
+      "description": "The shortcut: clone + init + update in one go. A brand-new working copy comes down fully populated — including the `.git/modules/<name>/` store and the gitfiles inside each submodule directory. Use this whenever you know a repo uses submodules.",
       "state": {
-        "tree": "sibling/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+        "tree": "sibling/\n  .git/\n    modules/\n      bar/\n      foo/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      .git ← gitfile\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      .git ← gitfile\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
       }
     }
   ]
