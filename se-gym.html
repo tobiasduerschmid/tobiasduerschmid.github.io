@@ -241,6 +241,7 @@ title: "SE Gym"
       description: {{ qdata.description | default: "" | jsonify }},
       questions: [
         {% for q in qdata.questions %} {
+      id: {{ q.id | jsonify }},
       question: {{ q.question | markdownify | jsonify }},
       type: {{ q.type | default: "single" | jsonify }},
       options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
@@ -261,6 +262,7 @@ title: "SE Gym"
       isMaster: true,
         questions: [
           {% for gym_id in qdata.decks %} {% assign ref_data = site.data.quizzes[gym_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
+      id: {{ q.id | jsonify }},
       question: {{ q.question | markdownify | jsonify }},
       type: {{ q.type | default: "single" | jsonify }},
       options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
