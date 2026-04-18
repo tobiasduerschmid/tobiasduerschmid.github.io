@@ -247,7 +247,7 @@ steps:
       - **Branch = 41-byte pointer file:** `.git/refs/heads/main` literally contains one line — the commit SHA. No file copies, no timeline duplication. Creating a branch is a single `fwrite()`.
       - **HEAD = symbolic reference:** `.git/HEAD` contains `ref: refs/heads/main`, not the commit SHA directly. That indirection lets `git commit` update the branch pointer while `HEAD` follows automatically.
       - **Detached HEAD:** `HEAD` holds a raw SHA rather than a ref. Any commits made here are reachable only from `HEAD` — once you move `HEAD`, they are orphaned.
-      - **reflog recovery:** `git reflog` logs every position `HEAD` has been at. Reachable reflog entries are kept longer than **unreachable** ones (the orphan-recovery case is the unreachable bucket — see `gc.reflogExpire` and `gc.reflogExpireUnreachable`). A new branch anchored at `HEAD@{n}` rescues otherwise-unreachable commits.
+      - **reflog recovery:** `git reflog` logs every position `HEAD` has been at, including positions whose commits are no longer reachable from any branch or tag. A new branch anchored at `HEAD@{n}` rescues otherwise-unreachable commits.
   tests:
   - description: myproject is a Git repository
     command: '[ -d /tutorial/myproject/.git ]'
@@ -291,7 +291,7 @@ steps:
       - Git automatically migrated them to the `main` branch when we switched
       - They are stored in a hidden recovery folder we can copy from
       correct_index: 1
-      explanation: 'Orphaned commits remain in `.git/objects/` until `git gc` prunes them (default: ~30 days unreferenced). `git reflog` shows every position HEAD has been at, including the orphaned one. `git branch rescue <sha>` rescues the work.'
+      explanation: Orphaned commits remain in `.git/objects/` until `git gc` prunes them. `git reflog` shows every position HEAD has been at, including the orphaned one. `git branch rescue <sha>` rescues the work.
     - question: Why can `HEAD` point to a branch name rather than a commit SHA?
       options:
       - Branch names are shorter and easier to type
@@ -2151,10 +2151,10 @@ steps:
 
     > **Meta-lesson:** every destructive Git operation is survivable
     > as long as `git reflog` has a record of HEAD's position before
-    > the operation. The reflog default retention is ~90 days. This
-    > is why `git reset --hard`, `git rebase`, and `git branch -D`
-    > are all less scary than they sound — **as long as you act
-    > within a few weeks**.
+    > the operation. This is why `git reset --hard`, `git rebase`,
+    > and `git branch -D` are all less scary than they sound —
+    > **as long as you act before the reflog entry and its objects
+    > are garbage-collected**.
 
     ### Task 4: Reword a commit message — you decide
 
@@ -2329,7 +2329,7 @@ steps:
       - Only by running `git rebase --undo`
       - Only if you had pushed the commit
       correct_index: 1
-      explanation: Dropped commits remain in `.git/objects` until garbage collection (typically 30+ days). `git reflog` is the bookmark that lets you find them. `git reset --hard <reflog-sha>` restores the exact pre-rebase state. **This is the safety net.** Always verify it works once before a high-stakes rebase.
+      explanation: Dropped commits remain in `.git/objects` until garbage collection prunes them. `git reflog` is the bookmark that lets you find them. `git reset --hard <reflog-sha>` restores the exact pre-rebase state. **This is the safety net.** Always verify it works once before a high-stakes rebase.
     - question: '**[Revisit Step 2]** After an interactive rebase, the rewritten commits have new SHAs even if their patches are identical. Why?'
       options:
       - Interactive rebase randomly generates SHAs

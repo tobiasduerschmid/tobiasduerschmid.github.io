@@ -7,7 +7,7 @@ questions:
       - "Distributed systems require a constant internet connection to the central server to make any changes."
       - "In distributed systems, each developer has a full, local copy of the entire repository and its history."
       - "Centralized systems are generally considered the best practice for massive, globally distributed open-source projects."
-      - "Distributed systems are designed exclusively to track binary files, whereas centralized systems track text files."
+      - "Centralized systems make branching and merging faster than distributed systems because there is only one source of truth."
     correct_index: 1
     explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history, enabling offline work and independent development.** This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
 
@@ -220,7 +220,7 @@ questions:
     distractors:
       - "git reset --hard <bad-commit-hash>"
       - "git push -f"
-    explanation: "**The correct order is log → revert → push: identify the bad commit, create a safe undo commit, then share it — reset --hard and force-push rewrite shared history and destroy teammates' work.** `git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
+    explanation: "**The correct order is log → revert → push: identify the bad commit, create a safe undo commit, then share it — reset --hard and force-push rewrite shared history and destroy teammates' work.** `git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. (On a busy shared branch, run `git pull` before `git push` to pick up any new commits first — otherwise the push may be rejected as non-fast-forward.) The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
 
   - id: 20
     question: |

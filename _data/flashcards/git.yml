@@ -31,8 +31,8 @@ cards:
     explanation: "Squashing combines all the patches from the feature branch into a single set of changes, allowing you to make one clean commit on the target branch and keep the history tidy with `git merge --squash`."
   - id: 8
     question: "You are building a massive project and want to include an entirely separate external Git repository as a subdirectory within your project, while keeping its history independent."
-    answer: "`git submodule`"
-    explanation: "`git submodule` allows you to nest an independent repository inside your main project. It essentially creates a pointer to a specific commit of that external library."
+    answer: "`git submodule add <url> <path>`"
+    explanation: "`git submodule add` clones the external repo into `<path>` and records a gitlink (mode `160000`) pointing at its current commit SHA, plus a `.gitmodules` entry with the URL. The outer repo stores just that pinned SHA — no file duplication. Teammates get the content via `git clone --recursive` (or `git submodule update --init` after a plain clone)."
   - id: 9
     question: "You are starting a brand new project in an empty folder on your computer and want Git to start tracking changes in this directory."
     answer: "`git init`"
@@ -107,7 +107,7 @@ cards:
   - id: 26
     question: "You made some experimental changes to a file but want to discard them entirely and revert to the version from your last commit."
     answer: "`git restore <filename>`"
-    explanation: "`git restore <file>` discards unstaged changes in the working directory, reverting it to the staged version (or the last commit if nothing is staged). To explicitly revert to the last commit, use `git restore --source=HEAD <file>`."
+    explanation: "`git restore <file>` copies the version of the file from the **index** (staging area) onto the working tree, discarding any unstaged edits. If the file has never been staged since the last commit, the index already matches HEAD, so this also matches the last commit. If you have a partially-staged file and want to go all the way back to HEAD (blowing away both staged and unstaged edits), use `git restore --source=HEAD --staged --worktree <file>`."
 
   - id: 27
     question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"

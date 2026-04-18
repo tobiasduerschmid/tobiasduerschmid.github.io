@@ -23,8 +23,8 @@ cards:
     explanation: "Squashing combines all the patches from the feature branch into a single set of changes, allowing you to make one clean commit on the target branch and keep the history tidy with `git merge --squash`."
   - id: 6
     question: "You are building a massive project and want to include an entirely separate external Git repository as a subdirectory within your project, while keeping its history independent."
-    answer: "`git submodule`"
-    explanation: "`git submodule` allows you to nest an independent repository inside your main project. It essentially creates a pointer to a specific commit of that external library."
+    answer: "`git submodule add <url> <path>`"
+    explanation: "`git submodule add` clones the external repo into `<path>` and records a gitlink (mode `160000`) pointing at its current commit SHA, plus a `.gitmodules` entry with the URL. The outer repo stores just that pinned SHA — no file duplication. Teammates get the content via `git clone --recursive` (or `git submodule update --init` after a plain clone)."
   - id: 7
     question: "Instead of creating a merge commit, you want to take the commits from your feature branch and re-apply them directly on top of the latest 'main' branch to create a clean, linear history."
     answer: "`git rebase main`"

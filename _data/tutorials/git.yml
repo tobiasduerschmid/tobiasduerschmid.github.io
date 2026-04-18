@@ -559,7 +559,7 @@ steps:
       - **Individual file:** `git add README.md`
       - **Wildcard pattern:** `git add test_*.py`
       - **Current directory:** `git add .`
-      - **All tracked + untracked:** `git add --all` (or `-A`)
+      - **All changes in the whole working tree — modifications, new files, AND deletions:** `git add --all` (or `-A`)
 
       ### The `-am` shortcut — and its hidden catch
 
@@ -1126,7 +1126,7 @@ steps:
       ```
 
       Press `q` to exit. Each entry shows:
-      - **Commit hash** — a unique 40-character ID for this snapshot (SHA-1 today; Git is actively migrating to SHA-256 to address hash-collision vulnerabilities)
+      - **Commit hash** — a unique 40-character ID for this snapshot
       - **Author** — who made the commit
       - **Date** — when it was made
       - **Message** — what it describes
@@ -2561,12 +2561,10 @@ steps:
       ```bash
       git reset --hard <sha>   # jump your branch back to that commit
       # or
-      git checkout <sha>       # inspect that commit (changes to "detached HEAD state")
+      git switch --detach <sha>  # inspect that commit (enters "detached HEAD state")
       ```
 
-      Two important limitations to keep in mind:
-      - Reflog entries **expire after ~90 days** by default (configured by
-        `gc.reflogExpire`).
+      One important limitation to keep in mind:
       - The reflog is **local only** — it is never pushed to remotes, so it
         can only help you recover your own lost work.
 
@@ -3087,6 +3085,7 @@ steps:
       | `git remote add` | Register a remote repository |
       | `git push` | Upload local commits to a remote |
       | `git pull` | Download and merge remote commits |
+      | `git pull --rebase` | Download and **rebase** local commits on top of remote (cleaner linear history; can also be made the default with `git config --global pull.rebase true`) |
       | `git clone <url>` | Download a full copy of a remote repository |
 
       ### Best practices for professional use

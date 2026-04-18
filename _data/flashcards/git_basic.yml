@@ -76,7 +76,7 @@ cards:
   - id: 19
     question: "You made some experimental changes to a file but want to discard them entirely and revert to the version from your last commit."
     answer: "`git restore <filename>`"
-    explanation: "`git restore <file>` discards unstaged changes in the working directory, reverting it to the staged version (or the last commit if nothing is staged). To explicitly revert to the last commit, use `git restore --source=HEAD <file>`."
+    explanation: "`git restore <file>` copies the version of the file from the **index** (staging area) onto the working tree, discarding any unstaged edits. If the file has never been staged since the last commit, the index already matches HEAD, so this also matches the last commit. If you have a partially-staged file and want to go all the way back to HEAD (blowing away both staged and unstaged edits), use `git restore --source=HEAD --staged --worktree <file>`."
   - id: 20
     question: "You merge a feature branch into main, and Git performs the merge without creating a new merge commit — it simply moves the 'main' pointer forward. What type of merge is this, and when does it occur?"
     answer: "A **fast-forward merge** — occurs when 'main' has no new commits since the feature branch was created."
