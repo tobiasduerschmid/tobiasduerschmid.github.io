@@ -85,6 +85,27 @@ To understand Git, you must understand where your files live at any given time. 
 
 
 
+## The Git Object Model
+
+Internally, Git stores everything in `.git/objects/` as four immutable, content-addressed object types:
+
+* **Blob**: stores the raw bytes of a single file version — no filename, no metadata.
+* **Tree**: a directory snapshot mapping filenames and modes to blobs or other trees.
+* **Commit**: wraps a tree with metadata — author, timestamp, commit message, and the SHA hash(es) of its parent commit(s). The commit's own SHA is a hash of all that content, making history tamper-evident.
+* **Tag**: a named, signed pointer to any object (usually a commit).
+
+Because every object is identified by the SHA hash of its contents, two files with identical bytes share one blob object — Git never stores duplicate data.
+
+### Referring to Commits
+
+Git lets you address any commit relative to a known reference:
+* **`HEAD~n`**: *n* commits back following the first parent. `HEAD~1` is the parent, `HEAD~3` is three ancestors back.
+* **`HEAD^`** (or `HEAD^1`): the first parent of HEAD — identical to `HEAD~1`.
+* **`HEAD^2`**: the *second* parent of a merge commit (the branch that was merged in).
+* **`main^`**, **`v1.0~5`**: the same syntax works with any branch name or tag.
+
+These relative references work with every command that accepts a commit — `git diff HEAD~3 HEAD`, `git rebase HEAD~4`, `git switch --detach HEAD~1`, and so on.
+
 ## Fundamental Git Workflow
 
 A typical Git workflow follows these steps:
@@ -136,6 +157,13 @@ When you want to bring changes from a feature branch back into the main codebase
 For more control over your project's history, you can use these manual techniques:
 
 * **Rebasing**: Re-applies commits from one branch onto a new base, producing new commit objects with new SHA hashes. Creates a linear history but must **never** be used on shared branches, as it rewrites history that collaborators may already have.
+* **Interactive Rebase** (`git rebase -i HEAD~n`): Opens an editor listing the last *n* commits, each prefixed with an action keyword. You can reorder lines and change the keyword to control what happens to each commit:
+  * `pick` — keep the commit unchanged.
+  * `reword` — keep the changes, but edit the commit message.
+  * `squash` — combine with the previous commit, merging both messages.
+  * `fixup` — like squash, but silently discards this commit's message.
+  * `drop` — remove the commit from history entirely.
+  * `edit` — pause the rebase so you can amend the commit or split it.
 * **Squashing**: `git merge --squash` collapses all commits from a feature branch into a single commit on the target branch, keeping the main history tidy.
 
 <div class="git-diagram-row">
@@ -167,9 +195,9 @@ For more control over your project's history, you can use these manual technique
 ## Advanced Power Tools
 
 Git includes several advanced commands for debugging and project management:
-* **`git stash`**: Temporarily saves local changes (staged and unstaged) so you can switch branches without committing messy or incomplete work.
+* **`git stash`**: Temporarily saves local changes (staged and unstaged) so you can switch branches without committing messy or incomplete work. Use `git stash -u` to also stash untracked files. `git stash pop` re-applies the most recent stash and removes it; `git stash apply` re-applies without removing it (useful for applying to multiple branches).
 * **`git cherry-pick`**: Selectively applies a specific commit from one branch onto another.
-* **`git bisect`**: Uses a binary search through your commit history to find the exact commit that introduced a bug.
+* **`git bisect`**: Uses a binary search through your commit history to find the exact commit that introduced a bug. Mark a known-bad commit with `git bisect bad` and a known-good one with `git bisect good <hash>` — Git checks out the midpoint each step. Use `git bisect run <script>` to automate the process: Git will run your script on each candidate commit and mark it good or bad based on the exit code.
 * **`git blame`**: Annotates each line of a file with the name of the author and the commit hash of the last person to modify it.
 * **`git revert`**: Safely "undoes" a previous commit by creating a *new* commit with the inverse changes, preserving the original history.
 * **`git reflog`**: Records every position HEAD has pointed to, even when you switch branches, reset, or make commits in detached HEAD state. This is your safety net for recovering "lost" commits — if a commit is no longer reachable via any branch, `git reflog` will show its hash so you can recover it with `git switch -c <name> <hash>`.
@@ -237,6 +265,7 @@ Branching allows for parallel development, such as working on a new feature with
     * **`git merge --no-ff`**: Forces creation of a merge commit even when a fast-forward would be possible, preserving the record that a feature branch existed.
     * **`git merge --abort`**: Cancels an in-progress merge (including one with conflicts) and restores the branch to its pre-merge state.
 * **`git rebase`**: Re-applies commits from one branch onto a new base. This is often used to create a linear history, though it must never be used on shared branches.
+    * `git rebase -i HEAD~n`: Opens an interactive editor to reorder, squash, reword, drop, or edit the last *n* commits before they are replayed.
 
 
 ## Remote Operations
@@ -251,9 +280,9 @@ These commands facilitate collaboration by syncing your local work with a remote
 
 ## Advanced and Debugging Tools
 Git includes powerful utilities for handling complex scenarios and tracking down bugs.
-* **`git stash` / `git stash pop`**: Temporarily saves uncommitted changes (both staged and unstaged) so you can switch contexts without making a messy commit. Use `pop` to re-apply those changes later.
+* **`git stash` / `git stash pop`**: Temporarily saves uncommitted changes (both staged and unstaged) so you can switch contexts without making a messy commit. Use `git stash -u` to also include untracked files. Use `pop` to re-apply and remove the stash; use `git stash apply` to re-apply without removing it (useful for applying the same stash to multiple branches). `git stash drop` discards a saved stash.
 * **`git cherry-pick`**: Selectively applies a single specific commit from one branch onto another.
-* **`git bisect`**: Uses a binary search through commit history to find the exact commit that introduced a bug.
+* **`git bisect`**: Uses a binary search through commit history to find the exact commit that introduced a bug. Start with `git bisect start`, then `git bisect bad` (current is broken) and `git bisect good <hash>` (last known-good commit). Git checks out the midpoint; you test and mark it good or bad, repeating until Git identifies the culprit. `git bisect run <script>` automates this entirely — Git runs your script and uses its exit code (0 = good, non-zero = bad) to complete the search without manual intervention.
 * **`git blame`**: Annotates each line of a file with the author and commit ID of the last person to modify it.
 * **`git revert <commit>`**: Creates a new "anti-commit" that applies the exact inverse changes of a previous commit, safely undoing it without rewriting history. Prefer this over `git reset` whenever the commit to undo has already been pushed to a shared branch.
 * **`git reflog`**: Shows a chronological log of every position HEAD has pointed to in the local repository. Indispensable for recovering "lost" commits — commits made in detached HEAD state or after an accidental reset can be found here and recovered with `git switch -c <name> <hash>`.
@@ -261,6 +290,8 @@ Git includes powerful utilities for handling complex scenarios and tracking down
 * **`git submodule`**: Allows you to include an external Git repository as a subdirectory of your project while maintaining its independent history.
 
 # Git Command Lab
+
+Every Git repository is a **commit graph** — a directed acyclic graph (DAG) in which each commit node points back to its parent(s). Branches and HEAD are simply movable pointers into this graph. Understanding how a command repositions those pointers is the key to understanding Git.
 
 Click each command button to **animate** the transformation it performs on the commit graph. Click again to **undo** and replay the change as many times as you like.
 
