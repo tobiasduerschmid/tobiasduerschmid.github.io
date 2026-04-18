@@ -1,0 +1,164 @@
+/* ===========================================================================
+   GitGraph — visual styles + delta animations for the SVG commit-graph widget.
+   Used by both the interactive tutorial (js/tutorial-code.js) and the
+   standalone SEBook command-lab / diagram embeds (js/git-command-lab.js,
+   js/git-graph.js).
+
+   Keep this file free of tutorial-layout-specific styles (tvm-*); see
+   tutorial.css for those.
+   =========================================================================== */
+
+/* Empty state */
+.git-graph-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+}
+.git-graph-empty code {
+  background: #2a2a3a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* SVG styling */
+.git-graph-svg {
+  display: block;
+}
+.git-graph-svg .git-graph-node {
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.git-graph-svg .git-graph-head-glow {
+  animation: git-graph-pulse 2s ease-in-out infinite;
+}
+@keyframes git-graph-pulse {
+  0%, 100% { stroke-opacity: 0.3; }
+  50% { stroke-opacity: 0.7; }
+}
+
+/* === Git graph delta animations =========================================== */
+
+/* Synchronised motion: nodes, branch labels, HEAD, edges, and chip colors
+   all share the exact same duration + ease-in-out curve so the commit circle,
+   its branch label, the HEAD chip, and the connecting edges glide together
+   as one cohesive unit when the layout shifts. */
+.git-graph-svg .git-graph-node-g,
+.git-graph-svg .git-graph-label-g,
+.git-graph-svg .git-graph-label-g--head,
+.git-graph-svg .git-graph-head-chip,
+.git-graph-svg .git-graph-head-text {
+  transition-duration: 720ms;
+  transition-timing-function: cubic-bezier(.7,0,.3,1);
+}
+
+.git-graph-svg .git-graph-node-g,
+.git-graph-svg .git-graph-label-g,
+.git-graph-svg .git-graph-label-g--head {
+  transition-property: transform;
+}
+
+.git-graph-svg .git-graph-head-chip {
+  transition-property: fill, stroke, fill-opacity;
+}
+.git-graph-svg .git-graph-head-text {
+  transition-property: fill;
+}
+
+.git-graph-svg .git-graph-edge {
+  transition: stroke-dashoffset 800ms cubic-bezier(.5,.1,.5,1),
+              opacity 300ms ease-out,
+              stroke 720ms cubic-bezier(.7,0,.3,1),
+              x1 720ms cubic-bezier(.7,0,.3,1),
+              y1 720ms cubic-bezier(.7,0,.3,1),
+              x2 720ms cubic-bezier(.7,0,.3,1),
+              y2 720ms cubic-bezier(.7,0,.3,1),
+              d 720ms cubic-bezier(.7,0,.3,1);
+}
+
+/* New commit pop-in: scale + opacity bounce.
+   transform-origin 0 0 because each commit's content is centered on (0,0)
+   in its wrapper-local coordinate system. */
+@keyframes git-graph-node-enter {
+  0%   { transform: scale(0);    opacity: 0; }
+  60%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.git-graph-svg .git-graph-node-g.entering > .git-graph-node,
+.git-graph-svg .git-graph-node-g.entering > .git-graph-hash,
+.git-graph-svg .git-graph-node-g.entering > .git-graph-head-glow {
+  transform-origin: 0 0;
+  animation: git-graph-node-enter 480ms cubic-bezier(.34,1.56,.64,1) backwards;
+}
+.git-graph-svg .git-graph-node-g.entering > .git-graph-message {
+  animation: git-graph-fade-in 480ms ease-out 120ms backwards;
+}
+
+/* Label fade-in (also used by HEAD chip) */
+@keyframes git-graph-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.git-graph-svg .git-graph-label-g.entering {
+  animation: git-graph-fade-in 380ms ease-out;
+}
+
+/* Removed commit / label / edge: fade and shrink */
+@keyframes git-graph-node-exit {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(0.4); opacity: 0; }
+}
+.git-graph-svg .git-graph-node-g.exiting > .git-graph-node,
+.git-graph-svg .git-graph-node-g.exiting > .git-graph-hash,
+.git-graph-svg .git-graph-node-g.exiting > .git-graph-head-glow {
+  transform-origin: 0 0;
+  animation: git-graph-node-exit 420ms ease-in forwards;
+}
+.git-graph-svg .git-graph-node-g.exiting > .git-graph-message,
+.git-graph-svg .git-graph-label-g.exiting {
+  animation: git-graph-fade-out 350ms ease-in forwards;
+}
+.git-graph-svg .git-graph-edge.exiting {
+  opacity: 0;
+}
+@keyframes git-graph-fade-out {
+  to { opacity: 0; }
+}
+
+/* HEAD pulse — fires on the glow halo when HEAD lands on a new commit.
+   This selector is more specific than the static .git-graph-svg .git-graph-head-glow
+   above, so it overrides during the burst. */
+@keyframes git-graph-head-pulse {
+  0%, 100% { transform: scale(1);   stroke-opacity: 0.4; stroke-width: 2; }
+  40%      { transform: scale(1.5); stroke-opacity: 1;   stroke-width: 5; }
+}
+.git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow {
+  transform-origin: 0 0;
+  animation: git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1);
+}
+
+/* Merge sparkle — burst on a freshly-created merge commit */
+@keyframes git-graph-merge-burst {
+  0%   { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+  35%  { filter: drop-shadow(0 0 14px rgba(255,255,255,0.95))
+                 drop-shadow(0 0 24px rgba(255,200,28,0.85)); }
+  100% { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+}
+.git-graph-svg .git-graph-node-g.git-graph-merge-burst > .git-graph-node {
+  animation: git-graph-merge-burst 750ms ease-out;
+}
+
+/* Light-mode tweaks for the shadow */
+html:not(.dark-mode) .git-graph-svg .git-graph-node {
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));
+}
+html:not(.dark-mode) .git-graph-empty {
+  color: #666;
+}
+html:not(.dark-mode) .git-graph-empty code {
+  background: #e8eaed;
+  color: #333;
+}

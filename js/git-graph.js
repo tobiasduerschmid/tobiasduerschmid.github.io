@@ -439,12 +439,53 @@
     if (!this._svgRoot || !this.container || !this.container.contains(this._svgRoot)) {
       this._buildInitialSvg(dims);
     } else {
-      this._svgRoot.setAttribute('width', dims.width);
-      this._svgRoot.setAttribute('height', dims.height);
-      this._svgRoot.setAttribute('viewBox', '0 0 ' + dims.width + ' ' + dims.height);
+      this._animateDimensions(dims);
     }
 
     this._diffRender(data);
+  };
+
+  // Smoothly tween width/height/viewBox so the SVG canvas grows or shrinks
+  // in step with the node and edge transitions (which use the same 520ms
+  // ease curve in git-graph.css). Without this the canvas snaps abruptly
+  // whenever a longer commit message or new column changes the dimensions.
+  GitGraph.prototype._animateDimensions = function (newDims) {
+    var svg = this._svgRoot;
+    if (!svg) return;
+    var startW = parseFloat(svg.getAttribute('width'))  || newDims.width;
+    var startH = parseFloat(svg.getAttribute('height')) || newDims.height;
+    var endW = newDims.width;
+    var endH = newDims.height;
+
+    if (Math.abs(startW - endW) < 0.5 && Math.abs(startH - endH) < 0.5) {
+      svg.setAttribute('width', endW);
+      svg.setAttribute('height', endH);
+      svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
+      return;
+    }
+
+    if (this._dimAnim) cancelAnimationFrame(this._dimAnim);
+
+    var DURATION = 520;
+    var t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+
+    var self = this;
+    function frame(now) {
+      var t = Math.min(1, (now - t0) / DURATION);
+      var k = ease(t);
+      var w = startW + (endW - startW) * k;
+      var h = startH + (endH - startH) * k;
+      svg.setAttribute('width',  w);
+      svg.setAttribute('height', h);
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+      if (t < 1) {
+        self._dimAnim = requestAnimationFrame(frame);
+      } else {
+        self._dimAnim = null;
+      }
+    }
+    self._dimAnim = requestAnimationFrame(frame);
   };
 
   // ---------------------------------------------------------------------------
@@ -505,9 +546,73 @@
   };
 
   GitGraph.prototype._diffRender = function (data) {
+    var rebaseMap = this._detectRebases(data.commits);
+    if (rebaseMap) this._applyRebaseMapping(rebaseMap);
     this._diffEdges(data.commits, data.commitMap);
     this._diffNodes(data.commits, data.head);
     this._diffLabels(data.branches, data.commitMap, data.head);
+  };
+
+  // Detect rebase / cherry-pick where commits get NEW hashes but carry the
+  // SAME commit message. Returns oldHash->newHash so the existing DOM nodes
+  // can be re-keyed and slid to their new positions instead of fading out
+  // and a brand-new node fading in.
+  GitGraph.prototype._detectRebases = function (commits) {
+    var newHashes = {};
+    for (var i = 0; i < commits.length; i++) newHashes[commits[i].hash] = true;
+
+    var removedByMessage = {};
+    var hasRemoved = false;
+    for (var h in this._nodeEls) {
+      if (!this._nodeEls.hasOwnProperty(h)) continue;
+      if (newHashes[h]) continue;
+      if (this._nodeEls[h]._removalTimer) continue;
+      var msg = this._nodeEls[h].message;
+      if (!msg) continue;
+      if (!removedByMessage[msg]) removedByMessage[msg] = [];
+      removedByMessage[msg].push(h);
+      hasRemoved = true;
+    }
+    if (!hasRemoved) return null;
+
+    var rebaseMap = null;
+    for (var ci = 0; ci < commits.length; ci++) {
+      var cm = commits[ci];
+      if (this._nodeEls[cm.hash]) continue;
+      var bucket = removedByMessage[cm.message];
+      if (bucket && bucket.length > 0) {
+        if (!rebaseMap) rebaseMap = {};
+        rebaseMap[bucket.shift()] = cm.hash;
+      }
+    }
+    return rebaseMap;
+  };
+
+  GitGraph.prototype._applyRebaseMapping = function (rebaseMap) {
+    for (var oldHash in rebaseMap) {
+      if (!rebaseMap.hasOwnProperty(oldHash)) continue;
+      var newHash = rebaseMap[oldHash];
+      var entry = this._nodeEls[oldHash];
+      if (!entry) continue;
+      delete this._nodeEls[oldHash];
+      this._nodeEls[newHash] = entry;
+      entry.g.setAttribute('data-hash', newHash);
+    }
+
+    var rekeyedEdges = {};
+    for (var k in this._edgeEls) {
+      if (!this._edgeEls.hasOwnProperty(k)) continue;
+      var edgeEntry = this._edgeEls[k];
+      var parts = k.split('__');
+      var newChild = rebaseMap[parts[0]] || parts[0];
+      var newParent = rebaseMap[parts[1]] || parts[1];
+      var newKey = newChild + '__' + newParent;
+      if (newKey !== k) {
+        edgeEntry.el.setAttribute('data-edge-key', newKey);
+      }
+      rekeyedEdges[newKey] = edgeEntry;
+    }
+    this._edgeEls = rekeyedEdges;
   };
 
   // ---- Edges ----------------------------------------------------------------

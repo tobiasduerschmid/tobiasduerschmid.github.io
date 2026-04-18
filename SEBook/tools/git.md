@@ -4,6 +4,9 @@ layout: sebook
 ---
 
 <script src="/js/git-graph.js"></script>
+<script src="/js/git-command-lab.js"></script>
+<link rel="stylesheet" href="/css/git-graph.css">
+<link rel="stylesheet" href="/css/git-command-lab.css">
 <style>
 .git-graph-svg { display: block; }
 .git-graph-svg .git-graph-node { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
@@ -256,6 +259,223 @@ Git includes powerful utilities for handling complex scenarios and tracking down
 * **`git reflog`**: Shows a chronological log of every position HEAD has pointed to in the local repository. Indispensable for recovering "lost" commits — commits made in detached HEAD state or after an accidental reset can be found here and recovered with `git switch -c <name> <hash>`.
 * **`git show`**: Displays detailed information about a specific Git object, such as a commit.
 * **`git submodule`**: Allows you to include an external Git repository as a subdirectory of your project while maintaining its independent history.
+
+# Git Command Lab
+
+Click each command button to **animate** the transformation it performs on the commit graph. Click again to **undo** and replay the change as many times as you like.
+
+<div class="git-command-lab-grid">
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git commit -m \"Add login\"",
+  "description": "Records a new snapshot on the current branch and advances HEAD to it.",
+  "before": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|HEAD -> main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "cccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Add login|HEAD -> main\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git switch -c feature",
+  "description": "Creates a new branch pointer at the current commit and moves HEAD to it (shorthand for git branch + git switch).",
+  "before": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|HEAD -> main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|HEAD -> feature, main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "  main\n* feature",
+    "head": "refs/heads/feature"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git switch feature",
+  "description": "Moves HEAD to point at the feature branch. No commits are changed.",
+  "before": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|HEAD -> main, feature\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|HEAD -> feature, main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "  main\n* feature",
+    "head": "refs/heads/feature"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git switch --detach HEAD~1",
+  "description": "Moves HEAD off the branch and points it directly at an earlier commit — a detached HEAD state.",
+  "before": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add login|HEAD -> main\naaaa000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add login|main\naaaa000000000000000000000000000000000000||Initial commit|HEAD",
+    "branches": "  main",
+    "head": "detached"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git merge feature",
+  "description": "Fast-forward: main has no new commits, so its pointer simply slides to the tip of feature.",
+  "before": {
+    "log": "dddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Add tests|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Add login|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|HEAD -> main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "dddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Add tests|HEAD -> main, feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Add login|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git merge feature",
+  "description": "Three-way merge: both branches diverged, so Git creates a new merge commit with two parents.",
+  "before": {
+    "log": "eeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|HEAD -> main\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "mmmm000000000000000000000000000000000000|eeee000000000000000000000000000000000000 dddd000000000000000000000000000000000000|Merge branch 'feature'|HEAD -> main\neeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git merge --squash feature",
+  "description": "Collapses all of feature's commits into a single new commit on main (only one parent). The feature branch itself is unchanged.",
+  "before": {
+    "log": "eeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|HEAD -> main\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "ssss000000000000000000000000000000000000|eeee000000000000000000000000000000000000|Squashed feature|HEAD -> main\neeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git rebase main",
+  "description": "Replays the feature commits on top of main, producing new hashes (c2c2…, d2d2…) and a clean linear history.",
+  "before": {
+    "log": "eeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|main\ndddd000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Feature B|HEAD -> feature\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Feature A|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "  main\n* feature",
+    "head": "refs/heads/feature"
+  },
+  "after": {
+    "log": "d2d2000000000000000000000000000000000000|c2c2000000000000000000000000000000000000|Feature B|HEAD -> feature\nc2c2000000000000000000000000000000000000|eeee000000000000000000000000000000000000|Feature A|\neeee000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Hotfix|main\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Initial commit|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "  main\n* feature",
+    "head": "refs/heads/feature"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git reset --hard HEAD~1",
+  "description": "Moves the main pointer back one commit and discards the most recent commit from the branch.",
+  "before": {
+    "log": "cccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Buggy commit|HEAD -> main\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add feature|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "bbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add feature|HEAD -> main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git revert HEAD",
+  "description": "Creates a new commit that applies the inverse of the most recent commit. History is preserved.",
+  "before": {
+    "log": "cccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Buggy commit|HEAD -> main\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add feature|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "rrrr000000000000000000000000000000000000|cccc000000000000000000000000000000000000|Revert \"Buggy commit\"|HEAD -> main\ncccc000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Buggy commit|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add feature|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git cherry-pick yyyy",
+  "description": "Copies a single commit from another branch onto the current branch as a new commit (y2y2…).",
+  "before": {
+    "log": "zzzz000000000000000000000000000000000000|yyyy000000000000000000000000000000000000|Cleanup|feature\nyyyy000000000000000000000000000000000000|xxxx000000000000000000000000000000000000|Important fix|\nxxxx000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add experiment|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Update README|HEAD -> main\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "y2y2000000000000000000000000000000000000|bbbb000000000000000000000000000000000000|Important fix|HEAD -> main\nzzzz000000000000000000000000000000000000|yyyy000000000000000000000000000000000000|Cleanup|feature\nyyyy000000000000000000000000000000000000|xxxx000000000000000000000000000000000000|Important fix|\nxxxx000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Add experiment|\nbbbb000000000000000000000000000000000000|aaaa000000000000000000000000000000000000|Update README|\naaaa000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+</div>
 
 # Quiz
 
