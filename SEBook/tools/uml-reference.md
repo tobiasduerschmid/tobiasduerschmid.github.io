@@ -8,7 +8,7 @@ no_auto_uml: true
 <p style="color:#666;font-style:italic;margin-bottom:1.5em;">Diagrams render after the page loads. Scroll to see each one.</p>
 
 {% capture ref_md %}{% include REFERENCE.md %}{% endcapture %}
-{{ ref_md | markdownify }}
+{{ ref_md | escape_chevrons_in_pre | markdownify }}
 
 <script>
 /* Progressive lazy rendering for the reference page.
