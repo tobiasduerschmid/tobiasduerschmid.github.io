@@ -171,7 +171,9 @@
              git-graph-pulse 2s ease-in-out infinite 900ms;
 }
 
-/* Merge sparkle — burst on a freshly-created merge commit */
+/* Commit burst — yellow/white flash when a node is freshly created (any
+   commit, not just merges). Fires during the entry scale animation so the
+   commit appears in a little burst of light. */
 @keyframes git-graph-merge-burst {
   0%   { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
   35%  { filter: drop-shadow(0 0 14px rgba(255,255,255,0.95))
@@ -180,6 +182,21 @@
 }
 .git-graph-svg .git-graph-node-g.git-graph-merge-burst > .git-graph-node {
   animation: git-graph-merge-burst 750ms ease-out;
+}
+
+/* Pointer burst — same yellow flash on branch labels (and HEAD) whose
+   target commit hash changed. Identical duration + peak timing as the
+   commit-creation burst so when a command both creates a commit and
+   moves a pointer (e.g. git commit, merge --no-ff), both flashes ignite
+   at the exact same moment. */
+@keyframes git-graph-label-burst {
+  0%   { filter: none; }
+  35%  { filter: drop-shadow(0 0 10px rgba(255,255,255,0.95))
+                 drop-shadow(0 0 18px rgba(255,200,28,0.9)); }
+  100% { filter: none; }
+}
+.git-graph-svg .git-graph-label-g.git-graph-label-burst {
+  animation: git-graph-label-burst 750ms ease-out;
 }
 
 /* Light-mode tweaks for the shadow */

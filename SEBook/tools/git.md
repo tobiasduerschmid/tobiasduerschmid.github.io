@@ -477,6 +477,26 @@ A **remote** is a named URL pointing to another copy of the repository — typic
 * **`git pull`** — shorthand for `git fetch` followed by `git merge`. Fetches and immediately merges into your current branch.
 * **`git push`** — uploads your local commits to a remote. `git push -u origin <branch>` pushes and sets up **upstream tracking**, so future `git push` and `git pull` on this branch can omit the remote name.
 
+The diagram below shows how each command moves data between the four areas Git works with:
+
+<pre><code class="language-uml-sequence">
+@startuml
+participant WorkingTree
+participant StagingArea
+participant LocalRepo
+participant RemoteRepo
+
+RemoteRepo ->> LocalRepo: git clone / git fetch
+LocalRepo ->> WorkingTree: git checkout
+WorkingTree ->> StagingArea: git add
+StagingArea ->> LocalRepo: git commit
+WorkingTree ->> LocalRepo: git commit -a
+LocalRepo ->> WorkingTree: git merge
+RemoteRepo ->> WorkingTree: git pull
+LocalRepo ->> RemoteRepo: git push
+@enduml
+</code></pre>
+
 ### Remote-Tracking Branches
 
 A **remote-tracking branch** (e.g. `origin/main`) is a read-only local reference stored in `.git/refs/remotes/`. It records the last known position of a branch on the remote — not where the remote is *right now*, but where it was the last time you communicated with it. In the graphs below it appears with a **dashed label** and grey color to distinguish it from your local branch pointer.

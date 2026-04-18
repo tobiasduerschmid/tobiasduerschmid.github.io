@@ -850,9 +850,8 @@
   };
 
   GitGraph.prototype._createNode = function (cm, cx, cy, isHead) {
-    var classes = 'git-graph-node-g entering';
+    var classes = 'git-graph-node-g entering git-graph-merge-burst';
     if (isHead) classes += ' git-graph-node-head head-pulse';
-    if (cm.parents && cm.parents.length >= 2) classes += ' git-graph-merge-burst';
 
     var g = this._svgEl('g', {
       'class': classes,
@@ -996,7 +995,7 @@
         var stackIdx = labels.length - 1 - l;
         var wrapperY = cy - stackIdx * (LABEL_HEIGHT + LABEL_GAP);
         var commitRelY = cy - wrapperY;
-        this._renderLabelGroup(key, cx, wrapperY, function (g, gThis) {
+        this._renderLabelGroup(key, cx, wrapperY, br2.hash, function (g, gThis) {
           gThis._buildBranchLabelContent(g, br2.name, gThis._branchColors[br2.name] || BRANCH_COLORS[0], commitRelY, br2.remote);
         });
       }
@@ -1036,7 +1035,13 @@
       }
       var commitRelX = hcx - wrapperX;
       var commitRelY = hcy - wrapperY;
-      this._renderLabelGroup(key2, wrapperX, wrapperY, function (g, gThis) {
+      // HEAD's "target" is the commit AND the ref it's attached to, so a
+      // `git switch` that moves HEAD between branches pointing at the same
+      // commit still bursts (the commit id alone wouldn't tell us HEAD
+      // moved). Detached state is encoded too so attached<->detached
+      // transitions always flash.
+      var headTargetId = head.hash + '@' + (head.detached ? '(detached)' : head.ref);
+      this._renderLabelGroup(key2, wrapperX, wrapperY, headTargetId, function (g, gThis) {
         gThis._buildHeadContent(g, isDetached, color, commitRelX, commitRelY);
       }, 'git-graph-label-g--head');
     }
@@ -1048,7 +1053,7 @@
     }
   };
 
-  GitGraph.prototype._renderLabelGroup = function (key, cx, cy, fillFn, extraClass) {
+  GitGraph.prototype._renderLabelGroup = function (key, cx, cy, targetHash, fillFn, extraClass) {
     var entry = this._labelEls[key];
     var self = this;
     if (!entry) {
@@ -1059,7 +1064,7 @@
       });
       g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
       this._labelsLayer.appendChild(g);
-      entry = { g: g, cx: cx, cy: cy };
+      entry = { g: g, cx: cx, cy: cy, targetHash: targetHash };
       this._labelEls[key] = entry;
       setTimeout(function () { g.classList.remove('entering'); }, 400);
     } else {
@@ -1072,6 +1077,16 @@
         entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
         entry.cx = cx;
         entry.cy = cy;
+      }
+      // Yellow flash only when the pointer actually retargets to a different
+      // commit (checkout, fast-forward, reset, rebase). A position shift
+      // caused purely by layout reshuffling of the underlying commit is not
+      // a "move" of the pointer itself.
+      if (entry.targetHash !== targetHash) {
+        entry.targetHash = targetHash;
+        entry.g.classList.add('git-graph-label-burst');
+        var gRef = entry.g;
+        setTimeout(function () { gRef.classList.remove('git-graph-label-burst'); }, 800);
       }
     }
     while (entry.g.firstChild) entry.g.removeChild(entry.g.firstChild);
