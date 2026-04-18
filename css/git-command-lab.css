@@ -2,7 +2,7 @@
 
 .git-command-lab-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
   gap: 18px;
   margin: 1.5em 0;
 }
@@ -198,7 +198,7 @@
 .git-command-lab__desc > p:last-child { margin-bottom: 0; }
 
 .git-command-lab__rebase-file {
-  margin: 0 0 12px;
+  margin: 0 0 20px;
   padding: 0;
   background-color: #f4f6f8;
   border: 1px solid #d8dde2;

@@ -477,6 +477,46 @@ A **remote** is a named URL pointing to another copy of the repository — typic
 * **`git pull`** — shorthand for `git fetch` followed by `git merge`. Fetches and immediately merges into your current branch.
 * **`git push`** — uploads your local commits to a remote. `git push -u origin <branch>` pushes and sets up **upstream tracking**, so future `git push` and `git pull` on this branch can omit the remote name.
 
+The key distinction between `fetch` and `pull` is worth animating. The remote-tracking branch `origin/main` (shown with a dashed label) records the last known state of the remote — `fetch` advances it without touching your local branch; `pull` goes one step further and merges it in:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git fetch",
+  "description": "Downloads new commits from the remote into the remote-tracking branch (origin/main) without touching your local branch or working directory.\n\nAfter a fetch you can review what changed (git log origin/main, git diff main..origin/main) before deciding to merge.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull",
+  "description": "Shorthand for git fetch + git merge — downloads the remote commits and immediately fast-forwards the local branch to match origin/main.\n\nBoth pointers land on the same commit. If the local branch had diverged, a merge commit would be created instead.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
 ### The Force-Push Warning
 
 `git push -f` (force-push) overwrites remote history to match your local copy. On a shared branch this **permanently deletes** commits your collaborators have already pushed. Never force-push to `main` or any shared integration branch. If you've rebased or amended commits that are already remote, push to a new branch instead — or use `--force-with-lease` which at least refuses to overwrite if the remote has moved since your last fetch.
