@@ -1,7 +1,13 @@
 /* ── UML Diagram Theming ── */
 
-/* Hide raw UML source until it is rendered to prevent flash of unstyled content */
+/* Hide raw diagram source until it is rendered to prevent flash of unstyled content */
 pre:has(> code[class*="language-uml-"]),
+pre:has(> code.diagram-freeform),
+pre:has(> code.diagram-gitgraph),
+pre:has(> code.diagram-folder-tree),
+pre:has(> code.language-freeform),
+pre:has(> code.language-gitgraph),
+pre:has(> code.language-folder-tree),
 [data-uml-type]:not([data-uml-rendered="true"]) {
   display: none !important;
 }
@@ -13,7 +19,10 @@ pre:has(> code[class*="language-uml-"]),
 .uml-activity-diagram-container,
 .uml-usecase-diagram-container,
 .uml-component-diagram-container,
-.uml-deployment-diagram-container {
+.uml-deployment-diagram-container,
+.uml-freeform-diagram-container,
+.uml-gitgraph-diagram-container,
+.uml-folder-tree-diagram-container {
   display: block;
   --uml-stroke: #4060a0;
   --uml-text: #222;
@@ -33,7 +42,10 @@ html.dark-mode .uml-state-diagram-container svg,
 html.dark-mode .uml-activity-diagram-container svg,
 html.dark-mode .uml-usecase-diagram-container svg,
 html.dark-mode .uml-component-diagram-container svg,
-html.dark-mode .uml-deployment-diagram-container svg {
+html.dark-mode .uml-deployment-diagram-container svg,
+html.dark-mode .uml-freeform-diagram-container svg,
+html.dark-mode .uml-gitgraph-diagram-container svg,
+html.dark-mode .uml-folder-tree-diagram-container svg {
   filter: invert(1) hue-rotate(180deg);
 }
 
@@ -43,12 +55,21 @@ html.dark-mode .uml-deployment-diagram-container svg {
 .uml-activity-diagram-container svg,
 .uml-usecase-diagram-container svg,
 .uml-component-diagram-container svg,
-.uml-deployment-diagram-container svg {
+.uml-deployment-diagram-container svg,
+.uml-freeform-diagram-container svg,
+.uml-gitgraph-diagram-container svg,
+.uml-folder-tree-diagram-container svg {
   display: block;
   margin: 0 auto;
   overflow: visible;
   max-width: 100%;
   height: auto;
+}
+
+/* Folder trees are text-heavy and read better flowing with the surrounding
+   prose than floating in the center of the column. */
+.uml-folder-tree-diagram-container svg {
+  margin: 0;
 }
 
 /* ── Inline notation symbols ── */

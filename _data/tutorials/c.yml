@@ -506,25 +506,24 @@ steps:
 
       Before diving into malloc, you need to know *where* your variables live:
 
-      ```
-      +---------------------+ High address
-      |       Stack         | <-- local variables (int x, char buf[20])
-      |  (grows downward)   |     automatic: created on function entry,
-      |         v           |     destroyed on function return
-      +---------------------+
-      |                     |
-      |    (free space)     |
-      |                     |
-      +---------------------+
-      |         ^           |
-      |   (grows upward)    |
-      |        Heap         | <-- malloc'd memory
-      |                     |     manual: you create it, you destroy it
-      +---------------------+
-      |   Global/Static     | <-- global variables, string literals
-      +---------------------+
-      |    Code (Text)      | <-- your compiled functions
-      +---------------------+ Low address
+      ```freeform
+      @startuml
+      layout vertical
+
+      box "Stack\n(grows downward)\nlocal variables, auto-managed" as stack
+      box "(free space)" as freesp
+      box "Heap\n(grows upward)\nmalloc'd memory, manual" as heap
+      box "Global / Static\nglobal variables, string literals" as glob
+      box "Code (Text)\nyour compiled functions" as code
+
+      stack -- freesp
+      freesp -- heap
+      heap -- glob
+      glob -- code
+
+      note right of stack : High address
+      note right of code : Low address
+      @enduml
       ```
 
       **Key insight:** Stack memory is free and automatic — but it dies when the function returns. Heap memory survives function calls — but you must `free()` it yourself. Returning a pointer to a local stack variable is a classic bug: the memory is gone by the time the caller uses the pointer.
@@ -540,15 +539,15 @@ steps:
 
       Here's a mental model that will save you hours of debugging. Every pointer variable is in one of **four states**:
 
-      ```
-                        malloc()
-      [Uninitialized] -----------> [Alive]
-                                      |
-                                      |
-                           free()     |     = NULL
-                              |       |       |
-                              v       |       v
-                           [Dead]           [Null]
+      ```uml-state
+      @startuml
+      [*] --> Uninitialized
+
+      Uninitialized --> Alive : malloc()
+      Alive --> Dead : free()
+      Alive --> Null : p = NULL
+      Null --> Alive : p = malloc()
+      @enduml
       ```
 
       | State | Meaning | Safe Operations |

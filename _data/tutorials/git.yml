@@ -47,14 +47,21 @@ steps:
       Before we start, understand Git's core architecture — every file
       lives in one of **three states**:
 
-      ```
-      ┌──────────────┐     git add     ┌──────────────┐   git commit  ┌──────────────┐
-      │   Working    │ ──────────────▶ │   Staging    │ ────────────▶ │    Local     │
-      │  Directory   │                 │  Area (Index)│               │  Repository  │
-      └──────────────┘                 └──────────────┘               └──────────────┘
-            You edit                     You review                    Permanently
-           files here                  what will be in                  saved as a
-                                      the next snapshot                  snapshot
+      ```freeform
+      @startuml
+      layout horizontal
+
+      box "Working Directory" as wd
+      box "Staging Area\n(Index)" as sa
+      box "Local Repository" as lr
+
+      wd --> sa : git add
+      sa --> lr : git commit
+
+      note bottom of wd : You edit files here
+      note bottom of sa : Review what will be in the next snapshot
+      note bottom of lr : Permanently saved as a snapshot
+      @enduml
       ```
 
       Think of it like posting on social media:
@@ -1457,19 +1464,29 @@ steps:
       is nearly instant. You can have hundreds of branches without any
       performance impact.
 
+      **Before branching** — `main` and `HEAD` both point at `C3`:
+
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+      head main
+      @enduml
       ```
-      Before branching:
 
-        main:  [C1] ← [C2] ← [C3]  ← HEAD
-                                ↑
-                           pointer: "main"
+      **After creating the `feature-team-up` branch** — two pointers at the same commit; `HEAD` follows `feature-team-up`:
 
-      After creating feature branch:
-
-        main:  [C1] ← [C2] ← [C3]
-                                ↑
-                          pointer: "main"
-                          pointer: "feature-team-up"  ← HEAD
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+      branch feature-team-up at C3
+      head feature-team-up
+      @enduml
       ```
 
       Two pointers to the same commit — not a copy of your entire
@@ -1702,34 +1719,67 @@ steps:
       was created, Git simply slides the `main` pointer forward. No merge
       commit is created; the history stays linear:
 
+      **Before** — `feature-team-up` has one new commit ahead of `main`:
+
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+      branch feature-team-up from C3:
+        C4 "C4"
+      head main
+      @enduml
       ```
-      Before:
 
-        main:  [C1] ← [C2] ← [C3]
-                                ↑ main
-                                └── feature-team-up: [C4]
+      **After fast-forward merge** — `main` slides forward; both branches now point at `C4`:
 
-      After fast-forward merge:
-
-        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD (main, feature-team-up)
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+        C4 "C4"
+      branch feature-team-up at C4
+      head main
+      @enduml
       ```
 
       **Three-way merge** — when both branches have diverged (each has new
       commits the other doesn't), Git compares both branch tips against their
       common ancestor and creates a new **merge commit** with two parents:
 
+      **Before** — both branches have diverged from their common ancestor `C3`:
+
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+        C5 "C5"
+      branch feature from C3:
+        C4 "C4"
+      head main
+      @enduml
       ```
-      Before:
 
-        main:           [C1] ← [C2] ← [C3] ← [C5]
-                                         \
-        feature:                          [C4]
+      **After three-way merge** — Git creates a new merge commit `M` with two parents (`C5` and `C4`):
 
-      After three-way merge:
-
-        main:           [C1] ← [C2] ← [C3] ← [C5] ← [M]  ← HEAD
-                                         \              ↑
-        feature:                          [C4] ─────────┘
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+        C5 "C5"
+        M merge feature "Merge feature into main"
+      branch feature from C3:
+        C4 "C4"
+      head main
+      @enduml
       ```
 
       You'll see a three-way merge in action in the next few steps, where
@@ -1754,17 +1804,32 @@ steps:
       This leaves an explicit join point in the history, so you can always
       see that a feature branch existed and when it was integrated:
 
+      **With default fast-forward** — the feature commit is absorbed into `main`'s linear history:
+
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+        C4 "C4 — feature commit, no trace of the branch"
+      head main
+      @enduml
       ```
-      With default fast-forward:
 
-        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
-                                     (feature commit, no trace of the branch)
+      **With `--no-ff`** — an explicit merge commit preserves the branch topology:
 
-      With --no-ff:
-
-        main:  [C1] ← [C2] ← [C3] ← [M]  ← HEAD
-                                 \   /
-        feature:                 [C4]
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3"
+        M merge feature "Merge feature into main"
+      branch feature from C3:
+        C4 "C4"
+      head main
+      @enduml
       ```
 
       **Trade-off:** `--no-ff` preserves explicit branch history — you and
@@ -2426,16 +2491,29 @@ steps:
       "ignore that last message" — the original is still there, but everyone
       knows it's been corrected.
 
+      **Before revert** — `C3` is the bad commit:
+
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3 — bad commit"
+      head main
+      @enduml
       ```
-      Before revert:
 
-        main:  [C1] ← [C2] ← [C3]  ← HEAD
-                              (bad commit)
+      **After `git revert HEAD`** — `C4` is the anti-commit that undoes `C3`:
 
-      After git revert HEAD:
-
-        main:  [C1] ← [C2] ← [C3] ← [C4]  ← HEAD
-                              (bad)   (anti-commit: undoes C3)
+      ```gitgraph
+      @startuml
+      branch main:
+        C1 "C1"
+        C2 "C2"
+        C3 "C3 — bad commit (still in history)"
+        C4 "C4 — anti-commit that undoes C3"
+      head main
+      @enduml
       ```
 
       ### Scalpel vs. Sledgehammer
@@ -2791,12 +2869,19 @@ steps:
 
       ### The remote workflow
 
-      ```
-      ┌──────────────┐  git add/commit  ┌──────────────┐    git push    ┌──────────────┐
-      │   Working    │ ───────────────▶ │    Local     │ ─────────────▶ │    Remote    │
-      │  Directory   │ ◀─────────────── │     Repo     │ ◀───────────── │     Repo     │
-      └──────────────┘   git restore    └──────────────┘    git pull    └──────────────┘
-                                          (your machine)                  (e.g. GitHub)
+      ```freeform
+      @startuml
+      layout horizontal
+
+      box "Working Directory" as wd
+      box "Local Repo\n(your machine)" as local
+      box "Remote Repo\n(e.g. GitHub)" as remote
+
+      wd --> local : git add/commit
+      local --> wd : git restore
+      local --> remote : git push
+      remote --> local : git pull
+      @enduml
       ```
 
       - **`git clone <url>`** — Download a full copy of a remote repository

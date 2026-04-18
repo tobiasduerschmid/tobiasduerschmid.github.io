@@ -1422,6 +1422,60 @@ UC4 -- PaymentGateway
 @enduml
   </code></pre>
 
+  <h2>Actor Inheritance — LMS with User Hierarchy</h2>
+  <pre><code class="language-uml-usecase">
+@startuml
+actor User
+actor Student
+actor Instructor
+usecase "Login" as UC1
+usecase "View Course" as UC2
+usecase "Submit Assignment" as UC3
+usecase "Grade Submission" as UC4
+rectangle "LMS" {
+  UC1
+  UC2
+  UC3
+  UC4
+}
+User -- UC1
+User -- UC2
+Student --|> User
+Instructor --|> User
+Student -- UC3
+Instructor -- UC4
+@enduml
+  </code></pre>
+
+  <h2>Actor Inheritance — Hospital System</h2>
+  <pre><code class="language-uml-usecase">
+@startuml
+actor "Medical Staff" as Staff
+actor Doctor
+actor Nurse
+actor Patient
+usecase "View Patient Records" as UC1
+usecase "Prescribe Medication" as UC2
+usecase "Administer Treatment" as UC3
+usecase "Schedule Appointment" as UC4
+usecase "Authenticate" as UC5
+rectangle "Hospital System" {
+  UC1
+  UC2
+  UC3
+  UC4
+  UC5
+}
+Staff -- UC1
+Doctor --|> Staff
+Nurse --|> Staff
+Doctor -- UC2
+Nurse -- UC3
+Patient -- UC4
+UC1 ..> UC5 : &lt;&lt;include&gt;&gt;
+@enduml
+  </code></pre>
+
   <hr style="margin-top: 60px;">
   <h1>UML Activity Diagram Tests</h1>
 

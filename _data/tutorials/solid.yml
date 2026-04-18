@@ -270,7 +270,7 @@ steps:
       | **HR Team** | Pay stub formatting and employee records |
       | **Compliance Team** | CSV export for audit reports |
 
-      The Finance Team just pinged you: **the 22% federal tax bracket needs to become 24%** because of new tax legislation. Urgent, apparently.
+      The Finance Team just messaged you: **the 22% federal tax bracket needs to become 24%** because of new tax legislation. Urgent, apparently.
 
       ### Your Task
 
@@ -285,6 +285,21 @@ steps:
       ### What to Look For
 
       Notice how `_format_currency()` is shared between `calculate_payroll()` and `generate_pay_stub()`. Now think: if HR later wants to change the currency format (say, adding thousands separators), would that accidentally mess up the payroll calculations too?
+
+      ### Code Smells in Play
+
+      The `EmployeeManager` class exhibits two named code smells that often travel together:
+
+      - **God Class** (also called *Large Class*) — a single class that accumulates too many unrelated responsibilities. Easy to recognize: it keeps growing, and "where should I add this?" always ends up being this class.
+      - **Shotgun Surgery** — a change that requires edits scattered across many places. One simple refactor in this class causes ripples to Finance's, HR's, and Compliance's outputs simultaneously.
+
+      Knowing these names is useful: your IDE, static analysis tools (SonarQube, PyLint), and senior developers in code review will all reach for this vocabulary. (See the code smells reference in [`SEBook/development_practices/code_smells`](/SEBook/development_practices/code_smells.html) for more.)
+
+      > **Struggle is the lesson.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
+
+      ### Reflect → Explain in Your Own Words
+
+      Before you run the code: take 90 seconds. In three sentences or fewer, finish this prompt — *"The `EmployeeManager` class is hard to change because..."* Don't answer "SRP violation" — aim for the concrete mechanism: *which actor's request breaks which other actor's output, and why*. This short self-explanation is the difference between reading about SRP and building the mental model you'll reuse in code review for the rest of your career.
 
     files:
       - path: "employee_manager.py"
@@ -1401,6 +1416,74 @@ steps:
           assert "Venue:" in output, "Demo should print venue information"
           assert "Guests:" in output, "Demo should print guest count"
 
+      # ── SRP decoupling proof: Finance changes cannot bleed into Guest or Invite logic ──
+      - description: "SRP decoupling proof — BudgetTracker's source does not mention guests, invitations, or venues"
+        command: |
+          import ast
+          source = open('/tutorial/event_planner.py').read()
+          tree = ast.parse(source)
+          # Find BudgetTracker class and check its text for cross-concern leakage
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ClassDef) and node.name == 'BudgetTracker':
+                  body_src = ast.get_source_segment(source, node) or ''
+                  lowered = body_src.lower()
+                  for forbidden in ('guest', 'invitation', 'rsvp', 'email'):
+                      assert forbidden not in lowered, (
+                          f"BudgetTracker references '{forbidden}' — that's a concern belonging "
+                          f"to a different actor. The whole point of SRP is that changes requested "
+                          f"by Finance should not touch guest or communication code, and vice versa. "
+                          f"Remove the reference from BudgetTracker."
+                      )
+                  break
+          else:
+              raise AssertionError("Could not find BudgetTracker class in event_planner.py")
+        hints:
+          - text: "BudgetTracker is owned by the Finance actor. It should know about expenses and budget — nothing about guests, invitations, or emails."
+            condition: "default"
+
+      - description: "SRP decoupling proof — InvitationSender's source does not mention budgets or venues"
+        command: |
+          import ast
+          source = open('/tutorial/event_planner.py').read()
+          tree = ast.parse(source)
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ClassDef) and node.name == 'InvitationSender':
+                  body_src = ast.get_source_segment(source, node) or ''
+                  lowered = body_src.lower()
+                  for forbidden in ('budget', 'expense', 'venue'):
+                      assert forbidden not in lowered, (
+                          f"InvitationSender references '{forbidden}' — that belongs to a "
+                          f"different actor (Finance or Venue Manager). Keep each class "
+                          f"focused on its own actor."
+                      )
+                  break
+          else:
+              raise AssertionError("Could not find InvitationSender class in event_planner.py")
+        hints:
+          - text: "InvitationSender is owned by the Communications actor. Remove any references to budget or venue from it."
+            condition: "default"
+
+      - description: "SRP decoupling proof — changing BudgetTracker's behavior does not alter GuestRegistry state"
+        command: |
+          # Simulate: Finance actor changes the budget policy. The guest list must be unaffected.
+          exec(open('/tutorial/event_planner.py').read(), globals())
+          g = GuestRegistry()
+          g.add("Alice", "alice@example.com")
+          g.add("Bob", "bob@example.com")
+          snapshot_before = list(g.guests.keys())
+
+          b = BudgetTracker(10000)
+          b.add_expense("Catering", 5000)
+
+          snapshot_after = list(g.guests.keys())
+          assert snapshot_before == snapshot_after, (
+              "GuestRegistry state changed when BudgetTracker was used — the classes "
+              "should be fully decoupled. Each owns its own state."
+          )
+        hints:
+          - text: "Each refactored class should own its own state and not share data with siblings. If BudgetTracker modifies GuestRegistry, something is wrong."
+            condition: "default"
+
     quiz:
       title: "SRP — Refactor & Practice — Knowledge Check"
       min_score: 0.6
@@ -1462,9 +1545,17 @@ steps:
 
       Open `notification_router.py` and read through the code. Notice how all three channels are stuffed into one method with an if/elif chain. It's basically a giant switch statement pretending to be architecture.
 
+      ### Code Smell: *Switch Statement Smell*
+
+      The if/elif (or `switch`) chain on a string type has a name: the **Switch Statement Smell**. It's the dominant symptom of an OCP violation. Every new variant forces you to reopen existing code, risk breaking working branches, and crowd the method with logic that belongs in its own class.
+
+      ### Predict First
+
+      Before you write a line of code, predict the answer to this question: **if product asks you to add 10 more notification channels over the next six months, how long do you think `send_notification()` will end up?** Write your guess (in lines) somewhere. We'll check it against reality after the refactor in the next step.
+
       ### Task 1: Add Slack Notifications
 
-      Product team just dropped this in your DMs: **"We need Slack notifications for enterprise customers."**
+      Product team just sent over a new request: **"We need Slack notifications for enterprise customers."**
 
       Slack notifications need:
       - **Formatting:** Wrap the message in Slack markdown — bold the first line as a header using `*...*` and prefix the body with a clipboard emoji
@@ -1483,6 +1574,12 @@ steps:
       4. Pray you didn't accidentally break email or SMS while editing
 
       This is the pain the Open/Closed Principle is trying to save you from. We'll fix it properly in the next step.
+
+      > **Struggling is the lesson.** OCP feels counter-intuitive at first — your instinct says "just add another `elif`, the code works, ship it." The point of this step is to *feel* what happens when that instinct scales to 20 channels, so that polymorphism in Step 5 arrives as relief, not academic theory.
+
+      ### Reflect → Explain in Your Own Words
+
+      Before moving on, take 90 seconds. Close the code. In three sentences or fewer, finish this prompt: *"This `send_notification()` method becomes painful to change because..."* Don't answer "OCP violation" — aim for the concrete mechanism: what breaks when, who feels it, which line of the if/elif chain a junior would accidentally edit. This short self-explanation is what turns reading into schema-building (Chi & Wylie's ICAP framework — Constructive mode).
 
     files:
       - path: "notification_router.py"
@@ -1860,6 +1957,8 @@ steps:
       ### Worked Example: Refactoring NotificationRouter
 
       In Step 4 you felt the pain of that if/elif chain. Now let's fix it properly using **polymorphism** and **abstract base classes**.
+
+      > **Check your prediction from Step 4.** You predicted how long `send_notification()` would grow if 10 more channels were added to the if/elif design. After the refactor below, look at how long `NotificationRouter.send_notification()` is in the new design. (Spoiler: it doesn't grow at all — each channel is its own class.)
 
       The key insight: instead of one class that *knows about every channel*, we create a **family of channel classes** that each handle themselves. The router just iterates over whatever channels it has — it literally never needs to change when a new channel shows up. New channel? Just write a new class. Done.
 
@@ -2517,25 +2616,25 @@ steps:
             - "The polymorphic design uses less memory because abstract classes are more efficient than if/elif chains"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are legit benefits. Each format is independently testable, new formats can't break existing ones, and the exporter is cleaner because it just dispatches. The fourth is cap — polymorphism doesn't inherently save memory, and in Python the difference is negligible. OCP is about **maintainability and safety**, not performance.
+            The first three are real benefits. Each format is independently testable, new formats can't break existing ones, and the exporter is cleaner because it just dispatches. The fourth is a myth — polymorphism doesn't inherently save memory, and in Python the difference is negligible. OCP is about **maintainability and safety**, not performance.
   # --------------------------------------------------------------------------
-  # STEP 6 — LSP: Broken Promises (Liskov Substitution Principle)
+  # STEP 6 — LSP Part 1: Feel the Broken Contract
   # Pedagogy:
-  #   Pain-first          — checkout() breaks when GiftCardProcessor is added.
-  #   Predict-before-run  — students predict what fails before running tests.
-  #   Worked Example       — split into PaymentProcessor / RefundableProcessor.
-  #   Transfer Exercise    — MediaPlayer hierarchy with same LSP violation.
-  #   Bloom's level        — Understand / Apply / Analyze / Evaluate (quiz).
+  #   Pain-first             — student adds a subclass that shreds the contract.
+  #   Predict-before-run     — predict which phase of checkout() fails first.
+  #   Design-by-Contract     — student writes pre/postconditions as executable asserts.
+  #   Growth mindset         — struggle normalized (LSP is the deepest principle).
+  #   Bloom's level          — Apply / Analyze (quiz).
   # --------------------------------------------------------------------------
-  - title: "LSP — Broken Promises"
+  - title: "LSP — The Contract You Didn't Know You Signed"
     instructions: |
-      ## The Liskov Substitution Principle
+      ## The Liskov Substitution Principle — Part 1: Feel the Broken Promise
 
-      > **Learning objective:** After this step you will be able to **identify** LSP violations caused by strengthened preconditions or weakened postconditions, **explain** why returning a failure value still violates the contract, and **fix** a broken hierarchy by splitting interfaces.
+      > **Learning objective:** After this step you will be able to **identify** LSP violations caused by strengthened preconditions or weakened postconditions, **write** pre/postconditions as executable assertions, and **explain** why returning a "success: false" sentinel still violates the contract.
 
       ### The Principle
 
-      Barbara Liskov dropped this rule back in 1987 and it still hits:
+      Barbara Liskov stated this rule in 1987, and it still hits:
 
       > *If S is a subtype of T, then objects of type T may be replaced with objects of type S without altering any desirable property of the program.*
 
@@ -2544,87 +2643,83 @@ steps:
       - **Accept AT LEAST what the parent accepts** (preconditions may be equal or *weaker*)
       - **Guarantee AT LEAST what the parent guarantees** (postconditions may be equal or *stronger*)
 
-      Break either rule and code that trusts the parent's contract will blow up when it meets the subclass.
+      Break either rule and code that trusts the parent's contract will blow up the moment it meets the subclass.
+
+      > **Struggling is the lesson.** LSP is the deepest SOLID principle — every senior developer has been burned by it at least once. If "strengthening vs. weakening" feels abstract, that's normal. The exercises below make it mechanically observable.
+
+      ### The Happy / Sad Visual Mnemonic
+
+      Students routinely forget which of pre- and post-conditions can be weakened and which can be strengthened. Baniassad (ICSE-SEET 2018) developed a visual cue that sticks in memory: a *substitutable* method is **happy** — a smile, wider at the top and narrower at the bottom. A *violating* method is **sad** — a frown, narrow at the top and wide at the bottom.
+
+      ```
+      Happy  ⌣   — substitutable (LSP-compliant)
+         TOP  wide    → preconditions  WEAKER    (accept more inputs than parent)
+         BOT  narrow  → postconditions STRONGER  (guarantee more than parent)
+
+      Sad    ⌢   — LSP violation
+         TOP  narrow  → preconditions  STRONGER  (reject inputs parent accepts)
+         BOT  wide    → postconditions WEAKER    (promise less than parent)
+      ```
+
+      Keep this picture in your head. Every LSP judgment reduces to the same question: *is the subclass's contract shaped like a smile relative to the parent's, or like a frown?*
+
+      ### Code Smell: *Refused Bequest*
+
+      The most common LSP violation has a name: **Refused Bequest**. It looks like a subclass that inherits a method it cannot meaningfully implement, so it either throws `NotImplementedError` *or* returns a "success: false" sentinel. Both are violations — and the second is worse because it fails silently.
 
       ### The Payment Processing System
 
       Open `payments.py`. You'll find a working payment system:
 
-      - `PaymentProcessor` (ABC) — defines two methods:
-        - `process_payment(amount)` — accepts any positive amount, returns `{"success": True, "txn_id": ...}`
-        - `refund(txn_id)` — returns `{"success": True, "amount": ...}`
+      - `PaymentProcessor` (ABC) — defines two methods with documented contracts:
+        - `process_payment(amount)` — **precondition:** `amount > 0`; **postcondition:** returns `{"success": True, "txn_id": <str>}`
+        - `refund(txn_id)` — **postcondition:** returns `{"success": True, "amount": <float>}`
       - `CreditCardProcessor` — honors the full contract
       - `DebitCardProcessor` — honors the full contract
-      - `checkout(processors, amounts)` — iterates processors polymorphically: processes all payments, stores transaction IDs, then refunds them all (simulating a test/rollback scenario)
+      - `checkout(processors, amounts)` — iterates processors polymorphically: charges all payments, stores transaction IDs, then refunds them all (a test/rollback scenario)
 
-      Run the tests now. They pass. Everything's chill.
+      Run the tests now. They pass. Everything's fine.
 
       ### Predict Before You Code
 
-      Your task is to add a `GiftCardProcessor` that breaks the contract in two ways. Before writing it, predict: *which* of the two checkout operations (process or refund) will fail first, and why?
+      Your job is to add a `GiftCardProcessor` that breaks the contract in two ways. Before writing a single line of code: **predict** — which phase of `checkout()` (process or refund) will fail first, and why? Write your prediction down. You'll check it after running the code.
 
-      ### Task
+      ### Task 1 — Add a Contract-Violating Subclass
 
       Add a `GiftCardProcessor` class to `payments.py` that inherits from `PaymentProcessor` and:
 
       1. **Strengthens the precondition:** `process_payment(amount)` rejects amounts greater than the card's balance (even though the base class accepts any positive amount). Raise a `ValueError` with the message `"Insufficient gift card balance"`.
       2. **Weakens the postcondition:** `refund(txn_id)` returns `{"success": False, "error": "Gift cards are non-refundable"}` instead of actually refunding.
 
-      Give the constructor a `balance` parameter (e.g., `GiftCardProcessor(balance=25.00)`).
+      Give the constructor a `balance` parameter (e.g., `GiftCardProcessor(balance=25.00)`). Also implement `process_payment()` to return `{"success": True, "txn_id": <some unique id>}` when the amount is within balance, so that *successful* charges still look normal — this is exactly what makes the silent-failure path so dangerous in the real world.
 
-      After adding `GiftCardProcessor`, update `test_checkout_with_refund()` in `test_payments.py` to include it in the processor list (with a balance of `25.00` and an amount of `50.00`). Watch the test fail.
+      ### Task 2 — Write the Contract as Executable Code
 
-      ### Why Is Returning `{"success": False}` a Violation?
+      Open `test_payments.py`. You'll find a helper function called `refund_contract_holds(processor)` marked as `TODO`. Implement it using plain `assert` statements so that each assertion encodes one piece of the `refund()` postcondition:
+
+      1. The result must be a `dict`.
+      2. `result["success"]` must be `True`.
+      3. `result["amount"]` must be numeric (`int` or `float`).
+
+      Then — in the existing test `test_refund_contract_for_all_processors()` — call your helper with **each** of the three processors (after you've added `GiftCardProcessor`). The first two should pass. The gift card should fail — and because you wrote the contract as `assert` statements, the failure message will make the broken postcondition literally visible.
+
+      ### Task 3 — Break checkout()
+
+      In `test_checkout_with_refund()`, append `GiftCardProcessor(balance=25.00)` to the processors list and `50.00` to the amounts list. Run the tests and watch `checkout()` explode.
+
+      Was your prediction right?
+
+      ### Why Is `{"success": False}` Still a Violation?
 
       You might be thinking: *"But I'm returning a dict with the right keys — I'm just setting success to False."*
 
-      The postcondition of `refund()` isn't just "return a dict." It's **"actually refund the transaction and return the refunded amount."** Callers depend on that guarantee. A function that silently fails while wearing the same interface is *more dangerous* than one that crashes — because the caller has zero reason to suspect anything went wrong.
+      The postcondition of `refund()` isn't just "return a dict." It's **"actually refund the transaction and return the refunded amount."** Callers depend on that guarantee. A function that silently fails while wearing the same interface is *more dangerous* than one that crashes — because the caller has zero reason to suspect anything went wrong. Money has already moved. The customer is gone. You'll find out next Tuesday during reconciliation.
 
-      ### The Fix: Split the Interface
+      **The fix is structural** — splitting the hierarchy so `GiftCardProcessor` never inherits a `refund()` method it can't honor. That's the next step.
 
-      The root problem is that `GiftCardProcessor` is forced to implement `refund()` even though gift cards cannot be refunded. The fix:
+      ### Reflect → Explain in Your Own Words
 
-      ```python
-      from __future__ import annotations
-      from abc import ABC, abstractmethod
-
-      class PaymentProcessor(ABC):
-          """Can process payments. No refund guarantee."""
-
-          @property
-          def max_amount(self) -> float | None:
-              """Maximum amount this processor accepts. None means no limit."""
-              return None
-
-          @abstractmethod
-          def process_payment(self, amount: float) -> dict[str, str | bool]:
-              ...
-
-      class RefundableProcessor(PaymentProcessor):
-          """Can process payments AND refund them."""
-
-          @abstractmethod
-          def refund(self, txn_id: str) -> dict[str, str | float | bool]:
-              ...
-      ```
-
-      Now:
-      - `CreditCardProcessor` and `DebitCardProcessor` extend `RefundableProcessor`
-      - `GiftCardProcessor` extends only `PaymentProcessor` and overrides `max_amount`
-      - `checkout_with_refund()` accepts only `RefundableProcessor` instances
-      - Code that only needs to charge (no refund) accepts any `PaymentProcessor`
-
-      This is the **Interface Segregation Principle** (ISP) working hand-in-hand with LSP.
-
-      ### Exercise: Fix the MediaPlayer Hierarchy
-
-      Open `media_player.py`. A `MediaPlayer` ABC declares `play()`, `stop()`, `seek(position)`, and `get_duration()`. `AudioFilePlayer` and `VideoFilePlayer` work fine. But `LiveStreamPlayer` inherits all four methods and raises `NotImplementedError` on `seek()` and `get_duration()`.
-
-      The `playlist_renderer(players)` function iterates all players and renders a progress bar using `get_duration()` and `seek()`. It crashes on live streams.
-
-      **Your task:** Refactor the hierarchy so that `LiveStreamPlayer` does not pretend to support seeking or duration. A `render_playlist(players)` function should be able to handle all player types safely, rendering progress bars only for seekable players.
-
-      **Hint:** Split `MediaPlayer` into a base with `play()`/`stop()`, and a `SeekablePlayer` subclass that adds `seek()`/`get_duration()`. Use `isinstance()` checks or separate lists in the renderer.
+      Before moving on, take 90 seconds. Close the code. In three sentences or fewer, explain to an imaginary teammate: *"Why is silently returning `success=False` worse than crashing with `NotImplementedError`?"* Use the Happy/Sad mnemonic if it helps — is the subclass's refund contract shaped like a smile or a frown? This self-explanation is what moves "LSP knowledge" from "something I read" to "something I can wield in code review".
 
     files:
       - path: "payments.py"
@@ -2718,10 +2813,14 @@ steps:
 
 
           # TODO: Add GiftCardProcessor here.
-          # It should:
-          #   1. Strengthen the precondition: reject amounts > balance
-          #   2. Weaken the postcondition: refund() returns
-          #      {"success": False, "error": "Gift cards are non-refundable"}
+          # Task 1 requirements:
+          #   1. Constructor takes `balance: float`.
+          #   2. process_payment(amount):
+          #        - If amount > balance, raise ValueError("Insufficient gift card balance").
+          #        - Otherwise, deduct from balance, store a txn_id, and return
+          #          {"success": True, "txn_id": <str>} — this is the part that looks normal.
+          #   3. refund(txn_id):
+          #        - Return {"success": False, "error": "Gift cards are non-refundable"}.
 
 
           def checkout(processors: list[PaymentProcessor], amounts: list[float]) -> list[dict[str, str | float | bool]]:
@@ -2767,6 +2866,8 @@ steps:
               DebitCardProcessor,
               checkout,
           )
+          # TODO: After you add GiftCardProcessor to payments.py, import it here:
+          # from payments import GiftCardProcessor
 
 
           def test_credit_card_process_and_refund() -> None:
@@ -2792,240 +2893,61 @@ steps:
               assert refund_result["amount"] == 200.00
 
 
+          # ── The Refund Contract (Task 2) ──────────────────────────────
+          #
+          # The refund() postcondition — written as executable assertions.
+          # Any processor that inherits PaymentProcessor must satisfy ALL
+          # three assertions. If not, it violates LSP.
+
+          def refund_contract_holds(processor) -> None:
+              """TODO: Encode the refund() postcondition as assert statements.
+
+              Call processor.process_payment(50.00), then call
+              processor.refund(result["txn_id"]) and assert:
+                1. the refund result is a dict
+                2. refund_result["success"] is True
+                3. refund_result["amount"] is an int or float
+              """
+              # TODO: Implement this helper.
+              pass
+
+
+          def test_refund_contract_for_all_processors() -> None:
+              """Task 2: verify the contract for every PaymentProcessor subclass.
+
+              After adding GiftCardProcessor to payments.py, uncomment the
+              third line below. The credit and debit cards should pass the
+              contract. The gift card will FAIL — and the failure message
+              from refund_contract_holds() will make the broken postcondition
+              visible.
+              """
+              refund_contract_holds(CreditCardProcessor())
+              refund_contract_holds(DebitCardProcessor(account_balance=500.00))
+              # TODO: Uncomment the next line after adding GiftCardProcessor
+              # refund_contract_holds(GiftCardProcessor(balance=100.00))
+
+
           def test_checkout_with_refund() -> None:
-              """checkout() processes and refunds through all processors."""
+              """Task 3: checkout() processes and refunds through all processors.
+
+              After adding GiftCardProcessor, uncomment the extra lines below
+              to add it to the list. Watch checkout() blow up in the refund
+              phase — and compare the failure to your prediction.
+              """
               processors = [
                   CreditCardProcessor(),
                   DebitCardProcessor(account_balance=500.00),
               ]
               amounts = [75.00, 150.00]
 
-              # TODO: After adding GiftCardProcessor, add it here:
-              #   - Append GiftCardProcessor(balance=25.00) to processors
-              #   - Append 50.00 to amounts
-              # Then run the tests and observe the failure.
+              # TODO: After adding GiftCardProcessor, uncomment:
+              # processors.append(GiftCardProcessor(balance=25.00))
+              # amounts.append(50.00)
 
               refund_results = checkout(processors, amounts)
               assert len(refund_results) == len(processors)
               for result in refund_results:
                   assert result["success"] is True
-
-
-          def test_checkout_refund_amounts_match() -> None:
-              """Refunded amounts must match the originally charged amounts."""
-              processors = [
-                  CreditCardProcessor(),
-                  DebitCardProcessor(account_balance=1000.00),
-              ]
-              amounts = [42.50, 87.25]
-              refund_results = checkout(processors, amounts)
-              for result, expected in zip(refund_results, amounts):
-                  assert result["amount"] == expected
-
-
-          if __name__ == "__main__":
-              pytest.main([__file__, "-v"])
-        language: "python"
-
-      - path: "media_player.py"
-        content: |
-          """Media player hierarchy — LSP exercise.
-
-          BUG: LiveStreamPlayer inherits seek() and get_duration() from
-          MediaPlayer but cannot implement them. The playlist_renderer()
-          function crashes when it encounters a live stream.
-
-          YOUR TASK: Refactor the hierarchy so LiveStreamPlayer does not
-          pretend to support seeking or duration queries. The renderer
-          should handle all player types safely.
-          """
-          from abc import ABC, abstractmethod
-
-
-          class MediaPlayer(ABC):
-              """Base class for all media players."""
-
-              def __init__(self, title: str) -> None:
-                  self._title = title
-                  self._playing = False
-
-              @property
-              def title(self) -> str:
-                  return self._title
-
-              @abstractmethod
-              def play(self) -> None:
-                  ...
-
-              @abstractmethod
-              def stop(self) -> None:
-                  ...
-
-              @abstractmethod
-              def seek(self, position: int) -> None:
-                  """Seek to a position in seconds."""
-                  ...
-
-              @abstractmethod
-              def get_duration(self) -> str:
-                  """Return total duration in seconds."""
-                  ...
-
-
-          class AudioFilePlayer(MediaPlayer):
-              def __init__(self, title: str, duration: int) -> None:
-                  super().__init__(title)
-                  self._duration = duration
-
-              def play(self) -> str:
-                  self._playing = True
-
-              def stop(self) -> str:
-                  self._playing = False
-
-              def seek(self, position: int) -> str:
-                  if position < 0 or position > self._duration:
-                      raise ValueError("Position out of range")
-
-              def get_duration(self) -> str:
-                  return self._duration
-
-
-          class VideoFilePlayer(MediaPlayer):
-              def __init__(self, title: str, duration: int, resolution="1080p") -> None:
-                  super().__init__(title)
-                  self._duration = duration
-                  self._resolution = resolution
-
-              def play(self) -> str:
-                  self._playing = True
-
-              def stop(self) -> str:
-                  self._playing = False
-
-              def seek(self, position: int) -> str:
-                  if position < 0 or position > self._duration:
-                      raise ValueError("Position out of range")
-
-              def get_duration(self) -> str:
-                  return self._duration
-
-
-          class LiveStreamPlayer(MediaPlayer):
-              """Live streams have no duration and cannot be seeked."""
-
-              def __init__(self, title: str, stream_url="https://live.example.com") -> None:
-                  super().__init__(title)
-                  self._stream_url = stream_url
-
-              def play(self) -> None:
-                  self._playing = True
-
-              def stop(self) -> None:
-                  self._playing = False
-
-              def seek(self, position: int) -> None:
-                  raise NotImplementedError("Cannot seek a live stream")
-
-              def get_duration(self) -> str:
-                  raise NotImplementedError("Live streams have no duration")
-
-
-          def playlist_renderer(players) -> None:
-              """Render a playlist with progress bars for each player.
-
-              Depends on the MediaPlayer contract:
-              - get_duration() returns a number
-              - seek() accepts a valid position
-
-              Returns:
-                  list of rendered playlist entries (dicts)
-              """
-              entries = []
-              for player in players:
-                  duration = player.get_duration()
-                  midpoint = duration / 2
-                  player.seek(midpoint)
-                  entries.append({
-                      "title": player.title,
-                      "duration": duration,
-                      "seeked_to": midpoint,
-                      "has_progress_bar": True,
-                  })
-              return entries
-        language: "python"
-
-      - path: "test_media_player.py"
-        content: |
-          """Tests for the media player hierarchy."""
-          import pytest
-          from media_player import (
-              AudioFilePlayer,
-              VideoFilePlayer,
-              LiveStreamPlayer,
-              playlist_renderer,
-          )
-
-
-          def test_audio_player_contract() -> None:
-              """AudioFilePlayer supports play, stop, seek, and duration."""
-              player = AudioFilePlayer("Song.mp3", duration=240)
-              player.play()
-              player.seek(120)
-              assert player.get_duration() == 240
-              player.stop()
-
-
-          def test_video_player_contract() -> None:
-              """VideoFilePlayer supports play, stop, seek, and duration."""
-              player = VideoFilePlayer("Movie.mp4", duration=7200)
-              player.play()
-              player.seek(3600)
-              assert player.get_duration() == 7200
-              player.stop()
-
-
-          def test_live_stream_breaks_playlist() -> None:
-              """BEFORE fix: LiveStreamPlayer crashes playlist_renderer.
-
-              This test documents the LSP violation. After you fix the
-              hierarchy, update this test so the renderer works with all
-              player types without crashing.
-              """
-              players = [
-                  AudioFilePlayer("Song.mp3", duration=240),
-                  VideoFilePlayer("Movie.mp4", duration=7200),
-                  LiveStreamPlayer("CNN Live"),
-              ]
-              # This crashes because LiveStreamPlayer raises NotImplementedError
-              with pytest.raises(NotImplementedError):
-                  playlist_renderer(players)
-
-
-          def test_playlist_renders_all_types() -> None:
-              """AFTER fix: playlist renderer handles all player types.
-
-              TODO: Once you refactor the hierarchy, update this test
-              to verify that the renderer works with audio, video, AND
-              live stream players without crashing. Seekable players
-              should get progress bars; live streams should not.
-              """
-              # Uncomment and adapt after fixing the hierarchy:
-              # players = [
-              #     AudioFilePlayer("Song.mp3", duration=240),
-              #     VideoFilePlayer("Movie.mp4", duration=7200),
-              #     LiveStreamPlayer("CNN Live"),
-              # ]
-              # entries = playlist_renderer(players)
-              # assert len(entries) == 3
-              #
-              # # Seekable players have progress bars
-              # assert entries[0]["has_progress_bar"] is True
-              # assert entries[1]["has_progress_bar"] is True
-              #
-              # # Live stream has no progress bar
-              # assert entries[2]["has_progress_bar"] is False
-              pass
 
 
           if __name__ == "__main__":
@@ -3038,72 +2960,48 @@ steps:
       files:
         - path: "payments.py"
           content: |
-            """Payment processing system — LSP-compliant version."""
+            """Payment processing system — with GiftCardProcessor violating the contract."""
+            from __future__ import annotations
             from abc import ABC, abstractmethod
             import uuid
 
 
             class PaymentProcessor(ABC):
-                """Can process payments. No refund guarantee.
-
-                Contract:
-                    process_payment(amount):
-                        Precondition:  0 < amount <= max_amount (if max_amount is set)
-                        Postcondition: returns {"success": True, "txn_id": <str>}
-                """
-
-                @property
-                def max_amount(self) -> float:
-                    """Maximum accepted amount. None means no limit."""
-                    return None
+                """Abstract base class for all payment processors."""
 
                 @abstractmethod
-                def process_payment(self, amount: float) -> None:
+                def process_payment(self, amount: float) -> dict[str, str | bool]:
+                    ...
+
+                @abstractmethod
+                def refund(self, txn_id: str) -> dict[str, str | float | bool]:
                     ...
 
 
-            class RefundableProcessor(PaymentProcessor):
-                """Can process payments AND refund them.
-
-                Additional contract:
-                    refund(txn_id):
-                        Precondition:  txn_id was returned by a prior process_payment
-                        Postcondition: returns {"success": True, "amount": <float>}
-                """
-
-                @abstractmethod
-                def refund(self, txn_id: str) -> dict[str, object]:
-                    ...
-
-
-            class CreditCardProcessor(RefundableProcessor):
-                """Processes credit card payments. Supports refunds."""
-
+            class CreditCardProcessor(PaymentProcessor):
                 def __init__(self) -> None:
                     self._transactions = {}
 
-                def process_payment(self, amount: float) -> dict[str, object]:
+                def process_payment(self, amount: float) -> dict[str, str | bool]:
                     if amount <= 0:
                         raise ValueError("Amount must be positive")
                     txn_id = str(uuid.uuid4())
                     self._transactions[txn_id] = amount
                     return {"success": True, "txn_id": txn_id}
 
-                def refund(self, txn_id: str) -> dict[str, object]:
+                def refund(self, txn_id: str) -> dict[str, str | float | bool]:
                     if txn_id not in self._transactions:
                         raise ValueError(f"Unknown transaction: {txn_id}")
                     amount = self._transactions.pop(txn_id)
                     return {"success": True, "amount": amount}
 
 
-            class DebitCardProcessor(RefundableProcessor):
-                """Processes debit card payments. Supports refunds."""
-
-                def __init__(self, account_balance=1000.00) -> None:
+            class DebitCardProcessor(PaymentProcessor):
+                def __init__(self, account_balance: float = 1000.00) -> None:
                     self._balance = account_balance
                     self._transactions = {}
 
-                def process_payment(self, amount: float) -> dict[str, object]:
+                def process_payment(self, amount: float) -> dict[str, str | bool]:
                     if amount <= 0:
                         raise ValueError("Amount must be positive")
                     if amount > self._balance:
@@ -3113,7 +3011,7 @@ steps:
                     self._transactions[txn_id] = amount
                     return {"success": True, "txn_id": txn_id}
 
-                def refund(self, txn_id: str) -> dict[str, object]:
+                def refund(self, txn_id: str) -> dict[str, str | float | bool]:
                     if txn_id not in self._transactions:
                         raise ValueError(f"Unknown transaction: {txn_id}")
                     amount = self._transactions.pop(txn_id)
@@ -3122,261 +3020,125 @@ steps:
 
 
             class GiftCardProcessor(PaymentProcessor):
-                """Processes gift card payments. Non-refundable.
+                """Processes gift card payments.
 
-                Only implements PaymentProcessor (not RefundableProcessor)
-                because gift cards cannot be refunded. The max_amount
-                property explicitly declares the balance limit.
+                INTENTIONAL LSP VIOLATIONS (for demonstration):
+                  1. Strengthens the precondition on process_payment (rejects amount > balance).
+                  2. Weakens the postcondition on refund (returns success=False).
+
+                We'll fix these in the next step by splitting the hierarchy.
                 """
 
-                def __init__(self, balance: float = 0.0) -> None:
+                def __init__(self, balance: float) -> None:
                     self._balance = balance
                     self._transactions = {}
 
-                @property
-                def max_amount(self) -> dict[str, object]:
-                    return self._balance
-
-                def process_payment(self, amount: float) -> dict[str, object]:
+                def process_payment(self, amount: float) -> dict[str, str | bool]:
                     if amount <= 0:
                         raise ValueError("Amount must be positive")
                     if amount > self._balance:
+                        # Strengthened precondition — LSP violation
                         raise ValueError("Insufficient gift card balance")
                     self._balance -= amount
                     txn_id = str(uuid.uuid4())
                     self._transactions[txn_id] = amount
                     return {"success": True, "txn_id": txn_id}
 
+                def refund(self, txn_id: str) -> dict[str, str | float | bool]:
+                    # Weakened postcondition — LSP violation
+                    return {
+                        "success": False,
+                        "error": "Gift cards are non-refundable",
+                    }
 
-            def checkout(processors, amounts) -> list[str]:
-                """Process payments through any PaymentProcessor.
 
-                Does NOT require refund capability.
-                """
+            def checkout(processors: list[PaymentProcessor], amounts: list[float]) -> list[dict[str, str | float | bool]]:
                 if len(processors) != len(amounts):
                     raise ValueError("processors and amounts must have same length")
-
                 txn_ids = []
                 for processor, amount in zip(processors, amounts):
-                    if processor.max_amount is not None and amount > processor.max_amount:
-                        raise ValueError(
-                            f"Amount {amount} exceeds processor limit {processor.max_amount}"
-                        )
                     result = processor.process_payment(amount)
                     assert result["success"], "process_payment must succeed"
                     txn_ids.append((processor, result["txn_id"]))
-
-                return txn_ids
-
-
-            def checkout_with_refund(processors, amounts) -> None:
-                """Process payments and refund them all. Requires RefundableProcessor.
-
-                Args:
-                    processors: list of RefundableProcessor instances
-                    amounts: list of amounts
-                """
-                if len(processors) != len(amounts):
-                    raise ValueError("processors and amounts must have same length")
-
-                for p in processors:
-                    if not isinstance(p, RefundableProcessor):
-                        raise TypeError(
-                            f"{type(p).__name__} does not support refunds. "
-                            f"Use checkout() instead, or pass only RefundableProcessor instances."
-                        )
-
-                txn_ids = []
-                for processor, amount in zip(processors, amounts):
-                    result = processor.process_payment(amount)
-                    assert result["success"]
-                    txn_ids.append((processor, result["txn_id"]))
-
                 refund_results = []
                 for processor, txn_id in txn_ids:
                     result = processor.refund(txn_id)
                     assert result["success"], f"refund must succeed, got: {result}"
                     refund_results.append(result)
-
                 return refund_results
           language: "python"
 
-        - path: "media_player.py"
+        - path: "test_payments.py"
           content: |
-            """Media player hierarchy — LSP-compliant version."""
-            from abc import ABC, abstractmethod
-
-
-            class MediaPlayer(ABC):
-                """Base class: can play and stop. No seeking guarantee."""
-
-                def __init__(self, title: str) -> None:
-                    self._title = title
-                    self._playing = False
-
-                @property
-                def title(self) -> str:
-                    return self._title
-
-                @abstractmethod
-                def play(self) -> None:
-                    ...
-
-                @abstractmethod
-                def stop(self) -> None:
-                    ...
-
-
-            class SeekablePlayer(MediaPlayer):
-                """A media player that supports seeking and has a known duration."""
-
-                @abstractmethod
-                def seek(self, position: int) -> None:
-                    """Seek to a position in seconds."""
-                    ...
-
-                @abstractmethod
-                def get_duration(self) -> str:
-                    """Return total duration in seconds."""
-                    ...
-
-
-            class AudioFilePlayer(SeekablePlayer):
-                def __init__(self, title: str, duration: int) -> None:
-                    super().__init__(title)
-                    self._duration = duration
-
-                def play(self) -> str:
-                    self._playing = True
-
-                def stop(self) -> str:
-                    self._playing = False
-
-                def seek(self, position: int) -> str:
-                    if position < 0 or position > self._duration:
-                        raise ValueError("Position out of range")
-
-                def get_duration(self) -> str:
-                    return self._duration
-
-
-            class VideoFilePlayer(SeekablePlayer):
-                def __init__(self, title: str, duration: int, resolution="1080p") -> None:
-                    super().__init__(title)
-                    self._duration = duration
-                    self._resolution = resolution
-
-                def play(self) -> str:
-                    self._playing = True
-
-                def stop(self) -> str:
-                    self._playing = False
-
-                def seek(self, position: int) -> str:
-                    if position < 0 or position > self._duration:
-                        raise ValueError("Position out of range")
-
-                def get_duration(self) -> str:
-                    return self._duration
-
-
-            class LiveStreamPlayer(MediaPlayer):
-                """Live streams: play and stop only. No seeking, no duration."""
-
-                def __init__(self, title: str, stream_url="https://live.example.com") -> None:
-                    super().__init__(title)
-                    self._stream_url = stream_url
-
-                def play(self) -> None:
-                    self._playing = True
-
-                def stop(self) -> None:
-                    self._playing = False
-
-
-            def playlist_renderer(players) -> None:
-                """Render a playlist that safely handles all player types.
-
-                Seekable players get progress bars. Non-seekable players
-                (like live streams) get a simple entry without a progress bar.
-                """
-                entries = []
-                for player in players:
-                    if isinstance(player, SeekablePlayer):
-                        duration = player.get_duration()
-                        midpoint = duration / 2
-                        player.seek(midpoint)
-                        entries.append({
-                            "title": player.title,
-                            "duration": duration,
-                            "seeked_to": midpoint,
-                            "has_progress_bar": True,
-                        })
-                    else:
-                        entries.append({
-                            "title": player.title,
-                            "duration": None,
-                            "seeked_to": None,
-                            "has_progress_bar": False,
-                        })
-                return entries
-          language: "python"
-
-        - path: "test_media_player.py"
-          content: |
-            """Tests for the media player hierarchy — after fix."""
+            """Tests for the payment processing system — with the contract encoded as asserts."""
             import pytest
-            from media_player import (
-                AudioFilePlayer,
-                VideoFilePlayer,
-                LiveStreamPlayer,
-                SeekablePlayer,
-                MediaPlayer,
-                playlist_renderer,
+            from payments import (
+                CreditCardProcessor,
+                DebitCardProcessor,
+                GiftCardProcessor,
+                checkout,
             )
 
 
-            def test_audio_player_contract() -> None:
-                player = AudioFilePlayer("Song.mp3", duration=240)
-                player.play()
-                player.seek(120)
-                assert player.get_duration() == 240
-                player.stop()
+            def test_credit_card_process_and_refund() -> None:
+                cc = CreditCardProcessor()
+                result = cc.process_payment(100.00)
+                assert result["success"] is True
+                refund_result = cc.refund(result["txn_id"])
+                assert refund_result["success"] is True
+                assert refund_result["amount"] == 100.00
 
 
-            def test_video_player_contract() -> None:
-                player = VideoFilePlayer("Movie.mp4", duration=7200)
-                player.play()
-                player.seek(3600)
-                assert player.get_duration() == 7200
-                player.stop()
+            def test_debit_card_process_and_refund() -> None:
+                debit = DebitCardProcessor(account_balance=500.00)
+                result = debit.process_payment(200.00)
+                assert result["success"] is True
+                refund_result = debit.refund(result["txn_id"])
+                assert refund_result["success"] is True
+                assert refund_result["amount"] == 200.00
 
 
-            def test_live_stream_is_not_seekable() -> None:
-                player = LiveStreamPlayer("CNN Live")
-                assert isinstance(player, MediaPlayer)
-                assert not isinstance(player, SeekablePlayer)
-                player.play()
-                player.stop()
+            # ── The Refund Contract (implemented) ─────────────────────────
+            def refund_contract_holds(processor) -> None:
+                """Encode the refund() postcondition as assert statements."""
+                result = processor.process_payment(50.00)
+                refund_result = processor.refund(result["txn_id"])
+                # Contract assertion 1: refund result is a dict
+                assert isinstance(refund_result, dict), (
+                    f"refund() must return a dict; got {type(refund_result).__name__}"
+                )
+                # Contract assertion 2: success is True
+                assert refund_result["success"] is True, (
+                    f"refund() postcondition violated: success is not True "
+                    f"(got {refund_result.get('success')})"
+                )
+                # Contract assertion 3: amount is numeric
+                assert isinstance(refund_result.get("amount"), (int, float)), (
+                    f"refund() postcondition violated: 'amount' must be numeric "
+                    f"(got {refund_result.get('amount')!r})"
+                )
 
 
-            def test_playlist_renders_all_types() -> None:
-                players = [
-                    AudioFilePlayer("Song.mp3", duration=240),
-                    VideoFilePlayer("Movie.mp4", duration=7200),
-                    LiveStreamPlayer("CNN Live"),
+            def test_refund_contract_for_all_processors() -> None:
+                refund_contract_holds(CreditCardProcessor())
+                refund_contract_holds(DebitCardProcessor(account_balance=500.00))
+                # This one will FAIL — and that's the whole point.
+                refund_contract_holds(GiftCardProcessor(balance=100.00))
+
+
+            def test_checkout_with_refund() -> None:
+                processors = [
+                    CreditCardProcessor(),
+                    DebitCardProcessor(account_balance=500.00),
+                    GiftCardProcessor(balance=25.00),
                 ]
-                entries = playlist_renderer(players)
-                assert len(entries) == 3
+                amounts = [75.00, 150.00, 50.00]
 
-                assert entries[0]["has_progress_bar"] is True
-                assert entries[0]["duration"] == 240
-
-                assert entries[1]["has_progress_bar"] is True
-                assert entries[1]["duration"] == 7200
-
-                assert entries[2]["has_progress_bar"] is False
-                assert entries[2]["duration"] is None
+                # This will blow up in the refund phase for the GiftCard.
+                refund_results = checkout(processors, amounts)
+                assert len(refund_results) == len(processors)
+                for result in refund_results:
+                    assert result["success"] is True
 
 
             if __name__ == "__main__":
@@ -3384,20 +3146,18 @@ steps:
           language: "python"
 
       explanation: |
-        **Payment system fix:**
+        **What you just built — on purpose.**
 
-        The key insight is that `GiftCardProcessor` cannot honestly fulfill the `refund()` contract. Instead of forcing it to lie, we split the hierarchy:
+        `GiftCardProcessor` now violates the `PaymentProcessor` contract in two separate ways:
 
-        - `PaymentProcessor` — base class with `process_payment()` and a `max_amount` property
-        - `RefundableProcessor(PaymentProcessor)` — adds the `refund()` method
-        - `GiftCardProcessor` extends only `PaymentProcessor`, so it is never asked to refund
-        - `checkout_with_refund()` explicitly requires `RefundableProcessor`, catching misuse at the boundary rather than deep inside business logic
+        1. **Strengthened precondition** in `process_payment()`: the base class accepts any positive amount, but the gift card rejects `amount > balance`. Client code that assumes "any positive amount works" will crash.
+        2. **Weakened postcondition** in `refund()`: the contract guarantees `success=True` and a numeric `amount`. The gift card returns `success=False` instead — the silent failure path.
 
-        **Media player fix:**
+        **The contract-as-assertions trick.** `refund_contract_holds()` encodes the postcondition as three plain `assert` statements. Running it against `CreditCardProcessor` and `DebitCardProcessor` passes. Running it against `GiftCardProcessor` fails with a message pointing at the exact postcondition that got broken. **Design-by-Contract** — the idea that method behavior is a formal contract between caller and callee — is one of the most useful lenses in software design, and it makes LSP mechanically observable.
 
-        Same pattern: split `MediaPlayer` into a base (play/stop) and `SeekablePlayer` (adds seek/get_duration). `LiveStreamPlayer` extends only `MediaPlayer`. The renderer checks `isinstance(player, SeekablePlayer)` to decide whether to render a progress bar.
+        **The prediction check.** `checkout()` calls `process_payment()` first, then `refund()`. The gift card's balance was $25 and we tried to charge $50, so `process_payment()` raises first. If you predicted "refund fails first," you'd expect that — but the stronger precondition trips us up earlier. This is the point of prediction: the thing that *actually* breaks is often not what you'd guess.
 
-        **The LSP rule of thumb:** If a subclass needs to raise `NotImplementedError`, return a failure sentinel, or restrict what the parent accepts, it should not be a subclass of that parent.
+        **What happens next.** In the next step, you'll fix this the right way: by splitting `PaymentProcessor` into two classes so that `GiftCardProcessor` never inherits a `refund()` method it cannot honor. You'll then apply the same pattern to a media player hierarchy.
 
     tests:
       - description: "GiftCardProcessor class exists in payments.py"
@@ -3405,6 +3165,21 @@ steps:
           source = open('/tutorial/payments.py').read()
           assert 'class GiftCardProcessor' in source, \
               "Add a GiftCardProcessor class to payments.py"
+        hints:
+          - text: "In payments.py, add a class GiftCardProcessor that extends PaymentProcessor. See the TODO block in the file for the exact requirements."
+            condition: "default"
+      - description: "GiftCardProcessor takes a `balance` parameter in __init__"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('payments',):
+                  del sys.modules[m]
+          from payments import GiftCardProcessor
+          gc = GiftCardProcessor(balance=50.00)
+          assert gc is not None
+        hints:
+          - text: "GiftCardProcessor's constructor should accept a `balance: float` parameter, e.g., `def __init__(self, balance: float): ...`"
+            condition: "default"
       - description: "GiftCardProcessor strengthens precondition (rejects amount > balance)"
         command: |
           import sys
@@ -3416,15 +3191,13 @@ steps:
           try:
               gc.process_payment(50.00)
               assert False, "GiftCardProcessor should reject amounts > balance"
-          except (ValueError, Exception) as e:
+          except ValueError as e:
               assert "balance" in str(e).lower() or "insufficient" in str(e).lower(), \
-                  f"Error message should mention balance, got: {e}"
+                  f"Error message should mention balance or insufficient, got: {e}"
         hints:
-          - text: "GiftCardProcessor needs a balance parameter in __init__ and should raise ValueError when amount > balance."
-            condition: "code_missing: class GiftCardProcessor"
-          - text: "Your GiftCardProcessor exists. Make sure process_payment raises ValueError with a message containing 'balance' when amount exceeds the card balance."
-            condition: "code_contains: class GiftCardProcessor"
-      - description: "GiftCardProcessor has a refund() method"
+          - text: "In process_payment(), raise ValueError('Insufficient gift card balance') when amount > self._balance."
+            condition: "default"
+      - description: "GiftCardProcessor.process_payment() returns success dict when amount is within balance"
         command: |
           import sys
           for m in list(sys.modules):
@@ -3432,8 +3205,13 @@ steps:
                   del sys.modules[m]
           from payments import GiftCardProcessor
           gc = GiftCardProcessor(balance=100.00)
-          assert hasattr(gc, 'refund') and callable(gc.refund), \
-              "GiftCardProcessor must have a refund() method for this demonstration"
+          result = gc.process_payment(50.00)
+          assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+          assert result.get("success") is True, f"Expected success=True, got {result}"
+          assert "txn_id" in result, f"Expected 'txn_id' in result, got keys: {list(result.keys())}"
+        hints:
+          - text: "When the amount is valid, process_payment() should return {'success': True, 'txn_id': <some id>}. The successful path must look like any other PaymentProcessor."
+            condition: "default"
       - description: "GiftCardProcessor.refund() returns success=False (weakened postcondition)"
         command: |
           import sys
@@ -3444,172 +3222,68 @@ steps:
           gc = GiftCardProcessor(balance=100.00)
           result = gc.process_payment(50.00)
           refund_result = gc.refund(result["txn_id"])
-          assert isinstance(refund_result, dict), \
-              f"refund() should return a dict, got {type(refund_result)}"
-          assert refund_result["success"] is False, \
-              f"GiftCardProcessor.refund() should return success=False, got {refund_result.get('success')}"
-      - description: "GiftCardProcessor.refund() explains non-refundability"
+          assert isinstance(refund_result, dict), f"refund() should return a dict, got {type(refund_result)}"
+          assert refund_result.get("success") is False, f"GiftCardProcessor.refund() should return success=False, got {refund_result.get('success')}"
+        hints:
+          - text: "refund() should return {'success': False, 'error': 'Gift cards are non-refundable'}."
+            condition: "default"
+      - description: "refund_contract_holds() is implemented (not just `pass`)"
+        command: |
+          source = open('/tutorial/test_payments.py').read()
+          import re
+          # Find refund_contract_holds function body
+          m = re.search(r'def refund_contract_holds\(processor\).*?(?=\ndef |\Z)', source, re.DOTALL)
+          assert m is not None, "refund_contract_holds() function not found"
+          body = m.group()
+          assert 'assert' in body, \
+              "refund_contract_holds() must use `assert` statements to encode the postcondition."
+          assert body.count('assert') >= 3, \
+              f"refund_contract_holds() should have at least 3 assert statements (one per contract clause). Found {body.count('assert')}."
+        hints:
+          - text: "Replace the `pass` inside refund_contract_holds() with three `assert` statements: one for `isinstance(result, dict)`, one for `result['success'] is True`, one for `isinstance(result['amount'], (int, float))`."
+            condition: "default"
+      - description: "refund_contract_holds() passes for CreditCardProcessor"
         command: |
           import sys
           for m in list(sys.modules):
-              if m in ('payments',):
+              if m in ('payments', 'test_payments'):
                   del sys.modules[m]
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('test_payments', '/tutorial/test_payments.py')
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          from payments import CreditCardProcessor
+          mod.refund_contract_holds(CreditCardProcessor())
+        hints:
+          - text: "Your contract helper should accept a CreditCardProcessor without any assertion failing — credit cards honor the full refund contract."
+            condition: "default"
+      - description: "refund_contract_holds() FAILS for GiftCardProcessor (this is the point)"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('payments', 'test_payments'):
+                  del sys.modules[m]
+          import importlib.util
+          spec = importlib.util.spec_from_file_location('test_payments', '/tutorial/test_payments.py')
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
           from payments import GiftCardProcessor
-          gc = GiftCardProcessor(balance=100.00)
-          result = gc.process_payment(50.00)
-          refund_result = gc.refund(result["txn_id"])
-          assert "error" in refund_result or "non-refundable" in str(refund_result).lower(), \
-              f"refund result should contain an error message about non-refundability. Got: {refund_result}"
-      - description: "CreditCardProcessor.process_payment() returns success with txn_id"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('payments',):
-                  del sys.modules[m]
-          from payments import CreditCardProcessor
-          cc = CreditCardProcessor()
-          result = cc.process_payment(100.00)
-          assert result["success"] is True, \
-              f"CreditCardProcessor.process_payment() should return success=True, got {result.get('success')}"
-          assert "txn_id" in result, \
-              f"CreditCardProcessor.process_payment() should return a txn_id. Got keys: {list(result.keys())}"
-      - description: "CreditCardProcessor.refund() returns success with correct amount"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('payments',):
-                  del sys.modules[m]
-          from payments import CreditCardProcessor
-          cc = CreditCardProcessor()
-          result = cc.process_payment(100.00)
-          refund = cc.refund(result["txn_id"])
-          assert refund["success"] is True, \
-              f"CreditCardProcessor.refund() should return success=True, got {refund.get('success')}"
-          assert refund["amount"] == 100.00, \
-              f"Refund amount should be 100.00, got {refund.get('amount')}"
-      - description: "DebitCardProcessor.process_payment() returns success"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('payments',):
-                  del sys.modules[m]
-          from payments import DebitCardProcessor
-          dc = DebitCardProcessor(account_balance=500.00)
-          result = dc.process_payment(200.00)
-          assert result["success"] is True, \
-              f"DebitCardProcessor.process_payment() should return success=True, got {result.get('success')}"
-      - description: "DebitCardProcessor.refund() returns success with correct amount"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('payments',):
-                  del sys.modules[m]
-          from payments import DebitCardProcessor
-          dc = DebitCardProcessor(account_balance=500.00)
-          result = dc.process_payment(200.00)
-          refund = dc.refund(result["txn_id"])
-          assert refund["success"] is True, \
-              f"DebitCardProcessor.refund() should return success=True, got {refund.get('success')}"
-          assert refund["amount"] == 200.00, \
-              f"Refund amount should be 200.00, got {refund.get('amount')}"
-      - description: "LiveStreamPlayer can play() and stop() without errors"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('media_player',):
-                  del sys.modules[m]
-          from media_player import LiveStreamPlayer
-          ls = LiveStreamPlayer("Test Stream")
-          ls.play()
-          ls.stop()
-      - description: "LiveStreamPlayer.seek() does not raise NotImplementedError"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('media_player',):
-                  del sys.modules[m]
-          from media_player import LiveStreamPlayer
-          ls = LiveStreamPlayer("Test Stream")
-          has_seek = hasattr(ls, 'seek') and callable(getattr(ls, 'seek', None))
-          if has_seek:
-              try:
-                  ls.seek(0)
-              except NotImplementedError:
-                  assert False, \
-                      "LiveStreamPlayer should NOT have seek() that raises NotImplementedError. " \
-                      "Remove it or split the hierarchy so LiveStreamPlayer does not inherit seek()."
+          try:
+              mod.refund_contract_holds(GiftCardProcessor(balance=100.00))
+              assert False, (
+                  "refund_contract_holds() should FAIL for GiftCardProcessor because "
+                  "GiftCard's refund() returns success=False, violating the postcondition. "
+                  "If it passed, your assertions are not strict enough."
+              )
+          except AssertionError as e:
+              # The message should indicate the postcondition violation
+              pass
         hints:
-          - text: "Split MediaPlayer into a base class (play/stop) and SeekablePlayer (adds seek/get_duration). LiveStreamPlayer should extend only the base class."
-            condition: "code_missing: class SeekablePlayer"
-      - description: "LiveStreamPlayer.get_duration() does not raise NotImplementedError"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('media_player',):
-                  del sys.modules[m]
-          from media_player import LiveStreamPlayer
-          ls = LiveStreamPlayer("Test Stream")
-          has_duration = hasattr(ls, 'get_duration') and callable(getattr(ls, 'get_duration', None))
-          if has_duration:
-              try:
-                  ls.get_duration()
-              except NotImplementedError:
-                  assert False, \
-                      "LiveStreamPlayer should NOT have get_duration() that raises NotImplementedError. " \
-                      "Split the hierarchy so LiveStreamPlayer does not inherit get_duration()."
-      - description: "playlist_renderer returns an entry for each player"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('media_player',):
-                  del sys.modules[m]
-          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
-          players = [
-              AudioFilePlayer("Song.mp3", duration=240),
-              VideoFilePlayer("Movie.mp4", duration=7200),
-              LiveStreamPlayer("CNN Live"),
-          ]
-          entries = playlist_renderer(players)
-          assert len(entries) == 3, f"Expected 3 entries, got {len(entries)}"
-        hints:
-          - text: "Split MediaPlayer into a base class (play/stop) and SeekablePlayer (adds seek/get_duration). LiveStreamPlayer should extend only the base class."
-            condition: "code_missing: class SeekablePlayer"
-      - description: "playlist_renderer shows progress bar for seekable files"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('media_player',):
-                  del sys.modules[m]
-          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
-          players = [
-              AudioFilePlayer("Song.mp3", duration=240),
-              VideoFilePlayer("Movie.mp4", duration=7200),
-              LiveStreamPlayer("CNN Live"),
-          ]
-          entries = playlist_renderer(players)
-          assert entries[0]["has_progress_bar"] is True, \
-              "Audio file should have a progress bar (it is seekable)"
-        hints:
-          - text: "Update playlist_renderer to check isinstance(player, SeekablePlayer) before calling seek() or get_duration(). Set has_progress_bar=True for seekable players."
-            condition: "code_contains: class SeekablePlayer"
-      - description: "playlist_renderer hides progress bar for live streams"
-        command: |
-          import sys
-          for m in list(sys.modules):
-              if m in ('media_player',):
-                  del sys.modules[m]
-          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
-          players = [
-              AudioFilePlayer("Song.mp3", duration=240),
-              VideoFilePlayer("Movie.mp4", duration=7200),
-              LiveStreamPlayer("CNN Live"),
-          ]
-          entries = playlist_renderer(players)
-          assert entries[2]["has_progress_bar"] is False, \
-              "Live stream should NOT have a progress bar (it is not seekable)"
+          - text: "Your contract helper should detect that GiftCardProcessor.refund() returns success=False and raise an AssertionError. Make sure your assertion checks `result['success'] is True`."
+            condition: "default"
 
     quiz:
-      title: "Liskov Substitution Principle — Knowledge Check"
+      title: "LSP Part 1 — Knowledge Check"
       min_score: 0.75
       shuffle: true
       questions:
@@ -3663,7 +3337,7 @@ steps:
             - "This is fine — NotImplementedError is the standard way to indicate unsupported operations"
           correct_index: 1
           explanation: |
-            If `Bird` promises `fly()` works, then `Penguin` breaking that promise will crash any code that loops over birds and calls `fly()`. The fix is the same pattern we've been using: split into `Bird` (base) and `FlyingBird` (adds `fly()`). Seeing `NotImplementedError` in a concrete subclass is basically a flashing neon sign saying "LSP violation here."
+            If `Bird` promises `fly()` works, then `Penguin` breaking that promise will crash any code that loops over birds and calls `fly()`. This has a name: **Refused Bequest**. The fix is the same pattern you'll use in the next step: split into `Bird` (base) and `FlyingBird` (adds `fly()`). Seeing `NotImplementedError` in a concrete subclass is basically a flashing neon sign saying "LSP violation here."
 
         - question: |
             A base class method `calculate_shipping(weight)` accepts any positive weight. A subclass overrides it to reject weights above 50 kg. This is an example of:
@@ -3676,8 +3350,741 @@ steps:
           correct_index: 0
           explanation: |
             The base class accepts *any* positive weight. The subclass rejects weights above 50 kg — it accepts a *smaller* set of inputs. That's **strengthening** the precondition, which violates LSP. Code that passes 75 kg expecting it to work will blow up when it gets the subclass. Fix: declare the weight limit explicitly (e.g., a `max_weight` property) instead of silently restricting inputs.
+
+        - question: |
+            Why are `assert` statements a useful way to encode a method's postcondition?
+          type: multiple
+          options:
+            - "They make the contract executable — a violation becomes a concrete test failure"
+            - "They document the expected behavior at the exact boundary where it is checked"
+            - "The assertion error message surfaces the broken clause, making debugging fast"
+            - "They replace the need for unit tests entirely"
+          correct_indices: [0, 1, 2]
+          explanation: |
+            The first three capture the value of **Design-by-Contract**: executable, documenting, and diagnostic. The fourth is wrong — assertions complement unit tests, they don't replace them. Unit tests verify specific inputs; contract assertions verify *every* call. Using both gives you deep coverage.
+
   # --------------------------------------------------------------------------
-  # STEP 7 — "ISP — Lean Interfaces"
+  # STEP 7 — LSP Part 2: Split the Hierarchy (Refactor & Transfer)
+  # Pedagogy:
+  #   Worked Example with Sub-Goals — payments split (PaymentProcessor / RefundableProcessor).
+  #   Transfer Task                 — apply same pattern to media player hierarchy.
+  #   Variation Theory              — same structural move, different domain.
+  #   Bloom's level                 — Apply / Analyze / Create (quiz).
+  # --------------------------------------------------------------------------
+  - title: "LSP — Split the Hierarchy"
+    instructions: |
+      ## The Liskov Substitution Principle — Part 2: The Structural Fix
+
+      > **Learning objective:** After this step you will be able to **refactor** a broken inheritance hierarchy by splitting it into smaller, role-specific abstractions so that no subclass inherits a method it cannot honor.
+
+      ### Worked Example — Splitting `PaymentProcessor`
+
+      In the previous step you watched `GiftCardProcessor` shred the `refund()` contract. Now the fix. The *root* cause isn't that the gift card was coded poorly — it's that the **hierarchy is wrong**. `refund()` doesn't belong on every payment processor, only on those that can actually refund.
+
+      Here's the fix, broken down by sub-goal:
+
+      ```python
+      from __future__ import annotations
+      from abc import ABC, abstractmethod
+      import uuid
+
+      # --- Sub-goal 1: Define the minimum contract every processor honors ---
+      # Every payment processor must charge. That's it. No refund promise.
+      class PaymentProcessor(ABC):
+          """Can process payments. No refund guarantee."""
+
+          @property
+          def max_amount(self) -> float | None:
+              """Maximum accepted amount. None means no limit."""
+              return None
+
+          @abstractmethod
+          def process_payment(self, amount: float) -> dict:
+              ...
+
+      # --- Sub-goal 2: Extend the contract for processors that CAN refund ---
+      # Only processors that can honestly refund extend this class.
+      class RefundableProcessor(PaymentProcessor):
+          """Can process payments AND refund them."""
+
+          @abstractmethod
+          def refund(self, txn_id: str) -> dict:
+              ...
+
+      # --- Sub-goal 3: Cards extend RefundableProcessor — full contract ---
+      class CreditCardProcessor(RefundableProcessor):
+          def __init__(self):
+              self._transactions = {}
+
+          def process_payment(self, amount):
+              if amount <= 0:
+                  raise ValueError("Amount must be positive")
+              txn_id = str(uuid.uuid4())
+              self._transactions[txn_id] = amount
+              return {"success": True, "txn_id": txn_id}
+
+          def refund(self, txn_id):
+              amount = self._transactions.pop(txn_id)
+              return {"success": True, "amount": amount}
+
+      # --- Sub-goal 4: Gift cards extend ONLY PaymentProcessor — no lies ---
+      class GiftCardProcessor(PaymentProcessor):
+          """No refund() method at all. Cannot violate what it doesn't inherit."""
+
+          def __init__(self, balance):
+              self._balance = balance
+              self._transactions = {}
+
+          @property
+          def max_amount(self):
+              return self._balance  # Explicit: the upper limit is visible.
+
+          def process_payment(self, amount):
+              if amount > self._balance:
+                  raise ValueError("Insufficient gift card balance")
+              self._balance -= amount
+              txn_id = str(uuid.uuid4())
+              self._transactions[txn_id] = amount
+              return {"success": True, "txn_id": txn_id}
+
+      # --- Sub-goal 5: Boundaries catch misuse at the signature level ---
+      def checkout_with_refund(
+          processors: list[RefundableProcessor],  # <-- not PaymentProcessor!
+          amounts: list[float],
+      ) -> list[dict]:
+          # Every processor here extends RefundableProcessor, so refund()
+          # is guaranteed to exist and honor the contract.
+          ...
+      ```
+
+      **The structural insight:** `GiftCardProcessor` used to *lie* about refunds. After the split, it *literally cannot be passed* to a function that needs refunds — a type checker or a simple `isinstance()` check catches the misuse at the boundary, not deep inside business logic after money has already moved.
+
+      **LSP ↔ ISP:** splitting one fat interface into two smaller ones is exactly the **Interface Segregation Principle** (ISP) — which you'll see head-on in the next step.
+
+      ### Your Turn — The Media Player Hierarchy
+
+      Same structural move, new domain. Open `media_player.py`.
+
+      A `MediaPlayer` ABC declares `play()`, `stop()`, `seek(position)`, and `get_duration()`. `AudioFilePlayer` and `VideoFilePlayer` work fine. But `LiveStreamPlayer` inherits all four methods and raises `NotImplementedError` on `seek()` and `get_duration()` — classic Refused Bequest.
+
+      The `playlist_renderer(players)` function iterates every player and renders a progress bar using `get_duration()` and `seek()`. It crashes on live streams.
+
+      **Your tasks:**
+
+      1. Split `MediaPlayer` into two classes:
+         - `MediaPlayer` (base) — abstract methods: `play()` and `stop()` only.
+         - `SeekablePlayer(MediaPlayer)` — adds abstract `seek(position)` and `get_duration()`.
+      2. Move `AudioFilePlayer` and `VideoFilePlayer` to extend `SeekablePlayer`.
+      3. Change `LiveStreamPlayer` to extend `MediaPlayer` only — and **remove** `seek()` and `get_duration()` entirely. Not even stubs that raise. The whole point is that a live stream cannot be asked for these.
+      4. Update `playlist_renderer(players)` to use `isinstance(player, SeekablePlayer)` to decide whether a progress bar is appropriate. Live streams get an entry with `has_progress_bar=False` and `duration=None`.
+
+      The tests in `test_media_player.py` check each of these — including a test that confirms `LiveStreamPlayer` is **not** an instance of `SeekablePlayer`.
+
+    files:
+      - path: "media_player.py"
+        content: |
+          """Media player hierarchy — LSP exercise.
+
+          BUG: LiveStreamPlayer inherits seek() and get_duration() from
+          MediaPlayer but cannot implement them. The playlist_renderer()
+          function crashes when it encounters a live stream.
+
+          YOUR TASK: Split MediaPlayer into (MediaPlayer + SeekablePlayer)
+          so LiveStreamPlayer does not pretend to support seeking or duration.
+          The renderer should handle all player types safely.
+          """
+          from abc import ABC, abstractmethod
+
+
+          class MediaPlayer(ABC):
+              """Base class for all media players."""
+
+              def __init__(self, title: str) -> None:
+                  self._title = title
+                  self._playing = False
+
+              @property
+              def title(self) -> str:
+                  return self._title
+
+              @abstractmethod
+              def play(self) -> None:
+                  ...
+
+              @abstractmethod
+              def stop(self) -> None:
+                  ...
+
+              # TODO: Move these two methods to a new SeekablePlayer subclass.
+              @abstractmethod
+              def seek(self, position: int) -> None:
+                  """Seek to a position in seconds."""
+                  ...
+
+              @abstractmethod
+              def get_duration(self) -> int:
+                  """Return total duration in seconds."""
+                  ...
+
+
+          # TODO: Create a SeekablePlayer(MediaPlayer) class here that declares
+          # abstract seek() and get_duration() methods. AudioFilePlayer and
+          # VideoFilePlayer should then extend SeekablePlayer, not MediaPlayer.
+
+
+          class AudioFilePlayer(MediaPlayer):
+              def __init__(self, title: str, duration: int) -> None:
+                  super().__init__(title)
+                  self._duration = duration
+
+              def play(self) -> None:
+                  self._playing = True
+
+              def stop(self) -> None:
+                  self._playing = False
+
+              def seek(self, position: int) -> None:
+                  if position < 0 or position > self._duration:
+                      raise ValueError("Position out of range")
+
+              def get_duration(self) -> int:
+                  return self._duration
+
+
+          class VideoFilePlayer(MediaPlayer):
+              def __init__(self, title: str, duration: int, resolution: str = "1080p") -> None:
+                  super().__init__(title)
+                  self._duration = duration
+                  self._resolution = resolution
+
+              def play(self) -> None:
+                  self._playing = True
+
+              def stop(self) -> None:
+                  self._playing = False
+
+              def seek(self, position: int) -> None:
+                  if position < 0 or position > self._duration:
+                      raise ValueError("Position out of range")
+
+              def get_duration(self) -> int:
+                  return self._duration
+
+
+          class LiveStreamPlayer(MediaPlayer):
+              """Live streams have no duration and cannot be seeked."""
+
+              def __init__(self, title: str, stream_url: str = "https://live.example.com") -> None:
+                  super().__init__(title)
+                  self._stream_url = stream_url
+
+              def play(self) -> None:
+                  self._playing = True
+
+              def stop(self) -> None:
+                  self._playing = False
+
+              # TODO: REMOVE these two methods entirely (not even a stub that raises).
+              # LiveStreamPlayer should only extend MediaPlayer (after the split),
+              # so it will not inherit seek() or get_duration() at all.
+              def seek(self, position: int) -> None:
+                  raise NotImplementedError("Cannot seek a live stream")
+
+              def get_duration(self) -> int:
+                  raise NotImplementedError("Live streams have no duration")
+
+
+          def playlist_renderer(players) -> list[dict]:
+              """Render a playlist with progress bars for seekable players.
+
+              TODO: Use isinstance(player, SeekablePlayer) to decide whether
+              a progress bar is appropriate. Non-seekable players should get
+              an entry with has_progress_bar=False and duration=None.
+              """
+              entries: list[dict] = []
+              for player in players:
+                  duration = player.get_duration()   # <-- crashes on live streams
+                  midpoint = duration / 2
+                  player.seek(midpoint)
+                  entries.append({
+                      "title": player.title,
+                      "duration": duration,
+                      "seeked_to": midpoint,
+                      "has_progress_bar": True,
+                  })
+              return entries
+        language: "python"
+
+      - path: "test_media_player.py"
+        content: |
+          """Tests for the media player hierarchy — post-fix."""
+          import pytest
+          from media_player import (
+              AudioFilePlayer,
+              VideoFilePlayer,
+              LiveStreamPlayer,
+              MediaPlayer,
+              playlist_renderer,
+          )
+          # TODO: After you add SeekablePlayer, import it here:
+          # from media_player import SeekablePlayer
+
+
+          def test_audio_player_supports_seek() -> None:
+              player = AudioFilePlayer("Song.mp3", duration=240)
+              player.play()
+              player.seek(120)
+              assert player.get_duration() == 240
+              player.stop()
+
+
+          def test_video_player_supports_seek() -> None:
+              player = VideoFilePlayer("Movie.mp4", duration=7200)
+              player.play()
+              player.seek(3600)
+              assert player.get_duration() == 7200
+              player.stop()
+
+
+          def test_live_stream_plays_and_stops() -> None:
+              """Live streams only need play/stop."""
+              player = LiveStreamPlayer("CNN Live")
+              assert isinstance(player, MediaPlayer)
+              player.play()
+              player.stop()
+
+
+          def test_live_stream_is_not_seekable() -> None:
+              """After the fix, LiveStreamPlayer must NOT be a SeekablePlayer."""
+              # TODO: Uncomment after adding SeekablePlayer:
+              # player = LiveStreamPlayer("CNN Live")
+              # assert not isinstance(player, SeekablePlayer), (
+              #     "LiveStreamPlayer must not inherit from SeekablePlayer — "
+              #     "it can't honor the seek contract."
+              # )
+              pass
+
+
+          def test_playlist_renders_all_types() -> None:
+              """Renderer handles seekable and non-seekable players safely."""
+              players = [
+                  AudioFilePlayer("Song.mp3", duration=240),
+                  VideoFilePlayer("Movie.mp4", duration=7200),
+                  LiveStreamPlayer("CNN Live"),
+              ]
+              entries = playlist_renderer(players)
+              assert len(entries) == 3
+
+              # Seekable players get progress bars
+              assert entries[0]["has_progress_bar"] is True
+              assert entries[0]["duration"] == 240
+
+              assert entries[1]["has_progress_bar"] is True
+              assert entries[1]["duration"] == 7200
+
+              # Live stream: no progress bar, no duration
+              assert entries[2]["has_progress_bar"] is False
+              assert entries[2]["duration"] is None
+
+
+          if __name__ == "__main__":
+              pytest.main([__file__, "-v"])
+        language: "python"
+
+    open_file: "media_player.py"
+
+    solution:
+      files:
+        - path: "media_player.py"
+          content: |
+            """Media player hierarchy — LSP-compliant."""
+            from abc import ABC, abstractmethod
+
+
+            class MediaPlayer(ABC):
+                """Base class: can play and stop. No seeking guarantee."""
+
+                def __init__(self, title: str) -> None:
+                    self._title = title
+                    self._playing = False
+
+                @property
+                def title(self) -> str:
+                    return self._title
+
+                @abstractmethod
+                def play(self) -> None:
+                    ...
+
+                @abstractmethod
+                def stop(self) -> None:
+                    ...
+
+
+            class SeekablePlayer(MediaPlayer):
+                """A media player that supports seeking and has a known duration."""
+
+                @abstractmethod
+                def seek(self, position: int) -> None:
+                    """Seek to a position in seconds."""
+                    ...
+
+                @abstractmethod
+                def get_duration(self) -> int:
+                    """Return total duration in seconds."""
+                    ...
+
+
+            class AudioFilePlayer(SeekablePlayer):
+                def __init__(self, title: str, duration: int) -> None:
+                    super().__init__(title)
+                    self._duration = duration
+
+                def play(self) -> None:
+                    self._playing = True
+
+                def stop(self) -> None:
+                    self._playing = False
+
+                def seek(self, position: int) -> None:
+                    if position < 0 or position > self._duration:
+                        raise ValueError("Position out of range")
+
+                def get_duration(self) -> int:
+                    return self._duration
+
+
+            class VideoFilePlayer(SeekablePlayer):
+                def __init__(self, title: str, duration: int, resolution: str = "1080p") -> None:
+                    super().__init__(title)
+                    self._duration = duration
+                    self._resolution = resolution
+
+                def play(self) -> None:
+                    self._playing = True
+
+                def stop(self) -> None:
+                    self._playing = False
+
+                def seek(self, position: int) -> None:
+                    if position < 0 or position > self._duration:
+                        raise ValueError("Position out of range")
+
+                def get_duration(self) -> int:
+                    return self._duration
+
+
+            class LiveStreamPlayer(MediaPlayer):
+                """Live streams: play and stop only. No seeking, no duration."""
+
+                def __init__(self, title: str, stream_url: str = "https://live.example.com") -> None:
+                    super().__init__(title)
+                    self._stream_url = stream_url
+
+                def play(self) -> None:
+                    self._playing = True
+
+                def stop(self) -> None:
+                    self._playing = False
+
+
+            def playlist_renderer(players) -> list[dict]:
+                """Render a playlist that safely handles all player types."""
+                entries: list[dict] = []
+                for player in players:
+                    if isinstance(player, SeekablePlayer):
+                        duration = player.get_duration()
+                        midpoint = duration / 2
+                        player.seek(midpoint)
+                        entries.append({
+                            "title": player.title,
+                            "duration": duration,
+                            "seeked_to": midpoint,
+                            "has_progress_bar": True,
+                        })
+                    else:
+                        entries.append({
+                            "title": player.title,
+                            "duration": None,
+                            "seeked_to": None,
+                            "has_progress_bar": False,
+                        })
+                return entries
+          language: "python"
+
+        - path: "test_media_player.py"
+          content: |
+            """Tests for the media player hierarchy — post-fix."""
+            import pytest
+            from media_player import (
+                AudioFilePlayer,
+                VideoFilePlayer,
+                LiveStreamPlayer,
+                MediaPlayer,
+                SeekablePlayer,
+                playlist_renderer,
+            )
+
+
+            def test_audio_player_supports_seek() -> None:
+                player = AudioFilePlayer("Song.mp3", duration=240)
+                player.play()
+                player.seek(120)
+                assert player.get_duration() == 240
+                player.stop()
+
+
+            def test_video_player_supports_seek() -> None:
+                player = VideoFilePlayer("Movie.mp4", duration=7200)
+                player.play()
+                player.seek(3600)
+                assert player.get_duration() == 7200
+                player.stop()
+
+
+            def test_live_stream_plays_and_stops() -> None:
+                player = LiveStreamPlayer("CNN Live")
+                assert isinstance(player, MediaPlayer)
+                player.play()
+                player.stop()
+
+
+            def test_live_stream_is_not_seekable() -> None:
+                player = LiveStreamPlayer("CNN Live")
+                assert not isinstance(player, SeekablePlayer), (
+                    "LiveStreamPlayer must not inherit from SeekablePlayer — "
+                    "it can't honor the seek contract."
+                )
+
+
+            def test_playlist_renders_all_types() -> None:
+                players = [
+                    AudioFilePlayer("Song.mp3", duration=240),
+                    VideoFilePlayer("Movie.mp4", duration=7200),
+                    LiveStreamPlayer("CNN Live"),
+                ]
+                entries = playlist_renderer(players)
+                assert len(entries) == 3
+
+                assert entries[0]["has_progress_bar"] is True
+                assert entries[0]["duration"] == 240
+
+                assert entries[1]["has_progress_bar"] is True
+                assert entries[1]["duration"] == 7200
+
+                assert entries[2]["has_progress_bar"] is False
+                assert entries[2]["duration"] is None
+
+
+            if __name__ == "__main__":
+                pytest.main([__file__, "-v"])
+          language: "python"
+      explanation: |
+        **The structural move — same pattern in both domains.**
+
+        Payments: `PaymentProcessor` → split into `PaymentProcessor` (base, `process_payment` only) and `RefundableProcessor` (adds `refund`). `GiftCardProcessor` extends only the base. It cannot violate `refund()` because it doesn't have one.
+
+        Media player: `MediaPlayer` → split into `MediaPlayer` (base, `play`/`stop` only) and `SeekablePlayer` (adds `seek`/`get_duration`). `LiveStreamPlayer` extends only the base. The `playlist_renderer` uses `isinstance(player, SeekablePlayer)` to decide whether a progress bar is appropriate.
+
+        **The LSP rule of thumb:** if a subclass needs to raise `NotImplementedError`, return a failure sentinel, or silently restrict what the parent accepts, **it should not be a subclass of that parent**. Split the hierarchy so the contract stays honest.
+
+        **Connection to the next step:** when you split one fat interface (`MediaPlayer` with `play/stop/seek/get_duration`) into two smaller role-specific interfaces (`MediaPlayer` and `SeekablePlayer`), you've just applied the **Interface Segregation Principle** — ISP — which is up next.
+
+    tests:
+      - description: "SeekablePlayer class exists and extends MediaPlayer"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          import media_player
+          assert hasattr(media_player, 'SeekablePlayer'), \
+              "Create a SeekablePlayer class that extends MediaPlayer."
+          assert issubclass(media_player.SeekablePlayer, media_player.MediaPlayer), \
+              "SeekablePlayer must extend MediaPlayer."
+        hints:
+          - text: "Define `class SeekablePlayer(MediaPlayer):` with abstract methods `seek()` and `get_duration()`."
+            condition: "default"
+      - description: "AudioFilePlayer extends SeekablePlayer"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import AudioFilePlayer, SeekablePlayer
+          assert issubclass(AudioFilePlayer, SeekablePlayer), \
+              "AudioFilePlayer must extend SeekablePlayer (not just MediaPlayer)."
+        hints:
+          - text: "Change `class AudioFilePlayer(MediaPlayer):` to `class AudioFilePlayer(SeekablePlayer):`."
+            condition: "default"
+      - description: "VideoFilePlayer extends SeekablePlayer"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import VideoFilePlayer, SeekablePlayer
+          assert issubclass(VideoFilePlayer, SeekablePlayer), \
+              "VideoFilePlayer must extend SeekablePlayer (not just MediaPlayer)."
+        hints:
+          - text: "Change `class VideoFilePlayer(MediaPlayer):` to `class VideoFilePlayer(SeekablePlayer):`."
+            condition: "default"
+      - description: "LiveStreamPlayer is NOT a SeekablePlayer"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import LiveStreamPlayer, SeekablePlayer, MediaPlayer
+          assert issubclass(LiveStreamPlayer, MediaPlayer), \
+              "LiveStreamPlayer must still extend MediaPlayer."
+          assert not issubclass(LiveStreamPlayer, SeekablePlayer), \
+              "LiveStreamPlayer must NOT extend SeekablePlayer — that's the whole point of the split."
+        hints:
+          - text: "LiveStreamPlayer should extend MediaPlayer only. Remove any seek()/get_duration() methods from it entirely."
+            condition: "default"
+      - description: "LiveStreamPlayer does NOT have seek() or get_duration() methods"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import LiveStreamPlayer
+          ls = LiveStreamPlayer("Test")
+          # After the split, LiveStreamPlayer should not have these methods at all.
+          # A stub that raises NotImplementedError is still an LSP violation in spirit.
+          assert not hasattr(ls, 'seek') or not callable(getattr(ls, 'seek', None)) or ls.seek.__qualname__.split('.')[0] != 'LiveStreamPlayer', \
+              "LiveStreamPlayer should not define seek(). Remove it entirely."
+          assert not hasattr(ls, 'get_duration') or not callable(getattr(ls, 'get_duration', None)) or ls.get_duration.__qualname__.split('.')[0] != 'LiveStreamPlayer', \
+              "LiveStreamPlayer should not define get_duration(). Remove it entirely."
+        hints:
+          - text: "Delete the seek() and get_duration() methods from LiveStreamPlayer. After the split, these methods belong on SeekablePlayer, which LiveStreamPlayer does not extend."
+            condition: "default"
+      - description: "playlist_renderer handles all player types without crashing"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
+          players = [
+              AudioFilePlayer("Song.mp3", duration=240),
+              VideoFilePlayer("Movie.mp4", duration=7200),
+              LiveStreamPlayer("CNN Live"),
+          ]
+          entries = playlist_renderer(players)
+          assert len(entries) == 3, f"Expected 3 entries, got {len(entries)}"
+        hints:
+          - text: "Update playlist_renderer to check `isinstance(player, SeekablePlayer)` before calling seek() or get_duration()."
+            condition: "default"
+      - description: "Seekable players get a progress bar"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
+          entries = playlist_renderer([
+              AudioFilePlayer("Song.mp3", duration=240),
+              VideoFilePlayer("Movie.mp4", duration=7200),
+              LiveStreamPlayer("CNN Live"),
+          ])
+          assert entries[0]["has_progress_bar"] is True, "Audio should have a progress bar."
+          assert entries[1]["has_progress_bar"] is True, "Video should have a progress bar."
+      - description: "Live streams do NOT get a progress bar"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('media_player',):
+                  del sys.modules[m]
+          from media_player import AudioFilePlayer, VideoFilePlayer, LiveStreamPlayer, playlist_renderer
+          entries = playlist_renderer([
+              AudioFilePlayer("Song.mp3", duration=240),
+              VideoFilePlayer("Movie.mp4", duration=7200),
+              LiveStreamPlayer("CNN Live"),
+          ])
+          assert entries[2]["has_progress_bar"] is False, \
+              "Live stream should NOT have a progress bar (it is not seekable)."
+          assert entries[2]["duration"] is None, \
+              "Live stream entry should have duration=None."
+
+    quiz:
+      title: "LSP Part 2 — Knowledge Check"
+      min_score: 0.75
+      shuffle: true
+      questions:
+
+        - question: |
+            After splitting `PaymentProcessor` into `PaymentProcessor` (base) and `RefundableProcessor` (extends base with `refund`), `checkout_with_refund()` is typed to accept `list[RefundableProcessor]`. What does this give us that the old design did not?
+          type: multiple
+          options:
+            - "Misuse is caught at the function boundary — a GiftCardProcessor literally cannot be passed"
+            - "Every processor in the list is guaranteed to have a working refund() method"
+            - "The refund contract is honestly scoped to the processors that can honor it"
+            - "It prevents anyone from ever using GiftCardProcessor for payments"
+          correct_indices: [0, 1, 2]
+          explanation: |
+            The first three are the core wins. `GiftCardProcessor` can still be used for *payments* (option 4 is wrong) — it just cannot be used anywhere `refund()` is required, because it no longer claims to support it. The type signature of the function makes this explicit at the boundary.
+
+        - question: |
+            In the media player refactor, `LiveStreamPlayer` ended up with **no** `seek()` or `get_duration()` methods — not even stubs that raise. Why is removing them entirely better than keeping stubs that raise `NotImplementedError`?
+          type: single
+          options:
+            - "It makes the code slightly faster because there is one less method in the class"
+            - "A stub that raises is still LSP-violating in spirit — the method appears to exist but doesn't honor the parent's contract. Removing it lets `isinstance()` and type checks catch misuse at the boundary."
+            - "Stubs that raise are a syntax error in Python 3"
+            - "It reduces the line count of the file"
+          correct_index: 1
+          explanation: |
+            The whole point of LSP is **honesty about capabilities**. A `seek()` that raises is a lie dressed as a method. Removing it moves the check from runtime (where it crashes *after* some work has already started) to load time (where `isinstance(player, SeekablePlayer)` returns False and the code goes down the non-seekable branch). Static type checkers like mypy can enforce this at CI time.
+
+        - question: |
+            Which of the following subclass behaviors would violate LSP? Select all that apply.
+          type: multiple
+          options:
+            - "Overriding a method so it raises an exception the parent never raises"
+            - "Overriding a method so it accepts *more* inputs than the parent (weaker precondition)"
+            - "Overriding a method so it returns *less* detailed output than the parent (weaker postcondition)"
+            - "Overriding a method so it runs faster than the parent's version"
+          correct_indices: [0, 2]
+          explanation: |
+            - **New exceptions** (option 1): violates LSP — callers don't expect them.
+            - **Weaker preconditions** (option 2): LSP-compliant — accepting *more* is always safe.
+            - **Weaker postconditions** (option 3): violates LSP — you promised more than you're delivering.
+            - **Faster** (option 4): LSP-compliant — performance improvements don't change the contract.
+
+        - question: |
+            You see this structure in a legacy codebase:
+
+            ```python
+            class Bird(ABC):
+                @abstractmethod
+                def fly(self): ...
+                @abstractmethod
+                def swim(self): ...
+
+            class Penguin(Bird):
+                def fly(self): raise NotImplementedError()
+                def swim(self): return "Penguin swimming"
+
+            class Eagle(Bird):
+                def fly(self): return "Eagle flying"
+                def swim(self): raise NotImplementedError()
+            ```
+
+            What is the minimal structural fix?
+          type: single
+          options:
+            - "Make Penguin and Eagle both extend Bird but implement `fly()` and `swim()` with print statements"
+            - "Split Bird into three classes: Bird (base), FlyingBird (adds fly), SwimmingBird (adds swim). Penguin extends SwimmingBird; Eagle extends FlyingBird."
+            - "Delete the ABC and make Bird a concrete class"
+            - "Rename Bird to Animal — the problem is the class name"
+          correct_index: 1
+          explanation: |
+            Two Refused Bequests mean two extension interfaces are needed. `Bird` is the minimal common contract, `FlyingBird` adds `fly()`, `SwimmingBird` adds `swim()`. This mirrors the payments split (`PaymentProcessor` / `RefundableProcessor`). Any function that needs a flyer takes a `FlyingBird`; any function that needs a swimmer takes a `SwimmingBird`.
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — "ISP — Lean Interfaces"
   # Pedagogy:
   #   Productive Failure — fat CloudStorage interface forces meaningless stubs.
   #   Contrastive Case   — side-by-side fat vs. segregated interfaces.
@@ -3695,7 +4102,13 @@ steps:
       > *"Clients should not be forced to depend on methods they do not use."*
       > — Robert C. Martin
 
-      When an interface gets too thicc, implementers that only need a few of its methods are forced to write stub implementations — methods that do nothing or raise errors. This wastes effort, confuses anyone reading the code, and creates **latent bugs**: code that looks fine but crashes at runtime.
+      When an interface gets too bloated, implementers that only need a few of its methods are forced to write stub implementations — methods that do nothing or raise errors. This wastes effort, confuses anyone reading the code, and creates **latent bugs**: code that looks fine but crashes at runtime.
+
+      > **Struggling is the lesson.** ISP violations don't crash the compiler — they quietly plant `NotImplementedError` land mines that blow up at runtime, often far from the class that planted them. If the problem feels subtle, that's because it *is* subtle. The exercise below makes the latent crashes observable.
+
+      ### Code Smell: *Fat Interface*
+
+      A bloated interface with too many unrelated methods is called a **Fat Interface**. Close cousin: the *Refused Bequest* smell you met in the LSP step — when a fat interface forces a subclass to stub methods it cannot honor, you get LSP violations for free. ISP and LSP work together: segregating interfaces eliminates whole categories of LSP bugs before they can happen.
 
       ### Bridge from LSP
 
@@ -3730,41 +4143,131 @@ steps:
 
       Compare the fat interface approach with a segregated design:
 
-      **Fat interface (current — problematic):**
-      ```
-      CloudStorage
-      ├── upload()
-      ├── download()
-      ├── sync()
-      ├── share()
-      ├── encrypt()
-      └── get_version_history()
+      **Fat interface (current — problematic).** `FreeStorage` is forced to implement methods it cannot support:
 
-      FreeStorage(CloudStorage)  ← must stub 4 methods
-      PremiumStorage(CloudStorage)
+      ```uml-class
+      @startuml
+      class CloudStorage {
+        + upload()
+        + download()
+        + sync()
+        + share()
+        + encrypt()
+        + get_version_history()
+      }
+      class FreeStorage {
+        + upload()
+        + download()
+      }
+      class PremiumStorage {
+        + upload()
+        + download()
+        + sync()
+        + share()
+        + encrypt()
+        + get_version_history()
+      }
+      FreeStorage --|> CloudStorage
+      PremiumStorage --|> CloudStorage
+      @enduml
       ```
 
-      **Segregated interfaces (ISP-compliant):**
-      ```
-      Uploadable          ← upload()
-      Downloadable        ← download()
-      Syncable            ← sync()
-      Shareable           ← share()
-      Encryptable         ← encrypt()
-      Versionable         ← get_version_history()
+      **Segregated interfaces (ISP-compliant).** Each capability is its own interface; classes only implement what they can actually support:
 
-      FreeStorage(Uploadable, Downloadable)
-      PremiumStorage(Uploadable, Downloadable, Syncable, Shareable, Encryptable, Versionable)
+      ```uml-class
+      @startuml
+      interface Uploadable {
+        + upload()
+      }
+      interface Downloadable {
+        + download()
+      }
+      interface Syncable {
+        + sync()
+      }
+      interface Shareable {
+        + share()
+      }
+      interface Encryptable {
+        + encrypt()
+      }
+      interface Versionable {
+        + get_version_history()
+      }
+      class FreeStorage
+      class PremiumStorage
+      FreeStorage ..|> Uploadable
+      FreeStorage ..|> Downloadable
+      PremiumStorage ..|> Uploadable
+      PremiumStorage ..|> Downloadable
+      PremiumStorage ..|> Syncable
+      PremiumStorage ..|> Shareable
+      PremiumStorage ..|> Encryptable
+      PremiumStorage ..|> Versionable
+      @enduml
       ```
 
       With segregated interfaces, `FreeStorage` never inherits `sync()`, so `backup_service()` would require `Syncable` — and the type system (or a simple `isinstance` check) would catch the mismatch **before** runtime.
 
-      ### Key Insight: ISP is not SRP
+      ### Key Insight: ISP is NOT SRP
 
-      - **SRP** = what a class does internally (one reason to change, one actor).
-      - **ISP** = what a class exposes to its **clients** (no client should depend on methods it does not use).
+      The #1 ISP misconception is conflating it with SRP. They look similar, but they target different problems:
 
-      A class can satisfy SRP (single actor) while violating ISP (interface too broad for some clients). They address different concerns.
+      - **SRP** = what a class does *internally* (one reason to change, one actor).
+      - **ISP** = what a class exposes to its *clients* (no client should depend on methods it does not use).
+
+      ### Discrimination Exercise — Which Principle?
+
+      Study these two code sketches. Both look "wrong" at first glance, but they violate *different* principles. Before reading the answers below, think about each one.
+
+      **Class A:**
+
+      ```python
+      class CustomerRecord:
+          # Used by Sales, Finance, and Support teams
+          def update_loyalty_points(self, points: int): ...        # Sales
+          def calculate_lifetime_value(self): ...                   # Finance
+          def generate_billing_invoice(self): ...                   # Finance
+          def record_support_ticket(self, ticket: dict): ...        # Support
+          def get_support_history(self): ...                        # Support
+      ```
+
+      Every method here is actually used — nobody is forced to implement stubs. But every team's concerns live in the same class, so a change requested by Support (e.g., new ticket fields) touches the same class that holds Finance's billing logic.
+
+      **Class B:**
+
+      ```python
+      class MediaDevice(ABC):
+          @abstractmethod
+          def play_audio(self, track: str): ...
+          @abstractmethod
+          def play_video(self, file: str): ...
+          @abstractmethod
+          def record_audio(self, duration: int): ...
+          @abstractmethod
+          def record_video(self, duration: int): ...
+
+      class MicrophoneSpeaker(MediaDevice):
+          def play_audio(self, track): ...       # uses it
+          def record_audio(self, duration): ...  # uses it
+          def play_video(self, file):
+              raise NotImplementedError
+          def record_video(self, duration):
+              raise NotImplementedError
+      ```
+
+      This class serves a single actor (the audio-device-using feature), but it's forced to implement video methods it can't honor. Stubs. Latent crashes.
+
+      **Diagnoses:**
+
+      - **Class A** violates **SRP** — multiple actors (Sales, Finance, Support) drive changes to the same class. No ISP violation — every client uses what it depends on. The fix is to split by actor into `LoyaltyTracker`, `BillingCalculator`, and `SupportTicketLog`.
+      - **Class B** violates **ISP** — a single client is forced to depend on methods it can't implement. The interface is too fat. The fix is to split the interface into `AudioPlayable`, `AudioRecordable`, `VideoPlayable`, `VideoRecordable`, and have each device implement only what it can honor.
+
+      **The rule of thumb:**
+
+      - If the *class has multiple reasons to change* (multiple actors) → **SRP** violation.
+      - If an *implementer is forced to stub or `NotImplementedError`* a method it doesn't need → **ISP** violation.
+      - A single class can violate both. Fixing ISP often exposes an SRP violation underneath, and vice versa.
 
     files:
       - path: "cloud_storage.py"
@@ -4548,6 +5051,49 @@ steps:
             SRP and ISP tackle different things. **SRP** = a class should serve one actor (internal cohesion). **ISP** = an interface shouldn't force clients to depend on methods they don't use (external contract). You can satisfy SRP while violating ISP, and vice versa. They're complementary, not synonymous.
 
         - question: |
+            Consider these two code sketches:
+
+            **Class A:**
+            ```python
+            class OrderProcessor:
+                # All methods are used; no stubs.
+                def calculate_tax(self, order): ...          # Finance
+                def format_receipt(self, order): ...          # UX
+                def send_shipping_update(self, order): ...   # Ops
+            ```
+
+            **Class B:**
+            ```python
+            class DocumentEditor(ABC):
+                @abstractmethod
+                def edit_text(self): ...
+                @abstractmethod
+                def edit_images(self): ...
+                @abstractmethod
+                def edit_video(self): ...
+
+            class TextEditor(DocumentEditor):
+                def edit_text(self): ...
+                def edit_images(self): raise NotImplementedError
+                def edit_video(self): raise NotImplementedError
+            ```
+
+            Which principle does each violate?
+          type: single
+          options:
+            - "Both violate SRP"
+            - "Class A violates SRP (three actors); Class B violates ISP (a client forced to stub methods it cannot implement)"
+            - "Class A violates ISP; Class B violates SRP"
+            - "Both violate ISP"
+          correct_index: 1
+          explanation: |
+            **Class A** serves three actors (Finance, UX, Ops) that each drive change to the same class — that's an **SRP** violation. Every method is used, so there's no ISP problem.
+
+            **Class B** has a single actor (text editing) but is forced to implement video and image methods with `raise NotImplementedError` — that's the classic **ISP** violation. Fix by splitting into `TextEditable`, `ImageEditable`, `VideoEditable` interfaces. No SRP problem: the class has one cohesive responsibility (edit text), it just depends on too-wide an interface.
+
+            The discrimination rule: **multiple actors → SRP; forced-to-stub methods → ISP**.
+
+        - question: |
             How does ISP help prevent LSP violations?
           type: single
           options:
@@ -4573,101 +5119,103 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 8 — "DIP — Depend on Abstractions"
+  # STEP 9 — "DIP — Own Your Abstractions"
   # Pedagogy:
   #   Productive Failure — direct instantiation makes unit testing impossible.
-  #   Contrastive Case   — DIP vs. DI distinction.
-  #   Worked Example     — extract ABCs with sub-goal labels.
-  #   Bloom's level      — Apply / Analyze / Evaluate (quiz).
+  #   Contrastive Case   — DIP vs. DI distinction (the #1 DIP misconception).
+  #   Constructive Mode  — student DESIGNS the abstractions, not just fills them in.
+  #   Ownership framing  — high-level module OWNS the interface it depends on.
+  #   Bloom's level      — Apply / Analyze / Create / Evaluate (quiz).
   # --------------------------------------------------------------------------
-  - title: "DIP — Depend on Abstractions"
+  - title: "DIP — Own Your Abstractions"
     instructions: |
       ## The Dependency Inversion Principle
 
-      > **Learning objective:** After this step you will be able to **distinguish** the Dependency Inversion Principle from Dependency Injection, **extract** abstractions owned by the high-level module, and **write** unit tests using mock implementations.
+      > **Learning objective:** After this step you will be able to **distinguish** the Dependency Inversion Principle from Dependency Injection, **design** abstractions owned by the high-level module (not inherited from low-level library interfaces), and **write** unit tests using fake implementations that never touch external services.
 
       ### The Principle
 
-      > *"High-level modules should not depend on low-level modules. Both should depend on abstractions."*
+      > *"High-level modules should not depend on low-level modules. Both should depend on abstractions.*
+      > *Abstractions should not depend on details; details should depend on abstractions."*
       > — Robert C. Martin
 
       ### DIP is NOT Dependency Injection
 
-      People mix these up constantly, but they're different things:
+      These get mixed up constantly, and the confusion is the #1 DIP misconception:
 
-      - **DIP** (Dependency Inversion Principle) = an **architectural decision** to depend on abstractions instead of concrete implementations. High-level policy owns the interface, low-level details implement it.
-      - **DI** (Dependency Injection) = a **mechanism** for passing dependencies via constructor, method parameters, or a framework. DI is one way to *achieve* DIP, but you can have DI without DIP (injecting a concrete class) and DIP without DI (using a factory).
+      - **DIP** (Dependency Inversion Principle) = an **architectural decision** to depend on abstractions instead of concrete implementations. The high-level module **owns** the interface — it describes what *it needs*, not what the low-level module happens to provide.
+      - **DI** (Dependency Injection) = a **mechanism** for delivering dependencies (via constructor, setter, or container). DI is *one way* to implement DIP.
 
-      ### The Scenario
+      You can have DI without DIP (inject a concrete `PostgresDatabase`) and you can have DIP without DI (use a factory or service locator). Passing a concrete class through a constructor is **not** DIP — it's just late binding.
 
-      You have an `OrderService` class that processes e-commerce orders. It directly instantiates three external dependencies in its `__init__`:
+      ### Who Owns the Abstraction?
+
+      This is the part that trips people up. "Depend on abstractions" doesn't mean "wrap every class in a generic interface." It means the **high-level policy** defines the abstraction in terms of **its own needs**, and the low-level detail bends to fit.
+
+      Example: `OrderService` needs to save orders. It does **not** need to know whether the store is SQL, NoSQL, or an in-memory dict. So the abstraction `OrderRepository` — owned by the order service's module — has a method like `save_order(order_id, items, total)`, shaped by what an order needs, not by what Postgres provides. Then `PostgresOrderRepository` implements that interface. If the interface started looking like `execute_sql(query)`, you'd know the low-level details were leaking up.
+
+      ### Apply DIP to Volatile Dependencies, Not Everything
+
+      Not every concrete type needs an abstraction. `int`, `str`, `datetime`, `list` are *stable* — they don't change often, and depending on them is completely fine. DIP targets **volatile** dependencies — the ones that:
+
+      - **Reach the network** (APIs, databases, message queues, file systems)
+      - **Change frequently** (3rd-party libraries on active releases, business rules you own)
+      - **Block testing** (slow, flaky, expensive, or stateful)
+
+      Wrapping every class in an ABC is the DIP equivalent of OCP's "speculative extensibility" trap — it adds indirection without buying you anything. The right question is always: *"If this collaborator had to be swapped tomorrow — for a test, a migration, or a cost cut — would I want it behind an abstraction?"* If yes, apply DIP. If no (`datetime.now()`, `math.sqrt`), don't.
+
+      > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will crystallize it in code.
+
+      ### The Scenario — Feel the Friction
+
+      Open `order_service.py`. It has an `OrderService` class that directly instantiates three external dependencies in its constructor:
 
       - `PostgresDatabase()` — stores order data (simulated with `print()`)
-      - `StripePaymentGateway()` — charges credit cards (simulated with `print()`)
-      - `SendGridEmailer()` — sends confirmation emails (simulated with `print()`)
+      - `StripePaymentGateway()` — charges credit cards (simulated)
+      - `SendGridEmailer()` — sends confirmation emails (simulated)
 
-      ### Your Task
+      ### Task 1 — Try to Unit-Test It
 
-      Open `order_service.py`. Try to write a unit test for `place_order()` that checks the order total (items cost $29.99 and $49.99, total should be $79.98). You'll discover your test **triggers all three external services** — database writes, payment charges, emails — because `OrderService` hard-codes its dependencies. There's no way to swap them out.
+      At the bottom of `order_service.py` there's a stub function `test_order_total_calculation()`. Implement it so it:
 
-      Implement `test_order_total_calculation()` so it:
       1. Creates an `OrderService` instance.
-      2. Calls `place_order()` with two items.
-      3. Asserts the returned total equals the expected sum.
+      2. Calls `place_order()` with two items (prices $29.99 and $49.99).
+      3. Asserts the returned total equals $79.98.
 
-      The test will "pass" in terms of the assertion, but look at all the `[POSTGRES]`, `[STRIPE]`, and `[SENDGRID]` print spam — your "unit" test is hitting every external service. That's not a unit test, that's an integration test in disguise.
+      Run the file. The assertion passes — but look at all the `[POSTGRES]`, `[STRIPE]`, `[SENDGRID]` print spam. Your "unit test" just pretended to charge a credit card, wrote to a database, and sent an email. That's not a unit test — that's an integration test wearing a disguise. In production, this test would hit real services, rack up real API costs, and be slow and flaky.
 
-      ### Worked Example: Applying DIP
+      **The root cause:** `OrderService` is *hardwired* to concrete classes. You cannot swap them out. That's the DIP violation.
 
-      Here is how you would refactor `OrderService` to depend on abstractions. Study the sub-goal labels:
+      ### Code Smell: *Hardcoded Dependency*
 
-      ```python
-      # Sub-goal 1: Define abstractions OWNED by the high-level module
-      # The OrderService (high-level) defines what it needs.
-      # Concrete implementations (low-level) adapt to fit.
+      This specific violation has a name: **Hardcoded Dependency** (sometimes called *New-keyword coupling* in Java, or *tight coupling*). The tell: a high-level class's `__init__` contains `self.db = PostgresDatabase()` or similar direct instantiation of concrete collaborators. When you see this pattern, ask: *"Can I unit-test this class without the real database?"* If no, you've found a DIP violation.
 
-      class OrderRepository(ABC):
-          """Interface for order persistence — owned by OrderService."""
-          @abstractmethod
-          def save_order(self, order_id: str, items: list, total: float) -> None: ...
+      ### Task 2 — Design the Abstractions Yourself
 
-      class PaymentGateway(ABC):
-          """Interface for payment processing — owned by OrderService."""
-          @abstractmethod
-          def charge(self, amount: float, token: str) -> bool: ...
+      Now the real work. You will apply DIP to `weather_dashboard.py`. Open it.
 
-      class OrderNotifier(ABC):
-          """Interface for order notifications — owned by OrderService."""
-          @abstractmethod
-          def send_confirmation(self, order_id: str, email: str) -> None: ...
+      You'll find only the concrete low-level classes (`OpenWeatherMapClient`, `MongoDbCache`) and the current high-level `WeatherDashboard` that instantiates them directly.
 
-      # Sub-goal 2: Make concrete classes implement the abstractions
-      class PostgresDatabase(OrderRepository):
-          def save_order(self, order_id: str, items: list, total: float) -> None:
-              print(f"[POSTGRES] Saved order {order_id}")
+      **You need to design the abstractions.** No ABCs are provided. No fakes are provided. Your job is to decide — from the perspective of `WeatherDashboard` — what interfaces it needs.
 
-      class StripePaymentGateway(PaymentGateway):
-          def charge(self, amount: float, token: str) -> bool:
-              print(f"[STRIPE] Charged ${amount}")
-              return True
+      **Start by asking:** "What does `WeatherDashboard` actually need from its dependencies?" Not "what does `OpenWeatherMapClient` offer?" The direction matters.
 
-      class SendGridEmailer(OrderNotifier):
-          def send_confirmation(self, order_id: str, email: str) -> None:
-              print(f"[SENDGRID] Sent confirmation for {order_id}")
+      Concretely, do the following **in order**:
 
-      # Sub-goal 3: Inject dependencies via constructor
-      class OrderService:
-          def __init__(self, repo: OrderRepository,
-                       payment: PaymentGateway,
-                       notifier: OrderNotifier) -> None:
-              self.repo = repo
-              self.payment = payment
-              self.notifier = notifier
-      ```
+      1. **Design `WeatherProvider` (ABC)** — an abstraction owned by the dashboard module. Think about what the dashboard needs to ask about weather. Look at the concrete calls inside `WeatherDashboard.get_weather()` and `get_forecast()` — the abstraction should have exactly the methods those calls need, no more.
+      2. **Design `WeatherCache` (ABC)** — an abstraction for caching. Again, shaped by the dashboard's needs: get a key, set a key with a TTL. Don't copy MongoDB's internal API; describe what the dashboard needs.
+      3. **Make `OpenWeatherMapClient` extend `WeatherProvider`** and `MongoDbCache` extend `WeatherCache`. They already have the right methods if you designed the ABCs based on the dashboard's calls.
+      4. **Create `WeatherDashboardDIP`** — a class that accepts `WeatherProvider` and `WeatherCache` via its constructor (DI), and implements the same caching logic as `WeatherDashboard` but only through the abstractions.
+      5. **Write `FakeWeatherProvider` and `FakeWeatherCache`** — in-memory implementations for testing. `FakeWeatherProvider` should count how many times `get_current()` was called.
+      6. **Write `test_dashboard_uses_cache()`** — using the fakes, verify that calling `dashboard.get_weather("Seattle")` twice hits the provider only once (cache hit on the second call). No network, no database.
 
-      **Who owns the interface?** The high-level module (`OrderService`) defines `OrderRepository`, `PaymentGateway`, and `OrderNotifier`. The low-level modules (`PostgresDatabase`, `StripePaymentGateway`, `SendGridEmailer`) implement them. This is the "inversion" — instead of high-level depending on low-level, both depend on abstractions that the high-level module owns.
+      ### Why This Is the Real Lesson
 
-      **Why this matters for testing:** Now you can create `FakeRepository`, `FakePayment`, and `FakeNotifier` classes that implement the same ABCs — no database, no payment API, no email server. Pure, fast, isolated unit tests.
+      A common mistake: students extract `WeatherProvider` with the same methods as `OpenWeatherMapClient` (matching the concrete class's API exactly). That's **indirection without inversion** — the "abstraction" is just a copy of the library's interface. If OpenWeatherMap changes its API, your abstraction changes with it, and every caller breaks.
+
+      The right move: design `WeatherProvider` from the **caller's** perspective. What does the dashboard need to ask? That's the interface. If a future provider has extra features, great — the dashboard doesn't care. If a future provider is missing features the dashboard needed, the dashboard's abstraction is the spec, and that provider has to adapt.
+
+      This is what it means for the **high-level module to own the abstraction**.
 
     files:
       - path: "order_service.py"
@@ -4704,10 +5252,6 @@ steps:
                   print(f"[STRIPE] Payment approved")
                   return True
 
-              def refund(self, amount: float, transaction_id: str) -> bool:
-                  print(f"[STRIPE] Refunding ${amount:.2f} for transaction {transaction_id}")
-                  return True
-
 
           class SendGridEmailer:
               """Simulates the SendGrid email API."""
@@ -4719,14 +5263,11 @@ steps:
                   print(f"[SENDGRID] Sending order confirmation for {order_id} to {email}")
                   print(f"[SENDGRID] Email delivered successfully")
 
-              def send_shipping_update(self, order_id: str, email: str, status: str) -> None:
-                  print(f"[SENDGRID] Sending shipping update for {order_id}: {status}")
-
 
           # ── High-level module — directly depends on low-level modules ────
           class OrderService:
               """Processes e-commerce orders.
-              Problem: directly instantiates all external dependencies."""
+              Problem: directly instantiates all external dependencies — cannot be unit-tested."""
 
               def __init__(self) -> None:
                   # Direct instantiation — tight coupling to concrete classes!
@@ -4742,21 +5283,13 @@ steps:
                   customer_email: str,
               ) -> Dict:
                   """Place an order: calculate total, charge payment, save, notify."""
-                  # Calculate total
                   total: float = sum(item["price"] for item in items)
-
-                  # Generate order ID
                   order_id: str = f"ORD-{self._next_order_id:04d}"
                   self._next_order_id += 1
 
-                  # Charge payment
                   item_names: List[str] = [item["name"] for item in items]
                   self.payment.charge(total, payment_token)
-
-                  # Save to database
                   self.db.save_order(order_id, item_names, total)
-
-                  # Send confirmation email
                   self.emailer.send_confirmation(order_id, customer_email)
 
                   return {
@@ -4767,20 +5300,23 @@ steps:
                   }
 
 
-          # ── Your task: write a unit test ──────────────────────────────────
+          # ── Task 1: Write a unit test ─────────────────────────────────────
           def test_order_total_calculation() -> None:
               """Test that place_order() calculates the total correctly.
 
-              TODO: Create an OrderService, place an order with two items
-              (prices $29.99 and $49.99), and assert the total is $79.98.
+              TODO:
+                1. Create an OrderService.
+                2. Call place_order() with two items (prices $29.99 and $49.99).
+                3. Assert the total returned equals 79.98.
 
-              Notice the problem: your 'unit test' triggers ALL external services!
+              After implementing, run this file. Notice how much the test prints:
+              your 'unit test' triggers real-looking database writes, Stripe charges,
+              and email sends. That's the DIP violation showing up as untestability.
               """
-              # TODO: Implement this test
+              # TODO: Implement this test.
               pass
 
 
-          # ── Demo ──────────────────────────────────────────────────────────
           if __name__ == "__main__":
               print("=== Placing an Order ===")
               service: OrderService = OrderService()
@@ -4794,20 +5330,25 @@ steps:
               )
               print(f"\nOrder result: {result}")
               print()
-
               print("=== Running 'Unit' Test ===")
               test_order_total_calculation()
-              print("Test passed! (But look at all that side-effect output...)")
+              print("Test passed. (But look at all that side-effect noise — that's the problem.)")
         language: "python"
 
       - path: "weather_dashboard.py"
         content: |
+          """Weather dashboard — DIP exercise.
+
+          ONLY concrete low-level classes are provided. You will DESIGN the
+          abstractions (WeatherProvider, WeatherCache) based on what
+          WeatherDashboard actually needs — the high-level module OWNS the
+          abstraction. Then you will write fakes and a unit test.
+          """
           from __future__ import annotations
-          from abc import ABC, abstractmethod
           from typing import Dict, List, Optional
 
 
-          # ── Low-level modules (external services) — tightly coupled ──────
+          # ── Low-level modules (external services) ────────────────────────
           class OpenWeatherMapClient:
               """Simulates the OpenWeatherMap API client."""
 
@@ -4816,7 +5357,6 @@ steps:
 
               def get_current(self, city: str) -> Dict[str, float]:
                   print(f"[OPENWEATHER] GET /weather?q={city}")
-                  # Simulated response
                   return {"temp": 72.5, "humidity": 45.0, "wind_speed": 8.3}
 
               def get_forecast(self, city: str, days: int) -> List[Dict[str, float]]:
@@ -4843,7 +5383,9 @@ steps:
           # ── High-level module — directly depends on low-level modules ────
           class WeatherDashboard:
               """Displays weather data with caching.
-              Problem: directly instantiates external dependencies."""
+              Problem: directly instantiates external dependencies, so it cannot
+              be unit-tested without connecting to OpenWeatherMap and MongoDB.
+              """
 
               def __init__(self) -> None:
                   self.api: OpenWeatherMapClient = OpenWeatherMapClient()
@@ -4867,131 +5409,60 @@ steps:
                   cache_key: str = f"forecast:{city}:{days}"
                   cached: Optional[Dict] = self.cache.get(cache_key)
                   if cached is not None:
-                      return cached
+                      return cached["data"]
 
                   forecast: List[Dict[str, float]] = self.api.get_forecast(city, days)
                   self.cache.set(cache_key, {"data": forecast}, ttl_seconds=600)
                   return forecast
 
 
-          # ── TODO: Refactor using DIP ────────────────────────────────────
+          # ══════════════════════════════════════════════════════════════════
+          # TASK 2 — You write everything below this line.
+          # ══════════════════════════════════════════════════════════════════
           #
-          # 1. Define two ABCs OWNED by WeatherDashboard:
-          #    - WeatherProvider (abstractmethod: get_current, get_forecast)
-          #    - WeatherCache (abstractmethod: get, set)
+          # Step 1: Design the WeatherProvider abstraction.
+          #   - Look at the calls WeatherDashboard makes to self.api.
+          #   - Define an ABC called WeatherProvider with exactly those methods.
+          #   - The abstraction is owned by the dashboard module — shape it by
+          #     what the dashboard needs, not by what OpenWeatherMap offers.
           #
-          # 2. Make OpenWeatherMapClient implement WeatherProvider
-          #    Make MongoDbCache implement WeatherCache
+          # Step 2: Design the WeatherCache abstraction.
+          #   - Same approach: look at the calls to self.cache.
+          #   - Define an ABC called WeatherCache with get(key) and
+          #     set(key, value, ttl_seconds).
           #
-          # 3. Create a new WeatherDashboardDIP class that accepts
-          #    WeatherProvider and WeatherCache via its constructor
+          # Step 3: Make the existing concrete classes implement the ABCs.
+          #   - class OpenWeatherMapClient(WeatherProvider): ...
+          #   - class MongoDbCache(WeatherCache): ...
+          #   (They already have the right methods if you designed the ABCs
+          #   around the dashboard's calls.)
           #
-          # 4. Create FakeWeatherProvider and FakeWeatherCache for testing
+          # Step 4: Write WeatherDashboardDIP.
+          #   - Constructor: __init__(self, provider: WeatherProvider, cache: WeatherCache)
+          #   - Methods: get_weather() and get_forecast() — same logic as
+          #     WeatherDashboard, but using self.provider and self.cache.
           #
-          # 5. Write test_dashboard_uses_cache() to verify caching logic
-          #    WITHOUT hitting any external services
+          # Step 5: Write FakeWeatherProvider(WeatherProvider).
+          #   - In-memory, no network.
+          #   - Track how many times get_current was called via self.call_count.
+          #
+          # Step 6: Write FakeWeatherCache(WeatherCache).
+          #   - In-memory dict, no database.
+          #
+          # Step 7: Write test_dashboard_uses_cache().
+          #   - Create a FakeWeatherProvider and FakeWeatherCache.
+          #   - Create a WeatherDashboardDIP(provider, cache).
+          #   - Call dashboard.get_weather("Seattle") twice.
+          #   - Assert provider.call_count == 1 (the second call should hit
+          #     the cache, not the provider).
 
 
-          # ── Abstractions owned by the high-level module ──────────────────
-          class WeatherProvider(ABC):
-              """Interface for weather data — owned by WeatherDashboard."""
-
-              @abstractmethod
-              def get_current(self, city: str) -> Dict[str, float]:
-                  """Get current weather for a city."""
-                  ...
-
-              @abstractmethod
-              def get_forecast(self, city: str, days: int) -> List[Dict[str, float]]:
-                  """Get weather forecast for the next N days."""
-                  ...
-
-
-          class WeatherCache(ABC):
-              """Interface for caching — owned by WeatherDashboard."""
-
-              @abstractmethod
-              def get(self, key: str) -> Optional[Dict]:
-                  """Get a cached value by key. Returns None if not found."""
-                  ...
-
-              @abstractmethod
-              def set(self, key: str, value: Dict, ttl_seconds: int) -> None:
-                  """Cache a value with a time-to-live."""
-                  ...
-
-
-          # ── TODO: Implement the refactored classes ───────────────────────
-
-          # Make OpenWeatherMapClient implement WeatherProvider:
-          # (Already has the right methods — just add the ABC inheritance)
-
-          # Make MongoDbCache implement WeatherCache:
-          # (Already has the right methods — just add the ABC inheritance)
-
-
-          class WeatherDashboardDIP:
-              """Refactored dashboard that depends on abstractions."""
-
-              def __init__(self, provider: WeatherProvider, cache: WeatherCache) -> None:
-                  # TODO: Store the injected dependencies
-                  pass
-
-              def get_weather(self, city: str) -> Dict[str, float]:
-                  """Get current weather, using cache if available."""
-                  # TODO: Implement — same logic as WeatherDashboard.get_weather
-                  # but using self.provider and self.cache
-                  pass
-
-              def get_forecast(self, city: str, days: int = 5) -> List[Dict[str, float]]:
-                  """Get weather forecast for the next N days."""
-                  # TODO: Implement — same logic as WeatherDashboard.get_forecast
-                  pass
-
-
-          class FakeWeatherProvider(WeatherProvider):
-              """Test double — returns predictable data, no network calls."""
-
-              def __init__(self) -> None:
-                  self.call_count: int = 0
-
-              def get_current(self, city: str) -> Dict[str, float]:
-                  self.call_count += 1
-                  return {"temp": 75.0, "humidity": 50.0, "wind_speed": 5.0}
-
-              def get_forecast(self, city: str, days: int) -> List[Dict[str, float]]:
-                  self.call_count += 1
-                  return [{"temp": 75.0, "humidity": 50.0} for _ in range(days)]
-
-
-          class FakeWeatherCache(WeatherCache):
-              """Test double — in-memory cache, no database."""
-
-              def __init__(self) -> None:
-                  self._data: Dict[str, Dict] = {}
-
-              def get(self, key: str) -> Optional[Dict]:
-                  return self._data.get(key)
-
-              def set(self, key: str, value: Dict, ttl_seconds: int) -> None:
-                  self._data[key] = value
-
-
-          def test_dashboard_uses_cache() -> None:
-              """Test that the dashboard returns cached data on second call.
-              TODO: Implement this test using FakeWeatherProvider and FakeWeatherCache."""
-              # TODO: Create fakes, create WeatherDashboardDIP, call get_weather twice,
-              # verify that the provider was only called once (cache hit on second call)
-              pass
-
-
-          # ── Demo ──────────────────────────────────────────────────────────
           if __name__ == "__main__":
               print("=== Original (tightly coupled) ===")
               dash: WeatherDashboard = WeatherDashboard()
               print(dash.get_weather("Seattle"))
               print()
-              print(dash.get_weather("Seattle"))  # Should be cached
+              print(dash.get_weather("Seattle"))  # Cached
         language: "python"
 
     open_file: "order_service.py"
@@ -5001,13 +5472,37 @@ steps:
         - path: "order_service.py"
           content: |
             from __future__ import annotations
+            from abc import ABC, abstractmethod
             from typing import Dict, List, Optional
 
 
-            # ── Low-level modules (external services) ────────────────────────
-            class PostgresDatabase:
-                """Simulates a PostgreSQL database connection."""
+            # ── Abstractions owned by the high-level OrderService module ─────
+            class OrderRepository(ABC):
+                """What OrderService needs for persistence. Owned by this module."""
 
+                @abstractmethod
+                def save_order(self, order_id: str, items: List[str], total: float) -> None:
+                    ...
+
+
+            class PaymentGateway(ABC):
+                """What OrderService needs for payments. Owned by this module."""
+
+                @abstractmethod
+                def charge(self, amount: float, token: str) -> bool:
+                    ...
+
+
+            class OrderNotifier(ABC):
+                """What OrderService needs for notifications. Owned by this module."""
+
+                @abstractmethod
+                def send_confirmation(self, order_id: str, email: str) -> None:
+                    ...
+
+
+            # ── Low-level modules — now implement the abstractions ────────────
+            class PostgresDatabase(OrderRepository):
                 def __init__(self) -> None:
                     print("[POSTGRES] Connecting to database...")
                     self._orders: Dict[str, Dict] = {}
@@ -5016,51 +5511,37 @@ steps:
                     print(f"[POSTGRES] INSERT INTO orders VALUES ('{order_id}', {len(items)} items, ${total:.2f})")
                     self._orders[order_id] = {"items": items, "total": total}
 
-                def get_order(self, order_id: str) -> Optional[Dict]:
-                    print(f"[POSTGRES] SELECT * FROM orders WHERE id = '{order_id}'")
-                    return self._orders.get(order_id)
 
-
-            class StripePaymentGateway:
-                """Simulates the Stripe payment API."""
-
+            class StripePaymentGateway(PaymentGateway):
                 def __init__(self) -> None:
                     print("[STRIPE] Initializing payment gateway...")
 
                 def charge(self, amount: float, token: str) -> bool:
                     print(f"[STRIPE] Charging ${amount:.2f} to card {token}")
-                    print(f"[STRIPE] Payment approved")
-                    return True
-
-                def refund(self, amount: float, transaction_id: str) -> bool:
-                    print(f"[STRIPE] Refunding ${amount:.2f} for transaction {transaction_id}")
                     return True
 
 
-            class SendGridEmailer:
-                """Simulates the SendGrid email API."""
-
+            class SendGridEmailer(OrderNotifier):
                 def __init__(self) -> None:
                     print("[SENDGRID] Initializing email service...")
 
                 def send_confirmation(self, order_id: str, email: str) -> None:
                     print(f"[SENDGRID] Sending order confirmation for {order_id} to {email}")
-                    print(f"[SENDGRID] Email delivered successfully")
-
-                def send_shipping_update(self, order_id: str, email: str, status: str) -> None:
-                    print(f"[SENDGRID] Sending shipping update for {order_id}: {status}")
 
 
-            # ── High-level module — directly depends on low-level modules ────
+            # ── High-level module — depends only on abstractions ─────────────
             class OrderService:
-                """Processes e-commerce orders.
-                Problem: directly instantiates all external dependencies."""
+                """Processes e-commerce orders using injected abstractions."""
 
-                def __init__(self) -> None:
-                    # Direct instantiation — tight coupling to concrete classes!
-                    self.db: PostgresDatabase = PostgresDatabase()
-                    self.payment: StripePaymentGateway = StripePaymentGateway()
-                    self.emailer: SendGridEmailer = SendGridEmailer()
+                def __init__(
+                    self,
+                    repository: OrderRepository,
+                    payment_gateway: PaymentGateway,
+                    notifier: OrderNotifier,
+                ) -> None:
+                    self.db: OrderRepository = repository
+                    self.payment: PaymentGateway = payment_gateway
+                    self.emailer: OrderNotifier = notifier
                     self._next_order_id: int = 1
 
                 def place_order(
@@ -5069,22 +5550,13 @@ steps:
                     payment_token: str,
                     customer_email: str,
                 ) -> Dict:
-                    """Place an order: calculate total, charge payment, save, notify."""
-                    # Calculate total
                     total: float = sum(item["price"] for item in items)
-
-                    # Generate order ID
                     order_id: str = f"ORD-{self._next_order_id:04d}"
                     self._next_order_id += 1
 
-                    # Charge payment
                     item_names: List[str] = [item["name"] for item in items]
                     self.payment.charge(total, payment_token)
-
-                    # Save to database
                     self.db.save_order(order_id, item_names, total)
-
-                    # Send confirmation email
                     self.emailer.send_confirmation(order_id, customer_email)
 
                     return {
@@ -5095,86 +5567,105 @@ steps:
                     }
 
 
-            # ── Unit test that triggers all external services ────────────────
-            def test_order_total_calculation() -> None:
-                """Test that place_order() calculates the total correctly.
+            # ── Fakes for testing — no external services touched ─────────────
+            class FakeOrderRepository(OrderRepository):
+                def __init__(self) -> None:
+                    self.saved: List[Dict] = []
 
-                This test 'works' but triggers all external services —
-                demonstrating why DIP is needed."""
-                service: OrderService = OrderService()
-                result: Dict = service.place_order(
+                def save_order(self, order_id: str, items: List[str], total: float) -> None:
+                    self.saved.append({"order_id": order_id, "items": items, "total": total})
+
+
+            class FakePaymentGateway(PaymentGateway):
+                def __init__(self) -> None:
+                    self.charges: List[float] = []
+
+                def charge(self, amount: float, token: str) -> bool:
+                    self.charges.append(amount)
+                    return True
+
+
+            class FakeOrderNotifier(OrderNotifier):
+                def __init__(self) -> None:
+                    self.sent: List[str] = []
+
+                def send_confirmation(self, order_id: str, email: str) -> None:
+                    self.sent.append(order_id)
+
+
+            def test_order_total_calculation() -> None:
+                """Unit test — zero external calls, zero print spam."""
+                service = OrderService(
+                    repository=FakeOrderRepository(),
+                    payment_gateway=FakePaymentGateway(),
+                    notifier=FakeOrderNotifier(),
+                )
+                result = service.place_order(
                     items=[
                         {"name": "Wireless Mouse", "price": 29.99},
                         {"name": "USB-C Hub", "price": 49.99},
                     ],
-                    payment_token="tok_test_1234",
+                    payment_token="tok_test",
                     customer_email="test@example.com",
                 )
-                assert abs(result["total"] - 79.98) < 0.01, \
-                    f"Expected total of $79.98, got ${result['total']:.2f}"
+                assert abs(result["total"] - 79.98) < 0.001, \
+                    f"Expected total 79.98, got {result['total']}"
 
 
-            # ── Demo ──────────────────────────────────────────────────────────
             if __name__ == "__main__":
-                print("=== Placing an Order ===")
-                service: OrderService = OrderService()
-                result: Dict = service.place_order(
+                service = OrderService(
+                    repository=PostgresDatabase(),
+                    payment_gateway=StripePaymentGateway(),
+                    notifier=SendGridEmailer(),
+                )
+                print(service.place_order(
                     items=[
                         {"name": "Wireless Mouse", "price": 29.99},
                         {"name": "USB-C Hub", "price": 49.99},
                     ],
                     payment_token="tok_visa_4242",
                     customer_email="customer@example.com",
-                )
-                print(f"\nOrder result: {result}")
-                print()
-
-                print("=== Running 'Unit' Test ===")
+                ))
                 test_order_total_calculation()
-                print("Test passed! (But look at all that side-effect output...)")
+                print("Unit test passed — no external services touched.")
           language: "python"
 
         - path: "weather_dashboard.py"
           content: |
+            """Weather dashboard — DIP-compliant with student-designed abstractions."""
             from __future__ import annotations
             from abc import ABC, abstractmethod
             from typing import Dict, List, Optional
 
 
-            # ── Abstractions owned by the high-level module ────────────────
+            # ── Abstractions owned by the dashboard module ──────────────────
             class WeatherProvider(ABC):
-                """Interface for weather data — owned by WeatherDashboard."""
+                """What WeatherDashboard needs from a weather source.
+                Shape: driven by the dashboard's calls, not by OpenWeatherMap's API."""
 
                 @abstractmethod
                 def get_current(self, city: str) -> Dict[str, float]:
-                    """Get current weather for a city."""
                     ...
 
                 @abstractmethod
                 def get_forecast(self, city: str, days: int) -> List[Dict[str, float]]:
-                    """Get weather forecast for the next N days."""
                     ...
 
 
             class WeatherCache(ABC):
-                """Interface for caching — owned by WeatherDashboard."""
+                """What WeatherDashboard needs from a cache."""
 
                 @abstractmethod
                 def get(self, key: str) -> Optional[Dict]:
-                    """Get a cached value by key. Returns None if not found."""
                     ...
 
                 @abstractmethod
                 def set(self, key: str, value: Dict, ttl_seconds: int) -> None:
-                    """Cache a value with a time-to-live."""
                     ...
 
 
-            # ── Low-level modules now implement the abstractions ───────────
+            # ── Low-level modules — adapt to fit the dashboard's abstractions ─
             class OpenWeatherMapClient(WeatherProvider):
-                """Simulates the OpenWeatherMap API client.
-                Now implements the WeatherProvider abstraction."""
-
                 def __init__(self) -> None:
                     print("[OPENWEATHER] Connecting to API...")
 
@@ -5188,9 +5679,6 @@ steps:
 
 
             class MongoDbCache(WeatherCache):
-                """Simulates a MongoDB caching layer.
-                Now implements the WeatherCache abstraction."""
-
                 def __init__(self) -> None:
                     print("[MONGODB] Connecting to cache...")
                     self._cache: Dict[str, Dict] = {}
@@ -5204,46 +5692,15 @@ steps:
                     self._cache[key] = value
 
 
-            # ── Original tightly coupled class (for reference) ─────────────
-            class WeatherDashboard:
-                """Displays weather data with caching.
-                Problem: directly instantiates external dependencies."""
-
-                def __init__(self) -> None:
-                    self.api: OpenWeatherMapClient = OpenWeatherMapClient()
-                    self.cache: MongoDbCache = MongoDbCache()
-
-                def get_weather(self, city: str) -> Dict[str, float]:
-                    cache_key: str = f"weather:{city}"
-                    cached: Optional[Dict] = self.cache.get(cache_key)
-                    if cached is not None:
-                        print(f"[DASHBOARD] Cache hit for {city}")
-                        return cached
-                    print(f"[DASHBOARD] Cache miss for {city} — fetching from API")
-                    data: Dict[str, float] = self.api.get_current(city)
-                    self.cache.set(cache_key, data, ttl_seconds=300)
-                    return data
-
-                def get_forecast(self, city: str, days: int = 5) -> List[Dict[str, float]]:
-                    cache_key: str = f"forecast:{city}:{days}"
-                    cached: Optional[Dict] = self.cache.get(cache_key)
-                    if cached is not None:
-                        return cached
-                    forecast: List[Dict[str, float]] = self.api.get_forecast(city, days)
-                    self.cache.set(cache_key, {"data": forecast}, ttl_seconds=600)
-                    return forecast
-
-
-            # ── Refactored dashboard using DIP ─────────────────────────────
+            # ── High-level module — depends only on abstractions ───────────
             class WeatherDashboardDIP:
-                """Refactored dashboard that depends on abstractions."""
+                """Dashboard that depends on abstractions owned by this module."""
 
                 def __init__(self, provider: WeatherProvider, cache: WeatherCache) -> None:
                     self.provider: WeatherProvider = provider
                     self.cache: WeatherCache = cache
 
                 def get_weather(self, city: str) -> Dict[str, float]:
-                    """Get current weather, using cache if available."""
                     cache_key: str = f"weather:{city}"
                     cached: Optional[Dict] = self.cache.get(cache_key)
                     if cached is not None:
@@ -5253,20 +5710,17 @@ steps:
                     return data
 
                 def get_forecast(self, city: str, days: int = 5) -> List[Dict[str, float]]:
-                    """Get weather forecast for the next N days."""
                     cache_key: str = f"forecast:{city}:{days}"
                     cached: Optional[Dict] = self.cache.get(cache_key)
                     if cached is not None:
-                        return cached
+                        return cached["data"]
                     forecast: List[Dict[str, float]] = self.provider.get_forecast(city, days)
                     self.cache.set(cache_key, {"data": forecast}, ttl_seconds=600)
                     return forecast
 
 
-            # ── Test doubles ───────────────────────────────────────────────
+            # ── Test doubles ────────────────────────────────────────────────
             class FakeWeatherProvider(WeatherProvider):
-                """Test double — returns predictable data, no network calls."""
-
                 def __init__(self) -> None:
                     self.call_count: int = 0
 
@@ -5280,8 +5734,6 @@ steps:
 
 
             class FakeWeatherCache(WeatherCache):
-                """Test double — in-memory cache, no database."""
-
                 def __init__(self) -> None:
                     self._data: Dict[str, Dict] = {}
 
@@ -5293,187 +5745,211 @@ steps:
 
 
             def test_dashboard_uses_cache() -> None:
-                """Test that the dashboard returns cached data on second call."""
-                provider: FakeWeatherProvider = FakeWeatherProvider()
-                cache: FakeWeatherCache = FakeWeatherCache()
-                dashboard: WeatherDashboardDIP = WeatherDashboardDIP(provider, cache)
+                """Verify caching logic WITHOUT hitting any external service."""
+                provider = FakeWeatherProvider()
+                cache = FakeWeatherCache()
+                dashboard = WeatherDashboardDIP(provider, cache)
 
-                # First call — should hit the provider
-                result1: Dict[str, float] = dashboard.get_weather("Seattle")
+                # First call: provider should be hit
+                result1 = dashboard.get_weather("Seattle")
+                assert provider.call_count == 1, f"Expected 1 call, got {provider.call_count}"
+
+                # Second call: cache hit, provider must NOT be hit again
+                result2 = dashboard.get_weather("Seattle")
                 assert provider.call_count == 1, \
-                    f"First call should hit provider once, got {provider.call_count} calls"
-
-                # Second call — should use cache, NOT hit provider again
-                result2: Dict[str, float] = dashboard.get_weather("Seattle")
-                assert provider.call_count == 1, \
-                    f"Second call should use cache (provider still 1 call), got {provider.call_count} calls"
-
-                # Both results should be identical
-                assert result1 == result2, "Cached result should match original"
+                    f"Provider should not be called again — got {provider.call_count} total calls"
+                assert result1 == result2
 
 
-            # ── Demo ──────────────────────────────────────────────────────
             if __name__ == "__main__":
-                print("=== Original (tightly coupled) ===")
-                dash: WeatherDashboard = WeatherDashboard()
-                print(dash.get_weather("Seattle"))
-                print()
-                print(dash.get_weather("Seattle"))  # Should be cached
+                test_dashboard_uses_cache()
+                print("Unit test passed — no network, no database.")
           language: "python"
       explanation: |
-        **The pain of tight coupling:**
+        **Task 1 reveal:** The original `test_order_total_calculation()` passed its assertion, but you saw `[POSTGRES]`, `[STRIPE]`, and `[SENDGRID]` spam. That's the DIP violation showing up as untestability — a "unit test" that cannot isolate the unit from its collaborators.
 
-        The `test_order_total_calculation()` function creates an `OrderService`, which immediately instantiates `PostgresDatabase()`, `StripePaymentGateway()`, and `SendGridEmailer()` in its constructor. Your "unit" test triggers database connections, payment API calls, and email sends — all simulated with `print()` here, but in production these would be real network calls that make tests slow, flaky, and dependent on external infrastructure.
+        **Task 2 — the abstractions you designed:**
 
-        **The DIP solution (shown in the worked example and applied in the WeatherDashboard exercise):**
+        - **`WeatherProvider`** — two methods (`get_current`, `get_forecast`), shaped by what the dashboard calls. Not a copy of OpenWeatherMap's full API. *Owned by the dashboard module.*
+        - **`WeatherCache`** — two methods (`get`, `set(..., ttl_seconds)`). Not MongoDB's full interface — just what the dashboard needs.
 
-        1. **Define abstractions** (`WeatherProvider`, `WeatherCache`) that the high-level module owns.
-        2. **Make concrete classes implement** those abstractions (`OpenWeatherMapClient` extends `WeatherProvider`).
-        3. **Inject via constructor** — `WeatherDashboardDIP` receives its dependencies instead of creating them.
-        4. **Test with fakes** — `FakeWeatherProvider` and `FakeWeatherCache` implement the same ABCs with no external dependencies. The test verifies caching logic purely in memory.
+        **Why ownership matters.** If OpenWeatherMap adds a `get_air_quality()` method next week, your abstraction doesn't change — the dashboard doesn't ask for air quality. If OpenWeatherMap *removes* `get_forecast()`, the abstraction still declares it, and you'd need a different provider (or an adapter) — which is exactly the signal you want: a spec mismatch at the boundary, not a silent change in behavior.
 
-        **Who owns the interface?** The high-level module (`WeatherDashboardDIP`) defines what it needs. The low-level modules adapt to fit. This is the "inversion" — dependency arrows point toward abstractions, not toward concrete implementations.
+        **Why fakes unlock testing.** With `FakeWeatherProvider` and `FakeWeatherCache`, the cache-hit test takes microseconds, hits no network, and verifies the *behavior that matters*: "after the first call, the provider is not called again." That is a true unit test.
+
+        **The "indirection without inversion" trap.** A common mistake is to make `WeatherProvider` mirror OpenWeatherMap's full API — same method names, same shape. That's *indirection* (an extra layer), not *inversion* (the caller owns the interface). Your interface should describe the caller's needs. If a method is there only because the concrete class has it, it probably doesn't belong.
 
     tests:
-      - description: "order_service.py runs without syntax errors"
-        command: |
-          exec(open('/tutorial/order_service.py').read())
-      - description: "test_order_total_calculation() is implemented and asserts the correct total"
-        command: |
-          exec(open('/tutorial/order_service.py').read())
-          test_order_total_calculation()
-      - description: "test_order_total_calculation() verifies total is $79.98"
+      - description: "test_order_total_calculation() in order_service.py is implemented"
         command: |
           source = open('/tutorial/order_service.py').read()
-          assert "79.98" in source or "79.98" in source.replace(" ", ""), \
-              "Your test should check that the total equals $79.98 (29.99 + 49.99)"
-          assert "assert" in source.split("def test_order_total_calculation")[1].split("def ")[0] if "def test_order_total_calculation" in source else False, \
-              "test_order_total_calculation() should contain an assert statement"
+          assert 'def test_order_total_calculation' in source
+          # Check that it's not just `pass`
+          import re
+          m = re.search(r'def test_order_total_calculation\(\).*?(?=\ndef |\nif __name__|\Z)', source, re.DOTALL)
+          assert m is not None, "Could not find test_order_total_calculation definition"
+          body = m.group()
+          assert 'assert' in body, \
+              "test_order_total_calculation() must contain an assert statement checking the total equals 79.98."
         hints:
-          - text: "Create an OrderService, call place_order() with items costing $29.99 and $49.99, and assert that result['total'] is approximately 79.98."
+          - text: "Inside test_order_total_calculation(), create an OrderService, call place_order with two items ($29.99 and $49.99), and assert the returned total equals 79.98."
             condition: "default"
-      - description: "WeatherProvider ABC exists and inherits from ABC"
+
+      - description: "WeatherProvider ABC is defined in weather_dashboard.py"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          import abc as _abc
-          assert 'WeatherProvider' in dir(), "WeatherProvider ABC not found"
-          assert issubclass(WeatherProvider, _abc.ABC), "WeatherProvider should be an ABC"
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          import weather_dashboard
+          assert hasattr(weather_dashboard, 'WeatherProvider'), \
+              "Define a WeatherProvider abstract base class in weather_dashboard.py."
+          from abc import ABC
+          assert issubclass(weather_dashboard.WeatherProvider, ABC), \
+              "WeatherProvider must be an ABC (inherit from abc.ABC)."
         hints:
-          - text: "Define `class WeatherProvider(ABC):` with abstract methods for get_current() and get_forecast()."
+          - text: "Define `class WeatherProvider(ABC):` with `@abstractmethod` methods get_current(city) and get_forecast(city, days)."
             condition: "default"
-      - description: "WeatherProvider has abstract method get_current()"
+
+      - description: "WeatherCache ABC is defined in weather_dashboard.py"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          abstract_methods = getattr(WeatherProvider, '__abstractmethods__', set())
-          assert 'get_current' in abstract_methods, \
-              "WeatherProvider should have abstract method get_current()"
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          import weather_dashboard
+          assert hasattr(weather_dashboard, 'WeatherCache'), \
+              "Define a WeatherCache abstract base class in weather_dashboard.py."
+          from abc import ABC
+          assert issubclass(weather_dashboard.WeatherCache, ABC), \
+              "WeatherCache must be an ABC (inherit from abc.ABC)."
         hints:
-          - text: "Add `@abstractmethod` decorator before `def get_current(self, city):` inside WeatherProvider."
+          - text: "Define `class WeatherCache(ABC):` with `@abstractmethod` methods get(key) and set(key, value, ttl_seconds)."
             condition: "default"
-      - description: "WeatherProvider has abstract method get_forecast()"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          abstract_methods = getattr(WeatherProvider, '__abstractmethods__', set())
-          assert 'get_forecast' in abstract_methods, \
-              "WeatherProvider should have abstract method get_forecast()"
-        hints:
-          - text: "Add `@abstractmethod` decorator before `def get_forecast(self, city, days):` inside WeatherProvider."
-            condition: "default"
-      - description: "WeatherCache ABC exists and inherits from ABC"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          import abc as _abc
-          assert 'WeatherCache' in dir(), "WeatherCache ABC not found"
-          assert issubclass(WeatherCache, _abc.ABC), "WeatherCache should be an ABC"
-        hints:
-          - text: "Define `class WeatherCache(ABC):` with abstract methods for get() and set()."
-            condition: "default"
-      - description: "WeatherCache has abstract method get()"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          abstract_methods = getattr(WeatherCache, '__abstractmethods__', set())
-          assert 'get' in abstract_methods, \
-              "WeatherCache should have abstract method get()"
-        hints:
-          - text: "Add `@abstractmethod` decorator before `def get(self, key):` inside WeatherCache."
-            condition: "default"
-      - description: "WeatherCache has abstract method set()"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          abstract_methods = getattr(WeatherCache, '__abstractmethods__', set())
-          assert 'set' in abstract_methods, \
-              "WeatherCache should have abstract method set()"
-        hints:
-          - text: "Add `@abstractmethod` decorator before `def set(self, key, value):` inside WeatherCache."
-            condition: "default"
+
       - description: "OpenWeatherMapClient implements WeatherProvider"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          from weather_dashboard import OpenWeatherMapClient, WeatherProvider
           assert issubclass(OpenWeatherMapClient, WeatherProvider), \
-              "OpenWeatherMapClient should implement (inherit from) WeatherProvider"
+              "OpenWeatherMapClient must extend WeatherProvider."
         hints:
-          - text: "Change the class definition to: class OpenWeatherMapClient(WeatherProvider): — it already has the right methods, just add the ABC as a parent class."
+          - text: "Change `class OpenWeatherMapClient:` to `class OpenWeatherMapClient(WeatherProvider):`."
             condition: "default"
+
       - description: "MongoDbCache implements WeatherCache"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          from weather_dashboard import MongoDbCache, WeatherCache
           assert issubclass(MongoDbCache, WeatherCache), \
-              "MongoDbCache should implement (inherit from) WeatherCache"
+              "MongoDbCache must extend WeatherCache."
         hints:
-          - text: "Change the class definition to: class MongoDbCache(WeatherCache): — it already has the right methods, just add the ABC as a parent class."
+          - text: "Change `class MongoDbCache:` to `class MongoDbCache(WeatherCache):`."
             condition: "default"
-      - description: "WeatherDashboardDIP accepts dependencies via constructor"
+
+      - description: "WeatherDashboardDIP accepts WeatherProvider and WeatherCache via constructor"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          fake_provider = FakeWeatherProvider()
-          fake_cache = FakeWeatherCache()
-          dashboard = WeatherDashboardDIP(fake_provider, fake_cache)
-          assert hasattr(dashboard, 'provider') or hasattr(dashboard, 'cache'), \
-              "WeatherDashboardDIP should store injected dependencies as attributes"
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          import inspect
+          from weather_dashboard import WeatherDashboardDIP, WeatherProvider, WeatherCache
+          sig = inspect.signature(WeatherDashboardDIP.__init__)
+          params = list(sig.parameters.values())
+          # skip self
+          non_self = [p for p in params if p.name != 'self']
+          assert len(non_self) >= 2, \
+              "WeatherDashboardDIP.__init__ must accept (at least) provider and cache parameters."
         hints:
-          - text: "In __init__, store the parameters: self.provider = provider and self.cache = cache"
+          - text: "`WeatherDashboardDIP.__init__(self, provider: WeatherProvider, cache: WeatherCache)`. Store both as attributes."
             condition: "default"
-      - description: "WeatherDashboardDIP.get_weather() works with fake dependencies"
+
+      - description: "FakeWeatherProvider is defined and tracks call count"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          fake_provider = FakeWeatherProvider()
-          fake_cache = FakeWeatherCache()
-          dashboard = WeatherDashboardDIP(fake_provider, fake_cache)
-          result = dashboard.get_weather("Seattle")
-          assert result is not None, "get_weather() should return weather data"
-          assert "temp" in result, "Weather data should contain 'temp'"
-          assert isinstance(result["temp"], (int, float)), "Temperature should be numeric"
-        hints:
-          - text: "Implement get_weather() with the same logic as the original WeatherDashboard, but use self.provider.get_current() and self.cache.get()/set()."
-            condition: "default"
-      - description: "WeatherDashboardDIP caches results (provider called only once for repeated queries)"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          fake_provider = FakeWeatherProvider()
-          fake_cache = FakeWeatherCache()
-          dashboard = WeatherDashboardDIP(fake_provider, fake_cache)
-          dashboard.get_weather("Seattle")
-          dashboard.get_weather("Seattle")
-          assert fake_provider.call_count == 1, \
-              f"Provider should be called once (second call uses cache), but was called {fake_provider.call_count} times"
-      - description: "test_dashboard_uses_cache() is implemented and passes"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
-          test_dashboard_uses_cache()
-      - description: "FakeWeatherProvider implements WeatherProvider"
-        command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          from weather_dashboard import FakeWeatherProvider, WeatherProvider
           assert issubclass(FakeWeatherProvider, WeatherProvider), \
-              "FakeWeatherProvider should implement WeatherProvider"
-      - description: "FakeWeatherCache implements WeatherCache"
+              "FakeWeatherProvider must implement WeatherProvider."
+          fake = FakeWeatherProvider()
+          assert hasattr(fake, 'call_count'), \
+              "FakeWeatherProvider needs a self.call_count attribute, starting at 0."
+          fake.get_current("Seattle")
+          assert fake.call_count == 1, \
+              f"call_count should be 1 after one call, got {fake.call_count}"
+        hints:
+          - text: "FakeWeatherProvider needs `self.call_count = 0` in __init__, and get_current() should do `self.call_count += 1`."
+            condition: "default"
+
+      - description: "FakeWeatherCache is defined and works as an in-memory dict"
         command: |
-          exec(open('/tutorial/weather_dashboard.py').read())
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          from weather_dashboard import FakeWeatherCache, WeatherCache
           assert issubclass(FakeWeatherCache, WeatherCache), \
-              "FakeWeatherCache should implement WeatherCache"
+              "FakeWeatherCache must implement WeatherCache."
+          fake = FakeWeatherCache()
+          fake.set("k", {"v": 1}, ttl_seconds=10)
+          assert fake.get("k") == {"v": 1}, "FakeWeatherCache.get should return what was set."
+          assert fake.get("missing") is None, "FakeWeatherCache.get should return None for missing keys."
+        hints:
+          - text: "FakeWeatherCache should store values in an internal dict. `get(key)` returns self._data.get(key); `set(key, value, ttl_seconds)` does self._data[key] = value."
+            condition: "default"
+
+      - description: "test_dashboard_uses_cache verifies cache hit on second call (no external services)"
+        command: |
+          import sys
+          for m in list(sys.modules):
+              if m in ('weather_dashboard',):
+                  del sys.modules[m]
+          import weather_dashboard
+          # Capture stdout during the test — a true unit test should not print [OPENWEATHER] or [MONGODB]
+          import io
+          captured = io.StringIO()
+          old_stdout = sys.stdout
+          sys.stdout = captured
+          try:
+              weather_dashboard.test_dashboard_uses_cache()
+          finally:
+              sys.stdout = old_stdout
+          output = captured.getvalue()
+          assert "[OPENWEATHER]" not in output, \
+              "test_dashboard_uses_cache() printed [OPENWEATHER] — it must use FakeWeatherProvider, not OpenWeatherMapClient."
+          assert "[MONGODB]" not in output, \
+              "test_dashboard_uses_cache() printed [MONGODB] — it must use FakeWeatherCache, not MongoDbCache."
+        hints:
+          - text: "Inside test_dashboard_uses_cache, construct FakeWeatherProvider, FakeWeatherCache, and WeatherDashboardDIP(provider, cache). Call get_weather twice and assert provider.call_count == 1."
+            condition: "default"
+
+      - description: "test_dashboard_uses_cache asserts provider is called exactly once"
+        command: |
+          source = open('/tutorial/weather_dashboard.py').read()
+          import re
+          m = re.search(r'def test_dashboard_uses_cache.*?(?=\ndef |\nif __name__|\Z)', source, re.DOTALL)
+          assert m is not None, "test_dashboard_uses_cache function not found"
+          body = m.group()
+          assert 'call_count' in body, \
+              "test_dashboard_uses_cache must check provider.call_count to verify the caching behavior."
+          assert 'assert' in body, \
+              "test_dashboard_uses_cache must contain an assert statement."
+        hints:
+          - text: "After calling dashboard.get_weather('Seattle') twice, assert provider.call_count == 1. The second call should hit the cache, not the provider."
+            condition: "default"
 
     quiz:
-      title: "DIP — Depend on Abstractions — Knowledge Check"
-      min_score: 0.6
+      title: "DIP — Knowledge Check"
+      min_score: 0.75
       shuffle: true
       questions:
 
@@ -5481,37 +5957,39 @@ steps:
             What is the difference between the Dependency Inversion Principle (DIP) and Dependency Injection (DI)?
           type: single
           options:
-            - "They are the same thing — DIP and DI are interchangeable terms"
-            - "DIP is an architectural principle (depend on abstractions, not concretions). DI is a mechanism (pass dependencies via constructor or parameters). You can have DI without DIP and DIP without DI"
-            - "DI is the principle and DIP is the implementation technique"
-            - "DIP only applies to databases and DI applies to all dependencies"
-          correct_index: 1
+            - "They are the same thing — different names for the same concept"
+            - "DIP is a mechanism for passing dependencies; DI is an architectural decision"
+            - "DIP is an architectural decision to depend on abstractions; DI is a mechanism for delivering dependencies (one way to implement DIP)"
+            - "DIP only applies to databases; DI only applies to HTTP clients"
+          correct_index: 2
           explanation: |
-            **DIP** = architectural decision (depend on abstractions, not concretions). **DI** = delivery mechanism (pass dependencies via constructor or parameters). You can inject a concrete class (DI without DIP) or use a factory to create abstractions (DIP without DI). Related but different concepts.
+            **DIP** is *what*: depend on abstractions, not concretions. **DI** is *how*: deliver dependencies via constructor, setter, or container. DI is one way — the most common way — to implement DIP. But you can do DI without DIP (injecting a concrete class) and DIP without DI (using a factory or service locator). Mixing them up is the single biggest source of confusion around this principle.
 
         - question: |
-            In DIP, who "owns" the interface (abstraction)?
+            In the `WeatherDashboard` refactor, who should own the `WeatherProvider` abstraction — the dashboard module or the OpenWeatherMap module?
           type: single
           options:
-            - "The low-level module — it defines what it can do, and the high-level module adapts"
-            - "The high-level module — it defines what it needs, and the low-level module adapts to fit"
-            - "A separate 'interfaces' package that neither module owns"
-            - "The framework or dependency injection container"
+            - "The OpenWeatherMap module — it's the one providing the data"
+            - "The dashboard module — the abstraction describes what the high-level module needs"
+            - "A separate 'abstractions' module that neither owns"
+            - "It doesn't matter who owns it as long as it exists"
           correct_index: 1
           explanation: |
-            This is where the "inversion" comes from. Traditionally, high-level depends on low-level. With DIP, the high-level module defines what it needs (`OrderRepository`, `PaymentGateway`), and the low-level module (`PostgresDatabase`, `StripePaymentGateway`) implements that interface. The dependency arrow flips — low-level now depends on the abstraction that high-level defined.
+            The high-level module **owns** the abstraction. The interface is shaped by what *the dashboard needs to ask*, not by what OpenWeatherMap happens to offer. If OpenWeatherMap had an interface file, the dashboard could be trapped by its choices — it could never switch to a different provider without touching the interface. When the dashboard owns the abstraction, any provider must conform to *its* spec.
 
         - question: |
-            A colleague refactors a class to accept its database connection as a constructor parameter instead of creating it internally: `__init__(self, db: PostgresDatabase)`. Does this satisfy DIP?
+            A teammate says: "I added Dependency Inversion by making my class accept `PostgresDatabase` via its constructor instead of creating it inside the method."
+
+            Is this actually DIP?
           type: single
           options:
-            - "Yes — passing a dependency via constructor is DIP"
-            - "No — this is Dependency Injection but not Dependency Inversion. The class still depends on the concrete `PostgresDatabase` class, not an abstraction. DIP requires depending on an abstract interface like `OrderRepository`"
-            - "Yes — any constructor parameter satisfies DIP"
-            - "No — DIP requires using a dependency injection framework"
+            - "Yes — passing dependencies via the constructor is Dependency Inversion"
+            - "No — this is Dependency Injection, but the class still depends on the concrete PostgresDatabase. To achieve DIP, the parameter should be an abstract interface like OrderRepository"
+            - "Yes — as long as the constructor has a default value, it counts"
+            - "No — DIP requires using a dependency injection framework like Spring"
           correct_index: 1
           explanation: |
-            Classic misconception. Passing `PostgresDatabase` via constructor is **Dependency Injection** (delivering dependencies externally), but not **Dependency Inversion** (depending on abstractions). To actually satisfy DIP, the parameter should be an abstract interface (`OrderRepository`), not a concrete class. Your class shouldn't know or care whether it's talking to Postgres, MySQL, or an in-memory fake.
+            Classic misconception. Passing `PostgresDatabase` via constructor is **Dependency Injection** (delivering the dependency externally), but not **Dependency Inversion** (depending on an abstraction). To satisfy DIP, the parameter type should be an abstract interface (`OrderRepository`), not a concrete class. Your class should not know or care whether it's talking to Postgres, MySQL, or an in-memory fake.
 
         - question: |
             Which of the following are benefits of applying DIP to the `WeatherDashboard`?
@@ -5524,8 +6002,21 @@ steps:
           correct_indices: [0, 1, 3]
           explanation: |
             DIP gives you **testability** (use fakes instead of real services), **flexibility** (swap implementations without changing the high-level module), and **extensibility** (new providers or caches just implement the interface). It does **not** make code faster — abstractions add a tiny layer of indirection. The real win is being able to test properly and catch bugs early.
+
+        - question: |
+            A student "applies DIP" by extracting a `WeatherProvider` ABC that mirrors OpenWeatherMap's full API — identical method names and parameters, including obscure endpoints the dashboard never calls. Why is this still a DIP violation (in spirit)?
+          type: single
+          options:
+            - "Because it has too many methods — DIP requires minimal interfaces"
+            - "Because the abstraction is shaped by the low-level module's capabilities, not the high-level module's needs — the dependency still flows the wrong direction"
+            - "Because ABCs shouldn't have the same method names as concrete classes"
+            - "Because DIP requires using Protocols, not ABCs"
+          correct_index: 1
+          explanation: |
+            This is the "indirection without inversion" trap. The *shape* of a true DIP abstraction comes from the high-level module's needs. If you start by mirroring the concrete class, you're still tied to its design decisions — swap the provider and you'll either carry dead interface methods or break something. The tell: if you ask "what does my high-level module actually call?" and the answer is a subset of the ABC you defined, the ABC is too wide.
+
   # --------------------------------------------------------------------------
-  # STEP 9 — "Integration — Which Principle?"
+  # STEP 10 — "Integration — Which Principle?"
   # Pedagogy:
   #   Interleaving         — mix all five principles in random order.
   #   Discrimination Tasks — students must distinguish which principle applies.
@@ -6118,7 +6609,7 @@ steps:
 
 
   # --------------------------------------------------------------------------
-  # STEP 10 — "Capstone — The Real World"
+  # STEP 11 — "Capstone — The Real World"
   # Pedagogy:
   #   Authentic Task       — realistic library management domain.
   #   Full Transfer         — apply all five principles simultaneously.

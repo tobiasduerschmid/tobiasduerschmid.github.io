@@ -389,7 +389,12 @@ Hub --> CoffeeMaker
         return true;
       });
 
-      const tipTol = 1.5;
+      // Arrow tips are intentionally offset from the polyline endpoint by
+      // ~1.725px (= strokeWidth * 0.75 + 0.6) so the arrow body sits on
+      // the polyline instead of extending beyond the box edge. Both
+      // tolerances below accommodate that shift.
+      const tipAxialTol = 2.5;       // along the arrow's axial direction
+      const tipLateralTol = 0.75;    // perpendicular to the arrow (should be exact)
       let matchedCount = 0;
       let orthogonalMatches = 0;
       for (const marker of openArrows) {
@@ -399,11 +404,11 @@ Hub --> CoffeeMaker
           const endPoint = route.points[route.points.length - 1];
           const startPoint = route.points[0];
           const matchEnd = isVerticalArrow
-            ? Math.abs(endPoint.x - tip.x) <= 0.75 && Math.abs(endPoint.y - tip.y) <= tipTol
-            : Math.abs(endPoint.y - tip.y) <= 0.75 && Math.abs(endPoint.x - tip.x) <= tipTol;
+            ? Math.abs(endPoint.x - tip.x) <= tipLateralTol && Math.abs(endPoint.y - tip.y) <= tipAxialTol
+            : Math.abs(endPoint.y - tip.y) <= tipLateralTol && Math.abs(endPoint.x - tip.x) <= tipAxialTol;
           const matchStart = isVerticalArrow
-            ? Math.abs(startPoint.x - tip.x) <= 0.75 && Math.abs(startPoint.y - tip.y) <= tipTol
-            : Math.abs(startPoint.y - tip.y) <= 0.75 && Math.abs(startPoint.x - tip.x) <= tipTol;
+            ? Math.abs(startPoint.x - tip.x) <= tipLateralTol && Math.abs(startPoint.y - tip.y) <= tipAxialTol
+            : Math.abs(startPoint.y - tip.y) <= tipLateralTol && Math.abs(startPoint.x - tip.x) <= tipAxialTol;
           const matchPoint = matchEnd || matchStart;
           return matchPoint;
         });
@@ -514,34 +519,45 @@ Hub --> CoffeeMaker
     await page.waitForSelector('div[class$="diagram-container"] > svg');
 
     const stats = await page.evaluate(() => {
-      const sections = Array.from(document.querySelectorAll('h2')).map((heading) => {
-        const container = heading.nextElementSibling;
-        const svg = container && container.querySelector ? container.querySelector('svg') : null;
-        const viewBox = svg ? (svg.getAttribute('viewBox') || '') : '';
-        const outer = svg ? svg.outerHTML : '';
-        const shapeCount = svg
-          ? svg.querySelectorAll('line, polyline, path, rect, circle, ellipse, text, polygon').length
-          : 0;
+      // Only audit UML diagram sections — git-graph sections (G1/G2/G3) live
+      // in the same page but aren't UML output, so their geometry rules differ.
+      const sections = Array.from(document.querySelectorAll('h2'))
+        .filter((heading) => {
+          const title = heading.textContent.trim();
+          // Exclude git-graph diagrams (titled with "G<number>.")
+          if (/^G\d+\./.test(title)) return false;
+          const container = heading.nextElementSibling;
+          // Only headings whose next sibling renders into a UML diagram container
+          return container && container.querySelector && container.querySelector('div[class$="diagram-container"], svg');
+        })
+        .map((heading) => {
+          const container = heading.nextElementSibling;
+          const svg = container && container.querySelector ? container.querySelector('svg') : null;
+          const viewBox = svg ? (svg.getAttribute('viewBox') || '') : '';
+          const outer = svg ? svg.outerHTML : '';
+          const shapeCount = svg
+            ? svg.querySelectorAll('line, polyline, path, rect, circle, ellipse, text, polygon').length
+            : 0;
 
-        return {
-          title: heading.textContent.trim(),
-          hasSvg: !!svg,
-          viewBox,
-          shapeCount,
-          hasInvalidCoords: svg ? /NaN|undefined/.test(outer) : true,
-        };
-      });
+          return {
+            title: heading.textContent.trim(),
+            hasSvg: !!svg,
+            viewBox,
+            shapeCount,
+            hasInvalidCoords: svg ? /NaN|undefined/.test(outer) : true,
+          };
+        });
 
       return {
-        headingCount: document.querySelectorAll('h2').length,
-        svgCount: document.querySelectorAll('div[class$="diagram-container"] > svg').length,
+        umlHeadingCount: sections.length,
+        umlSvgCount: sections.filter((s) => s.hasSvg).length,
         sections,
       };
     });
 
     expect(pageErrors).toEqual([]);
     expect(consoleErrors).toEqual([]);
-    expect(stats.svgCount).toBe(stats.headingCount);
+    expect(stats.umlSvgCount).toBe(stats.umlHeadingCount);
 
     const missing = stats.sections.filter((section) => !section.hasSvg).map((section) => section.title);
     const invalid = stats.sections
@@ -555,6 +571,378 @@ Hub --> CoffeeMaker
 
     expect(missing, `Missing SVG output for: ${missing.join(', ')}`).toEqual([]);
     expect(invalid, `Invalid SVG geometry for: ${invalid.join(', ')}`).toEqual([]);
+  });
+
+  test('UMLLayoutCore exposes the new staged primitives', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLLayoutCore);
+
+    const api = await page.evaluate(() => {
+      const core = /** @type {any} */ (window).UMLLayoutCore;
+      return {
+        hasMeasure: typeof core.measureEdgeRequirement === 'function',
+        hasMinGaps: typeof core.computeMinGaps === 'function',
+        hasDetect: typeof core.detectOverlaps === 'function',
+        hasRepair: typeof core.repairOverlaps === 'function',
+        hasOrient: typeof core.pickOrientation === 'function',
+        hasAspect: typeof core.containerAspect === 'function',
+        hasAnalyze: typeof core.analyzeHierarchy === 'function'
+      };
+    });
+
+    expect(api).toEqual({
+      hasMeasure: true, hasMinGaps: true, hasDetect: true, hasRepair: true,
+      hasOrient: true, hasAspect: true, hasAnalyze: true
+    });
+  });
+
+  test('compact-mode class diagrams keep every box overlap-free', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
+
+    const stats = await page.evaluate(() => {
+      // Busy diagram in compact mode — the specific case that used to produce
+      // cross-row overlaps before cross-layer repair landed.
+      const src = `@startuml
+layout compact
+class Customer {
+  - id: int
+  - firstName: String
+  - lastName: String
+  + placeOrder()
+  + cancelOrder()
+}
+class Order {
+  - orderId: int
+  - date: Date
+  + calculateTotal()
+  + addItem(Item)
+  + removeItem(Item)
+}
+class Item {
+  - sku: String
+  - price: double
+}
+class Address {
+  - street: String
+  - city: String
+  - zip: String
+}
+class Payment {
+  - amount: double
+  - method: String
+  + authorize()
+}
+class Invoice {
+  - number: String
+  - total: double
+}
+Customer "1" *-- "0..*" Order : places
+Order "1" *-- "1..*" Item : contains
+Customer "1" o-- "1..*" Address : has
+Order "1" --> "1" Payment : paidBy
+Order "1" --> "1" Invoice : generates
+Payment ..> Invoice : references
+@enduml`;
+
+      const host = document.createElement('div');
+      host.style.width = '1400px';
+      host.style.height = '800px';
+      host.style.position = 'absolute';
+      host.style.left = '-10000px';
+      document.body.appendChild(host);
+      /** @type {any} */ (window).UMLClassDiagram.render(host, src);
+
+      const svg = host.querySelector('svg');
+      if (!svg) { document.body.removeChild(host); return { pairs: 0, overlaps: 0 }; }
+
+      // Identify class boxes by finding the text nodes for the class names
+      // and deriving each box from the outermost rect that *contains* it.
+      const names = ['Customer', 'Order', 'Item', 'Address', 'Payment', 'Invoice'];
+      const texts = Array.from(svg.querySelectorAll('text'));
+      const rects = Array.from(svg.querySelectorAll('rect'));
+      const classRects = [];
+      for (const name of names) {
+        const txt = texts.find((t) => t.textContent.trim() === name);
+        if (!txt) continue;
+        const tb = txt.getBBox();
+        let best = null;
+        let bestArea = Infinity;
+        for (const r of rects) {
+          const rb = r.getBBox();
+          const contains =
+            tb.x >= rb.x - 0.5 && tb.x + tb.width <= rb.x + rb.width + 0.5 &&
+            tb.y >= rb.y - 0.5 && tb.y + tb.height <= rb.y + rb.height + 0.5;
+          if (!contains) continue;
+          const area = rb.width * rb.height;
+          if (area < bestArea) { bestArea = area; best = rb; }
+        }
+        if (best) classRects.push({ name, x: best.x, y: best.y, w: best.width, h: best.height });
+      }
+
+      let overlaps = 0;
+      const pairs = [];
+      for (let i = 0; i < classRects.length; i++) {
+        for (let j = i + 1; j < classRects.length; j++) {
+          const a = classRects[i], b = classRects[j];
+          const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+          const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+          if (ox > 2 && oy > 2) {
+            overlaps++;
+            pairs.push(`${a.name} vs ${b.name}`);
+          }
+        }
+      }
+
+      document.body.removeChild(host);
+      return { classCount: classRects.length, overlaps, pairs };
+    });
+
+    expect(stats.classCount).toBeGreaterThanOrEqual(5);
+    expect(stats.overlaps, `Overlapping pairs: ${(stats.pairs || []).join(', ')}`).toBe(0);
+  });
+
+  test('UMLLayoutCore.repairOverlaps resolves a known cross-layer overlap', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLLayoutCore);
+
+    const result = await page.evaluate(() => {
+      const core = /** @type {any} */ (window).UMLLayoutCore;
+      // Two boxes overlap diagonally — the kind of case the old band-based
+      // nudger missed because the boxes weren't in the same vertical band.
+      const nodes = [
+        { id: 'A', x: 0,  y: 0,  width: 120, height: 60 },
+        { id: 'B', x: 60, y: 20, width: 120, height: 60 }
+      ];
+      const before = core.detectOverlaps(nodes, 0).length;
+      const repairResult = core.repairOverlaps(nodes, { padding: 4, maxIter: 20 });
+      const after = core.detectOverlaps(nodes, 0).length;
+      return { before, after, converged: repairResult.converged };
+    });
+
+    expect(result.before).toBeGreaterThan(0);
+    expect(result.after).toBe(0);
+    expect(result.converged).toBe(true);
+  });
+
+  test('UMLLayoutCore.repairOverlaps respects Y-axis locks (hierarchy preservation)', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLLayoutCore);
+
+    const result = await page.evaluate(() => {
+      const core = /** @type {any} */ (window).UMLLayoutCore;
+      // Both Y positions locked — repair must separate only along X.
+      const nodes = [
+        { id: 'A', x: 0,  y: 100, width: 100, height: 60 },
+        { id: 'B', x: 40, y: 100, width: 100, height: 60 }
+      ];
+      const originalYs = nodes.map((n) => n.y);
+      core.repairOverlaps(nodes, {
+        padding: 4, maxIter: 20,
+        lockY: { A: true, B: true }
+      });
+      return {
+        yChangedA: Math.abs(nodes[0].y - originalYs[0]) > 0.01,
+        yChangedB: Math.abs(nodes[1].y - originalYs[1]) > 0.01,
+        remaining: core.detectOverlaps(nodes, 0).length
+      };
+    });
+
+    expect(result.yChangedA).toBe(false);
+    expect(result.yChangedB).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
+
+  test('UMLLayoutCore.pickOrientation follows container aspect', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLLayoutCore);
+
+    const result = await page.evaluate(() => {
+      const core = /** @type {any} */ (window).UMLLayoutCore;
+      return {
+        landscape: core.pickOrientation({ containerAspect: 1.78, preference: 'compact' }).direction,
+        portrait: core.pickOrientation({ containerAspect: 0.6, preference: 'compact' }).direction,
+        square: core.pickOrientation({ containerAspect: 1.0, preference: 'compact' }).direction,
+        lockedWins: core.pickOrientation({
+          containerAspect: 0.6, preference: 'compact',
+          userDirection: 'LR', directionLocked: true
+        }).direction,
+        hierarchyPrefersTB: core.pickOrientation({
+          containerAspect: 1.78, preference: 'compact', hasHierarchy: true
+        }).direction
+      };
+    });
+
+    expect(result.landscape).toBe('LR');
+    expect(result.portrait).toBe('TB');
+    expect(result.lockedWins).toBe('LR');
+    expect(result.hierarchyPrefersTB).toBe('TB');
+  });
+
+  test('UMLLayoutCore tolerates hostile inputs', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!/** @type {any} */ (window).UMLLayoutCore);
+
+    const outcome = await page.evaluate(() => {
+      const core = /** @type {any} */ (window).UMLLayoutCore;
+      try {
+        // Hostile inputs: NaN, Infinity, missing fields, undefined edges.
+        const nodes = [
+          { id: 'A', x: NaN, y: 0, width: 100, height: 50 },
+          { id: 'B', x: 50, y: Infinity, width: 100, height: 50 },
+          { id: 'C', x: 100, y: 100, width: 0, height: 0 },
+          { id: 'D', x: 200, y: 200, width: 100, height: 50 }
+        ];
+        const overlaps = core.detectOverlaps(nodes, 0);
+        const gaps = core.computeMinGaps(
+          [null, undefined, {}, { label: 'hi', source: 'A', target: 'B' }],
+          null, {}
+        );
+        const orient = core.pickOrientation({
+          containerAspect: NaN, preference: null, userDirection: null
+        });
+        const measured = core.measureEdgeRequirement(null);
+        const aspect = core.containerAspect(null);
+        const repair = core.repairOverlaps(null);
+        return {
+          detectReturnsArray: Array.isArray(overlaps),
+          gapsFinite: isFinite(gaps.minX) && isFinite(gaps.minY),
+          orientValid: orient.direction === 'TB' || orient.direction === 'LR',
+          measuredFinite: isFinite(measured.minX) && isFinite(measured.minY),
+          aspectNull: aspect === null,
+          repairOk: repair && typeof repair.converged === 'boolean'
+        };
+      } catch (e) {
+        return { error: String(e) };
+      }
+    });
+
+    expect(outcome).toEqual({
+      detectReturnsArray: true,
+      gapsFinite: true,
+      orientValid: true,
+      measuredFinite: true,
+      aspectNull: true,
+      repairOk: true
+    });
+  });
+
+  test('layout landscape produces landscape (aspect > 1) for every diagram type', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!(/** @type {any} */ (window)).UMLClassDiagram);
+
+    const results = await page.evaluate(() => {
+      function render(type, body) {
+        const w = /** @type {any} */ (window);
+        const renderer = {
+          class: w.UMLClassDiagram, seq: w.UMLSequenceDiagram,
+          state: w.UMLStateDiagram, comp: w.UMLComponentDiagram,
+          usecase: w.UMLUseCaseDiagram, activity: w.UMLActivityDiagram,
+          deployment: w.UMLDeploymentDiagram
+        }[type];
+        const h = document.createElement('div');
+        h.style.width = '1200px';
+        h.style.position = 'absolute';
+        h.style.left = '-10000px';
+        document.body.appendChild(h);
+        renderer.render(h, '@startuml\nlayout landscape\n' + body + '\n@enduml');
+        const svg = h.querySelector('svg');
+        const [,, w2, h2] = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+        document.body.removeChild(h);
+        return { w: w2, h: h2, aspect: w2 / h2 };
+      }
+      return {
+        classFlat: render('class', 'class A\nclass B\nclass C\nclass D\nclass E\nA -- B\nA -- C\nB -- D\nC -- E'),
+        state: render('state', '[*] --> A\nA --> B\nB --> C\nC --> D\nD --> [*]'),
+        comp: render('comp', 'component A\ncomponent B\ncomponent C\ncomponent D\nA --> B\nB --> C\nC --> D'),
+        activity: render('activity', '(*) --> "One"\n"One" --> "Two"\n"Two" --> "Three"\n"Three" --> (*)')
+      };
+    });
+
+    for (const [name, dim] of Object.entries(results)) {
+      expect(dim.w, `${name} landscape width`).toBeGreaterThan(0);
+      expect(dim.h, `${name} landscape height`).toBeGreaterThan(0);
+      expect(dim.aspect, `${name} aspect should be > 1 for landscape`).toBeGreaterThan(1);
+    }
+  });
+
+  test('layout portrait produces portrait (aspect < 1) for every diagram type', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!(/** @type {any} */ (window)).UMLClassDiagram);
+
+    const results = await page.evaluate(() => {
+      function render(type, body) {
+        const w = /** @type {any} */ (window);
+        const renderer = {
+          class: w.UMLClassDiagram, seq: w.UMLSequenceDiagram,
+          state: w.UMLStateDiagram, comp: w.UMLComponentDiagram,
+          usecase: w.UMLUseCaseDiagram, activity: w.UMLActivityDiagram,
+          deployment: w.UMLDeploymentDiagram
+        }[type];
+        const h = document.createElement('div');
+        h.style.width = '1200px';
+        h.style.position = 'absolute';
+        h.style.left = '-10000px';
+        document.body.appendChild(h);
+        renderer.render(h, '@startuml\nlayout portrait\n' + body + '\n@enduml');
+        const svg = h.querySelector('svg');
+        const [,, w2, h2] = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+        document.body.removeChild(h);
+        return { w: w2, h: h2, aspect: w2 / h2 };
+      }
+      return {
+        classFlat: render('class', 'class A\nclass B\nclass C\nclass D\nclass E\nA -- B\nA -- C\nB -- D\nC -- E'),
+        classHier: render('class', 'class Animal\nclass Dog\nclass Cat\nclass Mammal\nclass Bird\nDog --|> Mammal\nCat --|> Mammal\nMammal --|> Animal\nBird --|> Animal'),
+        state: render('state', '[*] --> A\nA --> B\nB --> C\nC --> D\nD --> [*]'),
+        comp: render('comp', 'component A\ncomponent B\ncomponent C\ncomponent D\nA --> B\nB --> C\nC --> D'),
+        activity: render('activity', '(*) --> "One"\n"One" --> "Two"\n"Two" --> "Three"\n"Three" --> (*)')
+      };
+    });
+
+    for (const [name, dim] of Object.entries(results)) {
+      expect(dim.w, `${name} portrait width`).toBeGreaterThan(0);
+      expect(dim.h, `${name} portrait height`).toBeGreaterThan(0);
+      expect(dim.aspect, `${name} aspect should be < 1 for portrait`).toBeLessThan(1);
+    }
+  });
+
+  test('compact mode produces a visibly smaller footprint than default', async ({ page }) => {
+    await page.goto('/test-uml.html');
+    await page.waitForFunction(() => !!(/** @type {any} */ (window)).UMLClassDiagram);
+
+    const ratios = await page.evaluate(() => {
+      function area(type, directive, body) {
+        const w = /** @type {any} */ (window);
+        const renderer = {
+          class: w.UMLClassDiagram, seq: w.UMLSequenceDiagram,
+          state: w.UMLStateDiagram, comp: w.UMLComponentDiagram
+        }[type];
+        const h = document.createElement('div');
+        h.style.width = '1200px';
+        h.style.position = 'absolute';
+        h.style.left = '-10000px';
+        document.body.appendChild(h);
+        const src = '@startuml\n' + (directive ? directive + '\n' : '') + body + '\n@enduml';
+        renderer.render(h, src);
+        const svg = h.querySelector('svg');
+        const [,, w2, h2] = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+        document.body.removeChild(h);
+        return w2 * h2;
+      }
+      const classBody = 'class A\nclass B\nclass C\nclass D\nA -- B\nA -- C\nB -- D';
+      const seqBody = 'participant A\nparticipant B\nparticipant C\nA -> B : x\nB -> C : y\nC --> B : z\nB --> A : w';
+      const stateBody = '[*] --> A\nA --> B\nB --> C\nC --> [*]';
+      return {
+        class: area('class', '', classBody) / area('class', 'layout compact', classBody),
+        seq:   area('seq', '', seqBody)     / area('seq', 'layout compact', seqBody),
+        state: area('state', '', stateBody) / area('state', 'layout compact', stateBody)
+      };
+    });
+
+    // Every diagram type should be at least 10% smaller in compact mode.
+    expect(ratios.class, 'class compact/normal area ratio').toBeGreaterThan(1.10);
+    expect(ratios.seq, 'sequence compact/normal area ratio').toBeGreaterThan(1.15);
+    expect(ratios.state, 'state compact/normal area ratio').toBeGreaterThan(1.10);
   });
 
   test('state example keeps the context, interface, and center state visually aligned', async ({ page }) => {
