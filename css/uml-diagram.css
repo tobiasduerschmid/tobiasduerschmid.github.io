@@ -1,5 +1,26 @@
 /* ── UML Diagram Theming ── */
 
+/* Git graph defaults — light-mode colors. SEBook applies a `filter: invert(1)`
+   to the whole SVG in dark mode (rule below) so we always render light colors
+   here and let the inversion handle dark theming. The interactive tutorial
+   view overrides these inside .tvm-git-graph-container for explicit theming. */
+:root {
+  --git-graph-text: #222;
+  --git-graph-bg: #fafbfc;
+}
+
+/* High-contrast commit message text with an opposite-color stroke halo so
+   lines crossing through stay readable. paint-order: stroke puts the stroke
+   beneath the fill so letterforms don't get eaten. */
+.git-graph-svg .git-graph-message {
+  fill: var(--git-graph-text);
+  stroke: var(--git-graph-bg);
+  stroke-width: 3;
+  paint-order: stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 /* Hide raw diagram source until it is rendered to prevent flash of unstyled content */
 pre:has(> code[class*="language-uml-"]),
 pre:has(> code.diagram-freeform),
@@ -35,7 +56,10 @@ pre:has(> code.language-folder-tree),
 }
 
 
-/* Dark mode — invert the SVG, then rotate hue back to preserve UCLA blue */
+/* Dark mode — invert the SVG, then rotate hue back to preserve UCLA blue.
+   Git-graph is excluded because its branch colors and HEAD chip styling are
+   chosen for both modes; it themes via CSS variables (--git-graph-bg/text)
+   instead of relying on a global filter. */
 html.dark-mode .uml-class-diagram-container svg,
 html.dark-mode .uml-sequence-diagram-container svg,
 html.dark-mode .uml-state-diagram-container svg,
@@ -44,9 +68,13 @@ html.dark-mode .uml-usecase-diagram-container svg,
 html.dark-mode .uml-component-diagram-container svg,
 html.dark-mode .uml-deployment-diagram-container svg,
 html.dark-mode .uml-freeform-diagram-container svg,
-html.dark-mode .uml-gitgraph-diagram-container svg,
 html.dark-mode .uml-folder-tree-diagram-container svg {
   filter: invert(1) hue-rotate(180deg);
+}
+
+html.dark-mode {
+  --git-graph-text: #f0f0f0;
+  --git-graph-bg: #121212;
 }
 
 .uml-class-diagram-container svg,

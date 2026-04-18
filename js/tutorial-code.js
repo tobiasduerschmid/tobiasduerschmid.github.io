@@ -169,6 +169,14 @@
     this._gitGraphHookInstalled = false;
     this._promptDetectBuf = '';
 
+    // Per-step VM snapshot cache (v86 only, in-memory for this session).
+    // Keyed by step index; value is a v86 save_state() result. Populated
+    // whenever we finish producing the "clean entry state" of a step —
+    // first-visit setup_commands completing, or a reset/restore replay
+    // finishing. Reset / autosave-restore check this first and restore
+    // directly instead of replaying prior steps.
+    this._stepEntrySnapshots = {};
+
     // UML diagram state
     this._umlDiagramEnabled = options.uml_diagram || false;
     this._umlPositionRight = options.uml_position === 'right'; // diagram in right bottom tab
@@ -890,6 +898,70 @@
       if (self.fitAddon) { try { self.fitAddon.fit(); } catch (e) { } }
       if (self.editor) self.editor.layout();
     });
+  };
+
+  /**
+   * Terminal-scoped loading overlay. Covers only the terminal panel so
+   * instructions and git-graph remain visible and interactive. Used while
+   * step setup_commands are running silently — the terminal should be inert
+   * and the commands should not flash by.
+   */
+  TutorialCode.prototype._showTerminalLoading = function (msg) {
+    var panel = this.root && this.root.querySelector('.tvm-terminal-panel');
+    if (!panel) return;
+    var overlay = panel.querySelector('.tvm-terminal-loading');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'tvm-terminal-loading';
+      overlay.innerHTML =
+        '<div class="tvm-loading-spinner"></div>' +
+        '<div class="tvm-loading-text"></div>';
+      panel.appendChild(overlay);
+    }
+    overlay.querySelector('.tvm-loading-text').textContent = msg || 'Loading\u2026';
+    overlay.style.display = 'flex';
+  };
+
+  TutorialCode.prototype._hideTerminalLoading = function () {
+    var panel = this.root && this.root.querySelector('.tvm-terminal-panel');
+    if (!panel) return;
+    var overlay = panel.querySelector('.tvm-terminal-loading');
+    if (overlay) overlay.style.display = 'none';
+  };
+
+  /**
+   * Save a v86 snapshot of the VM at the clean "entry state" of a step —
+   * the state right after that step's setup_commands have completed on top
+   * of a fresh VM + all prior steps' solution commands. Subsequent Reset
+   * or autosave-restore operations targeting this step can restore this
+   * snapshot directly, skipping the replay entirely.
+   * No-op for non-v86 backends or if save_state is unavailable.
+   */
+  TutorialCode.prototype._saveStepEntrySnapshot = function (idx) {
+    var self = this;
+    if (self.resetType !== 'commands') return Promise.resolve();
+    if (!self.emulator || !self.emulator.save_state) return Promise.resolve();
+    if (idx == null || idx < 0) return Promise.resolve();
+    return self.emulator.save_state().then(function (state) {
+      self._stepEntrySnapshots[idx] = state;
+    }).catch(function () { /* ignore snapshot failures */ });
+  };
+
+  /**
+   * Restore a cached step-entry snapshot. Returns a Promise that resolves
+   * to true on success, false if no snapshot is cached (caller should fall
+   * back to the replay path).
+   */
+  TutorialCode.prototype._restoreStepEntrySnapshot = function (idx) {
+    var self = this;
+    var state = self._stepEntrySnapshots[idx];
+    if (!state || !self.emulator || !self.emulator.restore_state) {
+      return Promise.resolve(false);
+    }
+    return self.emulator.restore_state(state).then(function () {
+      self._resetSerialState();
+      return true;
+    }).catch(function () { return false; });
   };
 
   TutorialCode.prototype._showError = function (msg) {
@@ -1646,13 +1718,25 @@
     // one marker/prompt detection cycle regardless of how many setup commands
     // there are.  Once the shell confirms they have all completed, clear the
     // terminal immediately via xterm so the user always starts with a clean slate.
-    var initScript = ['cd /tutorial', 'export HISTCONTROL=ignoreboth',
+    // HISTIGNORE pattern matches the marker suffix that every _runSilent /
+    // _runVisible call appends (e.g. " #__SIL_a1b2c3d4"), so bash skips those
+    // lines at history-insert time regardless of whether HISTCONTROL is in
+    // effect yet — closes the chicken-and-egg gap on the very first boot line.
+    var histIgnore = "'*#__SIL_*:*#__VIS_*'";
+    var initScript = ['cd /tutorial',
+                      'export HISTCONTROL=ignoreboth',
+                      'export HISTIGNORE=' + histIgnore,
                       'stty cols ' + cols + ' rows ' + rows]
                      .concat(self.setupCommands)
                      .join('; ');
     // Stay muted after setup — _refreshPrompt will clear and unmute once
     // the full restore sequence (files + commands) has finished.
     return self._runSilent(initScript).then(function () {
+      // Wipe the bootstrap line itself — up to this point the student has
+      // not typed anything, so clearing history is safe and guarantees the
+      // up-arrow starts empty.
+      return self._runSilent('history -c');
+    }).then(function () {
       // Snapshot the VM right after boot + setup commands so "commands" resets
       // can restore to a clean filesystem before replaying solutions.
       if (self.resetType === 'commands' && self.emulator && self.emulator.save_state) {
@@ -3530,13 +3614,13 @@
     // 3. Run solution commands (backend-specific dispatch)
     if (solution.commands && solution.commands.length > 0) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
-        // Use --no-pager for git commands so interactive pagers don't stall
-        // the serial stream between sequenced solution commands.
-        solution.commands.forEach(function (cmd) {
-          p = p.then(function () {
-            return self._runVisible(cmd.replace(/^git /, 'git --no-pager '));
-          });
-        });
+        // Batch into a single shell invocation so we only pay one marker +
+        // prompt-wait round-trip regardless of command count. --no-pager is
+        // injected per-command so interactive pagers don't stall the chain.
+        var batch = solution.commands
+          .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
+          .join('; ');
+        p = p.then(function () { return self._runVisible(batch); });
       } else if (this.config.backend === 'pyodide') {
         p = p.then(function () {
           return new Promise(function (resolve) {
@@ -3752,6 +3836,50 @@
     var targetStep = self.currentStep;
     var totalSteps = targetStep;
 
+    // Fast path: if we already cached a clean entry-state snapshot for this
+    // step (from a prior visit or a previous reset), just restore it. One
+    // WASM call replaces restoring _initialVMState + replaying every prior
+    // step + running this step's setup. This is the common case.
+    if (self._stepEntrySnapshots[targetStep]) {
+      self._showLoading('Resetting step\u2026');
+      return self._restoreStepEntrySnapshot(targetStep).then(function (ok) {
+        if (!ok) return self._resetStepWithCommandsSlow();
+        // Reapply the current step's starter files to the editor + 9p
+        var curStep = self.steps[targetStep];
+        if (curStep && curStep.files) {
+          self._suppressAutoSave = true;
+          curStep.files.forEach(function (f) {
+            self.openFile(f.path, f.content, f.language);
+            self._syncFileToBackend(f.path);
+            self._originalContent[f.path] = f.content || '';
+          });
+          self._suppressAutoSave = false;
+          if (curStep.open_file) { self._setActiveFile(curStep.open_file); }
+          self._renderTabs();
+        }
+        self._autoSaveProgress();
+        if (self.term) self.term.clear();
+        self._muteCount = 0;
+        if (self.emulator) self.emulator.serial0_send('\n');
+        self._hideLoading();
+        self._refreshGitGraph();
+      });
+    }
+
+    return self._resetStepWithCommandsSlow();
+  };
+
+  /**
+   * Slow path for reset: restore the post-boot VM, replay every prior
+   * step's solution commands, run the current step's setup_commands. Also
+   * caches a snapshot of the final "clean entry state" so that future
+   * resets of this step hit the fast path above.
+   */
+  TutorialCode.prototype._resetStepWithCommandsSlow = function () {
+    var self = this;
+    var targetStep = self.currentStep;
+    var totalSteps = targetStep;
+
     self._showLoading(
       totalSteps > 0
         ? 'Resetting step\u2026 (replaying ' + totalSteps + ' step' + (totalSteps === 1 ? '' : 's') + ')'
@@ -3769,15 +3897,15 @@
       });
     }
 
-    // Replay steps 0 … currentStep-1: starter files → solution files → solution commands
+    // Apply files for all prior steps (JS-only, fast). Commands for all
+    // prior steps + the current step's setup are accumulated and flushed in
+    // ONE _runSilent call below — so we pay one VM round-trip total rather
+    // than one per step.
+    var commandBatch = [];
     for (var i = 0; i < targetStep; i++) {
       (function (stepIdx) {
         var st = self.steps[stepIdx];
         if (!st) return;
-
-        p = p.then(function () {
-          self._showLoading('Resetting step\u2026 (step ' + (stepIdx + 1) + ' of ' + totalSteps + ')');
-        });
 
         // 1. Apply step starter files
         if (st.files) {
@@ -3808,13 +3936,12 @@
           });
         }
 
-        // 3. Run solution commands
+        // 3. Accumulate solution commands
         if (st.solution && st.solution.commands && st.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            var batch = st.solution.commands
-              .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-              .join('; ');
-            p = p.then(function () { return self._runSilent(batch); });
+            st.solution.commands.forEach(function (cmd) {
+              commandBatch.push(cmd.replace(/^git /, 'git --no-pager '));
+            });
           }
         }
       })(i);
@@ -3836,15 +3963,24 @@
       });
     }
 
-    // Run current step's setup_commands
+    // Accumulate current step's setup_commands
     if (curStep && curStep.setup_commands && curStep.setup_commands.length > 0) {
       if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-        var setupBatch = curStep.setup_commands
-          .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-          .join('; ');
-        p = p.then(function () { return self._runSilent(setupBatch); });
+        curStep.setup_commands.forEach(function (cmd) {
+          commandBatch.push(cmd.replace(/^git /, 'git --no-pager '));
+        });
       }
     }
+
+    // One round-trip for every queued command across all replayed steps.
+    if (commandBatch.length > 0 &&
+        (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
+      p = p.then(function () { return self._runSilent(commandBatch.join('; ')); });
+    }
+
+    // Cache the post-replay state so subsequent Resets / autosave-restores
+    // of this step can skip the replay and hit the fast path.
+    p = p.then(function () { return self._saveStepEntrySnapshot(targetStep); });
 
     // Reveal the tutorial
     p = p.then(function () {
@@ -3893,6 +4029,43 @@
     var targetStep = saved.step;
     var totalSteps = targetStep; // number of steps to replay
 
+    // Fast path: we already have a cached clean entry-state for this step.
+    // (Cached during an earlier reset in this session, or seeded by a prior
+    // normal progression.) One WASM call replaces the full replay below.
+    if (self._stepEntrySnapshots[targetStep]) {
+      self._showLoading('Restoring your progress\u2026');
+      return self._restoreStepEntrySnapshot(targetStep).then(function (ok) {
+        if (!ok) return self._restoreCommandsAndFilesSlow(saved);
+        var savedStepObj = self.steps[targetStep];
+        if (savedStepObj && savedStepObj.files) {
+          self._suppressAutoSave = true;
+          savedStepObj.files.forEach(function (f) {
+            self.openFile(f.path, f.content, f.language);
+            self._syncFileToBackend(f.path);
+            self._originalContent[f.path] = f.content || '';
+          });
+          self._suppressAutoSave = false;
+        }
+        self._applySavedFiles(saved.files, saved.activeFile);
+        self._autoSaveProgress();
+        self._hideLoading();
+      });
+    }
+
+    return self._restoreCommandsAndFilesSlow(saved);
+  };
+
+  /**
+   * Slow path for autosave restore: cold-replay every prior step's solution
+   * commands, then apply the saved step's starter files and the student's
+   * saved edits on top. Caches a snapshot of the clean post-replay state
+   * so subsequent reset/restore of this step hit the fast path.
+   */
+  TutorialCode.prototype._restoreCommandsAndFilesSlow = function (saved) {
+    var self = this;
+    var targetStep = saved.step;
+    var totalSteps = targetStep;
+
     // Show full-screen loading overlay for the entire replay so neither
     // the terminal commands nor intermediate file writes are visible.
     self._showLoading(
@@ -3912,15 +4085,15 @@
       });
     }
 
+    // File writes for every replayed step happen JS-side (fast), but every
+    // step's solution commands are accumulated into a single batch below and
+    // dispatched as ONE _runSilent call. That replaces N VM round-trips with
+    // one — the main cost of cold restore.
+    var restoreBatch = [];
     for (var i = 0; i < targetStep; i++) {
       (function (stepIdx) {
         var step = self.steps[stepIdx];
         if (!step) return;
-
-        // Update loading message with live step counter
-        p = p.then(function () {
-          self._showLoading('Restoring your progress\u2026 (step ' + (stepIdx + 1) + ' of ' + totalSteps + ')');
-        });
 
         // 1. Apply step starter files
         if (step.files) {
@@ -3951,14 +4124,12 @@
           });
         }
 
-        // 3. Run solution commands silently — batch into one _runSilent call
-        //    per step so we only pay one round-trip instead of one per command.
+        // 3. Accumulate solution commands into the single batch
         if (step.solution && step.solution.commands && step.solution.commands.length > 0) {
           if (self.config.backend === 'v86' || self.config.backend === 'webcontainer') {
-            var batch = step.solution.commands
-              .map(function (cmd) { return cmd.replace(/^git /, 'git --no-pager '); })
-              .join('; ');
-            p = p.then(function () { return self._runSilent(batch); });
+            step.solution.commands.forEach(function (cmd) {
+              restoreBatch.push(cmd.replace(/^git /, 'git --no-pager '));
+            });
           }
         }
       })(i);
@@ -3979,6 +4150,17 @@
         return Promise.all(syncs);
       });
     }
+
+    // Flush every accumulated solution command in a single VM round-trip
+    if (restoreBatch.length > 0 &&
+        (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
+      p = p.then(function () { return self._runSilent(restoreBatch.join('; ')); });
+    }
+
+    // Cache this clean post-replay state before applying the student's
+    // (possibly divergent) autosaved edits. Future reset/restore of this
+    // step can skip the replay entirely.
+    p = p.then(function () { return self._saveStepEntrySnapshot(targetStep); });
 
     // 5. Apply autosaved student file overrides, then reveal the tutorial
     p = p.then(function () {
@@ -4040,17 +4222,23 @@
     }
     if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
 
-    if (firstVisit && step.setup_commands) {
+    if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
       if (this.config.backend === 'v86' || this.config.backend === 'webcontainer') {
-        step.setup_commands.forEach(function (cmd) {
-          // Commands starting with a space are housekeeping (hidden from
-          // history via HISTCONTROL=ignoreboth).  On v86, also run them
-          // silently so the user never sees the echo in the terminal.
-          if (self.config.backend === 'v86' && cmd.charAt(0) === ' ') {
-            self._runSilent(cmd.trim());
-          } else {
-            self.sendCommand(cmd);
-          }
+        // Run all setup_commands silently in a single shell invocation. The
+        // terminal is covered by a scoped overlay during the run; instructions
+        // and the git-graph panel stay interactive. Bash skips this line at
+        // history-insert time because _runSilent appends a "#__SIL_<id>"
+        // marker that matches the boot-time HISTIGNORE pattern.
+        var setupBatch = step.setup_commands
+          .map(function (c) { return c.trim(); })
+          .join('; ');
+        self._showTerminalLoading('Preparing step\u2026');
+        self._runSilent(setupBatch).then(function () {
+          self._hideTerminalLoading();
+          self._refreshGitGraph && self._refreshGitGraph();
+          // Cache the clean "entry state" of this step so future Reset /
+          // autosave-restore operations can skip replay entirely.
+          self._saveStepEntrySnapshot(index);
         });
       } else if (this.config.backend === 'pyodide') {
         this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
