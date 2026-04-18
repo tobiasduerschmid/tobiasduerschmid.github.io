@@ -1,13 +1,13 @@
-/* GitCommandLab — interactive command demo cards */
+/* FSCommandLab — interactive directory command demo cards */
 
-.git-command-lab-grid {
+.fs-command-lab-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
   gap: 18px;
   margin: 1.5em 0;
 }
 
-.git-command-lab {
+.fs-command-lab {
   border: none;
   padding: 0;
   background-color: transparent;
@@ -16,28 +16,23 @@
   flex-direction: column;
   min-width: 0;
   overflow-wrap: anywhere;
+  margin: 1.5em 0;
 }
 
-.git-command-lab__header {
-  margin-bottom: 6px;
-  min-width: 0;
-}
-
-.git-command-lab__row {
+.fs-command-lab__row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
 }
-.git-command-lab__caption {
+.fs-command-lab__caption {
   flex: 1 1 260px;
   min-width: 0;
   order: 1;
 }
-.git-command-lab__caption > .git-command-lab__desc:first-child { margin-top: 0; }
-.git-command-lab__caption > .git-command-lab__rebase-file { margin-top: 10px; margin-bottom: 0; }
+.fs-command-lab__caption > .fs-command-lab__desc:first-child { margin-top: 0; }
 
-.git-command-lab__action {
+.fs-command-lab__action {
   flex: 1 1 280px;
   min-width: 0;
   order: 2;
@@ -45,49 +40,105 @@
   flex-direction: column;
   gap: 10px;
 }
-.git-command-lab__action > .git-command-lab__btn { align-self: flex-end; }
+.fs-command-lab__action > .fs-command-lab__btn { align-self: flex-end; }
 
-.git-command-lab__graphs {
+.fs-command-lab__trees {
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-self: stretch;
 }
-.git-command-lab__graphs > .git-command-lab__graph { align-self: stretch; }
-.git-command-lab__graph-after { display: none; }
+.fs-command-lab__trees > .fs-command-lab__tree { align-self: stretch; }
+.fs-command-lab__tree-after { display: none; }
+
+/* ----- Tree wrapper + crossfade slots ----- */
+.fs-command-lab__tree {
+  position: relative;
+  min-height: 40px;
+  transition: height 380ms cubic-bezier(.7,0,.3,1);
+  overflow: visible;
+}
+.fs-command-lab__tree-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transition: opacity 360ms ease;
+  pointer-events: none;
+}
+.fs-command-lab__tree-slot--active {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;  /* contributes to wrapper height when wrapper height isn't locked */
+}
+.fs-command-lab__tree-slot svg { display: block; max-width: 100%; height: auto; }
+
+/* Yellow glow burst on new / changed rows is driven by JS
+   (requestAnimationFrame) — it writes an inline `filter: drop-shadow(...)`
+   on each changed row's text + icon shapes over ~1 second. Colours,
+   peak timing and luminance mirror git-graph-label-burst exactly. No CSS
+   keyframes are needed; inline styles have higher specificity than any
+   print / dark-mode filter overrides. */
+
+/* ----- Terminal output area ----- */
+.fs-command-lab__output {
+  margin: 0;
+  padding: 0 12px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  background-color: #1e2430;
+  color: #e6edf3;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 240ms ease, max-height 240ms ease, padding 240ms ease, margin-top 240ms ease;
+}
+.fs-command-lab__output--visible {
+  opacity: 1;
+  max-height: 260px;
+  margin-top: 6px;
+  padding: 8px 12px;
+}
+html.dark-mode .fs-command-lab__output {
+  background-color: #0d1117;
+  color: #e6edf3;
+  border: 1px solid #2f3a4a;
+}
 
 /* ----- Print layout: show Before | After side by side ----- */
 @media print {
-  .git-command-lab { break-inside: avoid; page-break-inside: avoid; }
-  /* Keep the button visible as a labelled pill showing the command, but strip
-     its interactive affordances — printing doesn't click. */
-  .git-command-lab__btn {
+  .fs-command-lab { break-inside: avoid; page-break-inside: avoid; }
+  .fs-command-lab__btn {
     cursor: default !important;
     box-shadow: none !important;
     align-self: flex-start !important;
     margin: 4px 0 10px !important;
   }
-  .git-command-lab__btn .git-command-lab__icon { display: none !important; }
-  .git-command-lab__row {
-    display: block !important;
-  }
-  .git-command-lab__caption,
-  .git-command-lab__action { display: block !important; }
-  .git-command-lab__graphs {
+  .fs-command-lab__btn .fs-command-lab__icon { display: none !important; }
+  .fs-command-lab__row { display: block !important; }
+  .fs-command-lab__caption,
+  .fs-command-lab__action { display: block !important; }
+  .fs-command-lab__trees {
     display: flex !important;
     flex-direction: row !important;
     gap: 14px !important;
     align-items: flex-start;
   }
-  .git-command-lab__graphs > .git-command-lab__graph,
-  .git-command-lab__graphs > .git-command-lab__graph-after {
+  .fs-command-lab__trees > .fs-command-lab__tree,
+  .fs-command-lab__trees > .fs-command-lab__tree-after {
     display: block !important;
     flex: 1 1 0 !important;
     min-width: 0 !important;
+    position: static !important;
+    height: auto !important;
   }
-  /* Before / After headers above each graph */
-  .git-command-lab__graphs > .git-command-lab__graph::before,
-  .git-command-lab__graphs > .git-command-lab__graph-after::before {
+  .fs-command-lab__trees > .fs-command-lab__tree::before,
+  .fs-command-lab__trees > .fs-command-lab__tree-after::before {
     content: attr(data-state-label);
     display: block;
     font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
@@ -98,11 +149,32 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .git-command-lab__graph svg,
-  .git-command-lab__graph-after svg { max-width: 100% !important; height: auto !important; }
+  /* In print, dump both slots stacked so all content is visible. */
+  .fs-command-lab__tree-slot {
+    position: static !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* Show only the active slot; avoid duplicate renders of same state. */
+  .fs-command-lab__tree-slot:not(.fs-command-lab__tree-slot--active) {
+    display: none !important;
+  }
+  .fs-command-lab__tree svg,
+  .fs-command-lab__tree-after svg { max-width: 100% !important; height: auto !important; }
+  .fs-command-lab__output {
+    max-height: none !important;
+    opacity: 1 !important;
+    margin-top: 6px !important;
+    padding: 6px 10px !important;
+    background-color: #f4f6f8 !important;
+    color: #1f2d3d !important;
+    border: 1px solid #d8dde2 !important;
+    font-size: 8.5pt !important;
+  }
 }
 
-.git-command-lab__btn {
+/* ----- Primary (play) button ----- */
+.fs-command-lab__btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -123,35 +195,33 @@
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease, box-shadow 160ms ease;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
-.git-command-lab__btn .git-command-lab__cmd {
+.fs-command-lab__btn .fs-command-lab__cmd {
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-.git-command-lab__btn .git-command-lab__icon { flex: 0 0 auto; }
+.fs-command-lab__btn .fs-command-lab__icon { flex: 0 0 auto; }
 
 @media (max-width: 520px) {
-  .git-command-lab { padding: 12px 12px 10px; }
-  .git-command-lab__btn {
+  .fs-command-lab { padding: 12px 12px 10px; }
+  .fs-command-lab__btn {
     font-size: 12.5px;
     padding: 6px 12px 6px 10px;
     border-radius: 14px;
   }
-  .git-command-lab__rebase-file { font-size: 11.5px; }
-  .git-command-lab__rebase-file code { padding: 8px 10px; }
 }
-.git-command-lab__btn:hover {
+.fs-command-lab__btn:hover {
   background-color: #1e5f8d;
   border-color: #1e5f8d;
   box-shadow: 0 2px 6px rgba(39,116,174,0.25);
 }
-.git-command-lab__btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-.git-command-lab__btn:focus-visible {
+.fs-command-lab__btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.fs-command-lab__btn:focus-visible {
   outline: 2px solid #1e5f8d;
   outline-offset: 2px;
 }
 
-.git-command-lab__icon {
+.fs-command-lab__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -161,23 +231,24 @@
   line-height: 1;
 }
 
-.git-command-lab__btn--undo {
+/* ----- Undo variant ----- */
+.fs-command-lab__btn--undo {
   background-color: transparent;
   color: #b03a2e;
   border-color: #b03a2e;
   box-shadow: none;
 }
-.git-command-lab__btn--undo:hover {
+.fs-command-lab__btn--undo:hover {
   background-color: rgba(176,58,46,0.08);
   border-color: #b03a2e;
   box-shadow: 0 2px 6px rgba(176,58,46,0.14);
 }
-.git-command-lab__btn--undo .git-command-lab__icon {
+.fs-command-lab__btn--undo .fs-command-lab__icon {
   font-size: 11px;
 }
 
-.git-command-lab__btn .git-command-lab__cmd,
-.git-command-lab__btn code.git-command-lab__cmd {
+.fs-command-lab__btn .fs-command-lab__cmd,
+.fs-command-lab__btn code.fs-command-lab__cmd {
   background: transparent !important;
   background-color: transparent !important;
   color: inherit;
@@ -188,78 +259,17 @@
   box-shadow: none;
 }
 
-.git-command-lab__desc {
+.fs-command-lab__desc {
   margin: 0;
   color: #000;
   font-size: 1.05em;
   line-height: 1.5;
 }
-.git-command-lab__desc > p { margin: 0 0 1em; }
-.git-command-lab__desc > p:last-child { margin-bottom: 0; }
-
-.git-command-lab__rebase-file {
-  margin: 0 0 20px;
-  padding: 0;
-  background-color: #f4f6f8;
-  border: 1px solid #d8dde2;
-  border-radius: 6px;
-  overflow: hidden;
-  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-.git-command-lab__rebase-file code {
-  overflow-x: auto;
-}
-.git-command-lab__rebase-file-header {
-  padding: 6px 10px;
-  background-color: #e6eaee;
-  color: #5a6573;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  border-bottom: 1px solid #d8dde2;
-}
-.git-command-lab__rebase-file code {
-  display: block;
-  padding: 10px 12px;
-  background: transparent !important;
-  color: #1f2d3d;
-  white-space: pre;
-  font: inherit;
-}
-html.dark-mode .git-command-lab__rebase-file {
-  background-color: #0f1721;
-  border-color: #2f3a4a;
-}
-html.dark-mode .git-command-lab__rebase-file-header {
-  background-color: #1a2332;
-  color: #9aa6b2;
-  border-bottom-color: #2f3a4a;
-}
-html.dark-mode .git-command-lab__rebase-file code {
-  color: #e6edf3;
-}
-
-.git-command-lab__graph {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
-  overflow-x: auto;
-}
-.git-command-lab__graph .git-graph-svg { max-width: 100%; height: auto; }
-/* Workbench always takes a full row so the graph drops below it. */
-.git-command-lab__graph .git-workbench,
-.git-command-lab__graph-after .git-workbench,
-.git-command-lab__graph-static .git-workbench {
-  flex: 0 0 100%;
-  width: 100%;
-  min-width: 0;
-}
+.fs-command-lab__desc > p { margin: 0 0 1em; }
+.fs-command-lab__desc > p:last-child { margin-bottom: 0; }
 
 /* ----- Multi-step button group (Back + Forward/Restart) ----- */
-.git-command-lab__btn-group {
+.fs-command-lab__btn-group {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -268,11 +278,11 @@ html.dark-mode .git-command-lab__rebase-file code {
   justify-content: flex-end;
   max-width: 100%;
 }
-.git-command-lab--multi .git-command-lab__action > .git-command-lab__btn-group {
+.fs-command-lab--multi .fs-command-lab__action > .fs-command-lab__btn-group {
   align-self: flex-end;
 }
 
-.git-command-lab__btn-back {
+.fs-command-lab__btn-back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -288,83 +298,82 @@ html.dark-mode .git-command-lab__rebase-file code {
   line-height: 1.2;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
 }
-.git-command-lab__btn-back:hover:not(:disabled) {
+.fs-command-lab__btn-back:hover:not(:disabled) {
   background-color: #f1f3f5;
   border-color: #9aa6b2;
   color: #1f2d3d;
 }
-.git-command-lab__btn-back:focus-visible {
+.fs-command-lab__btn-back:focus-visible {
   outline: 2px solid #9aa6b2;
   outline-offset: 2px;
 }
-.git-command-lab__btn-back:disabled {
+.fs-command-lab__btn-back:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.git-command-lab__btn-back .git-command-lab__icon { font-size: 11px; }
-.git-command-lab__btn-back-label { font: inherit; }
+.fs-command-lab__btn-back .fs-command-lab__icon { font-size: 11px; }
+.fs-command-lab__btn-back-label { font: inherit; }
 
-html.dark-mode .git-command-lab__btn-back {
+html.dark-mode .fs-command-lab__btn-back {
   color: #9aa6b2;
   border-color: #3a4556;
 }
-html.dark-mode .git-command-lab__btn-back:hover:not(:disabled) {
+html.dark-mode .fs-command-lab__btn-back:hover:not(:disabled) {
   background-color: rgba(154,166,178,0.1);
   border-color: #5a6573;
   color: #e6edf3;
 }
 
 @media print {
-  .git-command-lab__btn-back { display: none !important; }
+  .fs-command-lab__btn-back { display: none !important; }
 }
 
 /* ----- Restart button (multi-step final state) ----- */
-.git-command-lab__btn--restart {
+.fs-command-lab__btn--restart {
   background-color: transparent;
   color: #1a7d5a;
   border-color: #1a7d5a;
   box-shadow: none;
 }
-.git-command-lab__btn--restart:hover {
+.fs-command-lab__btn--restart:hover {
   background-color: rgba(26,125,90,0.08);
   border-color: #1a7d5a;
   box-shadow: 0 2px 6px rgba(26,125,90,0.14);
 }
-html.dark-mode .git-command-lab__btn--restart {
+html.dark-mode .fs-command-lab__btn--restart {
   color: #4ade80;
   border-color: #4ade80;
 }
-html.dark-mode .git-command-lab__btn--restart:hover {
+html.dark-mode .fs-command-lab__btn--restart:hover {
   background-color: rgba(74,222,128,0.12);
 }
 
 /* ----- Step progress indicator (multi-step) ----- */
-.git-command-lab__step-progress {
+.fs-command-lab__step-progress {
   margin-top: 10px;
   font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
   font-size: 11.5px;
   color: #6b7280;
   font-variant-numeric: tabular-nums;
 }
-html.dark-mode .git-command-lab__step-progress { color: #9aa6b2; }
+html.dark-mode .fs-command-lab__step-progress { color: #9aa6b2; }
 
 /* ----- Print steps grid (hidden on screen, shown in print) ----- */
-.git-command-lab__print-steps { display: none; }
+.fs-command-lab__print-steps { display: none; }
 
-.git-command-lab__graph-static svg { max-width: 100%; height: auto; display: block; }
+.fs-command-lab__tree-static svg { max-width: 100%; height: auto; display: block; }
 
 @media print {
-  /* Multi-step: hide the interactive row, show the static steps grid */
-  .git-command-lab--multi > .git-command-lab__row { display: none !important; }
+  .fs-command-lab--multi > .fs-command-lab__row { display: none !important; }
 
-  .git-command-lab__print-steps {
+  .fs-command-lab__print-steps {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
     gap: 14px 18px;
     margin-top: 8px;
   }
 
-  .git-command-lab__print-step {
+  .fs-command-lab__print-step {
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -372,7 +381,7 @@ html.dark-mode .git-command-lab__step-progress { color: #9aa6b2; }
     page-break-inside: avoid;
   }
 
-  .git-command-lab__print-step-label {
+  .fs-command-lab__print-step-label {
     font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace !important;
     font-size: 9pt !important;
     font-weight: 700 !important;
@@ -381,10 +390,10 @@ html.dark-mode .git-command-lab__step-progress { color: #9aa6b2; }
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .git-command-lab__print-step-label--initial {
+  .fs-command-lab__print-step-label--initial {
     color: #5a6573 !important;
   }
-  .git-command-lab__print-step-label code {
+  .fs-command-lab__print-step-label code {
     background: transparent !important;
     padding: 0 !important;
     font-size: 9pt !important;
@@ -396,53 +405,53 @@ html.dark-mode .git-command-lab__step-progress { color: #9aa6b2; }
     font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace !important;
   }
 
-  .git-command-lab__print-step-desc,
-  .git-command-lab__print-step-desc p {
+  .fs-command-lab__print-step-desc,
+  .fs-command-lab__print-step-desc p {
     font-size: 8pt !important;
     line-height: 1.35 !important;
     color: #374151 !important;
   }
-  .git-command-lab__print-step-desc code {
+  .fs-command-lab__print-step-desc code {
     font-size: 8pt !important;
     padding: 0 2px !important;
     font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace !important;
   }
-  .git-command-lab__print-step-desc p { margin: 0 0 3px; }
-  .git-command-lab__print-step-desc p:last-child { margin-bottom: 0; }
+  .fs-command-lab__print-step-desc p { margin: 0 0 3px; }
+  .fs-command-lab__print-step-desc p:last-child { margin-bottom: 0; }
 
-  .git-command-lab__graph-static svg { max-width: 100% !important; height: auto !important; }
-  .git-command-lab__step-progress { display: none !important; }
+  .fs-command-lab__tree-static svg { max-width: 100% !important; height: auto !important; }
+  .fs-command-lab__step-progress { display: none !important; }
 }
 
 /* ----- Dark mode ----- */
-html.dark-mode .git-command-lab {
+html.dark-mode .fs-command-lab {
   border-color: #2f3a4a;
   color: #e6edf3;
 }
-html.dark-mode .git-command-lab__desc { color: #fff; }
-html.dark-mode .git-command-lab__btn {
+html.dark-mode .fs-command-lab__desc { color: #fff; }
+html.dark-mode .fs-command-lab__btn {
   background-color: transparent;
   color: #4a9fd9;
   border-color: #4a9fd9;
 }
-html.dark-mode .git-command-lab__btn:hover {
+html.dark-mode .fs-command-lab__btn:hover {
   background-color: rgba(74,159,217,0.12);
   border-color: #66b1e3;
   color: #66b1e3;
 }
-html.dark-mode .git-command-lab__btn--undo {
+html.dark-mode .fs-command-lab__btn--undo {
   background-color: transparent;
   color: #f1948a;
   border-color: #f1948a;
 }
-html.dark-mode .git-command-lab__btn--undo:hover {
+html.dark-mode .fs-command-lab__btn--undo:hover {
   background-color: rgba(241,148,138,0.12);
   border-color: #f1948a;
 }
 
 /* ----- Modal (popup) presentation ----- */
 
-.git-command-lab-modal-overlay {
+.fs-command-lab-modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 35, 0.55);
@@ -451,10 +460,10 @@ html.dark-mode .git-command-lab__btn--undo:hover {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: gcl-modal-fade 140ms ease-out;
+  animation: fcl-modal-fade 140ms ease-out;
 }
 
-.git-command-lab-modal {
+.fs-command-lab-modal {
   background-color: #ffffff;
   color: #1f2d3d;
   border-radius: 10px;
@@ -465,15 +474,15 @@ html.dark-mode .git-command-lab__btn--undo:hover {
   overflow: auto;
   box-shadow: 0 24px 60px rgba(0,0,0,0.35);
 }
-html.dark-mode .git-command-lab-modal { background-color: #1c2533; color: #e6edf3; }
+html.dark-mode .fs-command-lab-modal { background-color: #1c2533; color: #e6edf3; }
 
-.git-command-lab-modal .git-command-lab {
+.fs-command-lab-modal .fs-command-lab {
   border: none;
   padding: 0;
   background-color: transparent;
 }
 
-.git-command-lab-modal__close {
+.fs-command-lab-modal__close {
   position: absolute;
   top: 8px;
   right: 12px;
@@ -486,11 +495,11 @@ html.dark-mode .git-command-lab-modal { background-color: #1c2533; color: #e6edf
   padding: 4px 8px;
   border-radius: 4px;
 }
-.git-command-lab-modal__close:hover { background-color: #f1f3f5; color: #1f2d3d; }
-html.dark-mode .git-command-lab-modal__close { color: #9aa6b2; }
-html.dark-mode .git-command-lab-modal__close:hover { background-color: #2a323e; color: #e6edf3; }
+.fs-command-lab-modal__close:hover { background-color: #f1f3f5; color: #1f2d3d; }
+html.dark-mode .fs-command-lab-modal__close { color: #9aa6b2; }
+html.dark-mode .fs-command-lab-modal__close:hover { background-color: #2a323e; color: #e6edf3; }
 
-@keyframes gcl-modal-fade {
+@keyframes fcl-modal-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
 }

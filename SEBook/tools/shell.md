@@ -3,6 +3,10 @@ title: Shell Scripting - Automating the Command Line
 layout: sebook
 ---
 
+<script src="/js/ArchUML/uml-bundle.js"></script>
+<script src="/js/fs-command-lab.js"></script>
+
+<link rel="stylesheet" href="/css/fs-command-lab.css">
 
 > **Start here:** If you are new to shell scripting, begin with the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system. This article is a **reference** to deepen your understanding afterward.
 
@@ -47,6 +51,107 @@ These are the foundational tools for interacting with the POSIX filesystem:
 * **`rm`**: Remove (delete) files. Use `-r` to remove a directory and its contents recursively.
 * **`rmdir`**: Remove empty directories (only works on empty ones).
 * **`touch`**: Create an empty file or update timestamps.
+
+#### Walkthrough: file handling in action
+
+Step through a realistic session to see each command's effect on the directory tree. New or changed rows get a yellow burst; the `(you are here)` marker tracks the current working directory.
+
+<div data-fs-command-lab-multi>
+<script type="application/json">
+{
+  "description": "Start in an empty `project/` directory. Each step runs one command; the tree and `ls` output update to match what you would see in a real shell.",
+  "initialState": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+    "cwd": "project"
+  },
+  "steps": [
+    {
+      "command": "pwd",
+      "description": "`pwd` prints the current working directory. The filesystem doesn't change — the output below the tree is what the shell would print.",
+      "state": {
+        "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project",
+        "output": "/home/user/project"
+      }
+    },
+    {
+      "command": "ls",
+      "description": "`ls` lists the contents of the cwd. Still no tree changes — the interesting result is stdout.",
+      "state": {
+        "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project",
+        "output": "README.md  src"
+      }
+    },
+    {
+      "command": "mkdir docs",
+      "description": "`mkdir` creates a new directory relative to cwd. `docs/` appears as a sibling of `src/`.",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n  src/\n    app.js\n    utils.js",
+        "cwd": "project"
+      }
+    },
+    {
+      "command": "touch docs/readme.md",
+      "description": "`touch` creates an empty file (or updates an existing one's mtime). The new file appears inside `docs/`.",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n    readme.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project"
+      }
+    },
+    {
+      "command": "cd src",
+      "description": "`cd` moves the cwd. The tree is identical — only the `(you are here)` marker shifts to `src/`.",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n    readme.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project/src"
+      }
+    },
+    {
+      "command": "ls",
+      "description": "Running `ls` now lists the contents of `src/` (the new cwd).",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n    readme.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project/src",
+        "output": "app.js  utils.js"
+      }
+    },
+    {
+      "command": "cp app.js backup.js",
+      "description": "`cp` copies a file. The source (`app.js`) stays; a new sibling (`backup.js`) appears in the same directory.",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n    readme.md\n  src/\n    app.js\n    backup.js\n    utils.js",
+        "cwd": "project/src"
+      }
+    },
+    {
+      "command": "mv backup.js ../docs/backup.js",
+      "description": "`mv` moves (or renames) a file. The source disappears from `src/` and reappears under `docs/` — a single conceptual operation, shown as a simultaneous removal and arrival.",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n    backup.js\n    readme.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project/src"
+      }
+    },
+    {
+      "command": "cd ..",
+      "description": "`..` refers to the parent directory. The cwd marker jumps back up to `project/`.",
+      "state": {
+        "tree": "project/\n  README.md\n  docs/\n    backup.js\n    readme.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project"
+      }
+    },
+    {
+      "command": "rm -r docs",
+      "description": "`rm -r` removes a directory *and everything it contains* recursively. Use with care — there is no trash bin in a POSIX shell.",
+      "state": {
+        "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+        "cwd": "project"
+      }
+    }
+  ]
+}
+</script>
+</div>
 
 ### 2. Text Processing and Data Manipulation
 Unix treats text streams as a universal interface, and these tools allow you to transform that data:

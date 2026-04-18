@@ -5,8 +5,11 @@ layout: sebook
 
 <script src="/js/git-graph.js"></script>
 <script src="/js/git-command-lab.js"></script>
+<script src="/js/ArchUML/uml-bundle.js"></script>
+<script src="/js/fs-command-lab.js"></script>
 <link rel="stylesheet" href="/css/git-graph.css">
 <link rel="stylesheet" href="/css/git-command-lab.css">
+<link rel="stylesheet" href="/css/fs-command-lab.css">
 <style>
 .git-graph-svg { display: block; }
 .git-graph-svg .git-graph-node { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
@@ -91,24 +94,131 @@ The canonical local workflow:
 
 Before we see a commit happen, one concept to introduce: **`HEAD`**. In every graph on this page you'll see a white chip labelled `HEAD` pointing at a commit — it marks where *you are* in history, i.e. the commit your next operation will act on. Normally `HEAD` points at a branch (like `main`), and the branch in turn points at a commit; `HEAD` follows the branch forward as new commits are added.
 
+Git tracks files through **three "trees"**: the **working directory** (your files on disk), the **index/staging area** (a snapshot of what your next commit will contain), and the **repository** (the committed history). The strip above each graph below mirrors what `git status` prints — **Untracked**, **Not staged**, and **Staged**. `git add` moves files into Staged; `git commit` turns Staged into the next node in the graph.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "Typing a new file doesn't involve Git yet \u2014 it lives only in your **working directory**. `git add` copies the current contents into the **staging area** (the index), marking them for the next commit. `git commit` then turns whatever is staged into a new, immutable node in the graph.\n\nClick through to see each step: a fresh `login.js` appears untracked, moves to staged with `git add`, then folds into commit **C** when you commit.",
+  "initialState": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": ["login.js"],
+      "unstaged": [{"status": "modified", "path": "README.md"}],
+      "staged": [],
+      "stashed": []
+    }
+  },
+  "steps": [
+    {
+      "command": "git add login.js",
+      "description": "Stages `login.js`. The row slides from **Untracked** to **Staged** and flashes gold to mirror the graph's commit-burst. `README.md` remains unstaged \u2014 `git add` only moves the files you name.",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [{"status": "modified", "path": "README.md"}],
+          "staged": [{"status": "new file", "path": "login.js"}],
+          "stashed": []
+        }
+      }
+    },
+    {
+      "command": "git commit -m \"Add login\"",
+      "description": "Saves the staged changes as a new, immutable snapshot on the current branch. The staged row disappears as commit **C** pops in on top of **B** and both `HEAD` and `main` glide forward. The unstaged `README.md` is untouched \u2014 it wasn't staged, so it wasn't included.",
+      "state": {
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [{"status": "modified", "path": "README.md"}],
+          "staged": [],
+          "stashed": []
+        }
+      }
+    }
+  ]
+}
+</script>
+</div>
+
+### Shortcut: `git add -A` vs. `git commit -am`
+
+Typing `git add <file>` for every modified file gets tedious. Two shortcuts stage multiple files at once, but they differ in one critical way: **whether they touch untracked files**.
+
 <div data-git-command-lab>
 <script type="application/json">
 {
-  "command": "git commit -m \"Add login\"",
-  "description": "Saves the staged changes as a new, immutable snapshot on the current branch.\n\nWatch the graph: a fresh commit node **C** appears on top of **B** with B as its parent, and both `HEAD` and `main` glide forward to it.\n\nEach `git commit` only ever *adds* a node \u2014 history never changes underneath.",
+  "command": "git add -A",
+  "undoCommand": "git restore --staged .",
+  "description": "`git add -A` (or `--all`) stages **every** change in the working tree \u2014 modifications to tracked files, deletions, *and* brand-new untracked files. Watch `notes.txt` (untracked) and `src/utils.js` (modified) both slide into **Staged**.\n\nThis is the \"just stage everything\" command, and the reason some teams discourage it: it's easy to accidentally stage generated files, logs, or secrets you didn't mean to commit.\n\nThe real undo for this is `git restore --staged .` \u2014 it unstages every file, moving rows back from Staged to their previous zones.",
   "before": {
     "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main",
-    "head": "refs/heads/main"
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": ["notes.txt"],
+      "unstaged": [{"status": "modified", "path": "src/utils.js"}],
+      "staged": [],
+      "stashed": []
+    }
   },
   "after": {
-    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main",
-    "head": "refs/heads/main"
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [],
+      "staged": [
+        {"status": "new file", "path": "notes.txt"},
+        {"status": "modified", "path": "src/utils.js"}
+      ],
+      "stashed": []
+    }
   }
 }
 </script>
 </div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git commit -am \"Update utils\"",
+  "undoCommand": "git reset --soft HEAD~1",
+  "description": "`git commit -a` (or `-am` to add a message in one go) auto-stages *only tracked* files that have been modified or deleted, then commits in a single step \u2014 **untracked files are ignored entirely**.\n\nWatch the difference vs. `git add -A` above: `src/utils.js` (tracked, modified) flies into the new commit **C**, but `notes.txt` (untracked) stays put in the **Untracked** zone. This is `-am`'s safety feature \u2014 you won't accidentally commit files Git has never seen before.\n\nThe real undo is `git reset --soft HEAD~1` \u2014 it removes commit **C** while keeping the changes staged (so you can edit and re-commit).",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": ["notes.txt"],
+      "unstaged": [{"status": "modified", "path": "src/utils.js"}],
+      "staged": [],
+      "stashed": []
+    }
+  },
+  "after": {
+    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Update utils|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": ["notes.txt"],
+      "unstaged": [],
+      "staged": [],
+      "stashed": []
+    }
+  }
+}
+</script>
+</div>
+
+**Rule of thumb:** `git add -A` stages **everything new** (dangerous); `git commit -am` is a safe shortcut for **tracked-only** commits. When in doubt, run `git status` first to see what each will affect.
 
 ### Inspecting Changes
 
@@ -295,6 +405,79 @@ The commands above only *append* commits. This section covers commands that **cr
 
 > **Golden rule:** never rebase a branch that has been pushed to a shared remote. The new commits *look* the same to you but have different hashes, so your collaborators' clones still reference the old hashes — a recipe for conflicts and lost work.
 
+### Divergence and Time-Travel
+
+The single-step card above shows rebase as a finished magic trick — two commits appear on top of `main` with new hashes. The multi-step walkthrough below pulls the trick apart: you build up the divergence yourself, pause to see the fork, and only *then* ask Git to replay history. Watch the graph, not the commands — the whole point is to replace "commands I memorised" with "pointer moves I can picture".
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "Start from an empty repo. We'll build up a two-branch divergence commit by commit, pause to observe the fork, and then use `git rebase` to flatten it — watching commit **C** vanish and a brand-new **C′** appear on top of **D**.\n\nThree ideas to hold in your head as you click through:\n\n1. **Commands are pointer moves.** Branches are lightweight labels; `checkout` and `commit` just slide those labels along a DAG.\n2. **Parallel universes are real.** Once `main` and `feature` both have commits the other lacks, history is *not* a single timeline anymore.\n3. **Commits are immutable.** Rebase never *moves* C — it copies its changes onto a new parent, producing a different commit object (**C′**) with a different hash.",
+  "initialState": {
+    "log": "",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "steps": [
+    {
+      "command": "git commit -m \"A\"  &&  git commit -m \"B\"",
+      "description": "Two commits land on `main` in sequence, giving us a base timeline. `HEAD -> main` advances together — the branch label is just a pointer to the tip commit, and `HEAD` is a pointer to the branch.\n\nNothing surprising yet: a linear chain, exactly the mental model most newcomers arrive with.",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|HEAD -> main\nA000000000000000000000000000000000000000||A|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git checkout -b feature  &&  git commit -m \"C\"",
+      "description": "`git checkout -b feature` creates a new branch pointer at the current commit (B) and moves `HEAD` onto it — no new commit, just two labels now sitting on the same node.\n\nThen `git commit -m \"C\"` adds **C** on top of **B**, and because `HEAD -> feature`, only `feature` advances. `main` stays pinned at B.",
+      "state": {
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|C|HEAD -> feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|main\nA000000000000000000000000000000000000000||A|",
+        "branches": "  main\n* feature",
+        "head": "refs/heads/feature"
+      }
+    },
+    {
+      "command": "git checkout main  &&  git commit -m \"D\"",
+      "description": "`git checkout main` slides `HEAD` back to the `main` pointer (still at B). Then `git commit -m \"D\"` adds **D** as a second child of B.\n\nThis is the key moment: **B now has two children** — one per branch. The graph forks. `main` and `feature` are no longer on the same line; they are parallel universes that share an ancestor but have each moved on independently.",
+      "state": {
+        "log": "D000000000000000000000000000000000000000|B000000000000000000000000000000000000000|D|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|C|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|\nA000000000000000000000000000000000000000||A|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git log --graph --all --oneline",
+      "description": "**Pedagogical pause.** This command doesn't change anything — it just asks Git to print the same DAG you see in the graph panel above. `--all` means \"every branch\", and `--graph` draws the fork as ASCII art.\n\nSpend a moment here. The two arrows pointing at **B** are the whole story of divergence: one commit, two children, two branch pointers living in their own worlds. Any merge or rebase from here on is just a strategy for reconciling these two universes.",
+      "state": {
+        "log": "D000000000000000000000000000000000000000|B000000000000000000000000000000000000000|D|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|C|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|\nA000000000000000000000000000000000000000||A|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git checkout feature",
+      "description": "Pure pointer move: `HEAD` detaches from `main` and re-attaches to `feature`. No commit is created, no file content changes in the graph — just the yellow `HEAD` label slides from **D** over to **C**.\n\nWe do this *before* the rebase because `git rebase main` replays **the current branch** on top of `main`. Getting `HEAD` onto `feature` first tells Git which universe we want to rewrite.",
+      "state": {
+        "log": "D000000000000000000000000000000000000000|B000000000000000000000000000000000000000|D|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|C|HEAD -> feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|\nA000000000000000000000000000000000000000||A|",
+        "branches": "  main\n* feature",
+        "head": "refs/heads/feature"
+      }
+    },
+    {
+      "command": "git rebase main",
+      "description": "The time-travel rewrite. Git takes every commit on `feature` that is *not* on `main` (here: just **C**) and **replays** its changes on top of `main`'s tip (**D**).\n\nWatch the graph carefully: **C doesn't move.** It can't — commits are immutable. Instead, Git creates a brand-new commit **C′** with a different parent (D instead of B) and therefore a different hash. The `feature` pointer snaps over to C′; the old **C** becomes unreferenced and disappears.\n\nThe fork is gone, history reads as one straight line, and you've seen the deepest lesson Git has to offer: *you cannot change a commit. You can only build new ones and move pointers to them.*",
+      "state": {
+        "log": "C'00000000000000000000000000000000000000|D000000000000000000000000000000000000000|C|HEAD -> feature\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|D|main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|B|\nA000000000000000000000000000000000000000||A|",
+        "branches": "  main\n* feature",
+        "head": "refs/heads/feature"
+      }
+    }
+  ]
+}
+</script>
+</div>
+
 ## Amending the Tip Commit
 
 <div data-git-command-lab>
@@ -326,12 +509,12 @@ Amend is safe on local work but subject to the same golden rule: never amend a c
   "command": "git merge --squash feature",
   "description": "Collapses every commit on `feature` into a single new commit on `main` (C+D).\n\nCrucially, this new commit has **only one parent** \u2014 the previous `main` tip (E) \u2014 *not* the `feature` branch's tip (D). That's because `--squash` produces a regular commit, not a merge commit: Git records the squashed work as if you had written those changes directly on `main` yourself, with no structural link back to `feature`.\n\nThe `feature` branch stays at D, unreferenced from `main`'s history; commands like `git log main` won't show it as an ancestor.\n\nUseful when you want `main` to read as a series of clean features, not every intermediate \"fix typo\" commit \u2014 but the trade-off is that you lose the ability to trace the original commits from `main`.",
   "before": {
-    "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature B|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature A|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main\n  feature",
     "head": "refs/heads/main"
   },
   "after": {
-    "log": "C+D0000000000000000000000000000000000000|E000000000000000000000000000000000000000|Squashed C+D|HEAD -> main\nE000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature B|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature A|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "log": "C+D0000000000000000000000000000000000000|E000000000000000000000000000000000000000|Squashed C+D|HEAD -> main\nE000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main\n  feature",
     "head": "refs/heads/main"
   }
@@ -402,16 +585,28 @@ Two commands remove the effect of a commit, with fundamentally different graph c
 <script type="application/json">
 {
   "command": "git reset --hard HEAD~1",
-  "description": "**Rewinds** the `main` branch pointer by one commit, dropping everything that was on top.\n\nThe tip commit (C) is no longer reachable from any branch and will be garbage-collected eventually.\n\n`--hard` also **overwrites your working directory and staging area** to match the target commit, so any uncommitted changes are lost.\n\n*Only safe for local, unpushed work.*",
+  "description": "**Rewinds** the `main` branch pointer by one commit, dropping everything that was on top.\n\nThe tip commit (C) is no longer reachable from any branch and will be garbage-collected eventually.\n\n`--hard` also **overwrites your working directory and staging area** to match the target commit, so any uncommitted changes are lost \u2014 watch the staged `notes.txt` vanish along with commit C.\n\n*Only safe for local, unpushed work.*",
   "before": {
     "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main",
-    "head": "refs/heads/main"
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [{"status": "modified", "path": "src/bug.js"}],
+      "staged": [{"status": "new file", "path": "notes.txt"}],
+      "stashed": []
+    }
   },
   "after": {
     "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main",
-    "head": "refs/heads/main"
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [],
+      "staged": [],
+      "stashed": []
+    }
   }
 }
 </script>
@@ -543,6 +738,77 @@ The key distinction between `fetch` and `pull` is worth animating. The remote-tr
 </script>
 </div>
 
+### Diverged `pull`: Merge Commit vs. Rebase
+
+The fast-forward case above is the lucky path — your local branch had no new commits of its own, so Git could simply slide `main` forward. The interesting case is when *both* you and the remote have moved on since your last sync. Suppose you committed **B** locally, and while you were working, a teammate pushed **C** to the remote. Now `main` and `origin/main` have diverged, both descending from the common ancestor **A**.
+
+`git pull` handles this by creating a **merge commit** that ties the two tips together — preserving the full DAG but littering history with "Merge branch 'main' of origin" commits:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull",
+  "description": "After `git fetch`, Git sees that `main` (at B) and `origin/main` (at C) have diverged from their common ancestor A. `git pull`'s default strategy is **merge**: it creates a new merge commit **M** with two parents — your local **B** and the remote's **C** — and advances `main` to M.\n\nHistory is preserved exactly (no hashes change), but the graph gains a diamond and a commit message like *\"Merge branch 'main' of origin/main\"*. On a busy team branch, these pile up and clutter the log.",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 C000000000000000000000000000000000000000|Merge branch 'main' of origin/main|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+`git pull --rebase` is the antidote. Instead of merging, it **replays** your local commits on top of the fetched remote tip, producing a linear history with no merge commit. Your local **B** becomes **B′** with a new hash, parented on the remote's **C** instead of the shared ancestor **A**:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull --rebase",
+  "description": "Same diverged situation, different integration strategy. `git pull --rebase` fetches `origin/main` (bringing in C), then **rebases** your local commits onto it — each of your commits is replayed as a brand-new commit with a new hash.\n\nHere your single local commit **B** is replayed on top of **C**, becoming **B′**. The old **B** is discarded. History reads as a straight line (`A → C → B′`), and no merge commit appears.\n\nRule of thumb: prefer `git pull --rebase` on your own feature branch to keep the log clean; stick with the default `git pull` (merge) on shared long-lived branches where rewriting any history — even your own — is risky.",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "B'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Your local work|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+You can make `--rebase` the default for a branch (`git config branch.main.rebase true`) or globally (`git config --global pull.rebase true`) so you don't have to type the flag every time.
+
+### Pushing
+
+`git push` is the mirror image of `git fetch`: it uploads your local commits to the remote and then advances the **remote-tracking branch** `origin/main` to match. The commits themselves do not change (no new hashes) — only the grey dashed label slides forward to catch up with your local `main`:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git push",
+  "description": "You've made two local commits (**C** and **D**) on top of the last shared state (**B**). `git push` sends them to the remote and, once the remote accepts them, Git advances `origin/main` to match your local `main`.\n\nNotice what *doesn't* happen: no new commit is created, and no existing commit gets a new hash. The only visible change is that the dashed `origin/main` label hops from **B** up to **D** — a pointer move, nothing more. This is why `push` is a structural no-op on the graph: it only updates where the remote-tracking label sits.\n\n`git push` fails if the remote has commits you don't have locally (someone else pushed since your last fetch). Pull first to reconcile, then push.",
+  "before": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Fix bug|origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Fix bug|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
 ### The Force-Push Warning
 
 `git push -f` (force-push) overwrites remote history to match your local copy. On a shared branch this **permanently deletes** commits your collaborators have already pushed. Never force-push to `main` or any shared integration branch. If you've rebased or amended commits that are already remote, push to a new branch instead — or use `--force-with-lease` which at least refuses to overwrite if the remote has moved since your last fetch.
@@ -550,6 +816,60 @@ The key distinction between `fetch` and `pull` is worth animating. The remote-tr
 ## Rescue and Debugging Tools
 
 * **`git stash` / `git stash pop`** — temporarily save uncommitted changes (staged and unstaged) so you can switch contexts without making a messy commit. `pop` re-applies the stashed changes later.
+
+Watch the shelf on the right: `git stash` sweeps both staged and unstaged rows into a new `stash@{0}` entry, leaving the working tree clean. `git stash pop` peels it back off and scatters the rows back into their original zones.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nThe commit graph never changes \u2014 stash operates entirely on the working tree and index, which is why the `status` strip is doing all the work.",
+  "initialState": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [{"status": "modified", "path": "checkout.js"}],
+      "staged": [{"status": "modified", "path": "cart.js"}],
+      "stashed": []
+    }
+  },
+  "steps": [
+    {
+      "command": "git stash",
+      "description": "Sweeps everything staged *and* unstaged into a new shelf entry `stash@{0}`. The working tree and index are now clean \u2014 you can safely switch branches without carrying the work-in-progress.\n\nThe commit graph is untouched: stash is a side-shelf, not a commit.",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [],
+          "staged": [],
+          "stashed": [{"ref": "stash@{0}", "branch": "main", "message": "cart + checkout WIP"}]
+        }
+      }
+    },
+    {
+      "command": "git stash pop",
+      "description": "Pops the top stash entry back onto your working tree. The rows fly out of the shelf and settle back where they came from \u2014 `cart.js` staged, `checkout.js` unstaged. The shelf is now empty and disappears.\n\n(Note: `pop` always restores rows as unstaged by default; this lab simplifies for pedagogy. Use `git stash apply --index` to preserve the original staged/unstaged split.)",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [{"status": "modified", "path": "checkout.js"}],
+          "staged": [{"status": "modified", "path": "cart.js"}],
+          "stashed": []
+        }
+      }
+    }
+  ]
+}
+</script>
+</div>
+
 * **`git bisect`** — binary search through commit history to find the exact commit that introduced a bug. You mark known-good and known-bad commits, then Git checks out the midpoint repeatedly. With 1,000 commits in the range, it finds the culprit in at most **10 tests**.
 The workflow for `git bisect` is always the same six-step ritual — start a session, mark bad, mark good, then let Git drive. Click through the demo below to see each command and its effect on the graph.
 
@@ -629,6 +949,79 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
 ## Submodules
 
 For very large projects, **Git submodules** let you include another Git repository as a subdirectory while keeping its history independent. Internally a submodule is just a file pointing to a specific commit hash in the external repo — pulling always brings in that exact revision, which makes submodule updates explicit rather than automatic.
+
+The walk-through below covers the commands you'll meet most: adding submodules, cloning a parent repo that uses them, and updating submodules to new commits. Each step mutates the directory tree on the left; changed rows get a yellow burst so you can see exactly what the command touched.
+
+<div data-fs-command-lab-multi>
+<script type="application/json">
+{
+  "description": "A superproject `myproject/` starts with just its own source. We'll add two submodules, commit the result, then see what happens on a fresh clone.",
+  "initialState": {
+    "tree": "myproject/\n  .git/\n  src/\n    app.js"
+  },
+  "steps": [
+    {
+      "command": "git submodule add https://github.com/acme/libfoo libs/foo",
+      "description": "`git submodule add` clones the remote into `libs/foo` *and* writes a new top-level `.gitmodules` file recording the mapping. The submodule is pinned to the remote's current HEAD (shown as the annotation hash).",
+      "state": {
+        "tree": "myproject/\n  .git/\n  .gitmodules\n  libs/\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+      }
+    },
+    {
+      "command": "git submodule add https://github.com/acme/libbar libs/bar",
+      "description": "A second submodule. `.gitmodules` now records two mappings; both pinned folders are part of the superproject's working tree.",
+      "state": {
+        "tree": "myproject/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+      }
+    },
+    {
+      "command": "git commit -m \"Add libfoo and libbar as submodules\"",
+      "description": "The superproject commit records **three** things: the new `.gitmodules` file, the `libs/foo` pin, and the `libs/bar` pin. No files change; the commit metadata below is what Git prints.",
+      "state": {
+        "tree": "myproject/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js",
+        "output": "[main a1b2c3d] Add libfoo and libbar as submodules\n 3 files changed, 6 insertions(+)\n create mode 100644 .gitmodules"
+      }
+    },
+    {
+      "command": "git clone https://example.com/myproject.git cloned",
+      "description": "On a fresh machine, a **plain** clone brings down `.gitmodules` but leaves the submodule directories *empty*. The pins exist in Git's config, but the trees aren't populated yet.",
+      "state": {
+        "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← empty — not initialised\n    foo/ ← empty — not initialised\n  src/\n    app.js"
+      }
+    },
+    {
+      "command": "git submodule init",
+      "description": "`init` reads `.gitmodules` and registers each submodule in `.git/config`. Still no files appear — it's a local bookkeeping step.",
+      "state": {
+        "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← empty — not initialised\n    foo/ ← empty — not initialised\n  src/\n    app.js",
+        "output": "Submodule 'libs/bar' (https://github.com/acme/libbar) registered for path 'libs/bar'\nSubmodule 'libs/foo' (https://github.com/acme/libfoo) registered for path 'libs/foo'"
+      }
+    },
+    {
+      "command": "git submodule update",
+      "description": "`update` fetches each registered submodule and checks out the pinned commit. Previously-empty folders now contain the submodule's files at the exact revision the superproject recorded.",
+      "state": {
+        "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+      }
+    },
+    {
+      "command": "git submodule update --remote libs/foo",
+      "description": "`--remote` advances one submodule to the latest commit on its tracking branch. The annotation flips to a newer hash and the superproject is now dirty — you'd commit the updated pin next.",
+      "state": {
+        "tree": "cloned/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ de4f71\n      CHANGELOG.md\n      README.md\n      src/\n        foo.js\n        helpers.js\n  src/\n    app.js"
+      }
+    },
+    {
+      "command": "git clone --recurse-submodules https://example.com/myproject.git sibling",
+      "description": "The shortcut: clone + init + update in one go. A brand-new working copy comes down fully populated. Use this whenever you know a repo uses submodules.",
+      "state": {
+        "tree": "sibling/\n  .git/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
+      }
+    }
+  ]
+}
+</script>
+</div>
 
 # Best Practices
 

@@ -238,3 +238,324 @@ html.dark-mode .git-command-lab-modal {
 html.dark-mode .post-content svg.git-graph-svg {
   filter: none !important;
 }
+
+/* ===========================================================================
+   Workbench — HTML panel above the commit graph that mimics `git status`
+   output. Three zones (Untracked / Not staged / Staged) + an optional stash
+   shelf. Only rendered when a lab's spec declares a `files` object, so labs
+   about pure-graph operations (merge/rebase/switch/cherry-pick) are visually
+   unchanged.
+   =========================================================================== */
+
+.git-workbench {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: #1f2d3d;
+}
+/* The workbench is shown whenever a `files` spec is declared, even if all
+   zones are empty — an "all clean" strip after `git reset --hard` or
+   `git stash` is pedagogically meaningful. */
+
+.git-workbench-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  flex: 1 1 360px;
+  min-width: 0;
+  background: #f7f8fa;
+  border: 1px solid #dde2e8;
+  border-radius: 6px;
+  padding: 5px 0;
+}
+.git-workbench-zone {
+  padding: 0 10px;
+  min-width: 0;
+  border-right: 1px dashed #dde2e8;
+}
+.git-workbench-zone:last-child { border-right: none; }
+.git-workbench-zone-header {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5a6573;
+  margin: 0 0 3px;
+  padding: 0;
+  line-height: 1.2;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: transparent;
+  border: none;
+}
+.git-workbench-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.git-workbench-row,
+.git-workbench-stash-entry {
+  list-style: none;
+  display: flex;
+  gap: 6px;
+  padding: 1px 4px;
+  margin: 0;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Shared 720ms cubic-bezier curve so row movement reads as the same
+     cohesive motion as the commit/label transitions below. */
+  transition: transform 720ms cubic-bezier(.7,0,.3,1),
+              color 720ms cubic-bezier(.7,0,.3,1),
+              background-color 720ms cubic-bezier(.7,0,.3,1),
+              filter 720ms cubic-bezier(.7,0,.3,1);
+  will-change: transform;
+}
+.git-workbench-status {
+  flex: 0 0 auto;
+  font-weight: 600;
+  width: 5.5em;
+  text-align: left;
+}
+.git-workbench-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Per-zone colors match git's own terminal output: red for unstaged/untracked,
+   green for staged. */
+.git-workbench-row--untracked {
+  color: #b03a2e;
+}
+.git-workbench-row--untracked .git-workbench-path::before {
+  content: '? ';
+  color: #b03a2e;
+  font-weight: 700;
+  opacity: 0.65;
+}
+.git-workbench-row--unstaged {
+  color: #b03a2e;
+}
+.git-workbench-row--staged {
+  color: #1a7d5a;
+}
+.git-workbench-stash-entry {
+  color: #6b3fa0;
+}
+
+/* Stash shelf — standalone aside to the right of the strip. Rendered only
+   when the spec declares stash entries (the DOM is removed entirely when
+   empty). */
+.git-workbench-shelf {
+  flex: 0 1 280px;
+  min-width: 0;
+  background: rgba(107, 63, 160, 0.06);
+  border: 1px solid rgba(107, 63, 160, 0.35);
+  border-radius: 6px;
+  padding: 5px 10px;
+  align-self: stretch;
+}
+.git-workbench-shelf-header {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b3fa0;
+  margin: 0 0 3px;
+  padding: 0;
+  line-height: 1.2;
+  display: block;
+  background: transparent;
+  border: none;
+}
+
+/* ----- Animations — matching the graph's motion language ----- */
+
+/* Row enter: scale bounce + fade, same 480ms ease as commit-entry. */
+@keyframes git-workbench-row-enter {
+  0%   { opacity: 0; transform: scale(0.85) translateX(-8px); }
+  60%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.git-workbench-row.entering,
+.git-workbench-stash-entry.entering {
+  animation: git-workbench-row-enter 480ms cubic-bezier(.34,1.56,.64,1);
+}
+
+/* FLIP zone-change: the JS measures the row's old → new delta and feeds it
+   back as `--fx`/`--fy`. The keyframe starts the row at its old position
+   (from the delta) and tweens to its new position (0,0) — reads as the
+   row sliding smoothly between zones rather than snapping. Uses the same
+   720ms cubic-bezier as the commit/label slides below. */
+@keyframes git-workbench-row-flip {
+  from { transform: translate(var(--fx, 0), var(--fy, 0)); }
+  to   { transform: translate(0, 0); }
+}
+.git-workbench-row.git-workbench-row-flip,
+.git-workbench-stash-entry.git-workbench-row-flip {
+  animation: git-workbench-row-flip 720ms cubic-bezier(.7,0,.3,1);
+}
+
+/* Fly-into-commit: when a staged or unstaged row is committed, it translates
+   from its current position down into the new commit node while shrinking
+   and fading. `--fx`/`--fy` carry the delta to the node's center. Runs
+   alongside the same yellow-gold burst flash used by zone-change moves, so
+   the "into the commit" moment glows with the same vocabulary as the rest
+   of the graph. */
+@keyframes git-workbench-row-fly {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--fx, 0), var(--fy, 0)) scale(0.25); opacity: 0; }
+}
+.git-workbench-row.git-workbench-row-fly,
+.git-workbench-stash-entry.git-workbench-row-fly {
+  animation-name: git-workbench-row-fly, git-workbench-row-burst;
+  animation-duration: 480ms, 480ms;
+  animation-timing-function: cubic-bezier(.55,.08,.68,.53), ease-out;
+  animation-fill-mode: forwards, none;
+  pointer-events: none;
+}
+
+/* Row exit: fade + shrink. */
+@keyframes git-workbench-row-exit {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.git-workbench-row.exiting,
+.git-workbench-stash-entry.exiting {
+  animation: git-workbench-row-exit 380ms ease-in forwards;
+  pointer-events: none;
+}
+
+/* Yellow burst — same gold glow + peak timing as the commit/label bursts
+   (750ms total, peak at 35%). Fires on row zone-change and on fresh inserts,
+   so "git add" / "git commit" / "git stash" feel visually identical to the
+   graph's own commit animations. */
+@keyframes git-workbench-row-burst {
+  0%   { filter: none; background-color: transparent; }
+  35%  { filter: drop-shadow(0 0 8px rgba(255,255,255,0.9))
+                 drop-shadow(0 0 14px rgba(255,200,28,0.85));
+         background-color: rgba(255, 220, 70, 0.35); }
+  100% { filter: none; background-color: transparent; }
+}
+
+/* When a row is FLIP-ing and bursting at the same time (zone change): run
+   both keyframes simultaneously. This is the common case for git add /
+   git restore / git stash / stash pop — the row slides into its new zone
+   while flashing gold. */
+.git-workbench-row.git-workbench-row-flip.git-workbench-row-burst,
+.git-workbench-stash-entry.git-workbench-row-flip.git-workbench-row-burst {
+  animation-name: git-workbench-row-flip, git-workbench-row-burst;
+  animation-duration: 720ms, 750ms;
+  animation-timing-function: cubic-bezier(.7,0,.3,1), ease-out;
+  animation-fill-mode: both, none;
+}
+
+/* Burst only (no flip) — a row freshly appearing or marked for emphasis
+   without a position change. */
+.git-workbench-row.git-workbench-row-burst:not(.git-workbench-row-flip):not(.entering),
+.git-workbench-stash-entry.git-workbench-row-burst:not(.git-workbench-row-flip):not(.entering) {
+  animation: git-workbench-row-burst 750ms ease-out;
+}
+
+/* Burst + enter — a fresh row that's also worth flashing (e.g. a first-time
+   render). Runs both in parallel. */
+.git-workbench-row.entering.git-workbench-row-burst,
+.git-workbench-stash-entry.entering.git-workbench-row-burst {
+  animation-name: git-workbench-row-enter, git-workbench-row-burst;
+  animation-duration: 480ms, 750ms;
+  animation-timing-function: cubic-bezier(.34,1.56,.64,1), ease-out;
+}
+
+/* ----- Dark-mode theming ----- */
+html.dark-mode .git-workbench {
+  color: #e6edf3;
+}
+html.dark-mode .git-workbench-strip {
+  background: #141a24;
+  border-color: #2f3a4a;
+}
+html.dark-mode .git-workbench-zone {
+  border-right-color: #2f3a4a;
+}
+html.dark-mode .git-workbench-zone-header,
+html.dark-mode .git-workbench-shelf-header {
+  color: #9aa6b2;
+}
+html.dark-mode .git-workbench-row--untracked,
+html.dark-mode .git-workbench-row--unstaged {
+  color: #f1948a;
+}
+html.dark-mode .git-workbench-row--untracked .git-workbench-path::before {
+  color: #f1948a;
+}
+html.dark-mode .git-workbench-row--staged {
+  color: #4ade80;
+}
+html.dark-mode .git-workbench-stash-entry {
+  color: #c29bf0;
+}
+html.dark-mode .git-workbench-shelf {
+  background: rgba(194, 155, 240, 0.08);
+  border-color: rgba(194, 155, 240, 0.35);
+}
+
+/* ----- Print styling: keep the workbench visible above each graph ----- */
+@media print {
+  .git-workbench {
+    font-size: 8pt;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .git-workbench-strip {
+    padding: 6px 0;
+  }
+  .git-workbench-zone-header,
+  .git-workbench-shelf-header {
+    font-size: 7.5pt;
+  }
+  .git-workbench-row,
+  .git-workbench-stash-entry {
+    transition: none;
+  }
+}
+
+/* ----- Responsive: on narrow viewports let zones stack ----- */
+@media (max-width: 560px) {
+  .git-workbench-strip {
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    gap: 2px 0;
+    padding: 4px 0;
+  }
+  .git-workbench-zone {
+    border-right: none;
+    border-bottom: 1px dashed #dde2e8;
+    padding: 2px 10px 4px;
+  }
+  .git-workbench-zone:last-child { border-bottom: none; padding-bottom: 2px; }
+  html.dark-mode .git-workbench-zone { border-bottom-color: #2f3a4a; }
+  .git-workbench-rows { min-height: 0; }
+  .git-workbench-shelf { flex: 1 1 100%; padding: 4px 10px; }
+  /* On mobile, collapse empty zones to just their header + tiny padding so
+     students still see that the zone exists but it doesn't waste space. */
+  .git-workbench-zone:has(.git-workbench-rows:empty) {
+    opacity: 0.55;
+    padding-bottom: 2px;
+  }
+  .git-workbench-zone:has(.git-workbench-rows:empty) .git-workbench-zone-header {
+    margin-bottom: 0;
+  }
+}

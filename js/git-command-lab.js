@@ -26,8 +26,8 @@
 (function () {
   'use strict';
 
-  function buildState(s) {
-    return GitGraph.parseGitState(s.log, s.branches, s.head);
+  function buildState(s, filesOverride) {
+    return GitGraph.parseGitState(s.log, s.branches, s.head, filesOverride !== undefined ? filesOverride : s.files);
   }
 
   // Minimal markdown → HTML for lab-card descriptions. Supports **bold**,
@@ -147,7 +147,8 @@
     var afterHost = document.createElement('div');
     afterHost.className = 'git-command-lab__graph-after';
     afterHost.setAttribute('data-state-label', 'After');
-    afterHost.innerHTML = GitGraph.renderToSVG(buildState(spec.after));
+    var afterState = buildState(spec.after);
+    afterHost.innerHTML = GitGraph.renderWorkbench(afterState) + GitGraph.renderToSVG(afterState);
     graphs.appendChild(afterHost);
 
     var beforeData = buildState(spec.before);
@@ -160,8 +161,17 @@
     function update() {
       if (applied) {
         graph.render(buildState(spec.after));
-        icon.textContent = '\u21BA';
-        cmdEl.textContent = 'Undo ' + spec.command;
+        // When a spec declares `undoCommand`, show that as the button label
+        // (an actual git command that reverses the demo — e.g. `git restore
+        // --staged foo` for `git add foo`). Without it, fall back to the
+        // generic "Undo <cmd>" label for reversible demos.
+        if (spec.undoCommand) {
+          icon.textContent = '\u25B6';
+          cmdEl.textContent = spec.undoCommand;
+        } else {
+          icon.textContent = '\u21BA';
+          cmdEl.textContent = 'Undo ' + spec.command;
+        }
         btn.classList.add('git-command-lab__btn--undo');
       } else {
         graph.render(buildState(spec.before));
@@ -367,6 +377,17 @@
       effectiveDescs.push(runningDesc);
     }
 
+    // Same inheritance for file-state specs. A step that omits `state.files`
+    // re-uses the previous step's files. Absence across the whole spec means
+    // no workbench on any step.
+    var effectiveFiles = [];
+    var runningFiles = spec.initialState && spec.initialState.files ? spec.initialState.files : null;
+    effectiveFiles.push(runningFiles);
+    for (var fi = 0; fi < steps.length; fi++) {
+      if (steps[fi].state && steps[fi].state.files !== undefined) runningFiles = steps[fi].state.files;
+      effectiveFiles.push(runningFiles);
+    }
+
     function addPrintStep(label, stateData, descText, isInitial) {
       var stepEl = document.createElement('div');
       stepEl.className = 'git-command-lab__print-step';
@@ -392,15 +413,15 @@
 
       var graphDiv = document.createElement('div');
       graphDiv.className = 'git-command-lab__graph-static';
-      graphDiv.innerHTML = GitGraph.renderToSVG(stateData);
+      graphDiv.innerHTML = GitGraph.renderWorkbench(stateData) + GitGraph.renderToSVG(stateData);
       stepEl.appendChild(graphDiv);
 
       printSection.appendChild(stepEl);
     }
 
-    addPrintStep('Initial state', buildState(spec.initialState), effectiveDescs[0], true);
+    addPrintStep('Initial state', buildState(spec.initialState, effectiveFiles[0]), effectiveDescs[0], true);
     for (var si = 0; si < steps.length; si++) {
-      addPrintStep(steps[si].command, buildState(steps[si].state), effectiveDescs[si + 1], false);
+      addPrintStep(steps[si].command, buildState(steps[si].state, effectiveFiles[si + 1]), effectiveDescs[si + 1], false);
     }
 
     // ----- State update -----
@@ -428,7 +449,10 @@
 
       backBtn.disabled = isInitial;
 
-      var st = isInitial ? buildState(spec.initialState) : buildState(steps[stepIdx].state);
+      var filesForStep = effectiveFiles[stepIdx + 1];
+      var st = isInitial
+        ? buildState(spec.initialState, filesForStep)
+        : buildState(steps[stepIdx].state, filesForStep);
       graph.render(st);
     }
 

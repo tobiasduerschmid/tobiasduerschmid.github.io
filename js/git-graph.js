@@ -76,9 +76,88 @@
    *   git branch -a
    *   git symbolic-ref HEAD (or 'detached')
    *
-   * Returns { commits: [...], branches: [...], head: { ref, hash, detached } }
+   * Optional filesSpec describes working-tree / index / stash state and is
+   * normalized into a `workingTree` field on the returned state. Omitted or
+   * null filesSpec means no workbench strip is rendered.
+   *
+   * Returns { commits, branches, head, commitMap, workingTree }
    */
-  GitGraph.parseGitState = function (logOutput, branchOutput, headRef) {
+  var VALID_STATUSES = {
+    'modified': 1, 'new file': 1, 'deleted': 1, 'renamed': 1, 'typechange': 1, 'unmerged': 1,
+  };
+  var STATUS_SHORT_MAP = { 'M': 'modified', 'A': 'new file', 'D': 'deleted', 'R': 'renamed', 'T': 'typechange', 'U': 'unmerged' };
+
+  function _normalizeFileEntry(entry) {
+    if (!entry) return null;
+    if (typeof entry === 'string') {
+      // Either "M:path/to/file" shorthand or a bare filename (treated as untracked only).
+      var colonIdx = entry.indexOf(':');
+      if (colonIdx > 0 && colonIdx <= 12) {
+        var prefix = entry.substring(0, colonIdx).trim();
+        var rest = entry.substring(colonIdx + 1).trim();
+        var status = STATUS_SHORT_MAP[prefix] || (VALID_STATUSES[prefix] ? prefix : null);
+        if (status && rest) return { status: status, path: rest };
+      }
+      return { path: entry };
+    }
+    if (typeof entry === 'object' && entry.path) {
+      return {
+        status: entry.status && VALID_STATUSES[entry.status] ? entry.status : undefined,
+        path: entry.path,
+      };
+    }
+    return null;
+  }
+
+  function _normalizeStashEntry(entry, idx) {
+    if (!entry) return null;
+    if (typeof entry === 'string') {
+      // Support "WIP on main: message" shorthand or bare message.
+      var m = entry.match(/^(?:WIP\s+on\s+)?([^:]+?):\s*(.*)$/);
+      if (m) return { ref: 'stash@{' + idx + '}', branch: m[1].trim(), message: m[2] };
+      return { ref: 'stash@{' + idx + '}', branch: '', message: entry };
+    }
+    if (typeof entry === 'object') {
+      return {
+        ref: entry.ref || ('stash@{' + idx + '}'),
+        branch: entry.branch || '',
+        message: entry.message || '',
+      };
+    }
+    return null;
+  }
+
+  function _normalizeFilesSpec(spec) {
+    // Null/undefined spec → no workbench at all (existing labs that don't
+    // declare `files` are unchanged).
+    if (spec === null || spec === undefined) return null;
+    if (typeof spec !== 'object') return null;
+    var wt = { untracked: [], unstaged: [], staged: [], stashed: [] };
+    var zones = ['untracked', 'unstaged', 'staged'];
+    for (var z = 0; z < zones.length; z++) {
+      var zone = zones[z];
+      var src = spec[zone];
+      if (!src || !src.length) continue;
+      for (var i = 0; i < src.length; i++) {
+        var norm = _normalizeFileEntry(src[i]);
+        if (norm) wt[zone].push(norm);
+      }
+    }
+    var stashSrc = spec.stashed || [];
+    for (var s = 0; s < stashSrc.length; s++) {
+      var st = _normalizeStashEntry(stashSrc[s], s);
+      if (st) wt.stashed.push(st);
+    }
+    // A spec declared explicitly (even with all arrays empty) still renders
+    // the strip — pedagogically meaningful for transitions like
+    // `git reset --hard` where "everything is now clean" is the point.
+    return wt;
+  }
+
+  // Expose for the command-lab to probe/normalize outside parseGitState.
+  GitGraph._normalizeFilesSpec = _normalizeFilesSpec;
+
+  GitGraph.parseGitState = function (logOutput, branchOutput, headRef, filesSpec) {
     var commits = [];
     var branchMap = {};   // branch name → commit hash
     var commitMap = {};   // hash → commit object
@@ -194,7 +273,13 @@
       }
     }
 
-    return { commits: commits, branches: branches, head: head, commitMap: commitMap };
+    return {
+      commits: commits,
+      branches: branches,
+      head: head,
+      commitMap: commitMap,
+      workingTree: _normalizeFilesSpec(filesSpec),
+    };
   };
 
   // ---------------------------------------------------------------------------
@@ -208,20 +293,29 @@
     if (commits.length === 0) return;
 
     // Assign colors to branches by consistent hashing
-    var REMOTE_COLOR = '#8b949e'; // grey for remote-tracking branches (origin/*)
+    var REMOTE_COLOR = '#8b949e'; // grey for remote-tracking branches (origin/*) with no local counterpart
     var branchColors = {};
+    // Pass 1: color local branches first.
     for (var bi = 0; bi < branches.length; bi++) {
       var bname = branches[bi].name;
-      if (branches[bi].remote) {
-        branchColors[bname] = REMOTE_COLOR;
-      } else {
-        var colorIdx = this._hashString(bname) % BRANCH_COLORS.length;
-        branchColors[bname] = BRANCH_COLORS[colorIdx];
-      }
+      if (branches[bi].remote) continue;
+      var colorIdx = this._hashString(bname) % BRANCH_COLORS.length;
+      branchColors[bname] = BRANCH_COLORS[colorIdx];
     }
     // Ensure 'main' and 'master' get UCLA Blue
     if (branchColors['main']) branchColors['main'] = BRANCH_COLORS[0];
     if (branchColors['master']) branchColors['master'] = BRANCH_COLORS[0];
+    // Pass 2: remote-tracking branches inherit the color of their local
+    // counterpart so commits on `origin/main` read as the same "main lane"
+    // as local `main`. Only fall back to grey when there is no local branch
+    // of the same short name.
+    for (var bi2 = 0; bi2 < branches.length; bi2++) {
+      var bname2 = branches[bi2].name;
+      if (!branches[bi2].remote) continue;
+      var slashIdx = bname2.indexOf('/');
+      var shortName = slashIdx >= 0 ? bname2.substring(slashIdx + 1) : bname2;
+      branchColors[bname2] = branchColors[shortName] || REMOTE_COLOR;
+    }
 
     // -------------------------------------------------------------------------
     // Lane-based column assignment (prevents crossing lines)
@@ -515,6 +609,7 @@
           '<div>No commits yet.<br>Run <code>git commit</code> to see the graph.</div>' +
           '</div></div>';
       }
+      if (data && data.workingTree) this._diffWorkbench(data);
       return;
     }
 
@@ -620,7 +715,15 @@
 
   GitGraph.prototype._buildInitialSvg = function (dims) {
     if (!this.container) return;
-    this.container.innerHTML = '';
+    // Preserve an existing workbench (rendered via _diffWorkbench) so the
+    // SVG rebuild doesn't wipe it. Other children (legacy SVG, empty state)
+    // are cleared.
+    var children = Array.prototype.slice.call(this.container.children);
+    for (var ci = 0; ci < children.length; ci++) {
+      if (children[ci] !== this._workbenchEl) {
+        this.container.removeChild(children[ci]);
+      }
+    }
     this._svgRoot = this._svgEl('svg', {
       xmlns: SVG_NS,
       width: dims.width,
@@ -649,6 +752,7 @@
     this._diffEdges(data.commits, data.commitMap);
     this._diffNodes(data.commits, data.head);
     this._diffLabels(data.branches, data.commitMap, data.head);
+    this._diffWorkbench(data);
   };
 
   // Detect rebase / cherry-pick where commits get NEW hashes but carry the
@@ -988,7 +1092,7 @@
 
     var hashText = this._svgEl('text', {
       x: 0, y: 5, 'text-anchor': 'middle',
-      fill: '#fff', 'font-size': 14, 'font-weight': 600,
+      fill: '#fff', 'font-size': 11, 'font-weight': 600,
       'class': 'git-graph-hash',
     });
     hashText.textContent = cm.shortHash;
@@ -996,7 +1100,7 @@
 
     var msgText = this._svgEl('text', {
       x: NODE_RADIUS + 24, y: 5,
-      fill: 'var(--git-graph-text, #ccc)', 'font-size': 16,
+      fill: 'var(--git-graph-text, #ccc)', 'font-size': 13,
       'class': 'git-graph-message',
     });
     msgText.textContent = this._truncate(cm.message, 50);
@@ -1380,7 +1484,7 @@
         'fill="' + color + '" stroke="#fff" stroke-width="2.5" class="git-graph-node"/>';
 
       var shortName = cm.hash.length === 1;
-      var hashFont = shortName ? 22 : 14;
+      var hashFont = shortName ? 18 : 11;
       var hashY    = shortName ? 7  : 5;
       var hashStr  = shortName ? cm.hash : cm.shortHash;
       svg += '<text x="' + cx + '" y="' + (cy + hashY) + '" text-anchor="middle" ' +
@@ -1389,7 +1493,7 @@
 
       var msgX = cx + NODE_RADIUS + 24;
       svg += '<text x="' + msgX + '" y="' + (cy + 5) + '" ' +
-        'fill="var(--git-graph-text, #ccc)" font-size="16" class="git-graph-message">' +
+        'fill="var(--git-graph-text, #ccc)" font-size="13" class="git-graph-message">' +
         this._escapeXml(this._truncate(cm.message, 50)) + '</text>';
     }
     return svg;
@@ -1515,6 +1619,449 @@
 
   GitGraph.prototype._truncate = function (str, max) {
     return str.length > max ? str.substring(0, max - 1) + '\u2026' : str;
+  };
+
+  GitGraph.prototype._escapeHtml = function (str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
+  // ---------------------------------------------------------------------------
+  // Workbench — HTML panel above the graph that mimics `git status` output.
+  // Renders three zones (Untracked / Not staged / Staged) plus an optional
+  // stash shelf whenever the data has a non-empty workingTree. Kept in HTML
+  // (not SVG) so the text flows, wraps, and renders natively in all themes.
+  // ---------------------------------------------------------------------------
+
+  var ZONE_HEADERS = {
+    untracked: 'Untracked',
+    unstaged:  'Not staged',
+    staged:    'Staged',
+  };
+  var ZONE_HEADERS_FULL = {
+    untracked: 'Untracked files',
+    unstaged:  'Changes not staged for commit',
+    staged:    'Changes to be committed',
+  };
+
+  // Render a static HTML string for the workbench. Empty string when the
+  // data has no workingTree. Use for print rendering and the hidden "after"
+  // SVG panel in the command-lab card.
+  GitGraph.prototype.workbenchToHtml = function (data) {
+    if (!data || !data.workingTree) return '';
+    var wt = data.workingTree;
+    var esc = this._escapeHtml.bind(this);
+
+    function zoneHtml(name) {
+      var items = wt[name] || [];
+      var rowsHtml = '';
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        var statusHtml = '';
+        if (name !== 'untracked' && it.status) {
+          statusHtml = '<span class="git-workbench-status">' + esc(it.status + ':') + '</span>';
+        }
+        rowsHtml += '<li class="git-workbench-row git-workbench-row--' + name + '" data-path="' + esc(it.path) + '">' +
+          statusHtml +
+          '<span class="git-workbench-path">' + esc(it.path) + '</span>' +
+          '</li>';
+      }
+      var titleAttr = ' title="' + esc(ZONE_HEADERS_FULL[name] + ':') + '"';
+      return '<section class="git-workbench-zone git-workbench-zone--' + name + '" data-zone="' + name + '">' +
+        '<header class="git-workbench-zone-header"' + titleAttr + '>' + esc(ZONE_HEADERS[name]) + ':</header>' +
+        '<ul class="git-workbench-rows">' + rowsHtml + '</ul>' +
+        '</section>';
+    }
+
+    // Always include the strip when the spec declared `files`. Empty zones
+    // remain visible so transitions like `git reset --hard` can show the
+    // "all clean" endpoint explicitly.
+    var stripHtml = '<div class="git-workbench-strip">' +
+      zoneHtml('untracked') + zoneHtml('unstaged') + zoneHtml('staged') +
+      '</div>';
+
+    var shelfHtml = '';
+    if (wt.stashed && wt.stashed.length) {
+      var stashRows = '';
+      for (var s = 0; s < wt.stashed.length; s++) {
+        var st = wt.stashed[s];
+        var label = st.ref + ': ' + (st.branch ? 'WIP on ' + st.branch + ': ' : '') + st.message;
+        stashRows += '<li class="git-workbench-stash-entry" data-ref="' + esc(st.ref) + '">' +
+          '<span class="git-workbench-path">' + esc(label) + '</span></li>';
+      }
+      shelfHtml = '<aside class="git-workbench-shelf" aria-label="Stash">' +
+        '<header class="git-workbench-shelf-header">Stash</header>' +
+        '<ul class="git-workbench-rows">' + stashRows + '</ul>' +
+        '</aside>';
+    }
+
+    return '<div class="git-workbench">' + stripHtml + shelfHtml + '</div>';
+  };
+
+  // Static helper — like renderToSVG but for the workbench.
+  GitGraph.renderWorkbench = function (data) {
+    return new GitGraph(null).workbenchToHtml(data);
+  };
+
+  // Combined static helper: workbench HTML + graph SVG. Existing callers of
+  // renderToSVG already set innerHTML with the result, so appending the
+  // workbench prefix is transparent.
+  GitGraph.renderStateMarkup = function (data) {
+    var g = new GitGraph(null);
+    return g.workbenchToHtml(data) + g.toSVG(data);
+  };
+
+  // ---- Live diff rendering for the workbench --------------------------------
+  //
+  // FLIP technique: record each row's bounding box before mutation, apply the
+  // DOM changes (re-parent rows to their new zones, remove/insert rows), then
+  // translate each surviving row from its old position back to its new one
+  // and transition transform to zero. CSS handles status-color fade.
+
+  GitGraph.prototype._ensureWorkbench = function (data) {
+    if (!this.container) return null;
+    if (!data || !data.workingTree) {
+      if (this._workbenchEl && this._workbenchEl.parentNode) {
+        this._workbenchEl.parentNode.removeChild(this._workbenchEl);
+      }
+      this._workbenchEl = null;
+      this._workbenchRowEls = {};
+      return null;
+    }
+    if (!this._workbenchEl) {
+      var wb = document.createElement('div');
+      wb.className = 'git-workbench';
+      // Place the workbench as the FIRST child of the container so it sits
+      // above the SVG regardless of DOM build order (buildInitialSvg may
+      // recreate the SVG but we want to keep the workbench attached).
+      this.container.insertBefore(wb, this.container.firstChild);
+      this._workbenchEl = wb;
+      this._workbenchRowEls = {};
+    }
+    return this._workbenchEl;
+  };
+
+  GitGraph.prototype._diffWorkbench = function (data) {
+    var wb = this._ensureWorkbench(data);
+    if (!wb) {
+      if (data && data.commits) {
+        this._prevCommitHashes = {};
+        for (var rc = 0; rc < data.commits.length; rc++) this._prevCommitHashes[data.commits[rc].hash] = true;
+      }
+      return;
+    }
+    var wt = data.workingTree;
+
+    // Detect newly-added commit so staged rows about to be removed can fly
+    // into the fresh commit node rather than just fading — matches the
+    // "staged → committed" mental model visually.
+    var newlyAddedCommit = null;
+    var prev = this._prevCommitHashes || {};
+    for (var nc = 0; nc < (data.commits || []).length; nc++) {
+      if (!prev[data.commits[nc].hash]) {
+        newlyAddedCommit = data.commits[nc];
+        break;
+      }
+    }
+    this._prevCommitHashes = {};
+    for (var rc2 = 0; rc2 < (data.commits || []).length; rc2++) {
+      this._prevCommitHashes[data.commits[rc2].hash] = true;
+    }
+
+    // Build the desired zone/shelf structure if missing. The strip is always
+    // present as a stable target for row-moves even when empty mid-diff; the
+    // CSS :not(:has(.git-workbench-row)) rule hides it visually when empty.
+    if (!wb.querySelector('.git-workbench-strip')) {
+      wb.innerHTML = '<div class="git-workbench-strip">' +
+        '<section class="git-workbench-zone git-workbench-zone--untracked" data-zone="untracked">' +
+          '<header class="git-workbench-zone-header" title="Untracked files:">Untracked:</header>' +
+          '<ul class="git-workbench-rows"></ul>' +
+        '</section>' +
+        '<section class="git-workbench-zone git-workbench-zone--unstaged" data-zone="unstaged">' +
+          '<header class="git-workbench-zone-header" title="Changes not staged for commit:">Not staged:</header>' +
+          '<ul class="git-workbench-rows"></ul>' +
+        '</section>' +
+        '<section class="git-workbench-zone git-workbench-zone--staged" data-zone="staged">' +
+          '<header class="git-workbench-zone-header" title="Changes to be committed:">Staged:</header>' +
+          '<ul class="git-workbench-rows"></ul>' +
+        '</section>' +
+      '</div>';
+    }
+
+    // Step 1: record current row positions for FLIP.
+    var oldRects = {};
+    var rowEls = this._workbenchRowEls || {};
+    for (var key in rowEls) {
+      if (rowEls.hasOwnProperty(key) && rowEls[key].el && rowEls[key].el.parentNode) {
+        var r = rowEls[key].el.getBoundingClientRect();
+        oldRects[key] = { left: r.left, top: r.top };
+      }
+    }
+
+    // Step 2: compute desired rows per zone, keyed by path (for files) or ref (for stash).
+    var desired = {
+      untracked: wt.untracked.map(function (f) { return { key: 'untracked:' + f.path, zone: 'untracked', data: f }; }),
+      unstaged:  wt.unstaged.map(function (f) {  return { key: 'unstaged:' + f.path,  zone: 'unstaged',  data: f }; }),
+      staged:    wt.staged.map(function (f) {    return { key: 'staged:' + f.path,    zone: 'staged',    data: f }; }),
+      stashed:   wt.stashed.map(function (st) {  return { key: 'stashed:' + st.ref,   zone: 'stashed',   data: st }; }),
+    };
+
+    // Path-based tracking so a row that moves zones (e.g. foo.js: unstaged → staged)
+    // reuses its DOM element — animating the slide via FLIP.
+    var byPath = {};
+    for (var p in rowEls) {
+      if (!rowEls.hasOwnProperty(p)) continue;
+      var pth = rowEls[p].path;
+      if (!pth) continue;
+      if (!byPath[pth]) byPath[pth] = [];
+      byPath[pth].push({ key: p, entry: rowEls[p] });
+    }
+
+    // Step 3: reconcile. Build a map of surviving keys.
+    var newRowEls = {};
+    var zones = ['untracked', 'unstaged', 'staged', 'stashed'];
+    var self = this;
+
+    function ensureZoneContainer(zoneName) {
+      if (zoneName === 'stashed') {
+        var shelf = wb.querySelector('.git-workbench-shelf');
+        if (!shelf) {
+          shelf = document.createElement('aside');
+          shelf.className = 'git-workbench-shelf';
+          shelf.setAttribute('aria-label', 'Stash');
+          shelf.innerHTML = '<header class="git-workbench-shelf-header">Stash</header><ul class="git-workbench-rows"></ul>';
+          wb.appendChild(shelf);
+        }
+        return shelf.querySelector('.git-workbench-rows');
+      }
+      return wb.querySelector('.git-workbench-zone--' + zoneName + ' .git-workbench-rows');
+    }
+
+    for (var zi = 0; zi < zones.length; zi++) {
+      var zoneName = zones[zi];
+      var zoneList = desired[zoneName];
+      var zoneContainer = ensureZoneContainer(zoneName);
+      if (!zoneContainer) continue;
+      for (var i = 0; i < zoneList.length; i++) {
+        var d = zoneList[i];
+        var reusedEntry = null;
+
+        // Try to reuse by exact key (same path, same zone → update in place).
+        if (rowEls[d.key]) {
+          reusedEntry = rowEls[d.key];
+          delete rowEls[d.key];
+        } else if (zoneName !== 'stashed') {
+          // Try to reuse by path from another zone → animate zone change.
+          var path = d.data.path;
+          if (byPath[path]) {
+            // Pick the first remaining entry for this path that hasn't been reused.
+            for (var bi = 0; bi < byPath[path].length; bi++) {
+              var cand = byPath[path][bi];
+              if (cand.entry._claimed) continue;
+              if (cand.entry.zone === 'stashed') continue; // don't merge stash↔file
+              reusedEntry = cand.entry;
+              cand.entry._claimed = true;
+              delete rowEls[cand.key];
+              break;
+            }
+          }
+        }
+
+        if (reusedEntry) {
+          self._updateWorkbenchRow(reusedEntry, d);
+          newRowEls[d.key] = reusedEntry;
+          if (reusedEntry.el.parentNode !== zoneContainer) {
+            zoneContainer.appendChild(reusedEntry.el);
+          } else {
+            // Keep order consistent with desired list.
+            zoneContainer.appendChild(reusedEntry.el);
+          }
+        } else {
+          var fresh = self._createWorkbenchRow(d);
+          zoneContainer.appendChild(fresh.el);
+          newRowEls[d.key] = fresh;
+        }
+      }
+    }
+
+    // Step 4: anything left in rowEls is departing. If a fresh commit just
+    // appeared, any departing file row (staged OR unstaged — the latter
+    // covers `git commit -am` which auto-stages tracked modifications) flies
+    // into the new commit node. Untracked leavers still fade (they would
+    // only disappear via explicit delete, not a commit). Stash entries are
+    // also excluded — they go back into the strip via different paths.
+    for (var leftoverKey in rowEls) {
+      if (!rowEls.hasOwnProperty(leftoverKey)) continue;
+      var leaver = rowEls[leftoverKey];
+      var isFileRow = (leaver.zone === 'staged' || leaver.zone === 'unstaged');
+      if (newlyAddedCommit && isFileRow) {
+        self._flyRowIntoCommit(leaver, newlyAddedCommit);
+      } else {
+        self._removeWorkbenchRow(leaver);
+      }
+    }
+
+    this._workbenchRowEls = newRowEls;
+
+    // Step 5: FLIP animation — compute deltas for surviving rows and tween
+    // them from their old positions to their new positions using a CSS
+    // keyframe that reads the per-row `--fx`/`--fy` custom properties. CSS
+    // keyframe animations tick reliably from document-time so this works
+    // even in headless/throttled tabs where rAF may be starved.
+    for (var surviveKey in newRowEls) {
+      if (!newRowEls.hasOwnProperty(surviveKey)) continue;
+      (function (entry) {
+        entry._claimed = false;
+        var prior = oldRects[surviveKey];
+        if (!prior) {
+          for (var okey in oldRects) {
+            if (oldRects.hasOwnProperty(okey) && okey.split(':').slice(1).join(':') === entry.path) {
+              prior = oldRects[okey];
+              break;
+            }
+          }
+        }
+        if (!prior) return;
+        var newRect = entry.el.getBoundingClientRect();
+        var dx = prior.left - newRect.left;
+        var dy = prior.top - newRect.top;
+        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+        var el = entry.el;
+        // Yellow-burst flash to signal the zone change, matching the
+        // git-graph's own commit-burst vocabulary.
+        el.classList.add('git-workbench-row-burst');
+        setTimeout(function () { el.classList.remove('git-workbench-row-burst'); }, 800);
+        // Feed dx/dy to the CSS keyframe via custom properties, then toggle
+        // the .git-workbench-row-flip class to (re)trigger the animation.
+        el.style.setProperty('--fx', dx + 'px');
+        el.style.setProperty('--fy', dy + 'px');
+        el.classList.remove('git-workbench-row-flip');
+        // Force a reflow so the class-remove commits before re-adding, so
+        // the animation restarts even if it was already running from a
+        // previous transition.
+        /* eslint-disable no-unused-expressions */
+        el.offsetWidth;
+        /* eslint-enable no-unused-expressions */
+        el.classList.add('git-workbench-row-flip');
+        setTimeout(function () {
+          el.classList.remove('git-workbench-row-flip');
+          el.style.removeProperty('--fx');
+          el.style.removeProperty('--fy');
+        }, 760);
+      })(newRowEls[surviveKey]);
+    }
+
+    // Remove stash shelf entirely if empty, matching the spec.
+    var shelf = wb.querySelector('.git-workbench-shelf');
+    if (shelf) {
+      var shelfRows = shelf.querySelectorAll('.git-workbench-stash-entry');
+      if (shelfRows.length === 0) {
+        shelf.parentNode.removeChild(shelf);
+      }
+    }
+  };
+
+  GitGraph.prototype._createWorkbenchRow = function (d) {
+    var li = document.createElement('li');
+    li.className = 'git-workbench-row git-workbench-row--' + d.zone + ' entering';
+    var path, label;
+    if (d.zone === 'stashed') {
+      path = d.data.ref;
+      label = d.data.ref + ': ' + (d.data.branch ? 'WIP on ' + d.data.branch + ': ' : '') + d.data.message;
+      li.className = 'git-workbench-stash-entry entering';
+      li.setAttribute('data-ref', d.data.ref);
+      li.innerHTML = '<span class="git-workbench-path">' + this._escapeHtml(label) + '</span>';
+    } else {
+      path = d.data.path;
+      li.setAttribute('data-path', path);
+      var statusHtml = '';
+      if (d.zone !== 'untracked' && d.data.status) {
+        statusHtml = '<span class="git-workbench-status">' + this._escapeHtml(d.data.status + ':') + '</span>';
+      }
+      li.innerHTML = statusHtml + '<span class="git-workbench-path">' + this._escapeHtml(path) + '</span>';
+    }
+    setTimeout(function () { li.classList.remove('entering'); }, 480);
+    return {
+      el: li, zone: d.zone, path: path,
+      status: d.data.status, message: d.data.message,
+    };
+  };
+
+  GitGraph.prototype._updateWorkbenchRow = function (entry, d) {
+    var el = entry.el;
+    var newZoneClass = 'git-workbench-row--' + d.zone;
+    if (d.zone !== 'stashed') {
+      // Normalize class list — strip old zone modifier and stash class.
+      el.className = 'git-workbench-row ' + newZoneClass;
+      var statusSpan = el.querySelector('.git-workbench-status');
+      if (d.zone === 'untracked' || !d.data.status) {
+        if (statusSpan) statusSpan.parentNode.removeChild(statusSpan);
+      } else {
+        if (!statusSpan) {
+          statusSpan = document.createElement('span');
+          statusSpan.className = 'git-workbench-status';
+          el.insertBefore(statusSpan, el.firstChild);
+        }
+        statusSpan.textContent = d.data.status + ':';
+      }
+      var pathSpan = el.querySelector('.git-workbench-path');
+      if (pathSpan && pathSpan.textContent !== d.data.path) pathSpan.textContent = d.data.path;
+      entry.path = d.data.path;
+      entry.status = d.data.status;
+    } else {
+      el.className = 'git-workbench-stash-entry';
+      var label = d.data.ref + ': ' + (d.data.branch ? 'WIP on ' + d.data.branch + ': ' : '') + d.data.message;
+      var pathSpanS = el.querySelector('.git-workbench-path');
+      if (pathSpanS) pathSpanS.textContent = label;
+      entry.path = d.data.ref;
+      entry.message = d.data.message;
+    }
+    entry.zone = d.zone;
+    return entry;
+  };
+
+  GitGraph.prototype._removeWorkbenchRow = function (entry) {
+    var el = entry.el;
+    el.classList.add('exiting');
+    setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 400);
+  };
+
+  // Animate a staged or unstaged row flying into a freshly-created commit
+  // node so the "tree → committed" transition reads as one continuous motion
+  // with the commit-burst flash. Uses CSS custom properties fed into the
+  // `git-workbench-row-fly` keyframe so the yellow-gold burst fires in sync
+  // with the translate+shrink — same vocabulary as the FLIP zone-change.
+  GitGraph.prototype._flyRowIntoCommit = function (entry, commit) {
+    var rowEl = entry.el;
+    var nodeEntry = this._nodeEls && this._nodeEls[commit.hash];
+    if (!nodeEntry || !nodeEntry.g || !rowEl.parentNode) {
+      this._removeWorkbenchRow(entry);
+      return;
+    }
+    var rowRect = rowEl.getBoundingClientRect();
+    var nodeRect = nodeEntry.g.getBoundingClientRect();
+    if (!rowRect.width || !nodeRect.width) {
+      this._removeWorkbenchRow(entry);
+      return;
+    }
+    var dx = (nodeRect.left + nodeRect.width / 2) - (rowRect.left + rowRect.width / 2);
+    var dy = (nodeRect.top + nodeRect.height / 2) - (rowRect.top + rowRect.height / 2);
+    rowEl.style.transformOrigin = 'center center';
+    rowEl.style.pointerEvents = 'none';
+    rowEl.style.zIndex = '5';
+    rowEl.style.setProperty('--fx', dx + 'px');
+    rowEl.style.setProperty('--fy', dy + 'px');
+    // Force reflow so adding the class (re)triggers the animation.
+    /* eslint-disable no-unused-expressions */
+    rowEl.offsetWidth;
+    /* eslint-enable no-unused-expressions */
+    rowEl.classList.add('git-workbench-row-fly');
+    setTimeout(function () {
+      if (rowEl.parentNode) rowEl.parentNode.removeChild(rowEl);
+    }, 500);
   };
 
   // ---------------------------------------------------------------------------
