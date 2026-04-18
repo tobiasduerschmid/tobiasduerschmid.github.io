@@ -146,21 +146,25 @@
     return { rows: rows, map: map };
   }
 
-  // Compare old vs. new tree text; return the indices (in new) of rows that
-  // are either new, or have a different annotation than the corresponding
-  // row in the old tree.
+  // Return indices (in new) of rows that should burst. Structural changes —
+  // create, delete, move, rename — produce a new path in the new tree and
+  // always burst. The "(you are here)" cwd marker arriving at a row also
+  // bursts (so `cd` is visually obvious), but the row it *leaves* does not.
+  // Other pure annotation changes (e.g. a submodule pin label flipping)
+  // aren't bursted, per design.
   function computeChangedIndices(oldText, newText) {
     if (oldText == null) return [];
     var oldInfo = extractPathsAndAnnotations(oldText);
     var newInfo = extractPathsAndAnnotations(newText);
     var out = [];
     newInfo.rows.forEach(function (entry, i) {
-      var path = entry.path;
-      if (!(path in oldInfo.map)) {
-        out.push(i);                                 // new row
-      } else if (oldInfo.map[path] !== entry.annotation) {
-        out.push(i);                                 // annotation changed
+      if (!(entry.path in oldInfo.map)) {
+        out.push(i);
+        return;
       }
+      var wasCwd = /\(you are here\)/.test(oldInfo.map[entry.path]);
+      var isCwd  = /\(you are here\)/.test(entry.annotation);
+      if (isCwd && !wasCwd) out.push(i);
     });
     return out;
   }
@@ -174,9 +178,9 @@
   // <text> / child elements reliably — but setting `filter` via inline
   // style on any SVG element works. So we run the frame loop in JS and
   // write the interpolated inline filter on each element ourselves.
-  var BURST_DELAY_MS    = 240;   // wait for the 360ms crossfade to mostly land
-  var BURST_DURATION_MS = 750;   // same total duration as git-graph-label-burst
-  var BURST_PEAK        = 0.35;  // peak at 35% (same as git-graph)
+  var BURST_DURATION_MS = 1000;
+  var BURST_RISE_END    = 0.22;   // finish rising to peak at 22% of duration (~220ms)
+  var BURST_FALL_START  = 0.45;   // hold at peak until 45% (~225ms plateau)
 
   function startRowBurst(elements) {
     if (!elements.length) return;
@@ -186,26 +190,30 @@
     // stalls in headless CDP sessions; setInterval runs regardless.
     var timer = setInterval(function () {
       var nowT = (window.performance && performance.now) ? performance.now() : Date.now();
-      var t = nowT - start;
-      if (t < BURST_DELAY_MS) return;
-      var p = (t - BURST_DELAY_MS) / BURST_DURATION_MS;
+      var p = (nowT - start) / BURST_DURATION_MS;
       if (p >= 1) {
         elements.forEach(function (el) { el.style.filter = ''; });
         clearInterval(timer);
         return;
       }
-      // Ramp up to peak, then ease-out ramp down.
+      // Fast rise → plateau at peak → ease-out fall. The plateau keeps the
+      // glow visible long enough to register as a flash even on fast reads.
       var intensity;
-      if (p <= BURST_PEAK) {
-        intensity = p / BURST_PEAK;
+      if (p < BURST_RISE_END) {
+        intensity = p / BURST_RISE_END;
+      } else if (p < BURST_FALL_START) {
+        intensity = 1;
       } else {
-        var q = (p - BURST_PEAK) / (1 - BURST_PEAK);
+        var q = (p - BURST_FALL_START) / (1 - BURST_FALL_START);
         intensity = 1 - (q * q);
       }
-      var innerR = (10 * intensity).toFixed(2);
-      var outerR = (18 * intensity).toFixed(2);
-      var innerA = (0.95 * intensity).toFixed(3);
-      var outerA = (0.9 * intensity).toFixed(3);
+      // Tight, bright glow: small radius so it stays close to the row and
+      // won't be clipped by any outer SVG filter bitmap; full opacity so
+      // it reads clearly against both light and dark backgrounds.
+      var innerR = (4 * intensity).toFixed(2);
+      var outerR = (9 * intensity).toFixed(2);
+      var innerA = (1 * intensity).toFixed(3);
+      var outerA = (1 * intensity).toFixed(3);
       var filter = 'drop-shadow(0 0 ' + innerR + 'px rgba(255,255,255,' + innerA + ')) ' +
                    'drop-shadow(0 0 ' + outerR + 'px rgba(255,200,28,' + outerA + '))';
       elements.forEach(function (el) { el.style.filter = filter; });
@@ -334,6 +342,30 @@
     }
   }
 
+  // Measure the tallest tree among a list of states so we can lock the
+  // wrapper to that height — then switching states leaves surrounding
+  // content perfectly still (no snap up/down).
+  function measureMaxTreeHeight(states) {
+    if (!states.length) return 0;
+    var tempDiv = document.createElement('div');
+    tempDiv.style.cssText =
+      'position: absolute; left: -9999px; top: -9999px; ' +
+      'visibility: hidden; width: auto; height: auto;';
+    document.body.appendChild(tempDiv);
+    var maxH = 0;
+    try {
+      states.forEach(function (state) {
+        if (!state) return;
+        window.UMLFolderTreeDiagram.render(tempDiv, buildTreeText(state));
+        var h = tempDiv.offsetHeight;
+        if (h > maxH) maxH = h;
+      });
+    } finally {
+      if (tempDiv.parentNode) tempDiv.parentNode.removeChild(tempDiv);
+    }
+    return maxH;
+  }
+
   // ---------------------------------------------------------------------------
   // Single-step card: play button toggles between `before` and `after`.
   // ---------------------------------------------------------------------------
@@ -382,6 +414,11 @@
     var output = document.createElement('pre');
     output.className = 'fs-command-lab__output';
     action.appendChild(output);
+
+    // Lock wrapper to the taller of before/after so toggling doesn't shift
+    // the page above or below.
+    var maxH = measureMaxTreeHeight([spec.before, spec.after]);
+    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
 
     var animator = TreeAnimator(treeWrap);
     animator.render(buildTreeText(spec.before));
@@ -556,6 +593,14 @@
     output.className = 'fs-command-lab__output';
     action.appendChild(output);
 
+    // Lock wrapper height to the tallest state in the walkthrough so walking
+    // the sequence doesn't shift surrounding content as the tree grows and
+    // shrinks.
+    var allStates = [spec.initialState];
+    for (var si0 = 0; si0 < steps.length; si0++) allStates.push(steps[si0].state);
+    var maxH = measureMaxTreeHeight(allStates);
+    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
+
     var animator = TreeAnimator(treeWrap);
 
     // Print section: all steps pre-rendered as static folder trees. Hidden on
@@ -688,6 +733,22 @@
         if (el._fcl && el._fcl.reset) el._fcl.reset();
       });
     });
+
+    // Re-render every card's tree when dark mode toggles — the SVG bakes in
+    // its fill/stroke colours at generation time, so a live theme change
+    // needs a fresh render for the right palette (and to avoid the outer
+    // invert filter that uml-diagram.css would otherwise apply).
+    if (typeof MutationObserver !== 'undefined' && document.documentElement) {
+      var lastDark = document.documentElement.classList.contains('dark-mode');
+      new MutationObserver(function () {
+        var nowDark = document.documentElement.classList.contains('dark-mode');
+        if (nowDark === lastDark) return;
+        lastDark = nowDark;
+        document.querySelectorAll('.fs-command-lab').forEach(function (el) {
+          if (el._fcl && el._fcl.reset) el._fcl.reset();
+        });
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    }
   }
 
   window.FSCommandLab = {

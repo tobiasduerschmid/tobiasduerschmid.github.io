@@ -52,9 +52,9 @@ These are the foundational tools for interacting with the POSIX filesystem:
 * **`rmdir`**: Remove empty directories (only works on empty ones).
 * **`touch`**: Create an empty file or update timestamps.
 
-#### Each command, one click
-
 Play each card to see the command's effect; click again to undo. The descriptions call out the flags you'll reach for most often.
+
+#### `ls` — list directory contents
 
 <div data-fs-command-lab>
 <script type="application/json">
@@ -74,6 +74,8 @@ Play each card to see the command's effect; click again to undo. The description
 </script>
 </div>
 
+#### `cd` — change working directory
+
 <div data-fs-command-lab>
 <script type="application/json">
 {
@@ -90,6 +92,8 @@ Play each card to see the command's effect; click again to undo. The description
 }
 </script>
 </div>
+
+#### `pwd` — print current path
 
 <div data-fs-command-lab>
 <script type="application/json">
@@ -109,6 +113,8 @@ Play each card to see the command's effect; click again to undo. The description
 </script>
 </div>
 
+#### `mkdir` — create a directory
+
 <div data-fs-command-lab>
 <script type="application/json">
 {
@@ -125,6 +131,8 @@ Play each card to see the command's effect; click again to undo. The description
 }
 </script>
 </div>
+
+#### `cp` — copy files and directories
 
 <div data-fs-command-lab>
 <script type="application/json">
@@ -143,6 +151,8 @@ Play each card to see the command's effect; click again to undo. The description
 </script>
 </div>
 
+#### `mv` — move or rename
+
 <div data-fs-command-lab>
 <script type="application/json">
 {
@@ -159,6 +169,8 @@ Play each card to see the command's effect; click again to undo. The description
 }
 </script>
 </div>
+
+#### `rm` — remove files and directories
 
 <div data-fs-command-lab>
 <script type="application/json">
@@ -177,6 +189,8 @@ Play each card to see the command's effect; click again to undo. The description
 </script>
 </div>
 
+#### `rmdir` — remove an empty directory
+
 <div data-fs-command-lab>
 <script type="application/json">
 {
@@ -193,6 +207,8 @@ Play each card to see the command's effect; click again to undo. The description
 }
 </script>
 </div>
+
+#### `touch` — create an empty file / bump timestamps
 
 <div data-fs-command-lab>
 <script type="application/json">

@@ -64,12 +64,25 @@
 }
 .fs-command-lab__tree-slot svg { display: block; max-width: 100%; height: auto; }
 
-/* Yellow glow burst on new / changed rows is driven by JS
-   (requestAnimationFrame) — it writes an inline `filter: drop-shadow(...)`
-   on each changed row's text + icon shapes over ~1 second. Colours,
-   peak timing and luminance mirror git-graph-label-burst exactly. No CSS
-   keyframes are needed; inline styles have higher specificity than any
-   print / dark-mode filter overrides. */
+/* Yellow glow burst on new / changed rows is driven by JS — it writes an
+   inline `filter: drop-shadow(...)` on each new row's text + icon shapes
+   over ~1 second. Colours mirror git-graph's label-burst; the radius is
+   tight and the opacity full so the pop reads as *concentrated* rather
+   than hazy, and so it stays inside the SVG bitmap (which matters in
+   dark mode where outer filters can clip). */
+
+/* Dark mode: theme the folder-tree natively via CSS variables and drop the
+   outer invert/hue-rotate filter that uml-diagram.css would otherwise apply.
+   Mirrors the pattern git-graph uses — needed here because the outer invert
+   would eat the JS-driven yellow burst drop-shadow. */
+html.dark-mode .fs-command-lab .uml-folder-tree-diagram-container {
+  --uml-stroke: #7aa0ce;
+  --uml-text: #e6edf3;
+  --uml-header-fill: #2a3a52;
+}
+html.dark-mode .fs-command-lab .uml-folder-tree-diagram-container svg {
+  filter: none !important;
+}
 
 /* ----- Terminal output area ----- */
 .fs-command-lab__output {

@@ -490,6 +490,24 @@ html.dark-mode .git-command-lab-modal { background-color: #1c2533; color: #e6edf
 html.dark-mode .git-command-lab-modal__close { color: #9aa6b2; }
 html.dark-mode .git-command-lab-modal__close:hover { background-color: #2a323e; color: #e6edf3; }
 
+.git-command-lab__output {
+  margin: 0 0 0 0;
+  padding: 10px 14px;
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  border-radius: 0 0 6px 6px;
+  border-top: 1px solid #30363d;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+html.dark-mode .git-command-lab__output {
+  background: #010409;
+  border-top-color: #21262d;
+}
+
 @keyframes gcl-modal-fade {
   from { opacity: 0; }
   to   { opacity: 1; }

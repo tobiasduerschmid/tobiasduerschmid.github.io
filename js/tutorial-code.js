@@ -5535,6 +5535,8 @@
       '{ echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; ' +
       'echo "===BRANCH==="; git branch 2>/dev/null; ' +
       'echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; ' +
+      'echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; ' +
+      'echo "===STASH==="; git stash list 2>/dev/null; ' +
       '} > ' + p + '/.git/gitgraph_state 2>/dev/null ); }; ' +
       'PROMPT_COMMAND="__gg_dump${PROMPT_COMMAND:+;$PROMPT_COMMAND}"';
     this._runSilent(hookCmd);
@@ -5549,29 +5551,106 @@
   TutorialCode.prototype._dumpGitState = function () {
     var p = this.gitGraphPath || '/tutorial';
     return this._runSilent(
-      '( cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; } > ' + p + '/.git/gitgraph_state 2>/dev/null )'
+      '( cd ' + p + ' && { echo "===LOG==="; git log --all --format="%H|%P|%s|%D" --topo-order 2>/dev/null; echo "===BRANCH==="; git branch 2>/dev/null; echo "===HEAD==="; git symbolic-ref HEAD 2>/dev/null || echo detached; echo "===STATUS==="; git status --porcelain=v1 2>/dev/null; echo "===STASH==="; git stash list 2>/dev/null; } > ' + p + '/.git/gitgraph_state 2>/dev/null )'
     );
   };
 
   /**
    * Parse the .gitgraph_state file content and render the SVG graph.
+   *
+   * Sections dumped by __gg_dump:
+   *   ===LOG===     git log --all --format="%H|%P|%s|%D" --topo-order
+   *   ===BRANCH===  git branch
+   *   ===HEAD===    git symbolic-ref HEAD (or "detached")
+   *   ===STATUS===  git status --porcelain=v1
+   *   ===STASH===   git stash list
    */
   TutorialCode.prototype._renderGitGraphFromText = function (text) {
     var logOutput = '';
     var branchOutput = '';
     var headRef = '';
+    var statusOutput = '';
+    var stashOutput = '';
     var sections = text.split(/^===(\w+)===$\n?/m);
     for (var i = 0; i < sections.length; i++) {
       if (sections[i] === 'LOG') logOutput = (sections[i + 1] || '').trim();
-      if (sections[i] === 'BRANCH') branchOutput = (sections[i + 1] || '').trim();
-      if (sections[i] === 'HEAD') headRef = (sections[i + 1] || '').trim();
+      else if (sections[i] === 'BRANCH') branchOutput = (sections[i + 1] || '').trim();
+      else if (sections[i] === 'HEAD') headRef = (sections[i + 1] || '').trim();
+      else if (sections[i] === 'STATUS') statusOutput = (sections[i + 1] || '').replace(/^\n+|\n+$/g, '');
+      else if (sections[i] === 'STASH') stashOutput = (sections[i + 1] || '').replace(/^\n+|\n+$/g, '');
     }
-    var data = GitGraph.parseGitState(logOutput, branchOutput, headRef);
+    var files = _parseStatusAndStash(statusOutput, stashOutput);
+    var data = GitGraph.parseGitState(logOutput, branchOutput, headRef, files);
     if (!this._gitGraph) {
       this._gitGraph = new GitGraph(this.gitGraphContainerEl);
     }
     this._gitGraph.render(data);
   };
+
+  // Map `git status --porcelain=v1` two-column status codes to the workbench's
+  // human-readable status strings. Column 1 is the index (staged) status,
+  // column 2 is the working-tree (unstaged) status.
+  var _PORCELAIN_STATUS = {
+    'M': 'modified', 'A': 'new file', 'D': 'deleted',
+    'R': 'renamed',  'C': 'copied',   'T': 'typechange',
+    'U': 'unmerged'
+  };
+
+  function _parseStatusAndStash(statusOutput, stashOutput) {
+    var files = { untracked: [], unstaged: [], staged: [], stashed: [] };
+
+    if (statusOutput) {
+      var lines = statusOutput.split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (!line || line.length < 3) continue;
+        var indexCode = line.charAt(0);
+        var workCode = line.charAt(1);
+        var path = line.substring(3);
+        // Untracked — "?? path"
+        if (indexCode === '?' && workCode === '?') {
+          files.untracked.push(path);
+          continue;
+        }
+        // Ignored — "!! path" — skip.
+        if (indexCode === '!') continue;
+        // Renames: porcelain v1 prints "old -> new" in the path slot; use the
+        // new name as the displayed path.
+        var displayPath = path;
+        var arrowIdx = path.indexOf(' -> ');
+        if (arrowIdx >= 0) displayPath = path.substring(arrowIdx + 4);
+        // A file can appear in both zones (index modified AND further working
+        // changes). Emit one row per zone so the user sees both.
+        if (indexCode !== ' ' && indexCode !== '?' && _PORCELAIN_STATUS[indexCode]) {
+          files.staged.push({ status: _PORCELAIN_STATUS[indexCode], path: displayPath });
+        }
+        if (workCode !== ' ' && workCode !== '?' && _PORCELAIN_STATUS[workCode]) {
+          files.unstaged.push({ status: _PORCELAIN_STATUS[workCode], path: displayPath });
+        }
+      }
+    }
+
+    if (stashOutput) {
+      var stashLines = stashOutput.split('\n');
+      for (var s = 0; s < stashLines.length; s++) {
+        var sLine = stashLines[s];
+        if (!sLine) continue;
+        // Format: "stash@{N}: WIP on <branch>: <hash> <message>"
+        //     or: "stash@{N}: On <branch>: <message>"
+        var m = sLine.match(/^(stash@\{\d+\}):\s+(?:WIP on|On)\s+([^:]+):\s*(.*)$/);
+        if (m) {
+          files.stashed.push({ ref: m[1], branch: m[2].trim(), message: m[3].trim() });
+        } else {
+          // Fall back to raw line if regex doesn't match.
+          files.stashed.push({ ref: 'stash@{' + s + '}', branch: '', message: sLine });
+        }
+      }
+    }
+
+    // Returning an empty `files` object (rather than null) means the workbench
+    // always renders in tutorial views, matching the "live git status" promise.
+    return files;
+  }
 
   /**
    * FULL refresh: runs _dumpGitState (uses serial) then reads the file.

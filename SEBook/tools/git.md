@@ -465,13 +465,14 @@ The full resolution sequence is: edit the conflicting file to remove all markers
     {
       "command": "git merge feature",
       "description": "Both branches edited the same lines in `greeting.txt`. Git cannot decide which version to keep, so it **pauses the merge** and injects conflict markers into the file.\n\n`greeting.txt` appears as `unstaged` (modified with conflicts) — Git will not let you commit until every conflict is resolved.",
+      "output": "Auto-merging greeting.txt\nCONFLICT (content): Merge conflict in greeting.txt\nAutomatic merge failed; fix conflicts and then commit the result.",
       "state": {
         "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "* main\n  feature",
         "head": "refs/heads/main",
         "files": {
           "untracked": [],
-          "unstaged": [{"status": "both modified", "path": "greeting.txt"}],
+          "unstaged": [{"status": "modified", "path": "greeting.txt"}],
           "staged": [],
           "stashed": []
         }

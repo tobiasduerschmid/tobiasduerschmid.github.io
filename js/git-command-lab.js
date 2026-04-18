@@ -360,6 +360,12 @@
 
     var graph = new GitGraph(graphHost);
 
+    // ----- Command output panel (sits below the graph within the action column) -----
+    var outputEl = document.createElement('pre');
+    outputEl.className = 'git-command-lab__output';
+    outputEl.hidden = true;
+    action.appendChild(outputEl);
+
     // ----- Print section: all steps pre-rendered as static SVGs -----
     // Hidden on screen; revealed by @media print.  Each cell shows the
     // command label, the effective description, and a static SVG graph.
@@ -433,6 +439,10 @@
       // the inherit-last-description behaviour lives in effectiveDescs so
       // Back and Forward stay consistent.
       descEl.innerHTML = mdToHtml(effectiveDescs[stepIdx + 1]);
+
+      var stepOutput = (stepIdx >= 0 && steps[stepIdx].output) ? steps[stepIdx].output : '';
+      outputEl.textContent = stepOutput;
+      outputEl.hidden = !stepOutput;
 
       progressEl.textContent =
         'Step\u00A0' + (isInitial ? 0 : stepIdx + 1) + '\u00A0of\u00A0' + steps.length;
