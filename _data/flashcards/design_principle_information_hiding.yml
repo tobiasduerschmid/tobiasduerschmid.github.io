@@ -1,0 +1,82 @@
+title: "Information Hiding Flashcards"
+description: "Key definitions, examples, trade-offs, and misconceptions of the Information Hiding principle (Parnas 1972)."
+cards:
+  - id: 1
+    question: "State the **Information Hiding principle** in one sentence."
+    answer: "Design decisions that are likely to change independently should be the **secrets** of separate modules; the interface between modules should reveal only assumptions that are unlikely to change."
+    explanation: "From Parnas's 1972 paper *On the Criteria To Be Used in Decomposing Systems into Modules*. The point is to bound the impact of change: a likely-to-change decision should be hidden inside exactly one module, not scattered across the system."
+
+  - id: 2
+    question: "Who introduced the Information Hiding principle, and in what year and venue?"
+    answer: "**David L. Parnas**, in *On the Criteria To Be Used in Decomposing Systems into Modules*, **Communications of the ACM, December 1972**."
+    explanation: "Parnas wrote it four years after the 1968 NATO Software Crisis conference, in response to a decade of software projects failing because step-by-step (flowchart) module decomposition couldn't absorb change."
+
+  - id: 3
+    question: "What two example modularizations did Parnas compare in his 1972 paper, and which won?"
+    answer: "He compared a **conventional flowchart-based decomposition** (one module per processing step) and an **information-hiding decomposition** (one module per design decision) using the **KWIC (Key Word In Context) index** program. The information-hiding decomposition was dramatically easier to change, understand, and develop in parallel."
+    explanation: "Both decompositions worked, but in the conventional one almost every module had to change when the data structure changed. In the information-hiding version, exactly one module changed."
+
+  - id: 4
+    question: "Define a **module** in the Parnas sense."
+    answer: "An **independent unit of work** — something that can be assigned to a single engineer or small team and developed in relative isolation. It can be a function, class, package, library, microservice, or subsystem; granularity does not matter."
+    explanation: "Parnas's emphasis was on the *work-assignment* nature of a module, because the principle's payoff is largely about parallel work, isolated reasoning, and bounded change."
+
+  - id: 5
+    question: "Name the **two parts** every module has, and which one should be stable."
+    answer: "(1) The **interface** — the public contract that says *what* the module does. (2) The **implementation** (the **secret**) — the code that says *how*. The **interface should be stable**; the implementation should be free to change."
+    explanation: "Picture an iceberg: small visible tip = interface; large submerged mass = secret. As long as the tip doesn't change, the mass underneath can be re-shaped at will."
+
+  - id: 6
+    question: "Give five categories of design decisions that are commonly worth hiding inside a module."
+    answer: "(1) **Data structures and formats** (array vs. tree vs. hash map); (2) **Storage location** (local file, SQL, NoSQL, S3, third-party API); (3) **Algorithms** (greedy vs. DP, A* vs. Dijkstra); (4) **External dependencies** — libraries, frameworks, vendors (PayPal vs. Stripe, MongoDB vs. Postgres); (5) **Hardware and platform details** (byte order, screen size, OS APIs)."
+    explanation: "All five share the property that they *might change* without the system's purpose changing — a textbook signal that they belong inside one module behind a stable interface."
+
+  - id: 7
+    question: "What is the difference between a **deep** module and a **shallow** module?"
+    answer: "A **deep module hides a lot of complexity behind a small interface** (e.g., the file system: open/read/write/close). A **shallow module exposes a wide interface that hides little** (e.g., a 'service' class whose methods one-to-one delegate to another class). Deep modules are the goal; shallow modules are tax."
+    explanation: "From John Ousterhout, *A Philosophy of Software Design*. Heuristic: the bigger the gap between interface size and implementation size, the deeper the module."
+
+  - id: 8
+    question: "True or false: 'If I make all my fields and methods `private`, I have followed the Information Hiding principle.'"
+    answer: "**False.** Visibility modifiers are one *language tool* for enforcing hiding. The principle is broader: even with all-`private` fields, you can leak the secret through your **interface** — for example, by returning a vendor-specific type like `PayPalCharge` from a public method."
+    explanation: "Information Hiding decides *what* to hide; encapsulation and visibility modifiers help *enforce* the choice. You can have one without the other in either direction."
+
+  - id: 9
+    question: "Define **coupling** and **cohesion**, and say which way each should go."
+    answer: "**Coupling** = strength of dependencies *between* modules — should be **low**. **Cohesion** = strength of dependencies *within* a module — should be **high**. When secrets are well hidden, coupling drops and cohesion rises."
+    explanation: "Coupling and cohesion are the *metrics* by which Information Hiding is evaluated. Information Hiding is the *principle*; cohesion/coupling are the measurements that show whether you applied it well."
+
+  - id: 10
+    question: "Distinguish **syntactic** and **semantic** coupling. Why is the second one more dangerous?"
+    answer: "**Syntactic coupling**: module A imports/calls/names types from B (the compiler can see it). **Semantic coupling**: A and B share an unspoken assumption (e.g., 'phone numbers are 10-digit strings without formatting'); changing the assumption in one silently breaks the other. Semantic coupling is more dangerous because tools can't detect it."
+    explanation: "Information Hiding fights both kinds, but semantic coupling only goes away when the shared assumption itself lives in exactly one module."
+
+  - id: 11
+    question: "In the lecture's **payment-system** example, what is the secret, and where should it live?"
+    answer: "The secret is **'we use PayPal'** (the choice of payment provider). It should live in **exactly one module** — a `PaymentGateway` interface with a `PayPalGateway` implementation. `OrderService`, `RefundService`, and `WalletService` should all depend on the abstraction, never on PayPal."
+    explanation: "When the CFO swaps providers, the impact is bounded to writing a new gateway implementation. None of the services have to change."
+
+  - id: 12
+    question: "Why is whether a network protocol is **stateful or stateless** part of the **interface**, not the secret?"
+    answer: "Because clients **cannot ignore** it. Stateful protocols require clients to maintain a session, reconnect on disconnect, and carry session tokens. Statelessness allows simpler clients. Hiding this would produce mysterious bugs."
+    explanation: "Rule of thumb: hide what only the module needs to know to do its job; expose what callers need to know to use it correctly."
+
+  - id: 13
+    question: "What is **change impact analysis**, and how does it test whether your design follows Information Hiding?"
+    answer: "Change impact analysis is the procedure of **listing plausible future changes**, **estimating their likelihood**, and **counting the modules each one would force you to edit**. A well-hidden design responds to a single change by lighting up one module; a poorly-hidden one lights up many."
+    explanation: "Industry uses this both as a design exercise (before code) and as a review technique (after). It is the most direct way to falsify the claim 'this design hides X.'"
+
+  - id: 14
+    question: "Name three common **anti-patterns** of poor Information Hiding."
+    answer: "(1) **Vendor name in the interface** — `OrderService.checkoutWithPayPal(...)`. (2) **Returning the implementation type** — a repository returning `MySQLResultSet` instead of `List<Order>`. (3) **Exposed mutable internals** — returning a reference to an internal `List` that callers can mutate."
+    explanation: "Other common ones: leaky abstractions, God classes, shallow modules, conditional types in clients (`if provider == 'paypal'` everywhere), and 'documentation as a substitute for hiding'."
+
+  - id: 15
+    question: "When is applying Information Hiding a **bad** idea?"
+    answer: "For **throwaway scripts**, **single-variant systems with stable scope**, **premature abstractions** in domains you don't yet understand, and **performance-critical inner loops** where indirection has measurable cost. Also: when the property is genuinely part of the contract and hiding it would produce silent failures."
+    explanation: "The right number of abstractions is the smallest number that lets the system change gracefully. Beyond that, every extra layer is tax in indirection, file count, and cognitive load."
+
+  - id: 16
+    question: "How does Information Hiding relate to **Separation of Concerns** (SoC)?"
+    answer: "**SoC** decides *which* aspects of the system should live in separate modules. **Information Hiding** decides *how* each module protects its design decisions behind a stable interface. SoC without Information Hiding gives you separate modules that still break each other when details change."
+    explanation: "They are complementary principles, not synonyms. Most modern principles (SRP, DIP, layered architecture, microservices) are specific applications of one or both."

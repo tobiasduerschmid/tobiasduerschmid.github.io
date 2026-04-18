@@ -1,0 +1,194 @@
+title: "Information Hiding Quiz"
+description: "Test your ability to identify, apply, and evaluate the Information Hiding principle in real code."
+questions:
+  - id: 1
+    type: single
+    question: |
+      Who introduced the Information Hiding principle, and in what paper?
+    options:
+      - "Edsger W. Dijkstra, in *On the Role of Scientific Thought* (EWD 447), 1974"
+      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems into Modules*, Communications of the ACM, 1972"
+      - "Robert C. Martin, in *Clean Architecture*, 2017"
+      - "John Ousterhout, in *A Philosophy of Software Design*, 2018"
+    correct_index: 1
+    explanation: "Parnas's 1972 *CACM* paper introduced the principle, four years after the 1968 NATO Software Crisis conference. Dijkstra coined *Separation of Concerns* (a related but broader principle); Martin and Ousterhout build on Parnas's ideas in modern form."
+
+  - id: 2
+    type: single
+    question: |
+      In Parnas's KWIC (Key Word In Context) example, what was wrong with the **conventional** decomposition (one module per processing step)?
+    options:
+      - "It used too many modules and was therefore too slow"
+      - "It exposed the shared data structure to every module, so a change to that data structure forced edits to nearly every module"
+      - "It used inheritance instead of composition"
+      - "It violated the Liskov Substitution Principle"
+    correct_index: 1
+    explanation: "Both decompositions worked, but in the conventional one almost every module *knew* the shared data structure. The information-hiding decomposition kept that decision in one module — only that module changed when the structure was redesigned. Parnas's argument was that step-by-step decomposition uses the wrong criterion: it splits along the processing sequence, not along design decisions."
+
+  - id: 3
+    type: single
+    question: |
+      Look at this Java code:
+
+      ```java
+      public class OrderService {
+          private final PayPalClient paypal;
+          public PayPalCharge checkout(Order o, PayPalAccount acc) {
+              paypal.authenticate(acc);
+              return paypal.charge(acc.getAccountToken(), o.getTotal());
+          }
+      }
+      ```
+
+      Every field is `private`. Is this an example of good Information Hiding?
+    options:
+      - "Yes — all fields are `private`, so the implementation is hidden"
+      - "No — the *interface* (parameter and return types) names PayPal-specific types, so the PayPal decision has leaked into the contract"
+      - "No — Information Hiding requires inheritance, which this class doesn't use"
+      - "Yes — Java visibility modifiers always guarantee Information Hiding"
+    correct_index: 1
+    explanation: "`private` controls access to fields, but the *public method signatures* expose `PayPalClient`, `PayPalAccount`, and `PayPalCharge`. Every caller of `checkout` now compiles against PayPal. The fix is to introduce a `PaymentGateway` abstraction that exposes only neutral types like `PaymentDetails` and `ChargeResult`."
+
+  - id: 4
+    type: single
+    question: |
+      What does Ousterhout mean by a **deep** module?
+    options:
+      - "A module with many subclasses arranged in a deep inheritance tree"
+      - "A module that hides a lot of complexity behind a small interface"
+      - "A module placed deep inside the directory structure"
+      - "A module that uses recursion heavily"
+    correct_index: 1
+    explanation: "A deep module hides a *lot* of internal complexity behind a *small* interface — the file system (`open/read/write/close`), TCP, garbage collection. Deep modules are the goal of Information Hiding. Shallow modules — those whose interface is nearly as large as their implementation — add vocabulary without buying any abstraction."
+
+  - id: 5
+    type: single
+    question: |
+      A teammate proposes splitting a 30-line helper function into its own class with a one-method interface, "for Information Hiding." When is this **most likely** the wrong move?
+    options:
+      - "When the helper is genuinely a likely-to-change decision used by several modules"
+      - "When the helper has only one caller, the implementation is trivial, and there is no plausible variation that the abstraction would protect against"
+      - "Never — extracting a class is always good Information Hiding"
+      - "When the helper is over 100 lines"
+    correct_index: 1
+    explanation: "This is the **shallow module** trap (Ousterhout). If the new 'module' has nothing meaningful to hide and no plausible second variant, you have added an interface and a file without buying any abstraction value. Information Hiding pays off when there is a real secret worth hiding; otherwise, it just adds vocabulary the reader must learn."
+
+  - id: 6
+    type: single
+    question: |
+      Which of the following is *most likely* to be **part of the interface** (visible) rather than a hidden secret?
+    options:
+      - "Whether `find_user` looks up the user in MySQL or in MongoDB"
+      - "Whether the network protocol used by the API is **stateful or stateless**"
+      - "Whether `sortItems` uses quicksort or mergesort"
+      - "Whether passwords are hashed with bcrypt or argon2"
+    correct_index: 1
+    explanation: "Statefulness changes how clients **must** interact with the server (do they reconnect? carry a session token? retransmit on disconnect?). Clients cannot ignore it, so it belongs in the contract. The other three are textbook secrets — clients neither know nor care, and the choice can change without breaking callers."
+
+  - id: 7
+    type: single
+    question: |
+      Which statement best captures the relationship between **Information Hiding** and **Separation of Concerns (SoC)**?
+    options:
+      - "They are synonyms"
+      - "SoC decides *which* aspects belong in separate modules; Information Hiding decides *how* each module protects its internal decisions behind a stable interface"
+      - "Information Hiding is a deprecated 1972 idea; SoC replaced it"
+      - "SoC applies to data; Information Hiding applies only to functions"
+    correct_index: 1
+    explanation: "They are complementary. SoC is about *identifying* distinct aspects (data access vs. business rules vs. UI). Information Hiding is about *protecting* each one — the interface should expose only what is unlikely to change. SoC without Information Hiding gives you separate modules that still rip apart when details change."
+
+  - id: 8
+    type: single
+    question: |
+      The CFO announces that PayPal will be replaced with Stripe. In a codebase that follows Information Hiding well, what is the expected scope of the change?
+    options:
+      - "Edit every service that processes a payment, refund, or wallet operation"
+      - "Write one new `StripeGateway` implementation of the existing `PaymentGateway` interface, plus update the dependency-injection configuration"
+      - "Rewrite the entire system because vendor changes always cascade"
+      - "Add a `try/catch` block in every payment-related method"
+    correct_index: 1
+    explanation: "If the secret 'we use PayPal' lives in exactly one module behind a stable interface, the swap is bounded: write a new implementation, change the wiring, redeploy. None of the services that *use* `PaymentGateway` need to be touched. This is the canonical Information Hiding payoff — local, low-risk change instead of cross-cutting rework."
+
+  - id: 9
+    type: single
+    question: |
+      Which is the strongest evidence that a module is **shallow**?
+    options:
+      - "Its public methods are mostly one-line pass-throughs that delegate to another module"
+      - "It has more than 200 lines of code"
+      - "It uses generics or templates"
+      - "It is in its own file"
+    correct_index: 0
+    explanation: "Shallowness is about the *ratio* of interface to implementation. If almost every public method is a thin pass-through, the module hides nothing — readers pay the cost of learning a new API and gain no abstraction. The fix is usually to inline the shallow module back into its caller, or to deepen it by absorbing real responsibilities."
+
+  - id: 10
+    type: single
+    question: |
+      Two modules in your codebase both depend on the assumption "phone numbers are stored as exactly 10 digits, no separators." There is no shared constant, no shared validator — just two pieces of code that happen to assume the same thing. What is this?
+    options:
+      - "Healthy duplication that improves performance"
+      - "**Semantic coupling** — a hidden dependency that no compiler or static analyzer can detect"
+      - "Strict syntactic coupling, easy to detect with `grep`"
+      - "An example of good Information Hiding because the assumption is implicit"
+    correct_index: 1
+    explanation: "Semantic coupling is the dangerous cousin of syntactic coupling: tools cannot see it, but if you change the assumption in one place, the other silently breaks. Information Hiding fights it by ensuring that the assumption (here, a `PhoneNumber` value object or a single normalization function) lives in exactly one module."
+
+  - id: 11
+    type: single
+    question: |
+      You inherit a `UserRepository` whose `findByEmail` method returns `sqlite3.Row`. Why is this a problem?
+    options:
+      - "Because `sqlite3.Row` is slower than `dict`"
+      - "Because it leaks the storage technology into the return type — every caller of `findByEmail` is now coupled to SQLite, and switching databases would force changes throughout the code"
+      - "Because `findByEmail` should return a list, not a single row"
+      - "Because Python doesn't allow returning custom types"
+    correct_index: 1
+    explanation: "The repository's *job* is to hide the storage decision. Returning a SQLite-specific type undoes that job: every caller now compiles against SQLite. Map the row to a domain `User` object before returning. The interface should mention only domain types — never storage-specific ones."
+
+  - id: 12
+    type: single
+    question: |
+      In *change impact analysis*, what does it mean if a single plausible change (say, "we switch from JSON to Protobuf for our wire format") would force edits across dozens of unrelated modules?
+    options:
+      - "Information Hiding has been applied very well"
+      - "The wire-format decision has *leaked* — it is not actually a secret of one module, but a shared assumption across many"
+      - "The system is too small for Information Hiding to matter"
+      - "The team is following SRP correctly"
+    correct_index: 1
+    explanation: "Change impact analysis falsifies bad designs. If 'one decision' touches dozens of modules, that decision is not really hidden — it is a *de facto* shared secret encoded in many places. The right response is to redesign so the decision lives in one module behind a stable interface."
+
+  - id: 13
+    type: single
+    question: |
+      Which of the following is **not** a typical mechanism for enforcing Information Hiding?
+    options:
+      - "Defining an abstract interface and writing clients against it"
+      - "The Facade pattern"
+      - "A globally accessible singleton with a long list of public mutator methods"
+      - "Repository / Gateway pattern"
+    correct_index: 2
+    explanation: "A globally accessible singleton with many public mutators is the *opposite* of Information Hiding — it gives every module access to internal state with no insulation. The other three (interfaces, Facade, Repository/Gateway) are standard mechanisms for hiding decisions behind stable contracts."
+
+  - id: 14
+    type: single
+    question: |
+      Why does Information Hiding **reduce cognitive load** on developers reading code?
+    options:
+      - "It removes all code comments, leaving less text to read"
+      - "By bounding what a reader needs to know about a module to its small interface, it lets the reader reason about one module without paging in the implementations of every other module"
+      - "It enforces shorter variable names"
+      - "It uses fewer files, so navigation is easier"
+    correct_index: 1
+    explanation: "Field studies of professional developers find that **program comprehension consumes ~58% of their time** *(Xia et al., 2017, IEEE TSE)*. A well-hidden module lets a reader load only the interface — not the entire implementation tree — into working memory. This is one of the most underrated practical benefits of the principle."
+
+  - id: 15
+    type: single
+    question: |
+      A reviewer says: "Don't add an abstraction for this — we only have one database and we'll never have another." When is this argument **most reasonable**?
+    options:
+      - "Always — abstractions are forbidden until proven necessary"
+      - "When the system is genuinely throwaway, single-variant, has stable scope, and the abstraction would not buy any other benefit (testability, comprehensibility) right now"
+      - "Whenever the database is SQL — only NoSQL deserves a repository"
+      - "Never — predictions of stability are usually wrong"
+    correct_index: 1
+    explanation: "Information Hiding has real costs: indirection, file count, vocabulary. Spending those costs on a decision that genuinely will never change is wasted ceremony. But 'we'll never need another database' is one of the most commonly falsified predictions in software, so the argument earns scrutiny — and is usually weakest in long-lived systems with multiple teams."
