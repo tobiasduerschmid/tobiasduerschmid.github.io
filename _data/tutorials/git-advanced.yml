@@ -24,7 +24,7 @@ steps:
 
       - **Detached HEAD:** `HEAD` holds a raw SHA rather than a ref. Any commits made here are reachable only from `HEAD` — once you move `HEAD`, they are orphaned.
 
-      - **reflog recovery:** `git reflog` logs every position `HEAD` has been at, for ~90 days by default. A new branch anchored at `HEAD@{n}` rescues otherwise-unreachable commits.
+      - **reflog recovery:** `git reflog` logs every position `HEAD` has been at. Reachable reflog entries are kept longer than **unreachable** ones (the orphan-recovery case is the unreachable bucket — see `gc.reflogExpire` and `gc.reflogExpireUnreachable`). A new branch anchored at `HEAD@{n}` rescues otherwise-unreachable commits.
 
       '
   tests:
@@ -215,7 +215,7 @@ steps:
 
       - **Why not just `git commit -m "WIP"`?** A WIP commit pollutes shared history if pushed. The stash is *private, local, and temporary* — no risk of shipping half-baked work.
 
-      - **Internal:** a stash is stored as a proper commit object with two parents (HEAD and the tree before stash), reachable via `refs/stash`. This is why `git stash apply <sha>` works even on detached stashes.
+      - **Internal:** a stash is stored as a merge commit reachable via `refs/stash`. Its **first parent** is HEAD at stash time; its **second parent** is a commit recording the **index** state. With `git stash -u`, a **third parent** records the untracked files. This is why `git stash apply <sha>` works even on detached stashes.
 
       '
   tests:

@@ -1729,7 +1729,14 @@
       this._workbenchRowEls = {};
       return null;
     }
-    if (!this._workbenchEl) {
+    // If the workbench was orphaned (e.g. by an innerHTML wipe in the empty-
+    // commits branch of render()), the stale reference is useless — rows
+    // appended to it would be invisible, and their cached positions from
+    // the previous render are no longer trustworthy. Create a fresh one
+    // and reset the row cache so the next diff is a clean first render.
+    var orphaned = this._workbenchEl &&
+      (!this._workbenchEl.parentNode || this._workbenchEl.parentNode !== this.container);
+    if (!this._workbenchEl || orphaned) {
       var wb = document.createElement('div');
       wb.className = 'git-workbench';
       // Place the workbench as the FIRST child of the container so it sits
@@ -1789,12 +1796,17 @@
       '</div>';
     }
 
-    // Step 1: record current row positions for FLIP.
+    // Step 1: record current row positions for FLIP. If the row has a zero
+    // rect (parent was display:none — e.g. the tutorial's graph panel was
+    // hidden until the user switched views), skip it so the FLIP later
+    // doesn't compute a bogus delta from (0,0) to the row's real position,
+    // which would make the animation "fly in from the top-left corner".
     var oldRects = {};
     var rowEls = this._workbenchRowEls || {};
     for (var key in rowEls) {
       if (rowEls.hasOwnProperty(key) && rowEls[key].el && rowEls[key].el.parentNode) {
         var r = rowEls[key].el.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) continue;
         oldRects[key] = { left: r.left, top: r.top };
       }
     }
