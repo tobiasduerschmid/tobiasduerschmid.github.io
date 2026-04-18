@@ -77,9 +77,17 @@
 
       var parents = parentStr ? parentStr.split(/\s+/) : [];
 
+      // Short synthetic hashes used by the SEBook command-lab ("A0000…0",
+      // "C'0000…0") are displayed verbatim — strip the zero padding. Real
+      // git hashes get the traditional first-4-chars-plus-ellipsis treatment.
+      var trimmed = hash.replace(/0+$/, '');
+      var shortHash = (trimmed.length > 0 && trimmed.length <= 4)
+        ? trimmed
+        : hash.substring(0, 4) + '\u2026';
+
       var commit = {
         hash: hash,
-        shortHash: hash.substring(0, 4) + '\u2026',
+        shortHash: shortHash,
         parents: parents,
         message: message,
         decorations: decorations,

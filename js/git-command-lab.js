@@ -59,6 +59,19 @@
       container.appendChild(desc);
     }
 
+    if (spec.rebaseFile) {
+      var file = document.createElement('pre');
+      file.className = 'git-command-lab__rebase-file';
+      var header = document.createElement('div');
+      header.className = 'git-command-lab__rebase-file-header';
+      header.textContent = '~/.git/rebase-merge/git-rebase-todo';
+      var body = document.createElement('code');
+      body.textContent = spec.rebaseFile;
+      file.appendChild(header);
+      file.appendChild(body);
+      container.appendChild(file);
+    }
+
     var graphHost = document.createElement('div');
     graphHost.className = 'git-command-lab__graph';
     container.appendChild(graphHost);

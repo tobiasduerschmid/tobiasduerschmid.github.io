@@ -91,6 +91,47 @@
   line-height: 1.4;
 }
 
+.git-command-lab__rebase-file {
+  margin: 0 0 12px;
+  padding: 0;
+  background-color: #f4f6f8;
+  border: 1px solid #d8dde2;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.git-command-lab__rebase-file-header {
+  padding: 6px 10px;
+  background-color: #e6eaee;
+  color: #5a6573;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid #d8dde2;
+}
+.git-command-lab__rebase-file code {
+  display: block;
+  padding: 10px 12px;
+  background: transparent !important;
+  color: #1f2d3d;
+  white-space: pre;
+  font: inherit;
+}
+html.dark-mode .git-command-lab__rebase-file {
+  background-color: #0f1721;
+  border-color: #2f3a4a;
+}
+html.dark-mode .git-command-lab__rebase-file-header {
+  background-color: #1a2332;
+  color: #9aa6b2;
+  border-bottom-color: #2f3a4a;
+}
+html.dark-mode .git-command-lab__rebase-file code {
+  color: #e6edf3;
+}
+
 .git-command-lab__graph {
   flex: 1;
   min-height: 220px;
