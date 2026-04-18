@@ -69,7 +69,6 @@
   box-shadow: 0 2px 6px rgba(176,58,46,0.14);
 }
 .git-command-lab__btn--undo .git-command-lab__icon {
-  background-color: rgba(176,58,46,0.15);
   font-size: 11px;
 }
 
@@ -118,9 +117,6 @@ html.dark-mode .git-command-lab__btn:hover {
   background-color: #66b1e3;
   border-color: #66b1e3;
   box-shadow: 0 2px 6px rgba(74,159,217,0.4);
-}
-html.dark-mode .git-command-lab__icon {
-  background-color: rgba(0,0,0,0.18);
 }
 html.dark-mode .git-command-lab__btn--undo {
   background-color: transparent;

@@ -126,16 +126,49 @@
   to { opacity: 0; }
 }
 
-/* HEAD pulse — fires on the glow halo when HEAD lands on a new commit.
-   This selector is more specific than the static .git-graph-svg .git-graph-head-glow
-   above, so it overrides during the burst. */
+/* HEAD glow cross-fade. When HEAD moves from one commit to another, the
+   label wrapper slides over 720ms; these animations delay the new glow's
+   appearance so it shows up as HEAD arrives (second half of the slide)
+   and fades the old glow as HEAD leaves (first half). Pairs with the
+   JS-added .glow-entering / .glow-exiting classes. */
+@keyframes git-graph-glow-enter {
+  0%, 50% { opacity: 0; }
+  100%    { opacity: 1; }
+}
+@keyframes git-graph-glow-exit {
+  0%        { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.git-graph-svg .git-graph-head-glow.glow-entering {
+  animation: git-graph-glow-enter 720ms cubic-bezier(.7,0,.3,1) forwards,
+             git-graph-pulse 2s ease-in-out infinite;
+}
+.git-graph-svg .git-graph-head-glow.glow-exiting {
+  animation: git-graph-glow-exit 720ms cubic-bezier(.7,0,.3,1) forwards,
+             git-graph-pulse 2s ease-in-out infinite;
+}
+
+/* HEAD pulse burst — fires on the glow when HEAD lands on a new commit.
+   420ms delay waits until the HEAD label has arrived at the destination
+   before bursting, so the emphasis lines up with the landing. */
 @keyframes git-graph-head-pulse {
   0%, 100% { transform: scale(1);   stroke-opacity: 0.4; stroke-width: 2; }
   40%      { transform: scale(1.5); stroke-opacity: 1;   stroke-width: 5; }
 }
-.git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow {
+.git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow:not(.glow-entering):not(.glow-exiting) {
   transform-origin: 0 0;
-  animation: git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1);
+  animation: git-graph-head-pulse 480ms cubic-bezier(.4,0,.2,1) 420ms;
+}
+
+/* When the glow is both entering (HEAD just arrived at a new commit) AND
+   the parent has head-pulse, stack both effects: the opacity fade reveals
+   the glow in the second half of the slide, then the scale burst fires
+   as HEAD lands. */
+.git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow.glow-entering {
+  transform-origin: 0 0;
+  animation: git-graph-glow-enter 720ms cubic-bezier(.7,0,.3,1) forwards,
+             git-graph-head-pulse 480ms cubic-bezier(.4,0,.2,1) 420ms,
+             git-graph-pulse 2s ease-in-out infinite 900ms;
 }
 
 /* Merge sparkle — burst on a freshly-created merge commit */
@@ -159,4 +192,32 @@ html:not(.dark-mode) .git-graph-empty {
 html:not(.dark-mode) .git-graph-empty code {
   background: #e8eaed;
   color: #333;
+}
+
+/* Theme tokens — default to light-mode colors. Every direct container of a
+   rendered .git-graph-svg sets these so the commit-message halo renders
+   correctly even when the SVG is embedded outside the tutorial layout
+   (static SEBook diagrams, command-lab cards, popup modal). The tutorial's
+   .tvm-git-graph-container sets the same vars itself in tutorial.css. */
+.git-graph-canvas,
+.git-command-lab__graph,
+.git-command-lab-modal {
+  --git-graph-text: #000000;
+  --git-graph-bg: #fafbfc;
+}
+html.dark-mode .git-graph-canvas,
+html.dark-mode .git-command-lab__graph,
+html.dark-mode .git-command-lab-modal {
+  --git-graph-text: #ffffff;
+  --git-graph-bg: #1a1a2e;
+}
+
+/* portfolio.css applies `filter: invert(1) hue-rotate(180deg)` to every SVG
+   under .post-content in dark mode so generic SVG icons/diagrams flip to
+   light-on-dark. The git-graph already themes itself via CSS variables
+   (--git-graph-text/--git-graph-bg) and its branch colors are chosen to
+   work in both modes, so we must opt out of the global inversion to avoid
+   double-flipping colors (black-on-white messages instead of white-on-dark).*/
+html.dark-mode .post-content svg.git-graph-svg {
+  filter: none !important;
 }

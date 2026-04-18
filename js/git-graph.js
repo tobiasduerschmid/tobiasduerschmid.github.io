@@ -910,16 +910,22 @@
           entry.glow = this._svgEl('circle', {
             cx: 0, cy: 0, r: NODE_RADIUS + 5,
             fill: 'none', stroke: cm.branchColor, 'stroke-width': 2, 'stroke-opacity': 0.4,
-            'class': 'git-graph-head-glow',
+            'class': 'git-graph-head-glow glow-entering',
           });
           entry.g.insertBefore(entry.glow, entry.circle);
+          var newGlow = entry.glow;
+          setTimeout(function () { newGlow.classList.remove('glow-entering'); }, 900);
         }
         entry.g.classList.add('git-graph-node-head', 'head-pulse');
         var gRef = entry.g;
-        setTimeout(function () { gRef.classList.remove('head-pulse'); }, 800);
+        setTimeout(function () { gRef.classList.remove('head-pulse'); }, 900);
       } else {
         if (entry.glow && entry.glow.parentNode) {
-          entry.glow.parentNode.removeChild(entry.glow);
+          var oldGlow = entry.glow;
+          oldGlow.classList.add('glow-exiting');
+          setTimeout(function () {
+            if (oldGlow.parentNode) oldGlow.parentNode.removeChild(oldGlow);
+          }, 720);
           entry.glow = null;
         }
         entry.g.classList.remove('git-graph-node-head', 'head-pulse');
@@ -949,6 +955,13 @@
     }
 
     var newKeys = {};
+    // Baking the stack offset into the wrapper's transform (instead of the
+    // inner content's labelY) means when a label's stackIdx changes —
+    // e.g. fast-forward merge brings main to a commit feature already
+    // occupies, pushing main to stack position 1 — the transform still
+    // interpolates smoothly from old Y to new Y, matching HEAD's wrapper
+    // which already does this. Otherwise main snaps 28px at render time
+    // while HEAD animates, creating visible desync.
     for (var hash in byCommit) {
       if (!byCommit.hasOwnProperty(hash)) continue;
       var labels = byCommit[hash];
@@ -961,8 +974,10 @@
         var key = 'branch:' + br2.name;
         newKeys[key] = true;
         var stackIdx = labels.length - 1 - l;
-        this._renderLabelGroup(key, cx, cy, function (g, gThis) {
-          gThis._buildBranchLabelContent(g, br2.name, gThis._branchColors[br2.name] || BRANCH_COLORS[0], false, stackIdx);
+        var wrapperY = cy - stackIdx * (LABEL_HEIGHT + LABEL_GAP);
+        var commitRelY = cy - wrapperY;
+        this._renderLabelGroup(key, cx, wrapperY, function (g, gThis) {
+          gThis._buildBranchLabelContent(g, br2.name, gThis._branchColors[br2.name] || BRANCH_COLORS[0], commitRelY);
         });
       }
     }
@@ -1043,12 +1058,17 @@
     fillFn(entry.g, self);
   };
 
-  GitGraph.prototype._buildBranchLabelContent = function (g, name, color, flipRight, stackIdx) {
+  // Label content is drawn centered at wrapper origin (y=0); the stack offset
+  // lives in the wrapper transform instead so it can animate smoothly.
+  // commitRelY is the commit's y in wrapper-local coords — used by the
+  // dashed L-connector to route from the label tip (y=0) down/up to the
+  // actual commit position.
+  GitGraph.prototype._buildBranchLabelContent = function (g, name, color, commitRelY) {
     var PTR_DEPTH = LABEL_HEIGHT / 2;
     var TIP_TO_NODE = 4;
 
-    var labelY = -LABEL_HEIGHT / 2 - stackIdx * (LABEL_HEIGHT + LABEL_GAP);
-    var labelMidY = labelY + LABEL_HEIGHT / 2;
+    var labelY = -LABEL_HEIGHT / 2;
+    var labelMidY = 0;
     var textW = name.length * 7.5 + 16;
     var brW = textW + PTR_DEPTH;
 
@@ -1071,7 +1091,7 @@
     });
     tL.textContent = name;
     g.appendChild(tL);
-    g.appendChild(this._lConnectorEl(tipXL, labelMidY, -NODE_RADIUS - 2, 0, color, true));
+    g.appendChild(this._lConnectorEl(tipXL, labelMidY, -NODE_RADIUS - 2, commitRelY || 0, color, true));
   };
 
   GitGraph.prototype._buildHeadContent = function (g, isDetached, color, commitRelX, commitRelY) {
