@@ -173,6 +173,7 @@
 
 html.dark-mode .git-graph-svg .git-graph-head-glow {
   stroke: #FFD100 !important;
+  stroke-opacity: 0.85 !important;
 }
 
 /* Commit burst — yellow/white flash when a node is freshly created (any

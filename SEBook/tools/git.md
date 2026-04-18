@@ -967,12 +967,19 @@ You can make `--rebase` the default for a branch (`git config branch.main.rebase
 
 * **`git stash` / `git stash pop`** — temporarily save uncommitted changes (staged and unstaged) so you can switch contexts without making a messy commit. `pop` re-applies the stashed changes later.
 
-Watch the shelf on the right: `git stash` sweeps both staged and unstaged rows into a new `stash@{0}` entry, leaving the working tree clean. `git stash pop` peels it back off and scatters the rows back into their original zones.
+Under the hood, `git stash` is implemented as **real commit objects**, not a separate storage area. When you run `git stash`, Git creates up to two commits off of `HEAD`:
+
+1. An **index commit `i`** whose tree captures the state of the *staging area*. Its single parent is the current `HEAD`.
+2. A **WIP commit `w`** whose tree captures the state of the *working directory*. It's a **merge commit** with **two parents** — the current `HEAD` *and* the index commit `i` — so that a future `stash pop` can restore both the staged and unstaged halves independently.
+
+The ref `refs/stash` (shown in the graph as the **stash** pointer, and exposed by name as `stash@{0}`) then points at the `w` commit. Neither `main` nor `HEAD` moves — stashing never touches your branch. The shelf on the right still shows `stash@{0}` as a user-facing handle; the new commits in the graph are what `stash@{0}` actually *is*.
+
+`git stash pop` is the inverse: it applies `w`'s working-tree changes back onto the index/working directory, then drops the `refs/stash` ref. Without a ref reaching them, the `i` and `w` commits become unreachable and get garbage-collected by Git's background GC.
 
 <div data-git-command-lab-multi>
 <script type="application/json">
 {
-  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nThe commit graph never changes \u2014 stash operates entirely on the working tree and index, which is why the `status` strip is doing all the work.",
+  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nStash is **not** a separate storage area \u2014 it's regular commit objects (`i` for the index, `w` for the working tree) on a dangling branch `refs/stash`. Watch the graph: the new commits pop into a sibling lane during `git stash` and vanish during `git stash pop`. The shelf on the right is just a friendlier view of the same data.",
   "initialState": {
     "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main",
@@ -987,9 +994,9 @@ Watch the shelf on the right: `git stash` sweeps both staged and unstaged rows i
   "steps": [
     {
       "command": "git stash",
-      "description": "Sweeps everything staged *and* unstaged into a new shelf entry `stash@{0}`. The working tree and index are now clean \u2014 you can safely switch branches without carrying the work-in-progress.\n\nThe commit graph is untouched: stash is a side-shelf, not a commit.",
+      "description": "Git creates two new commits off `B`:\n\n- **`i`** captures the *staged* tree (so `cart.js`'s staged version is preserved). Parent: `B`.\n- **`w`** captures the *working* tree (so `checkout.js`'s unstaged modification is preserved too). Parents: `B` and `i` \u2014 a merge commit, so both halves can be recovered independently.\n\nThe ref `refs/stash` (shown as the **stash** pointer) now points at `w`. `HEAD` and `main` stay at `B`; your branch history is untouched. The working tree and index are rewound to `B`'s state, leaving the strip clean.",
       "state": {
-        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+        "log": "w000000000000000000000000000000000000000|B000000000000000000000000000000000000000 i000000000000000000000000000000000000000|WIP on main: B Initial commit|refs/stash\ni000000000000000000000000000000000000000|B000000000000000000000000000000000000000|index on main: B Initial commit|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "* main",
         "head": "refs/heads/main",
         "files": {
@@ -1002,7 +1009,7 @@ Watch the shelf on the right: `git stash` sweeps both staged and unstaged rows i
     },
     {
       "command": "git stash pop",
-      "description": "Pops the top stash entry back onto your working tree. The rows fly out of the shelf and settle back where they came from \u2014 `cart.js` staged, `checkout.js` unstaged. The shelf is now empty and disappears.\n\n(Note: `pop` always restores rows as unstaged by default; this lab simplifies for pedagogy. Use `git stash apply --index` to preserve the original staged/unstaged split.)",
+      "description": "Git replays `w`'s tree onto your working directory \u2014 `cart.js` and `checkout.js` both come back \u2014 then deletes the `refs/stash` ref. Without any ref reaching them, `i` and `w` become unreachable commit objects; Git's garbage collector removes them on its next pass, so the graph snaps back to just `B` and `A`.\n\n(Note: `pop` defaults to restoring every change as unstaged. Use `git stash pop --index` to preserve the original staged/unstaged split; this lab simplifies for pedagogy.)",
       "state": {
         "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "* main",

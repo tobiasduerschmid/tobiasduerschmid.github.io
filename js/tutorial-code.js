@@ -960,6 +960,13 @@
     }
     return self.emulator.restore_state(state).then(function () {
       self._resetSerialState();
+      // Defensive: if the snapshot was taken with residual input in-flight
+      // (unterminated quote, heredoc, or PS2 continuation), sending Ctrl-C
+      // clears it before any caller queues new commands. Harmless on a
+      // clean prompt. One byte, no round-trip wait.
+      if (self.emulator && self.emulator.serial0_send) {
+        self.emulator.serial0_send('\x03');
+      }
       return true;
     }).catch(function () { return false; });
   };
@@ -1831,7 +1838,17 @@
       entry.resolve();
       self._drainSilentQueue();
     }, 30000);
-    self.sendCommand(' ' + entry.cmd + ' #' + marker);
+    // Heredocs and embedded newlines make it unsafe to append ` #marker` to
+    // the same line — a trailing "EOF #marker" no longer matches the heredoc
+    // terminator and the shell hangs at a PS2 `>` prompt forever. In those
+    // cases, send the marker as a separate no-op line that prints after the
+    // previous command's prompt returns.
+    if (/<<|\n/.test(entry.cmd)) {
+      self.sendCommand(' ' + entry.cmd);
+      self.sendCommand(': #' + marker);
+    } else {
+      self.sendCommand(' ' + entry.cmd + ' #' + marker);
+    }
   };
 
   /**
@@ -3975,11 +3992,16 @@
     // One round-trip for every queued command across all replayed steps.
     if (commandBatch.length > 0 &&
         (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
-      p = p.then(function () { return self._runSilent(commandBatch.join('; ')); });
+      p = p.then(function () { return self._runSilent(commandBatch.join('\n')); });
     }
 
-    // Cache the post-replay state so subsequent Resets / autosave-restores
-    // of this step can skip the replay and hit the fast path.
+    // Quiesce the shell before snapshotting: a no-op silent command forces
+    // one more prompt round-trip after the batched replay, guaranteeing the
+    // serial output queue is drained to a clean PS1. Without this, the
+    // snapshot can freeze bytes still in-flight from the previous batch,
+    // and a later restore replays them as a half-typed command. Single
+    // cheap round-trip.
+    p = p.then(function () { return self._runSilent(':'); });
     p = p.then(function () { return self._saveStepEntrySnapshot(targetStep); });
 
     // Reveal the tutorial
@@ -4154,12 +4176,11 @@
     // Flush every accumulated solution command in a single VM round-trip
     if (restoreBatch.length > 0 &&
         (self.config.backend === 'v86' || self.config.backend === 'webcontainer')) {
-      p = p.then(function () { return self._runSilent(restoreBatch.join('; ')); });
+      p = p.then(function () { return self._runSilent(restoreBatch.join('\n')); });
     }
 
-    // Cache this clean post-replay state before applying the student's
-    // (possibly divergent) autosaved edits. Future reset/restore of this
-    // step can skip the replay entirely.
+    // Quiesce before snapshot — see _resetStepWithCommandsSlow for rationale.
+    p = p.then(function () { return self._runSilent(':'); });
     p = p.then(function () { return self._saveStepEntrySnapshot(targetStep); });
 
     // 5. Apply autosaved student file overrides, then reveal the tutorial
