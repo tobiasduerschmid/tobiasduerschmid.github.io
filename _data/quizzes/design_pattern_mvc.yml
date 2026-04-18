@@ -11,7 +11,7 @@ questions:
       - "State (model states), Mediator (controller mediates), Facade (view simplifies display)"
       - "Iterator (traverse model data), Command (controller commands), Decorator (view decorates output)"
     correct_index: 0
-    explanation: "MVC combines: **Observer** — the model acts as Subject and views register as Observers, enabling automatic synchronization. **Strategy** — the view delegates input handling to a controller, which can be swapped for different behaviors. **Composite** — the view is often a tree of nested UI components (windows > panels > buttons). The **emergent property** is clean three-way separation that no individual pattern achieves alone."
+    explanation: "**MVC combines Observer (model→view sync), Strategy (swappable controller), and Composite (view as a component tree) to achieve clean three-way separation.** MVC combines: **Observer** — the model acts as Subject and views register as Observers, enabling automatic synchronization. **Strategy** — the view delegates input handling to a controller, which can be swapped for different behaviors. **Composite** — the view is often a tree of nested UI components (windows > panels > buttons). The **emergent property** is clean three-way separation that no individual pattern achieves alone."
 
   - id: 2
     type: single
@@ -23,7 +23,7 @@ questions:
       - "It prevents the Model from becoming a god class"
       - "It makes the View easier to implement"
     correct_index: 1
-    explanation: "The Model's independence is MVC's most powerful property. Because the Model knows nothing about Views or Controllers, the **core domain logic** can be: (1) **reused** across different applications, (2) **tested** without any UI framework, and (3) **ported** to a completely different platform by only rewriting the View and Controller. This is why MVC says 'the Model is blind to how it is displayed.'"
+    explanation: "**The Model's independence is MVC's most powerful property because it allows the core domain logic to be reused, tested, and ported without modification.** The Model's independence is MVC's most powerful property. Because the Model knows nothing about Views or Controllers, the **core domain logic** can be: (1) **reused** across different applications, (2) **tested** without any UI framework, and (3) **ported** to a completely different platform by only rewriting the View and Controller. This is why MVC says 'the Model is blind to how it is displayed.'"
 
   - id: 3
     type: single
@@ -35,7 +35,7 @@ questions:
       - "No — MVC is necessary for any application that handles user input"
       - "Yes — but only because CRUD forms should use the State pattern instead"
     correct_index: 1
-    explanation: "As Bass, Clements, and Kazman note: *'The complexity may not be worth it for simple user interfaces.'* MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice. Applying MVC to every UI is a form of the 'Hammer and Nail' syndrome."
+    explanation: "**This criticism is valid — MVC's three-way division adds complexity that is not justified for a simple CRUD form with a single view.** As Bass, Clements, and Kazman note: *'The complexity may not be worth it for simple user interfaces.'* MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice. Applying MVC to every UI is a form of the 'Hammer and Nail' syndrome."
 
   - id: 4
     type: single
@@ -47,7 +47,7 @@ questions:
       - "The inverted dependency problem"
       - "The god class problem"
     correct_index: 1
-    explanation: "MVC inherits the **notification storm** problem directly from the Observer pattern. When the Model changes, it blindly broadcasts to ALL 50 views, even if most don't need to update for a given change. Solutions include: **batched/deferred notifications** (collect changes, notify once), **granular event types** (views subscribe only to relevant changes), and **smart change detection** (views compare old vs. new data before re-rendering)."
+    explanation: "**MVC inherits the notification storm from Observer — every model change broadcasts to all 50 views even if most don't need to update.** MVC inherits the **notification storm** problem directly from the Observer pattern. When the Model changes, it blindly broadcasts to ALL 50 views, even if most don't need to update for a given change. Solutions include: **batched/deferred notifications** (collect changes, notify once), **granular event types** (views subscribe only to relevant changes), and **smart change detection** (views compare old vs. new data before re-rendering)."
 
   - id: 5
     type: single
@@ -59,4 +59,4 @@ questions:
       - "The Composite pattern for UI tree structure"
       - "The use of explicit Subject and Observer base classes"
     correct_index: 1
-    explanation: "While modern frameworks have evolved beyond explicit Observer/Subject classes, the **core principle** of MVC remains: separate **domain state** from **presentation** from **interaction handling**. React components combine View + Controller but still separate state management (Model) from rendering (View). The mechanisms change (reactive bindings replace Observer), but the architectural principle — separation of concerns between data, display, and input — endures."
+    explanation: "**Modern frameworks still preserve MVC's core principle of separating domain state from presentation from interaction handling, even as the mechanisms evolve.** While modern frameworks have evolved beyond explicit Observer/Subject classes, the **core principle** of MVC remains: separate **domain state** from **presentation** from **interaction handling**. React components combine View + Controller but still separate state management (Model) from rendering (View). The mechanisms change (reactive bindings replace Observer), but the architectural principle — separation of concerns between data, display, and input — endures."

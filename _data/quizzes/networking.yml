@@ -9,7 +9,7 @@ questions:
       - "Connections are always initiated by the client, not the server."
       - "Only one client can be connected to a server at any given time."
     correct_index: 2
-    explanation: "In client-server architectures, the client always initiates the connection. The server passively listens for incoming requests and responds to them. Multiple clients can connect to the same server simultaneously, and the server never reaches out to a client unprompted (unless a different pattern like WebSockets is used on top)."
+    explanation: "**In client-server architecture, the client always initiates the connection — the server passively listens and never reaches out to a client unprompted.** In client-server architectures, the client always initiates the connection. The server passively listens for incoming requests and responds to them. Multiple clients can connect to the same server simultaneously, and the server never reaches out to a client unprompted (unless a different pattern like WebSockets is used on top)."
 
   - id: 2
     question: "What is the key advantage of peer-to-peer (P2P) architecture over client-server?"
@@ -19,7 +19,7 @@ questions:
       - "P2P is always simpler to implement than client-server."
       - "P2P produces fewer total network messages than client-server."
     correct_index: 1
-    explanation: "In a P2P architecture there is no central server whose failure would bring down the whole system. Each peer continues communicating with other available peers. However, if a peer goes offline, any resources unique to that peer become temporarily unavailable — P2P eliminates a single point of failure at the infrastructure level, but individual peers are still fallible."
+    explanation: "**P2P eliminates the single point of failure because there is no central server — every peer can continue communicating with other available peers if one goes offline.** In a P2P architecture there is no central server whose failure would bring down the whole system. Each peer continues communicating with other available peers. However, if a peer goes offline, any resources unique to that peer become temporarily unavailable — P2P eliminates a single point of failure at the infrastructure level, but individual peers are still fallible."
 
   - id: 3
     question: "What is the difference between throughput and latency?"
@@ -29,7 +29,7 @@ questions:
       - "Latency measures how many servers are active; throughput measures how many clients are connected."
       - "Throughput is only relevant for UDP connections; latency is only relevant for TCP connections."
     correct_index: 1
-    explanation: "Throughput is about volume (e.g., 500 requests/second), while latency is about individual speed (e.g., a single database query takes 40ms). They are related but distinct — adding more servers increases throughput without necessarily reducing latency. Caching reduces latency and may also improve throughput."
+    explanation: "**Throughput measures volume per time period (e.g., requests/sec) while latency measures the time for a single request to complete — they are related but independently optimized.** Throughput is about volume (e.g., 500 requests/second), while latency is about individual speed (e.g., a single database query takes 40ms). They are related but distinct — adding more servers increases throughput without necessarily reducing latency. Caching reduces latency and may also improve throughput."
 
   - id: 4
     question: "In the TCP/IP stack, what is the purpose of the Transport Layer?"
@@ -39,7 +39,7 @@ questions:
       - "It provides end-to-end communication between specific applications running on different hosts."
       - "It provides an interface for applications to exchange data using protocols like HTTP."
     correct_index: 2
-    explanation: "The Transport Layer (TCP, UDP) sits between the Internet Layer and the Application Layer. It enables communication between specific *applications* on different machines — not just between machines. The Link Layer handles physical transmission, the Internet Layer handles routing between networks, and the Application Layer gives apps protocols like HTTP to talk to each other."
+    explanation: "**The Transport Layer provides end-to-end communication between specific applications (ports) on different hosts — distinguishing it from the Internet Layer which routes between machines.** The Transport Layer (TCP, UDP) sits between the Internet Layer and the Application Layer. It enables communication between specific *applications* on different machines — not just between machines. The Link Layer handles physical transmission, the Internet Layer handles routing between networks, and the Application Layer gives apps protocols like HTTP to talk to each other."
 
   - id: 5
     question: "When data travels *down* through the TCP/IP stack before being sent, what happens at each layer?"
@@ -49,17 +49,17 @@ questions:
       - "Each layer wraps the higher-layer message as its payload and adds its own header."
       - "Each layer splits the message into equal-sized fragments and sends them independently."
     correct_index: 2
-    explanation: "This process is called encapsulation — think of sealing a letter inside successively larger envelopes. An HTTP message is placed inside a TCP envelope (port numbers added), that is placed inside an IP envelope (IP addresses added), that is placed inside an Ethernet envelope (MAC addresses added). Each envelope carries only the metadata needed for its own delivery step. The process reverses (decapsulation) at the receiving end."
+    explanation: "**Each layer wraps the higher-layer message as its payload and adds its own header — a process called encapsulation — which reverses as decapsulation at the receiver.** This process is called encapsulation — think of sealing a letter inside successively larger envelopes. An HTTP message is placed inside a TCP envelope (port numbers added), that is placed inside an IP envelope (IP addresses added), that is placed inside an Ethernet envelope (MAC addresses added). Each envelope carries only the metadata needed for its own delivery step. The process reverses (decapsulation) at the receiving end."
 
   - id: 6
-    question: "A student runs `node server.js` and their terminal shows: `Server listening on http://127.0.0.1:5000`. They open a browser on the same machine. Which URL should they visit?"
+    question: "A student runs `node server.js` and their terminal shows: `Server listening on http://localhost:5000`. They open a browser on the same machine. Which URL should they visit?"
     options:
       - "http://127.0.0.1:5000 — the loopback address the server is listening on"
       - "http://0.0.0.0:5000 — the universal interface address"
       - "They cannot connect without a public IP address and port-forwarding."
       - "http://mymachine.local:5000 — the local DNS hostname"
     correct_index: 0
-    explanation: "`127.0.0.1` is the loopback (localhost) address that always refers to the local machine itself. A server listening on `127.0.0.1:5000` is reachable from any browser on the *same* machine at that exact address — no internet connection or public IP required. This is the standard local development workflow."
+    explanation: "**`127.0.0.1` is the loopback address that always refers to the local machine itself, so a server listening there is reachable only from that same machine — no internet connection required.** `127.0.0.1` is the loopback (localhost) address that always refers to the local machine itself. A server listening on `127.0.0.1:5000` is reachable from any browser on the *same* machine at that exact address — no internet connection or public IP required. This is the standard local development workflow."
 
   - id: 7
     question: "HTTP is described as a 'stateless' protocol. What does this mean?"
@@ -69,7 +69,7 @@ questions:
       - "HTTP connections are never encrypted."
       - "HTTP can only transfer plain text, not binary content like images."
     correct_index: 1
-    explanation: "Stateless means every HTTP request is treated as completely independent. The server does not automatically track which requests came from the same user or session. This is why web applications use mechanisms like cookies and session tokens to maintain state across multiple requests."
+    explanation: "**HTTP is stateless because the server retains no memory of previous requests — each request is treated as completely independent, which is why cookies and session tokens are needed.** Stateless means every HTTP request is treated as completely independent. The server does not automatically track which requests came from the same user or session. This is why web applications use mechanisms like cookies and session tokens to maintain state across multiple requests."
 
   - id: 8
     question: "Your Express route handler queries the database for a course by ID, but no matching course exists. Which HTTP status code should the handler return?"
@@ -79,7 +79,7 @@ questions:
       - "404 Not Found — the server processed the request but the resource does not exist."
       - "500 Internal Server Error — the missing data constitutes a server failure."
     correct_index: 2
-    explanation: "404 Not Found is the correct response when the server successfully handled the request but the requested resource simply doesn't exist at that URL. Use 200 when data is returned successfully, 201 when a new resource was created, and 500 only for unexpected server-side failures (like an unhandled exception or a crashed database connection)."
+    explanation: "**404 Not Found is correct because the server successfully handled the request but the resource simply does not exist — 500 is only for unexpected server-side failures.** 404 Not Found is the correct response when the server successfully handled the request but the requested resource simply doesn't exist at that URL. Use 200 when data is returned successfully, 201 when a new resource was created, and 500 only for unexpected server-side failures (like an unhandled exception or a crashed database connection)."
 
   - id: 9
     question: "Why was HTTPS created, and what does it add on top of HTTP?"
@@ -89,17 +89,21 @@ questions:
       - "HTTPS replaces TCP with UDP to reduce round-trip latency for web browsing."
       - "HTTPS adds server-side caching so the browser avoids repeated database lookups."
     correct_index: 1
-    explanation: "HTTPS (HTTP Secure) wraps HTTP inside an SSL/TLS encryption layer. This prevents anyone intercepting traffic between the client and server from reading or modifying it — critical for passwords, personal information, and financial transactions. HTTPS has become the default for all public web pages, even static ones without sensitive data, because it also verifies the server's identity."
+    explanation: "**HTTPS wraps HTTP in SSL/TLS encryption to prevent eavesdropping and tampering in transit — it does not change the underlying TCP transport or add server-side caching.** HTTPS (HTTP Secure) wraps HTTP inside an SSL/TLS encryption layer. This prevents anyone intercepting traffic between the client and server from reading or modifying it — critical for passwords, personal information, and financial transactions. HTTPS has become the default for all public web pages, even static ones without sensitive data, because it also verifies the server's identity."
 
   - id: 10
-    question: "What is the correct order of the TCP/IP layers from bottom (closest to hardware) to top (closest to the application)?"
-    options:
-      - "Application → Transport → Internet → Link"
-      - "Link → Internet → Transport → Application"
-      - "Internet → Link → Application → Transport"
-      - "Transport → Application → Link → Internet"
-    correct_index: 1
-    explanation: "Bottom to top: **Link** (physical hardware — Ethernet, Wi-Fi), **Internet** (IP addressing and routing between networks), **Transport** (TCP/UDP end-to-end communication between applications), **Application** (HTTP, HTTPS, DNS, SSH — the protocols your code uses directly). Each layer uses only the layer immediately below it, enabling clean separation of concerns."
+    question: |
+      **Arrange** the TCP/IP layers in order from bottom (closest to hardware) to top (closest to the application).
+    type: parsons
+    lines:
+      - "Application Layer"
+      - "Transport Layer"
+      - "Internet Layer"
+      - "Link Layer"
+    distractors:
+      - "Security Layer"
+      - "Performance Layer"
+    explanation: "**The correct bottom-to-top order is Link → Internet → Transport → Application, with each layer using only the layer immediately below it.** Bottom to top: **Link** (physical hardware — Ethernet, Wi-Fi), **Internet** (IP addressing and routing between networks), **Transport** (TCP/UDP end-to-end communication between applications), **Application** (HTTP, HTTPS, DNS, SSH — the protocols your code uses directly). Each layer uses only the layer immediately below it, enabling clean separation of concerns."
 
   - id: 11
     type: multiple
@@ -107,10 +111,10 @@ questions:
     options:
       - "Messages are delivered in the order they were sent."
       - "Lost messages are automatically detected and retransmitted."
-      - "Each message includes a checksum for error detection."
+      - "Each message gets retransmitted in cases of bit flips identified via checksum-based error detection."
       - "Messages are delivered with zero additional latency or overhead."
     correct_indices:
       - 0
       - 1
       - 2
-    explanation: "TCP guarantees ordering (sequence numbers), retransmission of lost messages (ACK + timeout), and error detection (checksums) — but all three come at a cost: the 3-way handshake, per-message ACKs, and connection teardown add overhead. 'Zero additional latency' is a property of **UDP**, which fires data at the receiver with no setup and no acknowledgement."
+    explanation: "**TCP guarantees ordering, retransmission, and error detection at the cost of overhead — 'zero additional latency' is a property of UDP, not TCP.** TCP guarantees ordering (sequence numbers), retransmission of lost messages (ACK + timeout), and error detection (checksums) — but all three come at a cost: the 3-way handshake, per-message ACKs, and connection teardown add overhead. 'Zero additional latency' is a property of **UDP**, which fires data at the receiver with no setup and no acknowledgement."

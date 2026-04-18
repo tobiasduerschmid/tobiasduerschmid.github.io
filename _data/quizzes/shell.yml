@@ -9,7 +9,7 @@ questions:
       - "Because `awk` and `sort` are built-in OS functions that completely bypass the system's kernel."
       - "It prevents the operating system from allocating memory to background processes."
     correct_index: 1
-    explanation: "The UNIX design philosophy revolves around writing programs that 'do one thing and do it well', and having them work together by handling text streams. Pipelines allow complex tasks to be solved elegantly by chaining these simple tools together."
+    explanation: "**This pipeline is preferred because it follows the UNIX philosophy of combining single-purpose tools that communicate via text streams.** The UNIX design philosophy revolves around writing programs that 'do one thing and do it well', and having them work together by handling text streams. Pipelines allow complex tasks to be solved elegantly by chaining these simple tools together."
   - id: 2
     question: "A script runs a command that generates both useful output and a flood of permission error messages. The user runs `script.sh > output.txt`, but the errors still clutter the terminal screen while the useful data goes to the file. What underlying concept explains this behavior?"
     options:
@@ -18,7 +18,7 @@ questions:
       - "The script is missing the `#!/bin/bash` shebang, causing it to execute in a fallback compatibility mode."
       - "Standard Error cannot be redirected in UNIX systems and must always be printed to the screen to alert the user."
     correct_index: 1
-    explanation: "In UNIX, processes have three default streams: stdin, stdout, and stderr. Redirection with `>` only captures stdout. To capture the errors, you would need to redirect stderr specifically (e.g., using `2>`)."
+    explanation: "**Errors still appear in the terminal because stdout and stderr are separate streams, and `>` only redirects stdout.** In UNIX, processes have three default streams: stdin, stdout, and stderr. Redirection with `>` only captures stdout. To capture the errors, you would need to redirect stderr specifically (e.g., using `2>`)."
   - id: 3
     question: "A C++ developer writes a Bash script with a `for` loop. Inside the loop, they declare a variable `temp_val`. After the loop finishes, they try to print `temp_val` expecting it to be undefined or empty, but it prints the last value assigned in the loop. Why did this happen?"
     options:
@@ -27,7 +27,7 @@ questions:
       - "Unlike C++, Bash lacks strict block-level scoping (like `{}` blocks), meaning variables set within loops or if-statements remain accessible in the script's global scope."
       - "The script was executed with `sudo` privileges, which ignores standard scoping rules."
     correct_index: 2
-    explanation: "Bash does not use block-level scoping. Unless explicitly declared as `local` inside a function, variables assigned within control structures like loops or conditionals bleed into the rest of the script."
+    explanation: "**Bash lacks block-level scoping, so variables set inside loops remain accessible throughout the entire script.** Bash does not use block-level scoping. Unless explicitly declared as `local` inside a function, variables assigned within control structures like loops or conditionals bleed into the rest of the script."
   - id: 4
     question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the `<(command)` syntax. What is this concept called and what does it achieve?"
     options:
@@ -36,7 +36,7 @@ questions:
       - "I/O Redirection; it overwrites the standard input of the `diff` command with standard error."
       - "Arithmetic expansion; it mathematically evaluates the commands and returns their integer exit codes."
     correct_index: 1
-    explanation: "Process substitution `<()` allows the standard output of a command to be treated as a file. The operating system creates a temporary file descriptor (like `/dev/fd/63`) that the consuming command can read from as if it were a physical file."
+    explanation: "**This is process substitution — it lets the OS present a command's output as a temporary file descriptor without writing to disk.** Process substitution `<()` allows the standard output of a command to be treated as a file. The operating system creates a temporary file descriptor (like `/dev/fd/63`) that the consuming command can read from as if it were a physical file."
   - id: 5
     question: "A script contains entirely valid Python code, but the file is named `script.sh` and has `#!/bin/bash` at the very top. When executed via `./script.sh`, the terminal throws dozens of 'command not found' and syntax errors. What is the fundamental misunderstanding here?"
     options:
@@ -45,7 +45,7 @@ questions:
       - "Python scripts cannot be made executable via `chmod +x` and must always be run using the 'python' keyword."
       - "The script requires the `set -e` flag to switch the shell into a dynamic Python compatibility mode."
     correct_index: 1
-    explanation: "In UNIX systems, file extensions are largely superficial. The shebang (`#!`) on the first line is what tells the operating system's program loader which interpreter program (e.g., Bash, Python, Node) to use to parse the rest of the file."
+    explanation: "**The shebang `#!` dictates the interpreter, completely overriding the file extension — which the OS treats as superficial.** In UNIX systems, file extensions are largely superficial. The shebang (`#!`) on the first line is what tells the operating system's program loader which interpreter program (e.g., Bash, Python, Node) to use to parse the rest of the file."
   - id: 6
     question: "A developer uses the regular expression `[0-9]{4}` to validate that a user's input is exactly a four-digit PIN. However, the system incorrectly accepts '12345' and 'A1234'. What crucial RegEx concept did the developer omit?"
     options:
@@ -54,7 +54,7 @@ questions:
       - "Anchors (`^` and `$`) to strictly bind the match to the start and end of the string."
       - "Named groups to extract the exact digits into memory."
     correct_index: 2
-    explanation: "Without anchors, a regular expression looks for a match *anywhere* within the string. Because '12345' contains '1234', the pattern matches. Adding `^` (start) and `$` (end) ensures the pattern must account for the entire string."
+    explanation: "**Anchors were omitted, so the regex matches the valid substring inside the input and ignores the surrounding characters.** Without anchors, a regular expression looks for a match *anywhere* within the string. Because '12345' contains '1234', the pattern matches. Adding `^` (start) and `$` (end) ensures the pattern must account for the entire string."
   - id: 7
     type: multiple
     question: "You are designing a data pipeline in the shell. Which of the following statements correctly describe how UNIX handles data streams and command chaining? (Select all that apply)"
@@ -65,7 +65,7 @@ questions:
       - "The `<` operator is used to redirect standard input, allowing a command to read from a file instead of the keyboard."
       - "The `>!` operator is fundamentally required to redirect both stdout and stderr simultaneously in modern Bash."
     correct_indices: [0, 1, 3]
-    explanation: "Pipes (`|`) link stdout to stdin, `>>` appends stdout to a file, and `<` feeds a file into stdin. By default, pipes do NOT pass stderr (errors will still print to the screen). `>!` is not the standard way to redirect both streams in Bash (typically `>&` or `&>` is used)."
+    explanation: "**`|` links stdout to stdin, `>>` appends, and `<` redirects stdin — but pipes do NOT carry stderr and `>!` is not standard Bash.** Pipes (`|`) link stdout to stdin, `>>` appends stdout to a file, and `<` feeds a file into stdin. By default, pipes do NOT pass stderr (errors will still print to the screen). `>!` is not the standard way to redirect both streams in Bash (typically `>&` or `&>` is used)."
   - id: 8
     type: multiple
     question: "You've written a shell script `deploy.sh` but it throws a 'Permission denied' error or fails to run when you type `./deploy.sh`. Which of the following are valid reasons or necessary steps to successfully execute a script as a standalone program? (Select all that apply)"
@@ -75,7 +75,7 @@ questions:
       - "The script should start with a valid shebang (e.g., `#!/bin/bash`) to inform the OS which interpreter to invoke."
       - "The script's directory must be permanently added to the `$PATH` variable in order to run it using the `./` prefix."
     correct_indices: [0, 2]
-    explanation: "Scripts require execute permissions (`chmod +x`) to be run as programs, and a shebang tells the OS how to interpret the text. They are interpreted, not compiled. The `./` explicitly tells the OS to look in the current directory, bypassing the need for the directory to be in the `$PATH`."
+    explanation: "**A script needs execute permissions (`chmod +x`) and a valid shebang — it is interpreted, not compiled, and `./` bypasses `$PATH`.** Scripts require execute permissions (`chmod +x`) to be run as programs, and a shebang tells the OS how to interpret the text. They are interpreted, not compiled. The `./` explicitly tells the OS to look in the current directory, bypassing the need for the directory to be in the `$PATH`."
   - id: 9
     type: multiple
     question: "In Bash, exit codes are crucial for determining if a command succeeded or failed. Which of the following statements are true regarding how Bash handles exit statuses and control flow? (Select all that apply)"
@@ -85,7 +85,7 @@ questions:
       - "An exit status of '1' universally indicates complete, bug-free success in UNIX shell scripting."
       - "Control structures like `if` statements evaluate the underlying exit code of a command, rather than looking for a boolean literal like 'true' or 'false'."
     correct_indices: [0, 1, 3]
-    explanation: "In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. `if` statements work by running a command and proceeding if its exit code is 0. `set -e` is a common safety mechanism to fail fast if an error occurs."
+    explanation: "**Exit code 0 means success; `if` tests exit codes not booleans; and `set -e` aborts on any non-zero exit.** In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. `if` statements work by running a command and proceeding if its exit code is 0. `set -e` is a common safety mechanism to fail fast if an error occurs."
   - id: 10
     type: multiple
     question: "When you type a command like `python` or `grep` into the terminal, the shell knows exactly what program to run without you providing the full file path. How does the `$PATH` environment variable facilitate this, and how is it managed? (Select all that apply)"
@@ -95,7 +95,7 @@ questions:
       - "To make a `$PATH` modification permanent, you must append the export command to a shell startup script, such as `~/.bashrc` or `~/.zshrc`."
       - "`$PATH` automatically crawls every single folder on your hard drive in real-time, which is why system commands are discovered so rapidly."
     correct_indices: [0, 1, 2]
-    explanation: "`$PATH` is an explicit list of directories, not a global search crawler (which would be extremely slow). The OS checks these directories in order. Modifications in the terminal are bound to that specific session unless saved in a configuration file like `.bashrc`."
+    explanation: "**`$PATH` is an explicit ordered directory list, not a global crawler — session changes are temporary unless saved to a startup file.** `$PATH` is an explicit list of directories, not a global search crawler (which would be extremely slow). The OS checks these directories in order. Modifications in the terminal are bound to that specific session unless saved in a configuration file like `.bashrc`."
   - id: 11
     question: "A developer writes `LOGFILE=\"access errors.log\"` and then runs `wc -l $LOGFILE`. The command fails with 'No such file or directory' errors for both 'access' and 'errors.log'. What is the root cause?"
     options:
@@ -104,7 +104,7 @@ questions:
       - "The shell performs word splitting on the unquoted variable expansion, breaking the value into two separate arguments at the space boundary."
       - "The `.log` extension is not recognized as a text file by `wc -l`."
     correct_index: 2
-    explanation: "When a variable is expanded without double quotes, the shell splits the result on whitespace. `wc -l $LOGFILE` is interpreted as `wc -l access errors.log` — two separate arguments. The fix is to always quote variable expansions: `wc -l \"$LOGFILE\"`."
+    explanation: "**The shell word-splits the unquoted variable at the space, turning one filename into two separate arguments.** When a variable is expanded without double quotes, the shell splits the result on whitespace. `wc -l $LOGFILE` is interpreted as `wc -l access errors.log` — two separate arguments. The fix is to always quote variable expansions: `wc -l \"$LOGFILE\"`."
   - id: 12
     question: "A script is invoked with `./deploy.sh production 8080 myapp`. Inside the script, which variable holds the value `8080`?"
     options:
@@ -113,7 +113,7 @@ questions:
       - "`$2`"
       - "`$#`"
     correct_index: 2
-    explanation: "`$0` is the script name (`./deploy.sh`), `$1` is the first argument (`production`), `$2` is the second argument (`8080`), and `$3` would be `myapp`. `$#` holds the total argument count (3)."
+    explanation: "**`$2` holds the value `8080` because `$0` is the script name, `$1` is the first argument, and `$2` is the second.** `$0` is the script name (`./deploy.sh`), `$1` is the first argument (`production`), `$2` is the second argument (`8080`), and `$3` would be `myapp`. `$#` holds the total argument count (3)."
   - id: 13
     question: "A script contains the line: `cd /deploy/target && ./run_tests.sh && echo 'All tests passed!'`. If `./run_tests.sh` exits with a non-zero status code, what happens next?"
     options:
@@ -122,7 +122,7 @@ questions:
       - "`echo 'All tests passed!'` does not run, because `&&` short-circuits when the preceding command fails."
       - "The shell re-tries `./run_tests.sh` once before giving up."
     correct_index: 2
-    explanation: "The `&&` operator short-circuits on failure. Since `./run_tests.sh` returned a non-zero exit code, the shell skips all remaining `&&`-linked commands. Only if every command in the chain succeeds does `echo 'All tests passed!'` execute."
+    explanation: "**`&&` short-circuits when `./run_tests.sh` fails, so `echo 'All tests passed!'` is never executed.** The `&&` operator short-circuits on failure. Since `./run_tests.sh` returned a non-zero exit code, the shell skips all remaining `&&`-linked commands. Only if every command in the chain succeeds does `echo 'All tests passed!'` execute."
   - id: 14
     type: multiple
     question: "Which of the following statements correctly describe Bash quoting and command substitution behavior? (Select all that apply)"
@@ -133,7 +133,7 @@ questions:
       - "Single quotes and double quotes are completely interchangeable in all Bash contexts."
       - "The `$(command)` syntax runs the command in a subshell and replaces itself with the command's standard output."
     correct_indices: [0, 1, 2, 4]
-    explanation: "Single quotes suppress all expansion; double quotes allow variable and command substitution while protecting spaces. Quoting `\"$VARIABLE\"` is essential to prevent word splitting on values containing spaces. Single and double quotes are NOT interchangeable when variable expansion is needed. `$(command)` is command substitution — the standard way to capture command output into a variable."
+    explanation: "**Single quotes suppress all expansion, double quotes allow substitution while protecting spaces, and `$(command)` captures output — single and double quotes are not interchangeable.** Single quotes suppress all expansion; double quotes allow variable and command substitution while protecting spaces. Quoting `\"$VARIABLE\"` is essential to prevent word splitting on values containing spaces. Single and double quotes are NOT interchangeable when variable expansion is needed. `$(command)` is command substitution — the standard way to capture command output into a variable."
 
   - id: 15
     question: |
@@ -151,7 +151,7 @@ questions:
     distractors:
       - "cat"
       - ">"
-    explanation: "`grep` filters for ERROR lines, `sort` orders them (required before `uniq`), `uniq` removes adjacent duplicates, and `wc -l` counts the remaining lines. Each `|` pipes stdout to the next command's stdin — the UNIX philosophy of chaining single-purpose tools. `cat` is unnecessary here (UUOC — Useless Use of Cat) and `>` would redirect to a file rather than pipe."
+    explanation: "**The pipeline is grep → sort → uniq → wc -l; `cat` is unnecessary and `>` would write to a file instead of piping.** `grep` filters for ERROR lines, `sort` orders them (required before `uniq`), `uniq` removes adjacent duplicates, and `wc -l` counts the remaining lines. Each `|` pipes stdout to the next command's stdin — the UNIX philosophy of chaining single-purpose tools. `cat` is unnecessary here (UUOC — Useless Use of Cat) and `>` would redirect to a file rather than pipe."
 
   - id: 16
     question: |
@@ -167,7 +167,7 @@ questions:
     distractors:
       - "    return 1"
       - "fi;"
-    explanation: "The shebang (`#!/bin/bash`) must be the first line. The `if [ $# -lt 1 ]` test checks argument count, `>&2` redirects echo to stderr, and `exit 1` terminates with a failure code. `fi` closes the `if` block (no semicolon). The distractor `return 1` only works inside functions, not at the top level of a script. `fi;` with a trailing semicolon is unnecessary and unconventional."
+    explanation: "**The script starts with the shebang, uses `[ $# -lt 1 ]` to check arguments, redirects errors to stderr with `>&2`, exits with `1` on failure, and closes with `fi` — no semicolon.** The shebang (`#!/bin/bash`) must be the first line. The `if [ $# -lt 1 ]` test checks argument count, `>&2` redirects echo to stderr, and `exit 1` terminates with a failure code. `fi` closes the `if` block (no semicolon). The distractor `return 1` only works inside functions, not at the top level of a script. `fi;` with a trailing semicolon is unnecessary and unconventional."
 
   - id: 17
     question: |
@@ -187,7 +187,7 @@ questions:
     distractors:
       - "tail -5"
       - "wc -l"
-    explanation: "The `grep -oE` extracts all IPv4 addresses (one per line). `sort` groups identical IPs together (required for `uniq`). `uniq -c` counts each group. `sort -rn` sorts by count in descending numeric order. `head -5` takes the top 5. `tail -5` would give the *least* frequent, and `wc -l` would just count total lines."
+    explanation: "**The pipeline is grep -oE → sort → uniq -c → sort -rn → head -5; `tail -5` gives the least frequent IPs, not the most.** The `grep -oE` extracts all IPv4 addresses (one per line). `sort` groups identical IPs together (required for `uniq`). `uniq -c` counts each group. `sort -rn` sorts by count in descending numeric order. `head -5` takes the top 5. `tail -5` would give the *least* frequent, and `wc -l` would just count total lines."
 
   - id: 18
     question: |
@@ -202,7 +202,7 @@ questions:
     distractors:
       - "1>&2"
       - "2> output.log"
-    explanation: "`> output.log` redirects stdout to the file first, then `2>&1` redirects stderr to wherever stdout currently points (the file). Order matters: `2>&1 > output.log` would send stderr to the *original* stdout (terminal) and only stdout to the file. The distractor `1>&2` goes the wrong direction — it sends stdout to stderr. Using `2> output.log` alone still lets stdout reach the terminal."
+    explanation: "**`> output.log` then `2>&1` captures both streams to the file — order matters because reversing them sends stderr to the terminal.** `> output.log` redirects stdout to the file first, then `2>&1` redirects stderr to wherever stdout currently points (the file). Order matters: `2>&1 > output.log` would send stderr to the *original* stdout (terminal) and only stdout to the file. The distractor `1>&2` goes the wrong direction — it sends stdout to stderr. Using `2> output.log` alone still lets stdout reach the terminal."
 
   - id: 19
     question: |
@@ -216,7 +216,7 @@ questions:
     distractors:
       - "grep -r 'TODO' src/"
       - "sort"
-    explanation: "`grep -rl` (recursive, files-with-matches) prints one matching filename per line — each file counted once regardless of how many matches it contains. `wc -l` then counts those filenames. The distractor `grep -r` (without `-l`) prints every matching *line*, so `wc -l` would count occurrences, not files. `sort` is unnecessary here since we only need a count."
+    explanation: "**`grep -rl` prints one filename per match (not per occurrence), so `wc -l` correctly counts matching files — `grep -r` without `-l` would count lines, not files.** `grep -rl` (recursive, files-with-matches) prints one matching filename per line — each file counted once regardless of how many matches it contains. `wc -l` then counts those filenames. The distractor `grep -r` (without `-l`) prints every matching *line*, so `wc -l` would count occurrences, not files. `sort` is unnecessary here since we only need a count."
 
   - id: 20
     question: |
@@ -230,4 +230,4 @@ questions:
     distractors:
       - "||"
       - "sh script.sh"
-    explanation: "`chmod +x script.sh` adds the execute bit, making the file runnable as a program. `&&` ensures the script only runs if `chmod` succeeded. `./script.sh` executes it using the shebang to select the interpreter. Using `||` instead of `&&` would run the script only when `chmod` *fails* — the opposite of the intent. `sh script.sh` works but bypasses the shebang, hardcoding the interpreter to `sh` regardless of what the script specifies."
+    explanation: "**`chmod +x` makes the file executable, `&&` ensures it only runs on success, and `./script.sh` uses the shebang — `||` would run it only on failure.** `chmod +x script.sh` adds the execute bit, making the file runnable as a program. `&&` ensures the script only runs if `chmod` succeeded. `./script.sh` executes it using the shebang to select the interpreter. Using `||` instead of `&&` would run the script only when `chmod` *fails* — the opposite of the intent. `sh script.sh` works but bypasses the shebang, hardcoding the interpreter to `sh` regardless of what the script specifies."

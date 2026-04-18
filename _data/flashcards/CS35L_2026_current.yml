@@ -12,3 +12,7 @@ decks:
   - git_basic
   - nodejs_syntax_explain
   - nodejs_syntax_generate
+  - react_syntax_explain
+  - react_syntax_generate
+  - design_pattern_observer
+  - networking_concepts

@@ -13,7 +13,7 @@ questions:
       - "A class that implements system behavior."
       - "A database that stores user information."
     correct_index: 1
-    explanation: "An actor represents a **role**, not a specific person. One person can play multiple roles (e.g., a professor who is also a student), and multiple people can share the same role."
+    explanation: "**An actor represents a role, not a specific person — one person can hold multiple roles and multiple people can share the same role.** An actor represents a **role**, not a specific person. One person can play multiple roles (e.g., a professor who is also a student), and multiple people can share the same role."
 
   - id: 2
     type: single
@@ -27,7 +27,7 @@ questions:
       - "Purchase Item is a specialized version of Login."
       - "Login extends the Purchase Item behavior with additional steps."
     correct_index: 1
-    explanation: "The `<<include>>` relationship means the included behavior **always** occurs. Whenever a customer purchases an item, they always go through the login process. This is mandatory, not optional."
+    explanation: "**`<<include>>` means Login always occurs as a mandatory part of Purchase Item — it is not optional.** The `<<include>>` relationship means the included behavior **always** occurs. Whenever a customer purchases an item, they always go through the login process. This is mandatory, not optional."
 
   - id: 3
     type: single
@@ -41,7 +41,7 @@ questions:
       - "Include means the behavior always happens; extend means it sometimes happens."
       - "Include arrows point to the base; extend arrows point to the extension."
     correct_index: 2
-    explanation: "`<<include>>` models **mandatory** shared behavior (always happens). `<<extend>>` models **optional** or conditional behavior (sometimes happens). Both use dashed arrows, but they point in opposite directions."
+    explanation: "**`<<include>>` is mandatory (always happens) while `<<extend>>` is optional or conditional — both use dashed arrows but point in opposite directions.** `<<include>>` models **mandatory** shared behavior (always happens). `<<extend>>` models **optional** or conditional behavior (sometimes happens). Both use dashed arrows, but they point in opposite directions."
 
   - id: 4
     type: single
@@ -55,7 +55,7 @@ questions:
       - "Apply Coupon always occurs as part of Place Order."
       - "Place Order is optional behavior that may supplement the basic Apply Coupon flow."
     correct_index: 0
-    explanation: "The `<<extend>>` arrow points **from the extending use case to the base use case** --- from 'Apply Coupon' to 'Place Order.' This indicates that 'Apply Coupon' is optional behavior that may extend the 'Place Order' flow."
+    explanation: "**`<<extend>>` means Apply Coupon is optional behavior that may supplement Place Order — the arrow points from the extension to the base.** The `<<extend>>` arrow points **from the extending use case to the base use case** --- from 'Apply Coupon' to 'Place Order.' This indicates that 'Apply Coupon' is optional behavior that may extend the 'Place Order' flow."
 
   - id: 5
     type: single
@@ -69,7 +69,7 @@ questions:
       - "A composite state containing substates."
       - "A container for related sequence diagrams."
     correct_index: 1
-    explanation: "The system boundary rectangle defines the **scope of the system**. Use cases (the functionality the system provides) are placed inside, while actors (external users/roles) are placed outside. The system name appears at the top."
+    explanation: "**The rectangle defines the system boundary — use cases go inside (system functionality) and actors go outside (external roles).** The system boundary rectangle defines the **scope of the system**. Use cases (the functionality the system provides) are placed inside, while actors (external users/roles) are placed outside. The system name appears at the top."
 
   - id: 6
     type: multiple
@@ -83,7 +83,7 @@ questions:
       - "Lifelines (dashed vertical lines)"
       - "Associations (lines between actors and use cases)"
     correct_indices: [0, 1, 2, 5]
-    explanation: "Use case diagrams contain **actors** (stick figures), **use cases** (ovals), **system boundaries** (rectangles), and **associations** (lines). Classes belong in class diagrams, and lifelines belong in sequence diagrams."
+    explanation: "**Use case diagrams contain actors, use cases, system boundaries, and associations — classes and lifelines belong in other diagram types.** Use case diagrams contain **actors** (stick figures), **use cases** (ovals), **system boundaries** (rectangles), and **associations** (lines). Classes belong in class diagrams, and lifelines belong in sequence diagrams."
 
   - id: 7
     type: single
@@ -97,7 +97,7 @@ questions:
       - "A dotted line with no arrowhead."
       - "A solid line with a filled diamond."
     correct_index: 1
-    explanation: "Use case generalization uses the same notation as class generalization: a **solid line with a hollow triangle** pointing to the general (parent) use case. A specialized use case can replace or enhance the parent's behavior."
+    explanation: "**Use case generalization uses the same solid line with hollow triangle as class generalization, pointing to the parent use case.** Use case generalization uses the same notation as class generalization: a **solid line with a hollow triangle** pointing to the general (parent) use case. A specialized use case can replace or enhance the parent's behavior."
 
   - id: 8
     type: single
@@ -111,4 +111,4 @@ questions:
       - "Verify Identity is a specialized version of both Enroll and Drop."
       - "No relationship needed --- just connect the actor to all three use cases."
     correct_index: 1
-    explanation: "Since identity verification **always** happens (mandatory), this is an `<<include>>` relationship. Both 'Enroll in Course' and 'Drop Course' include 'Verify Identity.' The include arrows point from the including use cases toward Verify Identity."
+    explanation: "**Because identity verification always happens, it is modeled as `<<include>>` from both Enroll and Drop toward Verify Identity.** Since identity verification **always** happens (mandatory), this is an `<<include>>` relationship. Both 'Enroll in Course' and 'Drop Course' include 'Verify Identity.' The include arrows point from the including use cases toward Verify Identity."

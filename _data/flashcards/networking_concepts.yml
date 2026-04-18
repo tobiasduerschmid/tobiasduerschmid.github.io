@@ -18,8 +18,8 @@ cards:
     answer: "**Throughput** = volume of requests processed per unit time (e.g., an API handling 500 req/sec during peak load). **Latency** = time for a single request to complete (e.g., a database query returning in 40ms). They are *not* always correlated: adding more servers increases throughput but doesn't reduce per-request latency. Caching reduces latency and may also increase throughput."
 
   - id: 5
-    question: "Name the four layers of the **TCP/IP stack** from bottom to top and what each layer does."
-    answer: "1. **Link Layer** (Ethernet, Wi-Fi) — physical transmission over local hardware. 2. **Internet Layer** (IPv4, IPv6) — addressing and routing between networks. 3. **Transport Layer** (TCP, UDP) — end-to-end communication between applications. 4. **Application Layer** (HTTP, HTTPS, DNS) — interface for apps to access network services."
+    question: "You type a URL into your browser and press Enter. Trace the journey of that HTTP request **down** the four layers of the TCP/IP stack — name each layer and describe what it contributes."
+    answer: "1. **Application Layer** — your browser constructs the HTTP request (verb, URL, headers). 2. **Transport Layer** — TCP wraps it in a segment with port numbers and sequence info for reliable delivery. 3. **Internet Layer** — IP wraps it in a packet with source and destination IP addresses for routing between networks. 4. **Link Layer** — Ethernet/Wi-Fi wraps it in a frame with MAC addresses and physically transmits it to the next hop."
 
   - id: 6
     question: "What is **encapsulation** (package wrapping) in the TCP/IP stack?"
@@ -31,11 +31,7 @@ cards:
 
   - id: 8
     question: "How does TCP guarantee reliable delivery during data transfer?"
-    answer: "TCP sends data in **ordered** messages with **checksums** for error detection. The receiver sends an **ACK** for each message received correctly. If the sender doesn't receive an ACK within a **timeout**, it **retransmits** the message. This guarantees delivery, order, and integrity — at the cost of additional overhead."
-
-  - id: 9
-    question: "What guarantees does **UDP** provide, and what does it sacrifice?"
-    answer: "UDP provides **fast, connectionless, lightweight** communication with **no additional delay**. It sacrifices everything else: no guaranteed delivery (messages can be lost), no guaranteed order, and no error detection. It just 'throws' data at the receiver."
+    answer: "TCP sends data in **ordered** segments with **checksums** for error detection. The receiver sends **ACKs** to confirm receipt (a single ACK can cover multiple segments). If the sender doesn't receive an ACK within a **timeout**, it **retransmits** the missing data. This guarantees delivery, order, and integrity — at the cost of additional overhead."
 
   - id: 10
     question: "What does it mean that HTTP is **stateless**?"

@@ -11,7 +11,7 @@ questions:
       - "The Push model creates tighter coupling than the Pull model"
       - "The Push model prevents adding new observers at runtime"
     correct_index: 1
-    explanation: "In the Push model, the subject sends **all** data to **every** observer on **every** change. At 1,000 updates/second with 50 widgets, most of which may only need a small subset of the data, this creates massive unnecessary data transfer. A **hybrid model** (push the event type, let observers pull only what they need) combined with **batched notifications** would be far more appropriate here."
+    explanation: "**The Push model causes unnecessary data transfer because every observer receives the full data set on every update, even when they only need a small subset.** In the Push model, the subject sends **all** data to **every** observer on **every** change. At 1,000 updates/second with 50 widgets, most of which may only need a small subset of the data, this creates massive unnecessary data transfer. A **hybrid model** (push the event type, let observers pull only what they need) combined with **batched notifications** would be far more appropriate here."
 
   - id: 2
     type: single
@@ -23,7 +23,7 @@ questions:
       - "The lapsed listener problem"
       - "The god class problem"
     correct_index: 2
-    explanation: "This is the **lapsed listener problem** — a memory leak caused by observers that remain registered with a subject indefinitely. The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
+    explanation: "**This is the lapsed listener problem — observers that never detach keep themselves alive in memory because the subject holds a reference to them.** This is the **lapsed listener problem** — a memory leak caused by observers that remain registered with a subject indefinitely. The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
 
   - id: 3
     type: single
@@ -35,7 +35,7 @@ questions:
       - "The subject must be created before any observers, inverting the normal object creation order"
       - "The Pull model inverts the Push model's data flow direction"
     correct_index: 1
-    explanation: "The inversion is about **code readability vs. conceptual flow**. Conceptually, change flows from subject to observer. But in code, observers call the subject to register, so the dependency arrow points from observer to subject. When a reader encounters an observer in the codebase, there is **no nearby sign** of what it depends on — they must trace back to the registration call to understand the data flow."
+    explanation: "**The inverted dependency means data flows from subject to observer, but in code observers call the subject to register — making the dependency invisible at the point of use.** The inversion is about **code readability vs. conceptual flow**. Conceptually, change flows from subject to observer. But in code, observers call the subject to register, so the dependency arrow points from observer to subject. When a reader encounters an observer in the codebase, there is **no nearby sign** of what it depends on — they must trace back to the registration call to understand the data flow."
 
   - id: 4
     type: single
@@ -47,7 +47,7 @@ questions:
       - "When the observer uses the Pull model instead of the Push model"
       - "When the subject and observer are in the same package"
     correct_index: 1
-    explanation: "A direct method call is simpler and introduces no unnecessary abstraction. The Observer pattern solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. This is the **Rule of Three** in action — don't apply a pattern until you've seen the need multiple times."
+    explanation: "**When there is only one observer that will never change, a direct method call is simpler and the Observer pattern adds complexity for no benefit.** A direct method call is simpler and introduces no unnecessary abstraction. The Observer pattern solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. This is the **Rule of Three** in action — don't apply a pattern until you've seen the need multiple times."
 
   - id: 5
     type: single
@@ -59,4 +59,4 @@ questions:
       - "Batched — notifications are deferred and sent at a synchronization point"
       - "It depends on whether Push or Pull model is used"
     correct_index: 1
-    explanation: "In the standard MVC implementation, the Model's data-mutation methods (like `addTask()`) internally call `notify()` after modifying state. This is **automatic notification** — the Model itself triggers the update. The alternative, **client-triggered**, would require the Controller to explicitly call `notifyObservers()` after making changes, which is more efficient for batch updates but places the burden on the caller."
+    explanation: "**This is automatic notification — the Model's setter methods call `notifyObservers()` internally after every state change, without requiring the Controller to do so.** In the standard MVC implementation, the Model's data-mutation methods (like `addTask()`) internally call `notify()` after modifying state. This is **automatic notification** — the Model itself triggers the update. The alternative, **client-triggered**, would require the Controller to explicitly call `notifyObservers()` after making changes, which is more efficient for batch updates but places the burden on the caller."

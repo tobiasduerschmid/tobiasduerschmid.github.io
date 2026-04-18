@@ -9,7 +9,7 @@ questions:
       - "HTML tags contain special characters like `<` and `>` that cannot be properly escaped in modern RegEx." 
       - "The RegEx engine will inevitably suffer from catastrophic backtracking when encountering the forward slash in closing tags." 
     correct_index: 1 
-    explanation: "Standard regular expressions correlate to regular languages in formal language theory. They are evaluated by Finite State Machines, which do not have a 'stack' or memory mechanism to keep track of balanced, nested pairs (unlike context-free grammars used by HTML parsers)." 
+    explanation: "**RegEx fails on nested structures because it is backed by Finite State Machines, which lack the stack memory needed to track balanced nesting.** Standard regular expressions correlate to regular languages in formal language theory. They are evaluated by Finite State Machines, which do not have a 'stack' or memory mechanism to keep track of balanced, nested pairs (unlike context-free grammars used by HTML parsers)."
   
   - id: 2 
     question: "A developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?" 
@@ -19,7 +19,7 @@ questions:
       - "The `.*` is lazy; it pauses execution at every single character to check for the word 'error'." 
       - "The `.*` command forces the regex engine to cache the entire file into memory before evaluating the line." 
     correct_index: 1 
-    explanation: "Greedy quantifiers (like `*` and `+`) match as much as possible right away. `.*` consumes the whole string, realizes it missed 'error', and has to backtrack (step backwards) one character at a time to find a match, which is computationally expensive on long strings." 
+    explanation: "**`.*` is greedy — it consumes the whole string first, then backtracks character by character, which is expensive on long lines.** Greedy quantifiers (like `*` and `+`) match as much as possible right away. `.*` consumes the whole string, realizes it missed 'error', and has to backtrack (step backwards) one character at a time to find a match, which is computationally expensive on long strings."
   
   - id: 3 
     question: "You need to validate user input to ensure a password contains both a number and a special character, but you don't know what order they will appear in. What mechanism allows a RegEx engine to assert these conditions without actually 'consuming' the string character by character?" 
@@ -29,7 +29,7 @@ questions:
       - "Lookarounds (e.g., Lookaheads `(?=...)`)" 
       - "Word boundaries `\\b`" 
     correct_index: 2 
-    explanation: "Lookaheads and lookbehinds are 'zero-width assertions'. They look ahead in the string to verify a pattern exists, but they do not consume any characters. This allows you to chain multiple lookaheads at the start of a string to act like a logical 'AND' statement." 
+    explanation: "**Lookaheads are the right tool because they assert conditions without consuming characters, enabling multiple requirements to be chained at the same position.** Lookaheads and lookbehinds are 'zero-width assertions'. They look ahead in the string to verify a pattern exists, but they do not consume any characters. This allows you to chain multiple lookaheads at the start of a string to act like a logical 'AND' statement."
   
   - id: 4
     question: "You are given the regex `(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})` and apply it to the string `2026-04-01`. After a successful match, which of the following correctly describes how you can access the captured month value?"
@@ -39,7 +39,7 @@ questions:
       - "By either its name (e.g., `match.group('month')`) or its positional index (e.g., `match.group(2)`), because named groups also receive a numeric index."
       - "By referencing the original regex string at runtime, since named groups are not stored in the match object."
     correct_index: 2
-    explanation: "Named groups are assigned both a name and a positional index. You can retrieve the match using either `match.group('month')` or `match.group(2)`. This dual-access design means named groups are a strict superset of numbered groups — they add readability without removing any existing functionality." 
+    explanation: "**Named groups can be accessed by both name and positional index because they are a strict superset of numbered groups.** Named groups are assigned both a name and a positional index. You can retrieve the match using either `match.group('month')` or `match.group(2)`. This dual-access design means named groups are a strict superset of numbered groups — they add readability without removing any existing functionality."
 
   - id: 5
     question: "When writing a complex regex to extract phone numbers, you use parentheses `(...)` to group the area code so you can apply a `?` quantifier. However, you also want to extract the area code by name for later use in your code. What is the best approach?"
@@ -49,7 +49,7 @@ questions:
       - "Use a named group `(?<areaCode>...)` so you can access it via `match.groups.areaCode`."
       - "Escape the parentheses `\\( \\)` to tell the engine to ignore them."
     correct_index: 2
-    explanation: "Standard parentheses `(...)` create groups that can be accessed by index (e.g., `match[1]`). Named groups `(?<name>...)` let you assign a meaningful label, so you can access the matched value by name (e.g., `match.groups.areaCode`) — making your code self-documenting and easier to maintain."
+    explanation: "**A named group `(?<areaCode>...)` is best because it both enables the quantifier and provides a readable name for accessing the captured value.** Standard parentheses `(...)` create groups that can be accessed by index (e.g., `match[1]`). Named groups `(?<name>...)` let you assign a meaningful label, so you can access the matched value by name (e.g., `match.groups.areaCode`) — making your code self-documenting and easier to maintain."
 
   - id: 6 
     question: "You write a regex to ensure a username is strictly alphanumeric: `[a-zA-Z0-9]+`. However, a user successfully submits the username `admin!@#`. Why did this happen?" 
@@ -59,7 +59,7 @@ questions:
       - "You failed to use start `^` and end `$` anchors, allowing the regex to simply match the 'admin' portion and ignore the rest." 
       - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed." 
     correct_index: 2 
-    explanation: "Without positional anchors (`^` for the start, `$` for the end), a regex will search for *any* substring that satisfies the pattern. It found 'admin', considered it a successful match, and ignored the trailing invalid characters. Anchors are mandatory for strict input validation." 
+    explanation: "**Without `^` and `$` anchors, the regex matches any valid substring and ignores the rest of the input.** Without positional anchors (`^` for the start, `$` for the end), a regex will search for *any* substring that satisfies the pattern. It found 'admin', considered it a successful match, and ignored the trailing invalid characters. Anchors are mandatory for strict input validation."
 
   - id: 7 
     type: multiple 
@@ -71,7 +71,7 @@ questions:
       - "Sanitizing HTML input to prevent XSS attacks by perfectly stripping all `<script>` tags regardless of formatting." 
       - "Performing a bulk find-and-replace operation to change US date formats to European date formats in a text document." 
     correct_indices: [0, 2, 4] 
-    explanation: "RegEx excels at pattern matching flat strings, validating strict formats, and doing structural find-and-replace operations. It should NOT be used to parse complex, tree-like structures like JSON or HTML, as it cannot handle infinite nesting and is prone to security bypasses." 
+    explanation: "**RegEx is appropriate for flat pattern matching and format validation, but not for tree-structured data like JSON or HTML.** RegEx excels at pattern matching flat strings, validating strict formats, and doing structural find-and-replace operations. It should NOT be used to parse complex, tree-like structures like JSON or HTML, as it cannot handle infinite nesting and is prone to security bypasses."
 
   - id: 8 
     type: multiple 
@@ -82,7 +82,7 @@ questions:
       - "A False Negative occurs when the regex does not match text that it was actually supposed to find." 
       - "A False Positive occurs when the regex engine throws a syntax error." 
     correct_indices: [0, 2] 
-    explanation: "A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns." 
+    explanation: "**A False Positive is an unwanted match (regex too loose) and a False Negative is a missed match (regex too strict).** A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns."
 
   - id: 9
     question: "You use the regex `<.*>` to extract a single HTML tag from `<b>bold</b> text`, but it matches the entire string `<b>bold</b>` instead of just `<b>`. What is the simplest fix?"
@@ -92,7 +92,7 @@ questions:
       - "Wrap the dot in a group: `<(.)*>`."
       - "Add the `g` flag to enable global matching."
     correct_index: 1
-    explanation: "By default, `*` is **greedy** — it matches as many characters as possible, consuming everything from the first `<` to the last `>`. Adding `?` makes it **lazy** (`*?`), so it matches as *few* characters as possible and stops at the first `>` it encounters." 
+    explanation: "**Adding `?` makes the quantifier lazy so it stops at the first `>` rather than greedily consuming everything.** By default, `*` is **greedy** — it matches as many characters as possible, consuming everything from the first `<` to the last `>`. Adding `?` makes it **lazy** (`*?`), so it matches as *few* characters as possible and stops at the first `>` it encounters."
 
   - id: 10 
     type: multiple 
@@ -103,7 +103,7 @@ questions:
       - "They are natively supported by basic POSIX standard utilities like standard `grep` or `sed`." 
       - "They allow you to validate logical 'AND' requirements (e.g., must have a letter AND a number)." 
     correct_indices: [0, 1, 3]
-    explanation: "Lookaheads do not consume characters, can be chained to check multiple conditions from the exact same starting position, and are the standard way to enforce logical 'AND' in regex. However, they are a feature of PCRE (Perl Compatible Regular Expressions) and are generally NOT supported by basic POSIX tools like standard `sed`."
+    explanation: "**Lookaheads are zero-width, chainable, and enable logical AND — but they require PCRE and are not supported by basic POSIX tools.** Lookaheads do not consume characters, can be chained to check multiple conditions from the exact same starting position, and are the standard way to enforce logical 'AND' in regex. However, they are a feature of PCRE (Perl Compatible Regular Expressions) and are generally NOT supported by basic POSIX tools like standard `sed`."
 
   - id: 11
     question: "**Arrange** the regex fragments to build a pattern that validates a simple email address like `user@example.com`. The pattern should be anchored to match the entire string."
@@ -119,7 +119,7 @@ questions:
     distractors:
       - "\\d{3}"
       - "\\s+"
-    explanation: "The pattern anchors with `^` and `$` to match the full string. `[a-zA-Z0-9._%+-]+` matches the local part (username), `@` is the literal at-sign, `[a-zA-Z0-9.-]+` matches the domain name, and `\\.[a-zA-Z]{2,}` matches the dot followed by a TLD of at least 2 letters. The distractors `\\d{3}` (three digits) and `\\s+` (whitespace) have no place in an email pattern."
+    explanation: "**The email pattern requires anchors, a local-part character class, a literal `@`, a domain character class, and a TLD pattern — digits and whitespace are distractors.** The pattern anchors with `^` and `$` to match the full string. `[a-zA-Z0-9._%+-]+` matches the local part (username), `@` is the literal at-sign, `[a-zA-Z0-9.-]+` matches the domain name, and `\\.[a-zA-Z]{2,}` matches the dot followed by a TLD of at least 2 letters. The distractors `\\d{3}` (three digits) and `\\s+` (whitespace) have no place in an email pattern."
 
   - id: 12
     question: "**Arrange** the regex fragments to build a pattern that matches a date in `YYYY-MM-DD` format (e.g., `2024-01-15`). Anchor the pattern."
@@ -136,7 +136,7 @@ questions:
     distractors:
       - "/"
       - "\\w+"
-    explanation: "The date pattern uses `\\d{4}` for the 4-digit year, literal `-` as separators, and `\\d{2}` for 2-digit month and day. Anchors `^` and `$` ensure the entire string is a date. The `/` distractor would be for a different date format (MM/DD/YYYY), and `\\w+` is too broad (matches letters, digits, and underscores)."
+    explanation: "**The YYYY-MM-DD pattern uses `\\d{4}`, `-`, `\\d{2}`, `-`, `\\d{2}` with anchors; `/` belongs to a different format and `\\w+` is too broad.** The date pattern uses `\\d{4}` for the 4-digit year, literal `-` as separators, and `\\d{2}` for 2-digit month and day. Anchors `^` and `$` ensure the entire string is a date. The `/` distractor would be for a different date format (MM/DD/YYYY), and `\\w+` is too broad (matches letters, digits, and underscores)."
 
   - id: 13
     question: "**Arrange** the regex fragments to extract the protocol and domain from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
@@ -150,4 +150,4 @@ questions:
     distractors:
       - "\\w+://"
       - "[a-z]"
-    explanation: "`https?://` matches both `http://` and `https://` (the `s` is optional via `?`). The capturing group `([^/]+)` matches one or more characters that are NOT a forward slash — i.e., the domain name. `\\w+://` is a distractor that would also match things like `ftp://` which wasn't the intent, and `[a-z]` matches only a single lowercase letter."
+    explanation: "**`https?://` handles both protocols and `([^/]+)` captures the domain by matching everything up to the first slash.** `https?://` matches both `http://` and `https://` (the `s` is optional via `?`). The capturing group `([^/]+)` matches one or more characters that are NOT a forward slash — i.e., the domain name. `\\w+://` is a distractor that would also match things like `ftp://` which wasn't the intent, and `[a-z]` matches only a single lowercase letter."

@@ -9,7 +9,7 @@ questions:
       - "A specific architectural implementation strategy."
       - "A concrete algorithmic choice for data caching."
     correct_index: 1
-    explanation: "The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**. To make it more specific, the definition of 'perceivable loading delays' needs to be included in the requirement."
+    explanation: "**This is a quality attribute requirement because it states what the system must achieve (seamless transitions) without dictating any implementation — though 'perceivable' needs a concrete definition to be measurable.** The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**. To make it more specific, the definition of 'perceivable loading delays' needs to be included in the requirement."
 
   - id: 2
     question: "A Quality Assurance (QA) engineer is writing automated checks for a new e-commerce checkout flow. They ensure that every test maps directly back to a specific stakeholder request. Which core benefit of defining the problem space does this mapping best demonstrate?"
@@ -19,7 +19,7 @@ questions:
       - "Establishing verifiable traceability."
       - "Delegating design choices to the QA team."
     correct_index: 2
-    explanation: "Good requirements allow developers to write clear acceptance criteria, ensuring every test and line of code traces back to a specific requirement via **verifiable traceability**."
+    explanation: "**Mapping every test to a stakeholder request demonstrates verifiable traceability — a core benefit of defining the problem space before building solutions.** Good requirements allow developers to write clear acceptance criteria, ensuring every test and line of code traces back to a specific requirement via **verifiable traceability**."
 
   - id: 3
     question: "A client requests a new social media dashboard and specifies, 'The platform must use a graph database to map user connections.' Why might a software architect push back on this specific phrasing?"
@@ -29,7 +29,7 @@ questions:
       - "It makes it impossible to write automated acceptance tests."
       - "It requires the use of unproven, experimental technologies."
     correct_index: 1
-    explanation: "Specifying a 'graph database' is a design decision. Including it in the requirement prematurely constrains the engineering team from exploring potentially better data persistence options."
+    explanation: "**Specifying a 'graph database' is a design decision, not a user need — including it in the requirement prematurely constrains the engineering team from exploring better solutions.** Specifying a 'graph database' is a design decision. Including it in the requirement prematurely constrains the engineering team from exploring potentially better data persistence options."
 
   - id: 4
     question: "In a cross-functional Agile team, who is ideally suited to articulate the functional expectations of a new feature, and who should decide the underlying technical mechanics?"
@@ -39,7 +39,7 @@ questions:
       - "The project manager dictates both expectations and mechanics to ensure alignment."
       - "End-users define mechanics; quality assurance engineers dictate expectations."
     correct_index: 1
-    explanation: "Requirements (expectations) should be negotiated with the customer/product manager, while design decisions (mechanics) belong to the software engineers and architects."
+    explanation: "**Customers and product representatives define what the system must do, while software engineers decide how to build it — mixing these roles leads to over-constrained or poorly understood requirements.** Requirements (expectations) should be negotiated with the customer/product manager, while design decisions (mechanics) belong to the software engineers and architects."
 
   - id: 5
     question: "Which of the following statements represents an exploration of the solution space rather than a statement of user need?"
@@ -49,7 +49,7 @@ questions:
       - "The application will utilize an in-memory Redis store to temporarily hold the user's unpurchased items."
       - "Consumers must receive an email notification immediately after a successful transaction."
     correct_index: 2
-    explanation: "Utilizing **`Redis`** is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
+    explanation: "**'Embed a Redis store' is a solution-space statement because it names a specific technology — the other options describe required system behavior without dictating the implementation.** Utilizing **`Redis`** is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
 
   - id: 6
     question: "A development team originally built a search feature using a basic database query but later migrated to a dedicated indexing engine to handle typos more effectively. If their original specification was written perfectly, what happened to that specification during this technical migration?"
@@ -59,7 +59,7 @@ questions:
       - "It was discarded because iterative teams do not use specifications."
       - "It was expanded to mandate the new indexing engine for all future company projects."
     correct_index: 1
-    explanation: "Because design decisions change frequently, a well-written requirement focused strictly on the **'what'** preserves flexibility and remains valid even if the underlying technical solution is swapped out."
+    explanation: "**A well-written requirement focused on the 'what' remains unchanged even when the implementation is completely replaced — it stayed valid through the migration because it never named a specific technology.** Because design decisions change frequently, a well-written requirement focused strictly on the **'what'** preserves flexibility and remains valid even if the underlying technical solution is swapped out."
 
   - id: 7
     question: "A team needs to ensure their new banking portal can handle 10,000 simultaneous logins within two seconds without crashing. What is the recommended format for capturing this specific type of system characteristic?"
@@ -70,7 +70,7 @@ questions:
       - "An Operational Transformation matrix."
       - "A long user story."
     correct_index: 1
-    explanation: "Quality attribute requirements (performance, security, availability) are best captured via **Quality Attribute Scenarios** to make them concrete and measurable."
+    explanation: "**A concrete, measurable performance target like this is best captured as a Quality Attribute Scenario — it makes the requirement testable rather than vague.** Quality attribute requirements (performance, security, availability) are best captured via **Quality Attribute Scenarios** to make them concrete and measurable."
 
   - id: 8
     question: "A transit application needs to serve commuters who frequently lose cell service in subway tunnels. Which of the following represents the 'how' (the implementation) rather than the 'what' for this scenario?"
@@ -80,4 +80,4 @@ questions:
       - "The application embeds a local database to cache schedule data directly on the device."
       - "The app must notify the user with a banner that they are viewing offline data."
     correct_index: 2
-    explanation: "Embedding a local database to cache data is the design decision (the **'how'**). The other options describe the required offline capabilities (the **'what'**)."
+    explanation: "**'Embeds a local database to cache data' is the 'how' because it names a specific implementation technique — the other options describe the required offline behavior without specifying the mechanism.** Embedding a local database to cache data is the design decision (the **'how'**). The other options describe the required offline capabilities (the **'what'**)."

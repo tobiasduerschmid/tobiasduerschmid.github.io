@@ -11,7 +11,7 @@ questions:
       - "The loop makes the adapter too slow for production use"
       - "The adapter violates the Liskov Substitution Principle"
     correct_index: 1
-    explanation: "Simple interface translation (renaming `quack()` to `gobble()`) is low-risk. But the `fly()` mapping introduces **behavioral adaptation** — the adapter contains logic (a loop) that goes beyond translating signatures. As adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. This is a warning sign that the adapter may be taking on too much responsibility."
+    explanation: "**The loop in `fly()` is behavioral adaptation beyond simple interface translation, which is a warning sign that the adapter is taking on too much responsibility.** Simple interface translation (renaming `quack()` to `gobble()`) is low-risk. But the `fly()` mapping introduces **behavioral adaptation** — the adapter contains logic (a loop) that goes beyond translating signatures. As adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. This is a warning sign that the adapter may be taking on too much responsibility."
 
   - id: 2
     type: single
@@ -23,7 +23,7 @@ questions:
       - "Use a Facade instead — it simplifies complex subsystems"
       - "Use a Mediator instead — it coordinates between components"
     correct_index: 1
-    explanation: "The Adapter pattern is designed for **after-the-fact** interface mismatches — typically with third-party or legacy code you **cannot modify**. If you control both interfaces, there is no mismatch to adapt around. Simply **refactor** one interface to match the other. Adding an Adapter here would introduce unnecessary indirection. If you anticipate the interfaces diverging in the future (e.g., the database layer will be replaced), **Bridge** is the upfront solution."
+    explanation: "**Using an Adapter when you control both interfaces is unnecessary — simply refactor one to match the other directly.** The Adapter pattern is designed for **after-the-fact** interface mismatches — typically with third-party or legacy code you **cannot modify**. If you control both interfaces, there is no mismatch to adapt around. Simply **refactor** one interface to match the other. Adding an Adapter here would introduce unnecessary indirection. If you anticipate the interfaces diverging in the future (e.g., the database layer will be replaced), **Bridge** is the upfront solution."
 
   - id: 3
     type: single
@@ -35,7 +35,7 @@ questions:
       - "A compile-time error prevents the call"
       - "The item silently ignores the call with no error"
     correct_index: 1
-    explanation: "This is the **Transparent Composite** trade-off. By putting `add()`/`remove()` on the abstract `Component`, clients get a uniform interface (any component can be treated the same), but **leaves inherit methods that are semantically meaningless**. The leaf must handle this — typically by throwing `UnsupportedOperationException`. The **Safe Composite** alternative puts these methods only on `Composite`, preventing the call at compile time but requiring clients to downcast."
+    explanation: "**This is the Transparent Composite trade-off — a runtime exception is thrown because leaves inherit child-management methods that are meaningless for them.** This is the **Transparent Composite** trade-off. By putting `add()`/`remove()` on the abstract `Component`, clients get a uniform interface (any component can be treated the same), but **leaves inherit methods that are semantically meaningless**. The leaf must handle this — typically by throwing `UnsupportedOperationException`. The **Safe Composite** alternative puts these methods only on `Composite`, preventing the call at compile time but requiring clients to downcast."
 
   - id: 4
     type: single
@@ -47,7 +47,7 @@ questions:
       - "Adapter is structural; Facade is behavioral; Decorator is creational"
       - "They are interchangeable — the choice depends only on team preference"
     correct_index: 1
-    explanation: "The distinction is **intent**: **Adapter** changes *what* the interface looks like (converts incompatible to compatible). **Facade** changes *how much* of the interface you see (simplifies a complex subsystem). **Decorator** changes *what the object does* through the same interface (adds behavior). Understanding intent is what separates correct pattern application from cargo-cult pattern usage."
+    explanation: "**The key distinction is intent: Adapter converts an interface, Facade simplifies a set of interfaces, and Decorator adds behavior through the same interface.** The distinction is **intent**: **Adapter** changes *what* the interface looks like (converts incompatible to compatible). **Facade** changes *how much* of the interface you see (simplifies a complex subsystem). **Decorator** changes *what the object does* through the same interface (adds behavior). Understanding intent is what separates correct pattern application from cargo-cult pattern usage."
 
   - id: 5
     type: single
@@ -59,7 +59,7 @@ questions:
       - "Add an Adapter between the Facade and each subsystem"
       - "Convert to a Singleton so there is only one Facade instance"
     correct_index: 1
-    explanation: "A single Facade wrapping a large subsystem risks becoming a **god class**. The solution is to create **multiple focused Facades**, each responsible for a different aspect of the subsystem. `PlaybackFacade` handles movie/music playback, `SetupFacade` handles karaoke and game setup, and `CalibrationFacade` handles system tuning. Each Facade remains cohesive and manageable."
+    explanation: "**A growing Facade should be split into multiple focused Facades, each responsible for one coherent aspect of the subsystem.** A single Facade wrapping a large subsystem risks becoming a **god class**. The solution is to create **multiple focused Facades**, each responsible for a different aspect of the subsystem. `PlaybackFacade` handles movie/music playback, `SetupFacade` handles karaoke and game setup, and `CalibrationFacade` handles system tuning. Each Facade remains cohesive and manageable."
 
   - id: 6
     type: single
@@ -71,4 +71,4 @@ questions:
       - "Facades can only be used with structural patterns; Mediators with behavioral patterns"
       - "There is no practical difference — both achieve decoupling"
     correct_index: 1
-    explanation: "Because the subsystem **does not know** about the Facade, it remains fully independent — usable and testable without the Facade present. In contrast, Mediator colleagues **depend on the Mediator interface** to communicate — they cannot function independently. This is why Facade is a *convenience layer* (optional), while Mediator is a *coordination layer* (required for the objects to interact)."
+    explanation: "**One-directional communication means the subsystem can be used and tested independently of the Facade, while Mediator colleagues cannot operate without the mediator.** Because the subsystem **does not know** about the Facade, it remains fully independent — usable and testable without the Facade present. In contrast, Mediator colleagues **depend on the Mediator interface** to communicate — they cannot function independently. This is why Facade is a *convenience layer* (optional), while Mediator is a *coordination layer* (required for the objects to interact)."

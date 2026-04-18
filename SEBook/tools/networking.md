@@ -67,6 +67,8 @@ These are related but **not the same**:
 * **Duplicating servers** increases throughput (more requests handled in parallel) without necessarily reducing latency.
 * **Implementing caching** reduces latency (individual requests are faster) and may also increase throughput.
 
+> **Analogy:** Think of a highway between two cities. **Latency** is the speed limit — it determines how fast a single truck makes the journey. **Throughput** is the number of lanes — adding lanes lets you move more total cargo per hour, but it doesn't make any individual truck arrive faster. Scaling horizontally (more servers) adds lanes; optimizing code or adding caches raises the speed limit.
+
 # The TCP/IP Protocol Stack
 
 The internet uses a **layered architecture** called the TCP/IP stack. Each layer solves a specific problem and relies only on the layer directly below it. This design provides **reusability** (lower layers can be shared) and **flexibility** (you can swap one layer's implementation without affecting the others).
@@ -96,19 +98,64 @@ Each message consists of a **header** (meta information like destination, origin
 
 ## IP Addresses
 
-Every device on the internet needs a unique address. **IP addresses** solve this by having two parts: a **network** portion (like a city) and a **host** portion (like a street address).
+Every device on the internet needs a unique address. **IP addresses** solve this by having two parts: a **network** portion (like a city) and a **host** portion (like a street address within that city). Routers use the network portion to forward packets toward the right destination network; once there, the host portion identifies the specific device.
 
-* **IPv4** addresses range from `0.0.0.0` to `255.255.255.255`
-* `127.0.0.1` is **localhost** — it always refers to *your own machine*
-* **IPv6** was created because the world ran out of IPv4 addresses
+* **IPv4** addresses are 32-bit numbers written as four decimal octets: `0.0.0.0` to `255.255.255.255` (about 4 billion possible addresses)
+* **IPv6** was created because the world ran out of IPv4 addresses — it uses 128-bit addresses, providing vastly more unique values
+
+### Localhost and the Loopback Interface
+
+`127.0.0.1` (or its alias `localhost`) is a special address called the **loopback address**. Unlike a normal IP address that routes packets out through your network hardware, loopback traffic never leaves your machine — the operating system short-circuits it internally.
+
+This is why it is indispensable for local development:
+
+* When you run `node server.js`, your server listens on `localhost:3000` (or whichever port you choose)
+* Your browser — also running on the same machine — sends an HTTP request to `localhost:3000`
+* The OS intercepts the request before it ever touches Wi-Fi or Ethernet and routes it directly to your server process
+* No internet connection is required; the traffic is entirely internal to your computer
+
+> **Practical consequence:** A server listening on `localhost` is *only* reachable from the same machine. If a classmate tries to connect to your laptop's `localhost:3000` from their machine, it will fail — `localhost` on their machine refers to *their* machine, not yours.
+
+### Public vs. Private IP Addresses
+
+Not all IP addresses are reachable from the internet:
+
+| Range | Type | Example |
+|-------|------|---------|
+| `127.0.0.0/8` | Loopback (your own machine) | `127.0.0.1` |
+| `192.168.x.x`, `10.x.x.x`, `172.16–31.x.x` | Private (local network only) | `192.168.1.42` |
+| Everything else | Public (internet-reachable) | `142.250.80.46` |
+
+Your laptop typically has a private IP address assigned by your router (e.g. `192.168.1.42`). Your router holds the single public IP address that the internet sees. When you deploy a server to the cloud, it gets a public IP — that is what makes it reachable by anyone.
 
 ## Ports
 
-A single device can run many networked applications simultaneously. **Ports** identify which application on a host should receive a given message.
+An IP address identifies a *machine*, but a single machine can run many networked applications simultaneously (a web server, a database, an SSH daemon…). **Ports** identify which *application* on that machine should receive a given message.
 
-* Port numbers range from 0 to 65535
-* Well-known ports: **80** (HTTP), **443** (HTTPS), **22** (SSH)
-* When developing locally, you often use ports like **3000** or **5000**
+The combination of an IP address and a port — written `IP:port` — is called a **socket address** and uniquely identifies a communication endpoint:
+
+```
+192.168.1.42:3000   →  your Node.js server
+192.168.1.42:5432   →  your PostgreSQL database
+```
+
+* Port numbers range from **0 to 65535**
+* **Well-known ports** (0–1023) are reserved for standard services: **80** (HTTP), **443** (HTTPS), **22** (SSH), **5432** (PostgreSQL)
+* **Ephemeral ports** (typically 49152–65535) are assigned automatically by the OS for the *client* side of a connection — you never type these in, but every outgoing TCP connection uses one
+* When developing locally, you pick an unprivileged port like **3000** or **5000** to avoid needing administrator privileges (ports below 1024 require root/admin on most systems)
+
+## DNS (Domain Name System)
+
+Humans use names like `github.com`; computers use IP addresses like `140.82.121.4`. **DNS** is the distributed directory that translates one into the other — effectively the phone book of the internet.
+
+When you type `github.com` into your browser:
+
+1. Your OS checks its local DNS cache — if it recently resolved this name, it reuses the answer
+2. If not cached, it sends a **DNS query** (over UDP, port 53) to a DNS resolver — typically provided by your ISP or configured manually (e.g. Google's `8.8.8.8`)
+3. The resolver works through a hierarchy of DNS servers to find the authoritative answer
+4. Your OS receives the IP address, caches it for a configurable time (the **TTL**), and the browser proceeds with the HTTP request
+
+This is why DNS uses UDP: each lookup is a single independent question-and-answer pair. If the response is lost, the client simply retries — no persistent connection is needed.
 
 # Transport Layer Protocols: TCP vs. UDP
 
@@ -120,10 +167,27 @@ UDP simply "throws" messages at the receiver without establishing a connection f
 
 * **Fast** and **lightweight** — no connection setup overhead
 * **Connectionless** — just sends the data
-* **Does not guarantee** delivery, order, or error checking
+* **Does not guarantee** delivery or order
+* Includes a **checksum** for error detection (mandatory in IPv6), but does not recover from errors — corrupted packets are silently discarded
 * If a message is lost, it is simply gone
 
-**UDP is ideal when speed matters more than reliability:** DNS name resolution (a fast, independent lookup where a retry is cheap), live GPS position broadcasts in navigation apps, and real-time game state updates (player positions and bullet trajectories in FPS games).
+**UDP is ideal when speed matters more than reliability:** DNS name resolution (a fast, independent lookup where a retry is cheap — though DNS falls back to TCP when a response is too large for a single UDP packet), live GPS position broadcasts in navigation apps, and real-time game state updates (player positions and bullet trajectories in FPS games).
+
+```uml-sequence
+@startuml
+participant sender: Sender
+participant receiver: Receiver
+
+sender ->> receiver: Datagram [1]
+sender ->> receiver: Datagram [2]
+note right of receiver: checksum failed — discard silently
+sender ->> receiver: Datagram [3]
+sender ->> receiver: Datagram [4]
+note right of receiver: packet lost — never arrives
+sender ->> receiver: Datagram [5]
+note over sender: sender never knows about\nthe lost or corrupted packets
+@enduml
+```
 
 ## TCP (Transmission Control Protocol)
 
@@ -131,30 +195,58 @@ TCP is more complex but provides **reliable**, ordered delivery. It uses a three
 
 **Connection Setup (3-Way Handshake):**
 
-| Step | Sender | Message | Meaning |
-|------|--------|---------|---------|
-| 1 | Client → Server | **SYN** | "I want to connect" |
-| 2 | Server → Client | **SYN-ACK** | "OK, I'm ready" |
-| 3 | Client → Server | **ACK** | "Great, let's go" |
+```uml-sequence
+@startuml
+participant client: Client
+participant server: Server
 
-**Data Transfer:** Messages are sent in order, each with a **checksum** for error detection. The receiver sends an **ACK** for each message. If the sender doesn't receive an ACK within a **timeout**, it retransmits the message.
+client ->> server: SYN
+server ->> client: SYN-ACK
+client ->> server: ACK
+note over client, server: Connection established
+@enduml
+```
+
+**Data Transfer:** Messages are sent in order, each with a **checksum** for error detection (like UDP, but TCP goes further). The receiver sends **ACKs** to confirm receipt. If the sender doesn't receive an ACK within a **timeout**, it retransmits the message — this error *recovery* is what distinguishes TCP from UDP.
+
+```uml-sequence
+@startuml
+participant client: Client
+participant server: Server
+
+client ->> server: Data [seq=1]
+server ->> client: ACK [seq=1]
+client ->> server: Data [seq=2]
+note right of server: packet lost — no ACK sent
+note over client: timeout — retransmit
+client ->> server: Data [seq=2]
+server ->> client: ACK [seq=2]
+@enduml
+```
 
 **Connection Teardown:**
 
-| Step | Sender | Message | Meaning |
-|------|--------|---------|---------|
-| 1 | Sender → Receiver | **FIN** | "I'm done sending" |
-| 2 | Receiver → Sender | **FIN-ACK** | "OK, I'm done too" |
-| 3 | Sender → Receiver | **ACK** | "Goodbye" |
+```uml-sequence
+@startuml
+participant client: Client
+participant server: Server
 
-**The cost of reliability:** For N data messages, TCP sends at least **6 + 2N** total messages (3 handshake + N data + N ACKs + 3 teardown). UDP would send just N.
+client ->> server: FIN
+server ->> client: ACK
+server ->> client: FIN
+client ->> server: ACK
+note over client, server: Connection closed
+@enduml
+```
+
+**The cost of reliability:** For N data messages, TCP sends significantly more total messages than UDP — the handshake, ACKs, and teardown all add overhead. UDP would send just N messages.
 
 ## TCP vs. UDP — Trade-Offs at a Glance
 
 | | TCP | UDP |
 |---|---|---|
 | **Message order** | Preserved | Any order |
-| **Error detection** | Included (checksums) | Not included |
+| **Error detection** | Included (checksums) | Included (checksums), but no error *recovery* |
 | **Lost messages** | Retransmitted | Lost forever |
 | **Speed** | Slower (overhead) | Fast (no overhead) |
 
@@ -163,7 +255,7 @@ TCP is more complex but provides **reliable**, ordered delivery. It uses a three
 | Protocol | Best For | Examples |
 |----------|----------|----------|
 | **TCP** | Data that must arrive completely and in order | SSH sessions, pushing code to a Git repository, online banking, web browsing |
-| **UDP** | Real-time data where speed beats reliability | DNS queries, live GPS updates, video streaming, multiplayer game state |
+| **UDP** | Real-time data where speed beats reliability | DNS queries (primarily), live GPS updates, real-time video calls, multiplayer game state |
 
 **Competitive online games** (e.g., CS2, Valorant) use a hybrid: **UDP** for high-frequency movement and bullet trajectory updates (often 64–128 snapshots per second), since a missed snapshot is harmless — the next one arrives milliseconds later. **TCP** handles match-making, round results, inventory changes, and in-game purchases, where a lost or reordered message would corrupt game state. UDP snapshots include **absolute positions** of all objects, so a single dropped packet never causes lasting inconsistency.
 

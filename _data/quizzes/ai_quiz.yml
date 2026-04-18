@@ -18,7 +18,7 @@ questions:
       - "Skilled developers with strong foundational knowledge."
       - "Everyone benefits equally regardless of skill level."
     correct_index: 2
-    explanation: "Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
+    explanation: "**Skilled developers benefit most from AI because it amplifies their existing ability to direct and verify outputs.** Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
   - id: 3
     question: "Which of these is an example of 'Beneficial Offloading' for a CS student?"
     options:

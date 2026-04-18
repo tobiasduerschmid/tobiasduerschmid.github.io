@@ -9,7 +9,7 @@ questions:
       - "Centralized systems are generally considered the best practice for massive, globally distributed open-source projects."
       - "Distributed systems are designed exclusively to track binary files, whereas centralized systems track text files."
     correct_index: 1
-    explanation: "This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
+    explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history, enabling offline work and independent development.** This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
 
   - id: 2
     question: "What are the three primary local states that a file can reside in within a standard Git workflow?"
@@ -19,7 +19,7 @@ questions:
       - "Working Directory, Staging Area, and Local Repository"
       - "Uploaded, Downloaded, and Synced"
     correct_index: 2
-    explanation: "Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
+    explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area (prepped for commit), and the Local Repository (committed history).** Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
 
   - id: 3
     question: "What does the command `git diff HEAD` compare?"
@@ -29,7 +29,7 @@ questions:
       - "The latest commit to the commit immediately before it."
       - "The working directory to the latest commit."
     correct_index: 3
-    explanation: "Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
+    explanation: "**`git diff HEAD` compares the current working directory (including staged changes) against the latest commit.** Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
 
   - id: 4
     question: "Which Git command should you NEVER use on a shared branch because it can permanently overwrite and destroy work pushed by other team members?"
@@ -39,7 +39,7 @@ questions:
       - "`git push -f`"
       - "`git merge --squash`"
     correct_index: 2
-    explanation: "Force-pushing overwrites the remote repository's history to exactly match yours, which will permanently delete any new commits made by your collaborators."
+    explanation: "**`git push -f` is dangerous on shared branches because it overwrites the remote history, permanently deleting collaborators' commits.** Force-pushing overwrites the remote repository's history to exactly match yours, which will permanently delete any new commits made by your collaborators."
 
   - id: 5
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
@@ -49,7 +49,7 @@ questions:
       - "`git revert`"
       - "`git stash`"
     correct_index: 3
-    explanation: "`git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+    explanation: "**`git stash` temporarily shelves uncommitted changes so you can switch contexts without making a messy commit.** `git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
 
   - id: 6
     question: "What happens when you enter a 'Detached HEAD' state in Git?"
@@ -59,7 +59,7 @@ questions:
       - "You accidentally delete the main branch of your repository."
       - "The remote server goes offline, and your local repository can no longer push updates."
     correct_index: 1
-    explanation: "Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
+    explanation: "**Detached HEAD means HEAD points directly to a commit hash rather than a branch — new commits in this state are not anchored to any branch and can be lost.** Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
 
   - id: 7
     question: "Which Git command utilizes a binary search through your commit history to help you pinpoint the exact commit that introduced a bug?"
@@ -69,7 +69,7 @@ questions:
       - "`git diff`"
       - "`git cherry-pick`"
     correct_index: 1
-    explanation: "`git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
+    explanation: "**`git bisect` uses binary search through commit history to efficiently pinpoint the exact commit that introduced a bug.** `git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
 
   - id: 8
     question: "What is the primary purpose of Git Submodules?"
@@ -79,7 +79,7 @@ questions:
       - "To securely store passwords, API keys, and private credentials outside of the main repository."
       - "To automatically squash a long sequence of commits into a single bugfix."
     correct_index: 1
-    explanation: "Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
+    explanation: "**Git Submodules let you embed an external repository as a subdirectory, pinned to a specific commit, while keeping its history independent.** Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
 
   - id: 9
     type: multiple
@@ -91,7 +91,7 @@ questions:
       - "It strictly relies on a single central server to store all file metadata."
       - "It is generally better suited for massive, globally distributed open-source projects."
     correct_indices: [0, 1, 4]
-    explanation: "In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
+    explanation: "**Git's distributed model enables offline work and removes the single point of failure, making it ideal for large distributed teams — but it does not prevent merge conflicts.** In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
 
   - id: 10
     type: multiple
@@ -103,7 +103,7 @@ questions:
       - "Local Repository"
       - "Detached Head"
     correct_indices: [0, 1, 3]
-    explanation: "The three primary local states in Git's architecture are the Working Directory (files on disk), the Staging Area (prepped for the next commit), and the Local Repository (the compressed history of commits). The remote server is external, and 'Detached HEAD' is a state of the HEAD pointer, not a file area."
+    explanation: "**The three local areas are Working Directory, Staging Area, and Local Repository — the remote server and Detached HEAD are not file areas.** The three primary local states in Git's architecture are the Working Directory (files on disk), the Staging Area (prepped for the next commit), and the Local Repository (the compressed history of commits). The remote server is external, and 'Detached HEAD' is a state of the HEAD pointer, not a file area."
 
   - id: 11
     type: multiple
@@ -115,7 +115,7 @@ questions:
       - "`git push`"
       - "`git init`"
     correct_indices: [0, 1, 2]
-    explanation: "`git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
+    explanation: "**`git log`, `git diff`, and `git show` are the review/inspection commands — `git push` uploads data and `git init` creates repos.** `git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
 
   - id: 12
     type: multiple
@@ -138,7 +138,7 @@ questions:
       - "`git bisect`"
       - "`git blame`"
     correct_indices: [0, 1, 2]
-    explanation: "Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
+    explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
 
   - id: 14
     question: "A faulty commit was pushed to a shared 'main' branch last week and your teammates have already synced it. Why should you use `git revert` to fix this rather than `git reset --hard` followed by a force-push?"
@@ -148,7 +148,7 @@ questions:
       - "`git revert` deletes the bad commit from the remote server without affecting local copies."
       - "`git revert` creates a new commit with the exact inverse changes, preserving the shared history for all collaborators."
     correct_index: 3
-    explanation: "`git revert` is the safe choice on shared branches because it adds a new forward-moving commit that nullifies the targeted commit, without rewriting or destroying history. Using `git reset --hard` and force-pushing would overwrite the shared history, causing serious disruption for any teammate who has already synced that commit."
+    explanation: "**`git revert` is safe on shared branches because it adds a new undo commit without rewriting history, while `reset --hard` + force-push would destroy teammates' synced work.** `git revert` is the safe choice on shared branches because it adds a new forward-moving commit that nullifies the targeted commit, without rewriting or destroying history. Using `git reset --hard` and force-pushing would overwrite the shared history, causing serious disruption for any teammate who has already synced that commit."
 
   - id: 15
     question: "When integrating a feature branch into 'main', under what condition will Git perform a fast-forward merge rather than creating a three-way merge commit?"
@@ -158,7 +158,7 @@ questions:
       - "When there are conflicting changes on the same lines in both branches."
       - "When you explicitly pass the `--squash` flag to `git merge`."
     correct_index: 1
-    explanation: "A fast-forward merge occurs when the target branch's history has not diverged — Git can simply slide its pointer forward to incorporate the changes linearly. If both branches have unique commits since they split, Git must perform a three-way merge using their common ancestor, resulting in a merge commit with two parents."
+    explanation: "**A fast-forward merge is only possible when the base branch has received no new commits since the feature branch was created, allowing Git to slide its pointer forward linearly.** A fast-forward merge occurs when the target branch's history has not diverged — Git can simply slide its pointer forward to incorporate the changes linearly. If both branches have unique commits since they split, Git must perform a three-way merge using their common ancestor, resulting in a merge commit with two parents."
 
   - id: 16
     question: "What does the file `.git/HEAD` contain when you are checked out on a branch, compared to when you are in a detached HEAD state?"
@@ -168,7 +168,7 @@ questions:
       - "On a branch, it contains a symbolic reference (e.g., `ref: refs/heads/main`); in detached HEAD, it contains a raw commit hash."
       - "Both states contain `ref: refs/heads/main`, but detached HEAD additionally points to the staging area index."
     correct_index: 2
-    explanation: "Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
+    explanation: "**On a branch, `.git/HEAD` holds a symbolic reference to the branch; in detached HEAD state it holds a raw commit hash because HEAD is no longer anchored to any branch.** Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
 
   - id: 17
     question: |
@@ -188,7 +188,7 @@ questions:
     distractors:
       - "git push -f"
       - "git init"
-    explanation: "The workflow is: create and switch to a feature branch (`switch -c`), stage changes (`add`), commit them, switch back to main, and merge the feature branch in. `git push -f` is dangerous on shared branches and is not part of a local merge workflow. `git init` creates a new repository — irrelevant here."
+    explanation: "**The correct order is: create the branch, stage changes, commit, switch back to main, then merge — force-push and init are distractors irrelevant to a local merge workflow.** The workflow is: create and switch to a feature branch (`switch -c`), stage changes (`add`), commit them, switch back to main, and merge the feature branch in. `git push -f` is dangerous on shared branches and is not part of a local merge workflow. `git init` creates a new repository — irrelevant here."
 
   - id: 18
     question: |
@@ -204,7 +204,7 @@ questions:
     distractors:
       - "git stash drop"
       - "git reset --hard"
-    explanation: "`git stash` saves uncommitted changes temporarily, `git pull` fetches and merges remote changes onto a clean working directory, and `git stash pop` re-applies the stashed changes on top. `git stash drop` would *discard* the stash without applying it. `git reset --hard` would destroy all local changes — dangerous!"
+    explanation: "**The correct order is stash → pull → pop: shelve local changes first, then pull onto a clean working directory, then restore — drop discards the stash and reset --hard destroys local work.** `git stash` saves uncommitted changes temporarily, `git pull` fetches and merges remote changes onto a clean working directory, and `git stash pop` re-applies the stashed changes on top. `git stash drop` would *discard* the stash without applying it. `git reset --hard` would destroy all local changes — dangerous!"
 
   - id: 19
     question: |
@@ -220,7 +220,7 @@ questions:
     distractors:
       - "git reset --hard <bad-commit-hash>"
       - "git push -f"
-    explanation: "`git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
+    explanation: "**The correct order is log → revert → push: identify the bad commit, create a safe undo commit, then share it — reset --hard and force-push rewrite shared history and destroy teammates' work.** `git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
 
   - id: 20
     question: |
@@ -236,7 +236,7 @@ questions:
     distractors:
       - "git clone ."
       - "git push"
-    explanation: "`git init` creates the repository, `git add .` stages every file in the working directory, and `git commit` records the first snapshot. `git clone` copies an *existing* remote repo — it doesn't create one from scratch. `git push` requires a remote to already exist."
+    explanation: "**The correct order is init → add → commit: create the repository, stage all files, then record the first snapshot — clone copies an existing repo and push requires a remote to already exist.** `git init` creates the repository, `git add .` stages every file in the working directory, and `git commit` records the first snapshot. `git clone` copies an *existing* remote repo — it doesn't create one from scratch. `git push` requires a remote to already exist."
 
   - id: 21
     question: |
@@ -250,7 +250,7 @@ questions:
     distractors:
       - "git fetch origin"
       - "git pull origin main"
-    explanation: "`git remote add origin <url>` registers the remote address under the alias `origin`. `git push -u origin main` uploads the branch and sets the upstream tracking reference so future `git push`/`git pull` calls need no extra arguments. `git fetch` and `git pull` *download* data — they don't publish your local branch."
+    explanation: "**The correct order is remote add → push -u: register the remote alias first, then push with -u to set the upstream tracking reference — fetch and pull download data and cannot publish a local branch.** `git remote add origin <url>` registers the remote address under the alias `origin`. `git push -u origin main` uploads the branch and sets the upstream tracking reference so future `git push`/`git pull` calls need no extra arguments. `git fetch` and `git pull` *download* data — they don't publish your local branch."
 
   - id: 22
     question: |
@@ -264,4 +264,4 @@ questions:
     distractors:
       - "git reset --hard HEAD~1"
       - "git commit -m 'Add forgotten file'"
-    explanation: "`git add forgotten.py` stages the missing file, and `git commit --amend --no-edit` rewrites the previous commit to include it while keeping the original message. `git reset --hard HEAD~1` would *destroy* the previous commit entirely. Creating a brand-new commit (`-m 'Add forgotten file'`) is valid but pollutes history with a fixup commit — amend is cleaner when the previous commit hasn't been pushed."
+    explanation: "**The correct order is add → amend --no-edit: stage the forgotten file, then fold it into the last commit without changing its message — reset --hard destroys the commit and a new commit pollutes history.** `git add forgotten.py` stages the missing file, and `git commit --amend --no-edit` rewrites the previous commit to include it while keeping the original message. `git reset --hard HEAD~1` would *destroy* the previous commit entirely. Creating a brand-new commit (`-m 'Add forgotten file'`) is valid but pollutes history with a fixup commit — amend is cleaner when the previous commit hasn't been pushed."
