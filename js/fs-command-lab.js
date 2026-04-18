@@ -342,26 +342,41 @@
     }
   }
 
-  // Measure the tallest tree among a list of states so we can lock the
-  // wrapper to that height — then switching states leaves surrounding
-  // content perfectly still (no snap up/down).
+  // Measure the tallest (tree + output) height across all states. Used to
+  // lock the tree wrapper's min-height so switching states never changes
+  // the page layout around the card. Combining tree and output into one
+  // measurement lets the output sit flush against the tree with no gap
+  // while still holding a single stable outer height.
   function measureMaxTreeHeight(states) {
     if (!states.length) return 0;
-    var tempDiv = document.createElement('div');
-    tempDiv.style.cssText =
+    var tempTree = document.createElement('div');
+    tempTree.style.cssText =
       'position: absolute; left: -9999px; top: -9999px; ' +
       'visibility: hidden; width: auto; height: auto;';
-    document.body.appendChild(tempDiv);
+    document.body.appendChild(tempTree);
+
+    var tempOut = document.createElement('pre');
+    tempOut.className = 'fs-command-lab__output fs-command-lab__output--visible';
+    tempOut.style.cssText =
+      'position: absolute; left: -9999px; top: -9999px; ' +
+      'visibility: hidden; max-height: none; opacity: 1;';
+    document.body.appendChild(tempOut);
+
     var maxH = 0;
     try {
       states.forEach(function (state) {
         if (!state) return;
-        window.UMLFolderTreeDiagram.render(tempDiv, buildTreeText(state));
-        var h = tempDiv.offsetHeight;
+        window.UMLFolderTreeDiagram.render(tempTree, buildTreeText(state));
+        var h = tempTree.offsetHeight;
+        if (state.output) {
+          tempOut.textContent = state.output;
+          h += tempOut.offsetHeight;
+        }
         if (h > maxH) maxH = h;
       });
     } finally {
-      if (tempDiv.parentNode) tempDiv.parentNode.removeChild(tempDiv);
+      if (tempTree.parentNode) tempTree.parentNode.removeChild(tempTree);
+      if (tempOut.parentNode) tempOut.parentNode.removeChild(tempOut);
     }
     return maxH;
   }
@@ -411,9 +426,8 @@
     treeWrap.className = 'fs-command-lab__tree';
     action.appendChild(treeWrap);
 
-    var output = document.createElement('pre');
-    output.className = 'fs-command-lab__output';
-    action.appendChild(output);
+    var maxH = measureMaxTreeHeight([spec.before, spec.after]);
+    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
 
     // Lock wrapper to the taller of before/after so toggling doesn't shift
     // the page above or below.
@@ -421,6 +435,14 @@
     if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
 
     var animator = TreeAnimator(treeWrap);
+
+    // Output lives inside the tree wrapper, after the slots, so it sits
+    // flush against the tree (no flex gap between them) and stays within
+    // the wrapper's locked min-height.
+    var output = document.createElement('pre');
+    output.className = 'fs-command-lab__output';
+    treeWrap.appendChild(output);
+
     animator.render(buildTreeText(spec.before));
     renderOutputInto(output, spec.before && spec.before.output);
 
@@ -589,9 +611,13 @@
     treeWrap.className = 'fs-command-lab__tree';
     action.appendChild(treeWrap);
 
-    var output = document.createElement('pre');
-    output.className = 'fs-command-lab__output';
-    action.appendChild(output);
+    // Lock wrapper height to the tallest state in the walkthrough so walking
+    // the sequence doesn't shift surrounding content as the tree grows and
+    // shrinks.
+    var allStates = [spec.initialState];
+    for (var si0 = 0; si0 < steps.length; si0++) allStates.push(steps[si0].state);
+    var maxH = measureMaxTreeHeight(allStates);
+    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
 
     // Lock wrapper height to the tallest state in the walkthrough so walking
     // the sequence doesn't shift surrounding content as the tree grows and
@@ -602,6 +628,12 @@
     if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
 
     var animator = TreeAnimator(treeWrap);
+
+    // Output lives inside the tree wrapper, after the slots, so it sits
+    // flush against the tree rather than being separated by flex gap.
+    var output = document.createElement('pre');
+    output.className = 'fs-command-lab__output';
+    treeWrap.appendChild(output);
 
     // Print section: all steps pre-rendered as static folder trees. Hidden on
     // screen; revealed via @media print.

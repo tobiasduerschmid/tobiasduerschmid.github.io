@@ -1869,6 +1869,13 @@
         }
 
         if (reusedEntry) {
+          // Capture the entry's pre-update zone + status so the FLIP step
+          // later knows whether the row "actually changed" (zone swap or
+          // status change) vs. merely shifted because siblings were
+          // added/removed above it. Unchanged rows must not animate.
+          reusedEntry._prevZone = reusedEntry.zone;
+          reusedEntry._prevStatus = reusedEntry.status;
+          reusedEntry._isFresh = false;
           self._updateWorkbenchRow(reusedEntry, d);
           newRowEls[d.key] = reusedEntry;
           if (reusedEntry.el.parentNode !== zoneContainer) {
@@ -1879,6 +1886,7 @@
           }
         } else {
           var fresh = self._createWorkbenchRow(d);
+          fresh._isFresh = true;
           zoneContainer.appendChild(fresh.el);
           newRowEls[d.key] = fresh;
         }
@@ -1904,15 +1912,23 @@
 
     this._workbenchRowEls = newRowEls;
 
-    // Step 5: FLIP animation — compute deltas for surviving rows and tween
-    // them from their old positions to their new positions using a CSS
-    // keyframe that reads the per-row `--fx`/`--fy` custom properties. CSS
-    // keyframe animations tick reliably from document-time so this works
-    // even in headless/throttled tabs where rAF may be starved.
+    // Step 5: FLIP animation — ONLY for rows that actually changed (zone
+    // swap or status change). Rows whose zone + status stayed the same are
+    // left alone even if their absolute position shifted because siblings
+    // were added/removed above them; they snap to their new layout spot
+    // without a glow or slide. This matches the user expectation that a
+    // quiet row stays quiet.
     for (var surviveKey in newRowEls) {
       if (!newRowEls.hasOwnProperty(surviveKey)) continue;
       (function (entry) {
         entry._claimed = false;
+        // Fresh rows already have the .entering animation from
+        // _createWorkbenchRow — don't also FLIP them.
+        if (entry._isFresh) return;
+        // Reused rows that didn't change zone or status: skip animation.
+        var zoneChanged = entry._prevZone !== undefined && entry._prevZone !== entry.zone;
+        var statusChanged = entry._prevStatus !== undefined && entry._prevStatus !== entry.status;
+        if (!zoneChanged && !statusChanged) return;
         var prior = oldRects[surviveKey];
         if (!prior) {
           for (var okey in oldRects) {
@@ -1926,12 +1942,27 @@
         var newRect = entry.el.getBoundingClientRect();
         var dx = prior.left - newRect.left;
         var dy = prior.top - newRect.top;
-        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+          // Status changed but position didn't (rare) — fire a burst without
+          // the slide so the change is still perceptible.
+          entry.el.classList.add('git-workbench-row-burst');
+          setTimeout(function () { entry.el.classList.remove('git-workbench-row-burst'); }, 800);
+          return;
+        }
         var el = entry.el;
         // Yellow-burst flash to signal the zone change, matching the
         // git-graph's own commit-burst vocabulary.
+        // Cancel any in-flight cleanup from a previous FLIP so the next
+        // scheduled removal doesn't yank --fx/--fy out mid-animation of this
+        // new transition — that would collapse the keyframe's `from` to the
+        // fallback 0 and make the animation start at the new position.
+        if (el._flipBurstTimer) clearTimeout(el._flipBurstTimer);
+        if (el._flipCleanupTimer) clearTimeout(el._flipCleanupTimer);
         el.classList.add('git-workbench-row-burst');
-        setTimeout(function () { el.classList.remove('git-workbench-row-burst'); }, 800);
+        el._flipBurstTimer = setTimeout(function () {
+          el.classList.remove('git-workbench-row-burst');
+          el._flipBurstTimer = null;
+        }, 800);
         // Feed dx/dy to the CSS keyframe via custom properties, then toggle
         // the .git-workbench-row-flip class to (re)trigger the animation.
         el.style.setProperty('--fx', dx + 'px');
@@ -1944,10 +1975,11 @@
         el.offsetWidth;
         /* eslint-enable no-unused-expressions */
         el.classList.add('git-workbench-row-flip');
-        setTimeout(function () {
+        el._flipCleanupTimer = setTimeout(function () {
           el.classList.remove('git-workbench-row-flip');
           el.style.removeProperty('--fx');
           el.style.removeProperty('--fy');
+          el._flipCleanupTimer = null;
         }, 760);
       })(newRowEls[surviveKey]);
     }

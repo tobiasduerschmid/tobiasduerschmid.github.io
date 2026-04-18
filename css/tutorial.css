@@ -574,7 +574,15 @@ html:not(.dark-mode) .tvm-left-tab.active {
 }
 html.dark-mode .tvm-git-graph-container {
   --git-graph-text: #ffffff;
-  --git-graph-bg: #1a1a2e;
+  --git-graph-bg: #000000;
+  background: #000000;
+}
+
+/* Branch label fill is 22% opacity — invisible on pure black. Boost to 60%
+   and thicken the stroke so labels are readable against the dark background. */
+html.dark-mode .tvm-git-graph-container .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-label-bg + path {
+  fill-opacity: 0.60;
+  stroke-width: 2;
 }
 
 /* ── Light mode overrides for git graph ── */

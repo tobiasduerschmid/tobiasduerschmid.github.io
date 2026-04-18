@@ -171,6 +171,10 @@
              git-graph-pulse 2s ease-in-out infinite 900ms;
 }
 
+html.dark-mode .git-graph-svg .git-graph-head-glow {
+  stroke: #FFD100 !important;
+}
+
 /* Commit burst — yellow/white flash when a node is freshly created (any
    commit, not just merges). Fires during the entry scale animation so the
    commit appears in a little burst of light. */

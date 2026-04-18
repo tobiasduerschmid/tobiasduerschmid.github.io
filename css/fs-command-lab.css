@@ -84,6 +84,20 @@ html.dark-mode .fs-command-lab .uml-folder-tree-diagram-container svg {
   filter: none !important;
 }
 
+/* When the yellow glow fires on a cd/annotation row, the italic annotation
+   text ("← (you are here)", "← submodule @ ...") sits inside a bright halo
+   and can get washed out in dark mode. A dark outline painted *behind* the
+   fill keeps the letterforms readable regardless of halo intensity.
+   Selecting on `font-style="italic"` matches UMLFolderTreeDiagram's
+   annotation texts without affecting the row-name text. */
+html.dark-mode .fs-command-lab text[font-style="italic"] {
+  paint-order: stroke fill;
+  stroke: #0d1117;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
 /* ----- Terminal output area ----- */
 .fs-command-lab__output {
   margin: 0;
@@ -99,12 +113,11 @@ html.dark-mode .fs-command-lab .uml-folder-tree-diagram-container svg {
   opacity: 0;
   max-height: 0;
   overflow: hidden;
-  transition: opacity 240ms ease, max-height 240ms ease, padding 240ms ease, margin-top 240ms ease;
+  transition: opacity 240ms ease, max-height 240ms ease, padding 240ms ease;
 }
 .fs-command-lab__output--visible {
   opacity: 1;
   max-height: 260px;
-  margin-top: 6px;
   padding: 8px 12px;
 }
 html.dark-mode .fs-command-lab__output {
