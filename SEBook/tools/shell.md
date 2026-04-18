@@ -52,6 +52,165 @@ These are the foundational tools for interacting with the POSIX filesystem:
 * **`rmdir`**: Remove empty directories (only works on empty ones).
 * **`touch`**: Create an empty file or update timestamps.
 
+#### Each command, one click
+
+Play each card to see the command's effect; click again to undo. The descriptions call out the flags you'll reach for most often.
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "ls -la",
+  "description": "Lists directory contents. **`-l`** switches to the long format (permissions, owner, size, mtime). **`-a`** includes hidden entries — anything starting with `.`. **`-h`** prints sizes as `1.2K` / `4.3M` instead of raw bytes. Plain `ls` gives you just the visible names.",
+  "before": {
+    "tree": "project/\n  .env\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  .env\n  README.md\n  src/\n    app.js",
+    "cwd": "project",
+    "output": "total 16\ndrwxr-xr-x  4 user user  128 Apr 18 09:10 .\ndrwxr-xr-x  3 user user   96 Apr 18 09:00 ..\n-rw-------  1 user user   42 Apr 18 09:05 .env\n-rw-r--r--  1 user user  980 Apr 18 09:08 README.md\ndrwxr-xr-x  3 user user   96 Apr 18 09:10 src"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "cd src",
+  "description": "Changes the current working directory. A relative name like `src` is resolved from the cwd. **`..`** goes up to the parent. **`~`** jumps to your home directory. **`-`** (a single dash) returns to the previous cwd. The change only affects the current shell session — subshells don't inherit it.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+    "cwd": "project/src"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "pwd",
+  "description": "Prints the absolute path of the current working directory. **`-L`** (the default) keeps symlink names in the path as-is. **`-P`** resolves symlinks to the real, physical path. Useful to sanity-check *where* you are before running destructive commands.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project/src"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project/src",
+    "output": "/home/user/project/src"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "mkdir -p docs/api",
+  "description": "Creates a new directory. **`-p`** creates any missing parents *and* stays silent if the directory already exists — the safe, idempotent form used in scripts. **`-m 755`** sets the permission mode at creation time. Without `-p`, every parent must already exist or `mkdir` errors out.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  docs/\n    api/\n  src/\n    app.js",
+    "cwd": "project"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "cp -r src/ backup/",
+  "description": "Copies a file or directory. **`-r`** (or `-R`) is mandatory for directories — it recursively copies everything inside. **`-i`** prompts before overwriting an existing destination. **`-n`** never overwrites. **`-v`** prints every copied path. The source is preserved; this is duplication, not a move.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  backup/\n    app.js\n    utils.js\n  src/\n    app.js\n    utils.js",
+    "cwd": "project"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "mv notes.txt archive/",
+  "description": "Moves or renames. If the destination is an existing directory (like `archive/`), the source is moved *into* it. If the destination is a new name, the source is renamed. **`-i`** prompts before overwriting; **`-n`** refuses to overwrite. Unlike `cp`, no `-r` is needed — `mv` handles directories natively.",
+  "before": {
+    "tree": "project/\n  README.md\n  notes.txt\n  archive/",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  archive/\n    notes.txt",
+    "cwd": "project"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "rm -rf tmp/",
+  "description": "Removes files. **`-r`** recurses into directories and deletes their contents. **`-f`** forces removal: no prompts, no errors for missing files. **`-i`** is the opposite — prompts for every file (safest). There is **no trash can**: once `rm` finishes, the files are gone. Double-check your path before pressing Enter.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js\n  tmp/\n    cache.db\n    logs/\n      build.log",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "rmdir build/",
+  "description": "Removes *only empty* directories. If `build/` still contains files or subdirectories, `rmdir` refuses and errors out — far safer than `rm -r` when you just want to clean up a leftover empty folder. **`-p`** also removes parent directories that become empty as a side-effect.",
+  "before": {
+    "tree": "project/\n  README.md\n  build/\n  src/\n    app.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  }
+}
+</script>
+</div>
+
+<div data-fs-command-lab>
+<script type="application/json">
+{
+  "command": "touch .env",
+  "description": "Creates an empty file if it doesn't exist, or updates the access/modification timestamps of an existing file. **`-a`** updates only the access time; **`-m`** only the modification time. **`-d \"2024-01-01\"`** (or **`-t`**) sets a specific timestamp — useful for reproducible builds and tricking `make` into re-running a target.",
+  "before": {
+    "tree": "project/\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  },
+  "after": {
+    "tree": "project/\n  .env\n  README.md\n  src/\n    app.js",
+    "cwd": "project"
+  }
+}
+</script>
+</div>
+
 #### Walkthrough: file handling in action
 
 Step through a realistic session to see each command's effect on the directory tree. New or changed rows get a yellow burst; the `(you are here)` marker tracks the current working directory.

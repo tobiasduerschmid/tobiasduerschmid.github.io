@@ -281,7 +281,6 @@
     var other = slotB;
     var initialized = false;
     var previousText = null;
-    var heightReleaseTimer = null;
 
     function renderInitial(text) {
       window.UMLFolderTreeDiagram.render(current, text);
@@ -296,33 +295,14 @@
       var changed = computeChangedIndices(previousText, text);
       applyRowBursts(other, changed);
 
-      // Measure heights. For the incoming slot we temporarily reposition it
-      // so layout flow reflects its real height.
-      var prevStyle = other.style.cssText;
-      other.style.cssText = 'position: relative; opacity: 0; transform: none; visibility: hidden;';
-      var newH = other.offsetHeight;
-      other.style.cssText = prevStyle;
-
-      var oldH = current.offsetHeight || newH;
-
-      // Lock wrapper height at current, then animate to new height in sync
-      // with the crossfade.
-      wrapper.style.height = oldH + 'px';
-      // Force reflow so the height transition actually runs.
-      void wrapper.offsetHeight;
-
+      // Swap which slot contributes to layout height. We do NOT lock or
+      // animate the wrapper's height — the tree stays steady; content below
+      // it snaps rather than slides.
       current.classList.remove('fs-command-lab__tree-slot--active');
       other.classList.add('fs-command-lab__tree-slot--active');
-      wrapper.style.height = newH + 'px';
 
       var tmp = current; current = other; other = tmp;
       previousText = text;
-
-      if (heightReleaseTimer) clearTimeout(heightReleaseTimer);
-      heightReleaseTimer = setTimeout(function () {
-        wrapper.style.height = '';
-        heightReleaseTimer = null;
-      }, 420);
     }
 
     return {
@@ -395,19 +375,9 @@
     btn.appendChild(cmdEl);
     action.appendChild(btn);
 
-    var trees = document.createElement('div');
-    trees.className = 'fs-command-lab__trees';
-    action.appendChild(trees);
-
     var treeWrap = document.createElement('div');
     treeWrap.className = 'fs-command-lab__tree';
-    treeWrap.setAttribute('data-state-label', 'Before');
-    trees.appendChild(treeWrap);
-
-    var afterHost = document.createElement('div');
-    afterHost.className = 'fs-command-lab__tree-after';
-    afterHost.setAttribute('data-state-label', 'After');
-    trees.appendChild(afterHost);
+    action.appendChild(treeWrap);
 
     var output = document.createElement('pre');
     output.className = 'fs-command-lab__output';
@@ -416,9 +386,6 @@
     var animator = TreeAnimator(treeWrap);
     animator.render(buildTreeText(spec.before));
     renderOutputInto(output, spec.before && spec.before.output);
-
-    // Pre-render the "after" state into the print-only slot.
-    window.UMLFolderTreeDiagram.render(afterHost, buildTreeText(spec.after));
 
     var applied = false;
     function update() {

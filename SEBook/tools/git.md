@@ -274,6 +274,74 @@ A **branch** in Git is just a **lightweight pointer** to a commit — literally 
 </script>
 </div>
 
+Where a commit lands depends entirely on where `HEAD` is pointing when you run `git commit`. A very common mistake is running `git branch <name>` and then immediately starting work — `git branch` creates the pointer but leaves `HEAD` on the current branch, so all new commits continue landing there. The two labs below show this side-by-side.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "**Common mistake: `git branch` without switching.** `git branch feature` creates the pointer but does **not** move `HEAD` — commits keep landing on `main`.\n\nWatch `HEAD` carefully: it never leaves `main`.",
+  "initialState": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "steps": [
+    {
+      "command": "git branch feature",
+      "description": "`git branch feature` creates a new branch pointer at the current commit. **`HEAD` does not move** — it still points to `main`.\n\nBoth pointers reference the same commit, but you are still on `main`.",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main, feature\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git commit -m \"Add feature work\"",
+      "description": "Commit **C** lands on `main` — not on `feature` — because `HEAD` was still pointing at `main`.\n\n`feature` is left behind at B. This is the classic mistake: you did the work on the wrong branch.",
+      "state": {
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature work|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|feature\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main"
+      }
+    }
+  ]
+}
+</script>
+</div>
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "**Correct approach: switch first, then commit.** `git switch feature` moves `HEAD` onto the branch before you start working. Commits then land exactly where you intended.",
+  "initialState": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main, feature\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "steps": [
+    {
+      "command": "git switch feature",
+      "description": "`git switch feature` moves `HEAD` to point at `feature`. From this point on, commits will advance `feature`, not `main`.",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> feature, main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main\n* feature",
+        "head": "refs/heads/feature"
+      }
+    },
+    {
+      "command": "git commit -m \"Add feature work\"",
+      "description": "Commit **C** correctly lands on `feature`. `main` stays behind at B, untouched — exactly the isolation branches are designed for.",
+      "state": {
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature work|HEAD -> feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main\n* feature",
+        "head": "refs/heads/feature"
+      }
+    }
+  ]
+}
+</script>
+</div>
+
 ### Detached HEAD
 
 If you point `HEAD` directly at a commit hash instead of a branch (for example, to inspect an older version with `git switch --detach <commit>`), you are in **detached HEAD** state. Any commits made here are not anchored to a branch and are easy to lose when switching away — always create a branch with `git switch -c <name>` before leaving a detached HEAD if you have new work. `git reflog` can recover the hashes if you forget.
@@ -322,27 +390,6 @@ Once work has happened in parallel on two branches, you eventually want to bring
 </script>
 </div>
 
-### Forcing a Merge Commit: `--no-ff`
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git merge --no-ff feature",
-  "description": "**Forces a merge commit** even though a fast-forward would have worked. The result **M** has two parents: the previous `main` tip (B) and the `feature` tip (D).\n\nThe extra commit looks redundant but preserves a visible trace that a feature branch was integrated \u2014 handy when reviewing history to see *which commits belonged to which feature*.",
-  "before": {
-    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main\n  feature",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 D000000000000000000000000000000000000000|Merge branch 'feature'|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main\n  feature",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
-
 ### Three-Way Merge
 
 <div data-git-command-lab>
@@ -364,9 +411,30 @@ Once work has happened in parallel on two branches, you eventually want to bring
 </script>
 </div>
 
+### Forcing a Merge Commit: `--no-ff`
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git merge --no-ff feature",
+  "description": "**Forces a merge commit** even though a fast-forward would have worked. The result **M** has two parents: the previous `main` tip (B) and the `feature` tip (D).\n\nThe extra commit looks redundant but preserves a visible trace that a feature branch was integrated \u2014 handy when reviewing history to see *which commits belonged to which feature*.",
+  "before": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 D000000000000000000000000000000000000000|Merge branch 'feature'|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
 ### Merge Conflicts
 
-When Git cannot automatically reconcile differences (usually because the same lines were changed in both branches), it marks the conflicting sections in the file:
+When Git cannot automatically reconcile differences (usually because the same lines were changed in both branches), it marks the conflicting sections in the file with conflict markers:
 
 ```
 <<<<<<< HEAD
@@ -376,7 +444,88 @@ incoming branch version
 >>>>>>> feature-branch
 ```
 
-Resolve by editing the file to keep the correct content (removing all markers), then `git add` the resolved file and `git commit` to complete the merge. Use `git merge --abort` to cancel a merge in progress and return to the pre-merge state.
+The full resolution sequence is: edit the conflicting file to remove all markers and keep the correct content, stage it with `git add`, then finalise with `git commit`. Use `git merge --abort` to cancel a merge in progress and return to the pre-merge state.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "**Resolving a merge conflict step by step.** When `git merge` cannot automatically reconcile changes it pauses and leaves conflict markers in the affected files. The graph does not change until you complete or abort the merge.",
+  "initialState": {
+    "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [],
+      "staged": [],
+      "stashed": []
+    }
+  },
+  "steps": [
+    {
+      "command": "git merge feature",
+      "description": "Both branches edited the same lines in `greeting.txt`. Git cannot decide which version to keep, so it **pauses the merge** and injects conflict markers into the file.\n\n`greeting.txt` appears as `unstaged` (modified with conflicts) — Git will not let you commit until every conflict is resolved.",
+      "state": {
+        "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [{"status": "both modified", "path": "greeting.txt"}],
+          "staged": [],
+          "stashed": []
+        }
+      }
+    },
+    {
+      "command": "manual edits to greeting.txt",
+      "description": "Open `greeting.txt` and remove the conflict markers, keeping the content you want:\n\n```\n<<<<<<< HEAD\nHello, world! (hotfix)\n=======\nHi there! (feature)\n>>>>>>> feature\n```\n\nAfter editing, the file is clean but still shows as `unstaged` — not yet staged for the merge commit.",
+      "state": {
+        "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [{"status": "modified", "path": "greeting.txt"}],
+          "staged": [],
+          "stashed": []
+        }
+      }
+    },
+    {
+      "command": "git add greeting.txt",
+      "description": "`git add` marks the conflict in `greeting.txt` as **resolved** and moves it to the staging area.\n\nIf there were multiple conflicting files you would repeat this for each one before moving on.",
+      "state": {
+        "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [],
+          "staged": [{"status": "modified", "path": "greeting.txt"}],
+          "stashed": []
+        }
+      }
+    },
+    {
+      "command": "git commit",
+      "description": "With all conflicts staged, `git commit` finalises the merge by creating the merge commit **M** with two parents — one from each branch.\n\nThe graph now shows the classic diamond shape that marks a three-way merge.",
+      "state": {
+        "log": "M000000000000000000000000000000000000000|E000000000000000000000000000000000000000 D000000000000000000000000000000000000000|Merge branch 'feature'|HEAD -> main\nE000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main\n  feature",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [],
+          "staged": [],
+          "stashed": []
+        }
+      }
+    }
+  ]
+}
+</script>
+</div>
 
 # Reshaping History
 

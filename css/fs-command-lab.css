@@ -42,20 +42,10 @@
 }
 .fs-command-lab__action > .fs-command-lab__btn { align-self: flex-end; }
 
-.fs-command-lab__trees {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-self: stretch;
-}
-.fs-command-lab__trees > .fs-command-lab__tree { align-self: stretch; }
-.fs-command-lab__tree-after { display: none; }
-
 /* ----- Tree wrapper + crossfade slots ----- */
 .fs-command-lab__tree {
   position: relative;
   min-height: 40px;
-  transition: height 380ms cubic-bezier(.7,0,.3,1);
   overflow: visible;
 }
 .fs-command-lab__tree-slot {
@@ -123,31 +113,10 @@ html.dark-mode .fs-command-lab__output {
   .fs-command-lab__row { display: block !important; }
   .fs-command-lab__caption,
   .fs-command-lab__action { display: block !important; }
-  .fs-command-lab__trees {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 14px !important;
-    align-items: flex-start;
-  }
-  .fs-command-lab__trees > .fs-command-lab__tree,
-  .fs-command-lab__trees > .fs-command-lab__tree-after {
+  .fs-command-lab__tree {
     display: block !important;
-    flex: 1 1 0 !important;
-    min-width: 0 !important;
     position: static !important;
     height: auto !important;
-  }
-  .fs-command-lab__trees > .fs-command-lab__tree::before,
-  .fs-command-lab__trees > .fs-command-lab__tree-after::before {
-    content: attr(data-state-label);
-    display: block;
-    font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-    font-size: 10pt;
-    font-weight: 700;
-    color: #1f2d3d;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   /* In print, dump both slots stacked so all content is visible. */
   .fs-command-lab__tree-slot {
@@ -160,7 +129,7 @@ html.dark-mode .fs-command-lab__output {
     display: none !important;
   }
   .fs-command-lab__tree svg,
-  .fs-command-lab__tree-after svg { max-width: 100% !important; height: auto !important; }
+  .fs-command-lab__tree svg { max-width: 100% !important; height: auto !important; }
   .fs-command-lab__output {
     max-height: none !important;
     opacity: 1 !important;
