@@ -88,17 +88,29 @@
   }
   function mdToHtml(md) {
     if (!md) return '';
+    // Extract fenced ```code blocks``` first so their contents are not
+    // re-processed by the inline rules below. Each block is replaced by a
+    // placeholder token that we swap back in after paragraph splitting.
+    var codeBlocks = [];
+    md = md.replace(/```(?:[a-zA-Z0-9_-]*)?\n?([\s\S]*?)```/g, function (_, body) {
+      var esc = body.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      codeBlocks.push('<pre class="git-command-lab__code"><code>' + esc.replace(/\n$/, '') + '</code></pre>');
+      return '\u0000CODEBLOCK' + (codeBlocks.length - 1) + '\u0000';
+    });
     // Split on blank lines to paragraphs, but DON'T escape HTML because
     // descriptions may intentionally include tags. Authors who want literal
     // angle brackets can use HTML entities themselves.
     var paragraphs = md.split(/\n\s*\n/);
-    return paragraphs.map(function (para) {
+    var out = paragraphs.map(function (para) {
+      var m = para.match(/^\u0000CODEBLOCK(\d+)\u0000$/);
+      if (m) return codeBlocks[+m[1]];
       var html = para
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/\*([^*]+)\*/g, '<em>$1</em>');
       return '<p>' + html + '</p>';
     }).join('');
+    return out;
   }
 
   function makeCard(container, spec) {
