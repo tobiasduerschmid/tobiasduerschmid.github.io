@@ -1732,6 +1732,191 @@ Task o-- Priority
 @enduml
   </code></pre>
 
+  <h2>69. Element Colors — Class Diagram</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Plain
+class Highlighted #lightblue
+class Warning #FFEB3B
+class Error #FF9999
+class Success #99FF99
+class Service <<service>> #lightcoral
+Plain --> Highlighted
+Highlighted --> Warning
+Warning --> Error
+Error --> Success
+Service --> Plain
+@enduml
+  </code></pre>
+
+  <h2>70. Element Colors — State Machine</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Idle
+Idle #lightblue --> Processing #FFEB3B : start
+Processing --> Done #99FF99 : complete
+Processing --> Failed #FF9999 : error
+Failed --> Idle : reset
+Done --> [*]
+@enduml
+  </code></pre>
+
+  <h2>71. Element Colors — Sequence Diagram</h2>
+  <pre><code class="language-uml-sequence">
+@startuml
+participant Client #lightblue
+participant Gateway #FFEB3B
+participant Service #lightgreen
+participant Database #lightcoral
+Client -> Gateway : request
+Gateway -> Service : forward
+Service -> Database : query
+Database --> Service : result
+Service --> Gateway : response
+Gateway --> Client : reply
+@enduml
+  </code></pre>
+
+  <h2>72. Element Colors — Component Diagram</h2>
+  <pre><code class="language-uml-component">
+@startuml
+[Frontend] #lightblue
+[API Gateway] #FFEB3B
+[Auth Service] #lightgreen
+[Data Service] #lightcoral
+[Database] #pink
+[Frontend] --> [API Gateway]
+[API Gateway] --> [Auth Service]
+[API Gateway] --> [Data Service]
+[Data Service] --> [Database]
+@enduml
+  </code></pre>
+
+  <h2>73. Texture Overlays — Class Diagram</h2>
+  <pre><code class="language-uml-class">
+@startuml
+class Plain
+class Colour #lightblue
+class Hatched #lightblue hatched
+class Crosshatch #FFEB3B crosshatch
+class Dotted dotted
+class Grid #99FF99 grid
+class Striped #pink striped
+Plain --> Colour
+Colour --> Hatched
+Hatched --> Crosshatch
+Crosshatch --> Dotted
+Dotted --> Grid
+Grid --> Striped
+@enduml
+  </code></pre>
+
+  <h2>74. Texture Overlays — State Machine</h2>
+  <pre><code class="language-uml-state">
+@startuml
+[*] --> Draft
+Draft dotted --> Review #FFEB3B hatched : submit
+Review --> Approved #99FF99 grid : approve
+Review --> Rejected #FF9999 crosshatch : reject
+Rejected --> Draft striped : revise
+Approved --> [*]
+@enduml
+  </code></pre>
+
+  <h2>75. Texture Overlays — Component Diagram</h2>
+  <pre><code class="language-uml-component">
+@startuml
+[Legacy Module] #lightcoral hatched
+[Deprecated API] dotted
+[Active Service] #lightblue grid
+[New Module] #99FF99
+[Legacy Module] --> [Active Service]
+[Deprecated API] --> [Active Service]
+[Active Service] --> [New Module]
+@enduml
+  </code></pre>
+
+  <h2>76. Colors and Textures — Use Case Diagram</h2>
+  <pre><code class="language-uml-usecase">
+@startuml
+actor User #lightblue
+actor Admin #lightcoral
+usecase "Login" as UC1 #lightgreen
+usecase "View Dashboard" as UC2 #FFEB3B hatched
+usecase "Manage Users" as UC3 #pink crosshatch
+usecase "Generate Report" as UC4 dotted
+User --> UC1
+User --> UC2
+Admin --> UC1
+Admin --> UC3
+Admin --> UC4
+@enduml
+  </code></pre>
+
+  <h2>77. Colors and Textures — Deployment Diagram</h2>
+  <pre><code class="language-uml-deployment">
+@startuml
+node "Production" #lightgreen {
+  node WebServer #lightblue striped
+  node AppServer #FFEB3B grid
+}
+node "Staging" #FFEB3B hatched {
+  node StagingServer dotted
+}
+node "Database Cluster" #lightcoral crosshatch {
+  node Primary #99FF99
+  node Replica dotted
+}
+WebServer --> AppServer
+AppServer --> Primary
+Primary --> Replica
+@enduml
+  </code></pre>
+
+  <h2>78. Colors and Textures — Git Graph</h2>
+  <pre><code class="diagram-gitgraph">
+@startuml
+branch main:
+  A "Initial commit"
+  B "Add auth module"
+  C "Fix login bug" #FF9999
+  D "Release v1.0" #99FF99 hatched
+
+branch feature from B:
+  α "Start OAuth" #lightblue
+  β "Implement flow" #lightblue dotted
+  γ "Tests pass" #FFEB3B crosshatch
+
+branch hotfix from C:
+  h1 "Patch CVE" #FF9999 striped
+
+head main
+@enduml
+  </code></pre>
+
+  <h2>79. Colors and Textures — Folder Tree</h2>
+  <pre><code class="diagram-folder-tree">
+@startuml
+project-root/
+  src/ #lightblue
+    components/ #lightblue hatched
+      Button.tsx #99FF99
+      Modal.tsx #99FF99 dotted
+    utils/
+      auth.ts #FFEB3B
+      helpers.ts
+    deprecated/ #FF9999 crosshatch
+      oldApi.ts #FF9999 striped
+      legacyAuth.ts #FF9999 striped
+  tests/ #lightcoral grid
+    Button.test.tsx
+    auth.test.ts
+  README.md
+  package.json #FFEB3B
+@enduml
+  </code></pre>
+
+  <script src="/js/git-graph.js" defer></script>
   <script src="/js/ArchUML/uml-bundle.js" defer></script>
 </body>
 </html>

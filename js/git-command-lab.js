@@ -27,7 +27,35 @@
   'use strict';
 
   function buildState(s, filesOverride) {
-    return GitGraph.parseGitState(s.log, s.branches, s.head, filesOverride !== undefined ? filesOverride : s.files);
+    var state = GitGraph.parseGitState(s.log, s.branches, s.head, filesOverride !== undefined ? filesOverride : s.files);
+    if (s.highlights && state.commitMap) {
+      var textures = { hatched: 1, crosshatch: 1, dotted: 1, grid: 1, striped: 1 };
+      for (var hash in s.highlights) {
+        if (!s.highlights.hasOwnProperty(hash)) continue;
+        var cm = state.commitMap[hash];
+        if (!cm) continue;
+        var val = s.highlights[hash];
+        var col, sec;
+        if (val && typeof val === 'object') {
+          col = val.color || null;
+          sec = val.secondary || null;
+          if (val.texture) cm.texture = val.texture;
+        } else {
+          var parts = String(val).trim().split(/\s+/);
+          col = parts[0];
+          if (parts[1] && textures[parts[1]]) cm.texture = parts[1];
+        }
+        function normalizeColor(c) {
+          if (!c) return null;
+          // Named colors arrive as `#lightblue` — strip `#` so SVG fill is valid CSS.
+          return (c.charAt(0) === '#' && !/^#[0-9a-fA-F]{3,8}$/.test(c)) ? c.slice(1) : c;
+        }
+        if (col && !textures[col]) cm.highlight = normalizeColor(col);
+        else if (col && textures[col]) cm.texture = col;
+        if (sec) cm.highlightSecondary = normalizeColor(sec);
+      }
+    }
+    return state;
   }
 
   // Minimal markdown → HTML for lab-card descriptions. Supports **bold**,

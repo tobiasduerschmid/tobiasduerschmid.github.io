@@ -567,6 +567,27 @@
       '</marker></defs>';
   };
 
+  GitGraph.prototype._textureDefsMarkup = function () {
+    return '<defs>' +
+      '<pattern id="git-tx-hatched" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+        '<line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="1.4" stroke-opacity="0.35"/>' +
+      '</pattern>' +
+      '<pattern id="git-tx-crosshatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+        '<line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="1" stroke-opacity="0.35"/>' +
+        '<line x1="0" y1="0" x2="8" y2="0" stroke="#fff" stroke-width="1" stroke-opacity="0.35"/>' +
+      '</pattern>' +
+      '<pattern id="git-tx-dotted" width="6" height="6" patternUnits="userSpaceOnUse">' +
+        '<circle cx="3" cy="3" r="1.1" fill="#fff" fill-opacity="0.4"/>' +
+      '</pattern>' +
+      '<pattern id="git-tx-grid" width="9" height="9" patternUnits="userSpaceOnUse">' +
+        '<path d="M0 0 L9 0 M0 0 L0 9" stroke="#fff" stroke-width="0.7" stroke-opacity="0.35" fill="none"/>' +
+      '</pattern>' +
+      '<pattern id="git-tx-striped" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">' +
+        '<rect width="4" height="10" fill="#fff" fill-opacity="0.25"/>' +
+      '</pattern>' +
+      '</defs>';
+  };
+
   GitGraph.prototype._appendArrowDefs = function (svgRoot) {
     var defs = this._svgEl('defs');
     var marker = this._svgEl('marker', {
@@ -628,7 +649,7 @@
       'viewBox="0 0 ' + width + ' ' + height + '" ' +
       'class="git-graph-svg" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
 
-    svg += this._arrowDefsMarkup();
+    svg += this._arrowDefsMarkup() + this._textureDefsMarkup();
 
     // Draw edges first (behind nodes)
     svg += this._renderEdges(commits, data.commitMap);
@@ -1154,9 +1175,11 @@
       });
       g.appendChild(glow);
     }
+    var nodeColor = cm.highlight || cm.branchColor;
+    var nodeSecondary = cm.highlightSecondary || '#fff';
     var circle = this._svgEl('circle', {
       cx: 0, cy: 0, r: NODE_RADIUS,
-      fill: cm.branchColor, stroke: '#fff', 'stroke-width': 2.5,
+      fill: nodeColor, stroke: nodeSecondary, 'stroke-width': 2.5,
       'class': 'git-graph-node',
     });
     g.appendChild(circle);
@@ -1164,7 +1187,7 @@
     var hd = _hashDisplay(cm.shortHash);
     var hashText = this._svgEl('text', {
       x: 0, y: hd.dy, 'text-anchor': 'middle',
-      fill: '#fff', 'font-size': hd.fontSize, 'font-weight': 600,
+      fill: nodeSecondary, 'font-size': hd.fontSize, 'font-weight': 600,
       'class': 'git-graph-hash',
     });
     hashText.textContent = hd.text;
@@ -1197,10 +1220,17 @@
       entry.cx = cx;
       entry.cy = cy;
     }
-    if (entry.color !== cm.branchColor) {
-      entry.circle.setAttribute('fill', cm.branchColor);
-      if (entry.glow) entry.glow.setAttribute('stroke', cm.branchColor);
-      entry.color = cm.branchColor;
+    var nodeColor = cm.highlight || cm.branchColor;
+    var nodeSecondary = cm.highlightSecondary || '#fff';
+    if (entry.color !== nodeColor) {
+      entry.circle.setAttribute('fill', nodeColor);
+      if (entry.glow) entry.glow.setAttribute('stroke', nodeColor);
+      entry.color = nodeColor;
+    }
+    if (entry.secondary !== nodeSecondary) {
+      entry.circle.setAttribute('stroke', nodeSecondary);
+      entry.hashText.setAttribute('fill', nodeSecondary);
+      entry.secondary = nodeSecondary;
     }
     if (entry.message !== cm.message) {
       entry.msgText.textContent = this._truncate(cm.message, 50);
@@ -1544,7 +1574,7 @@
       var cm = commits[i];
       var cx = this._cx(cm.col);
       var cy = this._cy(cm.row);
-      var color = cm.branchColor;
+      var color = cm.highlight || cm.branchColor;
       var isHead = (head.hash === cm.hash);
 
       // Glow effect for HEAD
@@ -1555,12 +1585,19 @@
       }
 
       // Main node circle
+      var secondary = cm.highlightSecondary || '#fff';
       svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
-        'fill="' + color + '" stroke="#fff" stroke-width="2.5" class="git-graph-node"/>';
+        'fill="' + color + '" stroke="' + secondary + '" stroke-width="2.5" class="git-graph-node"/>';
+
+      // Texture overlay
+      if (cm.texture) {
+        svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
+          'fill="url(#git-tx-' + cm.texture + ')" stroke="none"/>';
+      }
 
       var hd = _hashDisplay(cm.shortHash);
       svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
-        'fill="#fff" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash">' +
+        'fill="' + secondary + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash">' +
         this._escapeXml(hd.text) + '</text>';
 
       var msgX = cx + NODE_RADIUS + 24;
