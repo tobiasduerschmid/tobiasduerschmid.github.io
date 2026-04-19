@@ -366,6 +366,9 @@ steps:
           var h1 = frame.contentDocument.querySelector('h1');
           assert(h1, 'Fix all JSX bugs so the component renders. No <h1> found yet.');
         hints:
+          - title: "Wrapped in a <div> — works, but try the Fragment"
+            text: "You wrapped the two siblings in a `<div>` — that fixes the syntax error, but adds an extra node to the DOM. The JSX rules table shows a *zero-overhead* wrapper that produces no extra element. What two characters form its opening tag?"
+            condition: "code_matches: return\\s*\\(\\s*\\n?\\s*<div"
           - text: "The component isn't rendering at all — that means there's a **syntax error** preventing React from building the component tree. Check: does the `App` function return a single root element?"
             condition: "code_missing: <>"
           - text: "You've added a Fragment — good. If it still doesn't render, check the **style** prop on the Badge component. JSX style requires a specific format."
@@ -385,6 +388,9 @@ steps:
           assert(spans.length >= 3,
             'Add a third <Badge> component. Currently found: ' + spans.length + ' span(s)');
         hints:
+          - title: "Lowercase component name — React treats it as HTML"
+            text: "You added `<badge ... />` (lowercase). React uses capitalisation to decide: **lowercase → HTML tag, capital → your component**. The browser has no `<badge>` tag, so React silently renders nothing. What is the component's exact name?"
+            condition: "code_matches: <badge\\s"
           - text: "You need to add one more `<Badge>` below the existing two. Look at how the first two are used — same component, different props."
             condition: "code_missing: Badge"
       - description: "Badge spans have a background color applied (style is an object, not a string)"
@@ -395,6 +401,12 @@ steps:
           assert(styled.length >= 2,
             'Fix the Badge style — use style={{background: color, ...}} (a JS object), not style="..." (a CSS string). Found ' + styled.length + ' styled span(s).');
         hints:
+          - title: "Single brace is a *value*, double brace is an *object*"
+            text: "You wrote `style={ background: color }` with a **single** pair of braces — JSX reads that as a JS expression containing a syntax error (that's not a valid expression). The pattern has **two** pairs: the outer one says 'here is an expression', the inner one says 'that expression is an object literal'. What does the correct syntax look like?"
+            condition: "code_matches: style=\\{\\s*background\\s*:"
+          - title: "`\"color\"` is the literal string, not the prop"
+            text: "Your style uses `background: \"color\"` — that would paint every badge the CSS colour named `color` (which isn't a real colour). The `color` in `Badge({ label, color })` is a *variable* — drop the quotes so JavaScript reads it as the prop value."
+            condition: "code_matches: background\\s*:\\s*['\"]color['\"]"
           - text: "The Badge's `style` prop is using an **HTML string** (`style=\"...\"`). In JSX, `style` takes a **JavaScript object**. What does the JSX rules table say about inline styles?"
             condition: "code_contains: style=\""
           - text: "You changed the style format — nice. Make sure `color` (the prop) is used as a **variable**, not as the literal string `\"color\"`. The outer `{}` is for JSX expressions, the inner `{}` is for the object literal."
@@ -674,6 +686,9 @@ steps:
           assert(names.some(function(n) { return n.includes('Keyboard'); }),
             '<h3> should display the product name. Got: ' + JSON.stringify(names));
         hints:
+          - title: "Literal `name` vs. the variable `{name}`"
+            text: "You wrote `<h3>name</h3>` — that renders the *word* \"name\", not the prop value. In JSX, how do you tell the renderer 'this is a JavaScript expression, evaluate it'?"
+            condition: "code_matches: <h3>\\s*name\\s*</h3>"
           - text: "You have an `<h3>` — good. But the product name isn't showing. Did you put `{name}` inside the `<h3>` tags? The curly braces tell JSX to evaluate a JavaScript expression."
             condition: "code_contains: <h3>"
       - description: "Price is displayed and formatted to two decimal places"
@@ -683,9 +698,13 @@ steps:
           assert(text.includes('129.99') || text.includes('$129.99'),
             'Display the price with .toFixed(2). Render it inside the card, e.g. <p>${price.toFixed(2)}</p>');
         hints:
+          - title: "Mutating props is forbidden"
+            text: "You wrote something like `price = price.toFixed(2)` inside the component. Props are **read-only** — reassigning `price` inside `ProductCard` doesn't change what the parent sees, but it *does* confuse future readers. Compute the formatted value without mutating the prop."
+            condition: "code_matches: \\bprice\\s*=\\s*price\\.toFixed"
           - text: "Add a `<p>` tag for the price. To format to 2 decimal places, call a **method** on the `price` variable — what Number method formats decimals?"
             condition: "code_missing: toFixed"
-          - text: "You're using `toFixed` — good. Make sure you have `$` before the expression and that the whole thing is wrapped in `{}` for JSX: `${price.toFixed(2)}`."
+          - title: "Don't forget the `$` in front of the number"
+            text: "You're using `toFixed` — good. But the expected output is `$129.99`, not just `129.99`. In JSX text, a literal `$` followed by `{expression}` renders the dollar sign and then the value. Check your `<p>` tag."
             condition: "code_contains: toFixed"
       - description: "'Sale!' badge appears for the keyboard (onSale=true) but not for the hub"
         command: |
@@ -697,6 +716,9 @@ steps:
           assert(saleBadges.length < 2,
             'The "Sale!" badge should only appear for products where onSale is true (the Keyboard), not for all products. Found ' + saleBadges.length + ' badges.');
         hints:
+          - title: "`if` statements don't fit inside JSX expressions"
+            text: "You wrote something like `{ if (onSale) <Badge .../> }` — but JSX curly braces only accept **expressions** (things that produce a value), not **statements** like `if`. Re-read the 'Conditional Rendering with `&&`' section — what operator produces a value without a full `if` block?"
+            condition: "code_matches: \\{\\s*if\\s*\\("
           - text: "You need to **conditionally** render a Badge. Re-read the `&&` pattern in the **Conditional Rendering** section above — it shows how to render something only when a boolean is `true`."
             condition: "code_missing: &&"
           - text: "You're using `&&` — good. Make sure the left side is the `onSale` prop, and the right side is a `<Badge>` component with the text 'Sale!'."
@@ -1015,8 +1037,15 @@ steps:
         hints:
           - text: "The first fix is replacing `let count = 0`. React provides `React.useState(initialValue)` which returns a pair: `[currentValue, setterFunction]`. Re-read the **useState** section above for the syntax."
             condition: "code_missing: useState"
-          - text: "You've added `useState` — good. Now make sure the **click handler** calls the setter function (second item from the pair), not `count++` or `count = count + 1`."
-            condition: "code_contains: useState"
+          - title: "Destructuring: `[count, setCount]` — don't forget the brackets"
+            text: "You wrote `const state = React.useState(0)` — that puts the **pair** (an array) into `state`, so you'd have to write `state[0]` and `state[1]` everywhere. The idiomatic pattern destructures the pair into two named variables. What does `[count, setCount] = ...` do that `state = ...` doesn't?"
+            condition: "code_matches: const\\s+state\\s*=\\s*React\\.useState"
+          - title: "`count++` still won't re-render"
+            text: "You've added `useState` — good. But your click handler still does `count++` or `count = count + 1`. React only re-renders when you call the **setter function** (the second item in the destructured pair). What's the setter's name and what do you pass to it?"
+            condition: "code_matches: useState[\\s\\S]*count\\s*(\\+\\+|=\\s*count\\s*\\+\\s*1)"
+          - title: "`useState` inside an `if` violates the Rules of Hooks"
+            text: "You wrapped `useState` in an `if` block. React identifies hooks by call **order**, so every render must run the same hooks in the same sequence. Where should `useState` calls always live?"
+            condition: "code_matches: if\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*useState"
       - description: "The +1 button and a Reset button are both present"
         command: |
           var root = frame.contentDocument.getElementById('root');
@@ -1035,6 +1064,12 @@ steps:
           });
           assert(hasReset, 'Add a Reset button that sets count back to 0');
         hints:
+          - title: "HTML `onclick` is silently ignored in JSX"
+            text: "You wrote `onclick={...}` (lowercase). JSX uses **camelCase** for event handlers. The `onclick` attribute is passed as an unknown HTML attribute and does nothing. What is the exact capitalisation React expects?"
+            condition: "code_matches: <button[\\s\\S]*?\\bonclick\\s*="
+          - title: "`setFilter(...)` with parentheses is called on render"
+            text: "Your Reset button uses `onClick={setCount(0)}` — the parentheses mean you are **calling** `setCount(0)` during render, not passing a function. This causes an infinite re-render loop. How do you pass a function that calls `setCount(0)` only on click?"
+            condition: "code_matches: onClick=\\{\\s*setCount\\s*\\(\\s*0\\s*\\)\\s*\\}"
           - text: "Add a button with the text **Reset**. Its `onClick` should call the setter with the initial value — what value did you pass to `useState(...)` at the top?"
             condition: "code_missing: Reset"
       - description: "A decrement (−1) button exists"
@@ -1301,6 +1336,12 @@ steps:
           assert(code.includes('.map('),
             'Use .map() to render the tasks array into JSX elements');
         hints:
+          - title: "`for` loops don't work inside JSX"
+            text: "You tried a `for` loop inside the JSX — but JSX curly braces only accept **expressions** (things that evaluate to a value), not statements. Which array method returns a new array of JSX elements (the expression JSX can render)?"
+            condition: "code_matches: \\{\\s*for\\s*\\("
+          - title: "`.forEach` returns `undefined`"
+            text: "`tasks.forEach(...)` executes the callback but returns `undefined` — React renders nothing for it. The sibling method that *returns a new array* is the one you need. What's it called?"
+            condition: "code_matches: tasks\\.forEach\\s*\\("
           - text: "Replace the placeholder `<ListGroup.Item>` with a `.map()` call on the `tasks` array. The pattern is: `{tasks.map(task => <ListGroup.Item>...</ListGroup.Item>)}`."
             condition: "code_missing: .map("
           - text: "You're using `.map()` — good. Make sure each `<ListGroup.Item>` has a `key` prop set to `task.id`, not the array index."
@@ -1312,6 +1353,9 @@ steps:
           assert(items.length === 6,
             'Render all 6 tasks using .map(). Found ' + items.length + ' list items');
         hints:
+          - title: "Arrow body with `{...}` needs an explicit `return`"
+            text: "If your map callback uses curly-brace bodies — `tasks.map(task => { <ListGroup.Item>...</ListGroup.Item> })` — JavaScript does **not** auto-return. Either add `return` or drop the braces and use parentheses: `task => (<ListGroup.Item>...</ListGroup.Item>)`."
+            condition: "code_matches: \\.map\\s*\\(\\s*\\w+\\s*=>\\s*\\{\\s*<"
           - text: "Not all 6 tasks are rendering. Check that your `.map()` is inside the `<ListGroup>` tags and that you haven't accidentally filtered the array."
             condition: "code_contains: .map("
       - description: "Done/undone status is shown (✓ or ✗ or similar)"
@@ -1325,6 +1369,9 @@ steps:
           assert(hasDoneIndicator,
             'Show a done/undone indicator inside each list item (e.g. ✓ or ✗ using a ternary). First item text: ' + firstItemText.slice(0, 60));
         hints:
+          - title: "`if` statements can't live inside JSX braces"
+            text: "You tried `{if (task.done) '✓' else '✗'}` — but `if` is a *statement*, not an *expression*. JSX braces only accept expressions. What shorter operator evaluates a condition and produces one of two values?"
+            condition: "code_matches: \\{\\s*if\\s*\\(task\\.done"
           - text: "Inside each `<ListGroup.Item>`, use a **ternary operator** to show different text based on `task.done`. The ternary pattern is: `{condition ? valueIfTrue : valueIfFalse}`."
             condition: "code_missing: ?"
 
@@ -1607,6 +1654,9 @@ steps:
           assert(labels.some(function(l) { return l.includes('done') || l.includes('complet'); }),
             'Add a "Done" filter button inside the ButtonGroup');
         hints:
+          - title: "`onClick={setFilter('done')}` calls it during render"
+            text: "You wrote `onClick={setFilter('done')}` — the parentheses mean this runs **during render**, not on click. That triggers an infinite re-render. Wrap the call in an arrow function so it only runs when the user clicks. What does the arrow-wrapped version look like?"
+            condition: "code_matches: onClick=\\{\\s*setFilter\\s*\\(\\s*['\"]"
           - text: "Add three `<Button>` components inside the `<ButtonGroup>`. Each needs an `onClick` that calls `setFilter()` with the appropriate string — `'all'`, `'active'`, or `'done'`."
             condition: "code_missing: setFilter"
           - text: "You're calling `setFilter` — good. Make sure each button has visible text ('All', 'Active', 'Done') between its opening and closing tags."
@@ -1627,6 +1677,12 @@ steps:
             }, 400);
           });
         hints:
+          - title: "Anti-pattern: filtered list stored in state"
+            text: "If you added a second `useState` for `visibleTasks`, you now have two sources of truth that can drift. Re-read the 'Derived State Principle' box: store only the minimal state (the filter *string*) and *derive* `visibleTasks` on every render. Why is one-source better?"
+            condition: "code_matches: useState[\\s\\S]*useState\\s*\\(\\s*initialTasks"
+          - title: "`==` with coercion still bites"
+            text: "You wrote `filter == 'done'` (single `=`). Works in this case, but the professional habit from Step 2 is the strict variant. Which operator is it?"
+            condition: "code_matches: filter\\s*==\\s*['\"]done['\"]"
           - text: "The list isn't filtering. Did you replace `const visibleTasks = initialTasks;` with a `.filter()` call that uses the `filter` state variable? Check that clicking the button actually changes `filter` via `setFilter`."
             condition: "code_missing: .filter("
           - text: "You're using `.filter()` — good. Make sure your filter logic checks `task.done`: when `filter === 'done'`, return only tasks where `task.done` is `true`."
@@ -1667,6 +1723,9 @@ steps:
             }, 400);
           });
         hints:
+          - title: "Hard-coded `variant=\"primary\"` always highlights"
+            text: "You wrote `variant=\"primary\"` for every button — now *all three* are highlighted regardless of which filter is active. The variant needs to depend on whether `filter` matches **this** button's value. What JS operator produces different values based on a condition?"
+            condition: "code_matches: variant=['\"]primary['\"]"
           - text: "The button isn't changing color. Use a **ternary** in the `variant` prop to switch between `'primary'` and `'outline-secondary'` based on whether `filter` matches that button's value."
             condition: "code_missing: ? 'primary'"
 
@@ -2098,6 +2157,9 @@ steps:
           assert(cards.length >= 4,
             'Render all user cards, each with an avatar image. Found: ' + cards.length + ' image(s)');
         hints:
+          - title: "Lowercase `<avatar />` becomes an unknown HTML tag"
+            text: "You used `<avatar ... />` or `<statBadge ... />` (lowercase first letter). React reads any lowercase tag as an HTML element — and no such element exists. What's the convention for component names?"
+            condition: "code_matches: <avatar\\s"
           - text: "Each `ProfileCard` should contain an `Avatar`, which renders an `<img>`. Make sure `Avatar` is used inside `ProfileCard` and that `ProfileCard` is rendered for each user via `.map()`."
             condition: "code_missing: Avatar"
           - text: "You're using `Avatar` — good. Check that the `Avatar` component's JSX includes an `<img>` tag with the `src` prop set to `avatarUrl`."
@@ -2122,6 +2184,9 @@ steps:
           assert(text.includes('fred-brooks') || text.includes('Fred Brooks'),
             'Display both usernames');
         hints:
+          - title: "Not destructured — `username` is `undefined`"
+            text: "Your `Avatar` function signature says `function Avatar(props)` (not `{ avatarUrl, username }`). Then writing `{username}` in the JSX reads a *local variable* called `username` that doesn't exist, giving `undefined`. Either destructure in the signature or access it as `props.username`."
+            condition: "code_matches: function\\s+Avatar\\s*\\(\\s*props\\s*\\)[\\s\\S]*\\{username\\}"
           - text: "The `Avatar` component receives a `username` prop. Make sure you render it somewhere in the component's JSX — try a `<span>` below the image."
             condition: "code_missing: username"
       - description: "Stats (repos, followers) are displayed"
@@ -2130,6 +2195,9 @@ steps:
           assert(text.includes('12') && text.includes('2048'),
             'Display repo and follower counts using StatBadge. Expected "12" and "2048" in the output.');
         hints:
+          - title: "`value=42` without braces isn't a number prop"
+            text: "You passed `<StatBadge label=\"Repos\" value={user.repos}>` — check each one. If you forgot the braces somewhere (`value=user.repos`), JSX treats it as a parse error or literal string. Numbers, variables, and expressions all need `{}`."
+            condition: "code_matches: <StatBadge[^/]*value=[^{\"']"
           - text: "Use `StatBadge` inside `ProfileCard` to display stats. Pass `label` and `value` as props, e.g. `<StatBadge label=\"Repos\" value={user.repos} />`."
             condition: "code_missing: StatBadge"
           - text: "You're using `StatBadge` — good. Make sure the `StatBadge` component renders both the `label` and `value` props in its JSX. Check that `value` uses curly braces: `{value}`."
@@ -2415,6 +2483,9 @@ steps:
           assert(code.includes('key=') || code.includes('key =' ),
             'Add key props to mapped elements');
         hints:
+          - title: "Array index is a fragile key"
+            text: "You used `key={index}` (or `key={i}`). Step 5 warned against this: if a user reorders or removes products, index-based keys confuse React's reconciler. Each product object has a unique, stable property — which one should you use?"
+            condition: "code_matches: key=\\{\\s*(index|i)\\s*\\}"
           - text: "Each mapped element needs a `key` prop. Use `product.id` — it's unique and stable. The pattern: `<ProductCard key={product.id} ... />`."
             condition: "code_missing: key="
       - description: "Prices are displayed"
@@ -2434,6 +2505,12 @@ steps:
           });
           assert(hasAdd, 'Add an "Add to Cart" button to each product card');
         hints:
+          - title: "Mutating state with `.push` won't re-render"
+            text: "If `cart.push(product)` does not update the visible count, remember: React uses **reference equality** to detect changes. `.push` mutates the existing array in place — the reference is unchanged, so React skips the re-render. How do you create a *new* array containing the old items plus the new product?"
+            condition: "code_matches: cart\\.push\\s*\\("
+          - title: "`onClick={addToCart(product)}` calls immediately"
+            text: "The click handler runs during render because of the parentheses. That calls `addToCart(product)` for every product card on *every* render — flooding the cart and often causing an infinite re-render loop. Wrap it in an arrow function so it fires only on click."
+            condition: "code_matches: onClick=\\{\\s*addToCart\\s*\\(\\s*product"
           - text: "Each product card needs a `<Button>` with text like 'Add to Cart'. Its `onClick` should call a function that adds the product to the cart state — think about which parent owns the cart."
             condition: "code_missing: Add to Cart"
       - description: "Category filter buttons exist"
@@ -2455,6 +2532,9 @@ steps:
           assert(code.includes('useState'),
             'Use React.useState for cart items and/or filter state');
         hints:
+          - title: "`let cart = []` resets on every render"
+            text: "You used a plain `let cart = []` at the top of the component — every render throws the old cart away. React only preserves values stored via `useState`. What hook gives `cart` persistent memory across re-renders?"
+            condition: "code_matches: let\\s+cart\\s*=\\s*\\["
           - text: "You need `useState` for at least two things: the **cart** (an array of products) and the **filter** (a string like 'All'). Where should these state variables live? (Hint: which component needs both?)"
             condition: "code_missing: useState"
       - description: "Uses at least 3 component functions"
@@ -2465,6 +2545,9 @@ steps:
           assert(total >= 3,
             'Define at least 3 components (e.g. ProductCard, CartSummary, FilterBar). Found: ' + total);
         hints:
+          - title: "Lowercase component names don't count as components"
+            text: "React (and the test) only counts **capitalised** function names as components. If you defined `function productCard(...)` or `const filterBar = ...`, the tag `<productCard />` would be parsed as an unknown HTML element. Capitalise the first letter."
+            condition: "code_matches: function\\s+[a-z]\\w*\\s*\\(\\s*\\{"
           - text: "Apply **Thinking in React**: break your UI into components. Each concern gets its own function — one for displaying a product, one for the cart summary, one for the filter bar. Component names must be **Capitalized**."
             condition: "code_contains: useState"
 
