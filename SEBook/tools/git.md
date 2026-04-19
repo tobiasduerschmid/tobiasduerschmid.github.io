@@ -397,7 +397,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 {
   "command": "git merge feature",
   "description": "**Three-way merge.** Both branches have commits the other doesn't: `main` added E; `feature` added C and D.\n\nGit compares both tips against their **common ancestor** (B) and creates a new merge commit **M** with *two parents* \u2014 one per branch.\n\nThe resulting diamond shape in the graph is the hallmark of a three-way merge.\n\n*The strategy name shown in the output is* `ort` *(default since Git 2.33, Aug 2021); older versions and Pro Git show `recursive` \u2014 the algorithm is equivalent for this case.*",
-  "output": "Merge made by the 'ort' strategy.\n greeting.txt | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)",
+  "output": "Merge made by the 'ort' strategy.\n src/app.py | 4 +++-\n 1 file changed, 3 insertions(+), 1 deletion(-)",
   "before": {
     "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature B|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature A|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main\n  feature",
@@ -465,7 +465,7 @@ The full resolution sequence is: edit the conflicting file to remove all markers
   "steps": [
     {
       "command": "git merge feature",
-      "description": "Both branches edited the same lines in `greeting.txt`. Git cannot decide which version to keep, so it **pauses the merge** and injects conflict markers into the file.\n\n`greeting.txt` appears as `unstaged` (modified with conflicts) — Git will not let you commit until every conflict is resolved.",
+      "description": "Both branches edited the same lines in `greeting.txt`. Git cannot decide which version to keep, so it **pauses the merge** and injects conflict markers into the file.\n\n`greeting.txt` now shows up with status **`unmerged`** (Git's own `git status` calls this *both modified* — it was modified on both sides of the merge). Git will not let you commit until every conflict is resolved.",
       "output": "Auto-merging greeting.txt\nCONFLICT (content): Merge conflict in greeting.txt\nAutomatic merge failed; fix conflicts and then commit the result.",
       "state": {
         "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
@@ -473,7 +473,7 @@ The full resolution sequence is: edit the conflicting file to remove all markers
         "head": "refs/heads/main",
         "files": {
           "untracked": [],
-          "unstaged": [{"status": "modified", "path": "greeting.txt"}],
+          "unstaged": [{"status": "unmerged", "path": "greeting.txt"}],
           "staged": [],
           "stashed": []
         }
@@ -481,14 +481,14 @@ The full resolution sequence is: edit the conflicting file to remove all markers
     },
     {
       "command": "manual edits to greeting.txt",
-      "description": "Open `greeting.txt` and remove the conflict markers, keeping the content you want:\n\n```\n<<<<<<< HEAD\nHello, world! (hotfix)\n=======\nHi there! (feature)\n>>>>>>> feature\n```\n\nAfter editing, the file is clean but still shows as `unstaged` — not yet staged for the merge commit.",
+      "description": "Open `greeting.txt` and remove the conflict markers, keeping the content you want:\n\n```\n<<<<<<< HEAD\nHello, world! (hotfix)\n=======\nHi there! (feature)\n>>>>>>> feature\n```\n\nEditing the file **does not clear the conflict flag** — `greeting.txt` still shows as `unmerged` and Git still refuses to commit. The conflict is officially marked resolved only when you `git add` the file in the next step.",
       "state": {
         "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "* main\n  feature",
         "head": "refs/heads/main",
         "files": {
           "untracked": [],
-          "unstaged": [{"status": "modified", "path": "greeting.txt"}],
+          "unstaged": [{"status": "unmerged", "path": "greeting.txt"}],
           "staged": [],
           "stashed": []
         }
@@ -496,7 +496,7 @@ The full resolution sequence is: edit the conflicting file to remove all markers
     },
     {
       "command": "git add greeting.txt",
-      "description": "`git add` marks the conflict in `greeting.txt` as **resolved** and moves it to the staging area.\n\nIf there were multiple conflicting files you would repeat this for each one before moving on.",
+      "description": "`git add` has a second job during a merge: it **clears the `unmerged` flag** and simultaneously stages the resolved content. `greeting.txt` moves from `unmerged` (unstaged) to `modified` (staged).\n\nIf multiple files conflicted you would repeat this for each one before moving on.",
       "state": {
         "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|HEAD -> main\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "* main\n  feature",
@@ -511,7 +511,8 @@ The full resolution sequence is: edit the conflicting file to remove all markers
     },
     {
       "command": "git commit",
-      "description": "With all conflicts staged, `git commit` finalises the merge by creating the merge commit **M** with two parents — one from each branch.\n\nThe graph now shows the classic diamond shape that marks a three-way merge.",
+      "description": "With all conflicts staged, `git commit` finalises the merge by creating the merge commit **M** with two parents — one from each branch. Because the staging area already holds the resolved content, Git just needs a message: it pre-fills one (`Merge branch 'feature'`) and opens your editor so you can save-and-quit to accept it (or edit it first).\n\nThe graph now shows the classic diamond shape that marks a three-way merge.",
+      "output": "[main M000000] Merge branch 'feature'",
       "state": {
         "log": "M000000000000000000000000000000000000000|E000000000000000000000000000000000000000 D000000000000000000000000000000000000000|Merge branch 'feature'|HEAD -> main\nE000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix on main|\nD000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Edit greeting on feature|feature\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "* main\n  feature",
@@ -893,20 +894,20 @@ The key distinction between `fetch` and `pull` is worth animating. The remote-tr
 
 The fast-forward case above is the lucky path — your local branch had no new commits of its own, so Git could simply slide `main` forward. The interesting case is when *both* you and the remote have moved on since your last sync. Suppose you committed **B** locally, and while you were working, a teammate pushed **C** to the remote. Now `main` and `origin/main` have diverged, both descending from the common ancestor **A**.
 
-`git pull` handles this by creating a **merge commit** that ties the two tips together — preserving the full DAG but littering history with "Merge branch 'main' of origin" commits:
+`git pull` handles this by creating a **merge commit** that ties the two tips together — preserving the full DAG but littering history with auto-generated "Merge remote-tracking branch 'origin/main'" commits:
 
 <div data-git-command-lab>
 <script type="application/json">
 {
   "command": "git pull",
-  "description": "After `git fetch`, Git sees that `main` (at B) and `origin/main` (at C) have diverged from their common ancestor A. `git pull`'s default strategy is **merge**: it creates a new merge commit **M** with two parents — your local **B** and the remote's **C** — and advances `main` to M.\n\nHistory is preserved exactly (no hashes change), but the graph gains a diamond and a commit message like *\"Merge branch 'main' of origin/main\"*. On a busy team branch, these pile up and clutter the log.",
+  "description": "After `git fetch`, Git sees that `main` (at B) and `origin/main` (at C) have diverged from their common ancestor A. `git pull`'s default strategy is **merge**: it creates a new merge commit **M** with two parents — your local **B** and the remote's **C** — and advances `main` to M.\n\nHistory is preserved exactly (no hashes change), but the graph gains a diamond and an auto-generated message *`Merge remote-tracking branch 'origin/main'`* (or, on older Git, *`Merge branch 'main' of <remote-url>`*). On a busy team branch, these pile up and clutter the log.",
   "before": {
     "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
     "branches": "* main",
     "head": "refs/heads/main"
   },
   "after": {
-    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 C000000000000000000000000000000000000000|Merge branch 'main' of origin/main|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|\nA000000000000000000000000000000000000000||Shared base|",
+    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 C000000000000000000000000000000000000000|Merge remote-tracking branch 'origin/main'|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|\nA000000000000000000000000000000000000000||Shared base|",
     "branches": "* main",
     "head": "refs/heads/main"
   }
