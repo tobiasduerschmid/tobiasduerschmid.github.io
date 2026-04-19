@@ -942,8 +942,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     }
   },
   "after": {
@@ -952,8 +952,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "head": "refs/heads/main",
     "highlights": {
       "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     }
   }
 }
@@ -972,8 +972,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     }
   },
   "after": {
@@ -982,8 +982,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "head": "refs/heads/main",
     "highlights": {
       "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     }
   }
 }
@@ -1004,8 +1004,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     }
   },
   "after": {
@@ -1014,8 +1014,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "head": "refs/heads/main",
     "highlights": {
       "C+D0000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     }
   }
 }
@@ -1049,8 +1049,8 @@ The full resolution sequence is: edit the conflicting file to remove all markers
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "E000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "E000000000000000000000000000000000000000": { "color": "#003B5C" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C" }
     },
     "files": {
       "untracked": [],
@@ -1069,8 +1069,8 @@ The full resolution sequence is: edit the conflicting file to remove all markers
         "branches": "* main\n  feature",
         "head": "refs/heads/main",
         "highlights": {
-          "E000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-          "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "E000000000000000000000000000000000000000": { "color": "#003B5C" },
+          "D000000000000000000000000000000000000000": { "color": "#003B5C" }
         },
         "files": {
           "untracked": [],
@@ -1088,8 +1088,8 @@ The full resolution sequence is: edit the conflicting file to remove all markers
         "branches": "* main\n  feature",
         "head": "refs/heads/main",
         "highlights": {
-          "E000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-          "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "E000000000000000000000000000000000000000": { "color": "#003B5C" },
+          "D000000000000000000000000000000000000000": { "color": "#003B5C" }
         },
         "files": {
           "untracked": [],
@@ -1107,8 +1107,8 @@ The full resolution sequence is: edit the conflicting file to remove all markers
         "branches": "* main\n  feature",
         "head": "refs/heads/main",
         "highlights": {
-          "E000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-          "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "E000000000000000000000000000000000000000": { "color": "#003B5C" },
+          "D000000000000000000000000000000000000000": { "color": "#003B5C" }
         },
         "files": {
           "untracked": [],
@@ -1128,8 +1128,8 @@ The full resolution sequence is: edit the conflicting file to remove all markers
         "head": "refs/heads/main",
         "highlights": {
           "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-          "E000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-          "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "E000000000000000000000000000000000000000": { "color": "#003B5C" },
+          "D000000000000000000000000000000000000000": { "color": "#003B5C" }
         },
         "files": {
           "untracked": [],
@@ -2041,7 +2041,8 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
         "head": "detached",
         "highlights": {
           "F000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
-          "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
+          "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
+          "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
         }
       }
     },
@@ -2049,28 +2050,32 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
       "command": "git bisect bad",
       "description": "`git bisect bad` marks D (`Add auth`) as bad — you tested it and the bug is present. The search range narrows to [C] (the single commit between B-good and D-bad). Git checks out **C** for your next test.",
       "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "  main",
         "head": "detached",
         "highlights": {
           "F000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+          "E000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
           "D000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
-          "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
+          "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
+          "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
         }
       }
     },
     {
       "command": "git bisect good",
-      "description": "`git bisect good` marks C (`Add login`) as good — you tested it and the bug is absent. Git now knows the answer: C is good and D is bad, and they are adjacent, so **`Add auth` (D) is the first bad commit**.\n\nGit prints the full commit details. Run `git show D` or `git diff C D` to see exactly what changed.",
+      "description": "`git bisect good` marks C (`Add login`) as good — you tested it and the bug is absent. Git now knows the answer: C is good and D is bad, and they are adjacent, so **`Add auth` (D) is the first bad commit**.\n\nGit prints the full commit details and leaves `refs/bisect/bad` pointing at D. `HEAD` stays on C (the last commit you tested) — to land on the culprit, run `git bisect reset bisect/bad` or `git checkout D`. Then `git show` shows exactly what changed.",
       "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD, bisect/good\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD, bisect/good\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
         "branches": "  main",
         "head": "detached",
         "highlights": {
           "F000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+          "E000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
           "D000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+          "C000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
           "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
-          "C000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
+          "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
         }
       }
     },
@@ -2083,8 +2088,9 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
         "head": "refs/heads/main",
         "highlights": {
           "D000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+          "C000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
           "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
-          "C000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
+          "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
         }
       }
     }

@@ -440,30 +440,56 @@
     }
 
     // -------------------------------------------------------------------------
-    // Assign branch colors to each commit via first-parent chain propagation
+    // Assign branch colors to each commit.
+    //
+    // A commit inherits the color of the highest-priority branch that reaches
+    // it through ANY parent chain (not just first-parent). That's what makes
+    // "main wins over feature" and "local wins over remote" hold even when the
+    // commit is only reachable via a merge's second parent — the common
+    // `git pull` shape where main's tip is a merge of local and origin/main.
+    //
+    // Priority (higher wins):
+    //   4  main / master
+    //   3  HEAD branch
+    //   2  Other local branches
+    //   1  Remote-tracking branches (grey)
+    //
+    // BFS the full ancestor set from each branch tip in ascending priority;
+    // higher-priority passes overwrite earlier stamps.
     // -------------------------------------------------------------------------
     var commitBranch = {};
-    // Seed remote branches first, then local — local always wins for shared hashes.
-    for (var bt = 0; bt < branches.length; bt++) {
-      if (branches[bt].remote) commitBranch[branches[bt].hash] = branches[bt].name;
+    var headBranchName = (!data.head.detached && data.head.ref) ? data.head.ref : null;
+
+    function _branchPriority(br) {
+      if (br.name === 'main' || br.name === 'master') return 4;
+      if (br.name === headBranchName) return 3;
+      if (!br.remote) return 2;
+      return 1;
     }
-    for (var bt2 = 0; bt2 < branches.length; bt2++) {
-      if (!branches[bt2].remote) commitBranch[branches[bt2].hash] = branches[bt2].name;
-    }
-    // Propagate: a commit inherits the branch of its first child that knows its branch
-    for (var ci = 0; ci < commits.length; ci++) {
-      var cm2 = commits[ci];
-      if (!commitBranch[cm2.hash]) {
-        for (var ch = 0; ch < cm2.children.length; ch++) {
-          if (commitBranch[cm2.children[ch]]) {
-            var childCm = commitMap[cm2.children[ch]];
-            if (childCm && childCm.parents[0] === cm2.hash) {
-              commitBranch[cm2.hash] = commitBranch[cm2.children[ch]];
-              break;
-            }
-          }
+
+    var orderedBranches = branches.slice().sort(function (a, b) {
+      return _branchPriority(a) - _branchPriority(b);
+    });
+
+    for (var sb = 0; sb < orderedBranches.length; sb++) {
+      var brN = orderedBranches[sb];
+      var queue = [brN.hash];
+      var visited = {};
+      while (queue.length) {
+        var h = queue.shift();
+        if (visited[h]) continue;
+        visited[h] = true;
+        commitBranch[h] = brN.name;
+        var anc = commitMap[h];
+        if (!anc) continue;
+        for (var pp = 0; pp < anc.parents.length; pp++) {
+          if (!visited[anc.parents[pp]]) queue.push(anc.parents[pp]);
         }
       }
+    }
+
+    for (var ci = 0; ci < commits.length; ci++) {
+      var cm2 = commits[ci];
       if (!commitBranch[cm2.hash]) {
         commitBranch[cm2.hash] = branches.length > 0 ? branches[0].name : 'main';
       }
@@ -630,6 +656,7 @@
   GitGraph.prototype.toSVG = function (data) {
     if (!data || !data.commits || data.commits.length === 0) return '';
 
+    this._labelColorOverrides = (data && data.labelColors) || {};
     this._layout(data);
 
     var commits = data.commits;
@@ -664,6 +691,7 @@
 
   GitGraph.prototype.render = function (data) {
     this._data = data;
+    this._labelColorOverrides = (data && data.labelColors) || {};
     if (!data || !data.commits || data.commits.length === 0) {
       this._svgRoot = null;
       this._nodeEls = {};
@@ -1283,6 +1311,24 @@
 
   // ---- Labels (branches + HEAD) ---------------------------------------------
 
+  // Resolve the color for a label (branch or attached HEAD). Precedence:
+  //   1. Explicit per-label override in state.labelColors.
+  //   2. Session refs like `bisect/bad` and `bisect/good` inherit the target
+  //      commit's highlight — they describe the commit's status, so the chip
+  //      should read as part of the highlighted node (red=bad, green=good).
+  //   3. Regular branch pointers (main, feature, origin/*) keep their own
+  //      lane / branch color — those identities persist regardless of any
+  //      ad-hoc highlight on the commit they happen to point at.
+  GitGraph.prototype._labelColorFor = function (name, commit) {
+    if (this._labelColorOverrides && this._labelColorOverrides[name]) {
+      return this._labelColorOverrides[name];
+    }
+    if (commit && commit.highlight && /^bisect\//.test(name)) {
+      return commit.highlight;
+    }
+    return (this._branchColors && this._branchColors[name]) || BRANCH_COLORS[0];
+  };
+
   GitGraph.prototype._diffLabels = function (branches, commitMap, head) {
     var byCommit = {};
     for (var i = 0; i < branches.length; i++) {
@@ -1313,8 +1359,9 @@
         var stackIdx = labels.length - 1 - l;
         var wrapperY = cy - stackIdx * (LABEL_HEIGHT + LABEL_GAP);
         var commitRelY = cy - wrapperY;
+        var labelColor = this._labelColorFor(br2.name, commit);
         this._renderLabelGroup(key, cx, wrapperY, br2.hash, function (g, gThis) {
-          gThis._buildBranchLabelContent(g, br2.name, gThis._branchColors[br2.name] || BRANCH_COLORS[0], commitRelY, br2.remote);
+          gThis._buildBranchLabelContent(g, br2.name, labelColor, commitRelY, br2.remote);
         });
       }
     }
@@ -1340,7 +1387,7 @@
         wrapperY = hcy + stackIdxD * (LABEL_HEIGHT + LABEL_GAP);
       } else {
         isDetached = false;
-        color = this._branchColors[head.ref] || BRANCH_COLORS[0];
+        color = this._labelColorFor(head.ref, commitMap[head.hash]);
         var siblings = byCommit[head.hash] || [];
         var headBranchPos = -1;
         for (var sb = 0; sb < siblings.length; sb++) {
@@ -1652,7 +1699,7 @@
       for (var l = 0; l < labels.length; l++) {
         var br          = labels[l];
         var isHeadBr    = (!head.detached && head.ref === br.name);
-        var color       = this._branchColors[br.name] || BRANCH_COLORS[0];
+        var color       = this._labelColorFor(br.name, commit);
         var labelY      = cy - LABEL_HEIGHT / 2 - (labels.length - 1 - l) * (LABEL_HEIGHT + LABEL_GAP);
         var labelMidY   = labelY + LABEL_HEIGHT / 2;
         var textW       = br.name.length * 8.5 + 18;

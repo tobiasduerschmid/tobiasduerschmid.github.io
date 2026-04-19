@@ -28,6 +28,7 @@
 
   function buildState(s, filesOverride) {
     var state = GitGraph.parseGitState(s.log, s.branches, s.head, filesOverride !== undefined ? filesOverride : s.files);
+    if (s.labelColors) state.labelColors = s.labelColors;
     if (s.highlights && state.commitMap) {
       var textures = { hatched: 1, crosshatch: 1, dotted: 1, grid: 1, striped: 1 };
       for (var hash in s.highlights) {
