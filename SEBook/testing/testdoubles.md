@@ -3,6 +3,31 @@ title: Test Doubles
 layout: sebook
 ---
 
+A **test double** is any object that stands in for a real dependency during a test. The three kinds you will meet differ along two axes: *which direction of data flow they control* (indirect input vs. indirect output) and *when verification happens* (after the fact vs. during execution).
+
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+class TestDouble <<abstract>> {
+  replaces a real dependency
+}
+class TestStub {
+  controls indirect inputs
+  (feeds values INTO the SUT)
+}
+class TestSpy {
+  records indirect outputs;
+  verify AFTER execution
+}
+class MockObject {
+  expects indirect outputs;
+  verify DURING execution
+}
+TestStub --|> TestDouble
+TestSpy --|> TestDouble
+MockObject --|> TestDouble
+@enduml'></div>
+
+Keep this map in mind as you read: each section below deepens one of the three branches.
+
 # Test Stub
 
 A Test Stub is an object that replaces a real component to allow a test to control the indirect inputs of the SUT. 
