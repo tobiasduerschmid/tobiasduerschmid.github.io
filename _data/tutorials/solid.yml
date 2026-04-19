@@ -1,5 +1,5 @@
-title: "SOLID Design Principles: Stop Writing Code That Falls Apart"
-description: "Learn the SOLID principles by suffering through rigid code first, then leveling up with refactoring. Each principle hits you with a realistic scenario where one tiny change request breaks everything — and then shows you how to fix it so your code actually survives contact with reality."
+title: "SOLID Design Principles"
+description: "Learn the SOLID principles by working through rigid code first, then refactoring it. Each principle presents a realistic scenario where a small change request breaks existing code, and then shows how to restructure the code so it holds up as requirements change."
 
 backend: pyodide
 
@@ -27,24 +27,24 @@ steps:
 
       ### The Scenario
 
-      You just inherited a `CourseManager` class from a colleague who left the company. Classic. This thing handles *everything*: student enrollment, grade calculation, GPA formatting, HTML report generation, and email notifications. It works — for now.
+      You just inherited a `CourseManager` class from a colleague who left the company. It handles *everything*: student enrollment, grade calculation, GPA formatting, HTML report generation, and email notifications. It works — for now.
 
       Your manager drops two change requests on you:
 
       1. **Finance Team:** Switch the grading scale from letter grades (A/B/C/D/F) to a **4.0 numeric scale** (4.0/3.0/2.0/1.0/0.0).
       2. **Registrar's Office:** Change the report format from **HTML** to **JSON**.
 
-      Two small changes. Should be easy, right? ...Right?
+      Two small changes. They look straightforward in isolation.
 
       ### Your Task
 
-      Open `course_manager.py` and try to make **both changes**. You'll quickly discover the nightmare: the private helper `_format_grade()` is used by *both* `calculate_gpa()` *and* `generate_report()`. Change it for one purpose and you break the other. It's like trying to update your profile pic on one app and it changes across all your accounts.
+      Open `course_manager.py` and try to make **both changes**. You will quickly find that the private helper `_format_grade()` is used by *both* `calculate_gpa()` *and* `generate_report()`. Changing it for one purpose breaks the other.
 
       **This is the point.** You're *supposed* to struggle here. Do your best to make both changes work — any approach counts. There's no single "correct" answer.
 
       ### Errors Are the Lesson
 
-      You will almost certainly break things. That's not a bug in the exercise — it *is* the exercise. Every developer has inherited code like this. The errors you hit aren't you messing up; they're proof that the original design is the problem. Read the error messages, experiment, and embrace the chaos.
+      You will almost certainly break something while attempting both changes. That is the point of the exercise. The errors you encounter are evidence that the original design is coupled in ways that make independent modifications difficult. Read the error messages carefully and observe which features break when you change the shared helper.
 
     files:
       - path: "course_manager.py"
@@ -178,7 +178,9 @@ steps:
               "The grading scale still uses the original letter-grade mapping. " \
               "Try switching to a 4.0 numeric scale (e.g., 4.0, 3.0, 2.0, 1.0, 0.0 as the grades themselves)."
         hints:
-          - text: "The Finance Team wants a numeric scale: instead of letter grades A/B/C/D/F, use 4.0/3.0/2.0/1.0/0.0 as the grade values. Modify the `_grade_weights` dictionary and the `add_grade()` method."
+          - text: "Replace the `_grade_weights` dictionary in `CourseManager.__init__` so the keys are the numeric grades (4.0, 3.0, 2.0, 1.0, 0.0) instead of the letters 'A'–'F', and update the validation in `add_grade()` accordingly."
+            condition: "source_contains: '\"A\": 4.0'"
+          - text: "The Finance Team wants a numeric scale. Modify `_grade_weights` and `add_grade()` so they accept 4.0/3.0/2.0/1.0/0.0 as the grade values instead of the letters A/B/C/D/F."
             condition: "default"
       - description: "You changed the report format (JSON instead of HTML)"
         command: |
@@ -187,13 +189,17 @@ steps:
               "The report still uses the original HTML format. " \
               "Try switching generate_report() to produce JSON output instead."
         hints:
-          - text: "The Registrar's Office wants JSON instead of HTML. Modify `generate_report()` to return a JSON string (e.g., using `json.dumps()`) instead of HTML tags."
+          - text: "`generate_report()` still builds an HTML string (`<html><body><h1>...`). Replace that logic with `json.dumps({...})` so it returns a JSON string containing the student's name, courses, grades, and GPA."
+            condition: "source_contains: '<html><body>'"
+          - text: "Rewrite `generate_report()` to return JSON instead of HTML. Build a dict with the student's name, courses, and GPA, then pass it to `json.dumps()`."
             condition: "default"
       - description: "Your modified code still runs without errors"
         command: |
           exec(open('/tutorial/course_manager.py').read())
         hints:
-          - text: "Your changes introduced a syntax or runtime error. Run the code and read the error message — it will tell you exactly what went wrong."
+          - text: "The private helper `_format_grade()` is called by `calculate_gpa()`, `generate_report()`, and `send_grade_notification()`. If you changed its return type or signature for one caller, the others now crash — this coupling is exactly the SRP issue the step is showing you."
+            condition: "output_contains: _format_grade"
+          - text: "Run the file and read the traceback. The failing line and exception type will point to the specific method whose assumptions your edit broke."
             condition: "default"
 
     quiz:
@@ -295,7 +301,7 @@ steps:
 
       Knowing these names is useful: your IDE, static analysis tools (SonarQube, PyLint), and senior developers in code review will all reach for this vocabulary. (See the code smells reference in [`SEBook/development_practices/code_smells`](/SEBook/development_practices/code_smells.html) for more.)
 
-      > **Struggle is the lesson.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
+      > **Expect friction.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
 
       ### Reflect → Explain in Your Own Words
 
@@ -568,7 +574,9 @@ steps:
           assert abs(payroll["tax_rate"] - 0.24) < 0.001, \
               f"Expected tax rate of 0.24 (24%) for $75k salary, got {payroll['tax_rate']}"
         hints:
-          - text: "Look for the tax bracket that handles salaries between $50,000 and $100,000. The rate there should be changed from 0.22 to 0.24."
+          - text: "In `calculate_payroll()`, the middle `elif salary <= 100000:` branch still sets `tax_rate = 0.22`. Change that literal to `0.24`."
+            condition: "source_contains: 'tax_rate = 0.22'"
+          - text: "Locate the `elif salary <= 100000:` branch of `calculate_payroll()` and update its `tax_rate` from 0.22 to 0.24."
             condition: "default"
       - description: "Tax amount is correctly calculated at 24%"
         command: |
@@ -580,7 +588,9 @@ steps:
           assert abs(payroll["tax"] - expected_tax) < 0.01, \
               f"Expected tax of ${expected_tax:,.2f} for $80k at 24%, got ${payroll['tax']:,.2f}"
         hints:
-          - text: "Make sure you changed the tax_rate value, not just a comment. The actual numeric value 0.22 should become 0.24."
+          - text: "The literal `0.22` still appears in `calculate_payroll()`. Update the assignment itself — changing only the comment does not affect the computed tax."
+            condition: "source_contains: 'tax_rate = 0.22'"
+          - text: "Make sure the `tax_rate = 0.22` assignment (not just the surrounding comment) is updated to `0.24`."
             condition: "default"
       - description: "Net pay is correctly calculated with the new rate"
         command: |
@@ -1237,21 +1247,27 @@ steps:
           exec(open('/tutorial/event_planner.py').read())
           assert 'GuestRegistry' in dir(), "Class GuestRegistry not found. Did you define it?"
         hints:
-          - text: "Define a `GuestRegistry` class that manages guest data. Move the guest-related methods from `EventPlanner` into this new class."
+          - text: "Python cannot find a top-level `class GuestRegistry:` definition in `event_planner.py`. Add the class stub and move `add_guest`, `remove_guest`, `get_guest_count`, and `list_guests` from `EventPlanner` into it."
+            condition: "source_missing: class GuestRegistry"
+          - text: "Define a `class GuestRegistry:` that owns the guest-list state. The Event Coordinator actor's methods from `EventPlanner` belong here."
             condition: "default"
       - description: "BudgetTracker class exists"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           assert 'BudgetTracker' in dir(), "Class BudgetTracker not found. Did you define it?"
         hints:
-          - text: "Define a `BudgetTracker` class that manages budget and expenses. Move the budget-related methods from `EventPlanner` into this new class."
+          - text: "No `class BudgetTracker:` is defined in `event_planner.py`. Add it, give it `__init__(self, budget)`, and move `add_expense`, `get_remaining_budget`, and `get_budget_summary` into it."
+            condition: "source_missing: class BudgetTracker"
+          - text: "Define a `class BudgetTracker:` that owns `self.budget` and `self.spent`. The Finance actor's methods from `EventPlanner` belong here."
             condition: "default"
       - description: "InvitationSender class exists"
         command: |
           exec(open('/tutorial/event_planner.py').read())
           assert 'InvitationSender' in dir(), "Class InvitationSender not found. Did you define it?"
         hints:
-          - text: "Define an `InvitationSender` class that handles sending invitations and tracking RSVPs. Move the invitation-related methods from `EventPlanner` into this new class."
+          - text: "No `class InvitationSender:` is defined. Add one with `__init__(self, event_name)` and move `send_invitation`, `record_rsvp`, and `get_rsvp_summary` into it."
+            condition: "source_missing: class InvitationSender"
+          - text: "Define a `class InvitationSender:` that owns `self.invitations`. The Communications actor's methods from `EventPlanner` belong here."
             condition: "default"
       - description: "VenueManager stores the venue name after booking"
         command: |
@@ -1275,7 +1291,9 @@ steps:
           gr.add("Bob", "bob@test.com")
           assert gr.count() == 2, f"Expected 2 guests, got {gr.count()}"
         hints:
-          - text: "The `add()` method should store the guest in `self.guests` using the name as the key. Look at how `add_guest()` works in the original `EventPlanner` class for the pattern."
+          - text: "`GuestRegistry.add()` is still `pass`. Assign `self.guests[name] = {'email': email, 'dietary': dietary}` so `count()` (which returns `len(self.guests)`) can see the new entry."
+            condition: "source_contains: \"def add(self, name: str, email: str, dietary=\\\"none\\\") -> str:\\n            # TODO\""
+          - text: "Implement `GuestRegistry.add()` so it stores the guest in `self.guests` keyed by `name`. Mirror the pattern from `EventPlanner.add_guest()`."
             condition: "default"
       - description: "GuestRegistry lists guest names"
         command: |
@@ -1286,7 +1304,9 @@ steps:
           assert "Alice" in gr.list_names(), "Alice should be in the guest list"
           assert "Bob" in gr.list_names(), "Bob should be in the guest list"
         hints:
-          - text: "`list_names()` should return the keys of `self.guests` (or a list of them)."
+          - text: "`list_names()` is inherited from the stub, which already returns `list(self.guests.keys())` — if it's empty, the real problem is that `add()` hasn't populated `self.guests`. Fix `add()` first."
+            condition: "source_contains: \"def add(self, name: str, email: str, dietary=\\\"none\\\") -> str:\\n            # TODO\""
+          - text: "`list_names()` should return a list of the keys of `self.guests`."
             condition: "default"
       - description: "GuestRegistry removes guests correctly"
         command: |
@@ -1297,7 +1317,7 @@ steps:
           gr.remove("Alice")
           assert gr.count() == 1, f"Expected 1 guest after removal, got {gr.count()}"
         hints:
-          - text: "The `remove()` method should use `del self.guests[name]` to remove the guest."
+          - text: "Implement `GuestRegistry.remove()` to `del self.guests[name]`. The TODO stub currently falls through to `pass`, so the entry is never removed."
             condition: "default"
       - description: "GuestRegistry raises error for removing unknown guests"
         command: |
@@ -1310,7 +1330,7 @@ steps:
           except ValueError:
               pass
         hints:
-          - text: "Before deleting, check if the name exists in `self.guests`. If not, raise a ValueError."
+          - text: "In `GuestRegistry.remove()`, first check `if name not in self.guests: raise ValueError(f\"Guest {name} not found\")` before calling `del`."
             condition: "default"
       - description: "BudgetTracker tracks remaining budget after expenses"
         command: |
@@ -1321,7 +1341,7 @@ steps:
           assert bt.get_remaining() == 5000, \
               f"Expected remaining budget of 5000, got {bt.get_remaining()}"
         hints:
-          - text: "`add_expense()` should add the amount to `self.spent`. `get_remaining()` should return `self.budget - self.spent`."
+          - text: "Both `BudgetTracker.add_expense()` and `get_remaining()` are still `pass`. Make `add_expense()` do `self.spent += amount` and `get_remaining()` return `self.budget - self.spent`."
             condition: "default"
       - description: "BudgetTracker get_summary() returns correct totals"
         command: |
@@ -1337,7 +1357,7 @@ steps:
           assert summary["remaining"] == 5000, \
               f"Remaining should be 5000, got {summary.get('remaining')}"
         hints:
-          - text: "`get_summary()` should return a dict with keys 'total_budget', 'spent', and 'remaining'."
+          - text: "The provided `get_summary()` already returns the right shape — if its values are wrong, it's because `add_expense()` never updated `self.spent`. Fix `add_expense()` first."
             condition: "default"
       - description: "BudgetTracker rejects expenses exceeding the budget"
         command: |
@@ -1350,7 +1370,7 @@ steps:
           except ValueError:
               pass
         hints:
-          - text: "Before adding the expense, check if `amount > (self.budget - self.spent)`. If so, raise a ValueError with a descriptive message."
+          - text: "In `BudgetTracker.add_expense()`, before mutating `self.spent`, check `if amount > (self.budget - self.spent): raise ValueError(...)`. The original `EventPlanner.add_expense()` shows the same guard."
             condition: "default"
       - description: "InvitationSender sends invitations"
         command: |
@@ -1361,7 +1381,7 @@ steps:
           summary = inv.get_rsvp_summary()
           assert summary["sent"] == 2, f"Expected 2 sent invitations, got {summary.get('sent')}"
         hints:
-          - text: "`send()` should store the invitation in `self.invitations` with status 'sent'. For example: `self.invitations[guest_name] = {'email': email, 'status': 'sent'}`."
+          - text: "The stub `send()` already sets `self.invitations[guest_name] = 'sent'`. If `summary['sent']` isn't 2, check that `get_rsvp_summary()` counts the `'sent'` status — its TODO may still be returning `None`."
             condition: "default"
       - description: "InvitationSender tracks accepted RSVPs"
         command: |
@@ -1373,7 +1393,7 @@ steps:
           summary = inv.get_rsvp_summary()
           assert summary["accepted"] == 1, f"Expected 1 accepted, got {summary.get('accepted')}"
         hints:
-          - text: "`record_rsvp()` should update the invitation's status. `get_rsvp_summary()` should count invitations by status."
+          - text: "`InvitationSender.record_rsvp()` must reassign `self.invitations[guest_name] = status` so the later summary loop counts it as 'accepted' instead of still 'sent'."
             condition: "default"
       - description: "InvitationSender tracks declined RSVPs"
         command: |
@@ -1395,7 +1415,7 @@ steps:
           except ValueError:
               pass
         hints:
-          - text: "Before updating, check that `guest_name` is in `self.invitations`. If not, raise a ValueError."
+          - text: "In `InvitationSender.record_rsvp()`, start with `if guest_name not in self.invitations: raise ValueError(f\"No invitation sent to {guest_name}\")`."
             condition: "default"
       - description: "InvitationSender rejects invalid RSVP status"
         command: |
@@ -1408,7 +1428,7 @@ steps:
           except ValueError:
               pass
         hints:
-          - text: "Check that `status` is either 'accepted' or 'declined'. If not, raise a ValueError."
+          - text: "In `record_rsvp()`, add `if status not in (\"accepted\", \"declined\"): raise ValueError(f\"Invalid RSVP status: {status}\")` before the assignment."
             condition: "default"
       - description: "The demo script runs without errors"
         command: |
@@ -1438,7 +1458,7 @@ steps:
           else:
               raise AssertionError("Could not find BudgetTracker class in event_planner.py")
         hints:
-          - text: "BudgetTracker is owned by the Finance actor. It should know about expenses and budget — nothing about guests, invitations, or emails."
+          - text: "Remove any references to guests, invitations, RSVPs, or email from `BudgetTracker`. Its vocabulary should be limited to budgets, expenses, and spent amounts — nothing the Communications or Event Coordinator actors own."
             condition: "default"
 
       - description: "SRP decoupling proof — InvitationSender's source does not mention budgets or venues"
@@ -1460,7 +1480,7 @@ steps:
           else:
               raise AssertionError("Could not find InvitationSender class in event_planner.py")
         hints:
-          - text: "InvitationSender is owned by the Communications actor. Remove any references to budget or venue from it."
+          - text: "`InvitationSender` should not mention `budget`, `expense`, or `venue` anywhere in its methods. Those concerns belong to `BudgetTracker` and `VenueManager` — keep this class focused on invitations and RSVPs."
             condition: "default"
 
       - description: "SRP decoupling proof — changing BudgetTracker's behavior does not alter GuestRegistry state"
@@ -1481,7 +1501,7 @@ steps:
               "should be fully decoupled. Each owns its own state."
           )
         hints:
-          - text: "Each refactored class should own its own state and not share data with siblings. If BudgetTracker modifies GuestRegistry, something is wrong."
+          - text: "`BudgetTracker` should only read or write its own `self.budget` and `self.spent`. If calling `b.add_expense(...)` alters `GuestRegistry.guests`, the two classes are sharing mutable state they should not share."
             condition: "default"
 
     quiz:
@@ -1543,7 +1563,7 @@ steps:
 
       Your team runs an e-commerce platform. The `NotificationRouter` class sends notifications to customers through different channels — email, SMS, and push. Each channel has its own formatting, rate limits, and delivery logic.
 
-      Open `notification_router.py` and read through the code. Notice how all three channels are stuffed into one method with an if/elif chain. It's basically a giant switch statement pretending to be architecture.
+      Open `notification_router.py` and read through the code. Notice how all three channels are handled in a single method with an if/elif chain — a large conditional acting as the only extension mechanism.
 
       ### Code Smell: *Switch Statement Smell*
 
@@ -1566,12 +1586,12 @@ steps:
 
       ### Task 2: Think Ahead
 
-      Now imagine product comes back and also wants **Discord**, **Microsoft Teams**, **WhatsApp**, **Telegram**, and **Carrier Pigeon** (okay, maybe not that last one). For each new channel you'd have to:
+      Now imagine product comes back and also wants **Discord**, **Microsoft Teams**, **WhatsApp**, and **Telegram**. For each new channel you would have to:
 
       1. Open `notification_router.py`
       2. Read through *all* existing branches to understand the pattern
-      3. Slap another `elif` at the bottom
-      4. Pray you didn't accidentally break email or SMS while editing
+      3. Add another `elif` at the bottom
+      4. Re-run the tests to confirm that email or SMS was not broken while editing
 
       This is the pain the Open/Closed Principle is trying to save you from. We'll fix it properly in the next step.
 
@@ -1832,9 +1852,9 @@ steps:
           assert "Unknown channel" not in result, \
               f"'slack' channel is not recognized. Got: {result}"
         hints:
-          - text: "You need to add an `elif channel == \"slack\":` branch inside `send_notification()`. Look at how the existing channels (email, sms, push) are structured."
+          - text: "`send_notification()` falls through to `return f\"Unknown channel: {channel}\"` because there's no `elif channel == \"slack\":` branch. Add one that mirrors the structure of the existing `email`/`sms`/`push` branches (format, rate-limit, deliver)."
             condition: "code_missing: slack"
-          - text: "Good, you have 'slack' somewhere in your code. Make sure you have an `elif channel == \"slack\":` condition inside the `send_notification` method."
+          - text: "You reference `slack` somewhere, but `send_notification()` is still returning `Unknown channel`. The comparison `elif channel == \"slack\":` must sit inside `send_notification` (not in `__init__` or a comment)."
             condition: "code_contains: slack"
       - description: "Slack message is formatted with markdown bold header"
         command: |
@@ -1849,8 +1869,10 @@ steps:
           assert "Deploy complete" in msg, \
               f"Formatted message should contain the original text. Got: {repr(msg)}"
         hints:
-          - text: "Slack uses `*text*` for bold formatting. The first line of the message should be wrapped in asterisks."
+          - text: "Your Slack branch isn't wrapping anything in `*...*`. Slack uses `*text*` for bold; build the formatted string so the first line is `f\"*{header}*\"` and assign it to `self.last_sent_message`."
             condition: "code_missing: *"
+          - text: "In the Slack branch, format the message so the first line is wrapped in `*...*` (Slack bold markdown) and the rest keeps its original text. Remember to set `self.last_sent_message = formatted`."
+            condition: "default"
       - description: "Slack delivery prints [SLACK] tag"
         command: |
           g = {}
@@ -1868,7 +1890,8 @@ steps:
           assert "dave" in output, \
               f"Slack delivery should include the username. Got: {repr(output)}"
         hints:
-          - text: "Your Slack branch needs a `print()` statement that includes `[SLACK]` and the user's name, similar to how email uses `[EMAIL]`."
+          - text: "Inside the Slack branch, add `print(f\"[SLACK] Delivering to {user}: {formatted}\")` — the same pattern used by the `[EMAIL]` and `[SMS]` branches."
+            condition: "default"
       - description: "Slack rate limit is 200/hr"
         command: |
           g = {}
@@ -1880,7 +1903,8 @@ steps:
           assert router._rate_limits["slack"] == 200, \
               f"Slack rate limit should be 200/hr, got {router._rate_limits['slack']}"
         hints:
-          - text: "In `__init__`, add `\"slack\"` to both `self._send_counts` and `self._rate_limits` dictionaries. The Slack rate limit should be 200."
+          - text: "Extend both dicts in `NotificationRouter.__init__`: add `\"slack\": 0` to `self._send_counts` and `\"slack\": 200` to `self._rate_limits`."
+            condition: "default"
       - description: "Slack returns a success message (not 'Unknown channel')"
         command: |
           g = {}
@@ -1960,7 +1984,7 @@ steps:
 
       > **Check your prediction from Step 4.** You predicted how long `send_notification()` would grow if 10 more channels were added to the if/elif design. After the refactor below, look at how long `NotificationRouter.send_notification()` is in the new design. (Spoiler: it doesn't grow at all — each channel is its own class.)
 
-      The key insight: instead of one class that *knows about every channel*, we create a **family of channel classes** that each handle themselves. The router just iterates over whatever channels it has — it literally never needs to change when a new channel shows up. New channel? Just write a new class. Done.
+      The key insight: instead of one class that *knows about every channel*, we create a **family of channel classes** that each handle themselves. The router iterates over whatever channels it has, so it does not need to change when a new channel is added — a new channel is introduced by writing a new class that implements the abstract interface.
 
       Here's the refactored design. Read it carefully and check out the **sub-goal labels** in the comments:
 
@@ -2386,9 +2410,9 @@ steps:
           assert issubclass(g['ExportFormat'], ABC), \
               "ExportFormat should inherit from abc.ABC"
         hints:
-          - text: "You need to create an abstract base class. Start with `from abc import ABC, abstractmethod` at the top of the file, then define `class ExportFormat(ABC):`."
+          - text: "Add `from abc import ABC, abstractmethod` at the top of `report_exporter.py`, then declare `class ExportFormat(ABC):`."
             condition: "code_missing: ABC"
-          - text: "You have ABC imported — good. Make sure your ExportFormat class inherits from it: `class ExportFormat(ABC):`"
+          - text: "`ABC` is imported but `ExportFormat` does not inherit from it. Change the class header to `class ExportFormat(ABC):` so the abstract-method machinery is active."
             condition: "code_contains: ABC"
       - description: "ExportFormat has abstract method format_report"
         command: |
@@ -2401,8 +2425,10 @@ steps:
           assert 'format_report' in EF.__abstractmethods__, \
               "ExportFormat should declare format_report as an @abstractmethod"
         hints:
-          - text: "Inside your ExportFormat class, define `format_report` with the `@abstractmethod` decorator. It should accept `title`, `headers`, and `rows` parameters."
+          - text: "Decorate `format_report` with `@abstractmethod` inside `ExportFormat`. Its signature should be `def format_report(self, title, headers, rows) -> str:` and the body can be `...`."
             condition: "code_missing: abstractmethod"
+          - text: "You have `@abstractmethod` somewhere, but `format_report` is not in `ExportFormat.__abstractmethods__`. Make sure `@abstractmethod` sits directly above `def format_report(...)` inside `class ExportFormat(ABC):`."
+            condition: "default"
       - description: "CsvFormat extends ExportFormat"
         command: |
           g = {}
@@ -2411,7 +2437,7 @@ steps:
           assert issubclass(g['CsvFormat'], g['ExportFormat']), \
               "CsvFormat should inherit from ExportFormat"
         hints:
-          - text: "Create a `CsvFormat` class inheriting from `ExportFormat`: `class CsvFormat(ExportFormat):`"
+          - text: "Declare `class CsvFormat(ExportFormat):` and implement both `name` (return `\"csv\"`) and `format_report(title, headers, rows)` — otherwise instantiation will fail because of the abstract methods."
             condition: "default"
       - description: "JsonFormat extends ExportFormat"
         command: |
@@ -2421,7 +2447,7 @@ steps:
           assert issubclass(g['JsonFormat'], g['ExportFormat']), \
               "JsonFormat should inherit from ExportFormat"
         hints:
-          - text: "Create a `JsonFormat` class inheriting from `ExportFormat`: `class JsonFormat(ExportFormat):`"
+          - text: "Declare `class JsonFormat(ExportFormat):` with `name` returning `\"json\"` and a concrete `format_report` that calls `json.dumps(...)`."
             condition: "default"
       - description: "TextFormat extends ExportFormat"
         command: |
@@ -2431,7 +2457,7 @@ steps:
           assert issubclass(g['TextFormat'], g['ExportFormat']), \
               "TextFormat should inherit from ExportFormat"
         hints:
-          - text: "Create a `TextFormat` class inheriting from `ExportFormat`: `class TextFormat(ExportFormat):`"
+          - text: "Declare `class TextFormat(ExportFormat):` with `name` returning `\"txt\"` and port the column-alignment loop from the original `elif fmt == \"txt\":` branch into its `format_report`."
             condition: "default"
       - description: "CSV export has comma-separated headers"
         command: |
@@ -2441,7 +2467,7 @@ steps:
           result = csv_fmt.format_report("Test", ["A", "B"], [["1", "2"], ["3", "4"]])
           assert "A,B" in result, f"CSV should have comma-separated headers. Got: {repr(result)}"
         hints:
-          - text: "Your CsvFormat.format_report() should join headers with commas: `','.join(headers)`."
+          - text: "In `CsvFormat.format_report`, start the output with `\",\".join(headers)` so the first line looks like `A,B`."
             condition: "default"
       - description: "CSV export has comma-separated rows"
         command: |
@@ -2451,7 +2477,7 @@ steps:
           result = csv_fmt.format_report("Test", ["A", "B"], [["1", "2"], ["3", "4"]])
           assert "1,2" in result, f"CSV should have comma-separated rows. Got: {repr(result)}"
         hints:
-          - text: "Join each row's cells with commas: `','.join(row)`, then join all lines with newlines."
+          - text: "After the header line, loop over `rows` and append `\",\".join(str(cell) for cell in row)` for each one, then `\"\\n\".join(lines)`."
             condition: "default"
       - description: "JSON export produces valid JSON with a 'records' key"
         command: |
@@ -2463,7 +2489,7 @@ steps:
           parsed = json.loads(result)
           assert "records" in parsed, f"JSON should contain a 'records' key. Got keys: {list(parsed.keys())}"
         hints:
-          - text: "Your JsonFormat.format_report() should return `json.dumps(...)` with a 'records' key containing a list of dicts."
+          - text: "Return `json.dumps({\"title\": title, \"records\": records}, indent=2)` where `records` is a list of dicts (one per row). A missing `records` key means you serialized the data under a different name."
             condition: "default"
       - description: "JSON export maps headers to values correctly"
         command: |
@@ -2476,7 +2502,7 @@ steps:
           assert parsed["records"][0]["Name"] == "Alice", \
               f"JSON records should map headers to values. Got: {parsed.get('records')}"
         hints:
-          - text: "Build a list of dicts, one per row: `dict(zip(headers, row))` for each row."
+          - text: "For each row, build `dict(zip(headers, row))` so `\"Name\" -> \"Alice\"` and add it to `records`. An empty or header-less dict means you forgot the zip/enumerate step."
             condition: "default"
       - description: "Text export includes the title"
         command: |
@@ -2520,8 +2546,10 @@ steps:
               f"ReportExporter.export() still has {format_checks} format-specific if/elif checks. " \
               f"Refactor to delegate to format objects instead of checking format strings."
         hints:
-          - text: "Your ReportExporter.export() method should look up the format object by name (like using a dictionary) and call its `format_report()` method. Remove the if/elif chain that checks for 'csv', 'json', 'txt'."
+          - text: "`ReportExporter.export()` still branches on the format string. Replace the `if fmt == \"csv\": ... elif fmt == \"json\": ...` chain with a single dictionary lookup: `fmt = self._formats[fmt_name]; return fmt.format_report(...)`."
             condition: "code_contains: elif"
+          - text: "`ReportExporter` must delegate to the registered format objects. Store them in a dict keyed by `name` and call `format_report()` on the looked-up object — no format-specific branching in the exporter."
+            condition: "default"
       - description: "Adding a new format does not require modifying ReportExporter"
         command: |
           g = {}
@@ -2634,7 +2662,7 @@ steps:
 
       ### The Principle
 
-      Barbara Liskov stated this rule in 1987, and it still hits:
+      Barbara Liskov stated this rule in 1987:
 
       > *If S is a subtype of T, then objects of type T may be replaced with objects of type S without altering any desirable property of the program.*
 
@@ -2643,7 +2671,7 @@ steps:
       - **Accept AT LEAST what the parent accepts** (preconditions may be equal or *weaker*)
       - **Guarantee AT LEAST what the parent guarantees** (postconditions may be equal or *stronger*)
 
-      Break either rule and code that trusts the parent's contract will blow up the moment it meets the subclass.
+      Break either rule and code that trusts the parent's contract will fail when it is handed the subclass.
 
       > **Struggling is the lesson.** LSP is the deepest SOLID principle — every senior developer has been burned by it at least once. If "strengthening vs. weakening" feels abstract, that's normal. The exercises below make it mechanically observable.
 
@@ -3166,7 +3194,9 @@ steps:
           assert 'class GiftCardProcessor' in source, \
               "Add a GiftCardProcessor class to payments.py"
         hints:
-          - text: "In payments.py, add a class GiftCardProcessor that extends PaymentProcessor. See the TODO block in the file for the exact requirements."
+          - text: "`payments.py` does not define `class GiftCardProcessor`. Add one under the `# TODO: Add GiftCardProcessor here.` marker that inherits from `PaymentProcessor`."
+            condition: "source_missing: class GiftCardProcessor"
+          - text: "Add `class GiftCardProcessor(PaymentProcessor):` below the existing processors. Follow the TODO comment for the three requirements (balance, strengthened process_payment, weakened refund)."
             condition: "default"
       - description: "GiftCardProcessor takes a `balance` parameter in __init__"
         command: |
@@ -3178,7 +3208,7 @@ steps:
           gc = GiftCardProcessor(balance=50.00)
           assert gc is not None
         hints:
-          - text: "GiftCardProcessor's constructor should accept a `balance: float` parameter, e.g., `def __init__(self, balance: float): ...`"
+          - text: "Give `GiftCardProcessor` a constructor `def __init__(self, balance: float) -> None:` that stores `self._balance = balance` and initializes `self._transactions = {}`."
             condition: "default"
       - description: "GiftCardProcessor strengthens precondition (rejects amount > balance)"
         command: |
@@ -3195,7 +3225,7 @@ steps:
               assert "balance" in str(e).lower() or "insufficient" in str(e).lower(), \
                   f"Error message should mention balance or insufficient, got: {e}"
         hints:
-          - text: "In process_payment(), raise ValueError('Insufficient gift card balance') when amount > self._balance."
+          - text: "Inside `GiftCardProcessor.process_payment`, add `if amount > self._balance: raise ValueError(\"Insufficient gift card balance\")` — this strengthened precondition is what causes the LSP violation you're meant to observe."
             condition: "default"
       - description: "GiftCardProcessor.process_payment() returns success dict when amount is within balance"
         command: |
@@ -3210,7 +3240,7 @@ steps:
           assert result.get("success") is True, f"Expected success=True, got {result}"
           assert "txn_id" in result, f"Expected 'txn_id' in result, got keys: {list(result.keys())}"
         hints:
-          - text: "When the amount is valid, process_payment() should return {'success': True, 'txn_id': <some id>}. The successful path must look like any other PaymentProcessor."
+          - text: "After the balance check passes, `process_payment` must return `{\"success\": True, \"txn_id\": str(uuid.uuid4())}` — exactly the same shape as `CreditCardProcessor` so the successful path is indistinguishable."
             condition: "default"
       - description: "GiftCardProcessor.refund() returns success=False (weakened postcondition)"
         command: |
@@ -3225,7 +3255,7 @@ steps:
           assert isinstance(refund_result, dict), f"refund() should return a dict, got {type(refund_result)}"
           assert refund_result.get("success") is False, f"GiftCardProcessor.refund() should return success=False, got {refund_result.get('success')}"
         hints:
-          - text: "refund() should return {'success': False, 'error': 'Gift cards are non-refundable'}."
+          - text: "Make `GiftCardProcessor.refund` return `{\"success\": False, \"error\": \"Gift cards are non-refundable\"}`. This weakens the postcondition (`success=True` guaranteed by the parent is no longer guaranteed) — the deliberate LSP violation for this step."
             condition: "default"
       - description: "refund_contract_holds() is implemented (not just `pass`)"
         command: |
@@ -3240,7 +3270,7 @@ steps:
           assert body.count('assert') >= 3, \
               f"refund_contract_holds() should have at least 3 assert statements (one per contract clause). Found {body.count('assert')}."
         hints:
-          - text: "Replace the `pass` inside refund_contract_holds() with three `assert` statements: one for `isinstance(result, dict)`, one for `result['success'] is True`, one for `isinstance(result['amount'], (int, float))`."
+          - text: "In `test_payments.py`, replace the `pass` body of `refund_contract_holds` with three asserts: (1) `isinstance(refund_result, dict)`, (2) `refund_result[\"success\"] is True`, (3) `isinstance(refund_result[\"amount\"], (int, float))`. Call `processor.process_payment(50.00)` first to get a `txn_id`."
             condition: "default"
       - description: "refund_contract_holds() passes for CreditCardProcessor"
         command: |
@@ -3255,7 +3285,7 @@ steps:
           from payments import CreditCardProcessor
           mod.refund_contract_holds(CreditCardProcessor())
         hints:
-          - text: "Your contract helper should accept a CreditCardProcessor without any assertion failing — credit cards honor the full refund contract."
+          - text: "`refund_contract_holds(CreditCardProcessor())` is raising — which means your helper is asserting something the credit card processor does not satisfy. Double-check that you first call `process_payment(50.00)` and then pass `result[\"txn_id\"]` to `refund`."
             condition: "default"
       - description: "refund_contract_holds() FAILS for GiftCardProcessor (this is the point)"
         command: |
@@ -3279,7 +3309,7 @@ steps:
               # The message should indicate the postcondition violation
               pass
         hints:
-          - text: "Your contract helper should detect that GiftCardProcessor.refund() returns success=False and raise an AssertionError. Make sure your assertion checks `result['success'] is True`."
+          - text: "`refund_contract_holds(GiftCardProcessor(...))` must raise `AssertionError`. Add `assert refund_result[\"success\"] is True` in your helper — that line is what catches the weakened postcondition."
             condition: "default"
 
     quiz:
@@ -3903,7 +3933,10 @@ steps:
           assert issubclass(media_player.SeekablePlayer, media_player.MediaPlayer), \
               "SeekablePlayer must extend MediaPlayer."
         hints:
-          - text: "Define `class SeekablePlayer(MediaPlayer):` with abstract methods `seek()` and `get_duration()`."
+          - text: "Add a new `class SeekablePlayer(MediaPlayer):` below `MediaPlayer`. Move the `@abstractmethod seek(self, position)` and `@abstractmethod get_duration(self)` declarations from `MediaPlayer` down onto it."
+            condition: "source_missing"
+            value: "class SeekablePlayer"
+          - text: "`SeekablePlayer` must inherit from `MediaPlayer` so every seekable player is still a media player, but `MediaPlayer` itself stays small (just `play` and `stop`)."
             condition: "default"
       - description: "AudioFilePlayer extends SeekablePlayer"
         command: |
@@ -3915,7 +3948,10 @@ steps:
           assert issubclass(AudioFilePlayer, SeekablePlayer), \
               "AudioFilePlayer must extend SeekablePlayer (not just MediaPlayer)."
         hints:
-          - text: "Change `class AudioFilePlayer(MediaPlayer):` to `class AudioFilePlayer(SeekablePlayer):`."
+          - text: "Change the class header to `class AudioFilePlayer(SeekablePlayer):`. Audio files are seekable, so they belong on the seekable branch of the split."
+            condition: "source_contains"
+            value: "class AudioFilePlayer(MediaPlayer)"
+          - text: "`AudioFilePlayer` must extend `SeekablePlayer` directly — not `MediaPlayer` — so its `seek()` and `get_duration()` implementations satisfy the `SeekablePlayer` contract."
             condition: "default"
       - description: "VideoFilePlayer extends SeekablePlayer"
         command: |
@@ -3927,7 +3963,10 @@ steps:
           assert issubclass(VideoFilePlayer, SeekablePlayer), \
               "VideoFilePlayer must extend SeekablePlayer (not just MediaPlayer)."
         hints:
-          - text: "Change `class VideoFilePlayer(MediaPlayer):` to `class VideoFilePlayer(SeekablePlayer):`."
+          - text: "Change the class header to `class VideoFilePlayer(SeekablePlayer):`. Video files, like audio files, can be seeked, so they belong on the `SeekablePlayer` branch."
+            condition: "source_contains"
+            value: "class VideoFilePlayer(MediaPlayer)"
+          - text: "`VideoFilePlayer` must extend `SeekablePlayer` — its `seek()` and `get_duration()` implementations satisfy the `SeekablePlayer` contract, not the base `MediaPlayer` one."
             condition: "default"
       - description: "LiveStreamPlayer is NOT a SeekablePlayer"
         command: |
@@ -3941,7 +3980,10 @@ steps:
           assert not issubclass(LiveStreamPlayer, SeekablePlayer), \
               "LiveStreamPlayer must NOT extend SeekablePlayer — that's the whole point of the split."
         hints:
-          - text: "LiveStreamPlayer should extend MediaPlayer only. Remove any seek()/get_duration() methods from it entirely."
+          - text: "`class LiveStreamPlayer(SeekablePlayer):` re-introduces the original bug — a live stream cannot seek. Change it back to `class LiveStreamPlayer(MediaPlayer):` so the type system encodes that it isn't seekable."
+            condition: "source_contains"
+            value: "class LiveStreamPlayer(SeekablePlayer)"
+          - text: "`LiveStreamPlayer` must extend `MediaPlayer` only. Keeping it off the `SeekablePlayer` branch is the whole reason for the split — it lets `isinstance(player, SeekablePlayer)` return False for live streams."
             condition: "default"
       - description: "LiveStreamPlayer does NOT have seek() or get_duration() methods"
         command: |
@@ -3958,7 +4000,10 @@ steps:
           assert not hasattr(ls, 'get_duration') or not callable(getattr(ls, 'get_duration', None)) or ls.get_duration.__qualname__.split('.')[0] != 'LiveStreamPlayer', \
               "LiveStreamPlayer should not define get_duration(). Remove it entirely."
         hints:
-          - text: "Delete the seek() and get_duration() methods from LiveStreamPlayer. After the split, these methods belong on SeekablePlayer, which LiveStreamPlayer does not extend."
+          - text: "Even a stub like `def seek(self, position): raise NotImplementedError` is a lie — it says the method exists when it doesn't work. Delete `seek()` and `get_duration()` from `LiveStreamPlayer` completely."
+            condition: "source_contains"
+            value: "NotImplementedError"
+          - text: "After the split, `seek()` and `get_duration()` live on `SeekablePlayer` only. `LiveStreamPlayer` doesn't extend `SeekablePlayer`, so those methods should not appear on it at all."
             condition: "default"
       - description: "playlist_renderer handles all player types without crashing"
         command: |
@@ -3975,7 +4020,10 @@ steps:
           entries = playlist_renderer(players)
           assert len(entries) == 3, f"Expected 3 entries, got {len(entries)}"
         hints:
-          - text: "Update playlist_renderer to check `isinstance(player, SeekablePlayer)` before calling seek() or get_duration()."
+          - text: "Inside `playlist_renderer`, branch on `isinstance(player, SeekablePlayer)` before calling `get_duration()`. For the seekable branch set `duration=player.get_duration()` and `has_progress_bar=True`; for the non-seekable branch set `duration=None` and `has_progress_bar=False`."
+            condition: "source_missing"
+            value: "isinstance"
+          - text: "`playlist_renderer` must handle both `SeekablePlayer` instances and bare `MediaPlayer` instances without crashing. Use `isinstance(player, SeekablePlayer)` as the guard; do not use `isinstance(player, LiveStreamPlayer)` — that would couple the renderer to a concrete subclass and re-introduce an OCP violation."
             condition: "default"
       - description: "Seekable players get a progress bar"
         command: |
@@ -4882,7 +4930,7 @@ steps:
           name = fs.download("file_1")
           assert name == "notes.txt", f"download('file_1') should return 'notes.txt', got {repr(name)}"
         hints:
-          - text: "Store the file in self._files using a generated file_id like f'file_{self._next_id}'. In download(), look up the file_id in self._files."
+          - text: "In `FreeStorage.upload`, generate `file_id = f\"file_{self._next_id}\"`, increment `self._next_id`, then do `self._files[file_id] = file`. `download(file_id)` should just return `self._files[file_id]` (after checking the key exists)."
             condition: "default"
       - description: "FreeStorage.sync() raises NotImplementedError"
         command: |
@@ -4895,7 +4943,7 @@ steps:
               assert "Upgrade to Premium" in str(e), \
                   f"Error message should contain 'Upgrade to Premium', got: {e}"
         hints:
-          - text: "Implement sync() with a single line: raise NotImplementedError('Upgrade to Premium')"
+          - text: "The body of `FreeStorage.sync` should be exactly `raise NotImplementedError(\"Upgrade to Premium\")`. This stub is the Refused Bequest that demonstrates the ISP violation."
             condition: "default"
       - description: "FreeStorage.share() raises NotImplementedError"
         command: |
@@ -4941,28 +4989,28 @@ steps:
           exec(open('/tutorial/smart_home.py').read())
           assert 'Dimmable' in dir(), "Role interface Dimmable not found. Define it as an ABC."
         hints:
-          - text: "Define `class Dimmable(ABC):` with an abstract method `dim_lights(self, level)`."
+          - text: "In `smart_home.py`, add `class Dimmable(ABC):` with an `__init__(self, name)` and an `@abstractmethod def dim_lights(self, brightness: int) -> int:` stub. This is the role interface for light-control only."
             condition: "default"
       - description: "Playable role interface exists as an ABC"
         command: |
           exec(open('/tutorial/smart_home.py').read())
           assert 'Playable' in dir(), "Role interface Playable not found. Define it as an ABC."
         hints:
-          - text: "Define `class Playable(ABC):` with an abstract method `play_music(self, song)`."
+          - text: "Add `class Playable(ABC):` with `__init__(self, name)` and an `@abstractmethod def play_music(self, song: str) -> str:`. Only speakers will implement this."
             condition: "default"
       - description: "TemperatureControllable role interface exists as an ABC"
         command: |
           exec(open('/tutorial/smart_home.py').read())
           assert 'TemperatureControllable' in dir(), "Role interface TemperatureControllable not found. Define it as an ABC."
         hints:
-          - text: "Define `class TemperatureControllable(ABC):` with an abstract method `set_temperature(self, temp)`."
+          - text: "Add `class TemperatureControllable(ABC):` with `__init__(self, name)` and `@abstractmethod def set_temperature(self, degrees: float) -> float:`. Thermostats will be the only device implementing this."
             condition: "default"
       - description: "Lockable role interface exists as an ABC"
         command: |
           exec(open('/tutorial/smart_home.py').read())
           assert 'Lockable' in dir(), "Role interface Lockable not found. Define it as an ABC."
         hints:
-          - text: "Define `class Lockable(ABC):` with an abstract method `lock_door(self)`."
+          - text: "Add `class Lockable(ABC):` with `__init__(self, name)` and `@abstractmethod def lock_door(self) -> bool:`. Only the smart lock will implement this role."
             condition: "default"
       - description: "SmartLight implements Dimmable"
         command: |
@@ -4981,7 +5029,7 @@ steps:
           assert not isinstance(light, Lockable), \
               "SmartLight should NOT implement Lockable — it is not a lock"
         hints:
-          - text: "SmartLight should only inherit from Dimmable, not from the other role interfaces."
+          - text: "Change `SmartLight`'s base class list to `(Dimmable,)` only. Inheriting from additional role interfaces makes `isinstance(light, Playable)` true, which is exactly the fat-interface behavior ISP is trying to eliminate."
             condition: "default"
       - description: "SmartSpeaker implements Playable"
         command: |
@@ -5115,7 +5163,7 @@ steps:
             - "No — ISP says you should never split interfaces at all"
           correct_index: 1
           explanation: |
-            ISP is about **role-based** grouping, not splitting everything into atoms. One-method-per-interface creates an explosion of tiny interfaces that are a nightmare to discover and compose. The goal is to group methods that **change together** and are **used together** by the same clients. For example, `Uploadable` can reasonably include both `upload()` and `get_upload_status()` if every client that uploads also checks status.
+            ISP is about **role-based** grouping, not splitting everything into atoms. One-method-per-interface creates an explosion of tiny interfaces that are hard to discover and compose. The goal is to group methods that **change together** and are **used together** by the same clients. For example, `Uploadable` can reasonably include both `upload()` and `get_upload_status()` if every client that uploads also checks status.
 
 
   # --------------------------------------------------------------------------
@@ -5164,7 +5212,7 @@ steps:
 
       Wrapping every class in an ABC is the DIP equivalent of OCP's "speculative extensibility" trap — it adds indirection without buying you anything. The right question is always: *"If this collaborator had to be swapped tomorrow — for a test, a migration, or a cost cut — would I want it behind an abstraction?"* If yes, apply DIP. If no (`datetime.now()`, `math.sqrt`), don't.
 
-      > **Struggling is the lesson.** DIP is the principle that most unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will crystallize it in code.
+      > **Expect friction.** DIP is the principle that most often enables testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will make it concrete.
 
       ### The Scenario — Feel the Friction
 
@@ -5775,7 +5823,7 @@ steps:
 
         **Why ownership matters.** If OpenWeatherMap adds a `get_air_quality()` method next week, your abstraction doesn't change — the dashboard doesn't ask for air quality. If OpenWeatherMap *removes* `get_forecast()`, the abstraction still declares it, and you'd need a different provider (or an adapter) — which is exactly the signal you want: a spec mismatch at the boundary, not a silent change in behavior.
 
-        **Why fakes unlock testing.** With `FakeWeatherProvider` and `FakeWeatherCache`, the cache-hit test takes microseconds, hits no network, and verifies the *behavior that matters*: "after the first call, the provider is not called again." That is a true unit test.
+        **Why fakes enable testing.** With `FakeWeatherProvider` and `FakeWeatherCache`, the cache-hit test takes microseconds, hits no network, and verifies the *behavior that matters*: "after the first call, the provider is not called again." That is a true unit test.
 
         **The "indirection without inversion" trap.** A common mistake is to make `WeatherProvider` mirror OpenWeatherMap's full API — same method names, same shape. That's *indirection* (an extra layer), not *inversion* (the caller owns the interface). Your interface should describe the caller's needs. If a method is there only because the concrete class has it, it probably doesn't belong.
 
@@ -5792,7 +5840,7 @@ steps:
           assert 'assert' in body, \
               "test_order_total_calculation() must contain an assert statement checking the total equals 79.98."
         hints:
-          - text: "Inside test_order_total_calculation(), create an OrderService, call place_order with two items ($29.99 and $49.99), and assert the returned total equals 79.98."
+          - text: "Replace the `pass` body of `test_order_total_calculation` with: (1) `service = OrderService()`, (2) `result = service.place_order(items=[{\"name\": \"A\", \"price\": 29.99}, {\"name\": \"B\", \"price\": 49.99}], payment_token=\"tok_test\", customer_email=\"t@example.com\")`, (3) `assert abs(result[\"total\"] - 79.98) < 0.001`."
             condition: "default"
 
       - description: "WeatherProvider ABC is defined in weather_dashboard.py"
@@ -5808,7 +5856,7 @@ steps:
           assert issubclass(weather_dashboard.WeatherProvider, ABC), \
               "WeatherProvider must be an ABC (inherit from abc.ABC)."
         hints:
-          - text: "Define `class WeatherProvider(ABC):` with `@abstractmethod` methods get_current(city) and get_forecast(city, days)."
+          - text: "Add `from abc import ABC, abstractmethod` and define `class WeatherProvider(ABC):` with two `@abstractmethod` stubs — `get_current(self, city)` and `get_forecast(self, city, days)` — matching the calls `WeatherDashboard` already makes on `self.api`."
             condition: "default"
 
       - description: "WeatherCache ABC is defined in weather_dashboard.py"
@@ -5824,7 +5872,7 @@ steps:
           assert issubclass(weather_dashboard.WeatherCache, ABC), \
               "WeatherCache must be an ABC (inherit from abc.ABC)."
         hints:
-          - text: "Define `class WeatherCache(ABC):` with `@abstractmethod` methods get(key) and set(key, value, ttl_seconds)."
+          - text: "Define `class WeatherCache(ABC):` with `@abstractmethod def get(self, key)` and `@abstractmethod def set(self, key, value, ttl_seconds)`. Model the signatures on the calls `WeatherDashboard.get_weather` already makes on `self.cache`."
             condition: "default"
 
       - description: "OpenWeatherMapClient implements WeatherProvider"
@@ -5837,7 +5885,7 @@ steps:
           assert issubclass(OpenWeatherMapClient, WeatherProvider), \
               "OpenWeatherMapClient must extend WeatherProvider."
         hints:
-          - text: "Change `class OpenWeatherMapClient:` to `class OpenWeatherMapClient(WeatherProvider):`."
+          - text: "Update the declaration to `class OpenWeatherMapClient(WeatherProvider):` — it already has compatible `get_current` and `get_forecast` signatures."
             condition: "default"
 
       - description: "MongoDbCache implements WeatherCache"
@@ -5850,7 +5898,7 @@ steps:
           assert issubclass(MongoDbCache, WeatherCache), \
               "MongoDbCache must extend WeatherCache."
         hints:
-          - text: "Change `class MongoDbCache:` to `class MongoDbCache(WeatherCache):`."
+          - text: "Update the declaration to `class MongoDbCache(WeatherCache):`. Its existing `get` and `set` methods already match the abstract contract."
             condition: "default"
 
       - description: "WeatherDashboardDIP accepts WeatherProvider and WeatherCache via constructor"
@@ -5868,7 +5916,7 @@ steps:
           assert len(non_self) >= 2, \
               "WeatherDashboardDIP.__init__ must accept (at least) provider and cache parameters."
         hints:
-          - text: "`WeatherDashboardDIP.__init__(self, provider: WeatherProvider, cache: WeatherCache)`. Store both as attributes."
+          - text: "Define `WeatherDashboardDIP.__init__(self, provider: WeatherProvider, cache: WeatherCache)` and store them as `self.provider` and `self.cache`. Do NOT instantiate `OpenWeatherMapClient()` or `MongoDbCache()` inside — that would reintroduce the hardcoded-dependency smell."
             condition: "default"
 
       - description: "FakeWeatherProvider is defined and tracks call count"
@@ -5887,7 +5935,7 @@ steps:
           assert fake.call_count == 1, \
               f"call_count should be 1 after one call, got {fake.call_count}"
         hints:
-          - text: "FakeWeatherProvider needs `self.call_count = 0` in __init__, and get_current() should do `self.call_count += 1`."
+          - text: "In `FakeWeatherProvider.__init__`, set `self.call_count = 0`, then make both `get_current` and `get_forecast` increment it and return a canned dict (no real network calls)."
             condition: "default"
 
       - description: "FakeWeatherCache is defined and works as an in-memory dict"
@@ -5904,7 +5952,7 @@ steps:
           assert fake.get("k") == {"v": 1}, "FakeWeatherCache.get should return what was set."
           assert fake.get("missing") is None, "FakeWeatherCache.get should return None for missing keys."
         hints:
-          - text: "FakeWeatherCache should store values in an internal dict. `get(key)` returns self._data.get(key); `set(key, value, ttl_seconds)` does self._data[key] = value."
+          - text: "Back `FakeWeatherCache` with a plain dict. `__init__` sets `self._data = {}`; `get(key)` returns `self._data.get(key)`; `set(key, value, ttl_seconds)` does `self._data[key] = value`. Ignore the TTL for the fake."
             condition: "default"
 
       - description: "test_dashboard_uses_cache verifies cache hit on second call (no external services)"
@@ -5929,7 +5977,9 @@ steps:
           assert "[MONGODB]" not in output, \
               "test_dashboard_uses_cache() printed [MONGODB] — it must use FakeWeatherCache, not MongoDbCache."
         hints:
-          - text: "Inside test_dashboard_uses_cache, construct FakeWeatherProvider, FakeWeatherCache, and WeatherDashboardDIP(provider, cache). Call get_weather twice and assert provider.call_count == 1."
+          - text: "If the captured output contains `[OPENWEATHER]` or `[MONGODB]`, `test_dashboard_uses_cache` is constructing the real clients. Build `WeatherDashboardDIP(FakeWeatherProvider(), FakeWeatherCache())` instead — only the fakes should be touched inside the test."
+            condition: "output_contains: [OPENWEATHER]"
+          - text: "Inside `test_dashboard_uses_cache`, wire the dashboard with fakes only: `provider = FakeWeatherProvider(); cache = FakeWeatherCache(); dashboard = WeatherDashboardDIP(provider, cache)`. Then call `dashboard.get_weather(\"Seattle\")` twice."
             condition: "default"
 
       - description: "test_dashboard_uses_cache asserts provider is called exactly once"
@@ -5944,7 +5994,7 @@ steps:
           assert 'assert' in body, \
               "test_dashboard_uses_cache must contain an assert statement."
         hints:
-          - text: "After calling dashboard.get_weather('Seattle') twice, assert provider.call_count == 1. The second call should hit the cache, not the provider."
+          - text: "Add `assert provider.call_count == 1, f\"expected 1 call, got {provider.call_count}\"` after the two `dashboard.get_weather(\"Seattle\")` calls — the second call must be served from the cache, not the provider."
             condition: "default"
 
     quiz:
@@ -6463,7 +6513,7 @@ steps:
           assert 'DIAGNOSIS' in preceding.upper(), \
               "Add a '# DIAGNOSIS: ...' comment above the Logger class (Snippet 1)."
         hints:
-          - text: "Above `class Logger:`, add a comment like: `# DIAGNOSIS: SRP violation — class handles both formatting and file writing`"
+          - text: "Write `# DIAGNOSIS: SRP violation — formatting (timestamp, uppercase) and persistence (file write) are two separate reasons to change` on the line directly above `class Logger:`."
             condition: "default"
       - description: "Snippet 2 (DiscountEngine) has a DIAGNOSIS comment"
         command: |
@@ -6474,7 +6524,7 @@ steps:
           assert 'DIAGNOSIS' in preceding.upper(), \
               "Add a '# DIAGNOSIS: ...' comment above the DiscountEngine class (Snippet 2)."
         hints:
-          - text: "Above `class DiscountEngine:`, add a comment like: `# DIAGNOSIS: OCP violation — adding a new discount type requires modifying the if/elif chain`"
+          - text: "Write `# DIAGNOSIS: OCP violation — the if/elif chain on discount_type means every new discount ('holiday', 'referral', ...) requires editing this method instead of extending via a new class` directly above `class DiscountEngine:`."
             condition: "default"
       - description: "Snippet 3 (PremiumUser) has a DIAGNOSIS comment"
         command: |
@@ -6485,7 +6535,7 @@ steps:
           assert 'DIAGNOSIS' in preceding.upper(), \
               "Add a '# DIAGNOSIS: ...' comment above the PremiumUser class (Snippet 3)."
         hints:
-          - text: "Above `class PremiumUser(User):`, add a comment like: `# DIAGNOSIS: LSP violation — PremiumUser raises an exception where User returns a string`"
+          - text: "Write `# DIAGNOSIS: LSP violation — PremiumUser.free_trial_signup raises RuntimeError where User returns a str, so it cannot substitute for User` directly above `class PremiumUser(User):`."
             condition: "default"
       - description: "Snippet 4 (DatabaseClient) has a DIAGNOSIS comment"
         command: |
@@ -6496,7 +6546,7 @@ steps:
           assert 'DIAGNOSIS' in preceding.upper(), \
               "Add a '# DIAGNOSIS: ...' comment above the DatabaseClient class (Snippet 4)."
         hints:
-          - text: "Above `class DatabaseClient(ABC):`, add a comment like: `# DIAGNOSIS: ISP violation — simple clients forced to implement methods they don't use`"
+          - text: "Write `# DIAGNOSIS: ISP violation — simple clients that only need connect/query/disconnect are forced to implement cache_query, replicate, and shard; split into DatabaseClient + Cacheable + Replicable + Shardable` directly above `class DatabaseClient(ABC):`."
             condition: "default"
       - description: "Snippet 5 (ReportGenerator) has a DIAGNOSIS comment"
         command: |
@@ -6507,7 +6557,7 @@ steps:
           assert 'DIAGNOSIS' in preceding.upper(), \
               "Add a '# DIAGNOSIS: ...' comment above the ReportGenerator class (Snippet 5)."
         hints:
-          - text: "Above `class ReportGenerator:`, add a comment like: `# DIAGNOSIS: DIP violation — directly instantiates concrete low-level classes`"
+          - text: "Write `# DIAGNOSIS: DIP violation — __init__ calls PdfRenderer() and SqlConnection() directly, so the high-level report policy depends on two concrete low-level classes instead of injected Renderer/DataSource abstractions` directly above `class ReportGenerator:`."
             condition: "default"
       - description: "Snippet 6 (UserValidator) has a DIAGNOSIS comment"
         command: |
@@ -6519,7 +6569,7 @@ steps:
               "Add a '# DIAGNOSIS: ...' comment above the UserValidator class (Snippet 6). " \
               "Hint: not every class has a violation — is this one well-designed?"
         hints:
-          - text: "This is the trick question. UserValidator follows all SOLID principles. Write: `# DIAGNOSIS: No violation — open for extension via new ValidationRule subclasses`"
+          - text: "This is the trick snippet. `UserValidator` depends on the `ValidationRule` ABC, so new rules extend the system without editing `UserValidator`. Write `# DIAGNOSIS: No violation — depends on the ValidationRule abstraction and is open for extension via new subclasses` directly above `class UserValidator:`."
             condition: "default"
 
     quiz:
@@ -6619,13 +6669,13 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Capstone — The Real World"
     instructions: |
-      ## Final Boss: Library Management System
+      ## Capstone: Library Management System
 
       > **Learning objective:** After this step you will be able to **identify** multiple simultaneous SOLID violations in a realistic system, **refactor** it to follow all five principles, and **recognize** when SOLID is being applied excessively.
 
       ### The Challenge
 
-      Here's `library_system.py` — a monolithic library management system with **multiple SOLID violations baked in**. Your mission:
+      Here's `library_system.py` — a monolithic library management system with **multiple SOLID violations baked in**. Your job:
 
       1. **Identify** every violation and label it with a comment (e.g., `# VIOLATION: OCP — ...`).
       2. **Refactor** the system into well-designed classes that follow SOLID.
@@ -6654,7 +6704,7 @@ steps:
 
       ### Don't Over-Engineer
 
-      After refactoring, check out this cautionary example. This is what happens when SOLID is applied **without judgment** — when you treat principles as rules to maximize instead of tools to apply thoughtfully:
+      After refactoring, consider this cautionary example. It shows what happens when SOLID is applied **without judgment** — when principles are treated as rules to maximize instead of tools to apply thoughtfully:
 
       ```python
       # over_engineered.py — DO NOT DO THIS
@@ -6702,12 +6752,12 @@ steps:
       result = engine.add(2, 3)
       ```
 
-      Four interfaces, a factory, and a result wrapper — all for `2 + 3`. The original code was already perfectly clear. **SOLID is a tool, not a religion.** Apply it when the complexity of the domain justifies it. Don't be that person who architects a to-do app like it's a distributed system.
+      Four interfaces, a factory, and a result wrapper — all for `2 + 3`. The original code was already perfectly clear. **SOLID is a tool, not a rule.** Apply it when the complexity of the domain justifies it — not to a to-do app.
 
       ### When NOT to Apply SOLID
 
       - **Simple scripts and one-off tasks:** If the code will never change, don't invest in extension points.
-      - **Prototypes and spikes:** Favor speed over structure — you're gonna throw it away anyway.
+      - **Prototypes and spikes:** Favor speed over structure — the code is meant to be thrown away.
       - **When there's only one variant:** Don't create an ABC with a single implementation. Wait until you actually have two variants, then extract the abstraction.
       - **When it obscures intent:** If a 5-line function becomes 50 lines across 4 classes, the cure is worse than the disease.
 
@@ -7318,7 +7368,7 @@ steps:
         command: |
           exec(open('/tutorial/library_system.py').read())
         hints:
-          - text: "Make sure your refactored code is syntactically valid Python. Run it to check for import errors or typos."
+          - text: "Run `python library_system.py` locally first. The most common failures are: a missing `from abc import ABC, abstractmethod`, a class declared `@abstractmethod` that is still being instantiated, or a subclass that forgot to implement `checkout()` or `is_available()`."
             condition: "default"
 
       - description: "Physical book checkout returns the book title"
@@ -7346,7 +7396,10 @@ steps:
               result = lib.checkout("M1", "ISBN-001")
               assert "Test Book" in result
         hints:
-          - text: "Create a `PhysicalBook` class with a `checkout()` method that returns a string containing the book's title."
+          - text: "Define `class PhysicalBook(Book):` and give it a `checkout(self) -> str` that decrements `self.copies` and returns a string such as `f\"Checked out physical copy of '{self.title}'\"` — the title must appear in the return value."
+            condition: "source_missing"
+            value: "class PhysicalBook"
+          - text: "`PhysicalBook.checkout()` must return (not print) a string that contains `self.title`. `CheckoutService.checkout()` just forwards whatever `book.checkout()` returns — it does no formatting itself."
             condition: "default"
 
       - description: "Physical book copies are decremented after checkout"
@@ -7376,7 +7429,7 @@ steps:
               assert lib.get_book("ISBN-001").copies == 1, \
                   "Expected 1 copy remaining after checkout"
         hints:
-          - text: "PhysicalBook.checkout() should decrement self.copies. Make sure BookRepository.get_book() returns the book so the copy count can be verified."
+          - text: "Inside `PhysicalBook.checkout()`, decrement `self.copies -= 1` before returning. Starting with `copies=2`, one checkout must leave `copies=1`, not `0` (that would mean you decremented twice) and not `2` (you forgot to decrement)."
             condition: "default"
 
       - description: "EBooks can be checked out with a download link"
@@ -7409,7 +7462,10 @@ steps:
               result = lib.checkout("M1", "ISBN-002")
               assert "https://example.com/book" in result
         hints:
-          - text: "Create an `EBook` class whose `checkout()` method returns a string containing the download link."
+          - text: "Define `class EBook(Book):` with a `download_link: str` field and a `checkout()` that returns a string containing `self.download_link` — e.g. `return f\"Download '{self.title}' at: {self.download_link}\"`."
+            condition: "source_missing"
+            value: "class EBook"
+          - text: "`EBook.checkout()` must substitute `self.download_link` into its return string. The test asserts the exact URL `https://example.com/book` is present in the result."
             condition: "default"
 
       - description: "AudioBooks can be checked out with a DRM license"
@@ -7442,7 +7498,10 @@ steps:
               result = lib.checkout("M1", "ISBN-003")
               assert "DRM-XYZ" in result
         hints:
-          - text: "Create an `AudioBook` class whose `checkout()` method returns a string containing the DRM license."
+          - text: "Define `class AudioBook(Book):` with a `drm_license: str` field and a `checkout()` that returns a string containing `self.drm_license` — e.g. `return f\"Stream '{self.title}' with license: {self.drm_license}\"`."
+            condition: "source_missing"
+            value: "class AudioBook"
+          - text: "`AudioBook.checkout()` must substitute `self.drm_license` into its return string. The test asserts the exact value `DRM-XYZ` is present in the result."
             condition: "default"
 
       - description: "Members are tracked and borrowing is recorded"
@@ -7482,7 +7541,7 @@ steps:
               member = lib.get_member("M1")
               assert "ISBN-A" in member.borrowed_isbns
         hints:
-          - text: "After a successful checkout, append the ISBN to `member.borrowed_isbns`."
+          - text: "In `CheckoutService.checkout()`, after the successful call to `book.checkout()`, run `member.borrowed_isbns.append(isbn)` so the member's list grows by one entry per checkout."
             condition: "default"
 
       - description: "Overdue notice includes the member's name"
@@ -7508,7 +7567,10 @@ steps:
               notice = lib.send_overdue_notice("M1", "ISBN-X")
               assert "Alice" in notice
         hints:
-          - text: "Create a `NotificationService` class with a `send_overdue_notice(member, book_title)` method that returns a notice string containing the member's name."
+          - text: "Define `class NotificationService:` with `__init__(self, logger: Logger)` and `send_overdue_notice(self, member: Member, book_title: str) -> str`. Interpolate `member.name` into the returned string, e.g. `f\"Dear {member.name}, '{book_title}' is overdue...\"`."
+            condition: "source_missing"
+            value: "class NotificationService"
+          - text: "`NotificationService.send_overdue_notice()` must return (not just print) a notice string that includes `member.name`. The test calls `notifier.send_overdue_notice(member, \"Some Book\")` and asserts `\"Alice\" in notice`."
             condition: "default"
 
       - description: "Overdue notice includes the book title"
@@ -7581,7 +7643,10 @@ steps:
               report = lib.generate_inventory_report()
               assert "ISBN-A" in report
         hints:
-          - text: "Create an `InventoryReporter` class that accepts a `BookRepository` and a `ReportWriter`, and generates a report listing all books."
+          - text: "Define `class InventoryReporter:` with `__init__(self, book_repo: BookRepository, writer: ReportWriter)`. Its `generate()` method should build a list of dict rows (each row including `\"isbn\": book.isbn`) and return `self.writer.write(\"Inventory Report\", rows)` so every book's ISBN appears in the output."
+            condition: "source_missing"
+            value: "class InventoryReporter"
+          - text: "Make sure `InventoryReporter.generate()` iterates every book in the repository and includes its `isbn` in the row dict — the test asserts both `ISBN-A` and `ISBN-B` appear in the report string."
             condition: "default"
 
       - description: "Reference books are handled without raising on checkout"
@@ -7614,7 +7679,10 @@ steps:
                                 "reference"))
               assert lib.get_book("ISBN-REF") is not None
         hints:
-          - text: "The LSP fix: make `ReferenceBook` a separate class (not a subclass of `Book`) with a `browse()` method instead of `checkout()`. This way it cannot be accidentally passed to `CheckoutService`."
+          - text: "Declare `ReferenceBook` as a standalone `@dataclass` — not `class ReferenceBook(Book):`. Give it a `browse(self) -> str` method and no `checkout()` at all. Because it isn't a `Book`, `CheckoutService` cannot even receive it, so the LSP violation is eliminated at the type level."
+            condition: "source_contains"
+            value: "class ReferenceBook(Book)"
+          - text: "The LSP-honest fix is **separation, not stubbing**: `ReferenceBook` should not inherit from `Book`. Give it a `browse()` method instead of `checkout()` so reference books cannot be passed to `CheckoutService` — and therefore cannot trigger a `NotImplementedError` at runtime."
             condition: "default"
 
       - description: "Dependency injection is used (no direct instantiation of FileLogger/CsvReportWriter in service classes)"
@@ -7650,7 +7718,10 @@ steps:
               ". Inject Logger and ReportWriter abstractions via " \
               "constructor parameters instead."
         hints:
-          - text: "Define `Logger` and `ReportWriter` ABCs. Have `CheckoutService` and other services accept these abstractions as constructor parameters. Create `FileLogger` and `CsvReportWriter` outside the service classes and pass them in."
+          - text: "Remove the `FileLogger()` / `CsvReportWriter()` calls from inside `CheckoutService`, `NotificationService`, `InventoryReporter`, and `LibrarySystem`. Instead, accept `logger: Logger` and `writer: ReportWriter` as `__init__` parameters and construct the concrete `FileLogger()` / `CsvReportWriter()` once in the `if __name__ == \"__main__\":` block, then pass them in."
+            condition: "source_contains"
+            value: "FileLogger()"
+          - text: "Service classes must depend on the `Logger` and `ReportWriter` ABCs — not on concrete implementations. The AST check scans `CheckoutService`, `NotificationService`, `InventoryReporter`, and `LibrarySystem` for any direct call to `FileLogger()` or `CsvReportWriter()` and flags each one as a DIP violation."
             condition: "default"
 
     quiz:

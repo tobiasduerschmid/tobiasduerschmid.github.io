@@ -142,26 +142,45 @@ steps:
       - description: "Script runs without errors"
         command: |
           output = __run_capture('/tutorial/grades.py')
+        hints:
+          - text: "Click Run and read the error message. Python prints the file name, line number, and the kind of error. The first error is the one to fix — later errors often cascade from it."
+            condition: "default"
       - description: "Contains assert for grade 95 == 'A'"
         command: |
           source = open('/tutorial/grades.py').read()
           assert 'assert' in source and '95' in source, \
               "Add an assert statement that checks calculate_grade(95) == 'A'"
+        hints:
+          - text: "Add `assert calculate_grade(95) == \"A\"` at the bottom of the file. An `assert` succeeds silently when the condition is True and raises `AssertionError` when it is False."
+            condition: "code_missing: assert"
+          - text: "You have an `assert` but not one for 95. Write three separate assertions — one per input (95, 85, 72). Keep each on its own line so a failure tells you exactly which one broke."
+            condition: "code_contains: assert"
       - description: "Contains assert for grade 85 == 'B'"
         command: |
           source = open('/tutorial/grades.py').read()
           assert 'assert' in source and '85' in source, \
               "Add an assert statement that checks calculate_grade(85) == 'B'"
+        hints:
+          - text: "Add a second line: `assert calculate_grade(85) == \"B\"`. Test each boundary on its own line so you know which case failed when it fails."
+            condition: "default"
       - description: "Contains assert for grade 72 == 'C'"
         command: |
           source = open('/tutorial/grades.py').read()
           assert 'assert' in source and '72' in source, \
               "Add an assert statement that checks calculate_grade(72) == 'C'"
+        hints:
+          - text: "Add a third line: `assert calculate_grade(72) == \"C\"`."
+            condition: "default"
       - description: "All assertions pass (function is correct)"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'AssertionError' not in output and 'Error' not in output, \
               f"Your assertions failed — is the function correct? Output: {output}"
+        hints:
+          - text: "Your assertions are correct, so the function must be wrong. Look at the first `if`: `calculate_grade(90)` returns what? Walk through the conditions one by one — which boundary is off?"
+            condition: "output_contains: AssertionError"
+          - text: "The condition `if score > 90` excludes 90 itself, so `calculate_grade(90)` falls through to the `>= 80` branch. Should 90 be an A or a B? Pick the right comparison operator (`>` vs `>=`)."
+            condition: "output_contains: AssertionError"
 
     quiz:
       title: "Why Test? — Knowledge Check"
@@ -359,22 +378,36 @@ steps:
       - description: "test_temperature.py runs without errors"
         command: |
           output = __run_capture('/tutorial/test_temperature.py')
+        hints:
+          - text: "If you see an `ImportError`, check that `temperature.py` exists in the same directory. If you see a `SyntaxError`, the message names the line and column — look there first."
+            condition: "default"
       - description: "test_freezing_point has a real assertion (not just pass)"
         command: |
           source = open('/tutorial/test_temperature.py').read()
           # Find the test_freezing_point function body
           assert 'assert' in source.split('test_freezing_point')[1].split('def ')[0], \
               "test_freezing_point still has 'pass' — replace it with an assert statement"
+        hints:
+          - text: "Replace `pass` inside `test_freezing_point` with `assert celsius_to_fahrenheit(0) == 32.0`. A function with only `pass` passes trivially — pytest cannot tell it apart from a real passing test."
+            condition: "default"
       - description: "test_boiling_point has a real assertion"
         command: |
           source = open('/tutorial/test_temperature.py').read()
           assert 'assert' in source.split('test_boiling_point')[1].split('def ')[0], \
               "test_boiling_point still has 'pass' — replace it with an assert statement"
+        hints:
+          - text: "In `test_boiling_point`, replace `pass` with `assert celsius_to_fahrenheit(100) == 212.0`."
+            condition: "default"
       - description: "test_negative_forty function exists"
         command: |
           source = open('/tutorial/test_temperature.py').read()
           assert 'def test_negative_forty' in source, \
               "Write a new function called test_negative_forty"
+        hints:
+          - text: "Add a new function defined as `def test_negative_forty():` followed by `assert celsius_to_fahrenheit(-40) == -40.0`. The name must start with `test_` for pytest discovery."
+            condition: "code_missing: def test_negative_forty"
+          - text: "The grader checks for the exact name `test_negative_forty`. Abbreviations like `test_neg_40` won't match."
+            condition: "code_missing: test_negative_forty"
       - description: "All tests pass"
         command: |
           import pytest, io, sys
@@ -382,6 +415,11 @@ steps:
           code = pytest.main(['/tutorial/test_temperature.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - text: "Read the pytest output — it names the failing test and prints the two mismatched values. The common mistake is an off-by-one decimal, e.g., asserting `32` vs `32.0`. Both are equal in Python, but check your formula: `celsius * 9 / 5 + 32`."
+            condition: "output_contains: FAILED"
+          - text: "If every individual test shows PASSED but this check still fails, one of your test bodies may still be just `pass`. Scan each function to confirm every one has an `assert`."
+            condition: "default"
 
     quiz:
       title: "pytest Basics — Knowledge Check"
@@ -648,6 +686,11 @@ steps:
           exec(open('/tutorial/word_counter.py').read())
           assert 'WordCounter' in dir() or 'WordCounter' in open('/tutorial/word_counter.py').read(), \
               "Define a class called WordCounter in word_counter.py"
+        hints:
+          - text: "The file needs a line starting with `class WordCounter:` — check spelling and capitalization. `wordcounter` or `Word_Counter` won't match."
+            condition: "source_missing: class WordCounter"
+          - text: "If the file fails to import, look for a SyntaxError or an incorrect indent. Classes need their methods indented one level."
+            condition: "default"
       - description: "test_count_words_simple passes"
         command: |
           import pytest, io, sys
@@ -655,12 +698,20 @@ steps:
           code = pytest.main(['/tutorial/test_word_counter.py::test_count_words_simple', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"test_count_words_simple failed:\n{output}"
+        hints:
+          - text: "Read the failure message — pytest shows the expected value vs. what your `count_words` returned. `\"hello world\"` has 2 words; if you got 1, you're probably not splitting on whitespace."
+            condition: "output_contains: FAILED"
+          - text: "`str.split()` with no argument splits on any whitespace and ignores leading/trailing spaces. Use that, then call `len()` on the result."
+            condition: "default"
       - description: "test_count_repeated_words has a real assertion (not just pass)"
         command: |
           source = open('/tutorial/test_word_counter.py').read()
           func_body = source.split('test_count_repeated_words')[1].split('def ')[0]
           assert 'assert' in func_body, \
               "Replace 'pass' in test_count_repeated_words with an assert statement"
+        hints:
+          - text: "The function body is still just `pass`. Delete that line and write `assert wc.count_words(\"the cat and the dog\") == 5`."
+            condition: "default"
       - description: "test_count_repeated_words passes"
         command: |
           import pytest, io, sys
@@ -668,11 +719,19 @@ steps:
           code = pytest.main(['/tutorial/test_word_counter.py::test_count_repeated_words', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"test_count_repeated_words failed:\n{output}"
+        hints:
+          - text: "`count_words` counts total words (so `\"the cat and the dog\"` → 5), not unique ones. If you're using `set()`, remove it — we count every occurrence."
+            condition: "output_contains: FAILED"
+          - text: "If the assertion value in your test looks wrong, count by hand: every whitespace-separated token is one word."
+            condition: "default"
       - description: "test_count_empty_string function exists"
         command: |
           source = open('/tutorial/test_word_counter.py').read()
           assert 'def test_count_empty_string' in source, \
               "Write a test function called test_count_empty_string"
+        hints:
+          - text: "Add a new test: `def test_count_empty_string():` — the name has to match exactly, including underscores, for this check to find it."
+            condition: "source_missing: def test_count_empty_string"
       - description: "All tests pass"
         command: |
           import pytest, io, sys
@@ -680,6 +739,11 @@ steps:
           code = pytest.main(['/tutorial/test_word_counter.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - text: "Empty string is the classic edge case. `\"\".split()` returns `[]`, so `len(\"\".split()) == 0`. Your test should assert `wc.count_words(\"\") == 0`."
+            condition: "output_contains: FAILED"
+          - text: "If individual tests pass but the full file fails, you likely have a test function whose body is still `pass` or whose assertion uses the wrong expected value."
+            condition: "default"
 
     quiz:
       title: "Red-Green-Refactor — Knowledge Check"
@@ -917,6 +981,11 @@ steps:
           code = pytest.main(['/tutorial/test_fizzbuzz.py::test_returns_number_as_string', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Cycle 1 failed:\n{output}"
+        hints:
+          - text: "`fizzbuzz(1)` should return the string `\"1\"`, not the integer `1`. Use `str(n)` when the number is not divisible by 3 or 5."
+            condition: "output_contains: FAILED"
+          - text: "For Cycle 1, the minimum code that passes is `return str(n)`. You don't need any `if` statements yet — that's the point of the GREEN phase."
+            condition: "default"
       - description: "Cycle 2 passes — multiples of 3 return 'Fizz'"
         command: |
           import pytest, io, sys
@@ -924,12 +993,20 @@ steps:
           code = pytest.main(['/tutorial/test_fizzbuzz.py::test_fizz_for_multiples_of_3', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Cycle 2 failed:\n{output}"
+        hints:
+          - text: "Check divisibility with `n % 3 == 0`. Return `\"Fizz\"` (with a capital F, in quotes) — not `Fizz` without quotes, which Python reads as a variable name."
+            condition: "output_contains: FAILED"
+          - text: "Order matters: put the `if n % 3 == 0:` branch before the default `return str(n)`, otherwise every number returns its string form first."
+            condition: "default"
       - description: "Cycle 3 — test_buzz_for_multiples_of_5 has real assertions"
         command: |
           source = open('/tutorial/test_fizzbuzz.py').read()
           func_body = source.split('test_buzz_for_multiples_of_5')[1].split('def ')[0]
           assert 'assert' in func_body, \
               "Replace 'pass' in test_buzz_for_multiples_of_5 with assert statements"
+        hints:
+          - text: "The test body is still `pass`. Add at least one `assert` — for example, `assert fizzbuzz(5) == \"Buzz\"` and `assert fizzbuzz(10) == \"Buzz\"`."
+            condition: "default"
       - description: "Cycle 3 passes — multiples of 5 return 'Buzz'"
         command: |
           import pytest, io, sys
@@ -937,11 +1014,19 @@ steps:
           code = pytest.main(['/tutorial/test_fizzbuzz.py::test_buzz_for_multiples_of_5', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Cycle 3 failed:\n{output}"
+        hints:
+          - text: "Add an `elif n % 5 == 0: return \"Buzz\"` branch. Watch the spelling — `\"Buzz\"` is not `\"buzz\"` or `\"BUZZ\"`."
+            condition: "output_contains: FAILED"
+          - text: "If `fizzbuzz(15)` returns `\"Fizz\"` at this stage, that is fine — Cycle 4 handles 15. Focus on making 5 and 10 return `\"Buzz\"` first."
+            condition: "default"
       - description: "Cycle 4 — test_fizzbuzz_for_multiples_of_15 exists"
         command: |
           source = open('/tutorial/test_fizzbuzz.py').read()
           assert 'def test_fizzbuzz_for_multiples_of_15' in source, \
               "Write a test function called test_fizzbuzz_for_multiples_of_15"
+        hints:
+          - text: "Add a new test function: `def test_fizzbuzz_for_multiples_of_15():`. Assert on `fizzbuzz(15)`, `fizzbuzz(30)`, `fizzbuzz(45)` — each should equal `\"FizzBuzz\"`."
+            condition: "source_missing: def test_fizzbuzz_for_multiples_of_15"
       - description: "Cycle 4 passes — multiples of 15 return 'FizzBuzz'"
         command: |
           import pytest, io, sys
@@ -949,6 +1034,11 @@ steps:
           code = pytest.main(['/tutorial/test_fizzbuzz.py::test_fizzbuzz_for_multiples_of_15', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Cycle 4 failed:\n{output}"
+        hints:
+          - text: "The 15-check has to come FIRST. If `if n % 3 == 0` runs before `if n % 15 == 0`, then 15 returns `\"Fizz\"` and never reaches the FizzBuzz branch."
+            condition: "output_contains: FAILED"
+          - text: "`\"FizzBuzz\"` is one word, one string, no space — not `\"Fizz Buzz\"` or `\"Fizz\" + \"Buzz\"` printed separately."
+            condition: "default"
       - description: "All FizzBuzz tests pass together"
         command: |
           import pytest, io, sys
@@ -956,6 +1046,11 @@ steps:
           code = pytest.main(['/tutorial/test_fizzbuzz.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - text: "Read the pytest summary — it lists which specific test failed. A common cause: your branches are ordered so that a regular number like `3` matches the FizzBuzz branch."
+            condition: "output_contains: FAILED"
+          - text: "If earlier cycles passed individually but now fail, you may have changed your implementation while working on a later cycle. Revert the part that broke the earlier test."
+            condition: "default"
 
     quiz:
       title: "TDD Kata — Knowledge Check"
@@ -1234,6 +1329,11 @@ steps:
           source = open('/tutorial/test_brittle_audit.py').read()
           assert '._items' not in source, \
               "Your tests still access the private attribute `_items`. Rewrite them to use public methods like item_count(), total(), or items() instead."
+        hints:
+          - text: "Remove every `._items` reference. Instead of `cart._items[0] == \"apple\"`, ask what the test is really checking — the first item should be `\"apple\"` — and use `cart.items()[0]` or check `\"apple\" in cart.items()`."
+            condition: "source_contains: ._items"
+          - text: "Think behavior: `cart._items` is how the cart *stores* data; `cart.item_count()`, `cart.total()`, `cart.items()` describe what the cart *does*. Tests should ask the second question."
+            condition: "default"
       - description: "All audit tests pass"
         command: |
           import pytest, io, sys
@@ -1241,11 +1341,19 @@ steps:
           code = pytest.main(['/tutorial/test_brittle_audit.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - text: "If a test fails with `AttributeError: ... has no attribute`, you probably renamed a call without checking the cart's public API. The cart exposes `add(item, price)`, `item_count()`, `total()`, and `items()`."
+            condition: "output_contains: AttributeError"
+          - text: "`cart.items()` returns a list of item names. If you're comparing to the whole list, make sure the order matches the insertion order."
+            condition: "default"
       - description: "FizzBuzz has been refactored"
         command: |
           source = open('/tutorial/fizzbuzz.py').read()
           assert 'Fizz' in source, \
               "Refactor your fizzbuzz.py using a different approach (e.g., string concatenation)"
+        hints:
+          - text: "Try the string-concatenation approach: start with `result = \"\"`, append `\"Fizz\"` if divisible by 3, append `\"Buzz\"` if divisible by 5, and return `result or str(n)` at the end."
+            condition: "default"
       - description: "All FizzBuzz tests still pass after refactoring"
         command: |
           import pytest, io, sys
@@ -1253,6 +1361,11 @@ steps:
           code = pytest.main(['/tutorial/test_fizzbuzz.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Tests broke after refactoring — your tests may be too brittle:\n{output}"
+        hints:
+          - text: "The refactor changes the implementation, not the behavior. If a test now fails, check whether it was asserting on something that isn't visible through the return value — that's a brittle test and it should be rewritten."
+            condition: "output_contains: FAILED"
+          - text: "Common refactor bug with string concatenation: forgetting `result or str(n)` at the end, so regular numbers return `\"\"` instead of the number as a string."
+            condition: "default"
 
     quiz:
       title: "Behavior vs. Implementation — Knowledge Check"
@@ -1509,11 +1622,17 @@ steps:
           test_count = source.count('def test_')
           assert test_count >= 4, \
               f"Write at least 4 test functions (found {test_count}). Test valid passwords, too-short, missing uppercase, and missing digit."
+        hints:
+          - text: "You need four separate `def test_...():` functions — one per rule. Putting multiple `assert`s in one test hides failures: if the first fails, the rest never run."
+            condition: "default"
       - description: "validate_password function exists"
         command: |
           source = open('/tutorial/password.py').read()
           assert 'def validate_password' in source, \
               "Implement the validate_password function in password.py"
+        hints:
+          - text: "Create `password.py` with `def validate_password(password):`. The function should return a tuple `(is_valid, message)` — not just a bool."
+            condition: "source_missing: def validate_password"
       - description: "All student tests pass"
         command: |
           import pytest, io, sys
@@ -1521,26 +1640,43 @@ steps:
           code = pytest.main(['/tutorial/test_password.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Your tests failed:\n{output}"
+        hints:
+          - text: "pytest prints the specific failing assertion. If your test compares the whole tuple (e.g., `== (True, \"Valid\")`), a small message difference will fail it — prefer asserting on just `result[0]`."
+            condition: "output_contains: FAILED"
+          - text: "Check rule order in your implementation: length → uppercase → digit. If length fails first, you return before checking the other rules, so short passwords get a length error, not an uppercase error."
+            condition: "default"
       - description: "Valid passwords are accepted"
         command: |
           exec(open('/tutorial/password.py').read())
           result = validate_password("SecureP1")
           assert result[0] is True, f"Expected (True, ...) for 'SecureP1', got {result}"
+        hints:
+          - text: "`\"SecureP1\"` is 8 chars, has an uppercase `S` and `P`, and a digit `1`. If it's rejected, one of your checks is too strict — for example, `len(password) > 8` instead of `>= 8`."
+            condition: "default"
       - description: "Too-short passwords are rejected"
         command: |
           exec(open('/tutorial/password.py').read())
           result = validate_password("Short1")
           assert result[0] is False, f"Expected (False, ...) for 'Short1', got {result}"
+        hints:
+          - text: "`\"Short1\"` is 6 characters. Your length check should be `len(password) >= 8`; anything shorter returns `(False, ...)`."
+            condition: "default"
       - description: "Passwords without uppercase are rejected"
         command: |
           exec(open('/tutorial/password.py').read())
           result = validate_password("password1")
           assert result[0] is False, f"Expected (False, ...) for 'password1', got {result}"
+        hints:
+          - text: "Use `any(c.isupper() for c in password)` to check for an uppercase letter. If it returns `False`, return `(False, \"...\")`."
+            condition: "default"
       - description: "Passwords without digits are rejected"
         command: |
           exec(open('/tutorial/password.py').read())
           result = validate_password("Password")
           assert result[0] is False, f"Expected (False, ...) for 'Password', got {result}"
+        hints:
+          - text: "Use `any(c.isdigit() for c in password)` for the digit check. Don't use `any(c in \"0123456789\" ...)` — `isdigit()` is clearer."
+            condition: "default"
 
     quiz:
       title: "Independent TDD — Knowledge Check"
@@ -1843,6 +1979,9 @@ steps:
           source = open('/tutorial/test_bank_account.py').read()
           assert '._balance' not in source, \
               "Test 2 still accesses account._balance directly — refactor it to use account.balance() instead"
+        hints:
+          - text: "Replace `account._balance` with `account.balance()`. The underscore-prefix says \"internal\" — tests should go through the public API so the class can change its storage later."
+            condition: "source_contains: ._balance"
       - description: "Refactored tests do not contain tautological assertions"
         command: |
           source = open('/tutorial/test_bank_account.py').read()
@@ -1852,12 +1991,22 @@ steps:
               "Test 4 still asserts on the local variable 'expected' — assert on account.balance() instead"
           assert '!= 999999' not in source, \
               "Test 3's assertion is still a Liar (always true) — assert that the overdraft was either prevented OR raised an error"
+        hints:
+          - text: "`isinstance(result, int)` is always true if your function returns an int — it never fails. Replace it with the actual expected number, e.g., `assert account.balance() == 100`."
+            condition: "source_contains: isinstance(result, int)"
+          - text: "`expected == 250` compares your own variable to itself after you set it. That proves nothing. Assert on the object under test: `assert account.balance() == 250`."
+            condition: "source_contains: expected == 250"
+          - text: "`!= 999999` is the Liar — any plausible balance is not 999999, so the assertion always passes. Express the real requirement: either `pytest.raises(ValueError)` around the withdraw call, or `assert account.balance() == 100` after it."
+            condition: "source_contains: != 999999"
       - description: "Test file still contains at least 4 test functions"
         command: |
           source = open('/tutorial/test_bank_account.py').read()
           test_count = source.count('def test_')
           assert test_count >= 4, \
               f"Keep at least 4 test functions (found {test_count}) — refactor each, do not delete them"
+        hints:
+          - text: "Don't delete tests to make the check pass — that defeats the exercise. Rewrite each one so it asserts on real behavior through the public API."
+            condition: "default"
       - description: "BankAccount.withdraw() rejects overdrafts (bug fixed)"
         command: |
           exec(open('/tutorial/bank_account.py').read())
@@ -1870,6 +2019,9 @@ steps:
               raised = True
           assert raised or account.balance() == 100, \
               "withdraw(150) on a balance of 100 must either raise an error or leave the balance unchanged — the overdraft bug is still present"
+        hints:
+          - text: "In `withdraw(amount)`, guard against overdraft before subtracting: `if amount > self._balance: raise ValueError(\"Insufficient funds\")`. Then `self._balance -= amount`."
+            condition: "default"
       - description: "All refactored tests pass after the bug fix"
         command: |
           import pytest, io, sys
@@ -1877,6 +2029,11 @@ steps:
           code = pytest.main(['/tutorial/test_bank_account.py', '-v', '--tb=short', '--no-header'])
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
+        hints:
+          - text: "Once `withdraw` raises on overdraft, any test that called `withdraw(150)` on a 100-balance account without catching the error will fail. Wrap it in `with pytest.raises(ValueError):`."
+            condition: "output_contains: FAILED"
+          - text: "If a test fails after you fix the bug, that's useful — it means the test was asserting the buggy behavior. Update the test's expectation to match the correct behavior."
+            condition: "default"
 
     quiz:
       title: "AI-Critical TDD — Knowledge Check"

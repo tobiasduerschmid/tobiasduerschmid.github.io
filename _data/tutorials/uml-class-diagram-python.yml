@@ -25,7 +25,7 @@ steps:
     uml_hide:
       - visibility
     instructions: |
-      ## Welcome to UML Class Diagrams
+      ## Introduction
 
       > **Learning objective:** After this step you will be able to **identify** the three compartments of a UML class box and **write** a Python class that matches a given diagram.
 
@@ -218,7 +218,7 @@ steps:
             - "0 — none, because methods aren't shown yet"
           correct_index: 1
           explanation: |
-            The bottom compartment lists **methods**. `Timer` defines three: `__init__`, `start`, and `stop`. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom. Predicting before you run is a powerful way to test your mental model — you either confirm it or you find the gap.
+            The bottom compartment lists **methods**. `Timer` defines three: `__init__`, `start`, and `stop`. The attributes `seconds` and `running` go in the **middle** compartment, not the bottom. Predicting before you run tests your mental model: you either confirm it or find the gap.
 
 
   # --------------------------------------------------------------------------
@@ -1392,7 +1392,9 @@ steps:
           assert uni.departments[0].name == 'CS', \
               "The created department should have the name 'CS'"
         hints:
-          - text: "In `add_department`, create a new Department: `dept = Department(dept_name)` then `self.departments.append(dept)`."
+          - text: "Composition means the University creates the Department *inside* itself. What parameter does `add_department` receive — a `Department` object, or just the name? That tells you whether to instantiate or append directly."
+            condition: "default"
+          - text: "`add_department` takes a name (string), so it has to construct the Department. Call `Department(dept_name)` and append the result to `self.departments`."
             condition: "default"
 
       - description: "Department receives professors from outside (aggregation)"
@@ -1408,7 +1410,9 @@ steps:
           assert dept.professors[0] is prof, \
               "The professor in the department should be the SAME object that was passed in (not a copy)"
         hints:
-          - text: "In `add_professor`, just append the received professor: `self.professors.append(prof)`."
+          - text: "Aggregation means the Professor was created elsewhere and handed to the Department. What should you NOT do here? Hint: do not construct a new Professor."
+            condition: "default"
+          - text: "Append the parameter you received — `self.professors.append(prof)`. No `Professor(...)` constructor call."
             condition: "default"
 
       - description: "Full system works end-to-end"
@@ -1625,7 +1629,9 @@ steps:
           assert isinstance(p.songs, list), \
               "songs should be a list, not a single Song object"
         hints:
-          - text: "Replace `self.song: Song = song` with `self.songs: list = []` and remove `song` from the constructor parameters."
+          - text: "A multiplicity of `*` in UML maps to a **collection** in Python. What built-in type supports \"zero or more of X\"? Rename `song` accordingly."
+            condition: "default"
+          - text: "Replace `self.song: Song = song` with `self.songs: list[Song] = []`, and drop `song` from `__init__`'s parameter list — songs get added later via `add_song`."
             condition: "default"
 
       - description: "add_song() works and get_song_count() is correct"
@@ -1641,7 +1647,9 @@ steps:
           assert p.get_song_count() == 2, \
               f"After adding 2 songs, get_song_count() should return 2 but got {p.get_song_count()}"
         hints:
-          - text: "Add `def add_song(self, song: Song) -> None:` that calls `self.songs.append(song)`, and `def get_song_count(self) -> int:` returning `len(self.songs)`."
+          - text: "You need two methods: one that adds to the list, one that reports its size. Which list methods give you those?"
+            condition: "default"
+          - text: "`add_song(song)` calls `self.songs.append(song)`; `get_song_count()` returns `len(self.songs)`."
             condition: "default"
 
       - description: "get_total_duration() sums all song durations"
@@ -1656,7 +1664,9 @@ steps:
           assert total == 350, \
               f"Total duration of 100 + 250 should be 350, got {total}"
         hints:
-          - text: "Use `sum(s.duration_sec for s in self.songs)` to compute the total duration."
+          - text: "Walk the list and add up one field. A generator expression inside `sum(...)` does this in one line."
+            condition: "default"
+          - text: "`return sum(s.duration_sec for s in self.songs)`. Each `Song` contributes its `duration_sec`."
             condition: "default"
 
     quiz:
@@ -1855,7 +1865,7 @@ steps:
         - It **defines a contract** — any subclass MUST implement `process()` and `get_name()`
         - The UML shows this with **italics** on the class name and abstract methods
 
-        This is a powerful design tool: you can write code that works with *any* `PaymentMethod` without knowing the specific type. You could add `PayPal`, `CryptoCurrency`, or `ApplePay` later without changing any code that uses the `PaymentMethod` interface.
+        The payoff: you can write code that works with *any* `PaymentMethod` without knowing the specific type. You could add `PayPal`, `CryptoCurrency`, or `ApplePay` later without changing any code that uses the `PaymentMethod` interface.
 
     tests:
       - description: "PaymentMethod is abstract (cannot be instantiated)"
@@ -2169,7 +2179,7 @@ steps:
         - `Order` manages a collection of products for a customer
         - `OnlineStore` coordinates the system
 
-        The UML diagram now shows a network of relationships — composition (`*--`), associations (`-->`), and clear data flow. This is the power of UML: it makes the difference between good and bad architecture **immediately visible**.
+        The UML diagram now shows a network of relationships — composition (`*--`), associations (`-->`), and clear data flow. UML makes the difference between good and bad architecture **immediately visible**.
 
     tests:
       - description: "Product class exists with is_available() and reduce_stock()"
