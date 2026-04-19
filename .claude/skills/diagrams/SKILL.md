@@ -67,6 +67,14 @@ Any page that uses ArchUML diagrams needs the bundle loaded in its front matter 
 
 The git and fs command-lab widgets additionally require their own scripts and stylesheets — see the example setups in [SEBook/tools/git.md](../../../SEBook/tools/git.md) (top of file) and [SEBook/tools/shell.md](../../../SEBook/tools/shell.md).
 
+## Known renderer limits (read before authoring labels)
+
+These are traps this renderer does **not** forgive. Hit one and the diagram ships with literal `\n` characters or duplicated boxes in the page.
+
+- **`\n` does not produce a line break inside labels.** Arrow labels (`A --> B : text`), transition labels, and state body descriptions (`StateName : text`) render `\n` as the two characters `\`, `n` — not as a newline. If you need multi-line context, either (a) keep the label short and single-line, or (b) move the detail into a `note ... end note` block attached to the nearest element. Real newlines *do* work inside `note ... end note` bodies and inside `class Foo { ... }` bodies — just not inside label strings.
+- **Prefer plain identifiers over `"Display Name" as Alias`.** The `"X" as Y` aliasing form has produced duplicate / stray boxes in component diagrams here (the display string leaks out as its own component). Use a single-word identifier directly (`component EventBus`) instead of aliasing. If you truly need a multi-word display label, verify it renders cleanly before committing.
+- **Avoid special characters in labels.** Symbols like `✗`, `✓`, em-dashes, and parentheses-heavy labels have caused layout issues. Spell the meaning out in words.
+
 ## Choosing between Freeform and something more specific
 
 Freeform is the "none of the above" escape hatch. Before reaching for it, check whether a formal type fits — a state machine is almost always better drawn with `language-uml-state` than with freeform boxes and arrows, because the renderer gives you proper states, transitions, and initial/final markers for free. Freeform earns its keep for:

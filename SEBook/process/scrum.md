@@ -46,16 +46,16 @@ The sprint is a closed feedback loop: every event feeds the next, and the retros
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> SprintPlanning : sprint begins
-SprintPlanning : define goal,\nselect backlog items
+SprintPlanning : define goal and select items
 SprintPlanning --> Development : sprint backlog ready
 Development : build the increment
 Development --> DailyStandup : every 24 hours
-DailyStandup : 15-min sync,\nsurface blockers
+DailyStandup : 15-min sync, surface blockers
 DailyStandup --> Development : continue work
 Development --> SprintReview : last day of sprint
-SprintReview : demo increment,\ncollect feedback
-SprintReview --> SprintRetrospective : product feedback captured
-SprintRetrospective : inspect process,\ncommit to one improvement
+SprintReview : demo increment, collect feedback
+SprintReview --> SprintRetrospective : feedback captured
+SprintRetrospective : inspect process, commit one improvement
 SprintRetrospective --> SprintPlanning : next sprint
 @enduml'></div>
 

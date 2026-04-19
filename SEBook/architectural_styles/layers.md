@@ -27,25 +27,25 @@ To achieve the systemic properties of the style, architects must enforce strict 
 The diagram below contrasts the four topologies. Solid arrows are *allowed* uses; dashed arrows annotated "✗" are the violations that turn a clean stack into a ball of mud.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
-component "Presentation" as P
-component "Domain" as D
-component "Data Access" as DA
-component "Infrastructure" as I
-P --> D : strict (OK)
-D --> DA : strict (OK)
-DA --> I : strict (OK)
-P ..> DA : relaxed / bridging\n(skips one layer)
-D ..> P : golden-rule violation ✗\n(upward use)
-note right of P
+component Presentation
+component Domain
+component DataAccess
+component Infrastructure
+Presentation --> Domain : strict (OK)
+Domain --> DataAccess : strict (OK)
+DataAccess --> Infrastructure : strict (OK)
+Presentation ..> DataAccess : relaxed bridging
+Domain ..> Presentation : golden-rule violation
+note right of Presentation
   Strict: use only
   the layer directly below.
 end note
-note right of D
+note right of Domain
   Relaxed: may skip layers
   downward; acceptable.
   Excessive bridging is a smell.
 end note
-note right of DA
+note right of DataAccess
   Golden rule: NEVER
   use a layer above.
   Creates cycles; kills portability.

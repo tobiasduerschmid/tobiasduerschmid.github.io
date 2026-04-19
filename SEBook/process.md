@@ -12,10 +12,10 @@ In Waterfall, feedback from the customer only appears at the very end — after 
 [*] --> Requirements
 Requirements --> Design : sign-off
 Design --> Implementation : sign-off
-Implementation --> Verification : code complete
-Verification --> Maintenance : release
+Implementation --> Testing : code complete
+Testing --> Maintenance : release
 Maintenance --> [*]
-note right of Verification
+note right of Testing
   Customer sees working
   software for the FIRST time
   here — often months or

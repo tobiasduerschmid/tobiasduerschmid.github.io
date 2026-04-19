@@ -34,10 +34,10 @@ The three phases form a tight, repeating loop — the engine that drives every T
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
 [*] --> Red : start of cycle
 Red : write a tiny failing test
-Red --> Green : test fails\n(specification captured)
+Red --> Green : test fails
 Green : write simplest code to pass
-Green --> Refactor : test passes\n(behavior verified)
-Refactor : remove duplication,\nclarify intent
+Green --> Refactor : test passes
+Refactor : remove duplication, clarify intent
 Refactor --> Red : next behavior
 @enduml'></div>
 
