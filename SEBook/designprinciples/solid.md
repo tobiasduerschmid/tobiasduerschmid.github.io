@@ -103,7 +103,24 @@ DI is the most common way to *implement* DIP, but you can do DI without DIP (inj
 
 # How the Principles Reinforce Each Other
 
-SOLID is not five independent rules — the principles interact:
+SOLID is not five independent rules — the principles interact. The diagram below shows how mastering one unlocks others: arrows point from the enabler to the payoff.
+
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+component SRP
+component OCP
+component LSP
+component ISP
+component DIP
+LSP --> OCP : enables polymorphism
+DIP --> OCP : enables pluggable impls
+ISP --> LSP : shrinks surface
+SRP --> OCP : narrows change
+note bottom of OCP
+  OCP is the common
+  payoff: extend without
+  modifying existing code.
+end note
+@enduml'></div>
 
 * **LSP enables OCP.** If every subtype honors the parent's contract, a router can iterate polymorphically without knowing which subclass it has — so new subclasses extend the system without modifying the router.
 * **DIP enables OCP.** If high-level modules depend on abstractions, new implementations can be plugged in as extensions — again, without modifying existing code.

@@ -6,6 +6,25 @@ layout: sebook
 # Agile
 For decades, software development was dominated by the Waterfall model, a sequential process where each phase—requirements, design, implementation, verification, and maintenance—had to be completed entirely before the next began. This "Big Upfront Design" approach assumed that requirements were stable and that designers could predict every challenge before a single line of code was written. However, this led to significant industry frustrations: projects were frequently delayed, and because customer feedback arrived only at the very end of the multi-year cycle, teams often delivered products that no longer met the user's changing needs.
 
+In Waterfall, feedback from the customer only appears at the very end — after months or years of work:
+
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> Requirements
+Requirements --> Design : sign-off
+Design --> Implementation : sign-off
+Implementation --> Testing : code complete
+Testing --> Maintenance : release
+Maintenance --> [*]
+note right of Testing
+  Customer sees working
+  software for the FIRST time
+  here — often months or
+  years after Requirements.
+end note
+@enduml'></div>
+
+Agile inverts this: the team delivers a small working increment every one to four weeks and lets customer feedback reshape each subsequent iteration — the feedback loop closes in weeks, not years.
+
 ## Agile Manifesto
 In 2001, a group of software experts met in Utah to address these failures, resulting in the Agile Manifesto. Rather than a rigid rulebook, the manifesto proposed a shift in values: 
 * Individuals and interactions over processes and tools

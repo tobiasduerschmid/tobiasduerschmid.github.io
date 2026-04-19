@@ -42,6 +42,25 @@ The framework follows a specific rhythm of time-boxed events:
 * **Sprint Review**: A working session at the end of the sprint where stakeholders provide feedback on the working increment. A good review includes live demos, not just slides.
 * **Sprint Retrospective**: The team reflects on their process and identifies ways to increase future quality and effectiveness.
 
+The sprint is a closed feedback loop: every event feeds the next, and the retrospective loops the team back into the next planning session.
+
+<div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
+[*] --> SprintPlanning : sprint begins
+SprintPlanning : define goal and select items
+SprintPlanning --> Development : sprint backlog ready
+Development : build the increment
+Development --> DailyStandup : every 24 hours
+DailyStandup : 15-min sync, surface blockers
+DailyStandup --> Development : continue work
+Development --> SprintReview : last day of sprint
+SprintReview : demo increment, collect feedback
+SprintReview --> SprintRetrospective : feedback captured
+SprintRetrospective : inspect process, commit one improvement
+SprintRetrospective --> SprintPlanning : next sprint
+@enduml'></div>
+
+The retrospective's arrow back to planning is the engine of empiricism: each cycle the team inspects both the *product* (in review) and the *process* (in retro), and adapts before the next sprint starts.
+
 # Scaling Scrum with SAFe
 When a product is too massive for a single team of 7–10 people, organizations often use the Scaled Agile Framework (SAFe). SAFe introduces the Agile Release Train (ART)—a "team of teams" that synchronizes their sprints. It operates on Program Increments (PI), typically lasting 8–12 weeks, which align multiple teams toward quarterly goals. While SAFe provides predictability for Fortune 500 companies, critics sometimes call it "Scrum-but-for-managers" because it can reduce individual team autonomy through heavy planning requirements.
 

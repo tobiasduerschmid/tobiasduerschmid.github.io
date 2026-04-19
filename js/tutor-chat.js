@@ -155,13 +155,37 @@
   }
 
   /**
+   * Safely compile a regex pattern (returns null if invalid).
+   * Pattern may be a bare regex body (e.g. "\bvar\b") or a full slash form
+   * with flags (e.g. "/\bvar\b/i"). Defaults to no flags.
+   */
+  function _compileRegex(pattern) {
+    try {
+      var slashMatch = pattern.match(/^\/(.+)\/([a-z]*)$/i);
+      if (slashMatch) return new RegExp(slashMatch[1], slashMatch[2]);
+      return new RegExp(pattern);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
    * Evaluate a hint condition against the student's code.
    * Supported conditions:
-   *   (none / falsy)         → always true
-   *   "source_contains: X"   → true if student source contains X
-   *   "source_missing: X"    → true if student source does NOT contain X
-   *   "code_contains: X"     → true if student code (comments stripped) contains X
-   *   "code_missing: X"      → true if student code (comments stripped) does NOT contain X
+   *   (none / falsy)            → always true
+   *   "source_contains: X"      → true if student source contains X (substring)
+   *   "source_missing: X"       → true if student source does NOT contain X
+   *   "code_contains: X"        → true if code (comments stripped) contains X
+   *   "code_missing: X"         → true if code (comments stripped) does NOT contain X
+   *   "code_matches: <regex>"   → true if code (comments stripped) matches regex
+   *   "code_not_matches: <re>"  → true if code (comments stripped) does NOT match regex
+   *   "source_matches: <regex>" → true if full source matches regex (incl. comments)
+   *   "output_contains: X"      → true if output contains X
+   *   "output_missing: X"       → true if output does NOT contain X
+   *
+   * Regex patterns may be written bare ("\\bvar\\b") or slash-delimited with
+   * flags ("/\\bvar\\b/i"). Invalid patterns fall through and return true so
+   * the hint still surfaces rather than silently hide.
    */
   function _evaluateHintCondition(condition, studentCode, backend, output) {
     if (!condition) return true;
@@ -175,6 +199,21 @@
     if (m) return stripped.indexOf(m[1].trim()) !== -1;
     m = condition.match(/^code_missing:\s*(.+)$/i);
     if (m) return stripped.indexOf(m[1].trim()) === -1;
+    m = condition.match(/^code_matches:\s*(.+)$/i);
+    if (m) {
+      var re = _compileRegex(m[1].trim());
+      return re ? re.test(stripped) : true;
+    }
+    m = condition.match(/^code_not_matches:\s*(.+)$/i);
+    if (m) {
+      var reN = _compileRegex(m[1].trim());
+      return reN ? !reN.test(stripped) : true;
+    }
+    m = condition.match(/^source_matches:\s*(.+)$/i);
+    if (m) {
+      var reS = _compileRegex(m[1].trim());
+      return reS ? reS.test(studentCode) : true;
+    }
     m = condition.match(/^output_contains:\s*(.+)$/i);
     if (m) return output.indexOf(m[1].trim()) !== -1;
     m = condition.match(/^output_missing:\s*(.+)$/i);
