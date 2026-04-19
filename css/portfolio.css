@@ -617,6 +617,11 @@ html.dark-mode h2 {
 	-webkit-text-stroke: 1px #000;
 }
 
+/* Inline code inside headings inherits the heading color in all modes */
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+	color: inherit !important;
+}
+
 html.dark-mode .text-danger {
 	color: white !important;
 }
