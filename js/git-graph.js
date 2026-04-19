@@ -354,16 +354,14 @@
     // Ensure 'main' and 'master' get UCLA Blue
     if (branchColors['main']) branchColors['main'] = BRANCH_COLORS[0];
     if (branchColors['master']) branchColors['master'] = BRANCH_COLORS[0];
-    // Pass 2: remote-tracking branches inherit the color of their local
-    // counterpart so commits on `origin/main` read as the same "main lane"
-    // as local `main`. Only fall back to grey when there is no local branch
-    // of the same short name.
+    // Pass 2: remote-tracking branches always use grey so remote-only commits
+    // are visually distinct from local commits. When a commit is reachable from
+    // both a local and a remote branch, the local branch wins (seeding order
+    // in commitBranch below), so that commit keeps its local color.
     for (var bi2 = 0; bi2 < branches.length; bi2++) {
       var bname2 = branches[bi2].name;
       if (!branches[bi2].remote) continue;
-      var slashIdx = bname2.indexOf('/');
-      var shortName = slashIdx >= 0 ? bname2.substring(slashIdx + 1) : bname2;
-      branchColors[bname2] = branchColors[shortName] || REMOTE_COLOR;
+      branchColors[bname2] = REMOTE_COLOR;
     }
 
     // -------------------------------------------------------------------------
@@ -1209,7 +1207,7 @@
 
     return {
       g: g, glow: glow, circle: circle, hashText: hashText, msgText: msgText,
-      cx: cx, cy: cy, isHead: isHead, color: cm.branchColor,
+      cx: cx, cy: cy, isHead: isHead, color: nodeColor, secondary: nodeSecondary,
       message: cm.message, shortHash: cm.shortHash,
     };
   };
