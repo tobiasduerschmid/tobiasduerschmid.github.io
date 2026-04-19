@@ -14,71 +14,42 @@ steps:
     ### Welcome to Advanced Git
 
     You already know `init`, `add`, `commit`, `branch`, `merge`, and remotes.
-    This tutorial does two things the basic course did not:
+    This tutorial lifts the hood (object database, refs, HEAD) and drills
+    every tool from Lecture 10: detached HEAD, reflog, stash, cherry-pick,
+    blame, bisect, rebase (incl. interactive), squash merge, and submodules.
 
-    1. It lifts the hood and shows **how Git actually stores your work** —
-       the object database, refs, and HEAD pointer. Knowing the internals
-       turns intimidating commands like `rebase` and `bisect` into
-       predictable mechanical operations.
-    2. It practices **every tool from Lecture 10** in a realistic scenario:
-       detached HEAD, relative addresses, stash, cherry-pick, blame, bisect,
-       simple & interactive rebase, squash merge, and submodules.
-
-    You will intentionally break things. The very next step teaches
+    You will intentionally break things. The next step teaches
     `git reflog` — the safety net that makes every destructive command
-    in this tutorial recoverable.
+    recoverable.
 
-    ### Two antipatterns you will *not* fall into by the end
-
-    Research on how students actually use Git (Isomöttönen & Cochez 2014)
-    identified two behaviours that separate novices from professionals:
+    ### Two antipatterns to avoid
 
     1. **Blind-testing** — typing random permutations of `add`, `commit`,
-       `push`, `pull` until the terminal stops complaining. You get
-       a fragile *illusion* of competence that collapses the first
-       time you hit a conflict or divergence.
-    2. **"Burning down the repo"** — when something goes wrong, the
-       novice deletes their local folder, copies their uncommitted
-       code to a text file, re-clones from the server, pastes the
-       changes back, and force-commits. This "works" but destroys
-       atomic history and guarantees you never actually learn.
+       `push`, `pull` until the terminal stops complaining.
+    2. **"Burning down the repo"** — deleting the local folder, copying
+       files to a text file, re-cloning, and force-pushing when anything
+       goes wrong. Destroys history and prevents learning.
 
-    Both antipatterns come from the same root cause: **no accurate
-    mental model of what Git is doing.** Every step in this tutorial
-    is designed to build that model piece by piece. When you finish,
-    you won't need to guess or burn down anything — you'll read the
-    state and reach for the right tool.
+    Both come from no accurate mental model of what Git is doing. Each
+    step builds that model.
 
     ### Prerequisite self-check
 
-    Before you start, **grab a piece of paper** (or open a scratch
-    file) and write one-sentence answers to these five questions. Do
-    not skim them in your head — the generation effect (Bjork & Bjork)
-    only fires when you actually commit to an answer. Compare what you
-    wrote against the reveal afterwards.
+    Answer these five from memory before continuing. If any feel shaky,
+    go back to the basic tutorial — the rest assumes these are reflex.
 
-    If any feel shaky, **go back to the basic tutorial first** — the
-    advanced tutorial assumes every one of them is cold-reflex.
-
-    1. A new file appears red in `git status`. What's the one-word
-       state name, and which command promotes it to green?
+    1. A new file appears red in `git status`. What's the state name,
+       and which command promotes it to green?
     2. You commit, then edit the file again. What does `git diff`
        (no arguments) compare?
-    3. `main` and `feature` have diverged — each has commits the
-       other doesn't. Can `git merge feature` still fast-forward? Why
-       or why not?
-    4. A teammate pushed a buggy commit to shared `main`. Which is
-       safe — `git reset --hard HEAD~1` then force-push, or
-       `git revert <sha>`? Why?
-    5. Someone ran `git add .` and staged a `.env` file with
-       secrets. Adding `.env` to `.gitignore` now — does that stop
-       the secret from being committed?
+    3. `main` and `feature` have diverged. Can `git merge feature`
+       fast-forward? Why or why not?
+    4. A teammate pushed a buggy commit to shared `main`. Safer:
+       `git reset --hard HEAD~1` + force-push, or `git revert <sha>`?
+    5. Someone staged a `.env` file with secrets. Adding `.env` to
+       `.gitignore` now — does that stop the secret from being committed?
 
-    **Did you write answers down?** If not, do it now — even one word
-    per question. Peeking without attempting is the single fastest way
-    to lose the benefit of this whole exercise.
-
-    <details markdown="1"><summary>Expected answers (check yourself)</summary>
+    <details markdown="1"><summary>Expected answers</summary>
 
     1. **Untracked.** `git add` moves it to staged.
     2. **Working directory vs. staging area.** Since nothing is
@@ -98,62 +69,38 @@ steps:
 
     </details>
 
-    If you got 4-5 right, you're ready. If 2-3, skim the relevant
-    basic-tutorial steps before continuing — the concepts below
-    build directly on these.
+    ### What is a branch, really?
 
-    ### What is a branch, really? — Predict first
-
-    You have seen branches behave like separate timelines.
-    Before we look under the hood, **write down your current mental
-    model** (on paper or in your head):
-
-    > *"A branch in Git is physically stored as ________."*
-
-    Finish the sentence with your best guess **before** scrolling. A
-    folder? A snapshot? A compressed diff? A network resource? Keep
-    your guess; we will test it against reality in Task 1.
-
-    Once you have your guess, read on:
-
-    A branch is **not a copy** of your project — it is a **41-byte text file**
-    containing one commit hash. Let's prove it (and see whether your
-    guess was right).
+    A branch is **not a copy** of your project — it is a **41-byte text
+    file** containing one commit hash. Let's prove it.
 
     ### The starter repo
 
-    A small `myproject/` calculator repo has already been built for you —
-    two commits on `main`, one on a `feature-divide` branch. Drop into it by looking at the git graph on the right and running:
+    A small `myproject/` calculator repo has been built for you —
+    two commits on `main`, one on a `feature-divide` branch. Inspect it:
 
     ```bash
     git log --all --oneline --graph --decorate
     ```
 
-
-    You should see three commits arranged across `main` and
-    `feature-divide`. **Compare the terminal output with the git graph
-    panel on the right** — they show the same history. The panel updates
-    live as you run commands; use it throughout this step to confirm your
-    mental model matches what Git actually records.
+    Compare the terminal output with the git graph panel on the right —
+    they show the same history.
 
     ### Task 1: Look at the branch pointer files
 
-    **Predict first:** 
-    `.git/refs/heads/main` is your local representation of the main branch. 
-    What do you expect is inside the file? A sequence of commits? A snapshot of the files? A compressed diff? 
-    Give it a guess and then run:
+    **Predict:** what's inside `.git/refs/heads/main`? A list of commits?
+    A snapshot? A diff? Then run:
 
     ```bash
     cat .git/refs/heads/main
     cat .git/refs/heads/feature-divide
     ```
 
-    Each file is **one line** containing the commit ID (SHA hash) of the commit that
-    branch points to. Branches are not folders, not lists of commits — they are **single-line text files**. Creating
-    one is very lightweight, simple, and fast. It's just writing a few bytes into a file. (How did
-    your prediction compare to what you actually saw?)
+    Each file is **one line** containing the commit SHA that branch
+    points to. Branches are single-line text files — creating one is
+    just an `fwrite()` of a few bytes.
 
-    Now inspect `HEAD` the pointer to your currently checked-out version of the repo:
+    Now inspect `HEAD`:
 
     ```bash
     cat .git/HEAD
@@ -177,89 +124,37 @@ steps:
 
     ### Task 2: Detach HEAD
 
-    Sometimes you need to inspect an old commit without being on a branch.
-    The `--detach` flag lets you do this:
-
     ```bash
     git switch --detach HEAD~1
     cat .git/HEAD
     ```
-    (Side note: This is equivalent to the older command `git checkout HEAD~1`. However, the `--detach` flag is more explicit about the intent to leave a branch).
 
-    Now `.git/HEAD` contains a **raw SHA hash** instead of a branch
-    reference. This is **detached HEAD state**.
-    HEAD is no longer anchored to a branch pointer — it is anchored directly to a commit. 
+    Now `.git/HEAD` contains a **raw SHA hash** instead of a branch ref.
+    This is **detached HEAD state** — HEAD anchored directly to a
+    commit, not to a branch pointer. Look at the git-graph panel: the
+    HEAD label floats directly on a commit node.
 
-    **Look at the git graph panel on the right.** The HEAD label should now
-    float directly on a commit node rather than sitting next to the
-    `main` branch name. That visual is the exact picture of what
-    "detached" means: HEAD is anchored to a commit, not to a branch pointer.
+    > Think of it as visiting a museum archive. You can read any
+    > document, but notes you leave without a label have nowhere to go
+    > when you walk away. `git switch -c <name>` is that label.
 
-    > Think of it as visiting a museum archive. You can pull out any
-    > document and read it. But if you leave scribbled notes on a desk
-    > without labelling which room they belong to, the archive staff have
-    > nowhere to file them when you walk away. `git switch -c <name>` is
-    > the label you must leave before walking away.
+    **Warning:** New commits in detached HEAD are anchored to no branch.
+    When you `git switch` away, they become orphaned (eventually
+    pruned by `git gc`). The next step (`git reflog`) is how you rescue
+    them.
 
-    **Warning:** Any new commits you make in detached HEAD state are
-    **anchored to no branch**. When you `git switch` away, Git has no pointer
-    to keep them reachable — they become orphaned and are eventually
-    pruned by `git gc`. (The *next step* teaches `git reflog`, the
-    tool that rescues work from exactly this situation. Keep the
-    warning in mind; we'll put the recovery in your hands immediately.)
-
-    ### Cleanup — return to main
+    ### Cleanup
 
     ```bash
     git switch main
     ```
 
-    The git-graph view on the right should now show `main` and
-    `feature-divide` — two pointers, one shared history.
-
-    ### Transfer: the same concept in different contexts
-
-    You will meet the branch-as-pointer idea in many places. For each
-    of these, predict what Git has to write to disk:
-
-    1. You clone a 20 GB monorepo with 300 branches. How much disk space
-       do the branch pointers themselves occupy (excluding the object
-       database)? **Estimate.**
-    2. A CI system creates a throwaway `ci/run-48219` branch at the tip
-       of `main`, runs tests, then deletes it. Roughly how many bytes
-       were written and deleted?
-    3. You `git tag v1.0.0` on a commit. Compared to `git branch v1.0`,
-       what is the structural difference under `.git/refs/`?
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **About 12 KB** (300 branches × ~41 bytes/pointer). Trivially
-       small — the objects dominate storage, not refs.
-    2. **One `fwrite()` of 41 bytes, then one `unlink()`.** The
-       working-directory state and object graph are untouched.
-    3. **Tags live in `.git/refs/tags/` and point at a commit (or a
-       tag object) just like a branch pointer in `.git/refs/heads/`.**
-       Structurally near-identical — tags are just immutable by
-       convention. Same pointer-file pattern, different folder.
-
-    </details>
-
-    Same pointer-file mechanism, three wildly different contexts —
-    that is what makes it a real mental model rather than a memorized
-    fact about `main`.
-
     ### You can now
 
-    - **Explain** why creating a branch is a millisecond operation, in
-      terms of what is physically written to disk.
-    - **Distinguish** attached HEAD from detached HEAD by inspecting
-      `.git/HEAD`.
-    - **Anticipate** where orphaned commits will come from — and the
-      next step teaches the tool (`git reflog`) that rescues them.
-
-    > **Normalize the struggle:** Every experienced Git user has
-    > panicked at "detached HEAD" at some point. The next step turns
-    > that panic into routine recovery.
+    - **Explain** why creating a branch is a millisecond operation.
+    - **Distinguish** attached vs. detached HEAD by inspecting `.git/HEAD`.
+    - **Anticipate** where orphaned commits come from — the next step
+      teaches how to rescue them.
   solution:
     commands:
     - cd /tutorial/myproject
@@ -333,39 +228,25 @@ steps:
 - title: "Rescuing Lost Work with git reflog"
   view: git_graph
   instructions: |
-    ### The tool the rest of the tutorial leans on
+    ### The safety net
 
-    You learned in the previous step that commits made in detached
-    HEAD become orphaned the instant you switch away. That sounds
-    scary — but it isn't, because Git keeps a **diary of every
-    position `HEAD` has ever occupied**, regardless of whether the
-    commits at those positions are still reachable from any branch.
+    Commits made in detached HEAD become orphaned the instant you
+    switch away. Git keeps a **diary of every position `HEAD` has
+    ever occupied**, regardless of reachability. That diary is the
+    **reflog** — the recovery tool for bad rebases, dropped commits,
+    hard resets, and detached-HEAD orphans.
 
-    That diary is the **reflog**. It is the safety net for every
-    destructive operation you will meet later in this tutorial:
-    detached-HEAD orphans, bad rebases, dropped commits, hard
-    resets. Master it here, once, and the rest of the tutorial
-    stops being scary.
-
-    ### Why `git log` and `git reflog` are fundamentally different
+    ### `git log --all` vs `git reflog`
 
     | | `git log --all` | `git reflog` |
     |---|---|---|
     | **What it walks** | Commits reachable from any branch/tag | Every position HEAD has occupied |
     | **Sees orphans?** | No — unreachable = invisible | Yes — reachability is irrelevant |
     | **Scope** | Whole repo history | Local to this clone |
-    | **Retention** | Forever (until `gc`) | Default 90 days (`gc.reflogExpire`) |
-    | **Shared across clones?** | Yes (via push/pull) | No — reflog is local-only |
-
-    Keep this distinction sharp. When you hear "the commit is
-    gone" — `git log --all` can't see it, but `git reflog` almost
-    always can.
+    | **Retention** | Forever (until `gc`) | Default 90 days |
+    | **Shared across clones?** | Yes (via push/pull) | No — local only |
 
     ### Task 1: Deliberately lose some work
-
-    You are going to intentionally create an orphaned commit. The
-    panic-inducing situation becomes a routine recovery drill when
-    you trigger it on purpose.
 
     ```bash
     cd /tutorial/myproject
@@ -376,72 +257,35 @@ steps:
     git switch main
     ```
 
-    Those detached commits are now **orphaned** — no branch points to
-    them. Confirm by asking `git log --all` for everything it can see:
+    Those detached commits are now orphaned. Confirm:
 
     ```bash
     git log --all --oneline
     ```
 
-    Notice: the `Experimental` commit **does not appear.**
-    `git log --all` walks every branch and tag to collect reachable
-    commits; an orphan is reachable from *no* ref, so it is invisible.
-    The SHA is nowhere on your screen — you have lost the **address**
-    of the very object you want to visit.
-
-    > **"Why can't I just `git checkout <sha>` the commit?"** You
-    > could — *if you still had the SHA*. But the only place it was
-    > ever displayed was the terminal output from `git commit`, which
-    > has now scrolled off. This is the exact gap reflog fills.
+    The `Experimental` commit **does not appear** — `git log --all`
+    walks refs, orphans aren't reachable from any ref.
 
     ### Task 2: Find the orphan with `git reflog`
-
-    **Predict first:** you are about to run `git reflog`. Will the
-    lost `Experimental` commit appear there? Write down yes or no
-    and why before running.
 
     ```bash
     git reflog
     ```
 
-    You see it. Each line has the form
-    `<sha>  HEAD@{n}: <action>: <description>`. The most recent entry
-    (`HEAD@{0}`) is the `git switch main` you just ran. The entry
-    above it — `HEAD@{1}` — is the detached-HEAD commit, including
-    its SHA and message.
-
-    **Why did reflog see it when `git log --all` couldn't?** Because
-    reflog is not a commit-graph traversal — it is a literal log of
-    every `HEAD` movement, regardless of whether the destination is
-    still reachable from any ref. Orphanhood doesn't matter to it.
-
-    ### Stop and self-explain
-
-    Before reading on, **write one sentence in your own words**
-    explaining why `git reflog` can show commits that `git log --all`
-    cannot — without using the word "reflog" in your explanation.
-
-    …
-
-    > Expected answer outline: "One tool walks the branch/tag graph
-    > (so it misses anything no ref points at); the other keeps a
-    > local diary of every `HEAD` position, which records commits
-    > by address without requiring them to be reachable." If your
-    > sentence captured that, your mental model is correct. If
-    > not — re-read the table above before moving on. This
-    > distinction will come back at every destructive operation
-    > in the rest of the tutorial.
+    Each line: `<sha>  HEAD@{n}: <action>: <description>`. `HEAD@{0}`
+    is where HEAD is now; `HEAD@{1}` is the detached-HEAD commit.
+    Reflog is a literal log of HEAD movements — orphanhood doesn't
+    matter to it.
 
     ### Task 3: Rescue the orphan with a branch
 
-    The `@{n}` suffix is **reflog syntax** — you can use it anywhere
-    Git expects a commit SHA.
+    The `@{n}` syntax works anywhere Git expects a commit ref:
 
     | Expression   | Meaning                        |
     |--------------|--------------------------------|
     | `HEAD@{0}`   | where HEAD is **right now**    |
     | `HEAD@{1}`   | where HEAD was **one move ago** |
-    | `HEAD@{2}`   | two moves ago, and so on       |
+    | `HEAD@{n}`   | n moves ago                    |
 
     Anchor a branch to the experimental commit:
 
@@ -450,72 +294,18 @@ steps:
     git log rescued-work --oneline
     ```
 
-    **Check the git graph panel** — `rescued-work` should now appear as
-    a new branch label pointing to your experimental commit. The "lost"
-    commit is reachable again — `git gc` will no longer prune it, and
-    `git log --all` now shows it.
-
-    That is the entire recovery recipe: **`git reflog` to find the
-    SHA, `git branch <name> <sha>` to anchor it.** The same two-step
-    recipe will rescue dropped commits after interactive rebase
-    (Step 9), bad resets, and failed rebases — you will see it again.
-
-    > **Meta-lesson:** every destructive Git operation is survivable
-    > as long as the reflog still has a record of where `HEAD` was
-    > before the operation. Destructive commands are less scary than
-    > they sound — **as long as you act before the reflog expires and
-    > its objects are garbage-collected** (default: 90 days for
-    > reachable objects, 30 days for unreachable).
-
-    ### Transfer: where else reflog saves you
-
-    For each of these, decide — would reflog recover the lost work,
-    and if so, which reflog entry would you target? You don't need
-    to run the commands; just reason.
-
-    1. You ran `git reset --hard HEAD~3` on your feature branch,
-       intending `HEAD~1`. Three commits of work are gone from the
-       branch tip.
-    2. You ran `git rebase -i` and marked a commit `drop` by mistake.
-       The rebase finished cleanly; the "dropped" commit no longer
-       appears in `git log`.
-    3. You force-pushed to a remote and `rm -rf`-ed your local clone
-       because you were embarrassed. You re-clone. Can reflog help?
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **Yes.** `git reflog` shows the pre-reset SHA (one line up from
-       `HEAD@{0}`). `git reset --hard HEAD@{1}` restores the branch
-       exactly. Same recipe.
-    2. **Yes.** Reflog records every HEAD movement during rebase,
-       including where HEAD was before `rebase -i` started. Find the
-       pre-rebase entry; `git branch rescue <that-sha>` preserves the
-       dropped commit on a new branch.
-    3. **No.** Reflog is **local**. `rm -rf` of your clone destroys
-       its reflog. A fresh clone starts with an empty reflog. Lesson:
-       reflog protects against your own mistakes on a single clone,
-       not against destroying the clone itself. Keep backups of
-       unpublished work in some form outside the clone you might nuke.
-
-    </details>
-
-    Same two-step recipe (`reflog → branch at SHA`), three different
-    destructive operations — that is the generalization Variation
-    Theory says you need to actually use this tool in the wild.
+    The "lost" commit is reachable again. The full recipe: **`git reflog`
+    to find the SHA, `git branch <name> <sha>` to anchor it.** Same
+    recipe rescues dropped commits after interactive rebase, bad
+    resets, and failed rebases.
 
     ### You can now
 
     - **Distinguish** `git log --all` (reachability walk) from
-      `git reflog` (HEAD-movement diary) — and predict which will
-      see an orphaned commit.
-    - **Recover** orphaned commits using `git reflog` + `git branch
-      <name> <sha>` — your safety net for every destructive
-      operation later in this tutorial.
-    - **Apply the same recipe** to bad resets, dropped commits, and
-      failed rebases — the mechanism is identical; only the cause of
-      the loss changes.
-    - **Recognize the one failure mode:** reflog is local; a
-      destroyed clone takes its reflog with it.
+      `git reflog` (HEAD-movement diary).
+    - **Recover** orphans with `git reflog` + `git branch <name> <sha>`.
+    - **Know the failure mode:** reflog is local; destroying the clone
+      destroys its reflog.
   setup_commands:
   - cd /tutorial/myproject
   - git switch -q main 2>/dev/null; true
@@ -602,26 +392,6 @@ steps:
 - title: Relative Commit Addresses & Git's Object Database
   view: git_graph
   instructions: |
-    ### Warm-up: one prediction
-
-    Imagine two separate Git repos on two separate laptops. Alice's
-    `foo.txt` contains exactly the bytes `hello world\n`. Bob's
-    `bar.txt` contains exactly the bytes `hello world\n`.
-
-    > **Predict (yes/no/depends):** Do Alice's repo and Bob's repo
-    > internally store that content using the **same SHA-1 hash**?
-
-    Write your guess down. We will prove the answer at the end of this
-    step. It matters more than it sounds — the answer is the
-    foundation of every efficient operation in Git.
-
-    > ⚠️ **Common wrong model you may be carrying:**
-    > *"Git stores a diff between each commit — that's why it's so
-    > compact."* This is the **SVN mental model** and it is **wrong**
-    > for Git. Git stores full snapshots, deduplicated by content
-    > hash. Holding onto the diff model makes rebase, cherry-pick, and
-    > bisect feel magical and unpredictable. This step replaces it.
-
     ### The address problem
 
     Every advanced Git command takes a commit as an argument.
@@ -687,15 +457,15 @@ steps:
     | **tree** | A directory listing: filename → blob or sub-tree |
     | **commit** | A tree SHA + parent SHAs + author + message |
 
-    Everything is addressed by SHA-1 of its content — a *content-addressable
-    filesystem*. Let's settle the warm-up prediction.
+    Everything is addressed by SHA-1 of its content — a
+    *content-addressable filesystem*.
 
     ```bash
     echo "hello world" | git hash-object --stdin
     ```
 
-    Note the 40-character hash. Now run the **same command in a
-    fresh, unrelated repo** (simulate Bob's laptop):
+    Note the 40-character hash. Run the same command in a fresh,
+    unrelated repo:
 
     ```bash
     cd /tmp && git init -q bob-repo && cd bob-repo
@@ -703,107 +473,31 @@ steps:
     cd /tutorial/myproject
     ```
 
-    **Identical output.** That is the answer to the warm-up prediction:
-    anyone hashing the same content gets the same SHA. Git is
-    content-addressable — deduplication across repos, branches, and
-    history is automatic and free. (If your prediction was "no" or
-    "depends," this is the moment to update your mental model.)
+    **Identical output.** Anyone hashing the same bytes gets the same
+    SHA. Deduplication across repos, branches, and history is free.
 
-    ### Task 3: The "how byte-exact is byte-exact?" challenge — predict first
+    ### Task 3: Byte-exact hashing
 
-    You now believe identical bytes produce identical SHAs. Time to
-    probe the edge of that claim.
-
-    **Predict first — commit to yes/no/different:** You are about
-    to hash `"hello world "` with **one trailing space**. Compared
-    to the no-trailing-space version above, will the SHA be:
-
-    - **(A) the same** — Git normalizes minor whitespace?
-    - **(B) different** — Git hashes byte-exact content?
-    - **(C) depends** on Git's line-ending settings?
-
-    Write your guess down *before* running. There is a correct
-    answer, and it matters for your mental model.
+    **Predict:** hashing `"hello world "` with one trailing space —
+    same SHA as above, or different?
 
     ```bash
     printf 'hello world \n' | git hash-object --stdin
     ```
 
-    (Note the `printf` — `echo` may strip or add trailing whitespace
-    depending on the shell. `printf` emits exactly what you give
-    it.)
-
-    **The output is different.** A single trailing space changes
-    every byte of the hash output. Git's content-addressability is
-    **byte-exact**, not "close enough." This is why a file that
-    differs from the committed version by a single invisible
-    character gets a new blob SHA, new tree SHA, new commit SHA —
-    the whole chain re-hashes.
-
-    **Implication:** if your IDE strips trailing whitespace on save
-    and your teammate's doesn't, you will *constantly* see "no
-    visible diff" commits that still bump every SHA. This is also
-    why the reformatter-mask problem in Step 6 is so common — every
-    whitespace tweak is a full rewrite from the object database's
-    point of view.
-
-    **Stop and self-explain.** In one sentence (paper/scratch), why
-    does the snapshot model mean Git can't "know" two near-identical
-    files are "the same" and skip re-hashing? (Expected: because
-    content identity is defined *by* the hash, not by fuzzy
-    comparison — no hash match, no identity, by construction.)
-
-    ### Transfer: where content-addressability shows up elsewhere
-
-    The same content-addressable property reappears in contexts you
-    might not expect. For each, decide whether identical content
-    across users produces the same address:
-
-    1. **`git fetch`** from a remote. If a blob already exists
-       locally by SHA, is it re-downloaded?
-    2. **Pack files** (`.git/objects/pack/`). If a release copies
-       many identical files into a new version, does the pack
-       grow proportionally?
-    3. **A Docker image layer.** Two Dockerfiles with identical
-       `RUN` steps on identical base images — same layer hash?
-    4. **IPFS / BitTorrent.** A file shared by two unrelated users
-       with the same bytes — same content ID?
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **Not re-downloaded.** Fetch walks the object graph and
-       skips any SHA already present locally. Same property at
-       work — SHA is the de-duplication key across machines.
-    2. **Does not grow proportionally.** Pack files use delta
-       encoding, but even before that, identical blobs
-       deduplicate by SHA — hundreds of copies of the same file
-       occupy one blob's space.
-    3. **Yes** (Docker uses a similar content-hash layering
-       scheme). Identical instructions on identical inputs
-       produce identical layer hashes; Docker skips redundant
-       builds.
-    4. **Yes.** IPFS's CID and BitTorrent's info-hash are both
-       content-addressable. Two users, zero coordination, same
-       bytes → same address.
-
-    </details>
-
-    **Same mechanism, four contexts.** Content-addressability is
-    not a Git quirk — it's a fundamental systems-design pattern.
-    Recognizing it outside Git is what lets the mental model you
-    just built transfer to the rest of your career.
+    **Different.** One trailing space changes every byte of the hash.
+    Content-addressability is byte-exact, not "close enough" — a file
+    differing by a single invisible character gets a new blob SHA, new
+    tree SHA, new commit SHA. This is why reformatter commits
+    (Step 6) mask real authorship: every whitespace tweak rewrites
+    the whole chain.
 
     ### You can now
 
     - **Resolve** any commit without typing a SHA using `HEAD~n`,
       `BRANCH^`, or `git rev-parse`.
-    - **Prove** that Git is snapshot-based (not diff-based) by
-      hashing identical content and seeing identical SHAs.
-    - **Predict** that one trailing space changes the whole hash —
-      byte-exact content is the foundation, not a near-miss.
-
-    You have now built the mental model that the remaining 11 steps
-    all build on.
+    - **Prove** that Git is snapshot-based (not diff-based).
+    - **Predict** that one trailing space changes the whole hash.
   setup_commands:
   - cd /tutorial/myproject && git switch main 2>/dev/null; true
   solution:
@@ -895,49 +589,19 @@ steps:
   instructions: |
     ### The context-switch problem
 
-    Real development rarely lets you finish one task before another
-    demands attention. Imagine you are halfway through a feature when
-    your team lead says: **"Drop everything — there's a critical bug on
-    `main` that needs a hotfix now."**
+    You're halfway through a feature when your lead says: **"Drop
+    everything — critical bug on `main`, hotfix now."** Your choices
+    without `git stash` are all bad: commit half-finished work
+    (pollutes history), discard with `git restore` (permanent loss),
+    or stay on your branch (can't isolate the hotfix).
 
-    Without `git stash`, your choices are all bad:
-
-    - **Commit half-finished work** → pollutes history.
-    - **Discard changes with `git restore`** → permanent loss.
-    - **Stay on your branch** → cannot isolate the hotfix.
-
-    `git stash` is the fourth, clean option: **temporarily set aside**
-    your work-in-progress so the working directory is clean, context-switch,
-    then **restore your work** exactly where you left off.
-
-    > ⚠️ **Anti-pattern alert:** a common novice response to "clean
-    > tree needed now" is to **delete the local folder, copy code to
-    > a text file, re-clone, paste back** (the "burning down the
-    > repo" pattern). This works but destroys atomic history, loses
-    > authorship, and you never learn the real tool. `git stash` is
-    > the professional one-command alternative — learn it once, use
-    > it forever.
-
-    ```freeform
-    @startuml
-    layout horizontal
-
-    box "Working Directory\n(half-finished feature)" as wd
-    box "Stash\nWIP: power function" as st
-    box "Working Directory restored" as restored
-
-    wd --> st : git stash
-    st --> restored : git stash pop
-
-    note bottom of wd : do hotfix, commit, merge
-    @enduml
-    ```
+    `git stash` temporarily sets aside your work-in-progress so the
+    working directory is clean, then restores it.
 
     ### Task 1: You have been interrupted mid-work
 
-    The tutorial has already set the scene for you: you're on `main`,
-    and a half-finished `power` function is sitting at the bottom of
-    `calculator.py` — exactly as if you had been pulled off mid-edit:
+    A half-finished `power` function is sitting at the bottom of
+    `calculator.py`:
 
     ```python
 
@@ -946,9 +610,7 @@ steps:
         return a ** b
     ```
 
-    It is **modified but not committed**. Confirm Git sees the dirty
-    working tree (and note the file appears under `NOT STAGED` in the
-    Git Graph panel on the right):
+    Confirm Git sees the dirty working tree:
 
     ```bash
     cd /tutorial/myproject
@@ -958,27 +620,16 @@ steps:
 
     ### Task 2: Stash
 
-    **Predict first:** after running `git stash`, what will `git
-    status` report? Will your changes still show up as "modified"?
-    Will they be "staged"? Will the working tree be "clean"? Commit
-    to one prediction before running.
-
     ```bash
     git stash
     git status
-    ```
-
-    The working directory is **clean** — that's the answer to the
-    prediction. The half-finished `power` function is in the stash — not
-    committed, not lost.
-
-    ```bash
     git stash list
     ```
 
-    Each entry looks like `stash@{0}: WIP on main: <hash> <message>`.
-    Internally, a stash is a **commit object** (actually two — one for
-    index, one for working tree) stored under `.git/refs/stash`.
+    The working directory is **clean**. The half-finished `power`
+    function is in the stash — not committed, not lost. Internally, a
+    stash is a commit object (two, actually — index + working tree)
+    stored under `.git/refs/stash`.
 
     ### Task 3: Do the hotfix on a dedicated branch
 
@@ -1179,22 +830,13 @@ steps:
   instructions: |
     ### The problem
 
-    Your team lead pings you: *"The bugfix in commit `b73f...` on the
-    `experimental` branch also applies to `main`. Can you pull in just
-    that one commit — not the rest of the branch?"*
+    Your lead asks: *"The bugfix in commit `b73f...` on the
+    `experimental` branch also applies to `main`. Pull in just that
+    one commit — not the rest of the branch."*
 
-    Merging the whole branch would bring in unrelated work. Copying the
-    file manually loses authorship and context. You want surgical
-    precision: **take one commit, replay it on main**.
-
-    That is `git cherry-pick`.
-
-    ### How it works
-
-    `git cherry-pick <sha>` computes the *patch* (diff) of commit
-    `<sha>` against its parent, then applies that patch on top of
-    your current HEAD — creating a **new commit** with the same
-    changes and message but a different SHA.
+    `git cherry-pick <sha>` computes the patch of that commit against
+    its parent, applies it on top of HEAD, and creates a **new commit**
+    with the same changes but a different SHA.
 
     **Before** — `experimental` has commits `α β γ`; `main` stops at `C`:
 
@@ -1284,29 +926,12 @@ steps:
     `Add absolute value function`. Its SHA is **different** from the
     original on `experimental`, but the patch is identical.
 
-    ### Stop and self-explain
+    A commit's SHA hashes `tree + parent(s) + author + committer +
+    message`. The cherry-picked commit has a different parent (tip of
+    main, not experimental), so the SHA changes. Same patch, new
+    identity.
 
-    Before reading the explanation below, **say out loud (or write on
-    paper) in one sentence** why the cherry-picked commit has a
-    different SHA even though it contains exactly the same patch.
-
-    …
-
-    Here is the expected answer — compare with yours:
-
-    > A commit's SHA is `SHA-1(tree + parent(s) + author + committer +
-    > message)`. Cherry-picking onto `main` gives the new commit a
-    > **different parent** (the tip of main, not the tip of experimental),
-    > so at least the parent component of the hash changes → new SHA.
-    > Same patch, new identity. This is consistent with Step 3's
-    > object model: commits are immutable; "moving" a commit actually
-    > creates a fresh one.
-
-    If your answer matched, the object-model mental model is
-    sticking. If it did not, re-read the explanation — this pattern
-    will come back in Steps 8 and 9.
-
-    ### Task 3: Handle a cherry-pick conflict (desirable difficulty)
+    ### Task 3: Handle a cherry-pick conflict
 
     Cherry-picks can conflict — the patch does not apply cleanly. Let's
     force one. Make sure you are on `main`, then in the editor change
@@ -1363,20 +988,9 @@ steps:
     You will see conflict markers `<<<<<<<`, `=======`, `>>>>>>>` in
     the editor.
 
-    > **A reframe worth holding onto:** merge/cherry-pick conflicts
-    > are **not failures**. They are Git saying: "two valid changes
-    > touched the same lines; a human must decide how to combine
-    > them." You will see hundreds of these in your career. Each one
-    > you resolve makes the next one faster. Treat every conflict as
-    > a tiny code review you give yourself.
-
-    > ⚠️ **What not to do:** the novice panic response here is to
-    > `git cherry-pick --abort`, delete the local folder, copy the
-    > conflicting file out, re-clone, and try again. **Don't.** Git
-    > has already loaded both versions into your editor — the fix
-    > is 30 seconds of reading and typing. Taking the "burn down"
-    > shortcut once costs you 30 seconds; taking it every time costs
-    > you the ability to ever resolve a conflict.
+    > Merge/cherry-pick conflicts are not failures — Git is saying
+    > "two valid changes touched the same lines; a human must decide
+    > how to combine them."
 
     Resolve the conflict by keeping the docstring
     **and** the inline comment — edit in the editor so the block reads:
@@ -1397,31 +1011,6 @@ steps:
 
     If you had wanted to bail out entirely, `git cherry-pick --abort`
     would restore `main` to before the cherry-pick.
-
-    ### Transfer: pick the right tool
-
-    Decide — on your own — which Git tool is best for each scenario:
-
-    1. Your teammate pushed 50 commits on a feature branch. You want
-       all of them on `main` as individual commits. **Tool?**
-    2. A CVE disclosure says a single commit on `main` has a security
-       hole. You need to apply the fix to three release branches
-       (`release-1.0`, `release-1.1`, `release-1.2`). **Tool?**
-    3. Your own feature branch has 10 messy WIP commits. Before
-       opening a PR, you want them as one clean commit. **Tool?**
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. `git merge feature` (or `git rebase` if you want linear
-       history). Cherry-picking 50 commits one by one is laborious and
-       loses merge-base info. Cherry-pick is **surgical**, not bulk.
-    2. `git cherry-pick <fix-sha>` on each release branch. Classic
-       backport pattern — exactly what cherry-pick was built for.
-    3. `git rebase -i` with `squash`/`fixup` (Step 9). Cherry-pick
-       does not clean up the source branch — it only copies from
-       there.
-
-    </details>
 
     ### You can now
 
@@ -1542,67 +1131,28 @@ steps:
   instructions: |
     ### The forensic question
 
-    You are reading `calculator.py` and spot a suspicious line. Before
-    ripping it out, you want to know:
+    You spot a suspicious line in `calculator.py` and want to know:
+    who last changed it, when, and **why**. `git blame` answers all
+    three. Used for *context* (not accusation), it's one of the most-used
+    commands in professional development.
 
-    - **Who** last changed this line?
-    - **When** did they change it?
-    - **Why** did they change it — what commit message did they leave?
+    The real workflow is two commands:
 
-    `git blame` answers all three. Used defensively (not accusingly!),
-    it is one of the most-used commands in professional development.
+    1. `git blame -L <start>,<end> <file>` → find the SHA that last
+       touched the line.
+    2. `git show <sha>` → read the commit message and diff — where
+       the *why* lives.
 
-    > **Don't literally "blame":** The command is named poorly. In
-    > practice you use it to find *context* — the commit that introduced
-    > or last touched a line, so you can read its message and diff
-    > before changing or reverting the line.
-
-    ### The idiomatic two-step
-
-    Blame by itself is noise until you use it to answer "why". The
-    real workflow is two commands:
-
-    1. `git blame -L <start>,<end> <file>` → find the SHA of the
-       commit that last touched the line(s) you care about.
-    2. `git show <sha>` → read the commit message and full diff. This
-       is where the *why* lives.
-
-    ### Flag reference (read once, keep handy)
+    ### Flag reference
 
     | Flag | Use when |
     |---|---|
-    | `-L start,end` | You already know roughly which lines matter — avoids scrolling hundreds of lines |
-    | `-w` | A reformatter (`black`, `gofmt`) ran recently and is masking the real author |
-    | `-C -M` | A line was moved/copied across files — follow it back to its origin, not the last mover |
-    | `blame.ignoreRevsFile` config | Permanently skip known reformat commits on your team |
+    | `-L start,end` | You know roughly which lines matter |
+    | `-w` | A reformatter masked the real author |
+    | `-C -M` | A line was moved/copied across files |
+    | `blame.ignoreRevsFile` | Permanently skip known reformat commits |
 
-    ### Task 1: A forensic mystery — find why a line exists
-
-    Pretend you just joined this project and opened `calculator.py`.
-    You see a function that looks odd — maybe it's the `safe_divide`
-    function, or `absolute`, or `divide`. **Before you change or
-    remove it**, you need to know the story: who wrote it, when, and
-    what problem were they solving?
-
-    **Predict first:** pick a specific line (e.g., the opening line
-    of `safe_divide` if present, else line 7). Guess — will `git
-    blame` on that line show:
-
-    - (A) Today's date? (The tutorial just built this state.)
-    - (B) A date from years ago?
-    - (C) The same commit as every other line in the file?
-
-    <details markdown="1"><summary>Reveal the answer</summary>
-
-    **All timestamps will be "today"** (the tutorial built them in
-    this session). What will differ is the **SHA and commit message**
-    per line — each line traces to the commit that introduced or
-    last modified it. In a real project, timestamps span months or
-    years, making blame a true archaeology tool.
-
-    </details>
-
-    Now run it:
+    ### Task 1: Find why a line exists
 
     ```bash
     git blame -L 7,7 calculator.py
@@ -1610,164 +1160,71 @@ steps:
     git show <that-sha>
     ```
 
-    You now know **who** wrote it, **when**, and **why** (from the
-    commit message and diff). That is 90% of how blame is used on real
-    teams.
+    You now know who, when, and why — that's 90% of real blame usage.
 
-    ### Think like a detective
+    ### Task 2: The reformatter-masked authorship case
 
-    Professional `git blame` usage is always a **chain** of commands,
-    never just one call. The recipe:
+    The setup planted:
+    - **Bob** wrote the `clip` function.
+    - **CI-Bot** ran a whitespace-normalization job after — no functional
+      change, just whitespace.
 
-    1. `git blame -L <line>,<line> <file>` → narrow to the line(s)
-       of interest.
-    2. `git show <sha>` → read the commit's full message and diff to
-       understand **intent**, not just the change.
-    3. If the commit message is vague (`"fix"`, `"wip"`), fall back
-       to `git log --all --grep=<keyword>` or `git bisect` (Step 7).
-    4. If the line's last change was a reformatter, repeat with `-w`
-       to skip whitespace-only changes.
-
-    Bookmark this four-step recipe. It works on every real codebase.
-
-    ### Task 2: The reformatter-masked authorship case — full PRIMM
-
-    The tutorial setup has planted a realistic forensic scenario for
-    you:
-
-    - **Bob** wrote the `clip` function last month. Real authorship,
-      real intent, real commit message.
-    - **CI-Bot** ran a whitespace-normalization job (like `black`'s
-      post-commit hook or "strip trailing whitespace" in CI) and
-      committed the result. No functional change — just whitespace.
-
-    You will walk through the five PRIMM stages — **Predict, Run,
-    Investigate, Modify, Make** — to see how reformatter commits mask
-    the real author and how `-w` defuses them.
-
-    #### 2a. Predict
-
-    You are about to run:
-
-    ```bash
-    git blame -L 1,$(wc -l < calculator.py) calculator.py | grep -n 'clip'
-    ```
-
-    **Before running**, write down: who will Git name as the last
-    author of the `def clip(...)` line? Bob? CI-Bot? Someone else?
-    Also predict: *why* might your answer be wrong?
-
-    <details markdown="1"><summary>Reveal hint (read only after writing)</summary>
-
-    "Last to touch" wins in plain `git blame`. If CI-Bot committed
-    *after* Bob, even with a whitespace-only change, CI-Bot is the
-    last toucher — so blame will name CI-Bot. That's the
-    reformatter-mask phenomenon in action. Hold this prediction as
-    you run.
-
-    </details>
-
-    #### 2b. Run
+    **Predict:** who will plain `git blame` name as the last author of
+    the `def clip(...)` line?
 
     ```bash
     git blame -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'clip'
     ```
 
-    Observe the author column. Did it match your prediction? (If yes,
-    your mental model of "last commit wins" is sound; if no, this is
-    exactly the moment to update it.)
-
-    #### 2c. Investigate
-
-    You now suspect this might be a reformatter commit. Read its
-    content to verify — grab the SHA from the blame output and inspect:
+    "Last to touch" wins — plain blame names CI-Bot, masking Bob.
+    Grab the SHA and inspect:
 
     ```bash
     git log --oneline -10
-    # find the CI-Bot commit SHA in the log
     git show <ci-bot-sha>
     ```
 
-    The diff is pure whitespace. No logic changed. `git log` confirms
-    the message is "CI: auto-format via whitespace-normalize" — this
-    is exactly the kind of noise that masks real authorship.
-
-    #### 2d. Modify — add `-w` to ignore whitespace-only changes
+    Pure whitespace diff. Now add `-w` to skip whitespace-only changes:
 
     ```bash
     git blame -w -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'clip'
     ```
 
-    The author column changes. **Who does blame now name?** Run
-    `git show <that-sha>` to confirm — this is the commit where the
-    real logic landed.
-
-    #### 2e. Make — build the full defensive recipe
-
-    Now chain the whole forensic workflow that handles reformatter
-    masking up-front. Run it end-to-end:
+    The author column changes to Bob — the real logic author. On teams
+    with recurring formatter commits, configure `blame.ignoreRevsFile`:
 
     ```bash
-    SHA=$(git blame -w -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'clip' | awk '{print $1}' | tr -d '^')
-    echo "Real author SHA: $SHA"
-    git show $SHA
-    ```
-
-    Save this recipe. On any real codebase with a CI formatter, this
-    is the first thing you reach for when plain blame "lies to you."
-    On teams with recurring formatter commits, go further and
-    configure `blame.ignoreRevsFile`:
-
-    ```bash
-    # Example: tell blame to skip known reformatter SHAs permanently
     echo "<ci-bot-sha>" >> .git-blame-ignore-revs
     git config blame.ignoreRevsFile .git-blame-ignore-revs
     ```
 
-    Now even plain `git blame` will skip the reformatter commits —
-    useful for GitHub's web blame UI, which also reads this file.
+    GitHub's web blame UI honors this file too.
 
     ### Task 3: Contrast — when blame is NOT masked
 
-    For contrast, run blame on a line that was **never** touched by
-    CI-Bot — e.g. the original `add` function:
+    Run blame on a line CI-Bot never touched:
 
     ```bash
     git blame -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'def add'
     ```
 
-    Same line, same file — but because CI-Bot didn't touch it,
-    plain blame already shows the real author (you, from the
-    starter setup). This is the point of Variation Theory: seeing
-    the tool in both a **masked** case (where `-w` matters) and an
-    **unmasked** case (where `-w` is a no-op) lets you generalize
-    "when does `-w` matter?" rather than just memorizing the flag.
-
-    ### GitHub visualizes blame very well
-
-    Every file view on GitHub has a **Blame** button — the web UI
-    shows the same data with clickable links to each commit. It also
-    honors `blame.ignoreRevsFile` if present in the repo. Useful
-    during code review in the browser.
+    Plain blame already shows the real author — `-w` is a no-op here.
+    That's the pattern: `-w` matters only when a reformatter was the
+    last toucher.
 
     ### You can now
 
     - **Chain** `git blame -L` → `git show` to answer "why does this
-      line exist?" in two commands.
-    - **Predict** when plain blame will lie to you — any time a
-      reformatter commit is the last toucher.
-    - **Defuse** a reformatter commit with `-w` or
-      `blame.ignoreRevsFile`, then re-run the forensic chain.
-    - **Recognize** when blame cannot help — bugs caused by a
-      *missing* line (see the last quiz question).
-
-    > **Normalize the struggle.** Plain blame misleading you into
-    > suspecting an innocent CI bot happens to nearly every engineer
-    > exactly once. After it happens, you remember `-w` forever.
-    > Going through it here means the first real incident won't
-    > cost you hours.
+      line exist?".
+    - **Predict** when plain blame will lie (reformatter was last toucher).
+    - **Defuse** with `-w` or `blame.ignoreRevsFile`.
+    - **Recognize** blame's limit: it cannot see *missing* lines.
   setup_commands:
   - cd /tutorial/myproject && git switch main 2>/dev/null; true
+  - cd /tutorial/myproject && (git log --all --oneline 2>/dev/null | grep -q 'auto-format via whitespace-normalize' || grep -q 'def clip' calculator.py) || printf '\ndef clip(x, lo, hi):    \n    """Clip x to [lo, hi]."""    \n    if x < lo:\n        return lo\n    if x > hi:\n        return hi\n    return x\n' >> calculator.py
+  - cd /tutorial/myproject && git diff --quiet calculator.py || GIT_AUTHOR_NAME=Bob GIT_AUTHOR_EMAIL=bob@example.com GIT_COMMITTER_NAME=Bob GIT_COMMITTER_EMAIL=bob@example.com git commit -qam 'feat: add clip function'
+  - cd /tutorial/myproject && git log --all --oneline 2>/dev/null | grep -q 'auto-format via whitespace-normalize' || sed -i 's/ *$//' calculator.py
+  - cd /tutorial/myproject && git diff --quiet calculator.py || GIT_AUTHOR_NAME=CI-Bot GIT_AUTHOR_EMAIL=ci@example.com GIT_COMMITTER_NAME=CI-Bot GIT_COMMITTER_EMAIL=ci@example.com git commit -qam 'CI: auto-format via whitespace-normalize'
   solution:
     commands:
     - cd /tutorial/myproject
@@ -1902,19 +1359,6 @@ steps:
     helper comment`, `Simplify absolute`, `Later tweak`, `Even later
     tweak`.
 
-    **Predict first (human bisect):** based on the commit messages
-    alone, which one do you suspect introduced the bug? Write it
-    down. After `git bisect` finishes, compare — did the algorithm
-    agree with your intuition?
-
-    > **Why this matters:** in real projects, good commit messages
-    > cut debugging time in half. If every commit said "WIP" or
-    > "fix", your human bisect would be hopeless and you'd be forced
-    > to run the full 10+ automated bisect iterations. Descriptive
-    > messages let you skip half the search mentally. Pair this
-    > lesson with any future "why should I bother writing good commit
-    > messages?" moment.
-
     Now confirm the test fails:
 
     ```bash
@@ -2022,141 +1466,6 @@ steps:
     > each iteration), or write a smaller, older-friendly regression
     > test before you start.
 
-    ### Transfer: decide whether bisect is worth it
-
-    Consider each scenario. Would you reach for `git bisect run`?
-    Why or why not?
-
-    1. The regression is in the last **3 commits**. Your test takes
-       **0.1 seconds** to run. Bisect or manual? **Reason.**
-    2. The regression is in the last **500 commits**. Your test takes
-       **8 minutes** to run per commit. Bisect or manual? Estimate
-       total time.
-    3. The regression test was **added yesterday** (so historical
-       commits don't even contain the test file). Does bisect still
-       work? How?
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **Manual.** With 3 commits, reading diffs is instant; bisect
-       setup + 2 tests is slower. Rule of thumb: below ~5 commits,
-       skip bisect.
-    2. **Bisect.** `log₂(500) ≈ 9` tests × 8 min = ~72 min total,
-       fully automated. Manual would be 500 × 8 = 66 hours.
-    3. **Yes,** but you must keep the test outside the bisect range.
-       Copy it back at each iteration via
-       `git bisect run bash -c 'cp /tmp/test.py . && python3 test.py'`.
-
-    </details>
-
-    ### Tool selection checkpoint — the first six tools
-
-    You've now met six advanced tools — **reflog, stash, cherry-pick,
-    blame, bisect**, plus the branch/HEAD foundation. Before moving
-    on to history rewriting, verify you can *choose* among them, not
-    just execute each. For each scenario, decide which single tool
-    you'd reach for first, and **write down your reasoning in one
-    sentence**. This is the discrimination skill that separates
-    "I know what bisect does" from "I know when to use bisect."
-
-    1. A colleague says function `parse_config()` has a subtle bug.
-       You want to know who wrote the current implementation and why.
-    2. You're midway through a refactor, your working tree is dirty,
-       and your lead pings you: *"Please bisect the regression on
-       `main` first, urgent."*
-    3. Tests were green yesterday, red today, and there are ~200
-       commits between them. Nobody knows which one broke it.
-    4. A single commit on `main` fixes a CVE. You need that exact
-       fix landed on three release branches.
-    5. A teammate ran `git branch -D experimental` by mistake and
-       needs yesterday's commit from it back.
-    6. Your team lead asks for an urgent hotfix on `main`. You have
-       uncommitted experimental changes on a feature branch.
-
-    <details markdown="1"><summary>Answers (only peek after you've written yours)</summary>
-
-    1. **`git blame` → `git show <sha>`.** The forensic two-step.
-       Bisect would work in principle but is vastly overkill when the
-       line is already in front of you.
-    2. **`git stash` → `git bisect`, then `git stash pop`.** Two
-       tools, composed. Running bisect on a dirty tree either blocks
-       it or carries your edits across historical commits.
-    3. **`git bisect run`.** log₂(200) ≈ 8 tests beats reading 200
-       diffs. Blame only finds existing lines; if the culprit is a
-       deletion, blame fails entirely while bisect still works.
-    4. **`git cherry-pick <sha>`** on each release branch. This is
-       exactly what cherry-pick was built for. Merge would pull in
-       too much; rebase would rewrite released history.
-    5. **`git reflog`** on that local clone. The branch-delete SHA
-       is in the diary even though `git log --all` can't see it any
-       more. `git branch experimental <reflog-sha>` restores it.
-       (If the clone has been destroyed, reflog is gone too — the
-       one failure mode.)
-    6. **`git stash`**, switch to a hotfix branch, commit the fix,
-       merge, then `git stash pop` back on your feature branch. No
-       commit pollution, no lost work.
-
-    </details>
-
-    Notice the pattern: each of the six tools has *one* scenario
-    where it dominates. The skill is not knowing every command — it
-    is recognizing which scenario you're in.
-
-    ### 🌙 Break point — come back tomorrow
-
-    You've just finished the **debugging-tools block** (branches,
-    reflog, object model, stash, cherry-pick, blame, bisect). The
-    next step begins the **history-rewriting block** (rebase,
-    interactive rebase, squash merge) — conceptually different
-    territory, and the hardest part of the tutorial.
-
-    **This is the single most evidence-backed pedagogical move in
-    this whole tutorial:** stop here, sleep on it, come back
-    tomorrow. Cepeda et al. (2008) show that 12–24-hour spacing
-    roughly **doubles** 1-week retention versus cramming straight
-    through. Five minutes of sleep-and-retrieve outperforms an hour
-    of re-reading.
-
-    **When you come back, do NOT scroll up.** Open a notebook (paper
-    or scratch file) and answer these five questions from memory
-    *before* you touch the next step. Scoring yourself matters less
-    than the retrieval attempt — just write whatever you can.
-
-    1. What is physically on disk at `.git/refs/heads/main`? How
-       many bytes, roughly?
-    2. You made a commit in detached HEAD and switched away. Name
-       the two commands that rescue it.
-    3. Your working tree is dirty and you need a clean tree to
-       bisect a regression. What tool composes with bisect here,
-       and in what order do you run them?
-    4. You want to know who last changed line 42 of `parser.py` and
-       why. Name the two-command forensic chain.
-    5. A regression appeared in the last 100 commits; your test
-       script exits 0 on pass. Which command finds the culprit, and
-       roughly how many test iterations will it take?
-
-    <details markdown="1"><summary>Only open this AFTER attempting all five from memory</summary>
-
-    1. **A 41-byte file** (40-char SHA + newline) containing one
-       commit SHA. Creating/deleting branches is one `fwrite` /
-       `unlink` — that's why they're instantaneous.
-    2. **`git reflog`** to find the SHA (or use `HEAD@{n}`), then
-       **`git branch <name> <sha>`** to anchor it.
-    3. **`git stash`** → **`git bisect`** (then reset) → **`git
-       stash pop`** at the end. Bisect needs a clean tree; stash
-       keeps your WIP private.
-    4. **`git blame -L 42,42 parser.py`** to get the SHA, then
-       **`git show <sha>`** to read the commit message and diff.
-    5. **`git bisect run <script>`** — log₂(100) ≈ **7 iterations**.
-
-    </details>
-
-    Compare what you remembered against the list. The ones you
-    missed are the ones you'll re-read first. This is *not* a test
-    grade — it is **calibration**. If you missed 0-1, you are ready
-    for history rewriting. If you missed 3+, re-skim the relevant
-    step(s) before continuing. If you're somewhere in between, the
-    next step will fill in the rest.
   watch_files:
   - myproject/calculator.py
   - myproject/test_calculator.py
@@ -2259,26 +1568,13 @@ steps:
 - title: 'Rebase: Integrate Changes Without a Merge Commit'
   view: git_graph
   instructions: |
-    > ⚠️ **Common wrong model you may be carrying:**
-    > *"`git rebase` edits the old commits in place — that is why it's
-    > destructive."* **Wrong.** Commits are immutable (Step 3 — that
-    > is not negotiable). Rebase creates **brand-new** commits with
-    > the same patches and moves the branch pointer. The "old" commits
-    > stay in `.git/objects` and are recoverable via `git reflog`.
-    > Once you see this, rebase stops being scary.
-
     ### Mental model: the video-editor timeline cut
 
-    Think of rebase like a video editor:
-    - Select the clips (commits) unique to your feature.
-    - Cut them out.
-    - Move the playhead to the tip of `main`.
-    - Paste the clips, one by one, onto the new location.
-
-    Git literally does this: each cut-and-pasted clip is a new commit
-    object with the same content but a new parent, hence a new SHA.
-    The original clips still exist in the archive (`reflog`) — you
-    just watch the *new* timeline now.
+    Rebase is like a video editor: select the clips (commits) unique
+    to your feature, cut them out, move the playhead to the tip of
+    `main`, paste the clips onto the new location. Each paste is a
+    new commit object — same content, new parent, new SHA. The
+    originals stay in `.git/objects` (recoverable via reflog).
 
     ### The merge-commit noise problem
 
@@ -2375,23 +1671,10 @@ steps:
     the latest `main`. Its tip commit has **one** parent, not two —
     no merge commit anywhere.
 
-    ### Stop and self-explain
-
-    Before reading on, **explain in one sentence** why the rebased
-    commit on `feature-sqrt` has a *different* SHA than it did 10
-    seconds ago, even though its patch is byte-identical.
-
-    …
-
-    > Expected answer: "Rebase replays the commit on top of a new
-    > parent (the current tip of `main`, not the old branch point).
-    > A commit's SHA hashes its parent reference, so a different
-    > parent ⇒ a different SHA. Commits are immutable — rebase
-    > doesn't modify; it creates new ones." Same object-model
-    > reasoning you used in Step 5.
-
-    `git reflog` still has the pre-rebase SHA — your rescue route
-    if anything goes wrong.
+    The rebased commit's SHA changed because rebase replayed it on a
+    new parent (tip of `main`, not the old branch point). Commits are
+    immutable; rebase creates new ones. `git reflog` still has the
+    pre-rebase SHA.
 
     ### Task 4: Fast-forward merge into main
 
@@ -2478,101 +1761,6 @@ steps:
     > only on your local machine or on a feature branch **only you**
     > are working on. Rewriting shared history breaks other people's
     > branches.
-
-    ### Why the cardinal rule exists — the concrete failure mode
-
-    Research on professional Git usage (Isomöttönen & Cochez) shows
-    that conflating *local* and *remote* history is the single most
-    common source of serious Git accidents in industry. Walk through
-    the scenario concretely:
-
-    1. You and Alice both pull `shared-feature` at commit `abc123`.
-    2. You rebase locally — your tip is now a new commit `xyz789`
-       (same patch, different SHA).
-    3. You `git push --force`. The remote now has `xyz789`; `abc123`
-       is orphaned on the server.
-    4. Alice pulls. Git says *"your local branch and the remote have
-       diverged"* — because her local still has `abc123`, but the
-       remote now has `xyz789`.
-    5. Alice's pull creates a messy merge that reintroduces the
-       duplicated patches (one under each SHA).
-
-    Every push of a rewritten branch exports this problem to your
-    whole team. **The fix is social, not technical:** never rebase
-    branches others share. For public/shared branches, use `git
-    revert` (non-destructive anti-commit) instead.
-
-    ### Transfer: choose between rebase and merge
-
-    For each scenario, decide: rebase or merge? Justify in one line.
-
-    1. Your feature branch is 3 commits old, no one else has pulled
-       it, and you want to open a PR. Upstream `main` has moved.
-       **Rebase or merge?**
-    2. You and two teammates have all been pushing to `shared-demo`.
-       Your local branch has diverged from the remote. You need to
-       integrate. **Rebase or merge?**
-    3. A long-lived `release-2.0` branch has absorbed 200 commits from
-       `main` over 6 months. Integration time. **Rebase or merge?**
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **Rebase.** Short, private, pre-PR cleanup — textbook fit.
-    2. **Merge.** Shared branch with others who hold old SHAs —
-       rebasing would force-push and devastate their branches.
-    3. **Merge.** A 200-commit rebase is conflict-hell and destroys
-       the real branch topology that tells the story of the release.
-
-    </details>
-
-    ### Tool selection checkpoint — now with rebase in the mix
-
-    You now have seven tools — the six from the bisect checkpoint
-    *plus* `git rebase`. Rebase opens new "how do I integrate?"
-    questions. Decide the best single tool for each scenario and
-    write down your reasoning (one sentence per scenario):
-
-    1. Your feature branch is 4 commits old, private, and `main` has
-       moved 6 commits ahead. You want a clean, linear PR.
-    2. Bug traces to the `format_currency()` function. You want to
-       know what the author was trying to do in the commit that
-       introduced it.
-    3. You just finished a 3-commit feature; teammates also push to
-       the same (shared) `feature-integration` branch. You need to
-       catch up their changes.
-    4. Tests broke after pulling ~80 commits from `main`. You need to
-       find the guilty commit.
-    5. A security-critical commit on `main` needs to land on
-       `release-1.1` and `release-1.2`, which share no history with
-       `main`'s recent work.
-    6. You're mid-edit on `feature-a`, a 1-line hotfix becomes
-       urgent, and you cannot commit your WIP because it's broken.
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **Rebase** (`git rebase main` on the feature branch).
-       Short, private, pre-PR — textbook rebase use case.
-    2. **Blame → show.** Never reach for bisect when the line is
-       already in front of you; never reach for rebase when the
-       question is "why was this written this way?"
-    3. **Merge.** Shared branch; rebasing would force-push new SHAs
-       over teammates' old ones and break their clones.
-    4. **Bisect.** log₂(80) ≈ 7 tests vs reading 80 diffs. Rebase
-       and merge are irrelevant to *finding* the bug.
-    5. **Cherry-pick.** You want one commit, not whole-branch
-       integration. Rebase would rewrite the release branches'
-       history — forbidden because they're shared.
-    6. **Stash** first, then hotfix workflow. Committing broken WIP
-       pollutes history; rebase can't integrate uncommitted work.
-
-    </details>
-
-    **The meta-lesson.** Rebase doesn't replace merge, cherry-pick,
-    or bisect — it joins them. The "right" choice depends on three
-    questions you'll ask again and again: (a) is this branch shared
-    or private? (b) how many commits am I integrating? (c) am I
-    investigating or changing history? Answering those three pins
-    down the tool almost every time.
 
     ### You can now
 
@@ -2983,36 +2171,12 @@ steps:
     The "deleted" commit is fully recoverable. You now have a branch
     `secret-backup` anchoring it.
 
-    > **Meta-lesson:** every destructive Git operation is survivable
-    > as long as `git reflog` has a record of HEAD's position before
-    > the operation. This is why `git reset --hard`, `git rebase`,
-    > and `git branch -D` are all less scary than they sound —
-    > **as long as you act before the reflog entry and its objects
-    > are garbage-collected**.
+    > ⚠️ **For real secrets**, drop + rescue leaves *more* copies,
+    > not fewer. Real response: rotate the credential immediately, then
+    > scrub history with `git filter-repo` (or BFG), then force-push
+    > and ask collaborators to re-clone.
 
-    > ⚠️ **Real-world secret handling — don't confuse the lessons.**
-    > We rescued the dropped commit to *demonstrate the reflog safety
-    > net*, which is the point of this step. In production, the exact
-    > opposite is true: if you ever commit a real credential, `drop`
-    > + `rescue-onto-a-branch` would leave the secret in **both**
-    > `secret-backup` **and** reflog — *more* copies, not fewer. The
-    > real response for a leaked credential is two-part:
-    >
-    > 1. **Rotate the credential immediately** (assume it is
-    >    compromised the moment it entered Git — even unpushed, even
-    >    reflog-only).
-    > 2. **Scrub history** with `git filter-repo` (or BFG Repo
-    >    Cleaner), then force-push the cleaned history and ask
-    >    collaborators to re-clone.
-    >
-    > The basic tutorial's `.gitignore` step makes the same point:
-    > `.gitignore` prevents *future* tracking; it cannot retroactively
-    > remove anything. Keep the mental models separate — **rescue
-    > drills** use reflog to make destructive commands less scary;
-    > **secret incidents** require credential rotation and history
-    > rewriting. Don't apply the drill recipe to the incident.
-
-    ### Task 4: Reword a commit message — you decide
+    ### Task 4: Reword a commit message
 
     Interactive rebase can edit messages without altering content
     using the `reword` action. Your goal: rename the tip commit's
@@ -3088,29 +2252,6 @@ steps:
     - When the history is about to be merged with `--squash` anyway
       (redundant effort)
 
-    ### The force-push disaster (cautionary scenario)
-
-    You rebased `shared-feature` locally. Rebase complete, history
-    clean. You push:
-
-    ```bash
-    git push               # rejected — remote has commits you don't
-    git push --force       # "works" — remote is overwritten
-    ```
-
-    Monday morning, three teammates report their local `shared-feature`
-    is "broken": every pull creates hundreds of conflict markers.
-    What happened?
-
-    - Their local branches still hold the **old SHAs** you rebased away.
-    - The remote now has your **new SHAs** for the same patches.
-    - Git sees this as two branches that both have the same changes
-      twice — pull can't cleanly merge.
-
-    This is a real outage. The fix requires each teammate to
-    `git reset --hard origin/shared-feature` (throwing away any local
-    work they had), then re-apply anything they had in flight.
-
     ### The public-history alternative: `git revert`
 
     If a commit already reached shared history and you want to "undo"
@@ -3125,54 +2266,6 @@ steps:
     Rule of thumb:
     - **Local, unpushed commits** → rebase -i is fine (as in this step)
     - **Shared, pushed commits** → always revert, never rebase
-
-    ### Tool selection checkpoint — rebase -i vs every other tool
-
-    You now have eight tools. The new one — `rebase -i` — is
-    powerful but narrow: it is for **rewriting local history before
-    it ships**. For each scenario, pick the *single* best tool and
-    write one sentence of justification:
-
-    1. Eight WIP commits on your private `feature` branch. You want
-       them to land on `main` as one focused commit.
-    2. The very last commit on `feature` has a typo in its message.
-       Nothing else is wrong.
-    3. You accidentally committed `DATABASE_PASSWORD=hunter2`. You
-       have not pushed. You want it gone from history.
-    4. You already pushed a commit that breaks `main`'s CI. Three
-       teammates have pulled. You need to neutralize it *safely*.
-    5. A colleague's `experimental` branch has one commit — a
-       useful helper function — that you want on `main` without
-       taking the rest of the branch.
-    6. You want to split one giant commit into three smaller,
-       focused commits before opening a PR.
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **`rebase -i HEAD~8`** with `squash`/`fixup` on commits 2-8.
-       This is rebase -i's signature use case.
-    2. **`git commit --amend`** (faster than rebase -i for just the
-       tip). Rebase -i with `reword` also works but is overkill.
-    3. **`rebase -i` with `drop`** on the offending commit, plus
-       credential rotation. Never rebase-drop on pushed commits —
-       see scenario 4.
-    4. **`git revert <sha>`** — appends an anti-commit. No SHA
-       rewriting, so teammates' pulls stay clean. Rebase-dropping
-       here would break everyone who pulled.
-    5. **`git cherry-pick <sha>`.** Rebase-i is for rewriting *your*
-       history, not copying from theirs.
-    6. **`rebase -i` with `edit`** on the giant commit. It pauses
-       at that commit with HEAD there; `git reset HEAD~` un-stages
-       so you can re-stage in smaller pieces.
-
-    </details>
-
-    **The discrimination rule.** Rebase-i is for **rewriting your
-    own unshared history**. If the question is "copy one commit
-    across" → cherry-pick. If it's "undo on shared history" →
-    revert. If it's "find the right commit first" → blame or bisect.
-    Interactive rebase is neither a finder nor a copier — it is an
-    editor for drafts you haven't published.
 
     ### You can now
 
@@ -3306,14 +2399,6 @@ steps:
 - title: 'Squash Merge: Collapse a Feature Into a Single Commit'
   view: git_graph
   instructions: |
-    > ⚠️ **Common wrong model you may be carrying:**
-    > *"`git merge --squash feature` deletes the feature branch and
-    > rewrites its commits."* **Wrong.** `--squash` doesn't touch the
-    > feature branch. It only takes the cumulative diff and stages it
-    > on your *current* branch. The feature's individual commits remain
-    > exactly where they were. This is the single most common
-    > misconception about squash merge — notice if you were holding it.
-
     ### The goal
 
     Your feature branch has 7 commits — useful while developing, but on
@@ -3388,21 +2473,15 @@ steps:
 
     ### Task 2: Squash-merge into main
 
-    **Predict first:** after `git merge --squash feature-stats`, will
-    there be a new commit on `main`? Will the feature branch be
-    deleted? Will the working tree be clean? Commit to three
-    yes/no predictions.
-
     ```bash
     git switch main
     git merge --squash feature-stats
     git status
     ```
 
-    Surprising answers, if you didn't guess them: **no new commit
-    yet** (you must still run `git commit`), **feature branch
-    untouched**, **working tree dirty with staged changes** (the
-    combined diff is sitting in the index).
+    Three things to notice: **no new commit yet** (you still need to
+    run `git commit`), **feature branch untouched**, **working tree
+    has staged changes** (the combined diff is in the index).
 
     Finalize with a commit message describing the whole feature:
 
@@ -3442,72 +2521,6 @@ steps:
     | `git rebase main` on feature, then `git merge feature` on main | `A ── B ── C ── α' ── β' ── γ'` (linear) |
     | `git merge --squash feature; git commit` | `A ── B ── C ── αβγ` (one new commit) |
 
-    ### Stop and self-explain
-
-    Before moving on, **write or say in one sentence**: why is the
-    feature branch's last commit `γ` **not** a parent of the new
-    squash commit, even though the squash commit contains `γ`'s
-    changes?
-
-    …
-
-    > Expected answer: "`git merge --squash` only takes the
-    > *cumulative diff* and stages it. The resulting commit's parent
-    > is whatever HEAD was before the squash (the tip of `main`). No
-    > reference is stored to `γ`'s commit object — which is why the
-    > feature branch's history is **invisible** to `git log main`
-    > afterwards, and why `git bisect` on `main` cannot drill into
-    > the feature." Same object-model logic: commits store explicit
-    > parent references; `--squash` deliberately omits them.
-
-    ### Tool selection checkpoint — three ways to integrate
-
-    You now know three integration strategies: **plain merge**,
-    **rebase + ff-merge**, and **squash merge**. They produce
-    visibly different `main` histories. For each scenario, pick one
-    and write a one-sentence justification:
-
-    1. 4-commit feature (`add-search`). Team convention: main reads
-       as one commit per feature; internal commits are not preserved.
-    2. A long-lived `release-2.0` branch is ready to integrate into
-       `main` after 6 months of divergence. Team wants the merge
-       event to remain visible in `git log --graph`.
-    3. Your 3-commit feature is ready; team prefers a linear history
-       on `main` but insists on preserving each commit's individual
-       authorship.
-    4. Same as (1) — squash merged. Three months later a bug is
-       traced to the squash commit. What tool now?
-    5. You squashed feature-X into main, then deleted the feature
-       branch the next day. A bug surfaces months later that
-       requires drilling into which internal commit caused it. What
-       broke?
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **`git merge --squash`.** One commit per feature on main;
-       internal commits stay only on the feature branch (if kept).
-    2. **Plain `git merge`** (no ff). The merge commit preserves
-       the topology — you can see "release-2.0 integrated here"
-       six months later.
-    3. **Rebase + fast-forward merge.** Rebase linearizes the
-       feature on top of main; ff-merge appends each commit
-       individually, authorship intact.
-    4. **`git bisect` on the (still-existing) feature branch**, not
-       on main. The feature branch has internal commits; main only
-       has the opaque squash commit.
-    5. **Your recovery path.** Deleting the feature branch
-       immediately after squash-merge means `git log` can no longer
-       reach the internal commits; only reflog (if still within
-       retention) can. This is the strongest argument for leaving
-       merged branches around for a few weeks.
-
-    </details>
-
-    **Meta.** The three strategies trade off the same three axes:
-    (a) is main's history readable? (b) is the integration event
-    visible? (c) can you bisect into the feature? Pick the tool by
-    deciding which axis matters most for this project.
-
     ### You can now
 
     - **Choose** squash vs rebase vs merge based on how you want
@@ -3516,65 +2529,6 @@ steps:
       but loses `git bisect` precision *within* a feature.
     - **Recover** individual feature commits if needed — they still
       exist on the (pre-delete) feature branch and in reflog.
-
-    ### 🌙 Second break point — come back tomorrow before submodules
-
-    You've just finished the **history-rewriting block** (rebase,
-    interactive rebase, squash merge). The next step pivots to a
-    **fundamentally different abstraction** — submodules are nested
-    repos, not commands operating on your current repo. Treating
-    them as "just another Git feature" is the #1 cause of the
-    confusion Step 13 exists to untangle.
-
-    Stop here. Sleep on it. Return tomorrow (or at least after a
-    long break). Before opening the next step, **close the tutorial,
-    open a notebook, and answer these from memory:**
-
-    1. `git rebase main` on `feature-sqrt`. Why does the rebased
-       commit have a different SHA than it did 10 seconds before,
-       even though the patch is identical byte-for-byte?
-    2. You ran `git rebase -i HEAD~5` and marked a commit `drop` by
-       mistake. The rebase finished cleanly. Is the commit
-       recoverable? What are the two commands?
-    3. Fill in the blanks: **merge** produces a commit with ___
-       parents; **rebase + ff-merge** produces ___ commits on main
-       (each with ___ parent); **squash merge** produces ___ commit
-       on main with ___ parent(s).
-    4. Your team lead says: *"We squash-merged feature-X three
-       months ago. A bug bisects down to that squash commit. The
-       squash changed 1,200 lines."* What is your next move, and
-       why does it work?
-    5. What is the one property (not "local vs shared", look one
-       level deeper) that makes rebase, interactive rebase, and
-       squash merge all potentially destructive on shared branches?
-
-    <details markdown="1"><summary>Reveal only after attempting all five</summary>
-
-    1. A commit's SHA hashes tree + **parent(s)** + author +
-       committer + message. Rebase replays onto a new parent → new
-       parent reference → new SHA. Commits are immutable; "moving"
-       is always "copy to new parent, drop old pointer."
-    2. **`git reflog`** to find the pre-rebase SHA; **`git reset
-       --hard <sha>`** (or `git branch rescue <sha>`) to recover.
-       Same recipe as Step 2's detached-HEAD rescue.
-    3. Merge → **2 parents**; rebase + ff → **N new commits** on
-       main (each with **1 parent**); squash merge → **1 new
-       commit** on main with **1 parent** (the tip of main pre-squash).
-    4. Run **`git bisect` on the (still-existing) feature-X
-       branch** — its internal commits were preserved there even
-       though the squash hid them on main. This is why many teams
-       keep merged feature branches for several weeks before
-       deleting.
-    5. **They all create new commit SHAs** by design. Any operation
-       that rewrites SHAs makes every collaborator's existing
-       pointers stale. Merge, cherry-pick, and revert *add* commits
-       without rewriting existing ones — that's what makes them
-       safe on shared branches.
-
-    </details>
-
-    Submodules are next. The mental model change is significant —
-    don't try to power through tired.
   setup_commands:
   - "cd /tutorial/myproject\ngit merge --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log feature-stats --oneline 2>/dev/null | grep -q 'Add stddev function'; then\n  exit 0\nfi\ngit branch -D feature-stats 2>/dev/null\ngit switch -qc feature-stats\nprintf '\\ndef mean(values):\\n    return sum(values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add mean function'\nprintf '\\ndef variance(values):\\n    m = mean(values)\\n    return sum((x - m) ** 2 for x in values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add variance function'\nprintf '\\nimport math as _math\\ndef stddev(values):\\n    return _math.sqrt(variance(values))\\n' >> calculator.py\ngit commit -qam 'Add stddev function'\ngit switch -q main\n"
   solution:
@@ -3675,14 +2629,6 @@ steps:
 - title: 'Git Submodules: Add & Clone'
   view: editor
   instructions: |
-    > ⚠️ **Common wrong model you may be carrying:**
-    > *"A submodule copies the library's files into my repo, so my
-    > repo ends up storing two copies of everything."* **Wrong.** The
-    > outer repo stores **one 40-char SHA** (plus a URL in
-    > `.gitmodules`). That is enough — the content lives in the
-    > submodule's own object database. No duplication. Same
-    > snapshot-identity idea as Step 3.
-
     ### Mental model: a library subscription
 
     Think of a submodule like **subscribing to a specific edition
@@ -3856,57 +2802,9 @@ steps:
 
     **Upgrade** and **resync** are the subjects of the next step.
 
-    ### Transfer: submodules in different kinds of projects
-
-    You've added one math-utils submodule to one calculator project.
-    The mental model generalizes — but the *reasons* for using a
-    submodule vary widely. For each scenario, decide: is a submodule
-    the right tool, or would another approach (npm package, copying,
-    monorepo, vendored code) be better? Justify in one sentence.
-
-    1. **Shared UI component library** across three web apps your
-       team maintains. Library releases semantic-versioned tags.
-    2. **A single config file** (`terraform.tfvars`) that three
-       infra repos need to keep identical.
-    3. **A small utility file** (`logger.py`, ~200 lines) you
-       copy-pasted into five microservices two years ago; now you
-       need to fix a bug in all five.
-    4. **Your employer's proprietary code** inside an open-source
-       repo you maintain in your personal GitHub.
-    5. **A `node_modules` directory** of dependencies your team
-       wants pinned exactly, including lockfile-resistant
-       transitives.
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **npm package (or similar), not submodule.** Language
-       package managers handle SemVer versioning, transitive deps,
-       and upgrade tooling far better than submodules do for this
-       use case.
-    2. **Submodule fits well** *if* you want the config file
-       version-pinned per-consumer and updates to require explicit
-       bumps. Alternative: a config-management tool. Submodule is
-       fine for the small-team case.
-    3. **Submodule is the textbook fit.** A tiny `logger` utility
-       across 5 repos, each pinning a version, upgradeable per-repo
-       when convenient. Extract it into its own repo, vendor as
-       submodule.
-    4. **Submodule — but with caution.** Submodules CAN bridge
-       private and public repos, but teammates cloning your public
-       repo will fail at `submodule update` without access to the
-       private URL. Often better: keep the private code out of
-       the public repo entirely.
-    5. **NOT submodules** — node_modules is npm's job. Use
-       package-lock.json or yarn.lock. Submodules would capture
-       the files but lose all the tooling that makes dependency
-       management tractable.
-
-    </details>
-
-    **Meta-lesson.** Submodules work best for *versioned code
-    you own*, not for third-party dependencies or pure config.
-    When in doubt: "does a language-specific package manager
-    already handle this?" If yes, use that instead.
+    > **When to use submodules:** versioned code *you own* across
+    > several repos. Not for third-party deps (use a package manager),
+    > not for single config files (use config management).
 
     ### You can now
 
@@ -4038,16 +2936,15 @@ steps:
     git --git-dir=/tutorial/math-utils.git log --oneline --all
     ```
 
-    **Predict:** before running any submodule commands, what does
-    your **outer repo's** `git status` say? Anything about `vendor/math-utils`?
+    Check your outer repo — nothing has changed yet:
 
     ```bash
     cd /tutorial/myproject
     git status
     ```
 
-    Nothing has changed yet — the upstream push doesn't automatically
-    propagate to your checked-out submodule. You must opt in.
+    The upstream push doesn't automatically propagate to your
+    checked-out submodule. You must opt in.
 
     ### Task 2: Fetch and check out the new version inside the submodule
 
@@ -4150,60 +3047,8 @@ steps:
     ```
 
     Clean again — the submodule is back at the pinned SHA the outer
-    repo expected. Same command works whether the submodule was
-    never initialized, partially fetched, or drifted.
-
-    ### Transfer: the same two-step dance in different shapes
-
-    You just upgraded math-utils from v0.1 to v0.2. The two-step
-    pattern — (1) change something in the submodule, (2) commit
-    the gitlink bump in the outer repo — generalizes. For each
-    scenario, describe **what changes inside the submodule** and
-    **what you commit in the outer repo**.
-
-    1. **Downgrade.** A new submodule release introduced a bug;
-       you want to pin to the *previous* release's SHA.
-    2. **Pin to a specific tag.** Upstream tagged `v1.2.3` and you
-       want your outer repo to pin that specific tag's commit.
-    3. **Emergency hotfix.** You need to patch the submodule's code
-       for your project specifically, not waiting for upstream to
-       release a fix.
-    4. **Upstream rewrote history.** The submodule's maintainer
-       force-pushed and rebased; your pinned SHA no longer exists
-       on their remote. Now what?
-
-    <details markdown="1"><summary>Answers</summary>
-
-    1. **Inside submodule:** `git fetch && git checkout
-       <previous-release-sha>`. **Outer:** `git add
-       <submodule-path> && git commit -m "Downgrade math-utils
-       to v0.1.3"`. Same two-step pattern, just moving the
-       pinned SHA backwards instead of forwards.
-    2. **Inside submodule:** `git fetch --tags && git checkout
-       v1.2.3`. **Outer:** same commit dance. The gitlink stores
-       a commit SHA; checking out a tag just moves HEAD to that
-       commit.
-    3. **Two sub-cases.** (a) If you want this fix permanently in
-       your fork: clone the submodule to your own remote, push
-       your branch there, change the `.gitmodules` URL in the
-       outer repo, pin your fix's SHA. (b) If it's temporary
-       until upstream fixes it: commit inside the submodule on a
-       local branch, but be aware teammates can't fetch that SHA
-       — the full 6-step publish ceremony applies.
-    4. **You're in trouble.** The outer repo pins a SHA that no
-       longer exists on the submodule's remote. Teammates' fetches
-       fail with "reference is not a tree." Options: pin to the
-       new (rewritten) SHA and document the discontinuity, or
-       maintain your own fork that keeps the old SHA reachable.
-       This is exactly why the cardinal rule of rebase applies
-       extra-hard to submodules (Step 8).
-
-    </details>
-
-    **Pattern.** Every submodule operation follows the same
-    "change inside, commit outside" rhythm. Once you see it, you
-    can derive the command sequence for downgrade, tag-pin, or
-    cross-remote swap without memorizing each one.
+    repo expected. Same command works whether the submodule was never
+    initialized, partially fetched, or drifted.
 
     ### You can now
 
@@ -4527,66 +3372,6 @@ steps:
     invariants in a dependency order": each later invariant requires
     the earlier ones to already hold.
 
-    ### Stop and self-explain — what breaks if you skip each step?
-
-    Before reading on, **write down** (paper, scratch file, any
-    external surface) what specifically fails if each step is
-    skipped — AND *at what moment does the teammate notice*. This
-    is what converts the six-step recipe into a causal schema.
-
-    1. You did (2)–(6) but skipped (1) — committed in detached HEAD.
-       What error does *you* hit, and on which command?
-    2. You did (1), (3)–(6) but skipped (2) — switched to a branch
-       but never committed inside. What does the teammate see?
-    3. You did (1)–(2), (4)–(6) but skipped (3) — the submodule
-       branch was never pushed. What happens when the teammate
-       runs `git pull` + `git submodule update --init --recursive`?
-    4. You did (1)–(3), (6) but skipped (4) and (5) — the
-       submodule was pushed, but you forgot to bump the outer
-       pin. What's on `main` of the outer repo after your push?
-    5. You did (1)–(5) but skipped (6) — everything committed
-       locally, never pushed. When does the teammate notice?
-
-    <details markdown="1"><summary>Reveal after writing your answers</summary>
-
-    1. **You get the `fatal: You are not currently on a branch`
-       error at step (3), the submodule push.** HEAD is detached,
-       so Git has no branch to publish. You notice this, not the
-       teammate — which is actually the easier failure mode. The
-       harder ones are the downstream skips below.
-    2. **The teammate sees a "no-op" upgrade.** You run the whole
-       ceremony but the submodule's HEAD never advanced; step (4)
-       stages the same SHA that was already pinned; step (5)
-       becomes a "nothing to commit" error or an empty commit.
-       Nothing actually ships.
-    3. **Teammate fails at `git submodule update` time** with
-       something like `fatal: reference is not a tree` or
-       `Unable to fetch in submodule`. The outer repo pins a SHA
-       that only exists on your laptop; the submodule's remote
-       doesn't have it. **This is the scariest one** — your local
-       state looks correct, but teammates are blocked, and the
-       error message points at the submodule, not at your
-       skipped step (3). Hours lost debugging the wrong thing.
-    4. **The outer repo still pins the OLD submodule SHA.** Your
-       push goes through (nothing changed on main), teammates pull
-       nothing, submodule remote has the new commit nobody is
-       asked to use. Silent failure. You notice only when the
-       teammate says "I don't see your change."
-    5. **Nobody sees anything.** Locally everything is fine.
-       Tomorrow, when you're asked "did you publish that fix?"
-       you say yes — then discover you forgot the final push.
-
-    </details>
-
-    **Pattern:** the *further downstream* you skip, the *longer
-    the delay before someone notices* and the *more misleading
-    the error message*. Skipping (1) fails in your own terminal
-    in seconds. Skipping (3) hits teammates hours or days later
-    with an error that seems to be about the submodule's state.
-    This is what makes submodules treacherous — the ceremony's
-    ordering is load-bearing because failures travel forward in
-    time.
-
     ```bash
     git log -1 -p vendor/math-utils
     ```
@@ -4646,70 +3431,15 @@ steps:
       you: the outer repo tracks one SHA; the inner repo is a full
       Git repo; the two are independent.
 
-    ### Normalize the struggle
-
-    Submodules genuinely are harder than anything else in this
-    tutorial. If they felt confusing, you are in good company — even
-    senior engineers mis-handle them. The recipes here (two-step
-    publish, `submodule update --init --recursive`, the three
-    status messages) cover 95% of real-world submodule work. Bookmark
-    this step.
-
-    ### 📇 Submodule survival card — copy this somewhere you'll find it
-
-    If you take one artifact away from this tutorial, let it be this.
-    Print it, pin it, paste it into your team wiki.
-
-    **The outer repo stores exactly one thing per submodule:** a
-    pinned commit SHA (gitlink, mode `160000`) plus a `.gitmodules`
-    entry with the URL. Everything else lives in the submodule's own
-    Git repo.
-
-    **The three `git status` states for a submodule path:**
-
-    | Message | What it means | What to do |
-    |---|---|---|
-    | *(nothing)* | submodule HEAD matches the pinned SHA, working tree clean | nothing — you're in sync |
-    | `modified content` | submodule working tree is dirty | `cd` in; commit or discard |
-    | `new commits` | submodule HEAD ≠ pinned SHA | `git add <path>` + commit (to bump), OR `git submodule update` (to reset) |
-
-    **Publishing a submodule change — the six invariants:**
-
-    Each step maintains one invariant. If an invariant fails,
-    downstream steps silently break or fail with misleading
-    errors. Memorize the *invariants*, not the commands.
-
-    1. **HEAD-on-branch:** `cd` into the submodule; `git switch
-       -c <branch>` (not detached HEAD). Skipping = push fails
-       with "You are not currently on a branch."
-    2. **Commit-exists:** `git commit -am "..."` inside the
-       submodule. Skipping = nothing to publish; ceremony
-       becomes a no-op.
-    3. **SHA-on-remote:** `git push` the submodule branch.
-       Skipping = **teammates fail at `submodule update`** with
-       "reference is not a tree" — the nastiest failure because
-       it hits them, not you, hours later.
-    4. **Outer-stages-SHA:** `cd ../..; git add <submodule-path>`
-       in outer. Skipping = outer tree still points at the old
-       pin.
-    5. **Outer-records-SHA:** `git commit` in outer. Skipping
-       (with 4) = outer repo still pins the old SHA; teammates
-       pull nothing.
-    6. **Pin-is-visible:** `git push` the outer repo. Skipping = the bump never
-       leaves your machine.
-
-    **The one command that fixes 95% of "my submodule is weird"
-    moments:**
+    ### Fixes 95% of "my submodule is weird" moments
 
     ```bash
     git submodule update --init --recursive
     ```
 
-    This force-resyncs every submodule's HEAD to the outer repo's
-    pinned SHA. Safe to run unconditionally after any `git pull`.
-    Add `--force` if a submodule has local changes you want to
-    discard. Set `git config --global submodule.recurse true` to
-    make `git pull` and `git checkout` do this automatically.
+    Safe to run after any `git pull`. Add `--force` to discard local
+    submodule changes. Set `git config --global submodule.recurse true`
+    to make pull/checkout do this automatically.
   watch_files:
   - myproject/vendor/math-utils/utils.py
   open_file: myproject/vendor/math-utils/utils.py
@@ -4885,11 +3615,10 @@ steps:
     python3 test_calculator.py
     ```
 
-    ### Hints — expand only after you've tried
+    ### Hints — expand only if stuck
 
-    Each hint corresponds to one task above. Try the task first; open
-    the hint only if you get stuck for more than a minute. Generation
-    effect is real — a minute of struggling primes the learning.
+    Try each task first; open the hint only if you're stuck for more
+    than a minute.
 
     <details markdown="1"><summary>Hint — Task 1 (shelve uncommitted work)</summary>
 
@@ -4978,12 +3707,6 @@ steps:
       distinguishes professional Git usage from the "blind-testing"
       antipattern Step 1 named.
 
-    > **If you completed this unguided**, you have crossed the
-    > line from "knows Git commands" to "reaches for the right Git
-    > tool under pressure." That's the real outcome of the advanced
-    > tutorial. Nothing below this step is new content — only a
-    > cumulative quiz that interleaves everything you've built.
-
     ### The "burning down the repo" callback
 
     Remember **"burning down the repo"** from Step 1 — the novice
@@ -5000,34 +3723,9 @@ steps:
       a panicked `rm -rf`.
 
     You could still have burned down the repo. You didn't need to.
-    That's the competence difference. Every commit you made stayed
-    recoverable; every tool matched the situation; your teammate's
-    unrelated note survived untouched. This is what the tutorial
-    promised to build.
+    That's the competence difference.
 
-    ### Post-capstone reflection — 90 seconds on paper
-
-    Stop. Before scrolling on, answer these in a sentence each,
-    **in writing**:
-
-    1. **Which tool surprised you by being the right one?** (For
-       many learners it's reflog, stash, or interactive-rebase with
-       `fixup`.) What about this scenario made it the right choice?
-    2. **Which tool did you reach for first and abandon?** Why did
-       your initial instinct not fit the situation?
-    3. **Which invariant did you check most often?** "Am I on the
-       right branch?" "Is my tree clean?" "Is my reflog intact?"
-       (Answering this tells you what your cognitive attention
-       pattern has become — and that pattern is the skill.)
-    4. **What would you do differently next time?** Not "better" —
-       specifically, *different*. This is the calibration that
-       will land the deepest.
-
-    Reflection is not fluff — it's what converts a completed task
-    into a schema you'll reach for in the real incident in four
-    months.
-
-    ### 🏔️ Stretch variant (optional, for the motivated)
+    ### 🏔️ Stretch variant (optional)
 
     If the capstone felt manageable and you want to push one level
     further: **re-run the capstone with one extra wrinkle**. The
