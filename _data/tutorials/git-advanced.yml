@@ -113,37 +113,37 @@ steps:
     ### The starter repo
 
     A small `myproject/` calculator repo has already been built for you —
-    two commits on `main`, one on a `feature-divide` branch. Drop into it:
+    two commits on `main`, one on a `feature-divide` branch. Drop into it by looking at the git graph on the right and running:
 
     ```bash
-    cd /tutorial/myproject
     git log --all --oneline --graph --decorate
     ```
 
+
     You should see three commits arranged across `main` and
     `feature-divide`. **Compare the terminal output with the git graph
-    panel on the left** — they show the same history. The panel updates
+    panel on the right** — they show the same history. The panel updates
     live as you run commands; use it throughout this step to confirm your
     mental model matches what Git actually records.
 
     ### Task 1: Look at the branch pointer files
 
-    **Predict first:** how many lines do you think
-    `.git/refs/heads/main` contains? 1? 10? 1000? Write a number down
-    before running.
+    **Predict first:** 
+    `.git/refs/heads/main` is your local representation of the main branch. 
+    What do you expect is inside the file? A sequence of commits? A snapshot of the files? A compressed diff? 
+    Give it a guess and then run:
 
     ```bash
     cat .git/refs/heads/main
     cat .git/refs/heads/feature-divide
     ```
 
-    Each file is **one line** containing the SHA of the commit that
-    branch points to. Branches are not folders, not backups, not
-    network resources — they are **single-line text files**. Creating
-    one is literally one `fwrite()` of a 40-character hash. (How did
+    Each file is **one line** containing the commit ID (SHA hash) of the commit that
+    branch points to. Branches are not folders, not lists of commits — they are **single-line text files**. Creating
+    one is very lightweight, simple, and fast. It's just writing a few bytes into a file. (How did
     your prediction compare to what you actually saw?)
 
-    Now inspect `HEAD`:
+    Now inspect `HEAD` the pointer to your currently checked-out version of the repo:
 
     ```bash
     cat .git/HEAD
@@ -174,11 +174,13 @@ steps:
     git switch --detach HEAD~1
     cat .git/HEAD
     ```
+    (Side note: This is equivalent to the older command `git checkout HEAD~1`. However, the `--detach` flag is more explicit about the intent to leave a branch).
 
     Now `.git/HEAD` contains a **raw SHA hash** instead of a branch
     reference. This is **detached HEAD state**.
+    HEAD is no longer anchored to a branch pointer — it is anchored directly to a commit. 
 
-    **Look at the git graph panel on the left.** The HEAD label should now
+    **Look at the git graph panel on the right.** The HEAD label should now
     float directly on a commit node rather than sitting next to the
     `main` branch name. That visual is the exact picture of what
     "detached" means: HEAD is anchored to a commit, not to a branch pointer.
@@ -190,7 +192,7 @@ steps:
     > the label you must leave before walking away.
 
     **Warning:** Any new commits you make in detached HEAD state are
-    anchored to no branch. When you `git switch` away, Git has no pointer
+    **anchored to no branch**. When you `git switch` away, Git has no pointer
     to keep them reachable — they become orphaned and are eventually
     pruned by `git gc`.
 
@@ -263,7 +265,7 @@ steps:
     git switch main
     ```
 
-    The git-graph view on the left should now show `main`, `feature-divide`,
+    The git-graph view on the right should now show `main`, `feature-divide`,
     and `rescued-work` — three pointers, one shared history.
 
     ### You can now
@@ -462,77 +464,10 @@ steps:
     history is automatic and free. (If your prediction was "no" or
     "depends," this is the moment to update your mental model.)
 
-    ### Task 3: Inspect the current commit
-
-    **Predict first:** If you could pretty-print the commit `HEAD`
-    points to as plain text, what fields would you expect to see?
-    Write down at least three fields you expect.
-
-    <details><summary>Reveal the answer after you've committed to a guess</summary>
-
-    A commit object contains exactly these fields:
-    - `tree <SHA>` — points at the root directory snapshot
-    - one or more `parent <SHA>` lines (zero for root commit, two
-      for a merge commit)
-    - `author <name> <email> <timestamp> <timezone>`
-    - `committer <name> <email> <timestamp> <timezone>`
-    - blank line
-    - commit message (multi-line free text)
-
-    That is **everything**. No file bytes, no diffs, no deltas — just
-    a tiny text record. Now run the command and compare.
-
-    </details>
-
-    ```bash
-    git cat-file -t HEAD          # object type
-    git cat-file -p HEAD          # pretty-printed content
-    ```
-
-    You will see something like:
-
-    ```
-    tree 8a1b2c...
-    parent e3f4a5...
-    author Soon-to-be Git Hero <...> 1712000000 -0700
-    committer Soon-to-be Git Hero <...> 1712000000 -0700
-
-    Add add function
-    ```
-
-    A commit is **a text file** with a tree reference, parent reference,
-    author metadata, and message — nothing more. Now walk into the tree:
-
-    ```bash
-    TREE_SHA=$(git cat-file -p HEAD | sed -n 's/^tree //p')
-    git cat-file -p $TREE_SHA
-    ```
-
-    The tree lists `calculator.py → <blob SHA>`. Dereference the blob:
-
-    ```bash
-    BLOB_SHA=$(git cat-file -p $TREE_SHA | awk '{print $3}' | head -1)
-    git cat-file -p $BLOB_SHA
-    ```
-
-    That blob **is** your file content — byte for byte. You just walked
-    the object graph by hand from commit → tree → blob.
-
-    ### The one sentence to remember
-
-    **Every command in this tutorial (rebase, cherry-pick, bisect,
-    stash, submodules) is just creating or moving pointers across the
-    immutable object graph you just walked by hand.**
-
-    That single sentence, internalized, will make the next nine steps
-    feel mechanical instead of magical.
-
     ### You can now
 
     - **Resolve** any commit without typing a SHA using `HEAD~n`,
       `BRANCH^`, or `git rev-parse`.
-    - **Walk the object graph** manually from commit → tree → blob
-      using `git cat-file`.
     - **Prove** that Git is snapshot-based (not diff-based) by
       hashing identical content and seeing identical SHAs.
 
@@ -543,23 +478,16 @@ steps:
   solution:
     commands:
     - cd /tutorial/myproject
-    - TREE_SHA=$(git cat-file -p HEAD | sed -n 's/^tree //p') && git cat-file -p $TREE_SHA
-    - TREE_SHA=$(git cat-file -p HEAD | sed -n 's/^tree //p') && BLOB_SHA=$(git cat-file -p $TREE_SHA | awk '{print $3}' | head -1) && git cat-file -p $BLOB_SHA
     explanation: |
       - **`HEAD~n`:** n commits back along the first-parent chain. `HEAD~0` is HEAD itself, `HEAD~1` is its parent, `HEAD~2` its grandparent. `HEAD^` is equivalent to `HEAD~1`. For a merge commit, `HEAD^2` accesses the *second* parent (the merged-in branch tip).
       - **`git rev-parse`:** Converts any ref (relative, symbolic, short SHA) into a full 40-character SHA. Plumbing-level tool used internally by nearly every porcelain command.
       - **`git hash-object`:** Computes the SHA Git would assign to content. Feeding the same bytes always produces the same hash — that is what makes Git content-addressable.
-      - **`git cat-file -t <obj>` / `-p <obj>`:** Inspect object type / pretty-print. You walked commit → tree → blob manually — the same walk every `git log -p` and every clone performs at scale.
       - **Why it matters:** Every advanced command later (rebase, cherry-pick, bisect) is just moving ref pointers across this immutable object graph. Once you see commits as *hashed snapshots*, not *edits*, nothing in Git is mysterious.
   tests:
   - description: On main branch with calculator.py
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main' && [ -f calculator.py ]
-  - description: HEAD resolves to a commit object (object database intact)
-    command: cd /tutorial/myproject && git cat-file -t HEAD 2>/dev/null | grep -qx 'commit'
   - description: You can resolve HEAD~1 (at least 2 commits on main)
     command: cd /tutorial/myproject && git rev-parse --quiet --verify HEAD~1 >/dev/null
-  - description: HEAD's tree object contains calculator.py (walked commit → tree → blob)
-    command: cd /tutorial/myproject && TSHA=$(git cat-file -p HEAD | sed -n 's/^tree //p') && git cat-file -p $TSHA | grep -q 'calculator.py'
   quiz:
     title: Relative Addresses & Object Database — Knowledge Check
     min_score: 0.8
@@ -593,22 +521,14 @@ steps:
       - 1
       - 2
       explanation: Git stores **full snapshots** as blobs, not deltas. (Pack files compress with delta encoding later, but the logical model is snapshot-based.) Filenames live in tree objects, not in blobs — so two files with identical content share one blob.
-    - question: You run `git cat-file -p HEAD` and see a `tree` line, a `parent` line, author info, and a message. What have you just inspected?
-      options:
-      - A raw blob containing your file's bytes
-      - A commit object — a plain text record pointing at a tree snapshot and parent commits
-      - A compressed diff against the previous commit
-      - A branch pointer file
-      correct_index: 1
-      explanation: 'A commit is a small text record: a tree SHA, parent SHA(s), author/committer metadata, and the message. That is *all*. The actual file bytes live in blobs referenced through the tree.'
     - question: '**[Revisit Step 1]** You are in detached HEAD at a commit that is 4 back from `main`. Which command prints that SHA without copying it from `git log`?'
       options:
       - '`git rev-parse main~4`'
       - '`git log main --limit 4`'
       - '`git checkout main~4`'
-      - '`git cat-file -t main~4`'
+      - '`git show main~4`'
       correct_index: 0
-      explanation: '`git rev-parse` is the universal ''ref → SHA'' translator. It accepts relative (`main~4`), symbolic (`main`), short (`a73f`), or branch/tag references. `cat-file -t` prints the *type*, not the SHA. `git log --limit` is not valid syntax.'
+      explanation: '`git rev-parse` is the universal ''ref → SHA'' translator. It accepts relative (`main~4`), symbolic (`main`), short (`a73f`), or branch/tag references. `git show` displays the full commit diff, not just the SHA. `git log --limit` is not valid syntax.'
     - question: Why does `git branch feature` complete in milliseconds even on a 10-GB repo?
       options:
       - Git compresses the whole working directory in parallel
@@ -2869,7 +2789,7 @@ steps:
     ### Open `.gitmodules` in the editor
 
     **Don't `cat` it in the terminal — open it in the Monaco editor
-    on the left.** Click `.gitmodules` in the file tree (or use
+    on the right.** Click `.gitmodules` in the file tree (or use
     File → Open). You will see something like:
 
     ```ini
@@ -3333,7 +3253,7 @@ steps:
 
     ### Task 2: Make an uncommitted change **inside** the submodule
 
-    Open `vendor/math-utils/utils.py` in the editor (top-left). Add
+    Open `vendor/math-utils/utils.py` in the editor (top-right). Add
     this function at the bottom:
 
     ```python
