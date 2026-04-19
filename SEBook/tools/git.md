@@ -951,7 +951,9 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
     }
   }
 }
@@ -979,7 +981,9 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
     }
   }
 }
@@ -1009,7 +1013,9 @@ Once work has happened in parallel on two branches, you eventually want to bring
     "branches": "* main\n  feature",
     "head": "refs/heads/main",
     "highlights": {
-      "C+D0000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+      "C+D0000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+      "C000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+      "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
     }
   }
 }
@@ -1121,7 +1127,9 @@ The full resolution sequence is: edit the conflicting file to remove all markers
         "branches": "* main\n  feature",
         "head": "refs/heads/main",
         "highlights": {
-          "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "E000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "D000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         },
         "files": {
           "untracked": [],
