@@ -87,11 +87,13 @@
   };
   var STATUS_SHORT_MAP = { 'M': 'modified', 'A': 'new file', 'D': 'deleted', 'R': 'renamed', 'T': 'typechange', 'U': 'unmerged' };
 
-  // Single-letter commit IDs (A, B, C…) used in command labs need a larger
-  // font so the letter fills the node; real hashes (4–7 chars) use a smaller size.
-  function _hashDisplay(hash, shortHash) {
-    var single = hash.length === 1;
-    return { text: single ? hash : shortHash, fontSize: single ? 18 : 11, dy: single ? 7 : 5 };
+  // Single-letter commit IDs (A, B, C… or A', B'…) used in command labs need
+  // a larger font so the label fills the node; real hashes use a smaller size.
+  // shortHash is the trimmed form ("A", "D'", "a3f2…") so we check that, not
+  // the raw 40-char hash (which was always length 40 and never matched before).
+  function _hashDisplay(shortHash) {
+    var single = shortHash.length === 1 || (shortHash.length === 2 && shortHash[1] === "'");
+    return { text: shortHash, fontSize: single ? 18 : 11, dy: single ? 7 : 5 };
   }
 
   function _normalizeFileEntry(entry) {
@@ -1097,7 +1099,7 @@
     });
     g.appendChild(circle);
 
-    var hd = _hashDisplay(cm.hash, cm.shortHash);
+    var hd = _hashDisplay(cm.shortHash);
     var hashText = this._svgEl('text', {
       x: 0, y: hd.dy, 'text-anchor': 'middle',
       fill: '#fff', 'font-size': hd.fontSize, 'font-weight': 600,
@@ -1143,7 +1145,7 @@
       entry.message = cm.message;
     }
     if (entry.shortHash !== cm.shortHash) {
-      var hd = _hashDisplay(cm.hash, cm.shortHash);
+      var hd = _hashDisplay(cm.shortHash);
       entry.hashText.textContent = hd.text;
       entry.hashText.setAttribute('font-size', hd.fontSize);
       entry.hashText.setAttribute('y', hd.dy);
@@ -1494,7 +1496,7 @@
       svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
         'fill="' + color + '" stroke="#fff" stroke-width="2.5" class="git-graph-node"/>';
 
-      var hd = _hashDisplay(cm.hash, cm.shortHash);
+      var hd = _hashDisplay(cm.shortHash);
       svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
         'fill="#fff" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash">' +
         this._escapeXml(hd.text) + '</text>';

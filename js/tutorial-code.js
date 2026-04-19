@@ -127,6 +127,8 @@
     this._inputLine = '';
     this._silentQueue = [];          // queued _runSilent Promises
     this._silentRunning = false;      // true while a silent cmd is in-flight
+    this._silentListeners = [];       // in-flight _runSilent listener registrations
+    this._resetInProgress = false;    // guard against concurrent resetStep() calls
     this._visFilterMarker = null;     // string to suppress from xterm output
     this._visFilterBuf = '';       // partial-match buffer for _visFilterMarker
 
@@ -1764,6 +1766,25 @@
    * uninstalled since the shell no longer has them.
    */
   TutorialCode.prototype._resetSerialState = function () {
+    var self = this;
+    // Remove every in-flight _runSilent listener and its timer BEFORE
+    // resetting muteCount. The VM state was restored so their markers will
+    // never arrive; left alone their 30s timers would fire later and
+    // decrement muteCount below zero, permanently muting the terminal (and
+    // causing silent commands like the periodic stty to echo visibly).
+    // We do NOT call entry.resolve() — the chained .then() callbacks
+    // (e.g. _saveStepEntrySnapshot after a setup_commands batch) were
+    // designed for the pre-restore VM and would do the wrong thing now.
+    if (self._silentListeners && self._silentListeners.length > 0) {
+      self._silentListeners.forEach(function (reg) {
+        reg.cleaned = true;
+        if (self.emulator && reg.onByte) {
+          try { self.emulator.remove_listener('serial0-output-byte', reg.onByte); } catch (e) { }
+        }
+        if (reg.timer) clearTimeout(reg.timer);
+      });
+    }
+    self._silentListeners = [];
     // Set to 1 (not 0) because _refreshPrompt will do the final decrement
     // to 0 after the restore sequence finishes.  Setting 0 here would cause
     // _refreshPrompt's _muteCount-- to underflow to -1, permanently muting
@@ -1772,6 +1793,18 @@
     this._silentQueue = [];
     this._silentRunning = false;
     this._gitGraphHookInstalled = false;
+    // Clear the in-flight refresh guard. An active _refreshGitGraph chain
+    // was waiting on a _runSilent(dumpCmd) whose listener we just removed,
+    // so its .then that would have cleared this flag will never fire —
+    // without this, the reveal's _refreshGitGraph() returns early for up
+    // to 10s (the safety timeout) and the graph never re-renders.
+    this._gitGraphRefreshing = false;
+    // _lastStty is a JS-side cache of the last stty dimensions pushed to the
+    // VM. After restore_state the VM's actual stty is whatever was captured
+    // in the snapshot — if xterm has since resized, _syncTerminalSize will
+    // skip the re-send because it thinks dimensions match. Clear the cache
+    // so the next fit() re-syncs.
+    this._lastStty = null;
   };
 
   TutorialCode.prototype._refreshPrompt = function () {
@@ -1815,16 +1848,25 @@
     var entry = this._silentQueue.shift();
     var marker = '__SIL_' + Math.random().toString(36).substr(2, 8);
     var buf = '';
+    // Tracked registration so _resetSerialState can clean up in-flight
+    // listeners after a VM restore_state(). Without this, orphaned listeners
+    // would time out 30s later and decrement muteCount below zero,
+    // permanently muting the terminal (and making stty echoes visible).
+    var reg = { onByte: null, timer: null, cleaned: false };
 
     self._muteCount++;
     function onByte(byte) {
+      if (reg.cleaned) return;  // defensive: listener should already be removed
       buf += String.fromCharCode(byte);
       var mi = buf.indexOf(marker);
       if (mi !== -1) {
         var tail = buf.substring(mi + marker.length);
         if (tail.includes('# ') || tail.includes('$ ')) {
+          reg.cleaned = true;
           self.emulator.remove_listener('serial0-output-byte', onByte);
           clearTimeout(timer);
+          var idx = self._silentListeners.indexOf(reg);
+          if (idx >= 0) self._silentListeners.splice(idx, 1);
           self._muteCount--;
           entry.resolve();
           self._drainSilentQueue();
@@ -1833,11 +1875,18 @@
     }
     self.emulator.add_listener('serial0-output-byte', onByte);
     var timer = setTimeout(function () {
+      if (reg.cleaned) return;  // already cleaned up by reset or marker match
+      reg.cleaned = true;
       self.emulator.remove_listener('serial0-output-byte', onByte);
+      var idx = self._silentListeners.indexOf(reg);
+      if (idx >= 0) self._silentListeners.splice(idx, 1);
       self._muteCount--;
       entry.resolve();
       self._drainSilentQueue();
     }, 30000);
+    reg.onByte = onByte;
+    reg.timer = timer;
+    self._silentListeners.push(reg);
     // Heredocs and embedded newlines make it unsafe to append ` #marker` to
     // the same line — a trailing "EOF #marker" no longer matches the heredoc
     // terminator and the shell hangs at a PS2 `>` prompt forever. In those
@@ -3822,8 +3871,22 @@
     if (!step) return;
     var self = this;
 
+    // Guard against re-entrant resets. Clicking Reset twice in quick
+    // succession was layering concurrent restore_state + replay chains on
+    // top of each other, leaving muteCount and the silent queue in a
+    // desynced state.
+    if (self._resetInProgress) return;
+
     if (self.resetType === 'commands') {
-      return self._resetStepWithCommands();
+      self._resetInProgress = true;
+      var p = self._resetStepWithCommands();
+      var clear = function () { self._resetInProgress = false; };
+      if (p && typeof p.then === 'function') {
+        p.then(clear, clear);
+      } else {
+        clear();
+      }
+      return p;
     }
 
     // Default "files" reset: just reload starter files
@@ -3861,25 +3924,41 @@
       self._showLoading('Resetting step\u2026');
       return self._restoreStepEntrySnapshot(targetStep).then(function (ok) {
         if (!ok) return self._resetStepWithCommandsSlow();
-        // Reapply the current step's starter files to the editor + 9p
+        // Reapply the current step's starter files to the editor + 9p.
+        // _syncFileToBackend's v86 path falls back to a silent shell mkdir
+        // + printf when create_file errors (subdirectory files). Each
+        // fallback enqueues a _runSilent, so we MUST await them before
+        // firing the quiesce below — otherwise muteCount gets adjusted by
+        // the fallbacks while we've also manually forced it to 0 in the
+        // reveal, leaving muteCount stuck at -1 and the terminal muted.
         var curStep = self.steps[targetStep];
+        var syncs = [];
         if (curStep && curStep.files) {
           self._suppressAutoSave = true;
           curStep.files.forEach(function (f) {
             self.openFile(f.path, f.content, f.language);
-            self._syncFileToBackend(f.path);
+            syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
             self._originalContent[f.path] = f.content || '';
           });
           self._suppressAutoSave = false;
           if (curStep.open_file) { self._setActiveFile(curStep.open_file); }
           self._renderTabs();
         }
-        self._autoSaveProgress();
-        if (self.term) self.term.clear();
-        self._muteCount = 0;
-        if (self.emulator) self.emulator.serial0_send('\n');
-        self._hideLoading();
-        self._refreshGitGraph();
+        // Await syncs, then quiesce the shell. _restoreStepEntrySnapshot
+        // sent a Ctrl-C to clear any stray PS2 continuation; its response
+        // (^C plus a fresh prompt) streams in asynchronously. Without the
+        // _runSilent(':') the response can arrive after we set muteCount=0
+        // and appear in the terminal as a spurious "^C" line.
+        return Promise.all(syncs).then(function () {
+          return self._runSilent(':');
+        }).then(function () {
+          self._autoSaveProgress();
+          if (self.term) self.term.clear();
+          self._muteCount = 0;
+          if (self.emulator) self.emulator.serial0_send('\n');
+          self._hideLoading();
+          self._refreshGitGraph();
+        });
       });
     }
 
