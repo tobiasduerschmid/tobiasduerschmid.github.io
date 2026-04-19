@@ -24,6 +24,34 @@ To achieve the systemic properties of the style, architects must enforce strict 
 *   **Layer Bridging:** When a module in a higher layer accesses a nonadjacent lower layer, it is known as *layer bridging*. While occasional bridging is permitted for performance optimization, excessive layer bridging acts as an *architectural smell* that destroys the low coupling of the system, ultimately ruining the portability the style was meant to guarantee.
 *   **The Golden Rule:** Under no circumstances is a lower layer allowed to use an upper layer. Upward dependencies create cyclic references, which fundamentally invalidate the layering and turn the architecture into a "big ball of mud".
 
+The diagram below contrasts the four topologies. Solid arrows are *allowed* uses; dashed arrows annotated "✗" are the violations that turn a clean stack into a ball of mud.
+
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+component "Presentation" as P
+component "Domain" as D
+component "Data Access" as DA
+component "Infrastructure" as I
+P --> D : strict (OK)
+D --> DA : strict (OK)
+DA --> I : strict (OK)
+P ..> DA : relaxed / bridging\n(skips one layer)
+D ..> P : golden-rule violation ✗\n(upward use)
+note right of P
+  Strict: use only
+  the layer directly below.
+end note
+note right of D
+  Relaxed: may skip layers
+  downward; acceptable.
+  Excessive bridging is a smell.
+end note
+note right of DA
+  Golden rule: NEVER
+  use a layer above.
+  Creates cycles; kills portability.
+end note
+@enduml'></div>
+
 #  Quality Attribute Trade-offs
 Every architectural style is a prefabricated set of constraints designed to elicit specific systemic qualities. The layered style presents a highly distinct profile of trade-offs:
 

@@ -26,6 +26,27 @@ The primary components in this style are any independent entities equipped with 
 **The Event Bus Connector**
 The true "rock star" of this architecture is not the components, but the connector. The *event bus* (or event distributor) is an N-way connector responsible for accepting published events and dispatching them to all registered subscribers. All communications strictly route through this intermediary, preventing direct point-to-point coupling between the application components.
 
+The canonical topology looks like this — publishers on one side, the bus in the middle, subscribers on the other. Crucially, **no arrow ever crosses directly between a publisher and a subscriber**:
+
+<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
+component Publisher1
+component Publisher2
+component "Event Bus" as Bus
+component Subscriber1
+component Subscriber2
+component Subscriber3
+Publisher1 --> Bus : publish(event)
+Publisher2 --> Bus : publish(event)
+Bus --> Subscriber1 : notify
+Bus --> Subscriber2 : notify
+Bus --> Subscriber3 : notify
+note bottom of Bus
+  Publisher and Subscriber
+  never reference each other —
+  the bus is the only coupling point.
+end note
+@enduml'></div>
+
 **Behavioral Variation: Push vs. Pull Models**
 When an event occurs, how does the state information propagate to the subscribers? The literature details two distinct behavioral variations:
 *   **The Push Model:** The publisher sends all relevant changed data along with the event notification. This creates a rigid dynamic behavior but is highly efficient if subscribers almost always need the detailed information.
