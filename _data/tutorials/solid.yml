@@ -301,7 +301,7 @@ steps:
 
       Knowing these names is useful: your IDE, static analysis tools (SonarQube, PyLint), and senior developers in code review will all reach for this vocabulary. (See the code smells reference in [`SEBook/development_practices/code_smells`](/SEBook/development_practices/code_smells.html) for more.)
 
-      > **Expect friction.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
+      > **Struggle is the point.** This step is supposed to feel clunky. You'll make a change, run the code, and realize something unrelated broke. That's not your mistake — that's the class's design talking.
 
       ### Reflect → Explain in Your Own Words
 
@@ -5212,7 +5212,7 @@ steps:
 
       Wrapping every class in an ABC is the DIP equivalent of OCP's "speculative extensibility" trap — it adds indirection without buying you anything. The right question is always: *"If this collaborator had to be swapped tomorrow — for a test, a migration, or a cost cut — would I want it behind an abstraction?"* If yes, apply DIP. If no (`datetime.now()`, `math.sqrt`), don't.
 
-      > **Expect friction.** DIP is the principle that most often enables testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will make it concrete.
+      > **Struggle is the point.** DIP is the principle that most often unlocks testing — and the one most commonly confused with Dependency Injection. If "who owns the abstraction" still feels slippery after reading this section, that's normal. The Task 2 refactor will make it click in code.
 
       ### The Scenario — Feel the Friction
 

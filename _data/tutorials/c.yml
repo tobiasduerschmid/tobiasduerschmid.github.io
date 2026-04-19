@@ -1664,7 +1664,7 @@ steps:
 
       **Scaffolding pause:** You've been writing code from scratch in the last few steps. This step gives you back some scaffolding — pre-written buggy code to debug — because this concept trips up experienced programmers too. Finding bugs is the right exercise here: it forces you to reason about *why* code breaks.
 
-      In C++, arrays and pointers are related but distinct. In C they are tightly intertwined, which is why students routinely confuse them between the two languages.
+      In C++, arrays and pointers are related but distinct. In C they blur into each other — a classic "false friend" that trips students coming from C++.
 
       **The Decay Rule:** When you pass an array to a function, it silently **decays** into a pointer to its first element. The function receives *just* a pointer — all size information is lost.
 
@@ -1681,7 +1681,7 @@ steps:
       }
       ```
 
-      **This is a leading cause of bugs in C array code.** The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
+      **This is one of the top sources of bugs in C array code.** The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
 
       ### Quick Refresh: The Pointer Lifecycle (from Step 4)
 
@@ -2178,17 +2178,17 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 11: Putting It All Together — A Linked List in C (Capstone)
   # --------------------------------------------------------------------------
-  - title: "Capstone — A Linked List in C"
+  - title: "Final Boss — A Linked List in C"
     instructions: |
       ### Capstone Exercise
 
-      The final step combines everything you've learned.
+      The final step pulls everything together.
 
       You'll use **every concept from the tutorial** — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch. No scaffolding, no TODO markers. Just you and the compiler.
 
       **This is supposed to be hard.** If you get stuck, go back and re-read the step that covers the concept you're struggling with. Every tool you need was introduced earlier; the challenge is combining them.
 
-      **Why linked lists are a strong pointer test:** When researchers tracked real student code, three categories of pointer errors accounted for nearly all bugs:
+      **Why linked lists are the boss fight for pointers:** When researchers tracked real student code, three categories of pointer errors accounted for nearly all bugs:
 
       | Error Category | % of Students Who Make It |
       |----------------|--------------------------|

@@ -1865,7 +1865,7 @@ steps:
         - It **defines a contract** — any subclass MUST implement `process()` and `get_name()`
         - The UML shows this with **italics** on the class name and abstract methods
 
-        The payoff: you can write code that works with *any* `PaymentMethod` without knowing the specific type. You could add `PayPal`, `CryptoCurrency`, or `ApplePay` later without changing any code that uses the `PaymentMethod` interface.
+        The payoff is huge: you can write code that works with *any* `PaymentMethod` without knowing the specific type. Drop in `PayPal`, `CryptoCurrency`, or `ApplePay` later without touching a single line that uses the `PaymentMethod` interface.
 
     tests:
       - description: "PaymentMethod is abstract (cannot be instantiated)"
@@ -2179,7 +2179,7 @@ steps:
         - `Order` manages a collection of products for a customer
         - `OnlineStore` coordinates the system
 
-        The UML diagram now shows a network of relationships — composition (`*--`), associations (`-->`), and clear data flow. UML makes the difference between good and bad architecture **immediately visible**.
+        The UML diagram now shows a network of relationships — composition (`*--`), associations (`-->`), and clear data flow. That's the big payoff of UML: the difference between good and bad architecture becomes **immediately visible**.
 
     tests:
       - description: "Product class exists with is_available() and reduce_stock()"

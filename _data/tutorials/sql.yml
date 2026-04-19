@@ -528,7 +528,7 @@ steps:
 
       Using what you know so far, how would you find out *how many students are in each major*? Try writing a query — even a wrong one — before reading further. (Hint: there is no way to do this with just SELECT and WHERE. You need something new.)
 
-      Every time Spotify shows you "Your top artists this month" or Instagram shows "4 people liked this," that is a `GROUP BY` + `COUNT` query running against millions of rows in milliseconds. Aggregation is one of the core tools in SQL, and you already see its output dozens of times a day.
+      Every time Spotify shows you "Your top artists this month" or Instagram shows "4 people liked this" — that's a `GROUP BY` + `COUNT` query running against millions of rows in milliseconds. Aggregation is SQL's superpower, and you already see its output dozens of times a day.
 
       ### Aggregation maps to reduce()
 
