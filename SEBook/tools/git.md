@@ -513,17 +513,20 @@ The payoff: checking out any historical commit is instant — Git reads a tree, 
 
 A branch is **literally** a text file. On your filesystem:
 
-```
+<pre><code class="diagram-folder-tree">
+@startuml
 .git/
-├── HEAD                    # contains "ref: refs/heads/main"
-├── refs/
-│   └── heads/
-│       ├── main            # contains "a3f2d9c..." (a 40-char SHA + newline)
-│       └── feature         # contains "b7e1c4d..."
-└── objects/                # the content-addressed blob/tree/commit store
-    ├── a3/f2d9c...         # objects are sharded by first two hex chars
-    └── ...
-```
+  HEAD                 ← contains "ref: refs/heads/main"
+  refs/
+    heads/
+      main             ← contains "a3f2d9c…" (40-char SHA + newline)
+      feature          ← contains "b7e1c4d…"
+  objects/             ← content-addressed blob / tree / commit store
+    a3/                ← sharded by first two hex chars
+      f2d9c…
+    …
+@enduml
+</code></pre>
 
 `git branch feature` is one `fwrite()`. `git branch -d feature` is one `unlink()`. That's why branch operations are instant even on a 10 GB repo — no file copies, no per-branch state. The commits "on" the branch aren't stored with the branch; the branch is just a pointer, and *reachability through parent links* is what defines "on this branch."
 
