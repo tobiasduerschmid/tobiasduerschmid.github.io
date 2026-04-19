@@ -167,10 +167,16 @@ steps:
   tests:
   - description: myproject is a Git repository
     command: '[ -d /tutorial/myproject/.git ]'
+    hints:
+    - text: '`/tutorial/myproject/.git` is missing — something went wrong with setup. Re-run the step to rebuild the starter repo.'
   - description: feature-divide branch exists
     command: cd /tutorial/myproject && git branch | grep -q 'feature-divide'
+    hints:
+    - text: 'No `feature-divide` branch. From main, run `git switch -c feature-divide` (or branch + switch separately). `git branch` lists what you have.'
   - description: Currently on main branch (not detached)
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'HEAD is detached or on another branch. `git switch main` re-attaches.'
   quiz:
     title: Branch Internals & Detached HEAD — Knowledge Check
     min_score: 0.8
@@ -323,10 +329,12 @@ steps:
   tests:
   - description: Currently on main branch (not detached)
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'Still detached after the rescue? `git switch main` re-attaches. The rescued-work branch you anchored stays put.'
   - description: rescued-work branch exists and points to an experimental commit (proves reflog rescue)
     command: cd /tutorial/myproject && git log rescued-work --oneline 2>/dev/null | grep -qi 'experimental'
     hints:
-    - text: You need to (1) create an orphan commit in detached HEAD and switch away, then (2) use `git reflog` to find its SHA, and (3) `git branch rescued-work <sha>` to anchor it.
+    - text: 'The recipe: (1) make an orphan commit in detached HEAD and switch away, (2) `git reflog` to find its SHA, (3) `git branch rescued-work <sha>` to anchor it. `HEAD@{1}` works as a shortcut for the SHA.'
   quiz:
     title: git reflog — Knowledge Check
     min_score: 0.8
@@ -511,8 +519,12 @@ steps:
   tests:
   - description: On main branch with calculator.py
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main' && [ -f calculator.py ]
+    hints:
+    - text: 'Not on main, or `calculator.py` went missing. `git switch main`; if the file is gone, restore it from the last commit: `git restore calculator.py`.'
   - description: You can resolve HEAD~1 (at least 2 commits on main)
     command: cd /tutorial/myproject && git rev-parse --quiet --verify HEAD~1 >/dev/null
+    hints:
+    - text: 'Only one commit on main, so `HEAD~1` resolves to nothing. Make a small second commit (touch any file, `git add && git commit`) and retry.'
   quiz:
     title: Relative Addresses & Object Database — Knowledge Check
     min_score: 0.8
@@ -742,12 +754,26 @@ steps:
   tests:
   - description: Stash is empty (work was popped and committed)
     command: cd /tutorial/myproject && [ $(git stash list | wc -l) -eq 0 ]
+    hints:
+    - text: '`git stash list` still shows entries. After popping your work and committing, there should be nothing left. `git stash drop` removes stale entries.'
   - description: calculator.py contains the safe_divide hotfix
     command: cd /tutorial/myproject && grep -q 'def safe_divide' calculator.py
+    hints:
+    - text: 'No `safe_divide` in `calculator.py`. The hotfix lives on `hotfix-divide-zero` — after `git switch main`, merge it in (`git merge hotfix-divide-zero`).'
+      condition: 'code_missing: def safe_divide'
+    - text: '`safe_divide` is in the file but the test still reports it missing. Did you save and switch back to `main`?'
+      condition: 'code_contains: def safe_divide'
   - description: power function has been committed
     command: cd /tutorial/myproject && git log --oneline | grep -qi 'power'
+    hints:
+    - text: 'No `power` in the file — pop your stash first: `git stash pop` brings it back.'
+      condition: 'code_missing: def power'
+    - text: '`power` is in the file but not committed. `git add calculator.py && git commit -m "Add power function"`.'
+      condition: 'code_contains: def power'
   - description: Working tree is clean
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
+    hints:
+    - text: 'Uncommitted changes remain. `git status` tells you what; commit or discard to finish the step.'
   quiz:
     title: git stash — Knowledge Check
     min_score: 0.8
@@ -1049,14 +1075,32 @@ steps:
   tests:
   - description: On main branch
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'Cherry-pick while on the target branch. `git switch main` first, then cherry-pick.'
   - description: main contains the absolute value function (cherry-picked)
     command: cd /tutorial/myproject && grep -q 'def absolute' calculator.py && git log --oneline | grep -qi 'absolute value'
+    hints:
+    - text: 'Cherry-pick the tip of `experimental` — a branch name resolves to its tip, so `git cherry-pick experimental` works.'
+      condition: 'code_missing: def absolute'
+    - text: 'The function is there but the commit message does not mention "absolute value". Did you edit the message during cherry-pick?'
+      condition: 'code_contains: def absolute'
   - description: main does NOT contain experimental_multiply
     command: cd /tutorial/myproject && ! grep -q 'def experimental_multiply' calculator.py
+    hints:
+    - text: 'You cherry-picked the wrong commit — `experimental_multiply` should have stayed on `experimental`. Undo with `git reset --hard HEAD~1` and pick the correct SHA.'
   - description: main includes a commit with 'Document' or 'comment' in the message
     command: cd /tutorial/myproject && git log --oneline | grep -qiE 'document|comment'
+    hints:
+    - text: 'Task 4 wants a docstring edit on `main` with "Document" in the commit message — that is what creates the conflict Task 4 asks you to resolve.'
+      condition: 'code_missing: Return the sum'
+    - text: 'Docstring is in the file but no commit mentions "Document" or "comment" yet. `git commit -am "Document add function"`.'
+      condition: 'code_contains: Return the sum'
   - description: No unresolved conflict markers remain
     command: cd /tutorial/myproject && ! grep -E '^(<{7}|={7}|>{7})' calculator.py
+    hints:
+    - text: 'Conflict markers still in `calculator.py`. Keep both the docstring and the inline comment, remove the `<<<` / `===` / `>>>` lines, then `git add calculator.py && git cherry-pick --continue`.'
+      condition: 'code_contains: <<<<<<<'
+    - text: '`git cherry-pick --abort` bails if you want to start over — it resets cleanly.'
   quiz:
     title: Cherry-Pick — Knowledge Check
     min_score: 0.8
@@ -1238,12 +1282,20 @@ steps:
   tests:
   - description: calculator.py exists and has at least 2 commits in its history
     command: cd /tutorial/myproject && [ -f calculator.py ] && [ $(git log --oneline -- calculator.py | wc -l) -ge 2 ]
+    hints:
+    - text: '`calculator.py` needs at least two commits in its history for blame to show interesting output. Make a small edit and commit it if the file has only one.'
   - description: Blame runs without error on calculator.py
     command: cd /tutorial/myproject && git blame calculator.py >/dev/null
+    hints:
+    - text: 'Run `git blame calculator.py` in the terminal. If it errors, check the working directory — you must be inside `/tutorial/myproject`.'
   - description: Blame reports per-line SHA + author + timestamp (format check)
     command: cd /tutorial/myproject && git blame calculator.py | head -1 | grep -qE '^[\^a-f0-9]+ .* \([^)]+[0-9]+\)'
+    hints:
+    - text: 'Each blame line should look like `<sha> (<author> <date> <lineno>) <code>`. If yours does not, your Git version may need an upgrade — but normally this just means blame was never run.'
   - description: -L line-range flag works (returns output for specified range)
     command: cd /tutorial/myproject && [ -n "$(git blame -L 1,3 calculator.py 2>/dev/null)" ]
+    hints:
+    - text: 'Try `git blame -L 1,3 calculator.py` — restricts blame to lines 1–3. Syntax is `-L <start>,<end>`.'
   quiz:
     title: git blame — Knowledge Check
     min_score: 0.8
@@ -1491,12 +1543,23 @@ steps:
   tests:
   - description: Bisect has been cleaned up (no active bisect)
     command: cd /tutorial/myproject && [ ! -f .git/BISECT_LOG ]
+    hints:
+    - text: '`git bisect reset` ends the bisect session and returns HEAD to where you started.'
   - description: Test file was committed
     command: cd /tutorial/myproject && git log --oneline -- test_calculator.py | grep -q '.'
+    hints:
+    - text: '`test_calculator.py` exists but was never committed. `git add test_calculator.py && git commit -m "Add regression test"` — bisect needs the test to be in history so it survives the checkouts.'
   - description: At least 5 new commits exist on main
     command: cd /tutorial/myproject && [ $(git log --oneline main | wc -l) -ge 7 ]
+    hints:
+    - text: 'Setup issue — normally the step seeds 5+ commits automatically. Re-run the step if history is sparse.'
   - description: The absolute function has been repaired (handles negatives, zero, and positives correctly)
     command: cd /tutorial/myproject && python3 -c "import sys; sys.path.insert(0,'.'); from calculator import absolute; assert absolute(-4) == 4 and absolute(3) == 3 and absolute(0) == 0 and absolute(-0.5) == 0.5"
+    hints:
+    - text: 'Fix `absolute(x)` to return `x` when `x >= 0`, else `-x`. After bisect pointed at the culprit, commit the repair on top of main.'
+      condition: 'code_contains: def absolute'
+    - text: '`def absolute` is gone entirely. Add it back with a one-line body using the sign of `x`, then commit.'
+      condition: 'code_missing: def absolute'
   quiz:
     title: git bisect — Knowledge Check
     min_score: 0.8
@@ -1799,14 +1862,25 @@ steps:
   tests:
   - description: On main branch
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'After rebase + merge, end on `main`. `git switch main` if you drifted.'
   - description: feature-sqrt branch was merged and deleted
     command: cd /tutorial/myproject && ! git branch | grep -q 'feature-sqrt'
+    hints:
+    - text: 'After the fast-forward merge, delete the branch: `git branch -d feature-sqrt`. Safe because its commits are now reachable from `main`.'
   - description: square_root function is on main
     command: cd /tutorial/myproject && grep -q 'def square_root' calculator.py && git log --oneline main | grep -qi 'square_root'
+    hints:
+    - text: 'Rebase `feature-sqrt` onto `main`, then fast-forward merge. Check `git log --oneline main` — the `square_root` commit should appear on top.'
   - description: History is linear (no merge commit for feature-sqrt)
     command: cd /tutorial/myproject && [ $(git log --merges --oneline main | grep -ci 'Merge branch.*feature-sqrt') -eq 0 ]
+    hints:
+    - text: 'A merge commit snuck in — you ran `git merge` without rebasing first, or with `--no-ff`. The point of rebase is linear history; redo with `git rebase main` on the feature branch, then `git merge` (fast-forwards).'
   - description: No rebase is in progress and no conflict markers remain (Task 5 resolved)
     command: cd /tutorial/myproject && [ ! -d .git/rebase-merge ] && [ ! -d .git/rebase-apply ] && ! grep -E '^(<{7}|={7}|>{7})' calculator.py
+    hints:
+    - text: 'Rebase is paused on a conflict. Edit the file, remove `<<<` / `===` / `>>>`, `git add`, then `git rebase --continue` — not `git commit`. `git rebase --abort` bails.'
+      condition: 'output_contains: rebase in progress'
   quiz:
     title: Rebase — Knowledge Check
     min_score: 0.8
@@ -2302,16 +2376,25 @@ steps:
   tests:
   - description: On refactor-power branch
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/refactor-power'
+    hints:
+    - text: '`git switch refactor-power` before rebasing. Interactive rebase rewrites the *current* branch.'
   - description: Secret was dropped from the active branch (SECRET_API_KEY not in calculator.py)
     command: cd /tutorial/myproject && ! grep -q 'SECRET_API_KEY' calculator.py
+    hints:
+    - text: 'The secret is still here. During `rebase -i HEAD~2`, change the `pick` of the secret commit to `drop`. Scripted: `GIT_SEQUENCE_EDITOR="sed -i ''1s/^pick/drop/''" git rebase -i HEAD~2`.'
+      condition: 'code_contains: SECRET_API_KEY'
   - description: Secret-commit is gone from branch history
     command: cd /tutorial/myproject && ! git log --oneline | grep -qi 'Accidentally add secret'
+    hints:
+    - text: 'The commit is still in `git log`. Interactive rebase with `drop` (not `pick`) on that line, save and exit the editor to finish the rebase.'
   - description: secret-backup branch rescued the 'dropped' commit via reflog (proves reflog safety net)
     command: cd /tutorial/myproject && git log secret-backup --oneline 2>/dev/null | grep -qi 'Accidentally add secret'
     hints:
-    - text: Use `git reflog` to find the SHA of the dropped 'Accidentally add secret' commit, then `git branch secret-backup <sha>` to anchor it. This is the safety-net step from Task 3b.
+    - text: '`git reflog` → find the SHA of the dropped "Accidentally add secret" commit → `git branch secret-backup <sha>`. The dropped commit is still in `.git/objects`; you''re just anchoring it.'
   - description: The 4 messy WIP/typo commits were squashed into fewer commits
     command: cd /tutorial/myproject && [ $(git log --oneline refactor-power | grep -ciE '(WIP|Fix typo|More typo)') -le 1 ]
+    hints:
+    - text: 'Rebase with `squash` (or `fixup`) on lines 2–4 to fold them into the pick on line 1. After the rebase, the WIP/typo commits should be folded together.'
   quiz:
     title: Interactive Rebase — Knowledge Check
     min_score: 0.8
@@ -2544,12 +2627,20 @@ steps:
   tests:
   - description: On main branch
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'Squash-merge lands on `main`. `git switch main` first, then `git merge --squash feature-stats`.'
   - description: feature-stats branch has been deleted
     command: cd /tutorial/myproject && ! git branch | grep -q 'feature-stats'
+    hints:
+    - text: 'After the squash commit on `main`, `git branch -D feature-stats` removes the branch. Use `-D` (not `-d`) — squash-merge leaves the branch looking "unmerged" to Git.'
   - description: mean, variance, and stddev are on main
     command: cd /tutorial/myproject && grep -q 'def mean' calculator.py && grep -q 'def variance' calculator.py && grep -q 'def stddev' calculator.py
+    hints:
+    - text: 'All three functions should land in one commit. `git merge --squash feature-stats` stages the combined changes — remember to `git commit -m "Add stats module"` afterward.'
   - description: The three feature commits are NOT in main's history (only one combined commit)
     command: cd /tutorial/myproject && [ $(git log --oneline main | grep -ciE 'Add (mean|variance|stddev) function') -eq 0 ]
+    hints:
+    - text: 'Individual feature commits are on `main` — looks like a regular merge, not `--squash`. Reset with `git reset --hard ORIG_HEAD` and redo with `git merge --squash`.'
   quiz:
     title: Squash Merge — Knowledge Check
     min_score: 0.8
@@ -2833,14 +2924,24 @@ steps:
   tests:
   - description: myproject has a math-utils submodule
     command: cd /tutorial/myproject && [ -f .gitmodules ] && grep -q 'math-utils' .gitmodules
+    hints:
+    - text: '`git submodule add /tutorial/math-utils.git vendor/math-utils` creates both `.gitmodules` and the submodule directory.'
   - description: .gitmodules has been committed
     command: cd /tutorial/myproject && git log --oneline -- .gitmodules | grep -q '.'
+    hints:
+    - text: '`git submodule add` stages `.gitmodules` and the gitlink but does not commit. `git commit -m "Add math-utils submodule"` finishes it.'
   - description: Submodule content is checked out
     command: '[ -f /tutorial/myproject/vendor/math-utils/utils.py ]'
+    hints:
+    - text: 'Submodule folder is empty. `git submodule update --init --recursive` populates it from the pinned SHA.'
   - description: vendor/math-utils is tracked as a gitlink (mode 160000)
     command: cd /tutorial/myproject && git ls-files -s vendor/math-utils | grep -q '^160000'
+    hints:
+    - text: 'Something committed `vendor/math-utils` as a regular directory rather than a gitlink. Remove it from the index (`git rm -r --cached vendor/math-utils`) and re-run `git submodule add`.'
   - description: colleague-clone was created successfully with its submodule populated
     command: '[ -f /tutorial/colleague-clone/vendor/math-utils/utils.py ]'
+    hints:
+    - text: '`git clone --recurse-submodules <url> /tutorial/colleague-clone` clones and populates in one shot. Without `--recurse-submodules`, the submodule directory is empty.'
   quiz:
     title: Git Submodules — Knowledge Check
     min_score: 0.8
@@ -3081,12 +3182,20 @@ steps:
   tests:
   - description: Submodule working directory has the new quadruple function
     command: grep -q 'def quadruple' /tutorial/myproject/vendor/math-utils/utils.py
+    hints:
+    - text: 'Edit inside the submodule: `cd vendor/math-utils` → add `def quadruple(x): return x * 4` to `utils.py`.'
   - description: Outer repo has a commit bumping the submodule SHA
     command: cd /tutorial/myproject && git log --oneline | grep -qiE 'bump|v0.2|quadruple'
+    hints:
+    - text: 'Inner work done but outer repo still pins the old SHA. `cd /tutorial/myproject && git add vendor/math-utils && git commit -m "Bump math-utils to add quadruple"`.'
   - description: Outer repo is clean (no pending submodule modifications)
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
+    hints:
+    - text: 'Usually `modified: vendor/math-utils (new commits)` — inner commit landed but outer bump is missing. Finish the outer commit.'
   - description: Remote (math-utils.git) has the new upstream commit
     command: git --git-dir=/tutorial/math-utils.git log --oneline --all | grep -qi 'quadruple'
+    hints:
+    - text: 'Inner commit never pushed. From inside the submodule: `git switch -c main` (if detached), then `git push origin main`.'
   quiz:
     title: Updating Submodules — Knowledge Check
     min_score: 0.8
@@ -3459,14 +3568,26 @@ steps:
   tests:
   - description: On main branch
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'You''re probably still inside the submodule. `cd /tutorial/myproject && git switch main`.'
   - description: Submodule contains a halve helper
     command: cd /tutorial/myproject && grep -q 'def halve' vendor/math-utils/utils.py
+    hints:
+    - text: 'Append `def halve(x): return x / 2` to `vendor/math-utils/utils.py`. The edit goes in the submodule''s file.'
+      condition: 'code_missing: def halve'
   - description: Submodule's inner commit for halve exists
     command: cd /tutorial/myproject/vendor/math-utils && git log --oneline | grep -qi 'halve'
+    hints:
+    - text: 'You edited the file but never committed *inside* the submodule. `cd vendor/math-utils && git add utils.py && git commit -m "Add halve helper"`.'
+      condition: 'code_contains: def halve'
   - description: Outer repo has a commit that bumps the submodule SHA
     command: cd /tutorial/myproject && git log --oneline | grep -qiE 'bump|halve'
+    hints:
+    - text: 'Outer repo still pins the old SHA. `cd /tutorial/myproject && git add vendor/math-utils && git commit -m "Bump math-utils: add halve helper"`.'
   - description: Outer repo is clean (no pending submodule modifications)
     command: cd /tutorial/myproject && git diff --quiet && git diff --cached --quiet
+    hints:
+    - text: 'Usually `modified: vendor/math-utils (new commits)` — inner landed, outer bump is missing. Finish it.'
   quiz:
     title: Submodule Internals — Knowledge Check
     min_score: 0.8
@@ -3786,20 +3907,35 @@ steps:
   tests:
   - description: 'On main branch (cleanup verified)'
     command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'End on `main`. `git switch main` if you''re still on a fix branch or detached.'
   - description: 'No bisect or rebase still in progress'
     command: cd /tutorial/myproject && [ ! -f .git/BISECT_LOG ] && [ ! -d .git/rebase-merge ] && [ ! -d .git/rebase-apply ]
+    hints:
+    - text: '`git status` names the paused operation. `git bisect reset`, `git rebase --abort`, or `git merge --abort` as appropriate.'
   - description: 'absolute() works correctly for negatives, zero, and positives'
     command: cd /tutorial/myproject && python3 -c "import sys; sys.path.insert(0,'.'); from calculator import absolute; assert absolute(-4) == 4 and absolute(3) == 3 and absolute(0) == 0"
+    hints:
+    - text: 'Bisect should have pointed at `Capstone: simplify absolute return path`. `git show <sha>` to see the damage, then fix `absolute` to return `x` when `x >= 0`, else `-x`.'
   - description: 'Regression test passes end-to-end'
     command: cd /tutorial/myproject && python3 test_calculator.py | grep -q 'all tests pass'
+    hints:
+    - text: '`python3 test_calculator.py` should print `all tests pass`. If it raises, the failing assertion tells you which case of `absolute` is still broken.'
   - description: 'Exactly one fix commit landed on main (not 2+ WIP commits visible on main)'
     command: cd /tutorial/myproject && [ $(git log main --oneline | grep -ciE '^[a-f0-9]+ (WIP|wip)') -eq 0 ]
+    hints:
+    - text: 'WIP commits landed on `main`. Collapse into one: `rebase -i` + `squash`, or `git merge --squash` + commit. Either way, one clean fix commit.'
   - description: 'The in-progress clamp note survived the session (still in working tree, uncommitted)'
     command: "cd /tutorial/myproject && grep -q 'TODO: add clamp helper' calculator.py && ! git log main --oneline | grep -qi 'clamp'"
+    hints:
+    - text: 'The TODO note is missing from `calculator.py`. You stashed it for the bisect — `git stash pop` restores it. Leave it uncommitted.'
+      condition: 'source_missing: TODO: add clamp'
+    - text: 'The note got committed to `main`. The capstone wants it uncommitted. `git reset HEAD~1` if it''s the tip, then leave the edit dirty.'
+      condition: 'source_contains: TODO: add clamp'
   - description: 'Reflog has at least a few entries from this session (safety net intact)'
     command: cd /tutorial/myproject && [ $(git reflog -n 20 | wc -l) -ge 5 ]
     hints:
-    - text: '`git reflog` should show HEAD movements from your stash, bisect, branch-switches, and commits. If it is empty or near-empty, something has been cleared — but normally this test passes automatically once you''ve done any work.'
+    - text: '`git reflog` should show your stash, bisect, branch-switches, and commits. Empty reflog usually means something was cleared — this test typically passes on its own.'
   quiz:
     title: Cumulative Final Quiz — Choose the Right Tool
     min_score: 0.8
