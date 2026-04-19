@@ -39,6 +39,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 In modern software construction, version control is not just a convenience — it is a foundational practice that solves several major challenges of managing code: collaboration, change tracking, traceability, safe rollback, and parallel development. Git is by far the most common tool for version control.
 
+> **By the end of this chapter, you'll be able to:**
+>
+> - Explain in your own words what a **commit**, **branch**, **HEAD**, and the **commit DAG** are — and why Git treats commits as immutable.
+> - Go through the everyday local workflow fluently: stage, commit, inspect, branch, switch, and merge.
+> - Collaborate through a remote: push, fetch, pull, resolve a merge conflict, and open a pull request.
+> - Diagnose and recover from the common failure modes — merge conflicts, detached HEAD, "lost" commits, accidental commits on the wrong branch.
+> - Decide between `merge`, `rebase`, `cherry-pick`, `revert`, and `reset` for a given situation.
+> - Recognise at a glance which commands **rewrite history** and which are **additive** — and why that distinction matters on shared branches.
+>
+> **Assumed background:** comfort with a Unix shell (running commands, `cd`, `ls`, chaining with `&&`); the idea that a hash is a fixed-length fingerprint of content; familiarity with text editors. **No prior Git experience is required** — every command you meet here is introduced with a before/after graph before you're expected to use it.
+>
+> **How to read this chapter.** On a first pass, read it linearly — the sections build on each other. After that, use the [Choosing the Right Tool](#choosing-the-right-tool) table at the end as your lookup index. At the end of each major section you'll find short **retrieval prompts** with collapsible answers — pause and try to answer them before revealing. They feel slow on purpose; that's the effort that makes the material stick.
+
 This page is organised by **workflow phase** — the same sequence you move through on a real project:
 
 1. **Core Concepts** — the mental model everything else builds on.
@@ -98,21 +111,34 @@ A **branch** in Git is a **lightweight pointer** to a commit — literally a tex
 
 Commits, trees, and blobs form a **Directed Acyclic Graph (DAG)**. Each commit records one or more **parent** commit SHAs: zero for the root commit, one for a normal commit, two for a merge commit. Follow the parent links and you walk the full history of the project. The graphs throughout this page are just visualisations of that DAG.
 
-## Immutability — Every Command Is Either Additive or a Rewrite
+## The One Big Idea: Additive or Rewrite
 
-Every object Git stores — commit, tree, blob — is identified by a **SHA-1 hash of its own content**. Change a single byte and the hash changes. This means commits are **immutable**: you cannot edit one in place. The SHA *is* the commit's identity.
+Git stores your project as an **append-only history of snapshots**. Branches and `HEAD` are just pointers into that history.
 
-This single design choice is the seed of almost every Git property:
+Once you hold that picture, every Git command fits in one of two buckets:
 
-- **Snapshots, not diffs.** A commit stores a full tree snapshot (with blob deduplication), not a delta against its parent.
-- **Distributed sync works.** Two collaborators whose repositories contain the same content produce the same SHAs — no central authority needed to decide what equals what.
-- **Reflog can rescue lost work.** Commits never truly disappear on their own; they become *unreferenced*, garbage-collected only after a retention window (~90 days by default).
+> **Every Git command either (a) creates new snapshots and moves a pointer to them, or (b) only moves pointers. It never edits an existing snapshot in place.**
 
-The consequence for every command in this page is:
+The (a) bucket is **additive** — safe on shared branches, because nothing anyone already has changes. The (b) bucket is more interesting: *moving pointers backward* (e.g. `git reset --hard`) effectively discards work, and some commands in bucket (a) create new snapshots that *replace* older ones (e.g. `git commit --amend`, `git rebase`). Collectively these are the commands that **rewrite history** — safe locally, dangerous after you've pushed. Throughout this page every such command carries an **⚠️ rewrites history** callout at first mention.
 
-> **Every Git command either (a) creates new immutable objects and moves a pointer to them, or (b) only moves pointers. Never edits in place.**
+We'll unpack *why* Git can work this way — the content-addressed hash machinery that makes snapshots cheap and tamper-evident — in [Under the Hood: Git's Object Model](#under-the-hood-gits-object-model) after you've made your first commit. For now, the pointer-and-snapshot picture is enough.
 
-This taxonomy is the single most useful mental model for deciding whether a command is safe to run. Throughout this page, subsections that create new commits (or move pointers backward) carry an **⚠️ rewrites history** callout. Such operations are safe on local, unpushed commits but dangerous on commits that have been pushed to a shared branch. Everything without the callout is either additive (safe everywhere) or read-only.
+**🧠 Check yourself — Core Concepts.** Before moving on, try these without looking back:
+
+1. **In your own words:** what's the difference between a *branch* and `HEAD`? Where does each point?
+2. You run `git branch feature` and then make a commit. On which branch does the new commit land, and why?
+3. Which of these are **additive** (safe on shared branches) and which **rewrite history**? `git commit`, `git merge`, `git reset --hard`, `git commit --amend`, `git revert`.
+4. Why does Git keep commits instead of editing them in place when you change something?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. `HEAD` points to **where you are right now** — usually at a branch. A branch (like `main`) points directly at a commit. The double indirection `HEAD → branch → commit` is what lets `git commit` advance history by rewriting only the branch pointer file.
+2. The commit lands on **whichever branch `HEAD` was on** when you committed — not on `feature`. `git branch feature` creates the pointer but doesn't move `HEAD`. (This is the Common Mistake walkthrough in [Branching](#common-mistake-git-branch-without-switching).)
+3. Additive: `git commit`, `git merge`, `git revert`. Rewrites history: `git reset --hard`, `git commit --amend`.
+4. Because commits are **immutable** — the SHA that identifies a commit is a hash of its own contents. Editing a commit in place would change its identity, which would break every reference to it. Git's answer is to build a new commit and move pointers instead.
+
+</details>
 
 # Setting Up a Repository
 
@@ -205,6 +231,21 @@ git commit -m "Stop tracking secrets.env"
 **Commit `.gitignore` itself.** Sharing the file means every teammate and every future clone automatically gets the same ignore rules. Without this, each developer independently re-discovers which files to ignore — and someone eventually commits `.env`.
 
 > ⚠️ **`.gitignore` is not a security tool.** If a secret was *ever* committed — even in a commit that was later removed — it remains in history and in the reflog, visible to anyone who clones the repository. The correct response to a leaked credential is to **rotate it immediately** and scrub history with tools like `git filter-repo` or BFG Repo Cleaner.
+
+**🧠 Check yourself — Setting Up.** Try these before peeking:
+
+1. When would you reach for `git init` versus `git clone`?
+2. Your first commit on a new project has `node_modules/` in it. You add `node_modules/` to `.gitignore` and commit. Is it still tracked? Why?
+3. Your teammate accidentally committed `.env` (containing an API key) last week and the commit is on `main`. Someone suggests "just add `.env` to `.gitignore` and we're fine." Why is that advice wrong, and what should happen instead?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. `git init` creates a brand-new empty repository in the current directory. `git clone <url>` downloads an existing repository from a remote (with its full history) and sets `origin` to the URL. New project → `init`. Joining an existing project → `clone`.
+2. **Still tracked.** `.gitignore` has no retroactive effect on files that are already tracked. You need to run `git rm --cached node_modules -r` to untrack them, then commit. The `.gitignore` entry only prevents *future* additions.
+3. The API key is now in the repo's permanent history and reflog — anyone with a clone (including past clones) can still see it. Adding to `.gitignore` only prevents *re-committing* it. Correct response: **rotate the key immediately** (assume it's compromised), then scrub the history with `git filter-repo` or BFG Repo Cleaner and force-update the remote.
+
+</details>
 
 # Making Commits
 
@@ -430,6 +471,95 @@ Typical uses:
 
 Amend is the simplest of Git's rewrite operations — and therefore the gateway drug to the rest of [Reshaping History](#rewriting-history).
 
+**🧠 Check yourself — Making Commits.** Try these before peeking:
+
+1. Name the three areas a file passes through on its way into history. Which Git command moves it between each?
+2. You have `src/utils.js` (modified) and `notes.txt` (untracked). You run `git commit -am "Update utils"`. What ends up in the new commit, and why?
+3. You commit, then notice a typo in the message two seconds later. Which command fixes it, and why must you only use it on *local* commits?
+4. Rewrite this commit subject in imperative mood: *"Fixed the pagination off-by-one error that broke the dashboard"*.
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. **Working directory → staging area (index) → repository.** `git add <file>` moves a change from working directory into staging. `git commit` moves staged changes into a new commit in the repository. (`git status` lets you inspect what's in each area at any time.)
+2. **Only `src/utils.js` is committed.** `git commit -am` auto-stages *tracked, modified* files — it does not touch *untracked* files like `notes.txt`. That's the difference between `-am` and `git add -A`; `-am` is the safer shortcut.
+3. `git commit --amend` (typically `--amend -m "New message"`). It creates a *new* commit replacing the old tip — same content, corrected message, different SHA. Safe locally because only your repo has the old SHA; dangerous after pushing because collaborators still have the old SHA and their clones will diverge.
+4. *"Fix off-by-one in dashboard pagination"* (and ≤50 chars). The mnemonic: a good subject completes "If applied, this commit will ___".
+
+</details>
+
+# Under the Hood: Git's Object Model
+
+Now that you've made a commit, we can open the box and look at *what Git actually stored*. This section is **optional for a first-pass read** — nothing later in the chapter requires you to remember the details here — but it explains *why* everything else works the way it does. Treat it as the "because physics" section for everything you've just learned.
+
+## Commits Are Hashes of Their Own Content
+
+Every object Git stores — every commit, every tree (a directory listing), every blob (a file's contents) — is identified by a **SHA-1 hash of its own content**. Change a single byte of the content and the hash changes. This is called **content addressing**.
+
+Two consequences follow immediately:
+
+- **Commits are immutable.** You cannot edit a commit in place — changing its content would change its SHA, so it would be a *different* commit. Every "rewrite" operation you've seen (`--amend`, `rebase`, `cherry-pick`) is really *"build a new commit with the change baked in, then move pointers to it"*. The old commit isn't edited; it's abandoned.
+- **Identity travels.** Two collaborators whose repositories contain the same content produce the same SHAs. There's no central authority deciding what counts as "the same commit" — the content decides. That's why Git can sync distributed clones without a lock server.
+
+## Snapshots, Not Diffs
+
+A common misconception is that Git stores each commit as a *diff* against its parent. It doesn't. A commit stores a **full tree snapshot** — a recursive directory listing of every tracked file at that moment, with each file's content hashed into a **blob** object.
+
+This sounds wasteful until you realise Git **deduplicates** by hash: if `README.md` is identical across 100 commits, the blob is stored **once**, and all 100 tree objects just reference its SHA. A 10-year-old repository with 50,000 commits typically takes only a few gigabytes because 99% of the content is shared between snapshots.
+
+The payoff: checking out any historical commit is instant — Git reads a tree, pulls out the referenced blobs, and writes them to disk. There's no "apply 50,000 diffs in sequence" step.
+
+## Branches Are 41-Byte Files
+
+A branch is **literally** a text file. On your filesystem:
+
+```
+.git/
+├── HEAD                    # contains "ref: refs/heads/main"
+├── refs/
+│   └── heads/
+│       ├── main            # contains "a3f2d9c..." (a 40-char SHA + newline)
+│       └── feature         # contains "b7e1c4d..."
+└── objects/                # the content-addressed blob/tree/commit store
+    ├── a3/f2d9c...         # objects are sharded by first two hex chars
+    └── ...
+```
+
+`git branch feature` is one `fwrite()`. `git branch -d feature` is one `unlink()`. That's why branch operations are instant even on a 10 GB repo — no file copies, no per-branch state. The commits "on" the branch aren't stored with the branch; the branch is just a pointer, and *reachability through parent links* is what defines "on this branch."
+
+## "Deleted" Commits Aren't Deleted — They're Unreferenced
+
+When you `git reset --hard HEAD~1` or drop a commit in an interactive rebase, the "removed" commit objects don't vanish. They become **unreachable** — no branch, tag, or `HEAD` position points at them. Git's garbage collector (`git gc`, which runs automatically on a schedule) eventually deletes unreachable objects.
+
+But "eventually" has a grace period: unreachable objects are kept for roughly **90 days** by default, and every move of `HEAD` is additionally logged in the **reflog** (`.git/logs/HEAD`). That's what makes [`git reflog`](#the-safety-net-git-reflog) the universal undo — as long as the object is still in the database and the reflog still remembers the SHA, you can create a new branch pointing at it and recover the work. Commits are forgiving because immutability plus a retention window means nothing *really* disappears for a long time.
+
+## Bringing It Back
+
+Hold on to three facts and the rest of Git follows:
+
+1. **Content is hashed.** Commits, trees, blobs — all identified by SHAs of their own content. Identity = content.
+2. **History is additive.** Every operation either adds new objects to the database or moves pointers; nothing is edited in place.
+3. **Branches are pointers, commits are reachable.** A commit is "alive" as long as some reference — branch, tag, or reflog entry — still names its SHA.
+
+When a command looks scary, ask: *which objects does this create? which pointers does it move? is anything unreferenced afterwards?* That framing resolves almost every "wait, what just happened?" question in Git.
+
+**🧠 Check yourself — Under the Hood.** Try these before peeking:
+
+1. You run `git commit --amend` on the tip of `main`. What happens to the original commit, and what does the SHA of the branch tip look like now?
+2. Your colleague says *"just edit that commit to fix the typo."* What's wrong with that phrasing, literally?
+3. `README.md` hasn't changed across 500 commits. How many copies of the file's content does Git store?
+4. Someone on your team force-pushed and you think you "lost" a commit you had locally. What is the first command to run?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. Git creates a **new commit** (call it C′) with the amended content. The branch pointer for `main` moves from C to C′. The original C is now unreachable; it will sit in `.git/objects/` for ~90 days and then be garbage-collected. The SHA is completely different because the content (message, parent, tree) differs.
+2. Commits are **immutable**. You can't edit one — you can only create a new commit that supersedes it. The correct phrasing is *"replace that commit with a new one that fixes the typo"* — which is what `--amend` and `rebase` actually do.
+3. **One.** Git deduplicates by hash; identical content has identical SHA. All 500 tree objects reference the same blob SHA for `README.md`.
+4. `git reflog`. Find the SHA you want, then either `git branch rescued <sha>` or `git reset --hard <sha>`. As long as GC hasn't run on an unreachable object and the reflog still has the entry, the commit is recoverable.
+
+</details>
+
 # Managing Uncommitted Changes
 
 Your working tree is often in a state you don't want to commit yet — half-finished edits, debug prints, generated files. Three commands manage this space.
@@ -468,12 +598,17 @@ Flags worth knowing:
 - `git stash list` shows the stack; entries are named `stash@{0}` (most recent), `stash@{1}`, etc.
 - `git stash drop stash@{n}` deletes an entry without applying it.
 
-**How it works internally.** Stash is **not** a separate storage area — it's regular commit objects on a dangling branch `refs/stash`. When you stash, Git creates up to two commits off `HEAD`:
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: how stash actually works</strong> (optional — skip on first pass)</summary>
+
+Stash is **not** a separate storage area — it's regular commit objects on a dangling branch `refs/stash`. When you stash, Git creates up to two commits off `HEAD`:
 
 1. An **index commit `i`** whose tree captures the state of the staging area. Parent: current `HEAD`.
 2. A **WIP commit `w`** whose tree captures the working directory. Parents: current `HEAD` *and* `i` — a merge commit, so the staged and unstaged halves can be recovered independently.
 
 The ref `refs/stash` (exposed as `stash@{0}`) points at `w`. Neither `main` nor `HEAD` moves — stashing never touches your branch. `git stash pop` re-applies `w`'s tree and deletes the ref; without a ref pointing at them, `i` and `w` become unreachable and are garbage-collected on the next `git gc`.
+
+</details>
 
 <div data-git-command-lab-multi>
 <script type="application/json">
@@ -538,6 +673,21 @@ git clean -fdx        # also remove ignored files (!!!)
 ```
 
 Like `git restore` without `--staged`, this is **permanent** — `git clean -fd` cannot be undone by Git. Always dry-run first. `-fdx` removes files that `.gitignore` excludes (build artefacts, `node_modules/`, caches) — useful for a full reset before diagnosing a build issue, but dangerous if `.gitignore` covers anything you don't want to lose.
+
+**🧠 Check yourself — Managing Uncommitted Changes.** Try these before peeking:
+
+1. Three files are all *uncommitted* but in different states: `a.js` is staged, `b.js` is modified-but-unstaged, `c.js` is brand-new-and-untracked. You run `git stash`. What happens to each?
+2. What's the functional difference between `git restore file.js` and `git restore --staged file.js`?
+3. You run `git clean -fd` in your project and realise too late that you had some untracked scratch notes in there. Can Git recover them? Why or why not?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. `a.js` and `b.js` are stashed (tracked files — staged and unstaged changes both go onto the stash). `c.js` is **left untouched** in the working directory — plain `git stash` ignores untracked files. To include it, you'd need `git stash -u` (for untracked) or `git stash -a` (for untracked *and* ignored).
+2. **Different target.** `git restore file.js` replaces the working-copy version with the staged (or committed) version — it **destroys working-copy edits**. `git restore --staged file.js` only unstages — it moves the file out of the index back to "unstaged", leaving your edits intact.
+3. **No.** Untracked files were never in the object database or the reflog — Git has nothing to recover them from. OS-level backups or editor "local history" are your only hope. This is why `git clean` always wants a `-n` dry run first.
+
+</details>
 
 # Branching
 
@@ -670,6 +820,21 @@ Where a commit lands depends entirely on where `HEAD` is pointing when you run `
 
 > **Detached HEAD**, the third common HEAD state, is covered under [Undoing Committed Work](#detached-head) — it's most useful when investigating and recovering, not during normal branching.
 
+**🧠 Check yourself — Branching.** Try these before peeking:
+
+1. Your repo has 10 GB of code. How long does `git branch feature` take, and why?
+2. You run `git branch feature`. Without moving from `main`, you stage and commit a new file. Sketch the graph (or describe it in one sentence). Where did the commit actually land?
+3. What do `git switch feature` and `git switch -c feature` each do? When would you pick one over the other?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. **Milliseconds.** A branch is a 41-byte text file in `.git/refs/heads/` containing one SHA. Creating one is one `fwrite()` — nothing is copied, nothing re-indexed. The 10 GB of code is irrelevant.
+2. The commit lands on **`main`**, not `feature`. `git branch feature` creates a new pointer at the current commit but **doesn't move `HEAD`** — `HEAD` still points at `main`, so the next commit advances `main`. `feature` stays behind at the previous commit. (This is the classic Common Mistake — do `git switch -c feature` instead.)
+3. `git switch feature` moves `HEAD` to an **existing** branch. `git switch -c feature` **creates** a new branch at the current commit *and* moves `HEAD` to it. Use `-c` when starting new work; omit it when navigating between branches that already exist.
+
+</details>
+
 # Merging
 
 Once work has happened in parallel on two branches, you eventually want to bring it back together. Git has three modes of `git merge`, each with a distinct graph shape.
@@ -777,6 +942,8 @@ incoming branch version
 
 The full resolution sequence is: edit the conflicting file to remove all markers and keep the correct content, stage it with `git add`, then finalise with `git commit`. Use `git merge --abort` to cancel a merge in progress and return to the pre-merge state.
 
+> **Your editor probably has a nicer UI for this.** VS Code, JetBrains IDEs, and most other editors surface conflicts inline with *"Accept Current"* / *"Accept Incoming"* / *"Accept Both"* buttons above each conflict block — you click rather than hand-edit the markers. The underlying command sequence is identical (`git add` then `git commit` to finalise); the buttons are just a friendlier way to produce the same resolved file.
+
 <div data-git-command-lab-multi>
 <script type="application/json">
 {
@@ -875,6 +1042,23 @@ git merge feature -X ignore-all-space  # ignore whitespace differences
 **Important:** `-X ours`/`-X theirs` only affect *conflicting* lines — non-conflicting changes from both branches are still combined normally. Don't confuse them with the whole-branch strategies `-s ours` (discard the other branch's changes entirely) or `-s subtree` — far rarer and more dangerous operations.
 
 Use `-X theirs` when integrating generated or vendored files where the incoming version is authoritative. Use `-X ours` sparingly — it's easy to silently lose incoming fixes.
+
+**🧠 Check yourself — Merging.** Try these before peeking:
+
+1. `main` is at commit B. `feature` branched from B and added commits C and D. `main` has not moved. You run `git merge feature` from `main`. What shape does history take — fast-forward or merge commit? Why?
+2. Same setup, but now `main` has also added a commit E since `feature` branched. You run `git merge feature`. What's the shape now? How many parents does the new commit have?
+3. `git merge --squash feature` produces a commit whose parent is `main`'s previous tip — *not* `feature`'s tip. What does this mean for `git log --graph` after the squash? Can you still tell from `main`'s history that `feature` existed?
+4. Mid-merge, you open a conflicted file and edit it. You run `git status` and the file is still marked `unmerged`. What command officially marks it resolved?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. **Fast-forward.** `main` had no commits of its own past B, so Git simply slides `main`'s pointer forward to D — no new commit is created. History stays linear.
+2. A **three-way merge**. Git creates a new merge commit **M** with **two parents**: one is `main`'s previous tip (E), the other is `feature`'s tip (D). The shape is the classic diamond.
+3. `main`'s history reads as a single linear commit with the squashed changes — no branch structure on `main`. The `feature` branch's individual commits still exist (on `feature` itself, or in reflog) but are **not reachable from `main`**. `git log main` won't traverse them. This is the trade-off: clean linear log, lost fine-grained history and weaker `git bisect` precision.
+4. **`git add <file>`.** During a merge, `git add` has a double job: it stages the file *and* clears the `unmerged` flag. Only then will `git commit` let you finalise the merge.
+
+</details>
 
 # Remotes
 
@@ -1090,6 +1274,23 @@ The daily loop:
 
 **Forks vs. direct branches.** In internal team repositories, everyone pushes branches directly to the same `origin` and opens PRs there. In open-source projects (and some strict security contexts), you don't have push access to the main repo — you **fork** it into your own account, push branches to your fork, and open a PR from `yourfork:branch` → `upstream:main`. The mechanics are the same; only the *where you pushed the branch* differs.
 
+**🧠 Check yourself — Remotes.** Try these before peeking:
+
+1. There are three pointers that *all* sit on what feels like "the main branch": `main`, `origin/main`, and the actual branch on the remote server. Which one moves when you run each of these? `git commit`, `git fetch`, `git push`.
+2. What's the practical difference between `git fetch` and `git pull` — and why have two commands?
+3. You and a teammate both pushed to `main` since your last pull. A plain `git pull` succeeds but adds a `Merge remote-tracking branch 'origin/main'` commit. What would `git pull --rebase` have done instead, and why might you prefer it on a feature branch?
+4. Why is `git push -f` to `main` considered dangerous even if you've only "cleaned up" your own commits?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. `git commit` moves **`main`** (your local branch) — neither of the remote pointers changes. `git fetch` moves **`origin/main`** (your local snapshot of the remote) to match the actual remote; nothing else moves. `git push` uploads your commits and advances **both the actual remote and `origin/main`** to match your local `main`.
+2. `git fetch` **downloads only** — updates `origin/main`, never touches your local branch or working tree. `git pull` is `fetch + merge` (or `fetch + rebase`) — it integrates immediately. Two commands exist so you can inspect what's coming (`git log main..origin/main`, `git diff`) before committing to integrate.
+3. `--rebase` replays your local commits on top of the fetched `origin/main` tip, producing linear history with no merge commit (your commits get new hashes). Preferred on a feature branch because the log reads cleanly as one linear story; less appropriate on long-lived shared branches where *anyone* rewriting is risky.
+4. Force-push **overwrites** the remote branch with your local copy. If any commits on the remote are not in your local copy (say, a teammate pushed while you were rebasing), they are **deleted from the server**. Even on "only your own commits", collaborators' clones still reference the old hashes, so their next pull will see a confused diverged state. Use `--force-with-lease` as a safer alternative, or — better — push to a new branch.
+
+</details>
+
 # Tagging Releases
 
 A **tag** is a permanent, human-meaningful name for a specific commit — typically used to mark a release (`v1.0.0`, `v2.3.1-beta`, `release-2024-01-15`). Unlike branches, tags don't move. Once `v1.0.0` is created, it points to that commit forever.
@@ -1126,7 +1327,23 @@ Tags are **not** pushed by default with `git push`. You must explicitly push the
 
 ## Semantic Versioning and `git describe`
 
-Teams often follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`, where each component signals a different level of change (breaking, feature-add, bug-fix). [Conventional Commits](#writing-good-commit-messages) play well with this — the commit types map directly to SemVer bumps.
+Teams often follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`. Each component signals a different level of change:
+
+| Bump | When | Example |
+|---|---|---|
+| **PATCH** (`1.2.3` → `1.2.4`) | Backwards-compatible bug fix | Fix crash when input is empty |
+| **MINOR** (`1.2.4` → `1.3.0`) | Backwards-compatible new feature | Add optional `--verbose` flag |
+| **MAJOR** (`1.3.0` → `2.0.0`) | Breaking change that existing callers can't use unchanged | Remove deprecated function; change default argument |
+
+[Conventional Commits](#writing-good-commit-messages) plug directly into this: tools like [`semantic-release`](https://semantic-release.gitbook.io/) and [`standard-version`](https://github.com/conventional-changelog/standard-version) read the `feat:` / `fix:` / `BREAKING CHANGE:` prefixes in your commit history and automatically decide the next version number. For example, given these three commits since the last release (`v1.2.3`):
+
+```
+fix(parser): handle empty input
+feat(cli): add --verbose flag
+fix(logger): correct timestamp format
+```
+
+`semantic-release` sees one `feat` (MINOR bump wins over `fix`) and releases **`v1.3.0`** — generating a `CHANGELOG.md` entry that groups the commits by type. A single commit with `BREAKING CHANGE:` in its footer would instead bump the MAJOR. The convention is a *machine-readable protocol*, not just a naming style.
 
 `git describe` produces a human-readable version string from the nearest tag:
 
@@ -1136,6 +1353,21 @@ v1.2.0-15-ga3f2d9c
 ```
 
 Read this as *"15 commits past the v1.2.0 tag, at commit `a3f2d9c`"*. Build systems use this to stamp binaries with their exact source version.
+
+**🧠 Check yourself — Tagging Releases.** Try these before peeking:
+
+1. What's the practical difference between `git tag v1.0.0` (lightweight) and `git tag -a v1.0.0 -m "…"` (annotated)? Which one should you use for a public release?
+2. You've tagged `v1.0.0` locally and pushed your branch. Your teammate pulls — can they see `v1.0.0`? What do you need to do?
+3. Your project uses SemVer. A commit introduces a change to a public API that old callers can no longer use unchanged. Should the next version bump the MAJOR, MINOR, or PATCH number?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. Lightweight tag = just a named pointer to a commit (like a branch that doesn't move). Annotated tag = a full Git object with tagger name, email, timestamp, optional message, and GPG signature support. For public releases, **always use annotated** — you want the provenance and signability.
+2. **No, not by default.** Tags are not pushed with `git push`. You need `git push origin v1.0.0` (one tag) or `git push --tags` (all local tags). Very common source of "I tagged the release but nobody can see it."
+3. **MAJOR** — breaking changes bump MAJOR. MINOR is for backwards-compatible new features; PATCH is for backwards-compatible bug fixes. Example: `1.2.3` → breaking change → `2.0.0`.
+
+</details>
 
 # Rewriting History
 
@@ -1329,6 +1561,23 @@ All three create new commits with new hashes. Their difference is **scope and in
 
 All three obey the [Golden Rule](#the-golden-rule-never-rewrite-pushed-commits) — never rewrite pushed history.
 
+**🧠 Check yourself — Rewriting History.** Try these before peeking:
+
+1. State the Golden Rule in your own words and explain *why* it exists (what actually breaks if you ignore it?).
+2. Your branch has three commits on top of `main`: `Add login`, `Oops debug print`, `Add tests`. You want to land this as clean work on `main`. Which rewrite tool removes the middle commit without touching the other two, and what happens to the hashes?
+3. A hotfix went in as commit `a3f2d9c` on the `release-2.x` branch. You need the same fix on `main`. You have two choices: `git merge release-2.x` or `git cherry-pick a3f2d9c`. Which do you pick, and why?
+4. `git rebase` and `git merge --squash` both "clean up" history. Name one concrete situation where each is the right tool.
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. *Never rewrite commits that have already been pushed to a shared branch.* Rewrite operations produce **new commits with new SHAs** — the old ones look "the same" but aren't. Collaborators' clones still reference the old SHAs; their next pull sees a diverged branch, conflicts multiply, and patches can be duplicated or lost.
+2. `git rebase -i HEAD~3` with the middle commit marked `drop`. The first commit keeps its hash (its parent didn't change); the *third* commit is replayed on top of the first, getting a new hash. Net: one old hash preserved, one new hash, the `Oops` commit gone.
+3. **`git cherry-pick a3f2d9c`.** `git merge release-2.x` would drag *every* commit unique to `release-2.x` into `main`, not just the fix. Cherry-pick grabs exactly that one commit as a new commit on `main` (new hash, same changes) — surgical.
+4. `git rebase main` before opening a PR on your feature branch — replays your commits on top of the latest base so the PR is clean and mergeable fast-forward. `git merge --squash feature` when landing a feature: you want `main`'s log to read as one commit per feature, not thirty `fix typo` commits.
+
+</details>
+
 # Branching Strategies
 
 Once you can branch, merge, and open pull requests, the next question is: *how should the team organise branches?* Different answers emerge based on release cadence, team size, and tolerance for complexity. Three strategies cover most industry practice.
@@ -1375,9 +1624,33 @@ A rough decision tree:
 
 The single most important choice is *keeping feature branches short*. Regardless of strategy, branches that live for weeks accumulate merge conflicts and hide unfinished work from CI. Aim for *days*, not *weeks*.
 
+**🧠 Check yourself — Branching Strategies.** Try these before peeking:
+
+1. A startup ships a SaaS product to production several times a day from a single live version. Which strategy fits best, and what mechanism lets unfinished features live in `main` without shipping?
+2. An enterprise product ships quarterly releases and simultaneously maintains v1.x, v2.x, and v3.x lines for different customers. Which strategy fits best, and why?
+3. Regardless of strategy, *one* discipline matters more than the strategy choice itself. What is it, and why?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. **Trunk-based development.** Integrate several times a day into a single `main`; hide unfinished features behind **feature flags** so code can ship while the feature is still "off" in production.
+2. **Gitflow** — the combination of long-lived `main` (tagged with versions), `develop` (integration), and parallel `release/*` and `hotfix/*` branches is exactly what multi-version maintenance needs. The ceremony that feels heavy for a small SaaS team is load-bearing here.
+3. **Keep feature branches short** — days, not weeks. Long-lived branches accumulate merge conflicts, hide unfinished work from CI, and defer integration pain to the worst possible moment.
+
+</details>
+
 # Submodules
 
-For very large projects, **Git submodules** let you include another Git repository as a subdirectory while keeping its history independent. Internally a submodule is just a "gitlink" entry — a pinned commit SHA — in the superproject, alongside a `.gitmodules` config file with the URL. Each populated submodule directory contains a small `.git` text file (a "gitfile"), not a full `.git/` directory; the submodule's actual git data (objects, refs, HEAD) is stored in the parent repo's `.git/modules/<name>/` directory. Pulling always brings in the pinned revision, which makes submodule updates explicit rather than automatic.
+For very large projects, **Git submodules** let you include another Git repository as a subdirectory while keeping its history independent. The superproject records two things for each submodule: a **pinned commit SHA** of the external repo, and a URL in a top-level `.gitmodules` file. Pulling always brings in the pinned revision, which makes submodule updates explicit rather than automatic.
+
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: where the submodule's .git directory lives</strong> (optional — skip on first pass)</summary>
+
+Each populated submodule directory contains a small `.git` **text file** (a "gitfile"), **not** a full `.git/` directory. The gitfile holds one line — e.g. `gitdir: ../../.git/modules/foo` — pointing at the submodule's actual git data (objects, refs, HEAD), which is stored inside the superproject at `.git/modules/<name>/`. This is why cloning the superproject is self-contained: every submodule's history is stored inside the parent repo's `.git/`.
+
+The pin itself is stored in the superproject's tree as a **"gitlink"** entry — a tree entry with mode `160000` that points at a commit SHA instead of a blob SHA. That's the mechanism that makes the pin a first-class part of the commit's content.
+
+</details>
 
 The walk-through below covers the commands you'll meet most: adding submodules, cloning a parent repo that uses them, and updating submodules to new commits. Each step mutates the directory tree on the left; changed rows get a yellow burst so you can see exactly what the command touched.
 
@@ -1442,7 +1715,7 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
     },
     {
       "command": "git clone --recurse-submodules https://example.com/myproject.git sibling",
-      "description": "The shortcut: clone + init + update in one go. A brand-new working copy comes down fully populated — including the `.git/modules/<name>/` store and the gitfiles inside each submodule directory. Use this whenever you know a repo uses submodules.",
+      "description": "The shortcut: clone + init + update in one go. A brand-new working copy comes down fully populated \u2014 including the `.git/modules/<name>/` store and the gitfiles inside each submodule directory. Use this whenever you know a repo uses submodules.",
       "state": {
         "tree": "sibling/\n  .git/\n    modules/\n      bar/\n      foo/\n  .gitmodules\n  libs/\n    bar/ ← submodule @ 9f2e10\n      .git ← gitfile\n      README.md\n      src/\n        bar.js\n    foo/ ← submodule @ abc123\n      .git ← gitfile\n      README.md\n      src/\n        foo.js\n  src/\n    app.js"
       }
@@ -1451,6 +1724,21 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
 }
 </script>
 </div>
+
+**🧠 Check yourself — Submodules.** Try these before peeking:
+
+1. A submodule pins one specific thing about the external repo. What is it, and what does that mean for teammates who pull?
+2. You clone a repo that uses submodules with plain `git clone`. The submodule directories exist but are empty. What one-command alternative would have populated them, and which two commands would you run after a plain clone to fix it?
+3. Why use submodules over just copy-pasting the dependency's files into your repo?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. A submodule pins **one commit SHA** of the external repo (plus a URL in `.gitmodules`). When teammates pull, they get the *same* commit you pinned — submodule updates are explicit: someone has to run `git submodule update --remote` and commit the new pin. That's the whole point of the mechanism.
+2. `git clone --recurse-submodules <url>` would have handled everything in one go. From a plain clone, run `git submodule init` (registers URLs from `.gitmodules` into `.git/config`) and `git submodule update` (actually fetches and checks out the pinned commits).
+3. Copy-pasting destroys history — you can't tell what upstream version you have, can't pull fixes, can't contribute back. Submodules preserve the independent history and make the version explicit and updatable.
+
+</details>
 
 # Investigating History
 
@@ -1572,6 +1860,23 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
 
 **Automating bisect.** If your test script exits `0` on success and non-zero on failure, `git bisect run <script>` automates the whole search — Git runs the script at each candidate and uses the exit code to decide. Always end with `git bisect reset` — without it, HEAD stays on the last-checked historical commit, which is a confusing state to leave behind.
 
+**🧠 Check yourself — Investigating History.** Try these before peeking:
+
+1. You want to find every commit that mentions "rate limit" in its message, and — separately — every commit whose diff added or removed the string `RateLimiter`. Which `git log` flags?
+2. A line in `src/auth.py` looks wrong. Which command tells you who last touched it, and which command do you then run to see the full context of that change?
+3. A regression slipped in between release `v1.2.0` (known good) and `HEAD` (known bad). The range covers 256 commits. At most how many tests does `git bisect` need to find the culprit, and why?
+4. Your bug is caused by a line that *used to exist* and was *deleted*. Why won't `git blame` find it, and what tool would you use instead?
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. `git log --grep="rate limit"` searches commit messages. `git log -S"RateLimiter"` (the *pickaxe*) searches commit diffs for additions or removals of that string.
+2. `git blame <file>` (or `git blame -L 42,42 <file>` to narrow by line). Copy the SHA it prints, then `git show <sha>` to see the full diff and message.
+3. **At most 8 tests.** `git bisect` is binary search: each test halves the remaining range, so 256 commits → log₂(256) = 8 iterations worst case. Even 1,000 commits needs only ~10.
+4. `git blame` only annotates lines that **currently exist** — deleted lines aren't there to annotate. Use `git bisect` (find the commit that introduced the regression) or `git log -S"<removed string>"` (find commits that removed that exact string from the diff).
+
+</details>
+
 # Undoing Committed Work
 
 Mistakes reach your history eventually — a buggy commit, an accidental merge, an embarrassing message. Git provides two opposing tools for undoing committed work, plus a safety net that makes both survivable.
@@ -1609,11 +1914,11 @@ Mistakes reach your history eventually — a buggy commit, an accidental merge, 
 
 Three modes determine what happens to the working tree and staging area:
 
-| Mode | Branch pointer | Staging area | Working tree |
-|---|---|---|---|
-| `--soft` | moves to target | **preserved** | preserved |
-| `--mixed` (default) | moves to target | reset to target | preserved |
-| `--hard` | moves to target | reset to target | **overwritten** |
+| Mode | Branch pointer | Staging area | Working tree | Use this when… |
+|---|---|---|---|---|
+| `--soft` | moves to target | **preserved** | preserved | You want to un-commit but keep everything staged — to re-commit with a better message, or to split the commit into smaller pieces. |
+| `--mixed` (default) | moves to target | reset to target | preserved | You want to un-commit *and* un-stage, keeping your edits as plain working-tree changes to re-organise. |
+| `--hard` | moves to target | reset to target | **overwritten** | You want the commit *and* its changes gone — a full wipe back to the target. Your uncommitted work is destroyed. |
 
 Most common uses:
 
@@ -1724,6 +2029,23 @@ That's the whole pattern. Every "oh no, I lost my commits" question on Stack Ove
 > **Why this works.** Commits are immutable and SHAs are content-addressed. A "deleted" commit isn't deleted — it's *unreferenced*. As long as some reference (a branch, a tag, or the reflog) still mentions its SHA, the object is safe. The reflog is therefore the universal bookmark, surviving even when every branch pointer has moved away.
 
 The reflog is one of the deepest reasons Git is forgiving: destructive commands look scary, but they are almost always recoverable for weeks after the fact.
+
+**🧠 Check yourself — Undoing Committed Work.** Try these before peeking:
+
+1. A buggy commit has been *pushed* to `main` and several teammates have already pulled it. Should you `git reset --hard` or `git revert`? Why?
+2. For `git reset`, rank the three modes by how much state they destroy (least to most): `--soft`, `--mixed`, `--hard`.
+3. You do `git switch --detach <sha>`, make two commits, then `git switch main` without creating a branch. Your new commits appear to be "gone." Are they really deleted? What's the recovery recipe?
+4. State the universal recovery recipe for "I lost my commit" in two steps.
+
+<details markdown="1">
+<summary>Click to view answers</summary>
+
+1. **`git revert`.** `reset --hard` rewrites history — collaborators' clones still reference the old SHAs; if you force-pushed a reset-ed branch, their next pull breaks badly. `revert` creates a new commit whose changes cancel out the buggy one, so history is preserved exactly — the only safe undo on shared history.
+2. `--soft` (moves the branch pointer, keeps staging *and* working tree) < `--mixed` (also resets staging, keeps working tree) < `--hard` (resets staging *and* overwrites working tree — uncommitted changes lost).
+3. **Not deleted — just unreferenced.** No branch points at them. They live in the object database for ~90 days and in the reflog for the same window. `git reflog` shows HEAD's history; find the SHA and run `git branch rescued <sha>`.
+4. (1) `git reflog` — find the SHA of the state you want back. (2) `git branch <name> <sha>` (or `git reset --hard <sha>` on your current branch). That's the whole pattern.
+
+</details>
 
 # Choosing the Right Tool
 
