@@ -106,15 +106,15 @@ DI is the most common way to *implement* DIP, but you can do DI without DIP (inj
 SOLID is not five independent rules — the principles interact. The diagram below shows how mastering one unlocks others: arrows point from the enabler to the payoff.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
-component "SRP\nSingle Responsibility" as SRP
-component "OCP\nOpen/Closed" as OCP
-component "LSP\nLiskov Substitution" as LSP
-component "ISP\nInterface Segregation" as ISP
-component "DIP\nDependency Inversion" as DIP
-LSP --> OCP : enables\n(safe polymorphism)
-DIP --> OCP : enables\n(pluggable impls)
-ISP --> LSP : shrinks\n(less to violate)
-SRP --> OCP : narrows change\nsurface
+component SRP
+component OCP
+component LSP
+component ISP
+component DIP
+LSP --> OCP : enables polymorphism
+DIP --> OCP : enables pluggable impls
+ISP --> LSP : shrinks surface
+SRP --> OCP : narrows change
 note bottom of OCP
   OCP is the common
   payoff: extend without

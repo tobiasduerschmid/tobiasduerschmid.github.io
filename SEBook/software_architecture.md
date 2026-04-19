@@ -44,24 +44,4 @@ This discrepancy between the as-intended plan and the as-realized code is known 
 
 If a system's architecture is allowed to drift and erode without reconciliation, the descriptive and prescriptive architectures diverge completely. When this happens, the system loses its conceptual integrity, technical debt accumulates in the source code, and the system eventually becomes unmaintainable, necessitating a complete architectural recovery or overhaul {% cite Taylor2009 %}.
 
-The two architectures are two separate artifacts that *should* stay aligned — the diagram below names the two forces that pull them apart:
-
-<div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
-component "Prescriptive Architecture\n(as-intended, the plan)" as P
-component "Descriptive Architecture\n(as-realized, the code)" as D
-P ..> D : drift\n(undocumented additions\nthat do not break rules)
-P ..> D : erosion\n(changes that violate\nthe stated rules)
-note bottom of P
-  Lives in diagrams, ADRs,
-  architect notes.
-end note
-note bottom of D
-  Lives in the source code.
-  This is the REAL architecture.
-end note
-@enduml'></div>
-
-The job of the architect is continuous *reconciliation*: either update the plan to reflect reality, or refactor the code to match the plan. Without that work, the gap grows monotonically.
-
-
 {% include quiz.html id="software_architecture" %}
