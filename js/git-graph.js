@@ -87,6 +87,13 @@
   };
   var STATUS_SHORT_MAP = { 'M': 'modified', 'A': 'new file', 'D': 'deleted', 'R': 'renamed', 'T': 'typechange', 'U': 'unmerged' };
 
+  // Single-letter commit IDs (A, B, C…) used in command labs need a larger
+  // font so the letter fills the node; real hashes (4–7 chars) use a smaller size.
+  function _hashDisplay(hash, shortHash) {
+    var single = hash.length === 1;
+    return { text: single ? hash : shortHash, fontSize: single ? 18 : 11, dy: single ? 7 : 5 };
+  }
+
   function _normalizeFileEntry(entry) {
     if (!entry) return null;
     if (typeof entry === 'string') {
@@ -1090,12 +1097,13 @@
     });
     g.appendChild(circle);
 
+    var hd = _hashDisplay(cm.hash, cm.shortHash);
     var hashText = this._svgEl('text', {
-      x: 0, y: 5, 'text-anchor': 'middle',
-      fill: '#fff', 'font-size': 11, 'font-weight': 600,
+      x: 0, y: hd.dy, 'text-anchor': 'middle',
+      fill: '#fff', 'font-size': hd.fontSize, 'font-weight': 600,
       'class': 'git-graph-hash',
     });
-    hashText.textContent = cm.shortHash;
+    hashText.textContent = hd.text;
     g.appendChild(hashText);
 
     var msgText = this._svgEl('text', {
@@ -1135,7 +1143,10 @@
       entry.message = cm.message;
     }
     if (entry.shortHash !== cm.shortHash) {
-      entry.hashText.textContent = cm.shortHash;
+      var hd = _hashDisplay(cm.hash, cm.shortHash);
+      entry.hashText.textContent = hd.text;
+      entry.hashText.setAttribute('font-size', hd.fontSize);
+      entry.hashText.setAttribute('y', hd.dy);
       entry.shortHash = cm.shortHash;
     }
     if (entry.isHead !== isHead) {
@@ -1483,13 +1494,10 @@
       svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
         'fill="' + color + '" stroke="#fff" stroke-width="2.5" class="git-graph-node"/>';
 
-      var shortName = cm.hash.length === 1;
-      var hashFont = shortName ? 18 : 11;
-      var hashY    = shortName ? 7  : 5;
-      var hashStr  = shortName ? cm.hash : cm.shortHash;
-      svg += '<text x="' + cx + '" y="' + (cy + hashY) + '" text-anchor="middle" ' +
-        'fill="#fff" font-size="' + hashFont + '" font-weight="700" class="git-graph-hash">' +
-        this._escapeXml(hashStr) + '</text>';
+      var hd = _hashDisplay(cm.hash, cm.shortHash);
+      svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
+        'fill="#fff" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash">' +
+        this._escapeXml(hd.text) + '</text>';
 
       var msgX = cx + NODE_RADIUS + 24;
       svg += '<text x="' + msgX + '" y="' + (cy + 5) + '" ' +
