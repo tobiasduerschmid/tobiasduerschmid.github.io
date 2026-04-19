@@ -17,6 +17,10 @@
   min-width: 0;
   overflow-wrap: anywhere;
   margin: 1.5em 0;
+  /* Isolate each card's paint/layout so a click on one card doesn't trigger
+     repaint checks against the whole page. Invisible to the user; pages with
+     many cards feel smoother. */
+  contain: layout paint;
 }
 
 .fs-command-lab__row {

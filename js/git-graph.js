@@ -55,6 +55,46 @@
   // same page (e.g. the 7-step print grid) don't collide on element ids.
   var _instanceCounter = 0;
 
+  // Pause perpetual animations (e.g. the HEAD glow's `pulse 2s infinite`) on
+  // off-screen graphs. Pages like SEBook/tools/git.md embed ~28 labs; without
+  // this, every card keeps the compositor hot forever, which drags the frame
+  // rate of whichever card the user is actually interacting with. rootMargin
+  // starts the animation slightly before the SVG scrolls into view so the
+  // resume is imperceptible.
+  var _offscreenObserver = null;
+  function _ensureOffscreenObserver() {
+    if (_offscreenObserver) return _offscreenObserver;
+    if (typeof IntersectionObserver === 'undefined') return null;
+    _offscreenObserver = new IntersectionObserver(function (entries) {
+      for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+        if (e.isIntersecting) {
+          e.target.classList.remove('git-graph-svg--offscreen');
+        } else {
+          e.target.classList.add('git-graph-svg--offscreen');
+        }
+      }
+    }, { rootMargin: '200px' });
+    return _offscreenObserver;
+  }
+
+  // Promote an element to its own compositor layer just before we mutate its
+  // `transform` (which kicks in the CSS transition), then drop the hint once
+  // the transition completes. Without this transient scoping, setting
+  // `will-change: transform` statically in CSS creates a compositor layer for
+  // every node/label on the page at rest — pages with many cards can easily
+  // accumulate hundreds of idle layers, at which point Chrome starts evicting
+  // them and each animation pays a re-promote cost on its first frame.
+  function _setTransformAnimated(el, transform) {
+    el.style.willChange = 'transform';
+    el.style.transform = transform;
+    if (el._wcTimer) clearTimeout(el._wcTimer);
+    el._wcTimer = setTimeout(function () {
+      el.style.willChange = '';
+      el._wcTimer = null;
+    }, 900);
+  }
+
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
@@ -653,6 +693,21 @@
       return;
     }
 
+    // Pin the graph host to max(start, end) height for the duration of the
+    // animation so the SVG's per-frame width/height attribute changes don't
+    // push the rest of the page up or down on every frame. Without this pin,
+    // each of the ~31 animation frames forces a full-page reflow as every
+    // sibling below the card shifts. With it, content below moves exactly
+    // once — at the start if the graph is growing, or at the end when we
+    // release the pin if it's shrinking. The pin exists only during the
+    // animation window, so the card returns to its natural size at rest.
+    var container = this.container;
+    var hadMinHeight = container && container.style.minHeight !== '';
+    var priorMinHeight = hadMinHeight ? container.style.minHeight : '';
+    if (container) {
+      container.style.minHeight = Math.max(startH, endH) + 'px';
+    }
+
     if (this._dimAnim) cancelAnimationFrame(this._dimAnim);
 
     var DURATION = 520;
@@ -686,6 +741,10 @@
       svg.setAttribute('width',  endW);
       svg.setAttribute('height', endH);
       svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
+      // Release the pin. SVG intrinsic is now at endH, so the container
+      // collapses to whichever is the natural resting size. Growing paid
+      // its one reflow at the start; shrinking pays it now.
+      if (container) container.style.minHeight = priorMinHeight;
     }, DURATION + 30);
   };
 
@@ -749,6 +808,9 @@
     this._svgRoot.appendChild(this._nodesLayer);
     this._svgRoot.appendChild(this._labelsLayer);
     this.container.appendChild(this._svgRoot);
+
+    var obs = _ensureOffscreenObserver();
+    if (obs) obs.observe(this._svgRoot);
 
     this._nodeEls = {};
     this._edgeEls = {};
@@ -1131,7 +1193,7 @@
 
   GitGraph.prototype._updateNode = function (entry, cm, cx, cy, isHead) {
     if (entry.cx !== cx || entry.cy !== cy) {
-      entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+      _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
       entry.cx = cx;
       entry.cy = cy;
     }
@@ -1302,7 +1364,7 @@
         entry.g.classList.remove('exiting');
       }
       if (entry.cx !== cx || entry.cy !== cy) {
-        entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+        _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
         entry.cx = cx;
         entry.cy = cy;
       }

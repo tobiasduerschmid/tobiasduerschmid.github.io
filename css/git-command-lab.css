@@ -16,6 +16,10 @@
   flex-direction: column;
   min-width: 0;
   overflow-wrap: anywhere;
+  /* Isolate each card's paint/layout so a click on one card's graph doesn't
+     trigger repaint checks against the whole page. Pages with many labs
+     (SEBook/tools/git.md has 28) feel dramatically smoother with this. */
+  contain: layout paint;
 }
 
 .git-command-lab__header {

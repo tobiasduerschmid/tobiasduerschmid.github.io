@@ -40,6 +40,17 @@
   50% { stroke-opacity: 0.7; }
 }
 
+/* Pause perpetual / in-flight CSS animations when the graph is scrolled
+   out of view. An IntersectionObserver in js/git-graph.js toggles the
+   `--offscreen` modifier on each SVG root. Without this, pages with many
+   cards (e.g. sebook/tools/git.md has 28) keep the compositor hot forever
+   running every card's HEAD-glow pulse, which lowers the frame rate of
+   the card the user is actually interacting with. */
+.git-graph-svg--offscreen,
+.git-graph-svg--offscreen * {
+  animation-play-state: paused !important;
+}
+
 /* === Git graph delta animations =========================================== */
 
 /* Synchronised motion: nodes, branch labels, HEAD, edges, and chip colors
@@ -47,15 +58,16 @@
    its branch label, the HEAD chip, and the connecting edges glide together
    as one cohesive unit when the layout shifts.
 
-   `will-change: transform` promotes each moving element to its own compositor
-   layer so the browser animates all of them on the GPU with locked-step
-   timing — without this hint, SVG elements can tick at slightly different
-   rates and visibly desync during a shared slide. */
+   `will-change: transform` is NOT set statically here — it's scoped to the
+   actual transition window by js/git-graph.js (_setTransformAnimated), which
+   sets it inline just before mutating `transform` and clears it after the
+   720ms transition completes. Pages with many cards otherwise accumulate
+   hundreds of idle compositor layers, at which point Chrome starts evicting
+   them and each animation pays a re-promote cost on its first frame. */
 .git-graph-svg .git-graph-node-g,
 .git-graph-svg .git-graph-label-g,
 .git-graph-svg .git-graph-label-g--head {
   transition: transform 720ms cubic-bezier(.7,0,.3,1);
-  will-change: transform;
 }
 
 .git-graph-svg .git-graph-head-chip {
@@ -323,6 +335,18 @@ html.dark-mode .post-content svg.git-graph-svg {
               color 720ms cubic-bezier(.7,0,.3,1),
               background-color 720ms cubic-bezier(.7,0,.3,1),
               filter 720ms cubic-bezier(.7,0,.3,1);
+}
+/* Scope `will-change: transform` to the transient classes that actually
+   animate rows. Keeping it off idle rows prevents pages with many workbench
+   instances from creating dozens of always-on compositor layers. */
+.git-workbench-row.entering,
+.git-workbench-stash-entry.entering,
+.git-workbench-row.exiting,
+.git-workbench-stash-entry.exiting,
+.git-workbench-row.git-workbench-row-flip,
+.git-workbench-stash-entry.git-workbench-row-flip,
+.git-workbench-row.git-workbench-row-fly,
+.git-workbench-stash-entry.git-workbench-row-fly {
   will-change: transform;
 }
 .git-workbench-status {
