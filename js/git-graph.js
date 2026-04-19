@@ -33,7 +33,7 @@
   var COL_WIDTH = 80;
   var PADDING_TOP = 50;
   var PADDING_LEFT = 185;  // extra space for branch labels + HEAD pointer on the left
-  var PADDING_BOTTOM = 4;
+  var PADDING_BOTTOM = 20;
   var LABEL_OFFSET_X = 34;
   var LABEL_HEIGHT = 24;
   var LABEL_GAP = 4;
@@ -578,7 +578,7 @@
     var head = data.head;
 
     var width = PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 24 + this._maxMessagePx(commits) + 24;
-    var height = PADDING_TOP + commits.length * ROW_HEIGHT + PADDING_BOTTOM;
+    var height = PADDING_TOP + (commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM;
 
     // viewBox is essential — without it, `max-width: 100%; height: auto`
     // (from uml-diagram.css) can't preserve aspect ratio when the container
@@ -709,7 +709,7 @@
   GitGraph.prototype._computeDimensions = function (data) {
     return {
       width: PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 24 + this._maxMessagePx(data.commits) + 24,
-      height: PADDING_TOP + data.commits.length * ROW_HEIGHT + PADDING_BOTTOM,
+      height: PADDING_TOP + (data.commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM,
     };
   };
 

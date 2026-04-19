@@ -35,13 +35,24 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-> **Want to practice?** Try the [Interactive Git Tutorial](/SEBook/tools/git-tutorial.html) — hands-on exercises in a real Linux system right in the browser!
+> **Want to practice?** Try the [Interactive Git Tutorial](/SEBook/tools/git-tutorial.html) and the [Advanced Git Tutorial](/SEBook/tools/git-advanced-tutorial.html) — hands-on exercises in a real Linux system right in the browser!
 
 In modern software construction, version control is not just a convenience — it is a foundational practice that solves several major challenges of managing code: collaboration, change tracking, traceability, safe rollback, and parallel development. Git is by far the most common tool for version control.
 
-Throughout this page you will find **interactive command cards** — click the button to animate the graph transformation a command performs, and click again to undo. This is the fastest way to build an intuition for what each Git command actually does to your commit graph.
+This page is organised by **workflow phase** — the same sequence you move through on a real project:
 
-# Basics
+1. **Core Concepts** — the mental model everything else builds on.
+2. **Setup** — create or clone a repository and configure it.
+3. **Author** — write code, craft commits, manage your working tree.
+4. **Share** — branch, merge, push, pull, collaborate via pull requests and tags.
+5. **Maintain** — polish history, organise the team's branching strategy, manage submodules.
+6. **Debug** — investigate when things go wrong, and recover safely.
+
+A final section — **[Choosing the Right Tool](#choosing-the-right-tool)** — is the decision table to come back to when you know what you want to do but can't remember which command does it.
+
+Throughout the page you will find **interactive command cards** — click the button to animate the graph transformation a command performs, and click again to undo. This is the fastest way to build an intuition for what each Git command actually does to your commit graph.
+
+# Core Concepts
 
 ## What is Version Control?
 
@@ -79,22 +90,133 @@ Git operates across three areas that every file passes through:
 
 A **commit** is a permanent snapshot: an immutable object identified by a 40-character SHA-1 hash, with pointers to its parent commit(s) and to a **tree** object that records the project's directory structure at that moment. The chain of parents is what we call *history*, and the visual form of that chain is the **commit graph** you'll animate below.
 
-# Building History
+## HEAD, Branches, and the Commit Graph
 
-Everything in this section produces **new commits** — either a single commit on top of the current branch, or a merge commit that weaves two branches together. Hashes only grow; nothing is rewritten.
+In every diagram on this page you'll see a white chip labelled **`HEAD`** pointing at a commit. `HEAD` marks *where you are* in history — the commit your next operation will act on. Normally `HEAD` points at a branch (like `main`), and the branch in turn points at a commit; `HEAD` follows the branch forward as new commits are added. This double indirection (`HEAD → branch → commit`) is why `git commit` only needs to rewrite the tiny branch-pointer file to advance history.
 
-## Making Commits
+A **branch** in Git is a **lightweight pointer** to a commit — literally a text file in `.git/refs/heads/` containing one commit's SHA. Creating or deleting a branch is nearly instantaneous; there are no per-branch file copies. The `HEAD` pointer (stored in `.git/HEAD`) usually contains a symbolic reference like `ref: refs/heads/main` pointing at the current branch.
 
-The canonical local workflow:
+Commits, trees, and blobs form a **Directed Acyclic Graph (DAG)**. Each commit records one or more **parent** commit SHAs: zero for the root commit, one for a normal commit, two for a merge commit. Follow the parent links and you walk the full history of the project. The graphs throughout this page are just visualisations of that DAG.
 
-1. **Initialize** a repo with `git init`.
-2. **Stage** file contents with `git add <filename>`.
-3. **Commit** the snapshot with `git commit -m "message"`.
-4. Check state anytime with `git status`, review history with `git log`.
+## Immutability — Every Command Is Either Additive or a Rewrite
 
-Before we see a commit happen, one concept to introduce: **`HEAD`**. In every graph on this page you'll see a white chip labelled `HEAD` pointing at a commit — it marks where *you are* in history, i.e. the commit your next operation will act on. Normally `HEAD` points at a branch (like `main`), and the branch in turn points at a commit; `HEAD` follows the branch forward as new commits are added.
+Every object Git stores — commit, tree, blob — is identified by a **SHA-1 hash of its own content**. Change a single byte and the hash changes. This means commits are **immutable**: you cannot edit one in place. The SHA *is* the commit's identity.
 
-Git tracks files through **three "trees"**: the **working directory** (your files on disk), the **index/staging area** (a snapshot of what your next commit will contain), and the **repository** (the committed history). The strip above each graph below mirrors what `git status` prints — **Untracked**, **Not staged**, and **Staged**. `git add` moves files into Staged; `git commit` turns Staged into the next node in the graph.
+This single design choice is the seed of almost every Git property:
+
+- **Snapshots, not diffs.** A commit stores a full tree snapshot (with blob deduplication), not a delta against its parent.
+- **Distributed sync works.** Two collaborators whose repositories contain the same content produce the same SHAs — no central authority needed to decide what equals what.
+- **Reflog can rescue lost work.** Commits never truly disappear on their own; they become *unreferenced*, garbage-collected only after a retention window (~90 days by default).
+
+The consequence for every command in this page is:
+
+> **Every Git command either (a) creates new immutable objects and moves a pointer to them, or (b) only moves pointers. Never edits in place.**
+
+This taxonomy is the single most useful mental model for deciding whether a command is safe to run. Throughout this page, subsections that create new commits (or move pointers backward) carry an **⚠️ rewrites history** callout. Such operations are safe on local, unpushed commits but dangerous on commits that have been pushed to a shared branch. Everything without the callout is either additive (safe everywhere) or read-only.
+
+# Setting Up a Repository
+
+Before you can commit anything, you need a repository and an identity. This is a one-time setup per project or machine — fast once, rarely revisited.
+
+## Creating a New Repository (`git init`)
+
+`git init` turns an existing directory into a Git repository by creating a hidden `.git/` folder. Everything Git tracks lives inside `.git/`: objects, refs, branches, config. Delete `.git/` and you have an ordinary folder again.
+
+```bash
+git init myproject
+cd myproject
+```
+
+The command is instantaneous because it only creates directory scaffolding — no network, no files copied. You now have an empty repository with one branch (`main` by default, since Git 2.28 if configured, or `master` on older setups) and no commits.
+
+## Cloning an Existing Repository (`git clone`)
+
+If the project already exists elsewhere (GitHub, GitLab, a teammate's server), use `git clone` instead of `git init`. It downloads the full repository — every commit, every branch, every tag — and creates a local copy with the remote already configured as `origin`:
+
+```bash
+git clone https://github.com/example/myproject.git
+cd myproject
+```
+
+A cloned repo is *fully functional offline* — because Git is distributed, every local clone contains the entire history.
+
+## Configuring Your Identity
+
+Every commit records who made it. Before your first commit, tell Git who you are:
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+These settings live in `~/.gitconfig` and apply to every repo on your machine. Override per-repo with `git config user.name "..."` (omit `--global`) when you need a different identity for one project — common when mixing work and personal accounts.
+
+## Ignoring Files (`.gitignore`)
+
+A `.gitignore` file tells Git to pretend certain files don't exist — never stage them, never warn about them, never track them. Set one up **before your first commit** — it has no retroactive effect on files that are already tracked.
+
+A typical Python project's `.gitignore`:
+
+```
+# Compiled Python
+*.pyc
+__pycache__/
+
+# Virtual environments
+venv/
+.venv/
+
+# Secrets — never commit
+.env
+*.pem
+
+# OS clutter
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+```
+
+**Pattern syntax:**
+
+| Pattern | Matches |
+|---|---|
+| `*.pyc` | Any file with a `.pyc` extension in any directory |
+| `__pycache__/` | Trailing `/` restricts the match to directories named `__pycache__` |
+| `.env` | A specific filename at any depth |
+| `/build/` | Leading `/` anchors to the repo root only (not nested `build/` folders) |
+| `docs/*.html` | A path-prefix glob |
+| `!important.log` | Leading `!` negates a prior match — "include this even though `*.log` would exclude it" |
+
+Patterns can also live in:
+
+- **`.git/info/exclude`** — local-only ignore rules for your working copy; not shared with the team.
+- **The global file** referenced by `core.excludesfile` (default `~/.config/git/ignore` on Linux/macOS) — your personal defaults that apply to every repo.
+
+**Important: no retroactive effect.** If a file was committed *before* `.gitignore` matched it, adding the pattern now does not untrack it. Remove the file from the index first:
+
+```bash
+git rm --cached secrets.env
+git commit -m "Stop tracking secrets.env"
+```
+
+**Commit `.gitignore` itself.** Sharing the file means every teammate and every future clone automatically gets the same ignore rules. Without this, each developer independently re-discovers which files to ignore — and someone eventually commits `.env`.
+
+> ⚠️ **`.gitignore` is not a security tool.** If a secret was *ever* committed — even in a commit that was later removed — it remains in history and in the reflog, visible to anyone who clones the repository. The correct response to a leaked credential is to **rotate it immediately** and scrub history with tools like `git filter-repo` or BFG Repo Cleaner.
+
+# Making Commits
+
+The canonical local workflow is the same every day:
+
+1. **Initialise** the repo with `git init` (or clone it) — see [Setting Up a Repository](#setting-up-a-repository).
+2. **Edit** files in your working directory.
+3. **Stage** the exact changes you want in the next snapshot with `git add <filename>`.
+4. **Commit** the snapshot with `git commit -m "message"`.
+5. **Check state** with `git status` at any time; **review history** with `git log`.
+
+Git tracks files through the **three trees** you met in Core Concepts: the **working directory** (files on disk), the **index/staging area** (what your next commit will contain), and the **repository** (committed history). The strip above each graph below mirrors what `git status` prints — **Untracked**, **Not staged**, and **Staged**. `git add` moves files into Staged; `git commit` turns Staged into the next node in the graph.
 
 <div data-git-command-lab-multi>
 <script type="application/json">
@@ -147,7 +269,19 @@ Git tracks files through **three "trees"**: the **working directory** (your file
 </script>
 </div>
 
-### Shortcut: `git add -A` vs. `git commit -am`
+## Inspecting Before You Commit
+
+Before turning staged changes into a permanent snapshot, *look at them*. `git diff` compares different versions of your code:
+
+* `git diff` — working directory vs. staging area.
+* `git diff --staged` (or `--cached`) — staging area vs. the latest commit. Useful to review exactly what you are about to commit.
+* `git diff HEAD` — working directory vs. the latest commit.
+* `git diff HEAD^ HEAD` — parent vs. latest commit (shows what the latest commit changed).
+* `git diff main..feature` — commits in `feature` not yet in `main`.
+
+`git status` is the dashboard; `git diff --staged` is the review step. Run both before every commit — it's the single best habit for keeping commits clean.
+
+## Staging Shortcuts: `git add -A` vs. `git commit -am`
 
 Typing `git add <file>` for every modified file gets tedious. Two shortcuts stage multiple files at once, but they differ in one critical way: **whether they touch untracked files**.
 
@@ -220,21 +354,211 @@ Typing `git add <file>` for every modified file gets tedious. Two shortcuts stag
 
 **Rule of thumb:** `git add -A` stages **everything new** (dangerous); `git commit -am` is a safe shortcut for **tracked-only** commits. When in doubt, run `git status` first to see what each will affect.
 
-### Inspecting Changes
+## Writing Good Commit Messages
 
-`git diff` compares different versions of your code:
+A commit message is a note to your future self and your teammates. Professional projects follow a small set of conventions that compound across thousands of commits.
 
-* `git diff` — working directory vs. staging area.
-* `git diff --staged` (or `--cached`) — staging area vs. the latest commit. Useful to review exactly what you are about to commit.
-* `git diff HEAD` — working directory vs. the latest commit.
-* `git diff HEAD^ HEAD` — parent vs. latest commit (shows what the latest commit changed).
-* `git diff main..feature` — commits in `feature` not yet in `main`.
+**The 50/72 rule:**
 
-`git log` shows the sequence of past commits. Useful flags: `-p` shows each commit's patch; `--oneline` is one commit per line; `--graph --all` renders an ASCII art graph of all branches and merges.
+- **Subject line: ≤50 characters.** A short imperative summary, no trailing period.
+- **Blank line.**
+- **Body: wrap at 72 characters.** Explain the *why*, not just the *what* — the diff already shows what.
 
-## Branching
+**Imperative mood.** Write the subject as a command describing what the commit does, not a past-tense description of what you did:
 
-A **branch** in Git is just a **lightweight pointer** to a commit — literally a text file in `.git/refs/heads/` containing a commit's SHA. Creating or deleting a branch is nearly instantaneous. The `HEAD` pointer (stored in `.git/HEAD`) usually contains a symbolic reference to the current branch, such as `ref: refs/heads/main`.
+| ✅ Imperative | ❌ Past tense / gerund |
+|---|---|
+| `Add login endpoint` | `Added login endpoint` |
+| `Fix off-by-one in pagination` | `Fixing off-by-one in pagination` |
+| `Refactor user-service for clarity` | `Refactored user service` |
+
+Mnemonic: a good subject line completes the sentence *"If applied, this commit will ______"*. "Add login endpoint" — yes. "Added login endpoint" — grammatically awkward.
+
+**Conventional Commits (optional, team-level).** Many teams adopt the [Conventional Commits](https://www.conventionalcommits.org/) convention — a structured prefix that enables automated changelog generation and semantic-version bumping:
+
+```
+<type>(<optional scope>): <subject>
+
+<optional body>
+
+<optional footer(s)>
+```
+
+Common types: `feat` (new feature), `fix` (bug fix), `docs`, `refactor`, `test`, `chore`, `ci`, `build`. Example:
+
+```
+feat(auth): add rate limiting to login endpoint
+
+Requests from a single IP are capped at 5 per minute.
+Exceeding the limit returns HTTP 429 with a Retry-After
+header. Protects against credential-stuffing attacks.
+
+Closes #342
+```
+
+Whether to adopt Conventional Commits is a **team decision** — but writing imperative, ≤50-character subjects is universal.
+
+## Fixing Your Last Commit (`git commit --amend`)
+
+> ⚠️ **This command rewrites history.** Safe for commits you have not yet pushed. Never amend a commit that has been pushed to a shared branch — see the [Golden Rule of Shared History](#the-golden-rule-never-rewrite-pushed-commits).
+
+The most common "oops" in Git is noticing a typo in the commit message, or realising you forgot to `git add` a file, seconds after committing. `git commit --amend` combines the staging area with the current tip commit and rewrites it — new hash, same branch position.
+
+Typical uses:
+
+- **Fix the message:** `git commit --amend -m "Correct subject line"`.
+- **Include a forgotten file:** `git add forgotten.py && git commit --amend --no-edit` (keeps the original message).
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git commit --amend",
+  "description": "**\u26a0\ufe0f Rewrites history.** Replaces the most recent commit with a new one \u2014 typically to fix a typo in the message or include a file you forgot to stage.\n\nThe commit is not actually edited in place (commits are immutable). Git creates a brand-new commit **C\u2032** with the amended content and moves the branch pointer to it; the original **C** becomes unreferenced and is eventually garbage-collected.\n\n*Safe for local work, but never amend a commit you've already pushed* \u2014 collaborators' clones still reference the old hash and will see a diverged branch on next pull.",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug (typo)|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "C'00000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix critical bug|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+Amend is the simplest of Git's rewrite operations — and therefore the gateway drug to the rest of [Reshaping History](#rewriting-history).
+
+# Managing Uncommitted Changes
+
+Your working tree is often in a state you don't want to commit yet — half-finished edits, debug prints, generated files. Three commands manage this space.
+
+## Discarding Changes (`git restore`)
+
+`git restore <file>` replaces the file in your working directory with its committed version, discarding any unsaved edits:
+
+```bash
+git restore src/app.py               # discard working-tree edits
+git restore --staged src/app.py      # unstage, but keep the edits
+git restore --source=HEAD~3 src/app.py  # restore from 3 commits ago
+```
+
+- Without `--staged`, `restore` overwrites your working tree — **uncommitted edits are lost with no undo**.
+- With `--staged`, `restore` only touches the index (moves the file out of "staged"), leaving your working-tree edits intact.
+
+`git restore` and its sibling `git switch` (for branch navigation) were introduced in Git 2.23 as cleaner replacements for the overloaded `git checkout`. `git checkout` still works, but the split is clearer — navigate branches with `switch`, discard file changes with `restore`.
+
+## Shelving Work in Progress (`git stash`)
+
+`git stash` saves your uncommitted changes (staged and unstaged) to a private stack, then cleans the working tree — letting you switch contexts without making a messy commit:
+
+```bash
+git stash                   # save; working tree becomes clean
+git switch hotfix           # do something urgent
+# …commit and merge the hotfix…
+git switch original-branch  # return
+git stash pop               # restore and drop the stash
+```
+
+Flags worth knowing:
+
+- `git stash -u` also stashes **untracked** files (otherwise ignored — a common surprise).
+- `git stash pop` restores and drops the stash; `git stash apply` restores but keeps the stash in the stack (useful when you want to apply the same shelf to multiple branches).
+- `git stash list` shows the stack; entries are named `stash@{0}` (most recent), `stash@{1}`, etc.
+- `git stash drop stash@{n}` deletes an entry without applying it.
+
+**How it works internally.** Stash is **not** a separate storage area — it's regular commit objects on a dangling branch `refs/stash`. When you stash, Git creates up to two commits off `HEAD`:
+
+1. An **index commit `i`** whose tree captures the state of the staging area. Parent: current `HEAD`.
+2. A **WIP commit `w`** whose tree captures the working directory. Parents: current `HEAD` *and* `i` — a merge commit, so the staged and unstaged halves can be recovered independently.
+
+The ref `refs/stash` (exposed as `stash@{0}`) points at `w`. Neither `main` nor `HEAD` moves — stashing never touches your branch. `git stash pop` re-applies `w`'s tree and deletes the ref; without a ref pointing at them, `i` and `w` become unreachable and are garbage-collected on the next `git gc`.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nStash is **not** a separate storage area \u2014 it's regular commit objects (`i` for the index, `w` for the working tree) on a dangling branch `refs/stash`. Watch the graph: the new commits pop into a sibling lane during `git stash` and vanish during `git stash pop`. The shelf on the right is just a friendlier view of the same data.",
+  "initialState": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [{"status": "modified", "path": "checkout.js"}],
+      "staged": [{"status": "modified", "path": "cart.js"}],
+      "stashed": []
+    }
+  },
+  "steps": [
+    {
+      "command": "git stash",
+      "description": "Git creates two new commits off `B`:\n\n- **`i`** captures the *staged* tree (so `cart.js`'s staged version is preserved). Parent: `B`.\n- **`w`** captures the *working* tree (so `checkout.js`'s unstaged modification is preserved too). Parents: `B` and `i` \u2014 a merge commit, so both halves can be recovered independently.\n\nThe ref `refs/stash` (shown as the **stash** pointer) now points at `w`. `HEAD` and `main` stay at `B`; your branch history is untouched. The working tree and index are rewound to `B`'s state, leaving the strip clean.",
+      "state": {
+        "log": "w000000000000000000000000000000000000000|B000000000000000000000000000000000000000 i000000000000000000000000000000000000000|WIP on main: B Initial commit|refs/stash\ni000000000000000000000000000000000000000|B000000000000000000000000000000000000000|index on main: B Initial commit|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [],
+          "staged": [],
+          "stashed": [{"ref": "stash@{0}", "branch": "main", "message": "cart + checkout WIP"}]
+        }
+      }
+    },
+    {
+      "command": "git stash pop",
+      "description": "Git replays `w`'s tree onto your working directory \u2014 `cart.js` and `checkout.js` both come back \u2014 then deletes the `refs/stash` ref. Without any ref reaching them, `i` and `w` become unreachable commit objects; Git's garbage collector removes them on its next pass, so the graph snaps back to just `B` and `A`.\n\n(Note: `pop` defaults to restoring every change as unstaged. Use `git stash pop --index` to preserve the original staged/unstaged split; this lab simplifies for pedagogy.)",
+      "state": {
+        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "files": {
+          "untracked": [],
+          "unstaged": [{"status": "modified", "path": "checkout.js"}],
+          "staged": [{"status": "modified", "path": "cart.js"}],
+          "stashed": []
+        }
+      }
+    }
+  ]
+}
+</script>
+</div>
+
+## Cleaning Untracked Files (`git clean`)
+
+`git clean` is `git restore`'s cousin for files Git *doesn't* track. `git restore` can only touch files Git already knows about; `git clean` removes entire untracked files and directories:
+
+```bash
+git clean -n          # dry run — list what would be removed
+git clean -f          # force — actually delete untracked files
+git clean -fd         # also remove untracked directories
+git clean -fdx        # also remove ignored files (!!!)
+```
+
+Like `git restore` without `--staged`, this is **permanent** — `git clean -fd` cannot be undone by Git. Always dry-run first. `-fdx` removes files that `.gitignore` excludes (build artefacts, `node_modules/`, caches) — useful for a full reset before diagnosing a build issue, but dangerous if `.gitignore` covers anything you don't want to lose.
+
+# Branching
+
+A branch is Git's way of supporting **parallel lines of development** — you can experiment on a feature branch without touching `main`, and combine the work back only when it's ready.
+
+## What a Branch Physically Is
+
+Recall from [Core Concepts](#head-branches-and-the-commit-graph): a branch is a **41-byte pointer file** in `.git/refs/heads/` containing one commit's SHA. That's it — no per-branch copy of your files, no hidden metadata. Creating a branch is one `fwrite()`; it costs milliseconds even on a 10 GB repo.
+
+This lightweight pointer is why Git encourages branching liberally. If branches were expensive copies, you'd avoid creating them. Because they're nearly free, best practice is to branch *often* — one branch per feature, bug fix, or experiment.
+
+## Creating, Switching, and Deleting Branches
+
+```bash
+git branch                   # list local branches (* marks current)
+git branch feature           # create a branch at HEAD (do NOT switch)
+git switch feature           # switch HEAD to an existing branch
+git switch -c feature        # create AND switch in one step (most common)
+git branch -d feature        # delete (refuses if unmerged; safe)
+git branch -D feature        # force-delete (no safety check)
+```
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -274,7 +598,9 @@ A **branch** in Git is just a **lightweight pointer** to a commit — literally 
 </script>
 </div>
 
-Where a commit lands depends entirely on where `HEAD` is pointing when you run `git commit`. A very common mistake is running `git branch <name>` and then immediately starting work — `git branch` creates the pointer but leaves `HEAD` on the current branch, so all new commits continue landing there. The two labs below show this side-by-side.
+## Common Mistake: `git branch` Without Switching
+
+Where a commit lands depends entirely on where `HEAD` is pointing when you run `git commit`. A very common beginner mistake is running `git branch <name>` and then immediately starting work — `git branch` creates the pointer but leaves `HEAD` on the current branch, so all new commits continue landing there. The two labs below show this side-by-side.
 
 <div data-git-command-lab-multi>
 <script type="application/json">
@@ -342,34 +668,13 @@ Where a commit lands depends entirely on where `HEAD` is pointing when you run `
 </script>
 </div>
 
-### Detached HEAD
+> **Detached HEAD**, the third common HEAD state, is covered under [Undoing Committed Work](#detached-head) — it's most useful when investigating and recovering, not during normal branching.
 
-If you point `HEAD` directly at a commit hash instead of a branch (for example, to inspect an older version with `git switch --detach <commit>`), you are in **detached HEAD** state. Any commits made here are not anchored to a branch and are easy to lose when switching away — always create a branch with `git switch -c <name>` before leaving a detached HEAD if you have new work. `git reflog` can recover the hashes if you forget.
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git switch --detach HEAD~1",
-  "description": "Points `HEAD` **directly** at a specific commit (here, one step before the current tip) instead of at a branch. This is called **detached HEAD** state.\n\nUseful for inspecting old code \u2014 but commits made in this state aren't anchored to any branch and are easy to lose when switching away.\n\nRecover them with `git reflog`, or stay safe by running `git switch -c <name>` to bookmark your work before leaving.",
-  "before": {
-    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add login|HEAD -> main\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add login|main\nA000000000000000000000000000000000000000||Initial commit|HEAD",
-    "branches": "  main",
-    "head": "detached"
-  }
-}
-</script>
-</div>
-
-## Merging
+# Merging
 
 Once work has happened in parallel on two branches, you eventually want to bring it back together. Git has three modes of `git merge`, each with a distinct graph shape.
 
-### Fast-Forward Merge
+## Fast-Forward Merge
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -390,7 +695,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 </script>
 </div>
 
-### Three-Way Merge
+## Three-Way Merge
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -412,7 +717,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 </script>
 </div>
 
-### Forcing a Merge Commit: `--no-ff`
+## Forcing a Merge Commit: `--no-ff`
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -433,7 +738,32 @@ Once work has happened in parallel on two branches, you eventually want to bring
 </script>
 </div>
 
-### Merge Conflicts
+## Squash Merge
+
+> ⚠️ **This variant rewrites history** in the sense that it produces one new commit whose parent is `main`'s previous tip — not `feature`'s tip. The feature branch's individual commits are **not** recorded on `main`.
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git merge --squash feature",
+  "description": "Collapses every commit on `feature` into a single new commit on `main` (C+D).\n\nCrucially, this new commit has **only one parent** \u2014 the previous `main` tip (E) \u2014 *not* the `feature` branch's tip (D). That's because `--squash` produces a regular commit, not a merge commit: Git records the squashed work as if you had written those changes directly on `main` yourself, with no structural link back to `feature`.\n\nThe `feature` branch stays at D, unreferenced from `main`'s history; commands like `git log main` won't show it as an ancestor.\n\nUseful when you want `main` to read as a series of clean features, not every intermediate \"fix typo\" commit \u2014 but the trade-off is that you lose the ability to trace the original commits from `main`.",
+  "before": {
+    "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "C+D0000000000000000000000000000000000000|E000000000000000000000000000000000000000|Squashed C+D|HEAD -> main\nE000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main\n  feature",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+**Trade-off.** Squash merge makes `main`'s log read as one commit per feature (clean), but you lose the intermediate commits — which hurts `git bisect` precision if a regression later narrows to "the whole squashed feature." The internal commits still exist on the feature branch (if you don't delete it) and in reflog.
+
+## Handling Merge Conflicts
 
 When Git cannot automatically reconcile differences (usually because the same lines were changed in both branches), it marks the conflicting sections in the file with conflict markers:
 
@@ -530,11 +860,294 @@ The full resolution sequence is: edit the conflicting file to remove all markers
 </script>
 </div>
 
-# Reshaping History
+## Merge Strategies (`ort`, `-X ours`, `-X theirs`)
 
-The commands above only *append* commits. This section covers commands that **create new commit objects with new hashes** or **move branch pointers backward** — operations that rewrite or rearrange history. They are powerful but must be used carefully: rewriting commits that others have already pulled breaks collaborators' copies of the repository.
+Since Git 2.33 (August 2021), the default merge strategy is **ort** (Ostensibly Recursive's Twin) — a reimplementation of the older `recursive` strategy that's faster and handles renames better. For typical two-branch merges the output is identical; you rarely need to pick a strategy explicitly.
 
-## Rebasing
+When the default auto-resolution doesn't do what you want, **strategy options** (`-X`) tune the behaviour:
+
+```bash
+git merge feature -X ours              # on conflict, keep OUR version (current branch)
+git merge feature -X theirs            # on conflict, keep THEIR version (incoming)
+git merge feature -X ignore-all-space  # ignore whitespace differences
+```
+
+**Important:** `-X ours`/`-X theirs` only affect *conflicting* lines — non-conflicting changes from both branches are still combined normally. Don't confuse them with the whole-branch strategies `-s ours` (discard the other branch's changes entirely) or `-s subtree` — far rarer and more dangerous operations.
+
+Use `-X theirs` when integrating generated or vendored files where the incoming version is authoritative. Use `-X ours` sparingly — it's easy to silently lose incoming fixes.
+
+# Remotes
+
+Git really shines once you're sharing work with other people. A **remote** is a named URL pointing to another copy of the repository — typically on GitHub, GitLab, or a self-hosted server. Remote servers typically host **bare repositories** (`git init --bare`) — repositories with no working tree; they store the object database, refs, and config (the contents of a regular `.git/` directory) but no checked-out files.
+
+## Remotes
+
+The five commands that define remote collaboration:
+
+* **`git clone <url>`** — creates a local copy of a remote repository ([Setup](#cloning-an-existing-repository-git-clone)).
+* **`git remote`** — lists configured remotes. `git remote add origin <url>` registers a remote named `origin` (the conventional primary remote name); `git remote -v` lists existing remotes with their URLs.
+* **`git fetch`** — downloads new commits and branches from a remote *without* modifying your working directory or current branch. Useful for reviewing before deciding how to integrate.
+* **`git pull`** — shorthand for `git fetch` followed by `git merge`. Fetches and immediately merges into your current branch.
+* **`git push`** — uploads your local commits to a remote. `git push -u origin <branch>` pushes and sets up **upstream tracking**, so future `git push` and `git pull` on this branch can omit the remote name.
+
+The diagram below shows how each command moves data between the four areas Git works with:
+
+<pre><code class="language-uml-sequence">
+@startuml
+participant WorkingTree
+participant StagingArea
+participant LocalRepo
+participant RemoteRepo
+
+RemoteRepo ->> LocalRepo: git clone / git fetch
+LocalRepo ->> WorkingTree: git checkout
+WorkingTree ->> StagingArea: git add
+StagingArea ->> LocalRepo: git commit
+WorkingTree ->> LocalRepo: git commit -a
+LocalRepo ->> WorkingTree: git merge
+RemoteRepo ->> WorkingTree: git pull
+LocalRepo ->> RemoteRepo: git push
+@enduml
+</code></pre>
+
+## Remote-Tracking Branches: `origin/main` vs. `main`
+
+This is one of Git's most persistent sources of confusion. There are actually **three different pointers** for any shared branch:
+
+1. **Your local branch** (`main`) — the tip of your own work.
+2. **Your remote-tracking branch** (`origin/main`) — your *snapshot* of where the remote was the last time you communicated with it. A read-only local reference stored in `.git/refs/remotes/origin/`.
+3. **The actual remote branch** — what GitHub/GitLab/your server shows *right now*. You can only see its current state by running `git fetch` (or `git ls-remote`).
+
+These three can be out of sync in different ways:
+
+- **After you commit locally:** `main` is ahead of both `origin/main` and the actual remote. A `git push` synchronises them by uploading your commits.
+- **After a teammate pushes:** the actual remote is ahead of both `origin/main` and your `main`. A `git fetch` updates `origin/main`. A `git pull` does both fetch *and* merge, bringing your `main` in sync.
+- **After both you and teammates pushed:** you've diverged. Neither simple push nor simple pull works — you must integrate (merge or rebase) and then push. See [Diverged Pull](#diverged-pull-merge-vs-rebase) below.
+
+Useful inspection commands that rely on this distinction:
+
+```bash
+git log origin/main                    # what's on the (last-fetched) remote
+git log main..origin/main              # commits on remote not yet on local (incoming)
+git log origin/main..main              # commits on local not yet on remote (unpushed)
+git diff main origin/main              # content differences between the two
+```
+
+**Rule of thumb:** `origin/main` is a **read-only local cache of the remote**. You never commit to it; it only moves when you `fetch`, `pull`, or `push`. In the graphs below it appears with a **dashed label** and grey colour to distinguish it from your local branch pointer.
+
+## Fetching vs. Pulling — Why You Have Two Commands
+
+`git fetch` and `git pull` both "download" from the remote, but they differ in how invasive they are:
+
+- **`git fetch`** — downloads new commits and updates remote-tracking branches only. Your local branches and working tree are untouched. Safe to run any time.
+- **`git pull`** — shorthand for `git fetch` followed by `git merge` (or `git rebase` if configured). Downloads *and* integrates into your current branch.
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git fetch",
+  "description": "Downloads new commits from the remote into the remote-tracking branch (origin/main) without touching your local branch or working directory.\n\nAfter a fetch you can review what changed (git log origin/main, git diff main..origin/main) before deciding to merge.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull",
+  "description": "Shorthand for git fetch + git merge — downloads the remote commits and immediately fast-forwards the local branch to match origin/main.\n\nBoth pointers land on the same commit. If the local branch had diverged, a merge commit would be created instead.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+**The case for running them separately** — the *fetch → inspect → merge* pattern:
+
+```bash
+git fetch                          # update origin/main
+git log main..origin/main          # what's new? any dangerous changes?
+git diff main origin/main          # what content would come in?
+git merge origin/main              # integrate only after you've inspected
+```
+
+This pattern is especially valuable for branches you share with many people, where you want to see what's coming before you commit to integrating. **Use plain `pull`** for your own feature branch where you already know what's incoming (your CI, your own work on another machine), or during trivial fast-forward syncs.
+
+## Diverged Pull: Merge vs. Rebase
+
+The fast-forward case above is the lucky path — your local branch had no new commits of its own, so Git could simply slide `main` forward. The interesting case is when *both* you and the remote have moved on since your last sync. Suppose you committed **B** locally, and while you were working, a teammate pushed **C** to the remote. Now `main` and `origin/main` have diverged, both descending from the common ancestor **A**.
+
+`git pull` handles this by creating a **merge commit** that ties the two tips together — preserving the full DAG but littering history with auto-generated "Merge remote-tracking branch 'origin/main'" commits:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull",
+  "description": "After `git fetch`, Git sees that `main` (at B) and `origin/main` (at C) have diverged from their common ancestor A. `git pull`'s default strategy is **merge**: it creates a new merge commit **M** with two parents — your local **B** and the remote's **C** — and advances `main` to M.\n\nHistory is preserved exactly (no hashes change), but the graph gains a diamond and an auto-generated message *`Merge remote-tracking branch 'origin/main'`* (or, on older Git, *`Merge branch 'main' of <remote-url>`*). On a busy team branch, these pile up and clutter the log.",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 C000000000000000000000000000000000000000|Merge remote-tracking branch 'origin/main'|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+`git pull --rebase` is the antidote. Instead of merging, it **replays** your local commits on top of the fetched remote tip, producing a linear history with no merge commit. Your local **B** becomes **B′** with a new hash, parented on the remote's **C** instead of the shared ancestor **A**:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git pull --rebase",
+  "description": "Same diverged situation, different integration strategy. `git pull --rebase` fetches `origin/main` (bringing in C), then **rebases** your local commits onto it — each of your commits is replayed as a brand-new commit with a new hash.\n\nHere your single local commit **B** is replayed on top of **C**, becoming **B′**. The old **B** is discarded. History reads as a straight line (`A → C → B′`), and no merge commit appears.\n\nRule of thumb: prefer `git pull --rebase` on your own feature branch to keep the log clean; stick with the default `git pull` (merge) on shared long-lived branches where rewriting any history — even your own — is risky.",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "B'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Your local work|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nA000000000000000000000000000000000000000||Shared base|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+You can make `--rebase` the default for a branch (`git config branch.main.rebase true`) or globally (`git config --global pull.rebase true`) so you don't have to type the flag every time.
+
+## Pushing
+
+`git push` is the mirror image of `git fetch`: it uploads your local commits to the remote and then advances the **remote-tracking branch** `origin/main` to match. The commits themselves do not change (no new hashes) — only the grey dashed label slides forward to catch up with your local `main`:
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git push",
+  "description": "You've made two local commits (**C** and **D**) on top of the last shared state (**B**). `git push` sends them to the remote and, once the remote accepts them, Git advances `origin/main` to match your local `main`.\n\nNotice what *doesn't* happen: no new commit is created, and no existing commit gets a new hash. The only visible change is that the dashed `origin/main` label hops from **B** up to **D** — a pointer move, nothing more. This is why `push` is a structural no-op on the graph: it only updates where the remote-tracking label sits.\n\n`git push` fails if the remote has commits you don't have locally (someone else pushed since your last fetch). Pull first to reconcile, then push.",
+  "before": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Fix bug|origin/main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Fix bug|\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+## The Force-Push Warning
+
+`git push -f` (force-push) overwrites remote history to match your local copy. On a shared branch this **permanently deletes** commits your collaborators have already pushed. Never force-push to `main` or any shared integration branch. If you've rebased or amended commits that are already remote, push to a new branch instead — or use `--force-with-lease`, which at least refuses to overwrite if the remote has moved since your last fetch.
+
+## Pull Requests and Code Review
+
+On every real-world team, code doesn't go straight from your laptop to `main`. It goes through a **pull request** (PR, on GitHub or Bitbucket) or **merge request** (MR, on GitLab) — a proposal asking teammates to review the change before it lands.
+
+The daily loop:
+
+1. **Branch.** `git switch -c feat-login` — one branch per feature or bug fix.
+2. **Commit.** Make your changes as a series of focused commits.
+3. **Push.** `git push -u origin feat-login` — uploads your branch and sets upstream tracking.
+4. **Open a PR.** On the hosting platform, request that `feat-login` be merged into `main`. Write a description explaining *what* changed and *why*. Link related issues.
+5. **Review.** Teammates read the diff, leave inline comments, request changes or approve.
+6. **Iterate.** Commit fixes locally, push again — the PR updates automatically.
+7. **Merge.** After approval (and green CI), someone clicks "Merge" on the platform. Most platforms offer three merge strategies — regular merge, squash-and-merge, or rebase-and-merge — as a team-wide setting or per-PR choice.
+8. **Clean up.** Delete the feature branch locally and on the remote.
+
+**Why teams use PRs:**
+
+- **Isolation.** Broken work never touches `main`; CI runs on the PR branch.
+- **Review.** Every change is read by at least one other human before it ships.
+- **Audit trail.** The PR is a durable record of the design discussion and approvals — valuable long after the commits themselves.
+- **CI gate.** The platform can block merging until tests pass and reviewers approve.
+
+**Forks vs. direct branches.** In internal team repositories, everyone pushes branches directly to the same `origin` and opens PRs there. In open-source projects (and some strict security contexts), you don't have push access to the main repo — you **fork** it into your own account, push branches to your fork, and open a PR from `yourfork:branch` → `upstream:main`. The mechanics are the same; only the *where you pushed the branch* differs.
+
+# Tagging Releases
+
+A **tag** is a permanent, human-meaningful name for a specific commit — typically used to mark a release (`v1.0.0`, `v2.3.1-beta`, `release-2024-01-15`). Unlike branches, tags don't move. Once `v1.0.0` is created, it points to that commit forever.
+
+## Lightweight vs. Annotated Tags
+
+Git has two kinds of tags:
+
+- **Lightweight tag** — just a pointer to a commit, like a branch that never moves. Created with `git tag <name>`.
+- **Annotated tag** — a full Git object that carries a tagger name, email, timestamp, and message (and can be GPG-signed). Created with `git tag -a <name> -m "message"`.
+
+For releases, **always use annotated tags**. They record who released what and when, and they're required for signed-release verification.
+
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0: initial public release"
+```
+
+Use lightweight tags only for quick, personal markers you don't share.
+
+## Listing, Pushing, and Checking Out Tags
+
+```bash
+git tag                           # list all tags
+git tag -l "v1.*"                 # list tags matching a glob
+git show v1.0.0                   # inspect the tag and its commit
+git push origin v1.0.0            # push ONE tag to the remote
+git push --tags                   # push ALL local tags
+git switch --detach v1.0.0        # check out the tagged commit (detached HEAD)
+git tag -d v1.0.0                 # delete the tag locally
+git push origin :refs/tags/v1.0.0 # delete the tag on the remote
+```
+
+Tags are **not** pushed by default with `git push`. You must explicitly push them, either individually or with `--tags`. This is a common source of confusion — "I tagged the release but my teammate can't see it."
+
+## Semantic Versioning and `git describe`
+
+Teams often follow **Semantic Versioning (SemVer)**: `MAJOR.MINOR.PATCH`, where each component signals a different level of change (breaking, feature-add, bug-fix). [Conventional Commits](#writing-good-commit-messages) play well with this — the commit types map directly to SemVer bumps.
+
+`git describe` produces a human-readable version string from the nearest tag:
+
+```bash
+$ git describe
+v1.2.0-15-ga3f2d9c
+```
+
+Read this as *"15 commits past the v1.2.0 tag, at commit `a3f2d9c`"*. Build systems use this to stamp binaries with their exact source version.
+
+# Rewriting History
+
+The commands in this section either **create new commit objects with new hashes** or **move branch pointers backward** — operations that rewrite or rearrange history. They are powerful, but the rule below is non-negotiable.
+
+## The Golden Rule: Never Rewrite Pushed Commits
+
+> ⚠️ **Never rewrite a branch that has been pushed to a shared remote.** The new commits *look* the same to you but have different hashes, so collaborators' clones still reference the old hashes — a recipe for conflicts, duplicate patches, and lost work.
+
+All of the operations below create new commit objects or move pointers backward. They are **safe on local, unpushed commits** and **dangerous on anything that has been pushed**. When in doubt, use `git revert` (additive — see [Undoing Committed Work](#undoing-committed-work)) instead.
+
+## Rebasing a Branch
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -554,8 +1167,6 @@ The commands above only *append* commits. This section covers commands that **cr
 }
 </script>
 </div>
-
-> **Golden rule:** never rebase a branch that has been pushed to a shared remote. The new commits *look* the same to you but have different hashes, so your collaborators' clones still reference the old hashes — a recipe for conflicts and lost work.
 
 ### Divergence and Time-Travel
 
@@ -630,50 +1241,6 @@ The single-step card above shows rebase as a finished magic trick — two commit
 </script>
 </div>
 
-## Amending the Tip Commit
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git commit --amend",
-  "description": "**Rewrites** the most recent commit in place \u2014 typically to fix a typo in the message or include a file you forgot to stage.\n\nBecause a commit's hash is derived from its content, the amended commit gets a brand-new hash **C\u2032**; the original **C** is discarded.\n\n*Safe for local work, but never amend a commit you've already pushed* \u2014 collaborators' clones still reference the old hash.",
-  "before": {
-    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug (typo)|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "C'00000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix critical bug|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
-
-Amend is safe on local work but subject to the same golden rule: never amend a commit you've already pushed to a shared branch.
-
-## Squash Merge
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git merge --squash feature",
-  "description": "Collapses every commit on `feature` into a single new commit on `main` (C+D).\n\nCrucially, this new commit has **only one parent** \u2014 the previous `main` tip (E) \u2014 *not* the `feature` branch's tip (D). That's because `--squash` produces a regular commit, not a merge commit: Git records the squashed work as if you had written those changes directly on `main` yourself, with no structural link back to `feature`.\n\nThe `feature` branch stays at D, unreferenced from `main`'s history; commands like `git log main` won't show it as an ancestor.\n\nUseful when you want `main` to read as a series of clean features, not every intermediate \"fix typo\" commit \u2014 but the trade-off is that you lose the ability to trace the original commits from `main`.",
-  "before": {
-    "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main\n  feature",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "C+D0000000000000000000000000000000000000|E000000000000000000000000000000000000000|Squashed C+D|HEAD -> main\nE000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main\n  feature",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
-
 ## Interactive Rebase
 
 `git rebase -i <base>` opens an editor with a **todo file** listing each commit between `<base>` and `HEAD`. You change the action in front of each line to rewrite history exactly how you like:
@@ -727,67 +1294,7 @@ Amend is safe on local work but subject to the same golden rule: never amend a c
 </script>
 </div>
 
-## Undoing: Reset vs. Revert
-
-Two commands remove the effect of a commit, with fundamentally different graph consequences.
-
-### `git reset --hard` — rewind the branch (local only)
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git reset --hard HEAD~1",
-  "description": "**Rewinds** the `main` branch pointer by one commit, dropping everything that was on top.\n\nThe tip commit (C) is no longer reachable from any branch and will be garbage-collected eventually.\n\n`--hard` also **overwrites your working directory and staging area** to match the target commit, so any uncommitted changes are lost \u2014 watch the staged `notes.txt` vanish along with commit C.\n\n*Only safe for local, unpushed work.*",
-  "before": {
-    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main",
-    "head": "refs/heads/main",
-    "files": {
-      "untracked": [],
-      "unstaged": [{"status": "modified", "path": "src/bug.js"}],
-      "staged": [{"status": "new file", "path": "notes.txt"}],
-      "stashed": []
-    }
-  },
-  "after": {
-    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main",
-    "head": "refs/heads/main",
-    "files": {
-      "untracked": [],
-      "unstaged": [],
-      "staged": [],
-      "stashed": []
-    }
-  }
-}
-</script>
-</div>
-
-### `git revert` — append an inverse commit (safe for shared branches)
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git revert HEAD",
-  "description": "Instead of rewriting history, `revert` **appends** a new commit **R** whose changes exactly undo those of the target commit.\n\nThe original commit (C) still exists and is still reachable \u2014 history now records both the bug being introduced *and* it being reverted.\n\nThis is the **only safe way** to undo a commit that has already been pushed to a shared branch.",
-  "before": {
-    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "R000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Revert \"Buggy commit\"|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
-
-**Rule of thumb:** for local work you haven't pushed, `reset --hard` is fine. For anything pushed to a shared branch, always use `revert`.
-
-## Cherry-picking
+## Cherry-Picking a Commit
 
 `git cherry-pick <hash>` copies a single commit from another branch onto the current branch as a new commit (new hash, same changes). Useful to grab a specific fix without merging an entire branch:
 
@@ -810,302 +1317,65 @@ Two commands remove the effect of a commit, with fundamentally different graph c
 </script>
 </div>
 
-# Remote Collaboration
+## Deciding Between Rebase, Cherry-Pick, and Squash Merge
 
-Git really shines once you're sharing work with other people. This section covers the commands for working with remotes and the rescue tools for when something goes wrong.
+All three create new commits with new hashes. Their difference is **scope and intent**:
 
-## Remotes
+| Command | Scope | Intent |
+|---|---|---|
+| `git rebase <base>` | All commits unique to the current branch | "Put my work on top of the latest base." Produces linear history before a PR. |
+| `git cherry-pick <sha>` | One commit (or a small range) | "I need this one fix on a different branch." Backports, selective pickups. |
+| `git merge --squash <branch>` | All commits on a branch, collapsed into one | "Land this whole feature as a single commit on main." Clean feature-log. |
 
-A **remote** is a named URL pointing to another copy of the repository — typically on GitHub, GitLab, or a self-hosted server. Remote servers typically host **bare repositories** (`git init --bare`) — repositories with no working tree; they store the object database, refs, and config (the contents of a regular `.git/` directory) but no checked-out files.
+All three obey the [Golden Rule](#the-golden-rule-never-rewrite-pushed-commits) — never rewrite pushed history.
 
-* **`git clone <url>`** — creates a local copy of a remote repository.
-* **`git remote`** — lists configured remotes. `git remote add origin <url>` registers a remote named `origin` (the conventional primary remote name).
-* **`git fetch`** — downloads new commits and branches from a remote *without* modifying your working directory or current branch. Useful for reviewing before deciding how to integrate.
-* **`git pull`** — shorthand for `git fetch` followed by `git merge`. Fetches and immediately merges into your current branch.
-* **`git push`** — uploads your local commits to a remote. `git push -u origin <branch>` pushes and sets up **upstream tracking**, so future `git push` and `git pull` on this branch can omit the remote name.
+# Branching Strategies
 
-The diagram below shows how each command moves data between the four areas Git works with:
+Once you can branch, merge, and open pull requests, the next question is: *how should the team organise branches?* Different answers emerge based on release cadence, team size, and tolerance for complexity. Three strategies cover most industry practice.
 
-<pre><code class="language-uml-sequence">
-@startuml
-participant WorkingTree
-participant StagingArea
-participant LocalRepo
-participant RemoteRepo
+## Gitflow
 
-RemoteRepo ->> LocalRepo: git clone / git fetch
-LocalRepo ->> WorkingTree: git checkout
-WorkingTree ->> StagingArea: git add
-StagingArea ->> LocalRepo: git commit
-WorkingTree ->> LocalRepo: git commit -a
-LocalRepo ->> WorkingTree: git merge
-RemoteRepo ->> WorkingTree: git pull
-LocalRepo ->> RemoteRepo: git push
-@enduml
-</code></pre>
+**Gitflow** uses long-lived `main` and `develop` branches plus short-lived `feature/*`, `release/*`, and `hotfix/*` branches.
 
-### Remote-Tracking Branches
+| Branch | Purpose | Lifetime |
+|---|---|---|
+| `main` | Production-ready code; tagged with release versions | Permanent |
+| `develop` | Integration branch for unreleased work | Permanent |
+| `feature/X` | New feature | Days–weeks |
+| `release/X` | Stabilisation before a release | Days |
+| `hotfix/X` | Urgent fix to production | Hours |
 
-A **remote-tracking branch** (e.g. `origin/main`) is a read-only local reference stored in `.git/refs/remotes/`. It records the last known position of a branch on the remote — not where the remote is *right now*, but where it was the last time you communicated with it. In the graphs below it appears with a **dashed label** and grey color to distinguish it from your local branch pointer.
+**Pros:** Clear roles; supports parallel releases and post-release hotfixes.
+**Cons:** Heavy for small teams and fast-moving projects; long-lived branches invite merge-hell.
+**Best for:** Versioned, shipped-to-customer software with slow release cadences.
 
-You cannot commit to a remote-tracking branch directly. It moves only when you run `git fetch`, `git pull`, or `git push`. This design lets you inspect and compare what is on the remote (`git log origin/main`, `git diff main..origin/main`) before deciding how to integrate.
+## Trunk-Based Development
 
-The key distinction between `fetch` and `pull` is worth animating. The remote-tracking branch `origin/main` (shown with a dashed label) records the last known state of the remote — `fetch` advances it without touching your local branch; `pull` goes one step further and merges it in:
+**Trunk-based development** keeps a single long-lived branch (`main` or `trunk`) and insists that feature branches live for hours, not days. Developers integrate multiple times a day. Unfinished work hides behind **feature flags** rather than on separate branches.
 
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git fetch",
-  "description": "Downloads new commits from the remote into the remote-tracking branch (origin/main) without touching your local branch or working directory.\n\nAfter a fetch you can review what changed (git log origin/main, git diff main..origin/main) before deciding to merge.",
-  "before": {
-    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
+**Pros:** Minimal integration pain; small PRs; fast CI feedback.
+**Cons:** Requires CI discipline; feature flags add complexity; riskier for regulated environments.
+**Best for:** Continuous-deployment SaaS, high-velocity teams, modern web applications.
 
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git pull",
-  "description": "Shorthand for git fetch + git merge — downloads the remote commits and immediately fast-forwards the local branch to match origin/main.\n\nBoth pointers land on the same commit. If the local branch had diverged, a merge commit would be created instead.",
-  "before": {
-    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add feature|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Fix bug|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
+## Feature Branches with Pull Requests (GitHub Flow)
 
-### Diverged `pull`: Merge Commit vs. Rebase
+The middle ground, popular on GitHub: one long-lived `main` branch plus short-lived feature branches, each merged via a [pull request](#pull-requests-and-code-review) after review and CI. No `develop`, no `release/*`.
 
-The fast-forward case above is the lucky path — your local branch had no new commits of its own, so Git could simply slide `main` forward. The interesting case is when *both* you and the remote have moved on since your last sync. Suppose you committed **B** locally, and while you were working, a teammate pushed **C** to the remote. Now `main` and `origin/main` have diverged, both descending from the common ancestor **A**.
+**Pros:** Simple model; aligns with the platform UX; supports PR review.
+**Cons:** No built-in place for release stabilisation.
+**Best for:** Most modern teams — this is the default for open-source and many internal projects.
 
-`git pull` handles this by creating a **merge commit** that ties the two tips together — preserving the full DAG but littering history with auto-generated "Merge remote-tracking branch 'origin/main'" commits:
+## Choosing a Strategy
 
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git pull",
-  "description": "After `git fetch`, Git sees that `main` (at B) and `origin/main` (at C) have diverged from their common ancestor A. `git pull`'s default strategy is **merge**: it creates a new merge commit **M** with two parents — your local **B** and the remote's **C** — and advances `main` to M.\n\nHistory is preserved exactly (no hashes change), but the graph gains a diamond and an auto-generated message *`Merge remote-tracking branch 'origin/main'`* (or, on older Git, *`Merge branch 'main' of <remote-url>`*). On a busy team branch, these pile up and clutter the log.",
-  "before": {
-    "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "M000000000000000000000000000000000000000|B000000000000000000000000000000000000000 C000000000000000000000000000000000000000|Merge remote-tracking branch 'origin/main'|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|\nA000000000000000000000000000000000000000||Shared base|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
+A rough decision tree:
 
-`git pull --rebase` is the antidote. Instead of merging, it **replays** your local commits on top of the fetched remote tip, producing a linear history with no merge commit. Your local **B** becomes **B′** with a new hash, parented on the remote's **C** instead of the shared ancestor **A**:
+- **Ship continuously to production, one version?** → Trunk-based or GitHub Flow.
+- **Ship multiple versions in parallel to customers on different schedules?** → Gitflow.
+- **Small team, no strong preference?** → GitHub Flow (least ceremony).
 
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git pull --rebase",
-  "description": "Same diverged situation, different integration strategy. `git pull --rebase` fetches `origin/main` (bringing in C), then **rebases** your local commits onto it — each of your commits is replayed as a brand-new commit with a new hash.\n\nHere your single local commit **B** is replayed on top of **C**, becoming **B′**. The old **B** is discarded. History reads as a straight line (`A → C → B′`), and no merge commit appears.\n\nRule of thumb: prefer `git pull --rebase` on your own feature branch to keep the log clean; stick with the default `git pull` (merge) on shared long-lived branches where rewriting any history — even your own — is risky.",
-  "before": {
-    "log": "C000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Your local work|HEAD -> main\nA000000000000000000000000000000000000000||Shared base|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "B'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Your local work|HEAD -> main\nC000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Teammate's change|origin/main\nA000000000000000000000000000000000000000||Shared base|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
+The single most important choice is *keeping feature branches short*. Regardless of strategy, branches that live for weeks accumulate merge conflicts and hide unfinished work from CI. Aim for *days*, not *weeks*.
 
-You can make `--rebase` the default for a branch (`git config branch.main.rebase true`) or globally (`git config --global pull.rebase true`) so you don't have to type the flag every time.
-
-### Pushing
-
-`git push` is the mirror image of `git fetch`: it uploads your local commits to the remote and then advances the **remote-tracking branch** `origin/main` to match. The commits themselves do not change (no new hashes) — only the grey dashed label slides forward to catch up with your local `main`:
-
-<div data-git-command-lab>
-<script type="application/json">
-{
-  "command": "git push",
-  "description": "You've made two local commits (**C** and **D**) on top of the last shared state (**B**). `git push` sends them to the remote and, once the remote accepts them, Git advances `origin/main` to match your local `main`.\n\nNotice what *doesn't* happen: no new commit is created, and no existing commit gets a new hash. The only visible change is that the dashed `origin/main` label hops from **B** up to **D** — a pointer move, nothing more. This is why `push` is a structural no-op on the graph: it only updates where the remote-tracking label sits.\n\n`git push` fails if the remote has commits you don't have locally (someone else pushed since your last fetch). Pull first to reconcile, then push.",
-  "before": {
-    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Fix bug|origin/main\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "after": {
-    "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add tests|HEAD -> main, origin/main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add feature|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Fix bug|\nA000000000000000000000000000000000000000||Initial commit|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  }
-}
-</script>
-</div>
-
-### The Force-Push Warning
-
-`git push -f` (force-push) overwrites remote history to match your local copy. On a shared branch this **permanently deletes** commits your collaborators have already pushed. Never force-push to `main` or any shared integration branch. If you've rebased or amended commits that are already remote, push to a new branch instead — or use `--force-with-lease` which at least refuses to overwrite if the remote has moved since your last fetch.
-
-## Rescue and Debugging Tools
-
-* **`git stash` / `git stash pop`** — temporarily save uncommitted changes (staged and unstaged) so you can switch contexts without making a messy commit. `pop` re-applies the stashed changes later.
-
-Under the hood, `git stash` is implemented as **real commit objects**, not a separate storage area. When you run `git stash`, Git creates up to two commits off of `HEAD`:
-
-1. An **index commit `i`** whose tree captures the state of the *staging area*. Its single parent is the current `HEAD`.
-2. A **WIP commit `w`** whose tree captures the state of the *working directory*. It's a **merge commit** with **two parents** — the current `HEAD` *and* the index commit `i` — so that a future `stash pop` can restore both the staged and unstaged halves independently.
-
-The ref `refs/stash` (shown in the graph as the **stash** pointer, and exposed by name as `stash@{0}`) then points at the `w` commit. Neither `main` nor `HEAD` moves — stashing never touches your branch. The shelf on the right still shows `stash@{0}` as a user-facing handle; the new commits in the graph are what `stash@{0}` actually *is*.
-
-`git stash pop` is the inverse: it applies `w`'s working-tree changes back onto the index/working directory, then drops the `refs/stash` ref. Without a ref reaching them, the `i` and `w` commits become unreachable and get garbage-collected by Git's background GC.
-
-<div data-git-command-lab-multi>
-<script type="application/json">
-{
-  "description": "You're mid-change on `main`, but need to jump to another branch for a quick fix. Committing half-finished work is ugly; `git stash` saves the state aside so you can come back to it with `pop` later.\n\nStash is **not** a separate storage area \u2014 it's regular commit objects (`i` for the index, `w` for the working tree) on a dangling branch `refs/stash`. Watch the graph: the new commits pop into a sibling lane during `git stash` and vanish during `git stash pop`. The shelf on the right is just a friendlier view of the same data.",
-  "initialState": {
-    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main",
-    "head": "refs/heads/main",
-    "files": {
-      "untracked": [],
-      "unstaged": [{"status": "modified", "path": "checkout.js"}],
-      "staged": [{"status": "modified", "path": "cart.js"}],
-      "stashed": []
-    }
-  },
-  "steps": [
-    {
-      "command": "git stash",
-      "description": "Git creates two new commits off `B`:\n\n- **`i`** captures the *staged* tree (so `cart.js`'s staged version is preserved). Parent: `B`.\n- **`w`** captures the *working* tree (so `checkout.js`'s unstaged modification is preserved too). Parents: `B` and `i` \u2014 a merge commit, so both halves can be recovered independently.\n\nThe ref `refs/stash` (shown as the **stash** pointer) now points at `w`. `HEAD` and `main` stay at `B`; your branch history is untouched. The working tree and index are rewound to `B`'s state, leaving the strip clean.",
-      "state": {
-        "log": "w000000000000000000000000000000000000000|B000000000000000000000000000000000000000 i000000000000000000000000000000000000000|WIP on main: B Initial commit|refs/stash\ni000000000000000000000000000000000000000|B000000000000000000000000000000000000000|index on main: B Initial commit|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "* main",
-        "head": "refs/heads/main",
-        "files": {
-          "untracked": [],
-          "unstaged": [],
-          "staged": [],
-          "stashed": [{"ref": "stash@{0}", "branch": "main", "message": "cart + checkout WIP"}]
-        }
-      }
-    },
-    {
-      "command": "git stash pop",
-      "description": "Git replays `w`'s tree onto your working directory \u2014 `cart.js` and `checkout.js` both come back \u2014 then deletes the `refs/stash` ref. Without any ref reaching them, `i` and `w` become unreachable commit objects; Git's garbage collector removes them on its next pass, so the graph snaps back to just `B` and `A`.\n\n(Note: `pop` defaults to restoring every change as unstaged. Use `git stash pop --index` to preserve the original staged/unstaged split; this lab simplifies for pedagogy.)",
-      "state": {
-        "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "* main",
-        "head": "refs/heads/main",
-        "files": {
-          "untracked": [],
-          "unstaged": [{"status": "modified", "path": "checkout.js"}],
-          "staged": [{"status": "modified", "path": "cart.js"}],
-          "stashed": []
-        }
-      }
-    }
-  ]
-}
-</script>
-</div>
-
-* **`git bisect`** — binary search through commit history to find the exact commit that introduced a bug. You mark known-good and known-bad commits, then Git checks out the midpoint repeatedly. With 1,000 commits in the range, it finds the culprit in at most **10 tests**.
-The workflow for `git bisect` is always the same six-step ritual — start a session, mark bad, mark good, then let Git drive. Click through the demo below to see each command and its effect on the graph.
-
-<div data-git-command-lab-multi>
-<script type="application/json">
-{
-  "description": "Our repository has 6 commits on `main`. A bug appeared recently — we know commit **B** (`Initial setup`) was clean. We'll use `git bisect` to binary-search the history and pinpoint the exact bad commit.\n\n`git bisect` eliminates *half* the remaining candidates on each step, so even a repo with 1,000 commits needs at most **10 tests**.",
-  "initialState": {
-    "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
-    "branches": "* main",
-    "head": "refs/heads/main"
-  },
-  "steps": [
-    {
-      "command": "git bisect start",
-      "description": "`git bisect start` initialises the bisect session. Git creates `.git/BISECT_LOG` to record progress. No visible change to the graph — this just puts Git into bisect mode.",
-      "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "* main",
-        "head": "refs/heads/main"
-      }
-    },
-    {
-      "command": "git bisect bad",
-      "description": "`git bisect bad` marks the current commit (`HEAD`, F — `Add analytics`) as **bad**: the bug is present here. Git stores this as `refs/bisect/bad`.",
-      "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "* main",
-        "head": "refs/heads/main"
-      }
-    },
-    {
-      "command": "git bisect good B",
-      "description": "`git bisect good B` marks B (`Initial setup`) as the last known-good commit. The search range is now [C, D, E] — 3 commits. Git picks the **midpoint (D)** and checks it out automatically. HEAD is now detached at D.",
-      "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "  main",
-        "head": "detached"
-      }
-    },
-    {
-      "command": "git bisect bad",
-      "description": "`git bisect bad` marks D (`Add auth`) as bad — you tested it and the bug is present. The search range narrows to [C] (the single commit between B-good and D-bad). Git checks out **C** for your next test.",
-      "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "  main",
-        "head": "detached"
-      }
-    },
-    {
-      "command": "git bisect good",
-      "description": "`git bisect good` marks C (`Add login`) as good — you tested it and the bug is absent. Git now knows the answer: C is good and D is bad, and they are adjacent, so **`Add auth` (D) is the first bad commit**.\n\nGit prints the full commit details. Run `git show D` or `git diff C D` to see exactly what changed.",
-      "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD, bisect/good\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "  main",
-        "head": "detached"
-      }
-    },
-    {
-      "command": "git bisect reset",
-      "description": "`git bisect reset` ends the bisect session and returns `HEAD` back to `main`. All `bisect/*` refs are deleted and the working directory is clean again.\n\nThe culprit was **D** (`Add auth`) — now you know exactly where to look for the fix.",
-      "state": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
-        "branches": "* main",
-        "head": "refs/heads/main"
-      }
-    }
-  ]
-}
-</script>
-</div>
-
-* **`git blame <file>`** — annotates each line with the author and commit hash of the last person to modify it.
-* **`git reflog`** — chronological log of every position `HEAD` has been at. Your safety net for recovering "lost" commits after an accidental reset or a detached-HEAD detour: `git reflog` shows the hash, and `git switch -c <name> <hash>` brings it back.
-* **`git show <commit>`** — displays detailed information about a specific commit or other Git object.
-
-## Submodules
+# Submodules
 
 For very large projects, **Git submodules** let you include another Git repository as a subdirectory while keeping its history independent. Internally a submodule is just a "gitlink" entry — a pinned commit SHA — in the superproject, alongside a `.gitmodules` config file with the URL. Each populated submodule directory contains a small `.git` text file (a "gitfile"), not a full `.git/` directory; the submodule's actual git data (objects, refs, HEAD) is stored in the parent repo's `.git/modules/<name>/` directory. Pulling always brings in the pinned revision, which makes submodule updates explicit rather than automatic.
 
@@ -1182,22 +1452,326 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
 </script>
 </div>
 
+# Investigating History
+
+Once a project has accumulated history, reading it — and searching it — becomes its own skill. Four commands cover almost all investigation work.
+
+## Viewing Commits (`git log`, `git show`)
+
+`git log` shows the sequence of past commits. Useful flags:
+
+- `-p` — show each commit's full patch (diff).
+- `--oneline` — one commit per line (hash + subject).
+- `--graph --all` — ASCII art graph across all branches and merges.
+- `--stat` — per-file change summary (no full diff).
+- `--grep="<pattern>"` — search commit messages.
+- `-S"<string>"` — "pickaxe": find commits whose diff adds or removes `<string>`.
+- `-- <path>` — limit to commits that touched `<path>`.
+
+```bash
+git log --oneline --graph --all   # the most useful overview
+git log -p -- src/auth.py         # every change to one file, with diffs
+git log --grep="rate limit"       # find "rate limit" in commit messages
+git log -S"RateLimiter"           # find commits that added/removed the string "RateLimiter"
+```
+
+`git show <commit>` displays detailed information about a specific commit — the message, the author, the full diff. Pair it with `git blame` (below) to go from a suspicious line to the commit that wrote it:
+
+```bash
+git blame -L 42,42 src/auth.py   # who last touched line 42?
+# copy the SHA, then:
+git show <sha>                    # read the full context
+```
+
+## Tracing a Line's Origin (`git blame`)
+
+`git blame <file>` annotates each line with the author, commit hash, and timestamp of the last person to modify it. Essential for understanding *why* a line exists before changing it:
+
+```bash
+git blame src/auth.py             # annotate every line
+git blame -L 42,50 src/auth.py    # narrow to lines 42–50
+git blame -w src/auth.py          # ignore whitespace-only changes (skip reformat commits)
+```
+
+**What blame doesn't see:** lines that *used to exist but were deleted*. For those — or for any behavioural regression where you don't yet know which line is at fault — use `git bisect`.
+
+## Binary-Searching for Regressions (`git bisect`)
+
+`git bisect` binary-searches through commit history to find the exact commit that introduced a bug. You mark known-good and known-bad commits, then Git checks out the midpoint repeatedly. With 1,000 commits in the range, it finds the culprit in at most **10 tests**.
+
+The workflow for `git bisect` is always the same six-step ritual — start a session, mark bad, mark good, then let Git drive. Click through the demo below to see each command and its effect on the graph.
+
+<div data-git-command-lab-multi>
+<script type="application/json">
+{
+  "description": "Our repository has 6 commits on `main`. A bug appeared recently — we know commit **B** (`Initial setup`) was clean. We'll use `git bisect` to binary-search the history and pinpoint the exact bad commit.\n\n`git bisect` eliminates *half* the remaining candidates on each step, so even a repo with 1,000 commits needs at most **10 tests**.",
+  "initialState": {
+    "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "steps": [
+    {
+      "command": "git bisect start",
+      "description": "`git bisect start` initialises the bisect session. Git creates `.git/BISECT_LOG` to record progress. No visible change to the graph — this just puts Git into bisect mode.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git bisect bad",
+      "description": "`git bisect bad` marks the current commit (`HEAD`, F — `Add analytics`) as **bad**: the bug is present here. Git stores this as `refs/bisect/bad`.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    },
+    {
+      "command": "git bisect good B",
+      "description": "`git bisect good B` marks B (`Initial setup`) as the last known-good commit. The search range is now [C, D, E] — 3 commits. Git picks the **midpoint (D)** and checks it out automatically. HEAD is now detached at D.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main",
+        "head": "detached"
+      }
+    },
+    {
+      "command": "git bisect bad",
+      "description": "`git bisect bad` marks D (`Add auth`) as bad — you tested it and the bug is present. The search range narrows to [C] (the single commit between B-good and D-bad). Git checks out **C** for your next test.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main",
+        "head": "detached"
+      }
+    },
+    {
+      "command": "git bisect good",
+      "description": "`git bisect good` marks C (`Add login`) as good — you tested it and the bug is absent. Git now knows the answer: C is good and D is bad, and they are adjacent, so **`Add auth` (D) is the first bad commit**.\n\nGit prints the full commit details. Run `git show D` or `git diff C D` to see exactly what changed.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|HEAD, bisect/good\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|bisect/good\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "  main",
+        "head": "detached"
+      }
+    },
+    {
+      "command": "git bisect reset",
+      "description": "`git bisect reset` ends the bisect session and returns `HEAD` back to `main`. All `bisect/*` refs are deleted and the working directory is clean again.\n\nThe culprit was **D** (`Add auth`) — now you know exactly where to look for the fix.",
+      "state": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Add analytics|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Fix layout|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial setup|\nA000000000000000000000000000000000000000||Repository init|",
+        "branches": "* main",
+        "head": "refs/heads/main"
+      }
+    }
+  ]
+}
+</script>
+</div>
+
+**Automating bisect.** If your test script exits `0` on success and non-zero on failure, `git bisect run <script>` automates the whole search — Git runs the script at each candidate and uses the exit code to decide. Always end with `git bisect reset` — without it, HEAD stays on the last-checked historical commit, which is a confusing state to leave behind.
+
+# Undoing Committed Work
+
+Mistakes reach your history eventually — a buggy commit, an accidental merge, an embarrassing message. Git provides two opposing tools for undoing committed work, plus a safety net that makes both survivable.
+
+## Reverting a Commit (`git revert`)
+
+> ✅ **Additive.** Safe on shared branches — preserves history exactly.
+
+`git revert <sha>` creates a **new commit** whose changes are the exact inverse of the target commit. The original commit stays in history; the revert commit cancels its effect. Because no existing commits are modified, revert is safe even on branches that teammates have already pulled.
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git revert HEAD",
+  "description": "**Additive operation \u2014 safe on shared branches.** Instead of rewriting history, `revert` **appends** a new commit **R** whose changes exactly undo those of the target commit.\n\nThe original commit (C) still exists and is still reachable \u2014 history now records both the bug being introduced *and* it being reverted.\n\nBecause no existing hashes change, teammates who already pulled the buggy commit see the revert commit as a normal follow-up. This is the **only safe way** to undo a commit that has already been pushed.",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "R000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Revert \"Buggy commit\"|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  }
+}
+</script>
+</div>
+
+## Resetting a Branch (`git reset`)
+
+> ⚠️ **Rewrites history.** Only safe on local, unpushed commits.
+
+`git reset <sha>` moves the current branch pointer to `<sha>`, effectively **discarding** every commit between the old tip and `<sha>`. Those commits become unreachable from any branch and are eventually garbage-collected (though [reflog](#the-safety-net-git-reflog) can recover them within the retention window).
+
+Three modes determine what happens to the working tree and staging area:
+
+| Mode | Branch pointer | Staging area | Working tree |
+|---|---|---|---|
+| `--soft` | moves to target | **preserved** | preserved |
+| `--mixed` (default) | moves to target | reset to target | preserved |
+| `--hard` | moves to target | reset to target | **overwritten** |
+
+Most common uses:
+
+- `git reset --soft HEAD~1` — "un-commit" the last commit while keeping the changes staged (perfect for re-committing with a better message or splitting into smaller commits).
+- `git reset HEAD~1` — un-commit and un-stage (changes stay as unstaged edits).
+- `git reset --hard HEAD~1` — discard the commit *and* the changes entirely.
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git reset --hard HEAD~1",
+  "description": "**Rewinds** the `main` branch pointer by one commit, dropping everything that was on top.\n\nThe tip commit (C) is no longer reachable from any branch and will be garbage-collected eventually.\n\n`--hard` also **overwrites your working directory and staging area** to match the target commit, so any uncommitted changes are lost \u2014 watch the staged `notes.txt` vanish along with commit C.\n\n*Only safe for local, unpushed work.*",
+  "before": {
+    "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Buggy commit|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [{"status": "modified", "path": "src/bug.js"}],
+      "staged": [{"status": "new file", "path": "notes.txt"}],
+      "stashed": []
+    }
+  },
+  "after": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add feature|HEAD -> main\nA000000000000000000000000000000000000000||Repository init|",
+    "branches": "* main",
+    "head": "refs/heads/main",
+    "files": {
+      "untracked": [],
+      "unstaged": [],
+      "staged": [],
+      "stashed": []
+    }
+  }
+}
+</script>
+</div>
+
+## Choosing: `reset` vs. `revert`
+
+| Situation | Use |
+|---|---|
+| Mistake is on a **local, unpushed** branch | `git reset` (any mode) |
+| Mistake has been **pushed** to a shared branch | `git revert` — always |
+| You want to preserve history as an audit trail | `git revert` |
+| You want to erase an embarrassing experiment (local only) | `git reset --hard` |
+
+Force-pushing a rewritten shared branch after `git reset` is how teams accidentally destroy each other's work. See the [Force-Push Warning](#the-force-push-warning).
+
+## Detached HEAD
+
+`HEAD` normally points at a branch (e.g. `ref: refs/heads/main`). If you point `HEAD` directly at a commit — `git switch --detach <sha>`, checking out a tag, or mid-bisect — you are in **detached HEAD** state. No branch is "following" your commits.
+
+<div data-git-command-lab>
+<script type="application/json">
+{
+  "command": "git switch --detach HEAD~1",
+  "description": "Points `HEAD` **directly** at a specific commit (here, one step before the current tip) instead of at a branch. This is called **detached HEAD** state.\n\nUseful for inspecting old code \u2014 but commits made in this state aren't anchored to any branch and are easy to lose when switching away.\n\nRecover them with `git reflog`, or stay safe by running `git switch -c <name>` to bookmark your work before leaving.",
+  "before": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add login|HEAD -> main\nA000000000000000000000000000000000000000||Initial commit|",
+    "branches": "* main",
+    "head": "refs/heads/main"
+  },
+  "after": {
+    "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add login|main\nA000000000000000000000000000000000000000||Initial commit|HEAD",
+    "branches": "  main",
+    "head": "detached"
+  }
+}
+</script>
+</div>
+
+**Why it matters:** any commits you make while detached are only reachable through `HEAD`. The moment you `git switch` to another branch, your new commits have no branch pointer anchoring them — they are *orphaned*. Git will garbage-collect them after the reflog retention window expires.
+
+**The fix is always the same:** before leaving detached HEAD, create a branch to anchor any new work:
+
+```bash
+git switch -c my-experiment
+```
+
+## The Safety Net: `git reflog`
+
+Every time `HEAD` moves — commit, checkout, reset, rebase, merge, cherry-pick, stash — Git records the movement in the **reflog**, a per-repository diary of HEAD's positions. The reflog is local, never pushed, and kept for ~90 days by default (`gc.reflogExpire` / `gc.reflogExpireUnreachable`).
+
+```bash
+$ git reflog
+a3f2d9c HEAD@{0}: reset: moving to HEAD~2
+b7e1c4d HEAD@{1}: commit: Add login validation
+c9a2f3e HEAD@{2}: checkout: moving from main to feat-login
+...
+```
+
+Each entry is `<sha> HEAD@{n}: <operation>: <description>`. The `@{n}` syntax is **reflog-relative** — `HEAD@{1}` means "where HEAD was one move ago," `HEAD@{2}` two moves ago, and so on.
+
+**The universal recovery recipe** — for *any* destructive operation (rebase drop, hard reset, detached-HEAD orphan, merge gone wrong):
+
+1. Run `git reflog` and find the SHA of the state you want to return to.
+2. Create a branch anchoring that SHA:
+
+```bash
+git branch rescued-work <sha>
+# or, if you want to reset your current branch instead:
+git reset --hard <sha>
+```
+
+That's the whole pattern. Every "oh no, I lost my commits" question on Stack Overflow resolves to these two steps, as long as the reflog still has the entry and `git gc` hasn't pruned the unreachable objects.
+
+> **Why this works.** Commits are immutable and SHAs are content-addressed. A "deleted" commit isn't deleted — it's *unreferenced*. As long as some reference (a branch, a tag, or the reflog) still mentions its SHA, the object is safe. The reflog is therefore the universal bookmark, surviving even when every branch pointer has moved away.
+
+The reflog is one of the deepest reasons Git is forgiving: destructive commands look scary, but they are almost always recoverable for weeks after the fact.
+
+# Choosing the Right Tool
+
+Return-readers come to this page with a specific intent: *"I want to do X, which Git command?"* This table is that index.
+
+| You want to… | Reach for… | Section |
+|---|---|---|
+| Make your changes part of the project's history | `git add` then `git commit` | [Making Commits](#making-commits) |
+| Discard your uncommitted edits to one file | `git restore <file>` | [Managing Uncommitted Changes](#managing-uncommitted-changes) |
+| Un-stage a file you accidentally added | `git restore --staged <file>` | [Managing Uncommitted Changes](#managing-uncommitted-changes) |
+| Temporarily save your work for later | `git stash` / `git stash pop` | [Managing Uncommitted Changes](#managing-uncommitted-changes) |
+| Fix a typo in your most recent commit (local only) | `git commit --amend` ⚠️ | [Making Commits](#making-commits) |
+| Start a new line of work | `git switch -c <branch>` | [Branching](#branching) |
+| Bring a feature branch into `main` | `git merge <branch>` | [Merging Branches](#merging) |
+| Land a feature as a single clean commit on `main` | `git merge --squash <branch>` ⚠️ | [Merging Branches](#merging) |
+| Preview what an incoming merge would change | `git fetch` then `git diff main..origin/main` | [Collaborating with Remotes](#remotes) |
+| Copy one specific commit from another branch | `git cherry-pick <sha>` | [Reshaping History](#rewriting-history) |
+| Clean up messy WIP commits before opening a PR | `git rebase -i <base>` ⚠️ | [Reshaping History](#rewriting-history) |
+| Rebase your feature branch onto the latest `main` | `git rebase main` ⚠️ | [Reshaping History](#rewriting-history) |
+| Mark a commit as release v1.0.0 | `git tag -a v1.0.0 -m "..."` then `git push --tags` | [Tagging Releases](#tagging-releases) |
+| Undo a commit that's already been pushed | `git revert <sha>` | [Undoing Committed Work](#undoing-committed-work) |
+| Delete commits on your local (unpushed) branch | `git reset --hard <sha>` ⚠️ | [Undoing Committed Work](#undoing-committed-work) |
+| Find which commit introduced a bug | `git bisect start` + `git bisect run <test>` | [Investigating History](#investigating-history) |
+| Find who last changed line 42 of a file | `git blame -L 42,42 <file>` then `git show <sha>` | [Investigating History](#investigating-history) |
+| Recover a commit that looks "lost" | `git reflog` + `git branch <name> <sha>` | [Undoing Committed Work](#undoing-committed-work) |
+| See the history graph across all branches | `git log --oneline --graph --all` | [Investigating History](#investigating-history) |
+| Upload your branch for a PR | `git push -u origin <branch>` | [Collaborating with Remotes](#remotes) |
+| Get teammates' changes without merging yet | `git fetch` | [Collaborating with Remotes](#remotes) |
+| Get and integrate teammates' changes | `git pull` (or `git pull --rebase`) | [Collaborating with Remotes](#remotes) |
+| Include another repo as a pinned dependency | `git submodule add <url> <path>` | [Submodules](#submodules) |
+
+**Legend:** ⚠️ = rewrites history; never run on commits that have been pushed to a shared branch.
+
 # Best Practices
 
-* **Write meaningful commit messages.** Explain *what* changed and *why*. Avoid vague messages like "bugfix" or "small changes".
+A condensed checklist. Each item links back to its full section.
+
+* **Write meaningful [commit messages](#writing-good-commit-messages).** Imperative mood, ≤50-character subject, blank line, wrapped body explaining *why*.
 * **Commit small and often.** Prefer many coherent commits over one giant "everything" update.
-* **Never force-push on shared branches.** `git push -f` can permanently delete your collaborators' work.
-* **Prefer `revert` over `reset` for shared history.** `reset --hard` destroys history; `revert` preserves it.
-* **Use `.gitignore`.** Prevent tracking unnecessary or sensitive files. The file uses glob patterns:
-  * `*.pyc` — ignore files by extension.
-  * `__pycache__/` — ignore an entire directory (trailing slash).
-  * `.env` — ignore a specific file (commonly used to protect secrets and API keys).
-  * `node_modules/`, `venv/` — ignore dependency folders.
-  * `.DS_Store`, `Thumbs.db` — ignore OS-generated clutter.
-  
-  Note: `.gitignore` has **no retroactive effect** — files already tracked must be explicitly removed with `git rm --cached <file>` before the ignore pattern applies. Commit the `.gitignore` itself so the whole team benefits.
-* **Pull frequently.** Regularly pull the latest changes from the main branch to catch merge conflicts early.
-* **Prefer `git switch` and `git restore` over `git checkout`.** The `checkout` command is overloaded — it does both branch navigation *and* file restoration. The split replacements `git switch` (navigate branches) and `git restore` (undo file changes), introduced in Git 2.23, make intent clearer. `git checkout` is still fully supported.
+* **Create [`.gitignore`](#ignoring-files-gitignore) before your first commit.** It has no retroactive effect on tracked files. Commit `.gitignore` itself so the team shares the rules.
+* **Never commit secrets.** `.gitignore` is not a security tool — if a secret is ever committed, rotate it immediately and scrub history.
+* **Never [force-push](#the-force-push-warning) on shared branches.** `git push -f` can permanently delete your collaborators' work. Use `--force-with-lease` only on branches only *you* work on.
+* **Prefer [`revert`](#reverting-a-commit-git-revert) over [`reset`](#resetting-a-branch-git-reset) for shared history.** `reset --hard` destroys commits; `revert` preserves history.
+* **Follow the [golden rule of shared history](#the-golden-rule-never-rewrite-pushed-commits).** Never rewrite pushed commits — use `revert` instead.
+* **Pull frequently.** Regularly pull the latest changes from `main` to catch merge conflicts while they are small.
+* **Prefer `git switch` and `git restore` over `git checkout`.** The `checkout` command is overloaded — it does both branch navigation *and* file restoration. The split replacements (introduced in Git 2.23) make intent clearer. `git checkout` is still fully supported for backward compatibility.
+* **Review [branching strategy](#branching-strategies) with your team.** Short-lived branches beat long-lived ones every time, regardless of which strategy you pick.
+* **Let `git reflog` be your safety net.** Destructive operations are almost always recoverable within ~90 days. Don't panic, reflog first.
 
 # Quiz
 
@@ -1210,4 +1784,3 @@ The walk-through below covers the commands you'll meet most: adding submodules, 
 {% include flashcards.html id="git_advanced" %}
 
 {% include quiz.html id="git_advanced" %}
-

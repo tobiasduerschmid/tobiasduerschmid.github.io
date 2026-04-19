@@ -99,6 +99,54 @@
             min-width: 220px;
           }
 
+          /* Flex layout for navbar: brand shares row 1 with nav items, items wrap to row 2.
+             Bootstrap 3 floats brand left and nav right, but when nav is too wide to fit
+             alongside brand it drops to its own row — producing 3 rows instead of 2.
+             Replacing floats with flex fixes this at all desktop widths. */
+          @media (min-width: 768px) {
+            #navnav .container-fluid {
+              display: flex !important;
+              flex-wrap: wrap !important;
+              align-items: stretch !important;
+            }
+
+            #navnav .navbar-header {
+              float: none !important;
+              flex: 0 0 auto !important;
+              display: flex !important;
+              align-items: center !important;
+            }
+
+            #navnav .navbar-collapse {
+              flex: 1 1 0 !important;
+              display: flex !important;
+              padding: 0 !important;
+              border-top: none !important;
+              box-shadow: none !important;
+              overflow: visible !important;
+              align-items: center !important;
+            }
+
+            #navnav .navbar-nav {
+              float: none !important;
+              display: flex !important;
+              flex-wrap: wrap !important;
+              justify-content: flex-end !important;
+              align-items: center !important;
+              flex: 1 !important;
+              margin: 0 !important;
+            }
+
+            #navnav .navbar-nav > li {
+              float: none !important;
+            }
+
+            #navnav .navbar-nav > li > a {
+              padding-top: 5px !important;
+              padding-bottom: 5px !important;
+            }
+          }
+
           /* Mobile responsive styles - Improved breakpoint */
           @media screen and (max-width: 1100px) {
             #sidebar-toggle {
@@ -139,28 +187,6 @@
               margin-left: 0 !important;
               margin-right: 0 !important;
               margin-bottom: 15px !important;
-            }
-
-            /* Allow navbar links to wrap */
-            .navbar-nav {
-              margin: 7.5px -15px !important;
-              float: none !important;
-              display: flex !important;
-              flex-wrap: wrap !important;
-              justify-content: center !important;
-              width: 100% !important;
-            }
-
-            .navbar-nav>li {
-              float: none !important;
-              display: inline-block !important;
-            }
-
-            .navbar-nav>li>a {
-              padding-top: 5px !important;
-              padding-bottom: 5px !important;
-              white-space: normal !important;
-              text-align: center !important;
             }
           }
         </style>
