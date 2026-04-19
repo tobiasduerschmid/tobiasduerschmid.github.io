@@ -1472,6 +1472,14 @@ steps:
       - description: "Uses strict comparison for query param"
         command: "assert(source.includes(\"=== 'true'\") || source.includes('=== \"true\"'), 'Compare req.query.passing with strict === (it is a string!)')"
         hints:
+          - text: "Use exactly one space between the operator and its operand: write `=== 'true'`, not `==='true'` (no space) or `===  'true'` (two or more spaces). The test matches the exact string `=== 'true'`."
+            condition: "code_contains: ==='true'"
+          - text: 'Use exactly one space between the operator and its operand: write `=== "true"`, not `==="true"` (no space) or `===  "true"` (two or more spaces). The test matches the exact string `=== "true"`.'
+            condition: 'code_contains: ==="true"'
+          - text: "Use exactly one space between the operator and its operand: write `=== 'true'`, not `===  'true'` (two or more spaces). The test matches the exact string `=== 'true'`."
+            condition: "code_contains: ===  'true'"
+          - text: 'Use exactly one space between the operator and its operand: write `=== "true"`, not `===  "true"` (two or more spaces). The test matches the exact string `=== "true"`.'
+            condition: 'code_contains: ===  "true"'
           - text: "Remember from Step 2: `req.query.passing` is a string. Using `== true` would fail due to type coercion rules. Use `=== 'true'` (strict equality with a string)."
             condition: "code_missing: === 'true'"
       - description: "Route params use Number() conversion with ==="
