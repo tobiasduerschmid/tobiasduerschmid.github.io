@@ -1,5 +1,5 @@
-title: "Makefiles: From Pain to Power (C Edition)"
-description: "Learn how to write Makefiles, understand dependency graphs, and automate your C builds through hands-on practice in an interactive terminal."
+title: "Makefiles for C Projects"
+description: "Write Makefiles, understand dependency graphs, and automate C builds in an interactive terminal."
 
 require_tests: true
 autosave_type: none
@@ -13,31 +13,29 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 1: The "Pain Point" Sandbox
   # --------------------------------------------------------------------------
-  - title: "The Pain of Manual Compilation"
+  - title: "Manual Compilation and Why It Scales Poorly"
     instructions: |
-      Welcome to the **Makefiles Tutorial**!
-
-      Before you care *how* a Makefile works, you need to feel *why* it exists. Every build tool exists to solve a real pain. Let's feel that pain first.
+      Before learning *how* a Makefile works, it helps to see *why* it exists. Build tools solve a specific problem, and you will understand Makefiles faster if you first experience that problem directly.
 
       ### Task 1: Compile the project manually
 
-      We have a small C project with three files: `main.c`, `math.c`, and `io.c`. Let's compile them the hard way:
+      The project has three files: `main.c`, `math.c`, and `io.c`. Compile them directly with `gcc`:
 
       ```bash
       cd make_project
       gcc main.c math.c io.c -o app
       ```
 
-      **Oh no!** The compilation failed. There is a syntax error in `math.c`.
+      The compilation fails because `math.c` has a syntax error.
 
       ### Task 2: Fix the error and recompile
 
       1. Open `math.c` in the editor.
-      2. Fix the missing semicolon at the end of the `return` statement.
+      2. Add the missing semicolon at the end of the `return` statement.
       3. Save the file.
-      4. Go back to the terminal and **re-type** (or press Up arrow) that entire `gcc` command to try compiling again.
+      4. Press the Up arrow in the terminal and run the same `gcc` command again.
 
-      Notice what just happened: to fix **one file**, you had to recompile **all three**. `gcc` has no memory — it blindly reprocesses everything you hand it. In a 500-file project, fixing a single typo means a minutes-long recompile of every untouched file. We need a smarter tool.
+      Fixing one file required recompiling all three. `gcc` has no memory of prior builds — it reprocesses every file you hand it. In a 500-file project, fixing one typo means re-compiling every untouched file. A build tool fixes this.
 
     files:
       - path: "make_project/main.c"
@@ -90,8 +88,18 @@ steps:
     tests:
       - description: "The syntax error in math.c is fixed"
         command: "cd /tutorial/make_project && grep -q 'a + b;' math.c"
+        hints:
+          - text: "Look at the `return` statement in `math.c`. Every C statement must end with a character you are missing. Which one?"
+            condition: "source_missing: a + b;"
+          - text: "You wrote the semicolon, but the test still fails. Did you save the file? Open `math.c` again and check the line."
+            condition: "source_contains: a + b;"
       - description: "The project compiled successfully into an executable named 'app'"
         command: "cd /tutorial/make_project && [ -f app ]"
+        hints:
+          - text: "Run `gcc main.c math.c io.c -o app` from inside the `make_project` directory. The `-o app` flag names the output file."
+            condition: "default"
+          - text: "If `gcc` prints errors, read the first one carefully — later errors are often consequences of the first. Fix the top error, then re-run the command."
+            condition: "default"
 
     quiz:
       title: "The Pain of Manual Compilation — Knowledge Check"
@@ -128,11 +136,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 2: The Core Anatomy & The "Tab" Trap
   # --------------------------------------------------------------------------
-  - title: "Your First Makefile & The Tab Trap"
+  - title: "Your First Makefile and the Tab Requirement"
     instructions: |
       ### The Anatomy of a Rule
 
-      Makefiles are made of **rules** that describe a dependency graph. A rule looks like this:
+      A Makefile is a list of **rules** that describe a dependency graph. Each rule has this shape:
 
       ```make
       target: prerequisites
@@ -140,32 +148,32 @@ steps:
       ```
       * **Target:** The file you want to build (e.g., your executable).
       * **Prerequisites:** The files the target depends on (e.g., your `.c` files).
-      * **Recipe:** The shell command to create the target.
+      * **Recipe:** The shell command that produces the target.
 
-      Make reads these rules, builds a graph of what depends on what, and only runs the recipes that are needed.
+      Make reads these rules, builds a graph of what depends on what, and only runs recipes when needed.
 
       ### Task 1: Run your first Make command
 
-      A basic `Makefile` has been added to your project. Try running it:
+      A basic `Makefile` has been added to your project. Run it:
 
       ```bash
       make
       ```
 
-      **Error!** You should see: `Makefile:2: *** missing separator. Stop.`
+      You should see the error: `Makefile:2: *** missing separator. Stop.`
 
-      ### Task 2: Fix the Tab Trap
+      ### Task 2: Fix the indentation
 
-      Makefiles have one notoriously strict, invisible rule: **Recipes MUST be indented with a true `Tab` character, not spaces!**
+      Makefile recipes **must** be indented with a real `Tab` character, not spaces.
 
       ```make
       target: prerequisites
       [TAB]recipe
       ```
 
-      If you see 4 or 8 spaces, it will NOT work. Most GUI editors silently insert spaces when you press Tab — so you need to fix it in the terminal.
+      If the recipe is indented with 4 or 8 spaces, Make will refuse to parse it. Most GUI editors silently insert spaces when you press Tab, so you will often need to fix this from the terminal.
 
-      **`sed` to the rescue.** `sed` is a stream editor: it reads a file line by line, applies a substitution, and writes the result. The substitution syntax is `s/pattern/replacement/`:
+      `sed` is a stream editor that reads a file line by line, applies a substitution, and writes the result. Its substitution syntax is `s/pattern/replacement/`:
 
       ```bash
       # Replace the leading spaces on the recipe line with a real Tab:
@@ -210,8 +218,18 @@ steps:
     tests:
       - description: "The recipe uses a Tab character, not spaces"
         command: "cd /tutorial/make_project && grep -qP '^\\tgcc' Makefile"
+        hints:
+          - text: "Make prints `missing separator` when a recipe line starts with spaces instead of a Tab. What does your recipe line look like right now? Run `cat -A Makefile` — a real Tab shows as `^I`."
+            condition: "default"
+          - text: "If the recipe line starts with four spaces, replace them with a Tab. Run `sed -i 's/^    /\\t/' Makefile` from the instructions, then check again with `cat -A Makefile`."
+            condition: "default"
+          - text: "If you used a different number of spaces, adjust the pattern (`s/^  /\\t/` for 2 spaces, `s/^        /\\t/` for 8). Every recipe line must start with exactly one Tab."
+            condition: "default"
       - description: "Make ran successfully and built 'app'"
         command: "cd /tutorial/make_project && [ -f app ]"
+        hints:
+          - text: "After fixing the indentation, run `make` from inside `make_project`. If the error persists, `cat -A Makefile` to confirm the recipe line starts with `^I` (a Tab)."
+            condition: "default"
 
     quiz:
       title: "Your First Makefile & The Tab Trap — Knowledge Check"
@@ -265,9 +283,9 @@ steps:
     instructions: |
       ### Enabling Incremental Builds
 
-      Our single-rule Makefile still recompiles everything together. To let Make skip unchanged files, we must compile each `.c` file into an **object file** (`.o`) separately, then **link** the `.o` files into the final executable.
+      The single-rule Makefile still recompiles every source file together. To let Make skip unchanged files, you compile each `.c` file into an **object file** (`.o`) separately, then **link** the `.o` files into the final executable.
 
-      Look at the new `Makefile`. It does this — but notice the problem: `gcc -Wall -std=c11` is hardcoded **four times**. If we ever switch to `clang`, we'd have to edit four lines. This violates the **DRY principle** (Don't Repeat Yourself).
+      The new `Makefile` does exactly that — but notice the repetition: `gcc -Wall -std=c11` is written out four times. Switching to `clang` would require editing four lines. This violates the **DRY principle** (Don't Repeat Yourself).
 
       ### Task: Refactor using Variables
 
@@ -325,12 +343,30 @@ steps:
     tests:
       - description: "Defined CC variable"
         command: "cd /tutorial/make_project && grep -q 'CC *=' Makefile"
+        hints:
+          - text: "Add `CC = gcc` on its own line, at the very top of the Makefile (before any rule)."
+            condition: "source_missing: CC"
+          - text: "You wrote `CC` somewhere, but the assignment needs a `=` sign. Check that your line looks like `CC = gcc` (spaces around `=` are optional)."
+            condition: "source_contains: CC"
       - description: "Defined CFLAGS variable"
         command: "cd /tutorial/make_project && grep -q 'CFLAGS *=' Makefile"
+        hints:
+          - text: "Add a second line: `CFLAGS = -Wall -std=c11`. `CFLAGS` is the conventional name Make uses for compiler flags."
+            condition: "source_missing: CFLAGS"
       - description: "Used $(CC) in recipes instead of hardcoded gcc"
         command: "cd /tutorial/make_project && grep -q '\\$(CC)' Makefile"
+        hints:
+          - text: "Defining `CC` is only half the job — you also need to use it. Replace every `gcc` in a recipe with `$(CC)`. Do the same for the flags: use `$(CFLAGS)` instead of `-Wall -std=c11`."
+            condition: "default"
+          - text: "Writing `$CC` (without parentheses) does not work — Make reads that as `$C` followed by the character `C`. Always use `$(CC)`."
+            condition: "source_missing: $(CC)"
       - description: "Code still builds successfully"
         command: "cd /tutorial/make_project && make && [ -f app ]"
+        hints:
+          - text: "A common mistake when editing the Makefile is accidentally replacing the Tab at the start of a recipe. Run `cat -A Makefile` and make sure every recipe line starts with `^I`."
+            condition: "default"
+          - text: "If you see `missing separator` again, you broke the Tab. If you see `command not found`, the variable probably didn't expand — double-check `$(CC)` vs `$CC`."
+            condition: "default"
 
     quiz:
       title: "DRY Variables — Knowledge Check"
@@ -388,11 +424,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 4: Automatic Variables & Pattern Rules
   # --------------------------------------------------------------------------
-  - title: "Smarter Rules: Automatic Variables & Patterns"
+  - title: "Automatic Variables and Pattern Rules"
     instructions: |
       ### The Repetition Problem
 
-      Look at your current Makefile. The three `.o` rules are almost identical:
+      The three `.o` rules in your current Makefile are almost identical:
 
       ```make
       main.o: main.c
@@ -405,7 +441,7 @@ steps:
       	$(CC) $(CFLAGS) -c io.c
       ```
 
-      Each filename appears **twice** per rule. With 50 source files you'd have 50 nearly identical rules. There must be a better way.
+      Each filename appears twice per rule. With 50 source files, you would have 50 nearly identical rules.
 
       ### Automatic Variables
 
@@ -419,14 +455,14 @@ steps:
 
       ### Pattern Rules
 
-      A **pattern rule** uses `%` as a wildcard to match any filename stem:
+      A **pattern rule** uses `%` as a wildcard that matches any filename stem:
 
       ```make
       %.o: %.c
       	$(CC) $(CFLAGS) -c $< -o $@
       ```
 
-      This **single rule** tells Make: "to build *any* `.o` file, compile the matching `.c` file." It replaces all three of your explicit `.o` rules.
+      This single rule tells Make: "to build any `.o` file, compile the matching `.c` file." It replaces all three of your explicit `.o` rules.
 
       ### Task: Refactor with OBJS, automatic variables, and a pattern rule
 
@@ -447,7 +483,7 @@ steps:
          ```
       5. Save and run `make` to confirm it still builds correctly.
 
-      Your Makefile shrinks from 14 lines to 8 — and it handles **any** number of source files with zero changes to the rules.
+      The Makefile shrinks from 14 lines to 8, and it now handles any number of source files without adding new rules.
 
     setup_commands:
       - "rm -f /tutorial/make_project/*.o /tutorial/make_project/app"
@@ -495,14 +531,45 @@ steps:
     tests:
       - description: "Defined OBJS variable"
         command: "cd /tutorial/make_project && grep -q 'OBJS *=' Makefile"
+        hints:
+          - text: "You already have `CC` and `CFLAGS`. A third variable can hold the list of object files so you don't have to repeat them. Where should it go, and what should it contain?"
+            condition: "source_missing: OBJS"
+          - text: "Add `OBJS = main.o math.o io.o` on its own line, just after `CFLAGS`. The variable name is a Make convention — use uppercase."
+            condition: "source_missing: OBJS"
       - description: "Used $(OBJS) in the app rule"
         command: "cd /tutorial/make_project && grep -q '\\$(OBJS)' Makefile"
+        hints:
+          - text: "The `app` rule still lists the object files by name. Replace that list with a reference to the variable you just defined."
+            condition: "default"
+          - text: "Change `app: main.o math.o io.o` to `app: $(OBJS)`. Use `$(OBJS)`, not `$OBJS` — without parentheses Make reads it as `$O` followed by the letters `BJS`."
+            condition: "default"
       - description: "Added a pattern rule (%.o: %.c)"
         command: "cd /tutorial/make_project && grep -qP '%\\.o.*:.*%\\.c' Makefile"
+        hints:
+          - text: "Three nearly identical rules for `.o` files can become one. What character does Make use as a wildcard to match any filename stem?"
+            condition: "default"
+          - text: "Delete the three rules for `main.o`, `math.o`, and `io.o`. Replace them with one pattern rule: `%.o: %.c` followed by a recipe line indented with a Tab."
+            condition: "default"
+          - text: "The `%` matches the filename stem on both sides of the colon. If the target matches `%.o` as `math.o`, the prerequisite becomes `math.c`. Extra spaces (like `%.o : %.c`) break the match."
+            condition: "default"
       - description: "Used an automatic variable ($<, $^, or $@) in a recipe"
         command: "cd /tutorial/make_project && grep -qP '\\$[<^@]' Makefile"
+        hints:
+          - text: "Look at each recipe. Which filename is the target? Which is the source? Can you name them without typing the actual filename?"
+            condition: "default"
+          - text: "In the pattern rule, use `$<` for the source `.c` file and `$@` for the output `.o` file: `$(CC) $(CFLAGS) -c $< -o $@`."
+            condition: "default"
+          - text: "In the `app` link rule, `$^` expands to all prerequisites (every object file) and `$@` expands to `app`. Use them to avoid listing the object files twice."
+            condition: "default"
       - description: "Project still builds correctly"
         command: "cd /tutorial/make_project && make && [ -f app ]"
+        hints:
+          - text: "Read the first line of the error — the rest usually cascades from it. `missing separator` points to a Tab problem; `No rule to make target` points to a prerequisite name mismatch."
+            condition: "default"
+          - text: "If you see `missing separator`, a recipe line lost its Tab. Run `cat -A Makefile` and look for a recipe line that does NOT start with `^I`."
+            condition: "default"
+          - text: "If Make says `No rule to make target 'main.o'`, check that your pattern rule has no extra spaces (`%.o: %.c`, not `%.o : %.c`) and that the `.c` files exist in the same folder as the Makefile."
+            condition: "default"
 
     quiz:
       title: "Automatic Variables & Pattern Rules — Knowledge Check"
@@ -559,41 +626,41 @@ steps:
           explanation: "As you discovered in Step 2, the 'Tab Trap' is real! Make strictly requires a literal Tab character to identify recipe lines. Spaces will cause a 'missing separator' error."
 
   # --------------------------------------------------------------------------
-  # STEP 5: Proving the Magic of the DAG
+  # STEP 5: Incremental Builds via Timestamps
   # --------------------------------------------------------------------------
-  - title: "The Magic of Incremental Builds"
+  - title: "Incremental Builds in Action"
     instructions: |
-      ### The Core Idea: Timestamp Comparison
+      ### Timestamp Comparison
 
-      Make's central trick is brutally simple: it compares the **last-modified timestamp** of each target against its prerequisites. If a prerequisite is *newer* than the target, the target is out of date and Make runs its recipe. Otherwise, it skips it.
+      Make decides whether to rebuild a target by comparing **last-modified timestamps**. If any prerequisite is *newer* than the target, the target is out of date and Make runs its recipe. Otherwise, it skips the recipe.
 
-      This timestamp heuristic is what turns a 2-hour full rebuild into a 2-second incremental one.
+      This is how Make turns a multi-minute full rebuild into a few-second incremental one.
 
-      ### Task 1: Check if up to date
+      ### Task 1: Check the current state
 
-      Run `make` right now:
+      Run `make`:
       ```bash
       make
       ```
-      Make should tell you: `make: 'app' is up to date.` It skipped all work because the `.o` files and `app` are all newer than the `.c` files.
+      Make prints `make: 'app' is up to date.` because every target is newer than its prerequisites.
 
       ### Task 2: Simulate a file change
 
-      The `touch` command updates a file's timestamp without changing its content — it tricks Make into thinking you just edited it.
+      The `touch` command updates a file's timestamp without changing its content, so Make treats it as edited.
 
-      Run this to "update" only `math.c`:
+      Update only `math.c`:
       ```bash
       touch math.c
       ```
 
-      ### Task 3: Observe the magic
+      ### Task 3: Observe the incremental rebuild
 
-      Run `make` one more time:
+      Run `make` once more:
       ```bash
       make
       ```
 
-      Look closely at the output! Make compiled `math.c` → `math.o` and then re-linked `app`. **It completely skipped `main.c` and `io.c`.** They were still up to date — so Make left them alone. In a massive codebase this is the difference between waiting seconds and waiting hours.
+      Make compiles `math.c` → `math.o` and re-links `app`. It skips `main.c` and `io.c` because they are still up to date. On a large codebase, that's the difference between a build that takes seconds and one that takes hours.
 
     setup_commands:
       - "make -C /tutorial/make_project 2>/dev/null || true"
@@ -612,9 +679,14 @@ steps:
     tests:
       - description: "math.c was touched and recompiled (math.o is newer than main.o)"
         command: "cd /tutorial/make_project && [ math.o -nt main.o ]"
+        hints:
+          - text: "Run the three commands in order from inside `make_project`: `make`, then `touch math.c`, then `make` again."
+            condition: "default"
+          - text: "If all three object files rebuild, you probably ran `make clean` or deleted the `.o` files. Rebuild once with `make`, then `touch math.c`, then `make` — only `math.o` should be newer than the others."
+            condition: "default"
 
     quiz:
-      title: "The Magic of Incremental Builds — Knowledge Check"
+      title: "Incremental Builds — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -657,11 +729,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 6: The .PHONY Sabotage
   # --------------------------------------------------------------------------
-  - title: "The .PHONY Sabotage"
+  - title: "Non-File Targets and .PHONY"
     instructions: |
-      ### Non-File Targets
+      ### Targets That Are Not Files
 
-      Make is fundamentally about building files. But sometimes we want a target that just runs a command — like cleaning up build artifacts. There's no output file; you just want the action.
+      Make treats every target as a file to build. But some targets just run a command — `clean` deletes build artifacts, `test` runs the test suite — and produce no output file.
 
       ### Task 1: Add a clean target
 
@@ -672,29 +744,27 @@ steps:
       ```
       Run `make clean` in the terminal. Your build artifacts are gone!
 
-      ### Task 2: The Sabotage
+      ### Task 2: See what breaks when a file named `clean` exists
 
-      Because Make assumes targets are files, what happens when a file actually *named* `clean` exists?
+      Because Make assumes targets are files, the `clean` rule breaks if a file actually *named* `clean` is on disk:
 
-      1. Create a dummy file named clean:
+      1. Create a dummy file named `clean`:
          ```bash
          touch clean
          ```
-      2. Run `make app` to generate the build files again.
-      3. Try running `make clean`.
+      2. Rebuild the project with `make app`.
+      3. Try `make clean`.
 
-      **It fails!** Make says `make: 'clean' is up to date.` It finds the file named `clean`, sees it has no prerequisites, decides it's already "built," and does nothing.
+      Make prints `make: 'clean' is up to date.` It found the file named `clean`, saw no prerequisites, decided the target was already "built," and did nothing.
 
-      ### Task 3: The Fix — .PHONY
+      ### Task 3: Declare the target as `.PHONY`
 
-      We must tell Make that `clean` is a *phony* target — a command name, not a filename.
-
-      Right above the `clean:` target, add:
+      Tell Make that `clean` is a command name, not a filename. Add this line above the `clean:` target:
       ```make
       .PHONY: clean
       ```
 
-      Save and run `make clean` again. Even though a file named `clean` exists, Make ignores it and correctly removes your build files.
+      Save and run `make clean` again. Make now runs the recipe regardless of whether a file named `clean` exists.
 
     setup_commands:
       - "make -C /tutorial/make_project 2>/dev/null || true"
@@ -717,8 +787,20 @@ steps:
     tests:
       - description: "Added .PHONY: clean to Makefile"
         command: "cd /tutorial/make_project && grep -q '\\.PHONY:.*clean' Makefile"
+        hints:
+          - text: "Add a line `.PHONY: clean` somewhere in the Makefile (conventionally right above the `clean:` rule). The dot at the front is required — `PHONY` alone is not a built-in directive."
+            condition: "source_missing: .PHONY"
+          - text: "You wrote `.PHONY` somewhere, but it needs `clean` as the target name: `.PHONY: clean`."
+            condition: "source_contains: .PHONY"
       - description: "The clean target exists in Makefile and removes 'app' and '.o' files"
         command: "cd /tutorial/make_project && grep -q 'clean:' Makefile && make clean >/dev/null 2>&1 && [ ! -f app ] && ! ls *.o 2>/dev/null"
+        hints:
+          - text: "The `clean:` rule needs a recipe (indented with a Tab) that deletes the build artifacts. `rm` is the shell command you want — what glob pattern matches every object file?"
+            condition: "default"
+          - text: "Use `rm -f *.o app`. The `-f` flag silences errors if the files are already gone, so `make clean` works even on a fresh build."
+            condition: "default"
+          - text: "If `make clean` prints `'clean' is up to date`, a file literally named `clean` still exists and `.PHONY` is missing or mis-spelled. Run `ls clean` to check, then confirm `.PHONY: clean` is in the Makefile."
+            condition: "default"
 
     quiz:
       title: ".PHONY — Knowledge Check"
@@ -773,20 +855,21 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 7: Summary & Best Practices
   # --------------------------------------------------------------------------
-  - title: "Mastering Make"
+  - title: "Summary and Best Practices"
     instructions: |
-      You've mastered the essentials of Make! You can now:
-      - Navigate the **Tab Trap** with confidence.
-      - Use **Variables** for DRY (Don't Repeat Yourself) builds.
-      - Leverage **Pattern Rules** and **Automatic Variables** for scalable automation.
-      - Understand the **Incremental Build** magic via the Dependency Graph.
-      - Use **.PHONY** to create reliable command shortcuts.
+      You now know the essentials of Make. You can:
+      - Indent recipes with a real Tab character.
+      - Use variables for DRY (Don't Repeat Yourself) builds.
+      - Write pattern rules and use automatic variables for scalable automation.
+      - Rely on the timestamp-based dependency graph for incremental builds.
+      - Declare non-file targets with `.PHONY` so they always run.
 
-      ### Final Pro-Tip: Recursive Make
-      As your projects grow, you might be tempted to put a Makefile in every subdirectory and call `make -C subdir` from a top-level Makefile. This is known as **Recursive Make**.
-      
+      ### A Note on Recursive Make
+
+      As a project grows, it is tempting to put a Makefile in every subdirectory and call `make -C subdir` from a top-level Makefile. This pattern is called **Recursive Make**.
+
       > [!WARNING]
-      > **Recursive Make is often considered harmful.** It breaks the global visibility of the dependency graph, which can lead to subtle bugs where files aren't recompiled when they should be. For larger projects, consider modern alternatives or a single, "non-recursive" top-level Makefile that includes sub-makefiles.
+      > Recursive Make breaks the global view of the dependency graph: each sub-make sees only its own targets, so files sometimes aren't rebuilt when they should be. For larger projects, a single non-recursive Makefile that `include`s sub-files is usually easier to maintain — see Peter Miller's paper *"Recursive Make Considered Harmful."*
 
     solution:
       files:

@@ -1,5 +1,5 @@
-title: "C for C++ Programmers: Origin Story"
-description: "Every systems programmer has an origin story. Yours starts here. Shed the safety net of C++, master raw memory, and emerge with powers most programmers never unlock — all through hands-on practice in an interactive Linux terminal."
+title: "C for C++ Programmers"
+description: "You already know C++. This tutorial focuses on the differences: manual memory management, raw pointers, C-style strings, and structs without methods. Hands-on practice in an interactive Linux terminal."
 
 require_tests: true
 autosave_type: none
@@ -11,15 +11,13 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 1: Hello C — What's Missing from C++
   # --------------------------------------------------------------------------
-  - title: "Origin Story — Shedding the C++ Armor"
+  - title: "Hello C — What C++ Gives You That C Doesn't"
     instructions: |
-      ### Chapter 1: Every hero starts by losing something.
+      ### What's missing from C
 
-      Welcome to the **C Tutorial**! You already know C++ — so instead of starting from zero, we'll focus on what's **different** and what's **missing**.
+      You already know C++, so instead of starting from zero, this tutorial focuses on what's **different** and what's **missing**.
 
-      Think of C++ as a suit of high-tech armor: classes, `std::string`, templates — layers of protection built over decades. C is what's underneath: raw, exposed, powerful. Learning C means *voluntarily removing the armor* to understand what it was protecting you from. That's not a downgrade — it's an origin story. Every systems programming superhero (Linux kernel devs, embedded engineers, OS hackers) started right here.
-
-      C is not a "simpler C++." It's an *older, smaller* language that C++ grew out of. Many features you rely on in C++ simply don't exist:
+      C is not a simpler C++. It is an older, smaller language that C++ grew out of. Many features you rely on in C++ simply don't exist:
 
       | C++ Feature | C Equivalent |
       |-------------|--------------|
@@ -58,10 +56,8 @@ steps:
           #include <stdio.h>
 
           int main(void) {
-              printf("=== Welcome to the Danger Zone ===\n");
-              printf("No classes. No RAII. No safety net.\n");
-              printf("Just you, raw memory, and a compiler.\n");
-              printf("Let's go.\n");
+              printf("Hello from C.\n");
+              printf("No classes, no RAII — just functions and memory.\n");
               return 0;
           }
         language: "c"
@@ -80,8 +76,14 @@ steps:
     tests:
       - description: "Compiled hello.c successfully"
         command: "cd /tutorial/c_project && [ -f hello ]"
+        hints:
+          - text: "Compile with `gcc -Wall -std=c11 hello.c -o hello` from inside `c_project`. Don't use `g++` — that would compile as C++."
+            condition: "default"
       - description: "The program runs and produces output"
-        command: "cd /tutorial/c_project && ./hello | grep -q 'Danger Zone'"
+        command: "cd /tutorial/c_project && ./hello | grep -q 'Hello from C'"
+        hints:
+          - text: "Run it with `./hello` (the `./` matters — without it, the shell looks in your PATH and won't find the binary)."
+            condition: "default"
 
     quiz:
       title: "Hello C — Knowledge Check"
@@ -122,7 +124,7 @@ steps:
             - "C strings are immutable"
             - "C uses `printf` instead of `cout`, but otherwise strings work the same"
           correct_index: 1
-          explanation: "The core issue isn't a missing function — it's a missing *paradigm*. C has no objects, no methods, no operator overloading. A C 'string' is just a `char[]` array. You must use standalone functions like `strlen()` from `<string.h>`. This is the fundamental shift: C gives you data and functions, not objects and methods."
+          explanation: "The issue isn't a missing function — it's a different model. C has no objects, no methods, no operator overloading. A C 'string' is just a `char[]` array. You use standalone functions like `strlen()` from `<string.h>`. C gives you data and functions, not objects and methods."
 
         - question: |
             **Arrange** the lines to write a minimal C program that prints `"42"` to the terminal.
@@ -141,11 +143,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 2: printf — Formatted Output
   # --------------------------------------------------------------------------
-  - title: "Power #1 — printf: Speak to the Machine"
+  - title: "printf — Formatted Output"
     instructions: |
-      ### Power Unlocked: Formatted Output
+      ### Formatted Output
 
-      Your first superpower: talking directly to the terminal. `printf` is C's Swiss Army knife for output. It takes a **format string** containing ordinary text and **conversion specifiers** that start with `%`:
+      `printf` is C's general-purpose tool for output. It takes a **format string** containing ordinary text and **conversion specifiers** that start with `%`:
 
       | Specifier | Type | Example |
       |-----------|------|---------|
@@ -233,8 +235,16 @@ steps:
     tests:
       - description: "Compiled format_lab.c successfully"
         command: "cd /tutorial/c_project && [ -f format_lab ]"
+        hints:
+          - text: "Run `gcc -Wall -std=c11 format_lab.c -o format_lab` from inside `c_project`. If the compiler complains about format specifiers, double-check that `%d` is used with ints and `%f`/`%.1f` with doubles."
+            condition: "default"
       - description: "The program runs and produces formatted output"
         command: "cd /tutorial/c_project && ./format_lab | grep -q '42.0%'"
+        hints:
+          - text: "The expected output contains `42.0%`. Check the final `printf` — you need `%.1f` for the percentage value and `%%` to emit a literal `%` character."
+            condition: "code_missing: %%"
+          - text: "Remember: `%%` prints one literal `%`. A single `%` starts a new format specifier and will consume an argument."
+            condition: "default"
 
     quiz:
       title: "printf — Knowledge Check"
@@ -298,11 +308,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 3: scanf — Reading Input (and Its Dangers)
   # --------------------------------------------------------------------------
-  - title: "Power #2 — scanf: Listen (But Watch Your Back)"
+  - title: "scanf — Input (and its Pitfalls)"
     instructions: |
-      ### Power Unlocked: Reading Input (with great danger)
+      ### Reading Input
 
-      Every superpower has a dark side. `scanf` lets you hear the user — but it's also how most C programs get hacked.
+      `scanf` is how C programs read input — and it's also a common source of security bugs.
 
       `scanf` reads formatted input from the user. It uses the same `%` specifiers as `printf`, but with a critical difference: **scanf needs pointers** because it must *store* the input somewhere.
 
@@ -315,7 +325,7 @@ steps:
 
       ### The Buffer Overflow Danger
 
-      Reading strings with `scanf` is notoriously dangerous:
+      Reading strings with `scanf` is unsafe by default:
 
       ```c
       char name[10];
@@ -335,7 +345,7 @@ steps:
 
       ### Task: Fix the vulnerable program
 
-      The file `input_lab.c` has a buffer overflow bug. This is a **Bug Hunt** — you'll learn more from finding and fixing broken code than from writing it yourself. Let's go.
+      The file `input_lab.c` has a buffer overflow bug. This is a **Bug Hunt** — you'll learn more from finding and fixing broken code than from writing it yourself.
 
       1. Replace the dangerous `scanf("%s", ...)` with `fgets()`.
       2. Compile with `gcc -Wall -std=c11 input_lab.c -o input_lab`.
@@ -422,10 +432,23 @@ steps:
     tests:
       - description: "Replaced scanf %s with fgets for the server name"
         command: "cd /tutorial/c_project && grep -q 'fgets(server' input_lab.c && ! grep -qE '^[^/]*scanf.*%s' input_lab.c"
+        hints:
+          - text: "Delete the `scanf(\"%s\", server);` line and replace it with `fgets(server, sizeof(server), stdin);`. Pass `sizeof(server)` (not a hardcoded number) so the size stays correct if the array grows."
+            condition: "code_contains: scanf(\"%s\""
+          - text: "`scanf(\"%s\", buf)` has no length limit — it writes until whitespace and can overflow. `fgets(buf, sizeof(buf), stdin)` caps input at `sizeof(buf) - 1` chars."
+            condition: "default"
       - description: "The program compiles without errors"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 input_lab.c -o input_lab"
+        hints:
+          - text: "If you see `implicit declaration of function 'fgets'` or `'strlen'`, make sure `#include <stdio.h>` and `#include <string.h>` are at the top."
+            condition: "default"
       - description: "The program runs correctly with test input"
         command: "cd /tutorial/c_project && echo -e 'Azeroth\n5000' | ./input_lab | grep -q 'Azeroth'"
+        hints:
+          - text: "`fgets` keeps the trailing newline in the buffer, so the output may print `Azeroth\\n:` on two lines. Call `strip_newline(server)` after `fgets` to trim the `\\n`."
+            condition: "code_missing: strip_newline"
+          - text: "Without `fflush(stdout)` after the prompt, the test's piped input can block before the prompt renders. Keep the `fflush(stdout);` calls in place."
+            condition: "default"
 
     quiz:
       title: "scanf — Knowledge Check"
@@ -485,13 +508,13 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 4: Pointers and malloc — Manual Memory Management
   # --------------------------------------------------------------------------
-  - title: "Power #3 — malloc/free: Control Over Memory Itself"
+  - title: "malloc and free — Manual Memory Management"
     instructions: |
-      ### Power Unlocked: Manual Memory Management
+      ### Manual Memory Management
 
-      This is the big one. The power that separates C programmers from everyone else: **you control memory directly**. No garbage collector. No smart pointers. Just you and the heap. With great power comes great responsibility — and great bugs. When researchers tracked real CS2 students, they found that **74% created memory leaks**, **70% dereferenced dead pointers**, and **57% dereferenced null pointers** — and most of these errors were completely silent. No crash, no warning, just corrupted memory that manifests as mysterious bugs way later. Spooky.
+      In C, you manage memory yourself. There is no garbage collector and no smart pointer. A well-known study of CS2 students found that **74% produced at least one memory leak**, **70% dereferenced dead pointers**, and **57% dereferenced null pointers**. Most of these errors were silent — no crash, no warning, just corrupted memory that surfaced as mysterious bugs later.
 
-      This step teaches you the discipline that prevents these errors.
+      This step teaches the discipline that prevents them.
 
       In C++, you allocate heap memory with `new` and release it with `delete`. C uses lower-level functions from `<stdlib.h>`:
 
@@ -659,12 +682,28 @@ steps:
     tests:
       - description: "Uses malloc to allocate memory"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*= *malloc\\(' memory_lab.c"
+        hints:
+          - text: "Replace `int *squares = NULL;` with `int *squares = malloc(count * sizeof(int));`. Use `sizeof(int)` rather than hardcoding `4`."
+            condition: "code_missing: malloc("
+          - text: "`malloc` lives in `<stdlib.h>`. Without that header, the compiler may assume it returns `int` and silently truncate the pointer on 64-bit systems."
+            condition: "default"
       - description: "Checks for NULL after malloc"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*(== NULL|!squares)' memory_lab.c"
+        hints:
+          - text: "Add `if (squares == NULL) { fprintf(stderr, \"malloc failed\\n\"); return 1; }` right after the malloc call. Dereferencing a NULL return is a segfault."
+            condition: "default"
       - description: "Frees the allocated memory"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*free\\(' memory_lab.c"
+        hints:
+          - text: "Add `free(squares);` before `return 0;`. Every `malloc` needs a matching `free` — there's no garbage collector in C."
+            condition: "default"
       - description: "Program compiles and produces correct output"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 memory_lab.c -o memory_lab && ./memory_lab | grep -q 'Squares: 0 1 4 9 16'"
+        hints:
+          - text: "The expected output is `Squares: 0 1 4 9 16`. Make sure your loop writes `squares[i] = i * i;` for `i` from 0 to `count - 1`."
+            condition: "output_contains: Segmentation fault"
+          - text: "If the values are all zero or garbage, the fill loop is missing. `malloc` does not zero-initialize — you must write to every element before reading it."
+            condition: "default"
 
     quiz:
       title: "malloc/free — Knowledge Check"
@@ -724,11 +763,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 5: C Strings — char Arrays, Not Objects
   # --------------------------------------------------------------------------
-  - title: "Power #4 — Strings: Bare-Knuckle Text Wrangling"
+  - title: "Strings — Character Arrays and the Null Terminator"
     instructions: |
-      ### Power Unlocked: Raw String Manipulation
+      ### Raw String Manipulation
 
-      In C++, `std::string` does the heavy lifting — memory, length tracking, concatenation, all automatic. In C, *you* are the string class. Every byte, every null terminator, every bounds check — that's on you. A "string" is just an array of `char` terminated by a null byte `'\0'`:
+      In C++, `std::string` manages memory, length tracking, and concatenation automatically. In C, you do all of that manually. Every byte, every null terminator, every bounds check is your responsibility. A "string" is just an array of `char` terminated by a null byte `'\0'`:
 
       ```
       char name[] = "Alice";
@@ -852,12 +891,30 @@ steps:
     tests:
       - description: "Uses strcmp for string comparison (not ==)"
         command: "cd /tutorial/c_project && grep -q 'strcmp' strings_lab.c"
+        hints:
+          - text: "Replace `if (lang == \"C\")` with `if (strcmp(lang, \"C\") == 0)`. `strcmp` returns 0 when strings match, non-zero otherwise."
+            condition: "code_contains: lang == \""
+          - text: "In C, array names decay to pointers, so `==` on two strings compares addresses, not contents. Always use `strcmp` from `<string.h>` to compare characters."
+            condition: "default"
       - description: "Uses strncpy instead of strcpy for the long string copy"
         command: "cd /tutorial/c_project && grep 'strncpy.*dest' strings_lab.c | head -1 | grep -q 'strncpy'"
+        hints:
+          - text: "Change `strcpy(dest, src);` to `strncpy(dest, src, sizeof(dest) - 1);`. Subtract 1 from the size so there's room for the `\\0` you add next."
+            condition: "code_contains: strcpy(dest"
+          - text: "`strcpy` keeps copying until it sees `\\0` in the source — if the source is longer than the destination, it writes past the end of the array."
+            condition: "default"
       - description: "Manually null-terminates after strncpy"
         command: "cd /tutorial/c_project && grep -F \"'\\0'\" strings_lab.c"
+        hints:
+          - text: "After each `strncpy`, add `dest[sizeof(dest) - 1] = '\\0';` (and the same for `abbrev`). This guarantees termination even when the source was truncated."
+            condition: "default"
       - description: "Program compiles and runs without crashing"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 strings_lab.c -o strings_lab && ./strings_lab | grep -q 'Language is C'"
+        hints:
+          - text: "A segfault or garbage output usually means `printf(\"%s\", ...)` ran past a missing `\\0`. Confirm every fixed-size `char` buffer ends in `'\\0'` before it's printed."
+            condition: "output_contains: Segmentation fault"
+          - text: "If the `strcmp` branch takes the wrong path, make sure you check `strcmp(lang, \"C\") == 0` — `strcmp` returns 0 on equality, which is falsy in C."
+            condition: "default"
 
     quiz:
       title: "C Strings — Knowledge Check"
@@ -908,11 +965,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 6: Structs — C's Classes (Without Methods)
   # --------------------------------------------------------------------------
-  - title: "Power #5 — Structs: Build Your Own Data Types"
+  - title: "Structs — Building Your Own Data Types"
     instructions: |
-      ### Power Unlocked: Custom Data Structures
+      ### Custom Data Structures
 
-      Time to level up from primitive types. With structs, you can bundle related data together and build the foundations of any system — game engines, operating systems, databases. C has no classes, but structs + functions give you everything you need.
+      Structs let you bundle related data together. They are the foundation of most real systems — game engines, operating systems, databases. C has no classes, but structs plus standalone functions cover the same use cases.
 
       In C++, `class` and `struct` are nearly identical (differing only in default access). In C, `struct` is all you have, and it's much more limited:
 
@@ -1058,12 +1115,30 @@ steps:
     tests:
       - description: "Defined a Character struct or typedef"
         command: "cd /tutorial/c_project && grep -q 'typedef struct' structs_lab.c || grep -q 'struct Character' structs_lab.c"
+        hints:
+          - text: "Add `typedef struct { char name[50]; int level; double hp; } Character;` above the function definitions. With `typedef` you can write `Character hero;` instead of `struct Character hero;`."
+            condition: "code_missing: typedef struct"
+          - text: "The struct must be declared before `main` uses `Character hero;`. Put the typedef near the top of the file, below the `#include`s."
+            condition: "default"
       - description: "Implemented character_init function"
         command: "cd /tutorial/c_project && grep -q 'void character_init' structs_lab.c && grep -qE '^[^/]*strncpy|^[^/]*strcpy' structs_lab.c"
+        hints:
+          - text: "Signature should be `void character_init(Character *c, const char *name, int level, double hp)`. Inside, call `strncpy(c->name, name, sizeof(c->name) - 1);` then set `c->name[sizeof(c->name) - 1] = '\\0';`."
+            condition: "code_missing: character_init"
+          - text: "Use `->` to access fields through a pointer (`c->level = level;`). `c.level` is wrong when `c` is a pointer."
+            condition: "default"
       - description: "Implemented character_print function"
         command: "cd /tutorial/c_project && grep -q 'void character_print' structs_lab.c && grep -A10 'void character_print' structs_lab.c | grep -q 'printf'"
+        hints:
+          - text: "Declare it as `void character_print(const Character *c)` and call `printf(\"%s [Lv.%d] HP: %.1f\\n\", c->name, c->level, c->hp);`. `const` signals that you won't modify the struct."
+            condition: "default"
       - description: "Program compiles and runs correctly"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 structs_lab.c -o structs_lab && ./structs_lab | grep -q 'LinkSlayer99'"
+        hints:
+          - text: "If the output looks like garbage, you likely passed `Character` by value instead of `Character *`. The `main` function calls `character_init(&hero, ...)`, so your function must accept a pointer."
+            condition: "output_contains: Segmentation fault"
+          - text: "Compile errors about `Character` being unknown mean the typedef isn't in scope. Make sure the struct definition appears before `character_init` and `character_print`."
+            condition: "default"
 
     quiz:
       title: "Structs — Knowledge Check"
@@ -1116,11 +1191,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 7: Unions — One Memory, Multiple Interpretations
   # --------------------------------------------------------------------------
-  - title: "Power #6 — Unions: Shape-Shifting Memory"
+  - title: "Unions — Overlapping Memory Layouts"
     instructions: |
-      ### Power Unlocked: One Memory Location, Many Forms
+      ### One Memory Location, Many Interpretations
 
-      This power is subtle but deadly useful. A union lets a single block of memory *shape-shift* between different types — like a superhero with multiple identities sharing the same body. It's normal to wonder "when would I ever use this?" The answer: unions show up in parsers, network protocols, and any system that handles multiple data types through the same interface. If this step feels harder than previous ones, that's expected — you're building a more sophisticated mental model.
+      A union lets a single block of memory hold different types at different times — only one member is valid at a time. It's normal to wonder "when would I ever use this?" Unions show up in parsers, network protocols, and any system that handles multiple data types through the same interface. If this step feels harder than previous ones, that's expected — you're building a more detailed mental model of memory.
 
       A `union` looks like a `struct`, but with a critical difference: **all members share the same memory**. The size of a union equals the size of its *largest* member.
 
@@ -1264,10 +1339,23 @@ steps:
     tests:
       - description: "Implemented print_value with a switch statement"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*switch *\\(' unions_lab.c"
+        hints:
+          - text: "Inside `print_value`, start with `switch (val->type) { ... }`. A chain of `if/else` works, but `switch` lets `-Wall` warn you if you forget an enum case."
+            condition: "default"
       - description: "Handles all three types (int, double, string)"
         command: "cd /tutorial/c_project && grep -c 'case TYPE_' unions_lab.c | grep -qE '^[3-9]'"
+        hints:
+          - text: "You need three `case` labels: `case TYPE_INT:`, `case TYPE_DOUBLE:`, `case TYPE_STRING:`. Don't forget `break;` after each to avoid fall-through."
+            condition: "code_missing: case TYPE_STRING"
+          - text: "The whole point of the tag is to pick the right union member — reading `val->d` when the tag says `TYPE_INT` is undefined behavior."
+            condition: "default"
       - description: "Program compiles and produces correct output"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 unions_lab.c -o unions_lab && ./unions_lab | grep -q 'int: 42' && ./unions_lab | grep -q 'double: 3.14' && ./unions_lab | grep -q 'string: hello'"
+        hints:
+          - text: "Format strings matter: `%d` for `val->i`, `%.2f` for `val->d`, `%s` for `val->s`. Mixing them up (e.g. `%d` with a double) produces garbage."
+            condition: "output_missing: double: 3.14"
+          - text: "Anonymous unions (C11) let you write `val->i` directly. If the compiler complains, make sure you're building with `-std=c11` or later."
+            condition: "default"
 
     quiz:
       title: "Unions — Knowledge Check"
@@ -1319,11 +1407,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 8: Function Pointers — Callbacks in C
   # --------------------------------------------------------------------------
-  - title: "Power #7 — Function Pointers: Code That Rewires Itself"
+  - title: "Function Pointers — Passing Code as Data"
     instructions: |
-      ### Power Unlocked: Functions as Values
+      ### Functions as Values
 
-      This is arguably C's most mind-bending power: **functions are just addresses in memory**, and you can store, pass, and swap them at runtime. This is how C programs achieve polymorphism without classes — and it's the secret behind `qsort`, callback systems, and plugin architectures.
+      In C, **functions are just addresses in memory**, and you can store, pass, and swap them at runtime. This is how C programs achieve polymorphism without classes — and it's the mechanism behind `qsort`, callback systems, and plugin architectures.
 
       In C, a function name (without parentheses) evaluates to the function's **memory address**. You can store this address in a **function pointer** and call the function through it.
 
@@ -1343,7 +1431,7 @@ steps:
 
       ### Reading the Syntax (Pair Up!)
 
-      Function pointer syntax is notoriously confusing — even experienced C programmers have to pause and think about it. If you're working alongside a classmate, this is an excellent moment for **pair programming**. Two brains parsing `int (*fp)(const void*, const void*)` is genuinely better than one.
+      Function pointer syntax trips up experienced C programmers too. If a classmate is nearby, try **pair programming** on this one. Two brains reading `int (*fp)(const void*, const void*)` is easier than one.
 
       The syntax `int (*operation)(int, int)` reads as:
       - `operation` is a **pointer** (the `*`)
@@ -1501,10 +1589,23 @@ steps:
     tests:
       - description: "Implemented compare_ascending with void* casting"
         command: "cd /tutorial/c_project && grep -q 'const int \\*)' funcptr_lab.c && ! grep -q 'return 0; // Replace' funcptr_lab.c"
+        hints:
+          - text: "Inside `compare_ascending`, first cast the parameters: `int ia = *(const int *)a;` and `int ib = *(const int *)b;`. Then compare with `<`/`>` and return -1, 1, or 0."
+            condition: "code_contains: return 0; // Replace"
+          - text: "Avoid the shortcut `return ia - ib;` — it overflows for extreme values like `INT_MIN`. Use explicit `if (ia < ib) return -1;` style comparisons."
+            condition: "default"
       - description: "Implemented compare_descending"
         command: "cd /tutorial/c_project && grep -A3 'compare_descending' funcptr_lab.c | grep -v 'return 0; // Replace' | grep -q 'return'"
+        hints:
+          - text: "`compare_descending` is `compare_ascending` with the comparisons flipped: return -1 when `ia > ib` and 1 when `ia < ib`."
+            condition: "default"
       - description: "Program sorts correctly in both directions"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 funcptr_lab.c -o funcptr_lab && ./funcptr_lab | grep -q 'Ascending: 8 17 31 42 56 74 93' && ./funcptr_lab | grep -q 'Descending: 93 74 56 42 31 17 8'"
+        hints:
+          - text: "A segfault here usually means you forgot to dereference: `*(const int *)a` gives the value, but `(const int *)a` alone gives the pointer. Compare values, not addresses."
+            condition: "output_contains: Segmentation fault"
+          - text: "Double-check the `qsort` call: `qsort(data, n, sizeof(int), compare_ascending);`. The third argument is the size of ONE element, not the whole array."
+            condition: "default"
 
     quiz:
       title: "Function Pointers — Knowledge Check"
@@ -1557,13 +1658,13 @@ steps:
   # --------------------------------------------------------------------------
   - title: "Trial by Fire — Arrays, Pointers, and the Decay Trap"
     instructions: |
-      ### Every Hero Has a Weakness. This Is Yours.
+      ### A Common Source of Bugs
 
-      Array decay and pass-by-value are the kryptonite of C programmers. More bugs come from misunderstanding these two concepts than from almost anything else in the language. This step is a trial — survive it, and you'll have the mental model that separates beginners from real systems programmers.
+      Array decay and pass-by-value cause many C bugs. A solid mental model of both gives you the foundation real systems programmers rely on.
 
-      **Scaffolding pause:** You've been writing code from scratch in the last few steps. Now we're deliberately giving you back some scaffolding — pre-written buggy code to debug — because this concept is a notorious trap even for experienced programmers. Finding bugs is the right exercise type here: it forces you to reason about *why* code breaks, which is exactly the skill you need for array/pointer issues.
+      **Scaffolding pause:** You've been writing code from scratch in the last few steps. This step gives you back some scaffolding — pre-written buggy code to debug — because this concept trips up experienced programmers too. Finding bugs is the right exercise here: it forces you to reason about *why* code breaks.
 
-      In C++, arrays and pointers are related but distinct. In C, they are so intertwined that students routinely confuse them — this is the most treacherous "false friend" between C and C++.
+      In C++, arrays and pointers are related but distinct. In C they blur into each other — a classic "false friend" that trips students coming from C++.
 
       **The Decay Rule:** When you pass an array to a function, it silently **decays** into a pointer to its first element. The function receives *just* a pointer — all size information is lost.
 
@@ -1580,7 +1681,7 @@ steps:
       }
       ```
 
-      **This is the #1 source of bugs in C array code.** The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
+      **This is one of the top sources of bugs in C array code.** The function signature `int arr[]` is *identical* to `int *arr` — it's just syntactic sugar.
 
       ### Quick Refresh: The Pointer Lifecycle (from Step 4)
 
@@ -1737,12 +1838,28 @@ steps:
     tests:
       - description: "Fixed array_length to accept a length parameter"
         command: "cd /tutorial/c_project && grep -q 'array_length.*int.*n\\|array_length.*int.*len\\|array_length.*int.*size' arrays_lab.c"
+        hints:
+          - text: "Change the signature to `int array_length(int arr[], int n)` and just `return n;`. Update the call in `main` to pass the length: `array_length(data, 5)`."
+            condition: "default"
       - description: "Fixed zero_fill to accept a length parameter"
         command: "cd /tutorial/c_project && grep -q 'zero_fill.*int.*len\\|zero_fill.*int.*n\\|zero_fill.*int.*size' arrays_lab.c"
+        hints:
+          - text: "Change the signature to `void zero_fill(int arr[], int len)` and remove the `sizeof(arr) / sizeof(arr[0])` line — inside the function `arr` is a pointer, so `sizeof(arr)` is 8 (pointer size), not the array size."
+            condition: "default"
       - description: "Fixed allocate to use pointer-to-pointer (int **)"
         command: "cd /tutorial/c_project && grep -q 'int \\*\\*' arrays_lab.c"
+        hints:
+          - text: "Signature becomes `void allocate(int **ptr, int n)` and the body uses `*ptr = malloc(n * sizeof(int));`. Call it as `allocate(&heap_data, 5);` so the function can modify `heap_data`."
+            condition: "code_missing: int **"
+          - text: "C is pass-by-value even for pointers. To modify the caller's pointer you need one more level of indirection (`int **`) — the same trick C uses for output parameters."
+            condition: "default"
       - description: "Program compiles and runs correctly"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 arrays_lab.c -o arrays_lab && ./arrays_lab | grep -q 'expected 5' && ./arrays_lab | grep -q 'expected all 0s'"
+        hints:
+          - text: "Writing to `(*ptr)[i]` needs the parentheses — `*ptr[i]` is parsed as `*(ptr[i])`, which is a different (and wrong) operation."
+            condition: "output_contains: Segmentation fault"
+          - text: "Don't forget to uncomment the `free(heap_data);` block once `allocate` actually fills `heap_data` — the tests only check output, but leaving the malloc un-freed leaks memory."
+            condition: "default"
 
     quiz:
       title: "Arrays, Pointers, and Pass-by-Value — Knowledge Check"
@@ -1793,11 +1910,11 @@ steps:
   # --------------------------------------------------------------------------
   # STEP 10: File I/O — Reading and Writing Files
   # --------------------------------------------------------------------------
-  - title: "Power #8 — File I/O: Read and Write the World"
+  - title: "File I/O — Reading and Writing Files"
     instructions: |
-      ### Power Unlocked: Persistent Storage
+      ### Persistent Storage
 
-      Up until now, everything you've built vanishes when the program exits. This power changes that — you can read from and write to files on disk, making your programs interact with the real world. Config files, save games, log files, databases — it all starts here.
+      Up until now, everything you've built vanishes when the program exits. File I/O lets you read from and write to files on disk so your programs can persist data across runs. Config files, save games, log files, databases — they all build on this.
 
       ### Files in C: Open, Use, Close
 
@@ -1967,16 +2084,38 @@ steps:
     tests:
       - description: "Uses fopen to open files"
         command: "cd /tutorial/c_project && grep -cE '^[^/]*fopen\\(' fileio_lab.c | grep -qE '^[2-9]'"
+        hints:
+          - text: "You need two `fopen` calls: `fp = fopen(\"playlist.txt\", \"w\");` for PART 1, then `fp = fopen(\"playlist.txt\", \"r\");` for PART 2."
+            condition: "default"
       - description: "Checks for NULL after fopen"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*== *NULL' fileio_lab.c"
+        hints:
+          - text: "Right after each `fopen`, add `if (fp == NULL) { perror(\"fopen failed\"); return 1; }`. `perror` prints the system error (e.g., permission denied) which is more useful than a generic message."
+            condition: "default"
       - description: "Uses fprintf to write to the file"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*fprintf\\(' fileio_lab.c"
+        hints:
+          - text: "Inside the write loop: `fprintf(fp, \"%s\\n\", songs[i]);`. The `FILE*` comes first, then the format string, then the arguments — same conversions as `printf`."
+            condition: "default"
       - description: "Uses fgets to read from the file"
         command: "cd /tutorial/c_project && grep -qE '^[^/]*fgets\\(' fileio_lab.c"
+        hints:
+          - text: "Read lines with `while (fgets(line, sizeof(line), fp) != NULL) { track_count++; }`. `fgets` returns `NULL` at EOF, which ends the loop."
+            condition: "code_missing: fgets("
+          - text: "Avoid `while (!feof(fp))` — `feof` only becomes true *after* a failed read, so the last iteration double-counts."
+            condition: "default"
       - description: "Closes files with fclose"
         command: "cd /tutorial/c_project && grep -c 'fclose' fileio_lab.c | grep -qE '^[2-9]'"
+        hints:
+          - text: "Call `fclose(fp);` after the write loop AND after the read loop. Without it, buffered writes may never reach disk — and each open `FILE*` uses a file descriptor."
+            condition: "default"
       - description: "Program compiles and produces correct output"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 fileio_lab.c -o fileio_lab && ./fileio_lab | grep -q 'Saved 6 tracks' && ./fileio_lab | grep -q 'Loaded 6 tracks'"
+        hints:
+          - text: "If `Loaded` shows 0, you didn't close and reopen the file between PART 1 and PART 2, or you're reading from a file opened in `\"w\"` mode. The read call needs `\"r\"`."
+            condition: "output_missing: Loaded 6"
+          - text: "If `Loaded` shows more than 6, double-check your loop — each successful `fgets` is exactly one line, so `track_count++` should only run inside the `while`."
+            condition: "default"
 
     quiz:
       title: "File I/O — Knowledge Check"
@@ -2008,7 +2147,7 @@ steps:
             - "fclose frees the memory used by the file contents"
             - "fclose is only needed for files opened in write mode"
           correct_index: 1
-          explanation: "C I/O is buffered — `fprintf` writes to an in-memory buffer, not directly to disk. `fclose` flushes this buffer. Without it, the last writes may never reach the file. Additionally, each open file uses a file descriptor, and the OS limits how many a process can hold."
+          explanation: "C I/O is buffered — `fprintf` writes to an in-memory buffer, not directly to disk. `fclose` flushes this buffer. Without it, the last writes may never reach the file. Open files also consume file descriptors, and the OS caps how many a process can hold."
 
         - question: |
             **Arrange** the lines to safely read all lines from a file and print them with line numbers.
@@ -2034,22 +2173,22 @@ steps:
             - "fprintf is safer because it does bounds checking"
             - "printf is a macro that calls fprintf(stdout, ...) internally"
           correct_index: 1
-          explanation: "In fact, `printf(...)` is essentially `fprintf(stdout, ...)`. The C standard I/O library uses the same formatting engine for both. `stdout`, `stdin`, and `stderr` are all `FILE*` pointers — they're just pre-opened for you."
+          explanation: "In fact, `printf(...)` is `fprintf(stdout, ...)` with `stdout` supplied for you. The C standard I/O library uses the same formatting engine for both. `stdout`, `stdin`, and `stderr` are all `FILE*` pointers — just pre-opened."
 
   # --------------------------------------------------------------------------
   # STEP 11: Putting It All Together — A Linked List in C (Capstone)
   # --------------------------------------------------------------------------
   - title: "Final Boss — A Linked List in C"
     instructions: |
-      ### The Final Boss Fight
+      ### Capstone Exercise
 
-      Every origin story ends with a boss battle. This is yours.
+      The final step pulls everything together.
 
-      You'll combine **every power you've unlocked** — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch. No scaffolding. No hints. No TODO comments telling you what to write. Just you and the compiler.
+      You'll use **every concept from the tutorial** — structs, pointers, malloc, free, printf, and scanf — to build a **singly linked list** from scratch. No scaffolding, no TODO markers. Just you and the compiler.
 
-      **This is supposed to be hard.** If you get stuck, that doesn't mean you're not cut out for C — it means you're fighting the boss, not the tutorial. Go back and re-read the specific step that covers the concept you're struggling with. Every power you need is already in your toolkit. The challenge is wielding them all at once.
+      **This is supposed to be hard.** If you get stuck, go back and re-read the step that covers the concept you're struggling with. Every tool you need was introduced earlier; the challenge is combining them.
 
-      **Why linked lists are the ultimate pointer test:** When researchers tracked real student code, three categories of pointer errors accounted for nearly all bugs:
+      **Why linked lists are the boss fight for pointers:** When researchers tracked real student code, three categories of pointer errors accounted for nearly all bugs:
 
       | Error Category | % of Students Who Make It |
       |----------------|--------------------------|
@@ -2250,12 +2389,28 @@ steps:
     tests:
       - description: "Implemented node_create with malloc"
         command: "cd /tutorial/c_project && grep -q 'malloc(' linked_list.c"
+        hints:
+          - text: "`node_create` should: `Node *n = malloc(sizeof(Node)); if (n == NULL) return NULL; n->value = value; n->next = NULL; return n;`. Setting `next` to NULL is what terminates the list."
+            condition: "code_missing: malloc("
+          - text: "Every successful `malloc` in `node_create` is paired with a later `free` in `list_free`. If you forget the NULL check, a failed allocation will segfault the caller."
+            condition: "default"
       - description: "Implemented list_print that traverses the list"
         command: "cd /tutorial/c_project && grep -A15 'void list_print' linked_list.c | grep -qE -- '->next|->value'"
+        hints:
+          - text: "The standard traversal is `const Node *curr = head; while (curr != NULL) { printf(\"%d \", curr->value); curr = curr->next; }`. Use `->` because `curr` is a pointer."
+            condition: "default"
       - description: "Implemented list_free that frees nodes"
         command: "cd /tutorial/c_project && grep -A15 'void list_free' linked_list.c | grep -qE '[^_]free\\(|^free\\('"
+        hints:
+          - text: "Save `Node *next = curr->next;` BEFORE calling `free(curr);`. Reading `curr->next` after `free(curr)` is a use-after-free — the allocator may have already reused that memory."
+            condition: "default"
       - description: "Program compiles and produces correct output"
         command: "cd /tutorial/c_project && gcc -Wall -std=c11 linked_list.c -o linked_list && echo '4 10 20 30 40' | ./linked_list | grep -q 'List: 10 20 30 40'"
+        hints:
+          - text: "A segfault usually comes from dereferencing `NULL` — check that every `malloc` is NULL-tested, and that `list_print` stops when `curr == NULL`."
+            condition: "output_contains: Segmentation fault"
+          - text: "If values come out in reverse order (40 30 20 10), you're prepending to the head instead of appending at the tail. Use the provided `tail` pointer to link new nodes at the end."
+            condition: "default"
 
     quiz:
       title: "Linked List & Integration — Knowledge Check"
@@ -2321,4 +2476,4 @@ steps:
             - 1
             - 2
             - 3
-          explanation: "The linked list integrates everything: structs (Node), malloc/free (allocation/cleanup), pointers (traversal, next-links, pass-by-reference), and printf/scanf (I/O). If you got this right, you just used every power in the toolkit at once. Boss defeated. Origin story complete. You're a C programmer now."
+          explanation: "The linked list integrates everything: structs (Node), malloc/free (allocation/cleanup), pointers (traversal, next-links, pass-by-reference), and printf/scanf (I/O). If you got this right, you've used every concept from the tutorial at once."
