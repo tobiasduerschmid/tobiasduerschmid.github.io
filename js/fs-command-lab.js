@@ -426,14 +426,6 @@
     treeWrap.className = 'fs-command-lab__tree';
     action.appendChild(treeWrap);
 
-    var maxH = measureMaxTreeHeight([spec.before, spec.after]);
-    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
-
-    // Lock wrapper to the taller of before/after so toggling doesn't shift
-    // the page above or below.
-    var maxH = measureMaxTreeHeight([spec.before, spec.after]);
-    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
-
     var animator = TreeAnimator(treeWrap);
 
     // Output lives inside the tree wrapper, after the slots, so it sits
@@ -463,8 +455,10 @@
     }
 
     btn.addEventListener('click', function () {
+      treeWrap.style.minHeight = treeWrap.offsetHeight + 'px';
       applied = !applied;
       update();
+      setTimeout(function () { treeWrap.style.minHeight = ''; }, 400);
     });
 
     var controller = {
@@ -611,22 +605,6 @@
     treeWrap.className = 'fs-command-lab__tree';
     action.appendChild(treeWrap);
 
-    // Lock wrapper height to the tallest state in the walkthrough so walking
-    // the sequence doesn't shift surrounding content as the tree grows and
-    // shrinks.
-    var allStates = [spec.initialState];
-    for (var si0 = 0; si0 < steps.length; si0++) allStates.push(steps[si0].state);
-    var maxH = measureMaxTreeHeight(allStates);
-    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
-
-    // Lock wrapper height to the tallest state in the walkthrough so walking
-    // the sequence doesn't shift surrounding content as the tree grows and
-    // shrinks.
-    var allStates = [spec.initialState];
-    for (var si0 = 0; si0 < steps.length; si0++) allStates.push(steps[si0].state);
-    var maxH = measureMaxTreeHeight(allStates);
-    if (maxH > 0) treeWrap.style.minHeight = maxH + 'px';
-
     var animator = TreeAnimator(treeWrap);
 
     // Output lives inside the tree wrapper, after the slots, so it sits
@@ -719,14 +697,18 @@
     }
 
     btn.addEventListener('click', function () {
+      treeWrap.style.minHeight = treeWrap.offsetHeight + 'px';
       stepIdx = (stepIdx === steps.length - 1) ? -1 : stepIdx + 1;
       update();
+      setTimeout(function () { treeWrap.style.minHeight = ''; }, 400);
     });
 
     backBtn.addEventListener('click', function () {
       if (stepIdx > -1) {
+        treeWrap.style.minHeight = treeWrap.offsetHeight + 'px';
         stepIdx--;
         update();
+        setTimeout(function () { treeWrap.style.minHeight = ''; }, 400);
       }
     });
 

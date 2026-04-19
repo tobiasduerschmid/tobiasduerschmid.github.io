@@ -67,25 +67,44 @@ Throughout the page you will find **interactive command cards** — click the bu
 
 # Core Concepts
 
+Before the commands, the mental model. Each section below opens with the question it answers — if you think you already know the answer, try to articulate it in your own words before reading on. That tiny act of retrieval is more valuable than a careful re-read.
+
 ## What is Version Control?
 
-**Version control** (also known as source control or revision control) is the software engineering practice of controlling, organizing, and tracking different versions in the history of computer files. A tool that supports version control is called a **Version Control System (VCS)**.
+### Why do we need version control?
 
-The most common version control systems are:
+Imagine four teammates editing the same 500-line program. You finish a function and email your copy around. Alice has already changed three of the files you touched; Bob is working on a fourth that you haven't seen; Carol fixed a bug last week that somehow didn't make it into your copy. When it's time to combine the work, whose version wins? Which edits are new? If the merged result crashes, how do you tell which change broke it?
+
+Manual version control — saving files with names like `homework_final_v2_really_final.txt` — collapses under this kind of pressure within hours. A **Version Control System (VCS)** is a tool that automates the job. It records every change with who/when/why metadata, lets many people work concurrently without clobbering each other, and makes it possible to undo a change that turned out to be wrong — days, weeks, or years later.
+
+The five concrete problems a VCS solves:
+
+* **Collaboration** — multiple developers can work concurrently without overwriting each other's changes.
+* **Change tracking** — see exactly what has changed since you last worked on a file.
+* **Traceability** — every modification records who made it, when, and why.
+* **Reversion** — if a bug is introduced, return to a known-good state.
+* **Parallel development** — branches let you work on features or fixes in isolation.
+
+The most common version control systems:
+
 * **[Git](https://git-scm.com/)** (most common for open source, also used by Microsoft, Apple, and most other companies)
 * **[Mercurial](https://www.mercurial-scm.org/)** (used by Meta, Jane Street, and others {% cite goode2014scaling %})
 * **Piper** (Google's internal tool {% cite Potvin2016 %})
 * **Subversion** (some older projects)
 
-Manual version control — saving files with names like `Homework_final_v2_really_final.txt` — is cumbersome and error-prone. Automated systems like Git solve several critical problems:
-
-* **Collaboration** — multiple developers can work concurrently without overwriting each other's changes.
-* **Change Tracking** — see exactly what has changed since you last worked on a file.
-* **Traceability** — every modification records who made it, when, and why.
-* **Reversion** — if a bug is introduced, revert to a known good state.
-* **Parallel Development** — branches let you work on features or fixes in isolation.
-
 ## Centralized vs. Distributed
+
+### Why is Git "distributed"?
+
+Because requiring a network connection for every Git operation is a terrible user experience — and older centralised systems like Subversion suffered from exactly that. Want to see what changed last week? Talk to the server. Want to commit? Talk to the server. Server is down? You can't work.
+
+A **distributed** VCS inverts this: every developer's machine holds a full copy of the entire history. Commit, branch, and inspect history offline on a train; sync with teammates when you have a network. The three concrete wins:
+
+- **Speed.** Local operations touch a local disk, no round-trip. `git log` on a 20-year-old repo is instant.
+- **Resilience.** Every clone is a complete backup. The central server can die and the project survives.
+- **Flexibility.** You can experiment on branches locally without permissions or policies getting in the way.
+
+The trade-off is that "the truth" has to be reconciled when people sync — which is what most of the "merge" machinery in this chapter is about.
 
 | Feature | Centralized (e.g., Subversion, Piper) | Distributed (e.g., Git, Mercurial) |
 | :--- | :--- | :--- |
@@ -93,23 +112,100 @@ Manual version control — saving files with names like `Homework_final_v2_reall
 | **Offline Work** | Needs server connection to commit | Work and commit fully offline |
 | **Best For** | Small teams with strict central control | Large teams, open-source, distributed workflows |
 
+## Commits
+
+### What is a commit, and why do we need them?
+
+A **commit** is a **named snapshot** of your entire project at one moment, with a short message explaining *why* you took that snapshot. It's the fundamental unit Git reasons about: every branch, merge, rebase, and undo operation is expressed in terms of commits.
+
+### Why not just auto-save continuously?
+
+Three reasons we commit in discrete, meaningful units instead of letting the OS or editor save every keystroke:
+
+1. **Meaningful units.** "Yesterday at 3:47 PM" is a useless coordinate when hunting a bug. "The commit where we added rate limiting" is something you can find, read, revert, or cherry-pick. Commits let you slice history into intention-sized pieces.
+2. **Explanatory metadata.** Each commit records who made it, when, and — crucially — *why*, through its message. The diff shows what changed; the message tells future-you or your teammate the reasoning. A trail of good messages is project memory.
+3. **Shared vocabulary.** Because every commit has a unique identity (a SHA — we'll meet hashes later), you and a teammate on another continent can refer to the exact same state of the project with a single string. "The bug reproduces on `a3f2d9c` but not on `b7e1c4d`." Commits are the atoms that reviews, releases, and deployments are built out of.
+
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: what a commit actually is (content addressing, snapshots vs. diffs)</strong> (optional — skip on first pass)</summary>
+
+Every object Git stores — every commit, every tree (a directory listing), every blob (a file's contents) — is identified by a **SHA-1 hash of its own content**. Change a single byte of the content and the hash changes. This is called **content addressing**.
+
+Two consequences follow immediately:
+
+- **Commits are immutable.** You cannot edit a commit in place — changing its content would change its SHA, so it would be a *different* commit. Every "rewrite" operation (`--amend`, `rebase`, `cherry-pick`) is really *"build a new commit with the change baked in, then move pointers to it"*. The old commit isn't edited; it's abandoned.
+- **Identity travels.** Two collaborators whose repositories contain the same content produce the same SHAs. There's no central authority deciding what counts as "the same commit" — the content decides. That's why Git can sync distributed clones without a lock server.
+
+**Snapshots, not diffs.** A common misconception is that Git stores each commit as a *diff* against its parent. It doesn't. A commit stores a **full tree snapshot** — a recursive directory listing of every tracked file at that moment, with each file's content hashed into a **blob** object. This sounds wasteful until you realise Git **deduplicates** by hash: if `README.md` is identical across 100 commits, the blob is stored *once* and all 100 tree objects reference its SHA. A 10-year-old repository with 50,000 commits typically takes only a few gigabytes because 99% of the content is shared between snapshots. The payoff: checking out any historical commit is instant — Git reads a tree, pulls the referenced blobs, writes them to disk. There's no "apply 50,000 diffs in sequence" step.
+
+</details>
+
 ## The Three States
 
-Git operates across three areas that every file passes through:
+### Why do we need a staging area?
 
-1. **Working Directory** — files as they exist on your disk right now.
-2. **Staging Area (Index)** — a middle ground where you stage the exact changes you want in your next snapshot.
-3. **Local Repository** — the `.git/` directory, where Git stores compressed snapshots (commits) of project history.
+You might reasonably expect a simpler design: you edit files, you commit, done. Two states — working directory and history. Why does Git insert a middle layer?
 
-A **commit** is a permanent snapshot: an immutable object identified by a 40-character SHA-1 hash, with pointers to its parent commit(s) and to a **tree** object that records the project's directory structure at that moment. The chain of parents is what we call *history*, and the visual form of that chain is the **commit graph** you'll animate below.
+The answer is that **what you edited** and **what you want in the next commit** are not always the same thing. Common situations:
+
+- You've edited five files in one session — two for a feature, three for an unrelated cleanup. You want **two commits**, not one messy one. The staging area lets you add the feature files, commit, then add the cleanup files and commit separately.
+- You've edited a file that mixes a real change with a debug `print` you forgot to remove. You want to commit the real change without the print. Staging individual *hunks* of a file (`git add -p`) lets you take half of a file now and leave the other half for later.
+- You want to review what you're about to commit before committing. `git diff --staged` shows you exactly that — the staging area *is* the preview.
+
+So Git operates across three areas that every file passes through:
+
+1. **Working directory** — files as they exist on your disk right now.
+2. **Staging area (a.k.a. the index)** — a preview of the next commit. Think of it as a *commit editor*: you can add files here, remove them, tweak which version goes in, and only commit when it reads the way you want.
+3. **Local repository** — the permanent history, where committed snapshots live forever.
+
+`git add` moves changes from the working directory into the staging area. `git commit` turns everything in staging into a new, immutable snapshot in the repository. `git status` tells you what's currently in each area.
 
 ## HEAD, Branches, and the Commit Graph
 
-In every diagram on this page you'll see a white chip labelled **`HEAD`** pointing at a commit. `HEAD` marks *where you are* in history — the commit your next operation will act on. Normally `HEAD` points at a branch (like `main`), and the branch in turn points at a commit; `HEAD` follows the branch forward as new commits are added. This double indirection (`HEAD → branch → commit`) is why `git commit` only needs to rewrite the tiny branch-pointer file to advance history.
+### What are branches, and why do we need them?
 
-A **branch** in Git is a **lightweight pointer** to a commit — literally a text file in `.git/refs/heads/` containing one commit's SHA. Creating or deleting a branch is nearly instantaneous; there are no per-branch file copies. The `HEAD` pointer (stored in `.git/HEAD`) usually contains a symbolic reference like `ref: refs/heads/main` pointing at the current branch.
+A **branch** is a named line of history you can work on in parallel with other lines. In practice: one branch per feature, bug fix, or experiment.
 
-Commits, trees, and blobs form a **Directed Acyclic Graph (DAG)**. Each commit records one or more **parent** commit SHAs: zero for the root commit, one for a normal commit, two for a merge commit. Follow the parent links and you walk the full history of the project. The graphs throughout this page are just visualisations of that DAG.
+Why bother? Because real projects always have multiple streams of work happening at once. Without branches, you'd have exactly two bad options:
+
+- **Queue everything.** Alice's feature blocks Bob's bug fix blocks Carol's refactor. Nobody ships until everything is ready.
+- **Mix everything on one timeline.** Half-finished features, debug prints, and WIP experiments all live together on `main`. Every commit is a gamble about what's actually production-ready.
+
+Branches solve this by letting each stream of work live on its own timeline. When a feature is done, you combine it back ("merge") into `main`. An experiment that doesn't pan out can be discarded without polluting the shared history. And critically, **all the branches are the same project** — the same files, the same history up to the point they diverged — so switching between them is instant.
+
+### How do branches, HEAD, and the commit graph fit together?
+
+Conceptually: a branch is a pointer to a commit, plus the chain of parent commits you can reach by walking backwards. `HEAD` is a pointer to *"where you are right now"* — usually at a branch, so that new commits extend that branch. All the Git graphs on this page are visualisations of branches as pointers into a **Directed Acyclic Graph (DAG)** of commits — each commit records one or more *parent* commit SHAs (zero for the root, one for a normal commit, two for a merge commit), and following the parent links walks you backwards through history.
+
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: what branches, HEAD, and the `.git/` directory look like on disk</strong> (optional — skip on first pass)</summary>
+
+A branch is **literally** a 41-byte text file. Inside `.git/refs/heads/` there is one file per branch, each containing one 40-character SHA plus a newline. Creating a branch is one `fwrite()`; deleting one is one `unlink()`. That's why branch operations are instant even on a 10 GB repo — nothing is copied.
+
+`HEAD` is another text file at `.git/HEAD`. Normally it contains a *symbolic reference* like `ref: refs/heads/main`, which is Git's way of saying "follow whatever commit `main` points at." When you're in [detached HEAD](#detached-head) state, this file instead contains a raw SHA directly.
+
+Both facts — branch-as-pointer-file and HEAD-as-indirection — are the reason `git commit` only has to rewrite a few bytes to advance history: update the branch file, and every reader sees the new tip.
+
+**The `.git/` directory layout:**
+
+<pre><code class="diagram-folder-tree">
+@startuml
+.git/
+  HEAD                 ← contains "ref: refs/heads/main"
+  refs/
+    heads/
+      main             ← contains "a3f2d9c…" (40-char SHA + newline)
+      feature          ← contains "b7e1c4d…"
+  objects/             ← content-addressed blob / tree / commit store
+    a3/                ← sharded by first two hex chars
+      f2d9c…
+    …
+@enduml
+</code></pre>
+
+The commits "on" a branch aren't stored with the branch; the branch is just a pointer, and *reachability through parent links* is what defines "on this branch." Walk the parent chain from a branch's SHA, and every commit you visit is part of that branch's history.
+
+</details>
 
 ## The One Big Idea: Additive or Rewrite
 
@@ -121,7 +217,7 @@ Once you hold that picture, every Git command fits in one of two buckets:
 
 The (a) bucket is **additive** — safe on shared branches, because nothing anyone already has changes. The (b) bucket is more interesting: *moving pointers backward* (e.g. `git reset --hard`) effectively discards work, and some commands in bucket (a) create new snapshots that *replace* older ones (e.g. `git commit --amend`, `git rebase`). Collectively these are the commands that **rewrite history** — safe locally, dangerous after you've pushed. Throughout this page every such command carries an **⚠️ rewrites history** callout at first mention.
 
-We'll unpack *why* Git can work this way — the content-addressed hash machinery that makes snapshots cheap and tamper-evident — in [Under the Hood: Git's Object Model](#under-the-hood-gits-object-model) after you've made your first commit. For now, the pointer-and-snapshot picture is enough.
+*Why* Git can work this way — the content-addressed hash machinery that makes snapshots cheap and tamper-evident — is covered in the optional **🔧 Under the Hood** callouts scattered throughout this page. For now, the pointer-and-snapshot picture is enough.
 
 **🧠 Check yourself — Core Concepts.** Before moving on, try these without looking back:
 
@@ -179,33 +275,59 @@ These settings live in `~/.gitconfig` and apply to every repo on your machine. O
 
 ## Ignoring Files (`.gitignore`)
 
-A `.gitignore` file tells Git to pretend certain files don't exist — never stage them, never warn about them, never track them. Set one up **before your first commit** — it has no retroactive effect on files that are already tracked.
+### Why do we need `.gitignore`?
 
-A typical Python project's `.gitignore`:
+Not every file in your project directory is *source code that belongs in version control*. Your working tree also accumulates files that are generated from the source, personal to your machine, or downright dangerous to commit:
+
+- **Build artefacts** — compiled binaries, `*.pyc` bytecode, `node_modules/`, `dist/`, `target/`. These are reproducible from the source and re-generated on every build. Committing them wastes repo space, creates merge conflicts on every build, and pollutes diffs.
+- **Editor / OS debris** — `.DS_Store`, `Thumbs.db`, `.idea/`, `.vscode/settings.json` (sometimes). These reflect *your* machine's setup, not the project.
+- **Local config and secrets** — `.env`, `*.pem`, database passwords, API keys. These must never enter history (see the security warning below).
+- **Huge binary files** — videos, datasets, model checkpoints. Git is optimised for text; large opaque binaries bloat the repo and can't be diffed meaningfully. Use Git LFS for those.
+
+Without a `.gitignore`, Git constantly reports these files as "untracked" in `git status`, and eventually someone stages `git add -A` and commits the wrong thing. The file tells Git to **pretend these paths don't exist** — they won't show up in `git status`, won't be staged by accident, and won't be tracked.
+
+### What goes in a `.gitignore`, and why?
+
+A typical Python project's `.gitignore`, annotated:
 
 ```
-# Compiled Python
+# Compiled Python — regenerated from .py sources, never need to share
 *.pyc
 __pycache__/
 
-# Virtual environments
+# Virtual environments — machine-local, contains thousands of installed packages
 venv/
 .venv/
 
-# Secrets — never commit
+# Secrets — never commit (rotate immediately if you do)
 .env
 *.pem
 
-# OS clutter
+# OS clutter — only relevant to macOS / Windows file browsers
 .DS_Store
 Thumbs.db
 
-# Editor
+# Editor metadata — reflects your personal editor, not the project
 .vscode/
 .idea/
 ```
 
-**Pattern syntax:**
+The shape generalises: **for each entry, ask "is this reproducible from source?" or "is this personal to my machine?" or "is this a secret?"** If yes to any of those, it belongs in `.gitignore`. If it's hand-authored content that's part of the project, it does not.
+
+A few defaults worth knowing for common ecosystems:
+
+| Ecosystem | Typical ignores |
+|---|---|
+| Python | `__pycache__/`, `*.pyc`, `.venv/`, `venv/`, `.pytest_cache/`, `*.egg-info/`, `dist/`, `build/` |
+| Node.js | `node_modules/`, `dist/`, `build/`, `.next/`, `coverage/`, `*.log` |
+| Java / JVM | `target/`, `build/`, `*.class`, `*.jar` (unless vendored), `.gradle/` |
+| C / C++ | `*.o`, `*.obj`, `build/`, `cmake-build-*/`, `*.exe` |
+| Rust | `target/`, `Cargo.lock` *(only ignore for libraries, commit it for apps)* |
+| OS / editor | `.DS_Store`, `Thumbs.db`, `.idea/`, `.vscode/` |
+
+GitHub publishes a curated [`gitignore` template collection](https://github.com/github/gitignore) — pick your language's file and copy it as a starting point.
+
+### Pattern syntax
 
 | Pattern | Matches |
 |---|---|
@@ -216,21 +338,34 @@ Thumbs.db
 | `docs/*.html` | A path-prefix glob |
 | `!important.log` | Leading `!` negates a prior match — "include this even though `*.log` would exclude it" |
 
-Patterns can also live in:
+### Why do I need to set `.gitignore` up *before* my first commit?
 
-- **`.git/info/exclude`** — local-only ignore rules for your working copy; not shared with the team.
-- **The global file** referenced by `core.excludesfile` (default `~/.config/git/ignore` on Linux/macOS) — your personal defaults that apply to every repo.
-
-**Important: no retroactive effect.** If a file was committed *before* `.gitignore` matched it, adding the pattern now does not untrack it. Remove the file from the index first:
+`.gitignore` has **no retroactive effect** on files that are already tracked. If you commit `node_modules/` first and add `node_modules/` to `.gitignore` second, the directory stays tracked — Git keeps following every change inside it. You have to explicitly untrack it:
 
 ```bash
-git rm --cached secrets.env
-git commit -m "Stop tracking secrets.env"
+git rm --cached node_modules -r
+git commit -m "Stop tracking node_modules"
 ```
 
-**Commit `.gitignore` itself.** Sharing the file means every teammate and every future clone automatically gets the same ignore rules. Without this, each developer independently re-discovers which files to ignore — and someone eventually commits `.env`.
+(The `--cached` flag removes the files from Git's index only, *not* from your working directory.) Adding the pattern *before* the first commit avoids this step entirely — which is why every language guide tells you to create `.gitignore` first.
+
+### Why commit `.gitignore` itself?
+
+Because the rules are a project-level concern, not a personal one. Sharing the file means every teammate and every future clone automatically gets the same ignore rules. Without this, each developer independently re-discovers which files to ignore — and someone eventually commits `.env`.
 
 > ⚠️ **`.gitignore` is not a security tool.** If a secret was *ever* committed — even in a commit that was later removed — it remains in history and in the reflog, visible to anyone who clones the repository. The correct response to a leaked credential is to **rotate it immediately** and scrub history with tools like `git filter-repo` or BFG Repo Cleaner.
+
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: other places ignore rules can live</strong> (optional — skip on first pass)</summary>
+
+Besides `.gitignore` files committed to the repo, Git honours two additional ignore sources:
+
+- **`.git/info/exclude`** — local-only ignore rules for *your* working copy of this repo; not shared with the team. Useful for adding one-off patterns without editing the shared `.gitignore` (e.g. a scratch script you only use on your machine).
+- **The global file** referenced by `core.excludesfile` (default `~/.config/git/ignore` on Linux/macOS) — your personal defaults that apply to every repo on your machine. The natural home for `.DS_Store`, `Thumbs.db`, and your editor's temp files.
+
+Rules combine: a file is ignored if any of the three sources matches it, unless a later `!pattern` negates it.
+
+</details>
 
 **🧠 Check yourself — Setting Up.** Try these before peeking:
 
@@ -443,7 +578,13 @@ Whether to adopt Conventional Commits is a **team decision** — but writing imp
 
 > ⚠️ **This command rewrites history.** Safe for commits you have not yet pushed. Never amend a commit that has been pushed to a shared branch — see the [Golden Rule of Shared History](#the-golden-rule-never-rewrite-pushed-commits).
 
-The most common "oops" in Git is noticing a typo in the commit message, or realising you forgot to `git add` a file, seconds after committing. `git commit --amend` combines the staging area with the current tip commit and rewrites it — new hash, same branch position.
+### Why do we need `--amend`?
+
+Because the most common "oops" in Git is noticing a typo in the commit message, or realising you forgot to `git add` a file, *seconds* after committing. Without `--amend` you'd have two bad options: leave the broken commit in history and create a follow-up ("fix typo in previous message"), or reset the branch and rebuild the commit manually. Neither is great. `--amend` gives you a dedicated "I meant this, not that" operation that replaces the tip commit with a corrected version.
+
+### What it does
+
+`git commit --amend` combines the staging area with the current tip commit and rewrites it — new hash, same branch position.
 
 Typical uses:
 
@@ -485,81 +626,6 @@ Amend is the simplest of Git's rewrite operations — and therefore the gateway 
 2. **Only `src/utils.js` is committed.** `git commit -am` auto-stages *tracked, modified* files — it does not touch *untracked* files like `notes.txt`. That's the difference between `-am` and `git add -A`; `-am` is the safer shortcut.
 3. `git commit --amend` (typically `--amend -m "New message"`). It creates a *new* commit replacing the old tip — same content, corrected message, different SHA. Safe locally because only your repo has the old SHA; dangerous after pushing because collaborators still have the old SHA and their clones will diverge.
 4. *"Fix off-by-one in dashboard pagination"* (and ≤50 chars). The mnemonic: a good subject completes "If applied, this commit will ___".
-
-</details>
-
-# Under the Hood: Git's Object Model
-
-Now that you've made a commit, we can open the box and look at *what Git actually stored*. This section is **optional for a first-pass read** — nothing later in the chapter requires you to remember the details here — but it explains *why* everything else works the way it does. Treat it as the "because physics" section for everything you've just learned.
-
-## Commits Are Hashes of Their Own Content
-
-Every object Git stores — every commit, every tree (a directory listing), every blob (a file's contents) — is identified by a **SHA-1 hash of its own content**. Change a single byte of the content and the hash changes. This is called **content addressing**.
-
-Two consequences follow immediately:
-
-- **Commits are immutable.** You cannot edit a commit in place — changing its content would change its SHA, so it would be a *different* commit. Every "rewrite" operation you've seen (`--amend`, `rebase`, `cherry-pick`) is really *"build a new commit with the change baked in, then move pointers to it"*. The old commit isn't edited; it's abandoned.
-- **Identity travels.** Two collaborators whose repositories contain the same content produce the same SHAs. There's no central authority deciding what counts as "the same commit" — the content decides. That's why Git can sync distributed clones without a lock server.
-
-## Snapshots, Not Diffs
-
-A common misconception is that Git stores each commit as a *diff* against its parent. It doesn't. A commit stores a **full tree snapshot** — a recursive directory listing of every tracked file at that moment, with each file's content hashed into a **blob** object.
-
-This sounds wasteful until you realise Git **deduplicates** by hash: if `README.md` is identical across 100 commits, the blob is stored **once**, and all 100 tree objects just reference its SHA. A 10-year-old repository with 50,000 commits typically takes only a few gigabytes because 99% of the content is shared between snapshots.
-
-The payoff: checking out any historical commit is instant — Git reads a tree, pulls out the referenced blobs, and writes them to disk. There's no "apply 50,000 diffs in sequence" step.
-
-## Branches Are 41-Byte Files
-
-A branch is **literally** a text file. On your filesystem:
-
-<pre><code class="diagram-folder-tree">
-@startuml
-.git/
-  HEAD                 ← contains "ref: refs/heads/main"
-  refs/
-    heads/
-      main             ← contains "a3f2d9c…" (40-char SHA + newline)
-      feature          ← contains "b7e1c4d…"
-  objects/             ← content-addressed blob / tree / commit store
-    a3/                ← sharded by first two hex chars
-      f2d9c…
-    …
-@enduml
-</code></pre>
-
-`git branch feature` is one `fwrite()`. `git branch -d feature` is one `unlink()`. That's why branch operations are instant even on a 10 GB repo — no file copies, no per-branch state. The commits "on" the branch aren't stored with the branch; the branch is just a pointer, and *reachability through parent links* is what defines "on this branch."
-
-## "Deleted" Commits Aren't Deleted — They're Unreferenced
-
-When you `git reset --hard HEAD~1` or drop a commit in an interactive rebase, the "removed" commit objects don't vanish. They become **unreachable** — no branch, tag, or `HEAD` position points at them. Git's garbage collector (`git gc`, which runs automatically on a schedule) eventually deletes unreachable objects.
-
-But "eventually" has a grace period: unreachable objects are kept for roughly **90 days** by default, and every move of `HEAD` is additionally logged in the **reflog** (`.git/logs/HEAD`). That's what makes [`git reflog`](#the-safety-net-git-reflog) the universal undo — as long as the object is still in the database and the reflog still remembers the SHA, you can create a new branch pointing at it and recover the work. Commits are forgiving because immutability plus a retention window means nothing *really* disappears for a long time.
-
-## Bringing It Back
-
-Hold on to three facts and the rest of Git follows:
-
-1. **Content is hashed.** Commits, trees, blobs — all identified by SHAs of their own content. Identity = content.
-2. **History is additive.** Every operation either adds new objects to the database or moves pointers; nothing is edited in place.
-3. **Branches are pointers, commits are reachable.** A commit is "alive" as long as some reference — branch, tag, or reflog entry — still names its SHA.
-
-When a command looks scary, ask: *which objects does this create? which pointers does it move? is anything unreferenced afterwards?* That framing resolves almost every "wait, what just happened?" question in Git.
-
-**🧠 Check yourself — Under the Hood.** Try these before peeking:
-
-1. You run `git commit --amend` on the tip of `main`. What happens to the original commit, and what does the SHA of the branch tip look like now?
-2. Your colleague says *"just edit that commit to fix the typo."* What's wrong with that phrasing, literally?
-3. `README.md` hasn't changed across 500 commits. How many copies of the file's content does Git store?
-4. Someone on your team force-pushed and you think you "lost" a commit you had locally. What is the first command to run?
-
-<details markdown="1">
-<summary>Click to view answers</summary>
-
-1. Git creates a **new commit** (call it C′) with the amended content. The branch pointer for `main` moves from C to C′. The original C is now unreachable; it will sit in `.git/objects/` for ~90 days and then be garbage-collected. The SHA is completely different because the content (message, parent, tree) differs.
-2. Commits are **immutable**. You can't edit one — you can only create a new commit that supersedes it. The correct phrasing is *"replace that commit with a new one that fixes the typo"* — which is what `--amend` and `rebase` actually do.
-3. **One.** Git deduplicates by hash; identical content has identical SHA. All 500 tree objects reference the same blob SHA for `README.md`.
-4. `git reflog`. Find the SHA you want, then either `git branch rescued <sha>` or `git reset --hard <sha>`. As long as GC hasn't run on an unreachable object and the reflog still has the entry, the commit is recoverable.
 
 </details>
 
@@ -1065,9 +1131,62 @@ Use `-X theirs` when integrating generated or vendored files where the incoming 
 
 # Remotes
 
-Git really shines once you're sharing work with other people. A **remote** is a named URL pointing to another copy of the repository — typically on GitHub, GitLab, or a self-hosted server. Remote servers typically host **bare repositories** (`git init --bare`) — repositories with no working tree; they store the object database, refs, and config (the contents of a regular `.git/` directory) but no checked-out files.
+Git really shines once you're sharing work with other people. This section opens with the two questions that trip up most newcomers.
 
-## Remotes
+### What's the difference between a local and a remote repository?
+
+A **local repository** is the one on your laptop — the `.git/` folder inside your project directory. It's where your commits actually live while you work, and everything in this chapter up to now has only touched it.
+
+A **remote repository** is another copy of the same project, living somewhere else — typically on GitHub, GitLab, or a self-hosted server. The remote is how your work becomes visible to anyone else: teammates, CI systems, deployment scripts, the open-source world.
+
+Why have both? Three reasons:
+
+1. **Collaboration.** Your teammates need access to your work. A single shared remote is the source of truth that everybody pushes to and pulls from.
+2. **Backup.** Your laptop could die, be stolen, or get dropped in a lake. The remote is insurance — if your local repo vanishes, a fresh clone from the remote reconstructs it.
+3. **Distribution.** In open-source projects, you don't have permission to write directly to the main repository. You clone your own copy, push commits to *your* remote (a "fork"), and open a pull request asking the maintainers to pull your changes into *theirs*.
+
+The local↔remote split is also why Git feels different from older, centralised systems like SVN. In SVN, you need a network to commit at all — the server *is* the repo. In Git, your local repo is fully featured: you commit, branch, and inspect history offline, then sync with a remote when you're ready. Every Git command in this chapter up to now works without network access.
+
+A **remote** — in the narrow Git sense — is a *named URL pointing to another copy of the repository*. `origin` is the conventional name for the primary remote (the one you cloned from). A single repo can have multiple remotes with different names (common in open-source: `origin` for your fork, `upstream` for the maintainer's repo).
+
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: what a server-side remote actually stores</strong> (optional — skip on first pass)</summary>
+
+Remote servers typically host **bare repositories** (created with `git init --bare`) — repositories with *no working tree*. They store the object database, refs, and config (the contents of a regular `.git/` directory), but no checked-out files. That makes sense: nobody is editing files directly on the server; the server exists to store history and serve it to clients on `push` / `fetch`. A bare repo's directory ends in `.git` by convention (e.g. `myproject.git`) so you can tell at a glance.
+
+</details>
+
+### What's the difference between `git clone` and `git pull`?
+
+They sound similar and both "get code from a remote," which causes endless confusion. They do fundamentally different jobs:
+
+| | `git clone <url>` | `git pull` |
+|---|---|---|
+| **When you run it** | Once per project, to get started | Repeatedly, to catch up with teammates' commits |
+| **Needs an existing local repo?** | **No** — you run it outside of any repo | **Yes** — you run it inside the repo |
+| **What it does** | Creates a new local repo from a remote: downloads every commit, branch, and tag; checks out the default branch; configures `origin` to point at `<url>` | Downloads **new** commits from the remote (`git fetch`) and integrates them into your current branch (`git merge` or `git rebase`) |
+| **Directory it produces** | Creates a new folder named after the repo | Doesn't create anything — updates the existing working tree in place |
+| **How often you run it** | Effectively once (per machine, per project) | Many times a day on an active team |
+
+The tidy way to think about it: **`clone` is how a local repo is born; `pull` is how it stays current.**
+
+A worked example:
+
+```bash
+# Day 1 — you join a project. You have no copy of it yet.
+git clone https://github.com/acme/myproject.git     # creates myproject/ and downloads everything
+cd myproject
+
+# Days 2..N — you work on the project. Each day, teammates push new commits.
+git pull                                             # brings those new commits into your branch
+# ...do your work...
+git push                                             # ship your commits back
+git pull                                             # tomorrow morning: catch up again
+```
+
+If you ever find yourself running `git clone` twice for the same project, you probably wanted `git pull`. If you ever find yourself running `git pull` and getting "not a git repository", you probably wanted `git clone`.
+
+## The five remote commands
 
 The five commands that define remote collaboration:
 
@@ -1383,6 +1502,18 @@ The commands in this section either **create new commit objects with new hashes*
 All of the operations below create new commit objects or move pointers backward. They are **safe on local, unpushed commits** and **dangerous on anything that has been pushed**. When in doubt, use `git revert` (additive — see [Undoing Committed Work](#undoing-committed-work)) instead.
 
 ## Rebasing a Branch
+
+### Why would I ever rebase instead of merging?
+
+Because `merge` and `rebase` produce different *shapes* of history, and sometimes you want the shape `rebase` gives you. A `git merge feature` into `main` preserves the fact that `feature` was a parallel line of work — you get a diamond in the graph. A `git rebase main` on `feature` *replays* your feature commits on top of the latest `main`, producing a straight line of history with no fork.
+
+Three concrete situations where people reach for `rebase`:
+
+1. **Cleaning up before a PR.** Your feature branch has been open for a week; `main` has moved; you want the diff in the PR to be exactly your changes, not "your changes plus everything else that happened". A `git rebase main` replays your commits on top of the current `main` so the PR is clean.
+2. **Keeping a linear log.** Some teams prefer `git log --oneline` on `main` to read as a single chain of features rather than a braided mess of merges. Rebasing feature branches before merging keeps the line straight.
+3. **Squashing WIP commits.** Interactive rebase (`-i`) lets you combine, reorder, reword, or drop commits — handy when you have "fix typo" and "oops forgot semicolon" commits you don't want in the permanent record.
+
+The cost: because replayed commits have *different hashes* from the originals, rebasing a branch you've already pushed breaks everyone else's clone of it. That's why rebase is safe locally and dangerous after pushing — the same rule that governs every other "rewrites history" operation.
 
 <div data-git-command-lab>
 <script type="application/json">
@@ -1884,6 +2015,15 @@ The workflow for `git bisect` is always the same six-step ritual — start a ses
 
 Mistakes reach your history eventually — a buggy commit, an accidental merge, an embarrassing message. Git provides two opposing tools for undoing committed work, plus a safety net that makes both survivable.
 
+### Why do we need two ways to "undo" a commit?
+
+Because there are two genuinely different situations, and they call for opposite strategies:
+
+- **The commit is only in your local repo** (you haven't pushed). You can just rewind the branch pointer — the commit becomes unreachable, garbage-collected later, and nobody else ever saw it. This is what `git reset` does.
+- **The commit has been pushed** and teammates have it. You can't safely erase it — their clones still reference it, and trying to rewrite shared history makes every pull a conflict. The only safe undo is to add *another* commit that inverts the change. This is what `git revert` does.
+
+The rule of thumb: **`reset` for private mistakes, `revert` for public mistakes.** The rest of this section unpacks both.
+
 ## Reverting a Commit (`git revert`)
 
 > ✅ **Additive.** Safe on shared branches — preserves history exactly.
@@ -2003,6 +2143,15 @@ git switch -c my-experiment
 ```
 
 ## The Safety Net: `git reflog`
+
+<details markdown="1">
+<summary><strong>🔧 Under the Hood: why "deleted" commits are recoverable</strong> (optional — skip on first pass)</summary>
+
+When you `git reset --hard HEAD~1` or drop a commit in an interactive rebase, the "removed" commit objects don't vanish from your repo. They become **unreachable** — no branch, tag, or `HEAD` position points at them. Git's garbage collector (`git gc`, which runs automatically on a schedule) eventually deletes unreachable objects.
+
+But "eventually" has a grace period: unreachable objects are kept for roughly **90 days** by default, and every move of `HEAD` is additionally logged in the **reflog** (`.git/logs/HEAD`). That's what makes `git reflog` the universal undo — as long as the object is still in the database and the reflog still remembers the SHA, you can create a new branch pointing at it and recover the work. Commits are forgiving because immutability plus a retention window means nothing *really* disappears for a long time.
+
+</details>
 
 Every time `HEAD` moves — commit, checkout, reset, rebase, merge, cherry-pick, stash — Git records the movement in the **reflog**, a per-repository diary of HEAD's positions. The reflog is local, never pushed, and kept for ~90 days by default (`gc.reflogExpire` / `gc.reflogExpireUnreachable`).
 

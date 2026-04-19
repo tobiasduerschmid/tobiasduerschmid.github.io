@@ -203,6 +203,10 @@ blockquote {
 /**
  * Details/Summary (collapsible sections)
  */
+details {
+    margin-bottom: $spacing-unit;
+}
+
 details summary {
     color: $brand-color;
     cursor: pointer;
