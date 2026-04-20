@@ -1153,6 +1153,77 @@ set -e
 ```
 This tells the shell to exit immediately if any simple command fails, making your scripts safer and more predictable.
 
+Work through each script **in your head first** — predict what reaches stdout before pressing Run. Each `echo` call below prints on its own line, so the number of lines on stdout tells you exactly how many `echo` statements ran. The output literally stops where execution stopped. The comparison panel will tell you if you got it; if not, the Notice below will explain why.
+
+#### Lab 1 — `set -e` before vs. after
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "bash demo.sh",
+  "description": "This script runs `false` **twice** — once before `set -e` is enabled, and once after. `false` is a tiny program whose only job is to exit with status `1`, so it's a convenient stand-in for \"a command that failed\". Trace the script line by line and commit to a prediction.",
+  "predict": true,
+  "predictPrompt": "Which `echo` statements reach stdout, and in what order? (Each one prints on its own line.)",
+  "input": {
+    "files": [
+      { "name": "demo.sh", "content": "#!/bin/bash\necho \"A\"\nfalse\necho \"B\"\nset -e\necho \"C\"\nfalse\necho \"D\"\n" }
+    ]
+  },
+  "output": {
+    "stdout": "A\nB\nC",
+    "exit": 1
+  },
+  "notice": "The first `false` is harmless — `set -e` is not yet active, so Bash simply continues. The **second** `false` fires `set -e`, the shell exits immediately, and `echo \"D\"` is never reached. The script's own exit code is `1` — inherited from the `false` that killed it."
+}
+</script>
+</div>
+
+#### Lab 2 — `set -e` is *suppressed* inside `&&` and `||`
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "bash chain.sh",
+  "description": "A critical subtlety: Bash does **not** let `set -e` fire when a failing command is part of an `&&` or `||` chain, because its exit status is being *tested*. Only a **bare** failing command kills the script. Contrast the two patterns below — one `false && …` chain and one bare `false` — and predict exactly what reaches stdout.",
+  "predict": true,
+  "predictPrompt": "`set -e` is active throughout. Which `echo` statements reach stdout, and in what order?",
+  "input": {
+    "files": [
+      { "name": "chain.sh", "content": "#!/bin/bash\nset -e\necho \"A\"\nfalse && echo \"skip\"\necho \"B\"\nfalse || echo \"rescue\"\necho \"C\"\nfalse\necho \"D\"\n" }
+    ]
+  },
+  "output": {
+    "stdout": "A\nB\nrescue\nC",
+    "exit": 1
+  },
+  "notice": "Two chained `false`s survive: `false && echo \"skip\"` returns **exit 1** overall, but `set -e` is suppressed because `false` is part of an `&&` test. `false || echo \"rescue\"` runs its rescue branch (overall exit 0). The **bare** `false` on the next-to-last line has nothing catching it, so `set -e` fires and `echo \"D\"` is unreached. The idiom `command || true` is the standard way to intentionally ignore a failure under `set -e`. Pipelines, by the way, are yet another story: `set -e` only inspects the *last* stage of a pipeline unless you also `set -o pipefail`."
+}
+</script>
+</div>
+
+#### Lab 3 — Synthesis: functions, `set -e`, `||`, `&&` — all at once
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "bash song.sh",
+  "description": "A synthesis of everything from the first two labs — a **function with its own `return 1`**, `set -e`, and a mix of `||` rescues, `&&` chains, and bare commands. Trace line by line. Somewhere in the script `set -e` fires and the rest is unreachable — finding *where* is the whole puzzle.",
+  "predict": true,
+  "predictPrompt": "What appears on **stdout**, line by line? (The function prints `Never gonna` every time it's *called*, not each time its return value is used.)",
+  "input": {
+    "files": [
+      { "name": "song.sh", "content": "#!/bin/bash\nnever_gonna() {\n    echo \"Never gonna\"\n    return 1\n}\nnever_gonna\nfalse\nset -e\nfalse || true\ntrue || echo \"give you\"\nfalse || echo \"up.\"\nnever_gonna || true\necho \"let you\" && false\necho \"down.\"\n" }
+    ]
+  },
+  "output": {
+    "stdout": "Never gonna\nup.\nNever gonna\nlet you",
+    "exit": 1
+  },
+  "notice": "Small pop-culture payoff: if `set -e` hadn't killed the script, stdout would spell out **Rick Astley's \"Never gonna give you up. Never gonna let you down.\"** — the 1987 chorus. The script *almost* finishes it. Walking through: (1) `never_gonna` *before* `set -e` — harmless, prints `Never gonna`. (2) bare `false` — also harmless, still no `set -e`. (3) `set -e` activates. (4) `false || true` — absorbed by `||`, nothing printed. (5) `true || echo …` — `true` succeeded, so `||` is skipped. (6) `false || echo \"up.\"` — rescue fires, prints `up.`. (7) `never_gonna || true` — function runs, prints `Never gonna` again, its `return 1` is swallowed. (8) `echo \"let you\" && false` — **this is the kill line**. `echo` prints; then `false` is the command *after* the final `&&`, which means `set -e` is **not** suppressed — the script exits. (9) `echo \"down.\"` is never reached, and the world is denied the resolution."
+}
+</script>
+</div>
+
 
 ## Syntax and Programming Constructs
 

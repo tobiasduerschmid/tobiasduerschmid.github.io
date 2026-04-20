@@ -257,8 +257,11 @@ html.dark-mode .fs-command-lab__output {
   border-color: #b03a2e;
   box-shadow: 0 2px 6px rgba(176,58,46,0.14);
 }
-.fs-command-lab__btn--undo .fs-command-lab__icon {
-  font-size: 11px;
+.fs-command-lab__btn--undo .fs-command-lab__icon,
+.fs-command-lab__btn--restart .fs-command-lab__icon {
+  font-size: 17px;
+  width: 18px;
+  height: 18px;
 }
 
 .fs-command-lab__btn .fs-command-lab__cmd,

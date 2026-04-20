@@ -92,23 +92,23 @@
   }
 
   // Compare a student's free-text prediction against the canonical stdout.
-  // Forgiving: collapse runs of whitespace, normalise line endings, trim
-  // trailing newlines. This avoids false negatives from "two spaces vs one"
-  // or a missing trailing newline — we care about the lines, not the exact
-  // byte sequence.
+  // Deliberately forgiving — we care that they got the lines right, not the
+  // exact byte sequence. Specifically:
+  //   - CRLF / CR / LF line endings all normalise to LF
+  //     (covers Windows, legacy macOS, modern macOS/Linux)
+  //   - leading/trailing whitespace *per line* is trimmed (incl. tabs and
+  //     non-breaking space, since \s in JS includes \u00A0)
+  //   - runs of internal whitespace collapse to a single space
+  //   - any number of leading or trailing blank lines are dropped
+  //     (interior blanks are preserved — they carry meaning)
   function normalizeForCompare(s) {
-    return String(s == null ? '' : s)
+    var lines = String(s == null ? '' : s)
       .replace(/\r\n?/g, '\n')
       .split('\n')
-      .map(function (line) { return line.replace(/\s+/g, ' ').trim(); })
-      .filter(function (line, i, arr) {
-        // Drop leading/trailing blank lines but keep interior blanks.
-        if (line !== '') return true;
-        if (i === 0) return false;
-        if (i === arr.length - 1) return false;
-        return true;
-      })
-      .join('\n');
+      .map(function (line) { return line.replace(/\s+/g, ' ').trim(); });
+    while (lines.length && lines[0] === '') lines.shift();
+    while (lines.length && lines[lines.length - 1] === '') lines.pop();
+    return lines.join('\n');
   }
 
   // ---------------------------------------------------------------------------
