@@ -738,6 +738,12 @@
       if (stEl) stEl.innerHTML = '&#10003;';
       if (rEl) { rEl.innerHTML = '&#10003; <strong>Correct!</strong> All test cases passed.'; rEl.className = 'rt-result rt-result-pass'; rEl.style.display = 'block'; }
       updateProgress();
+      var totalEx = EXERCISES.length, doneEx = 0;
+      for (var k = 0; k < totalEx; k++) if (completedExercises[EXERCISES[k].id]) doneEx++;
+      if (doneEx === totalEx && typeof window.spawnConfetti === 'function') {
+        var bar = document.getElementById('rt-progress-fill');
+        if (bar) window.spawnConfetti(bar);
+      }
       showSelfExplanation(ex);
     } else {
       var hint = getFailureHint(ex, pattern);
