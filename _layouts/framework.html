@@ -20,11 +20,14 @@ h4 {
 </style>
 
 <body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <article class="post-content">
-      {{content}}
-    </article>
-    
+    <main id="main-content" tabindex="-1">
+      <article class="post-content">
+        {{content}}
+      </article>
+    </main>
+
 {% include footer.html %}
 
 {% include scripts.html %}

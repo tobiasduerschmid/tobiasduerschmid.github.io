@@ -561,7 +561,9 @@
 <body>
 
   <div class="print-controls">
-    <button onclick="window.print()"><i class="fa fa-print"></i> Print / Save as PDF</button>
+    <button type="button" onclick="window.print()" aria-label="Print or save this tutorial as PDF">
+      <i class="fa fa-print" aria-hidden="true"></i> Print / Save as PDF
+    </button>
   </div>
 
   <script>
@@ -579,6 +581,8 @@
   </script>
 
   {% assign tutorial_data = site.data.tutorials[page.tutorial] %}
+
+  <main id="main-content" tabindex="-1" aria-label="{{ tutorial_data.title | default: page.title }} print view">
 
   <div class="print-header">
     <h1>{{ tutorial_data.title }}</h1>
@@ -719,6 +723,8 @@
     {% endif %}
   </div>
   {% endfor %}
+
+  </main>
 
 </body>
 </html>
