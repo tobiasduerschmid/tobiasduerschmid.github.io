@@ -1,24 +1,8 @@
 ---
 permalink: /se-gym/
 title: "SE Gym"
+layout: sebook
 ---
-<!DOCTYPE html>
-<html lang="en">
-
-{% include head.html %}
-
-<body id="page-top">
-
-  <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
-    <div class="container-fluid">
-      <div class="navbar-header page-scroll">
-        <a class="navbar-brand page-scroll" href="/se-gym/">SE Gym</a>
-        <a class="navbar-brand page-scroll">|</a>
-        <a class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
-      </div>
-    </div>
-  </nav>
-
   {% if site.personal_gym %}
 
   <!-- Confirm Modal -->
@@ -37,7 +21,6 @@ title: "SE Gym"
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
-      <h1>SE Study Gym</h1>
       <div id="milestone-banner" class="milestone-banner" style="display:none;"></div>
       <p class="gym-subtitle"> Make studying fun while following <a
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
@@ -2308,6 +2291,7 @@ title: "SE Gym"
         if (workoutIncorrectIndices.length === 0) {
           workoutSummaryEl.textContent = 'Perfect score! Come back later to improve your recall!';
           workoutReviewBtn.style.display = 'none';
+          if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         } else {
           workoutSummaryEl.textContent = 'Keep practicing to improve your recall!';
           workoutReviewBtn.style.display = 'inline-block';
@@ -2361,17 +2345,6 @@ title: "SE Gym"
       // Initialize
       refreshLibrary();
 
-      // Adjust for navbar
-      function adjustForNavbar() {
-        var navbar = document.getElementById('navnav');
-        var app = document.getElementById('se-gym-app');
-        if (navbar && app) {
-          app.style.marginTop = (navbar.offsetHeight + 10) + 'px';
-        }
-      }
-      adjustForNavbar();
-      window.addEventListener('load', adjustForNavbar);
-      window.addEventListener('resize', adjustForNavbar);
     })();
   </script>
 
@@ -2380,7 +2353,3 @@ title: "SE Gym"
     <p>Personal Gym feature is not currently available.</p>
   </div>
   {% endif %}
-
-</body>
-
-</html>
