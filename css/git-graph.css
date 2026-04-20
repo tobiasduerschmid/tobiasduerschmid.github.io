@@ -117,17 +117,15 @@
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g,
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-label-g,
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-label-g--head {
-  transition: transform 280ms cubic-bezier(.4,0,.2,1);
+  transition: transform 220ms cubic-bezier(.2,0,.2,1) !important;
 }
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-edge-shaft {
-  transition: stroke-dashoffset 280ms cubic-bezier(.4,0,.2,1),
-              stroke 280ms cubic-bezier(.4,0,.2,1),
-              d 0ms linear;
+  transition: opacity 180ms linear, stroke 180ms linear !important;
 }
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-edge-head {
-  transition: transform 280ms cubic-bezier(.4,0,.2,1),
-              fill 280ms cubic-bezier(.4,0,.2,1),
-              opacity 280ms cubic-bezier(.4,0,.2,1);
+  transition: transform 220ms cubic-bezier(.2,0,.2,1),
+              fill 180ms linear,
+              opacity 180ms linear !important;
 }
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.entering > .git-graph-node,
 .git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.entering > .git-graph-hash,
@@ -142,9 +140,9 @@
 
 .git-workbench--perf-lite .git-workbench-row,
 .git-workbench--perf-lite .git-workbench-stash-entry {
-  transition: transform 280ms cubic-bezier(.4,0,.2,1),
-              color 220ms linear,
-              background-color 220ms linear;
+  transition: transform 220ms cubic-bezier(.2,0,.2,1),
+              color 160ms linear,
+              background-color 160ms linear !important;
 }
 .git-workbench--perf-lite .git-workbench-row.git-workbench-row-flip,
 .git-workbench--perf-lite .git-workbench-stash-entry.git-workbench-row-flip,

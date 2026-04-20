@@ -33,10 +33,12 @@
   function shouldUsePerfLite() {
     if (typeof window === 'undefined') return false;
     var coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    var noHover = !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
     var smallViewport = !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+    var touchCapable = typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
     var lowCores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
     var lowMemory = typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 4;
-    return coarsePointer || (smallViewport && (lowCores || lowMemory));
+    return coarsePointer || noHover || touchCapable || (smallViewport && (lowCores || lowMemory));
   }
 
   // Branch color palette — UCLA colors first, then general palette for variety
@@ -1175,6 +1177,7 @@
   // makes the line appear to grow from its starting point.
   GitGraph.prototype._animateEdgeIn = function (entry) {
     var el = entry.shaft;
+    var head = entry.head;
     var len;
     try {
       if (el.getTotalLength) {
@@ -1191,6 +1194,20 @@
     // made it "draw in". No inline style gets set, so there's nothing to
     // clear up later either.
     if (prefersReducedMotion()) return;
+    if (this._perfLite) {
+      // Mobile fast path: avoid getTotalLength + dashoffset bookkeeping.
+      el.style.opacity = '0';
+      if (head) head.style.opacity = '0';
+      requestAnimationFrame(function () {
+        el.style.opacity = '1';
+        if (head) head.style.opacity = '1';
+      });
+      setTimeout(function () {
+        el.style.opacity = '';
+        if (head) head.style.opacity = '';
+      }, 260);
+      return;
+    }
     el.style.strokeDasharray = len + 'px';
     el.style.strokeDashoffset = len + 'px';
     requestAnimationFrame(function () {
@@ -1301,6 +1318,14 @@
     if (prefersReducedMotion()) {
       if (g.parentNode) g.parentNode.removeChild(g);
       delete self._edgeEls[key];
+      return;
+    }
+    if (this._perfLite) {
+      g.classList.add('exiting');
+      entry._removalTimer = setTimeout(function () {
+        if (g.parentNode) g.parentNode.removeChild(g);
+        delete self._edgeEls[key];
+      }, 220);
       return;
     }
     var len;
@@ -1417,7 +1442,12 @@
 
   GitGraph.prototype._updateNode = function (entry, cm, cx, cy, isHead) {
     if (entry.cx !== cx || entry.cy !== cy) {
-      _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
+      if (this._perfLite) {
+        entry.g.style.willChange = '';
+        entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+      } else {
+        _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
+      }
       entry.cx = cx;
       entry.cy = cy;
     }
@@ -1614,7 +1644,12 @@
         entry.g.classList.remove('exiting');
       }
       if (entry.cx !== cx || entry.cy !== cy) {
-        _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
+        if (this._perfLite) {
+          entry.g.style.willChange = '';
+          entry.g.style.transform = 'translate(' + cx + 'px,' + cy + 'px)';
+        } else {
+          _setTransformAnimated(entry.g, 'translate(' + cx + 'px,' + cy + 'px)');
+        }
         entry.cx = cx;
         entry.cy = cy;
       }
