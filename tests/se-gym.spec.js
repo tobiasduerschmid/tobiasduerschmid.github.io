@@ -67,7 +67,7 @@ test.describe('SE Gym - Library View', () => {
     await page.goto(GYM_URL);
     await expect(page.locator('#gym-entrance')).toBeVisible();
     await expect(page.locator('#gym-workout')).toBeHidden();
-    await expect(page.locator('h1')).toContainText('SE Study Gym');
+    await expect(page.locator('h1')).toContainText('SE Gym');
   });
 
   test('activate toggle is off by default and sections are dimmed', async ({ page }) => {
