@@ -4,6 +4,9 @@ layout: sebook
 permalink: /SEBook/tools/uml-playground
 ---
 
+<script src="/js/git-graph.js"></script>
+<link rel="stylesheet" href="/css/git-graph.css">
+
 # UML Playground
 
 Edit the diagram spec on the left and see the rendered SVG update live on the right. Switch between diagram types using the selector, then download the SVG when you're happy with the result.
@@ -19,8 +22,9 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
       <option value="deployment">Deployment</option>
       <option value="usecase">Use Case</option>
       <option value="activity">Activity</option>
+      <option value="gitgraph">Git Graph</option>
     </select>
-    <label for="uml-pg-layout">Layout:</label>
+    <label id="uml-pg-layout-label" for="uml-pg-layout">Layout:</label>
     <select id="uml-pg-layout">
       <option value="auto">Auto</option>
       <option value="square" selected>Square</option>
@@ -341,6 +345,28 @@ body.dark-mode #uml-pg-status {
       'b_eventout --> eb_in : publish',
       '@enduml'
     ].join('\n'),
+
+    gitgraph: [
+      '@startuml',
+      'branch main:',
+      '  A "Initial commit"',
+      '  B "Add README"',
+      '  C "Release 1.0"',
+      '  D "Add logging support"',
+      '  E "Merge feature/parser"',
+      '',
+      'branch feature/parser from D:',
+      '  F "Wire parser into build"',
+      '  G "Add error recovery"',
+      '  H "Add tokenizer"',
+      '',
+      'branch experiment from H:',
+      '  I "Try aggressive inlining"',
+      '  J "Add experimental optimization"',
+      '',
+      'head main',
+      '@enduml'
+    ].join('\n'),
   };
 
   var RENDERERS = {
@@ -351,11 +377,23 @@ body.dark-mode #uml-pg-status {
     deployment: function (container, text) { window.UMLDeploymentDiagram.render(container, text); },
     usecase: function (container, text) { window.UMLUseCaseDiagram.render(container, text); },
     activity: function (container, text) { window.UMLActivityDiagram.render(container, text); },
+    gitgraph: function (container, text) {
+      var pre = document.createElement('pre');
+      var code = document.createElement('code');
+      code.className = 'diagram-gitgraph';
+      code.textContent = text;
+      pre.appendChild(code);
+      container.appendChild(pre);
+      if (window.UMLShared && window.UMLShared.renderAll) {
+        window.UMLShared.renderAll();
+      }
+    },
   };
 
   function init() {
     var typeSelect = document.getElementById('uml-pg-type');
     var layoutSelect = document.getElementById('uml-pg-layout');
+    var layoutLabel = document.getElementById('uml-pg-layout-label');
     var textarea = document.getElementById('uml-pg-input');
     var output = document.getElementById('uml-pg-output');
     var errorBox = document.getElementById('uml-pg-error');
@@ -396,12 +434,24 @@ body.dark-mode #uml-pg-status {
       return filtered.join('\n');
     }
 
+    function isGitgraph(type) {
+      return (type || typeSelect.value) === 'gitgraph';
+    }
+
+    function updateLayoutVisibility() {
+      var hide = isGitgraph();
+      if (layoutLabel) layoutLabel.style.display = hide ? 'none' : '';
+      layoutSelect.style.display = hide ? 'none' : '';
+    }
+
     function exampleText(type, layoutMode) {
+      if (type === 'gitgraph') return EXAMPLES[type] || '';
       return applyLayoutDirective(EXAMPLES[type] || '', layoutMode);
     }
 
     // Load initial example
     textarea.value = exampleText(currentType, layoutSelect.value);
+    updateLayoutVisibility();
 
     function renderDiagram() {
       var text = textarea.value.trim();
@@ -456,11 +506,14 @@ body.dark-mode #uml-pg-status {
       if (normalizeLineEndings(textarea.value).trim() === exampleText(prev, layoutSelect.value).trim()) {
         textarea.value = exampleText(currentType, layoutSelect.value);
       }
+      updateLayoutVisibility();
       renderDiagram();
     });
 
     layoutSelect.addEventListener('change', function () {
-      textarea.value = applyLayoutDirective(textarea.value, layoutSelect.value);
+      if (!isGitgraph()) {
+        textarea.value = applyLayoutDirective(textarea.value, layoutSelect.value);
+      }
       renderDiagram();
     });
 
@@ -509,11 +562,10 @@ body.dark-mode #uml-pg-status {
 
     // Initial render — wait for renderers to be available
     function tryRender() {
-      var type = typeSelect.value;
       if (window.UMLClassDiagram && window.UMLSequenceDiagram &&
           window.UMLStateDiagram && window.UMLComponentDiagram &&
           window.UMLDeploymentDiagram && window.UMLUseCaseDiagram &&
-          window.UMLActivityDiagram) {
+          window.UMLActivityDiagram && window.UMLShared) {
         renderDiagram();
       } else {
         setTimeout(tryRender, 100);
