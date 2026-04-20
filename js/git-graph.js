@@ -46,9 +46,9 @@
   var NODE_RADIUS = 22;
   var ROW_HEIGHT = 80;
   var COL_WIDTH = 80;
-  var PADDING_TOP = 50;
+  var PADDING_TOP = 65;
   var PADDING_LEFT = 185;  // extra space for branch labels + HEAD pointer on the left
-  var PADDING_BOTTOM = 20;
+  var PADDING_BOTTOM = 35;
   var LABEL_OFFSET_X = 34;
   var LABEL_HEIGHT = 24;
   var LABEL_GAP = 4;
@@ -678,7 +678,7 @@
     var branches = data.branches;
     var head = data.head;
 
-    var width = PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 24 + this._maxMessagePx(commits) + 24;
+    var width = PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(commits) + 24;
     var height = PADDING_TOP + (commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM;
 
     // viewBox is essential — without it, `max-width: 100%; height: auto`
@@ -686,7 +686,7 @@
     // is narrower than the intrinsic width, and the bottom of the graph
     // gets clipped.
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" ' +
-      'viewBox="0 0 ' + width + ' ' + height + '" ' +
+      'viewBox="0 0 ' + width + ' ' + height + '" overflow="visible" ' +
       'class="git-graph-svg" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
 
     svg += this._arrowDefsMarkup() + this._textureDefsMarkup();
@@ -837,7 +837,7 @@
 
   GitGraph.prototype._computeDimensions = function (data) {
     return {
-      width: PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 24 + this._maxMessagePx(data.commits) + 24,
+      width: PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(data.commits) + 24,
       height: PADDING_TOP + (data.commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM,
     };
   };
@@ -867,6 +867,7 @@
       width: dims.width,
       height: dims.height,
       viewBox: '0 0 ' + dims.width + ' ' + dims.height,
+      overflow: 'visible',
       'class': 'git-graph-svg',
       style: "font-family:'Fira Code','Cascadia Code',Menlo,monospace;",
     });
@@ -1257,7 +1258,7 @@
     g.appendChild(hashText);
 
     var msgText = this._svgEl('text', {
-      x: NODE_RADIUS + 24, y: 5,
+      x: NODE_RADIUS + 54, y: 5,
       fill: 'var(--git-graph-text, #ccc)', 'font-size': 13,
       'class': 'git-graph-message',
     });
@@ -1682,7 +1683,7 @@
         'fill="' + secondary + '" font-size="' + hd.fontSize + '" font-weight="700" class="git-graph-hash">' +
         this._escapeXml(hd.text) + '</text>';
 
-      var msgX = cx + NODE_RADIUS + 24;
+      var msgX = cx + NODE_RADIUS + 54;
       svg += '<text x="' + msgX + '" y="' + (cy + 5) + '" ' +
         'fill="var(--git-graph-text, #ccc)" font-size="13" class="git-graph-message">' +
         this._escapeXml(this._truncate(cm.message, 50)) + '</text>';

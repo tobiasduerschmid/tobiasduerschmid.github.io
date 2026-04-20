@@ -28,6 +28,9 @@
 /* SVG styling */
 .git-graph-svg {
   display: block;
+  /* Bootstrap sets svg:not(:root) { overflow: hidden } which clips the HEAD
+     glow and drop-shadow burst at the SVG boundary. Override it explicitly. */
+  overflow: visible !important;
 }
 .git-graph-svg .git-graph-node {
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
@@ -208,8 +211,8 @@ html.dark-mode .git-graph-svg .git-graph-head-glow {
    at the exact same moment. */
 @keyframes git-graph-label-burst {
   0%   { filter: none; }
-  35%  { filter: drop-shadow(0 0 10px rgba(255,255,255,0.95))
-                 drop-shadow(0 0 18px rgba(255,200,28,0.9)); }
+  35%  { filter: drop-shadow(0 0 6px rgba(255,255,255,0.95))
+                 drop-shadow(0 0 10px rgba(255,200,28,0.9)); }
   100% { filter: none; }
 }
 .git-graph-svg .git-graph-label-g.git-graph-label-burst {
