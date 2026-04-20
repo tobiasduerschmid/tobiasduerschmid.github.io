@@ -43,7 +43,7 @@ module Jekyll
 
         # Match <div ... data-uml-type="type" data-uml-spec='spec' ...></div>
         # Using a more flexible regex for attributes
-        content.scan(%r{<div[^>]*data-uml-type=["']([^"']+)["'][^>]*data-uml-spec=["']([^"']+)["'][^>]*>[\s\S]*?</div>}m) do |type, spec|
+        content.scan(%r{<div[^>]*data-uml-type=(["'])(.*?)\1[^>]*data-uml-spec=(["'])([\s\S]*?)\3[^>]*>[\s\S]*?</div>}m) do |q1, type, q2, spec|
           raw_text = CGI.unescapeHTML(spec.strip)
           blocks << { type: type, text: raw_text, original: $& }
         end
