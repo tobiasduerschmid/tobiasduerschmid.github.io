@@ -110,8 +110,9 @@ html.dark-mode .fs-command-lab text[font-style="italic"] {
   font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
   font-size: 12.5px;
   line-height: 1.5;
-  background-color: #1e2430;
-  color: #e6edf3;
+  background-color: #f8f9fa;
+  color: #1f2d3d;
+  border: 1px solid #d8dde2;
   border-radius: 6px;
   white-space: pre-wrap;
   word-break: break-word;
@@ -132,9 +133,6 @@ html.dark-mode .fs-command-lab__output {
 }
 
 /* ----- Exit-status badge rendered inside the terminal output area ----- */
-/* The fs output box has a terminal-like dark background, so the badge uses
-   the dark-mode palette always (translucent fills, bright text). In print
-   the output box is white — overrides further down restore light colours. */
 .fs-command-lab__exit {
   display: inline-flex;
   align-items: center;
@@ -150,14 +148,24 @@ html.dark-mode .fs-command-lab__output {
   white-space: nowrap;
 }
 .fs-command-lab__exit--ok {
-  background-color: rgba(74, 222, 128, 0.14);
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.35);
+  background-color: #e6f4ea;
+  color: #1a7d5a;
+  border-color: #b6e0c4;
 }
 .fs-command-lab__exit--err {
-  background-color: rgba(241, 148, 138, 0.16);
+  background-color: #fde8e8;
+  color: #b03a2e;
+  border-color: #f1948a;
+}
+html.dark-mode .fs-command-lab__exit--ok {
+  background-color: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
+}
+html.dark-mode .fs-command-lab__exit--err {
+  background-color: rgba(241, 148, 138, 0.12);
   color: #f1948a;
-  border-color: rgba(241, 148, 138, 0.35);
+  border-color: rgba(241, 148, 138, 0.3);
 }
 .fs-command-lab__exit-label { opacity: 0.75; font-weight: 500; }
 .fs-command-lab__exit-icon { font-size: 11px; line-height: 1; }
