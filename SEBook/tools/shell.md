@@ -70,7 +70,7 @@ Play each card to see the command's effect; click again to undo. The description
   "after": {
     "tree": "project/\n  .env\n  README.md\n  src/\n    app.js",
     "cwd": "project",
-    "output": "total 16\ndrwxr-xr-x  4 user user  128 Apr 18 09:10 .\ndrwxr-xr-x  3 user user   96 Apr 18 09:00 ..\n-rw-------  1 user user   42 Apr 18 09:05 .env\n-rw-r--r--  1 user user  980 Apr 18 09:08 README.md\ndrwxr-xr-x  3 user user   96 Apr 18 09:10 src"
+    "output": "total 16\ndrwxr-xr-x  3 user user  128 Apr 18 09:10 .\ndrwxr-xr-x  3 user user   96 Apr 18 09:00 ..\n-rw-------  1 user user   42 Apr 18 09:05 .env\n-rw-r--r--  1 user user  980 Apr 18 09:08 README.md\ndrwxr-xr-x  2 user user   96 Apr 18 09:10 src"
   }
 }
 </script>
@@ -82,7 +82,7 @@ Play each card to see the command's effect; click again to undo. The description
 <script type="application/json">
 {
   "command": "cd src",
-  "description": "Changes the current working directory. A relative name like `src` is resolved from the cwd. **`..`** goes up to the parent. **`~`** jumps to your home directory. **`-`** (a single dash) returns to the previous cwd. The change only affects the current shell session — subshells don't inherit it.",
+  "description": "Changes the current working directory. A relative name like `src` is resolved from the cwd. **`..`** goes up to the parent. **`~`** jumps to your home directory. **`-`** (a single dash) returns to the previous cwd. The change only affects the current shell process — a `cd` done inside a subshell (or a script run as `./script.sh`) disappears when that shell exits, so it can't change the parent shell's cwd.",
   "before": {
     "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
     "cwd": "project"
@@ -437,7 +437,7 @@ These commands do not modify the filesystem tree — they transform **streams of
   "command": "cat intro.txt chapter1.txt outro.txt > book.txt",
   "description": "Given **multiple file arguments**, `cat` prints them back-to-back in the order you listed them — literal concatenation. Combined with `>` redirection, this is a common way to stitch fragments together into a single file. The source files are never modified.",
   "predict": true,
-  "predictPrompt": "Three fragments are listed in order. What will `book.txt` contain after running this? Write out your expected output by cooping lines from the intput. Then run the command to check your answer.",
+  "predictPrompt": "Three fragments are listed in order. What will `book.txt` contain after running this? Write out your expected output by copying lines from the input. Then run the command to check your answer.",
   "input": {
     "files": [
       { "name": "intro.txt",    "content": "== Preface ==\nWelcome.\n" },
@@ -486,7 +486,7 @@ These commands do not modify the filesystem tree — they transform **streams of
   "command": "grep ERROR log.txt",
   "description": "`grep` prints each line of the file (or stdin) that matches the given pattern. Lines that don't match are silently dropped. The exit code is `0` if at least one match was found, `1` if nothing matched, and `2` on error.",
   "predict": true,
-  "predictPrompt": "Before running: which lines from log.txt do you expect to see on stdout? Write them out by coping lines from the input. Then run the command to check your answer.",
+  "predictPrompt": "Before running: which lines from log.txt do you expect to see on stdout? Write them out by copying lines from the input. Then run the command to check your answer.",
   "input": {
     "files": [
       { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done" }
@@ -572,7 +572,7 @@ These commands do not modify the filesystem tree — they transform **streams of
 <script type="application/json">
 {
   "command": "sed 's/$user/guest/' log.txt",
-  "description": "The student has `user=\"alice\"` in their shell and expects `sed` to substitute `alice` for `guest`. But **single quotes** prevent the shell from expanding `$user` — `sed` literally searches for the four characters `$user`. Since no line contains `$user`, nothing is replaced. Use double quotes (`sed \"s/$user/guest/\"`) when you need variable expansion.",
+  "description": "The student has `user=\"alice\"` in their shell and expects `sed` to substitute `alice` for `guest`. But **single quotes** prevent the shell from expanding `$user` — `sed` literally searches for the five characters `$user`. Since no line contains `$user`, nothing is replaced. Use double quotes (`sed \"s/$user/guest/\"`) when you need variable expansion.",
   "predict": true,
   "predictPrompt": "`$user` is `alice` in the shell environment. What do you think stdout will show — and how many lines get replaced?",
   "input": {
@@ -1327,15 +1327,16 @@ In our scripts, we also treat these keywords as "commands" for building logic:
 <script type="application/json">
 {
   "command": "read -p \"Name: \" name; echo \"Hi, $name\"",
-  "description": "`read` consumes one line from stdin (up to the next newline) and assigns it to the named variable. **`-p`** prints a prompt on the same line before reading. Here the user types `Ada` and presses Enter; the second command prints a greeting. Always pair `read` with `-r` when reading arbitrary text — without it, backslashes get interpreted as line-continuation.",
+  "description": "`read` consumes one line from stdin (up to the next newline) and assigns it to the named variable. **`-p`** prints a prompt (to **stderr**, not stdout) before reading. Here the user types `Ada` and presses Enter; the second command prints a greeting. Always pair `read` with `-r` when reading arbitrary text — without it, backslashes get interpreted as line-continuation.",
   "input": {
     "stdin": "Ada"
   },
   "output": {
-    "stdout": "Name: Ada\nHi, Ada",
+    "stdout": "Hi, Ada",
+    "stderr": "Name: ",
     "exit": 0
   },
-  "notice": "The `Name: ` prompt is printed *before* `read` blocks for input; once a newline arrives, `read` returns and the next command runs."
+  "notice": "The `Name: ` prompt goes to **stderr** (not stdout) *before* `read` blocks for input; once a newline arrives, `read` returns and the next command runs. That's why running `read -p \"Name: \" name > out.txt` would still show the prompt on your screen — only stdout was redirected."
 }
 </script>
 </div>

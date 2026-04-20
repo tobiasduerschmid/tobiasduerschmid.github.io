@@ -62,7 +62,7 @@ questions:
       - "`git bisect`"
       - "`git blame`"
     correct_indices: [0, 1, 2]
-    explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
+    explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. Note that `git merge --squash` only **stages** the combined changes — you must follow it with `git commit` to actually create the squashed commit. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
 
   - id: 7
     question: "What does the file `.git/HEAD` contain when you are checked out on a branch, compared to when you are in a detached HEAD state?"

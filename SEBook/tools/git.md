@@ -453,7 +453,7 @@ Before turning staged changes into a permanent snapshot, *look at them*. `git di
 * `git diff --staged` (or `--cached`) — staging area vs. the latest commit. Useful to review exactly what you are about to commit.
 * `git diff HEAD` — working directory vs. the latest commit.
 * `git diff HEAD^ HEAD` — parent vs. latest commit (shows what the latest commit changed).
-* `git diff main..feature` — commits in `feature` not yet in `main`.
+* `git diff main..feature` — file-level differences between the tips of `main` and `feature` (the `..` is treated as a separator; equivalent to `git diff main feature`). To *list the commits* unique to `feature`, use `git log main..feature` instead.
 
 `git status` is the dashboard; `git diff --staged` is the review step. Run both before every commit — it's the single best habit for keeping commits clean.
 
@@ -935,7 +935,7 @@ Once work has happened in parallel on two branches, you eventually want to bring
 <script type="application/json">
 {
   "command": "git merge feature",
-  "description": "**Three-way merge.** Both branches have commits the other doesn't: `main` added E; `feature` added C and D.\n\nGit compares both tips against their **common ancestor** (B) and creates a new merge commit **M** with *two parents* \u2014 one per branch.\n\nThe resulting diamond shape in the graph is the hallmark of a three-way merge.\n\n*The strategy name shown in the output is* `ort` *(default since Git 2.33, Aug 2021); older versions and Pro Git show `recursive` \u2014 the algorithm is equivalent for this case.*",
+  "description": "**Three-way merge.** Both branches have commits the other doesn't: `main` added E; `feature` added C and D.\n\nGit compares both tips against their **common ancestor** (B) and creates a new merge commit **M** with *two parents* \u2014 one per branch.\n\nThe resulting diamond shape in the graph is the hallmark of a three-way merge.\n\n*The strategy name shown in the output is* `ort` *(default since Git 2.34, Nov 2021; introduced as opt-in in Git 2.33, Aug 2021); older versions and Pro Git show `recursive` \u2014 the algorithm is equivalent for this case.*",
   "output": "Merge made by the 'ort' strategy.\n src/app.py | 4 +++-\n 1 file changed, 3 insertions(+), 1 deletion(-)",
   "before": {
     "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature B|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature A|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
@@ -997,8 +997,8 @@ Once work has happened in parallel on two branches, you eventually want to bring
 <div data-git-command-lab>
 <script type="application/json">
 {
-  "command": "git merge --squash feature",
-  "description": "Collapses every commit on `feature` into a single new commit on `main` (C+D).\n\nCrucially, this new commit has **only one parent** \u2014 the previous `main` tip (E) \u2014 *not* the `feature` branch's tip (D). That's because `--squash` produces a regular commit, not a merge commit: Git records the squashed work as if you had written those changes directly on `main` yourself, with no structural link back to `feature`.\n\nThe `feature` branch stays at D, unreferenced from `main`'s history; commands like `git log main` won't show it as an ancestor.\n\nUseful when you want `main` to read as a series of clean features, not every intermediate \"fix typo\" commit \u2014 but the trade-off is that you lose the ability to trace the original commits from `main`.",
+  "command": "git merge --squash feature  &&  git commit -m \"Squashed C+D\"",
+  "description": "Collapses every commit on `feature` into a single new commit on `main` (C+D).\n\n**Two-step command.** `git merge --squash feature` only stages the combined changes and writes a draft message into `.git/SQUASH_MSG` \u2014 it does **not** create a commit on its own. You then run `git commit` to materialise the squashed snapshot.\n\nCrucially, the resulting commit has **only one parent** \u2014 the previous `main` tip (E) \u2014 *not* the `feature` branch's tip (D). That's because `--squash` produces a regular commit, not a merge commit: Git records the squashed work as if you had written those changes directly on `main` yourself, with no structural link back to `feature`.\n\nThe `feature` branch stays at D, unreferenced from `main`'s history; commands like `git log main` won't show it as an ancestor.\n\nUseful when you want `main` to read as a series of clean features, not every intermediate \"fix typo\" commit \u2014 but the trade-off is that you lose the ability to trace the original commits from `main`.",
   "before": {
     "log": "E000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Hotfix|HEAD -> main\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Feature D|feature\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Feature C|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Initial commit|\nA000000000000000000000000000000000000000||Repository init|",
     "branches": "* main\n  feature",
@@ -1146,7 +1146,7 @@ The full resolution sequence is: edit the conflicting file to remove all markers
 
 ## Merge Strategies (`ort`, `-X ours`, `-X theirs`)
 
-Since Git 2.33 (August 2021), the default merge strategy is **ort** (Ostensibly Recursive's Twin) — a reimplementation of the older `recursive` strategy that's faster and handles renames better. For typical two-branch merges the output is identical; you rarely need to pick a strategy explicitly.
+Since Git 2.34 (November 2021), the default merge strategy is **ort** (Ostensibly Recursive's Twin) — a reimplementation of the older `recursive` strategy that's faster and handles renames better. (`ort` was introduced as opt-in in Git 2.33, August 2021, and promoted to the default in 2.34.) For typical two-branch merges the output is identical; you rarely need to pick a strategy explicitly.
 
 When the default auto-resolution doesn't do what you want, **strategy options** (`-X`) tune the behaviour:
 
@@ -1300,7 +1300,7 @@ git diff main origin/main              # content differences between the two
 <script type="application/json">
 {
   "command": "git fetch",
-  "description": "Downloads new commits from the remote into the remote-tracking branch (origin/main) without touching your local branch or working directory.\n\nAfter a fetch you can review what changed (git log origin/main, git diff main..origin/main) before deciding to merge.",
+  "description": "Downloads new commits from the remote into the remote-tracking branch (origin/main) without touching your local branch or working directory.\n\nAfter a fetch you can review what changed (git log main..origin/main for the new commits, git diff main...origin/main for the file changes the merge would introduce) before deciding to merge.",
   "before": {
     "log": "B000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Latest commit|HEAD -> main, origin/main\nA000000000000000000000000000000000000000||Initial commit|",
     "branches": "* main",
@@ -2266,11 +2266,11 @@ git switch -c my-experiment
 
 When you `git reset --hard HEAD~1` or drop a commit in an interactive rebase, the "removed" commit objects don't vanish from your repo. They become **unreachable** — no branch, tag, or `HEAD` position points at them. Git's garbage collector (`git gc`, which runs automatically on a schedule) eventually deletes unreachable objects.
 
-But "eventually" has a grace period: unreachable objects are kept for roughly **90 days** by default, and every move of `HEAD` is additionally logged in the **reflog** (`.git/logs/HEAD`). That's what makes `git reflog` the universal undo — as long as the object is still in the database and the reflog still remembers the SHA, you can create a new branch pointing at it and recover the work. Commits are forgiving because immutability plus a retention window means nothing *really* disappears for a long time.
+But "eventually" has a grace period: unreachable objects are kept for a configurable retention window (governed by `gc.reflogExpire`, `gc.reflogExpireUnreachable`, and `gc.pruneExpire` — see `git help gc` for the current defaults), and every move of `HEAD` is additionally logged in the **reflog** (`.git/logs/HEAD`). That's what makes `git reflog` the universal undo — as long as the object is still in the database and the reflog still remembers the SHA, you can create a new branch pointing at it and recover the work. Commits are forgiving because immutability plus a retention window means nothing *really* disappears the moment you remove the last branch pointing at it.
 
 </details>
 
-Every time `HEAD` moves — commit, checkout, reset, rebase, merge, cherry-pick, stash — Git records the movement in the **reflog**, a per-repository diary of HEAD's positions. The reflog is local, never pushed, and kept for ~90 days by default (`gc.reflogExpire` / `gc.reflogExpireUnreachable`).
+Every time `HEAD` moves — commit, checkout, reset, rebase, merge, cherry-pick, stash — Git records the movement in the **reflog**, a per-repository diary of HEAD's positions. The reflog is local, never pushed, and kept for a generous retention window by default (configurable via `gc.reflogExpire` and `gc.reflogExpireUnreachable`).
 
 ```bash
 $ git reflog
@@ -2311,7 +2311,7 @@ The reflog is one of the deepest reasons Git is forgiving: destructive commands 
 
 1. **`git revert`.** `reset --hard` rewrites history — collaborators' clones still reference the old SHAs; if you force-pushed a reset-ed branch, their next pull breaks badly. `revert` creates a new commit whose changes cancel out the buggy one, so history is preserved exactly — the only safe undo on shared history.
 2. `--soft` (moves the branch pointer, keeps staging *and* working tree) < `--mixed` (also resets staging, keeps working tree) < `--hard` (resets staging *and* overwrites working tree — uncommitted changes lost).
-3. **Not deleted — just unreferenced.** No branch points at them. They live in the object database for ~90 days and in the reflog for the same window. `git reflog` shows HEAD's history; find the SHA and run `git branch rescued <sha>`.
+3. **Not deleted — just unreferenced.** No branch points at them. They live in the object database (and the reflog) for the configured retention window before garbage collection prunes them. `git reflog` shows HEAD's history; find the SHA and run `git branch rescued <sha>`.
 4. (1) `git reflog` — find the SHA of the state you want back. (2) `git branch <name> <sha>` (or `git reset --hard <sha>` on your current branch). That's the whole pattern.
 
 </details>
@@ -2330,7 +2330,7 @@ Return-readers come to this page with a specific intent: *"I want to do X, which
 | Start a new line of work | `git switch -c <branch>` | [Branching](#branching) |
 | Bring a feature branch into `main` | `git merge <branch>` | [Merging Branches](#merging) |
 | Land a feature as a single clean commit on `main` | `git merge --squash <branch>` ⚠️ | [Merging Branches](#merging) |
-| Preview what an incoming merge would change | `git fetch` then `git diff main..origin/main` | [Collaborating with Remotes](#remotes) |
+| Preview what an incoming merge would change | `git fetch` then `git diff main...origin/main` (triple-dot) | [Collaborating with Remotes](#remotes) |
 | Copy one specific commit from another branch | `git cherry-pick <sha>` | [Reshaping History](#rewriting-history) |
 | Clean up messy WIP commits before opening a PR | `git rebase -i <base>` ⚠️ | [Reshaping History](#rewriting-history) |
 | Rebase your feature branch onto the latest `main` | `git rebase main` ⚠️ | [Reshaping History](#rewriting-history) |
@@ -2362,7 +2362,7 @@ A condensed checklist. Each item links back to its full section.
 * **Pull frequently.** Regularly pull the latest changes from `main` to catch merge conflicts while they are small.
 * **Prefer `git switch` and `git restore` over `git checkout`.** The `checkout` command is overloaded — it does both branch navigation *and* file restoration. The split replacements (introduced in Git 2.23) make intent clearer. `git checkout` is still fully supported for backward compatibility.
 * **Review [branching strategy](#branching-strategies) with your team.** Short-lived branches beat long-lived ones every time, regardless of which strategy you pick.
-* **Let `git reflog` be your safety net.** Destructive operations are almost always recoverable within ~90 days. Don't panic, reflog first.
+* **Let `git reflog` be your safety net.** Destructive operations are almost always recoverable within Git's retention window (configured via `gc.reflogExpire` / `gc.reflogExpireUnreachable`). Don't panic, reflog first.
 
 # Quiz
 

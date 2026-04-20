@@ -249,7 +249,7 @@ steps:
     | **What it walks** | Commits reachable from any branch/tag | Every position HEAD has occupied |
     | **Sees orphans?** | No — unreachable = invisible | Yes — reachability is irrelevant |
     | **Scope** | Whole repo history | Local to this clone |
-    | **Retention** | Forever (until `gc`) | Default 90 days |
+    | **Retention** | Forever (until `gc`) | Configurable retention window (`gc.reflogExpire`) |
     | **Shared across clones?** | Yes (via push/pull) | No — local only |
 
     ### Task 1: Deliberately lose some work
@@ -370,7 +370,7 @@ steps:
       - '`rm -rf .git` (or deleting the whole clone directory)'
       - A fresh `git clone` of the same repo from the remote
       - '`git push --force` to a remote'
-      - Default reflog expiry after ~90 days without activity
+      - Default reflog expiry once the configured retention window passes without activity
       correct_indices:
       - 0
       - 1
@@ -640,8 +640,10 @@ steps:
 
     The working directory is **clean**. The half-finished `power`
     function is in the stash — not committed, not lost. Internally, a
-    stash is a commit object (two, actually — index + working tree)
-    stored under `.git/refs/stash`.
+    stash is a single commit object stored under `.git/refs/stash` —
+    a merge commit whose first parent is `HEAD` at stash time and whose
+    second parent is a separate commit recording the index state (so
+    both halves can be recovered independently).
 
     ### Task 3: Do the hotfix on a dedicated branch
 
@@ -830,7 +832,7 @@ steps:
     - question: '**[Revisit Step 3]** Where does Git physically store a stash entry?'
       options:
       - As a plain text file in `.git/stash.txt`
-      - As a commit object (actually two — index + working tree) reachable via `refs/stash` — the same object model as any other commit
+      - As a single merge commit reachable via `refs/stash` (with `HEAD` and an index-state commit as its parents) — the same object model as any other commit
       - In RAM only; restarting the shell loses it
       - In the remote repository
       correct_index: 1
@@ -1129,7 +1131,7 @@ steps:
       - Run `git cherry-pick --force` to override the conflict
       - Run `git commit --amend` to finalize the cherry-pick
       correct_index: 1
-      explanation: 'Standard conflict resolution: edit the file to remove `<<<<<<<` markers, `git add` to mark as resolved, `git cherry-pick --continue` (opens editor for message, which defaults to the original). `--abort` bails and restores HEAD.'
+      explanation: 'Standard conflict resolution: edit the file to remove `<<<<<<<` markers, `git add` to mark as resolved, `git cherry-pick --continue` (commits silently with the original message; pass `-e`/`--edit` if you want the editor). `--abort` bails and restores HEAD.'
     - question: '**[Revisit Step 3]** After a cherry-pick, the new commit has a different SHA from the source. Why?'
       options:
       - Cherry-pick mutates the patch content
@@ -4052,7 +4054,7 @@ steps:
     - question: '**[Evaluate — meta]** A junior teammate says: "Destructive Git commands like rebase and reset are too dangerous to use; I''ll stick with merge and revert only." Evaluate this position.'
       options:
       - Correct — rebase and reset should be avoided by anyone who isn't a Git expert
-      - Partially correct — on **shared** branches, they really are dangerous, and revert/merge are the right tools there. On **local/unpushed** branches, rebase and reset are routine safe tools because reflog recovers anything for ~90 days. Avoiding them entirely trades safety for history-quality and is a real cost on teams that value clean history
+      - Partially correct — on **shared** branches, they really are dangerous, and revert/merge are the right tools there. On **local/unpushed** branches, rebase and reset are routine safe tools because reflog recovers anything within the configured retention window. Avoiding them entirely trades safety for history-quality and is a real cost on teams that value clean history
       - Incorrect — there is no difference between local and shared branches
       - Incorrect — reflog auto-recovers destructive operations immediately in all cases
       correct_index: 1

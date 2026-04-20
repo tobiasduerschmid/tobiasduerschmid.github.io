@@ -233,8 +233,13 @@ steps:
       ```bash
       cd /tutorial
       git checkout main
-      git merge feature -m "Merge feature into main"
+      git merge --no-ff feature -m "Merge feature into main"
       ```
+
+      The `--no-ff` flag forces Git to create a merge commit even when
+      a fast-forward would be possible — without it, since `main` hasn't
+      moved since `feature` branched, Git would just slide the `main`
+      pointer forward and no merge commit would appear.
 
       Watch the graph — you'll see a new commit with lines going back
       to both `main` and `feature`, visually showing the merge.
@@ -249,10 +254,13 @@ steps:
       commands:
         - "cd /tutorial"
         - "git checkout main"
-        - 'git merge feature -m "Merge feature into main"'
+        - 'git merge --no-ff feature -m "Merge feature into main"'
       explanation: |
-        The merge commit connects both branches in the graph.
-        Both parent commits are preserved in the history.
+        The `--no-ff` flag forces a merge commit; without it, Git would
+        fast-forward (since `main` had no new commits since `feature`
+        branched) and no merge commit would be created. With `--no-ff`,
+        the merge commit connects both branches in the graph and both
+        parent commits are preserved in the history.
 
   # --------------------------------------------------------------------------
   # STEP 6: Multiple branches (git_graph view)

@@ -28,7 +28,7 @@ cards:
   - id: 7
     question: "You want to integrate a feature branch into main, but instead of bringing over all 15 tiny incremental commits, you want them combined into one clean commit on the main branch."
     answer: "`git merge --squash`"
-    explanation: "Squashing combines all the patches from the feature branch into a single set of changes, allowing you to make one clean commit on the target branch and keep the history tidy with `git merge --squash`."
+    explanation: "Squashing combines all the patches from the feature branch into a single set of changes, allowing you to make one clean commit on the target branch and keep the history tidy with `git merge --squash`. Note: `git merge --squash` only **stages** the combined changes — you must follow it with `git commit` to materialise the squashed commit."
   - id: 8
     question: "You are building a massive project and want to include an entirely separate external Git repository as a subdirectory within your project, while keeping its history independent."
     answer: "`git submodule add <url> <path>`"

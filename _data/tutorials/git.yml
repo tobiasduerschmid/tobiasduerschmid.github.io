@@ -1859,11 +1859,15 @@ steps:
       Before merging, preview what the incoming branch will introduce:
 
       ```bash
-      git diff main..feature-team-up
+      git diff main...feature-team-up
       ```
 
-      The `..` syntax shows all changes in `feature-team-up` that aren't
-      in `main` yet — useful reconnaissance before any merge.
+      The triple-dot (`...`) syntax shows the changes on `feature-team-up`
+      since the two branches diverged — i.e., precisely what the merge
+      would introduce. (The two-dot `main..feature-team-up` form is
+      different: it just compares the two endpoint snapshots, equivalent
+      to `git diff main feature-team-up`.) Useful reconnaissance before
+      any merge.
 
       Now merge the feature branch:
 
@@ -1901,7 +1905,7 @@ steps:
     solution:
       commands:
         - "git switch main"
-        - "git diff main..feature-team-up"
+        - "git diff main...feature-team-up"
         - "git merge feature-team-up --no-edit"
         - "cat hero_registry.py"
         - "git log --oneline"
@@ -1936,10 +1940,10 @@ steps:
           options:
             - "`git diff`"
             - "`git show feature-x`"
-            - "`git diff main..feature-x`"
+            - "`git diff main...feature-x`"
             - "`git log feature-x`"
           correct_index: 2
-          explanation: "`git diff main..feature-x` shows all changes that are in `feature-x` but NOT yet in `main` — precisely what the merge would introduce. `git diff` (no args) only compares working directory to staging area, not branches. `git log` shows commits, not file diffs."
+          explanation: "`git diff main...feature-x` (triple-dot) shows the changes on `feature-x` since the two branches diverged — precisely what the merge would introduce. The two-dot form `git diff main..feature-x` is *not* equivalent: it just compares the two endpoint snapshots (same as `git diff main feature-x`), which differs from the merge's introduced changes whenever `main` has its own commits since the split. `git diff` (no args) only compares working directory to staging area, not branches. `git log` shows commits, not file diffs."
 
         - question: "When does Git perform a **fast-forward merge** instead of creating a merge commit?"
           options:
@@ -3147,7 +3151,8 @@ steps:
       <summary>Hint 3 — merging back into main</summary>
       Revisit Step 9: switch to the branch you want to merge <em>into</em>
       before running <code>git merge</code>. Preview changes first with
-      <code>git diff main..feature-power-surge</code>.
+      <code>git diff main...feature-power-surge</code> (triple-dot shows
+      what the merge will introduce).
       </details>
 
       <details>
@@ -3414,7 +3419,7 @@ steps:
           type: multiple
           options:
             - "Delete the feature branch first to prevent merge conflicts"
-            - "Preview what the merge will introduce (`git diff main..feature`)"
+            - "Preview what the merge will introduce (`git diff main...feature`)"
             - "Ensure your working directory is clean — no uncommitted changes that could complicate a conflict (`git status`)"
             - "Run `git push` first to sync with the remote"
           correct_indices:

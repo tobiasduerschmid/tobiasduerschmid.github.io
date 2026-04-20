@@ -291,30 +291,28 @@
   // Used as a hard gate on ALL lab animations (bursts, confetti, …) so
   // even if CSS specificity somehow let a keyframe through, the JS never
   // triggers it in the first place.
-  // Three independent ways the lab considers reduced motion "on":
+  // Two independent ways the lab considers reduced motion "on":
   //   1. `window.matchMedia('(prefers-reduced-motion: reduce)').matches`
-  //      — the OS-level accessibility preference.
-  //   2. `?reduce-motion=1` (or any truthy value) in the URL — escape hatch
-  //      for browsers whose user-level prefs don't reach the media query,
-  //      and for testing without touching OS settings.
-  //   3. `localStorage.prefersReducedMotion === '1'` — persistent override
-  //      once set, survives reloads and across pages on the same origin.
-  // When any of the three is true, we stamp `html.prm-reduce` which the
-  // stylesheet uses as a class-based animation kill-switch in addition
-  // to its own @media rule.
+  //      — the OS-level accessibility preference. The canonical signal.
+  //   2. `?reduce-motion=1` in the URL — ad-hoc override for the *current
+  //      page load only* (no persistence), useful when a browser isn't
+  //      forwarding its user-level pref into the media query, or for
+  //      quick testing. Not passed across navigations, not saved to
+  //      storage — to keep it on persistently, use the OS-level toggle.
+  // When either is true, we stamp `html.prm-reduce` which the stylesheet
+  // uses as a class-based animation kill-switch in addition to its own
+  // @media rule.
+  //
+  // Side effect: this init also clears any lingering
+  // `localStorage.prefersReducedMotion` from an earlier version that
+  // persisted the override — one-time cleanup so stale entries don't
+  // silently keep animations off.
   var REDUCED_MOTION_FORCED = (function () {
+    try { localStorage.removeItem('prefersReducedMotion'); } catch (e) {}
     try {
       var params = new URLSearchParams(window.location.search);
       var url = params.get('reduce-motion');
-      if (url && url !== '0' && url.toLowerCase() !== 'false') {
-        try { localStorage.setItem('prefersReducedMotion', '1'); } catch (e) {}
-        return true;
-      }
-      if (url === '0' || (url && url.toLowerCase() === 'false')) {
-        try { localStorage.removeItem('prefersReducedMotion'); } catch (e) {}
-        return false;
-      }
-      try { if (localStorage.getItem('prefersReducedMotion') === '1') return true; } catch (e) {}
+      if (url && url !== '0' && url.toLowerCase() !== 'false') return true;
     } catch (e) {}
     return false;
   })();
