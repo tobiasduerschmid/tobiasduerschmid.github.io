@@ -521,3 +521,14 @@ html.dark-mode .git-command-lab__output {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* Respect OS-level "reduce motion" — disable button/link transitions,
+   modal fade-in, and lane-layout transitions inside git graphs. The
+   JS-driven label-burst and commit-burst in js/git-graph.js should also
+   check `window.matchMedia('(prefers-reduced-motion: reduce)').matches`
+   before animating — that guard is added alongside this rule. */
+@media (prefers-reduced-motion: reduce) {
+  .git-command-lab__btn,
+  .git-command-lab__btn-back { transition: none !important; }
+  .git-command-lab-modal-overlay { animation: none !important; }
+}

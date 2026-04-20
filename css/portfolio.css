@@ -1316,3 +1316,32 @@ html.dark-mode table.encapsulation-diagram td {
 		display: none !important;
 	}
 }
+
+/* Site-wide safety net for OS-level "reduce motion" preference.
+   Aggressively disables all animations and transitions — no flashes, no
+   glows, no pulses, no slide-ins, no pop-ins. States still change
+   (classes are still added/removed), but the *visual interpolation* is
+   skipped. More targeted overrides in individual stylesheets (e.g.
+   hiding the confetti spray entirely) stack on top of this. Nothing on
+   the site depends on animations completing for correctness.
+   Two triggers for maximum robustness:
+     1. the OS-level @media (prefers-reduced-motion: reduce) media query
+     2. an html.prm-reduce class stamped by JS when matchMedia reports
+        reduce (covers browsers that have been flaky about resolving
+        the media query from about:config / custom prefs). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+html.prm-reduce, html.prm-reduce *, html.prm-reduce *::before, html.prm-reduce *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+html.prm-reduce .unix-lab__confetti,
+html.prm-reduce [class*="confetti"] {
+  display: none !important;
+}

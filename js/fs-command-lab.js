@@ -184,6 +184,8 @@
 
   function startRowBurst(elements) {
     if (!elements.length) return;
+    // Honour the OS-level reduced-motion preference — skip the burst entirely.
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     var start = (window.performance && performance.now) ? performance.now() : Date.now();
 
     // 60fps tick via setInterval. requestAnimationFrame would be ideal but
@@ -387,37 +389,47 @@
     return span;
   }
 
-  // Yellow glow burst on the output <pre> itself — triggered when an action
-  // (button click, step advance) causes the output box to appear. Same
-  // visual vocabulary (and same timing envelope) as the unix-lab panel
-  // burst so every lab on the page feels animated consistently. Starts at
-  // full intensity synchronously to avoid the one-frame ramp-up delay.
-  var OUTPUT_BURST_MS = 900;
-  var OUTPUT_PEAK_HOLD = 0.18;
+  // Gentler glow burst on the output <pre> — intentionally weakened from
+  // an earlier "flash" version to be safer for photosensitive users.
+  // Soft ramp-up (no instantaneous onset), lower peak alphas, smaller
+  // radii. Matches the softened CSS burst used in unix-command-lab.
+  // Timing: 1000ms total, ease up to peak over the first ~12%, short
+  // plateau, then ease-out to zero. Respects `prefers-reduced-motion`.
+  var OUTPUT_BURST_MS = 1000;
+  var OUTPUT_RISE = 0.12;
+  var OUTPUT_PEAK_END = 0.22;
   function burstOutputBox(el) {
     if (!el) return;
+    // Honour the OS-level reduced-motion preference.
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     function draw(i) {
       var r1 = (3 * i).toFixed(2);
-      var r2 = (9 * i).toFixed(2);
-      var r3 = (18 * i).toFixed(2);
-      var a1 = (0.95 * i).toFixed(3);
-      var a2 = (0.85 * i).toFixed(3);
-      var a3 = (0.65 * i).toFixed(3);
+      var r2 = (8 * i).toFixed(2);
+      var r3 = (16 * i).toFixed(2);
+      var a1 = (0.55 * i).toFixed(3);
+      var a2 = (0.45 * i).toFixed(3);
+      var a3 = (0.22 * i).toFixed(3);
       el.style.boxShadow =
         '0 0 ' + r1 + 'px rgba(255,228,64,' + a1 + '), ' +
         '0 0 ' + r2 + 'px rgba(255,200,28,' + a2 + '), ' +
         '0 0 ' + r3 + 'px rgba(255,170,0,' + a3 + ')';
     }
-    draw(1);
+    // Start transparent — no instant onset.
+    draw(0);
     var start = (window.performance && performance.now) ? performance.now() : Date.now();
     var timer = setInterval(function () {
       var now = (window.performance && performance.now) ? performance.now() : Date.now();
       var p = (now - start) / OUTPUT_BURST_MS;
       if (p >= 1) { el.style.boxShadow = ''; clearInterval(timer); return; }
       var i;
-      if (p < OUTPUT_PEAK_HOLD) i = 1;
-      else {
-        var q = (p - OUTPUT_PEAK_HOLD) / (1 - OUTPUT_PEAK_HOLD);
+      if (p < OUTPUT_RISE) {
+        // Ease-in to peak.
+        var r = p / OUTPUT_RISE;
+        i = r * r;
+      } else if (p < OUTPUT_PEAK_END) {
+        i = 1;
+      } else {
+        var q = (p - OUTPUT_PEAK_END) / (1 - OUTPUT_PEAK_END);
         i = 1 - (q * q);
       }
       draw(i);

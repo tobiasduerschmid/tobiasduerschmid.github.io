@@ -1,3 +1,10 @@
+---
+# Empty front matter so Jekyll's Liquid processor runs on this file.
+# Without it, the `{% comment %}...{% endcomment %}` block and the
+# `{{ site.flickr_api_key }}` / `{{ page.lang }}` interpolations below
+# are served as literal text, which Firefox then rejects with
+# "SyntaxError: unexpected token: identifier".
+---
 
 var flickr_api = "https://api.flickr.com/services/rest/";
 var flickr_api_key = "{{ site.flickr_api_key }}";

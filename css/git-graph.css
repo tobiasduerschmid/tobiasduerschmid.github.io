@@ -588,3 +588,20 @@ html.dark-mode .git-workbench-shelf {
     margin-bottom: 0;
   }
 }
+
+/* Respect OS-level "reduce motion" — disable every animation and
+   transition inside git graphs and workbenches. State still changes
+   correctly, just without the glide/pulse/burst effects. The graphs
+   remain fully interactive; nothing functional depends on animation
+   completion. Uses attribute-prefix selectors so it matches the actual
+   flat class names (`.git-graph-svg`, `.git-workbench-row`, …) rather
+   than expecting a nested `.git-graph > *` structure. */
+@media (prefers-reduced-motion: reduce) {
+  [class^="git-graph-"],
+  [class*=" git-graph-"],
+  [class^="git-workbench-"],
+  [class*=" git-workbench-"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}

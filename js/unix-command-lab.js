@@ -286,8 +286,63 @@
   // they can't blend to grey at intermediate alphas. Re-triggering the
   // animation on subsequent clicks requires a class-clear + forced-reflow
   // dance; the `animationend` cleanup keeps the class list tidy.
+  // Test once on load whether the user prefers reduced motion, and keep
+  // the result live so preference changes take effect without a reload.
+  // Used as a hard gate on ALL lab animations (bursts, confetti, …) so
+  // even if CSS specificity somehow let a keyframe through, the JS never
+  // triggers it in the first place.
+  // Three independent ways the lab considers reduced motion "on":
+  //   1. `window.matchMedia('(prefers-reduced-motion: reduce)').matches`
+  //      — the OS-level accessibility preference.
+  //   2. `?reduce-motion=1` (or any truthy value) in the URL — escape hatch
+  //      for browsers whose user-level prefs don't reach the media query,
+  //      and for testing without touching OS settings.
+  //   3. `localStorage.prefersReducedMotion === '1'` — persistent override
+  //      once set, survives reloads and across pages on the same origin.
+  // When any of the three is true, we stamp `html.prm-reduce` which the
+  // stylesheet uses as a class-based animation kill-switch in addition
+  // to its own @media rule.
+  var REDUCED_MOTION_FORCED = (function () {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var url = params.get('reduce-motion');
+      if (url && url !== '0' && url.toLowerCase() !== 'false') {
+        try { localStorage.setItem('prefersReducedMotion', '1'); } catch (e) {}
+        return true;
+      }
+      if (url === '0' || (url && url.toLowerCase() === 'false')) {
+        try { localStorage.removeItem('prefersReducedMotion'); } catch (e) {}
+        return false;
+      }
+      try { if (localStorage.getItem('prefersReducedMotion') === '1') return true; } catch (e) {}
+    } catch (e) {}
+    return false;
+  })();
+  var REDUCED_MOTION = (function () {
+    if (!window.matchMedia) return { matches: REDUCED_MOTION_FORCED };
+    var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function active() { return REDUCED_MOTION_FORCED || !!mq.matches; }
+    function syncClass() {
+      if (document.documentElement) {
+        document.documentElement.classList.toggle('prm-reduce', active());
+      }
+    }
+    syncClass();
+    if (mq.addEventListener) {
+      mq.addEventListener('change', syncClass);
+    } else if (mq.addListener) {
+      mq.addListener(syncClass);  // older Safari/Firefox
+    }
+    // Expose a read-through proxy so callers always see the combined state.
+    return { get matches() { return active(); } };
+  })();
+  function prefersReducedMotion() {
+    return !!REDUCED_MOTION.matches;
+  }
+
   function burstPanel(panel) {
     if (!panel) return;
+    if (prefersReducedMotion()) return;
     panel.classList.remove('unix-lab__burst');
     void panel.offsetWidth;  // force layout flush so the animation re-fires
     panel.classList.add('unix-lab__burst');
@@ -306,6 +361,7 @@
   // piece and stamps its target as `--tx` / `--ty` / `--rot`.
   function spawnConfetti(anchor) {
     if (!anchor || !anchor.getBoundingClientRect) return;
+    if (prefersReducedMotion()) return;  // skip entirely under reduce-motion
     var rect = anchor.getBoundingClientRect();
     var host = document.createElement('div');
     host.className = 'unix-lab__confetti';

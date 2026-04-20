@@ -552,3 +552,17 @@ html.dark-mode .fs-command-lab-modal__close:hover { background-color: #2a323e; c
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* Respect the OS-level "reduce motion" preference: stop crossfades, the
+   row-burst flash on new tree rows, the modal fade-in, output-box
+   transitions, and button hover animations. Static colours and the
+   instant state swap still convey what changed. The JS-driven row-burst
+   and output-burst also check this preference themselves (see the
+   window.matchMedia calls in fs-command-lab.js). */
+@media (prefers-reduced-motion: reduce) {
+  .fs-command-lab__tree-slot { transition: none !important; }
+  .fs-command-lab__output,
+  .fs-command-lab__btn,
+  .fs-command-lab__btn-back { transition: none !important; }
+  .fs-command-lab-modal-overlay { animation: none !important; }
+}

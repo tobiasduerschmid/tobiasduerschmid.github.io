@@ -2831,3 +2831,28 @@ body.lecture-mode .tutorial-page {
   .parsons-line { padding: 1px 6px; font-size: 0.74em; }
   .parsons-separator { padding: 2px; font-size: 0.72em; }
 }
+
+/* Respect the OS-level "reduce motion" preference across the whole
+   tutorial surface — quiz feedback bounces, parsons drag animations,
+   flashcard flips, cursor blinks, button hover transitions. Drag-and-drop,
+   clicks, input, state changes all still work; they just happen
+   instantly without interpolation. */
+@media (prefers-reduced-motion: reduce) {
+  .tutorial *,
+  .tutorial *::before,
+  .tutorial *::after,
+  .quiz *,
+  .quiz *::before,
+  .quiz *::after,
+  .parsons *,
+  .parsons *::before,
+  .parsons *::after,
+  .flashcards *,
+  .flashcards *::before,
+  .flashcards *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
