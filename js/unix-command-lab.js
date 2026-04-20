@@ -280,25 +280,44 @@
   // yellow-rising-falling drop-shadow on changed rows. Keeps the two labs
   // visually coherent.
   // ---------------------------------------------------------------------------
-  var BURST_MS = 1000;
-  var RISE = 0.22;
-  var FALL = 0.45;
+  var BURST_MS = 900;
+  var PEAK_HOLD = 0.18;  // Hold at full intensity for the first 18% of the
+                         // duration, then decay. No rise phase — the burst
+                         // needs to be visible instantly when the panel
+                         // appears, otherwise the first ~200ms of ramp-up
+                         // reads as "delay" or "washed-out grey".
+  // Three-layer amber glow. No white inner ring (which made the burst look
+  // grey on light backgrounds). Three progressively-dimmer yellows at
+  // different radii read clearly on both the light-mode near-white page
+  // and the dark-mode near-black page.
   function burstPanel(panel) {
+    // Paint the first frame synchronously so the glow appears in the same
+    // paint as the panel itself — no one-frame delay.
+    function draw(i) {
+      var r1 = (3 * i).toFixed(2);
+      var r2 = (9 * i).toFixed(2);
+      var r3 = (18 * i).toFixed(2);
+      var a1 = (0.95 * i).toFixed(3);
+      var a2 = (0.85 * i).toFixed(3);
+      var a3 = (0.65 * i).toFixed(3);
+      panel.style.boxShadow =
+        '0 0 ' + r1 + 'px rgba(255,228,64,' + a1 + '), ' +
+        '0 0 ' + r2 + 'px rgba(255,200,28,' + a2 + '), ' +
+        '0 0 ' + r3 + 'px rgba(255,170,0,' + a3 + ')';
+    }
+    draw(1);
     var start = (window.performance && performance.now) ? performance.now() : Date.now();
     var timer = setInterval(function () {
       var now = (window.performance && performance.now) ? performance.now() : Date.now();
       var p = (now - start) / BURST_MS;
       if (p >= 1) { panel.style.boxShadow = ''; clearInterval(timer); return; }
       var i;
-      if (p < RISE)         i = p / RISE;
-      else if (p < FALL)    i = 1;
-      else { var q = (p - FALL) / (1 - FALL); i = 1 - (q * q); }
-      var outer = (14 * i).toFixed(2);
-      var inner = (4 * i).toFixed(2);
-      var a = (0.9 * i).toFixed(3);
-      panel.style.boxShadow =
-        '0 0 ' + inner + 'px rgba(255,255,255,' + a + '), ' +
-        '0 0 ' + outer + 'px rgba(255,200,28,' + a + ')';
+      if (p < PEAK_HOLD) i = 1;
+      else {
+        var q = (p - PEAK_HOLD) / (1 - PEAK_HOLD);
+        i = 1 - (q * q);  // ease-out quadratic decay
+      }
+      draw(i);
     }, 16);
   }
 
@@ -442,15 +461,34 @@
           // wrote to exactly one file (typical `cmd > out.txt` pattern), the
           // student is predicting the file content — the prompt usually says
           // so explicitly ("What will X contain?").
+          //
+          // Additional fallback for "expected outcome is empty" cases (most
+          // notably the `sort data.txt > data.txt` clobber card): if the
+          // actual result is an empty string and the student's prose answer
+          // mentions the words "nothing" or "empty" (a perfectly valid way
+          // to describe the outcome), accept that as a match too. This
+          // rewards students who understood the destructive-open-before-run
+          // behaviour even if they didn't literally type an empty string.
           var normUser = normalizeForCompare(user);
           var matchTarget = null;                       // 'stdout' | file name
+          var mentionsEmpty = /\b(nothing|empty)\b/i.test(user);
+          var singleFile = output.files && output.files.length === 1 ? output.files[0] : null;
           if ((output.stdout || '') !== '' &&
               normUser === normalizeForCompare(output.stdout)) {
             matchTarget = 'stdout';
           } else if ((!output.stdout || output.stdout === '') &&
-                     output.files && output.files.length === 1 &&
-                     normUser === normalizeForCompare(output.files[0].content)) {
-            matchTarget = output.files[0].name;
+                     singleFile &&
+                     normUser === normalizeForCompare(singleFile.content)) {
+            matchTarget = singleFile.name;
+          } else if (mentionsEmpty &&
+                     (!output.stdout || output.stdout === '') &&
+                     singleFile &&
+                     (singleFile.content === '' || singleFile.content == null)) {
+            matchTarget = singleFile.name + ' (empty)';
+          } else if (mentionsEmpty &&
+                     (output.stdout === '' || output.stdout === null || output.stdout === undefined) &&
+                     !singleFile) {
+            matchTarget = 'stdout (empty)';
           }
           if (matchTarget) {
             pShow.classList.add('unix-lab__prediction-show--match');
@@ -466,10 +504,22 @@
         }
       }
 
+      // Every revealed panel gets the yellow glow burst — the visual punch
+      // of a reveal is the point of the card, and the burst is the cue that
+      // says "look here, something just appeared". Earlier we only bursted
+      // stderr/files/env, but the inconsistency was more distracting than
+      // useful: some cards popped, others felt flat. Now: the prediction
+      // panel, stdout, stderr, modified files, env changes, and the
+      // exit-code badge all burst. (The green match-flash on a correct
+      // prediction still plays on the background; the burst just adds the
+      // yellow pop around the panel.)
       var bursts = [];
+      var predictionPanel = outCol.querySelector('.unix-lab__prediction-show');
+      if (predictionPanel) bursts.push(predictionPanel);
 
       var sOut = stdoutPanel(output.stdout);
       outCol.appendChild(sOut);
+      bursts.push(sOut);
 
       var sErr = stderrPanel(output.stderr);
       if (sErr) { outCol.appendChild(sErr); bursts.push(sErr); }
@@ -487,14 +537,17 @@
         if (envP) { outCol.appendChild(envP); bursts.push(envP); }
       }
 
-      outCol.appendChild(exitBadge(output.exit));
+      var badge = exitBadge(output.exit);
+      outCol.appendChild(badge);
+      bursts.push(badge);
 
       if (notice) notice.style.display = '';
 
-      // Burst only on "change"-y panels (stderr, modified files, env). Keeping
-      // stdout un-bursted reflects that stdout is the *expected* channel;
-      // stderr / file side effects are the pedagogically surprising channels.
-      setTimeout(function () { bursts.forEach(burstPanel); }, 60);
+      // Burst synchronously so the glow paints in the *same* frame as the
+      // panels themselves — no ramp-up delay, no rAF lag. burstPanel()'s
+      // first draw() call paints at full intensity; the setInterval that
+      // follows handles the decay over the next ~900ms.
+      bursts.forEach(burstPanel);
     }
 
     function clearOutputs() {
@@ -530,6 +583,19 @@
       button: btn,
       reset: function () { revealed = false; update(); },
       reveal: function () { revealed = true; update(); },
+      // Print-only state: reveal outputs (so the printout is useful) but
+      // keep the button showing the original command rather than "Reset".
+      // The "Reset" label is meaningless on paper and hides information the
+      // reader of a printed page actually wants — which command produced
+      // this output.
+      printReveal: function () {
+        if (!revealed) { revealed = true; populateOutputs(); if (predictInput) predictInput.readOnly = true; }
+        btnIcon.textContent = '\u25B6';
+        btnCmd.textContent = spec.command;
+        btn.classList.remove('unix-lab__btn--reset');
+      },
+      // Restore the normal revealed/unrevealed look after printing finishes.
+      exitPrintMode: function () { update(); },
     };
     container._unixLab = controller;
     return controller;
@@ -558,11 +624,17 @@
   }
 
   if (typeof window !== 'undefined') {
-    // Reset all cards for print so all content is in their "revealed" state
-    // uniformly (the teacher handing out printouts gets the full picture).
+    // Print layout: reveal every card's outputs (so printouts show the full
+    // picture) AND swap the button back from "Reset" to the original command
+    // (the label "Reset" is meaningless on paper and hides useful info).
     window.addEventListener('beforeprint', function () {
       document.querySelectorAll('.unix-lab').forEach(function (el) {
-        if (el._unixLab && el._unixLab.reveal) el._unixLab.reveal();
+        if (el._unixLab && el._unixLab.printReveal) el._unixLab.printReveal();
+      });
+    });
+    window.addEventListener('afterprint', function () {
+      document.querySelectorAll('.unix-lab').forEach(function (el) {
+        if (el._unixLab && el._unixLab.exitPrintMode) el._unixLab.exitPrintMode();
       });
     });
   }

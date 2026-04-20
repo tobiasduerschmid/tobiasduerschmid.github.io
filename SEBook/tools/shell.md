@@ -148,7 +148,8 @@ Play each card to see the command's effect; click again to undo. The description
   "after": {
     "tree": "project/\n  README.md\n  src/\n    app.js",
     "cwd": "project",
-    "output": "mkdir: cannot create directory 'docs/api': No such file or directory"
+    "output": "mkdir: cannot create directory 'docs/api': No such file or directory",
+    "exit": 1
   }
 }
 </script>
@@ -187,7 +188,8 @@ Play each card to see the command's effect; click again to undo. The description
   "after": {
     "tree": "project/\n  README.md\n  src/\n    app.js\n    utils.js",
     "cwd": "project",
-    "output": "cp: -r not specified; omitting directory 'src/'"
+    "output": "cp: -r not specified; omitting directory 'src/'",
+    "exit": 1
   }
 }
 </script>
@@ -264,7 +266,8 @@ Play each card to see the command's effect; click again to undo. The description
   "after": {
     "tree": "project/\n  README.md\n  src/\n    app.js",
     "cwd": "project",
-    "output": "rmdir: failed to remove 'src/': Directory not empty"
+    "output": "rmdir: failed to remove 'src/': Directory not empty",
+    "exit": 1
   }
 }
 </script>
@@ -514,6 +517,27 @@ These commands do not modify the filesystem tree — they transform **streams of
     "exit": 0
   },
   "notice": "`aleph.bet` matches because `a`+any-char+`b` appears inside it. Quote patterns (`grep 'a\\.b'`) or use `-F` for fixed strings."
+}
+</script>
+</div>
+
+#### `grep` — no match is not the same as error (exit code `1`)
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "grep WARN log.txt",
+  "description": "Sometimes students see a command \"produce nothing\" and assume it broke. `grep` *deliberately* exits with status **1** when it doesn't find any matches — that's not an error, it's a usable signal. Scripts branch on it: `if grep -q ERROR log.txt; then alert; fi`. Watch the exit badge carefully: the command succeeded in doing its job, it just found nothing.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO  start\n08:01 INFO  retry\n08:02 INFO  done\n" }
+    ]
+  },
+  "output": {
+    "stdout": "",
+    "exit": 1
+  },
+  "notice": "Exit **1** from `grep` means *no match* — the file was read successfully, the pattern was valid, there were simply no matching lines. Exit **2** would mean a *real* error like a missing file (you'll see that exit code in the Error Handling section). Always distinguish 1 from 2 before treating nonzero as failure."
 }
 </script>
 </div>
@@ -820,6 +844,27 @@ These tools manage how your shell operates and how you access information:
 </script>
 </div>
 
+#### Common mistake — *running a script without `chmod +x` (exit code `126`)*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "./deploy.sh",
+  "description": "A classic \"it should work\" moment: the script exists, the contents are correct, but you never ran `chmod +x` on it. The shell finds the file but refuses to execute it, returning exit code **126** — a POSIX-specific code meaning \"command found but not executable\". Distinct from 127 (command not found entirely).",
+  "input": {
+    "files": [
+      { "name": "deploy.sh", "content": "#!/bin/bash\necho \"deploying…\"", "hint": "mode: -rw-r--r--  (644 — no execute bit)" }
+    ]
+  },
+  "output": {
+    "stderr": "bash: ./deploy.sh: Permission denied",
+    "exit": 126
+  },
+  "notice": "Exit **126** is your cue that the file is there but not marked executable. Fix: `chmod +x deploy.sh`. This code is distinct from **127** (shell couldn't find the file at all) — the distinction matters when a CI job fails and you need to know which one it was."
+}
+</script>
+</div>
+
 #### Common mistake — *`chmod 777` as a security shortcut*
 
 <div data-unix-command-lab>
@@ -859,6 +904,27 @@ These tools manage how your shell operates and how you access information:
     "stdout": "/usr/local/bin/python3",
     "exit": 0
   }
+}
+</script>
+</div>
+
+#### Common mistake — *command not found (exit code `127`)*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "gti status",
+  "description": "Every developer has fat-fingered this one. The shell scans every directory in `$PATH` for `gti`, doesn't find it (the student meant `git`), and bails with exit code **127** — the universal \"command not found\" signal. Scripts use the same exit code to detect \"an expected tool isn't installed\" and fall back or fail loudly.",
+  "input": {
+    "env": [
+      { "name": "PATH", "value": "/usr/local/bin:/usr/bin:/bin" }
+    ]
+  },
+  "output": {
+    "stderr": "bash: gti: command not found",
+    "exit": 127
+  },
+  "notice": "Exit **127** always means \"the shell couldn't locate any file by that name in `$PATH`\" — distinct from exit **126** (file found, but not executable). A robust script tests before it calls: `command -v git >/dev/null || { echo \"git is required\" >&2; exit 127; }`."
 }
 </script>
 </div>

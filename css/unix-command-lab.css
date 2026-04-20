@@ -14,7 +14,10 @@
   background-color: transparent;
   color: inherit;
   margin: 1.5em 0;
-  contain: layout paint;
+  /* `contain: layout` keeps the perf-smoothing benefit but drops `paint`,
+     which was clipping the yellow-burst box-shadow at the card's bottom
+     edge. We want the glow to bleed past the card outline. */
+  contain: layout;
 }
 
 /* ----- Description (markdown block above the pipeline) ----- */
@@ -68,6 +71,13 @@ html.dark-mode .unix-lab__desc { color: #fff; }
   color: #5a6573;
   cursor: default;
 }
+/* Default browser placeholder grey (#757575-ish) is barely visible on the
+   dark-mode textarea. Set explicit placeholder colours for both modes so
+   the hint text is readable without looking like entered content. */
+.unix-lab__predict-input::placeholder {
+  color: #9aa6b2;
+  opacity: 1;     /* Firefox lowers placeholder opacity by default — undo that. */
+}
 html.dark-mode .unix-lab__predict {
   background-color: rgba(74, 159, 217, 0.08);
   border-left-color: #4a9fd9;
@@ -77,6 +87,13 @@ html.dark-mode .unix-lab__predict-input {
   background-color: #1c2533;
   color: #e6edf3;
   border-color: #3a4556;
+}
+html.dark-mode .unix-lab__predict-input::placeholder {
+  color: #6b7686;
+}
+html.dark-mode .unix-lab__predict-input:focus {
+  border-color: #4a9fd9;
+  box-shadow: 0 0 0 2px rgba(74, 159, 217, 0.25);
 }
 html.dark-mode .unix-lab__predict-input[readonly] {
   background-color: #141a24;
@@ -324,8 +341,14 @@ html.dark-mode .unix-lab__prediction-show pre,
 html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
 
 /* --- Prediction-matches-actual badge (positive reinforcement only) --- */
+/* The three --match-flash-* CSS variables drive the keyframe animation so
+   the same keyframe works in both light and dark mode. Dark mode overrides
+   these variables further down; that's the whole trick. */
 .unix-lab__prediction-show--match {
-  background-color: #e6f4ea;
+  --match-flash-start: #c7e8d2;
+  --match-flash-mid:   #d9edde;
+  --match-flash-end:   #e6f4ea;
+  background-color: var(--match-flash-end);
   border-color: #b6e0c4;
   animation: unix-lab-match-flash 700ms ease-out 1;
 }
@@ -356,9 +379,9 @@ html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
 .unix-lab__match-label { line-height: 1.2; }
 
 @keyframes unix-lab-match-flash {
-  0%   { background-color: #c7e8d2; box-shadow: 0 0 0 0 rgba(26, 125, 90, 0.35); }
-  60%  { background-color: #d9edde; box-shadow: 0 0 0 6px rgba(26, 125, 90, 0); }
-  100% { background-color: #e6f4ea; box-shadow: 0 0 0 0 rgba(26, 125, 90, 0); }
+  0%   { background-color: var(--match-flash-start); box-shadow: 0 0 0 0 rgba(26, 125, 90, 0.45); }
+  60%  { background-color: var(--match-flash-mid);   box-shadow: 0 0 0 8px rgba(26, 125, 90, 0); }
+  100% { background-color: var(--match-flash-end);   box-shadow: 0 0 0 0 rgba(26, 125, 90, 0); }
 }
 @keyframes unix-lab-match-pop {
   0%   { transform: scale(0.6) translateY(6px); opacity: 0; }
@@ -373,8 +396,16 @@ html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
   100% { transform: scale(1)   rotate(0); }
 }
 
+/* Dark-mode palette for the match flash — the same keyframe now animates
+   through these darker, translucent greens instead of the pastel
+   light-mode values. Without this override, the keyframe animated through
+   the light-mode constants and bled through as a washed-out pastel green
+   over the dark card. */
 html.dark-mode .unix-lab__prediction-show--match {
-  background-color: rgba(74, 222, 128, 0.08);
+  --match-flash-start: rgba(74, 222, 128, 0.22);
+  --match-flash-mid:   rgba(74, 222, 128, 0.14);
+  --match-flash-end:   rgba(74, 222, 128, 0.08);
+  background-color: var(--match-flash-end);
   border-color: rgba(74, 222, 128, 0.35);
 }
 html.dark-mode .unix-lab__prediction-show--match .unix-lab__prediction-label,
@@ -540,6 +571,27 @@ html.dark-mode .unix-lab__panel--file-out { border-color: #5e4a1e; }
 html.dark-mode .unix-lab__panel--file-out .unix-lab__panel-header {
   background-color: #2e2410;
   color: #e0b24e;
+}
+
+/* Panel-tag pills (CREATED, OVERWRITTEN, APPENDED, MODIFIED) need their own
+   dark-mode palettes — without these they render as bright pastel chips
+   (light yellow / pink / green / blue) on the dark panel header, which the
+   user (rightly) flagged as a visual mismatch. */
+html.dark-mode .unix-lab__panel-tag--create    {
+  background-color: rgba(224, 178, 78, 0.18);
+  color: #e0b24e;
+}
+html.dark-mode .unix-lab__panel-tag--overwrite {
+  background-color: rgba(241, 148, 138, 0.16);
+  color: #f1948a;
+}
+html.dark-mode .unix-lab__panel-tag--append    {
+  background-color: rgba(74, 222, 128, 0.14);
+  color: #4ade80;
+}
+html.dark-mode .unix-lab__panel-tag--modify    {
+  background-color: rgba(74, 159, 217, 0.16);
+  color: #66b1e3;
 }
 
 html.dark-mode .unix-lab__placeholder,

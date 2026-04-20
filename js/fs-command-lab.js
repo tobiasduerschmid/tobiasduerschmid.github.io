@@ -332,14 +332,96 @@
     return text;
   }
 
-  function renderOutputInto(el, output) {
+  // Render a state's textual output plus (optional) an exit-code badge into
+  // the given <pre>. Earlier this only handled output text; the exit badge
+  // was added so fs cards can now teach exit codes the same way the
+  // unix-command-lab does — e.g. `rmdir src/` (non-empty) → `exit: 1 ✗`.
+  //
+  // `isActionResult` (default false) says "this state is the result of a
+  // command running" — used for the post-click state in single-step cards
+  // and every non-initial step in multi-step cards. When true, an absent
+  // `exit` defaults to 0 so success cases also get the green `exit: 0 ✓`
+  // badge without every card having to spell it out.
+  //
+  // Accepts either a full state object (new callers) or a bare output
+  // string (for back-compat with any external callers that still pass
+  // just the string).
+  function renderOutputInto(el, stateOrOutput, isActionResult) {
+    var output, exit;
+    if (stateOrOutput && typeof stateOrOutput === 'object') {
+      output = stateOrOutput.output;
+      exit = stateOrOutput.exit;
+    } else {
+      output = stateOrOutput;
+      exit = undefined;
+    }
+    if (exit == null && isActionResult) exit = 0;
+
+    el.textContent = '';
     if (output != null && output !== '') {
-      el.textContent = output;
+      el.appendChild(document.createTextNode(output));
+    }
+    if (exit != null) {
+      if (output != null && output !== '') {
+        el.appendChild(document.createTextNode('\n'));
+      }
+      el.appendChild(buildExitBadge(exit));
+    }
+
+    var hasAny = (output != null && output !== '') || exit != null;
+    if (hasAny) {
       el.classList.add('fs-command-lab__output--visible');
     } else {
-      el.textContent = '';
       el.classList.remove('fs-command-lab__output--visible');
     }
+  }
+
+  function buildExitBadge(code) {
+    var ok = (code === 0);
+    var span = document.createElement('span');
+    span.className = 'fs-command-lab__exit fs-command-lab__exit--' + (ok ? 'ok' : 'err');
+    span.innerHTML =
+      '<span class="fs-command-lab__exit-label">exit:</span> ' +
+      '<span class="fs-command-lab__exit-code">' + code + '</span>' +
+      '<span class="fs-command-lab__exit-icon" aria-hidden="true">' + (ok ? '\u2713' : '\u2717') + '</span>';
+    return span;
+  }
+
+  // Yellow glow burst on the output <pre> itself — triggered when an action
+  // (button click, step advance) causes the output box to appear. Same
+  // visual vocabulary (and same timing envelope) as the unix-lab panel
+  // burst so every lab on the page feels animated consistently. Starts at
+  // full intensity synchronously to avoid the one-frame ramp-up delay.
+  var OUTPUT_BURST_MS = 900;
+  var OUTPUT_PEAK_HOLD = 0.18;
+  function burstOutputBox(el) {
+    if (!el) return;
+    function draw(i) {
+      var r1 = (3 * i).toFixed(2);
+      var r2 = (9 * i).toFixed(2);
+      var r3 = (18 * i).toFixed(2);
+      var a1 = (0.95 * i).toFixed(3);
+      var a2 = (0.85 * i).toFixed(3);
+      var a3 = (0.65 * i).toFixed(3);
+      el.style.boxShadow =
+        '0 0 ' + r1 + 'px rgba(255,228,64,' + a1 + '), ' +
+        '0 0 ' + r2 + 'px rgba(255,200,28,' + a2 + '), ' +
+        '0 0 ' + r3 + 'px rgba(255,170,0,' + a3 + ')';
+    }
+    draw(1);
+    var start = (window.performance && performance.now) ? performance.now() : Date.now();
+    var timer = setInterval(function () {
+      var now = (window.performance && performance.now) ? performance.now() : Date.now();
+      var p = (now - start) / OUTPUT_BURST_MS;
+      if (p >= 1) { el.style.boxShadow = ''; clearInterval(timer); return; }
+      var i;
+      if (p < OUTPUT_PEAK_HOLD) i = 1;
+      else {
+        var q = (p - OUTPUT_PEAK_HOLD) / (1 - OUTPUT_PEAK_HOLD);
+        i = 1 - (q * q);
+      }
+      draw(i);
+    }, 16);
   }
 
   // Measure the tallest (tree + output) height across all states. Used to
@@ -437,7 +519,7 @@
     treeWrap.appendChild(output);
 
     animator.render(buildTreeText(spec.before));
-    renderOutputInto(output, spec.before && spec.before.output);
+    renderOutputInto(output, spec.before);
 
     // Static print pair: Before | After side by side.  Hidden on screen,
     // revealed by @media print.  Mirrors the multi-step __print-steps approach.
@@ -452,11 +534,12 @@
       var renderTarget = document.createElement('div');
       cell.appendChild(renderTarget);
       window.UMLFolderTreeDiagram.render(renderTarget, buildTreeText(state));
-      if (state && state.output) {
+      var isAfterCell = (label === 'After');
+      if (state && (state.output || state.exit != null || isAfterCell)) {
         var outEl = document.createElement('pre');
-        outEl.className = 'fs-command-lab__output fs-command-lab__output--visible';
-        outEl.textContent = state.output;
-        cell.appendChild(outEl);
+        outEl.className = 'fs-command-lab__output';
+        renderOutputInto(outEl, state, isAfterCell);
+        if (outEl.classList.contains('fs-command-lab__output--visible')) cell.appendChild(outEl);
       }
       return cell;
     }
@@ -468,7 +551,11 @@
     function update() {
       var state = applied ? spec.after : spec.before;
       animator.render(buildTreeText(state));
-      renderOutputInto(output, state && state.output);
+      renderOutputInto(output, state, applied);
+      // Burst the output box when it becomes visible after an action click.
+      if (applied && output.classList.contains('fs-command-lab__output--visible')) {
+        burstOutputBox(output);
+      }
       if (applied) {
         icon.textContent = '\u21BA';
         cmdEl.textContent = 'Undo ' + spec.command;
@@ -681,11 +768,11 @@
       window.UMLFolderTreeDiagram.render(treeDiv, buildTreeText(state));
       stepEl.appendChild(treeDiv);
 
-      if (state && state.output) {
+      if (state && (state.output || state.exit != null || !isInitial)) {
         var outEl = document.createElement('pre');
-        outEl.className = 'fs-command-lab__output fs-command-lab__output--visible';
-        outEl.textContent = state.output;
-        stepEl.appendChild(outEl);
+        outEl.className = 'fs-command-lab__output';
+        renderOutputInto(outEl, state, !isInitial);
+        if (outEl.classList.contains('fs-command-lab__output--visible')) stepEl.appendChild(outEl);
       }
 
       printSection.appendChild(stepEl);
@@ -720,7 +807,11 @@
 
       var state = isInitial ? spec.initialState : steps[stepIdx].state;
       animator.render(buildTreeText(state));
-      renderOutputInto(output, state && state.output);
+      renderOutputInto(output, state, !isInitial);
+      // Burst the output box when a step with output/exit is reached.
+      if (!isInitial && output.classList.contains('fs-command-lab__output--visible')) {
+        burstOutputBox(output);
+      }
     }
 
     btn.addEventListener('click', function () {
