@@ -19,22 +19,26 @@ Data source: _data/flashcards/{{ include.id }}.yml
 {% assign all_cards = flashcard_data.cards %}
 {% endif %}
 
-<div class="flashcards-container" id="flashcards-{{ include.id }}" data-quiz-id="{{ include.id }}">
+<div class="flashcards-container" id="flashcards-{{ include.id }}" data-quiz-id="{{ include.id }}"
+  role="region" aria-labelledby="flashcards-{{ include.id }}-title">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h3>{{ flashcard_data.title }}</h3>
+      <h3 id="flashcards-{{ include.id }}-title">{{ flashcard_data.title }}</h3>
       {% if site.personal_gym %}
-      <button class="se-gym-toggle" data-gym-type="flashcard" data-gym-id="{{ include.id }}"
-        title="Add to Personal Gym" style="display: none;">
-        <i class="fa-solid fa-plus"></i>
+      <button type="button" class="se-gym-toggle" data-gym-type="flashcard" data-gym-id="{{ include.id }}"
+        aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
       </button>
       {% endif %}
     </div>
     <p>{{ flashcard_data.description }}</p>
-    <div class="quiz-progress-bar">
+    <div class="quiz-progress-bar" role="progressbar"
+      aria-label="Flashcard progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="progress-fill" style="width: 0%"></div>
     </div>
   </div>
+  <!-- Polite live region for reveal / transitions -->
+  <div class="flashcards-announce sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <div class="flashcards-list">
     {% for card in all_cards %}
@@ -42,16 +46,23 @@ Data source: _data/flashcards/{{ include.id }}.yml
       id="flash-{{ include.id }}-{{ forloop.index0 }}">
       <div class="flashcard-question">{{ card.question | markdownify }}</div>
 
-      <div class="flashcard-answer-container hidden">
+      <div class="flashcard-answer-container hidden"
+        id="flash-answer-{{ include.id }}-{{ forloop.index0 }}">
         <div class="flashcard-answer">{{ card.answer | markdownify }}</div>
         <div class="flashcard-explanation">{{ card.explanation | markdownify }}</div>
       </div>
 
       <div class="flashcard-actions">
-        <button class="show-answer-btn">Show Answer</button>
-        <div class="assessment-buttons hidden">
-          <button class="assess-btn correct-btn" title="I got it right!">✔</button>
-          <button class="assess-btn incorrect-btn" title="I missed it">✖</button>
+        <button type="button" class="show-answer-btn"
+          aria-expanded="false"
+          aria-controls="flash-answer-{{ include.id }}-{{ forloop.index0 }}">Show Answer</button>
+        <div class="assessment-buttons hidden" role="group" aria-label="Did you get it right?">
+          <button type="button" class="assess-btn correct-btn" aria-label="I got it right" title="I got it right!">
+            <span aria-hidden="true">✔</span>
+          </button>
+          <button type="button" class="assess-btn incorrect-btn" aria-label="I missed it" title="I missed it">
+            <span aria-hidden="true">✖</span>
+          </button>
         </div>
       </div>
     </div>
@@ -163,12 +174,38 @@ Data source: _data/flashcards/{{ include.id }}.yml
     background: #2774AE;
     color: white;
     border: none;
-    padding: 6px 14px;
+    padding: 8px 16px;
+    min-height: 36px;
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
     font-size: 0.9em;
+  }
+
+  .show-answer-btn:focus-visible,
+  .restart-btn:focus-visible,
+  .review-btn:focus-visible,
+  .assess-btn:focus-visible,
+  .se-gym-toggle:focus-visible {
+    outline: 3px solid #2774AE;
+    outline-offset: 2px;
+  }
+
+  html.dark-mode .show-answer-btn:focus-visible,
+  html.dark-mode .restart-btn:focus-visible,
+  html.dark-mode .review-btn:focus-visible,
+  html.dark-mode .assess-btn:focus-visible,
+  html.dark-mode .se-gym-toggle:focus-visible {
+    outline-color: #FFD100;
+  }
+
+  .flashcards-container .sr-only {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
   }
 
   .show-answer-btn:hover,
@@ -394,11 +431,19 @@ Data source: _data/flashcards/{{ include.id }}.yml
     if (!container) return;
 
     const progressBar = container.querySelector('.progress-fill');
+    const progressBarWrap = container.querySelector('.quiz-progress-bar');
     const resultsArea = container.querySelector('.flashcards-results');
     const scoreDisplay = container.querySelector('.current-score');
     const reviewBtn = container.querySelector('.review-btn');
     const restartBtn = container.querySelector('.restart-btn');
     const listContainer = container.querySelector('.flashcards-list');
+    const announceRegion = container.querySelector('.flashcards-announce');
+
+    function announce(msg) {
+      if (!announceRegion) return;
+      announceRegion.textContent = '';
+      setTimeout(function () { announceRegion.textContent = msg; }, 30);
+    }
 
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -438,12 +483,19 @@ Data source: _data/flashcards/{{ include.id }}.yml
     function updateProgress() {
       const total = cards.length;
       let progress;
+      let stepNumber;
       if (isReviewMode) {
         progress = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
+        stepNumber = (cards.length - reviewQueue.length + reviewStep) + 1;
       } else {
         progress = (currentStep / total) * 100;
+        stepNumber = currentStep + 1;
       }
       progressBar.style.width = `${progress}%`;
+      if (progressBarWrap) {
+        progressBarWrap.setAttribute('aria-valuenow', Math.round(progress));
+        progressBarWrap.setAttribute('aria-valuetext', 'Card ' + Math.min(stepNumber, total) + ' of ' + total);
+      }
     }
 
     function showCard(index) {
@@ -469,7 +521,9 @@ Data source: _data/flashcards/{{ include.id }}.yml
       card.querySelector('.flashcard-answer-container').classList.remove('hidden');
       if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       btn.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'true');
       card.querySelector('.assessment-buttons').classList.remove('hidden');
+      announce('Answer revealed. Use the "I got it right" or "I missed it" buttons to rate yourself.');
     }
 
     function handleAssessment(correct, card) {
@@ -511,7 +565,9 @@ Data source: _data/flashcards/{{ include.id }}.yml
     function resetCard(index) {
       const card = cards[index];
       card.querySelector('.flashcard-answer-container').classList.add('hidden');
-      card.querySelector('.show-answer-btn').classList.remove('hidden');
+      const showBtn = card.querySelector('.show-answer-btn');
+      showBtn.classList.remove('hidden');
+      showBtn.setAttribute('aria-expanded', 'false');
       card.querySelector('.assessment-buttons').classList.add('hidden');
     }
 
@@ -520,6 +576,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       resultsArea.classList.remove('hidden');
       scoreDisplay.textContent = score;
       progressBar.style.width = '100%';
+      if (progressBarWrap) progressBarWrap.setAttribute('aria-valuenow', 100);
       scrollToTop();
 
       const summary = resultsArea.querySelector('.score-summary');
@@ -528,6 +585,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }
+      announce('Workout complete. Score ' + score + ' out of ' + cards.length + '.');
 
       if (incorrectIndices.length > 0) {
         reviewBtn.classList.remove('hidden');

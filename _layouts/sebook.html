@@ -37,21 +37,22 @@
     {% assign projects = site.data.researchprojects.projects | where: 'key', 'sebook' %}
     {% assign project = projects.first %}
 
-    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Main navigation">
       <div class="container-fluid">
         <div class="navbar-header page-scroll">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse"
+            aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-nav-collapse">
             <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="icon-bar" aria-hidden="true"></span>
+            <span class="icon-bar" aria-hidden="true"></span>
+            <span class="icon-bar" aria-hidden="true"></span>
           </button>
           <a class="navbar-brand page-scroll" href="{{project.url}}">{{project.title}}</a><a
             class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
 
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <div class="collapse navbar-collapse navbar-ex1-collapse" id="primary-nav-collapse">
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract H1 headings from content -->
             {% assign sections = content | split: '<h1' %} {% for section in sections %} {% if section contains '</h1>'
@@ -73,18 +74,19 @@
 
     <div id="sebook-content-wrapper" style="display: flex; min-height: calc(100vh - 60px);">
       <!-- Mobile Sidebar Toggle -->
-      <button id="sidebar-toggle"
+      <button id="sidebar-toggle" type="button"
+        aria-label="Show table of contents" aria-expanded="false" aria-controls="sidebar"
         style="display: none; position: fixed; top: 60px; left: -5px; z-index: 1000; background: #2774AE; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-        ☰ Menu
+        <span aria-hidden="true">☰</span> Menu
       </button>
 
       <!-- Sidebar Navigation -->
-      <div id="sidebar" style="width: 260px; max-width: 80vw; overflow-y: auto; margin: 0; padding: 0;">
+      <aside id="sidebar" aria-label="Table of contents" style="width: 260px; max-width: 80vw; overflow-y: auto; margin: 0; padding: 0;">
         {% include sebook_navbar_sidebar.html %}
-      </div>
+      </aside>
 
       <!-- Main Content -->
-      <div id="main-content" style="flex: 1; padding: 20px;">
+      <main id="main-content" tabindex="-1" style="flex: 1; padding: 20px;">
         <style>
           .intro-header {
             margin-top: -70px;
@@ -264,7 +266,7 @@
         </div>
         {% endunless %}
         {% endif %}
-      </div>
+      </main>
     </div>
   </article>
 
@@ -275,10 +277,18 @@
 
       if (!sidebar || !toggleBtn) return;
 
+      function syncToggleState() {
+        var open = sidebar.classList.contains('open');
+        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggleBtn.setAttribute('aria-label', open ? 'Hide table of contents' : 'Show table of contents');
+      }
+      syncToggleState();
+
       // Toggle sidebar on button click (mobile only)
       toggleBtn.addEventListener('click', function (e) {
         e.stopPropagation();
         sidebar.classList.toggle('open');
+        syncToggleState();
       });
 
       // Close sidebar when clicking outside of it on mobile
@@ -288,6 +298,7 @@
         if (!sidebar.classList.contains('open')) return;
         if (sidebar.contains(e.target) || e.target === toggleBtn) return;
         sidebar.classList.remove('open');
+        syncToggleState();
       });
 
       // Close sidebar when a link inside it is clicked (for better UX on mobile)
@@ -295,6 +306,16 @@
         var target = e.target;
         if (target.tagName === 'A' || target.closest('a')) {
           sidebar.classList.remove('open');
+          syncToggleState();
+        }
+      });
+
+      // Esc closes the mobile sidebar (SC 1.4.13 Dismissible)
+      document.addEventListener('keydown', function (e) {
+        if ((e.key === 'Escape' || e.keyCode === 27) && sidebar.classList.contains('open')) {
+          sidebar.classList.remove('open');
+          syncToggleState();
+          toggleBtn.focus();
         }
       });
     })();

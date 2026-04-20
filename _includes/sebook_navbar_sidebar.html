@@ -1,14 +1,18 @@
-<nav class="sebook-sidebar-nav">
+<nav class="sebook-sidebar-nav" aria-label="SE Book table of contents">
   <ul class="sebook-nav-list">
     {% for topic in site.data.sebook_nav.topics %}
     <li class="sebook-nav-item {% if topic.subtopics %}has-subtopics{% endif %}">
       <a href="{{ topic.url }}" class="sebook-nav-link">
         {% if topic.icon %}
-        <span class="sebook-nav-icon">{{ topic.icon }}</span>
+        <span class="sebook-nav-icon" aria-hidden="true">{{ topic.icon }}</span>
         {% endif %}
         <span class="sebook-nav-text">{{ topic.name }}</span>
         {% if topic.subtopics %}
-        <span class="sebook-nav-toggle">›</span>
+        <span role="button" tabindex="0" class="sebook-nav-toggle"
+          aria-expanded="false"
+          aria-label="Toggle {{ topic.name }} subtopics">
+          <span aria-hidden="true">›</span>
+        </span>
         {% endif %}
       </a>
 
@@ -19,7 +23,11 @@
           <a href="{{ subtopic.url }}" class="sebook-nav-sublink">
             <span class="sebook-nav-text">{{ subtopic.name }}</span>
             {% if subtopic.items %}
-            <span class="sebook-nav-toggle">›</span>
+            <span role="button" tabindex="0" class="sebook-nav-toggle"
+              aria-expanded="false"
+              aria-label="Toggle {{ subtopic.name }} subtopics">
+              <span aria-hidden="true">›</span>
+            </span>
             {% endif %}
           </a>
 
@@ -94,6 +102,28 @@
   .sebook-nav-toggle {
     margin-left: 10px;
     transition: transform 0.2s;
+    background: transparent;
+    border: 0;
+    padding: 6px 8px;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .sebook-nav-toggle:focus-visible {
+    outline: 2px solid #2774AE;
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  .sebook-nav-item.has-subtopics .sebook-nav-toggle[aria-expanded="true"] {
+    transform: rotate(90deg);
   }
 
   .sebook-nav-item.has-subtopics .sebook-nav-toggle.open {
@@ -137,7 +167,8 @@
     background-color: #d8d8d8;
   }
 
-  .sebook-nav-subitem.has-subitems .sebook-nav-toggle.open {
+  .sebook-nav-subitem.has-subitems .sebook-nav-toggle.open,
+  .sebook-nav-subitem.has-subitems .sebook-nav-toggle[aria-expanded="true"] {
     transform: rotate(90deg);
   }
 
@@ -206,6 +237,7 @@
       const toggle = item.querySelector('.sebook-nav-toggle');
       if (toggle) {
         toggle.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
       }
     });
 
@@ -214,6 +246,7 @@
       const toggle = item.querySelector('.sebook-nav-toggle');
       if (toggle) {
         toggle.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
       }
     });
 
@@ -258,6 +291,7 @@
         const toggle = currentTopicItem.querySelector('.sebook-nav-toggle');
         if (toggle) {
           toggle.classList.add('open');
+          toggle.setAttribute('aria-expanded', 'true');
         }
       }
     }
@@ -269,34 +303,48 @@
         const toggle = currentSubtopicItem.querySelector('.sebook-nav-toggle');
         if (toggle) {
           toggle.classList.add('open');
+          toggle.setAttribute('aria-expanded', 'true');
         }
       }
     }
 
-    // Toggle handlers: Top level items
-    document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(function (link) {
-      const toggle = link.querySelector('.sebook-nav-toggle');
-      if (toggle) {
-        toggle.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const parent = link.parentElement;
-          parent.classList.toggle('open');
-          this.classList.toggle('open');
-        });
-      }
-    });
+    function toggleSection(toggle, parent) {
+      const isOpen = parent.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
 
-    // Toggle handlers: Subtopic items
-    document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(function (link) {
+    function wireToggle(link) {
       const toggle = link.querySelector('.sebook-nav-toggle');
+      if (!toggle) return;
+      const fire = function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        toggleSection(toggle, link.parentElement);
+      };
+      toggle.addEventListener('click', fire);
+      // role="button" span doesn't get native Enter/Space — wire it up.
+      toggle.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          fire(e);
+        }
+      });
+    }
+
+    document.querySelectorAll('.sebook-nav-item.has-subtopics > .sebook-nav-link').forEach(wireToggle);
+    document.querySelectorAll('.sebook-nav-subitem.has-subitems > .sebook-nav-sublink').forEach(wireToggle);
+
+    // Esc closes the nearest open expanded section (SC 1.4.13 dismissible).
+    document.querySelector('.sebook-sidebar-nav').addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      const focused = document.activeElement;
+      if (!focused) return;
+      const openAncestor = focused.closest('.sebook-nav-item.open, .sebook-nav-subitem.open');
+      if (!openAncestor) return;
+      const toggle = openAncestor.querySelector(':scope > .sebook-nav-link > .sebook-nav-toggle, :scope > .sebook-nav-sublink > .sebook-nav-toggle');
       if (toggle) {
-        toggle.addEventListener('click', function (e) {
-          e.stopPropagation();
-          e.preventDefault();
-          const parent = link.parentElement;
-          parent.classList.toggle('open');
-          this.classList.toggle('open');
-        });
+        toggleSection(toggle, openAncestor);
+        toggle.focus();
       }
     });
   });

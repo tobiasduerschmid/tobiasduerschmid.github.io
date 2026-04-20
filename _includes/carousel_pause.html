@@ -1,0 +1,41 @@
+{% comment %}
+  Accessible pause/play button for Bootstrap 3 data-ride="carousel" widgets.
+  Gives users with vestibular sensitivity (SC 2.2.2) a way to stop auto-cycling
+  without disabling it for everyone else.
+
+  Usage: {% include carousel_pause.html target="#my-carousel-id" %}
+{% endcomment %}
+<button type="button"
+  class="carousel-pause-btn"
+  data-carousel-pause-target="{{ include.target }}"
+  aria-pressed="false"
+  aria-label="Pause carousel auto-advance"
+  style="position:absolute; bottom:8px; right:8px; z-index:20;
+         background: rgba(0,0,0,0.55); color:#fff; border:0;
+         min-width:44px; min-height:44px; padding:8px 10px;
+         border-radius:4px; font-size:0.85em; cursor:pointer;">
+  <span aria-hidden="true" class="carousel-pause-btn__icon">⏸</span>
+  <span class="sr-only carousel-pause-btn__label">Pause</span>
+</button>
+<script>
+  (function () {
+    var btn = document.currentScript && document.currentScript.previousElementSibling;
+    if (!btn || !btn.classList || !btn.classList.contains('carousel-pause-btn')) return;
+    var targetSelector = btn.getAttribute('data-carousel-pause-target');
+    var carousel = document.querySelector(targetSelector);
+    if (!carousel) return;
+    var paused = false;
+    btn.addEventListener('click', function () {
+      paused = !paused;
+      if (window.jQuery) {
+        window.jQuery(carousel).carousel(paused ? 'pause' : 'cycle');
+      }
+      btn.setAttribute('aria-pressed', paused ? 'true' : 'false');
+      btn.setAttribute('aria-label', paused ? 'Resume carousel auto-advance' : 'Pause carousel auto-advance');
+      var icon = btn.querySelector('.carousel-pause-btn__icon');
+      var label = btn.querySelector('.carousel-pause-btn__label');
+      if (icon) icon.textContent = paused ? '▶' : '⏸';
+      if (label) label.textContent = paused ? 'Play' : 'Pause';
+    });
+  })();
+</script>

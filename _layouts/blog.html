@@ -8,20 +8,21 @@
 
   <article class="post-content">
 
-    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+    <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Main navigation">
       <div class="container-fluid">
         <div class="navbar-header page-scroll">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse"
+            aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-nav-collapse">
             <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="icon-bar" aria-hidden="true"></span>
+            <span class="icon-bar" aria-hidden="true"></span>
+            <span class="icon-bar" aria-hidden="true"></span>
           </button>
-          <a class="navbar-brand page-scroll" href="/blog/">Blog</a><a class="navbar-brand page-scroll">|</a><a
+          <a class="navbar-brand page-scroll" href="/blog/">Blog</a><a class="navbar-brand page-scroll" aria-hidden="true">|</a><a
             class="navbar-brand page-scroll" href="/">{{ site.author }}</a>
         </div>
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <div class="collapse navbar-collapse navbar-ex1-collapse" id="primary-nav-collapse">
           <ul class="nav navbar-nav navbar-right">
             <!-- Extract h2 headings from content -->
             {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
@@ -44,7 +45,7 @@
     <div id="blog-content-wrapper" style="display: flex; min-height: calc(100vh - 200px);">
 
       <!-- Main Content -->
-      <div id="main-content" style="flex: 1; padding: 00px">
+      <main id="main-content" tabindex="-1" style="flex: 1; padding: 00px">
         <div class="container">
           <div class="row">
             {% assign sections = content | split: '<h2' %} {% for section in sections %} {% if section contains '</h2>'
@@ -64,7 +65,7 @@
 
           </div>
         </div>
-      </div>
+      </main>
     </div>
   </article>
 

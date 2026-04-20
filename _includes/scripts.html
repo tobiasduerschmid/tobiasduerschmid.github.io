@@ -33,7 +33,27 @@
 <script src="{{ " /js/unslider-min.js" | prepend: site.baseurl }}"></script>
 <script>
   $(document).ready(function () {
-    $('[data-toggle="tooltip"]').tooltip();
+    // Tooltips: trigger on hover AND keyboard focus so keyboard users can
+    // reach them (SC 2.1.1). Esc dismisses without losing focus (SC 1.4.13).
+    $('[data-toggle="tooltip"]').tooltip({ trigger: 'hover focus' });
+    $(document).on('keydown.a11yTooltip', function (e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        $('[data-toggle="tooltip"]').tooltip('hide');
+      }
+    });
+
+    // Keep the navbar hamburger's aria-expanded in sync with the Bootstrap 3
+    // collapse state (SC 4.1.2). The toggle button points at the collapse
+    // via data-target, so its state should track shown/hidden transitions.
+    $('.navbar-collapse').on('show.bs.collapse hidden.bs.collapse', function (e) {
+      var expanded = e.type === 'show';
+      $('.navbar-toggle[data-target]').each(function () {
+        var tgt = $(this).attr('data-target');
+        if (tgt && $(e.target).is(tgt)) {
+          $(this).attr('aria-expanded', expanded ? 'true' : 'false');
+        }
+      });
+    });
   });
 </script>
 
@@ -258,10 +278,33 @@
       errorClass: 'error form-control-static text-danger',
       errorElement: 'div',
 
-      highlight: function (label) { $(label).closest('.form-group').addClass('has-error'); },
+      // Ensure every error message has a stable id, is linked to its input
+      // via aria-describedby, is wrapped in a polite live region, and that
+      // the input is flagged aria-invalid="true" (SC 3.3.1, 4.1.3).
+      errorPlacement: function (error, element) {
+        var inputId = element.attr('id') || element.attr('name');
+        var errId = 'err-' + inputId;
+        error.attr('id', errId);
+        error.attr('role', 'alert');
+        error.attr('aria-live', 'polite');
+        element.attr('aria-describedby', errId);
+        element.attr('aria-invalid', 'true');
+        error.insertAfter(element);
+      },
 
-      success: function (label) {
+      highlight: function (label) {
+        $(label).closest('.form-group').addClass('has-error');
+        $(label).attr('aria-invalid', 'true');
+      },
+
+      unhighlight: function (label) {
+        $(label).removeAttr('aria-invalid');
+      },
+
+      success: function (label, element) {
         $(label).closest('.form-group').removeClass('has-error');
+        $(element).removeAttr('aria-describedby');
+        $(element).removeAttr('aria-invalid');
         $(label).remove();
       },
 

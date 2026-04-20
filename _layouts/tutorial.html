@@ -5,9 +5,10 @@
 <meta name="pdf-url" content="{{ page.url | replace: '.html', '' }}/print">
 
 <body id="page-top">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <!-- Navbar — same style as SEBook but simplified -->
-  <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav">
+  <nav class="navbar top-nav-collapse navbar-inverse navbar-fixed-top" id="navnav" aria-label="Tutorial navigation">
     <div class="container-fluid">
       <div class="navbar-header page-scroll" style="display: flex; align-items: center; height: 45px;">
         <a id="seBookBtn" class="navbar-brand" href="/SEBook" style="display: flex; align-items: center; height: 100%; padding-top: 0; padding-bottom: 0; padding-left: 15px; font-size: 20px; font-weight: 400; text-decoration: none;">
@@ -138,30 +139,32 @@
   </script>
 
   <!-- Tutorial container — full viewport below navbar -->
-  <div class="tutorial-page">
+  <main id="main-content" class="tutorial-page" tabindex="-1" aria-label="Interactive tutorial">
     <div id="tutorial-container"></div>
-  </div>
+  </main>
 
   <!-- Auto-save disable confirmation modal -->
-  <div id="autosaveConfirmModal" style="display:none; position:fixed; inset:0; z-index:2000;
+  <div id="autosaveConfirmModal" role="dialog" aria-modal="true"
+       aria-labelledby="autosaveConfirmTitle" aria-describedby="autosaveConfirmDesc"
+       style="display:none; position:fixed; inset:0; z-index:2000;
        background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
     <div style="background:#fff; color:#222; border-radius:10px; padding:28px 32px;
                 max-width:420px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,0.28);">
-      <p style="margin:0 0 8px; font-size:15px; font-weight:700;">Delete saved progress?</p>
-      <p style="margin:0 0 8px; font-size:14px; line-height:1.5; color:#444;">
+      <p id="autosaveConfirmTitle" style="margin:0 0 8px; font-size:15px; font-weight:700;">Delete saved progress?</p>
+      <p id="autosaveConfirmDesc" style="margin:0 0 8px; font-size:14px; line-height:1.5; color:#444;">
         Do you want to delete all saved progress for this tutorial and reset the current step files?
       </p>
       <p style="margin:0 0 24px; font-size:13px; line-height:1.5; color:#888;">
         Selecting <strong>No</strong> will just turn off auto-save — your progress is kept but won't be updated.
       </p>
       <div style="display:flex; justify-content:flex-end; gap:10px;">
-        <button id="autosaveConfirmNo"
-                style="padding:7px 20px; border-radius:6px; border:1px solid #ccc;
+        <button id="autosaveConfirmNo" type="button"
+                style="padding:7px 20px; min-height:36px; border-radius:6px; border:1px solid #ccc;
                        background:#f5f5f5; font-size:14px; font-weight:600; cursor:pointer;">
           No
         </button>
-        <button id="autosaveConfirmYes"
-                style="padding:7px 20px; border-radius:6px; border:none;
+        <button id="autosaveConfirmYes" type="button"
+                style="padding:7px 20px; min-height:36px; border-radius:6px; border:none;
                        background:#c0392b; color:#fff; font-size:14px; font-weight:600; cursor:pointer;">
           Yes
         </button>

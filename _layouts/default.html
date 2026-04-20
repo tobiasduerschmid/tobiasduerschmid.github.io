@@ -10,7 +10,7 @@
 
 	{% include header.html %}
 
-	<div id="main-content">
+	<main id="main-content" tabindex="-1">
 
 
 		{% if site.data.carousel.show %}
@@ -52,7 +52,7 @@
 		{% if site.data.contact.show %}
 		{% include contact.html %}
 		{% endif %}
-	</div>
+	</main>
 
 	{% include footer.html %}
 

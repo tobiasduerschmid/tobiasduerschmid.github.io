@@ -1,49 +1,51 @@
 
-<div class="cap">
+<div class="cap" role="region" aria-label="Audio player">
     <audio class="cap__audio" preload="metadata">
         <source src="{{ include.src }}" type="audio/mpeg">
     </audio>
 
     <!-- Top Row: Timeline -->
     <div class="cap__top-row">
-        <span class="cap__time cap__time--cur">0:00</span>
+        <span class="cap__time cap__time--cur" aria-label="Current time">0:00</span>
         <div class="cap__progress-wrap">
-            <input class="cap__progress" type="range" min="0" max="100" step="0.1" value="0">
+            <input class="cap__progress" type="range" min="0" max="100" step="0.1" value="0"
+                aria-label="Seek audio position">
         </div>
-        <span class="cap__time cap__time--dur">--:--</span>
+        <span class="cap__time cap__time--dur" aria-label="Total duration">--:--</span>
     </div>
 
     <!-- Bottom Row: Controls, Speeds, Volume -->
     <div class="cap__bottom-row">
-        <div class="cap__transport">
-            <button class="cap__skip-btn" data-skip="-15" title="Back 15s">
-                <i class="fa-solid fa-rotate-left"></i><span>15</span>
+        <div class="cap__transport" role="group" aria-label="Playback controls">
+            <button type="button" class="cap__skip-btn" data-skip="-15" title="Back 15s" aria-label="Skip back 15 seconds">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">15</span>
             </button>
-            <button class="cap__ctrl-btn cap__ctrl-btn--prev" title="Restart">
-                <i class="fa-solid fa-backward-step"></i>
+            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--prev" title="Restart" aria-label="Restart from beginning">
+                <i class="fa-solid fa-backward-step" aria-hidden="true"></i>
             </button>
-            <button class="cap__play-btn" title="Play / Pause">
-                <i class="fa-solid fa-play"></i>
+            <button type="button" class="cap__play-btn" title="Play / Pause" aria-label="Play" aria-pressed="false">
+                <i class="fa-solid fa-play" aria-hidden="true"></i>
             </button>
-            <button class="cap__ctrl-btn cap__ctrl-btn--next" title="Skip to end">
-                <i class="fa-solid fa-forward-step"></i>
+            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--next" title="Skip to end" aria-label="Skip to end">
+                <i class="fa-solid fa-forward-step" aria-hidden="true"></i>
             </button>
-            <button class="cap__skip-btn" data-skip="15" title="Forward 15s">
-                <i class="fa-solid fa-rotate-right"></i><span>15</span>
+            <button type="button" class="cap__skip-btn" data-skip="15" title="Forward 15s" aria-label="Skip forward 15 seconds">
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span aria-hidden="true">15</span>
             </button>
         </div>
 
-        <div class="cap__speeds">
-            <button class="cap__speed-btn" data-speed="0.5">0.5x</button>
-            <button class="cap__speed-btn" data-speed="0.75">0.75x</button>
-            <button class="cap__speed-btn is-active" data-speed="1">1x</button>
-            <button class="cap__speed-btn" data-speed="1.5">1.5x</button>
-            <button class="cap__speed-btn" data-speed="2">2x</button>
+        <div class="cap__speeds" role="group" aria-label="Playback speed">
+            <button type="button" class="cap__speed-btn" data-speed="0.5" aria-label="0.5x playback speed" aria-pressed="false">0.5x</button>
+            <button type="button" class="cap__speed-btn" data-speed="0.75" aria-label="0.75x playback speed" aria-pressed="false">0.75x</button>
+            <button type="button" class="cap__speed-btn is-active" data-speed="1" aria-label="Normal playback speed" aria-pressed="true">1x</button>
+            <button type="button" class="cap__speed-btn" data-speed="1.5" aria-label="1.5x playback speed" aria-pressed="false">1.5x</button>
+            <button type="button" class="cap__speed-btn" data-speed="2" aria-label="2x playback speed" aria-pressed="false">2x</button>
         </div>
 
         <div class="cap__volume">
-            <i class="fa-solid fa-volume-low cap__vol-icon" title="Mute"></i>
-            <input class="cap__volume-slider" type="range" min="0" max="1" step="0.05" value="1">
+            <i class="fa-solid fa-volume-low cap__vol-icon" title="Mute" aria-hidden="true"></i>
+            <input class="cap__volume-slider" type="range" min="0" max="1" step="0.05" value="1"
+                aria-label="Volume">
         </div>
     </div>
 </div>

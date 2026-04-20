@@ -33,29 +33,60 @@
        lab scripts that check `window.__prefersReducedMotion` on init see
        the final value, and so the `html.prm-reduce` class is applied in
        the same paint as first render (no flash of motion).
-       Three triggers are OR'd together:
-         1. `window.matchMedia('(prefers-reduced-motion: reduce)').matches`
-            — the OS-level accessibility preference (canonical signal).
-         2. `?reduce-motion=1` in the URL — ad-hoc override, current page
-            load only. `?reduce-motion=0` forces motion on.
-         3. Firefox gotcha: some user-level prefs don't flip matchMedia,
-            so the URL override is the user-facing escape hatch.
-       Clears any `localStorage.prefersReducedMotion` legacy entries from
-       an earlier persistent-override version of this script. -->
+
+       Three signals, in precedence order:
+         1. `?reduce-motion=1|0` URL param   (highest — explicit user intent).
+            `=1` turns on and stores in localStorage; `=0` turns off and
+            clears the store.
+         2. `localStorage.prefersReducedMotion === '1'`  (persistent
+            override — survives tab close and browser restart until the
+            user explicitly visits with `?reduce-motion=0` or clears site
+            data).
+         3. `window.matchMedia('(prefers-reduced-motion: reduce)').matches`
+            — the OS-level accessibility pref, the canonical signal.
+
+       Uses localStorage so the preference sticks across tabs and
+       restarts. To turn it off, append `?reduce-motion=0` once — that
+       removes the localStorage entry, and subsequent visits fall back
+       to the OS preference. -->
   <script>
     (function () {
-      try { localStorage.removeItem('prefersReducedMotion'); } catch (e) {}
-      var forced = null;  // null = not forced, true = on, false = off
+      // One-time migration: if an earlier sessionStorage-based version of
+      // this script left a value there, promote it to localStorage so we
+      // don't accidentally forget the user's choice when they close the
+      // tab. (Harmless if the key doesn't exist.)
+      try {
+        if (sessionStorage.getItem('prefersReducedMotion') === '1'
+            && localStorage.getItem('prefersReducedMotion') !== '1') {
+          localStorage.setItem('prefersReducedMotion', '1');
+        }
+        sessionStorage.removeItem('prefersReducedMotion');
+      } catch (e) {}
+
+      var STORE_KEY = 'prefersReducedMotion';
+      function readStore() {
+        try { return localStorage.getItem(STORE_KEY) === '1'; } catch (e) { return false; }
+      }
+      function writeStore(on) {
+        try {
+          if (on) localStorage.setItem(STORE_KEY, '1');
+          else localStorage.removeItem(STORE_KEY);
+        } catch (e) {}
+      }
+      var forced = null;  // null = no URL param, true/false = explicit
       try {
         var p = new URLSearchParams(window.location.search).get('reduce-motion');
         if (p != null) {
           forced = !(p === '0' || p.toLowerCase() === 'false');
+          writeStore(forced);   // persist the explicit choice
         }
       } catch (e) {}
+      var stored = readStore();
       var mq = (window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null);
       function active() {
-        if (forced !== null) return forced;
-        return !!(mq && mq.matches);
+        if (forced !== null) return forced;   // current-page URL wins
+        if (stored) return true;              // persistent override
+        return !!(mq && mq.matches);          // OS preference
       }
       function sync() {
         if (document.documentElement) {
@@ -68,8 +99,8 @@
         else if (mq.addListener) mq.addListener(sync);
       }
       // Single, site-wide helper — lab scripts call this instead of
-      // window.matchMedia directly so the URL override and OS pref are
-      // honoured uniformly.
+      // window.matchMedia directly so the URL override, stored override
+      // and OS pref are honoured uniformly.
       window.__prefersReducedMotion = active;
     })();
   </script>

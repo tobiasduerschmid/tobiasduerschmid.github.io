@@ -30,11 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
             audio.playbackRate = speed;
             // Update active state on buttons
             speedBtns.forEach(btn => {
-                if (parseFloat(btn.dataset.speed) === speed) {
-                    btn.classList.add('is-active');
-                } else {
-                    btn.classList.remove('is-active');
-                }
+                const match = parseFloat(btn.dataset.speed) === speed;
+                btn.classList.toggle('is-active', match);
+                btn.setAttribute('aria-pressed', match ? 'true' : 'false');
             });
         }
 
@@ -82,22 +80,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        audio.addEventListener('ended', () => {
-            playBtn.classList.remove('is-playing');
-            playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        });
+        function setPlayBtnState(playing) {
+            playBtn.classList.toggle('is-playing', playing);
+            playBtn.innerHTML = playing
+                ? '<i class="fa-solid fa-pause" aria-hidden="true"></i>'
+                : '<i class="fa-solid fa-play" aria-hidden="true"></i>';
+            playBtn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+            playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+        }
+
+        audio.addEventListener('ended', () => { setPlayBtnState(false); });
+        audio.addEventListener('play',  () => { setPlayBtnState(true);  });
+        audio.addEventListener('pause', () => { setPlayBtnState(false); });
 
         // ── Play / Pause ─────────────────────────────────────────
         playBtn.addEventListener('click', () => {
-            if (audio.paused) {
-                audio.play();
-                playBtn.classList.add('is-playing');
-                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-            } else {
-                audio.pause();
-                playBtn.classList.remove('is-playing');
-                playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-            }
+            if (audio.paused) audio.play();
+            else              audio.pause();
         });
 
         // ── Seek ─────────────────────────────────────────────────
@@ -125,8 +124,12 @@ document.addEventListener('DOMContentLoaded', () => {
         speedBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const speed = parseFloat(btn.dataset.speed);
-                speedBtns.forEach(b => b.classList.remove('is-active'));
+                speedBtns.forEach(b => {
+                    b.classList.remove('is-active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
                 btn.classList.add('is-active');
+                btn.setAttribute('aria-pressed', 'true');
                 audio.playbackRate = speed;
                 localStorage.setItem(STORAGE_KEY_SPEED, speed);
             });

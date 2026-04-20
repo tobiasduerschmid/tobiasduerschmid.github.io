@@ -20,22 +20,26 @@ Data source: _data/quizzes/{{ include.id }}.yml
 {% endif %}
 
 <div class="quiz-container" id="quiz-{{ include.id }}" data-quiz-id="{{ include.id }}"
-  data-shuffle="{{ quiz_data.shuffle | default: true }}">
+  data-shuffle="{{ quiz_data.shuffle | default: true }}"
+  role="region" aria-labelledby="quiz-{{ include.id }}-title">
   <div class="quiz-header">
     <div class="quiz-title-row">
-      <h3>{{ quiz_data.title }}</h3>
+      <h3 id="quiz-{{ include.id }}-title">{{ quiz_data.title }}</h3>
       {% if site.personal_gym %}
-      <button class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}" title="Add to Personal Gym"
-        style="display: none;">
-        <i class="fa-solid fa-plus"></i>
+      <button type="button" class="se-gym-toggle" data-gym-type="quiz" data-gym-id="{{ include.id }}"
+        aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" style="display: none;">
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
       </button>
       {% endif %}
     </div>
     <p>{{ quiz_data.description }}</p>
-    <div class="quiz-progress-bar">
+    <div class="quiz-progress-bar" role="progressbar"
+      aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="progress-fill" style="width: 0%"></div>
     </div>
   </div>
+  <!-- Polite live region for progress + result announcements to screen readers -->
+  <div class="quiz-announce sr-only" aria-live="polite" aria-atomic="true"></div>
 
   <div class="quiz-questions">
     {% for q in all_questions %}
@@ -45,13 +49,17 @@ Data source: _data/quizzes/{{ include.id }}.yml
       <div class="question-text">{{ q.question | markdownify }}</div>
       {% if q.type == 'parsons' %}
       <div class="parsons-container{% if q.display == 'inline' %} parsons-inline{% endif %}">
-        <div class="parsons-label">{% if q.display == 'inline' %}Drag fragments into the answer area in the correct order{% else %}Drag lines into the solution area in the correct order{% endif %}{% if q.distractors.size > 0 %} (some items are distractors that should not be used){% endif %}:</div>
-        <div class="parsons-bank"></div>
-        <div class="parsons-separator"><span>{% if q.display == 'inline' %}&rarr; Drop here &rarr;{% else %}&darr; Drop here &darr;{% endif %}</span></div>
-        <div class="parsons-target"></div>
+        <div class="parsons-label" id="parsons-label-{{ include.id }}-{{ forloop.index0 }}">{% if q.display == 'inline' %}Drag fragments into the answer area in the correct order{% else %}Drag lines into the solution area in the correct order{% endif %}{% if q.distractors.size > 0 %} (some items are distractors that should not be used){% endif %}. Keyboard: focus a line and press Space or Enter to move it between the bank and the answer area. Use Arrow Up or Arrow Down to reorder within the answer area.</div>
+        <div class="parsons-bank" role="list"
+          aria-labelledby="parsons-label-{{ include.id }}-{{ forloop.index0 }}"
+          aria-label="Available lines (bank)"></div>
+        <div class="parsons-separator" aria-hidden="true"><span>{% if q.display == 'inline' %}&rarr; Drop here &rarr;{% else %}&darr; Drop here &darr;{% endif %}</span></div>
+        <div class="parsons-target" role="list"
+          aria-labelledby="parsons-label-{{ include.id }}-{{ forloop.index0 }}"
+          aria-label="Answer area (correct order here)"></div>
         <div class="parsons-actions">
-          <button class="parsons-check-btn">Check Order</button>
-          <button class="parsons-reset-btn">Reset</button>
+          <button type="button" class="parsons-check-btn">Check Order</button>
+          <button type="button" class="parsons-reset-btn">Reset</button>
         </div>
       </div>
       <div class="parsons-correct-data hidden"
@@ -69,30 +77,39 @@ Data source: _data/quizzes/{{ include.id }}.yml
         </span>
       </div>
       {% else %}
-      <div class="quiz-options">
+      {% if q.type == 'multiple' %}
+        {% assign optGroupRole = 'group' %}
+        {% assign optRole = 'checkbox' %}
+      {% else %}
+        {% assign optGroupRole = 'radiogroup' %}
+        {% assign optRole = 'radio' %}
+      {% endif %}
+      <div class="quiz-options" role="{{ optGroupRole }}"
+        aria-label="Answer options">
         {% assign alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
         {% for option in q.options %}
-        <button class="quiz-option" data-index="{{ forloop.index0 }}" data-correct="{{ q.correct_index }}"
+        <button type="button" class="quiz-option" role="{{ optRole }}" aria-checked="false"
+          data-index="{{ forloop.index0 }}" data-correct="{{ q.correct_index }}"
           data-correct-indices="{{ q.correct_indices | join: ',' }}"
           data-optional-indices="{{ q.optional_indices | join: ',' }}">
-          <span class="option-checkbox"></span>
-          <span class="option-label">{{ alphabet | slice: forloop.index0 }}</span>
+          <span class="option-checkbox" aria-hidden="true"></span>
+          <span class="option-label" aria-hidden="true">{{ alphabet | slice: forloop.index0 }}</span>
           <span class="option-content">{{ option | markdownify }}</span>
         </button>
         {% endfor %}
       </div>
       {% if q.type == 'multiple' %}
-      <button class="submit-answer-btn">Submit Answer</button>
+      <button type="button" class="submit-answer-btn">Submit Answer</button>
       {% endif %}
       <div class="quiz-correct-answers">
         Correct Answer{% if q.type == 'multiple' %}s{% endif %}:
         <span class="correct-labels"></span>
       </div>
       {% endif %}
-      <div class="quiz-explanation hidden">
+      <div class="quiz-explanation hidden" aria-live="polite">
         <div class="explanation-title">Explanation</div>
         <div class="explanation-text">{{ q.explanation | markdownify }}</div>
-        <button class="next-btn">Next Question</button>
+        <button type="button" class="next-btn">Next Question</button>
       </div>
     </div>
     {% endfor %}
@@ -189,8 +206,9 @@ Data source: _data/quizzes/{{ include.id }}.yml
   .quiz-option {
     display: flex;
     align-items: center;
-    padding: 6px 12px;
-    border: 1.5px solid #e1e4e8;
+    padding: 8px 12px;
+    min-height: 32px;
+    border: 1.5px solid #9aa1a8;
     border-radius: 6px;
     background: white;
     text-align: left;
@@ -198,6 +216,40 @@ Data source: _data/quizzes/{{ include.id }}.yml
     cursor: pointer;
     font-size: 0.95em;
     line-height: 1.25;
+  }
+
+  .quiz-option:focus-visible,
+  .submit-answer-btn:focus-visible,
+  .next-btn:focus-visible,
+  .restart-btn:focus-visible,
+  .review-btn:focus-visible,
+  .parsons-check-btn:focus-visible,
+  .parsons-reset-btn:focus-visible,
+  .parsons-line:focus-visible,
+  .se-gym-toggle:focus-visible {
+    outline: 3px solid #2774AE;
+    outline-offset: 2px;
+  }
+
+  html.dark-mode .quiz-option:focus-visible,
+  html.dark-mode .submit-answer-btn:focus-visible,
+  html.dark-mode .next-btn:focus-visible,
+  html.dark-mode .restart-btn:focus-visible,
+  html.dark-mode .review-btn:focus-visible,
+  html.dark-mode .parsons-check-btn:focus-visible,
+  html.dark-mode .parsons-reset-btn:focus-visible,
+  html.dark-mode .parsons-line:focus-visible,
+  html.dark-mode .se-gym-toggle:focus-visible {
+    outline-color: #FFD100;
+  }
+
+  /* Screen-reader-only utility, scoped to quiz */
+  .quiz-container .sr-only {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
   }
 
   .quiz-option:hover:not([disabled]):not(.selected) {
@@ -348,7 +400,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
     margin-left: 8px;
     font-size: 0.9em;
     font-weight: 700;
-    color: #666;
+    color: #555;
   }
 
   .score-display {
@@ -408,13 +460,13 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
   /* ── Parsons Problem Styles ─────────────────────────────────────────── */
   .parsons-container { margin-top: 12px; }
-  .parsons-label { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+  .parsons-label { font-size: 0.85em; color: #555; margin-bottom: 8px; }
   .parsons-bank, .parsons-target {
     min-height: 48px; padding: 8px; border-radius: 6px;
     display: flex; flex-direction: column; gap: 4px;
   }
-  .parsons-bank { background: #f5f5f8; border: 1px dashed #ccc; }
-  .parsons-target { background: #f0f8f0; border: 2px dashed #6a6; }
+  .parsons-bank { background: #f5f5f8; border: 1.5px dashed #6b7078; }
+  .parsons-target { background: #f0f8f0; border: 2px dashed #2f7a2f; }
   .parsons-separator { text-align: center; padding: 6px; color: #888; font-size: 0.8em; }
   .parsons-line {
     display: inline-flex; align-items: center; gap: 8px;
@@ -476,11 +528,20 @@ Data source: _data/quizzes/{{ include.id }}.yml
     if (!container) return;
 
     const progressBar = container.querySelector('.progress-fill');
+    const progressBarWrap = container.querySelector('.quiz-progress-bar');
     const resultsArea = container.querySelector('.quiz-results');
     const scoreDisplay = container.querySelector('.current-score');
     const reviewBtn = container.querySelector('.review-btn');
     const restartBtn = container.querySelector('.restart-btn');
     const questionsContainer = container.querySelector('.quiz-questions');
+    const announceRegion = container.querySelector('.quiz-announce');
+
+    function announce(msg) {
+      if (!announceRegion) return;
+      // Swap to empty then re-set so the same message re-announces.
+      announceRegion.textContent = '';
+      setTimeout(function () { announceRegion.textContent = msg; }, 30);
+    }
 
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -597,26 +658,23 @@ Data source: _data/quizzes/{{ include.id }}.yml
       } catch (e) { distractors = []; }
       const display = correctDataEl.dataset.display || 'block';
       // Build elements with correct-position metadata to avoid string comparison issues
-      const correctEls = correctLines.map((line, i) => {
+      function buildParsonsLine(line, correctPos, isDistractor) {
         const el = document.createElement('div');
         el.className = 'parsons-line';
         el.draggable = true;
         el.dataset.line = line;
-        el.dataset.correctPos = String(i);
-        el.dataset.distractor = 'false';
-        el.innerHTML = '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
+        el.dataset.correctPos = String(correctPos);
+        el.dataset.distractor = isDistractor ? 'true' : 'false';
+        // role + tabindex + aria-label so keyboard + screen-reader users can
+        // operate the Parsons puzzle (WCAG 2.2 SC 2.5.7 Dragging Movements).
+        el.setAttribute('role', 'listitem');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-label', 'Line: ' + line + '. In bank. Press Space or Enter to move.');
+        el.innerHTML = '<span class="parsons-grip" aria-hidden="true">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
         return el;
-      });
-      const distractorEls = distractors.map(line => {
-        const el = document.createElement('div');
-        el.className = 'parsons-line';
-        el.draggable = true;
-        el.dataset.line = line;
-        el.dataset.correctPos = '-1';
-        el.dataset.distractor = 'true';
-        el.innerHTML = '<span class="parsons-grip">&#8942;&#8942;</span><code>' + escapeHtml(line) + '</code>';
-        return el;
-      });
+      }
+      const correctEls = correctLines.map((line, i) => buildParsonsLine(line, i, false));
+      const distractorEls = distractors.map(line => buildParsonsLine(line, -1, true));
       const allEls = correctEls.concat(distractorEls);
       if (!noShuffle) shuffleArray(allEls);
       const bank = card.querySelector('.parsons-bank');
@@ -637,12 +695,19 @@ Data source: _data/quizzes/{{ include.id }}.yml
     function updateProgress() {
       const total = cards.length;
       let progressValue;
+      let stepNumber;
       if (isReviewMode) {
         progressValue = ((cards.length - reviewQueue.length + reviewStep) / total) * 100;
+        stepNumber = (cards.length - reviewQueue.length + reviewStep) + 1;
       } else {
         progressValue = (currentStep / total) * 100;
+        stepNumber = currentStep + 1;
       }
       progressBar.style.width = `${progressValue}%`;
+      if (progressBarWrap) {
+        progressBarWrap.setAttribute('aria-valuenow', Math.round(progressValue));
+        progressBarWrap.setAttribute('aria-valuetext', 'Question ' + Math.min(stepNumber, total) + ' of ' + total);
+      }
     }
 
     function showQuestion(index) {
@@ -669,10 +734,14 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       if (type === 'multiple') {
         option.classList.toggle('selected');
+        option.setAttribute('aria-checked', option.classList.contains('selected') ? 'true' : 'false');
         const submitBtn = card.querySelector('.submit-answer-btn');
         const anySelected = card.querySelectorAll('.quiz-option.selected').length > 0;
         submitBtn.disabled = !anySelected;
       } else {
+        // Single-choice: mark this option as the active radio before validating
+        card.querySelectorAll('.quiz-option').forEach(o => o.setAttribute('aria-checked', 'false'));
+        option.setAttribute('aria-checked', 'true');
         validateSingleChoice(option, card);
       }
     }
@@ -701,6 +770,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       explanation.classList.remove('hidden');
+      announce(isCorrect ? 'Correct.' : 'Incorrect. See the explanation for the correct answer.');
       if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -746,6 +816,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       }
 
       explanation.classList.remove('hidden');
+      announce(isAnswerCorrect ? 'Correct.' : 'Incorrect. See the explanation for the correct answers.');
       if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
       explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -765,6 +836,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
           showQuestion(reviewQueue[reviewStep]);
           resetCard(reviewQueue[reviewStep]);
           scrollToTop();
+          announce('Review question ' + (reviewStep + 1) + ' of ' + reviewQueue.length + '.');
         } else {
           finishQuiz();
         }
@@ -773,6 +845,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
         if (currentStep < cards.length) {
           showQuestion(currentStep);
           scrollToTop();
+          announce('Question ' + (currentStep + 1) + ' of ' + cards.length + '.');
         } else {
           finishQuiz();
         }
@@ -788,6 +861,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       options.forEach(opt => {
         opt.classList.remove('correct', 'incorrect', 'selected');
         opt.removeAttribute('disabled');
+        if (opt.hasAttribute('aria-checked')) opt.setAttribute('aria-checked', 'false');
       });
       explanation.classList.add('hidden');
       if (submitBtn) {
@@ -821,6 +895,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       resultsArea.classList.remove('hidden');
       scoreDisplay.textContent = score;
       progressBar.style.width = '100%';
+      if (progressBarWrap) progressBarWrap.setAttribute('aria-valuenow', 100);
       scrollToTop();
 
       const summary = resultsArea.querySelector('.score-summary');
@@ -829,6 +904,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
       } else {
         summary.textContent = "Keep practicing to improve your recall!";
       }
+      announce('Workout complete. Score ' + score + ' out of ' + cards.length + '.');
 
       if (incorrectIndices.length > 0) {
         reviewBtn.classList.remove('hidden');
@@ -911,7 +987,22 @@ Data source: _data/quizzes/{{ include.id }}.yml
         else zone.appendChild(parsonsDragEl);
       }
     });
-    // Click-to-move for mobile
+    function updateParsonsLineLabel(line) {
+      const parent = line.parentElement;
+      if (!parent) return;
+      const zone = parent.classList.contains('parsons-target') ? 'answer area' : 'bank';
+      const idx = Array.from(parent.children).indexOf(line) + 1;
+      const total = parent.children.length;
+      line.setAttribute('aria-label',
+        'Line: ' + line.dataset.line + '. In ' + zone + ', position ' + idx + ' of ' + total +
+        '. Press Space or Enter to move between bank and answer area. Arrow Up or Down to reorder.');
+    }
+
+    function refreshParsonsLabels(card) {
+      card.querySelectorAll('.parsons-line').forEach(updateParsonsLineLabel);
+    }
+
+    // Click-to-move (also serves touch users)
     container.addEventListener('click', e => {
       const line = e.target.closest('.parsons-line');
       if (!line) return;
@@ -921,10 +1012,56 @@ Data source: _data/quizzes/{{ include.id }}.yml
       if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
       if (parent.classList.contains('parsons-bank')) {
         const tgt = card.querySelector('.parsons-target');
-        if (tgt) tgt.appendChild(line);
+        if (tgt) {
+          tgt.appendChild(line);
+          announce('Moved to answer area.');
+        }
       } else if (parent.classList.contains('parsons-target')) {
         const bnk = card.querySelector('.parsons-bank');
-        if (bnk) bnk.appendChild(line);
+        if (bnk) {
+          bnk.appendChild(line);
+          announce('Moved back to bank.');
+        }
+      }
+      refreshParsonsLabels(card);
+      line.focus();
+    });
+
+    // Keyboard support for Parsons — satisfies SC 2.5.7 (Dragging Movements)
+    // by providing a full non-drag alternative. Space/Enter toggles between
+    // bank and answer area; Arrow Up/Down reorders within the answer area.
+    container.addEventListener('keydown', e => {
+      const line = e.target.closest('.parsons-line');
+      if (!line) return;
+      const card = line.closest('.quiz-question-card');
+      if (!card || card.querySelector('.quiz-explanation:not(.hidden)')) return;
+      const parent = line.parentElement;
+      if (!parent) return;
+      if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+        e.preventDefault();
+        if (parent.classList.contains('parsons-bank')) {
+          const tgt = card.querySelector('.parsons-target');
+          if (tgt) {
+            tgt.appendChild(line);
+            announce('Moved to answer area.');
+          }
+        } else {
+          const bnk = card.querySelector('.parsons-bank');
+          if (bnk) {
+            bnk.appendChild(line);
+            announce('Moved back to bank.');
+          }
+        }
+        refreshParsonsLabels(card);
+        line.focus();
+      } else if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && parent.classList.contains('parsons-target')) {
+        e.preventDefault();
+        const sibling = e.key === 'ArrowUp' ? line.previousElementSibling : line.nextElementSibling;
+        if (!sibling) return;
+        if (e.key === 'ArrowUp') parent.insertBefore(line, sibling);
+        else parent.insertBefore(line, sibling.nextElementSibling);
+        refreshParsonsLabels(card);
+        line.focus();
       }
     });
 
@@ -981,6 +1118,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
           PersonalGym.recordResult(perfKey, isCorrect);
         }
 
+        announce(isCorrect ? 'All lines in correct order.' : 'One or more lines are in the wrong position. See the explanation.');
+
         const ca = card.querySelector('.quiz-correct-answers');
         const exp = card.querySelector('.quiz-explanation');
         if (ca) ca.style.display = 'flex';
@@ -1003,6 +1142,8 @@ Data source: _data/quizzes/{{ include.id }}.yml
           el.classList.remove('parsons-correct', 'parsons-incorrect');
           bank.appendChild(el);
         });
+        refreshParsonsLabels(card);
+        announce('Parsons problem reset. All lines returned to the bank.');
       });
     });
 
