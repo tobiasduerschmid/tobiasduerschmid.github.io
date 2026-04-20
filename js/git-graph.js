@@ -841,74 +841,19 @@
     this._lockWorkbenchHeight();
   };
 
-  // Canvas-size animation: width/height/viewBox are tweened smoothly from
-  // the current state to the new target over the SAME duration + curve as
-  // every other moving part (nodes, labels, edges, workbench FLIP — all
-  // 720ms cubic-bezier(.7,0,.3,1)). Motion is thus one cohesive glide that
-  // starts on click and finishes in a single moment — no pre-click jump,
-  // no settle snap at the end.
+  // Canvas-size updates are intentionally NOT animated.
   //
-  // History: earlier versions pinned the canvas to `max(start, end)` for
-  // the transition window and then snapped to the real target at the end.
-  // That collapsed per-frame reflow into a single shift, but the snap
-  // produced a visible "big move" whenever EITHER dimension was shrinking
-  // (horizontal lane collapse on `git merge feature`, vertical row loss on
-  // `merge --no-ff` undo, ditto `git pull` / `pull --rebase` lane shuffles).
-  // The pin-and-snap trick also made GROWING renders jump at t=0 instead
-  // of gliding, which felt abrupt on the first step of multi-step labs.
+  // Why: nodes/labels move via CSS `transform` transitions and edges morph
+  // via CSS `d` transitions. Those are compositor/paint-driven animations,
+  // while canvas width/height/viewBox tweening is JS+rAF-driven geometry
+  // mutation. Running both at once makes some browsers visibly desync edges
+  // from nodes (the exact "line lags behind node" jitter users reported).
   //
-  // Per-frame canvas reflow is cheap here because `.git-command-lab` has
-  // `contain: layout` — the card's internal layout is isolated, so sibling
-  // cards below only need position updates (not re-layout). And the graph
-  // host uses `display: block; text-align: center` (see
-  // css/git-command-lab.css) so an intrinsic-width change on the SVG does
-  // not re-flex-center every frame. Workbench stays pinned to its max-ever
-  // height via `_lockWorkbenchHeight`, so row removal after a commit can't
-  // tug the SVG up mid-tween.
-  var _CANVAS_DURATION_MS = 720;
-
-  // Cubic-bezier(.7, 0, .3, 1) — matches the CSS transitions on nodes,
-  // labels, and edges. We evaluate it per frame so the SVG canvas tween
-  // stays perfectly in sync with the CSS-driven motion inside it, all the
-  // way to the final frame. Newton's method converges within a handful of
-  // iterations; falls back to bisection for pathological inputs.
-  function _makeCubicBezier(x1, y1, x2, y2) {
-    var cx = 3 * x1;
-    var bx = 3 * (x2 - x1) - cx;
-    var ax = 1 - cx - bx;
-    var cy = 3 * y1;
-    var by = 3 * (y2 - y1) - cy;
-    var ay = 1 - cy - by;
-    function sampleX(t) { return ((ax * t + bx) * t + cx) * t; }
-    function sampleY(t) { return ((ay * t + by) * t + cy) * t; }
-    function sampleDX(t) { return (3 * ax * t + 2 * bx) * t + cx; }
-    function solveX(x) {
-      var t = x;
-      for (var i = 0; i < 8; i++) {
-        var d = sampleX(t) - x;
-        if (Math.abs(d) < 1e-6) return t;
-        var dx = sampleDX(t);
-        if (Math.abs(dx) < 1e-6) break;
-        t -= d / dx;
-      }
-      var lo = 0, hi = 1;
-      t = x;
-      for (var j = 0; j < 20; j++) {
-        var cur = sampleX(t);
-        if (Math.abs(cur - x) < 1e-6) return t;
-        if (x > cur) lo = t; else hi = t;
-        t = 0.5 * (lo + hi);
-      }
-      return t;
-    }
-    return function (x) {
-      if (x <= 0) return 0;
-      if (x >= 1) return 1;
-      return sampleY(solveX(x));
-    };
-  }
-  var _CANVAS_EASE = _makeCubicBezier(0.7, 0, 0.3, 1);
-
+  // Snapping the canvas to its new dimensions before diff-updating elements
+  // keeps every moving part in ONE animation pipeline (the CSS transitions
+  // on nodes/labels/edges), which is materially more stable and accurate.
+  // Width remains effectively steady across state changes anyway because
+  // `_computeDimensions` pins it to `_reservedMaxW`.
   GitGraph.prototype._setSvgSize = function (w, h) {
     var svg = this._svgRoot;
     if (!svg) return;
@@ -925,59 +870,8 @@
   GitGraph.prototype._animateDimensions = function (newDims) {
     var svg = this._svgRoot;
     if (!svg) return;
-    var startW = parseFloat(svg.getAttribute('width'))  || newDims.width;
-    var startH = parseFloat(svg.getAttribute('height')) || newDims.height;
-    var endW = newDims.width;
-    var endH = newDims.height;
-    var dW = endW - startW;
-    var dH = endH - startH;
-
     this._cancelDimAnim();
-
-    // Sub-pixel change — nothing to animate. (Also catches the second
-    // render during a rapid double-click where the target hasn't moved.)
-    if (Math.abs(dW) < 0.5 && Math.abs(dH) < 0.5) {
-      this._setSvgSize(endW, endH);
-      return;
-    }
-
-    if (prefersReducedMotion()) {
-      this._setSvgSize(endW, endH);
-      return;
-    }
-
-    var self = this;
-    var t0 = (typeof performance !== 'undefined' && performance.now)
-      ? performance.now() : Date.now();
-
-    function frame(now) {
-      var t = (now - t0) / _CANVAS_DURATION_MS;
-      if (t >= 1) {
-        self._dimFrame = null;
-        self._setSvgSize(endW, endH);
-        if (self._dimFallback) {
-          clearTimeout(self._dimFallback);
-          self._dimFallback = null;
-        }
-        return;
-      }
-      var k = _CANVAS_EASE(t);
-      self._setSvgSize(startW + dW * k, startH + dH * k);
-      self._dimFrame = requestAnimationFrame(frame);
-    }
-    self._dimFrame = requestAnimationFrame(frame);
-
-    // Hidden-tab / throttled-rAF fallback: guarantee the final frame
-    // commits even if rAF never reaches t >= 1 (background tab, reduced
-    // refresh rate, dev-tools throttling).
-    self._dimFallback = setTimeout(function () {
-      self._dimFallback = null;
-      if (self._dimFrame) {
-        cancelAnimationFrame(self._dimFrame);
-        self._dimFrame = null;
-      }
-      self._setSvgSize(endW, endH);
-    }, _CANVAS_DURATION_MS + 80);
+    this._setSvgSize(newDims.width, newDims.height);
   };
 
   // Pin the workbench's min-height to the LARGEST height it will ever need
@@ -1249,7 +1143,9 @@
       'class': 'git-graph-edge',
       'data-edge-key': key,
     });
-    return { el: el, x1: x1, y1: y1, x2: x2, y2: y2, color: color };
+    return {
+      el: el, x1: x1, y1: y1, x2: x2, y2: y2, color: color,
+    };
   };
 
   // Stroke-dashoffset trick to "draw in" a new edge.
@@ -1334,6 +1230,11 @@
   };
 
   GitGraph.prototype._edgePathD = function (x1, y1, x2, y2) {
+    // Snap to half-pixels so the 3px stroke + marker base land on stable
+    // raster boundaries across frames. This reduces subtle arrowhead shimmer
+    // on HiDPI/composited transitions without changing geometry semantics.
+    function snap(v) { return Math.round(v * 2) / 2; }
+    x1 = snap(x1); y1 = snap(y1); x2 = snap(x2); y2 = snap(y2);
     // Cubic Bézier with vertical tangent at both ends. The endpoint
     // (x2, y2) is already pre-adjusted by _edgeEndpoint so the arrow tip
     // lands precisely on the parent's circumference.
