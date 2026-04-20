@@ -729,30 +729,73 @@
     this._lockWorkbenchHeight();
   };
 
-  // Keep the SVG canvas a STABLE size for the whole transition window,
-  // then settle to the real target once all the CSS node/edge/label
-  // transitions have landed.
+  // Canvas-size animation: width/height/viewBox are tweened smoothly from
+  // the current state to the new target over the SAME duration + curve as
+  // every other moving part (nodes, labels, edges, workbench FLIP — all
+  // 720ms cubic-bezier(.7,0,.3,1)). Motion is thus one cohesive glide that
+  // starts on click and finishes in a single moment — no pre-click jump,
+  // no settle snap at the end.
   //
-  // Why not tween width/height/viewBox frame-by-frame (the old approach)?
-  // The .git-command-lab__graph wrapper is `display: flex;
-  // justify-content: center`, and the SVG uses `max-width: 100%;
-  // height: auto` (uml-diagram.css). Any width attribute change alters
-  // the intrinsic aspect ratio, which — because the width is already
-  // constrained to 100% of the flex parent — flows back into the
-  // DISPLAYED height (height=auto recomputes from the new ratio), and
-  // the flex parent re-centers on every frame. The user saw this as
-  // horizontal + vertical stutter on every click: ~31 frames × one
-  // layout shift per frame. Shrinking produced the same pattern in
-  // reverse.
+  // History: earlier versions pinned the canvas to `max(start, end)` for
+  // the transition window and then snapped to the real target at the end.
+  // That collapsed per-frame reflow into a single shift, but the snap
+  // produced a visible "big move" whenever EITHER dimension was shrinking
+  // (horizontal lane collapse on `git merge feature`, vertical row loss on
+  // `merge --no-ff` undo, ditto `git pull` / `pull --rebase` lane shuffles).
+  // The pin-and-snap trick also made GROWING renders jump at t=0 instead
+  // of gliding, which felt abrupt on the first step of multi-step labs.
   //
-  // Pinning to max(start, end) for the whole 720ms transition window
-  // collapses that into exactly ONE layout shift — at the start if the
-  // graph is growing, or at the settle moment if it's shrinking. The
-  // content animates via the existing transform transitions on each
-  // node/edge/label, which is already the primary motion the user
-  // perceives. The canvas size change itself was never the "motion"
-  // that carried meaning; it was just an artifact of the layout.
-  var _DIM_SETTLE_MS = 750;   // slightly longer than the 720ms node transition.
+  // Per-frame canvas reflow is cheap here because `.git-command-lab` has
+  // `contain: layout` — the card's internal layout is isolated, so sibling
+  // cards below only need position updates (not re-layout). And the graph
+  // host uses `display: block; text-align: center` (see
+  // css/git-command-lab.css) so an intrinsic-width change on the SVG does
+  // not re-flex-center every frame. Workbench stays pinned to its max-ever
+  // height via `_lockWorkbenchHeight`, so row removal after a commit can't
+  // tug the SVG up mid-tween.
+  var _CANVAS_DURATION_MS = 720;
+
+  // Cubic-bezier(.7, 0, .3, 1) — matches the CSS transitions on nodes,
+  // labels, and edges. We evaluate it per frame so the SVG canvas tween
+  // stays perfectly in sync with the CSS-driven motion inside it, all the
+  // way to the final frame. Newton's method converges within a handful of
+  // iterations; falls back to bisection for pathological inputs.
+  function _makeCubicBezier(x1, y1, x2, y2) {
+    var cx = 3 * x1;
+    var bx = 3 * (x2 - x1) - cx;
+    var ax = 1 - cx - bx;
+    var cy = 3 * y1;
+    var by = 3 * (y2 - y1) - cy;
+    var ay = 1 - cy - by;
+    function sampleX(t) { return ((ax * t + bx) * t + cx) * t; }
+    function sampleY(t) { return ((ay * t + by) * t + cy) * t; }
+    function sampleDX(t) { return (3 * ax * t + 2 * bx) * t + cx; }
+    function solveX(x) {
+      var t = x;
+      for (var i = 0; i < 8; i++) {
+        var d = sampleX(t) - x;
+        if (Math.abs(d) < 1e-6) return t;
+        var dx = sampleDX(t);
+        if (Math.abs(dx) < 1e-6) break;
+        t -= d / dx;
+      }
+      var lo = 0, hi = 1;
+      t = x;
+      for (var j = 0; j < 20; j++) {
+        var cur = sampleX(t);
+        if (Math.abs(cur - x) < 1e-6) return t;
+        if (x > cur) lo = t; else hi = t;
+        t = 0.5 * (lo + hi);
+      }
+      return t;
+    }
+    return function (x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      return sampleY(solveX(x));
+    };
+  }
+  var _CANVAS_EASE = _makeCubicBezier(0.7, 0, 0.3, 1);
 
   GitGraph.prototype._setSvgSize = function (w, h) {
     var svg = this._svgRoot;
@@ -763,7 +806,8 @@
   };
 
   GitGraph.prototype._cancelDimAnim = function () {
-    if (this._dimSettle) { clearTimeout(this._dimSettle); this._dimSettle = null; }
+    if (this._dimFrame) { cancelAnimationFrame(this._dimFrame); this._dimFrame = null; }
+    if (this._dimFallback) { clearTimeout(this._dimFallback); this._dimFallback = null; }
   };
 
   GitGraph.prototype._animateDimensions = function (newDims) {
@@ -778,6 +822,8 @@
 
     this._cancelDimAnim();
 
+    // Sub-pixel change — nothing to animate. (Also catches the second
+    // render during a rapid double-click where the target hasn't moved.)
     if (Math.abs(dW) < 0.5 && Math.abs(dH) < 0.5) {
       this._setSvgSize(endW, endH);
       return;
@@ -789,27 +835,37 @@
     }
 
     var self = this;
-    var container = this.container;
-    var priorMinHeight = (container && container.style.minHeight) || '';
-    var maxW = Math.max(startW, endW);
-    var maxH = Math.max(startH, endH);
+    var t0 = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now() : Date.now();
 
-    // Reserve the union box. For a growing graph this paints the new
-    // canvas immediately (one shift at click time, before any motion);
-    // for a shrinking graph we stay at the old size until settle. The
-    // container's min-height pin keeps the rest of the page still until
-    // we release it, so siblings below reflow exactly once instead of
-    // per-frame. Workbench height is handled separately by
-    // `_lockWorkbenchHeight` (permanent max-ever pin), so row removal
-    // can't pull the SVG up.
-    if (container) container.style.minHeight = maxH + 'px';
-    this._setSvgSize(maxW, maxH);
+    function frame(now) {
+      var t = (now - t0) / _CANVAS_DURATION_MS;
+      if (t >= 1) {
+        self._dimFrame = null;
+        self._setSvgSize(endW, endH);
+        if (self._dimFallback) {
+          clearTimeout(self._dimFallback);
+          self._dimFallback = null;
+        }
+        return;
+      }
+      var k = _CANVAS_EASE(t);
+      self._setSvgSize(startW + dW * k, startH + dH * k);
+      self._dimFrame = requestAnimationFrame(frame);
+    }
+    self._dimFrame = requestAnimationFrame(frame);
 
-    this._dimSettle = setTimeout(function () {
+    // Hidden-tab / throttled-rAF fallback: guarantee the final frame
+    // commits even if rAF never reaches t >= 1 (background tab, reduced
+    // refresh rate, dev-tools throttling).
+    self._dimFallback = setTimeout(function () {
+      self._dimFallback = null;
+      if (self._dimFrame) {
+        cancelAnimationFrame(self._dimFrame);
+        self._dimFrame = null;
+      }
       self._setSvgSize(endW, endH);
-      if (container) container.style.minHeight = priorMinHeight;
-      self._dimSettle = null;
-    }, _DIM_SETTLE_MS);
+    }, _CANVAS_DURATION_MS + 80);
   };
 
   // Pin the workbench's min-height to the LARGEST height it's ever had.

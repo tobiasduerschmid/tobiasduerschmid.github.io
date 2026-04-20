@@ -725,23 +725,23 @@ steps:
     <div data-git-command-lab>
     <script type="application/json">
     {
-      "command": "git cherry-pick experimental",
-      "description": "Backport the **tip** of `experimental` (`Add absolute value`) onto `main`, leaving the half-baked `experimental_multiply` behind.\n\nThe replayed commit **β'** has the same patch but a new parent, so its SHA differs from the original. `experimental` is unchanged — cherry-pick copies, never moves.",
+      "command": "git cherry-pick hotfix-parse",
+      "description": "A different scenario to reinforce the pattern: `hotfix-parse` has one critical `Fix parse` commit the team wants on `main` *without* dragging along the WIP `Try tokens` commit below it.\n\n`H'` lands on `main` with the same patch as `H` but a new parent → new SHA. `hotfix-parse` is untouched. Same mechanic you'll apply to your `experimental` branch in the hands-on task.",
       "before": {
-        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|\nβ000000000000000000000000000000000000000|α000000000000000000000000000000000000000|Add absolute value|experimental\nα000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add experimental_multiply (not ready)|",
-        "branches": "* main\n  experimental",
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add parser|\nA000000000000000000000000000000000000000||Init|\nH000000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix parse|hotfix-parse\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Try tokens (WIP)|",
+        "branches": "* main\n  hotfix-parse",
         "head": "refs/heads/main",
         "highlights": {
-          "β000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "H000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       },
       "after": {
-        "log": "β'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add absolute value|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|\nβ000000000000000000000000000000000000000|α000000000000000000000000000000000000000|Add absolute value|experimental\nα000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add experimental_multiply (not ready)|",
-        "branches": "* main\n  experimental",
+        "log": "H'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Fix parse|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add parser|\nA000000000000000000000000000000000000000||Init|\nH000000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix parse|hotfix-parse\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Try tokens (WIP)|",
+        "branches": "* main\n  hotfix-parse",
         "head": "refs/heads/main",
         "highlights": {
-          "β000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
-          "β'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "H000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "H'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       }
     }
@@ -1155,9 +1155,9 @@ steps:
     <div data-git-command-lab-multi>
     <script type="application/json">
     {
-      "description": "Calculator `absolute(-4) == 4` fails at HEAD. Five recent commits hide the regression — one of them silently removed the `-x` negation. Bisect will binary-search the range `HEAD~5..HEAD` and pinpoint the culprit in ~3 tests.\n\n**Watch the HEAD label move.** Each step, Git detaches HEAD to a new midpoint. Your verdict halves the remaining range.",
+      "description": "Different scenario from the hands-on: a regression in `sort()` hides somewhere in the last 5 commits. Bisect pinpoints it in **just 2 tests** (log₂(5) ≈ 2.3).\n\n**Watch the HEAD label.** Git picks the commit whose *ancestors in range* ≈ *descendants in range* — the balanced midpoint. Your verdict halves the remaining range each time. You will apply this same algorithm below on the calculator `absolute` bug.",
       "initialState": {
-        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
         "branches": "* main",
         "head": "refs/heads/main",
         "highlights": {
@@ -1168,63 +1168,50 @@ steps:
       "steps": [
         {
           "command": "git bisect start HEAD HEAD~5",
-          "description": "Open a bisect session with `HEAD` (F) marked **bad** and `HEAD~5` (A) marked **good**. Git checks out the midpoint `C` (`Add unused helper comment`) in detached HEAD for you to test.",
+          "description": "Mark `HEAD` (F) **bad** and `HEAD~5` (A) **good**. Git prints:\n\n```\nBisecting: 2 revisions left to test after this (roughly 2 steps)\n```\n\nSuspects: {B, C, D, E, F} — 5 commits. Git picks the balanced midpoint: **D** (2 ancestors B,C; 2 descendants E,F). HEAD detaches to D.",
           "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
+            "branches": "  main",
+            "head": "D000000000000000000000000000000000000000",
+            "highlights": {
+              "F000000000000000000000000000000000000000": "red",
+              "A000000000000000000000000000000000000000": "green",
+              "D000000000000000000000000000000000000000": "yellow"
+            }
+          }
+        },
+        {
+          "command": "./test_sort.sh  →  exit 1  →  git bisect bad",
+          "description": "Tests **fail** at D, so D is bad. Git prints:\n\n```\nBisecting: 1 revision left to test after this (roughly 1 step)\n```\n\nSuspects narrow to {B, C, D} — 3 commits. Midpoint: **C** (1 ancestor, 1 descendant). HEAD moves to C.",
+          "state": {
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
             "branches": "  main",
             "head": "C000000000000000000000000000000000000000",
             "highlights": {
-              "F000000000000000000000000000000000000000": "red",
+              "D000000000000000000000000000000000000000": "red",
               "A000000000000000000000000000000000000000": "green",
               "C000000000000000000000000000000000000000": "yellow"
             }
           }
         },
         {
-          "command": "python3 test_calculator.py  →  exit 0  →  git bisect good",
-          "description": "Tests **pass** at C, so the bug landed later. Git narrows the range to `(C, F]` and checks out `E` (`Later tweak`) as the new midpoint.",
+          "command": "./test_sort.sh  →  exit 0  →  git bisect good",
+          "description": "Tests **pass** at C. Now C good, D bad — adjacent, so the answer is pinned. Git prints:\n\n```\nD is the first bad commit\ncommit D…\n    Skip stable (BUG)\n```\n\nHEAD stays on C (last tested). Run `git show D` to read the culprit's full diff and message.",
           "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|HEAD\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
             "branches": "  main",
-            "head": "E000000000000000000000000000000000000000",
+            "head": "C000000000000000000000000000000000000000",
             "highlights": {
-              "F000000000000000000000000000000000000000": "red",
-              "C000000000000000000000000000000000000000": "green",
-              "E000000000000000000000000000000000000000": "yellow"
-            }
-          }
-        },
-        {
-          "command": "python3 test_calculator.py  →  exit 1  →  git bisect bad",
-          "description": "Tests **fail** at E — the bug was already present here. Range narrows to `(C, E]`; Git checks out `D` (`Simplify absolute (BUG)`).",
-          "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
-            "branches": "  main",
-            "head": "D000000000000000000000000000000000000000",
-            "highlights": {
-              "E000000000000000000000000000000000000000": "red",
-              "C000000000000000000000000000000000000000": "green",
-              "D000000000000000000000000000000000000000": "yellow"
-            }
-          }
-        },
-        {
-          "command": "python3 test_calculator.py  →  exit 1  →  git bisect bad",
-          "description": "Tests **fail** at D — and D's parent C was good, so **D is the first bad commit**. Git prints the culprit's full message + diff. The blame name, message, and intent are all there in one place.",
-          "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
-            "branches": "  main",
-            "head": "D000000000000000000000000000000000000000",
-            "highlights": {
-              "D000000000000000000000000000000000000000": "red"
+              "D000000000000000000000000000000000000000": "red",
+              "C000000000000000000000000000000000000000": "green"
             }
           }
         },
         {
           "command": "git bisect reset",
-          "description": "**Non-negotiable final step.** Returns HEAD from the historical midpoint back to `main`. Skip this and your working tree looks mysteriously stale.",
+          "description": "**Non-negotiable final step.** Re-attaches HEAD from the detached midpoint back to `main`, clearing `refs/bisect/*`. Skip it and your working tree looks mysteriously stale (HEAD stuck on C).",
           "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
             "branches": "* main",
             "head": "refs/heads/main"
           }
@@ -1419,21 +1406,21 @@ steps:
     <script type="application/json">
     {
       "command": "git rebase main",
-      "description": "`feature-sqrt` branched from `main` *before* `main` gained `Bump version notes` and `Add identity helper`. Rebasing replays `Add square_root function` on top of the latest `main` as a **new** commit (same patch, new parent, new SHA).\n\nThe old `square_root` commit is still in `.git/objects` — reflog recovers it. The branch pointer just moves to the replayed copy.",
+      "description": "Different scenario from the hands-on: `topic` has one commit (`Add cache`); meanwhile `main` moved forward with `Update docs` and `Fix typo`. Rebasing replays `T` on top of the new `main` tip as **T'** (same patch, new parent, new SHA).\n\nThe old `T` commit lives on in `.git/objects` — reflog recovers it. The branch pointer just moves to the replayed copy. Below, you will apply this same mechanic to `feature-sqrt`.",
       "before": {
-        "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add identity helper|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Bump version notes|\nS000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add square_root function|HEAD -> feature-sqrt\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
-        "branches": "  main\n* feature-sqrt",
-        "head": "refs/heads/feature-sqrt",
+        "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Fix typo|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Update docs|\nT000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add cache|HEAD -> topic\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|\nA000000000000000000000000000000000000000||Init|",
+        "branches": "  main\n* topic",
+        "head": "refs/heads/topic",
         "highlights": {
-          "S000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "T000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       },
       "after": {
-        "log": "S'00000000000000000000000000000000000000|D000000000000000000000000000000000000000|Add square_root function|HEAD -> feature-sqrt\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add identity helper|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Bump version notes|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
-        "branches": "  main\n* feature-sqrt",
-        "head": "refs/heads/feature-sqrt",
+        "log": "T'00000000000000000000000000000000000000|D000000000000000000000000000000000000000|Add cache|HEAD -> topic\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Fix typo|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Update docs|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|\nA000000000000000000000000000000000000000||Init|",
+        "branches": "  main\n* topic",
+        "head": "refs/heads/topic",
         "highlights": {
-          "S'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "T'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       }
     }
@@ -1658,12 +1645,12 @@ steps:
     <script type="application/json">
     {
       "command": "git rebase -i HEAD~4   (squash into one)",
-      "description": "Four messy commits on `refactor-power` — `WIP`, two typo fixes, and 'More typo fixes' — collapse into one clean commit **W+F+F+M** before the PR reviewer sees them. Line 1 must stay `pick` because `squash` melds **into the previous** line; line 1 has no previous.",
-      "rebaseFile": "pick   W WIP\nsquash F Fix typo\nsquash F Fix typo again\nsquash M More typo fixes\n\n# Rebase abc1234..M onto abc1234 (4 commands)\n#\n# Commands:\n# p, pick   = use commit as-is\n# s, squash = meld into previous commit\n# f, fixup  = squash, discard this commit's message\n# d, drop   = remove commit",
+      "description": "Different scenario from the hands-on: four messy commits on `feature-login` — `Add login`, plus three nit fixes — collapse into one clean commit **W+F+F+M** before the PR reviewer sees them. Line 1 must stay `pick` because `squash` melds **into the previous** line; line 1 has no previous.\n\nYou'll apply the same `pick/squash/squash/squash` pattern to `refactor-power` below.",
+      "rebaseFile": "pick   W Add login\nsquash F Fix indent\nsquash F Fix lint\nsquash M Fix nit\n\n# Rebase abc1234..M onto abc1234 (4 commands)\n#\n# Commands:\n# p, pick   = use commit as-is\n# s, squash = meld into previous commit\n# f, fixup  = squash, discard this commit's message\n# d, drop   = remove commit",
       "before": {
-        "log": "M000000000000000000000000000000000000000|F200000000000000000000000000000000000000|More typo fixes|HEAD -> refactor-power\nF200000000000000000000000000000000000000|F100000000000000000000000000000000000000|Fix typo again|\nF100000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix typo|\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|WIP|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|main\nA000000000000000000000000000000000000000||Initial calculator|",
-        "branches": "  main\n* refactor-power",
-        "head": "refs/heads/refactor-power",
+        "log": "M000000000000000000000000000000000000000|F200000000000000000000000000000000000000|Fix nit|HEAD -> feature-login\nF200000000000000000000000000000000000000|F100000000000000000000000000000000000000|Fix lint|\nF100000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix indent|\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|main\nA000000000000000000000000000000000000000||Init|",
+        "branches": "  main\n* feature-login",
+        "head": "refs/heads/feature-login",
         "highlights": {
           "W000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
           "F100000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
@@ -1672,9 +1659,9 @@ steps:
         }
       },
       "after": {
-        "log": "WFFM000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor: cleanup notes in calculator.py|HEAD -> refactor-power\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|main\nA000000000000000000000000000000000000000||Initial calculator|",
-        "branches": "  main\n* refactor-power",
-        "head": "refs/heads/refactor-power",
+        "log": "WFFM000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login feature|HEAD -> feature-login\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|main\nA000000000000000000000000000000000000000||Init|",
+        "branches": "  main\n* feature-login",
+        "head": "refs/heads/feature-login",
         "highlights": {
           "WFFM000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
@@ -1687,23 +1674,23 @@ steps:
     <script type="application/json">
     {
       "command": "git rebase -i HEAD~2   (drop)",
-      "description": "Same mechanism, `drop` instead of `squash`. The secret-leaking commit is **removed** from branch history; the later `placeholder` commit is replayed as **P'** on top of the pre-secret tip. The dropped commit is **not deleted** — it's still in `.git/objects`, reachable via reflog until `git gc`.",
-      "rebaseFile": "drop S Accidentally add secret (should be dropped)\npick P Add placeholder function\n\n# Rebase abc1234..P onto abc1234 (2 commands)\n#\n# Commands:\n# p, pick = use commit\n# d, drop = remove commit",
+      "description": "Different scenario from the hands-on: one commit accidentally **leaked an API token**; the next one added tests. `drop` removes the leak commit from branch history; `Add tests` replays as **T'** on top of the pre-leak tip. The dropped commit is **not deleted** — it lives in `.git/objects`, reachable via reflog until `git gc`.\n\nYou'll use the same `drop` verb on the `SECRET_API_KEY` commit in the hands-on.",
+      "rebaseFile": "drop S Leak token\npick T Add tests\n\n# Rebase abc1234..T onto abc1234 (2 commands)\n#\n# Commands:\n# p, pick = use commit\n# d, drop = remove commit",
       "before": {
-        "log": "P000000000000000000000000000000000000000|S000000000000000000000000000000000000000|Add placeholder function|HEAD -> refactor-power\nS000000000000000000000000000000000000000|R000000000000000000000000000000000000000|Accidentally add secret (should be dropped)|\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor: cleanup notes in calculator.py|",
-        "branches": "* refactor-power",
-        "head": "refs/heads/refactor-power",
+        "log": "T000000000000000000000000000000000000000|S000000000000000000000000000000000000000|Add tests|HEAD -> feature-login\nS000000000000000000000000000000000000000|R000000000000000000000000000000000000000|Leak token|\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login feature|",
+        "branches": "* feature-login",
+        "head": "refs/heads/feature-login",
         "highlights": {
           "S000000000000000000000000000000000000000": { "color": "crimson" },
-          "P000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "T000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       },
       "after": {
-        "log": "P'00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Add placeholder function|HEAD -> refactor-power\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor: cleanup notes in calculator.py|",
-        "branches": "* refactor-power",
-        "head": "refs/heads/refactor-power",
+        "log": "T'00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Add tests|HEAD -> feature-login\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login feature|",
+        "branches": "* feature-login",
+        "head": "refs/heads/feature-login",
         "highlights": {
-          "P'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+          "T'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       }
     }
@@ -1948,11 +1935,11 @@ steps:
     <div data-git-command-lab>
     <script type="application/json">
     {
-      "command": "git merge --squash feature-stats && git commit",
-      "description": "Collapse `feature-stats`' three commits (`Add mean`, `Add variance`, `Add stddev`) into **one** new commit on `main`. The feature branch is **untouched** — its commits still exist there, valuable later when `bisect` needs fine-grained precision inside the feature.\n\nCompare to rebase (Step 8): rebase produces **three** new commits on main; squash produces **one**. Same feature, different main-log shape.",
+      "command": "git merge --squash feature-auth && git commit",
+      "description": "Different scenario from the hands-on: collapse `feature-auth`'s three commits (`Add signin`, `Add logout`, `Add session`) into **one** new commit on `main`. The feature branch is **untouched** — its commits still exist there, valuable later when `bisect` needs fine-grained precision inside the feature.\n\nCompare to rebase (Step 8): rebase produces **three** new commits on main; squash produces **one**. Same feature, different main-log shape. You'll apply this below to `feature-stats`.",
       "before": {
-        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|HEAD -> main\nS300000000000000000000000000000000000000|S200000000000000000000000000000000000000|Add stddev function|feature-stats\nS200000000000000000000000000000000000000|S100000000000000000000000000000000000000|Add variance function|\nS100000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add mean function|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
-        "branches": "* main\n  feature-stats",
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|HEAD -> main\nS300000000000000000000000000000000000000|S200000000000000000000000000000000000000|Add session|feature-auth\nS200000000000000000000000000000000000000|S100000000000000000000000000000000000000|Add logout|\nS100000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add signin|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|\nA000000000000000000000000000000000000000||Init|",
+        "branches": "* main\n  feature-auth",
         "head": "refs/heads/main",
         "highlights": {
           "S100000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
@@ -1961,8 +1948,8 @@ steps:
         }
       },
       "after": {
-        "log": "Σ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add descriptive statistics module (mean, variance, stddev)|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nS300000000000000000000000000000000000000|S200000000000000000000000000000000000000|Add stddev function|feature-stats\nS200000000000000000000000000000000000000|S100000000000000000000000000000000000000|Add variance function|\nS100000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add mean function|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
-        "branches": "* main\n  feature-stats",
+        "log": "Σ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add auth module|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|\nS300000000000000000000000000000000000000|S200000000000000000000000000000000000000|Add session|feature-auth\nS200000000000000000000000000000000000000|S100000000000000000000000000000000000000|Add logout|\nS100000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add signin|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|\nA000000000000000000000000000000000000000||Init|",
+        "branches": "* main\n  feature-auth",
         "head": "refs/heads/main",
         "highlights": {
           "Σ000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
@@ -2128,9 +2115,9 @@ steps:
     <script type="application/json">
     {
       "command": "git revert HEAD",
-      "description": "Revert the tip of `main` — the accidental rename commit. Git computes the **inverse patch** (every `-` becomes `+`, every `+` becomes `-`) and lands it as a brand-new commit **¬R**. The original **R** is still there; history grows by one. Everyone's clones stay consistent — `git pull` on teammates just fast-forwards.\n\nCompare with `rebase -i drop` (Step 9): drop *removes* R from the branch and rewrites everything after it. Revert *appends* an undo and touches nothing existing. Same end-state (R's changes gone), opposite effect on collaborators.",
+      "description": "Different scenario from the hands-on: a `Strip logs` commit accidentally removed production logging and has already been pushed. Revert computes the **inverse patch** (every `-` becomes `+`, every `+` becomes `-`) and lands it as a brand-new commit **¬R**. The original **R** is still there; history grows by one. Everyone's clones stay consistent — `pull` just fast-forwards.\n\nCompare with `rebase -i drop` (Step 9): drop *removes* R and rewrites everything after. Revert *appends* an undo and touches nothing existing. Same end-state, opposite effect on collaborators. Below, you will apply revert to the `rename divide → div` regression.",
       "before": {
-        "log": "R000000000000000000000000000000000000000|Σ000000000000000000000000000000000000000|Refactor: rename divide → div (BROKE imports)|HEAD -> main\nΣ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add descriptive statistics module|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "log": "R000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Strip logs (BUG)|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add stats|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|\nA000000000000000000000000000000000000000||Init|",
         "branches": "* main",
         "head": "refs/heads/main",
         "highlights": {
@@ -2138,7 +2125,7 @@ steps:
         }
       },
       "after": {
-        "log": "¬R00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Revert \"Refactor: rename divide → div\"|HEAD -> main\nR000000000000000000000000000000000000000|Σ000000000000000000000000000000000000000|Refactor: rename divide → div (BROKE imports)|\nΣ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add descriptive statistics module|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "log": "¬R00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Revert \"Strip logs\"|HEAD -> main\nR000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Strip logs (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add stats|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add API|\nA000000000000000000000000000000000000000||Init|",
         "branches": "* main",
         "head": "refs/heads/main",
         "highlights": {

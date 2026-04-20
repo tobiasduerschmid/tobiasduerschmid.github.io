@@ -253,21 +253,32 @@ html.dark-mode .git-command-lab__rebase-file code {
   color: #e6edf3;
 }
 
+/* Block layout with inline-block centering for the SVG. We deliberately
+   avoid `display: flex; justify-content: center` here because the SVG's
+   width/height are tweened per frame by js/git-graph.js (_animateDimensions).
+   A flex parent would re-flex-center every frame as the intrinsic size
+   (and, via `height: auto`, the displayed aspect ratio) shifts, which
+   showed up as horizontal + vertical stutter throughout the 720ms glide.
+   Block + text-align:center keeps the SVG centered without a per-frame
+   re-flex, so the canvas size smoothly tracks the nodes/labels/edges. */
 .git-command-lab__graph {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
+  display: block;
+  text-align: center;
   overflow-x: auto;
 }
-.git-command-lab__graph .git-graph-svg { max-width: 100%; height: auto; }
-/* Workbench always takes a full row so the graph drops below it. */
+.git-command-lab__graph .git-graph-svg {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+/* Workbench is a block sibling above the SVG — full width, left-aligned
+   content even though the parent's text-align centers the SVG. */
 .git-command-lab__graph .git-workbench,
 .git-command-lab__graph-after .git-workbench,
 .git-command-lab__graph-static .git-workbench {
-  flex: 0 0 100%;
   width: 100%;
   min-width: 0;
+  text-align: left;
 }
 
 /* ----- Multi-step button group (Back + Forward/Restart) ----- */
