@@ -1138,6 +1138,38 @@ layout: sebook
       }
     }
 
+    /* ── Gym emoji burst ─────────────────────────────────────────────────
+       Emoji pieces pop out of the results panel and float upward.
+       The host is position:fixed and sized to the anchor rect so pieces
+       can escape the card bounds. Each piece uses --tx / --ty / --rot as
+       its target, set per-piece by JS.                                   */
+    .gym-emoji-host {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .gym-emoji-piece {
+      position: absolute;
+      font-size: 1.8em;
+      line-height: 1;
+      opacity: 0;
+      transform: translate(0,0) scale(0) rotate(0deg);
+      animation: gym-emoji-fly 1800ms cubic-bezier(.22,.61,.36,1) forwards;
+      user-select: none;
+    }
+    @keyframes gym-emoji-fly {
+      0%   { opacity: 0;   transform: translate(0,0) scale(0) rotate(0deg); }
+      10%  { opacity: 1;   transform: translate(calc(var(--tx)*.15), calc(var(--ty)*.15)) scale(1.6) rotate(calc(var(--rot)*.1)); }
+      25%  { opacity: 1;   transform: translate(calc(var(--tx)*.4),  calc(var(--ty)*.4  - 12px)) scale(1.15) rotate(calc(var(--rot)*.3)); }
+      55%  { opacity: 1;   transform: translate(calc(var(--tx)*.8),  calc(var(--ty)*.8  - 28px)) scale(1.0)  rotate(calc(var(--rot)*.7)); }
+      80%  { opacity: .8;  transform: translate(var(--tx), calc(var(--ty) - 10px)) scale(.95) rotate(calc(var(--rot)*.9)); }
+      100% { opacity: 0;   transform: translate(calc(var(--tx) + var(--drift,0px)), calc(var(--ty) + 50px)) scale(.8) rotate(var(--rot)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gym-emoji-host  { display: none !important; }
+      .gym-emoji-piece { animation: none !important; }
+    }
+
     .hidden {
       display: none !important;
     }
@@ -2281,6 +2313,56 @@ layout: sebook
         }
       }
 
+      function spawnGymEmojis(anchor) {
+        if (!anchor || !anchor.getBoundingClientRect) return;
+        var prm = (typeof window.__prefersReducedMotion === 'function')
+          ? window.__prefersReducedMotion()
+          : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        if (prm) return;
+
+        var rect = anchor.getBoundingClientRect();
+        var host = document.createElement('div');
+        host.className = 'gym-emoji-host';
+        host.style.left   = rect.left   + 'px';
+        host.style.top    = rect.top    + 'px';
+        host.style.width  = rect.width  + 'px';
+        host.style.height = rect.height + 'px';
+
+        var emojis = ['💪', '🏋️'];
+        var count = 18;
+
+        for (var i = 0; i < count; i++) {
+          var piece = document.createElement('span');
+          piece.className = 'gym-emoji-piece';
+          piece.textContent = emojis[i % emojis.length];
+
+          // Random start position across the bottom third of the anchor
+          var x = Math.random() * rect.width;
+          var y = rect.height * (0.5 + Math.random() * 0.5);
+          piece.style.left = x + 'px';
+          piece.style.top  = y + 'px';
+
+          // Fly upward with lateral scatter — slow and heavy
+          var tx    = (Math.random() - 0.5) * rect.width * 0.9;
+          var ty    = -(80 + Math.random() * 160);
+          var rot   = (Math.random() - 0.5) * 60;
+          var drift = (Math.random() - 0.5) * 40;
+          var size  = 1.4 + Math.random() * 1.2;
+
+          piece.style.fontSize = size + 'em';
+          piece.style.setProperty('--tx',    tx.toFixed(1)    + 'px');
+          piece.style.setProperty('--ty',    ty.toFixed(1)    + 'px');
+          piece.style.setProperty('--rot',   rot.toFixed(0)   + 'deg');
+          piece.style.setProperty('--drift', drift.toFixed(1) + 'px');
+          piece.style.animationDelay    = (i * 120 + Math.random() * 150) + 'ms';
+          piece.style.animationDuration = (3200 + Math.random() * 1000)   + 'ms';
+          host.appendChild(piece);
+        }
+
+        document.body.appendChild(host);
+        setTimeout(function () { if (host.parentNode) host.parentNode.removeChild(host); }, 5500);
+      }
+
       function finishWorkout() {
         workoutCardArea.innerHTML = '';
         workoutResults.style.display = 'block';
@@ -2296,6 +2378,7 @@ layout: sebook
           workoutSummaryEl.textContent = 'Keep practicing to improve your recall!';
           workoutReviewBtn.style.display = 'inline-block';
         }
+        spawnGymEmojis(workoutResults);
       }
 
       function startReview() {
