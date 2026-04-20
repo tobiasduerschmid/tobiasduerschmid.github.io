@@ -422,6 +422,7 @@
     btn.appendChild(cmdEl);
     action.appendChild(btn);
 
+    // Interactive tree (screen only — hidden in print).
     var treeWrap = document.createElement('div');
     treeWrap.className = 'fs-command-lab__tree';
     action.appendChild(treeWrap);
@@ -437,6 +438,31 @@
 
     animator.render(buildTreeText(spec.before));
     renderOutputInto(output, spec.before && spec.before.output);
+
+    // Static print pair: Before | After side by side.  Hidden on screen,
+    // revealed by @media print.  Mirrors the multi-step __print-steps approach.
+    var printPair = document.createElement('div');
+    printPair.className = 'fs-command-lab__print-pair';
+    action.appendChild(printPair);
+
+    function makePrintCell(label, state) {
+      var cell = document.createElement('div');
+      cell.className = 'fs-command-lab__print-cell';
+      cell.setAttribute('data-state-label', label);
+      var renderTarget = document.createElement('div');
+      cell.appendChild(renderTarget);
+      window.UMLFolderTreeDiagram.render(renderTarget, buildTreeText(state));
+      if (state && state.output) {
+        var outEl = document.createElement('pre');
+        outEl.className = 'fs-command-lab__output fs-command-lab__output--visible';
+        outEl.textContent = state.output;
+        cell.appendChild(outEl);
+      }
+      return cell;
+    }
+
+    printPair.appendChild(makePrintCell('Before', spec.before));
+    printPair.appendChild(makePrintCell('After', spec.after));
 
     var applied = false;
     function update() {

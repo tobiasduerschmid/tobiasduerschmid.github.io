@@ -131,6 +131,8 @@ html.dark-mode .fs-command-lab__output {
 }
 
 /* ----- Print layout: show Before | After side by side ----- */
+.fs-command-lab__print-pair { display: none; }
+
 @media print {
   .fs-command-lab { break-inside: avoid; page-break-inside: avoid; }
   .fs-command-lab__btn {
@@ -143,23 +145,36 @@ html.dark-mode .fs-command-lab__output {
   .fs-command-lab__row { display: block !important; }
   .fs-command-lab__caption,
   .fs-command-lab__action { display: block !important; }
-  .fs-command-lab__tree {
-    display: block !important;
-    position: static !important;
-    height: auto !important;
+
+  /* Hide interactive tree; show static print pair */
+  .fs-command-lab__tree { display: none !important; }
+
+  .fs-command-lab__print-pair {
+    display: flex !important;
+    flex-direction: row;
+    gap: 14px;
+    align-items: flex-start;
+    margin-top: 8px;
   }
-  /* In print, dump both slots stacked so all content is visible. */
-  .fs-command-lab__tree-slot {
-    position: static !important;
-    opacity: 1 !important;
-    transform: none !important;
+  .fs-command-lab__print-cell {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
   }
-  /* Show only the active slot; avoid duplicate renders of same state. */
-  .fs-command-lab__tree-slot:not(.fs-command-lab__tree-slot--active) {
-    display: none !important;
+  .fs-command-lab__print-cell::before {
+    content: attr(data-state-label);
+    display: block;
+    font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+    font-size: 10pt;
+    font-weight: 700;
+    color: #1f2d3d;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .fs-command-lab__tree svg,
-  .fs-command-lab__tree svg { max-width: 100% !important; height: auto !important; }
+  .fs-command-lab__print-cell svg { max-width: 100% !important; height: auto !important; }
   .fs-command-lab__output {
     max-height: none !important;
     opacity: 1 !important;

@@ -434,7 +434,7 @@ These commands do not modify the filesystem tree — they transform **streams of
   "command": "cat intro.txt chapter1.txt outro.txt > book.txt",
   "description": "Given **multiple file arguments**, `cat` prints them back-to-back in the order you listed them — literal concatenation. Combined with `>` redirection, this is a common way to stitch fragments together into a single file. The source files are never modified.",
   "predict": true,
-  "predictPrompt": "Three fragments are listed in order. What will `book.txt` contain after running this?",
+  "predictPrompt": "Three fragments are listed in order. What will `book.txt` contain after running this? Write out your expected output by cooping lines from the intput. Then run the command to check your answer.",
   "input": {
     "files": [
       { "name": "intro.txt",    "content": "== Preface ==\nWelcome.\n" },
@@ -483,7 +483,7 @@ These commands do not modify the filesystem tree — they transform **streams of
   "command": "grep ERROR log.txt",
   "description": "`grep` prints each line of the file (or stdin) that matches the given pattern. Lines that don't match are silently dropped. The exit code is `0` if at least one match was found, `1` if nothing matched, and `2` on error.",
   "predict": true,
-  "predictPrompt": "Before running: which lines from log.txt do you expect to see on stdout? (Write them out by coping lines from the input)",
+  "predictPrompt": "Before running: which lines from log.txt do you expect to see on stdout? Write them out by coping lines from the input. Then run the command to check your answer.",
   "input": {
     "files": [
       { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done" }
@@ -672,7 +672,7 @@ These commands do not modify the filesystem tree — they transform **streams of
   "command": "cut -d: -f1 /etc/passwd",
   "description": "Splits each line on the delimiter given by **`-d`** and prints the field(s) chosen by **`-f`**. Here `-d:` splits on colons and `-f1` prints the first field — the usernames from the password file. `-f1,3` would print fields 1 and 3; `-f1-3` prints fields 1 through 3.",
   "predict": true,
-  "predictPrompt": "Given the file below, what will stdout contain?",
+  "predictPrompt": "Given the file below, what will stdout contain? Write your prediction. Then run the command to check your answer.",
   "input": {
     "files": [
       { "name": "/etc/passwd", "content": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nalice:x:1000:1000:Alice:/home/alice:/bin/bash" }
