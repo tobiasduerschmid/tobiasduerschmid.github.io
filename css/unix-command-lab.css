@@ -341,16 +341,14 @@ html.dark-mode .unix-lab__prediction-show pre,
 html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
 
 /* --- Prediction-matches-actual badge (positive reinforcement only) --- */
-/* The three --match-flash-* CSS variables drive the keyframe animation so
-   the same keyframe works in both light and dark mode. Dark mode overrides
-   these variables further down; that's the whole trick. */
+/* Static styling only — the amber burst (.unix-lab__burst) provides the
+   "something just appeared" cue, and a confetti spray handles the
+   celebration. We previously also animated bg-color and box-shadow here,
+   but that keyframe competed with the amber burst for the box-shadow
+   property, producing a muddy grey flash at the cross-over frames. */
 .unix-lab__prediction-show--match {
-  --match-flash-start: #c7e8d2;
-  --match-flash-mid:   #d9edde;
-  --match-flash-end:   #e6f4ea;
-  background-color: var(--match-flash-end);
+  background-color: #e6f4ea;
   border-color: #b6e0c4;
-  animation: unix-lab-match-flash 700ms ease-out 1;
 }
 .unix-lab__prediction-show--match .unix-lab__prediction-label,
 .unix-lab__prediction-show--match pre { color: #1a7d5a; }
@@ -378,11 +376,6 @@ html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
 }
 .unix-lab__match-label { line-height: 1.2; }
 
-@keyframes unix-lab-match-flash {
-  0%   { background-color: var(--match-flash-start); box-shadow: 0 0 0 0 rgba(26, 125, 90, 0.45); }
-  60%  { background-color: var(--match-flash-mid);   box-shadow: 0 0 0 8px rgba(26, 125, 90, 0); }
-  100% { background-color: var(--match-flash-end);   box-shadow: 0 0 0 0 rgba(26, 125, 90, 0); }
-}
 @keyframes unix-lab-match-pop {
   0%   { transform: scale(0.6) translateY(6px); opacity: 0; }
   60%  { transform: scale(1.08) translateY(0);  opacity: 1; }
@@ -414,6 +407,97 @@ html.dark-mode .unix-lab__prediction-match {
   background-color: #1c2533;
   border-color: rgba(74, 222, 128, 0.35);
   color: #4ade80;
+}
+
+/* --- Amber reveal burst -----------------------------------------------
+   CSS-driven (rather than JS) so the first frame paints with full
+   intensity immediately — earlier the JS setInterval had a one-frame gap
+   before the first paint, which read as a small "delay" before the glow
+   appeared. A solid amber ring (spread, no blur) as the peak keeps the
+   colour unambiguous on any background — on light pages the thin
+   translucent glows were blending to a grey/beige halo; the solid ring
+   reads as pure amber regardless. */
+.unix-lab__burst {
+  animation: unix-lab-burst 900ms cubic-bezier(0.25, 0.8, 0.35, 1) 1;
+}
+@keyframes unix-lab-burst {
+  0%, 18% {
+    box-shadow:
+      0 0 0 2px rgba(255, 200,  28, 0.95),
+      0 0 6px 1px rgba(255, 228,  64, 0.85),
+      0 0 22px 4px rgba(255, 170,   0, 0.45);
+  }
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(255, 200,  28, 0),
+      0 0 6px 1px rgba(255, 228,  64, 0),
+      0 0 22px 4px rgba(255, 170,   0, 0);
+  }
+}
+
+/* --- Confetti for the "Nailed it" celebration --------------------------
+   When a prediction matches, we fire ~36 small rotating paper pieces from
+   random points on the prediction panel's *perimeter*, bursting outward
+   along the edge normal with tangential scatter. Each piece is its own
+   div with inline per-piece custom props: `--tx` / `--ty` / `--rot` set
+   the target; size/shape/colour/border-radius are randomised in JS so
+   the burst contains mixed strips, squares, and rounds — the visual
+   variety that makes it read as "paper confetti" rather than uniform
+   rectangles.
+
+   The host element is position:fixed and sized to the anchor's rect so
+   pieces can start on the border and escape the card's contain bounds. */
+.unix-lab__confetti {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+}
+.unix-lab__confetti-piece {
+  position: absolute;
+  /* Shape defaults — JS overrides width/height/border-radius per piece. */
+  width: 10px;
+  height: 14px;
+  margin-left: -5px;
+  margin-top: -7px;
+  /* Two-sided paper illusion via rotateY animation + a soft edge shadow. */
+  box-shadow: 0 1px 1px rgba(0,0,0,0.15);
+  transform: translate(0, 0) rotate(0) rotateY(0) scale(0.5);
+  opacity: 0;
+  animation: unix-lab-confetti-fly 1600ms ease-out forwards;
+}
+/* Smooth parabolic trajectory with five sampled waypoints. The piece
+   bursts outward-and-slightly-up, reaches apex, then falls under
+   "gravity" (ty + a 220px drop) while continuing to tumble. Multiple
+   close waypoints keep the motion fluid — earlier only 3 frames gave
+   visible jumps at the transitions. */
+@keyframes unix-lab-confetti-fly {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg) rotateY(0deg) scale(0.5);
+    opacity: 0;
+  }
+  6% { opacity: 1; }
+  25% {
+    transform: translate(calc(var(--tx) * 0.55), calc(var(--ty) * 0.7 - 18px)) rotate(calc(var(--rot) * 0.25)) rotateY(180deg) scale(1);
+  }
+  45% {
+    transform: translate(calc(var(--tx) * 0.9), calc(var(--ty) * 0.95 - 8px)) rotate(calc(var(--rot) * 0.55)) rotateY(360deg) scale(1);
+  }
+  65% {
+    transform: translate(var(--tx), calc(var(--ty) + 40px)) rotate(calc(var(--rot) * 0.8)) rotateY(560deg) scale(1);
+    opacity: 1;
+  }
+  88% {
+    transform: translate(calc(var(--tx) + var(--drift, 0px)), calc(var(--ty) + 150px)) rotate(calc(var(--rot) * 0.95)) rotateY(800deg) scale(0.95);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--tx) + var(--drift, 0px)), calc(var(--ty) + 220px)) rotate(var(--rot)) rotateY(960deg) scale(0.85);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .unix-lab__burst, .unix-lab__confetti-piece { animation: none; }
+  .unix-lab__confetti { display: none; }
 }
 
 @media print {

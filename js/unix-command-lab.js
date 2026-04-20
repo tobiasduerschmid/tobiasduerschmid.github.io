@@ -280,45 +280,94 @@
   // yellow-rising-falling drop-shadow on changed rows. Keeps the two labs
   // visually coherent.
   // ---------------------------------------------------------------------------
-  var BURST_MS = 900;
-  var PEAK_HOLD = 0.18;  // Hold at full intensity for the first 18% of the
-                         // duration, then decay. No rise phase — the burst
-                         // needs to be visible instantly when the panel
-                         // appears, otherwise the first ~200ms of ramp-up
-                         // reads as "delay" or "washed-out grey".
-  // Three-layer amber glow. No white inner ring (which made the burst look
-  // grey on light backgrounds). Three progressively-dimmer yellows at
-  // different radii read clearly on both the light-mode near-white page
-  // and the dark-mode near-black page.
+  // Amber reveal burst — CSS-driven (see `.unix-lab__burst` in the
+  // stylesheet). The animation starts frame-perfect with no JS setInterval
+  // lag, and the box-shadow values are hard-coded in the @keyframes so
+  // they can't blend to grey at intermediate alphas. Re-triggering the
+  // animation on subsequent clicks requires a class-clear + forced-reflow
+  // dance; the `animationend` cleanup keeps the class list tidy.
   function burstPanel(panel) {
-    // Paint the first frame synchronously so the glow appears in the same
-    // paint as the panel itself — no one-frame delay.
-    function draw(i) {
-      var r1 = (3 * i).toFixed(2);
-      var r2 = (9 * i).toFixed(2);
-      var r3 = (18 * i).toFixed(2);
-      var a1 = (0.95 * i).toFixed(3);
-      var a2 = (0.85 * i).toFixed(3);
-      var a3 = (0.65 * i).toFixed(3);
-      panel.style.boxShadow =
-        '0 0 ' + r1 + 'px rgba(255,228,64,' + a1 + '), ' +
-        '0 0 ' + r2 + 'px rgba(255,200,28,' + a2 + '), ' +
-        '0 0 ' + r3 + 'px rgba(255,170,0,' + a3 + ')';
+    if (!panel) return;
+    panel.classList.remove('unix-lab__burst');
+    void panel.offsetWidth;  // force layout flush so the animation re-fires
+    panel.classList.add('unix-lab__burst');
+    var onEnd = function () {
+      panel.classList.remove('unix-lab__burst');
+      panel.removeEventListener('animationend', onEnd);
+    };
+    panel.addEventListener('animationend', onEnd);
+  }
+
+  // Confetti spray on a correct prediction. ~36 small rotating coloured
+  // rectangles spawn on random points along the prediction panel's
+  // *perimeter* (not its centre) and fly outward along the edge's normal
+  // with tangential jitter — so the whole panel appears to burst open
+  // around its rim. Pure CSS motion; this function just positions each
+  // piece and stamps its target as `--tx` / `--ty` / `--rot`.
+  function spawnConfetti(anchor) {
+    if (!anchor || !anchor.getBoundingClientRect) return;
+    var rect = anchor.getBoundingClientRect();
+    var host = document.createElement('div');
+    host.className = 'unix-lab__confetti';
+    host.style.left = rect.left + 'px';
+    host.style.top = rect.top + 'px';
+    host.style.width = rect.width + 'px';
+    host.style.height = rect.height + 'px';
+
+    var colors = ['#ff5252', '#ffeb3b', '#4ade80', '#4a9fd9', '#e0b24e', '#f1948a', '#b18ef0', '#ffffff'];
+    // Mixed shape palette: strips (tall narrow), squares, and rounds.
+    // Strips are weighted higher because real confetti is mostly strips.
+    var shapes = ['strip', 'strip', 'strip', 'square', 'round'];
+    var count = 36;
+    var perimeter = 2 * (rect.width + rect.height);
+    for (var i = 0; i < count; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'unix-lab__confetti-piece';
+
+      // Pick a position along the perimeter (uniform). Then figure out the
+      // starting (x, y) on the border and the outward normal direction.
+      var pos = Math.random() * perimeter;
+      var x, y, nx, ny;
+      if (pos < rect.width)                            { x = pos;                                y = 0;               nx = 0;  ny = -1; }
+      else if (pos < rect.width + rect.height)         { x = rect.width;                         y = pos - rect.width; nx = 1;  ny = 0;  }
+      else if (pos < 2 * rect.width + rect.height)     { x = rect.width - (pos - rect.width - rect.height); y = rect.height; nx = 0; ny = 1; }
+      else                                             { x = 0;                                  y = rect.height - (pos - 2 * rect.width - rect.height); nx = -1; ny = 0; }
+
+      piece.style.left = x + 'px';
+      piece.style.top  = y + 'px';
+
+      // Shape variety — strips, squares, rounds. Randomise size inside
+      // each category so even same-shape pieces differ a bit.
+      var shape = shapes[Math.floor(Math.random() * shapes.length)];
+      var w, h, br;
+      if (shape === 'strip')      { w = 4 + Math.random() * 3; h = 10 + Math.random() * 8;  br = 1; }
+      else if (shape === 'square'){ w = 8 + Math.random() * 4; h = 8 + Math.random() * 4;   br = 2; }
+      else                        { w = 7 + Math.random() * 5; h = w;                        br = 999; }
+      piece.style.width = w.toFixed(1) + 'px';
+      piece.style.height = h.toFixed(1) + 'px';
+      piece.style.marginLeft = (-w / 2).toFixed(1) + 'px';
+      piece.style.marginTop  = (-h / 2).toFixed(1) + 'px';
+      piece.style.borderRadius = br + 'px';
+
+      // Fly outward along the normal with some tangential scatter.
+      var distance = 60 + Math.random() * 90;
+      var tangential = (Math.random() - 0.5) * 80;
+      var tx = nx * distance + (nx === 0 ? tangential : 0);
+      var ty = ny * distance + (ny === 0 ? tangential : 0);
+      var rot = Math.random() * 720 - 360;
+      var drift = (Math.random() - 0.5) * 60;   // Final lateral drift
+      piece.style.setProperty('--tx', tx.toFixed(1) + 'px');
+      piece.style.setProperty('--ty', ty.toFixed(1) + 'px');
+      piece.style.setProperty('--rot', rot.toFixed(0) + 'deg');
+      piece.style.setProperty('--drift', drift.toFixed(1) + 'px');
+      piece.style.backgroundColor = colors[i % colors.length];
+      piece.style.animationDelay = (Math.random() * 70) + 'ms';
+      // Slight duration variance so the fall de-syncs.
+      piece.style.animationDuration = (1500 + Math.random() * 400) + 'ms';
+      host.appendChild(piece);
     }
-    draw(1);
-    var start = (window.performance && performance.now) ? performance.now() : Date.now();
-    var timer = setInterval(function () {
-      var now = (window.performance && performance.now) ? performance.now() : Date.now();
-      var p = (now - start) / BURST_MS;
-      if (p >= 1) { panel.style.boxShadow = ''; clearInterval(timer); return; }
-      var i;
-      if (p < PEAK_HOLD) i = 1;
-      else {
-        var q = (p - PEAK_HOLD) / (1 - PEAK_HOLD);
-        i = 1 - (q * q);  // ease-out quadratic decay
-      }
-      draw(i);
-    }, 16);
+    document.body.appendChild(host);
+    setTimeout(function () { if (host.parentNode) host.parentNode.removeChild(host); }, 1700);
   }
 
   // ---------------------------------------------------------------------------
@@ -498,6 +547,9 @@
               '<span class="unix-lab__match-label">Nailed it — your prediction matches ' +
               escapeHtml(matchTarget) + '</span>';
             pShow.appendChild(match);
+            // Confetti celebration! Fire once the panel is in the DOM so
+            // getBoundingClientRect returns its actual position.
+            setTimeout(function () { spawnConfetti(pShow); }, 0);
           }
 
           outCol.appendChild(pShow);

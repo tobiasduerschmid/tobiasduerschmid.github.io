@@ -506,17 +506,19 @@ These commands do not modify the filesystem tree — they transform **streams of
 <script type="application/json">
 {
   "command": "grep a.b names.txt",
-  "description": "The student wants lines containing the literal string `a.b`. But `.` is a regex metacharacter meaning \"any single character\" — so the pattern matches `aab`, `axb`, `a3b`, etc. Use `grep -F 'a.b'` for a fixed (literal) string, or escape the dot with `grep 'a\\.b'`.",
+  "description": "The student wants lines containing the literal string `a.b`. But `.` is a regex metacharacter meaning \"any **single** character\" — so the pattern matches `aab`, `axb`, `a3b`, etc. Use `grep -F 'a.b'` for a fixed (literal) string, or escape the dot with `grep 'a\\.b'`.",
+  "predict": true,
+  "predictPrompt": "Which lines of `names.txt` will `grep a.b` print? Remember `.` matches *exactly one* character — not a dot, and not a run.",
   "input": {
     "files": [
-      { "name": "names.txt", "content": "alice\naab\naxb\naab-extra\naleph.bet\nfoobar" }
+      { "name": "names.txt", "content": "alice\naab\naxb\na3b\naab-extra\naleph.bet\nfoobar" }
     ]
   },
   "output": {
-    "stdout": "aab\naxb\naab-extra\naleph.bet",
+    "stdout": "aab\naxb\na3b\naab-extra",
     "exit": 0
   },
-  "notice": "`aleph.bet` matches because `a`+any-char+`b` appears inside it. Quote patterns (`grep 'a\\.b'`) or use `-F` for fixed strings."
+  "notice": "`aab`, `axb`, `a3b`, and `aab-extra` all contain an `a` followed by a *single* character followed by `b`. **`aleph.bet` does NOT match** — between the `a` and the `b` there are five characters (`leph.`), and `.` in the regex only stands in for one. Quote patterns (`grep 'a\\.b'`) or use `-F` for fixed strings to avoid accidental regex matches."
 }
 </script>
 </div>
@@ -549,6 +551,8 @@ These commands do not modify the filesystem tree — they transform **streams of
 {
   "command": "sed 's/ERROR/FAIL/' log.txt",
   "description": "`sed` applies an editing script to each line of its input. `s/ERROR/FAIL/` replaces the **first** occurrence of `ERROR` on each line with `FAIL`. Add a trailing `g` (`s/ERROR/FAIL/g`) to replace **all** occurrences on each line. The original file is **not** modified — `sed` writes the transformed stream to stdout. Use `-i` for in-place editing.",
+  "predict": true,
+  "predictPrompt": "What does stdout look like after `s/ERROR/FAIL/` runs on every line of `log.txt`?",
   "input": {
     "files": [
       { "name": "log.txt", "content": "08:01 ERROR disk full\n08:03 ERROR timeout" }
@@ -569,6 +573,8 @@ These commands do not modify the filesystem tree — they transform **streams of
 {
   "command": "sed 's/$user/guest/' log.txt",
   "description": "The student has `user=\"alice\"` in their shell and expects `sed` to substitute `alice` for `guest`. But **single quotes** prevent the shell from expanding `$user` — `sed` literally searches for the four characters `$user`. Since no line contains `$user`, nothing is replaced. Use double quotes (`sed \"s/$user/guest/\"`) when you need variable expansion.",
+  "predict": true,
+  "predictPrompt": "`$user` is `alice` in the shell environment. What do you think stdout will show — and how many lines get replaced?",
   "input": {
     "env": [
       { "name": "user", "value": "alice" }
@@ -611,6 +617,8 @@ These commands do not modify the filesystem tree — they transform **streams of
 {
   "command": "sort names.txt",
   "description": "Sorts its input alphabetically, line by line. Add **`-n`** for numeric order (otherwise `10` sorts before `2`), **`-r`** to reverse, **`-u`** to also drop duplicates. Works on stdin if no file argument is given.",
+  "predict": true,
+  "predictPrompt": "Write the lines of `names.txt` in the order `sort` will print them.",
   "input": {
     "files": [
       { "name": "names.txt", "content": "charlie\nalice\nbob\nalice" }
@@ -675,6 +683,8 @@ These commands do not modify the filesystem tree — they transform **streams of
 {
   "command": "wc -l log.txt",
   "description": "Counts **lines, words, and characters** by default. **`-l`** shows just the line count, **`-w`** the word count, **`-c`** the byte count. Pedantic detail: `wc -l` counts **newline characters** — a file whose last line has no trailing newline reports one fewer line than you might expect.",
+  "predict": true,
+  "predictPrompt": "How many lines does `log.txt` have? (Including the format — `wc -l` prints the number *and* the filename.)",
   "input": {
     "files": [
       { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done\n" }
@@ -717,6 +727,8 @@ These commands do not modify the filesystem tree — they transform **streams of
 {
   "command": "cut -d ' ' -f 2 log.txt",
   "description": "The student wants the second \"column\" of a space-separated log file. But `cut` treats **every single space** as a delimiter. When fields are separated by *runs* of spaces, there are empty fields between them — so `-f 2` is the empty string for most lines. Use `awk '{print $2}'` instead: awk collapses runs of whitespace by default.",
+  "predict": true,
+  "predictPrompt": "The student expects `INFO`, `ERROR`, `INFO` — one level per line. Do you agree, or will something else happen? Write your prediction.",
   "input": {
     "files": [
       { "name": "log.txt", "content": "08:00  INFO  start\n08:01  ERROR disk\n08:02  INFO  retry" }
@@ -800,6 +812,8 @@ These commands do not modify the filesystem tree — they transform **streams of
 {
   "command": "awk '{print $2, $1}' names.txt",
   "description": "`awk` runs its program once per input line. `$1`, `$2`, … are the whitespace-separated fields (collapsing runs of whitespace by default, unlike `cut -d ' '`). This program swaps field order and prints them separated by a space. **`-F:`** changes the field separator.",
+  "predict": true,
+  "predictPrompt": "`{print $2, $1}` prints the second field, then the first, on every line. What does stdout look like?",
   "input": {
     "files": [
       { "name": "names.txt", "content": "alice Lovelace\nada King\ngrace Hopper" }
