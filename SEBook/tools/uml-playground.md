@@ -51,7 +51,6 @@ Edit the diagram spec on the left and see the rendered SVG update live on the ri
   margin: 1.5em 0;
   border: 1px solid #c8d4e8;
   border-radius: 6px;
-  overflow: hidden;
   font-family: inherit;
 }
 
@@ -353,16 +352,16 @@ body.dark-mode #uml-pg-status {
       '  B "Add README"',
       '  C "Release 1.0"',
       '  D "Add logging support"',
-      '  E "Merge feature/parser"',
+      '  E merge feature/parser "Merge feature/parser"',
       '',
-      'branch feature/parser from D:',
-      '  F "Wire parser into build"',
+      'branch feature/parser from C:',
+      '  F "Add tokenizer"',
       '  G "Add error recovery"',
-      '  H "Add tokenizer"',
+      '  H "Wire parser into build"',
       '',
-      'branch experiment from H:',
-      '  I "Try aggressive inlining"',
-      '  J "Add experimental optimization"',
+      'branch experiment from C:',
+      '  I "Add experimental optimization"',
+      '  J "Try aggressive inlining"',
       '',
       'head main',
       '@enduml'
