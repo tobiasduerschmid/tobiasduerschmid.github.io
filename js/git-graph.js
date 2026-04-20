@@ -97,7 +97,110 @@
     this._animating = false;
     this._arrowId = 'git-graph-arrow-' + (++_instanceCounter);
     this._paddingLeft = PADDING_LEFT;
+    // Pre-reserved layout dimensions — set by `reserveForStates` so the
+    // first render already knows the widest left padding, widest SVG
+    // width, and tallest workbench any future state will need. See that
+    // method for rationale.
+    this._reservedPaddingLeft = 0;
+    this._reservedMaxW        = 0;
+    this._reservedWorkbenchH  = 0;
   }
+
+  // Pre-compute the layout dimensions this graph will need across EVERY
+  // state the lab will transition through, so the first render already
+  // reserves the max-ever left padding and the max-ever workbench height.
+  //
+  // Without this, the first user interaction that moves HEAD to a
+  // longer-named branch (git switch / git switch -c), drops a commit so
+  // HEAD re-attaches (git rebase -i), or introduces workbench rows in a
+  // previously-empty zone (git add -A from a clean start) would:
+  //   - recompute a larger `_paddingLeft` and shift every node `cx` right,
+  //     which glides smoothly via the CSS transform transition but still
+  //     reads as "the whole graph is moving when only the labels should"; or
+  //   - grow the workbench's min-height pin, pushing the SVG and
+  //     everything below it down in a one-time jolt that doesn't recur
+  //     on later clicks (because the pin is now at max).
+  //
+  // `reserveForStates` eliminates both by running `_layout` on every
+  // candidate state to discover the widest paddingLeft, and by rendering
+  // each state's workbench into a hidden probe to measure its height.
+  // The max of each is stored and honoured by `_layout` and
+  // `_lockWorkbenchHeight` going forward.
+  //
+  // Cheap to call: `_layout` is pure data work (no DOM), the probe reuses
+  // a single element per call, and the whole pass happens once per lab at
+  // init. Safe to call more than once — later calls only grow the
+  // reservations, never shrink them.
+  GitGraph.prototype.reserveForStates = function (states) {
+    if (!states || !states.length) return;
+
+    // Temporarily clear the reservations so each state's per-state pass
+    // reads its own need. We restore/grow them after the loop.
+    var prevReservedPadding = this._reservedPaddingLeft || 0;
+    var prevReservedMaxW    = this._reservedMaxW        || 0;
+    this._reservedPaddingLeft = 0;
+    this._reservedMaxW        = 0;
+    var maxPadding = PADDING_LEFT;
+    var maxW = 0;
+    for (var i = 0; i < states.length; i++) {
+      var st = states[i];
+      if (!st || !st.commits || !st.commits.length) continue;
+      this._layout(st);
+      if (this._paddingLeft > maxPadding) maxPadding = this._paddingLeft;
+      // Width this state would produce under the (current) paddingLeft.
+      // We compute against the per-state padding now, then re-evaluate
+      // after the reservation is finalized below so the final reserved
+      // width is self-consistent with the final reserved paddingLeft.
+      var rawW = this._paddingLeft + (this._colCount - 1) * COL_WIDTH
+        + NODE_RADIUS + 54 + this._maxMessagePx(st.commits) + 24;
+      if (rawW > maxW) maxW = rawW;
+    }
+    this._reservedPaddingLeft = Math.max(maxPadding, prevReservedPadding);
+    this._reservedMaxW        = Math.max(maxW, prevReservedMaxW);
+    // Re-run layout on each state with the final reserved paddingLeft so
+    // any state whose width is driven by paddingLeft (not message text)
+    // also contributes to the reserved max width. This matters when one
+    // state has the widest labels and another has the widest messages.
+    for (var k = 0; k < states.length; k++) {
+      var sk = states[k];
+      if (!sk || !sk.commits || !sk.commits.length) continue;
+      this._layout(sk);  // uses the now-reserved paddingLeft
+      var wk = this._paddingLeft + (this._colCount - 1) * COL_WIDTH
+        + NODE_RADIUS + 54 + this._maxMessagePx(sk.commits) + 24;
+      if (wk > this._reservedMaxW) this._reservedMaxW = wk;
+    }
+
+    // Workbench: render each state's workbench markup into a hidden probe
+    // attached to `this.container` so CSS selectors match (dark-mode rules,
+    // `.git-command-lab__graph .git-workbench`, etc.). `visibility: hidden
+    // + position: absolute` lifts it out of layout flow — it takes no
+    // visible space, doesn't move siblings, but still computes a real
+    // layout height we can read.
+    if (!this.container || typeof GitGraph.renderWorkbench !== 'function') return;
+    var containerW = this.container.clientWidth || 0;
+    if (containerW <= 0) return;  // container not yet laid out — skip; fall back to runtime lock
+    var probe = document.createElement('div');
+    probe.className = 'git-command-lab__graph';
+    probe.style.cssText =
+      'visibility:hidden;position:absolute;left:-99999px;top:0;' +
+      'width:' + containerW + 'px;pointer-events:none;';
+    this.container.appendChild(probe);
+    var maxWbH = this._reservedWorkbenchH || 0;
+    try {
+      for (var j = 0; j < states.length; j++) {
+        var sj = states[j];
+        if (!sj || !sj.workingTree) continue;
+        probe.innerHTML = GitGraph.renderWorkbench(sj);
+        var wbProbe = probe.querySelector('.git-workbench');
+        if (!wbProbe) continue;
+        var h = wbProbe.getBoundingClientRect().height;
+        if (h > maxWbH) maxWbH = h;
+      }
+    } finally {
+      if (probe.parentNode) probe.parentNode.removeChild(probe);
+    }
+    this._reservedWorkbenchH = maxWbH;
+  };
 
   // ---------------------------------------------------------------------------
   // Parse git log + branch output into structured data
@@ -120,13 +223,13 @@
   };
   var STATUS_SHORT_MAP = { 'M': 'modified', 'A': 'new file', 'D': 'deleted', 'R': 'renamed', 'T': 'typechange', 'U': 'unmerged' };
 
-  // Single-letter commit IDs (A, B, C… or A', B'…) used in command labs need
-  // a larger font so the label fills the node; real hashes use a smaller size.
+  // Short commit IDs (1–2 chars: A, B', ¬A…) used in command labs need a
+  // larger font so the label fills the node; real hashes use a smaller size.
   // shortHash is the trimmed form ("A", "D'", "a3f2…") so we check that, not
   // the raw 40-char hash (which was always length 40 and never matched before).
   function _hashDisplay(shortHash) {
-    var single = shortHash.length === 1 || (shortHash.length === 2 && shortHash[1] === "'");
-    return { text: shortHash, fontSize: single ? 18 : 11, dy: single ? 7 : 5 };
+    var big = shortHash.length <= 2;
+    return { text: shortHash, fontSize: big ? 18 : 11, dy: big ? 7 : 5 };
   }
 
   function _normalizeFileEntry(entry) {
@@ -520,7 +623,16 @@
       }
       minPaddingLeft = Math.max(minPaddingLeft, leftNeeded);
     }
-    this._paddingLeft = minPaddingLeft;
+    // Use the max of this state's own need and the reservation made by
+    // `reserveForStates` (if the caller pre-announced every state the lab
+    // will transition through). Without this, a `git switch` / `git switch
+    // -c` or `git rebase -i (drop)` that changes which branch HEAD is
+    // attached to — or which col-0 branch labels exist — would recompute a
+    // different `_paddingLeft`, and every node's `cx` would shift
+    // horizontally even though the commits haven't moved. The shift would
+    // glide smoothly via the CSS transform transition but was still
+    // visible as "the main graph moves while only the labels should".
+    this._paddingLeft = Math.max(minPaddingLeft, this._reservedPaddingLeft || 0);
 
     var rightLabelSpace = 0;
     var lastColX = this._paddingLeft + colCount * COL_WIDTH;
@@ -868,23 +980,29 @@
     }, _CANVAS_DURATION_MS + 80);
   };
 
-  // Pin the workbench's min-height to the LARGEST height it's ever had.
-  // The workbench panel sits above the SVG in the flex container, so any
-  // time a row is added (undo restore) or removed (commit / add / stash)
-  // its natural height changes, which pulls the SVG below it up or down
-  // and feels like a jolt on every click. Pinning to the max-ever means
-  // the panel can grow (if a new state introduces more rows) but never
-  // shrink, so once the user has clicked through the lab a few times the
-  // workbench has reached its full extent and the SVG stays pinned to a
-  // fixed Y. Empty space in a collapsed zone reads as "this zone is
-  // clear" — which is exactly what git status would show too.
+  // Pin the workbench's min-height to the LARGEST height it will ever need
+  // across every state the lab transitions through. The panel sits above
+  // the SVG in the graph host, so any time a row is added or removed its
+  // natural height changes, which pulls the SVG below it up or down and
+  // feels like a jolt on every click. Pinning to max-across-all-states
+  // from the VERY FIRST render means the first click never grows the pin
+  // — without this, `git add -A` and similar transitions that introduce
+  // rows on the first press would grow the workbench once then stay
+  // pinned, producing a one-time visible jolt only on the first press.
+  //
+  // The reserved height comes from `reserveForStates`, which measures
+  // each state's workbench by rendering it into an off-layout probe. If
+  // the caller didn't reserve, we fall back to growing the pin on demand
+  // (the old max-ever behaviour) so this method is still correct in
+  // isolation.
   GitGraph.prototype._lockWorkbenchHeight = function () {
     var wb = this.container && this.container.querySelector('.git-workbench');
     if (!wb) return;
-    var h = wb.getBoundingClientRect().height;
-    if (h <= 0) return;
+    var natural = wb.getBoundingClientRect().height;
+    if (natural <= 0) return;
+    var target = Math.max(natural, this._reservedWorkbenchH || 0);
     var curPin = parseFloat(wb.style.minHeight) || 0;
-    if (h > curPin) wb.style.minHeight = h + 'px';
+    if (target > curPin) wb.style.minHeight = target + 'px';
   };
 
   // ---------------------------------------------------------------------------
@@ -905,8 +1023,19 @@
   };
 
   GitGraph.prototype._computeDimensions = function (data) {
+    var rawW = this._paddingLeft + (this._colCount - 1) * COL_WIDTH
+      + NODE_RADIUS + 54 + this._maxMessagePx(data.commits) + 24;
+    // Width pinned to the max-ever across all reserved states. This keeps
+    // the SVG's intrinsic width constant across transitions, which matters
+    // when the graph host is narrower than the graph: under CSS
+    // `max-width: 100%; height: auto` the browser applies a scale factor
+    // `containerW / intrinsicW` to every internal coordinate, so varying
+    // intrinsic width would shift every node's pixel x-position. By
+    // pinning the widest intrinsic size, the scale factor stays constant
+    // and nodes don't drift horizontally on transitions that only add or
+    // drop commits.
     return {
-      width: this._paddingLeft + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(data.commits) + 24,
+      width: Math.max(rawW, this._reservedMaxW || 0),
       height: PADDING_TOP + (data.commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM,
     };
   };

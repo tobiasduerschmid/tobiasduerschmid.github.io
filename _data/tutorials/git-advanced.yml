@@ -728,7 +728,7 @@ steps:
       "command": "git cherry-pick hotfix-parse",
       "description": "A different scenario to reinforce the pattern: `hotfix-parse` has one critical `Fix parse` commit the team wants on `main` *without* dragging along the WIP `Try tokens` commit below it.\n\n`H'` lands on `main` with the same patch as `H` but a new parent → new SHA. `hotfix-parse` is untouched. Same mechanic you'll apply to your `experimental` branch in the hands-on task.",
       "before": {
-        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add parser|\nA000000000000000000000000000000000000000||Init|\nH000000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix parse|hotfix-parse\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Try tokens (WIP)|",
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|HEAD -> main\nH000000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix parse|hotfix-parse\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Try tokens (WIP)|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add parser|\nA000000000000000000000000000000000000000||Init|",
         "branches": "* main\n  hotfix-parse",
         "head": "refs/heads/main",
         "highlights": {
@@ -736,7 +736,7 @@ steps:
         }
       },
       "after": {
-        "log": "H'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Fix parse|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add parser|\nA000000000000000000000000000000000000000||Init|\nH000000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix parse|hotfix-parse\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Try tokens (WIP)|",
+        "log": "H'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Fix parse|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor|\nH000000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix parse|hotfix-parse\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Try tokens (WIP)|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add parser|\nA000000000000000000000000000000000000000||Init|",
         "branches": "* main\n  hotfix-parse",
         "head": "refs/heads/main",
         "highlights": {
@@ -1155,65 +1155,71 @@ steps:
     <div data-git-command-lab-multi>
     <script type="application/json">
     {
-      "description": "Different scenario from the hands-on: a regression in `sort()` hides somewhere in the last 5 commits. Bisect pinpoints it in **just 2 tests** (log₂(5) ≈ 2.3).\n\n**Watch the HEAD label.** Git picks the commit whose *ancestors in range* ≈ *descendants in range* — the balanced midpoint. Your verdict halves the remaining range each time. You will apply this same algorithm below on the calculator `absolute` bug.",
+      "description": "Different scenario from the hands-on: a regression in `sort()` hides somewhere in the last 5 commits. Bisect pinpoints it in **just 2 tests** (log₂(5) ≈ 2.3).\n\n**Watch the labels.** Red = known bad, green = known good. `bisect/bad` and `bisect/good` refs mark the current boundaries. `HEAD` detaches to the midpoint Git wants you to test. You will apply this same algorithm below on the calculator `absolute` bug.",
       "initialState": {
         "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
         "branches": "* main",
-        "head": "refs/heads/main",
-        "highlights": {
-          "F000000000000000000000000000000000000000": "red",
-          "A000000000000000000000000000000000000000": "green"
-        }
+        "head": "refs/heads/main"
       },
       "steps": [
         {
           "command": "git bisect start HEAD HEAD~5",
-          "description": "Mark `HEAD` (F) **bad** and `HEAD~5` (A) **good**. Git prints:\n\n```\nBisecting: 2 revisions left to test after this (roughly 2 steps)\n```\n\nSuspects: {B, C, D, E, F} — 5 commits. Git picks the balanced midpoint: **D** (2 ancestors B,C; 2 descendants E,F). HEAD detaches to D.",
+          "description": "One-shot form: mark `HEAD` (F) **bad** and `HEAD~5` (A) **good** in a single command. Git prints:\n\n```\nBisecting: 2 revisions left to test after this (roughly 2 steps)\n```\n\nSuspects: {B, C, D, E, F} — 5 commits. Git picks the balanced midpoint **D** (2 ancestors B,C; 2 descendants E,F) and detaches HEAD to D for you to test.",
           "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main, bisect/bad\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|bisect/good",
             "branches": "  main",
-            "head": "D000000000000000000000000000000000000000",
+            "head": "detached",
             "highlights": {
-              "F000000000000000000000000000000000000000": "red",
-              "A000000000000000000000000000000000000000": "green",
-              "D000000000000000000000000000000000000000": "yellow"
+              "F000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
             }
           }
         },
         {
           "command": "./test_sort.sh  →  exit 1  →  git bisect bad",
-          "description": "Tests **fail** at D, so D is bad. Git prints:\n\n```\nBisecting: 1 revision left to test after this (roughly 1 step)\n```\n\nSuspects narrow to {B, C, D} — 3 commits. Midpoint: **C** (1 ancestor, 1 descendant). HEAD moves to C.",
+          "description": "Tests **fail** at D, so D is bad. `refs/bisect/bad` now points at D (the tighter bad boundary). Git prints:\n\n```\nBisecting: 1 revision left to test after this (roughly 1 step)\n```\n\nSuspects narrow to {B, C, D} — 3 commits. Midpoint **C**; HEAD moves there. E and F are now *inferred bad* (descendants of a bad D) — shown red even though you didn't test them.",
           "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|bisect/good",
             "branches": "  main",
-            "head": "C000000000000000000000000000000000000000",
+            "head": "detached",
             "highlights": {
-              "D000000000000000000000000000000000000000": "red",
-              "A000000000000000000000000000000000000000": "green",
-              "C000000000000000000000000000000000000000": "yellow"
+              "F000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "E000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "D000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
             }
           }
         },
         {
           "command": "./test_sort.sh  →  exit 0  →  git bisect good",
-          "description": "Tests **pass** at C. Now C good, D bad — adjacent, so the answer is pinned. Git prints:\n\n```\nD is the first bad commit\ncommit D…\n    Skip stable (BUG)\n```\n\nHEAD stays on C (last tested). Run `git show D` to read the culprit's full diff and message.",
+          "description": "Tests **pass** at C, so C is good. C (good) and D (bad) are now adjacent — the answer is pinned. Git prints:\n\n```\nD is the first bad commit\ncommit D…\n    Skip stable (BUG)\n```\n\nB is *inferred good* (ancestor of a good C). HEAD stays on C (last tested). Run `git show D` to read the culprit's full diff and message.",
           "state": {
-            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|bisect/bad\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|HEAD, bisect/good\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|bisect/good",
             "branches": "  main",
-            "head": "C000000000000000000000000000000000000000",
+            "head": "detached",
             "highlights": {
-              "D000000000000000000000000000000000000000": "red",
-              "C000000000000000000000000000000000000000": "green"
+              "F000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "E000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "D000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "C000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
+              "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
+              "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
             }
           }
         },
         {
           "command": "git bisect reset",
-          "description": "**Non-negotiable final step.** Re-attaches HEAD from the detached midpoint back to `main`, clearing `refs/bisect/*`. Skip it and your working tree looks mysteriously stale (HEAD stuck on C).",
+          "description": "**Non-negotiable final step.** Re-attaches `HEAD` from the detached midpoint back to `main` and deletes every `refs/bisect/*` ref. Skip it and your working tree looks mysteriously stale (HEAD stuck on C).\n\nThe diagram keeps D highlighted as a reminder of the culprit. In a real terminal, `git bisect log` captures the verdict — paste it into the PR description.",
           "state": {
             "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Lint|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Docs|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Skip stable (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add compare|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add sort|\nA000000000000000000000000000000000000000||Init|",
             "branches": "* main",
-            "head": "refs/heads/main"
+            "head": "refs/heads/main",
+            "highlights": {
+              "D000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+              "C000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
+              "B000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" },
+              "A000000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
+            }
           }
         }
       ]
@@ -1677,16 +1683,16 @@ steps:
       "description": "Different scenario from the hands-on: one commit accidentally **leaked an API token**; the next one added tests. `drop` removes the leak commit from branch history; `Add tests` replays as **T'** on top of the pre-leak tip. The dropped commit is **not deleted** — it lives in `.git/objects`, reachable via reflog until `git gc`.\n\nYou'll use the same `drop` verb on the `SECRET_API_KEY` commit in the hands-on.",
       "rebaseFile": "drop S Leak token\npick T Add tests\n\n# Rebase abc1234..T onto abc1234 (2 commands)\n#\n# Commands:\n# p, pick = use commit\n# d, drop = remove commit",
       "before": {
-        "log": "T000000000000000000000000000000000000000|S000000000000000000000000000000000000000|Add tests|HEAD -> feature-login\nS000000000000000000000000000000000000000|R000000000000000000000000000000000000000|Leak token|\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login feature|",
+        "log": "T000000000000000000000000000000000000000|S000000000000000000000000000000000000000|Add tests|HEAD -> feature-login\nS000000000000000000000000000000000000000|R000000000000000000000000000000000000000|Leak token|\nR000000000000000000000000000000000000000||Add login feature|",
         "branches": "* feature-login",
         "head": "refs/heads/feature-login",
         "highlights": {
-          "S000000000000000000000000000000000000000": { "color": "crimson" },
+          "S000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
           "T000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
         }
       },
       "after": {
-        "log": "T'00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Add tests|HEAD -> feature-login\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add login feature|",
+        "log": "T'00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Add tests|HEAD -> feature-login\nR000000000000000000000000000000000000000||Add login feature|",
         "branches": "* feature-login",
         "head": "refs/heads/feature-login",
         "highlights": {
@@ -2121,7 +2127,7 @@ steps:
         "branches": "* main",
         "head": "refs/heads/main",
         "highlights": {
-          "R000000000000000000000000000000000000000": { "color": "crimson" }
+          "R000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" }
         }
       },
       "after": {
@@ -2129,8 +2135,8 @@ steps:
         "branches": "* main",
         "head": "refs/heads/main",
         "highlights": {
-          "R000000000000000000000000000000000000000": { "color": "crimson" },
-          "¬R00000000000000000000000000000000000000": { "color": "green" }
+          "R000000000000000000000000000000000000000": { "color": "#C0392B", "secondary": "#fff" },
+          "¬R00000000000000000000000000000000000000": { "color": "#27AE60", "secondary": "#fff" }
         }
       }
     }

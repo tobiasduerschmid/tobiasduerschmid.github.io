@@ -196,6 +196,12 @@
     var afterData  = buildState(spec.after);
 
     var graph = new GitGraph(graphHost);
+    // Pre-reserve max left padding + max workbench height across the
+    // lab's two states, so the first click never shifts node `cx`
+    // horizontally (HEAD re-attaching to a longer-named branch) and
+    // never grows the workbench's min-height pin (a new zone acquiring
+    // rows). See GitGraph.prototype.reserveForStates.
+    graph.reserveForStates([beforeData, afterData]);
     graph.render(beforeData);
 
     var applied = false;
@@ -466,9 +472,24 @@
       printSection.appendChild(stepEl);
     }
 
-    addPrintStep('Initial state', buildState(spec.initialState, effectiveFiles[0]), effectiveDescs[0], true);
+    // Pre-build every state the lab will transition through and reserve
+    // the graph's layout dimensions for the union. This keeps the first
+    // click from shifting node `cx` (when HEAD re-attaches to a
+    // longer-named branch after `git switch -c` or a `git rebase -i`
+    // drop) and from growing the workbench's min-height pin (when a
+    // previously-empty zone acquires rows, e.g. the first `git add -A`
+    // in a step sequence). Without this, later clicks read smooth
+    // because the pins have reached their max — but the first click
+    // doesn't.
+    var allStates = [buildState(spec.initialState, effectiveFiles[0])];
+    for (var as = 0; as < steps.length; as++) {
+      allStates.push(buildState(steps[as].state, effectiveFiles[as + 1]));
+    }
+    graph.reserveForStates(allStates);
+
+    addPrintStep('Initial state', allStates[0], effectiveDescs[0], true);
     for (var si = 0; si < steps.length; si++) {
-      addPrintStep(steps[si].command, buildState(steps[si].state, effectiveFiles[si + 1]), effectiveDescs[si + 1], false);
+      addPrintStep(steps[si].command, allStates[si + 1], effectiveDescs[si + 1], false);
     }
 
     // ----- State update -----
@@ -500,11 +521,10 @@
 
       backBtn.disabled = isInitial;
 
-      var filesForStep = effectiveFiles[stepIdx + 1];
-      var st = isInitial
-        ? buildState(spec.initialState, filesForStep)
-        : buildState(steps[stepIdx].state, filesForStep);
-      graph.render(st);
+      // Reuse the pre-built state from `allStates` so we don't rebuild
+      // spec data on every click, and so the reservation pass and the
+      // render pass see the exact same object graph.
+      graph.render(allStates[stepIdx + 1]);
     }
 
     btn.addEventListener('click', function () {
