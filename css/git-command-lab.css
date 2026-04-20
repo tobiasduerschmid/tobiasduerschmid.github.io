@@ -161,8 +161,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   font-size: 10px;
   line-height: 1;
 }
@@ -178,11 +178,14 @@
   border-color: #b03a2e;
   box-shadow: 0 2px 6px rgba(176,58,46,0.14);
 }
+/* Icon BOX size (18×18) is now set on .git-command-lab__icon directly so
+   both play- and undo/restart-variants take the same vertical space — the
+   button's height no longer jumps by ~3px when toggling between the two
+   states, which was shifting the graph below it at click time. Only the
+   glyph font-size differs. */
 .git-command-lab__btn--undo .git-command-lab__icon,
 .git-command-lab__btn--restart .git-command-lab__icon {
   font-size: 17px;
-  width: 18px;
-  height: 18px;
 }
 
 .git-command-lab__btn .git-command-lab__cmd,

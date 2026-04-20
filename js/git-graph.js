@@ -70,29 +70,6 @@
   // same page (e.g. the 7-step print grid) don't collide on element ids.
   var _instanceCounter = 0;
 
-  // Pause perpetual animations (e.g. the HEAD glow's `pulse 2s infinite`) on
-  // off-screen graphs. Pages like SEBook/tools/git.md embed ~28 labs; without
-  // this, every card keeps the compositor hot forever, which drags the frame
-  // rate of whichever card the user is actually interacting with. rootMargin
-  // starts the animation slightly before the SVG scrolls into view so the
-  // resume is imperceptible.
-  var _offscreenObserver = null;
-  function _ensureOffscreenObserver() {
-    if (_offscreenObserver) return _offscreenObserver;
-    if (typeof IntersectionObserver === 'undefined') return null;
-    _offscreenObserver = new IntersectionObserver(function (entries) {
-      for (var i = 0; i < entries.length; i++) {
-        var e = entries[i];
-        if (e.isIntersecting) {
-          e.target.classList.remove('git-graph-svg--offscreen');
-        } else {
-          e.target.classList.add('git-graph-svg--offscreen');
-        }
-      }
-    }, { rootMargin: '200px' });
-    return _offscreenObserver;
-  }
-
   // Promote an element to its own compositor layer just before we mutate its
   // `transform` (which kicks in the CSS transition), then drop the hint once
   // the transition completes. Without this transient scoping, setting
@@ -119,6 +96,7 @@
     this._data = null;
     this._animating = false;
     this._arrowId = 'git-graph-arrow-' + (++_instanceCounter);
+    this._paddingLeft = PADDING_LEFT;
   }
 
   // ---------------------------------------------------------------------------
@@ -526,15 +504,31 @@
     // (any branch whose tip commit sits on col > 0).
     // We measure only the ADDITIONAL pixels beyond the last column's x — not the
     // full label width — so we don't over-inflate the message area.
-    var rightLabelSpace = 0;
-    var lastColX = PADDING_LEFT + colCount * COL_WIDTH;
     var PTR_D    = LABEL_HEIGHT / 2;   // 12
     var HEAD_W   = (4 * 8.5 + 18) + PTR_D; // "HEAD" label full width
+
+    // Compute minimum required left padding based on col-0 branch labels + HEAD.
+    // Formula: NODE_RADIUS + TIP_TO_NODE(4) + branchLabelW + HEAD_GAP(4) + headLabelW + margin(15)
+    var minPaddingLeft = PADDING_LEFT;
+    for (var lb = 0; lb < branches.length; lb++) {
+      var lbCommit = commitMap[branches[lb].hash];
+      if (!lbCommit || lbCommit.col !== 0) continue;
+      var lbW = branches[lb].name.length * 8.5 + 18 + PTR_D;
+      var leftNeeded = NODE_RADIUS + 4 + lbW + 15; // TIP_TO_NODE=4, 15px margin
+      if (!data.head.detached && data.head.ref === branches[lb].name) {
+        leftNeeded += 4 + HEAD_W; // HEAD_GAP=4
+      }
+      minPaddingLeft = Math.max(minPaddingLeft, leftNeeded);
+    }
+    this._paddingLeft = minPaddingLeft;
+
+    var rightLabelSpace = 0;
+    var lastColX = this._paddingLeft + colCount * COL_WIDTH;
     for (var rb = 0; rb < branches.length; rb++) {
       var rbName   = branches[rb].name;
       var rbCommit = commitMap[branches[rb].hash];
       if (!rbCommit || rbCommit.col === 0) continue;
-      var brTipX  = PADDING_LEFT + rbCommit.col * COL_WIDTH + NODE_RADIUS + 10; // TIP_TO_NODE=10
+      var brTipX  = this._paddingLeft + rbCommit.col * COL_WIDTH + NODE_RADIUS + 10; // TIP_TO_NODE=10
       var brW     = rbName.length * 8.5 + 18 + PTR_D;
       var rEdge   = brTipX + brW;
       // Add HEAD label width only when this branch actually carries HEAD
@@ -678,7 +672,7 @@
     var branches = data.branches;
     var head = data.head;
 
-    var width = PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(commits) + 24;
+    var width = this._paddingLeft + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(commits) + 24;
     var height = PADDING_TOP + (commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM;
 
     // viewBox is essential — without it, `max-width: 100%; height: auto`
@@ -691,14 +685,12 @@
 
     svg += this._arrowDefsMarkup() + this._textureDefsMarkup();
 
-    // Draw edges first (behind nodes)
+    // Layer order matches the live renderer: edges → labels → nodes.
+    // See _buildInitialSvg for why nodes are drawn last (so the HEAD
+    // glow ring isn't occluded by an adjacent branch/HEAD label).
     svg += this._renderEdges(commits, data.commitMap);
-
-    // Draw commit nodes
-    svg += this._renderNodes(commits, head);
-
-    // Draw branch labels
     svg += this._renderBranchLabels(branches, data.commitMap, head);
+    svg += this._renderNodes(commits, head);
 
     svg += '</svg>';
     return svg;
@@ -734,12 +726,46 @@
     }
 
     this._diffRender(data);
+    this._lockWorkbenchHeight();
   };
 
-  // Smoothly tween width/height/viewBox so the SVG canvas grows or shrinks
-  // in step with the node and edge transitions (which use the same 520ms
-  // ease curve in git-graph.css). Without this the canvas snaps abruptly
-  // whenever a longer commit message or new column changes the dimensions.
+  // Keep the SVG canvas a STABLE size for the whole transition window,
+  // then settle to the real target once all the CSS node/edge/label
+  // transitions have landed.
+  //
+  // Why not tween width/height/viewBox frame-by-frame (the old approach)?
+  // The .git-command-lab__graph wrapper is `display: flex;
+  // justify-content: center`, and the SVG uses `max-width: 100%;
+  // height: auto` (uml-diagram.css). Any width attribute change alters
+  // the intrinsic aspect ratio, which — because the width is already
+  // constrained to 100% of the flex parent — flows back into the
+  // DISPLAYED height (height=auto recomputes from the new ratio), and
+  // the flex parent re-centers on every frame. The user saw this as
+  // horizontal + vertical stutter on every click: ~31 frames × one
+  // layout shift per frame. Shrinking produced the same pattern in
+  // reverse.
+  //
+  // Pinning to max(start, end) for the whole 720ms transition window
+  // collapses that into exactly ONE layout shift — at the start if the
+  // graph is growing, or at the settle moment if it's shrinking. The
+  // content animates via the existing transform transitions on each
+  // node/edge/label, which is already the primary motion the user
+  // perceives. The canvas size change itself was never the "motion"
+  // that carried meaning; it was just an artifact of the layout.
+  var _DIM_SETTLE_MS = 750;   // slightly longer than the 720ms node transition.
+
+  GitGraph.prototype._setSvgSize = function (w, h) {
+    var svg = this._svgRoot;
+    if (!svg) return;
+    svg.setAttribute('width',  w);
+    svg.setAttribute('height', h);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  };
+
+  GitGraph.prototype._cancelDimAnim = function () {
+    if (this._dimSettle) { clearTimeout(this._dimSettle); this._dimSettle = null; }
+  };
+
   GitGraph.prototype._animateDimensions = function (newDims) {
     var svg = this._svgRoot;
     if (!svg) return;
@@ -747,75 +773,62 @@
     var startH = parseFloat(svg.getAttribute('height')) || newDims.height;
     var endW = newDims.width;
     var endH = newDims.height;
+    var dW = endW - startW;
+    var dH = endH - startH;
 
-    if (Math.abs(startW - endW) < 0.5 && Math.abs(startH - endH) < 0.5) {
-      svg.setAttribute('width', endW);
-      svg.setAttribute('height', endH);
-      svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
+    this._cancelDimAnim();
+
+    if (Math.abs(dW) < 0.5 && Math.abs(dH) < 0.5) {
+      this._setSvgSize(endW, endH);
       return;
     }
 
     if (prefersReducedMotion()) {
-      // Snap to final dimensions instead of tweening over 520ms.
-      svg.setAttribute('width', endW);
-      svg.setAttribute('height', endH);
-      svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
+      this._setSvgSize(endW, endH);
       return;
     }
 
-    // Pin the graph host to max(start, end) height for the duration of the
-    // animation so the SVG's per-frame width/height attribute changes don't
-    // push the rest of the page up or down on every frame. Without this pin,
-    // each of the ~31 animation frames forces a full-page reflow as every
-    // sibling below the card shifts. With it, content below moves exactly
-    // once — at the start if the graph is growing, or at the end when we
-    // release the pin if it's shrinking. The pin exists only during the
-    // animation window, so the card returns to its natural size at rest.
-    var container = this.container;
-    var hadMinHeight = container && container.style.minHeight !== '';
-    var priorMinHeight = hadMinHeight ? container.style.minHeight : '';
-    if (container) {
-      container.style.minHeight = Math.max(startH, endH) + 'px';
-    }
-
-    if (this._dimAnim) cancelAnimationFrame(this._dimAnim);
-
-    var DURATION = 520;
-    var t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-    function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
-
     var self = this;
-    function frame(now) {
-      var t = Math.min(1, (now - t0) / DURATION);
-      var k = ease(t);
-      var w = startW + (endW - startW) * k;
-      var h = startH + (endH - startH) * k;
-      svg.setAttribute('width',  w);
-      svg.setAttribute('height', h);
-      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
-      if (t < 1) {
-        self._dimAnim = requestAnimationFrame(frame);
-      } else {
-        self._dimAnim = null;
-      }
-    }
-    self._dimAnim = requestAnimationFrame(frame);
+    var container = this.container;
+    var priorMinHeight = (container && container.style.minHeight) || '';
+    var maxW = Math.max(startW, endW);
+    var maxH = Math.max(startH, endH);
 
-    // Fallback: when the tab is hidden (e.g. headless preview, background tab)
-    // requestAnimationFrame is throttled and may not fire, leaving the SVG at
-    // its initial dimensions. Snap to the final size after the duration so the
-    // graph is correct even without animation.
-    setTimeout(function () {
-      if (self._dimAnim) cancelAnimationFrame(self._dimAnim);
-      self._dimAnim = null;
-      svg.setAttribute('width',  endW);
-      svg.setAttribute('height', endH);
-      svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
-      // Release the pin. SVG intrinsic is now at endH, so the container
-      // collapses to whichever is the natural resting size. Growing paid
-      // its one reflow at the start; shrinking pays it now.
+    // Reserve the union box. For a growing graph this paints the new
+    // canvas immediately (one shift at click time, before any motion);
+    // for a shrinking graph we stay at the old size until settle. The
+    // container's min-height pin keeps the rest of the page still until
+    // we release it, so siblings below reflow exactly once instead of
+    // per-frame. Workbench height is handled separately by
+    // `_lockWorkbenchHeight` (permanent max-ever pin), so row removal
+    // can't pull the SVG up.
+    if (container) container.style.minHeight = maxH + 'px';
+    this._setSvgSize(maxW, maxH);
+
+    this._dimSettle = setTimeout(function () {
+      self._setSvgSize(endW, endH);
       if (container) container.style.minHeight = priorMinHeight;
-    }, DURATION + 30);
+      self._dimSettle = null;
+    }, _DIM_SETTLE_MS);
+  };
+
+  // Pin the workbench's min-height to the LARGEST height it's ever had.
+  // The workbench panel sits above the SVG in the flex container, so any
+  // time a row is added (undo restore) or removed (commit / add / stash)
+  // its natural height changes, which pulls the SVG below it up or down
+  // and feels like a jolt on every click. Pinning to the max-ever means
+  // the panel can grow (if a new state introduces more rows) but never
+  // shrink, so once the user has clicked through the lab a few times the
+  // workbench has reached its full extent and the SVG stays pinned to a
+  // fixed Y. Empty space in a collapsed zone reads as "this zone is
+  // clear" — which is exactly what git status would show too.
+  GitGraph.prototype._lockWorkbenchHeight = function () {
+    var wb = this.container && this.container.querySelector('.git-workbench');
+    if (!wb) return;
+    var h = wb.getBoundingClientRect().height;
+    if (h <= 0) return;
+    var curPin = parseFloat(wb.style.minHeight) || 0;
+    if (h > curPin) wb.style.minHeight = h + 'px';
   };
 
   // ---------------------------------------------------------------------------
@@ -837,7 +850,7 @@
 
   GitGraph.prototype._computeDimensions = function (data) {
     return {
-      width: PADDING_LEFT + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(data.commits) + 24,
+      width: this._paddingLeft + (this._colCount - 1) * COL_WIDTH + NODE_RADIUS + 54 + this._maxMessagePx(data.commits) + 24,
       height: PADDING_TOP + (data.commits.length - 1) * ROW_HEIGHT + NODE_RADIUS + PADDING_BOTTOM,
     };
   };
@@ -875,13 +888,18 @@
     this._edgesLayer = this._svgEl('g', { 'class': 'git-graph-edges-layer' });
     this._nodesLayer = this._svgEl('g', { 'class': 'git-graph-nodes-layer' });
     this._labelsLayer = this._svgEl('g', { 'class': 'git-graph-labels-layer' });
+    // Layer order: edges → labels → nodes. Nodes (and the HEAD glow ring
+    // nested inside each node-g) render ABOVE labels so a col-0 HEAD
+    // commit's halo is never clipped by the main/HEAD label that sits
+    // immediately to its left. Labels are pure decoration beside the
+    // node; their chevron tip stops 4px short of the node's circle
+    // (TIP_TO_NODE=4), so putting nodes on top doesn't cover any label
+    // content — it only prevents the label background from occluding
+    // the thin glow ring at the node's left edge.
     this._svgRoot.appendChild(this._edgesLayer);
-    this._svgRoot.appendChild(this._nodesLayer);
     this._svgRoot.appendChild(this._labelsLayer);
+    this._svgRoot.appendChild(this._nodesLayer);
     this.container.appendChild(this._svgRoot);
-
-    var obs = _ensureOffscreenObserver();
-    if (obs) obs.observe(this._svgRoot);
 
     this._nodeEls = {};
     this._edgeEls = {};
@@ -1612,7 +1630,7 @@
   };
 
   GitGraph.prototype._cx = function (col) {
-    return PADDING_LEFT + col * COL_WIDTH;
+    return this._paddingLeft + col * COL_WIDTH;
   };
 
   GitGraph.prototype._cy = function (row) {

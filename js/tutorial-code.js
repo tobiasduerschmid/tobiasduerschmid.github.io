@@ -4303,6 +4303,11 @@
 
     // Render any inline UML diagrams embedded in the instructions markdown
     if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
+    // Initialize any inline GitCommandLab widgets embedded in the instructions
+    if (window.GitCommandLab) {
+      if (GitCommandLab.initFrom) GitCommandLab.initFrom(this.stepContentEl);
+      if (GitCommandLab.initFromMulti) GitCommandLab.initFromMulti(this.stepContentEl);
+    }
 
     this._renderStepControls(index);
 

@@ -11,103 +11,59 @@ steps:
 - title: Branches, HEAD, and Detached HEAD
   view: git_graph
   instructions: |
-    ### Welcome to Advanced Git
+    ### 🎯 You will learn to
+    - **Explain** why branch creation is O(1) — no files get copied.
+    - **Tell** attached from detached HEAD by reading `.git/HEAD`.
+    - **Anticipate** where orphaned commits come from, setting up the reflog rescue.
 
-    You already know `init`, `add`, `commit`, `branch`, `merge`, and remotes.
-    This tutorial lifts the hood (object database, refs, HEAD) and drills
-    every tool from Lecture 10: detached HEAD, reflog, stash, cherry-pick,
-    blame, bisect, rebase (incl. interactive), squash merge, and submodules.
+    ### Why this tutorial exists
 
-    You will intentionally break things. The next step teaches
-    `git reflog` — the safety net that makes every destructive command
-    recoverable.
+    You already know `init`, `add`, `commit`, `branch`, `merge`, remotes.
+    This tutorial lifts the hood — object database, refs, HEAD — so every
+    "scary" command becomes a safe, predictable pointer move.
 
-    ### Two antipatterns to avoid
+    Two antipatterns to retire on sight:
 
-    1. **Blind-testing** — typing random permutations of `add`, `commit`,
-       `push`, `pull` until the terminal stops complaining.
-    2. **"Burning down the repo"** — deleting the local folder, copying
-       files to a text file, re-cloning, and force-pushing when anything
-       goes wrong. Destroys history and prevents learning.
+    | Antipattern | What it looks like |
+    |---|---|
+    | **Blind-testing** | Typing random `add/commit/push/pull` permutations until errors stop |
+    | **Burning down the repo** | Deleting the folder, copying files out, re-cloning, force-pushing |
 
-    Both come from no accurate mental model of what Git is doing. Each
-    step builds that model.
+    Both come from an inaccurate mental model. Each step fixes one piece.
 
     ### Prerequisite self-check
 
-    Answer these five from memory before continuing. If any feel shaky,
-    go back to the basic tutorial — the rest assumes these are reflex.
+    Answer from memory. Any shaky? Revisit the basic tutorial.
 
-    1. A new file appears red in `git status`. What's the state name,
-       and which command promotes it to green?
-    2. You commit, then edit the file again. What does `git diff`
-       (no arguments) compare?
-    3. `main` and `feature` have diverged. Can `git merge feature`
-       fast-forward? Why or why not?
-    4. A teammate pushed a buggy commit to shared `main`. Safer:
-       `git reset --hard HEAD~1` + force-push, or `git revert <sha>`?
-    5. Someone staged a `.env` file with secrets. Adding `.env` to
-       `.gitignore` now — does that stop the secret from being committed?
+    1. New file is red in `git status`. State name? Command to green?
+    2. After a commit + one more edit, what does bare `git diff` compare?
+    3. `main` and `feature` have diverged. Can `merge feature` fast-forward?
+    4. Teammate pushed a buggy commit to shared `main`. `reset --hard + force-push`, or `revert`?
+    5. Staged a `.env` with secrets. Does adding to `.gitignore` now help?
 
     <details markdown="1"><summary>Expected answers</summary>
 
-    1. **Untracked.** `git add` moves it to staged.
-    2. **Working directory vs. staging area.** Since nothing is
-       staged, the staging area still matches `HEAD`, so the diff
-       shows your unstaged edits.
-    3. **No.** Diverged branches need a three-way merge (new merge
-       commit with two parents). Fast-forward requires the target
-       branch to be a strict ancestor.
-    4. **`git revert`.** It appends an anti-commit without
-       rewriting history, so teammates who already pulled stay in
-       sync. `reset --hard` + force-push breaks every teammate's
-       local copy.
-    5. **No.** `.gitignore` only stops *future* tracking.
-       Already-staged files need `git restore --staged .env` now, or
-       `git rm --cached .env` if already committed — and for a real
-       secret, rotate the credential.
+    1. **Untracked** → `git add` stages it.
+    2. **Working tree vs. index.** Index matches HEAD (nothing staged), so you see unstaged edits.
+    3. **No** — diverged branches need a merge commit with two parents.
+    4. **`git revert`.** Additive; doesn't break teammates' clones.
+    5. **No.** `.gitignore` only blocks *future* tracking. Use `git rm --cached` + rotate the secret.
 
     </details>
 
-    ### What is a branch, really?
+    ### Task 1: Prove a branch is a 41-byte pointer
 
-    A branch is **not a copy** of your project — it is a **41-byte text
-    file** containing one commit hash. Let's prove it.
-
-    ### The starter repo
-
-    A small `myproject/` calculator repo has been built for you —
-    two commits on `main`, one on a `feature-divide` branch. Inspect it:
+    **Predict first:** what's in `.git/refs/heads/main`? A commit list? A snapshot?
 
     ```bash
-    git log --all --oneline --graph --decorate
-    ```
-
-    Compare the terminal output with the git graph panel on the right —
-    they show the same history.
-
-    ### Task 1: Look at the branch pointer files
-
-    **Predict:** what's inside `.git/refs/heads/main`? A list of commits?
-    A snapshot? A diff? Then run:
-
-    ```bash
+    cd /tutorial/myproject
     cat .git/refs/heads/main
     cat .git/refs/heads/feature-divide
-    ```
-
-    Each file is **one line** containing the commit SHA that branch
-    points to. Branches are single-line text files — creating one is
-    just an `fwrite()` of a few bytes.
-
-    Now inspect `HEAD`:
-
-    ```bash
     cat .git/HEAD
     ```
 
-    You see `ref: refs/heads/main`. `HEAD` is a **symbolic reference** —
-    a pointer to another pointer:
+    Each branch file is **one line** — a commit SHA. `HEAD` is
+    `ref: refs/heads/main` — a pointer to a pointer.
 
     ```gitgraph
     @startuml
@@ -118,43 +74,31 @@ steps:
     @enduml
     ```
 
-    This indirection is why `git commit` can move the branch forward
-    without touching `HEAD` itself: the branch pointer file is rewritten,
-    and `HEAD` dereferences to the new commit automatically.
+    That indirection lets `commit` advance the branch pointer while `HEAD`
+    auto-follows — no HEAD rewrite needed.
 
-    ### Task 2: Detach HEAD
+    ### Task 2: Detach HEAD and feel the difference
 
     ```bash
     git switch --detach HEAD~1
-    cat .git/HEAD
+    cat .git/HEAD        # now a raw 40-char SHA, not a ref
     ```
 
-    Now `.git/HEAD` contains a **raw SHA hash** instead of a branch ref.
-    This is **detached HEAD state** — HEAD anchored directly to a
-    commit, not to a branch pointer. Look at the git-graph panel: the
-    HEAD label floats directly on a commit node.
+    **Detached HEAD** = HEAD pinned to a commit, not a branch. Watch the
+    graph: HEAD floats on the commit node itself.
 
-    > Think of it as visiting a museum archive. You can read any
-    > document, but notes you leave without a label have nowhere to go
-    > when you walk away. `git switch -c <name>` is that label.
+    > **Museum-archive analogy.** You can read any document, but notes
+    > left without a label have nowhere to go when you leave.
+    > `git switch -c <name>` is that label.
 
-    **Warning:** New commits in detached HEAD are anchored to no branch.
-    When you `git switch` away, they become orphaned (eventually
-    pruned by `git gc`). The next step (`git reflog`) is how you rescue
-    them.
+    Any commit you make here is anchored to nothing. `git switch`ing away
+    orphans it. The next step shows how to rescue orphans.
 
     ### Cleanup
 
     ```bash
     git switch main
     ```
-
-    ### You can now
-
-    - **Explain** why creating a branch is a millisecond operation.
-    - **Distinguish** attached vs. detached HEAD by inspecting `.git/HEAD`.
-    - **Anticipate** where orphaned commits come from — the next step
-      teaches how to rescue them.
   solution:
     commands:
     - cd /tutorial/myproject
@@ -234,84 +178,59 @@ steps:
 - title: "Rescuing Lost Work with git reflog"
   view: git_graph
   instructions: |
-    ### The safety net
+    ### 🎯 You will learn to
+    - **Recover** commits lost to bad rebases, hard resets, and detached-HEAD orphans.
+    - **Tell** what `git log --all` can see from what `git reflog` can see.
+    - **Know reflog's limits** — it's local, and disappears with the clone.
 
-    Commits made in detached HEAD become orphaned the instant you
-    switch away. Git keeps a **diary of every position `HEAD` has
-    ever occupied**, regardless of reachability. That diary is the
-    **reflog** — the recovery tool for bad rebases, dropped commits,
-    hard resets, and detached-HEAD orphans.
+    ### `log --all` vs `reflog` — the load-bearing distinction
 
-    ### `git log --all` vs `git reflog`
-
-    | | `git log --all` | `git reflog` |
+    |  | `git log --all` | `git reflog` |
     |---|---|---|
-    | **What it walks** | Commits reachable from any branch/tag | Every position HEAD has occupied |
-    | **Sees orphans?** | No — unreachable = invisible | Yes — reachability is irrelevant |
-    | **Scope** | Whole repo history | Local to this clone |
-    | **Retention** | Forever (until `gc`) | Configurable retention window (`gc.reflogExpire`) |
-    | **Shared across clones?** | Yes (via push/pull) | No — local only |
+    | Walks | Commits reachable from refs | Every position HEAD occupied |
+    | Sees orphans? | No (unreachable = invisible) | Yes (reachability irrelevant) |
+    | Shared across clones? | Yes | **No — local only** |
 
-    ### Task 1: Deliberately lose some work
+    ### Task 1: Deliberately lose work
 
     ```bash
     cd /tutorial/myproject
     git switch --detach HEAD
     echo "# experimental note" >> calculator.py
-    git add calculator.py
-    git commit -m "Experimental: add note in detached HEAD"
+    git add calculator.py && git commit -m "Experimental: add note in detached HEAD"
     git switch main
+    git log --all --oneline      # the Experimental commit is GONE from this view
     ```
 
-    Those detached commits are now orphaned. Confirm:
+    It's orphaned — no ref reaches it, so `log --all` walks right past.
 
-    ```bash
-    git log --all --oneline
-    ```
-
-    The `Experimental` commit **does not appear** — `git log --all`
-    walks refs, orphans aren't reachable from any ref.
-
-    ### Task 2: Find the orphan with `git reflog`
+    ### Task 2: Find the orphan
 
     ```bash
     git reflog
     ```
 
-    Each line: `<sha>  HEAD@{n}: <action>: <description>`. `HEAD@{0}`
-    is where HEAD is now; `HEAD@{1}` is the detached-HEAD commit.
-    Reflog is a literal log of HEAD movements — orphanhood doesn't
-    matter to it.
+    Each line: `<sha>  HEAD@{n}: <action>: <description>`.
 
-    ### Task 3: Rescue the orphan with a branch
+    | Expression | Meaning |
+    |---|---|
+    | `HEAD@{0}` | where HEAD is now |
+    | `HEAD@{1}` | where HEAD was one move ago |
+    | `HEAD@{n}` | n moves ago |
 
-    The `@{n}` syntax works anywhere Git expects a commit ref:
+    The detached-HEAD commit is at `HEAD@{1}`.
 
-    | Expression   | Meaning                        |
-    |--------------|--------------------------------|
-    | `HEAD@{0}`   | where HEAD is **right now**    |
-    | `HEAD@{1}`   | where HEAD was **one move ago** |
-    | `HEAD@{n}`   | n moves ago                    |
-
-    Anchor a branch to the experimental commit:
+    ### Task 3: Anchor it with a branch
 
     ```bash
     git branch rescued-work HEAD@{1}
     git log rescued-work --oneline
     ```
 
-    The "lost" commit is reachable again. The full recipe: **`git reflog`
-    to find the SHA, `git branch <name> <sha>` to anchor it.** Same
-    recipe rescues dropped commits after interactive rebase, bad
-    resets, and failed rebases.
-
-    ### You can now
-
-    - **Distinguish** `git log --all` (reachability walk) from
-      `git reflog` (HEAD-movement diary).
-    - **Recover** orphans with `git reflog` + `git branch <name> <sha>`.
-    - **Know the failure mode:** reflog is local; destroying the clone
-      destroys its reflog.
+    **The universal recipe:** `git reflog` → note the SHA or `HEAD@{n}` →
+    `git branch <name> <sha>` anchors it as reachable. Works for dropped
+    commits after interactive rebase, botched resets, failed rebases —
+    any "lost" commit that's still in `.git/objects`.
   setup_commands:
   - cd /tutorial/myproject
   - git switch -q main 2>/dev/null; true
@@ -400,37 +319,18 @@ steps:
 - title: Relative Commit Addresses & Git's Object Database
   view: git_graph
   instructions: |
-    ### The address problem
+    ### 🎯 You will learn to
+    - **Name any commit without a SHA** using `HEAD~n`, `BRANCH^`, and `rev-parse`.
+    - **Prove Git stores snapshots, not deltas** by hashing bytes directly.
+    - **Predict** that a single trailing space changes the entire SHA chain — and say why that matters for `blame` later.
 
-    Every advanced Git command takes a commit as an argument.
-    Typing `a73f2d9c81...` by hand is error-prone. Git gives you two
-    better options:
+    ### Relative references
 
-    1. **Relative references** — `HEAD~1`, `main~3`, `feature^2`.
-    2. **Symbolic references** — `HEAD`, branch and tag names, ranges.
-
-    ### Task 1: Practice relative references
-
-    Your `main` branch has two commits. Let's name them without copying
-    any SHA.
-
-    ```bash
-    cd /tutorial/myproject
-    git log --oneline
-    ```
-
-    Now resolve relative references:
-
-    ```bash
-    git rev-parse HEAD        # the current commit SHA
-    git rev-parse HEAD~1      # one commit before HEAD
-    git rev-parse main        # same as HEAD right now
-    git rev-parse main~1      # same as HEAD~1
-    ```
-
-    **`BRANCH~n`** means *n steps back along the first-parent chain*.
-    **`BRANCH^`** is shorthand for `BRANCH~1`. **`BRANCH^2`** is the
-    *second parent* of a merge commit (first-parent chain ignores it).
+    | Expression | Meaning |
+    |---|---|
+    | `HEAD~n` | n commits back along first-parent chain |
+    | `BRANCH^` | shorthand for `BRANCH~1` |
+    | `BRANCH^2` | **second** parent of a merge commit |
 
     ```gitgraph
     @startuml
@@ -443,69 +343,49 @@ steps:
     @enduml
     ```
 
-    So on this history, `feature~2 = A`, `main~2 = B`, and `HEAD~1 = C`.
-
-    Try one more — how many commits back is the initial commit?
+    ### Task 1: Practice
 
     ```bash
-    git log --oneline | wc -l
-    git rev-parse HEAD~$(($(git log --oneline | wc -l) - 1))
+    cd /tutorial/myproject
+    git rev-parse HEAD        # current SHA
+    git rev-parse HEAD~1      # parent
+    git rev-parse main        # same as HEAD
     ```
 
-    That last expression jumps to the root commit without typing its SHA.
+    ### Task 2: Prove content-addressability
 
-    ### Task 2: Lift the hood — Git's object database
+    Every object in `.git/objects/` is **addressed by the SHA-1 of its
+    content**. Three object kinds:
 
-    Every commit, file, and directory you version is stored as a
-    **Git object** in `.git/objects/`. There are only three kinds:
-
-    | Object | What it stores |
+    | Object | Stores |
     |---|---|
-    | **blob** | The raw content of a file (no filename) |
-    | **tree** | A directory listing: filename → blob or sub-tree |
-    | **commit** | A tree SHA + parent SHAs + author + message |
+    | **blob** | Raw file bytes (no filename) |
+    | **tree** | Directory: filename → blob/tree SHA |
+    | **commit** | Tree SHA + parent SHAs + author + message |
 
-    Everything is addressed by SHA-1 of its content — a
-    *content-addressable filesystem*.
+    Hash the same bytes in two unrelated repos:
 
     ```bash
     echo "hello world" | git hash-object --stdin
-    ```
-
-    Note the 40-character hash. Run the same command in a fresh,
-    unrelated repo:
-
-    ```bash
     cd /tmp && git init -q bob-repo && cd bob-repo
     echo "hello world" | git hash-object --stdin
     cd /tutorial/myproject
     ```
 
-    **Identical output.** Anyone hashing the same bytes gets the same
-    SHA. Deduplication across repos, branches, and history is free.
+    **Identical 40-char SHA.** Same bytes → same hash, always, everywhere.
+    That's why Git deduplicates across branches and history for free.
 
-    ### Task 3: Byte-exact hashing
+    ### Task 3: Byte-exact means byte-exact
 
-    **Predict:** hashing `"hello world "` with one trailing space —
-    same SHA as above, or different?
+    **Predict:** hashing `"hello world "` with one trailing space — same SHA?
 
     ```bash
     printf 'hello world \n' | git hash-object --stdin
     ```
 
-    **Different.** One trailing space changes every byte of the hash.
-    Content-addressability is byte-exact, not "close enough" — a file
-    differing by a single invisible character gets a new blob SHA, new
-    tree SHA, new commit SHA. This is why reformatter commits
-    (Step 6) mask real authorship: every whitespace tweak rewrites
-    the whole chain.
-
-    ### You can now
-
-    - **Resolve** any commit without typing a SHA using `HEAD~n`,
-      `BRANCH^`, or `git rev-parse`.
-    - **Prove** that Git is snapshot-based (not diff-based).
-    - **Predict** that one trailing space changes the whole hash.
+    **Different.** One whitespace byte → new blob SHA → new tree SHA →
+    new commit SHA. That's why reformatter commits (Step 6) mask real
+    authorship: every whitespace tweak rewrites the entire hash chain.
   setup_commands:
   - cd /tutorial/myproject && git switch main 2>/dev/null; true
   solution:
@@ -599,30 +479,28 @@ steps:
 - title: Saving Work Temporarily with git stash
   view: git_graph
   instructions: |
-    ### The context-switch problem
+    ### 🎯 You will learn to
+    - **Context-switch cleanly** mid-feature without polluting history with WIP commits.
+    - **Pick** `pop` vs. `apply` correctly.
+    - **Diagnose** the classic "stash missed my new file" footgun.
 
-    You're halfway through a feature when your lead says: **"Drop
-    everything — critical bug on `main`, hotfix now."** Your choices
-    without `git stash` are all bad: commit half-finished work
-    (pollutes history), discard with `git restore` (permanent loss),
-    or stay on your branch (can't isolate the hotfix).
+    ### Scenario
 
-    `git stash` temporarily sets aside your work-in-progress so the
-    working directory is clean, then restores it.
+    You're mid-feature when your lead yells **"hotfix on main, now!"**
+    Your options without stash are all bad: WIP commit (pollutes history),
+    `git restore` (destroys work), or stay put (can't isolate the fix).
 
-    ### Task 1: You have been interrupted mid-work
+    `git stash` is the escape hatch.
 
-    A half-finished `power` function is sitting at the bottom of
-    `calculator.py`:
+    ### Task 1: See the dirty tree
+
+    A half-finished `power` function is already sitting in `calculator.py`:
 
     ```python
-
     def power(a, b):
         # TODO: add input validation
         return a ** b
     ```
-
-    Confirm Git sees the dirty working tree:
 
     ```bash
     cd /tutorial/myproject
@@ -630,42 +508,33 @@ steps:
     git diff
     ```
 
-    ### Task 2: Stash
+    ### Task 2: Stash it
 
     ```bash
     git stash
-    git status
-    git stash list
+    git status           # clean!
+    git stash list       # your WIP is here
     ```
 
-    The working directory is **clean**. The half-finished `power`
-    function is in the stash — not committed, not lost. Internally, a
-    stash is a single commit object stored under `.git/refs/stash` —
-    a merge commit whose first parent is `HEAD` at stash time and whose
-    second parent is a separate commit recording the index state (so
-    both halves can be recovered independently).
+    Internally the stash is a merge commit at `refs/stash` — first parent is
+    HEAD at stash time, second parent records the index. Same object model
+    as every other commit (Step 3).
 
     ### Task 3: Do the hotfix on a dedicated branch
-
-    With the tree clean, isolate the hotfix:
 
     ```bash
     git switch -c hotfix-divide-zero
     ```
 
-    Now open `calculator.py` in the editor and add this function at the
-    bottom:
+    In the editor, append to `calculator.py`:
 
     ```python
-
     def safe_divide(a, b):
         """Divide a by b, raising ValueError on zero denominator."""
         if b == 0:
             raise ValueError("Cannot divide by zero")
         return a / b
     ```
-
-    Save it. Back in the terminal, commit and merge:
 
     ```bash
     git add calculator.py
@@ -675,38 +544,31 @@ steps:
     git branch -d hotfix-divide-zero
     ```
 
-    ### Task 4: Recover your stashed work
+    ### Task 4: Restore your WIP
 
     ```bash
     git stash pop
-    git status
-    git stash list    # now empty
+    git stash list       # empty — pop removed it
     ```
 
-    Your `power` function work-in-progress is restored — `pop` removes
-    the stash after applying. The stash list is empty.
-
-    ### Stash reference
+    ### Stash cheat sheet
 
     | Command | Effect |
     |---|---|
-    | `git stash` | Save tracked modifications + staged changes; clean working tree |
-    | `git stash list` | Show all stash entries (stack) |
-    | `git stash pop` | Restore the most recent stash **and** drop it |
-    | `git stash apply` | Restore the most recent stash but **keep** it |
-    | `git stash drop` | Delete the most recent stash without applying |
-    | `git stash push -m "msg"` | Save with a descriptive message |
-    | `git stash -u` | Also include **untracked** files (new files never `git add`-ed) |
+    | `git stash` | Save tracked mods + staged; clean tree |
+    | `git stash pop` | Restore **and drop** the top stash |
+    | `git stash apply` | Restore but **keep** the stash |
+    | `git stash drop` | Delete without applying |
+    | `git stash push -m "msg"` | Save with a message |
+    | `git stash -u` | Also include **untracked** files |
 
-    > **Gotcha:** Plain `git stash` ignores untracked files. A brand-new
-    > file you have never `git add`-ed stays in the working directory.
-    > Use `git stash -u` if you need to include it.
+    > **Gotcha:** plain `git stash` skips untracked (never-`add`-ed) files.
+    > Use `-u` to include them.
 
-    ### Task 5: Finish the feature properly
+    ### Task 5: Finish the feature
 
-    Edit `calculator.py` in the editor. Finalize the `power` function
-    with proper validation, then commit with a descriptive message.
-    (The test checks for "power" in the commit message.)
+    Edit `calculator.py` so `power` has real validation, then commit
+    (message must include "power"):
 
     ```python
     def power(a, b):
@@ -715,15 +577,6 @@ steps:
             raise TypeError("Arguments must be numbers")
         return a ** b
     ```
-
-    ### You can now
-
-    - **Context-switch cleanly** mid-work: stash, do the urgent task,
-      pop back to where you were — without polluting history.
-    - **Distinguish** `pop` from `apply`, and know when each is
-      appropriate.
-    - **Diagnose** why `git stash` sometimes seems to "miss" a new
-      file (it was untracked; need `-u`).
   watch_files:
   - myproject/calculator.py
   open_file: myproject/calculator.py
@@ -856,115 +709,76 @@ steps:
 - title: 'Cherry-Pick: Copy One Specific Commit'
   view: git_graph
   instructions: |
-    ### The problem
+    ### 🎯 You will learn to
+    - **Pick** cherry-pick for one-commit backports; reject it for many-commit integration.
+    - **Resolve** a cherry-pick conflict end-to-end (same marker dance as merge — different final verb).
+    - **Explain** why the copied commit has a new SHA (apply Step 3's object model).
 
-    Your lead asks: *"The bugfix in commit `b73f...` on the
-    `experimental` branch also applies to `main`. Pull in just that
-    one commit — not the rest of the branch."*
+    ### Scenario
 
-    `git cherry-pick <sha>` computes the patch of that commit against
-    its parent, applies it on top of HEAD, and creates a **new commit**
-    with the same changes but a different SHA.
+    Lead: *"The `absolute` helper on `experimental` is useful on `main` too.
+    Bring that one commit over — leave the half-baked multiply behind."*
 
-    **Before** — `experimental` has commits `α β γ`; `main` stops at `C`:
+    `cherry-pick <sha>` replays one commit's patch on top of HEAD as a
+    **new commit** (new parent → new SHA, same message + diff).
 
-    ```gitgraph
-    @startuml
-    branch main:
-      A "Initial"
-      B "Shared base"
-      C "Refactor"
+    <div data-git-command-lab>
+    <script type="application/json">
+    {
+      "command": "git cherry-pick experimental",
+      "description": "Backport the **tip** of `experimental` (`Add absolute value`) onto `main`, leaving the half-baked `experimental_multiply` behind.\n\nThe replayed commit **β'** has the same patch but a new parent, so its SHA differs from the original. `experimental` is unchanged — cherry-pick copies, never moves.",
+      "before": {
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|HEAD -> main\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|\nβ000000000000000000000000000000000000000|α000000000000000000000000000000000000000|Add absolute value|experimental\nα000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add experimental_multiply (not ready)|",
+        "branches": "* main\n  experimental",
+        "head": "refs/heads/main",
+        "highlights": {
+          "β000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      },
+      "after": {
+        "log": "β'00000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add absolute value|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|\nβ000000000000000000000000000000000000000|α000000000000000000000000000000000000000|Add absolute value|experimental\nα000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add experimental_multiply (not ready)|",
+        "branches": "* main\n  experimental",
+        "head": "refs/heads/main",
+        "highlights": {
+          "β000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "β'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      }
+    }
+    </script>
+    </div>
 
-    branch experimental from B:
-      α "α — work-in-progress"
-      β "β — the one to backport"
-      γ "γ — more work"
+    ### Task 1: Inspect
 
-    head main
-    @enduml
-    ```
-
-    **After** `git cherry-pick β` — a new commit `β'` lands on `main` carrying the same patch as `β`, while `experimental` is unchanged:
-
-    ```gitgraph
-    @startuml
-    branch main:
-      A "Initial"
-      B "Shared base"
-      C "Refactor"
-      β' "β' — cherry-picked copy of β"
-
-    branch experimental from B:
-      α "α — unchanged"
-      β "β — original"
-      γ "γ — unchanged"
-
-    head main
-    @enduml
-    ```
-
-    The copy is a **new commit object** — same patch, new parent, new SHA,
-    same message.
-
-    ### Task 1: Inspect the pre-built `experimental` branch
-
-    The tutorial has already created an `experimental` branch with two
-    commits — a half-baked `experimental_multiply` (not ready), and a
-    reusable `absolute` value function you want to backport. Inspect:
+    The pre-built `experimental` has two commits: a half-baked
+    `experimental_multiply`, and a reusable `absolute`.
 
     ```bash
+    cd /tutorial/myproject
     git log experimental --oneline
-    git diff main experimental -- calculator.py
     ```
 
-    You want only the **second** commit on main, not the half-baked
-    one. Time to cherry-pick.
+    You only want the second commit.
 
-    You want only the **second** commit (`Add absolute value function`)
-    on `main`, not the half-baked experimental multiply.
+    ### Task 2: Cherry-pick the tip
 
-    ### Task 2: Return to main and cherry-pick
+    A branch name resolves to its tip commit — no SHA copy needed:
 
     ```bash
     git switch main
-    git log experimental --oneline
-    ```
-
-    Copy the SHA of the `Add absolute value function` commit, then:
-
-    ```bash
-    git cherry-pick <that-sha>
-    ```
-
-    Or avoid copying the SHA entirely by using a relative reference —
-    since `Add absolute value function` is the **tip** of `experimental`:
-
-    ```bash
     git cherry-pick experimental
-    ```
-
-    Now check:
-
-    ```bash
     git log --oneline
-    cat calculator.py
     ```
 
-    You will see a new commit on `main` with message
-    `Add absolute value function`. Its SHA is **different** from the
-    original on `experimental`, but the patch is identical.
+    A new commit `Add absolute value function` sits on `main` with a
+    **different SHA** from the original. Same patch, new parent → new
+    SHA (Step 3 rule).
 
-    A commit's SHA hashes `tree + parent(s) + author + committer +
-    message`. The cherry-picked commit has a different parent (tip of
-    main, not experimental), so the SHA changes. Same patch, new
-    identity.
+    ### Task 3: Produce and resolve a conflict
 
-    ### Task 3: Handle a cherry-pick conflict
+    Make the same line differ on both branches:
 
-    Cherry-picks can conflict — the patch does not apply cleanly. Let's
-    force one. Make sure you are on `main`, then in the editor change
-    the line `def add(a, b): return a + b` to a multi-line version with
-    a docstring:
+    **On `main`,** edit `calculator.py` so `def add(a, b): return a + b` becomes:
 
     ```python
     def add(a, b):
@@ -972,56 +786,34 @@ steps:
         return a + b
     ```
 
-    Save, then commit:
-
     ```bash
-    git add calculator.py
-    git commit -m "Document add function"
+    git add calculator.py && git commit -m "Document add function"
     ```
 
-    Now switch to `experimental` and make a **different** change to the
-    same line. Switch first:
+    **On `experimental`,** change the same line differently:
 
     ```bash
     git switch experimental
     ```
 
-    In the editor, change `def add(a, b): return a + b` to:
+    Edit to:
 
     ```python
     def add(a, b): return a + b  # simple addition
     ```
 
-    Save, then commit:
-
     ```bash
-    git add calculator.py
-    git commit -m "Inline comment on add"
-    ```
-
-    Attempt to cherry-pick the conflicting commit onto main:
-
-    ```bash
+    git add calculator.py && git commit -m "Inline comment on add"
     git switch main
-    git cherry-pick experimental
-    ```
-
-    Git will report a conflict. Inspect:
-
-    ```bash
+    git cherry-pick experimental      # CONFLICT
     git status
-    cat calculator.py
     ```
 
-    You will see conflict markers `<<<<<<<`, `=======`, `>>>>>>>` in
-    the editor.
+    You'll see `<<<<<<<` / `=======` / `>>>>>>>` in the file. Conflicts
+    are **not failures** — Git is asking a human to combine two valid
+    changes.
 
-    > Merge/cherry-pick conflicts are not failures — Git is saying
-    > "two valid changes touched the same lines; a human must decide
-    > how to combine them."
-
-    Resolve the conflict by keeping the docstring
-    **and** the inline comment — edit in the editor so the block reads:
+    Edit the block to keep **both** sides:
 
     ```python
     def add(a, b):
@@ -1029,25 +821,12 @@ steps:
         return a + b  # simple addition
     ```
 
-    (Delete the `<<<<<<<`, `=======`, `>>>>>>>` markers as you go.)
-    Save, then complete the cherry-pick:
-
     ```bash
     git add calculator.py
-    git cherry-pick --continue
+    git cherry-pick --continue     # NOT `git commit` — use the cherry-pick verb
     ```
 
-    If you had wanted to bail out entirely, `git cherry-pick --abort`
-    would restore `main` to before the cherry-pick.
-
-    ### You can now
-
-    - **Recognize** when cherry-pick is the right tool (one-commit
-      backport) versus the wrong tool (many-commit integration).
-    - **Resolve** a cherry-pick conflict end-to-end: inspect markers,
-      edit to merge both sides, `git add`, `git cherry-pick --continue`.
-    - **Explain** why the copied commit has a new SHA, invoking the
-      object-model reasoning from Step 3.
+    Bail out with `git cherry-pick --abort` at any point.
   watch_files:
   - myproject/calculator.py
   open_file: myproject/calculator.py
@@ -1175,30 +954,30 @@ steps:
 - title: 'git blame: Who Last Changed This Line (and Why)?'
   view: editor
   instructions: |
-    ### The forensic question
+    ### 🎯 You will learn to
+    - **Answer "why does this line exist?"** by chaining `blame -L` → `show <sha>`.
+    - **Predict when plain blame lies** — reformatter commits mask real authors.
+    - **Defuse** the lie with `-w` or `blame.ignoreRevsFile`.
+    - **Recognize blame's blind spot:** it can only see *existing* lines.
 
-    You spot a suspicious line in `calculator.py` and want to know:
-    who last changed it, when, and **why**. `git blame` answers all
-    three. Used for *context* (not accusation), it's one of the most-used
-    commands in professional development.
+    ### The two-command forensic workflow
 
-    The real workflow is two commands:
+    1. `git blame -L <start>,<end> <file>` → find the SHA that last touched the line.
+    2. `git show <sha>` → read the commit message and diff — the **why** lives here.
 
-    1. `git blame -L <start>,<end> <file>` → find the SHA that last
-       touched the line.
-    2. `git show <sha>` → read the commit message and diff — where
-       the *why* lives.
+    Blame is for *context*, not accusation. It's among the top-used commands
+    in professional work.
 
-    ### Flag reference
+    ### Flag cheat sheet
 
     | Flag | Use when |
     |---|---|
-    | `-L start,end` | You know roughly which lines matter |
-    | `-w` | A reformatter masked the real author |
-    | `-C -M` | A line was moved/copied across files |
+    | `-L start,end` | You know which lines matter (avoid scanning 1000 lines) |
+    | `-w` | A reformatter was the last toucher |
+    | `-C -M` | A line moved/was copied across files |
     | `blame.ignoreRevsFile` | Permanently skip known reformat commits |
 
-    ### Task 1: Find why a line exists
+    ### Task 1: Why does this line exist?
 
     ```bash
     git blame -L 7,7 calculator.py
@@ -1206,38 +985,33 @@ steps:
     git show <that-sha>
     ```
 
-    You now know who, when, and why — that's 90% of real blame usage.
+    Who, when, why — covered. That chain is 90% of real blame use.
 
     ### Task 2: The reformatter-masked authorship case
 
-    The setup planted:
-    - **Bob** wrote the `clip` function.
-    - **CI-Bot** ran a whitespace-normalization job after — no functional
-      change, just whitespace.
+    Setup planted: **Bob** wrote `clip`. **CI-Bot** later ran whitespace
+    normalization (no logic change).
 
-    **Predict:** who will plain `git blame` name as the last author of
-    the `def clip(...)` line?
+    **Predict:** who will plain blame name as the last author of `def clip`?
 
     ```bash
     git blame -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'clip'
     ```
 
-    "Last to touch" wins — plain blame names CI-Bot, masking Bob.
-    Grab the SHA and inspect:
+    Last-toucher wins — blame names **CI-Bot**, masking Bob. Inspect:
 
     ```bash
-    git log --oneline -10
-    git show <ci-bot-sha>
+    git show <ci-bot-sha>     # pure whitespace diff
     ```
 
-    Pure whitespace diff. Now add `-w` to skip whitespace-only changes:
+    Add `-w` to skip whitespace-only changes:
 
     ```bash
     git blame -w -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'clip'
     ```
 
-    The author column changes to Bob — the real logic author. On teams
-    with recurring formatter commits, configure `blame.ignoreRevsFile`:
+    Now the author is Bob — the real logic author. For recurring
+    formatters, persist this:
 
     ```bash
     echo "<ci-bot-sha>" >> .git-blame-ignore-revs
@@ -1248,23 +1022,12 @@ steps:
 
     ### Task 3: Contrast — when blame is NOT masked
 
-    Run blame on a line CI-Bot never touched:
-
     ```bash
     git blame -L 1,$(wc -l < calculator.py) calculator.py | grep -i 'def add'
     ```
 
     Plain blame already shows the real author — `-w` is a no-op here.
-    That's the pattern: `-w` matters only when a reformatter was the
-    last toucher.
-
-    ### You can now
-
-    - **Chain** `git blame -L` → `git show` to answer "why does this
-      line exist?".
-    - **Predict** when plain blame will lie (reformatter was last toucher).
-    - **Defuse** with `-w` or `blame.ignoreRevsFile`.
-    - **Recognize** blame's limit: it cannot see *missing* lines.
+    Rule: `-w` matters only when a reformatter was the last toucher.
   setup_commands:
   - cd /tutorial/myproject && git switch main 2>/dev/null; true
   - cd /tutorial/myproject && (git log --all --oneline 2>/dev/null | grep -q 'auto-format via whitespace-normalize' || grep -q 'def clip' calculator.py) || printf '\ndef clip(x, lo, hi):    \n    """Clip x to [lo, hi]."""    \n    if x < lo:\n        return lo\n    if x > hi:\n        return hi\n    return x\n' >> calculator.py
@@ -1376,88 +1139,125 @@ steps:
 - title: 'git bisect: Binary Search for the Commit That Broke Things'
   view: editor
   instructions: |
-    ### The scenario
+    ### 🎯 You will learn to
+    - **Decide** when bisect is worth reaching for (rule: ≥ ~5 commits or slow tests).
+    - **Run an automated bisect** end-to-end and **always reset** afterward.
+    - **Spot regressions blame cannot find** — deletions, behavioral changes, and anything involving missing lines.
 
-    It is Friday. Tests passed yesterday. Today `pytest` reports a
-    failure. You have made **~30 commits** in between. Which one broke it?
+    ### Why bisect beats every alternative
 
-    Reading 30 diffs by hand is slow and error-prone. `git blame` only
-    helps if you know the guilty line (you usually don't). `git log
-    --grep="fix"` is hopeful guessing.
+    Reading 30 diffs by hand is slow. `blame` can't see missing lines.
+    `log --grep="fix"` is wishful thinking.
 
-    `git bisect` runs a **binary search** across history. It needs:
+    Bisect runs **binary search** on history: `log₂(30) ≈ 5` tests to pin
+    the exact culprit. 1000 commits → 10 tests. Scales forever.
 
-    1. A commit where the test **passed** (`good`).
-    2. A commit where the test **fails** (`bad`, usually HEAD).
-    3. A command (or manual judgment) to test each candidate.
+    <div data-git-command-lab-multi>
+    <script type="application/json">
+    {
+      "description": "Calculator `absolute(-4) == 4` fails at HEAD. Five recent commits hide the regression — one of them silently removed the `-x` negation. Bisect will binary-search the range `HEAD~5..HEAD` and pinpoint the culprit in ~3 tests.\n\n**Watch the HEAD label move.** Each step, Git detaches HEAD to a new midpoint. Your verdict halves the remaining range.",
+      "initialState": {
+        "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "highlights": {
+          "F000000000000000000000000000000000000000": "red",
+          "A000000000000000000000000000000000000000": "green"
+        }
+      },
+      "steps": [
+        {
+          "command": "git bisect start HEAD HEAD~5",
+          "description": "Open a bisect session with `HEAD` (F) marked **bad** and `HEAD~5` (A) marked **good**. Git checks out the midpoint `C` (`Add unused helper comment`) in detached HEAD for you to test.",
+          "state": {
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|HEAD\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "branches": "  main",
+            "head": "C000000000000000000000000000000000000000",
+            "highlights": {
+              "F000000000000000000000000000000000000000": "red",
+              "A000000000000000000000000000000000000000": "green",
+              "C000000000000000000000000000000000000000": "yellow"
+            }
+          }
+        },
+        {
+          "command": "python3 test_calculator.py  →  exit 0  →  git bisect good",
+          "description": "Tests **pass** at C, so the bug landed later. Git narrows the range to `(C, F]` and checks out `E` (`Later tweak`) as the new midpoint.",
+          "state": {
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|HEAD\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "branches": "  main",
+            "head": "E000000000000000000000000000000000000000",
+            "highlights": {
+              "F000000000000000000000000000000000000000": "red",
+              "C000000000000000000000000000000000000000": "green",
+              "E000000000000000000000000000000000000000": "yellow"
+            }
+          }
+        },
+        {
+          "command": "python3 test_calculator.py  →  exit 1  →  git bisect bad",
+          "description": "Tests **fail** at E — the bug was already present here. Range narrows to `(C, E]`; Git checks out `D` (`Simplify absolute (BUG)`).",
+          "state": {
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "branches": "  main",
+            "head": "D000000000000000000000000000000000000000",
+            "highlights": {
+              "E000000000000000000000000000000000000000": "red",
+              "C000000000000000000000000000000000000000": "green",
+              "D000000000000000000000000000000000000000": "yellow"
+            }
+          }
+        },
+        {
+          "command": "python3 test_calculator.py  →  exit 1  →  git bisect bad",
+          "description": "Tests **fail** at D — and D's parent C was good, so **D is the first bad commit**. Git prints the culprit's full message + diff. The blame name, message, and intent are all there in one place.",
+          "state": {
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|HEAD\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "branches": "  main",
+            "head": "D000000000000000000000000000000000000000",
+            "highlights": {
+              "D000000000000000000000000000000000000000": "red"
+            }
+          }
+        },
+        {
+          "command": "git bisect reset",
+          "description": "**Non-negotiable final step.** Returns HEAD from the historical midpoint back to `main`. Skip this and your working tree looks mysteriously stale.",
+          "state": {
+            "log": "F000000000000000000000000000000000000000|E000000000000000000000000000000000000000|Even later tweak|HEAD -> main\nE000000000000000000000000000000000000000|D000000000000000000000000000000000000000|Later tweak|\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Simplify absolute (BUG)|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add unused helper comment|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Refactor docstring|\nA000000000000000000000000000000000000000||Add regression tests|",
+            "branches": "* main",
+            "head": "refs/heads/main"
+          }
+        }
+      ]
+    }
+    </script>
+    </div>
 
-    With 30 commits, it takes `log2(30) ≈ 5` tests to pinpoint the
-    exact breaking commit. Scales beautifully: 1000 commits → 10 tests.
+    ### Task 1: See the regression
 
-    ### Task 1: Inspect the broken project
-
-    The tutorial has pre-built a regression for you to hunt:
-
-    - `test_calculator.py` — a regression test that used to pass.
-    - 5 unrelated-looking commits on top of it, **one of which
-      silently broke the `absolute` function.** Your job is to find
-      which one.
-
-    First, see the history:
+    Setup planted 5 commits; one of them broke `absolute(-4) == 4`.
 
     ```bash
+    cd /tutorial/myproject
     git log --oneline -7
+    python3 test_calculator.py      # AssertionError
     ```
 
-    You will see commits like `Refactor: tidy docstring`, `Add unused
-    helper comment`, `Simplify absolute`, `Later tweak`, `Even later
-    tweak`.
-
-    Now confirm the test fails:
-
-    ```bash
-    python3 test_calculator.py
-    ```
-
-    You should see an `AssertionError` on the `absolute(-4) == 4` line —
-    proof that *something* in the last 5 commits broke it.
-
-    ### Task 2: Run bisect manually
-
-    Start the search. Mark the current state `bad` and an earlier-known-good
-    commit `good`:
+    ### Task 2: Manual bisect (feel the motion)
 
     ```bash
     git bisect start
     git bisect bad HEAD
     git bisect good HEAD~5
-    ```
-
-    Git checks out a commit in the middle and prompts you. Test it:
-
-    ```bash
+    # Git checks out a midpoint. Test it:
     python3 test_calculator.py
-    ```
-
-    Based on the result:
-
-    - **Tests pass** → `git bisect good`
-    - **Tests fail** → `git bisect bad`
-
-    Repeat 2-3 times. Git narrows the range each step. When it
-    finishes, it prints the first bad commit and its full message.
-
-    When done, always clean up:
-
-    ```bash
+    # exit 0 → git bisect good ;  exit ≠ 0 → git bisect bad
+    # Repeat until Git prints "<sha> is the first bad commit"
     git bisect reset
     ```
 
-    ### Task 3: Automate with `git bisect run`
-
-    Manually marking good/bad is tedious. If the test script returns
-    **exit 0 on pass**, **non-zero on fail**, bisect can automate the
-    whole search:
+    ### Task 3: Automated bisect (the real-world default)
 
     ```bash
     git bisect start HEAD HEAD~5
@@ -1465,16 +1265,14 @@ steps:
     git bisect reset
     ```
 
-    `git bisect run` invokes the command at each candidate commit and
-    uses the exit code to decide good/bad. It reports the culprit and
-    exits, no user input needed. This is the feature you will use on
-    real projects.
+    `bisect run` uses the script's exit code (0 = good, non-zero = bad)
+    to drive the search. Always finish with `reset` — otherwise HEAD
+    stays on the last midpoint.
 
-    ### Task 4: Fix the bug you just found
+    ### Task 4: Fix the bug
 
-    Bisect pointed at the `Simplify absolute (BUG: removes negation!)`
-    commit. In the editor, open `calculator.py` and find the
-    `absolute` function. Restore its correct body:
+    Bisect points at `Simplify absolute (BUG: removes negation!)`.
+    In the editor, restore the body of `absolute`:
 
     ```python
     def absolute(x):
@@ -1482,43 +1280,15 @@ steps:
         return x if x >= 0 else -x
     ```
 
-    Save, then commit the fix:
-
     ```bash
     git commit -am "Fix: restore negation in absolute"
+    python3 test_calculator.py      # all tests pass
     ```
 
-    Verify the tests pass:
-
-    ```bash
-    python3 test_calculator.py
-    ```
-
-    You should see `all tests pass`. The regression is closed.
-
-    ### You can now
-
-    - **Decide** whether bisect is worth it for a given regression
-      (rule of thumb: ≥ ~5 commits or slow tests → yes).
-    - **Run** an automated bisect with `git bisect start HEAD
-      <known-good>; git bisect run <cmd>` — and always end with `git
-      bisect reset`.
-    - **Recognize** scenarios where blame (Step 6) fails but bisect
-      succeeds: missing lines, behavioral regressions, deletions.
-
-    ### Why does this work?
-
-    Version history is (approximately) a chain of commits. If commit X
-    is bad and an ancestor Y is good, the break is somewhere on the
-    path from Y to X. Binary search halves the candidate range at each
-    step — guaranteed `O(log n)` tests to find the exact culprit.
-
-    > **Required properties of your test:** It must run cleanly on
-    > every historical commit. If the test was added after the
-    > regression, either use `git bisect run -- bash -c 'cp
-    > /tmp/test.py . && python3 test.py'` (restoring the modern test
-    > each iteration), or write a smaller, older-friendly regression
-    > test before you start.
+    > **Test portability caveat.** Bisect runs the test at *every historical
+    > commit* in range. If the test itself was added mid-range, use
+    > `git bisect run -- bash -c 'cp /tmp/test.py . && python3 test.py'` to
+    > restore the modern test each iteration.
 
   watch_files:
   - myproject/calculator.py
@@ -1633,212 +1403,102 @@ steps:
 - title: 'Rebase: Integrate Changes Without a Merge Commit'
   view: git_graph
   instructions: |
+    ### 🎯 You will learn to
+    - **Pick** rebase for short local branches, merge for shared/long-lived ones — and say *why*.
+    - **Produce linear history** with rebase + fast-forward merge (no diamond).
+    - **Resolve a rebase conflict** — same marker dance as merge, but finish with `rebase --continue`.
+    - **Recover** from a bad rebase using reflog (Step 2's safety net applied).
+
     ### Mental model: the video-editor timeline cut
 
-    Rebase is like a video editor: select the clips (commits) unique
-    to your feature, cut them out, move the playhead to the tip of
-    `main`, paste the clips onto the new location. Each paste is a
-    new commit object — same content, new parent, new SHA. The
-    originals stay in `.git/objects` (recoverable via reflog).
+    Select the clips (commits) unique to your feature, cut, move playhead to
+    `main`'s tip, paste. Each paste is a **new commit object** — same patch,
+    new parent, new SHA. Originals stay in `.git/objects` (reflog recovers).
 
-    ### The merge-commit noise problem
+    <div data-git-command-lab>
+    <script type="application/json">
+    {
+      "command": "git rebase main",
+      "description": "`feature-sqrt` branched from `main` *before* `main` gained `Bump version notes` and `Add identity helper`. Rebasing replays `Add square_root function` on top of the latest `main` as a **new** commit (same patch, new parent, new SHA).\n\nThe old `square_root` commit is still in `.git/objects` — reflog recovers it. The branch pointer just moves to the replayed copy.",
+      "before": {
+        "log": "D000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add identity helper|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Bump version notes|\nS000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add square_root function|HEAD -> feature-sqrt\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "  main\n* feature-sqrt",
+        "head": "refs/heads/feature-sqrt",
+        "highlights": {
+          "S000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      },
+      "after": {
+        "log": "S'00000000000000000000000000000000000000|D000000000000000000000000000000000000000|Add square_root function|HEAD -> feature-sqrt\nD000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add identity helper|main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Bump version notes|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "  main\n* feature-sqrt",
+        "head": "refs/heads/feature-sqrt",
+        "highlights": {
+          "S'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      }
+    }
+    </script>
+    </div>
 
-    You have been working on `feature-sqrt` for a day. Meanwhile, `main`
-    has received 3 other commits. A plain `git merge main` into your
-    feature branch produces a merge commit with two parents — visible
-    forever in `git log --graph`.
+    ### Task 1: Inspect the divergence
 
-    For short, linear features, many teams find merge commits noisy.
-    They prefer history that reads as a **straight line**:
-
-    **Before rebase** — `feature` branched off `main` at `B`; `main` has since moved to `D`:
-
-    ```gitgraph
-    @startuml
-    branch main:
-      A "Initial"
-      B "Shared base"
-      C "More on main"
-      D "Latest on main"
-    branch feature from B:
-      α "α"
-      β "β"
-      γ "γ"
-    head main
-    @enduml
-    ```
-
-    **After rebase** — `α β γ` are replayed as new commits `α' β' γ'` on top of `D`:
-
-    ```gitgraph
-    @startuml
-    branch main:
-      A "Initial"
-      B "Shared base"
-      C "More on main"
-      D "Latest on main"
-    branch feature from D:
-      α' "α' — replayed"
-      β'  "β' — replayed"
-      γ' "γ' — replayed"
-    head feature
-    @enduml
-    ```
-
-    `git rebase main` on the feature branch **replays** `α, β, γ` on
-    top of the new `main` tip, producing new commits `α', β', γ'` with
-    the same patches but different parents (and therefore different
-    SHAs).
-
-    > **Key insight:** rebase does **not** modify commits. Commits are
-    > immutable (recall Step 3: SHA = hash of content + parents). Rebase
-    > creates *brand-new* commits with the same patches, and moves the
-    > branch pointer to the new tip. The old commits are still in the
-    > object database — recoverable via reflog.
-
-    ### Task 1: Inspect the pre-built divergence
-
-    The tutorial has set up the scenario for you:
-
-    - `feature-sqrt` branch — contains one commit adding a
-      `square_root` function.
-    - `main` branch — has two newer commits (`Bump version notes`,
-      `Add identity helper`) made *after* `feature-sqrt` was created.
-
-    The two branches now diverge. See it:
+    Pre-built: `feature-sqrt` has `square_root`; `main` later got
+    `Bump version notes` + `Add identity helper`.
 
     ```bash
+    cd /tutorial/myproject
     git log --all --oneline --graph --decorate
     ```
 
-    You should see `feature-sqrt` diverging from `main` — two parallel
-    lines on the graph.
+    ### Task 2: Rebase and fast-forward
 
-    ### Task 3: Rebase feature-sqrt onto main
-
-    Switch to the feature branch. **Predict before rebasing:** how
-    many commits will be on `feature-sqrt` after the rebase? How many
-    *parents* will its tip commit have? (Trick question — think back
-    to the basic tutorial's merge-commit structure.)
+    **Predict before running:** how many parents will the feature tip have after rebase?
 
     ```bash
     git switch feature-sqrt
     git rebase main
-    ```
-
-    Check the log:
-
-    ```bash
-    git log --all --oneline --graph --decorate
-    ```
-
-    **Linear history restored.** `feature-sqrt` now sits on top of
-    the latest `main`. Its tip commit has **one** parent, not two —
-    no merge commit anywhere.
-
-    The rebased commit's SHA changed because rebase replayed it on a
-    new parent (tip of `main`, not the old branch point). Commits are
-    immutable; rebase creates new ones. `git reflog` still has the
-    pre-rebase SHA.
-
-    ### Task 4: Fast-forward merge into main
-
-    Because `feature-sqrt` is now a strict extension of `main`, a merge
-    is trivial — no merge commit is even needed:
-
-    ```bash
     git switch main
-    git merge feature-sqrt           # fast-forward, no merge commit
+    git merge feature-sqrt        # fast-forward, no merge commit
     git branch -d feature-sqrt
     ```
 
-    Final graph: one linear line of history. No diamond, no merge noise.
+    Result: one linear line on the graph. No diamond.
 
-    ### Task 5: Rebase through a conflict (desirable difficulty)
+    ### Task 3: Rebase through a conflict (desirable difficulty)
 
-    That rebase was clean — Git applied the patch and moved on. In
-    real life, rebases conflict when upstream touched the same lines
-    your branch did. Let's produce one deliberately so you see
-    `git rebase --continue` once before you need it for real.
-
-    Start a new branch from *before* the identity commit, and add a
-    competing line at the same location:
+    Real rebases conflict when upstream touched the same lines.
+    Produce one deliberately:
 
     ```bash
     git switch -c feature-trailer main~1
     echo '# end-of-module trailer' >> calculator.py
     git commit -am 'Add trailer comment at end of file'
-    ```
-
-    Now rebase onto the newer `main` (which added `identity` at the
-    same spot):
-
-    ```bash
-    git rebase main
-    ```
-
-    Git pauses: **CONFLICT** — both sides appended to the end of the
-    file. This is the normal case, not a failure. Inspect:
-
-    ```bash
+    git rebase main       # CONFLICT — both sides appended at EOF
     git status
-    cat calculator.py   # <<<<<<< HEAD, =======, >>>>>>> markers
     ```
 
-    Resolve by keeping **both** lines — edit `calculator.py` so the
-    end contains the `identity` helper *and* your trailer comment.
-    Delete the three marker lines (`<<<<<<<`, `=======`, `>>>>>>>`).
-    Save. Then tell Git the conflict is resolved:
+    Conflicts aren't failures — they're "two valid changes touched the
+    same lines; a human must combine them." Edit `calculator.py` so the
+    bottom keeps **both** the `identity` helper and your trailer
+    comment, removing the `<<<` / `===` / `>>>` markers.
 
     ```bash
     git add calculator.py
-    git rebase --continue
-    ```
-
-    Git finishes. Clean up the now-unneeded branch:
-
-    ```bash
+    git rebase --continue         # NOT `git commit` — use the rebase verb
     git switch main
     git branch -D feature-trailer
     ```
 
-    > **The sentence to remember:** a rebase conflict uses the *same*
-    > markers and the *same* `git add` as a merge conflict (basic
-    > tutorial Step 12). The only difference is you finalize with
-    > `git rebase --continue` instead of `git commit`. If you can
-    > resolve one, you can resolve the other — the mechanics are
-    > identical; only the ceremony differs.
-
-    > **If you panic:** `git rebase --abort` at any point restores
-    > the pre-rebase state. Same safety net as `git merge --abort`
-    > from the basic tutorial.
+    > **Remember:** rebase conflict = merge conflict mechanics, but finalize
+    > with `git rebase --continue`. Bail with `git rebase --abort`.
 
     ### When to rebase vs merge
 
     | Situation | Prefer |
     |---|---|
-    | Short feature branch (hours–days) | **Rebase** — keeps history linear |
-    | Long-lived integration branch | **Merge** — preserves the actual merge event |
-    | Branch has been **pushed and others are using it** | **Merge** — rebasing rewrites SHAs and breaks collaborators |
-    | PR review is complete and ready to land | Depends on team — some teams enforce rebase, others enforce merge |
-
-    > **The cardinal rule of rebase:** only rebase commits that exist
-    > only on your local machine or on a feature branch **only you**
-    > are working on. Rewriting shared history breaks other people's
-    > branches.
-
-    ### You can now
-
-    - **Explain** the video-editor analogy of rebase and why it
-      produces new SHAs.
-    - **Choose** rebase for short local branches, merge for shared or
-      long-lived branches.
-    - **Resolve** a rebase conflict with the same marker-edit + `git
-      add` recipe as a merge conflict, finishing with `git rebase
-      --continue` instead of `git commit`.
-    - **Recover** from a bad rebase with `git reflog` + `git reset
-      --hard` (same safety net as Step 2's reflog rescue),
-      or bail out cleanly with `git rebase --abort`.
+    | Short feature branch (hours–days), only you | **Rebase** |
+    | Long-lived or already-pushed branch used by teammates | **Merge** |
+    | Cardinal rule | Never rebase **shared** history |
   setup_commands:
   - "cd /tutorial/myproject\ngit rebase --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nHAS_SQRT=0\nHAS_IDENTITY=0\ngit log feature-sqrt --oneline 2>/dev/null | grep -q 'Add square_root function' && HAS_SQRT=1\ngit log main --oneline 2>/dev/null | grep -q 'Add identity helper' && HAS_IDENTITY=1\nif [ $HAS_SQRT = 1 ] && [ $HAS_IDENTITY = 1 ]; then\n  exit 0\nfi\ngit branch -D feature-sqrt 2>/dev/null\nif git log main --oneline | grep -q 'Add identity helper'; then\n  git reset --hard HEAD~2 2>/dev/null\nfi\ngit switch -qc feature-sqrt\nprintf '\\nimport math\\ndef square_root(x):\\n    \"\"\"Return the square root of x; raises ValueError if negative.\"\"\"\\n    if x < 0:\\n        raise ValueError(\"Cannot take sqrt of negative\")\\n    return math.sqrt(x)\\n' >> calculator.py\ngit commit -qam 'Add square_root function'\ngit switch -q main\necho '# version 1.1 notes' >> calculator.py\ngit commit -qam 'Bump version notes'\necho 'def identity(x): return x' >> calculator.py\ngit commit -qam 'Add identity helper'\n"
   solution:
@@ -1982,378 +1642,166 @@ steps:
 - title: 'Interactive Rebase: Edit, Squash, Reorder, Drop'
   view: git_graph
   instructions: |
-    ### Your history is a draft until you push
+    ### 🎯 You will learn to
+    - **Squash** messy WIP commits into one clean commit before opening a PR.
+    - **Drop** an accidentally-committed secret (and recover it from reflog if needed).
+    - **Reword** a commit message retroactively without changing its diff.
+    - **Pick the right verb** (`pick`/`reword`/`squash`/`fixup`/`drop`/`edit`) for the rewriting goal.
 
-    Sitting on your feature branch, you have 5 commits. Looking at them,
-    the history is embarrassing:
+    ### ⚠️ Safe zone only
 
-    ```
-    * f3e2d1c  More typo fixes
-    * 8a1c4b5  Fix typo
-    * 9e7d23c  Fix typo again
-    * 7d5a8e2  Add power function
-    * 4e5d6c1  WIP
-    ```
+    Interactive rebase **rewrites history** (Step 3: new parents → new SHAs).
+    Run it only on commits that (a) are unpushed, or (b) live on a feature
+    branch **only you** use. For public history, use `git revert` (next).
 
-    Nobody wants to review that. Before opening a pull request, you
-    clean it up into something like:
+    <div data-git-command-lab>
+    <script type="application/json">
+    {
+      "command": "git rebase -i HEAD~4   (squash into one)",
+      "description": "Four messy commits on `refactor-power` — `WIP`, two typo fixes, and 'More typo fixes' — collapse into one clean commit **W+F+F+M** before the PR reviewer sees them. Line 1 must stay `pick` because `squash` melds **into the previous** line; line 1 has no previous.",
+      "rebaseFile": "pick   W WIP\nsquash F Fix typo\nsquash F Fix typo again\nsquash M More typo fixes\n\n# Rebase abc1234..M onto abc1234 (4 commands)\n#\n# Commands:\n# p, pick   = use commit as-is\n# s, squash = meld into previous commit\n# f, fixup  = squash, discard this commit's message\n# d, drop   = remove commit",
+      "before": {
+        "log": "M000000000000000000000000000000000000000|F200000000000000000000000000000000000000|More typo fixes|HEAD -> refactor-power\nF200000000000000000000000000000000000000|F100000000000000000000000000000000000000|Fix typo again|\nF100000000000000000000000000000000000000|W000000000000000000000000000000000000000|Fix typo|\nW000000000000000000000000000000000000000|B000000000000000000000000000000000000000|WIP|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|main\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "  main\n* refactor-power",
+        "head": "refs/heads/refactor-power",
+        "highlights": {
+          "W000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "F100000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "F200000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "M000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      },
+      "after": {
+        "log": "WFFM000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor: cleanup notes in calculator.py|HEAD -> refactor-power\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|main\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "  main\n* refactor-power",
+        "head": "refs/heads/refactor-power",
+        "highlights": {
+          "WFFM000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      }
+    }
+    </script>
+    </div>
 
-    ```
-    * a9f8e7d  Add power function with full input validation
-    ```
+    <div data-git-command-lab>
+    <script type="application/json">
+    {
+      "command": "git rebase -i HEAD~2   (drop)",
+      "description": "Same mechanism, `drop` instead of `squash`. The secret-leaking commit is **removed** from branch history; the later `placeholder` commit is replayed as **P'** on top of the pre-secret tip. The dropped commit is **not deleted** — it's still in `.git/objects`, reachable via reflog until `git gc`.",
+      "rebaseFile": "drop S Accidentally add secret (should be dropped)\npick P Add placeholder function\n\n# Rebase abc1234..P onto abc1234 (2 commands)\n#\n# Commands:\n# p, pick = use commit\n# d, drop = remove commit",
+      "before": {
+        "log": "P000000000000000000000000000000000000000|S000000000000000000000000000000000000000|Add placeholder function|HEAD -> refactor-power\nS000000000000000000000000000000000000000|R000000000000000000000000000000000000000|Accidentally add secret (should be dropped)|\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor: cleanup notes in calculator.py|",
+        "branches": "* refactor-power",
+        "head": "refs/heads/refactor-power",
+        "highlights": {
+          "S000000000000000000000000000000000000000": { "color": "crimson" },
+          "P000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      },
+      "after": {
+        "log": "P'00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Add placeholder function|HEAD -> refactor-power\nR000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor: cleanup notes in calculator.py|",
+        "branches": "* refactor-power",
+        "head": "refs/heads/refactor-power",
+        "highlights": {
+          "P'00000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      }
+    }
+    </script>
+    </div>
 
-    `git rebase -i` (interactive) is the tool.
+    ### Todo-list verbs
 
-    ### Doctor Strange warning sign
+    | Verb | Effect |
+    |---|---|
+    | `pick` | Use commit as-is (default) |
+    | `reword` | Edit message only |
+    | `edit` | Pause so you can `commit --amend` or add fixes / **split** |
+    | `squash` | Meld into previous; combine messages |
+    | `fixup` | Like squash, drop this commit's message |
+    | `drop` | Remove commit |
+    | `break` | Pause; resume with `rebase --continue` |
+    | `exec <cmd>` | Run a shell command between steps (e.g. `exec pytest`) |
 
-    `git rebase -i` **rewrites commits**. Commits are immutable objects,
-    so technically what happens is: Git creates new commits with new
-    SHAs and moves the branch pointer. The old commits are still in
-    `.git/objects` (recoverable via `reflog`).
+    ### About the scripted-editor shortcut in this VM
 
-    > **The safe zone**: only run interactive rebase on commits that
-    > (a) exist only on your machine, OR (b) exist on a feature branch
-    > that **only you** work on. Rewriting pushed commits devastates
-    > teammates — their branches will conflict horrendously on next pull.
+    Real workflow: `git rebase -i HEAD~N` opens your `$EDITOR`, you hand-edit
+    action words, save-and-close. This VM can't host an interactive editor,
+    so we script it via `GIT_SEQUENCE_EDITOR="sed -i …"`.
 
-    ### How the editor works
+    **The skill is knowing what to change, not typing the `sed`.** For each
+    task below: (1) predict the edit on paper, (2) run the scripted version,
+    (3) verify the log matches your prediction.
 
-    When you run `git rebase -i HEAD~N`, Git opens an editor with
-    something like:
-
-    ```
-    pick 4e5d6c1 WIP
-    pick 7d5a8e2 Add power function
-    pick 9e7d23c Fix typo again
-    pick 8a1c4b5 Fix typo
-    pick f3e2d1c More typo fixes
-
-    # Commands:
-    # p, pick   = use commit as-is
-    # r, reword = use commit, but edit the message
-    # e, edit   = use commit, but pause for amending
-    # s, squash = use commit, but meld into the previous commit (combine messages)
-    # f, fixup  = like squash but DISCARD this commit's log message
-    # d, drop   = remove the commit
-    # b, break  = stop and let me run commands, then `git rebase --continue`
-    ```
-
-    You edit this list (any text editor), save and close. Git replays
-    according to your instructions.
-
-    ### Task 1: Inspect the pre-built messy history
-
-    The tutorial has created a `refactor-power` branch with four
-    embarrassing commits (`WIP`, `Fix typo`, `Fix typo again`, `More
-    typo fixes`) — the kind of history you would never want reviewers
-    to see. Inspect it:
+    ### Task 1: Inspect the messy branch
 
     ```bash
-    git log --oneline -5
+    cd /tutorial/myproject
+    git log --oneline -5           # 4 ugly commits on refactor-power
     ```
 
-    Four ugly commits — a perfect target for interactive rebase.
+    ### Task 2: Squash four commits into one
 
-    ### ⚠️ About the scripted-editor shortcut in this tutorial
-
-    In a real terminal, `git rebase -i HEAD~4` opens your `$EDITOR`
-    (vim, nano, VS Code, whatever you configured). You visually edit
-    a text buffer that lists each commit, one per line, prefixed with
-    an action word (`pick`, `squash`, `drop`, …). You save and close
-    the file; Git replays based on what you wrote.
-
-    **That interaction — reading a todo list and editing action words —
-    is the whole skill.** It's what you'll do every time at work.
-
-    Unfortunately this browser VM cannot host a full interactive
-    editor session, so we **script** the editor via
-    `GIT_SEQUENCE_EDITOR="sed -i ..."`. The `sed` expression below is
-    a **scripted shortcut for this environment only**. It is NOT what
-    you will type at work — you will open a real editor and change
-    the action words by hand.
-
-    **So for every `sed`-based command below, we also show the
-    editor buffer you'd see in a real terminal.** Before running the
-    scripted version:
-
-    1. Read the "what you'd actually see" panel.
-    2. Say out loud (or write on paper) what you would change, line
-       by line.
-    3. *Then* run the scripted version and verify the result matches.
-
-    This preserves the generative work. Do not skip step 2 — "run
-    the `sed` command" is not the skill; "know what to change in the
-    editor" is.
-
-    ### Task 2: Squash four messy commits into one
-
-    **What you'd actually see** — in a real terminal,
-    `git rebase -i HEAD~4` opens your editor with this buffer:
-
-    ```
-    pick 4e5d6c1 WIP
-    pick 7d5a8e2 Fix typo
-    pick 9e7d23c Fix typo again
-    pick 8a1c4b5 More typo fixes
-
-    # Rebase abc1234..8a1c4b5 onto abc1234 (4 commands)
-    #
-    # Commands:
-    # p, pick   = use commit
-    # s, squash = use commit, but meld into previous commit
-    # ...
-    ```
-
-    **Verbalize your edit first.** You want one commit instead of
-    four. Which action word do you put on which line, and why must
-    the first line stay `pick`? (Hint: `squash` melds the current
-    line *into the previous* one — so line 1 has nothing above it to
-    meld into; it has to be `pick`.) Write the four-line result on
-    paper:
-
-    ```
-    pick    4e5d6c1 WIP
-    squash  7d5a8e2 Fix typo
-    squash  9e7d23c Fix typo again
-    squash  8a1c4b5 More typo fixes
-    ```
-
-    **Now the scripted shortcut** that produces that exact edit in
-    this VM — the `sed` expression rewrites lines 2–4's action from
-    `pick` to `squash`:
+    Predict: which lines get `squash`, and why must line 1 stay `pick`?
 
     ```bash
     GIT_SEQUENCE_EDITOR="sed -i '2,4s/^pick/squash/'" git rebase -i HEAD~4
-    ```
-
-    In real life you'd just type `:wq` after hand-editing those
-    three lines. The mechanics Git runs are identical.
-
-    After you save, Git replays the first commit as-is, then melds
-    commits 2, 3, 4 into it and **opens a second editor** for the
-    combined commit message. That buffer looks like:
-
-    ```
-    # This is a combination of 4 commits.
-    # This is the 1st commit message:
-    WIP
-
-    # This is the commit message #2:
-    Fix typo
-
-    # This is the commit message #3:
-    Fix typo again
-
-    # This is the commit message #4:
-    More typo fixes
-
-    # Please enter the commit message for your changes. ...
-    ```
-
-    **What you'd do in a real editor:** delete all those lines and
-    type one clean message like `Refactor: cleanup notes in
-    calculator.py`, then save-and-close. In this VM we achieve the
-    same end-state by amending afterwards:
-
-    ```bash
     git commit --amend -m "Refactor: cleanup notes in calculator.py"
-    ```
-
-    Check the log:
-
-    ```bash
     git log --oneline -3
     ```
 
-    Four commits became one. The remaining history is clean.
+    ### Task 3: Drop a secret-leaking commit
 
-    ### Task 3: Drop a bad commit
+    Append to `calculator.py`: `SECRET_API_KEY=oops`. Commit:
+    `git commit -am "Accidentally add secret (should be dropped)"`.
 
-    Make two more commits — one of them accidentally leaks a secret.
+    Then append `def placeholder(): pass` and commit:
+    `git commit -am "Add placeholder function"`.
 
-    **Bad commit — append this line to `calculator.py` in the editor:**
-    ```
-    SECRET_API_KEY=oops
-    ```
-    Save.
-    Commit: `git commit -am "Accidentally add secret (should be dropped)"`
-
-    **Good commit — append this line below the secret:**
-    ```python
-    def placeholder(): pass
-    ```
-    Save.
-    Commit: `git commit -am "Add placeholder function"`
-
-    Now drop the secret-leaking commit, keep the others.
-
-    **What you'd actually see** — `git rebase -i HEAD~2` opens the
-    editor with this two-line todo list (oldest first):
-
-    ```
-    pick <sha-secret>  Accidentally add secret (should be dropped)
-    pick <sha-ok>      Add placeholder function
-
-    # Commands:
-    # p, pick = use commit
-    # d, drop = remove commit
-    # ...
-    ```
-
-    **Verbalize first.** Which line do you change, and to what
-    action word? Write the intended result:
-
-    ```
-    drop    <sha-secret>  Accidentally add secret (should be dropped)
-    pick    <sha-ok>      Add placeholder function
-    ```
-
-    **Scripted shortcut** (in real life you'd hand-edit the first
-    line's `pick` to `drop`):
+    Drop the secret:
 
     ```bash
     GIT_SEQUENCE_EDITOR="sed -i '1s/^pick/drop/'" git rebase -i HEAD~2
+    grep SECRET_API_KEY calculator.py || echo "secret is gone from branch"
     ```
 
-    The first (older) of the two commits is dropped. Verify the
-    secret is gone:
+    ### Task 3b: Prove reflog rescues the "dropped" commit
 
-    ```bash
-    git log --oneline -5
-    grep SECRET_API_KEY calculator.py || echo "secret is gone"
-    ```
-
-    ### Task 3b: Rescue the "dropped" commit — prove the safety net
-
-    You just dropped a commit from history. **Dropped ≠ deleted.** The
-    commit object still exists in `.git/objects` (Step 3 again —
-    commits are immutable, rebase only moves ref pointers). Prove it:
+    Dropped ≠ deleted (Step 3 again).
 
     ```bash
     git reflog -n 10
-    ```
-
-    Find the reflog entry with message `Accidentally add secret
-    (should be dropped)` — it has the SHA of the "dropped" commit.
-    Use that SHA to create a backup branch pointing at it:
-
-    ```bash
-    # Replace <sha> with the SHA you just saw in reflog
     SECRET_SHA=$(git reflog | grep -m1 'Accidentally add secret' | awk '{print $1}')
     git branch secret-backup $SECRET_SHA
     git log secret-backup --oneline
     ```
 
-    The "deleted" commit is fully recoverable. You now have a branch
-    `secret-backup` anchoring it.
+    > ⚠️ **For real secrets:** drop+rescue leaves *more* copies, not fewer.
+    > Rotate the credential immediately, scrub with `git filter-repo`/BFG,
+    > ask collaborators to re-clone.
 
-    > ⚠️ **For real secrets**, drop + rescue leaves *more* copies,
-    > not fewer. Real response: rotate the credential immediately, then
-    > scrub history with `git filter-repo` (or BFG), then force-push
-    > and ask collaborators to re-clone.
-
-    ### Task 4: Reword a commit message
-
-    Interactive rebase can edit messages without altering content
-    using the `reword` action. Your goal: rename the tip commit's
-    message to something like `Refactor: cleanup notes and placeholder`.
-
-    **What you'd actually see** — `git rebase -i HEAD~2` opens the
-    todo list (after Task 3 dropped the secret, only two commits
-    remain in the last two positions):
-
-    ```
-    pick <sha1> Add placeholder function
-    pick <sha2> <previous commit — will be "picked" unchanged>
-
-    # Commands:
-    # p, pick   = use commit
-    # r, reword = use commit, but edit the message
-    # ...
-    ```
-
-    **Verbalize first.** Which action do you change, on which line,
-    and what happens next? Write down the predicted two-editor flow:
-
-    1. In the todo-list editor, change line 1's `pick` to `reword`,
-       save-and-close.
-    2. A **second editor** opens with the current commit message.
-       Replace it with `Refactor: cleanup notes and placeholder`,
-       save-and-close.
-    3. Git replays; the commit now has the new message but the same
-       diff.
-
-    **Scripted shortcut for this VM** (runs both editors
-    non-interactively — in real life you'd hand-edit each one):
-
-    <details markdown="1"><summary>Hint (expand if stuck)</summary>
+    ### Task 4: Reword a message
 
     ```bash
     GIT_SEQUENCE_EDITOR="sed -i '1s/^pick/reword/'" \
       GIT_EDITOR="sed -i '1s/.*/Refactor: cleanup notes and placeholder/'" \
       git rebase -i HEAD~2
-    ```
-
-    The first env var scripts the todo list (change `pick` → `reword`
-    on line 1). The second env var scripts the message editor
-    (overwrite line 1 with the new message). Two env vars = two
-    editors, because interactive rebase with `reword` opens two.
-
-    </details>
-
-    Check the result:
-
-    ```bash
     git log --oneline -3
     ```
 
-    ### Rebase todo list reference
-
-    | Command | Effect |
-    |---|---|
-    | `pick` | Use commit as-is (default) |
-    | `reword` (`r`) | Keep commit, open editor to edit message |
-    | `edit` (`e`) | Pause at commit so you can `git commit --amend` or add fixes |
-    | `squash` (`s`) | Meld into previous commit — opens editor to combine messages |
-    | `fixup` (`f`) | Like squash, but discard this commit's message |
-    | `drop` (`d`) | Remove the commit entirely |
-    | `break` (`b`) | Stop here; resume later with `git rebase --continue` |
-    | `exec <cmd>` | Run a shell command between steps (e.g., `exec pytest`) |
-
-    ### When NOT to use interactive rebase
-
-    - On commits that are already pushed and being used by others
-    - When you are not sure what you are doing **and** have no reflog
-      safety net (always verify `reflog` is recording — it is, by default)
-    - When the history is about to be merged with `--squash` anyway
-      (redundant effort)
+    Two env vars = two editors (todo list + message editor). In real life
+    you'd hand-edit both.
 
     ### The public-history alternative: `git revert`
 
-    If a commit already reached shared history and you want to "undo"
-    it, do **not** rebase-drop. Use `git revert <sha>` instead:
+    For commits already pushed to shared branches, **never** rebase-drop.
+    Use `git revert <sha>` — creates a new **anti-matter commit** that
+    negates the bad one. History grows; no SHAs change; no force-push.
 
-    - `git revert` creates a new **anti-matter commit** that
-      negates the bad commit's changes.
-    - History grows (you now have both the bad commit and the
-      revert), but no SHAs change — no force-push, no collaborator
-      pain.
-
-    Rule of thumb:
-    - **Local, unpushed commits** → rebase -i is fine (as in this step)
-    - **Shared, pushed commits** → always revert, never rebase
-
-    ### You can now
-
-    - **Squash** multiple messy commits into one clean commit before
-      opening a PR.
-    - **Drop** a commit that accidentally leaked a secret (and then
-      recover it from reflog if needed).
-    - **Reword** commit messages retroactively without altering
-      content.
-    - **Choose** the right verb (`pick`/`reword`/`squash`/`fixup`/`drop`)
-      for a given rewriting goal, instead of memorizing one recipe.
-    - **Trust** `git reflog` as your reversal path for any mistake.
+    | History state | Undo tool |
+    |---|---|
+    | Local, unpushed | `rebase -i` (any verb) |
+    | Shared, pushed | `git revert` only |
   watch_files:
   - myproject/calculator.py
   open_file: myproject/calculator.py
@@ -2484,136 +1932,72 @@ steps:
 - title: 'Squash Merge: Collapse a Feature Into a Single Commit'
   view: git_graph
   instructions: |
-    ### The goal
+    ### 🎯 You will learn to
+    - **Pick** squash vs. rebase vs. merge based on how `main`'s log should read.
+    - **Anticipate the trade-off:** clean main, lost intra-feature `bisect` precision.
+    - **Recover** individual feature commits if a regression needs fine-grained blame.
 
-    Your feature branch has 7 commits — useful while developing, but on
-    `main` you want **one clean commit** per feature. This is the
-    default on many GitHub-based teams (the green "Squash and merge"
-    button on a PR).
+    ### The three merge strategies, side by side
 
-    Three ways to get there:
-
-    | Method | Resulting history | When |
+    | Method | main's graph | Use when |
     |---|---|---|
-    | `git merge feature` | Merge commit (2 parents) preserving branch | Long-lived branches, preserving merge context |
-    | `git rebase feature` (on main) | Linear, each commit preserved | Short features, keeping individual commits |
-    | `git merge --squash feature` | **One new commit** on main, branch history discarded | You want feature = single commit |
+    | `git merge feature` | Merge commit, 2 parents (diamond) | Long-lived branch; preserve merge context |
+    | `rebase + merge` (ff) | Linear, each commit preserved | Short feature; keep individual commits |
+    | `git merge --squash` | **One new commit**, branch untouched | Want `main` to read as one commit per feature |
 
-    ### How squash merge works
+    <div data-git-command-lab>
+    <script type="application/json">
+    {
+      "command": "git merge --squash feature-stats && git commit",
+      "description": "Collapse `feature-stats`' three commits (`Add mean`, `Add variance`, `Add stddev`) into **one** new commit on `main`. The feature branch is **untouched** — its commits still exist there, valuable later when `bisect` needs fine-grained precision inside the feature.\n\nCompare to rebase (Step 8): rebase produces **three** new commits on main; squash produces **one**. Same feature, different main-log shape.",
+      "before": {
+        "log": "C000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|HEAD -> main\nS300000000000000000000000000000000000000|S200000000000000000000000000000000000000|Add stddev function|feature-stats\nS200000000000000000000000000000000000000|S100000000000000000000000000000000000000|Add variance function|\nS100000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add mean function|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "* main\n  feature-stats",
+        "head": "refs/heads/main",
+        "highlights": {
+          "S100000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "S200000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" },
+          "S300000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      },
+      "after": {
+        "log": "Σ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add descriptive statistics module (mean, variance, stddev)|HEAD -> main\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nS300000000000000000000000000000000000000|S200000000000000000000000000000000000000|Add stddev function|feature-stats\nS200000000000000000000000000000000000000|S100000000000000000000000000000000000000|Add variance function|\nS100000000000000000000000000000000000000|B000000000000000000000000000000000000000|Add mean function|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "* main\n  feature-stats",
+        "head": "refs/heads/main",
+        "highlights": {
+          "Σ000000000000000000000000000000000000000": { "color": "#003B5C", "secondary": "#FFD100" }
+        }
+      }
+    }
+    </script>
+    </div>
 
-    `git merge --squash feature` takes the cumulative patch of all
-    commits on `feature` (not on `main`) and stages it as a single
-    change. You then `git commit` with a message describing the feature
-    as a whole.
-
-    **Before** — feature work lives on its own branch:
-
-    ```gitgraph
-    @startuml
-    branch main:
-      A "Initial"
-      B "Shared base"
-      C "Refactor"
-    branch feature from B:
-      α "α"
-      β "β"
-      γ "γ"
-    head main
-    @enduml
-    ```
-
-    **After** `git merge --squash feature; git commit` — one new commit on `main` containing the combined diff of `α β γ`; `feature` is unchanged:
-
-    ```gitgraph
-    @startuml
-    branch main:
-      A "Initial"
-      B "Shared base"
-      C "Refactor"
-      αβγ "αβγ — single squashed commit"
-    branch feature from B:
-      α "α"
-      β "β"
-      γ "γ"
-    head main
-    @enduml
-    ```
-
-    Feature branch is untouched; main gets one commit that contains
-    all of the feature's changes combined.
-
-    ### Task 1: Inspect the pre-built feature branch
-
-    The tutorial has set up a `feature-stats` branch with three
-    independent commits — `mean`, `variance`, `stddev` — building one
-    statistics feature. Inspect:
+    ### Task 1: Inspect the feature
 
     ```bash
-    git log feature-stats --oneline -5
-    git diff main feature-stats -- calculator.py | head -40
+    cd /tutorial/myproject
+    git log feature-stats --oneline -5     # three focused commits
     ```
 
-    Three focused commits. You now want to land this as **one**
-    commit on main rather than three.
-
-    ### Task 2: Squash-merge into main
+    ### Task 2: Squash-merge
 
     ```bash
     git switch main
     git merge --squash feature-stats
-    git status
-    ```
-
-    Three things to notice: **no new commit yet** (you still need to
-    run `git commit`), **feature branch untouched**, **working tree
-    has staged changes** (the combined diff is in the index).
-
-    Finalize with a commit message describing the whole feature:
-
-    ```bash
-    git status
+    git status       # staged changes, but NO commit yet — squash stops here
     git commit -m "Add descriptive statistics module (mean, variance, stddev)"
     ```
 
-    ### Task 3: Inspect the result
+    ### Task 3: Confirm + clean up
 
     ```bash
-    git log --oneline main
-    git log --all --oneline --graph
+    git log --oneline main            # one new commit for the feature
+    git branch -D feature-stats       # -D because not ff-merged in Git's view
     ```
 
-    Main has **one** new commit for the entire feature. The original
-    three commits on `feature-stats` are still there (for reference or
-    bisect), but they are not merged into main.
-
-    Clean up the feature branch since main has the work now:
-
-    ```bash
-    git branch -D feature-stats      # -D (force) because not ff-merged
-    ```
-
-    > **Trade-off:** squash merge loses individual commit granularity
-    > on main. If a bug is introduced in one of the three sub-features,
-    > `git bisect` on main can only narrow it down to "the whole
-    > feature", not to which of the three internal commits caused it.
-    > Teams value this trade-off differently.
-
-    ### Comparison: three merge strategies on the same history
-
-    | Command | main commit graph |
-    |---|---|
-    | `git merge feature` | `A ── B ── C ── M` where `M` has two parents |
-    | `git rebase main` on feature, then `git merge feature` on main | `A ── B ── C ── α' ── β' ── γ'` (linear) |
-    | `git merge --squash feature; git commit` | `A ── B ── C ── αβγ` (one new commit) |
-
-    ### You can now
-
-    - **Choose** squash vs rebase vs merge based on how you want
-      `main`'s history to read.
-    - **Anticipate** the trade-off: squash gives clean main-history
-      but loses `git bisect` precision *within* a feature.
-    - **Recover** individual feature commits if needed — they still
-      exist on the (pre-delete) feature branch and in reflog.
+    > **Trade-off.** `bisect` on `main` can only narrow to the whole feature,
+    > not to one of its three internal commits. Keeping the feature branch
+    > around (or its reflog) preserves fine-grained recovery.
   setup_commands:
   - "cd /tutorial/myproject\ngit merge --abort 2>/dev/null\ngit switch -q main 2>/dev/null\nif git log feature-stats --oneline 2>/dev/null | grep -q 'Add stddev function'; then\n  exit 0\nfi\ngit branch -D feature-stats 2>/dev/null\ngit switch -qc feature-stats\nprintf '\\ndef mean(values):\\n    return sum(values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add mean function'\nprintf '\\ndef variance(values):\\n    m = mean(values)\\n    return sum((x - m) ** 2 for x in values) / len(values)\\n' >> calculator.py\ngit commit -qam 'Add variance function'\nprintf '\\nimport math as _math\\ndef stddev(values):\\n    return _math.sqrt(variance(values))\\n' >> calculator.py\ngit commit -qam 'Add stddev function'\ngit switch -q main\n"
   solution:
@@ -2719,38 +2103,193 @@ steps:
       - 'git cherry-pick feature-stats     # only copies the tip commit, not combined'
       - 'git push --force                  # unneeded and dangerous'
       explanation: '`--squash` stages but does NOT commit — the extra `git commit` step is intentional so you write a fresh, whole-feature message. Use capital `-D` to delete: Git''s fast-forward definition says the feature branch is not merged (only a *new* combined commit landed on main), so lowercase `-d` refuses. Distractor 3 (`cherry-pick`) would only copy the *tip* commit''s patch, not the cumulative diff of the whole branch.'
+- title: 'Revert: Safely Undo a Pushed Commit'
+  view: git_graph
+  instructions: |
+    ### 🎯 You will learn to
+    - **Reach for revert** — not `reset --hard` — whenever a bad commit is already on a shared branch.
+    - **Read the anti-matter pattern** in the graph: the original stays; a new commit negates it.
+    - **Decide** between revert (public safety) and rebase-drop (private cleanup) by asking one question: *has this been pushed?*
+
+    ### Scenario
+
+    You pushed `Refactor: rename divide → div` to `main`. Ten teammates
+    already pulled. Then CI discovers every import of `divide` now breaks.
+
+    `reset --hard HEAD~1` + `push --force` would **fix your clone** but
+    break every teammate's — their local `main` still points at the
+    rewritten SHA. Not acceptable.
+
+    `git revert <sha>` is the **additive, public-safe** undo. It computes
+    the inverse patch of the target commit and commits *that* as a new
+    commit. No SHAs change; no force-push; no collaborator pain.
+
+    <div data-git-command-lab>
+    <script type="application/json">
+    {
+      "command": "git revert HEAD",
+      "description": "Revert the tip of `main` — the accidental rename commit. Git computes the **inverse patch** (every `-` becomes `+`, every `+` becomes `-`) and lands it as a brand-new commit **¬R**. The original **R** is still there; history grows by one. Everyone's clones stay consistent — `git pull` on teammates just fast-forwards.\n\nCompare with `rebase -i drop` (Step 9): drop *removes* R from the branch and rewrites everything after it. Revert *appends* an undo and touches nothing existing. Same end-state (R's changes gone), opposite effect on collaborators.",
+      "before": {
+        "log": "R000000000000000000000000000000000000000|Σ000000000000000000000000000000000000000|Refactor: rename divide → div (BROKE imports)|HEAD -> main\nΣ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add descriptive statistics module|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "highlights": {
+          "R000000000000000000000000000000000000000": { "color": "crimson" }
+        }
+      },
+      "after": {
+        "log": "¬R00000000000000000000000000000000000000|R000000000000000000000000000000000000000|Revert \"Refactor: rename divide → div\"|HEAD -> main\nR000000000000000000000000000000000000000|Σ000000000000000000000000000000000000000|Refactor: rename divide → div (BROKE imports)|\nΣ000000000000000000000000000000000000000|C000000000000000000000000000000000000000|Add descriptive statistics module|\nC000000000000000000000000000000000000000|B000000000000000000000000000000000000000|Refactor divide helper|\nB000000000000000000000000000000000000000|A000000000000000000000000000000000000000|Add add function|\nA000000000000000000000000000000000000000||Initial calculator|",
+        "branches": "* main",
+        "head": "refs/heads/main",
+        "highlights": {
+          "R000000000000000000000000000000000000000": { "color": "crimson" },
+          "¬R00000000000000000000000000000000000000": { "color": "green" }
+        }
+      }
+    }
+    </script>
+    </div>
+
+    ### Task 1: See the bad commit
+
+    Setup planted a "pushed" refactor that broke callers.
+
+    ```bash
+    cd /tutorial/myproject
+    git log --oneline -5
+    grep -c 'def divide\|def div' calculator.py
+    ```
+
+    ### Task 2: Revert it
+
+    ```bash
+    git revert HEAD --no-edit
+    git log --oneline -5
+    ```
+
+    Two commits visible: the bad one **and** its revert. `git log` is now
+    a truthful record of what happened.
+
+    ### Task 3: Prove the reachable commit count
+
+    **Predict:** did revert delete anything? (Answer: no — history grew by 1.)
+
+    ```bash
+    git rev-list --count HEAD
+    git cat-file -p HEAD          # examine the revert commit object
+    git cat-file -p HEAD^         # the original bad commit, still reachable
+    ```
+
+    ### Revert vs. reset vs. rebase-drop
+
+    | Goal | Pushed? | Tool |
+    |---|---|---|
+    | Remove a bad commit from shared history | **Yes** | `git revert <sha>` (additive) |
+    | Clean up a local WIP branch before PR | No | `rebase -i` with `drop` |
+    | Nuke local branch to a prior state | No | `reset --hard <sha>` |
+
+    The rule compresses to: **if anyone else has it, revert. If only you have it, rebase is fair game.**
+
+    > **Reverting a merge commit** needs `-m 1` or `-m 2` to pick which
+    > parent is the "mainline." `git revert -m 1 <merge-sha>` keeps the
+    > first-parent side, undoes the merged-in branch.
+  setup_commands:
+  - "cd /tutorial/myproject\ngit revert --abort 2>/dev/null\ngit switch -q main 2>/dev/null\n# Plant the buggy rename if missing.\nif ! git log main --oneline 2>/dev/null | grep -q 'rename divide'; then\n  # Rename divide -> div in file to simulate a bad refactor.\n  sed -i 's/def divide/def div/' calculator.py 2>/dev/null\n  git diff --quiet calculator.py || git commit -qam 'Refactor: rename divide → div (BROKE imports)'\nfi\n"
+  solution:
+    commands:
+    - cd /tutorial/myproject && git switch main
+    - git revert HEAD --no-edit
+  tests:
+  - description: On main branch
+    command: cd /tutorial/myproject && git symbolic-ref -q HEAD | grep -q 'refs/heads/main'
+    hints:
+    - text: 'Run revert from `main`. `git switch main` if drifted.'
+  - description: A revert commit was added on top (history grew, not shrank)
+    command: cd /tutorial/myproject && git log --oneline -3 | grep -qiE 'Revert|revert'
+    hints:
+    - text: '`git revert HEAD --no-edit` creates the anti-matter commit. If you used `git reset --hard`, you rewrote history — not the point of this step. Redo from main and use revert.'
+  - description: Both the bad commit and its revert are reachable (revert is additive)
+    command: cd /tutorial/myproject && git log --oneline | grep -qi 'rename divide' && git log --oneline | grep -qiE 'Revert.*rename'
+    hints:
+    - text: 'The original bad commit should still be visible in `git log` alongside the revert. Revert does not delete history — that is the whole point vs. reset.'
+  quiz:
+    title: git revert — Knowledge Check
+    min_score: 0.8
+    shuffle: true
+    questions:
+    - question: Why is `git revert` safe on shared branches where `git reset --hard + push --force` is not?
+      options:
+      - Revert doesn't actually change anything
+      - Revert is *additive* — it appends a new anti-matter commit. Existing SHAs are unchanged, so teammates' clones stay consistent. Reset + force-push rewrites history, forcing every collaborator to reconcile.
+      - Revert is encrypted
+      - GitHub blocks force-push by default
+      correct_index: 1
+      explanation: 'The rule compresses to one property: *does this operation change existing SHAs?* Revert — no. Reset/rebase/amend — yes. Changed SHAs break anyone who already fetched the old ones. Revert is the only undo that preserves shared-history safety.'
+    - question: What does `git revert <sha>` physically add to history?
+      options:
+      - Nothing — it just hides the commit
+      - A new commit whose patch is the **inverse** of `<sha>`'s patch, with its own new SHA and `<sha>` as parent
+      - A deletion marker
+      - A tag named `revert/<sha>`
+      correct_index: 1
+      explanation: Revert computes the inverse diff and creates a regular commit object recording it. `git log` shows both the bad commit and its undo — which is the honest story of what happened.
+    - question: You accidentally pushed a bad commit to `main`. Three teammates have pulled. Best move?
+      options:
+      - '`git reset --hard HEAD~1` + `git push --force` (or `--force-with-lease`)'
+      - '`git revert HEAD` + `git push`'
+      - '`git rebase -i HEAD~1` with `drop`, then force-push'
+      - Delete the whole repository and re-clone
+      correct_index: 1
+      explanation: Shared history was already distributed. Revert appends an undo; teammates' next `pull` fast-forwards cleanly. Force-pushing after reset or rebase makes teammates' branches diverge and their pulls fail — exactly what we avoid.
+    - question: '**[Revisit Step 9]** Rebase-drop and revert both "undo" a commit. Which is correct about their effect on SHAs?'
+      options:
+      - Both create new SHAs for all later commits
+      - '`rebase-drop` rewrites every subsequent commit''s SHA. `revert` appends one new commit and changes nothing existing.'
+      - Both are non-destructive
+      - Revert rewrites SHAs; rebase-drop doesn't
+      correct_index: 1
+      explanation: The destructive/additive distinction is the heart of this step. Rebase-drop replays every commit after the dropped one on a new parent — new SHAs cascading. Revert just appends one new commit. Same apparent outcome (the bad change is gone); completely different impact on collaborators.
+    - question: You want to revert a **merge commit** (one with two parents). What additional flag do you need?
+      options:
+      - '`--merge`'
+      - '`-m 1` or `-m 2` to tell Git which parent is the mainline'
+      - '`--force`'
+      - None — it just works
+      correct_index: 1
+      explanation: 'Merge commits have two parents; revert needs to know which side is "mainline" (the version you want to keep). `-m 1` means "first parent is mainline; undo the second-parent branch." Getting this wrong reverts the wrong side.'
+    - question: Put in order the safe public-undo workflow after discovering a bad commit on shared `main`. Distractors rewrite history.
+      type: parsons
+      display: block
+      lines:
+      - 'git log --oneline -5                   # find the bad SHA'
+      - 'git revert <bad-sha> --no-edit          # create the anti-matter commit'
+      - 'git log --oneline -3                   # verify: both bad + revert are there'
+      - 'git push                                # succeeds — no history rewrite'
+      distractors:
+      - 'git reset --hard <bad-sha>^            # rewrites main, breaks teammates'
+      - 'git push --force-with-lease            # overwrites remote'
+      - 'git rebase -i <bad-sha>^ drop          # rewrites downstream commits'
+      - 'rm -rf .git && git clone <url>         # "burning down the repo" antipattern'
+      explanation: '**Revert-and-push** is the only sequence that leaves every existing SHA untouched. Each distractor rewrites history in some way — which is exactly the failure mode revert exists to avoid. Run the safe one often enough that it becomes reflex.'
 - title: 'Git Submodules: Add & Clone'
   view: editor
   instructions: |
-    ### Mental model: a library subscription
+    ### 🎯 You will learn to
+    - **Add** a submodule to an existing repo with one command.
+    - **Clone** a submodule-using repo **correctly** (`--recursive`) — or recover after forgetting.
+    - **Recognize** the gitlink (mode `160000`) + `.gitmodules` as the two structural differences from a regular file.
+    - **Pick** submodules vs. package manager vs. monorepo based on the actual problem.
 
-    Think of a submodule like **subscribing to a specific edition
-    (version) of a library**:
+    ### Mental model: library subscription
 
-    - You don't photocopy the library book into your own bookshelf
-      (no file duplication).
-    - You write down the **book title + edition number** (`.gitmodules`
-      URL + pinned SHA).
-    - Anyone with your note can fetch the same edition.
-    - To upgrade, you edit the edition number — not the book.
+    A submodule is a **subscription to a specific edition of a library**:
 
-    The "edition number" is the commit SHA. The "book" is the
-    submodule's Git repository, hosted elsewhere.
+    - No photocopy — no file duplication.
+    - You record the **book title + edition number** (`.gitmodules` URL + pinned SHA).
+    - Anyone with your note fetches the same edition.
+    - Upgrade by changing the edition number.
 
-    ### The problem
-
-    Your main application depends on a shared library your team
-    maintains in a separate repository (e.g., `math-utils`). You want:
-
-    1. The library's source available in your project's working tree.
-    2. The ability to **pin a specific version** (commit) of the library.
-    3. To upgrade the library independently — without duplicating its
-       code into your main repo.
-
-    `git submodule` solves this. Internally, it is surprisingly simple:
-    your main repo stores **a pointer to a specific commit** in the
-    submodule's repo, plus a `.gitmodules` config file describing where
-    to fetch it.
+    Edition number = commit SHA. Book = the submodule's Git repo hosted elsewhere.
 
     ### On-disk layout
 
@@ -2760,121 +2299,58 @@ steps:
       .git/
         modules/
           math-utils/  ← submodule's actual git data (objects, refs, HEAD…)
-      .gitmodules  ← tells Git where to fetch each submodule
+      .gitmodules      ← where Git should fetch each submodule
       src/
       vendor/
-        math-utils/  ← a whole nested Git repo (just nested)
-          .git  ← gitfile: "gitdir: ../../.git/modules/math-utils"
+        math-utils/    ← nested Git repo (the working tree)
+          .git         ← gitfile: "gitdir: ../../.git/modules/math-utils"
           utils.py
     @enduml
     ```
 
-    In main-repo, `vendor/math-utils` is tracked as a special "gitlink"
-    entry — essentially a file that says "check out commit `abc123` of
-    the math-utils repo here."
+    ### Task 1: Inspect the "upstream" library
 
-    ### Task 1: Inspect the pre-built "remote" library
-
-    The tutorial has prepared a tiny `math-utils` library as if it
-    were hosted on GitHub:
-
-    - `/tutorial/math-utils-src/` — the "upstream" working repo (one
-      commit with `double` and `triple` functions).
-    - `/tutorial/math-utils.git` — a bare clone that acts as the
-      remote URL your main project will reference.
-
-    Inspect:
+    Pre-built: `/tutorial/math-utils-src/` (working repo, `double`+`triple`)
+    and `/tutorial/math-utils.git` (bare clone acting as the remote URL).
 
     ```bash
-    ls /tutorial/math-utils-src
     cat /tutorial/math-utils-src/utils.py
-    ls /tutorial/math-utils.git
     ```
 
-    In real life `math-utils.git` would be
-    `https://github.com/example/math-utils.git`. Here it is a local
-    path — same semantics for `git clone`.
-
-    ### Task 2: Add the submodule to your main project
+    ### Task 2: Add the submodule
 
     ```bash
     cd /tutorial/myproject
     git switch main
     git submodule add /tutorial/math-utils.git vendor/math-utils
+    git status                            # TWO new entries
     ```
 
-    Inspect what changed:
+    Open `.gitmodules` in the editor. **Predict before scrolling the answers:**
 
-    ```bash
-    ls vendor/math-utils
-    git status
-    ```
+    1. How many lines per submodule?
+    2. Is the pinned **SHA** stored here?
+    3. What breaks if the file is deleted?
 
-    You should see *two* new entries in `git status`: `.gitmodules` and
-    `vendor/math-utils`. The latter is the special gitlink pointer;
-    the former is the plain-text config file Git just created for you.
+    <details markdown="1"><summary>Answers</summary>
 
-    ### Open `.gitmodules` in the editor
-
-    **Don't `cat` it in the terminal — open it in the Monaco editor
-    on the right.** Click `.gitmodules` in the file tree (or use
-    File → Open). You will see something like:
-
-    ```ini
-    [submodule "vendor/math-utils"]
-            path = vendor/math-utils
-            url = /tutorial/math-utils.git
-    ```
-
-    **Inspect it closely. Answer these before moving on:**
-
-    1. How many lines? (Is it a "big complicated config" or a "tiny
-       stanza"?)
-    2. Where is the URL you passed to `git submodule add`? Is the
-       pinned **commit SHA** stored in this file?
-    3. What would break if you deleted this file?
-
-    <details markdown="1"><summary>Reveal answers</summary>
-
-    1. **Three lines per submodule** (a header + `path` + `url`). If
-       you add three submodules, the file grows to 9 lines. `.gitmodules`
-       is tiny by design — it only contains what teammates need to
-       *fetch* each submodule.
-    2. **URL yes, pinned SHA no.** The SHA lives in the outer tree
-       as a gitlink (`git ls-files -s vendor/math-utils` — see
-       below). `.gitmodules` answers "*where* can I fetch this"; the
-       tree answers "*which commit* do I check out". Two independent
-       pieces of information.
-    3. **Teammates could not clone your submodules.** Without
-       `.gitmodules`, `git clone --recursive` and `git submodule
-       update --init` would not know any URLs to fetch from. The
-       gitlink would still point at a SHA, but Git would have no
-       way to retrieve the commit. `.gitmodules` is the
-       **subscription directory**; the gitlink is the **edition
-       selection**.
+    1. **3 lines** (header + `path` + `url`). Tiny by design.
+    2. **URL yes, SHA no.** The SHA is the gitlink in the tree
+       (see below). Two independent facts: *where* to fetch vs.
+       *which commit* to check out.
+    3. **Teammates can't clone the submodule.** `.gitmodules` is the
+       subscription directory; without it, `clone --recursive` has no URL.
 
     </details>
 
-    Now look at the gitlink in the terminal:
+    Inspect the gitlink:
 
     ```bash
-    git ls-files -s vendor/math-utils
-    ```
-
-    The output starts with `160000` — a special mode meaning "this is a
-    submodule gitlink, not a regular file". The SHA after it is the
-    **submodule's current commit SHA** that your main repo pins.
-
-    Commit both the `.gitmodules` config and the gitlink pointer:
-
-    ```bash
+    git ls-files -s vendor/math-utils    # mode 160000 = submodule
     git commit -m "Add math-utils submodule at v0.1.0"
     ```
 
-    ### Task 3: Clone a repo with submodules
-
-    A colleague cloning your main repo needs `--recursive` or they get
-    an empty submodule folder. Simulate that:
+    ### Task 3: Clone with `--recursive`
 
     ```bash
     cd /tutorial
@@ -2882,35 +2358,12 @@ steps:
     ls colleague-clone/vendor/math-utils
     ```
 
-    The colleague's clone has the submodule content at the correct
-    pinned commit. Without `--recursive`, `vendor/math-utils/` would
-    exist but be empty until they ran `git submodule update --init`.
+    Without `--recursive`, the folder exists empty until the teammate
+    runs `git submodule update --init --recursive`.
 
-    ### Summary so far
-
-    You have added a submodule and cloned it recursively. The outer
-    repo now stores: (1) a `.gitmodules` entry with the URL, (2) one
-    40-char pinned SHA. That is the entire "subscription record" —
-    no file duplication, consistent with the Step 3 object model.
-
-    **Upgrade** and **resync** are the subjects of the next step.
-
-    > **When to use submodules:** versioned code *you own* across
-    > several repos. Not for third-party deps (use a package manager),
-    > not for single config files (use config management).
-
-    ### You can now
-
-    - **Add** a submodule to an existing repo with `git submodule add
-      <url> <path>`.
-    - **Clone** a repo that uses submodules correctly with `git clone
-      --recursive` (or recover after a plain clone with `git
-      submodule update --init --recursive`).
-    - **Recognize** the gitlink's `160000` mode and the `.gitmodules`
-      file — the two structural differences between a regular file
-      and a submodule.
-    - **Discriminate** between cases where submodules fit and
-      cases where a package manager or monorepo serves better.
+    > **When submodules are the right tool.** Versioned code **you own**
+    > across several repos. Not for third-party deps (use a package
+    > manager), not for single config files (use config management).
   setup_commands:
   - "cd /tutorial/myproject && git switch -q main 2>/dev/null\nif [ -d /tutorial/math-utils.git ] && git --git-dir=/tutorial/math-utils.git log --oneline 2>/dev/null | grep -q 'Initial utils' && [ -x /tutorial/publish-math-utils-v0.2.sh ]; then\n  exit 0\nfi\nrm -rf /tutorial/math-utils-src /tutorial/math-utils.git /tutorial/colleague-clone\nmkdir -p /tutorial/math-utils-src\ncd /tutorial/math-utils-src\ngit init -q\nprintf 'def double(x):\\n    return x * 2\\n\\ndef triple(x):\\n    return x * 3\\n' > utils.py\ngit add utils.py\ngit commit -qm 'Initial utils'\ncd /tutorial\ngit clone -q --bare math-utils-src math-utils.git\n# Install the \"upstream publishes v0.2\" helper.\ncat > /tutorial/publish-math-utils-v0.2.sh << 'SCRIPT'\n#!/bin/bash\nset -e\ncd /tutorial/math-utils-src\nif grep -q 'def quadruple' utils.py; then\n  echo 'upstream math-utils already at v0.2'\n  exit 0\nfi\nprintf '\\ndef quadruple(x):\\n    return x * 4\\n' >> utils.py\ngit commit -qam 'Add quadruple'\n# Push to the bare 'remote' so submodule fetch sees it\nBR=$(git rev-parse --abbrev-ref HEAD)\ngit push -q /tutorial/math-utils.git $BR:$BR 2>/dev/null || \\\n  git push -q /tutorial/math-utils.git HEAD:master 2>/dev/null || \\\n  git push -q /tutorial/math-utils.git HEAD:main 2>/dev/null || true\necho 'upstream math-utils is now at v0.2 (adds quadruple)'\nSCRIPT\nchmod +x /tutorial/publish-math-utils-v0.2.sh\n"
   solution:
@@ -3010,161 +2463,80 @@ steps:
 - title: 'Updating Submodules: Upstream Bumps & Resync'
   view: editor
   instructions: |
-    You added a submodule in Step 11 and pinned v0.1. Now the
-    upstream library team publishes v0.2 with a new `quadruple`
-    function. You need to:
-
-    1. Fetch the new version inside the submodule.
-    2. Bump the pinned SHA in the outer repo.
-    3. Understand what happens to a teammate who pulls your change.
-
-    Plus: what happens when your submodule working directory has
-    "drifted" from the pinned SHA — how you force-sync it back.
+    ### 🎯 You will learn to
+    - **Upgrade** a submodule to new upstream work via the two-step dance (fetch/checkout inside, `add`/`commit` outside).
+    - **Diagnose and fix** the "teammate forgot `submodule update`" trap — muscle memory for post-pull.
+    - **Force-resync** any drifted submodule back to the pinned SHA with one deterministic command.
 
     ### Task 1: Upstream publishes v0.2
 
-    Simulate the upstream library team publishing v0.2. The tutorial
-    provides a helper script — run it (the upstream team's work, not
-    yours):
-
     ```bash
     /tutorial/publish-math-utils-v0.2.sh
-    ```
-
-    The script commits a `quadruple` function in the upstream repo
-    and pushes it to the remote `math-utils.git`. Confirm the remote
-    now has two commits:
-
-    ```bash
     git --git-dir=/tutorial/math-utils.git log --oneline --all
-    ```
-
-    Check your outer repo — nothing has changed yet:
-
-    ```bash
     cd /tutorial/myproject
-    git status
+    git status            # nothing changed here — push doesn't propagate
     ```
 
-    The upstream push doesn't automatically propagate to your
-    checked-out submodule. You must opt in.
+    ### Task 2: Fetch + checkout inside the submodule
 
-    ### Task 2: Fetch and check out the new version inside the submodule
-
-    Remember: a submodule is a nested Git repo. To fetch new commits,
-    use normal `git` commands **inside** the submodule:
+    A submodule is a nested repo. Use normal `git` inside it:
 
     ```bash
     cd /tutorial/myproject/vendor/math-utils
     git fetch
     git checkout origin/HEAD
-    ```
-
-    Back in the outer repo, see what Git notices:
-
-    ```bash
     cd /tutorial/myproject
-    git status
+    git status            # vendor/math-utils (new commits)
     git diff vendor/math-utils
     ```
 
-    You will see something like:
-
-    ```
-    modified:   vendor/math-utils (new commits)
-
-    Subproject commit abc123...  ← old (pinned) commit
-    Subproject commit def456...  ← new (checked-out) commit
-    ```
-
-    That one-line diff is the entire thing the outer repo can say
-    about the submodule's change: "the pinned SHA is now this SHA
-    instead of that SHA." **The outer repo does not track the line-level
-    diff** — that lives in the submodule's own object database.
+    The outer diff is exactly **one line** — `-Subproject commit <old>` /
+    `+Subproject commit <new>`. Line-level diffs live in the submodule's
+    own object database.
 
     ### Task 3: Bump the pinned SHA in the outer repo
-
-    The upstream version is fetched, but your main repo still *pins*
-    the old SHA. To officially "bump the version":
 
     ```bash
     git add vendor/math-utils
     git commit -m "Bump math-utils to v0.2.0 (adds quadruple)"
     ```
 
-    Now `git log main --oneline` shows a commit that just bumps the
-    pinned SHA. In the library-subscription analogy, you changed the
-    edition number in your bookshelf log.
-
-    ### Task 4: The "teammate forgot submodule update" trap
-
-    Here is the most common submodule pain point. Imagine your teammate
-    pulls your change:
+    ### Task 4: The teammate trap
 
     ```bash
     cd /tutorial/colleague-clone
     git pull
-    cat vendor/math-utils/utils.py
+    cat vendor/math-utils/utils.py     # still v0.1 on disk!
     ```
 
-    They have the new *pinned SHA* in their outer repo's tree — but
-    **their submodule working directory is still at v0.1**. If their
-    code imports `quadruple`, it will fail with a `NameError`,
-    because the file on disk does not have it yet.
-
-    The fix is one command:
+    `pull` updated the pinned SHA in the tree, but **did not touch**
+    their submodule working directory. Code that imports `quadruple`
+    now fails. Fix:
 
     ```bash
     git submodule update --init --recursive
-    cat vendor/math-utils/utils.py
+    cat vendor/math-utils/utils.py     # now has quadruple
     ```
 
-    Now `quadruple` is present. This command clones missing submodules
-    and forces each submodule's working directory to match the outer
-    repo's pinned SHA — the **deterministic state**.
-
-    > **Rule of thumb:** after every `git pull` that may have touched
-    > submodule paths, run `git submodule update --init --recursive`.
-    > Or set `git config submodule.recurse true` so pull does it
-    > automatically.
+    > **Rule of thumb:** after every `pull` that might touch submodule
+    > paths, run `git submodule update --init --recursive`. Or set
+    > `git config submodule.recurse true` so `pull` does it automatically.
 
     ### Task 5: Force-resync a drifted submodule
 
-    Simulate a teammate who experimentally checked out an old commit
-    inside the submodule and forgot to come back:
+    Simulate drift:
 
     ```bash
     cd /tutorial/colleague-clone/vendor/math-utils
     git checkout HEAD~1
     cd /tutorial/colleague-clone
-    git status
-    ```
-
-    The outer repo says `modified: vendor/math-utils (new commits)`
-    because the checked-out SHA no longer matches the pinned one.
-    One command restores determinism:
-
-    ```bash
+    git status            # modified: vendor/math-utils (new commits)
     git submodule update --init --recursive
-    git status
+    git status            # clean — pinned SHA restored
     ```
 
-    Clean again — the submodule is back at the pinned SHA the outer
-    repo expected. Same command works whether the submodule was never
-    initialized, partially fetched, or drifted.
-
-    ### You can now
-
-    - **Upgrade** a submodule to a new upstream commit with the
-      two-step dance: `fetch`/`checkout` inside submodule, then
-      `git add`/`commit` outside.
-    - **Diagnose** and fix the classic "teammate forgot submodule
-      update" failure — add `git submodule update --init --recursive`
-      to your post-pull muscle memory.
-    - **Force-resync** any submodule to the outer repo's pinned SHA
-      regardless of how it drifted.
-    - **Generalize the two-step pattern** to downgrades, tag-pins,
-      and fork-swaps — the command surface is the same each time.
+    Same command works for never-initialized, partially-fetched, or
+    drifted submodules.
   setup_commands:
   - "cd /tutorial/myproject\ngit switch -q main 2>/dev/null\nif [ ! -f .gitmodules ] || ! grep -q math-utils .gitmodules 2>/dev/null; then\n  git submodule add -f /tutorial/math-utils.git vendor/math-utils 2>/dev/null\n  git commit -qm 'Add math-utils submodule at v0.1.0' 2>/dev/null\nfi\nif [ ! -d /tutorial/colleague-clone ]; then\n  (cd /tutorial && git clone -q --recursive myproject colleague-clone 2>/dev/null)\nfi\ngit submodule update --init --recursive 2>/dev/null\n"
   solution:
@@ -3270,287 +2642,125 @@ steps:
 - title: 'Submodule Internals: What ''Content Changed'' Means'
   view: editor
   instructions: |
-    ### The confusing situation
-
-    You `cd` into `vendor/math-utils`, fix a bug, run `git status`
-    back in the outer repo, and see:
-
-    ```
-    modified:   vendor/math-utils (modified content)
-    ```
-
-    Or sometimes:
-
-    ```
-    modified:   vendor/math-utils (new commits)
-    ```
-
-    What do those two messages actually mean? And why does `git diff`
-    on a submodule print lines like `Subproject commit abc123...`
-    instead of a real diff?
-
-    This step pulls the submodule concept apart one more time so you
-    can **reason from first principles** whenever you see that status
-    line.
+    ### 🎯 You will learn to
+    - **Read `modified content` vs. `new commits`** straight from `git status` and pick the right fix.
+    - **Execute the six-step publish ceremony** without falling into the detached-HEAD trap.
+    - **Resync** any weird submodule state deterministically with one command.
+    - **Reason from first principles** — outer repo tracks one SHA; inner repo is a full Git repo; they're independent.
 
     ### The mental model
 
-    The outer repo stores **exactly one thing** about each submodule
-    (in addition to the `.gitmodules` entry): the **pinned commit SHA**.
-
-    Every time you run `git status` in the outer repo, Git compares
-    two SHAs:
+    The outer repo stores **exactly one thing** per submodule (besides
+    `.gitmodules`): the **pinned commit SHA**. On every `git status`, Git compares:
 
     ```
-    SHA pinned by outer tree          vs      SHA at submodule's current HEAD
-        (the "gitlink" 160000 entry)                 (what's actually checked out)
+    SHA the outer tree pins   vs    SHA at the submodule's current HEAD
+        (gitlink, mode 160000)         (what's actually checked out)
     ```
 
-    - **SHAs match** → submodule is clean from the outer repo's view.
-    - **SHAs differ because submodule made commits** →
-      `modified: vendor/... (new commits)`
-    - **Submodule has uncommitted working-tree changes (dirty
-      working directory)** → `modified: vendor/... (modified content)`
-    - **Both** → both messages together.
+    | Condition | Message |
+    |---|---|
+    | SHAs match | clean |
+    | Submodule committed new SHA | `new commits` |
+    | Submodule working tree dirty | `modified content` |
+    | Both | both messages |
 
-    Nothing else can cause "modified" on a submodule gitlink.
+    Nothing else can cause a "modified" submodule.
 
-    ### Task 1: See a clean starting state
-
-    Ensure you are on main with the submodule cloned from Step 11. If
-    you jumped straight here, the setup has already wired everything up.
+    ### Task 1: Clean starting state
 
     ```bash
     cd /tutorial/myproject
-    git status
     git submodule status
     ```
 
-    `git submodule status` shows, for each submodule, the pinned SHA,
-    the path, and the current checked-out branch/tag. No prefix
-    character means clean. `+` means checked-out commit differs from
-    pinned. `-` means submodule is not initialized.
+    Prefix: ` ` clean, `+` HEAD ≠ pinned, `-` not initialized.
 
-    ### Task 2: Make an uncommitted change **inside** the submodule
+    ### Task 2: Dirty the submodule working tree
 
-    Open `vendor/math-utils/utils.py` in the editor (top-right). Add
-    this function at the bottom:
+    Open `vendor/math-utils/utils.py`. Append:
 
     ```python
-
     def halve(x):
         return x / 2
     ```
 
-    Save. Check the outer repo:
+    Save. Back in outer:
 
     ```bash
     cd /tutorial/myproject
-    git status
+    git status                      # modified content
+    git diff vendor/math-utils      # no real line diff — just a summary
+    cd vendor/math-utils && git diff   # the real diff lives here
     ```
 
-    You now see:
-
-    ```
-    modified:   vendor/math-utils (modified content)
-    ```
-
-    This **does not mean** Git tracks that new line. It means:
-    the submodule's working directory is dirty. The outer repo only
-    knows "the submodule directory doesn't match its own HEAD". It
-    does not store or commit the inner changes.
-
-    Also try:
-
-    ```bash
-    git diff vendor/math-utils
-    ```
-
-    You will see **no diff** (or a short submodule summary, depending
-    on Git version). The outer repo cannot show a real line-level diff
-    for a submodule — it only knows about the pinned SHA.
-
-    To see the actual content diff, cd into the submodule:
-
-    ```bash
-    cd vendor/math-utils
-    git diff
-    ```
-
-    That is a normal `git diff` in the submodule's own repo.
-
-    ### Task 3: Commit the change **inside** the submodule
-
-    In the submodule, stage and commit:
-
-    ```bash
-    # still inside vendor/math-utils
-    git add utils.py
-    git commit -m "Add halve helper"
-    ```
-
-    ### Task 3b: Try to share it — and watch it fail
-
-    You made and committed a change inside the submodule. Seems
-    complete? **Try to push it**:
-
-    ```bash
-    # still inside vendor/math-utils
-    git push
-    ```
-
-    **Predict the error before you run.** What will Git complain about?
-
-    You will likely see either:
-
-    - `fatal: The current branch ... has no upstream branch`, or
-    - `fatal: You are not currently on a branch` (if the submodule is
-      in detached HEAD — the default after `git submodule update`).
-
-    **This is the most common submodule footgun in the wild.** You
-    made the inner commit, you believe you published it — but the
-    submodule was in detached HEAD (Step 1!) so the commit has no
-    branch and cannot be pushed, OR the branch has no upstream.
-
-    The fix: check out a proper branch inside the submodule before
-    committing:
+    ### Task 3: Commit inside the submodule — then try to push
 
     ```bash
     # inside vendor/math-utils
-    git switch -c update-halve 2>/dev/null || git switch update-halve
-    git log --oneline -2     # your commit is on this branch now
-    # Push would work now:
-    # git push -u origin update-halve
+    git add utils.py
+    git commit -m "Add halve helper"
+    git push                        # FAILS — predict the error
     ```
 
-    (We can't actually push to the bare repo in this tutorial without
-    extra setup, but you now see why the push failed and how to
-    recover. This is a *core* submodule skill.)
+    Likely: `fatal: You are not currently on a branch` (detached HEAD from
+    `submodule update`) or `no upstream branch`. This is the top submodule
+    footgun — Step 1's detached-HEAD concept, encountered here.
 
-    Back in the outer repo:
+    Fix:
+
+    ```bash
+    git switch -c update-halve 2>/dev/null || git switch update-halve
+    git log --oneline -2
+    # git push -u origin update-halve   # real push would succeed now
+    ```
+
+    Back in outer:
 
     ```bash
     cd /tutorial/myproject
-    git status
+    git status                      # now: new commits (not modified content)
     ```
 
-    The outer-repo message changes to:
-
-    ```
-    modified:   vendor/math-utils (new commits)
-    ```
-
-    **"Modified content" became "new commits"** — because the
-    submodule's working tree is now clean (you committed), but its
-    HEAD moved to a new SHA that does not match the outer repo's
-    pinned SHA.
-
-    At this point the outer repo has **not yet recorded the new
-    submodule SHA**. Your main branch is still pinning the *old*
-    commit.
-
-    ### Task 4: Bump the pinned SHA in the outer repo
-
-    To "publish" the new submodule commit to teammates, commit the
-    gitlink update in the outer repo:
+    ### Task 4: Bump the pinned SHA
 
     ```bash
     git add vendor/math-utils
     git commit -m "Bump math-utils: add halve helper"
-    git status
+    git log -1 -p vendor/math-utils   # shows ONE line: -Subproject commit ... / +Subproject commit ...
     ```
 
-    `git status` reports clean. `git log -1 -p vendor/math-utils`
-    shows the single line that changed — the gitlink SHA.
+    ### The "six commands" are six invariants
 
-    ### The six steps are really six invariants
+    The ceremony looks arbitrary; each step preserves one invariant:
 
-    The ceremony looks like six arbitrary commands you must memorize.
-    It isn't — each step **preserves one invariant** without which
-    the rest of the ceremony collapses. Learn the invariants and
-    the steps derive themselves:
-
-    | # | Command | **Invariant preserved** |
+    | # | Command | Invariant preserved |
     |---|---|---|
-    | 1 | `cd submodule; git switch -c <branch>` | **HEAD is reachable from a branch ref** (not detached) |
-    | 2 | `git commit -am "..."` inside submodule | **Your change is a commit object** (not just a working-tree edit) |
-    | 3 | `git push` inside submodule | **The new SHA exists on the submodule's remote** where teammates can fetch it |
-    | 4 | `cd ../..; git add <submodule-path>` in outer | **The outer repo's tree stages the new pinned SHA** |
-    | 5 | `git commit -m "Bump..."` in outer | **The outer repo records a new commit pinning the new SHA** |
-    | 6 | `git push` outer | **The new pin is visible to teammates** |
+    | 1 | `cd sub; git switch -c <branch>` | HEAD is branch-attached (not detached) |
+    | 2 | `git commit` inside sub | Your change is a commit object |
+    | 3 | `git push` inside sub | New SHA exists on the sub's remote |
+    | 4 | `cd ../..; git add <path>` | Outer tree stages the new pinned SHA |
+    | 5 | `git commit` outer | Outer records a commit pinning the new SHA |
+    | 6 | `git push` outer | New pin is visible to teammates |
 
-    The ceremony isn't "follow six commands." It's "maintain six
-    invariants in a dependency order": each later invariant requires
-    the earlier ones to already hold.
+    Each step depends on all earlier ones. Know the invariants and the
+    commands derive themselves.
+
+    ### Task 5: Force-resync (the universal fix)
 
     ```bash
-    git log -1 -p vendor/math-utils
+    git submodule update --init --recursive
+    # add --force if local submodule changes should be discarded
     ```
 
-    You see something like:
-
-    ```
-    -Subproject commit <old-sha>
-    +Subproject commit <new-sha>
-    ```
-
-    That is the entire diff the outer repo stores for a submodule
-    bump: one line, the SHA. Everything else lives inside the
-    submodule's own object database.
-
-    ### Task 5: Reset a submodule back to the pinned SHA
-
-    What if a teammate clones your repo and their submodule folder
-    somehow drifts (they experimented, forgot to commit, etc.)? The
-    outer repo's pinned SHA is the deterministic truth. Force the
-    submodule back to it:
+    ### 🧭 Fixes 95% of "my submodule is weird" moments
 
     ```bash
     git submodule update --init --recursive
     ```
 
-    Or more aggressively if the submodule has local changes:
-
-    ```bash
-    git submodule update --init --recursive --force
-    ```
-
-    This resets every submodule's HEAD to exactly the SHA stored in
-    the outer tree. `git status` in the outer repo then reports
-    clean.
-
-    ### The three ways to exit a "modified" state
-
-    | Message | Meaning | Fix |
-    |---|---|---|
-    | `modified content` | submodule working tree is dirty | commit or discard inside the submodule |
-    | `new commits` | submodule HEAD ≠ pinned SHA | `git add <path>` + commit (to bump) OR `git submodule update` (to reset) |
-    | both | working tree dirty *and* unrecorded commits | same — resolve each layer |
-
-    Those are the only three states. Memorizing them removes 90% of
-    the submodule confusion you will see in practice.
-
-    ### You can now
-
-    - **Distinguish** `modified content` from `new commits` just from
-      `git status`, and pick the correct fix for each.
-    - **Execute** the six-step "publish a submodule change" ceremony
-      without missing the detached-HEAD-before-committing trap.
-    - **Resync** a submodule to its pinned SHA deterministically with
-      `git submodule update --init --recursive`.
-    - **Reason from first principles** whenever a submodule confuses
-      you: the outer repo tracks one SHA; the inner repo is a full
-      Git repo; the two are independent.
-
-    ### Fixes 95% of "my submodule is weird" moments
-
-    ```bash
-    git submodule update --init --recursive
-    ```
-
-    Safe to run after any `git pull`. Add `--force` to discard local
-    submodule changes. Set `git config --global submodule.recurse true`
-    to make pull/checkout do this automatically.
+    Safe on any repo. Set `git config --global submodule.recurse true`
+    to make `pull`/`checkout` do it automatically.
   watch_files:
   - myproject/vendor/math-utils/utils.py
   open_file: myproject/vendor/math-utils/utils.py
@@ -3678,58 +2888,36 @@ steps:
 - title: 'Capstone: On-Call Debugging Under Pressure'
   view: git_graph
   instructions: |
-    ### The scenario — no hand-holding this time
+    ### 🎯 You will demonstrate you can
+    - **Compose** 5+ advanced Git tools into one realistic end-to-end workflow — without step-by-step instruction.
+    - **Pick** squash/rebase/merge based on the history shape you want, not memorized rules.
+    - **Trust the reflog safety net** after chaining several destructive operations.
+    - **Read state first, act second** — the professional habit that defeats blind-testing.
 
-    You're the on-call engineer. A teammate paged you: **the
-    `absolute` function in `calculator.py` is producing wrong answers
-    on `main`**, CI is red, and they don't know which of the last
-    handful of commits caused it. They've also left you a dirty
-    working tree with an unrelated in-progress note.
+    ### Scenario — no hand-holding
 
-    **Your job**, in order:
+    You're on-call. Page: **`absolute(-4) == 4` fails on `main`.** CI red.
+    Teammate left a dirty tree with an unrelated note. Nobody knows which
+    of ~6 recent commits broke things.
 
-    1. **Shelve** the unrelated in-progress note so your tree is
-       clean for investigation.
-    2. **Find** the exact commit that introduced the bug, using a
-       binary search across the recent history.
-    3. **Read** the culprit commit's message and diff so you
-       understand *what the author was trying to do* before you
-       touch their code.
-    4. **Fix** the bug on a dedicated branch. It's fine (expected,
-       even) to make a couple of messy WIP commits as you iterate.
-    5. **Clean up** your fix branch so it lands on `main` as one
-       focused commit — no WIP noise.
-    6. **Merge** the fix into `main`.
-    7. **Restore** the in-progress note you shelved in step 1.
-    8. **Verify** you could still recover any of the commits you
-       rewrote — the safety net has to actually work.
+    Your checklist:
 
-    You already know every command you need. No new material. This
-    step exists to prove you can **choose** and **compose** the
-    right tools under pressure, not just execute them when told.
+    1. **Shelve** the unrelated in-progress note (tree must be clean for bisect).
+    2. **Find** the bad commit via binary search.
+    3. **Read** its message and diff before touching code (author intent).
+    4. **Fix** on a dedicated branch. Messy WIP commits expected.
+    5. **Clean up** so `main` sees **one** focused commit.
+    6. **Merge** to `main`.
+    7. **Restore** the shelved note.
+    8. **Verify** reflog could still recover everything you rewrote.
 
-    > **Style expectation.** Real on-call work is not a list of
-    > commands with commentary — it is a loop of *read state →
-    > decide → act → re-read state*. Run `git status`, `git log
-    > --oneline --graph --all`, and `git reflog` *between* your
-    > actions. They are your dashboard. If you feel lost, your first
-    > move is always to re-read the state, not to guess.
+    Nothing new — every command came earlier. The point is **choice and composition under pressure**.
 
-    ### The state you're walking into
+    > **Style.** Loop: *read state → decide → act → re-read state*.
+    > `git status`, `git log --oneline --graph --all`, `git reflog` are
+    > your dashboard. Lost? Re-read state, don't guess.
 
-    The setup has prepared `/tutorial/myproject` with:
-
-    - A `test_calculator.py` whose `absolute(-4) == 4` assertion
-      currently **fails**.
-    - `~6` recent commits on `main` — somewhere among them the
-      regression lives.
-    - A dirty working tree: an unrelated `# TODO: add clamp helper`
-      note has been appended to `calculator.py` and is **not yet
-      committed**. That note is unrelated to the bug — it must
-      survive this session intact.
-
-    Start by reading state. These commands are your eyes; run them
-    whenever you want:
+    ### The state you walk into
 
     ```bash
     cd /tutorial/myproject
@@ -3738,141 +2926,67 @@ steps:
     python3 test_calculator.py
     ```
 
-    ### Hints — expand only if stuck
+    ### Hints — open only if stuck for a minute
 
-    Try each task first; open the hint only if you're stuck for more
-    than a minute.
-
-    <details markdown="1"><summary>Hint — Task 1 (shelve uncommitted work)</summary>
-
-    Step 4. One command, noun form. The working tree must be
-    **clean** for bisect to move HEAD around safely.
+    <details markdown="1"><summary>Task 1 (shelve WIP)</summary>
+    Step 4. One command, noun form. Bisect needs a clean tree.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 2 (find the culprit)</summary>
-
-    Step 7. You want the automated version so you don't mark
-    good/bad by hand. The test script exits 0 on pass, non-zero on
-    fail — feed it to the right subcommand. Don't forget to
-    **reset** afterward or HEAD stays on a random historical
-    commit.
+    <details markdown="1"><summary>Task 2 (find the culprit)</summary>
+    Step 7, automated. Test exits 0 = good, non-zero = bad. Always end with reset.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 3 (read the culprit's intent)</summary>
-
-    Step 6 gave you a two-command chain. `git blame` alone is noise;
-    pair it with `git show <sha>` to read the commit message and
-    full diff. Target the line of `absolute` that looks wrong.
+    <details markdown="1"><summary>Task 3 (read intent)</summary>
+    Step 6's chain: `git blame` + `git show <sha>`.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 4 (fix on a branch, messily)</summary>
-
-    Step 9 showed you that messy intermediate commits are fine as
-    long as you clean them before sharing. Branch from `main`, make
-    at least two commits (any real workflow would), and get
-    `test_calculator.py` passing.
+    <details markdown="1"><summary>Task 4 (messy fix branch)</summary>
+    Branch off `main`, iterate, make any number of WIP commits, get tests green.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 5 (squash messy commits into one)</summary>
-
-    Step 9's interactive rebase is exactly this. Or — if your two
-    commits are both small and you don't mind losing the individual
-    messages — Step 10's `git merge --squash` does the same job at
-    merge time. **Either is acceptable**; the test only cares that
-    `main` ends with exactly one new commit containing your fix.
+    <details markdown="1"><summary>Task 5 (squash into one)</summary>
+    Step 9 `rebase -i` + `squash`, or Step 10 `merge --squash`. Either is fine.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 6 (merge to main)</summary>
-
-    Step 10 or the basic tutorial's Step 9. Whichever merge strategy
-    you pick, main should end up with your one clean fix commit on
-    top.
+    <details markdown="1"><summary>Task 6 (merge)</summary>
+    Whatever strategy leaves `main` with one clean fix commit on top.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 7 (restore the shelved note)</summary>
-
-    Step 4. Inverse of Task 1. The note must reappear in
-    `calculator.py` exactly as it was, still uncommitted.
+    <details markdown="1"><summary>Task 7 (restore note)</summary>
+    Step 4. Inverse of Task 1. Leave uncommitted.
     </details>
 
-    <details markdown="1"><summary>Hint — Task 8 (prove reflog still has your back)</summary>
-
-    Step 2. `git reflog` should still show the messy pre-squash
-    commits. This is a *read-only* verification — don't branch or
-    reset anything, just confirm the history of HEAD's movements is
-    intact and would let you recover your intermediate work if you
-    needed to. If you see at least two reflog entries from your fix
-    branch, you're safe.
+    <details markdown="1"><summary>Task 8 (reflog verify)</summary>
+    Step 2. Read-only check: `git reflog` still sees your pre-squash commits.
     </details>
 
     ### Success criteria
 
-    When you think you're done, check each of these yourself — the
-    automated tests check the same things:
-
     - `python3 test_calculator.py` prints `all tests pass`.
-    - `main`'s log ends with exactly **one** new fix commit on top
-      of the pre-session state — not two or three WIP commits.
-    - `calculator.py` still contains your uncommitted
-      `# TODO: add clamp helper` note.
-    - `git reflog` shows your intermediate messy commits — proof
-      you could still recover them if asked.
-
-    ### You can now
-
-    - **Compose** 5+ advanced Git tools into one realistic
-      end-to-end workflow, without instruction.
-    - **Choose** between squash/rebase/merge based on what the
-      resulting history should look like, not memorized rules.
-    - **Trust** the reflog safety net after combining multiple
-      destructive operations.
-    - **Read state first, act second** — the habit that
-      distinguishes professional Git usage from the "blind-testing"
-      antipattern Step 1 named.
+    - `main` ends with exactly **one** new fix commit.
+    - `calculator.py` still has your uncommitted `# TODO: add clamp helper` note.
+    - `git reflog` retains your intermediate messy commits.
 
     ### The "burning down the repo" callback
 
-    Remember **"burning down the repo"** from Step 1 — the novice
-    panic response of deleting the local folder, copying files to a
-    text file, re-cloning, and force-pushing? Look at what you just
-    did instead:
+    From Step 1's antipattern: panic = delete the folder, re-clone, force-push.
+    You did the opposite:
 
-    - Dirty working tree → **stash**, not delete the folder.
-    - Regression in unknown commit → **bisect**, not read 30 diffs.
-    - Find the culprit's intent → **blame + show**, not guess.
-    - Messy intermediate commits → **interactive rebase or squash
-      merge**, not re-write from scratch.
-    - Worried about losing the messy commits → **reflog**, not
-      a panicked `rm -rf`.
+    | Situation | What you did | What novices do |
+    |---|---|---|
+    | Dirty tree | **stash** | delete folder |
+    | Unknown-culprit regression | **bisect** | read 30 diffs |
+    | Author intent | **blame + show** | guess |
+    | Messy intermediates | **rebase / squash** | rewrite from scratch |
+    | "Lost" commits | **reflog** | panicked `rm -rf` |
 
-    You could still have burned down the repo. You didn't need to.
-    That's the competence difference.
+    Same competence gap you'll see on every team for the rest of your career.
 
-    ### 🏔️ Stretch variant (optional)
+    ### 🏔️ Stretch (optional, not auto-tested)
 
-    If the capstone felt manageable and you want to push one level
-    further: **re-run the capstone with one extra wrinkle**. The
-    unrelated in-progress `# TODO: add clamp helper` note you
-    stashed also conflicts with a line added by the bug-fix commit
-    (pretend the author touched the same region).
-
-    Now your `git stash pop` at the end hits a conflict. You have
-    to:
-    - Resolve the stash-pop conflict (same marker-edit dance as
-      any conflict).
-    - Decide whether to keep the note *and* the fix, or drop the
-      note.
-    - Verify the tests still pass after resolution.
-    - Verify reflog *still* shows you could unwind any of it.
-
-    This tests everything in the capstone *plus* composable
-    conflict resolution. It is the capstone's capstone. Only the
-    most confident learners should attempt it — but if you do and
-    succeed, there is nothing in advanced Git you aren't prepared
-    for.
-
-    (This variant is not tested by the automated check; it's
-    voluntary extension practice.)
+    Re-run with one extra wrinkle: the shelved note conflicts with the
+    bug-fix line on `stash pop`. Resolve the conflict, pick keep-both
+    or keep-fix, verify tests + reflog. This is the capstone's capstone.
   watch_files:
   - myproject/calculator.py
   - myproject/test_calculator.py

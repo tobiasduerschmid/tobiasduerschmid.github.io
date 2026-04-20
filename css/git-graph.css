@@ -38,21 +38,27 @@
 .git-graph-svg .git-graph-head-glow {
   animation: git-graph-pulse 2s ease-in-out infinite;
 }
+/* Pulse owns stroke-opacity exclusively. Other HEAD-glow animations
+   (head-pulse burst, glow-enter/exit cross-fade, node-enter pop-in)
+   animate DIFFERENT properties (transform, stroke-width, opacity), so
+   pulse can be layered with any of them without property conflicts —
+   which is why every compound animation declaration on .head-glow
+   includes `git-graph-pulse 2s infinite` alongside the one-shots. This
+   keeps the pulse visibly alive at all times, instead of having the
+   infinite rule silently replaced by a shorter one-shot the way it
+   would be if multiple animations claimed stroke-opacity. */
 @keyframes git-graph-pulse {
   0%, 100% { stroke-opacity: 0.3; }
   50% { stroke-opacity: 0.7; }
 }
 
-/* Pause perpetual / in-flight CSS animations when the graph is scrolled
-   out of view. An IntersectionObserver in js/git-graph.js toggles the
-   `--offscreen` modifier on each SVG root. Without this, pages with many
-   cards (e.g. sebook/tools/git.md has 28) keep the compositor hot forever
-   running every card's HEAD-glow pulse, which lowers the frame rate of
-   the card the user is actually interacting with. */
-.git-graph-svg--offscreen,
-.git-graph-svg--offscreen * {
-  animation-play-state: paused !important;
-}
+/* Offscreen pausing intentionally removed. IntersectionObserver doesn't
+   reliably fire for SVGs inside nested scroll containers (SEBook's
+   `main` has its own overflow-y), leaving graphs stuck with the
+   `--offscreen` class and their pulse frozen even after they scroll into
+   view. The pulse itself only animates stroke-opacity on a single ring
+   per graph, so running all 28 on SEBook/tools/git is cheap — a tiny
+   per-frame compositor cost that's not worth a fragile visibility hack. */
 
 /* === Git graph delta animations =========================================== */
 
@@ -101,10 +107,18 @@
   100% { transform: scale(1);    opacity: 1; }
 }
 .git-graph-svg .git-graph-node-g.entering > .git-graph-node,
-.git-graph-svg .git-graph-node-g.entering > .git-graph-hash,
-.git-graph-svg .git-graph-node-g.entering > .git-graph-head-glow {
+.git-graph-svg .git-graph-node-g.entering > .git-graph-hash {
   transform-origin: 0 0;
   animation: git-graph-node-enter 480ms cubic-bezier(.34,1.56,.64,1) backwards;
+}
+/* The glow keeps the same pop-in, but also carries the infinite pulse so
+   it starts ringing from the first frame — layered on a different
+   property (scale + opacity vs. stroke-opacity) so neither overrides
+   the other. */
+.git-graph-svg .git-graph-node-g.entering > .git-graph-head-glow {
+  transform-origin: 0 0;
+  animation: git-graph-node-enter 480ms cubic-bezier(.34,1.56,.64,1) backwards,
+             git-graph-pulse 2s ease-in-out infinite;
 }
 .git-graph-svg .git-graph-node-g.entering > .git-graph-message {
   animation: git-graph-fade-in 480ms ease-out 120ms backwards;
@@ -163,27 +177,33 @@
              git-graph-pulse 2s ease-in-out infinite;
 }
 
-/* HEAD pulse burst — the glow's scale/opacity pop. Shares duration + peak
-   timing (750ms @ 35%) with the yellow commit/label burst so when HEAD
-   lands and the commit/label flashes, the halo rings out at the exact
-   same beat. */
+/* HEAD pulse burst — the glow's scale + stroke-width pop. Shares duration
+   + peak timing (750ms @ 35%) with the yellow commit/label burst so when
+   HEAD lands and the commit/label flashes, the halo rings out at the
+   exact same beat. Deliberately does NOT animate stroke-opacity — that
+   property is owned by git-graph-pulse (infinite), which layers on this
+   via the compound animation declaration below. */
 @keyframes git-graph-head-pulse {
-  0%, 100% { transform: scale(1);   stroke-opacity: 0.4; stroke-width: 2; }
-  35%      { transform: scale(1.5); stroke-opacity: 1;   stroke-width: 5; }
+  0%, 100% { transform: scale(1);   stroke-width: 2; }
+  35%      { transform: scale(1.5); stroke-width: 5; }
 }
 .git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow:not(.glow-entering):not(.glow-exiting) {
   transform-origin: 0 0;
-  animation: git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1);
+  animation: git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1),
+             git-graph-pulse 2s ease-in-out infinite;
 }
 
 /* When the glow is both entering (HEAD just arrived at a new commit) AND
-   the parent has head-pulse, stack both effects on one declaration. The
-   scale burst still peaks at the merge-burst 35% mark for sync. */
+   the parent has head-pulse, stack all three effects. Since each targets
+   a different property (opacity / transform+stroke-width / stroke-opacity)
+   they run in parallel without overriding each other — no 900ms delay on
+   the pulse is needed, which was a workaround for the old keyframes where
+   head-pulse also claimed stroke-opacity and masked the infinite pulse. */
 .git-graph-svg .git-graph-node-g.head-pulse > .git-graph-head-glow.glow-entering {
   transform-origin: 0 0;
   animation: git-graph-glow-enter 720ms cubic-bezier(.7,0,.3,1) forwards,
              git-graph-head-pulse 750ms cubic-bezier(.4,0,.2,1),
-             git-graph-pulse 2s ease-in-out infinite 900ms;
+             git-graph-pulse 2s ease-in-out infinite;
 }
 
 html.dark-mode .git-graph-svg .git-graph-head-glow {
@@ -276,6 +296,14 @@ html.dark-mode .post-content svg.git-graph-svg {
   font-size: 12.5px;
   line-height: 1.35;
   color: #1f2d3d;
+  /* `min-height` is managed by js/git-graph.js (`_lockWorkbenchHeight`),
+     which pins it to the largest natural height the panel has ever had
+     for this lab. A `git commit` / `git add` that flies a row into the
+     commit no longer shrinks the panel when the row is removed, so the
+     SVG below it doesn't get pulled up — the only motion the user sees
+     is the row itself flying, not the whole graph jumping. An empty
+     zone reads exactly like `git status` would ("nothing staged"), so
+     the reserved space is meaningful rather than wasted. */
 }
 /* The workbench is shown whenever a `files` spec is declared, even if all
    zones are empty — an "all clean" strip after `git reset --hard` or
