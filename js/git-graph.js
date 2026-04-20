@@ -30,6 +30,15 @@
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
+  function shouldUsePerfLite() {
+    if (typeof window === 'undefined') return false;
+    var coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    var smallViewport = !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+    var lowCores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
+    var lowMemory = typeof navigator !== 'undefined' && navigator.deviceMemory && navigator.deviceMemory <= 4;
+    return coarsePointer || (smallViewport && (lowCores || lowMemory));
+  }
+
   // Branch color palette — UCLA colors first, then general palette for variety
   var BRANCH_COLORS = [
     '#2774AE', // UCLA Blue
@@ -69,6 +78,7 @@
   // Each GitGraph gets a unique arrow-marker id so multiple graphs on the
   // same page (e.g. the 7-step print grid) don't collide on element ids.
   var _instanceCounter = 0;
+  function _snapHalf(v) { return Math.round(v * 2) / 2; }
 
   // Promote an element to its own compositor layer just before we mutate its
   // `transform` (which kicks in the CSS transition), then drop the hint once
@@ -104,6 +114,7 @@
     this._reservedPaddingLeft = 0;
     this._reservedMaxW        = 0;
     this._reservedWorkbenchH  = 0;
+    this._perfLite = shouldUsePerfLite();
   }
 
   // Pre-compute the layout dimensions this graph will need across EVERY
@@ -793,9 +804,9 @@
     // gets clipped.
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" ' +
       'viewBox="0 0 ' + width + ' ' + height + '" overflow="visible" ' +
-      'class="git-graph-svg" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
+      'class="git-graph-svg' + (this._perfLite ? ' git-graph-svg--perf-lite' : '') + '" style="font-family:\'Fira Code\',\'Cascadia Code\',Menlo,monospace;">';
 
-    svg += this._arrowDefsMarkup() + this._textureDefsMarkup();
+    svg += this._textureDefsMarkup();
 
     // Layer order matches the live renderer: edges → labels → nodes.
     // See _buildInitialSvg for why nodes are drawn last (so the HEAD
@@ -960,10 +971,9 @@
       height: dims.height,
       viewBox: '0 0 ' + dims.width + ' ' + dims.height,
       overflow: 'visible',
-      'class': 'git-graph-svg',
+      'class': 'git-graph-svg' + (this._perfLite ? ' git-graph-svg--perf-lite' : ''),
       style: "font-family:'Fira Code','Cascadia Code',Menlo,monospace;",
     });
-    this._appendArrowDefs(this._svgRoot);
     this._edgesLayer = this._svgEl('g', { 'class': 'git-graph-edges-layer' });
     this._nodesLayer = this._svgEl('g', { 'class': 'git-graph-nodes-layer' });
     this._labelsLayer = this._svgEl('g', { 'class': 'git-graph-labels-layer' });
@@ -1049,7 +1059,7 @@
       var newParent = rebaseMap[parts[1]] || parts[1];
       var newKey = newChild + '__' + newParent;
       if (newKey !== k) {
-        edgeEntry.el.setAttribute('data-edge-key', newKey);
+        edgeEntry.g.setAttribute('data-edge-key', newKey);
       }
       rekeyedEdges[newKey] = edgeEntry;
     }
@@ -1104,7 +1114,7 @@
         if (oldKey.split('__')[0] !== req2.cm.hash) continue;
         delete this._edgeEls[oldKey];
         this._edgeEls[req2.key] = oldEntry;
-        oldEntry.el.setAttribute('data-edge-key', req2.key);
+        oldEntry.g.setAttribute('data-edge-key', req2.key);
         req2.satisfied = true;
         newKeys[req2.key] = true;
         this._updateEdge(oldEntry, req2.x1, req2.y1, req2.x2, req2.y2, req2.color);
@@ -1117,7 +1127,7 @@
       var req3 = required[r3];
       if (req3.satisfied) continue;
       var fresh = this._createEdge(req3.key, req3.x1, req3.y1, req3.x2, req3.y2, req3.color);
-      this._edgesLayer.appendChild(fresh.el);
+      this._edgesLayer.appendChild(fresh.g);
       this._animateEdgeIn(fresh);
       this._edgeEls[req3.key] = fresh;
       newKeys[req3.key] = true;
@@ -1136,15 +1146,26 @@
     // edge that switches between straight and curved during a layout shift
     // can smoothly morph via CSS `d` transition instead of being destroyed
     // and recreated (which caused the visible flash the user reported).
-    var el = this._svgEl('path', {
-      d: this._edgePathD(x1, y1, x2, y2),
-      fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-opacity': 0.7,
-      'marker-end': 'url(#' + this._arrowId + ')',
+    var g = this._svgEl('g', {
       'class': 'git-graph-edge',
       'data-edge-key': key,
     });
+    var shaft = this._svgEl('path', {
+      d: this._edgePathD(x1, y1, x2, y2),
+      fill: 'none', stroke: color, 'stroke-width': 3, 'stroke-opacity': 0.7,
+      'class': 'git-graph-edge-shaft',
+    });
+    var head = this._svgEl('path', {
+      d: ARROW_PATH,
+      transform: this._edgeHeadTransform(x1, y1, x2, y2),
+      fill: color,
+      'fill-opacity': 0.9,
+      'class': 'git-graph-edge-head',
+    });
+    g.appendChild(shaft);
+    g.appendChild(head);
     return {
-      el: el, x1: x1, y1: y1, x2: x2, y2: y2, color: color,
+      g: g, shaft: shaft, head: head, x1: x1, y1: y1, x2: x2, y2: y2, color: color,
     };
   };
 
@@ -1153,7 +1174,7 @@
   // otherwise pop. Setting dasharray=length and animating dashoffset to 0
   // makes the line appear to grow from its starting point.
   GitGraph.prototype._animateEdgeIn = function (entry) {
-    var el = entry.el;
+    var el = entry.shaft;
     var len;
     try {
       if (el.getTotalLength) {
@@ -1230,11 +1251,9 @@
   };
 
   GitGraph.prototype._edgePathD = function (x1, y1, x2, y2) {
-    // Snap to half-pixels so the 3px stroke + marker base land on stable
-    // raster boundaries across frames. This reduces subtle arrowhead shimmer
-    // on HiDPI/composited transitions without changing geometry semantics.
-    function snap(v) { return Math.round(v * 2) / 2; }
-    x1 = snap(x1); y1 = snap(y1); x2 = snap(x2); y2 = snap(y2);
+    // Keep shaft geometry continuous (no coordinate quantization) so `d`
+    // interpolation remains smooth during transitions. The explicit arrowhead
+    // transform is snapped separately for tip stability.
     // Cubic Bézier with vertical tangent at both ends. The endpoint
     // (x2, y2) is already pre-adjusted by _edgeEndpoint so the arrow tip
     // lands precisely on the parent's circumference.
@@ -1242,14 +1261,27 @@
     return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' + x2 + ' ' + midY + ', ' + x2 + ' ' + y2;
   };
 
+  GitGraph.prototype._edgeHeadTransform = function (x1, y1, x2, y2) {
+    var sx2 = _snapHalf(x2);
+    var sy2 = _snapHalf(y2);
+    var angle = (sy2 >= _snapHalf(y1)) ? 90 : -90;
+    // ARROW_PATH is drawn pointing +X with centerline at y=6 and base x=0.
+    // Place base center at (x2,y2), then rotate to the edge's terminal tangent.
+    return 'translate(' + sx2 + ' ' + sy2 + ') rotate(' + angle + ') translate(0 -6)';
+  };
+
   GitGraph.prototype._updateEdge = function (entry, x1, y1, x2, y2, color) {
     if (entry.x1 === x1 && entry.y1 === y1 && entry.x2 === x2 && entry.y2 === y2 && entry.color === color) return;
-    entry.el.setAttribute('d', this._edgePathD(x1, y1, x2, y2));
-    if (entry.el.style.strokeDasharray) {
-      entry.el.style.strokeDasharray = '';
-      entry.el.style.strokeDashoffset = '';
+    entry.shaft.setAttribute('d', this._edgePathD(x1, y1, x2, y2));
+    entry.head.setAttribute('transform', this._edgeHeadTransform(x1, y1, x2, y2));
+    if (entry.shaft.style.strokeDasharray) {
+      entry.shaft.style.strokeDasharray = '';
+      entry.shaft.style.strokeDashoffset = '';
     }
-    if (entry.color !== color) entry.el.setAttribute('stroke', color);
+    if (entry.color !== color) {
+      entry.shaft.setAttribute('stroke', color);
+      entry.head.setAttribute('fill', color);
+    }
     entry.x1 = x1; entry.y1 = y1; entry.x2 = x2; entry.y2 = y2; entry.color = color;
   };
 
@@ -1260,13 +1292,14 @@
   GitGraph.prototype._removeEdge = function (entry, key) {
     if (entry._removalTimer) return;
     var self = this;
-    var el = entry.el;
+    var el = entry.shaft;
+    var g = entry.g;
     // Reduced motion: skip the retract tween and remove the edge
     // immediately. No dashoffset games, no 720ms wait — the element leaves
     // the DOM on the next microtask. Dependent layout snaps to the new
     // shape in the same paint.
     if (prefersReducedMotion()) {
-      if (el.parentNode) el.parentNode.removeChild(el);
+      if (g.parentNode) g.parentNode.removeChild(g);
       delete self._edgeEls[key];
       return;
     }
@@ -1285,9 +1318,9 @@
         });
       });
     }
-    el.classList.add('exiting');
+    g.classList.add('exiting');
     entry._removalTimer = setTimeout(function () {
-      if (el.parentNode) el.parentNode.removeChild(el);
+      if (g.parentNode) g.parentNode.removeChild(g);
       delete self._edgeEls[key];
     }, 720);
   };
@@ -1737,19 +1770,12 @@
         var x2 = ep.x;
         var y2 = ep.y;
         var color = cm.branchColor;
-        var marker = ' marker-end="url(#' + this._arrowId + ')"';
-
-        if (x1 === x2) {
-          // Straight line (same column)
-          svg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" ' +
-            'stroke="' + color + '" stroke-width="3" stroke-opacity="0.7"' + marker + '/>';
-        } else {
-          // Curved line (cross-column merge/branch)
-          var midY = (y1 + y2) / 2;
-          svg += '<path d="M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + midY + ', ' +
-            x2 + ' ' + midY + ', ' + x2 + ' ' + y2 + '" ' +
-            'fill="none" stroke="' + color + '" stroke-width="3" stroke-opacity="0.7"' + marker + '/>';
-        }
+        svg += '<g class="git-graph-edge">' +
+          '<path d="' + this._edgePathD(x1, y1, x2, y2) + '" ' +
+          'fill="none" stroke="' + color + '" stroke-width="3" stroke-opacity="0.7" class="git-graph-edge-shaft"/>' +
+          '<path d="' + ARROW_PATH + '" transform="' + this._edgeHeadTransform(x1, y1, x2, y2) + '" ' +
+          'fill="' + color + '" fill-opacity="0.9" class="git-graph-edge-head"/>' +
+          '</g>';
       }
     }
     return svg;
@@ -2042,6 +2068,7 @@
       this._workbenchEl = wb;
       this._workbenchRowEls = {};
     }
+    this._workbenchEl.classList.toggle('git-workbench--perf-lite', !!this._perfLite);
     return this._workbenchEl;
   };
 

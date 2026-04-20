@@ -88,14 +88,76 @@
   transition: fill 720ms cubic-bezier(.7,0,.3,1);
 }
 
-/* Edges only need `d` to transition — every edge is a <path> now, whether
-   straight or curved, so CSS `d` interpolation morphs them smoothly when
-   endpoints move or an edge switches between straight and curved. */
-.git-graph-svg .git-graph-edge {
+/* Edge shafts morph via `d`; explicit arrowheads are separate paths whose
+   transform follows the shaft endpoint. This avoids SVG marker jitter while
+   keeping edge motion in sync with nodes and labels. */
+.git-graph-svg .git-graph-edge-shaft {
   transition: stroke-dashoffset 720ms cubic-bezier(.7,0,.3,1),
-              opacity 720ms cubic-bezier(.7,0,.3,1),
               stroke 720ms cubic-bezier(.7,0,.3,1),
               d 720ms cubic-bezier(.7,0,.3,1);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.git-graph-svg .git-graph-edge-head {
+  transition: transform 720ms cubic-bezier(.7,0,.3,1),
+              fill 720ms cubic-bezier(.7,0,.3,1),
+              opacity 720ms cubic-bezier(.7,0,.3,1);
+}
+
+/* Mobile/low-power fast path: keep semantics intact, drop expensive visual
+   effects and shorten transitions so interactions stay responsive. Enabled by
+   js/git-graph.js via `.git-graph-svg--perf-lite` / `.git-workbench--perf-lite`. */
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node {
+  filter: none !important;
+}
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-head-glow {
+  animation: none !important;
+  stroke-opacity: 0.45;
+}
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-label-g,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-label-g--head {
+  transition: transform 280ms cubic-bezier(.4,0,.2,1);
+}
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-edge-shaft {
+  transition: stroke-dashoffset 280ms cubic-bezier(.4,0,.2,1),
+              stroke 280ms cubic-bezier(.4,0,.2,1),
+              d 0ms linear;
+}
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-edge-head {
+  transition: transform 280ms cubic-bezier(.4,0,.2,1),
+              fill 280ms cubic-bezier(.4,0,.2,1),
+              opacity 280ms cubic-bezier(.4,0,.2,1);
+}
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.entering > .git-graph-node,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.entering > .git-graph-hash,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.entering > .git-graph-head-glow,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.entering > .git-graph-message,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-label-g.entering,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.head-pulse > .git-graph-head-glow,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-node-g.git-graph-merge-burst > .git-graph-node,
+.git-graph-svg.git-graph-svg--perf-lite .git-graph-label-g.git-graph-label-burst {
+  animation: none !important;
+}
+
+.git-workbench--perf-lite .git-workbench-row,
+.git-workbench--perf-lite .git-workbench-stash-entry {
+  transition: transform 280ms cubic-bezier(.4,0,.2,1),
+              color 220ms linear,
+              background-color 220ms linear;
+}
+.git-workbench--perf-lite .git-workbench-row.git-workbench-row-flip,
+.git-workbench--perf-lite .git-workbench-stash-entry.git-workbench-row-flip,
+.git-workbench--perf-lite .git-workbench-row.git-workbench-row-fly,
+.git-workbench--perf-lite .git-workbench-stash-entry.git-workbench-row-fly,
+.git-workbench--perf-lite .git-workbench-row.git-workbench-row-burst,
+.git-workbench--perf-lite .git-workbench-stash-entry.git-workbench-row-burst,
+.git-workbench--perf-lite .git-workbench-row.entering,
+.git-workbench--perf-lite .git-workbench-stash-entry.entering,
+.git-workbench--perf-lite .git-workbench-row.exiting,
+.git-workbench--perf-lite .git-workbench-stash-entry.exiting {
+  animation: none !important;
+  filter: none !important;
 }
 
 /* New commit pop-in: scale + opacity bounce.
