@@ -185,7 +185,12 @@
   function startRowBurst(elements) {
     if (!elements.length) return;
     // Honour the OS-level reduced-motion preference — skip the burst entirely.
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Honour the site-wide reduce-motion helper (checks OS pref OR
+    // `?reduce-motion=1` URL override). Falls back to matchMedia if the
+    // head-level helper somehow isn't defined.
+    if (typeof window.__prefersReducedMotion === 'function'
+        ? window.__prefersReducedMotion()
+        : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     var start = (window.performance && performance.now) ? performance.now() : Date.now();
 
     // 60fps tick via setInterval. requestAnimationFrame would be ideal but
@@ -401,7 +406,12 @@
   function burstOutputBox(el) {
     if (!el) return;
     // Honour the OS-level reduced-motion preference.
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Honour the site-wide reduce-motion helper (checks OS pref OR
+    // `?reduce-motion=1` URL override). Falls back to matchMedia if the
+    // head-level helper somehow isn't defined.
+    if (typeof window.__prefersReducedMotion === 'function'
+        ? window.__prefersReducedMotion()
+        : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     function draw(i) {
       var r1 = (3 * i).toFixed(2);
       var r2 = (8 * i).toFixed(2);

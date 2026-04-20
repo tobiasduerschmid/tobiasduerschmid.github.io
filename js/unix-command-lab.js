@@ -291,51 +291,16 @@
   // Used as a hard gate on ALL lab animations (bursts, confetti, …) so
   // even if CSS specificity somehow let a keyframe through, the JS never
   // triggers it in the first place.
-  // Two independent ways the lab considers reduced motion "on":
-  //   1. `window.matchMedia('(prefers-reduced-motion: reduce)').matches`
-  //      — the OS-level accessibility preference. The canonical signal.
-  //   2. `?reduce-motion=1` in the URL — ad-hoc override for the *current
-  //      page load only* (no persistence), useful when a browser isn't
-  //      forwarding its user-level pref into the media query, or for
-  //      quick testing. Not passed across navigations, not saved to
-  //      storage — to keep it on persistently, use the OS-level toggle.
-  // When either is true, we stamp `html.prm-reduce` which the stylesheet
-  // uses as a class-based animation kill-switch in addition to its own
-  // @media rule.
-  //
-  // Side effect: this init also clears any lingering
-  // `localStorage.prefersReducedMotion` from an earlier version that
-  // persisted the override — one-time cleanup so stale entries don't
-  // silently keep animations off.
-  var REDUCED_MOTION_FORCED = (function () {
-    try { localStorage.removeItem('prefersReducedMotion'); } catch (e) {}
-    try {
-      var params = new URLSearchParams(window.location.search);
-      var url = params.get('reduce-motion');
-      if (url && url !== '0' && url.toLowerCase() !== 'false') return true;
-    } catch (e) {}
-    return false;
-  })();
-  var REDUCED_MOTION = (function () {
-    if (!window.matchMedia) return { matches: REDUCED_MOTION_FORCED };
-    var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    function active() { return REDUCED_MOTION_FORCED || !!mq.matches; }
-    function syncClass() {
-      if (document.documentElement) {
-        document.documentElement.classList.toggle('prm-reduce', active());
-      }
-    }
-    syncClass();
-    if (mq.addEventListener) {
-      mq.addEventListener('change', syncClass);
-    } else if (mq.addListener) {
-      mq.addListener(syncClass);  // older Safari/Firefox
-    }
-    // Expose a read-through proxy so callers always see the combined state.
-    return { get matches() { return active(); } };
-  })();
+  // Delegates to the site-wide helper installed in head.html, which
+  // already honours the OS-level `prefers-reduced-motion` media query
+  // AND the `?reduce-motion=1` URL override AND stamps the
+  // `html.prm-reduce` class. Falls back to a local matchMedia check if
+  // the helper somehow isn't present (e.g. a test harness).
   function prefersReducedMotion() {
-    return !!REDUCED_MOTION.matches;
+    if (typeof window.__prefersReducedMotion === 'function') {
+      return window.__prefersReducedMotion();
+    }
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
   function burstPanel(panel) {

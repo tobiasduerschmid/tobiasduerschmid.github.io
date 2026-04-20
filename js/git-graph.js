@@ -15,6 +15,21 @@
 (function () {
   'use strict';
 
+  // Reduced-motion gate — delegates to the site-wide helper set up in
+  // _includes/head.html, which already honours the OS preference AND the
+  // `?reduce-motion=1` URL override. Used here to short-circuit every
+  // JS-driven animation (canvas resizing, edge draw-in / draw-out, label
+  // bursts, workbench row bursts, head-pulse, etc.) so the graph snaps to
+  // its final state without any tweening when motion is reduced. The CSS
+  // rule `html.prm-reduce *` separately kills class-triggered CSS
+  // animations for belt-and-suspenders coverage.
+  function prefersReducedMotion() {
+    if (typeof window.__prefersReducedMotion === 'function') {
+      return window.__prefersReducedMotion();
+    }
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
   // Branch color palette — UCLA colors first, then general palette for variety
   var BRANCH_COLORS = [
     '#2774AE', // UCLA Blue
@@ -740,6 +755,14 @@
       return;
     }
 
+    if (prefersReducedMotion()) {
+      // Snap to final dimensions instead of tweening over 520ms.
+      svg.setAttribute('width', endW);
+      svg.setAttribute('height', endH);
+      svg.setAttribute('viewBox', '0 0 ' + endW + ' ' + endH);
+      return;
+    }
+
     // Pin the graph host to max(start, end) height for the duration of the
     // animation so the SVG's per-frame width/height attribute changes don't
     // push the rest of the page up or down on every frame. Without this pin,
@@ -1042,6 +1065,11 @@
       len = Math.hypot(entry.x2 - entry.x1, entry.y2 - entry.y1);
     }
     if (!len || !isFinite(len)) return;
+    // Reduced motion: the edge is already drawn at its final position by
+    // the SVG itself; we just skip the dashoffset tween that would have
+    // made it "draw in". No inline style gets set, so there's nothing to
+    // clear up later either.
+    if (prefersReducedMotion()) return;
     el.style.strokeDasharray = len + 'px';
     el.style.strokeDashoffset = len + 'px';
     requestAnimationFrame(function () {
@@ -1128,6 +1156,15 @@
     if (entry._removalTimer) return;
     var self = this;
     var el = entry.el;
+    // Reduced motion: skip the retract tween and remove the edge
+    // immediately. No dashoffset games, no 720ms wait — the element leaves
+    // the DOM on the next microtask. Dependent layout snaps to the new
+    // shape in the same paint.
+    if (prefersReducedMotion()) {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      delete self._edgeEls[key];
+      return;
+    }
     var len;
     try {
       len = el.getTotalLength ? el.getTotalLength() : Math.hypot(entry.x2 - entry.x1, entry.y2 - entry.y1);
@@ -2221,6 +2258,11 @@
 
   GitGraph.prototype._removeWorkbenchRow = function (entry) {
     var el = entry.el;
+    if (prefersReducedMotion()) {
+      // Skip the 400ms exit animation — remove the row immediately.
+      if (el.parentNode) el.parentNode.removeChild(el);
+      return;
+    }
     el.classList.add('exiting');
     setTimeout(function () {
       if (el.parentNode) el.parentNode.removeChild(el);
@@ -2236,6 +2278,13 @@
     var rowEl = entry.el;
     var nodeEntry = this._nodeEls && this._nodeEls[commit.hash];
     if (!nodeEntry || !nodeEntry.g || !rowEl.parentNode) {
+      this._removeWorkbenchRow(entry);
+      return;
+    }
+    // Reduced motion: drop the fly-to-commit animation; just remove the
+    // row so state ends up correct. The commit itself still appears in
+    // its target position via the usual node-create path.
+    if (prefersReducedMotion()) {
       this._removeWorkbenchRow(entry);
       return;
     }
