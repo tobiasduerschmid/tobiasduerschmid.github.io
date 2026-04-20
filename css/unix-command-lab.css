@@ -1,0 +1,573 @@
+/*
+ * UnixCommandLab — interactive predict-and-reveal cards for UNIX commands
+ * that operate on streams rather than the filesystem tree. Companion to
+ * fs-command-lab.css; shares its button / dark-mode / print conventions
+ * so mixed pages look uniform.
+ *
+ * Layout: a CSS grid with three columns — inputs | command | outputs —
+ * that collapses to a vertical stack on narrow screens.
+ */
+
+.unix-lab {
+  border: none;
+  padding: 0;
+  background-color: transparent;
+  color: inherit;
+  margin: 1.5em 0;
+  contain: layout paint;
+}
+
+/* ----- Description (markdown block above the pipeline) ----- */
+.unix-lab__desc {
+  margin: 0 0 12px;
+  color: #000;
+  font-size: 1.05em;
+  line-height: 1.5;
+}
+.unix-lab__desc > p { margin: 0 0 0.9em; }
+.unix-lab__desc > p:last-child { margin-bottom: 0; }
+html.dark-mode .unix-lab__desc { color: #fff; }
+
+/* ----- Prediction row (shown only when spec.predict=true) ----- */
+.unix-lab__predict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background-color: rgba(39, 116, 174, 0.06);
+  border-left: 3px solid #2774AE;
+  border-radius: 0 6px 6px 0;
+}
+.unix-lab__predict-label {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #2774AE;
+}
+.unix-lab__predict-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 8px 10px;
+  border: 1px solid #c4cbd3;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #1f2d3d;
+  resize: vertical;
+  min-height: 48px;
+}
+.unix-lab__predict-input:focus {
+  outline: none;
+  border-color: #2774AE;
+  box-shadow: 0 0 0 2px rgba(39, 116, 174, 0.2);
+}
+.unix-lab__predict-input[readonly] {
+  background-color: #f1f3f5;
+  color: #5a6573;
+  cursor: default;
+}
+html.dark-mode .unix-lab__predict {
+  background-color: rgba(74, 159, 217, 0.08);
+  border-left-color: #4a9fd9;
+}
+html.dark-mode .unix-lab__predict-label { color: #4a9fd9; }
+html.dark-mode .unix-lab__predict-input {
+  background-color: #1c2533;
+  color: #e6edf3;
+  border-color: #3a4556;
+}
+html.dark-mode .unix-lab__predict-input[readonly] {
+  background-color: #141a24;
+  color: #9aa6b2;
+}
+
+/* ----- Pipeline grid (inputs | command | outputs) ----- */
+.unix-lab__pipeline {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+  gap: 10px;
+}
+@media (max-width: 720px) {
+  .unix-lab__pipeline { grid-template-columns: 1fr; }
+  .unix-lab__col--mid { flex-direction: row !important; justify-content: center; }
+  .unix-lab__arrow { transform: rotate(90deg); }
+}
+
+.unix-lab__col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.unix-lab__col--mid {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.unix-lab__col--out { align-items: stretch; }
+
+.unix-lab__arrow {
+  color: #9aa6b2;
+  font-size: 18px;
+  line-height: 1;
+  user-select: none;
+}
+html.dark-mode .unix-lab__arrow { color: #5a6573; }
+
+/* ----- Panels (stdin, stdout, stderr, files, env) ----- */
+.unix-lab__panel {
+  border: 1px solid #d8dde2;
+  border-radius: 6px;
+  background-color: #ffffff;
+  overflow: hidden;
+  min-width: 0;
+}
+.unix-lab__panel-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  background-color: #f1f3f5;
+  border-bottom: 1px solid #d8dde2;
+  color: #5a6573;
+}
+.unix-lab__panel-icon { font-size: 12px; line-height: 1; }
+.unix-lab__panel-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unix-lab__panel-tag {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #e3eef8;
+  color: #1e5f8d;
+}
+.unix-lab__panel-tag--overwrite { background-color: #fde8e8; color: #b03a2e; }
+.unix-lab__panel-tag--append    { background-color: #e6f4ea; color: #1a7d5a; }
+.unix-lab__panel-tag--create    { background-color: #fff4d6; color: #8a6d1e; }
+.unix-lab__panel-tag--modify    { background-color: #e3eef8; color: #1e5f8d; }
+
+.unix-lab__panel-body {
+  margin: 0;
+  padding: 8px 10px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #1f2d3d;
+  background-color: #ffffff;
+}
+.unix-lab__panel-body + .unix-lab__panel-body {
+  border-top: 1px dashed #d8dde2;
+}
+.unix-lab__panel-body--muted { color: #9aa6b2; background-color: #f8f9fa; }
+.unix-lab__panel-body--strike { text-decoration: line-through; text-decoration-color: rgba(154, 166, 178, 0.5); }
+
+.unix-lab__panel-empty {
+  padding: 8px 10px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  color: #9aa6b2;
+  font-style: italic;
+  background-color: #ffffff;
+}
+.unix-lab__panel-hint {
+  padding: 4px 10px 8px;
+  font-size: 11.5px;
+  color: #5a6573;
+  font-style: italic;
+  background-color: #ffffff;
+}
+
+/* ----- Stream-specific colour treatment (CLT signaling) ----- */
+.unix-lab__panel--stdin  { border-color: #c9e0f1; }
+.unix-lab__panel--stdin  .unix-lab__panel-header { background-color: #eef5fb; color: #1e5f8d; }
+.unix-lab__panel--file-in { border-color: #d7e5ef; }
+.unix-lab__panel--file-in .unix-lab__panel-header { background-color: #f0f5fa; color: #1e5f8d; }
+.unix-lab__panel--env-in,
+.unix-lab__panel--env-out { border-color: #ddd7ef; }
+.unix-lab__panel--env-in  .unix-lab__panel-header,
+.unix-lab__panel--env-out .unix-lab__panel-header { background-color: #f2f0fa; color: #5e3c9f; }
+
+.unix-lab__panel--stdout { border-color: #d8dde2; }
+.unix-lab__panel--stdout .unix-lab__panel-header { background-color: #f1f3f5; color: #334155; }
+
+.unix-lab__panel--stderr { border-color: #f1948a; }
+.unix-lab__panel--stderr .unix-lab__panel-header {
+  background-color: #fde8e8;
+  color: #b03a2e;
+}
+.unix-lab__panel--stderr .unix-lab__panel-body {
+  color: #7a2420;
+  background-color: #fffafa;
+}
+
+.unix-lab__panel--file-out { border-color: #ead9b3; }
+.unix-lab__panel--file-out .unix-lab__panel-header {
+  background-color: #fff4d6;
+  color: #8a6d1e;
+}
+
+/* ----- Env list (key=value rows) ----- */
+.unix-lab__env-list {
+  padding: 6px 10px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  background-color: #ffffff;
+}
+.unix-lab__env-row { display: flex; align-items: baseline; gap: 6px; }
+.unix-lab__env-row code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  border: none;
+  box-shadow: none;
+}
+.unix-lab__env-action {
+  display: inline-block;
+  width: 16px;
+  flex: 0 0 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+.unix-lab__env-action--set      { color: #1a7d5a; }
+.unix-lab__env-action--unset    { color: #b03a2e; }
+.unix-lab__env-action--modified { color: #8a6d1e; }
+
+/* ----- Exit-code badge (always visible after reveal) ----- */
+.unix-lab__exit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.unix-lab__exit--ok  { background-color: #e6f4ea; color: #1a7d5a; border: 1px solid #b6e0c4; }
+.unix-lab__exit--err { background-color: #fde8e8; color: #b03a2e; border: 1px solid #f1948a; }
+.unix-lab__exit-label { opacity: 0.7; font-weight: 500; }
+.unix-lab__exit-icon { font-size: 12px; line-height: 1; }
+
+/* ----- Placeholder (before reveal) and no-inputs note ----- */
+.unix-lab__placeholder {
+  padding: 14px 12px;
+  text-align: center;
+  font-size: 13px;
+  font-style: italic;
+  color: #9aa6b2;
+  background-color: #f8f9fa;
+  border: 1px dashed #d8dde2;
+  border-radius: 6px;
+}
+.unix-lab__no-inputs {
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-style: italic;
+  color: #9aa6b2;
+  background-color: #f8f9fa;
+  border: 1px dashed #d8dde2;
+  border-radius: 6px;
+}
+
+/* ----- Revealed prediction, shown above stdout for self-comparison ----- */
+.unix-lab__prediction-show {
+  padding: 8px 10px;
+  background-color: #eef5fb;
+  border: 1px solid #c9e0f1;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.unix-lab__prediction-show pre {
+  margin: 4px 0 0;
+  padding: 0;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #1e5f8d;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: transparent;
+}
+.unix-lab__prediction-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #1e5f8d;
+}
+html.dark-mode .unix-lab__prediction-show {
+  background-color: rgba(74, 159, 217, 0.08);
+  border-color: #2a3a52;
+}
+html.dark-mode .unix-lab__prediction-show pre,
+html.dark-mode .unix-lab__prediction-label { color: #4a9fd9; }
+
+/* --- Prediction-matches-actual badge (positive reinforcement only) --- */
+.unix-lab__prediction-show--match {
+  background-color: #e6f4ea;
+  border-color: #b6e0c4;
+  animation: unix-lab-match-flash 700ms ease-out 1;
+}
+.unix-lab__prediction-show--match .unix-lab__prediction-label,
+.unix-lab__prediction-show--match pre { color: #1a7d5a; }
+
+.unix-lab__prediction-match {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 4px 10px 4px 8px;
+  background-color: #ffffff;
+  border: 1px solid #b6e0c4;
+  border-radius: 999px;
+  color: #1a7d5a;
+  font-size: 12px;
+  font-weight: 600;
+  animation: unix-lab-match-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) 1 both;
+}
+.unix-lab__thumb {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  transform-origin: 50% 80%;
+  animation: unix-lab-thumb-bounce 900ms ease-out 1 both;
+}
+.unix-lab__match-label { line-height: 1.2; }
+
+@keyframes unix-lab-match-flash {
+  0%   { background-color: #c7e8d2; box-shadow: 0 0 0 0 rgba(26, 125, 90, 0.35); }
+  60%  { background-color: #d9edde; box-shadow: 0 0 0 6px rgba(26, 125, 90, 0); }
+  100% { background-color: #e6f4ea; box-shadow: 0 0 0 0 rgba(26, 125, 90, 0); }
+}
+@keyframes unix-lab-match-pop {
+  0%   { transform: scale(0.6) translateY(6px); opacity: 0; }
+  60%  { transform: scale(1.08) translateY(0);  opacity: 1; }
+  100% { transform: scale(1)    translateY(0);  opacity: 1; }
+}
+@keyframes unix-lab-thumb-bounce {
+  0%   { transform: scale(0)   rotate(-30deg); }
+  35%  { transform: scale(1.4) rotate(12deg); }
+  55%  { transform: scale(0.95) rotate(-6deg); }
+  75%  { transform: scale(1.08) rotate(3deg); }
+  100% { transform: scale(1)   rotate(0); }
+}
+
+html.dark-mode .unix-lab__prediction-show--match {
+  background-color: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+html.dark-mode .unix-lab__prediction-show--match .unix-lab__prediction-label,
+html.dark-mode .unix-lab__prediction-show--match pre { color: #4ade80; }
+html.dark-mode .unix-lab__prediction-match {
+  background-color: #1c2533;
+  border-color: rgba(74, 222, 128, 0.35);
+  color: #4ade80;
+}
+
+@media print {
+  .unix-lab__prediction-match, .unix-lab__thumb { animation: none !important; }
+}
+
+/* ----- Notice (Mayer signaling: one-line post-reveal callout) ----- */
+.unix-lab__notice {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #fff4d6;
+  border-left: 3px solid #e0b24e;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.95em;
+  color: #574115;
+}
+.unix-lab__notice code {
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+html.dark-mode .unix-lab__notice {
+  background-color: rgba(224, 178, 78, 0.12);
+  border-left-color: #e0b24e;
+  color: #f5ddab;
+}
+
+/* ----- Run button (matches fs-command-lab button) ----- */
+.unix-lab__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  background-color: #2774AE;
+  color: #ffffff;
+  border: 1px solid #2774AE;
+  border-radius: 999px;
+  padding: 7px 16px 7px 12px;
+  cursor: pointer;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease, box-shadow 160ms ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.unix-lab__btn:hover {
+  background-color: #1e5f8d;
+  border-color: #1e5f8d;
+  box-shadow: 0 2px 6px rgba(39,116,174,0.25);
+}
+.unix-lab__btn:active { transform: translateY(1px); }
+.unix-lab__btn:focus-visible { outline: 2px solid #1e5f8d; outline-offset: 2px; }
+.unix-lab__btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+.unix-lab__btn-cmd,
+.unix-lab__btn code.unix-lab__btn-cmd {
+  background: transparent !important;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  border: none;
+  font: inherit;
+  box-shadow: none;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ----- Reset variant (after reveal) ----- */
+.unix-lab__btn--reset {
+  background-color: transparent;
+  color: #b03a2e;
+  border-color: #b03a2e;
+  box-shadow: none;
+}
+.unix-lab__btn--reset:hover {
+  background-color: rgba(176,58,46,0.08);
+  border-color: #b03a2e;
+  box-shadow: 0 2px 6px rgba(176,58,46,0.14);
+}
+
+/* ----- Dark mode ----- */
+html.dark-mode .unix-lab__panel {
+  background-color: #1c2533;
+  border-color: #2f3a4a;
+}
+html.dark-mode .unix-lab__panel-header {
+  background-color: #141c28;
+  color: #9aa6b2;
+  border-bottom-color: #2f3a4a;
+}
+html.dark-mode .unix-lab__panel-body {
+  background-color: #1c2533;
+  color: #e6edf3;
+}
+html.dark-mode .unix-lab__panel-body + .unix-lab__panel-body { border-top-color: #2f3a4a; }
+html.dark-mode .unix-lab__panel-body--muted {
+  color: #6b7686;
+  background-color: #141c28;
+}
+html.dark-mode .unix-lab__panel-empty {
+  color: #6b7686;
+  background-color: #1c2533;
+}
+html.dark-mode .unix-lab__panel-hint {
+  color: #9aa6b2;
+  background-color: #1c2533;
+}
+html.dark-mode .unix-lab__env-list { background-color: #1c2533; color: #e6edf3; }
+
+html.dark-mode .unix-lab__panel--stdin,
+html.dark-mode .unix-lab__panel--file-in { border-color: #2c4862; }
+html.dark-mode .unix-lab__panel--stdin .unix-lab__panel-header,
+html.dark-mode .unix-lab__panel--file-in .unix-lab__panel-header {
+  background-color: #162637;
+  color: #4a9fd9;
+}
+html.dark-mode .unix-lab__panel--env-in,
+html.dark-mode .unix-lab__panel--env-out { border-color: #3f325b; }
+html.dark-mode .unix-lab__panel--env-in .unix-lab__panel-header,
+html.dark-mode .unix-lab__panel--env-out .unix-lab__panel-header {
+  background-color: #201a2e;
+  color: #b18ef0;
+}
+html.dark-mode .unix-lab__panel--stderr { border-color: #6b2a25; }
+html.dark-mode .unix-lab__panel--stderr .unix-lab__panel-header {
+  background-color: #3a1a16;
+  color: #f1948a;
+}
+html.dark-mode .unix-lab__panel--stderr .unix-lab__panel-body {
+  color: #f8c8c2;
+  background-color: #2a1411;
+}
+html.dark-mode .unix-lab__panel--file-out { border-color: #5e4a1e; }
+html.dark-mode .unix-lab__panel--file-out .unix-lab__panel-header {
+  background-color: #2e2410;
+  color: #e0b24e;
+}
+
+html.dark-mode .unix-lab__placeholder,
+html.dark-mode .unix-lab__no-inputs {
+  background-color: #141c28;
+  border-color: #2f3a4a;
+  color: #6b7686;
+}
+html.dark-mode .unix-lab__exit--ok { background-color: rgba(74, 222, 128, 0.12); color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+html.dark-mode .unix-lab__exit--err { background-color: rgba(241, 148, 138, 0.12); color: #f1948a; border-color: rgba(241, 148, 138, 0.3); }
+
+html.dark-mode .unix-lab__btn {
+  background-color: transparent;
+  color: #4a9fd9;
+  border-color: #4a9fd9;
+}
+html.dark-mode .unix-lab__btn:hover {
+  background-color: rgba(74, 159, 217, 0.12);
+  border-color: #66b1e3;
+  color: #66b1e3;
+}
+html.dark-mode .unix-lab__btn--reset {
+  color: #f1948a;
+  border-color: #f1948a;
+}
+html.dark-mode .unix-lab__btn--reset:hover {
+  background-color: rgba(241, 148, 138, 0.12);
+}
+
+/* ----- Print: show the revealed state (beforeprint forces reveal in JS) ----- */
+@media print {
+  .unix-lab { break-inside: avoid; page-break-inside: avoid; }
+  .unix-lab__btn { cursor: default !important; box-shadow: none !important; }
+  .unix-lab__btn-icon { display: none !important; }
+  .unix-lab__placeholder { display: none !important; }
+  .unix-lab__predict-input { background-color: #ffffff !important; color: #1f2d3d !important; }
+  .unix-lab__panel { break-inside: avoid; page-break-inside: avoid; }
+  .unix-lab__panel-body { font-size: 9pt !important; }
+}

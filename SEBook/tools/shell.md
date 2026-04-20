@@ -5,8 +5,10 @@ layout: sebook
 
 <script src="/js/ArchUML/uml-bundle.js"></script>
 <script src="/js/fs-command-lab.js"></script>
+<script src="/js/unix-command-lab.js"></script>
 
 <link rel="stylesheet" href="/css/fs-command-lab.css">
+<link rel="stylesheet" href="/css/unix-command-lab.css">
 
 > **Start here:** If you are new to shell scripting, begin with the [Interactive Shell Scripting Tutorial](/SEBook/tools/shell-tutorial.html) — hands-on exercises in a real Linux system. This article is a **reference** to deepen your understanding afterward.
 
@@ -402,6 +404,391 @@ Unix treats text streams as a universal interface, and these tools allow you to 
 * **`head` / `tail`**: Output the first or last part of files.
 * **`awk`**: Advanced pattern scanning and processing language.
 
+These commands do not modify the filesystem tree — they transform **streams of text**. The lab cards below make that visible: inputs flow in from the left (stdin + any referenced files), the command transforms them, and outputs emerge on the right (stdout + stderr + exit status). For a few cards you will be asked to **predict the output before running it** — that one small act of committing a guess is worth far more than reading the answer cold.
+
+#### `cat` — print a single file
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "cat notes.txt",
+  "description": "`cat` reads one or more files and prints them to **stdout**. Given a single file argument it just dumps the contents. With no arguments at all, `cat` reads from stdin — which is why `cat` on its own looks like it \"hangs\" waiting for input.",
+  "input": {
+    "files": [
+      { "name": "notes.txt", "content": "milk\neggs\nbread" }
+    ]
+  },
+  "output": {
+    "stdout": "milk\neggs\nbread",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `cat` — what the name actually means: con**cat**enate
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "cat intro.txt chapter1.txt outro.txt > book.txt",
+  "description": "Given **multiple file arguments**, `cat` prints them back-to-back in the order you listed them — literal concatenation. Combined with `>` redirection, this is a common way to stitch fragments together into a single file. The source files are never modified.",
+  "predict": true,
+  "predictPrompt": "Three fragments are listed in order. What will `book.txt` contain after running this?",
+  "input": {
+    "files": [
+      { "name": "intro.txt",    "content": "== Preface ==\nWelcome.\n" },
+      { "name": "chapter1.txt", "content": "== Chapter 1 ==\nIt was a dark and stormy night.\n" },
+      { "name": "outro.txt",    "content": "== The End ==\n" }
+    ]
+  },
+  "output": {
+    "stdout": "",
+    "files": [
+      { "name": "book.txt", "content": "== Preface ==\nWelcome.\n== Chapter 1 ==\nIt was a dark and stormy night.\n== The End ==\n", "action": "create" }
+    ],
+    "exit": 0
+  },
+  "notice": "Nothing reaches the terminal — the redirection sent every byte into `book.txt`. The files join **exactly** as-is: if a source file doesn't end in a newline, the next file's first line continues on the same line."
+}
+</script>
+</div>
+
+#### Common mistake — *useless use of `cat`*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "cat log.txt | grep ERROR",
+  "description": "This works, but there's no reason to spawn `cat` just to feed a single file into `grep`. `grep` can open the file itself: `grep ERROR log.txt`. Beginners reach for `cat | grep` because it feels like \"the shell way\" — but it hides what's really feeding the pipeline. The idiomatic form is below.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO start\n08:01 ERROR disk full\n08:02 INFO retry\n08:03 ERROR timeout" }
+    ]
+  },
+  "output": {
+    "stdout": "08:01 ERROR disk full\n08:03 ERROR timeout",
+    "exit": 0
+  },
+  "notice": "Prefer `grep ERROR log.txt` — same result, one fewer process, and the stdin panel stays empty (no one is piping anything in)."
+}
+</script>
+</div>
+
+#### `grep` — search for lines matching a pattern
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "grep ERROR log.txt",
+  "description": "`grep` prints each line of the file (or stdin) that matches the given pattern. Lines that don't match are silently dropped. The exit code is `0` if at least one match was found, `1` if nothing matched, and `2` on error.",
+  "predict": true,
+  "predictPrompt": "Before running: which lines from log.txt do you expect to see on stdout? (Write them out by coping lines from the input)",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done" }
+    ]
+  },
+  "output": {
+    "stdout": "08:01 ERROR disk full\n08:03 ERROR timeout",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### Common mistake — *regex metacharacters in an unquoted pattern*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "grep a.b names.txt",
+  "description": "The student wants lines containing the literal string `a.b`. But `.` is a regex metacharacter meaning \"any single character\" — so the pattern matches `aab`, `axb`, `a3b`, etc. Use `grep -F 'a.b'` for a fixed (literal) string, or escape the dot with `grep 'a\\.b'`.",
+  "input": {
+    "files": [
+      { "name": "names.txt", "content": "alice\naab\naxb\naab-extra\naleph.bet\nfoobar" }
+    ]
+  },
+  "output": {
+    "stdout": "aab\naxb\naab-extra\naleph.bet",
+    "exit": 0
+  },
+  "notice": "`aleph.bet` matches because `a`+any-char+`b` appears inside it. Quote patterns (`grep 'a\\.b'`) or use `-F` for fixed strings."
+}
+</script>
+</div>
+
+#### `sed` — stream editor (search and replace)
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "sed 's/ERROR/FAIL/' log.txt",
+  "description": "`sed` applies an editing script to each line of its input. `s/ERROR/FAIL/` replaces the **first** occurrence of `ERROR` on each line with `FAIL`. Add a trailing `g` (`s/ERROR/FAIL/g`) to replace **all** occurrences on each line. The original file is **not** modified — `sed` writes the transformed stream to stdout. Use `-i` for in-place editing.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:01 ERROR disk full\n08:03 ERROR timeout" }
+    ]
+  },
+  "output": {
+    "stdout": "08:01 FAIL disk full\n08:03 FAIL timeout",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### Common mistake — *single quotes block variable expansion in `sed`*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "sed 's/$user/guest/' log.txt",
+  "description": "The student has `user=\"alice\"` in their shell and expects `sed` to substitute `alice` for `guest`. But **single quotes** prevent the shell from expanding `$user` — `sed` literally searches for the four characters `$user`. Since no line contains `$user`, nothing is replaced. Use double quotes (`sed \"s/$user/guest/\"`) when you need variable expansion.",
+  "input": {
+    "env": [
+      { "name": "user", "value": "alice" }
+    ],
+    "files": [
+      { "name": "log.txt", "content": "alice logged in\nbob logged in\nalice logged out" }
+    ]
+  },
+  "output": {
+    "stdout": "alice logged in\nbob logged in\nalice logged out",
+    "exit": 0
+  },
+  "notice": "The output is identical to the input — `sed` found nothing to replace because it was literally hunting for `$user`, not `alice`."
+}
+</script>
+</div>
+
+#### `tr` — translate or delete characters
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "tr 'a-z' 'A-Z'",
+  "description": "`tr` reads from **stdin** only (never a file — pipe or redirect into it) and translates characters one-for-one. Here every lowercase letter becomes uppercase. `tr -d 'aeiou'` would *delete* the listed characters instead of translating them. `tr -s ' '` squeezes runs of spaces into one.",
+  "input": {
+    "stdin": "Hello, Ada Lovelace!"
+  },
+  "output": {
+    "stdout": "HELLO, ADA LOVELACE!",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `sort` — sort lines
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "sort names.txt",
+  "description": "Sorts its input alphabetically, line by line. Add **`-n`** for numeric order (otherwise `10` sorts before `2`), **`-r`** to reverse, **`-u`** to also drop duplicates. Works on stdin if no file argument is given.",
+  "input": {
+    "files": [
+      { "name": "names.txt", "content": "charlie\nalice\nbob\nalice" }
+    ]
+  },
+  "output": {
+    "stdout": "alice\nalice\nbob\ncharlie",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `uniq` — filter *adjacent* duplicate lines
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "uniq names.txt",
+  "description": "`uniq` collapses duplicate lines — but it's a streaming tool that keeps exactly **one line of memory**. That means it only notices duplicates when they appear *next to each other* in the input.",
+  "predict": true,
+  "predictPrompt": "`names.txt` contains four names, with `alice` appearing twice (but not in consecutive lines). How many lines will `uniq` print, and which ones? Write the exact output you expect here. Then run the command.",
+  "input": {
+    "files": [
+      { "name": "names.txt", "content": "charlie\nalice\nbob\nalice" }
+    ]
+  },
+  "output": {
+    "stdout": "charlie\nalice\nbob\nalice",
+    "exit": 0
+  },
+  "notice": "All four lines still appear — the two `alice`s are not adjacent, so `uniq` treats them as distinct. `uniq` is a one-line-lookahead filter, not a set operation. The fix is in the next card."
+}
+</script>
+</div>
+
+#### The fix — *`sort | uniq` puts duplicates next to each other*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "sort names.txt | uniq",
+  "description": "Pipe through `sort` first so identical lines become **adjacent** — now `uniq` can see them and collapse them. The `sort | uniq` idiom is so common that `sort -u names.txt` is shorthand for exactly this pipeline. With `-c`, `uniq` also prefixes each line with its occurrence count (great for frequency tables).",
+  "input": {
+    "files": [
+      { "name": "names.txt", "content": "charlie\nalice\nbob\nalice" }
+    ]
+  },
+  "output": {
+    "stdout": "alice\nbob\ncharlie",
+    "exit": 0
+  },
+  "notice": "The two `alice` lines collapsed to one because sorting made them adjacent. `sort -u names.txt` would give the same result in one command."
+}
+</script>
+</div>
+
+#### `wc` — word / line / character count
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "wc -l log.txt",
+  "description": "Counts **lines, words, and characters** by default. **`-l`** shows just the line count, **`-w`** the word count, **`-c`** the byte count. Pedantic detail: `wc -l` counts **newline characters** — a file whose last line has no trailing newline reports one fewer line than you might expect.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done\n" }
+    ]
+  },
+  "output": {
+    "stdout": "5 log.txt",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `cut` — extract columns from each line
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "cut -d: -f1 /etc/passwd",
+  "description": "Splits each line on the delimiter given by **`-d`** and prints the field(s) chosen by **`-f`**. Here `-d:` splits on colons and `-f1` prints the first field — the usernames from the password file. `-f1,3` would print fields 1 and 3; `-f1-3` prints fields 1 through 3.",
+  "predict": true,
+  "predictPrompt": "Given the file below, what will stdout contain?",
+  "input": {
+    "files": [
+      { "name": "/etc/passwd", "content": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nalice:x:1000:1000:Alice:/home/alice:/bin/bash" }
+    ]
+  },
+  "output": {
+    "stdout": "root\ndaemon\nalice",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### Common mistake — *`cut -d ' '` on whitespace-separated data*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "cut -d ' ' -f 2 log.txt",
+  "description": "The student wants the second \"column\" of a space-separated log file. But `cut` treats **every single space** as a delimiter. When fields are separated by *runs* of spaces, there are empty fields between them — so `-f 2` is the empty string for most lines. Use `awk '{print $2}'` instead: awk collapses runs of whitespace by default.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00  INFO  start\n08:01  ERROR disk\n08:02  INFO  retry" }
+    ]
+  },
+  "output": {
+    "stdout": "\n\n",
+    "exit": 0
+  },
+  "notice": "Three empty lines — field 2 for each line was the empty string between the first and second spaces. `awk '{print $2}'` would have printed `INFO`, `ERROR`, `INFO`."
+}
+</script>
+</div>
+
+#### `comm` — compare two sorted files
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "comm a.txt b.txt",
+  "description": "Compares two **sorted** files line by line and prints three columns: lines unique to the first file, lines unique to the second file, lines in both. Use flags to suppress columns: `-1` hides column 1, `-12` hides both unique columns (leaving only common lines). The files must be sorted; otherwise the output is meaningless.",
+  "input": {
+    "files": [
+      { "name": "a.txt", "content": "alice\nbob\ncharlie" },
+      { "name": "b.txt", "content": "alice\ndave\ncharlie" }
+    ]
+  },
+  "output": {
+    "stdout": "\t\talice\n\tbob\n\t\tcharlie\n\tdave",
+    "exit": 0
+  },
+  "notice": "Tabs separate the columns. `bob` is only in `a.txt`; `dave` is only in `b.txt`; `alice` and `charlie` are in both."
+}
+</script>
+</div>
+
+#### `head` — print the first N lines
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "head -n 3 log.txt",
+  "description": "Prints the first **N** lines of each input (default 10). **`-n 3`** gives just the first three. Pair it with `tail` to grab a slice out of the middle of a file: `head -n 20 file | tail -n 5` yields lines 16–20.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done" }
+    ]
+  },
+  "output": {
+    "stdout": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `tail` — print the last N lines
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "tail -n 2 log.txt",
+  "description": "Prints the last **N** lines (default 10). **`-f`** follows the file as new lines are appended (the canonical way to watch a live log). **`tail -n +K`** prints from line K onward, which is the other way to stream a file-tail.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done" }
+    ]
+  },
+  "output": {
+    "stdout": "08:03 ERROR timeout\n08:04 INFO  done",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `awk` — field-aware text processing
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "awk '{print $2, $1}' names.txt",
+  "description": "`awk` runs its program once per input line. `$1`, `$2`, … are the whitespace-separated fields (collapsing runs of whitespace by default, unlike `cut -d ' '`). This program swaps field order and prints them separated by a space. **`-F:`** changes the field separator.",
+  "input": {
+    "files": [
+      { "name": "names.txt", "content": "alice Lovelace\nada King\ngrace Hopper" }
+    ]
+  },
+  "output": {
+    "stdout": "Lovelace alice\nKing ada\nHopper grace",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
 ### 3. Permissions, Environment, and Documentation
 These tools manage how your shell operates and how you access information:
 * **`man`**: Access the manual pages for other commands. This is arguably the most useful command, providing built-in documentation for every other command in the system.
@@ -409,6 +796,121 @@ These tools manage how your shell operates and how you access information:
 * **`which` / `type`**: Locate the binary or type for a command.
 * **`export`**: Set environment variables. The **`PATH`** variable is especially important; it tells the shell which directories to search for executable programs. You can temporarily update it using `export` or make it permanent by adding the command to your `~/.bashrc` or `~/.profile` file.
 * **`source` / `.`**: Execute commands from a file in the current shell environment.
+
+#### `chmod` — add execute permission
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "chmod +x deploy.sh",
+  "description": "`chmod +x` grants execute permission so the shell will actually *run* the file when you type `./deploy.sh`. `+x` sets the bit for **everyone** (owner, group, others); `u+x` sets it only for the owner. Without an execute bit, the shell rejects the file with `Permission denied`.",
+  "input": {
+    "files": [
+      { "name": "deploy.sh", "content": "#!/bin/bash\necho \"deploying…\"", "hint": "mode before: -rw-r--r--  (644)" }
+    ]
+  },
+  "output": {
+    "files": [
+      { "name": "deploy.sh", "content": "#!/bin/bash\necho \"deploying…\"", "before": "#!/bin/bash\necho \"deploying…\"", "action": "modify", "hint": "mode after: -rwxr-xr-x  (755)" }
+    ],
+    "exit": 0
+  },
+  "notice": "Content unchanged, permissions changed. `chmod` only flips permission bits; it doesn't touch the file's bytes."
+}
+</script>
+</div>
+
+#### Common mistake — *`chmod 777` as a security shortcut*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "chmod 777 secrets.txt",
+  "description": "`777` grants **read, write, and execute to everyone** on the system. Students reach for it when they see \"Permission denied\" and want to make the problem go away — but on a shared or networked machine this is an open invitation for any other user or process to read and modify the file. The right answer is almost never `777`. Use `644` for regular files, `755` for executables and directories, `600` for secrets.",
+  "input": {
+    "files": [
+      { "name": "secrets.txt", "content": "API_TOKEN=sk-abc123", "hint": "mode before: -rw-------  (600)" }
+    ]
+  },
+  "output": {
+    "files": [
+      { "name": "secrets.txt", "content": "API_TOKEN=sk-abc123", "before": "API_TOKEN=sk-abc123", "action": "modify", "hint": "mode after: -rwxrwxrwx  (777)" }
+    ],
+    "exit": 0
+  },
+  "notice": "Every user on the machine can now read your API token and overwrite the file. For a secrets file you want `chmod 600`."
+}
+</script>
+</div>
+
+#### `which` — locate a command's binary
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "which python3",
+  "description": "`which` searches `$PATH` for the named command and prints the **full path** of the first match. Use it to confirm *which* copy of a tool you're actually running when multiple versions exist. For shell builtins and aliases use `type -a` instead — `which` only finds on-disk binaries.",
+  "input": {
+    "env": [
+      { "name": "PATH", "value": "/home/alice/.local/bin:/usr/local/bin:/usr/bin:/bin" }
+    ]
+  },
+  "output": {
+    "stdout": "/usr/local/bin/python3",
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `export` — set an environment variable for child processes
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "export PATH=$PATH:/opt/tools/bin",
+  "description": "`export` makes a variable visible to **child processes** — scripts and programs you launch. Setting `VAR=value` without `export` only makes the variable visible to the current shell. Here we append `/opt/tools/bin` to `$PATH` so the shell finds binaries in that directory. The change lasts until you close this shell; put it in `~/.bashrc` to make it permanent.",
+  "input": {
+    "env": [
+      { "name": "PATH", "value": "/usr/local/bin:/usr/bin:/bin" }
+    ]
+  },
+  "output": {
+    "env": [
+      { "name": "PATH", "value": "/usr/local/bin:/usr/bin:/bin:/opt/tools/bin", "action": "modified" }
+    ],
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `source` — run a script in the *current* shell
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "source env.sh",
+  "description": "`source env.sh` (or `. env.sh`) runs the script's commands **in the current shell**, so any variable assignments it makes persist. If you had instead run `./env.sh`, the script would run in a child shell and its assignments would disappear the moment it exits. This is how tools like `nvm`, `pyenv`, and virtualenvs activate themselves.",
+  "input": {
+    "files": [
+      { "name": "env.sh", "content": "export API_URL=https://api.example.com\nexport DEBUG=1" }
+    ],
+    "env": [
+      { "name": "API_URL", "value": "(unset)" }
+    ]
+  },
+  "output": {
+    "env": [
+      { "name": "API_URL", "value": "https://api.example.com", "action": "set" },
+      { "name": "DEBUG", "value": "1", "action": "set" }
+    ],
+    "exit": 0
+  },
+  "notice": "Run the same file with `./env.sh` and the `API_URL` variable would be gone the moment the child shell exits — the parent shell's environment would be unchanged."
+}
+</script>
+</div>
 
 ### 4. System, Networking, and Build Tools
 Tools used for remote work, debugging, and automating the construction process:
@@ -438,11 +940,152 @@ You can redirect these streams using special operators:
 * `2>`: Redirects `stderr` to a specific file to specifically log errors.
 * `2>&1`: Redirects `stderr` to the standard output stream. **Note**: order matters — `command > file.txt 2>&1` sends both streams to the file, whereas `command 2>&1 > file.txt` only redirects stdout to the file while stderr still goes to the terminal.
 
+#### `>` — redirect stdout to a file (overwrite)
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "echo hello > greeting.txt",
+  "description": "`>` captures the command's **stdout** and writes it to `greeting.txt`, **overwriting** whatever was there. The shell opens the destination file *before* the command runs, which is why `>` always truncates the target. Note: nothing appears on stdout in the terminal anymore — it all went to the file.",
+  "input": {
+    "files": [
+      { "name": "greeting.txt", "content": "old contents" }
+    ]
+  },
+  "output": {
+    "stdout": "",
+    "files": [
+      { "name": "greeting.txt", "content": "hello\n", "before": "old contents", "action": "overwrite" }
+    ],
+    "exit": 0
+  },
+  "notice": "Stdout in the terminal is **empty** — the bytes didn't vanish, they ended up in the file."
+}
+</script>
+</div>
+
+#### Common mistake — *`>` silently clobbers existing data*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "sort data.txt > data.txt",
+  "description": "The student wants to sort a file in place. But the shell opens `data.txt` for writing (truncating it) **before** `sort` runs — so `sort` reads an empty file, produces no output, and `data.txt` is now empty. This is one of the most painful shell beginners-traps; many hours of work have been lost this way. Use an intermediate file: `sort data.txt > sorted.tmp && mv sorted.tmp data.txt` — or `sort -o data.txt data.txt` (sort has a safe in-place mode).",
+  "predict": true,
+  "predictPrompt": "Before running: what do you think `data.txt` will contain afterwards — the sorted content, or something else?",
+  "input": {
+    "files": [
+      { "name": "data.txt", "content": "charlie\nalice\nbob" }
+    ]
+  },
+  "output": {
+    "stdout": "",
+    "files": [
+      { "name": "data.txt", "content": "", "before": "charlie\nalice\nbob", "action": "overwrite" }
+    ],
+    "exit": 0
+  },
+  "notice": "`data.txt` is now **empty**. The shell truncated it to open it for writing, then `sort` read zero bytes and wrote zero bytes back."
+}
+</script>
+</div>
+
+#### `>>` — redirect stdout and *append*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "echo \"new entry\" >> log.txt",
+  "description": "`>>` appends stdout to the file rather than truncating it. Always the right choice for log files or any destination whose existing content you care about. `>` would delete everything previously in `log.txt`.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 start\n08:01 ready" }
+    ]
+  },
+  "output": {
+    "stdout": "",
+    "files": [
+      { "name": "log.txt", "content": "new entry\n", "before": "08:00 start\n08:01 ready", "action": "append" }
+    ],
+    "exit": 0
+  }
+}
+</script>
+</div>
+
+#### `2>` — redirect stderr to a separate file
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "grep ERROR log.txt 2> errors.log",
+  "description": "Stdout and stderr are **two separate streams** — sending one to a file does nothing to the other. Here stdout still shows the matches; any error message (e.g. missing file) would have been captured in `errors.log` instead. The `2` is the file descriptor for stderr; `1` is stdout.",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:01 ERROR disk full\n08:02 INFO retry\n08:03 ERROR timeout" }
+    ]
+  },
+  "output": {
+    "stdout": "08:01 ERROR disk full\n08:03 ERROR timeout",
+    "exit": 0
+  },
+  "notice": "`errors.log` was not created because `grep` didn't write anything to stderr. The redirection happens whether or not the stream gets anything."
+}
+</script>
+</div>
+
+#### Common mistake — *redirection order: `2>&1 > file` vs `> file 2>&1`*
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "build.sh 2>&1 > build.log",
+  "description": "The student wants **both** stdout and stderr captured into `build.log`. But redirections are applied **left-to-right**: `2>&1` first makes stderr a duplicate of *the current stdout* (which is still the terminal), and only *then* does `> build.log` redirect stdout to the file. Result: stdout goes to the file, but stderr still goes to the terminal. The correct form is `build.sh > build.log 2>&1` (set stdout first, then dup stderr from stdout).",
+  "input": {
+    "files": [
+      { "name": "build.sh", "content": "#!/bin/bash\necho \"compiling main.c\"\n>&2 echo \"warning: unused variable\"\nexit 0" }
+    ]
+  },
+  "output": {
+    "stderr": "warning: unused variable",
+    "files": [
+      { "name": "build.log", "content": "compiling main.c\n", "action": "create" }
+    ],
+    "exit": 0
+  },
+  "notice": "The stderr warning **still shows in the terminal** — not in `build.log`. Fix: `build.sh > build.log 2>&1` (or in Bash, `&> build.log`)."
+}
+</script>
+</div>
+
 ### Piping
 The pipe operator `|` is the most powerful composition tool. It takes the `stdout` of the command on the left and sends it directly into the `stdin` for the command on the right. 
 
 *Example:* `cat access.log | grep "ERROR" | wc -l`
 This pipeline reads a log file, filters only the lines containing "ERROR", and then counts how many lines there are.
+
+#### Pipe `|` — composing commands
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "grep ERROR log.txt | wc -l",
+  "description": "A pipe takes the **stdout of the left command** and wires it directly into the **stdin of the right command**. No temporary files, no shared memory — just a stream of bytes. This is the single most powerful idea in the UNIX philosophy: small tools compose into pipelines. Here we filter the log for error lines and then count them.",
+  "predict": true,
+  "predictPrompt": "Two commands, one pipe. What number appears on stdout?",
+  "input": {
+    "files": [
+      { "name": "log.txt", "content": "08:00 INFO  start\n08:01 ERROR disk full\n08:02 INFO  retry\n08:03 ERROR timeout\n08:04 INFO  done" }
+    ]
+  },
+  "output": {
+    "stdout": "2",
+    "exit": 0
+  },
+  "notice": "`grep` produced two matching lines; those two lines flowed into `wc -l`'s stdin, which counted them. Only `wc`'s result (the number `2`) reaches the terminal."
+}
+</script>
+</div>
 
 ### Here Documents and Here Strings
 Sometimes you need to feed a block of text directly into a command without creating a temporary file. A **here document** (`<<`) lets you embed multi-line input inline, up to a chosen delimiter:
@@ -525,6 +1168,25 @@ In our scripts, we also treat these keywords as "commands" for building logic:
 * **`local`**: Declare a variable scoped to the current function.
 * **`return`**: Exit a function with a numeric status code.
 * **`exit`**: Terminate the script with a specific status code.
+
+#### `read` — read a line of stdin into a variable
+
+<div data-unix-command-lab>
+<script type="application/json">
+{
+  "command": "read -p \"Name: \" name; echo \"Hi, $name\"",
+  "description": "`read` consumes one line from stdin (up to the next newline) and assigns it to the named variable. **`-p`** prints a prompt on the same line before reading. Here the user types `Ada` and presses Enter; the second command prints a greeting. Always pair `read` with `-r` when reading arbitrary text — without it, backslashes get interpreted as line-continuation.",
+  "input": {
+    "stdin": "Ada"
+  },
+  "output": {
+    "stdout": "Name: Ada\nHi, Ada",
+    "exit": 0
+  },
+  "notice": "The `Name: ` prompt is printed *before* `read` blocks for input; once a newline arrives, `read` returns and the next command runs."
+}
+</script>
+</div>
 
 ### Variables
 You can assign values to variables without declaring a type. Note that there are **no spaces** around the equals sign in Bash.

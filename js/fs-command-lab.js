@@ -665,9 +665,10 @@
       printSection.appendChild(stepEl);
     }
 
-    addPrintStep('Initial state', spec.initialState, effectiveDescs[0], true);
+    var isSingle = steps.length === 1;
+    addPrintStep(isSingle ? 'Before' : 'Initial state', spec.initialState, effectiveDescs[0], true);
     for (var si = 0; si < steps.length; si++) {
-      addPrintStep(steps[si].command, steps[si].state, effectiveDescs[si + 1], false);
+      addPrintStep(isSingle ? 'After' : steps[si].command, steps[si].state, effectiveDescs[si + 1], isSingle);
     }
 
     function update() {
