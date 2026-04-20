@@ -735,10 +735,10 @@ These commands do not modify the filesystem tree — they transform **streams of
     ]
   },
   "output": {
-    "stdout": "\n\n",
+    "stdout": "\n\n\n",
     "exit": 0
   },
-  "notice": "Three empty lines — field 2 for each line was the empty string between the first and second spaces. `awk '{print $2}'` would have printed `INFO`, `ERROR`, `INFO`."
+  "notice": "Three empty lines — field 2 for each line was the empty string *between* the first and second spaces, because `cut` counts every single space as a delimiter. `awk '{print $2}'` would have printed `INFO`, `ERROR`, `INFO`."
 }
 </script>
 </div>
@@ -753,14 +753,14 @@ These commands do not modify the filesystem tree — they transform **streams of
   "input": {
     "files": [
       { "name": "a.txt", "content": "alice\nbob\ncharlie" },
-      { "name": "b.txt", "content": "alice\ndave\ncharlie" }
+      { "name": "b.txt", "content": "alice\ncharlie\ndave" }
     ]
   },
   "output": {
-    "stdout": "\t\talice\n\tbob\n\t\tcharlie\n\tdave",
+    "stdout": "\t\talice\nbob\n\t\tcharlie\n\tdave",
     "exit": 0
   },
-  "notice": "Tabs separate the columns. `bob` is only in `a.txt`; `dave` is only in `b.txt`; `alice` and `charlie` are in both."
+  "notice": "Three columns separated by tabs: **col 1** (no leading tab) = lines only in `a.txt`, **col 2** (one tab) = lines only in `b.txt`, **col 3** (two tabs) = lines in both. So `bob` sits in col 1, `dave` in col 2, `alice` and `charlie` in col 3. `comm` requires both files to be **sorted** — run it on unsorted input and it'll print a warning and produce meaningless results."
 }
 </script>
 </div>
@@ -1079,16 +1079,17 @@ You can redirect these streams using special operators:
   "description": "`>>` appends stdout to the file rather than truncating it. Always the right choice for log files or any destination whose existing content you care about. `>` would delete everything previously in `log.txt`.",
   "input": {
     "files": [
-      { "name": "log.txt", "content": "08:00 start\n08:01 ready" }
+      { "name": "log.txt", "content": "08:00 start\n08:01 ready\n" }
     ]
   },
   "output": {
     "stdout": "",
     "files": [
-      { "name": "log.txt", "content": "new entry\n", "before": "08:00 start\n08:01 ready", "action": "append" }
+      { "name": "log.txt", "content": "new entry\n", "before": "08:00 start\n08:01 ready\n", "action": "append" }
     ],
     "exit": 0
-  }
+  },
+  "notice": "The new bytes are appended *after* the existing file's final newline, so `new entry` lands cleanly on a new line. If `log.txt` hadn't ended in `\\n`, `>>` would have concatenated `new entry` directly onto the last existing line (no implicit newline inserted) — that's a subtle gotcha worth remembering."
 }
 </script>
 </div>
@@ -1109,7 +1110,7 @@ You can redirect these streams using special operators:
     "stdout": "08:01 ERROR disk full\n08:03 ERROR timeout",
     "exit": 0
   },
-  "notice": "`errors.log` was not created because `grep` didn't write anything to stderr. The redirection happens whether or not the stream gets anything."
+  "notice": "`errors.log` **is** created (as an empty file) the moment the shell parses the `2>` redirect — *before* `grep` even runs. Whether anything ends up written to it depends on whether the command emits to stderr. Here `grep` succeeded silently on stderr, so `errors.log` is on disk but zero bytes."
 }
 </script>
 </div>
