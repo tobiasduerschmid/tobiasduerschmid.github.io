@@ -1284,7 +1284,7 @@ steps:
 
       > **Learning objective:** After this step you will be able to **distinguish** composition from aggregation and **implement** both patterns correctly in Python.
 
-      > **Heads up — this is the distinction working developers most often get wrong.** Even Martin Fowler (see the caveat below) recommends leaning on plain association when you're unsure. If the rule feels fuzzy after this step, that is *honest* confusion, not a learning failure — the UML spec itself calls aggregation's semantics "intentionally informal."
+      > **Heads up — this is the distinction working developers most often get wrong.**  If the rule feels fuzzy after this step, that is *honest* confusion, not a learning failure — the UML spec itself calls aggregation's semantics "intentionally informal."
 
       ### Warm-Up (Retrieval from Step 5)
 
@@ -1303,7 +1303,8 @@ steps:
       | **Lifecycle** | Part is destroyed with the whole | Part survives independently |
       | **Python pattern** | Part created **inside** `__init__` | Part **passed in** from outside |
 
-      > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **exactly one** composite at a time, and is deleted with it. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal." Martin Fowler (*UML Distilled*) even recommends ignoring aggregation entirely: *"Aggregation is strictly meaningless; different authors use it for very different purposes."* For this tutorial we'll use the common textbook interpretation (lifecycle-based), but in the field, if you're unsure between aggregation and plain association, prefer association.
+      > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **exactly one** composite at a time, and is deleted with it. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal". For this tutorial we'll use the common textbook interpretation (conceptual whole-part relationship).
+      > **Aggregation is a domain decision, not a code decision.** Whether a relationship is aggregation or plain association cannot be read reliably from code alone — it depends on the *meaning* of the domain. Is a professor a part of a department or does a department merely now some professors? That answer comes from domain knowledge, not from Python syntax. This tutorial's live diagram uses heuristics, which works well as a learning scaffold — but in the real world, rely on domain knowledge rather than on tools to infer it.
 
       ### The File System Metaphor
 
