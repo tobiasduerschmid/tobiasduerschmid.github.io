@@ -5,6 +5,7 @@ Runs inside Pyodide. Receives a dict of {filename: source_code} via global `__um
 produces a JSON result with custom @startuml/@enduml syntax for the SVG renderers.
 """
 import ast
+import copy
 import json
 import sys
 
@@ -328,6 +329,64 @@ class ClassVisitor(ast.NodeVisitor):
         return ''
 
 
+class _SelfToCallerTransformer(ast.NodeTransformer):
+    """Rebind ``self`` to a caller's participant id via AST rewriting.
+
+    Replaces every ``Name(id='self')`` in an expression with ``Name(id=<caller>)``.
+    This is the sound, scope-aware analog of the naive ``str.replace('self.', ...)``
+    the code previously used, and avoids four classes of defect that textual
+    substitution can't distinguish:
+
+      * Identifier collisions — ``myself.x`` no longer gets mangled into
+        ``mybot.x``; only genuine ``self`` references are rewritten.
+      * String-literal corruption — the constant part of an f-string such as
+        ``f"self.x is {self.x}"`` stays intact; only the interpolated
+        ``{self.x}`` gets rewritten.
+      * Bare-``self`` cases — ``isinstance(self, Foo)`` and ``print(self)``
+        have no ``self.`` pattern at all, so a text replace misses them;
+        the AST pass rewrites them correctly.
+      * Attribute-vs-name confusion — a hypothetical ``obj.self.x`` wouldn't
+        be rewritten (the ``self`` there is an attribute, not a name).
+
+    Scoping (lexical): a nested ``FunctionDef``/``AsyncFunctionDef``/``Lambda``
+    whose first parameter is named ``self`` shadows the outer binding, so the
+    transformer does not descend into it. Closure-style nested functions
+    *without* a ``self`` parameter legitimately capture the enclosing method's
+    ``self``, so they are descended and rewritten like any other reference.
+    """
+
+    def __init__(self, replacement):
+        super().__init__()
+        self.replacement = replacement
+
+    def visit_Name(self, node):
+        if node.id == 'self':
+            return ast.copy_location(
+                ast.Name(id=self.replacement, ctx=node.ctx), node
+            )
+        return node
+
+    @staticmethod
+    def _rebinds_self(func_node):
+        args = func_node.args.args
+        return bool(args) and args[0].arg == 'self'
+
+    def visit_FunctionDef(self, node):
+        if self._rebinds_self(node):
+            return node
+        return self.generic_visit(node)
+
+    def visit_AsyncFunctionDef(self, node):
+        if self._rebinds_self(node):
+            return node
+        return self.generic_visit(node)
+
+    def visit_Lambda(self, node):
+        if self._rebinds_self(node):
+            return node
+        return self.generic_visit(node)
+
+
 class SequenceDiagramGenerator:
     """Generate @startuml/@enduml sequence diagrams from Python AST.
 
@@ -364,6 +423,7 @@ class SequenceDiagramGenerator:
         # Scope tracking
         self.var_types = {}           # {var_name: class_name} in current scope
         self._caller_class = {}       # {participant_id: class_name}
+        self._referenced_vars = set() # names read (Load ctx) anywhere in current scope
 
         # Recursion guard
         self._call_stack = set()      # (class_name, method_name) currently being followed
@@ -516,6 +576,7 @@ class SequenceDiagramGenerator:
             return ''
 
         self._ensure_participant('Main', 'Main')
+        self._referenced_vars = self._collect_name_loads(entry)
         self._process_stmts(entry, 'Main', depth=0)
 
         if not self.lines:
@@ -610,7 +671,13 @@ class SequenceDiagramGenerator:
         self._process_assign_value(stmt.value, stmt.targets, caller, depth)
 
     def _process_assign_value(self, value, targets, caller, depth):
-        """Handle var = ClassName(...) and general call detection in assignments."""
+        """Handle var = ClassName(...) and general call detection in assignments.
+
+        For non-creation calls where the target is a simple ``Name`` and that
+        name is read somewhere else in the scope (per ``_referenced_vars``),
+        we forward the target name to ``_process_call`` as a ``return_binding``
+        so the reply arrow can be labeled ``var: type`` instead of just ``type``.
+        """
         if isinstance(value, ast.Call):
             resolved = self._resolve_call(value, caller)
             if resolved:
@@ -640,7 +707,23 @@ class SequenceDiagramGenerator:
                         self.lines.append('create ' + pid)
                         self.lines.append(caller + ' --> ' + pid + ': <<create>>')
                         return
-        # General: scan the whole value expression for calls
+            # Non-creation call: forward the target name when the return
+            # value is read later in the scope.
+            binding = None
+            if len(targets) == 1 and isinstance(targets[0], ast.Name):
+                tname = targets[0].id
+                if tname in self._referenced_vars:
+                    binding = tname
+                # Track class-typed returns so `tname.method()` resolves later
+                if resolved:
+                    meth_node = self._find_method_node(*resolved)
+                    if meth_node and meth_node.returns:
+                        ret_cls = self._resolve_annotation_to_class(meth_node.returns)
+                        if ret_cls:
+                            self.var_types[tname] = ret_cls
+            self._process_call(value, caller, depth, return_binding=binding)
+            return
+        # Value is not a Call — scan for nested calls
         self._scan_expr_for_calls(value, caller, depth)
 
     # ── Expression statements ────────────────────────────────────────
@@ -676,7 +759,7 @@ class SequenceDiagramGenerator:
         Per Rountev et al. (2005), single-branch if (no else) uses opt,
         while multi-branch if/else uses alt/else.
         """
-        cond = self._expr_text(stmt.test)
+        cond = self._replace_self(stmt.test, caller)
 
         if not stmt.orelse:
             # Single-branch if → opt fragment (Rountev 2005)
@@ -699,7 +782,7 @@ class SequenceDiagramGenerator:
             if len(orelse) == 1 and isinstance(orelse[0], ast.If):
                 elif_node = orelse[0]
                 elif_lines = self._collect_fragment_lines(elif_node.body, caller, depth)
-                branches.append(('else [' + self._expr_text(elif_node.test) + ']', elif_lines))
+                branches.append(('else [' + self._replace_self(elif_node.test, caller) + ']', elif_lines))
                 orelse = elif_node.orelse
             else:
                 else_lines = self._collect_fragment_lines(orelse, caller, depth)
@@ -717,8 +800,8 @@ class SequenceDiagramGenerator:
                 self.lines.extend(blines)
 
     def _process_for(self, stmt, caller, depth):
-        target = self._expr_text(stmt.target)
-        iter_text = self._expr_text(stmt.iter)
+        target = self._replace_self(stmt.target, caller)
+        iter_text = self._replace_self(stmt.iter, caller)
         # Infer loop variable type from iter expression
         self._infer_loop_var_type(stmt, caller)
         body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
@@ -732,7 +815,7 @@ class SequenceDiagramGenerator:
     def _process_while(self, stmt, caller, depth):
         body_lines = self._collect_fragment_lines(stmt.body, caller, depth)
         if self._has_messages(body_lines):
-            self.lines.append('loop [while ' + self._expr_text(stmt.test) + ']')
+            self.lines.append('loop [while ' + self._replace_self(stmt.test, caller) + ']')
             self.lines.extend(body_lines)
             self.lines.append('end')
         else:
@@ -764,12 +847,17 @@ class SequenceDiagramGenerator:
 
     # ── Call processing ──────────────────────────────────────────────
 
-    def _process_call(self, call, caller, depth):
+    def _process_call(self, call, caller, depth, return_binding=None):
         """Process a single call node: emit a message and optionally follow the body.
 
         Improvements based on:
         - Srinivasan et al. (2016): include argument expressions for comprehension
         - UML 2.0 spec: return/reply messages (dashed arrows) after sync calls
+
+        ``return_binding`` — when the caller is an assignment whose target is
+        referenced later in the scope, this is the target's variable name.
+        The reply arrow then shows ``var: type`` so the reader can trace the
+        returned value through subsequent messages.
         """
         # Scan arguments first (they execute before the call)
         for arg in call.args:
@@ -796,7 +884,7 @@ class SequenceDiagramGenerator:
         callee_id = self._callee_id_for(cls_name, caller, attr_hint)
 
         # Build message label with arguments and return type
-        label = self._build_call_label(call, cls_name, method)
+        label = self._build_call_label(call, cls_name, method, caller)
 
         # Detect if this is a super() call — not a create, just a delegation
         is_super = (isinstance(call.func, ast.Attribute)
@@ -828,9 +916,10 @@ class SequenceDiagramGenerator:
             # "Label return messages only when not obvious." Void returns are obvious.)
             ret_type = self._get_return_type(cls_name, method)
             if ret_type:
-                self.lines.append(callee_id + ' --> ' + caller + ': ' + ret_type)
+                reply = return_binding + ': ' + ret_type if return_binding else ret_type
+                self.lines.append(callee_id + ' --> ' + caller + ': ' + reply)
 
-    def _build_call_label(self, call, cls_name, method):
+    def _build_call_label(self, call, cls_name, method, caller=''):
         """Build a message label with argument expressions.
 
         Per Srinivasan (2016), showing arguments aids OO comprehension.
@@ -839,7 +928,7 @@ class SequenceDiagramGenerator:
         """
         arg_parts = []
         for a in call.args[:3]:
-            text = self._expr_text(a)
+            text = self._replace_self(a, caller)
             if len(text) > 20:
                 text = text[:17] + '...'
             arg_parts.append(text)
@@ -911,12 +1000,18 @@ class SequenceDiagramGenerator:
                     return
         self._call_stack.add(key)
         saved = self.var_types.copy()
+        saved_refs = self._referenced_vars
         # Seed local scope with parameter type hints
         self.var_types = {}
         pt = self.param_types.get(cls_name, {}).get(method_name, {})
         self.var_types.update(pt)
+        # Recompute Load-context names for this method body so reply arrows
+        # can be labeled `var: type` only when `var` is actually referenced
+        # later (see `_collect_name_loads` for the soundness note).
+        self._referenced_vars = self._collect_name_loads(node.body)
         self._process_stmts(node.body, callee_id, depth + 1)
         self.var_types = saved
+        self._referenced_vars = saved_refs
         self._call_stack.discard(key)
 
     # ── Call resolution ──────────────────────────────────────────────
@@ -1146,6 +1241,59 @@ class SequenceDiagramGenerator:
             return ast.unparse(node)
         except Exception:
             return '...'
+
+    @staticmethod
+    def _collect_name_loads(stmts):
+        """Return names read (Load context) anywhere in the given statements.
+
+        This is the *use* side of a reaching-definitions dataflow problem:
+        strictly, we'd want to know whether the specific definition at an
+        assignment reaches some later use. Computing that precisely needs a
+        control-flow graph and a fixpoint iteration. For the pedagogical
+        sequence diagrams this module produces, the looser question "is the
+        variable name read anywhere in this scope?" is a sound
+        over-approximation — it admits only harmless false positives (an
+        assignment whose result is overwritten before any reader touches
+        it still earns a ``var: type`` label). False negatives (a truly-used
+        value lacking a label) are impossible because any genuine use
+        appears as a Load-context Name node.
+        """
+        names = set()
+        for stmt in stmts:
+            for child in ast.walk(stmt):
+                if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Load):
+                    names.add(child.id)
+        return names
+
+    def _replace_self(self, value, caller):
+        """Return readable text for an expression with ``self`` rebound to caller.
+
+        Preferred input is an AST node — we clone, run
+        :class:`_SelfToCallerTransformer` to rewrite ``self`` references in a
+        lexically scope-aware way, then unparse. This is sound wrt Python's
+        binding rules: the receiver of a method is a single stable reference
+        for the method's body, so a scope-aware alpha-rename suffices (no full
+        dataflow analysis is needed — ``self`` is never reassigned in
+        idiomatic code, and nested scopes that *do* rebind it are respected
+        by the transformer).
+
+        A string input is supported as a fallback for any future caller that
+        has already unparsed. It uses the crude ``str.replace`` that the old
+        code relied on — but the primary code path avoids this.
+        """
+        if not caller or caller == 'self':
+            return value if isinstance(value, str) else self._expr_text(value)
+
+        if isinstance(value, ast.AST):
+            try:
+                cloned = copy.deepcopy(value)
+                rewritten = _SelfToCallerTransformer(caller).visit(cloned)
+                ast.fix_missing_locations(rewritten)
+                return ast.unparse(rewritten)
+            except Exception:
+                return self._expr_text(value).replace('self.', caller + '.')
+
+        return value.replace('self.', caller + '.')
 
 
 def _topo_sort_classes(all_classes):
