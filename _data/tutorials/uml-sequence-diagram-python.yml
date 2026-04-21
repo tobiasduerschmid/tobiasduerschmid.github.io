@@ -84,6 +84,8 @@ steps:
       - The two dashed `<<create>>` arrows appear because `Main` constructs each object
       - The two solid arrows are synchronous calls — `Main` calls `send(...)` on `bot`, then `notify_members(...)` on `channel`
 
+      > **Note — `Main` is a learning scaffold, not real-world practice.** In this tutorial every diagram starts from `__main__`, giving you a concrete Python anchor for every arrow. Professional sequence diagrams almost never do this. A real diagram focuses on a **specific interaction between objects that are already alive** — it picks up the story at an interesting method call and does not trace from program startup. You would not see a `Main` lifeline in a diagram drawn on a whiteboard during a design meeting; instead you might see `user`, `authService`, and `database` — all assumed to exist — with the scenario beginning at `user -> authService: login(password)`. The `Main` lifeline is here purely to make Python execution explicit while you are learning the notation.
+
       ### Your Task
 
       The file `step1/chatbot.py` already defines `DiscordBot` and `Channel`. Your job is to write the `if __name__ == "__main__":` block so it:
@@ -1861,6 +1863,7 @@ steps:
       3. **Do not draw every `if` and `for`.** One or two fragment levels is usually enough — split deeply-branching logic into multiple diagrams.
       4. **One scenario per diagram.** A sequence diagram answers a single question. Happy path, error path, and edge cases typically belong in separate diagrams.
       5. **Only draw return arrows when the value matters.** UML is about communication — if the return is `None` or implied by the activation box ending, skip the dashed arrow.
+      6. **Real diagrams do not start from `Main`.** In this tutorial every scenario began from `__main__` to give you a Python anchor for every arrow. In practice, sequence diagrams focus on a specific interaction between objects that are already running — they start at an interesting method call, not at program startup. A whiteboard diagram might open with `user -> authService: login(password)` and never show how `user` or `authService` were constructed. The `Main` lifeline was a learning scaffold; leave it behind in your own diagrams.
 
       ---
 
