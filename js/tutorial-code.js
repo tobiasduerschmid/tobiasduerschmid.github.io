@@ -188,7 +188,7 @@
     this._umlContentEl = null;
     this._umlRefreshTimer = null;
     this._umlAnalyzerCode = null;       // Cached Python analyzer source
-    this._umlActiveType = 'class';      // 'class' or 'sequence'
+    this._umlActiveType = options.uml_default_type === 'sequence' ? 'sequence' : 'class'; // 'class' or 'sequence'
     this._umlWatchedFiles = [];         // Set per-step from YAML uml_files
     this._umlLanguage = 'python';      // 'python' or 'js' — auto-detected from file extensions
     this._umlClassLayoutPreference = options.uml_class_layout || 'portrait';
@@ -394,8 +394,8 @@
       // Right-positioned UML: output + UML share a tabbed bottom panel
       var umlRightToolbar =
         '<div class="tvm-diagram-toolbar">' +
-        '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
-        '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+        '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
+        '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
         '<div class="tvm-diagram-zoom-controls">' +
         '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
         '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -475,8 +475,8 @@
       (useBelowUml
         ? '<div class="tvm-uml-below-view">' +
           '<div class="tvm-diagram-toolbar">' +
-          '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
-          '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -512,8 +512,8 @@
       (useLeftUml
         ? '<div class="tvm-uml-left-view" style="display:none">' +
           '<div class="tvm-diagram-toolbar">' +
-          '<button class="tvm-diagram-type-btn active" data-type="class">Class Diagram</button>' +
-          '<button class="tvm-diagram-type-btn" data-type="sequence">Sequence Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
+          '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
@@ -553,8 +553,8 @@
       '</div>' +
       '<div class="tvm-diagram-fullscreen-overlay" style="display:none">' +
       '<div class="tvm-diagram-fs-toolbar">' +
-      '<button class="tvm-diagram-fs-type-btn active" data-type="class">Class Diagram</button>' +
-      '<button class="tvm-diagram-fs-type-btn" data-type="sequence">Sequence Diagram</button>' +
+      '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class">Class Diagram</button>' +
+      '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence">Sequence Diagram</button>' +
       '<div class="tvm-diagram-zoom-controls">' +
       '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
       '<span class="tvm-diagram-fs-zoom-label">100%</span>' +

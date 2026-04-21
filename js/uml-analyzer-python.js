@@ -1976,7 +1976,7 @@
 
   PythonSequenceDiagramGenerator.prototype.generatePlantUML = function () {
     if (this.lines.length === 0) return '';
-    var out = ['@startuml', 'layout landscape', 'layout compact'];
+    var out = ['@startuml', 'layout landscape'];
     for (var i = 0; i < this.participants.length; i++) {
       var p = this.participants[i];
       out.push('participant ' + p.id + ': ' + p.label);
@@ -2279,22 +2279,23 @@
         && call.func.value.func && call.func.value.func.type === 'Name'
         && call.func.value.func.id === 'super';
 
+    // NOTE: we deliberately do NOT emit explicit `activate` / `deactivate`
+    // directives here. The renderer derives activation bars from the call
+    // graph (push on sync, pop on response OR when the caller emits its next
+    // message). Explicit directives would shortcircuit that logic and produce
+    // zero-height bars for body-less calls — which is exactly the problem
+    // the implicit-activation path solves.
     if (method === '__init__' && !isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push('create ' + calleeId);
       this.lines.push(caller + ' --> ' + calleeId + ': <<create>>');
-      // Activation bar for constructor body (JIVE: Jayaraman et al. 2016)
-      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, '__init__', calleeId, depth);
-      this.lines.push('deactivate ' + calleeId);
     } else if (method === '__init__' && isSuper) {
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
-      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
-      this.lines.push('deactivate ' + calleeId);
     } else if (calleeId === caller) {
       // Self-call — nested activation bar on same lifeline (UML spec: stacked rectangles)
       this.lines.push(caller + ' -> ' + caller + ': ' + label);
@@ -2303,8 +2304,6 @@
       this._ensureParticipant(calleeId, clsName);
       this._callerClass[calleeId] = clsName;
       this.lines.push(caller + ' -> ' + calleeId + ': ' + label);
-      // Activation bar: top at incoming message, bottom at return (JIVE/CPP2XMI pattern)
-      this.lines.push('activate ' + calleeId);
       this._maybeFollow(clsName, method, calleeId, depth);
       // Return/reply message — only when return value is captured AND method has
       // a non-void return type (Cheers & Lin 2020 + Ambler G172: "Label return
@@ -2315,7 +2314,6 @@
           this.lines.push(calleeId + ' --> ' + caller + ': ' + retType);
         }
       }
-      this.lines.push('deactivate ' + calleeId);
     }
   };
 
