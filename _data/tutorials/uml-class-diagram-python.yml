@@ -508,7 +508,7 @@ steps:
       1. **UML diagrams** — the live diagram renderer reads type hints to show types. Without them, the diagram only shows names.
       2. **Communication** — type hints document the contracts of your class for other developers.
 
-      > **Advanced:** In professional projects, you can enforce type hints using tools like **mypy** (a static type checker). Running `mypy your_file.py` catches type errors without running the code — similar to a compiler in C++ or Java. You can integrate mypy into your build pipeline using **tox** (`tox -e mypy`) to automatically check types across your entire project.
+      *(Type hints can also be enforced at build time with tools like **mypy**. That's a topic for another tutorial — see the reference at the end of this one for a pointer.)*
 
       ### The Problem with Duck Typing
 
@@ -631,28 +631,60 @@ steps:
     tests:
       - description: "Instance attributes have type hints"
         command: |
+          import ast
           source = open('/tutorial/product.py').read()
-          assert 'self.__name: str' in source, \
-              "Add a type hint to __name: self.__name: str = name"
-          assert 'self.__price: float' in source, \
-              "Add a type hint to __price: self.__price: float = price"
-          assert 'self.__in_stock: bool' in source, \
-              "Add a type hint to __in_stock: self.__in_stock: bool = in_stock"
+          tree = ast.parse(source)
+          product_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'Product'), None)
+          assert product_cls is not None, "Product class must exist"
+          init_method = next((m for m in product_cls.body if isinstance(m, ast.FunctionDef) and m.name == '__init__'), None)
+          assert init_method is not None, "Product must have an __init__ method"
+          attr_annotations = {}
+          for stmt in init_method.body:
+              if (isinstance(stmt, ast.AnnAssign)
+                      and isinstance(stmt.target, ast.Attribute)
+                      and isinstance(stmt.target.value, ast.Name)
+                      and stmt.target.value.id == 'self'
+                      and isinstance(stmt.annotation, ast.Name)):
+                  attr_annotations[stmt.target.attr] = stmt.annotation.id
+          assert attr_annotations.get('__name') == 'str', \
+              "Add a type hint: `self.__name: str = name` (annotated assignment with type str)"
+          assert attr_annotations.get('__price') == 'float', \
+              "Add a type hint: `self.__price: float = price`"
+          assert attr_annotations.get('__in_stock') == 'bool', \
+              "Add a type hint: `self.__in_stock: bool = in_stock`"
         hints:
+          - text: "The middle compartment of the UML box shows types next to attributes. What Python syntax would put a type next to a `self.x = ...` assignment?"
+            condition: "default"
+          - text: "Annotated assignments use `name: Type = value`. Try it on `self.__name` first — the pattern is the same for all three attributes."
+            condition: "code_missing: __name:"
           - text: "Change `self.__name = name` to `self.__name: str = name` — add `: Type` before the `=`."
             condition: "default"
 
       - description: "Methods have return type hints"
         command: |
+          import ast
           source = open('/tutorial/product.py').read()
-          assert '-> str' in source, \
-              "Add return type hints like -> str to get_name()"
-          assert '-> float' in source, \
-              "Add return type hints like -> float to get_price() and apply_discount()"
-          assert '-> bool' in source, \
-              "Add return type hint -> bool to is_available()"
+          tree = ast.parse(source)
+          product_cls = next((n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'Product'), None)
+          assert product_cls is not None, "Product class must exist"
+          returns = {}
+          for m in product_cls.body:
+              if isinstance(m, ast.FunctionDef) and m.returns is not None and isinstance(m.returns, ast.Name):
+                  returns[m.name] = m.returns.id
+          assert returns.get('get_name') == 'str', \
+              "Add `-> str` to get_name(): `def get_name(self) -> str:`"
+          assert returns.get('get_price') == 'float', \
+              "Add `-> float` to get_price(): `def get_price(self) -> float:`"
+          assert returns.get('is_available') == 'bool', \
+              "Add `-> bool` to is_available(): `def is_available(self) -> bool:`"
+          assert returns.get('apply_discount') == 'float', \
+              "Add `-> float` to apply_discount(): `def apply_discount(self, percent: float) -> float:`"
         hints:
-          - text: "Add `-> ReturnType` before the colon in method definitions: `def get_name(self) -> str:`"
+          - text: "Where does a method's return type go in a UML signature? How would you express the same information on a Python `def` line?"
+            condition: "default"
+          - text: "Python puts the return type after `->`, between the closing paren and the colon."
+            condition: "code_missing: ->"
+          - text: "Add `-> ReturnType` before the colon: `def get_name(self) -> str:`. Then do the same for `get_price`, `is_available`, and `apply_discount`."
             condition: "default"
 
       - description: "apply_discount parameter has type hint"
@@ -714,6 +746,8 @@ steps:
       ## The Generalization Arrow
 
       > **Learning objective:** After this step you will be able to **refactor** duplicated classes into an inheritance hierarchy and **draw** the correct generalization arrow direction.
+
+      > **Heads up — the arrow direction trips up almost everyone the first time.** Even developers who use inheritance every day sometimes have to pause and think. Expect to re-read the "Is-a test" below once or twice. That is the skill forming, not a sign you're confused.
 
       ### Inheritance in UML
 
@@ -908,41 +942,59 @@ steps:
 
       - description: "Duplicated describe() and color removed from subclasses"
         command: |
+          import ast
           source = open('/tutorial/shapes.py').read()
-          import re
-          # Find class bodies for Circle and Rectangle
-          # Check that describe is not redefined in subclasses
-          circle_match = re.search(r'class Circle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
-          rect_match = re.search(r'class Rectangle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
-          if circle_match:
-              circle_body = circle_match.group()
-              assert 'def describe' not in circle_body, \
-                  "Remove describe() from Circle — it should inherit this method from Shape"
-              assert 'self.color' not in circle_body, \
-                  "Remove self.color from Circle — it should inherit this attribute from Shape via super().__init__()"
-          if rect_match:
-              rect_body = rect_match.group()
-              assert 'def describe' not in rect_body, \
-                  "Remove describe() from Rectangle — it should inherit this method from Shape"
-              assert 'self.color' not in rect_body, \
-                  "Remove self.color from Rectangle — it should inherit this attribute from Shape via super().__init__()"
+          tree = ast.parse(source)
+          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name in ('Circle', 'Rectangle')]:
+              for m in cls.body:
+                  if isinstance(m, ast.FunctionDef):
+                      assert m.name != 'describe', \
+                          "Remove describe() from " + cls.name + " — it should inherit this method from Shape"
+                      if m.name == '__init__':
+                          for stmt in m.body:
+                              tgt = None
+                              if isinstance(stmt, ast.AnnAssign):
+                                  tgt = stmt.target
+                              elif isinstance(stmt, ast.Assign) and stmt.targets:
+                                  tgt = stmt.targets[0]
+                              if (tgt is not None and isinstance(tgt, ast.Attribute)
+                                      and isinstance(tgt.value, ast.Name)
+                                      and tgt.value.id == 'self'
+                                      and tgt.attr == 'color'):
+                                  assert False, \
+                                      "Remove `self.color = color` from " + cls.name + " — it should inherit color from Shape via super().__init__()"
         hints:
+          - text: "Both subclasses still repeat Shape's work. What should `Circle` and `Rectangle` *not* need to do for themselves once they inherit from `Shape`?"
+            condition: "default"
+          - text: "Anything Shape already defines should disappear from the subclasses — they inherit it. Which members match that description?"
+            condition: "code_contains: def describe"
           - text: "Delete the entire `describe()` method from both `Circle` and `Rectangle`. Also delete `self.color: str = color` from their `__init__` — they get `color` from `Shape` via `super().__init__(color)`."
             condition: "default"
 
       - description: "Subclasses use super().__init__() to initialize the parent"
         command: |
+          import ast
           source = open('/tutorial/shapes.py').read()
-          import re
-          circle_match = re.search(r'class Circle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
-          rect_match = re.search(r'class Rectangle.*?(?=\nclass |\nif |\Z)', source, re.DOTALL)
-          if circle_match:
-              assert 'super().__init__' in circle_match.group() or 'super(Circle' in circle_match.group(), \
-                  "Circle.__init__ should call super().__init__(color) to initialize Shape"
-          if rect_match:
-              assert 'super().__init__' in rect_match.group() or 'super(Rectangle' in rect_match.group(), \
-                  "Rectangle.__init__ should call super().__init__(color) to initialize Shape"
+          tree = ast.parse(source)
+          for cls in [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name in ('Circle', 'Rectangle')]:
+              init = next((m for m in cls.body if isinstance(m, ast.FunctionDef) and m.name == '__init__'), None)
+              assert init is not None, cls.name + ' must have __init__'
+              found_super = False
+              for node in ast.walk(init):
+                  if (isinstance(node, ast.Call)
+                          and isinstance(node.func, ast.Attribute)
+                          and node.func.attr == '__init__'
+                          and isinstance(node.func.value, ast.Call)
+                          and isinstance(node.func.value.func, ast.Name)
+                          and node.func.value.func.id == 'super'):
+                      found_super = True
+                      break
+              assert found_super, cls.name + ".__init__ should call super().__init__(color) to initialize Shape"
         hints:
+          - text: "If `Shape.__init__` already knows how to set `self.color`, how can the subclass call that instead of repeating the work?"
+            condition: "default"
+          - text: "Python exposes the parent's `__init__` through `super()`. Try calling it with the color argument."
+            condition: "code_missing: super()"
           - text: "In Circle.__init__ and Rectangle.__init__, replace `self.color: str = color` with `super().__init__(color)`. This calls Shape.__init__ which sets self.color for you."
             condition: "default"
 
@@ -1185,6 +1237,18 @@ steps:
           explanation: |
             When you use a string, the **relationship between Course and Instructor is invisible** — both in the code and in the UML diagram. Using an `Instructor` object makes the dependency explicit, allowing UML to show the arrow and helping other developers understand the system structure at a glance.
 
+        - question: |
+            **Review of Step 3.** In the solution above, `Course` stores `self.instructor: Instructor = instructor`. Why is the `: Instructor` type annotation load-bearing — what would change if you wrote `self.instructor = instructor` instead?
+          type: single
+          options:
+            - "Nothing — Python ignores type annotations at runtime"
+            - "The code would stop working"
+            - "Python would enforce the type automatically"
+            - "The UML diagram would not know the association exists, because the renderer relies on the type annotation to see the link"
+          correct_index: 3
+          explanation: |
+            Python itself ignores type annotations at runtime — but the UML renderer reads them. Without `: Instructor`, the renderer can't tell what class the attribute refers to, and the association arrow disappears. This reconnects Step 3's "types as contracts" lesson with Step 5's "relationships as visibility": both rely on the *same* annotations.
+
 
   # --------------------------------------------------------------------------
   # STEP 6 — "Composition vs Aggregation"
@@ -1201,6 +1265,14 @@ steps:
       ## Ownership and Lifecycle
 
       > **Learning objective:** After this step you will be able to **distinguish** composition from aggregation and **implement** both patterns correctly in Python.
+
+      > **Heads up — this is the distinction working developers most often get wrong.** Even Martin Fowler (see the caveat below) recommends leaning on plain association when you're unsure. If the rule feels fuzzy after this step, that is *honest* confusion, not a learning failure — the UML spec itself calls aggregation's semantics "intentionally informal."
+
+      ### Warm-Up (Retrieval from Step 5)
+
+      > Before you read on — close your eyes for five seconds and answer: in Step 5, what exactly made the UML association arrow **appear** between `Course` and `Instructor`? Was it *importing* the class, *storing an instance* as an attribute, *calling a method*, or something else? Pick the answer you would bet on, then check the next paragraph.
+
+      An association appears when a class **stores another object as a persistent instance variable** — not when it merely imports or uses it. Keep that rule in your head: this step's composition and aggregation are *both* special cases of it.
 
       ### Two Kinds of "Has-A"
 
@@ -1305,11 +1377,13 @@ steps:
               uni = University("State University")
               uni.add_department("Computer Science")
               uni.add_department("Mathematics")
+              assert len(uni.departments) == 2, "add_department needs to actually store the new department"
 
               # Professors are assigned to departments (aggregation)
               cs = uni.get_department("Computer Science")
               cs.add_professor(prof_alice)
               cs.add_professor(prof_bob)
+              assert len(cs.professors) == 2, "add_professor needs to store the received professor"
 
               print(f"{uni.name} has {len(uni.departments)} departments")
               print(f"CS has {len(cs.professors)} professors")
@@ -1390,6 +1464,10 @@ steps:
           assert uni.departments[0].name == 'CS', \
               "The created department should have the name 'CS'"
         hints:
+          - text: "Composition means the whole *creates* the part. What does that mean for where `Department(...)` appears?"
+            condition: "default"
+          - text: "The method signature is `add_department(self, dept_name: str)` — `dept_name` is a string, not a Department. So something has to turn it into one."
+            condition: "code_missing: Department("
           - text: "In `add_department`, create a new Department: `dept = Department(dept_name)` then `self.departments.append(dept)`."
             condition: "default"
 
@@ -1406,6 +1484,10 @@ steps:
           assert dept.professors[0] is prof, \
               "The professor in the department should be the SAME object that was passed in (not a copy)"
         hints:
+          - text: "Aggregation means the whole *receives* the part — it doesn't create a new one. How would that change the body of `add_professor`?"
+            condition: "default"
+          - text: "The parameter `prof` is already a Professor object. You just need to remember it."
+            condition: "default"
           - text: "In `add_professor`, just append the received professor: `self.professors.append(prof)`."
             condition: "default"
 
@@ -1687,6 +1769,18 @@ steps:
           explanation: |
             `0..1` means the relationship is **optional** — there can be zero or one instance. For example, a `Person` might have `0..1` `Passport` — not everyone has a passport, but no one has two.
 
+        - question: |
+            **Review of Step 6.** A `University` has `1..*` `Department`s and a `Department` has `1..*` `Professor`s. Given the lifecycle rules you learned in Step 6, which pair of diamonds is correct?
+          type: single
+          options:
+            - "Both filled (composition) — because both are `1..*`"
+            - "Both hollow (aggregation) — because both are collections"
+            - "Filled between University and Department (the university creates its departments); hollow between Department and Professor (professors exist independently and can move)"
+            - "Hollow between University and Department; filled between Department and Professor"
+          correct_index: 2
+          explanation: |
+            Multiplicity tells you *how many* participate; the diamond tells you *ownership and lifecycle*. They are independent decisions. Here you combine Step 6's lifecycle reasoning with Step 7's multiplicity notation — both pieces of information go on the *same* arrow in the diagram.
+
 
   # --------------------------------------------------------------------------
   # STEP 8 — "Abstract Classes: Designing for Extension"
@@ -1699,6 +1793,20 @@ steps:
       ## Abstract Classes in UML
 
       > **Learning objective:** After this step you will be able to **implement** abstract classes using Python's `abc` module and **recognize** italic notation in UML diagrams.
+
+      ### Flashback to Step 4
+
+      Remember Step 4's `Shape`?
+
+      ```python
+      class Shape:
+          def area(self) -> float:
+              return 0.0   # ← wait, what is the area of a generic "shape"?
+      ```
+
+      That `0.0` was always a lie. A `Shape` isn't a thing you can actually measure — only *specific* shapes (circles, rectangles) have areas. We hid the lie behind a default value and let `Circle` and `Rectangle` override it. That worked, but it left a bug-shaped hole: if you ever wrote `Shape("red").area()`, Python cheerfully returned `0.0` instead of telling you that you made a design mistake.
+
+      **Abstract classes are how you fix that hole.** By the end of this step, you will know how to say "this class is a blueprint; you must not instantiate it directly, and every subclass *must* implement these methods."
 
       ### What Is an Abstract Class?
 
@@ -2231,9 +2339,13 @@ steps:
           order = store.place_order(customer, ['Laptop'])
           assert hasattr(order, 'total'), \
               "place_order should return an Order object"
-          assert order.total == 999.99, \
-              f"Order total should be 999.99, got {order.total}"
+          assert abs(order.total - 999.99) < 1e-6, \
+              f"Order total should be ~999.99, got {order.total}"
         hints:
+          - text: "`OnlineStore` is now a *coordinator*, not a data container. What would its `add_product` and `place_order` look like if they delegated the real work to the new classes?"
+            condition: "default"
+          - text: "`add_product` should accept a `Product` object from outside (aggregation) rather than a name/price/stock triple."
+            condition: "default"
           - text: "Refactor `OnlineStore` to accept `Product` objects via `add_product(self, product: Product)` and create `Order` objects in `place_order()`."
             condition: "default"
 
