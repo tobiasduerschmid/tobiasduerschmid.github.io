@@ -1668,12 +1668,14 @@ steps:
           var doneBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('done') || b.textContent.toLowerCase().includes('complet'); });
           assert(doneBtn, 'No "Done" filter button found');
           doneBtn.click();
-          return new Promise(function(resolve) {
+          return new Promise(function(resolve, reject) {
             setTimeout(function() {
-              var items = root.querySelectorAll('.list-group-item');
-              assert(items.length === 3,
-                'After clicking "Done", exactly 3 completed tasks should be visible. Found: ' + items.length + '. Wire onClick to call setFilter and use filter state in visibleTasks.');
-              resolve();
+              try {
+                var items = root.querySelectorAll('.list-group-item');
+                assert(items.length === 3,
+                  'After clicking "Done", exactly 3 completed tasks should be visible. Found: ' + items.length + '. Wire onClick to call setFilter and use filter state in visibleTasks.');
+                resolve();
+              } catch(e) { reject(e); }
             }, 400);
           });
         hints:
@@ -1694,12 +1696,14 @@ steps:
           var activeBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('active') || b.textContent.toLowerCase().includes('pending'); });
           assert(activeBtn, 'No "Active" filter button found');
           activeBtn.click();
-          return new Promise(function(resolve) {
+          return new Promise(function(resolve, reject) {
             setTimeout(function() {
-              var items = root.querySelectorAll('.list-group-item');
-              assert(items.length === 3,
-                'After clicking "Active", exactly 3 incomplete tasks should be visible. Found: ' + items.length + '.');
-              resolve();
+              try {
+                var items = root.querySelectorAll('.list-group-item');
+                assert(items.length === 3,
+                  'After clicking "Active", exactly 3 incomplete tasks should be visible. Found: ' + items.length + '.');
+                resolve();
+              } catch(e) { reject(e); }
             }, 400);
           });
         hints:
@@ -1712,14 +1716,16 @@ steps:
           var doneBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('done') || b.textContent.toLowerCase().includes('complet'); });
           assert(doneBtn, 'No "Done" filter button found');
           doneBtn.click();
-          return new Promise(function(resolve) {
+          return new Promise(function(resolve, reject) {
             setTimeout(function() {
-              assert(doneBtn.classList.contains('btn-primary'),
-                'The active filter button should have variant="primary" (adds the btn-primary class). Currently it does not. Use variant={filter === "done" ? "primary" : "outline-secondary"}.');
-              var allBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('all'); });
-              assert(allBtn && !allBtn.classList.contains('btn-primary'),
-                'Only the active filter button should be highlighted — "All" should not have btn-primary when "Done" is selected.');
-              resolve();
+              try {
+                assert(doneBtn.classList.contains('btn-primary'),
+                  'The active filter button should have variant="primary" (adds the btn-primary class). Currently it does not. Use variant={filter === "done" ? "primary" : "outline-secondary"}.');
+                var allBtn = buttons.find(function(b) { return b.textContent.toLowerCase().includes('all'); });
+                assert(allBtn && !allBtn.classList.contains('btn-primary'),
+                  'Only the active filter button should be highlighted — "All" should not have btn-primary when "Done" is selected.');
+                resolve();
+              } catch(e) { reject(e); }
             }, 400);
           });
         hints:
