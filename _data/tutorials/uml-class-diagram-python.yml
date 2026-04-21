@@ -1574,7 +1574,7 @@ steps:
       | `*` (or `0..*`) | Zero or more | a collection that may be empty |
       | `1..*` | One or more | a collection that must have at least one element |
 
-      > **Style tip (Ambler G117):** Prefer `*` over verbose `0..*`. Both mean the same thing, but `*` is concise and universally understood — use `0..*` only when explicitly spelling out the lower bound adds clarity in a specific context.
+      > **Style tip:** Prefer `*` over verbose `0..*`. The UML spec defines them as identical, and `*` is the more concise and widely recognised shorthand. Use the explicit `0..*` only when you want to emphasise the lower bound in context (e.g., contrasting it with `1..*` nearby).
 
       ### Reading Multiplicity as a Sentence
 
@@ -2523,13 +2523,13 @@ steps:
       |---|---|
       | `1` | Exactly one |
       | `0..1` | Zero or one (optional) |
-      | `*` *(preferred over verbose `0..*`)* | Zero or more |
+      | `*` *(preferred shorthand for zero or more)* | Zero or more |
       | `1..*` | One or more |
       | `n..m` | Between n and m |
 
       **Placement:** the number sits next to the class it *quantifies* — it answers "for *one* of the opposite class, how many of **this** class?"
 
-      **Style (Ambler G117/G118):** Show multiplicity on **both ends** of every relationship; prefer `*` over verbose `0..*`.
+      **Style (Ambler G117):** Show multiplicity on **both ends** of every relationship; prefer `*` over verbose `0..*`.
 
       ---
 

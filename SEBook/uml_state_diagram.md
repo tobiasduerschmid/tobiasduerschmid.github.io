@@ -85,7 +85,7 @@ Internal activities are particularly useful for modeling embedded systems, UI co
 
 ### 2.4 Composite States (Advanced)
 
-A **composite state** is a state that contains a nested state machine inside it. UML 2 introduced composite states to avoid the "spaghetti" of a flat state machine with dozens of transitions. When an object is in a composite state, it is simultaneously in *exactly one* of the nested substates.
+A **composite state** is a state that contains a nested state machine inside it. Hierarchical (composite) states originate in Harel's statecharts (1987) and were already present in UML 1.x; UML 2 formalized and extended their semantics to avoid the "spaghetti" of a flat state machine with dozens of transitions. When an object is in a composite state, it is simultaneously in *exactly one* of the nested substates.
 
 **Example:** A downloadable video has a high-level `Active` state that contains substates `Buffering`, `Playing`, and `Paused`. From any substate, a `stop()` event exits the entire composite state.
 

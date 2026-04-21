@@ -302,7 +302,7 @@ From weakest to strongest, the class relationships are:
 
 ## ⚠ The Five Most Common UML Class Diagram Mistakes
 
-Empirical studies of student diagrams (Chren et al., 2019) identify these recurring errors. Watch for them in your own work:
+Empirical studies of student diagrams (Chren et al., "Mistakes in UML Diagrams: Analysis of Student Projects in a Software Engineering Course," ICSE SEET 2019) identify these recurring errors. Watch for them in your own work:
 
 | # | Mistake | Fix |
 |---|---|---|
@@ -310,7 +310,7 @@ Empirical studies of student diagrams (Chren et al., 2019) identify these recurr
 | 2 | **Multiplicity on the wrong end** — e.g., `*` placed next to the "one" side | Multiplicity answers *"for one of the opposite class, how many of **this** class?"* Place it next to the class being quantified. |
 | 3 | **Missing multiplicity on one end** | Per Ambler (G117), always show multiplicity on **both** ends of every relationship. An unlabeled end is ambiguous, not "just 1." |
 | 4 | **Confusing aggregation and composition** — using the filled diamond when parts are actually shared | Composition = exclusive ownership *and* lifecycle dependency. If the part can exist without the whole, use aggregation (or plain association). |
-| 5 | **Verbose `0..*` when `*` suffices** | Use the shorthand `*` for zero-or-more; reserve the explicit lower bound only when it adds clarity (e.g., `1..*`). |
+| 5 | **Verbose `0..*` when `*` suffices** | Use the shorthand `*` for zero-or-more. The UML spec defines them as identical; `*` is more concise. Reserve `0..*` only when contrasting explicitly with `1..*` nearby. |
 
 > **Pedagogy tip:** Before turning in any class diagram, run this five-item checklist over every relationship. Catching these five mistakes catches the majority of grading-level errors.
 

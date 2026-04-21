@@ -13,7 +13,7 @@ Modeling serves two critical purposes in software engineering:
 
 **1. Communication.** Models provide a common, simple, graphical representation that allows developers, architects, and stakeholders to discuss the workings of the software. When everyone reads the same diagram, the team converges on the same understanding.
 
-**2. Early Problem Detection.** Bugs found during design cost a fraction of bugs found during testing or maintenance. Studies have shown that the cost to fix a defect grows roughly 100x from the requirements phase to the maintenance phase. Modeling and analysis shifts the discovery of problems earlier in the lifecycle, where they are cheaper to fix.
+**2. Early Problem Detection.** Bugs found during design cost a fraction of bugs found during testing or maintenance. Studies have shown that the cost to fix a defect grows substantially from the requirements phase to the maintenance phase — estimates range from 10× to 100× depending on the project and phase (Boehm, *Software Engineering Economics*, 1981; McConnell, *Code Complete*, 2004). Modeling and analysis shifts the discovery of problems earlier in the lifecycle, where they are cheaper to fix.
 
 ## What Is a Model?
 
