@@ -52,6 +52,7 @@ steps:
       Write Python code until the live diagram below matches this target:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class Student {
         name
         student_id
@@ -315,6 +316,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class BankAccount {
         - __balance: float
         + __init__(initial_balance: float): None
@@ -557,6 +559,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class Product {
         - __name: str
         - __price: float
@@ -794,6 +797,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class Shape {
         + color: str
         + __init__(color: str): None
@@ -1103,6 +1107,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class Instructor {
         + name: str
         + department: str
@@ -1340,6 +1345,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class Professor {
         + name: str
         + field: str
@@ -1639,6 +1645,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       class Song {
         + title: str
         + artist: str
@@ -1881,6 +1888,7 @@ steps:
       ### Your Target Diagram
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+      layout landscape
       abstract class PaymentMethod {
         + {abstract} process(amount: float): bool
         + {abstract} get_name(): str
@@ -2137,6 +2145,7 @@ steps:
       Refactor the monolithic `OnlineStore` into this well-structured system:
 
       <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
+        layout landscape
         class Product {
           +name: str
           +price: float
