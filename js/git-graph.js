@@ -523,11 +523,13 @@
         for (var l4 = 0; l4 < lanes.length; l4++) {
           if (lanes[l4] === fp) { fpLane = l4; break; }
         }
-        if (fpLane === -1) {
-          // Parent not yet scheduled — claim myLane for it.
-          lanes[myLane] = fp;
-        }
-        // else: parent already scheduled in another lane; myLane stays free.
+        // Always mark myLane with the parent hash. If the parent is already
+        // in another lane this acts as a phantom: the lane stays occupied
+        // until the parent commit is processed (step 3 removes all
+        // occurrences), preventing a new branch from reusing this column
+        // while the cross-lane edge is still in flight and would overlap
+        // with any nodes placed on it.
+        lanes[myLane] = fp;
       }
 
       // 5. Schedule additional parents (merge commits) into free lanes.
@@ -1421,7 +1423,7 @@
 
     var msgText = this._svgEl('text', {
       x: NODE_RADIUS + 54, y: 5,
-      fill: 'var(--git-graph-text, #ccc)', 'font-size': 13,
+      fill: 'var(--git-graph-text, #000000)', 'font-size': 13,
       'class': 'git-graph-message',
     });
     msgText.textContent = this._truncate(cm.message, 50);
@@ -1850,7 +1852,7 @@
 
       var msgX = cx + NODE_RADIUS + 54;
       svg += '<text x="' + msgX + '" y="' + (cy + 5) + '" ' +
-        'fill="var(--git-graph-text, #ccc)" font-size="13" class="git-graph-message">' +
+        'fill="var(--git-graph-text, #000000)" font-size="13" class="git-graph-message">' +
         this._escapeXml(this._truncate(cm.message, 50)) + '</text>';
     }
     return svg;
@@ -1865,7 +1867,7 @@
     var HEAD_GAP            = 4;
     var HEAD_COLOR          = '#ffffff';
     var HEAD_DETACHED_COLOR = '#f39c12';
-    var LABEL_BG            = 'var(--git-graph-bg, #1a1a2e)';
+    var LABEL_BG            = 'var(--git-graph-bg, #fafbfc)';
 
     // Group labels by commit hash
     var labelsByCommit = {};

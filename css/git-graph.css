@@ -318,13 +318,15 @@ html:not(.dark-mode) .git-graph-empty code {
    .tvm-git-graph-container sets the same vars itself in tutorial.css. */
 .git-graph-canvas,
 .git-command-lab__graph,
-.git-command-lab-modal {
+.git-command-lab-modal,
+.uml-gitgraph-diagram-container {
   --git-graph-text: #000000;
   --git-graph-bg: #fafbfc;
 }
 html.dark-mode .git-graph-canvas,
 html.dark-mode .git-command-lab__graph,
-html.dark-mode .git-command-lab-modal {
+html.dark-mode .git-command-lab-modal,
+html.dark-mode .uml-gitgraph-diagram-container {
   --git-graph-text: #ffffff;
   --git-graph-bg: #1a1a2e;
 }
