@@ -2578,7 +2578,7 @@ steps:
 
       | Symbol | Name | Meaning | Python Pattern |
       |---|---|---|---|
-      | <span class="uml-sym" data-diagram="class" data-sym="--|>"></span> | **Inheritance** | "is-a" — child extends parent | `class Child(Parent):` |
+      | <span class="uml-sym" data-diagram="class" data-sym="--&#124;>"></span> | **Inheritance** | "is-a" — child extends parent | `class Child(Parent):` |
       | <span class="uml-sym" data-diagram="class" data-sym="-->"></span> | **Association** | "knows-about" — stores a reference | `self.other: OtherClass = other` |
       | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> | **Composition** | "owns" — part destroyed with whole | `self.part = Part(...)` (created inside) |
       | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> | **Aggregation** | "uses" — part survives independently | `self.parts.append(part)` (passed in) |
