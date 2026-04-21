@@ -1750,7 +1750,9 @@ steps:
           assert isinstance(p.songs, list), \
               "songs should be a list, not a single Song object"
         hints:
-          - text: "Replace `self.song: Song = song` with `self.songs: list = []` and remove `song` from the constructor parameters."
+          - text: "The `*` multiplicity on the UML arrow means 'zero or more songs'. What Python type naturally holds a variable number of items — and how would you change the constructor to start with an empty one?"
+            condition: "default"
+          - text: "Replace `self.song: Song = song` with `self.songs: list[Song] = []` and remove the `song` parameter from the constructor."
             condition: "default"
 
       - description: "add_song() works and get_song_count() is correct"
@@ -1766,6 +1768,8 @@ steps:
           assert p.get_song_count() == 2, \
               f"After adding 2 songs, get_song_count() should return 2 but got {p.get_song_count()}"
         hints:
+          - text: "The UML shows two new methods: `add_song(song: Song)` and `get_song_count(): int`. Given that `self.songs` is a list, what would each method need to do?"
+            condition: "default"
           - text: "Add `def add_song(self, song: Song) -> None:` that calls `self.songs.append(song)`, and `def get_song_count(self) -> int:` returning `len(self.songs)`."
             condition: "default"
 
@@ -1781,6 +1785,8 @@ steps:
           assert total == 350, \
               f"Total duration of 100 + 250 should be 350, got {total}"
         hints:
+          - text: "Each song in `self.songs` has a `duration_sec` attribute. How would you add all those numbers together in a single expression?"
+            condition: "default"
           - text: "Use `sum(s.duration_sec for s in self.songs)` to compute the total duration."
             condition: "default"
 
@@ -2021,6 +2027,8 @@ steps:
           except TypeError:
               pass  # Good — abstract class cannot be instantiated
         hints:
+          - text: "The UML shows `PaymentMethod` in italics — that signals 'abstract'. What Python module lets you prevent a class from being instantiated directly, and what decorator marks its methods as unimplemented blueprints?"
+            condition: "default"
           - text: "Add `from abc import ABC, abstractmethod` at the top, change `class PaymentMethod:` to `class PaymentMethod(ABC):`, and add `@abstractmethod` above both `process()` and `get_name()`."
             condition: "default"
 
@@ -2036,6 +2044,8 @@ steps:
           assert result == True, \
               "CreditCard.process() should return True"
         hints:
+          - text: "An abstract class defines *what* must exist; the subclass defines *how* it works. Which two methods does `PaymentMethod` declare that `CreditCard` must now provide an actual implementation for?"
+            condition: "default"
           - text: "Implement `def process(self, amount: float) -> bool:` in CreditCard that prints a message and returns `True`, and `def get_name(self) -> str:` returning `'Credit Card'`."
             condition: "default"
 
@@ -2051,7 +2061,9 @@ steps:
           assert result == True, \
               "BankTransfer.process() should return True"
         hints:
-          - text: "Implement `process()` and `get_name()` in BankTransfer, similar to CreditCard but returning `'Bank Transfer'`."
+          - text: "`BankTransfer` must fulfil the same contract as `CreditCard`. Look at how `CreditCard` implements the two abstract methods — what would the `BankTransfer` versions return for its own name?"
+            condition: "default"
+          - text: "Implement `process()` and `get_name()` in BankTransfer, similar to CreditCard but returning `'Bank Transfer'` from `get_name()`."
             condition: "default"
 
     quiz:
@@ -2353,7 +2365,9 @@ steps:
           assert p.stock == 2, \
               "reduce_stock() should decrease stock by 1"
         hints:
-          - text: "Create `class Product:` with `__init__(self, name: str, price: float, stock: int)`, an `is_available()` returning `self.stock > 0`, and `reduce_stock()` doing `self.stock -= 1`."
+          - text: "Look at the God Class: it stores product data as parallel lists (`_product_names`, `_product_prices`, `_product_stocks`). The target diagram shows a `Product` class with those as instance attributes. Which methods and data currently in `OnlineStore` naturally belong to `Product` instead?"
+            condition: "default"
+          - text: "Create `class Product:` with `__init__(self, name: str, price: float, stock: int)`, `is_available()` returning `self.stock > 0`, and `reduce_stock()` doing `self.stock -= 1`."
             condition: "default"
 
       - description: "Customer class exists with name and email"
@@ -2367,6 +2381,8 @@ steps:
           assert c.name == 'Alice'
           assert c.email == 'alice@example.com'
         hints:
+          - text: "The God Class takes `customer_name` and `customer_email` as plain strings in `place_order`. The target diagram shows a standalone `Customer` class. What two pieces of data does that class own?"
+            condition: "default"
           - text: "Create `class Customer:` with `__init__(self, name: str, email: str)` storing both as typed attributes."
             condition: "default"
 
@@ -2386,7 +2402,9 @@ steps:
           assert o.customer is c, \
               "Order should store the Customer object"
         hints:
-          - text: "Create `class Order:` with `__init__(self, customer: Customer)` and an `add_item(self, product: Product)` that appends to `self.items` and adds to `self.total`."
+          - text: "The target diagram shows `Order --> Customer` and `Order o--> Product`. That means `Order` holds a reference to a `Customer` and a list of `Product`s. What should `Order.__init__` accept, and what does `add_item` do?"
+            condition: "default"
+          - text: "Create `class Order:` with `__init__(self, customer: Customer)` storing `self.customer`, `self.items: list[Product] = []`, and `self.total: float = 0.0`. Then add `add_item(self, product: Product)` that appends the product and adds its price to `self.total`."
             condition: "default"
 
       - description: "OnlineStore uses the extracted classes"

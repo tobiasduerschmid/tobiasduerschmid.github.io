@@ -180,6 +180,8 @@ steps:
           assert isinstance(local_ns['bot'], ns['DiscordBot']), \
               "`bot` must be a DiscordBot — use `bot = DiscordBot()`"
         hints:
+          - text: "The target diagram shows `bot: DiscordBot` as a lifeline — a specific *instance* named `bot`. Inside the `if __name__ == \"__main__\":` block, how would you create that instance?"
+            condition: "default"
           - text: "Inside the `if __name__ == \"__main__\":` block, write `bot = DiscordBot()`. Variable names become participant names in the diagram — so `bot` will appear as `bot: DiscordBot`."
             condition: "default"
 
@@ -202,6 +204,8 @@ steps:
           assert isinstance(local_ns['channel'], ns['Channel']), \
               "`channel` must be a Channel — use `channel = Channel()`"
         hints:
+          - text: "The diagram shows two lifelines besides `Main`: `bot: DiscordBot` and `channel: Channel`. You have the bot — what is the second object, and which class is it an instance of?"
+            condition: "default"
           - text: "Right after creating the bot, add `channel = Channel()`. Two objects, two lifelines."
             condition: "default"
 
@@ -213,6 +217,8 @@ steps:
           assert 'channel.notify_members(' in source, \
               "Call channel.notify_members(...) — this produces the `Main -> channel: notify_members(...)` arrow"
         hints:
+          - text: "The target diagram has two solid arrows from `Main` — read their labels. Which two method calls do they represent, and on which objects?"
+            condition: "default"
           - text: "After creating both objects, call `bot.send(\"Hello, world!\")` and then `channel.notify_members(\"Welcome\")`."
             condition: "default"
 
@@ -743,6 +749,8 @@ steps:
           assert has_self_call(handle_body, 'send'), \
               "handle_message must call self.send(message)"
         hints:
+          - text: "The target diagram shows two self-arrows nested inside `handle_message`'s activation box. What Python prefix on a method call tells the analyzer that the call stays on the *same* object?"
+            condition: "default"
           - text: "Inside `handle_message`, write two lines: `self._log(message)` then `self.send(message)`. The `self.` prefix is what produces the self-arrows in the diagram."
             condition: "default"
 
@@ -752,6 +760,8 @@ steps:
           assert 'bot.handle_message(' in source, \
               "In __main__, call bot.handle_message(\"hi there\")"
         hints:
+          - text: "The target diagram shows exactly one arrow from `Main` into `bot`. Reading that arrow's label — what single call should `__main__` make?"
+            condition: "default"
           - text: "In the `if __name__ == \"__main__\":` block, call `bot.handle_message(\"hi there\")` — this is the single entry point from Main into the bot."
             condition: "default"
 
@@ -1074,6 +1084,8 @@ steps:
           assert calls(if_node.orelse, 'channel', 'broadcast'), \
               "In the `else` branch, call `channel.broadcast(message)`."
         hints:
+          - text: "Look at the two compartments of the `alt` in the target diagram. The top compartment has a self-arrow; the bottom has an arrow going to `channel`. What two method calls do those arrows correspond to?"
+            condition: "default"
           - text: "`if` branch: `self._block(message)`. `else` branch: `channel.broadcast(message)`."
             condition: "default"
 
@@ -1283,6 +1295,8 @@ steps:
           assert called, \
               "Inside the loop body, call `channel.send_to_all(msg)` once per iteration."
         hints:
+          - text: "Inside the `loop` box in the target diagram, there is exactly one arrow going to `channel`. Looking at the `Channel` class in the starter, which method sends a single message?"
+            condition: "default"
           - text: "Inside the `for` body, call `channel.send_to_all(msg)`. That is the single arrow that appears inside the loop box."
             condition: "default"
 
@@ -1666,6 +1680,8 @@ steps:
           assert calls(inner_if.orelse, 'self', '_log_skip'), \
               "In the else branch, call `self._log_skip(post)`."
         hints:
+          - text: "The two `alt` compartments each show one arrow. The top goes to `channel`; the bottom is a self-arrow. What method names do those labels show in the target diagram?"
+            condition: "default"
           - text: "`if` branch: `channel.broadcast(post)`. `else` branch: `self._log_skip(post)`."
             condition: "default"
 
@@ -1694,7 +1710,9 @@ steps:
           assert has_channel, "Main must create a Channel — `channel = Channel()`"
           assert has_run, "Main must call `bot.run_digest(channel, posts)`"
         hints:
-          - text: "In `__main__`: create the bot, create the channel, then call `bot.run_digest(channel, posts)` once. That produces the three `<<create>>` arrows and the one entry call in the target diagram."
+          - text: "The target diagram shows two `<<create>>` arrows before the main call — one to `bot` and one to `channel`. What two object creations does that mean `__main__` must perform?"
+            condition: "default"
+          - text: "In `__main__`: create the bot, create the channel, then call `bot.run_digest(channel, posts)` once. That produces the `<<create>>` arrows and the entry call in the target diagram."
             condition: "default"
 
     quiz:
