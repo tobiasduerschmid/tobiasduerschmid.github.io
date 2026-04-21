@@ -2130,6 +2130,22 @@ steps:
         @enduml
       '></div>
 
+      ### New Notation: Dependency
+
+      The diagram introduces one arrow you have not seen before: the **dashed arrow** (`..>`).
+
+      | Symbol | Name | Meaning | Python Pattern |
+      |---|---|---|---|
+      | `..>` | **Dependency** | "temporarily uses" — the weakest link | A class appears only as a method parameter or local variable — never stored in `self` |
+
+      In the target diagram, `OnlineStore ..> Customer` means `OnlineStore` *uses* `Customer` only inside `place_order()` — as a method parameter that is immediately handed off to `Order`. There is no `self.customer` attribute on `OnlineStore`; the `Customer` object passes through and leaves.
+
+      **Rule of thumb:**
+      - `self.x: Other = other` → **association / composition / aggregation** (persistent reference)
+      - `def method(self, other: Other)` or `local = Other(...)` inside a method, never stored → **dependency** (temporary use)
+
+      This is the weakest possible relationship — the dashed line signals "I know this class exists, but I do not hold onto it."
+
       ### Your Task
 
       The starter code is a single `OnlineStore` class that manages products, customers, orders, and notifications all by itself. Refactor it:
@@ -2514,9 +2530,9 @@ steps:
 
       ---
 
-      ### Dependency — The Relationship We Did Not Cover
+      ### Dependency
 
-      A **dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> is the weakest relationship between classes. It means one class *temporarily uses* another — typically as a local variable or parameter inside a single method — without storing a persistent reference.
+      A **dependency** <span class="uml-sym" data-diagram="class" data-sym="..>"></span> is the weakest relationship between classes. It means one class *temporarily uses* another — typically as a method parameter or local variable inside a single method — without storing a persistent reference.
 
       ```python
       class ReportGenerator:

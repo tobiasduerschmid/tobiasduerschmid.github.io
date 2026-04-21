@@ -94,6 +94,8 @@
       // Derived flags
       useTerminal: (backend === 'v86' || backend === 'webcontainer'),
       usePreview: (backend === 'react'),    // live iframe preview for React tutorials
+      umlAnalyzerPath: options.umlAnalyzerPath || '/js/uml-analyzer.py',
+      umlPopupUrl: options.umlPopupUrl || '/uml-popup.html',
     };
 
     this.steps = options.steps || [];
@@ -217,6 +219,8 @@
     this._umlFullscreenEl = null;       // fullscreen overlay element
     this._umlFsContentEl = null;        // fullscreen diagram content element
     this._umlCustomColor = this._loadUMLColorCookie(); // user-chosen accent color (null = default)
+    this._umlChannel = null;       // BroadcastChannel for popup sync
+    this._umlPopupWindow = null;   // reference to pop-out window
 
     // React preview state
     this._previewFrame = null;
@@ -424,6 +428,7 @@
         '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
         '</div>' +
         '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+        '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
         '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
         '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
@@ -507,6 +512,7 @@
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
@@ -545,6 +551,7 @@
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
         '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
@@ -565,6 +572,7 @@
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
           '</div>' +
           '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" title="Diagram accent color"><input type="color" class="tvm-diagram-color-input"></label>' +
           '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
@@ -744,6 +752,12 @@
       var fsBtn = this._umlContainer.querySelector('.tvm-diagram-fullscreen-btn');
       if (fsBtn) {
         fsBtn.addEventListener('click', function () { self._openUMLFullscreen(); });
+      }
+
+      // Popout button
+      var popoutBtn = this._umlContainer.querySelector('.tvm-diagram-popout-btn');
+      if (popoutBtn) {
+        popoutBtn.addEventListener('click', function () { self._openUMLPopout(); });
       }
     }
 
@@ -1072,6 +1086,8 @@
       var umlBottomLeftView = this.root.querySelector('.tvm-uml-bottom-left-view');
       this._makeDraggable(umlBottomLeftSplitter, 'horizontal', stepsView, umlBottomLeftView);
     }
+
+    this._initUMLBroadcastChannel();
   };
 
   TutorialCode.prototype._makeDraggable = function (splitter, direction, beforeEl, afterEl) {
@@ -3084,6 +3100,47 @@
   };
 
   // ---------------------------------------------------------------------------
+  // UML Popup / BroadcastChannel
+  // ---------------------------------------------------------------------------
+
+  TutorialCode.prototype._initUMLBroadcastChannel = function () {
+    if (!window.BroadcastChannel || !this._umlDiagramEnabled) return;
+    var self = this;
+    this._umlChannel = new BroadcastChannel('uml-sync-' + window.location.pathname);
+    this._umlChannel.addEventListener('message', function (e) {
+      if (e.data.type === 'uml-ready') self._broadcastUMLState();
+    });
+  };
+
+  TutorialCode.prototype._broadcastUMLState = function () {
+    if (!this._umlChannel || !this._umlLastDiagrams) return;
+    this._umlChannel.postMessage({
+      type: 'uml-update',
+      classDiagram: this._umlLastDiagrams.classDiagram
+        ? this._applyTutorialClassLayout(this._umlLastDiagrams.classDiagram)
+        : null,
+      sequenceDiagram: this._umlLastDiagrams.sequenceDiagram || null,
+      activeType: this._umlActiveType,
+      color: this._umlCustomColor,
+      darkMode: document.documentElement.classList.contains('dark-mode')
+    });
+  };
+
+  TutorialCode.prototype._openUMLPopout = function () {
+    var url = this.config.umlPopupUrl;
+    if (!url) return;
+    var channelName = 'uml-sync-' + window.location.pathname;
+    var fullUrl = url + '?channel=' + encodeURIComponent(channelName);
+    if (this._umlPopupWindow && !this._umlPopupWindow.closed) {
+      this._umlPopupWindow.focus();
+      this._broadcastUMLState();
+      return;
+    }
+    this._umlPopupWindow = window.open(fullUrl, 'uml-popup',
+      'width=900,height=700,resizable=yes,scrollbars=yes');
+  };
+
+  // ---------------------------------------------------------------------------
   // UML Diagram Methods
   // ---------------------------------------------------------------------------
 
@@ -3408,6 +3465,7 @@
       }
       this._renderClassDiagramSVG(classSyntax);
     }
+    this._broadcastUMLState();
   };
 
   TutorialCode.prototype._applyTutorialClassLayout = function (syntax) {

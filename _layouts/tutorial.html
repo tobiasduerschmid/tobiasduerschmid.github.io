@@ -287,6 +287,7 @@
         uml_default_view: config.uml_default_view || false,
         uml_default_type: config.uml_default_type || 'class',
         umlAnalyzerPath: '{{ "/js/uml-analyzer.py" | relative_url }}',
+        umlPopupUrl: '{{ "/uml-popup.html" | relative_url }}',
       });
       window._tutorial = tutorial;
       tutorial.start();

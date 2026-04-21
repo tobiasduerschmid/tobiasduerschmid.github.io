@@ -662,7 +662,7 @@ html:not(.dark-mode) .tvm-git-graph-container {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 10px;
+  padding: 3px 8px;
   background: #1a1a28;
   border-bottom: 1px solid #2e2e42;
   flex-shrink: 0;
@@ -728,7 +728,8 @@ html:not(.dark-mode) .tvm-git-graph-container {
   border-left: 1px solid #3a3a52;
   border-right: 1px solid #3a3a52;
 }
-.tvm-diagram-fullscreen-btn {
+.tvm-diagram-fullscreen-btn,
+.tvm-diagram-popout-btn {
   padding: 3px 7px;
   border: 1px solid #3a3a52;
   border-radius: 3px;
@@ -740,7 +741,8 @@ html:not(.dark-mode) .tvm-git-graph-container {
   margin-left: 5px;
   transition: background 0.1s, color 0.1s;
 }
-.tvm-diagram-fullscreen-btn:hover {
+.tvm-diagram-fullscreen-btn:hover,
+.tvm-diagram-popout-btn:hover {
   background: #35354e;
   color: #c8d4e4;
   border-color: #5a5a78;
@@ -762,17 +764,17 @@ html:not(.dark-mode) .tvm-git-graph-container {
   border-color: #5a5a78;
 }
 .tvm-diagram-color-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  overflow: hidden;
+  align-self: center;
+  box-sizing: border-box;
   width: 26px;
   height: 26px;
   border: 1px solid #3a3a52;
   border-radius: 3px;
-  background: #252538;
   cursor: pointer;
   margin-left: 3px;
-  padding: 2px;
+  padding: 0;
   flex-shrink: 0;
   transition: border-color 0.1s;
 }
@@ -803,13 +805,13 @@ html:not(.dark-mode) .tvm-git-graph-container {
   border-color: #5a5a78;
 }
 .tvm-diagram-color-input {
-  width: 18px;
-  height: 18px;
+  display: block;
+  width: 100%;
+  height: 100%;
   border: none;
   padding: 0;
-  background: none;
+  margin: 0;
   cursor: pointer;
-  border-radius: 2px;
   -webkit-appearance: none;
   appearance: none;
 }
@@ -1003,12 +1005,14 @@ html:not(.dark-mode) .tvm-diagram-zoom-label {
   color: #6a7080;
   border-color: #cdd0d8;
 }
-html:not(.dark-mode) .tvm-diagram-fullscreen-btn {
+html:not(.dark-mode) .tvm-diagram-fullscreen-btn,
+html:not(.dark-mode) .tvm-diagram-popout-btn {
   background: #eaecf0;
   border-color: #cdd0d8;
   color: #5a6270;
 }
-html:not(.dark-mode) .tvm-diagram-fullscreen-btn:hover {
+html:not(.dark-mode) .tvm-diagram-fullscreen-btn:hover,
+html:not(.dark-mode) .tvm-diagram-popout-btn:hover {
   background: #d8dce6;
   color: #222;
   border-color: #b0b6c4;
@@ -1024,7 +1028,6 @@ html:not(.dark-mode) .tvm-diagram-refresh-btn:hover {
   border-color: #b0b6c4;
 }
 html:not(.dark-mode) .tvm-diagram-color-btn {
-  background: #eaecf0;
   border-color: #cdd0d8;
 }
 html:not(.dark-mode) .tvm-diagram-color-btn:hover {
